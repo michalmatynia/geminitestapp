@@ -20,6 +20,8 @@ This project is a Next.js application designed as a monochrome admin dashboard w
 This application follows the Next.js App Router architecture, organizing code logically:
 
 - **`app/`**: Contains pages and API routes. Pages are responsible for rendering UI, while API routes (`app/api/`) handle backend logic and data interactions.
+  - **`app/admin/`**: Contains the UI for the admin dashboard, including product management pages (create, edit, view).
+  - **`app/api/`**: Houses the backend API endpoints for product management.
 - **`components/`**: Reusable UI components, including shared UI elements (`components/ui/`) built with Radix UI and styled with Tailwind CSS.
 - **`lib/`**: Utility functions and helper modules.
 - **`prisma/`**: Prisma schema definition (`schema.prisma`) and database seeding script (`seed.js`).
@@ -28,7 +30,36 @@ This application follows the Next.js App Router architecture, organizing code lo
 
 Prisma is used as the Object-Relational Mapper (ORM) to interact with the database. The `Product` model is defined in `prisma/schema.prisma`, and the application uses SQLite for local development and testing. Database migrations are managed via Prisma Migrate.
 
-- **Database Seeding**: The `npm run seed` script populates the database with initial product data for development and testing purposes.
+### Product Data Model
+
+The `Product` model has the following fields:
+- `id`: Unique identifier (String, auto-generated with `cuid()`)
+- `name`: Product name (String)
+- `price`: Product price (Integer)
+- `createdAt`: Timestamp of creation (DateTime, defaults to now)
+- `updatedAt`: Timestamp of last update (DateTime, updates automatically)
+
+### Database Seeding
+
+The `npm run seed` script populates the database with initial product data for development and testing purposes.
+
+## API Endpoints
+
+The application exposes the following RESTful API endpoints for product management:
+
+- **`GET /api/products`**:
+  - Fetches all products.
+  - Supports optional query parameters for filtering: `search` (by name), `minPrice`, `maxPrice`, `startDate`, `endDate`.
+- **`POST /api/products`**:
+  - Creates a new product.
+  - Requires `name` (string) and `price` (number) in the request body.
+- **`GET /api/products/[id]`**:
+  - Fetches a single product by its `id`.
+- **`PUT /api/products/[id]`**:
+  - Updates an existing product by its `id`.
+  - Requires `name` (string) and `price` (number) in the request body.
+- **`DELETE /api/products/[id]`**:
+  - Deletes a product by its `id`.
 
 ## Styling
 
@@ -52,7 +83,7 @@ API tests are implemented using Jest and Supertest to ensure the backend endpoin
 - Updating existing products.
 - Deleting products.
 
-To run tests, ensure the Next.js development server is *not* running, as tests directly import and execute API route handlers.
+To run tests, ensure the Next.js development server is *not* running, as tests directly import and execute API route handlers. Tests can be executed using `npm run test`.
 
 ## Available Scripts
 

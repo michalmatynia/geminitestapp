@@ -26,25 +26,13 @@ function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-interface EditProductPageProps {
-  params: {
-    id: string;
-  };
-}
 
-interface ProductWithImages {
-  id: string;
-  name: string;
-  price: number;
-  images: {
-    imageFile: {
-      id: string;
-      filepath: string;
-    };
-  }[];
-}
 
-export default function EditProductPage({ params }: EditProductPageProps) {
+
+
+
+
+export default function EditProductPage({ params }: { params: { id: string } }) {
   const [product, setProduct] = useState<ProductWithImages | undefined>();
   const {
     register,
@@ -58,6 +46,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
     setShowFileManager,
     handleImageChange,
     handleFileSelect,
+    handleDisconnectImage,
   } = useProductForm(product);
 
   useEffect(() => {
@@ -69,7 +58,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
   return (
     <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
       <div className="mb-4 flex items-center">
-        <Link href="/admin/products" className="mr-4 text-white hover:text-gray-300">
+        <Link href="/admin" className="mr-4 text-white hover:text-gray-300">
           <ArrowLeftIcon className="size-6" />
         </Link>
         <h1 className="text-3xl font-bold text-white">Edit Product</h1>
@@ -83,6 +72,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
           errors={errors}
           handleImageChange={handleImageChange}
           setShowFileManager={setShowFileManager}
+          handleDisconnectImage={handleDisconnectImage}
           previewUrl={previewUrl}
           existingImageUrl={existingImageUrl}
           uploading={uploading}

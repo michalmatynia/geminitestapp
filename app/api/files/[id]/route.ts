@@ -1,11 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
 
 const prisma = new PrismaClient();
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: { id: string } }): Promise<NextResponse<{ error: string } | null>> {
   const { id } = params;
 
   try {
@@ -14,25 +14,32 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     });
 
     if (!imageFile) {
-      return NextResponse.json({ error: 'File not found' }, { status: 404 });
+      return NextResponse.json({ error: "Image file not found" }, { status: 404 });
     }
 
-    // Delete the file from the filesystem
-    const relativePath = imageFile.filepath.startsWith('/') ? imageFile.filepath.substring(1) : imageFile.filepath;
-    const filePath = path.join(process.cwd(), 'public', relativePath);
+    const filepath = path.join(process.cwd(), 'public', imageFile.filepath);
 
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    try {
+      await fs.unlink(filepath);
+    } catch (error: NodeJS.ErrnoException) {
+      if (error.code !== 'ENOENT') {
+        console.error("Error deleting file from filesystem:", error);
+        // We can choose to continue even if file deletion fails,
+        // as the primary goal is to remove the DB record.
+      }
     }
 
-    // Delete the ImageFile record from the database
+    await prisma.productImage.deleteMany({
+      where: { imageFileId: id },
+    });
+
     await prisma.imageFile.delete({
       where: { id },
     });
 
     return new NextResponse(null, { status: 204 });
-  } catch (error) {
-    console.error('Error deleting file:', error);
-    return NextResponse.json({ error: 'Failed to delete file' }, { status: 500 });
+  } catch (error: unknown) {
+    console.error("Error deleting image file:", error);
+    return NextResponse.json({ error: "Failed to delete image file" }, { status: 500 });
   }
 }

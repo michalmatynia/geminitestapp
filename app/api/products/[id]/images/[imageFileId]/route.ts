@@ -3,8 +3,7 @@ import { NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
-export async function DELETE(req: Request, { params, prisma: prismaClient }: { params: { productId: string, imageFileId: string }, prisma?: PrismaClient }): Promise<NextResponse<void | { error: string }>> {
-  const prisma = prismaClient || new PrismaClient();
+export async function DELETE(req: Request, { params }: { params: { productId: string, imageFileId: string } }): Promise<NextResponse<void | { error: string }>> {
   const { productId, imageFileId } = params;
 
   try {
@@ -17,9 +16,9 @@ export async function DELETE(req: Request, { params, prisma: prismaClient }: { p
       },
     });
     return new NextResponse(null, { status: 204 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error disconnecting image from product:", error);
-    if (error.code === 'P2025') {
+    if (error instanceof Error && 'code' in error && (error as { code: string }).code === 'P2025') {
       return NextResponse.json({ error: "Product-image link not found" }, { status: 404 });
     }
     return NextResponse.json({ error: "Failed to disconnect image" }, { status: 500 });

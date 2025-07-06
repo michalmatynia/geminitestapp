@@ -1,9 +1,14 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Product } from "@/components/columns";
+import Image from "next/image";
+import { Product } from "@prisma/client";
+import { ProductImage, ImageFile } from "@prisma/client";
+
+type ProductWithImages = Product & {
+  images: (ProductImage & { imageFile: ImageFile })[];
+};
 
 function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -25,26 +30,6 @@ function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-function ArrowRightIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m12 5 7 7-7 7" />
-      <path d="M5 12h14" />
-    </svg>
-  );
-}
-
 interface ViewProductPageProps {
   params: {
     id: string;
@@ -52,70 +37,21 @@ interface ViewProductPageProps {
 }
 
 export default function ViewProductPage({ params }: ViewProductPageProps) {
-  const [product, setProduct] = useState<Product | null>(null);
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [currentIndex, setCurrentIndex] = useState<number>(-1);
-  const router = useRouter();
+  const [product, setProduct] = useState<ProductWithImages | null>(null);
   const { id } = params;
-
-  const handleDisconnectImage = async (imageFileId: string) => {
-    try {
-      const res = await fetch(`/api/products/${id}/images/${imageFileId}`, {
-        method: "DELETE",
-      });
-
-      if (res.ok) {
-        setProduct((prevProduct) => {
-          if (!prevProduct) return null;
-          return {
-            ...prevProduct,
-            images: prevProduct.images.filter(
-              (imageRel) => imageRel.imageFile.id !== imageFileId
-            ),
-          };
-        });
-      } else {
-        console.error("Failed to disconnect image:", await res.json());
-      }
-    } catch (error) {
-      console.error("Error disconnecting image:", error);
-    }
-  };
 
   useEffect(() => {
     const fetchProductData = async () => {
-      const [productRes, allProductsRes] = await Promise.all([
-        fetch(`/api/products/${id}`),
-        fetch(`/api/products`),
-      ]);
-
-      const productData: Product = await productRes.json();
-      const allProductsData: Product[] = await allProductsRes.json();
+      const res = await fetch(`/api/products/${id}`);
+      const productData: ProductWithImages = await res.json();
 
       if (productData) {
         setProduct(productData);
-      }
-      if (allProductsData) {
-        setAllProducts(allProductsData);
-        const index = allProductsData.findIndex((p) => p.id === id);
-        setCurrentIndex(index);
       }
     };
 
     fetchProductData();
   }, [id]);
-
-  const goToPreviousProduct = () => {
-    if (currentIndex > 0) {
-      router.push(`/admin/products/${allProducts[currentIndex - 1].id}`);
-    }
-  };
-
-  const goToNextProduct = () => {
-    if (currentIndex < allProducts.length - 1) {
-      router.push(`/admin/products/${allProducts[currentIndex + 1].id}`);
-    }
-  };
 
   if (!product) {
     return <div className="text-white">Loading...</div>;
@@ -129,25 +65,6 @@ export default function ViewProductPage({ params }: ViewProductPageProps) {
             <ArrowLeftIcon className="size-6" />
           </Link>
           <h1 className="text-3xl font-bold text-white">Product Details</h1>
-        </div>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={goToPreviousProduct}
-            disabled={currentIndex === 0}
-            className="text-white enabled:hover:text-gray-300 disabled:opacity-50"
-          >
-            <ArrowLeftIcon className="size-6" />
-          </button>
-          <span className="text-sm text-white">
-            {currentIndex + 1} / {allProducts.length}
-          </span>
-          <button
-            onClick={goToNextProduct}
-            disabled={currentIndex === allProducts.length - 1}
-            className="text-white enabled:hover:text-gray-300 disabled:opacity-50"
-          >
-            <ArrowRightIcon className="size-6" />
-          </button>
         </div>
       </div>
       <div className="mb-4">
@@ -180,20 +97,13 @@ export default function ViewProductPage({ params }: ViewProductPageProps) {
           <div className="mt-1 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
             {product.images.map((imageRel) => (
               <div key={imageRel.imageFile.id} className="rounded-md bg-gray-900 p-4">
-                <div className="relative">
-                  <img
+                <Image
                     src={imageRel.imageFile.filepath}
                     alt={imageRel.imageFile.filename}
+                    width={imageRel.imageFile.width || 500}
+                    height={imageRel.imageFile.height || 500}
                     className="mb-2 h-32 w-full object-cover rounded-md"
                   />
-                  <button
-                    onClick={() => handleDisconnectImage(imageRel.imageFile.id)}
-                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 text-xs"
-                    title="Disconnect Image"
-                  >
-                    X
-                  </button>
-                </div>
                 <p className="text-sm text-white">
                   <span className="font-medium">Filename:</span> {imageRel.imageFile.filename}
                 </p>

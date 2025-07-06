@@ -6,13 +6,22 @@ import { UseFormRegister, FieldErrors } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+
+interface ProductFormData {
+  name: string;
+  price: number;
+  sku: string;
+  description: string;
+}
 
 interface ProductFormProps {
-  register: UseFormRegister<any>;
+  register: UseFormRegister<ProductFormData>;
   handleSubmit: (e: FormEvent<HTMLFormElement>) => void;
-  errors: FieldErrors;
+  errors: FieldErrors<ProductFormData>;
   handleImageChange: (e: ChangeEvent<HTMLInputElement>) => void;
   setShowFileManager: (show: boolean) => void;
+  handleDisconnectImage: () => void;
   previewUrl: string | null;
   existingImageUrl: string | null;
   uploading: boolean;
@@ -26,6 +35,7 @@ export default function ProductForm({
   errors,
   handleImageChange,
   setShowFileManager,
+  handleDisconnectImage,
   previewUrl,
   existingImageUrl,
   uploading,
@@ -43,6 +53,16 @@ export default function ProductForm({
         <Label htmlFor="price">Price</Label>
         <Input id="price" type="number" {...register('price', { valueAsNumber: true })} />
         {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price.message as string}</p>}
+      </div>
+      <div className="mb-4">
+        <Label htmlFor="sku">SKU</Label>
+        <Input id="sku" {...register('sku')} />
+        {errors.sku && <p className="text-red-500 text-sm mt-1">{errors.sku.message as string}</p>}
+      </div>
+      <div className="mb-4">
+        <Label htmlFor="description">Description</Label>
+        <Textarea id="description" {...register('description')} />
+        {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message as string}</p>}
       </div>
       <div className="mb-4">
         <Label>Product Image</Label>
@@ -71,6 +91,15 @@ export default function ProductForm({
           >
             Choose Existing
           </Button>
+          {(previewUrl || existingImageUrl) && (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDisconnectImage}
+            >
+              Remove Image
+            </Button>
+          )}
         </div>
         <Input
           type="file"
@@ -97,3 +126,4 @@ export default function ProductForm({
     </form>
   );
 }
+

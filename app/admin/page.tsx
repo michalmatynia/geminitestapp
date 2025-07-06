@@ -37,14 +37,14 @@ export default function AdminPage() {
             type="number"
             placeholder="Min Price"
             value={minPrice || ''}
-            onChange={(e) => setMinPrice(e.target.value ? parseFloat(e.target.value) : undefined)}
+            onChange={(e) => setMinPrice(e.target.value ? parseInt(e.target.value, 10) : undefined)}
             className="max-w-xs"
           />
           <Input
             type="number"
             placeholder="Max Price"
             value={maxPrice || ''}
-            onChange={(e) => setMaxPrice(e.target.value ? parseFloat(e.target.value) : undefined)}
+            onChange={(e) => setMaxPrice(e.target.value ? parseInt(e.target.value, 10) : undefined)}
             className="max-w-xs"
           />
           <Input

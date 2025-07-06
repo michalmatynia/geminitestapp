@@ -1,12 +1,10 @@
 import { PrismaClient, Product, Prisma } from '@prisma/client';
 import { NextResponse } from 'next/server';
-import { handleProductImageUpload } from '@/lib/utils/productUtils';
 import { productSchema } from '@/lib/validations/product';
+import { handleProductImageUpload } from '@/lib/utils/productUtils';
 
-const prisma = new PrismaClient();
-
-export async function GET(req: Request, { prisma: prismaClient }: { prisma?: PrismaClient } = {}): Promise<NextResponse<Product[] | { error: string }>> {
-  const prisma = prismaClient || new PrismaClient();
+export async function GET(req: Request) {
+  const prisma = new PrismaClient();
   const { searchParams } = new URL(req.url);
   const search = searchParams.get('search') || '';
   const minPrice = searchParams.get('minPrice');
@@ -14,31 +12,26 @@ export async function GET(req: Request, { prisma: prismaClient }: { prisma?: Pri
   const startDate = searchParams.get('startDate');
   const endDate = searchParams.get('endDate');
 
-  const where: Prisma.ProductWhereInput = {};
-
-  if (search) {
-    where.OR = [
-      { name: { contains: search } },
-    ];
-  }
-
-  if (minPrice) {
-    where.price = { ...where.price, gte: parseFloat(minPrice) };
-  }
-
-  if (maxPrice) {
-    where.price = { ...where.price, lte: parseFloat(maxPrice) };
-  }
-
-  if (startDate) {
-    where.createdAt = { ...where.createdAt, gte: new Date(startDate) };
-  }
-
-  if (endDate) {
-    where.createdAt = { ...where.createdAt, lte: new Date(endDate) };
-  }
-
   try {
+    const where: Prisma.ProductWhereInput = {
+      name: {
+        contains: search,
+      },
+    };
+
+    if (minPrice) {
+      where.price = { ...where.price as Prisma.IntFilter, gte: parseInt(minPrice, 10) };
+    }
+    if (maxPrice) {
+      where.price = { ...where.price as Prisma.IntFilter, lte: parseInt(maxPrice, 10) };
+    }
+    if (startDate) {
+      where.createdAt = { ...where.createdAt as Prisma.DateTimeFilter, gte: new Date(startDate) };
+    }
+    if (endDate) {
+      where.createdAt = { ...where.createdAt as Prisma.DateTimeFilter, lte: new Date(endDate) };
+    }
+
     const products = await prisma.product.findMany({
       where,
       include: {
@@ -48,27 +41,38 @@ export async function GET(req: Request, { prisma: prismaClient }: { prisma?: Pri
           },
         },
       },
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
+
     return NextResponse.json(products);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error("Error fetching products:", error);
     return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });
   }
 }
 
-export async function POST(req: Request, { prisma: prismaClient }: { prisma?: PrismaClient } = {}): Promise<NextResponse<Product | { error: string }>> {
-  const prisma = prismaClient || new PrismaClient();
+export async function POST(req: Request): Promise<NextResponse<Product | { error: string }>> {
+  const prisma = new PrismaClient();
   const formData = await req.formData();
   const name = formData.get('name') as string;
   const price = parseFloat(formData.get('price') as string);
+  const sku = formData.get('sku') as string;
+  const description = formData.get('description') as string | null;
   const image: File | null = formData.get('image') as unknown as File;
   const imageFileId = formData.get('imageFileId') as string | null;
 
   try {
-    const validatedData = productSchema.parse({ name, price });
+    const validatedData = productSchema.parse({ name, price, sku, description });
 
     const product = await prisma.product.create({
-      data: { name: validatedData.name, price: validatedData.price },
+      data: {
+        name: validatedData.name,
+        price: validatedData.price,
+        sku: validatedData.sku,
+        description: validatedData.description,
+      },
     });
 
     if (image) {

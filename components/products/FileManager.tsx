@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -26,7 +26,7 @@ export default function FileManager({ onSelectFile }: FileManagerProps) {
   const [filenameSearch, setFilenameSearch] = useState('');
   const [productNameSearch, setProductNameSearch] = useState('');
 
-  const fetchFiles = () => {
+  const fetchFiles = useCallback(() => {
     const query = new URLSearchParams();
     if (filenameSearch) {
       query.append('filename', filenameSearch);
@@ -37,11 +37,11 @@ export default function FileManager({ onSelectFile }: FileManagerProps) {
     fetch(`/api/files?${query.toString()}`)
       .then((res) => res.json())
       .then(setFiles);
-  };
+  }, [filenameSearch, productNameSearch]);
 
   useEffect(() => {
     fetchFiles();
-  }, [filenameSearch, productNameSearch]);
+  }, [fetchFiles]);
 
   const handleSelect = (fileId: string) => {
     if (onSelectFile) {

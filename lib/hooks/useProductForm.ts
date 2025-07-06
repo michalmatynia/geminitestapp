@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,6 +11,8 @@ interface ProductWithImages {
   id: string;
   name: string;
   price: number;
+  sku: string;
+  description: string | null;
   images: {
     imageFile: {
       id: string;
@@ -32,6 +34,8 @@ export function useProductForm(product?: ProductWithImages) {
     defaultValues: {
       name: product?.name || '',
       price: product?.price || 0,
+      sku: product?.sku || '',
+      description: product?.description || '',
     },
   });
 
@@ -49,6 +53,8 @@ export function useProductForm(product?: ProductWithImages) {
       reset({
         name: product.name,
         price: product.price,
+        sku: product.sku,
+        description: product.description || '',
       });
       if (product.images && product.images.length > 0) {
         setExistingImageUrl(`/api/files/preview?fileId=${product.images[0].imageFile.id}`);
@@ -63,6 +69,10 @@ export function useProductForm(product?: ProductWithImages) {
     const formData = new FormData();
     formData.append('name', data.name);
     formData.append('price', data.price.toString());
+    formData.append('sku', data.sku);
+    if (data.description) {
+      formData.append('description', data.description);
+    }
     if (image) {
       formData.append('image', image);
     } else if (imageFileId) {
@@ -99,7 +109,7 @@ export function useProductForm(product?: ProductWithImages) {
         setUploadError(errorData.error || 'Failed to save product.');
         setUploading(false);
       }
-    } catch (error) {
+    } catch {
       setUploadError('Network error or server is unreachable.');
       setUploading(false);
     }
@@ -129,6 +139,27 @@ export function useProductForm(product?: ProductWithImages) {
     setShowFileManager(false);
   };
 
+  const handleDisconnectImage = async () => {
+    if (!product || !product.images || product.images.length === 0) return;
+    const imageFileId = product.images[0].imageFile.id;
+
+    try {
+      const res = await fetch(`/api/products/${product.id}/images/${imageFileId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setExistingImageUrl(null);
+        setImage(null);
+        setImageFileId(null);
+      } else {
+        console.error("Failed to disconnect image:", await res.json());
+      }
+    } catch (error) {
+      console.error("Error disconnecting image:", error);
+    }
+  };
+
   return {
     register,
     handleSubmit: handleSubmit(onSubmit),
@@ -141,5 +172,6 @@ export function useProductForm(product?: ProductWithImages) {
     setShowFileManager,
     handleImageChange,
     handleFileSelect,
+    handleDisconnectImage,
   };
 }

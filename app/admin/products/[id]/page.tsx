@@ -98,11 +98,11 @@ export default function ViewProductPage({ params }: ViewProductPageProps) {
   }
 
   return (
-    <div className="bg-gray-950 p-6 rounded-lg shadow-lg">
-      <div className="flex items-center justify-between mb-4">
+    <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
+      <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center">
-          <Link href="/admin" className="text-white hover:text-gray-300 mr-4">
-            <ArrowLeftIcon className="h-6 w-6" />
+          <Link href="/admin" className="mr-4 text-white hover:text-gray-300">
+            <ArrowLeftIcon className="size-6" />
           </Link>
           <h1 className="text-3xl font-bold text-white">Product Details</h1>
         </div>
@@ -112,9 +112,9 @@ export default function ViewProductPage({ params }: ViewProductPageProps) {
             disabled={currentIndex === 0}
             className="text-white enabled:hover:text-gray-300 disabled:opacity-50"
           >
-            <ArrowLeftIcon className="h-6 w-6" />
+            <ArrowLeftIcon className="size-6" />
           </button>
-          <span className="text-white text-sm">
+          <span className="text-sm text-white">
             {currentIndex + 1} / {allProducts.length}
           </span>
           <button
@@ -122,37 +122,37 @@ export default function ViewProductPage({ params }: ViewProductPageProps) {
             disabled={currentIndex === allProducts.length - 1}
             className="text-white enabled:hover:text-gray-300 disabled:opacity-50"
           >
-            <ArrowRightIcon className="h-6 w-6" />
+            <ArrowRightIcon className="size-6" />
           </button>
         </div>
       </div>
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-400">Name</label>
-        <p className="mt-1 block w-full rounded-md bg-gray-900 border-gray-700 text-white sm:text-sm p-2">
+        <p className="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 p-2 text-white sm:text-sm">
           {product.name}
         </p>
       </div>
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-400">Price</label>
-        <p className="mt-1 block w-full rounded-md bg-gray-900 border-gray-700 text-white sm:text-sm p-2">
+        <p className="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 p-2 text-white sm:text-sm">
           ${product.price.toFixed(2)}
         </p>
       </div>
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-400">Created At</label>
-        <p className="mt-1 block w-full rounded-md bg-gray-900 border-gray-700 text-white sm:text-sm p-2">
+        <p className="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 p-2 text-white sm:text-sm">
           {new Date(product.createdAt).toLocaleString()}
         </p>
       </div>
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-400">Updated At</label>
-        <p className="mt-1 block w-full rounded-md bg-gray-900 border-gray-700 text-white sm:text-sm p-2">
+        <p className="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 p-2 text-white sm:text-sm">
           {new Date(product.updatedAt).toLocaleString()}
         </p>
       </div>
       <Link
         href={`/admin/products/${product.id}/edit`}
-        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-black bg-white hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+        className="inline-flex justify-center rounded-md border border-transparent bg-white px-4 py-2 text-sm font-medium text-black shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
       >
         Edit Product
       </Link>

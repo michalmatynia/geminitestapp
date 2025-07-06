@@ -21,7 +21,8 @@ const eslintConfig = [
       "no-undef": "off",
       "tailwindcss/no-custom-classname": "off",
       "react/no-unknown-property": "off",
-      "react/display-name": "off"
+      "react/display-name": "off",
+      "tailwindcss/classnames-order": "warn"
     },
   },
 ];

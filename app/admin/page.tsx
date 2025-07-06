@@ -24,9 +24,9 @@ export default function AdminPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="bg-gray-950 p-6 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-bold mb-4 text-white">Products</h1>
-        <div className="flex space-x-4 mb-4">
+      <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
+        <h1 className="mb-4 text-3xl font-bold text-white">Products</h1>
+        <div className="mb-4 flex space-x-4">
           <Input
             placeholder="Search by name..."
             value={search}

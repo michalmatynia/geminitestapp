@@ -16,19 +16,30 @@ import {
   TableRow 
 } from "@/components/ui/table"
 
+import { useRouter } from "next/navigation"
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;
+}
+
+declare module "@tanstack/react-table" {
+  interface TableMeta<TData> {
+    setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
+  }
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  setRefreshTrigger,
 }: DataTableProps<TData, TValue>) {
-  const table = useReactTable({
+  const table = useReactTable<TData>({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    meta: { setRefreshTrigger },
   })
 
   return (

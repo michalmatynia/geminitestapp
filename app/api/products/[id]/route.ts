@@ -5,12 +5,17 @@ const prisma = new PrismaClient();
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request, { params }: { params: { id: string } }): Promise<NextResponse<Product | null>> {
-  const { id } = await Promise.resolve(params);
-  const product = await prisma.product.findUnique({
-    where: { id },
-  });
-  return NextResponse.json(product);
+export async function GET(req: Request, { params }: { params: { id: string } }): Promise<NextResponse<Product | { error: string } | null>> {
+  const { id } = params;
+  try {
+    const product = await prisma.product.findUnique({
+      where: { id },
+    });
+    return NextResponse.json(product);
+  } catch (error) {
+    console.error("Error fetching product:", error);
+    return NextResponse.json({ error: "Failed to fetch product" }, { status: 500 });
+  }
 }
 
 interface PutRequestBody {
@@ -18,20 +23,33 @@ interface PutRequestBody {
   price: number;
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }): Promise<NextResponse<Product>> {
-  const { id } = await Promise.resolve(params);
-  const { name, price }: PutRequestBody = await req.json();
-  const product = await prisma.product.update({
-    where: { id },
-    data: { name, price },
-  });
-  return NextResponse.json(product);
+export async function PUT(req: Request, { params }: { params: { id: string } }): Promise<NextResponse<Product | { error: string }>> {
+  const { id } = params;
+  try {
+    const { name, price }: PutRequestBody = await req.json();
+    const product = await prisma.product.update({
+      where: { id },
+      data: { name, price },
+    });
+    return NextResponse.json(product);
+  } catch (error) {
+    console.error("Error updating product:", error);
+    return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
+  }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }): Promise<NextResponse<void>> {
-  const { id } = await Promise.resolve(params);
-  await prisma.product.delete({
-    where: { id },
-  });
-  return new NextResponse(null, { status: 204 });
+export async function DELETE(req: Request, { params }: { params: { id: string } }): Promise<NextResponse<void | { error: string }>> {
+  const { id } = params;
+  try {
+    await prisma.product.delete({
+      where: { id },
+    });
+    return new NextResponse(null, { status: 204 });
+  } catch (error: any) {
+    console.error("Error deleting product:", error);
+    if (error.code === 'P2025') {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+    return NextResponse.json({ error: "Failed to delete product" }, { status: 500 });
+  }
 }

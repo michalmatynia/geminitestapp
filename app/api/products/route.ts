@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
-export async function GET(req: Request): Promise<NextResponse<Product[]>> {
+export async function GET(req: Request): Promise<NextResponse<Product[] | { error: string }>> {
   const { searchParams } = new URL(req.url);
   const search = searchParams.get('search') || '';
   const minPrice = searchParams.get('minPrice');
@@ -51,10 +51,15 @@ interface PostRequestBody {
   price: number;
 }
 
-export async function POST(req: Request): Promise<NextResponse<Product>> {
+export async function POST(req: Request): Promise<NextResponse<Product | { error: string }>> {
   const { name, price }: PostRequestBody = await req.json();
-  const product = await prisma.product.create({
-    data: { name, price },
-  });
-  return NextResponse.json(product);
+  try {
+    const product = await prisma.product.create({
+      data: { name, price },
+    });
+    return NextResponse.json(product);
+  } catch (error) {
+    console.error("Error creating product:", error);
+    return NextResponse.json({ error: "Failed to create product" }, { status: 500 });
+  }
 }

@@ -6,23 +6,11 @@ import { DataTable } from "@/components/data-table"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
-async function getData(filters: { search?: string; minPrice?: number; maxPrice?: number; startDate?: string; endDate?: string }): Promise<Product[]> {
-  const params = new URLSearchParams();
-  if (filters.search) params.append('search', filters.search);
-  if (filters.minPrice) params.append('minPrice', filters.minPrice.toString());
-  if (filters.maxPrice) params.append('maxPrice', filters.maxPrice.toString());
-  if (filters.startDate) params.append('startDate', filters.startDate);
-  if (filters.endDate) params.append('endDate', filters.endDate);
-
-  const res = await fetch(`/api/products?${params.toString()}`)
-  if (!res.ok) {
-    throw new Error("Failed to fetch data")
-  }
-  return res.json()
-}
+import { getProducts } from "@/lib/api";
 
 export default function AdminPage() {
   const [data, setData] = useState<Product[]>([])
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [search, setSearch] = useState<string>('')
   const [minPrice, setMinPrice] = useState<number | undefined>(undefined)
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined)
@@ -31,8 +19,8 @@ export default function AdminPage() {
 
   useEffect(() => {
     const filters = { search, minPrice, maxPrice, startDate, endDate };
-    getData(filters).then((data) => setData(data))
-  }, [search, minPrice, maxPrice, startDate, endDate])
+    getProducts(filters).then((data) => setData(data))
+  }, [search, minPrice, maxPrice, startDate, endDate, refreshTrigger])
 
   return (
     <div className="container mx-auto py-10">
@@ -74,7 +62,7 @@ export default function AdminPage() {
             className="max-w-xs"
           />
         </div>
-        <DataTable columns={columns} data={data} />
+        <DataTable columns={columns} data={data} setRefreshTrigger={setRefreshTrigger} />
       </div>
     </div>
   )

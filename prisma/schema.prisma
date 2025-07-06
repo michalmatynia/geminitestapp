@@ -1,6 +1,6 @@
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
+  url      = "file:./dev.db?timeout=60000"
 }
 
 generator client {
@@ -34,8 +34,8 @@ model ProductImage {
   imageFileId String
   assignedAt  DateTime @default(now())
 
-  product     Product   @relation(fields: [productId], references: [id])
-  imageFile   ImageFile @relation(fields: [imageFileId], references: [id])
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  imageFile   ImageFile @relation(fields: [imageFileId], references: [id], onDelete: Cascade)
 
-  @@id([productId, imageFileId]) // Composite primary key
+  @@id([productId, imageFileId])
 }

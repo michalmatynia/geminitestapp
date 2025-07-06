@@ -20,11 +20,32 @@ This project is a Next.js application designed as a monochrome admin dashboard w
 This application follows the Next.js App Router architecture, organizing code logically:
 
 - **`app/`**: Contains pages and API routes. Pages are responsible for rendering UI, while API routes (`app/api/`) handle backend logic and data interactions.
-  - **`app/admin/`**: Contains the UI for the admin dashboard, including product management pages (create, edit, view).
-  - **`app/api/`**: Houses the backend API endpoints for product management.
+  - **`app/admin/`**: Contains the UI for the admin dashboard.
+    - **`app/admin/layout.tsx`**: Layout for the admin section.
+    - **`app/admin/page.tsx`**: Admin dashboard homepage.
+    - **`app/admin/files/page.tsx`**: UI for the file manager.
+    - **`app/admin/products/`**: Product management UI.
+      - **`app/admin/products/page.tsx`**: Lists all products.
+      - **`app/admin/products/create/page.tsx`**: UI for creating a new product.
+      - **`app/admin/products/[id]/page.tsx`**: Displays details of a single product.
+      - **`app/admin/products/[id]/edit/page.tsx`**: UI for editing an existing product.
+  - **`app/api/`**: Houses the backend API endpoints.
+    - **`app/api/files/route.ts`**: API endpoint for fetching all image files.
+    - **`app/api/files/[id]/route.ts`**: API endpoint for deleting a specific image file.
+    - **`app/api/products/route.ts`**: API endpoint for fetching all products and creating new products.
+    - **`app/api/products/[id]/route.ts`**: API endpoint for fetching, updating, and deleting a single product.
+    - **`app/api/products/[id]/images/[imageFileId]/route.ts`**: API endpoint for disconnecting a specific image from a product.
 - **`components/`**: Reusable UI components, including shared UI elements (`components/ui/`) built with Radix UI and styled with Tailwind CSS.
 - **`lib/`**: Utility functions and helper modules.
+  - **`lib/api.ts`**: Client-side API interaction utilities.
+  - **`lib/utils.ts`**: General utility functions.
+  - **`lib/generated/prisma/`**: Contains the generated Prisma client.
+  - **`lib/utils/productUtils.ts`**: Product-specific utility functions.
+  - **`lib/validations/product.ts`**: Zod schemas for product data validation.
 - **`prisma/`**: Prisma schema definition (`schema.prisma`) and database seeding script (`seed.js`).
+- **`__tests__/`**: Contains unit and integration tests.
+  - **`__tests__/api/files.test.ts`**: Tests for the file management API endpoints.
+  - **`__tests__/api/products.test.ts`**: Tests for the product management API endpoints.
 
 ## Data Management
 
@@ -38,6 +59,9 @@ The `Product` model has the following fields:
 - `price`: Product price (Integer)
 - `createdAt`: Timestamp of creation (DateTime, defaults to now)
 - `updatedAt`: Timestamp of last update (DateTime, updates automatically)
+- `images`: A relation to `ProductImage[]` representing associated images.
+
+The `ImageFile` model has been extended with `width` and `height` fields to store image dimensions.
 
 ### Database Seeding
 
@@ -60,6 +84,8 @@ The application exposes the following RESTful API endpoints for product manageme
   - Requires `name` (string) and `price` (number) in the request body.
 - **`DELETE /api/products/[id]`**:
   - Deletes a product by its `id`.
+- **`DELETE /api/products/[productId]/images/[imageFileId]`**:
+  - Disconnects a specific image from a product by deleting the `ProductImage` entry. The `ImageFile` and `Product` entries are not deleted.
 
 ## New Features
 
@@ -102,9 +128,10 @@ API tests are implemented using Jest and Supertest to ensure the backend endpoin
 
 - Fetching all products.
 - Filtering products by search terms.
-- Creating new products.
-- Updating existing products.
+- Creating new products (including with image uploads).
+- Updating existing products (including with new image uploads).
 - Deleting products.
+- Disconnecting images from products.
 
 To run tests, ensure the Next.js development server is *not* running, as tests directly import and execute API route handlers. Tests can be executed using `npm run test`.
 

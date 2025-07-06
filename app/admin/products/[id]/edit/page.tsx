@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useEffect, useState, ChangeEvent, FormEvent } from "react";
 import Image from "next/image";
@@ -64,10 +64,10 @@ export default function EditProductPage({ params }: EditProductPageProps) {
     setUploadError(null);
 
     const formData = new FormData();
-    formData.append('name', name);
-    formData.append('price', price);
+    formData.append("name", name);
+    formData.append("price", price);
     if (image) {
-      formData.append('image', image);
+      formData.append("image", image);
     }
 
     try {
@@ -110,30 +110,55 @@ export default function EditProductPage({ params }: EditProductPageProps) {
       </div>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
-          <label htmlFor="name" className="block text-sm font-medium text-gray-400">Name</label>
+          <label
+            htmlFor="name"
+            className="block text-sm font-medium text-gray-400"
+          >
+            Name
+          </label>
           <input
             type="text"
             id="name"
             value={name}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setName(e.target.value)
+            }
             className="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 text-white focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
           />
         </div>
         <div className="mb-4">
-          <label htmlFor="price" className="block text-sm font-medium text-gray-400">Price</label>
+          <label
+            htmlFor="price"
+            className="block text-sm font-medium text-gray-400"
+          >
+            Price
+          </label>
           <input
             type="number"
             id="price"
             value={price}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setPrice(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setPrice(e.target.value)
+            }
             className="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 text-white focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
           />
         </div>
         <div className="mb-4">
-          <label htmlFor="image" className="block text-sm font-medium text-gray-400">Product Image</label>
+          <label
+            htmlFor="image"
+            className="block text-sm font-medium text-gray-400"
+          >
+            Product Image
+          </label>
           {(existingImageUrl || uploadedImageUrl) && (
             <div className="mb-2">
-              <Image src={uploadedImageUrl || existingImageUrl!} alt="Product Image" width={128} height={128} className="max-w-xs h-auto" />
+              <Image
+                src={uploadedImageUrl || existingImageUrl!}
+                alt="Product Image"
+                width={128}
+                height={128}
+                className="max-w-xs h-auto"
+              />
             </div>
           )}
           <input
@@ -150,7 +175,10 @@ export default function EditProductPage({ params }: EditProductPageProps) {
           />
           {uploading && (
             <div className="mt-2 w-full bg-gray-700 rounded-full h-2.5">
-              <div className="bg-white h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+              <div
+                className="bg-white h-2.5 rounded-full"
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
             </div>
           )}
           {uploadError && (

@@ -7,9 +7,7 @@ import {
   PUT as productPUT,
   DELETE as productDELETE,
 } from "../../app/api/products/[id]/route";
-import {
-  DELETE as productImageDELETE,
-} from "../../app/api/products/[productId]/images/[imageFileId]/route";
+import { DELETE as productImageDELETE } from "../../app/api/products/[id]/images/[imageFileId]/route";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -75,8 +73,17 @@ describe("Products API", () => {
   });
 
   it("should create a new product with an image", async () => {
-    const mockFile = new File([Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64")], "test-image.png", { type: "image/png" });
-    Object.defineProperty(mockFile, 'size', { value: 1024 });
+    const mockFile = new File(
+      [
+        Buffer.from(
+          "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+          "base64"
+        ),
+      ],
+      "test-image.png",
+      { type: "image/png" }
+    );
+    Object.defineProperty(mockFile, "size", { value: 1024 });
 
     const formData = new FormData();
     formData.append("name", "Chair");
@@ -141,8 +148,17 @@ describe("Products API", () => {
     });
     if (!product) throw new Error("Keyboard product not found");
 
-    const mockFile = new File([Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64")], "updated-image.png", { type: "image/png" });
-    Object.defineProperty(mockFile, 'size', { value: 2048 });
+    const mockFile = new File(
+      [
+        Buffer.from(
+          "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+          "base64"
+        ),
+      ],
+      "updated-image.png",
+      { type: "image/png" }
+    );
+    Object.defineProperty(mockFile, "size", { value: 2048 });
 
     const formData = new FormData();
     formData.append("name", "Mechanical Keyboard");
@@ -168,7 +184,9 @@ describe("Products API", () => {
     });
 
     expect(updatedProduct?.images).toHaveLength(1);
-    expect(updatedProduct?.images[0].imageFile.filename).toEqual("updated-image.png");
+    expect(updatedProduct?.images[0].imageFile.filename).toEqual(
+      "updated-image.png"
+    );
     expect(updatedProduct?.images[0].imageFile.mimetype).toEqual("image/png");
     expect(updatedProduct?.images[0].imageFile.size).toEqual(2048);
     expect(updatedProduct?.images[0].imageFile.width).toBeDefined();
@@ -188,8 +206,17 @@ describe("Products API", () => {
 
   it("should disconnect an image from a product", async () => {
     // Create a product with an image first
-    const mockFile = new File([Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64")], "disconnect-image.png", { type: "image/png" });
-    Object.defineProperty(mockFile, 'size', { value: 512 });
+    const mockFile = new File(
+      [
+        Buffer.from(
+          "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+          "base64"
+        ),
+      ],
+      "disconnect-image.png",
+      { type: "image/png" }
+    );
+    Object.defineProperty(mockFile, "size", { value: 512 });
 
     const formData = new FormData();
     formData.append("name", "Product with Image");
@@ -216,7 +243,12 @@ describe("Products API", () => {
 
     // Disconnect the image
     const disconnectReq = {} as Request;
-    const disconnectRes = await productImageDELETE(disconnectReq, { params: { productId: createdProduct.id, imageFileId: imageFileIdToDisconnect } });
+    const disconnectRes = await productImageDELETE(disconnectReq, {
+      params: {
+        productId: createdProduct.id,
+        imageFileId: imageFileIdToDisconnect,
+      },
+    });
 
     expect(disconnectRes.status).toEqual(204);
 
@@ -241,4 +273,54 @@ describe("Products API", () => {
     });
     expect(productExists).not.toBeNull();
   });
+
+  it("should delete a product and its associated ProductImage records", async () => {
+    // Create a product with an image
+    const mockFile = new File(
+      [
+        Buffer.from(
+          "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+          "base64"
+        ),
+      ],
+      "test-image-for-delete.png",
+      { type: "image/png" }
+    );
+    Object.defineProperty(mockFile, "size", { value: 1024 });
+
+    const formData = new FormData();
+    formData.append("name", "Product to Delete");
+    formData.append("price", "50");
+    formData.append("image", mockFile);
+
+    const createReq = { formData: async () => formData } as unknown as Request;
+    const createRes = await productsPOST(createReq);
+    const createdProduct = await createRes.json();
+
+    const productWithImage = await prisma.product.findUnique({
+      where: { id: createdProduct.id },
+      include: { images: true },
+    });
+    expect(productWithImage?.images).toHaveLength(1);
+
+    // Delete the product
+    const deleteReq = {} as Request;
+    const deleteRes = await productDELETE(deleteReq, {
+      params: { id: createdProduct.id },
+    });
+    expect(deleteRes.status).toEqual(204);
+
+    // Verify the product is deleted
+    const deletedProduct = await prisma.product.findUnique({
+      where: { id: createdProduct.id },
+    });
+    expect(deletedProduct).toBeNull();
+
+    // Verify the ProductImage record is also deleted
+    const productImage = await prisma.productImage.findFirst({
+      where: { productId: createdProduct.id },
+    });
+    expect(productImage).toBeNull();
+  });
 });
+

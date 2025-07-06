@@ -1,12 +1,14 @@
 import { PrismaClient, Product } from '@prisma/client';
 import { NextResponse } from 'next/server';
-import { handleProductImageUpload, validateProductInput } from '@/lib/utils/productUtils';
+import { handleProductImageUpload } from '@/lib/utils/productUtils';
+import { productSchema } from '@/lib/validations/product';
 
 const prisma = new PrismaClient();
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request, { params }: { params: { id: string } }): Promise<NextResponse<Product | { error: string } | null>> {
+export async function GET(req: Request, { params, prisma: prismaClient }: { params: { id: string }, prisma?: PrismaClient }): Promise<NextResponse<Product | { error: string } | null>> {
+  const prisma = prismaClient || new PrismaClient();
   const { id } = await params;
   try {
     const product = await prisma.product.findUnique({
@@ -26,7 +28,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }):
   }
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }): Promise<NextResponse<Product | { error: string }>> {
+export async function PUT(req: Request, { params, prisma: prismaClient }: { params: { id: string }, prisma?: PrismaClient }): Promise<NextResponse<Product | { error: string }>> {
+  const prisma = prismaClient || new PrismaClient();
   const { id } = await params;
   try {
     const formData = await req.formData();
@@ -34,16 +37,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }):
     const price = parseFloat(formData.get('price') as string);
     const image: File | null = formData.get('image') as unknown as File;
 
-    const validationError = validateProductInput(name, price);
-    if (validationError) {
-      return validationError;
-    }
-
+    const validatedData = productSchema.parse({ name, price });
     const uploadedImageInfo = await handleProductImageUpload(image);
 
     const product = await prisma.product.update({
       where: { id },
-      data: { name, price },
+      data: { name: validatedData.name, price: validatedData.price },
     });
 
     if (uploadedImageInfo) {
@@ -67,19 +66,24 @@ export async function PUT(req: Request, { params }: { params: { id: string } }):
     }
     return NextResponse.json(product);
   } catch (error: unknown) {
+    if (error instanceof Error && 'issues' in error) {
+      return NextResponse.json({ error: JSON.parse(error.message) }, { status: 400 });
+    }
     console.error("Error updating product:", error);
     return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }): Promise<NextResponse<void | { error: string }>> {
+export async function DELETE(req: Request, { params, prisma: prismaClient }: { params: { id: string }, prisma?: PrismaClient }): Promise<NextResponse<void | { error: string }>> {
+  const prisma = prismaClient || new PrismaClient();
   const { id } = await params;
   try {
     await prisma.product.delete({
       where: { id },
     });
+
     return new NextResponse(null, { status: 204 });
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error("Error deleting product:", error);
     if (error.code === 'P2025') {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });

@@ -1,10 +1,12 @@
-import { PrismaClient, Product, Prisma, ImageFile, ProductImage } from '@prisma/client';
+import { PrismaClient, Product, Prisma } from '@prisma/client';
 import { NextResponse } from 'next/server';
-import { handleProductImageUpload, validateProductInput } from '@/lib/utils/productUtils';
+import { handleProductImageUpload } from '@/lib/utils/productUtils';
+import { productSchema } from '@/lib/validations/product';
 
 const prisma = new PrismaClient();
 
-export async function GET(req: Request): Promise<NextResponse<Product[] | { error: string }>> {
+export async function GET(req: Request, { prisma: prismaClient }: { prisma?: PrismaClient } = {}): Promise<NextResponse<Product[] | { error: string }>> {
+  const prisma = prismaClient || new PrismaClient();
   const { searchParams } = new URL(req.url);
   const search = searchParams.get('search') || '';
   const minPrice = searchParams.get('minPrice');
@@ -54,21 +56,18 @@ export async function GET(req: Request): Promise<NextResponse<Product[] | { erro
   }
 }
 
-export async function POST(req: Request): Promise<NextResponse<Product | { error: string }>> {
+export async function POST(req: Request, { prisma: prismaClient }: { prisma?: PrismaClient } = {}): Promise<NextResponse<Product | { error: string }>> {
+  const prisma = prismaClient || new PrismaClient();
   const formData = await req.formData();
   const name = formData.get('name') as string;
   const price = parseFloat(formData.get('price') as string);
   const image: File | null = formData.get('image') as unknown as File;
 
-  const validationError = validateProductInput(name, price);
-  if (validationError) {
-    return validationError;
-  }
-
   try {
+    const validatedData = productSchema.parse({ name, price });
     const uploadedImageInfo = await handleProductImageUpload(image);
     const product = await prisma.product.create({
-      data: { name, price },
+      data: { name: validatedData.name, price: validatedData.price },
     });
 
     if (uploadedImageInfo) {
@@ -92,6 +91,9 @@ export async function POST(req: Request): Promise<NextResponse<Product | { error
     }
     return NextResponse.json(product);
   } catch (error: unknown) {
+    if (error instanceof Error && 'issues' in error) {
+      return NextResponse.json({ error: JSON.parse(error.message) }, { status: 400 });
+    }
     console.error("Error creating product:", error);
     return NextResponse.json({ error: "Failed to create product" }, { status: 500 });
   }

@@ -7,6 +7,9 @@ import {
   PUT as productPUT,
   DELETE as productDELETE,
 } from "../../app/api/products/[id]/route";
+import {
+  DELETE as productImageDELETE,
+} from "../../app/api/products/[productId]/images/[imageFileId]/route";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -14,6 +17,8 @@ const prisma = new PrismaClient();
 describe("Products API", () => {
   beforeEach(async () => {
     // Clear the database and seed with test data before each test
+    await prisma.productImage.deleteMany({});
+    await prisma.imageFile.deleteMany({});
     await prisma.product.deleteMany({});
     await prisma.product.createMany({
       data: [
@@ -69,6 +74,41 @@ describe("Products API", () => {
     expect(body.name).toEqual("Desk");
   });
 
+  it("should create a new product with an image", async () => {
+    const mockFile = new File([Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64")], "test-image.png", { type: "image/png" });
+    Object.defineProperty(mockFile, 'size', { value: 1024 });
+
+    const formData = new FormData();
+    formData.append("name", "Chair");
+    formData.append("price", "150");
+    formData.append("image", mockFile);
+
+    const req = { formData: async () => formData } as unknown as Request;
+    const res = await productsPOST(req);
+    const body = await res.json();
+
+    expect(res.status).toEqual(200);
+    expect(body.name).toEqual("Chair");
+
+    const product = await prisma.product.findUnique({
+      where: { id: body.id },
+      include: {
+        images: {
+          include: {
+            imageFile: true,
+          },
+        },
+      },
+    });
+
+    expect(product?.images).toHaveLength(1);
+    expect(product?.images[0].imageFile.filename).toEqual("test-image.png");
+    expect(product?.images[0].imageFile.mimetype).toEqual("image/png");
+    expect(product?.images[0].imageFile.size).toEqual(1024);
+    expect(product?.images[0].imageFile.width).toBeDefined();
+    expect(product?.images[0].imageFile.height).toBeDefined();
+  });
+
   it("should return 400 if product creation fails due to invalid data", async () => {
     const formData = new FormData();
     formData.append("name", "");
@@ -95,6 +135,46 @@ describe("Products API", () => {
     expect(body.price).toEqual(75);
   });
 
+  it("should update a product with a new image", async () => {
+    const product = await prisma.product.findFirst({
+      where: { name: "Keyboard" },
+    });
+    if (!product) throw new Error("Keyboard product not found");
+
+    const mockFile = new File([Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64")], "updated-image.png", { type: "image/png" });
+    Object.defineProperty(mockFile, 'size', { value: 2048 });
+
+    const formData = new FormData();
+    formData.append("name", "Mechanical Keyboard");
+    formData.append("price", "120");
+    formData.append("image", mockFile);
+
+    const req = { formData: async () => formData } as unknown as Request;
+    const res = await productPUT(req, { params: { id: product.id } });
+    const body = await res.json();
+
+    expect(res.status).toEqual(200);
+    expect(body.name).toEqual("Mechanical Keyboard");
+
+    const updatedProduct = await prisma.product.findUnique({
+      where: { id: product.id },
+      include: {
+        images: {
+          include: {
+            imageFile: true,
+          },
+        },
+      },
+    });
+
+    expect(updatedProduct?.images).toHaveLength(1);
+    expect(updatedProduct?.images[0].imageFile.filename).toEqual("updated-image.png");
+    expect(updatedProduct?.images[0].imageFile.mimetype).toEqual("image/png");
+    expect(updatedProduct?.images[0].imageFile.size).toEqual(2048);
+    expect(updatedProduct?.images[0].imageFile.width).toBeDefined();
+    expect(updatedProduct?.images[0].imageFile.height).toBeDefined();
+  });
+
   it("should delete a product", async () => {
     const product = await prisma.product.findFirst({
       where: { name: "Webcam" },
@@ -104,5 +184,61 @@ describe("Products API", () => {
     const req = {} as Request;
     const res = await productDELETE(req, { params: { id: product.id } });
     expect(res.status).toEqual(204);
+  });
+
+  it("should disconnect an image from a product", async () => {
+    // Create a product with an image first
+    const mockFile = new File([Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64")], "disconnect-image.png", { type: "image/png" });
+    Object.defineProperty(mockFile, 'size', { value: 512 });
+
+    const formData = new FormData();
+    formData.append("name", "Product with Image");
+    formData.append("price", "99");
+    formData.append("image", mockFile);
+
+    const createReq = { formData: async () => formData } as unknown as Request;
+    const createRes = await productsPOST(createReq);
+    const createdProduct = await createRes.json();
+
+    const productWithImage = await prisma.product.findUnique({
+      where: { id: createdProduct.id },
+      include: {
+        images: {
+          include: {
+            imageFile: true,
+          },
+        },
+      },
+    });
+
+    expect(productWithImage?.images).toHaveLength(1);
+    const imageFileIdToDisconnect = productWithImage?.images[0].imageFile.id;
+
+    // Disconnect the image
+    const disconnectReq = {} as Request;
+    const disconnectRes = await productImageDELETE(disconnectReq, { params: { productId: createdProduct.id, imageFileId: imageFileIdToDisconnect } });
+
+    expect(disconnectRes.status).toEqual(204);
+
+    // Verify the ProductImage entry is deleted
+    const updatedProduct = await prisma.product.findUnique({
+      where: { id: createdProduct.id },
+      include: {
+        images: true,
+      },
+    });
+    expect(updatedProduct?.images).toHaveLength(0);
+
+    // Verify the ImageFile entry still exists
+    const imageFileExists = await prisma.imageFile.findUnique({
+      where: { id: imageFileIdToDisconnect },
+    });
+    expect(imageFileExists).not.toBeNull();
+
+    // Verify the Product entry still exists
+    const productExists = await prisma.product.findUnique({
+      where: { id: createdProduct.id },
+    });
+    expect(productExists).not.toBeNull();
   });
 });

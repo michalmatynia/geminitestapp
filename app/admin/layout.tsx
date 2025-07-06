@@ -18,6 +18,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link href="/admin/products/create" className="text-lg font-semibold text-muted-foreground hover:text-foreground">
             Create Product
           </Link>
+          <Link href="/admin/files" className="text-lg font-semibold text-muted-foreground hover:text-foreground">
+            File Manager
+          </Link>
         </nav>
       </aside>
       <main className="flex-1 bg-background p-6">{children}</main>

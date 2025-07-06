@@ -56,7 +56,31 @@ export default function ViewProductPage({ params }: ViewProductPageProps) {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(-1);
   const router = useRouter();
-  const { id } = React.use(params);
+  const { id } = params;
+
+  const handleDisconnectImage = async (imageFileId: string) => {
+    try {
+      const res = await fetch(`/api/products/${id}/images/${imageFileId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setProduct((prevProduct) => {
+          if (!prevProduct) return null;
+          return {
+            ...prevProduct,
+            images: prevProduct.images.filter(
+              (imageRel) => imageRel.imageFile.id !== imageFileId
+            ),
+          };
+        });
+      } else {
+        console.error("Failed to disconnect image:", await res.json());
+      }
+    } catch (error) {
+      console.error("Error disconnecting image:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchProductData = async () => {
@@ -149,6 +173,44 @@ export default function ViewProductPage({ params }: ViewProductPageProps) {
         <p className="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 p-2 text-white sm:text-sm">
           {new Date(product.updatedAt).toLocaleString()}
         </p>
+      </div>
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-400">Product Images</label>
+        {product.images && product.images.length > 0 ? (
+          <div className="mt-1 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+            {product.images.map((imageRel) => (
+              <div key={imageRel.imageFile.id} className="rounded-md bg-gray-900 p-4">
+                <div className="relative">
+                  <img
+                    src={imageRel.imageFile.filepath}
+                    alt={imageRel.imageFile.filename}
+                    className="mb-2 h-32 w-full object-cover rounded-md"
+                  />
+                  <button
+                    onClick={() => handleDisconnectImage(imageRel.imageFile.id)}
+                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 text-xs"
+                    title="Disconnect Image"
+                  >
+                    X
+                  </button>
+                </div>
+                <p className="text-sm text-white">
+                  <span className="font-medium">Filename:</span> {imageRel.imageFile.filename}
+                </p>
+                <p className="text-sm text-white">
+                  <span className="font-medium">Size:</span> {(imageRel.imageFile.size / 1024).toFixed(2)} KB
+                </p>
+                {imageRel.imageFile.width && imageRel.imageFile.height && (
+                  <p className="text-sm text-white">
+                    <span className="font-medium">Dimensions:</span> {imageRel.imageFile.width}x{imageRel.imageFile.height}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-1 text-white">No images associated with this product.</p>
+        )}
       </div>
       <Link
         href={`/admin/products/${product.id}/edit`}

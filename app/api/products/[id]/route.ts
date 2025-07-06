@@ -11,6 +11,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }):
   try {
     const product = await prisma.product.findUnique({
       where: { id },
+      include: {
+        images: {
+          include: {
+            imageFile: true,
+          },
+        },
+      },
     });
     return NextResponse.json(product);
   } catch (error) {
@@ -32,12 +39,32 @@ export async function PUT(req: Request, { params }: { params: { id: string } }):
       return validationError;
     }
 
-    const imageUrl = await handleProductImageUpload(image);
+    const uploadedImageInfo = await handleProductImageUpload(image);
 
     const product = await prisma.product.update({
       where: { id },
-      data: { name, price, imageUrl },
+      data: { name, price },
     });
+
+    if (uploadedImageInfo) {
+      const newImageFile = await prisma.imageFile.create({
+        data: {
+          filename: image.name,
+          filepath: uploadedImageInfo.filepath,
+          mimetype: image.type,
+          size: image.size,
+          width: uploadedImageInfo.width,
+          height: uploadedImageInfo.height,
+        },
+      });
+
+      await prisma.productImage.create({
+        data: {
+          productId: product.id,
+          imageFileId: newImageFile.id,
+        },
+      });
+    }
     return NextResponse.json(product);
   } catch (error: unknown) {
     console.error("Error updating product:", error);

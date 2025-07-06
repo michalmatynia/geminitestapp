@@ -8,10 +8,34 @@ generator client {
 }
 
 model Product {
-  id        String   @id @default(cuid())
-  name      String
-  price     Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  imageUrl  String?
+  id          String        @id @default(cuid())
+  name        String
+  price       Int
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  images      ProductImage[] // Relation to the join table
+}
+
+model ImageFile {
+  id          String        @id @default(cuid())
+  filename    String
+  filepath    String
+  mimetype    String
+  size        Int
+  width       Int?
+  height      Int?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  products    ProductImage[] // Relation to the join table
+}
+
+model ProductImage {
+  productId   String
+  imageFileId String
+  assignedAt  DateTime @default(now())
+
+  product     Product   @relation(fields: [productId], references: [id])
+  imageFile   ImageFile @relation(fields: [imageFileId], references: [id])
+
+  @@id([productId, imageFileId]) // Composite primary key
 }

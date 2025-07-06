@@ -1,4 +1,4 @@
-import { PrismaClient, Product, Prisma } from '@prisma/client';
+import { PrismaClient, Product, Prisma, ImageFile, ProductImage } from '@prisma/client';
 import { NextResponse } from 'next/server';
 import { handleProductImageUpload, validateProductInput } from '@/lib/utils/productUtils';
 
@@ -39,6 +39,13 @@ export async function GET(req: Request): Promise<NextResponse<Product[] | { erro
   try {
     const products = await prisma.product.findMany({
       where,
+      include: {
+        images: {
+          include: {
+            imageFile: true,
+          },
+        },
+      },
     });
     return NextResponse.json(products);
   } catch (error: unknown) {
@@ -59,10 +66,30 @@ export async function POST(req: Request): Promise<NextResponse<Product | { error
   }
 
   try {
-    const imageUrl = await handleProductImageUpload(image);
+    const uploadedImageInfo = await handleProductImageUpload(image);
     const product = await prisma.product.create({
-      data: { name, price, imageUrl },
+      data: { name, price },
     });
+
+    if (uploadedImageInfo) {
+      const newImageFile = await prisma.imageFile.create({
+        data: {
+          filename: image.name,
+          filepath: uploadedImageInfo.filepath,
+          mimetype: image.type,
+          size: image.size,
+          width: uploadedImageInfo.width,
+          height: uploadedImageInfo.height,
+        },
+      });
+
+      await prisma.productImage.create({
+        data: {
+          productId: product.id,
+          imageFileId: newImageFile.id,
+        },
+      });
+    }
     return NextResponse.json(product);
   } catch (error: unknown) {
     console.error("Error creating product:", error);

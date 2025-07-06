@@ -1,14 +1,30 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { NextResponse } from 'next/server';
+import sharp from 'sharp';
 
-export async function handleProductImageUpload(image: File | null): Promise<string | undefined> {
+interface UploadedImageInfo {
+  filepath: string;
+  width: number;
+  height: number;
+}
+
+export async function handleProductImageUpload(image: File | null): Promise<UploadedImageInfo | undefined> {
   if (image) {
     const buffer = Buffer.from(await image.arrayBuffer());
     const filename = `${Date.now()}-${image.name}`;
     const uploadPath = join(process.cwd(), 'public/uploads/products', filename);
     await writeFile(uploadPath, buffer);
-    return `/uploads/products/${filename}`;
+
+    const metadata = await sharp(buffer).metadata();
+    const width = metadata.width || 0;
+    const height = metadata.height || 0;
+
+    return {
+      filepath: `/uploads/products/${filename}`,
+      width,
+      height,
+    };
   }
   return undefined;
 }

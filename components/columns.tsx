@@ -10,7 +10,18 @@ export type Product = {
   name: string
   price: number
   createdAt: string
-  imageUrl?: string | null;
+  updatedAt: string;
+  images: {
+    imageFile: {
+      id: string;
+      filename: string;
+      filepath: string;
+      mimetype: string;
+      size: number;
+      width?: number;
+      height?: number;
+    };
+  }[];
 }
 
 interface ColumnActionsProps {
@@ -81,10 +92,11 @@ export const columns: ColumnDef<Product>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "imageUrl",
+    accessorKey: "images",
     header: "Image",
     cell: ({ row }) => {
-      const imageUrl = row.getValue("imageUrl") as string | undefined;
+      const product = row.original;
+      const imageUrl = product.images && product.images.length > 0 ? product.images[0].imageFile.filepath : undefined;
       return imageUrl ? <Image src={imageUrl} alt="Product Image" width={64} height={64} className="size-16 object-cover rounded-md" /> : null;
     },
   },

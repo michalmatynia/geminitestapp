@@ -61,6 +61,29 @@ The application exposes the following RESTful API endpoints for product manageme
 - **`DELETE /api/products/[id]`**:
   - Deletes a product by its `id`.
 
+## New Features
+
+### File Manager
+
+A new feature will be implemented to manage all uploaded image files. This includes:
+
+- **Overview**: A dedicated section to view all uploaded image files.
+- **Search Functionality**:
+  - **By Filename**: Users can search for image files using their filenames.
+  - **By Associated Product**: Users can search for image files based on the product they are linked to, leveraging the `ProductImage` and `Product` models to establish the association.
+
+#### File Manager API Endpoints
+
+- **`GET /api/files`**:
+  - Fetches all image files.
+  - Supports optional query parameters for filtering: `filename` (by filename), `productId` (by associated product ID), `productName` (by associated product name).
+- **`DELETE /api/files/[id]`**:
+  - Deletes a specific image file by its `id`. This will also remove any associations with products.
+
+#### File Manager UI
+
+- A new page will be created under `app/admin/files` to provide the user interface for the file manager.
+
 ## Styling
 
 The application adopts a strict monochrome design, utilizing shades of black, white, and gray for all visual elements. Tailwind CSS is the primary styling framework, enabling rapid UI development with utility classes. This approach ensures a consistent and minimalist aesthetic throughout the application.

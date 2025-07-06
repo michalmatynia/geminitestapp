@@ -1,21 +1,21 @@
 "use client"
 
-import { useState } from "react";
+import { useState, ChangeEvent, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 export default function CreateProductPage() {
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
+  const [name, setName] = useState<string>("");
+  const [price, setPrice] = useState<string>("");
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     await fetch("/api/products", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name, price: parseInt(price) }),
+      body: JSON.stringify({ name, price: parseInt(price, 10) }),
     });
     router.push("/admin");
   };
@@ -30,7 +30,7 @@ export default function CreateProductPage() {
             type="text"
             id="name"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
             className="mt-1 block w-full rounded-md bg-gray-900 border-gray-700 text-white focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
           />
         </div>
@@ -40,7 +40,7 @@ export default function CreateProductPage() {
             type="number"
             id="price"
             value={price}
-            onChange={(e) => setPrice(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setPrice(e.target.value)}
             className="mt-1 block w-full rounded-md bg-gray-900 border-gray-700 text-white focus:border-gray-500 focus:ring-gray-500 sm:text-sm"
           />
         </div>

@@ -62,33 +62,45 @@ export async function POST(req: Request, { prisma: prismaClient }: { prisma?: Pr
   const name = formData.get('name') as string;
   const price = parseFloat(formData.get('price') as string);
   const image: File | null = formData.get('image') as unknown as File;
+  const imageFileId = formData.get('imageFileId') as string | null;
 
   try {
     const validatedData = productSchema.parse({ name, price });
-    const uploadedImageInfo = await handleProductImageUpload(image);
+
     const product = await prisma.product.create({
       data: { name: validatedData.name, price: validatedData.price },
     });
 
-    if (uploadedImageInfo) {
-      const newImageFile = await prisma.imageFile.create({
-        data: {
-          filename: image.name,
-          filepath: uploadedImageInfo.filepath,
-          mimetype: image.type,
-          size: image.size,
-          width: uploadedImageInfo.width,
-          height: uploadedImageInfo.height,
-        },
-      });
+    if (image) {
+      const uploadedImageInfo = await handleProductImageUpload(image);
+      if (uploadedImageInfo) {
+        const newImageFile = await prisma.imageFile.create({
+          data: {
+            filename: image.name,
+            filepath: uploadedImageInfo.filepath,
+            mimetype: image.type,
+            size: image.size,
+            width: uploadedImageInfo.width,
+            height: uploadedImageInfo.height,
+          },
+        });
 
+        await prisma.productImage.create({
+          data: {
+            productId: product.id,
+            imageFileId: newImageFile.id,
+          },
+        });
+      }
+    } else if (imageFileId) {
       await prisma.productImage.create({
         data: {
           productId: product.id,
-          imageFileId: newImageFile.id,
+          imageFileId: imageFileId,
         },
       });
     }
+
     return NextResponse.json(product);
   } catch (error: unknown) {
     if (error instanceof Error && 'issues' in error) {

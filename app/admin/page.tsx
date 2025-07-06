@@ -42,10 +42,7 @@ export default function AdminPage() {
           <Input
             placeholder="Search by name..."
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              console.log("Search value:", e.target.value);
-            }}
+            onChange={(e) => setSearch(e.target.value)}
             className="max-w-sm"
           />
           <Input

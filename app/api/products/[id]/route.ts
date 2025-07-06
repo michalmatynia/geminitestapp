@@ -3,15 +3,12 @@ import { NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
+export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request, { params }: RouteParams): Promise<NextResponse<Product | null>> {
+export async function GET(req: Request, { params }: { params: { id: string } }): Promise<NextResponse<Product | null>> {
+  const { id } = await Promise.resolve(params);
   const product = await prisma.product.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
   return NextResponse.json(product);
 }
@@ -21,18 +18,20 @@ interface PutRequestBody {
   price: number;
 }
 
-export async function PUT(req: Request, { params }: RouteParams): Promise<NextResponse<Product>> {
+export async function PUT(req: Request, { params }: { params: { id: string } }): Promise<NextResponse<Product>> {
+  const { id } = await Promise.resolve(params);
   const { name, price }: PutRequestBody = await req.json();
   const product = await prisma.product.update({
-    where: { id: params.id },
+    where: { id },
     data: { name, price },
   });
   return NextResponse.json(product);
 }
 
-export async function DELETE(req: Request, { params }: RouteParams): Promise<NextResponse<void>> {
+export async function DELETE(req: Request, { params }: { params: { id: string } }): Promise<NextResponse<void>> {
+  const { id } = await Promise.resolve(params);
   await prisma.product.delete({
-    where: { id: params.id },
+    where: { id },
   });
   return new NextResponse(null, { status: 204 });
 }

@@ -1,5 +1,6 @@
 import { PrismaClient, Product } from '@prisma/client';
 import { NextResponse } from 'next/server';
+import { handleProductImageUpload, validateProductInput } from '@/lib/utils/productUtils';
 
 const prisma = new PrismaClient();
 
@@ -18,21 +19,27 @@ export async function GET(req: Request, { params }: { params: { id: string } }):
   }
 }
 
-interface PutRequestBody {
-  name: string;
-  price: number;
-}
-
 export async function PUT(req: Request, { params }: { params: { id: string } }): Promise<NextResponse<Product | { error: string }>> {
   const { id } = await params;
   try {
-    const { name, price }: PutRequestBody = await req.json();
+    const formData = await req.formData();
+    const name = formData.get('name') as string;
+    const price = parseFloat(formData.get('price') as string);
+    const image: File | null = formData.get('image') as unknown as File;
+
+    const validationError = validateProductInput(name, price);
+    if (validationError) {
+      return validationError;
+    }
+
+    const imageUrl = await handleProductImageUpload(image);
+
     const product = await prisma.product.update({
       where: { id },
-      data: { name, price },
+      data: { name, price, imageUrl },
     });
     return NextResponse.json(product);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error updating product:", error);
     return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
   }

@@ -1,5 +1,6 @@
 import { PrismaClient, Product, Prisma } from '@prisma/client';
 import { NextResponse } from 'next/server';
+import { handleProductImageUpload, validateProductInput } from '@/lib/utils/productUtils';
 
 const prisma = new PrismaClient();
 
@@ -46,25 +47,21 @@ export async function GET(req: Request): Promise<NextResponse<Product[] | { erro
   }
 }
 
-interface PostRequestBody {
-  name: string;
-  price: number;
-}
-
 export async function POST(req: Request): Promise<NextResponse<Product | { error: string }>> {
-  const { name, price }: PostRequestBody = await req.json();
+  const formData = await req.formData();
+  const name = formData.get('name') as string;
+  const price = parseFloat(formData.get('price') as string);
+  const image: File | null = formData.get('image') as unknown as File;
 
-  if (!name || name.trim() === '') {
-    return NextResponse.json({ error: "Product name cannot be empty" }, { status: 400 });
-  }
-
-  if (price === undefined || price <= 0) {
-    return NextResponse.json({ error: "Product price must be a positive number" }, { status: 400 });
+  const validationError = validateProductInput(name, price);
+  if (validationError) {
+    return validationError;
   }
 
   try {
+    const imageUrl = await handleProductImageUpload(image);
     const product = await prisma.product.create({
-      data: { name, price },
+      data: { name, price, imageUrl },
     });
     return NextResponse.json(product);
   } catch (error: unknown) {

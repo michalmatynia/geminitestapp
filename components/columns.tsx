@@ -2,6 +2,7 @@
 
 import { ColumnDef, Row } from "@tanstack/react-table"
 import Link from "next/link"
+import Image from "next/image"
 
 
 export type Product = {
@@ -9,6 +10,7 @@ export type Product = {
   name: string
   price: number
   createdAt: string
+  imageUrl?: string | null;
 }
 
 interface ColumnActionsProps {
@@ -77,6 +79,14 @@ export const columns: ColumnDef<Product>[] = [
     ),
     enableSorting: false,
     enableHiding: false,
+  },
+  {
+    accessorKey: "imageUrl",
+    header: "Image",
+    cell: ({ row }) => {
+      const imageUrl = row.getValue("imageUrl") as string | undefined;
+      return imageUrl ? <Image src={imageUrl} alt="Product Image" width={64} height={64} className="size-16 object-cover rounded-md" /> : null;
+    },
   },
   {
     accessorKey: "name",

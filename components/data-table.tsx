@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
 import React, { useState } from "react";
@@ -21,7 +22,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 
-interface DataTableProps<TData> { // eslint-disable-next-line @typescript-eslint/no-unused-vars
+interface DataTableProps<TData> {
   columns: ColumnDef<TData>[];
   data: TData[];
   setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;

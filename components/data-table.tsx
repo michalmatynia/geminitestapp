@@ -21,8 +21,8 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
+interface DataTableProps<TData> { // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  columns: ColumnDef<TData>[];
   data: TData[];
   setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;
 }
@@ -33,11 +33,7 @@ declare module "@tanstack/react-table" {
   }
 }
 
-export function DataTable<TData, TValue>({
-  columns,
-  data,
-  setRefreshTrigger,
-}: DataTableProps<TData, TValue>) {
+export function DataTable<TData>({ columns, data, setRefreshTrigger }: DataTableProps<TData>) {
   const [rowSelection, setRowSelection] = useState({});
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -57,7 +53,7 @@ export function DataTable<TData, TValue>({
   });
 
   const handleMassDelete = async () => {
-    const selectedProductIds = table.getSelectedRowModel().rows.map((row: any) => row.original.id);
+    const selectedProductIds = table.getSelectedRowModel().rows.map((row) => (row.original as Product).id);
 
     if (selectedProductIds.length === 0) {
       alert("Please select products to delete.");
@@ -90,14 +86,14 @@ export function DataTable<TData, TValue>({
   };
 
   return (
-    <div className="rounded-md border border-gray-800">
+    <div className="rounded-md border border-border">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id} className="border-gray-800">
+            <TableRow key={headerGroup.id} className="border-border">
               {headerGroup.headers.map((header) => {
                 return (
-                  <TableHead key={header.id} className="text-white">
+                  <TableHead key={header.id} className="text-foreground">
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -116,10 +112,10 @@ export function DataTable<TData, TValue>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
-                className="border-gray-800"
+                className="border-border"
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="text-gray-300">
+                  <TableCell key={cell.id} className="text-muted-foreground">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
@@ -129,7 +125,7 @@ export function DataTable<TData, TValue>({
             <TableRow>
               <TableCell
                 colSpan={columns.length}
-                className="h-24 text-center text-gray-500"
+                className="h-24 text-center text-muted-foreground"
               >
                 No results.
               </TableCell>
@@ -138,14 +134,14 @@ export function DataTable<TData, TValue>({
         </TableBody>
       </Table>
       <div className="flex items-center justify-between space-x-2 px-2 py-4">
-        <div className="flex-1 text-sm text-gray-500">
+        <div className="flex-1 text-sm text-muted-foreground">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
           {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
         <Button
           onClick={handleMassDelete}
           disabled={table.getFilteredSelectedRowModel().rows.length === 0}
-          className="bg-white text-black hover:bg-gray-200"
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
         >
           Delete Selected
         </Button>

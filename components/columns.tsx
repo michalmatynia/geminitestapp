@@ -1,8 +1,8 @@
 "use client"
 
-import { ColumnDef } from "@tanstack/react-table"
+import { ColumnDef, Row } from "@tanstack/react-table"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+
 
 export type Product = {
   id: string
@@ -12,9 +12,8 @@ export type Product = {
 }
 
 interface ColumnActionsProps {
-  row: any; // Adjust type as needed
-  setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;
-}
+  row: Row<Product>;
+  setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;}
 
 const handleDelete = async (id: string, setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>) => {
   const res = await fetch(`/api/products/${id}`, {
@@ -37,14 +36,14 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({ row, setRefreshTrigger }) =
   return (
     <div className="flex gap-2">
       <Link href={`/admin/products/${product.id}`}>
-        <button className="text-gray-400 hover:text-white">View</button>
+        <button className="text-muted-foreground hover:text-foreground">View</button>
       </Link>
       <Link href={`/admin/products/${product.id}/edit`}>
-        <button className="text-gray-400 hover:text-white">Edit</button>
+        <button className="text-muted-foreground hover:text-foreground">Edit</button>
       </Link>
       <button
         onClick={() => handleDelete(product.id, setRefreshTrigger)}
-        className="text-gray-400 hover:text-white"
+        className="text-destructive hover:text-destructive/80"
       >
         Delete
       </button>

@@ -1,4 +1,4 @@
-import { PrismaClient, Product } from '@prisma/client';
+import { PrismaClient, Product, Prisma } from '@prisma/client';
 import { NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
@@ -11,7 +11,7 @@ export async function GET(req: Request): Promise<NextResponse<Product[] | { erro
   const startDate = searchParams.get('startDate');
   const endDate = searchParams.get('endDate');
 
-  const where: any = {};
+  const where: Prisma.ProductWhereInput = {};
 
   if (search) {
     where.OR = [
@@ -40,7 +40,7 @@ export async function GET(req: Request): Promise<NextResponse<Product[] | { erro
       where,
     });
     return NextResponse.json(products);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error fetching products:", error);
     return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });
   }
@@ -53,12 +53,21 @@ interface PostRequestBody {
 
 export async function POST(req: Request): Promise<NextResponse<Product | { error: string }>> {
   const { name, price }: PostRequestBody = await req.json();
+
+  if (!name || name.trim() === '') {
+    return NextResponse.json({ error: "Product name cannot be empty" }, { status: 400 });
+  }
+
+  if (price === undefined || price <= 0) {
+    return NextResponse.json({ error: "Product price must be a positive number" }, { status: 400 });
+  }
+
   try {
     const product = await prisma.product.create({
       data: { name, price },
     });
     return NextResponse.json(product);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error creating product:", error);
     return NextResponse.json({ error: "Failed to create product" }, { status: 500 });
   }

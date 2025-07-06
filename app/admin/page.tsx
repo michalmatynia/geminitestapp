@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Product, columns } from "@/components/columns"
 import { DataTable } from "@/components/data-table"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+
 
 import { getProducts } from "@/lib/api";
 

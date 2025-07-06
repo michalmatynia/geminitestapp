@@ -31,6 +31,15 @@ describe('Products API', () => {
     expect(body.length).toBeGreaterThan(0);
   });
 
+  it('should return an empty array if no products exist', async () => {
+    await prisma.product.deleteMany({}); // Clear all products
+    const req = { url: 'http://localhost:3000/api/products' } as Request;
+    const res = await productsGET(req);
+    const body = await res.json();
+    expect(res.status).toEqual(200);
+    expect(body).toEqual([]);
+  });
+
   it('should return products filtered by search term', async () => {
     const req = { url: 'http://localhost:3000/api/products?search=lap' } as Request;
     const res = await productsGET(req);
@@ -47,6 +56,13 @@ describe('Products API', () => {
     const body = await res.json();
     expect(res.status).toEqual(200);
     expect(body.name).toEqual('Desk');
+  });
+
+  it('should return 400 if product creation fails due to invalid data', async () => {
+    const invalidProduct = { name: '', price: -100 }; // Invalid data
+    const req = { json: async () => invalidProduct } as Request;
+    const res = await productsPOST(req);
+    expect(res.status).toEqual(400);
   });
 
   it('should update a product', async () => {

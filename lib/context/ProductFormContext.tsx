@@ -25,6 +25,7 @@ interface ProductFormContextProps {
   register: UseFormRegister<ProductFormData>;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   errors: FieldErrors<ProductFormData>;
+  setValue: UseFormSetValue<ProductFormData>;
   existingImageUrl: string | null;
   uploading: boolean;
   uploadError: string | null;
@@ -52,6 +53,7 @@ export function ProductFormProvider({
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -102,6 +104,7 @@ export function ProductFormProvider({
   }, [product, reset]);
 
   const onSubmit = async (data: ProductFormData) => {
+    console.log("Submitting product form with data:", data);
     setUploading(true);
     setUploadError(null);
 
@@ -140,12 +143,14 @@ export function ProductFormProvider({
     const method = product ? "PUT" : "POST";
 
     try {
+      console.log(`Sending ${method} request to ${url}`);
       const res = await fetch(url, {
         method,
         body: formData,
       });
 
       if (res.ok) {
+        console.log("Product saved successfully.");
         const responseData: ProductWithImages = await res.json();
         if (product) {
           if (responseData.images && responseData.images.length > 0) {
@@ -165,16 +170,19 @@ export function ProductFormProvider({
         setUploading(false);
       } else {
         const errorData = await res.json();
+        console.error("Failed to save product:", errorData);
         setUploadError(errorData.error || "Failed to save product.");
         setUploading(false);
       }
-    } catch {
+    } catch (error) {
+      console.error("Network error or server is unreachable:", error);
       setUploadError("Network error or server is unreachable.");
       setUploading(false);
     }
   };
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    console.log("Image changed:", e.target.files);
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setImage(file);
@@ -188,6 +196,7 @@ export function ProductFormProvider({
   };
 
   const handleFileSelect = (fileId: string) => {
+    console.log("File selected from file manager:", fileId);
     setImage(null);
     setImageFileId(fileId);
     setExistingImageUrl(`/api/files/preview?fileId=${fileId}`);
@@ -201,6 +210,7 @@ export function ProductFormProvider({
   const handleDisconnectImage = async () => {
     if (!product || !product.images || product.images.length === 0) return;
     const imageFileId = product.images[0].imageFile.id;
+    console.log("Disconnecting image:", imageFileId);
 
     try {
       const res = await fetch(
@@ -211,6 +221,7 @@ export function ProductFormProvider({
       );
 
       if (res.ok) {
+        console.log("Image disconnected successfully.");
         setExistingImageUrl(null);
         setImage(null);
         setImageFileId(null);
@@ -228,6 +239,7 @@ export function ProductFormProvider({
         register,
         handleSubmit: handleSubmit(onSubmit),
         errors,
+        setValue,
         existingImageUrl,
         uploading,
         uploadError,

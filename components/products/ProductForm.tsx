@@ -1,12 +1,12 @@
 "use client";
 
-import { ChangeEvent, FormEvent } from 'react';
-import Image from 'next/image';
-import { UseFormRegister, FieldErrors } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { ChangeEvent, FormEvent, useState } from "react";
+import Image from "next/image";
+import { UseFormRegister, FieldErrors, UseFormSetValue } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 // The `ProductFormData` interface defines the shape of the data for the
 // product form.
@@ -29,6 +29,7 @@ interface ProductFormProps {
   register: UseFormRegister<ProductFormData>;
   handleSubmit: (e: FormEvent<HTMLFormElement>) => void;
   errors: FieldErrors<ProductFormData>;
+  setValue: UseFormSetValue<ProductFormData>;
   handleImageChange: (e: ChangeEvent<HTMLInputElement>) => void;
   setShowFileManager: (show: boolean) => void;
   handleDisconnectImage?: () => void;
@@ -43,6 +44,7 @@ export default function ProductForm({
   register,
   handleSubmit,
   errors,
+  setValue,
   handleImageChange,
   setShowFileManager,
   handleDisconnectImage,
@@ -52,57 +54,141 @@ export default function ProductForm({
   uploadError,
   submitButtonText,
 }: ProductFormProps) {
+  const [generating, setGenerating] = useState(false);
+
+  const handleGenerateDescription = async () => {
+    setGenerating(true);
+    const name = (document.getElementById("name") as HTMLInputElement).value;
+    try {
+      const res = await fetch("/api/generate-description", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name }),
+      });
+      const { description } = await res.json();
+      setValue("description", description);
+    } catch (error) {
+      console.error("Failed to generate description:", error);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit}>
       <div className="mb-4">
-        <Label htmlFor="name">Name <span className="text-red-500">*</span></Label>
-        <Input id="name" {...register('name')} />
-        {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
+        <Label htmlFor="name">
+          Name <span className="text-red-500">*</span>
+        </Label>
+        <Input id="name" {...register("name")} />
+        {errors.name && (
+          <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+        )}
       </div>
       <div className="mb-4">
-        <Label htmlFor="price">Price <span className="text-red-500">*</span></Label>
-        <Input id="price" type="number" {...register('price', { valueAsNumber: true })} />
-        {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price.message}</p>}
+        <Label htmlFor="price">
+          Price <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          id="price"
+          type="number"
+          {...register("price", { valueAsNumber: true })}
+        />
+        {errors.price && (
+          <p className="text-red-500 text-sm mt-1">{errors.price.message}</p>
+        )}
       </div>
       <div className="mb-4">
-        <Label htmlFor="sku">SKU <span className="text-red-500">*</span></Label>
-        <Input id="sku" {...register('sku')} />
-        {errors.sku && <p className="text-red-500 text-sm mt-1">{errors.sku.message}</p>}
+        <Label htmlFor="sku">
+          SKU <span className="text-red-500">*</span>
+        </Label>
+        <Input id="sku" {...register("sku")} />
+        {errors.sku && (
+          <p className="text-red-500 text-sm mt-1">{errors.sku.message}</p>
+        )}
       </div>
       <div className="mb-4">
         <Label htmlFor="description">Description</Label>
-        <Textarea id="description" {...register('description')} />
-        {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
+        <Textarea id="description" {...register("description")} />
+        {errors.description && (
+          <p className="text-red-500 text-sm mt-1">
+            {errors.description.message}
+          </p>
+        )}
+        <Button
+          type="button"
+          onClick={handleGenerateDescription}
+          disabled={generating}
+          className="mt-2"
+        >
+          {generating ? "Generating..." : "Generate Description"}
+        </Button>
       </div>
       <div className="mb-4">
         <Label htmlFor="supplierName">Supplier Name</Label>
-        <Input id="supplierName" {...register('supplierName')} />
-        {errors.supplierName && <p className="text-red-500 text-sm mt-1">{errors.supplierName.message}</p>}
+        <Input id="supplierName" {...register("supplierName")} />
+        {errors.supplierName && (
+          <p className="text-red-500 text-sm mt-1">
+            {errors.supplierName.message}
+          </p>
+        )}
       </div>
       <div className="mb-4">
         <Label htmlFor="supplierLink">Supplier Link</Label>
-        <Input id="supplierLink" {...register('supplierLink')} />
-        {errors.supplierLink && <p className="text-red-500 text-sm mt-1">{errors.supplierLink.message}</p>}
+        <Input id="supplierLink" {...register("supplierLink")} />
+        {errors.supplierLink && (
+          <p className="text-red-500 text-sm mt-1">
+            {errors.supplierLink.message}
+          </p>
+        )}
       </div>
       <div className="mb-4">
         <Label htmlFor="priceComment">Price Comment</Label>
-        <Input id="priceComment" {...register('priceComment')} />
-        {errors.priceComment && <p className="text-red-500 text-sm mt-1">{errors.priceComment.message}</p>}
+        <Input id="priceComment" {...register("priceComment")} />
+        {errors.priceComment && (
+          <p className="text-red-500 text-sm mt-1">
+            {errors.priceComment.message}
+          </p>
+        )}
       </div>
       <div className="mb-4">
         <Label htmlFor="stock">Stock</Label>
-        <Input id="stock" type="number" {...register('stock', { valueAsNumber: true })} />
-        {errors.stock && <p className="text-red-500 text-sm mt-1">{errors.stock.message}</p>}
+        <Input
+          id="stock"
+          type="number"
+          {...register("stock", { valueAsNumber: true })}
+        />
+        {errors.stock && (
+          <p className="text-red-500 text-sm mt-1">{errors.stock.message}</p>
+        )}
       </div>
       <div className="mb-4">
         <Label htmlFor="sizeLength">Size Length</Label>
-        <Input id="sizeLength" type="number" {...register('sizeLength', { valueAsNumber: true })} />
-        {errors.sizeLength && <p className="text-red-500 text-sm mt-1">{errors.sizeLength.message}</p>}
+        <Input
+          id="sizeLength"
+          type="number"
+          {...register("sizeLength", { valueAsNumber: true })}
+        />
+        {errors.sizeLength && (
+          <p className="text-red-500 text-sm mt-1">
+            {errors.sizeLength.message}
+          </p>
+        )}
       </div>
       <div className="mb-4">
         <Label htmlFor="sizeWidth">Size Width</Label>
-        <Input id="sizeWidth" type="number" {...register('sizeWidth', { valueAsNumber: true })} />
-        {errors.sizeWidth && <p className="text-red-500 text-sm mt-1">{errors.sizeWidth.message}</p>}
+        <Input
+          id="sizeWidth"
+          type="number"
+          {...register("sizeWidth", { valueAsNumber: true })}
+        />
+        {errors.sizeWidth && (
+          <p className="text-red-500 text-sm mt-1">
+            {errors.sizeWidth.message}
+          </p>
+        )}
       </div>
       <div className="mb-4">
         <Label>Product Image</Label>
@@ -121,17 +207,14 @@ export default function ProductForm({
         <div className="mt-2 flex space-x-4">
           <Button
             type="button"
-            onClick={() => document.getElementById('image-upload')?.click()}
+            onClick={() => document.getElementById("image-upload")?.click()}
           >
             Upload New
           </Button>
-          <Button
-            type="button"
-            onClick={() => setShowFileManager(true)}
-          >
+          <Button type="button" onClick={() => setShowFileManager(true)}>
             Choose Existing
           </Button>
-          {(previewUrl || existingImageUrl) && handleDisconnectImage && (
+          {((previewUrl || existingImageUrl) && handleDisconnectImage) && (
             <Button
               type="button"
               variant="destructive"
@@ -152,7 +235,7 @@ export default function ProductForm({
           <div className="mt-2 w-full bg-gray-700 rounded-full h-2.5">
             <div
               className="bg-white h-2.5 rounded-full"
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
             ></div>
           </div>
         )}
@@ -161,7 +244,7 @@ export default function ProductForm({
         )}
       </div>
       <Button type="submit" disabled={uploading}>
-        {uploading ? 'Saving...' : submitButtonText}
+        {uploading ? "Saving..." : submitButtonText}
       </Button>
     </form>
   );

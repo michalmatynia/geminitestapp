@@ -30,6 +30,7 @@ function CreateProductForm() {
     register,
     handleSubmit,
     errors,
+    setValue,
     existingImageUrl,
     uploading,
     uploadError,
@@ -55,6 +56,7 @@ function CreateProductForm() {
           register={register}
           handleSubmit={handleSubmit}
           errors={errors}
+          setValue={setValue}
           handleImageChange={handleImageChange}
           setShowFileManager={setShowFileManager}
           previewUrl={previewUrl}

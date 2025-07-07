@@ -37,6 +37,7 @@ export async function PUT(
   req: Request,
   { params, prisma: prismaClient }: { params: { id: string }; prisma?: PrismaClient }
 ): Promise<NextResponse<Product | { error: string }>> {
+  console.log(`Received PUT request to /api/products/${params.id}`);
   const prisma = prismaClient || new PrismaClient();
   const { id } = await params;
   try {
@@ -48,17 +49,16 @@ export async function PUT(
     const image: File | null = formData.get("image") as unknown as File;
     const imageFileId = formData.get("imageFileId") as string | null;
 
+    console.log("Validating product data...");
     const validatedData = productSchema.parse({
       name,
       price,
       sku,
       description,
     });
+    console.log("Product data validated successfully:", validatedData);
 
-    // The `$transaction` function is used to ensure that all the database
-    // operations are executed in a single transaction. This means that if
-    // any of the operations fail, all the previous operations will be
-    // rolled back.
+    console.log("Updating product in database...");
     const updatedProduct = await prisma.$transaction(async (tx) => {
       const product = await tx.product.update({
         where: { id },
@@ -69,10 +69,13 @@ export async function PUT(
           description: validatedData.description,
         },
       });
+      console.log("Product updated successfully:", product);
 
       if (image) {
+        console.log("Uploading product image...");
         const uploadedImageInfo = await handleProductImageUpload(image);
         if (uploadedImageInfo) {
+          console.log("Creating image file in database...");
           const newImageFile = await tx.imageFile.create({
             data: {
               filename: image.name,
@@ -83,23 +86,29 @@ export async function PUT(
               height: uploadedImageInfo.height,
             },
           });
+          console.log("Image file created successfully:", newImageFile);
 
+          console.log("Creating product image relation in database...");
           await tx.productImage.create({
             data: {
               productId: product.id,
               imageFileId: newImageFile.id,
             },
           });
+          console.log("Product image relation created successfully.");
         }
       } else if (imageFileId) {
+        console.log("Creating product image relation in database...");
         await tx.productImage.create({
           data: {
             productId: product.id,
             imageFileId: imageFileId,
           },
         });
+        console.log("Product image relation created successfully.");
       }
 
+      console.log("Fetching product with images...");
       return tx.product.findUnique({
         where: { id },
         include: {
@@ -114,10 +123,12 @@ export async function PUT(
         },
       });
     });
+    console.log("Product with images fetched successfully:", updatedProduct);
 
     return NextResponse.json(updatedProduct);
   } catch (error: unknown) {
     if (error instanceof Error && "issues" in error) {
+      console.error("Zod validation error:", error);
       return NextResponse.json(
         { error: JSON.parse(error.message) },
         { status: 400 }
@@ -131,18 +142,27 @@ export async function PUT(
   }
 }
 
-export async function DELETE(req: Request, { params, prisma: prismaClient }: { params: { id: string }, prisma?: PrismaClient }) {
+export async function DELETE(
+  req: Request,
+  { params, prisma: prismaClient }: { params: { id: string }; prisma?: PrismaClient }
+) {
+  console.log(`Received DELETE request to /api/products/${params.id}`);
   const prisma = prismaClient || new PrismaClient();
   const { id } = params;
 
   try {
+    console.log("Deleting product from database...");
     await prisma.product.delete({
       where: { id },
     });
+    console.log("Product deleted successfully.");
 
     return new Response(null, { status: 204 });
   } catch (error) {
     console.error(`Error deleting product ${id}:`, error);
-    return NextResponse.json({ error: "Failed to delete product" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete product" },
+      { status: 500 }
+    );
   }
 }

@@ -21,6 +21,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link href="/admin/files" className="text-lg font-semibold text-muted-foreground hover:text-foreground">
             File Manager
           </Link>
+          <Link href="/admin/settings" className="text-lg font-semibold text-muted-foreground hover:text-foreground">
+            Settings
+          </Link>
         </nav>
       </aside>
       <main className="flex-1 bg-background p-6">{children}</main>

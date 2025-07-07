@@ -36,6 +36,7 @@ function EditProductForm({ product }: { product: ProductWithImages }) {
     register,
     handleSubmit,
     errors,
+    setValue,
     existingImageUrl,
     uploading,
     uploadError,
@@ -62,6 +63,7 @@ function EditProductForm({ product }: { product: ProductWithImages }) {
           register={register}
           handleSubmit={handleSubmit}
           errors={errors}
+          setValue={setValue}
           handleImageChange={handleImageChange}
           setShowFileManager={setShowFileManager}
           handleDisconnectImage={handleDisconnectImage}

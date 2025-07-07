@@ -7,7 +7,7 @@ import mime from 'mime-types';
 const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest) {
-  const fileId = req.nextUrl.searchParams.get('fileId');
+  const fileId = req.nextUrl..get('fileId');
 
   if (!fileId) {
     return NextResponse.json({ error: 'File ID is required' }, { status: 400 });

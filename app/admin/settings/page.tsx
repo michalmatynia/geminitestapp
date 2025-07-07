@@ -52,6 +52,8 @@ export default function SettingsPage() {
       >
         <div className="mt-4">
           <Label htmlFor="api-key">OpenAI API Key</Label>
+          {/* The hidden username field is to prevent a browser warning about password forms without a username field. */}
+          <input type="text" autoComplete="username" style={{ display: 'none' }} />
           <Input
             id="api-key"
             type="password"

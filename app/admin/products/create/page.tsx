@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { ProductFormProvider, useProductFormContext } from "@/lib/context/ProductFormContext";
 import FileManager from "@/components/products/FileManager";
 import ProductForm from "@/components/products/ProductForm";
-import { useProductForm } from "@/lib/hooks/useProductForm";
 
 function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -25,7 +25,7 @@ function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-export default function CreateProductPage() {
+function CreateProductForm() {
   const {
     register,
     handleSubmit,
@@ -38,12 +38,12 @@ export default function CreateProductPage() {
     setShowFileManager,
     handleImageChange,
     handleFileSelect,
-  } = useProductForm();
+  } = useProductFormContext();
 
   return (
     <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
       <div className="mb-4 flex items-center">
-        <Link href="/admin/products" className="mr-4 text-white hover:text-gray-300">
+        <Link href="/admin" className="mr-4 text-white hover:text-gray-300">
           <ArrowLeftIcon className="size-6" />
         </Link>
         <h1 className="text-3xl font-bold text-white">Create Product</h1>
@@ -65,5 +65,13 @@ export default function CreateProductPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function CreateProductPage() {
+  return (
+    <ProductFormProvider>
+      <CreateProductForm />
+    </ProductFormProvider>
   );
 }

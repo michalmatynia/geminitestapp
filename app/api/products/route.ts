@@ -7,13 +7,15 @@ import { handleProductImageUpload } from '@/lib/utils/productUtils';
 export async function GET(req: Request) {
   const prisma = new PrismaClient();
   const { searchParams } = new URL(req.url);
-  const search = searchParams.get('search') || '';
-  const minPrice = searchParams.get('minPrice');
-  const maxPrice = searchParams.get('maxPrice');
-  const startDate = searchParams.get('startDate');
-  const endDate = searchParams.get('endDate');
+  const search = searchParams.get("search") || "";
+  const minPrice = searchParams.get("minPrice");
+  const maxPrice = searchParams.get("maxPrice");
+  const startDate = searchParams.get("startDate");
+  const endDate = searchParams.get("endDate");
 
   try {
+    // The `where` clause is used to filter the products based on the
+    // search parameters.
     const where: Prisma.ProductWhereInput = {
       name: {
         contains: search,
@@ -21,20 +23,34 @@ export async function GET(req: Request) {
     };
 
     if (minPrice) {
-      where.price = { ...where.price as Prisma.IntFilter, gte: parseInt(minPrice, 10) };
+      where.price = {
+        ...(where.price as Prisma.IntFilter),
+        gte: parseInt(minPrice, 10),
+      };
     }
     if (maxPrice) {
-      where.price = { ...where.price as Prisma.IntFilter, lte: parseInt(maxPrice, 10) };
+      where.price = {
+        ...(where.price as Prisma.IntFilter),
+        lte: parseInt(maxPrice, 10),
+      };
     }
     if (startDate) {
-      where.createdAt = { ...where.createdAt as Prisma.DateTimeFilter, gte: new Date(startDate) };
+      where.createdAt = {
+        ...(where.createdAt as Prisma.DateTimeFilter),
+        gte: new Date(startDate),
+      };
     }
     if (endDate) {
-      where.createdAt = { ...where.createdAt as Prisma.DateTimeFilter, lte: new Date(endDate) };
+      where.createdAt = {
+        ...(where.createdAt as Prisma.DateTimeFilter),
+        lte: new Date(endDate),
+      };
     }
 
     const products = await prisma.product.findMany({
       where,
+      // The `include` clause is used to include the related images for each
+      // product.
       include: {
         images: {
           include: {
@@ -43,14 +59,17 @@ export async function GET(req: Request) {
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
     return NextResponse.json(products);
   } catch (error) {
     console.error("Error fetching products:", error);
-    return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch products" },
+      { status: 500 }
+    );
   }
 }
 

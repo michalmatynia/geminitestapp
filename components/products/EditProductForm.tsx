@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { ProductFormProvider, useProductFormContext } from "@/lib/context/ProductFormContext";
 import FileManager from "@/components/products/FileManager";
 import ProductForm from "@/components/products/ProductForm";
-import { useProductForm } from "@/lib/hooks/useProductForm";
 import { Product } from "@prisma/client";
 import { ProductImage, ImageFile } from "@prisma/client";
 
@@ -31,7 +31,7 @@ function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-export default function EditProductForm({ product }: { product: ProductWithImages }) {
+function EditProductForm({ product }: { product: ProductWithImages }) {
   const {
     register,
     handleSubmit,
@@ -45,7 +45,7 @@ export default function EditProductForm({ product }: { product: ProductWithImage
     handleImageChange,
     handleFileSelect,
     handleDisconnectImage,
-  } = useProductForm(product);
+  } = useProductFormContext();
 
   return (
     <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
@@ -73,5 +73,13 @@ export default function EditProductForm({ product }: { product: ProductWithImage
         />
       )}
     </div>
+  );
+}
+
+export default function EditProductPage({ product }: { product: ProductWithImages }) {
+  return (
+    <ProductFormProvider product={product}>
+      <EditProductForm product={product} />
+    </ProductFormProvider>
   );
 }

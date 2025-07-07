@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 interface ImageFile {
   id: string;
@@ -23,16 +23,18 @@ interface FileManagerProps {
 
 export default function FileManager({ onSelectFile }: FileManagerProps) {
   const [files, setFiles] = useState<ImageFile[]>([]);
-  const [filenameSearch, setFilenameSearch] = useState('');
-  const [productNameSearch, setProductNameSearch] = useState('');
+  const [filenameSearch, setFilenameSearch] = useState("");
+  const [productNameSearch, setProductNameSearch] = useState("");
 
+  // The `fetchFiles` function fetches the files from the API based on the
+  // search criteria.
   const fetchFiles = useCallback(() => {
     const query = new URLSearchParams();
     if (filenameSearch) {
-      query.append('filename', filenameSearch);
+      query.append("filename", filenameSearch);
     }
     if (productNameSearch) {
-      query.append('productName', productNameSearch);
+      query.append("productName", productNameSearch);
     }
     fetch(`/api/files?${query.toString()}`)
       .then((res) => res.json())
@@ -43,21 +45,26 @@ export default function FileManager({ onSelectFile }: FileManagerProps) {
     fetchFiles();
   }, [fetchFiles]);
 
+  // The `handleSelect` function is called when a file is selected. It calls
+  // the `onSelectFile` callback with the selected file's ID.
   const handleSelect = (fileId: string) => {
     if (onSelectFile) {
       onSelectFile(fileId);
     }
   };
 
+  // The `handleDelete` function sends a DELETE request to the API to delete a
+  // file. If the request is successful, it triggers a refresh of the file
+  // list.
   const handleDelete = async (fileId: string) => {
-    if (confirm('Are you sure you want to delete this file?')) {
+    if (confirm("Are you sure you want to delete this file?")) {
       const res = await fetch(`/api/files/${fileId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
       if (res.ok) {
         fetchFiles();
       } else {
-        alert('Failed to delete file.');
+        alert("Failed to delete file.");
       }
     }
   };
@@ -83,10 +90,7 @@ export default function FileManager({ onSelectFile }: FileManagerProps) {
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {files.map((file) => (
-          <div
-            key={file.id}
-            className="relative"
-          >
+          <div key={file.id} className="relative">
             <div
               className={onSelectFile ? "cursor-pointer" : ""}
               onClick={() => handleSelect(file.id)}
@@ -102,7 +106,11 @@ export default function FileManager({ onSelectFile }: FileManagerProps) {
             <p className="text-center mt-2">{file.filename}</p>
             <div className="text-center text-xs text-gray-400">
               {file.products.map(({ product }) => (
-                <Link key={product.id} href={`/admin/products/${product.id}/edit`} className="hover:underline">
+                <Link
+                  key={product.id}
+                  href={`/admin/products/${product.id}/edit`}
+                  className="hover:underline"
+                >
                   {product.name}
                 </Link>
               ))}

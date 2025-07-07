@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
+// The `ProductFormData` interface defines the shape of the data for the
+// product form.
 interface ProductFormData {
   name: string;
   price: number;
@@ -21,6 +23,8 @@ interface ProductFormData {
   sizeWidth: number;
 }
 
+// The `ProductFormProps` interface defines the props for the `ProductForm`
+// component.
 interface ProductFormProps {
   register: UseFormRegister<ProductFormData>;
   handleSubmit: (e: FormEvent<HTMLFormElement>) => void;

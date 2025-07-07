@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-"use client"
+"use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   ColumnDef,
   flexRender,
@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Product } from "./columns";
 
 interface DataTableProps<TData> {
   columns: ColumnDef<TData>[];
@@ -34,7 +35,11 @@ declare module "@tanstack/react-table" {
   }
 }
 
-export function DataTable<TData>({ columns, data, setRefreshTrigger }: DataTableProps<TData>) {
+export function DataTable<TData>({
+  columns,
+  data,
+  setRefreshTrigger,
+}: DataTableProps<TData>) {
   const [rowSelection, setRowSelection] = useState({});
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -53,15 +58,24 @@ export function DataTable<TData>({ columns, data, setRefreshTrigger }: DataTable
     meta: { setRefreshTrigger },
   });
 
+  // The `handleMassDelete` function sends a DELETE request to the API for
+  // each selected product. If all requests are successful, it shows a
+  // success message. Otherwise, it shows an error message.
   const handleMassDelete = async () => {
-    const selectedProductIds = table.getSelectedRowModel().rows.map((row) => (row.original as Product).id);
+    const selectedProductIds = table
+      .getSelectedRowModel()
+      .rows.map((row) => (row.original as Product).id);
 
     if (selectedProductIds.length === 0) {
       alert("Please select products to delete.");
       return;
     }
 
-    if (window.confirm(`Are you sure you want to delete ${selectedProductIds.length} selected products?`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete ${selectedProductIds.length} selected products?`
+      )
+    ) {
       try {
         const deletePromises = selectedProductIds.map((id) =>
           fetch(`/api/products/${id}`, {

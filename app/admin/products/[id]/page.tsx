@@ -1,10 +1,11 @@
-import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { PrismaClient, Product, ProductImage, ImageFile } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+// The ProductWithImages type extends the Product type with the images
+// relation, which includes the ImageFile type.
 type ProductWithImages = Product & {
   images: (ProductImage & { imageFile: ImageFile })[];
 };
@@ -76,46 +77,60 @@ export default async function ViewProductPage({ params }: ViewProductPageProps) 
         </p>
       </div>
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-400">Created At</label>
+        <label className="block text-sm font-medium text-gray-400">
+          Created At
+        </label>
         <p className="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 p-2 text-white sm:text-sm">
           {new Date(product.createdAt).toLocaleString()}
         </p>
       </div>
       <div className="mb-4">
-        <label className="block text-sm font-.medium text-gray-400">Updated At</label>
+        <label className="block text-sm font-medium text-gray-400">
+          Updated At
+        </label>
         <p className="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 p-2 text-white sm:text-sm">
           {new Date(product.updatedAt).toLocaleString()}
         </p>
       </div>
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-400">Product Images</label>
+        <label className="block text-sm font-medium text-gray-400">
+          Product Images
+        </label>
         {product.images && product.images.length > 0 ? (
           <div className="mt-1 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
             {product.images.map((imageRel) => (
-              <div key={imageRel.imageFile.id} className="rounded-md bg-gray-900 p-4">
+              <div
+                key={imageRel.imageFile.id}
+                className="rounded-md bg-gray-900 p-4"
+              >
                 <Image
-                    src={imageRel.imageFile.filepath}
-                    alt={imageRel.imageFile.filename}
-                    width={imageRel.imageFile.width || 500}
-                    height={imageRel.imageFile.height || 500}
-                    className="mb-2 h-32 w-full object-cover rounded-md"
-                  />
+                  src={imageRel.imageFile.filepath}
+                  alt={imageRel.imageFile.filename}
+                  width={imageRel.imageFile.width || 500}
+                  height={imageRel.imageFile.height || 500}
+                  className="mb-2 h-32 w-full object-cover rounded-md"
+                />
                 <p className="text-sm text-white">
-                  <span className="font-medium">Filename:</span> {imageRel.imageFile.filename}
+                  <span className="font-medium">Filename:</span>{" "}
+                  {imageRel.imageFile.filename}
                 </p>
                 <p className="text-sm text-white">
-                  <span className="font-medium">Size:</span> {(imageRel.imageFile.size / 1024).toFixed(2)} KB
+                  <span className="font-medium">Size:</span>{" "}
+                  {(imageRel.imageFile.size / 1024).toFixed(2)} KB
                 </p>
                 {imageRel.imageFile.width && imageRel.imageFile.height && (
                   <p className="text-sm text-white">
-                    <span className="font-medium">Dimensions:</span> {imageRel.imageFile.width}x{imageRel.imageFile.height}
+                    <span className="font-medium">Dimensions:</span>{" "}
+                    {imageRel.imageFile.width}x{imageRel.imageFile.height}
                   </p>
                 )}
               </div>
             ))}
           </div>
         ) : (
-          <p className="mt-1 text-white">No images associated with this product.</p>
+          <p className="mt-1 text-white">
+            No images associated with this product.
+          </p>
         )}
       </div>
       <Link

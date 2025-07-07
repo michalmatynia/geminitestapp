@@ -18,9 +18,10 @@ export async function POST(req: NextRequest) {
 
   try {
     console.log("Fetching OpenAI API key from database...");
-    const apiKeySetting = await prisma.setting.findUnique({
-      where: { key: "openai_api_key" },
-    });
+    // const apiKeySetting = await prisma.setting.findUnique({
+    //   where: { key: "openai_api_key" },
+    // });
+    const apiKeySetting = process.env.OPENAI_API_KEY;
 
     if (!apiKeySetting) {
       console.error("OpenAI API key not configured");

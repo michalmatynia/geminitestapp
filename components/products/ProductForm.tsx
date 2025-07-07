@@ -51,17 +51,17 @@ export default function ProductForm({
   return (
     <form onSubmit={handleSubmit}>
       <div className="mb-4">
-        <Label htmlFor="name">Name</Label>
+        <Label htmlFor="name">Name <span className="text-red-500">*</span></Label>
         <Input id="name" {...register('name')} />
         {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
       </div>
       <div className="mb-4">
-        <Label htmlFor="price">Price</Label>
+        <Label htmlFor="price">Price <span className="text-red-500">*</span></Label>
         <Input id="price" type="number" {...register('price', { valueAsNumber: true })} />
         {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price.message}</p>}
       </div>
       <div className="mb-4">
-        <Label htmlFor="sku">SKU</Label>
+        <Label htmlFor="sku">SKU <span className="text-red-500">*</span></Label>
         <Input id="sku" {...register('sku')} />
         {errors.sku && <p className="text-red-500 text-sm mt-1">{errors.sku.message}</p>}
       </div>

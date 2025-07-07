@@ -1,10 +1,9 @@
-"use client";
-
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Product } from "@prisma/client";
-import { ProductImage, ImageFile } from "@prisma/client";
+import { PrismaClient, Product, ProductImage, ImageFile } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 type ProductWithImages = Product & {
   images: (ProductImage & { imageFile: ImageFile })[];
@@ -36,25 +35,22 @@ interface ViewProductPageProps {
   };
 }
 
-export default function ViewProductPage({ params }: ViewProductPageProps) {
-  const [product, setProduct] = useState<ProductWithImages | null>(null);
-  const { id } = params;
+export default async function ViewProductPage({ params }: ViewProductPageProps) {
+  const { id } = await params;
 
-  useEffect(() => {
-    const fetchProductData = async () => {
-      const res = await fetch(`/api/products/${id}`);
-      const productData: ProductWithImages = await res.json();
-
-      if (productData) {
-        setProduct(productData);
-      }
-    };
-
-    fetchProductData();
-  }, [id]);
+  const product = await prisma.product.findUnique({
+    where: { id },
+    include: {
+      images: {
+        include: {
+          imageFile: true,
+        },
+      },
+    },
+  });
 
   if (!product) {
-    return <div className="text-white">Loading...</div>;
+    return <div className="text-white">Product not found</div>;
   }
 
   return (
@@ -76,7 +72,7 @@ export default function ViewProductPage({ params }: ViewProductPageProps) {
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-400">Price</label>
         <p className="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 p-2 text-white sm:text-sm">
-          ${product.price.toFixed(2)}
+          ${product.price?.toFixed(2)}
         </p>
       </div>
       <div className="mb-4">
@@ -86,7 +82,7 @@ export default function ViewProductPage({ params }: ViewProductPageProps) {
         </p>
       </div>
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-400">Updated At</label>
+        <label className="block text-sm font-.medium text-gray-400">Updated At</label>
         <p className="mt-1 block w-full rounded-md border-gray-700 bg-gray-900 p-2 text-white sm:text-sm">
           {new Date(product.updatedAt).toLocaleString()}
         </p>

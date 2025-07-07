@@ -137,7 +137,7 @@ export function useProductForm(product?: ProductWithImages) {
             setPreviewUrl(null);
           }
         } else {
-          router.push('/admin/products');
+          router.push('/admin');
         }
         setUploading(false);
       } else {

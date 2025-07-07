@@ -5,6 +5,8 @@ import Link from "next/link"
 import Image from "next/image"
 
 
+import { deleteProduct } from "@/app/actions";
+
 export type Product = {
   id: string
   name: string
@@ -24,27 +26,8 @@ export type Product = {
   }[];
 }
 
-interface ColumnActionsProps {
-  row: Row<Product>;
-  setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;}
-
-const handleDelete = async (id: string, setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>) => {
-  const res = await fetch(`/api/products/${id}`, {
-    method: "DELETE",
-  });
-  if (res.ok) {
-    setRefreshTrigger(prev => prev + 1);
-  } else {
-    console.error("Failed to delete product:", await res.json());
-  }
-};
-
-const ActionsCell: React.FC<ColumnActionsProps> = ({ row, setRefreshTrigger }) => {
+const ActionsCell: React.FC<{ row: Row<Product> }> = ({ row }) => {
   const product = row.original;
-
-  if (!setRefreshTrigger) {
-    return null; // Or handle the error appropriately
-  }
 
   return (
     <div className="flex gap-2">
@@ -55,7 +38,11 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({ row, setRefreshTrigger }) =
         <button className="text-muted-foreground hover:text-foreground">Edit</button>
       </Link>
       <button
-        onClick={() => handleDelete(product.id, setRefreshTrigger)}
+        onClick={async () => {
+          if (confirm("Are you sure you want to delete this product?")) {
+            await deleteProduct(product.id);
+          }
+        }}
         className="text-destructive hover:text-destructive/80"
       >
         Delete
@@ -144,10 +131,8 @@ export const columns: ColumnDef<Product>[] = [
   },
   {
     id: "actions",
-    cell: ({ row, table }) => {
-      const setRefreshTrigger = table.options.meta?.setRefreshTrigger;
-      if (!setRefreshTrigger) return null; // Or handle the error appropriately
-      return <ActionsCell row={row} setRefreshTrigger={setRefreshTrigger} />;
+    cell: ({ row }) => {
+      return <ActionsCell row={row} />;
     },
   },
 ]

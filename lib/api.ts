@@ -8,7 +8,7 @@ export async function getProducts(filters: { search?: string; minPrice?: number;
   if (filters.startDate) params.append('startDate', filters.startDate);
   if (filters.endDate) params.append('endDate', filters.endDate);
 
-  const res = await fetch(`/api/products?${params.toString()}`)
+  const res = await fetch(`/api/products?${params.toString()}`, { cache: 'no-store' })
   if (!res.ok) {
     throw new Error("Failed to fetch data")
   }

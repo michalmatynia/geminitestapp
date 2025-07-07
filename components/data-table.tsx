@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
 import React, { useState } from "react";
@@ -11,6 +10,7 @@ import {
   getSortedRowModel,
   SortingState,
 } from "@tanstack/react-table";
+import { useRouter } from "next/navigation";
 
 import {
   Table,
@@ -22,19 +22,16 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 
+import { deleteProduct } from "@/app/actions";
+import { Product } from "./columns";
+
 interface DataTableProps<TData> {
   columns: ColumnDef<TData>[];
   data: TData[];
-  setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;
 }
 
-declare module "@tanstack/react-table" {
-  interface TableMeta<TData> {
-    setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
-  }
-}
-
-export function DataTable<TData>({ columns, data, setRefreshTrigger }: DataTableProps<TData>) {
+export function DataTable<TData>({ columns, data }: DataTableProps<TData>) {
+  const router = useRouter();
   const [rowSelection, setRowSelection] = useState({});
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -50,10 +47,10 @@ export function DataTable<TData>({ columns, data, setRefreshTrigger }: DataTable
       rowSelection,
       sorting,
     },
-    meta: { setRefreshTrigger },
   });
 
   const handleMassDelete = async () => {
+    console.log("CLIENT: handleMassDelete triggered.");
     const selectedProductIds = table.getSelectedRowModel().rows.map((row) => (row.original as Product).id);
 
     if (selectedProductIds.length === 0) {
@@ -63,22 +60,12 @@ export function DataTable<TData>({ columns, data, setRefreshTrigger }: DataTable
 
     if (window.confirm(`Are you sure you want to delete ${selectedProductIds.length} selected products?`)) {
       try {
-        const deletePromises = selectedProductIds.map((id) =>
-          fetch(`/api/products/${id}`, {
-            method: "DELETE",
-          })
-        );
-        const results = await Promise.all(deletePromises);
-
-        const failedDeletions = results.filter((res) => !res.ok);
-
-        if (failedDeletions.length > 0) {
-          alert("Some products could not be deleted.");
-        } else {
-          alert("Selected products deleted successfully.");
-        }
-        setRowSelection({}); // Clear selection after deletion
-        setRefreshTrigger((prev) => prev + 1); // Refresh the product list
+        await Promise.all(selectedProductIds.map((id) => deleteProduct(id)));
+        setRowSelection({});
+        alert("Selected products deleted successfully.");
+        console.log("CLIENT: Deletion successful. Calling router.refresh().");
+        router.refresh();
+        console.log("CLIENT: router.refresh() called.");
       } catch (error) {
         console.error("Error during mass deletion:", error);
         alert("An error occurred during deletion.");

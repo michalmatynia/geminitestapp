@@ -13,6 +13,12 @@ interface ProductWithImages {
   price: number;
   sku: string;
   description: string | null;
+  supplierName: string | null;
+  supplierLink: string | null;
+  priceComment: string | null;
+  stock: number | null;
+  sizeLength: number | null;
+  sizeWidth: number | null;
   images: {
     imageFile: {
       id: string;
@@ -36,6 +42,12 @@ export function useProductForm(product?: ProductWithImages) {
       price: product?.price || 0,
       sku: product?.sku || '',
       description: product?.description || '',
+      supplierName: product?.supplierName || '',
+      supplierLink: product?.supplierLink || '',
+      priceComment: product?.priceComment || '',
+      stock: product?.stock || 0,
+      sizeLength: product?.sizeLength || 0,
+      sizeWidth: product?.sizeWidth || 0,
     },
   });
 
@@ -55,6 +67,12 @@ export function useProductForm(product?: ProductWithImages) {
         price: product.price,
         sku: product.sku,
         description: product.description || '',
+        supplierName: product.supplierName || '',
+        supplierLink: product.supplierLink || '',
+        priceComment: product.priceComment || '',
+        stock: product.stock || 0,
+        sizeLength: product.sizeLength || 0,
+        sizeWidth: product.sizeWidth || 0,
       });
       if (product.images && product.images.length > 0) {
         setExistingImageUrl(`/api/files/preview?fileId=${product.images[0].imageFile.id}`);
@@ -72,6 +90,24 @@ export function useProductForm(product?: ProductWithImages) {
     formData.append('sku', data.sku);
     if (data.description) {
       formData.append('description', data.description);
+    }
+    if (data.supplierName) {
+      formData.append('supplierName', data.supplierName);
+    }
+    if (data.supplierLink) {
+      formData.append('supplierLink', data.supplierLink);
+    }
+    if (data.priceComment) {
+      formData.append('priceComment', data.priceComment);
+    }
+    if (data.stock) {
+      formData.append('stock', data.stock.toString());
+    }
+    if (data.sizeLength) {
+      formData.append('sizeLength', data.sizeLength.toString());
+    }
+    if (data.sizeWidth) {
+      formData.append('sizeWidth', data.sizeWidth.toString());
     }
     if (image) {
       formData.append('image', image);
@@ -101,7 +137,7 @@ export function useProductForm(product?: ProductWithImages) {
             setPreviewUrl(null);
           }
         } else {
-          router.push('/admin');
+          router.push('/admin/products');
         }
         setUploading(false);
       } else {

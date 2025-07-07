@@ -1,5 +1,6 @@
 import { PrismaClient, Product, Prisma } from '@prisma/client';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { productSchema } from '@/lib/validations/product';
 import { handleProductImageUpload } from '@/lib/utils/productUtils';
 
@@ -60,11 +61,17 @@ export async function POST(req: Request): Promise<NextResponse<Product | { error
   const price = parseFloat(formData.get('price') as string);
   const sku = formData.get('sku') as string;
   const description = formData.get('description') as string | null;
+  const supplierName = formData.get('supplierName') as string | null;
+  const supplierLink = formData.get('supplierLink') as string | null;
+  const priceComment = formData.get('priceComment') as string | null;
+  const stock = formData.get('stock') ? parseInt(formData.get('stock') as string, 10) : null;
+  const sizeLength = formData.get('sizeLength') ? parseInt(formData.get('sizeLength') as string, 10) : null;
+  const sizeWidth = formData.get('sizeWidth') ? parseInt(formData.get('sizeWidth') as string, 10) : null;
   const image: File | null = formData.get('image') as unknown as File;
   const imageFileId = formData.get('imageFileId') as string | null;
 
   try {
-    const validatedData = productSchema.parse({ name, price, sku, description });
+    const validatedData = productSchema.parse({ name, price, sku, description, supplierName, supplierLink, priceComment, stock, sizeLength, sizeWidth });
 
     const product = await prisma.product.create({
       data: {
@@ -72,6 +79,12 @@ export async function POST(req: Request): Promise<NextResponse<Product | { error
         price: validatedData.price,
         sku: validatedData.sku,
         description: validatedData.description,
+        supplierName: validatedData.supplierName,
+        supplierLink: validatedData.supplierLink,
+        priceComment: validatedData.priceComment,
+        stock: validatedData.stock,
+        sizeLength: validatedData.sizeLength,
+        sizeWidth: validatedData.sizeWidth,
       },
     });
 
@@ -105,10 +118,22 @@ export async function POST(req: Request): Promise<NextResponse<Product | { error
       });
     }
 
-    return NextResponse.json(product);
+    const productWithImages = await prisma.product.findUnique({
+      where: { id: product.id },
+      include: {
+        images: {
+          include: {
+            imageFile: true,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json(productWithImages as Product);
   } catch (error: unknown) {
-    if (error instanceof Error && 'issues' in error) {
-      return NextResponse.json({ error: JSON.parse(error.message) }, { status: 400 });
+    if (error instanceof z.ZodError) {
+      const errorMessage = error.errors.map((e) => e.message).join(', ');
+      return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
     console.error("Error creating product:", error);
     return NextResponse.json({ error: "Failed to create product" }, { status: 500 });

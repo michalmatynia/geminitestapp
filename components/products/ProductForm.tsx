@@ -13,6 +13,12 @@ interface ProductFormData {
   price: number;
   sku: string;
   description: string;
+  supplierName: string;
+  supplierLink: string;
+  priceComment: string;
+  stock: number;
+  sizeLength: number;
+  sizeWidth: number;
 }
 
 interface ProductFormProps {
@@ -21,7 +27,7 @@ interface ProductFormProps {
   errors: FieldErrors<ProductFormData>;
   handleImageChange: (e: ChangeEvent<HTMLInputElement>) => void;
   setShowFileManager: (show: boolean) => void;
-  handleDisconnectImage: () => void;
+  handleDisconnectImage?: () => void;
   previewUrl: string | null;
   existingImageUrl: string | null;
   uploading: boolean;
@@ -47,22 +53,52 @@ export default function ProductForm({
       <div className="mb-4">
         <Label htmlFor="name">Name</Label>
         <Input id="name" {...register('name')} />
-        {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message as string}</p>}
+        {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
       </div>
       <div className="mb-4">
         <Label htmlFor="price">Price</Label>
         <Input id="price" type="number" {...register('price', { valueAsNumber: true })} />
-        {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price.message as string}</p>}
+        {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price.message}</p>}
       </div>
       <div className="mb-4">
         <Label htmlFor="sku">SKU</Label>
         <Input id="sku" {...register('sku')} />
-        {errors.sku && <p className="text-red-500 text-sm mt-1">{errors.sku.message as string}</p>}
+        {errors.sku && <p className="text-red-500 text-sm mt-1">{errors.sku.message}</p>}
       </div>
       <div className="mb-4">
         <Label htmlFor="description">Description</Label>
         <Textarea id="description" {...register('description')} />
-        {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message as string}</p>}
+        {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
+      </div>
+      <div className="mb-4">
+        <Label htmlFor="supplierName">Supplier Name</Label>
+        <Input id="supplierName" {...register('supplierName')} />
+        {errors.supplierName && <p className="text-red-500 text-sm mt-1">{errors.supplierName.message}</p>}
+      </div>
+      <div className="mb-4">
+        <Label htmlFor="supplierLink">Supplier Link</Label>
+        <Input id="supplierLink" {...register('supplierLink')} />
+        {errors.supplierLink && <p className="text-red-500 text-sm mt-1">{errors.supplierLink.message}</p>}
+      </div>
+      <div className="mb-4">
+        <Label htmlFor="priceComment">Price Comment</Label>
+        <Input id="priceComment" {...register('priceComment')} />
+        {errors.priceComment && <p className="text-red-500 text-sm mt-1">{errors.priceComment.message}</p>}
+      </div>
+      <div className="mb-4">
+        <Label htmlFor="stock">Stock</Label>
+        <Input id="stock" type="number" {...register('stock', { valueAsNumber: true })} />
+        {errors.stock && <p className="text-red-500 text-sm mt-1">{errors.stock.message}</p>}
+      </div>
+      <div className="mb-4">
+        <Label htmlFor="sizeLength">Size Length</Label>
+        <Input id="sizeLength" type="number" {...register('sizeLength', { valueAsNumber: true })} />
+        {errors.sizeLength && <p className="text-red-500 text-sm mt-1">{errors.sizeLength.message}</p>}
+      </div>
+      <div className="mb-4">
+        <Label htmlFor="sizeWidth">Size Width</Label>
+        <Input id="sizeWidth" type="number" {...register('sizeWidth', { valueAsNumber: true })} />
+        {errors.sizeWidth && <p className="text-red-500 text-sm mt-1">{errors.sizeWidth.message}</p>}
       </div>
       <div className="mb-4">
         <Label>Product Image</Label>
@@ -91,7 +127,7 @@ export default function ProductForm({
           >
             Choose Existing
           </Button>
-          {(previewUrl || existingImageUrl) && (
+          {(previewUrl || existingImageUrl) && handleDisconnectImage && (
             <Button
               type="button"
               variant="destructive"
@@ -126,4 +162,5 @@ export default function ProductForm({
     </form>
   );
 }
+
 

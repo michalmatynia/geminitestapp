@@ -1,69 +1,35 @@
--- CreateTable
-CREATE TABLE "Product" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "sku" TEXT,
-    "name" TEXT,
-    "supplierName" TEXT,
-    "supplierLink" TEXT,
-    "priceComment" TEXT,
-    "stock" INTEGER,
-    "purchasePriceWithoutShipping" REAL,
-    "purchasePriceWithShipping" REAL,
-    "purchaseDate" DATETIME,
-    "salePrice" REAL,
-    "sizeLength" INTEGER,
-    "sizeWidth" INTEGER,
-    "cartonComment" TEXT,
-    "cartonSize" TEXT,
-    "moq" INTEGER,
-    "weight" REAL,
-    "material" TEXT,
-    "seaShipping" TEXT,
-    "trainShipping" TEXT,
-    "airShipping" TEXT,
-    "ddpShipping" TEXT,
-    "sparksOfSindri" TEXT,
-    "starGater" TEXT,
-    "olx" TEXT,
-    "nameEN" TEXT,
-    "namePL" TEXT,
-    "descriptionPL" TEXT,
-    "descriptionEN" TEXT,
-    "gptPrompt" TEXT,
-    "vinted" TEXT,
-    "de" TEXT,
-    "asin" TEXT,
-    "alternativeName" TEXT,
-    "alternativeDescriptionPL" TEXT,
-    "alternativeDescriptionEN" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
-);
-
--- CreateTable
-CREATE TABLE "ImageFile" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "filename" TEXT NOT NULL,
-    "filepath" TEXT NOT NULL,
-    "mimetype" TEXT NOT NULL,
-    "size" INTEGER NOT NULL,
-    "width" INTEGER,
-    "height" INTEGER,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
-);
-
--- CreateTable
-CREATE TABLE "ProductImage" (
-    "productId" TEXT NOT NULL,
-    "imageFileId" TEXT NOT NULL,
-    "assignedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    PRIMARY KEY ("productId", "imageFileId"),
-    CONSTRAINT "ProductImage_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "ProductImage_imageFileId_fkey" FOREIGN KEY ("imageFileId") REFERENCES "ImageFile" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
-
--- CreateIndex
-CREATE UNIQUE INDEX "Product_sku_key" ON "Product"("sku");
+-- Add new columns to the "Product" table
+ALTER TABLE "Product" ADD COLUMN "supplierName" TEXT;
+ALTER TABLE "Product" ADD COLUMN "supplierLink" TEXT;
+ALTER TABLE "Product" ADD COLUMN "priceComment" TEXT;
+ALTER TABLE "Product" ADD COLUMN "stock" INTEGER;
+ALTER TABLE "Product" ADD COLUMN "purchasePriceWithoutShipping" REAL;
+ALTER TABLE "Product" ADD COLUMN "purchasePriceWithShipping" REAL;
+ALTER TABLE "Product" ADD COLUMN "purchaseDate" DATETIME;
+ALTER TABLE "Product" ADD COLUMN "salePrice" REAL;
+ALTER TABLE "Product" ADD COLUMN "sizeLength" INTEGER;
+ALTER TABLE "Product" ADD COLUMN "sizeWidth" INTEGER;
+ALTER TABLE "Product" ADD COLUMN "cartonComment" TEXT;
+ALTER TABLE "Product" ADD COLUMN "cartonSize" TEXT;
+ALTER TABLE "Product" ADD COLUMN "moq" INTEGER;
+ALTER TABLE "Product" ADD COLUMN "weight" REAL;
+ALTER TABLE "Product" ADD COLUMN "material" TEXT;
+ALTER TABLE "Product" ADD COLUMN "seaShipping" TEXT;
+ALTER TABLE "Product" ADD COLUMN "trainShipping" TEXT;
+ALTER TABLE "Product" ADD COLUMN "airShipping" TEXT;
+ALTER TABLE "Product" ADD COLUMN "ddpShipping" TEXT;
+ALTER TABLE "Product" ADD COLUMN "sparksOfSindri" TEXT;
+ALTER TABLE "Product" ADD COLUMN "starGater" TEXT;
+ALTER TABLE "Product" ADD COLUMN "olx" TEXT;
+ALTER TABLE "Product" ADD COLUMN "nameEN" TEXT;
+ALTER TABLE "Product" ADD COLUMN "namePL" TEXT;
+ALTER TABLE "Product" ADD COLUMN "descriptionPL" TEXT;
+ALTER TABLE "Product" ADD COLUMN "descriptionEN" TEXT;
+ALTER TABLE "Product" ADD COLUMN "gptPrompt" TEXT;
+ALTER TABLE "Product" ADD COLUMN "vinted" TEXT;
+ALTER TABLE "Product" ADD COLUMN "de" TEXT;
+ALTER TABLE "Product" ADD COLUMN "asin" TEXT;
+ALTER TABLE "Product" ADD COLUMN "alternativeName" TEXT;
+ALTER TABLE "Product" ADD COLUMN "alternativeDescriptionPL" TEXT;
+ALTER TABLE "Product" ADD COLUMN "alternativeDescriptionEN" TEXT;
 

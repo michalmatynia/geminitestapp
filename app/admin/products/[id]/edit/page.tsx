@@ -1,9 +1,14 @@
 import { PrismaClient } from "@prisma/client";
 import EditProductForm from "@/components/products/EditProductForm";
 
+// This file is used to edit a product in the admin panel.
 const prisma = new PrismaClient();
 
-export default async function EditProductPage({ params }: { params: { id: string } }) {
+export default async function EditProductPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const { id } = await params;
   const product = await prisma.product.findUnique({
     where: { id },

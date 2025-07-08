@@ -1,56 +1,38 @@
-import fs from "fs/promises";
-import path from "path";
-
-import { PrismaClient } from "@prisma/client";
-import { NextResponse } from "next/server";
-
-const prisma = new PrismaClient();
+import { PrismaClient } from '@prisma/client';
+import { NextResponse } from 'next/server';
+import fs from 'fs/promises';
+import path from 'path';
 
 export async function DELETE(
   req: Request,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  { params }: any
+  { params }: { params: { id: string } }
 ) {
-  const { id } = params as { id: string };
+  const prisma = new PrismaClient();
+  const { id } = params;
 
   try {
-    const imageFile = await prisma.imageFile.findUnique({
+    const file = await prisma.imageFile.findUnique({
       where: { id },
     });
 
-    if (!imageFile) {
-      return NextResponse.json(
-        { error: "Image file not found" },
-        { status: 404 }
-      );
+    if (!file) {
+      return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
 
-    const filepath = path.join(process.cwd(), "public", imageFile.filepath);
+    // Physical file deletion
+    const filePath = path.join(process.cwd(), 'public', file.filepath);
+    await fs.unlink(filePath);
 
-    try {
-      await fs.unlink(filepath);
-    } catch (_error: unknown) {
-      const error = _error as { code?: string };
-      if (error.code !== "ENOENT") {
-        console.error("Error deleting file from filesystem:", error);
-        // We can choose to continue even if file deletion fails,
-        // as the primary goal is to remove the DB record.
-      }
-    }
-
-    await prisma.productImage.deleteMany({
-      where: { imageFileId: id },
-    });
-
+    // Database record deletion
     await prisma.imageFile.delete({
       where: { id },
     });
 
-    return new NextResponse(null, { status: 204 });
-  } catch (error: unknown) {
-    console.error("Error deleting image file:", error);
+    return new Response(null, { status: 204 });
+  } catch (error) {
+    console.error(`Error deleting file ${id}:`, error);
     return NextResponse.json(
-      { error: "Failed to delete image file" },
+      { error: "Failed to delete file" },
       { status: 500 }
     );
   }

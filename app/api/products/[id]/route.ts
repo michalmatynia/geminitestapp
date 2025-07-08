@@ -9,7 +9,7 @@ export async function GET(
   { params }: any
 ) {
   const prisma = new PrismaClient();
-  const { id } = params;
+  const { id } = await params;
 
   try {
     const product = await prisma.product.findUnique({
@@ -41,7 +41,7 @@ export async function PUT(
   { params }: any
 ): Promise<NextResponse> {
   const prisma = new PrismaClient();
-  const { id } = params;
+  const { id } = await params;
   try {
     const formData = await req.formData();
     const name = formData.get("name") as string;
@@ -166,7 +166,7 @@ export async function DELETE(
   { params }: any
 ) {
   const prisma = new PrismaClient();
-  const { id } = params;
+  const { id } = await params;
 
   try {
     await prisma.product.delete({

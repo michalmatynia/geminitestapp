@@ -1,17 +1,19 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import { useState } from "react";
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
-  useReactTable,
   getFilteredRowModel,
   getSortedRowModel,
   SortingState,
+  useReactTable,
 } from "@tanstack/react-table";
+import { useState } from "react";
 
+import { Product } from "./columns";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -20,8 +22,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Product } from "./columns";
 
 interface DataTableProps<TData> {
   columns: ColumnDef<TData>[];
@@ -154,7 +154,9 @@ export function DataTable<TData>({
           {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
         <Button
-          onClick={handleMassDelete}
+          onClick={() => {
+            void handleMassDelete();
+          }}
           disabled={table.getFilteredSelectedRowModel().rows.length === 0}
           className="bg-primary text-primary-foreground hover:bg-primary/90"
         >

@@ -1,6 +1,7 @@
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import { FlatCompat } from "@eslint/eslintrc";
+import importPlugin from "eslint-plugin-import";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -15,14 +16,23 @@ const eslintConfig = [
   },
   ...compat.extends(
     "next/core-web-vitals",
-    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-type-checked",
     "plugin:react/recommended",
     "plugin:react-hooks/recommended",
     "plugin:tailwindcss/recommended",
     "prettier"
   ),
-
   {
+    languageOptions: {
+      parser: await import("@typescript-eslint/parser"),
+      parserOptions: {
+        project: true,
+        tsconfigRootDir: __dirname,
+      },
+    },
+    plugins: {
+      import: importPlugin,
+    },
     rules: {
       "no-undef": "off",
       "tailwindcss/no-custom-classname": "off",
@@ -31,12 +41,33 @@ const eslintConfig = [
       "react/react-in-jsx-scope": "off",
       "react/prop-types": "off",
       "tailwindcss/classnames-order": "off",
-      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_", "ignoreRestSiblings": true }],
-      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
+      "@typescript-eslint/no-explicit-any": "warn",
+      "import/order": [
+        "error",
+        {
+          alphabetize: {
+            order: "asc",
+            caseInsensitive: true,
+          },
+        },
+      ],
     },
     settings: {
       react: {
         version: "detect",
+      },
+      "import/resolver": {
+        typescript: true,
+        node: true,
       },
     },
   },

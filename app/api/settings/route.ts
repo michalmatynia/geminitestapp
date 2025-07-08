@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Setting } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
@@ -21,7 +21,7 @@ export async function GET() {
 export async function POST(req: Request) {
   console.log("Received POST request to /api/settings");
   try {
-    const { key, value } = await req.json();
+    const { key, value } = (await req.json()) as Setting;
     console.log("Upserting setting:", { key, value });
     const setting = await prisma.setting.upsert({
       where: { key },

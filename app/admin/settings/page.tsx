@@ -1,20 +1,26 @@
 "use client";
 
 import { useState, useEffect } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+interface Setting {
+  key: string;
+  value: string;
+}
 
 export default function SettingsPage() {
   const [apiKey, setApiKey] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch("/api/settings")
+    void fetch("/api/settings")
       .then((res) => res.json())
-      .then((settings) => {
+      .then((settings: Setting[]) => {
         const apiKeySetting = settings.find(
-          (setting: { key: string }) => setting.key === "openai_api_key"
+          (setting) => setting.key === "openai_api_key"
         );
         if (apiKeySetting) {
           setApiKey(apiKeySetting.value);
@@ -47,13 +53,17 @@ export default function SettingsPage() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          handleSave();
+          void handleSave();
         }}
       >
         <div className="mt-4">
           <Label htmlFor="api-key">OpenAI API Key</Label>
           {/* The hidden username field is to prevent a browser warning about password forms without a username field. */}
-          <input type="text" autoComplete="username" style={{ display: 'none' }} />
+          <input
+            type="text"
+            autoComplete="username"
+            style={{ display: "none" }}
+          />
           <Input
             id="api-key"
             type="password"
@@ -69,3 +79,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+

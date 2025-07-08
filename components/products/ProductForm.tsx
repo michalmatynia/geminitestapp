@@ -1,35 +1,23 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useState } from "react";
 import Image from "next/image";
-import { UseFormRegister, FieldErrors, UseFormSetValue } from "react-hook-form";
+import { ChangeEvent, FormEvent, useState } from "react";
+import {
+  FieldErrors,
+  useFormContext,
+} from "react-hook-form";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-
-// The `ProductFormData` interface defines the shape of the data for the
-// product form.
-interface ProductFormData {
-  name: string;
-  price: number;
-  sku: string;
-  description: string;
-  supplierName: string;
-  supplierLink: string;
-  priceComment: string;
-  stock: number;
-  sizeLength: number;
-  sizeWidth: number;
-}
+import { ProductFormData } from "@/lib/types";
 
 // The `ProductFormProps` interface defines the props for the `ProductForm`
 // component.
 interface ProductFormProps {
-  register: UseFormRegister<ProductFormData>;
   handleSubmit: (e: FormEvent<HTMLFormElement>) => void;
   errors: FieldErrors<ProductFormData>;
-  setValue: UseFormSetValue<ProductFormData>;
   handleImageChange: (e: ChangeEvent<HTMLInputElement>) => void;
   setShowFileManager: (show: boolean) => void;
   handleDisconnectImage?: () => void;
@@ -41,10 +29,8 @@ interface ProductFormProps {
 }
 
 export default function ProductForm({
-  register,
   handleSubmit,
   errors,
-  setValue,
   handleImageChange,
   setShowFileManager,
   handleDisconnectImage,
@@ -55,10 +41,11 @@ export default function ProductForm({
   submitButtonText,
 }: ProductFormProps) {
   const [generating, setGenerating] = useState(false);
+  const { register, getValues, setValue } = useFormContext<ProductFormData>();
 
   const handleGenerateDescription = async () => {
     setGenerating(true);
-    const name = (document.getElementById("name") as HTMLInputElement).value;
+    const name = getValues("name");
     try {
       const res = await fetch("/api/generate-description", {
         method: "POST",
@@ -67,7 +54,7 @@ export default function ProductForm({
         },
         body: JSON.stringify({ name }),
       });
-      const { description } = await res.json();
+      const { description } = (await res.json()) as { description: string };
       setValue("description", description);
     } catch (error) {
       console.error("Failed to generate description:", error);
@@ -119,7 +106,9 @@ export default function ProductForm({
         )}
         <Button
           type="button"
-          onClick={handleGenerateDescription}
+          onClick={() => {
+            void handleGenerateDescription();
+          }}
           disabled={generating}
           className="mt-2"
         >
@@ -249,5 +238,12 @@ export default function ProductForm({
     </form>
   );
 }
+
+
+
+
+
+
+
 
 

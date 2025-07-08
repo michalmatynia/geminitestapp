@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { ProductFormProvider, useProductFormContext } from "@/lib/context/ProductFormContext";
 import FileManager from "@/components/products/FileManager";
 import ProductForm from "@/components/products/ProductForm";
+import {
+  ProductFormProvider,
+  useProductFormContext,
+} from "@/lib/context/ProductFormContext";
 
 function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -27,11 +30,8 @@ function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
 
 function CreateProductForm() {
   const {
-    register,
     handleSubmit,
     errors,
-    setValue,
-    existingImageUrl,
     uploading,
     uploadError,
     previewUrl,
@@ -53,14 +53,12 @@ function CreateProductForm() {
         <FileManager onSelectFile={handleFileSelect} />
       ) : (
         <ProductForm
-          register={register}
           handleSubmit={handleSubmit}
           errors={errors}
-          setValue={setValue}
           handleImageChange={handleImageChange}
           setShowFileManager={setShowFileManager}
           previewUrl={previewUrl}
-          existingImageUrl={existingImageUrl}
+          existingImageUrl={null}
           uploading={uploading}
           uploadError={uploadError}
           submitButtonText="Create"

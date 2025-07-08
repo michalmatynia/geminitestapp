@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 import { ModeToggle } from "@/components/theme-toggle";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

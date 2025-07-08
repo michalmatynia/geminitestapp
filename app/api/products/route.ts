@@ -1,8 +1,9 @@
-import { PrismaClient, Product, Prisma } from '@prisma/client';
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { productSchema } from '@/lib/validations/product';
-import { handleProductImageUpload } from '@/lib/utils/productUtils';
+import { Prisma, PrismaClient, Product } from "@prisma/client";
+import { NextResponse } from "next/server";
+import { z } from "zod";
+
+import { handleProductImageUpload } from "@/lib/utils/productUtils";
+import { productSchema } from "@/lib/validations/product";
 
 export async function GET(req: Request) {
   const prisma = new PrismaClient();

@@ -3,7 +3,7 @@ import OpenAI from "openai";
 
 export async function POST(req: NextRequest) {
   console.log("Received POST request to /api/generate-description");
-  const { name } = await req.json();
+  const { name } = (await req.json()) as { name: string };
 
   if (!name) {
     console.error("Product name is required");

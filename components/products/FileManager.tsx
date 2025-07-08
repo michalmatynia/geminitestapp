@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+
 import { Button } from "@/components/ui/button";
 
 interface ImageFile {
@@ -36,7 +37,7 @@ export default function FileManager({ onSelectFile }: FileManagerProps) {
     if (productNameSearch) {
       query.append("productName", productNameSearch);
     }
-    fetch(`/api/files?${query.toString()}`)
+    void fetch(`/api/files?${query.toString()}`)
       .then((res) => res.json())
       .then(setFiles);
   }, [filenameSearch, productNameSearch]);
@@ -119,7 +120,9 @@ export default function FileManager({ onSelectFile }: FileManagerProps) {
               variant="destructive"
               size="sm"
               className="absolute top-1 right-1"
-              onClick={() => handleDelete(file.id)}
+              onClick={() => {
+                void handleDelete(file.id);
+              }}
             >
               X
             </Button>

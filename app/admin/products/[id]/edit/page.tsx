@@ -1,9 +1,10 @@
 "use client";
 
-import EditProductForm from "@/components/products/EditProductForm";
+import { Product, ProductImage, ImageFile } from "@prisma/client";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Product, ProductImage, ImageFile } from "@prisma/client";
+
+import EditProductForm from "@/components/products/EditProductForm";
 
 type ProductWithImages = Product & {
   images: (ProductImage & { imageFile: ImageFile })[];
@@ -16,9 +17,9 @@ export default function EditProductPage() {
 
   useEffect(() => {
     if (id) {
-      fetch(`/api/products/${id}`)
+      void fetch(`/api/products/${id as string}`)
         .then((res) => res.json())
-        .then((data) => setProduct(data));
+        .then((data: ProductWithImages) => setProduct(data));
     }
   }, [id]);
 

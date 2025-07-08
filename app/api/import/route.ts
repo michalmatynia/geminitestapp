@@ -1,7 +1,7 @@
 
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, Prisma } from '@prisma/client';
-import Papa from 'papaparse';
+import { Prisma, PrismaClient } from "@prisma/client";
+import { NextRequest, NextResponse } from "next/server";
+import Papa from "papaparse";
 
 const prisma = new PrismaClient();
 
@@ -12,10 +12,10 @@ interface CsvRow {
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
-    const file = formData.get('file') as File;
+    const file = formData.get("file") as File;
 
     if (!file) {
-      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
     const text = await file.text();
@@ -24,10 +24,12 @@ export async function POST(req: NextRequest) {
 
     for (const row of parsed.data) {
       const productData: Prisma.ProductCreateInput = {
-        sku: row['SKU'],
-        name: row['My name'],
-        price: row['Cena sprzedaży Retail Online (in EUR)'] ? parseInt(row['Cena sprzedaży Retail Online (in EUR)']) : 0,
-        description: `${row['EN']}\n\n${row['PL']}`,
+        sku: row["SKU"],
+        name: row["My name"],
+        price: row["Cena sprzedaży Retail Online (in EUR)"]
+          ? parseInt(row["Cena sprzedaży Retail Online (in EUR)"])
+          : 0,
+        description: `${row["EN"]}\n\n${row["PL"]}`,
       };
 
       // Filter out entries with null or empty sku
@@ -38,9 +40,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ message: 'CSV imported successfully' });
+    return NextResponse.json({ message: "CSV imported successfully" });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: 'Error importing CSV' }, { status: 500 });
+    return NextResponse.json({ error: "Error importing CSV" }, { status: 500 });
   }
 }

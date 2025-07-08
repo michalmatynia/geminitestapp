@@ -1,11 +1,12 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
-import Image from "next/image";
-import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowUpDown } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export type Product = {
   id: string;
@@ -69,7 +70,9 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
         </button>
       </Link>
       <button
-        onClick={() => handleDelete(product.id, setRefreshTrigger)}
+        onClick={() => {
+          void handleDelete(product.id, setRefreshTrigger);
+        }}
         className="text-destructive hover:text-destructive/80"
       >
         Delete
@@ -125,7 +128,10 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: "name",
     header: ({ column }) => {
       return (
-        <Button variant="ghost" onClick={() => column.toggleSorting()}>
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting()}
+        >
           Name
           <ArrowUpDown className="ml-2 size-4" />
         </Button>
@@ -136,7 +142,10 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: "price",
     header: ({ column }) => {
       return (
-        <Button variant="ghost" onClick={() => column.toggleSorting()}>
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting()}
+        >
           Price
           <ArrowUpDown className="ml-2 size-4" />
         </Button>
@@ -147,7 +156,10 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: "createdAt",
     header: ({ column }) => {
       return (
-        <Button variant="ghost" onClick={() => column.toggleSorting()}>
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting()}
+        >
           Created At
           <ArrowUpDown className="ml-2 size-4" />
         </Button>

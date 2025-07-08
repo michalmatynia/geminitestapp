@@ -1,7 +1,8 @@
-import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
+import fs from "fs/promises";
+import path from "path";
+
+import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
@@ -10,7 +11,7 @@ export async function DELETE(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   { params }: any
 ) {
-  const { id } = params;
+  const { id } = params as { id: string };
 
   try {
     const imageFile = await prisma.imageFile.findUnique({

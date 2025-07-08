@@ -1,11 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import Image from "next/image";
 import { Product, ProductImage, ImageFile } from "@prisma/client";
+import Image from "next/image";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-
 
 type ProductWithImages = Product & {
   images: (ProductImage & { imageFile: ImageFile })[];
@@ -38,9 +37,9 @@ export default function ViewProductPage() {
 
   useEffect(() => {
     if (id) {
-      fetch(`/api/products/${id}`)
+      void fetch(`/api/products/${id as string}`)
         .then((res) => res.json())
-        .then((data) => setProduct(data));
+        .then((data: ProductWithImages) => setProduct(data));
     }
   }, [id]);
 
@@ -136,3 +135,4 @@ export default function ViewProductPage() {
     </div>
   );
 }
+

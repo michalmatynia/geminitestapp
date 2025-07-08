@@ -1,7 +1,8 @@
-import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
-import { productSchema } from '@/lib/validations/product';
-import { handleProductImageUpload } from '@/lib/utils/productUtils';
+import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
+
+import { handleProductImageUpload } from "@/lib/utils/productUtils";
+import { productSchema } from "@/lib/validations/product";
 
 export async function GET(
   req: Request,
@@ -9,7 +10,7 @@ export async function GET(
   { params }: any
 ) {
   const prisma = new PrismaClient();
-  const { id } = await params;
+  const { id } = params as { id: string };
 
   try {
     const product = await prisma.product.findUnique({
@@ -20,28 +21,35 @@ export async function GET(
             imageFile: true,
           },
           orderBy: {
-            assignedAt: 'desc',
+            assignedAt: "desc",
           },
         },
       },
     });
 
     if (!product) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Product not found" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json(product);
   } catch (_error) {
-    return NextResponse.json({ error: "Failed to fetch product" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch product" },
+      { status: 500 }
+    );
   }
 }
 
 export async function PUT(
   req: Request,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   { params }: any
 ): Promise<NextResponse> {
   const prisma = new PrismaClient();
-  const { id } = await params;
+  const { id } = params as { id: string };
   try {
     const formData = await req.formData();
     const name = formData.get("name") as string;
@@ -139,14 +147,20 @@ export async function PUT(
     });
 
     if (!updatedProduct) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Product not found" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json(updatedProduct);
   } catch (_error: unknown) {
     const error = _error as { code?: string; issues?: { message: string }[] };
     if (error.code === "P2025") {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Product not found" },
+        { status: 404 }
+      );
     }
     if (error.issues) {
       return NextResponse.json(
@@ -163,10 +177,11 @@ export async function PUT(
 
 export async function DELETE(
   req: Request,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   { params }: any
 ) {
   const prisma = new PrismaClient();
-  const { id } = await params;
+  const { id } = params as { id: string };
 
   try {
     await prisma.product.delete({
@@ -177,7 +192,10 @@ export async function DELETE(
   } catch (_error: unknown) {
     const error = _error as { code?: string };
     if (error.code === "P2025") {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Product not found" },
+        { status: 404 }
+      );
     }
     return NextResponse.json(
       { error: "Failed to delete product" },
@@ -185,3 +203,4 @@ export async function DELETE(
     );
   }
 }
+

@@ -1,11 +1,14 @@
 "use client";
 
+import { Product, ProductImage, ImageFile } from "@prisma/client";
 import Link from "next/link";
-import { ProductFormProvider, useProductFormContext } from "@/lib/context/ProductFormContext";
+
 import FileManager from "@/components/products/FileManager";
 import ProductForm from "@/components/products/ProductForm";
-import { Product } from "@prisma/client";
-import { ProductImage, ImageFile } from "@prisma/client";
+import {
+  ProductFormProvider,
+  useProductFormContext,
+} from "@/lib/context/ProductFormContext";
 
 type ProductWithImages = Product & {
   images: (ProductImage & { imageFile: ImageFile })[];
@@ -51,7 +54,10 @@ function EditProductForm() {
   return (
     <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
       <div className="mb-4 flex items-center">
-        <Link href="/admin/products" className="mr-4 text-white hover:text-gray-300">
+        <Link
+          href="/admin/products"
+          className="mr-4 text-white hover:text-gray-300"
+        >
           <ArrowLeftIcon className="size-6" />
         </Link>
         <h1 className="text-3xl font-bold text-white">Edit Product</h1>
@@ -78,7 +84,11 @@ function EditProductForm() {
   );
 }
 
-export default function EditProductPage({ product }: { product: ProductWithImages }) {
+export default function EditProductPage({
+  product,
+}: {
+  product: ProductWithImages;
+}) {
   return (
     <ProductFormProvider product={product}>
       <EditProductForm />

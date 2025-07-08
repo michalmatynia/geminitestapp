@@ -1,5 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
+import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
@@ -8,7 +8,10 @@ export async function DELETE(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   { params }: any
 ) {
-  const { productId, imageFileId } = params;
+  const { productId, imageFileId } = params as {
+    productId: string;
+    imageFileId: string;
+  };
 
   try {
     await prisma.productImage.delete({
@@ -22,9 +25,19 @@ export async function DELETE(
     return new NextResponse(null, { status: 204 });
   } catch (error: unknown) {
     console.error("Error disconnecting image from product:", error);
-    if (error instanceof Error && 'code' in error && (error as { code: string }).code === 'P2025') {
-      return NextResponse.json({ error: "Product-image link not found" }, { status: 404 });
+    if (
+      error instanceof Error &&
+      "code" in error &&
+      (error as { code: string }).code === "P2025"
+    ) {
+      return NextResponse.json(
+        { error: "Product-image link not found" },
+        { status: 404 }
+      );
     }
-    return NextResponse.json({ error: "Failed to disconnect image" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to disconnect image" },
+      { status: 500 }
+    );
   }
 }

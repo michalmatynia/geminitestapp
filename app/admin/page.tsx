@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { columns, Product } from "@/components/columns";
 import { DataTable } from "@/components/data-table";
 import { Input } from "@/components/ui/input";
@@ -19,7 +20,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     const filters = { search, minPrice, maxPrice, startDate, endDate };
-    getProducts(filters).then(setData);
+    void getProducts(filters).then(setData);
   }, [search, minPrice, maxPrice, startDate, endDate, refreshTrigger]);
 
   return (

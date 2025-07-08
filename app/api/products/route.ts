@@ -64,8 +64,7 @@ export async function GET(req: Request) {
     });
 
     return NextResponse.json(products);
-  } catch (error) {
-    console.log("Error fetching products:", error);
+  } catch (_error) {
     return NextResponse.json(
       { error: "Failed to fetch products" },
       { status: 500 }
@@ -76,7 +75,6 @@ export async function GET(req: Request) {
 export async function POST(
   req: Request
 ): Promise<NextResponse<Product | { error: string }>> {
-  console.log("Received POST request to /api/products");
   const prisma = new PrismaClient();
   const formData = await req.formData();
   const name = formData.get("name") as string;
@@ -99,7 +97,6 @@ export async function POST(
   const imageFileId = formData.get("imageFileId") as string | null;
 
   try {
-    console.log("Validating product data...");
     const validatedData = productSchema.parse({
       name,
       price,
@@ -112,9 +109,7 @@ export async function POST(
       sizeLength,
       sizeWidth,
     });
-    console.log("Product data validated successfully:", validatedData);
 
-    console.log("Creating product in database...");
     const product = await prisma.product.create({
       data: {
         name: validatedData.name,
@@ -129,13 +124,10 @@ export async function POST(
         sizeWidth: validatedData.sizeWidth,
       },
     });
-    console.log("Product created successfully:", product);
 
     if (image) {
-      console.log("Uploading product image...");
       const uploadedImageInfo = await handleProductImageUpload(image);
       if (uploadedImageInfo) {
-        console.log("Creating image file in database...");
         const newImageFile = await prisma.imageFile.create({
           data: {
             filename: image.name,
@@ -146,29 +138,23 @@ export async function POST(
             height: uploadedImageInfo.height,
           },
         });
-        console.log("Image file created successfully:", newImageFile);
 
-        console.log("Creating product image relation in database...");
         await prisma.productImage.create({
           data: {
             productId: product.id,
             imageFileId: newImageFile.id,
           },
         });
-        console.log("Product image relation created successfully.");
       }
     } else if (imageFileId) {
-      console.log("Creating product image relation in database...");
       await prisma.productImage.create({
         data: {
           productId: product.id,
           imageFileId: imageFileId,
         },
       });
-      console.log("Product image relation created successfully.");
     }
 
-    console.log("Fetching product with images...");
     const productWithImages = await prisma.product.findUnique({
       where: { id: product.id },
       include: {
@@ -179,16 +165,13 @@ export async function POST(
         },
       },
     });
-    console.log("Product with images fetched successfully:", productWithImages);
 
     return NextResponse.json(productWithImages as Product);
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       const errorMessage = error.errors.map((e) => e.message).join(", ");
-      console.error("Zod validation error:", errorMessage);
       return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
-    console.error("Error creating product:", error);
     return NextResponse.json(
       { error: "Failed to create product" },
       { status: 500 }

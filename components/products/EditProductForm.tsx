@@ -31,7 +31,7 @@ function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-function EditProductForm({ product }: { product: ProductWithImages }) {
+function EditProductForm() {
   const {
     register,
     handleSubmit,
@@ -81,7 +81,7 @@ function EditProductForm({ product }: { product: ProductWithImages }) {
 export default function EditProductPage({ product }: { product: ProductWithImages }) {
   return (
     <ProductFormProvider product={product}>
-      <EditProductForm product={product} />
+      <EditProductForm />
     </ProductFormProvider>
   );
 }

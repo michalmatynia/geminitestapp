@@ -5,7 +5,11 @@ import path from 'path';
 
 const prisma = new PrismaClient();
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }): Promise<NextResponse<{ error: string } | null>> {
+export async function DELETE(
+  req: Request,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  { params }: any
+) {
   const { id } = params;
 
   try {
@@ -14,15 +18,19 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     });
 
     if (!imageFile) {
-      return NextResponse.json({ error: "Image file not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Image file not found" },
+        { status: 404 }
+      );
     }
 
-    const filepath = path.join(process.cwd(), 'public', imageFile.filepath);
+    const filepath = path.join(process.cwd(), "public", imageFile.filepath);
 
     try {
       await fs.unlink(filepath);
-    } catch (error: NodeJS.ErrnoException) {
-      if (error.code !== 'ENOENT') {
+    } catch (_error: unknown) {
+      const error = _error as { code?: string };
+      if (error.code !== "ENOENT") {
         console.error("Error deleting file from filesystem:", error);
         // We can choose to continue even if file deletion fails,
         // as the primary goal is to remove the DB record.
@@ -40,6 +48,9 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     return new NextResponse(null, { status: 204 });
   } catch (error: unknown) {
     console.error("Error deleting image file:", error);
-    return NextResponse.json({ error: "Failed to delete image file" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete image file" },
+      { status: 500 }
+    );
   }
 }

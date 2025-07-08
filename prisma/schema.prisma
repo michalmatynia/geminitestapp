@@ -8,20 +8,20 @@ generator client {
 }
 
 model Product {
-  id                           String    @id @default(cuid())
-  sku                          String?   @unique
-  name                         String?
-  description                  String?
-  supplierName                 String?
-  supplierLink                 String?
-  priceComment                 String?
-  stock                        Int?
-  price                        Int?
-  sizeLength                   Int?
-  sizeWidth                    Int?
-  createdAt                    DateTime  @default(now())
-  updatedAt                    DateTime  @updatedAt
-  images                       ProductImage[]
+  id           String    @id @default(cuid())
+  sku          String?   @unique
+  name         String?
+  description  String?
+  supplierName String?
+  supplierLink String?
+  priceComment String?
+  stock        Int?
+  price        Int?
+  sizeLength   Int?
+  sizeWidth    Int?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  images       ProductImage[]
 }
 
 model Setting {

@@ -1,13 +1,10 @@
-"use client"
-
 "use client";
 
 import { useEffect, useState } from "react";
-import { columns } from "@/components/columns";
+import { columns, Product } from "@/components/columns";
 import { DataTable } from "@/components/data-table";
 import { Input } from "@/components/ui/input";
 import { getProducts } from "@/lib/api";
-import { Product } from "@prisma/client";
 
 export default function AdminPage() {
   const [data, setData] = useState<Product[]>([]);

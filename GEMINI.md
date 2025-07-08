@@ -128,6 +128,7 @@ API tests are implemented using Jest and Supertest to ensure the backend endpoin
 
 - Fetching all products.
 - Filtering products by search terms.
+- Sorting products.
 - Creating new products (including with image uploads).
 - Updating existing products (including with new image uploads).
 - Deleting products.

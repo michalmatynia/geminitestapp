@@ -1,4 +1,3 @@
-import { createMocks } from "node-mocks-http";
 import { GET } from "../../../app/api/products/route";
 import { PrismaClient } from "@prisma/client";
 import { createMockProduct } from "../../../mocks/products";

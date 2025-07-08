@@ -1,11 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
-import { PrismaClient, Product, ProductImage, ImageFile } from "@prisma/client";
+import { Product, ProductImage, ImageFile } from "@prisma/client";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
-const prisma = new PrismaClient();
 
-// The ProductWithImages type extends the Product type with the images
-// relation, which includes the ImageFile type.
 type ProductWithImages = Product & {
   images: (ProductImage & { imageFile: ImageFile })[];
 };
@@ -30,28 +31,21 @@ function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-interface ViewProductPageProps {
-  params: {
-    id: string;
-  };
-}
+export default function ViewProductPage() {
+  const params = useParams();
+  const { id } = params;
+  const [product, setProduct] = useState<ProductWithImages | null>(null);
 
-export default async function ViewProductPage({ params }: ViewProductPageProps) {
-  const { id } = await params;
-
-  const product = await prisma.product.findUnique({
-    where: { id },
-    include: {
-      images: {
-        include: {
-          imageFile: true,
-        },
-      },
-    },
-  });
+  useEffect(() => {
+    if (id) {
+      fetch(`/api/products/${id}`)
+        .then((res) => res.json())
+        .then((data) => setProduct(data));
+    }
+  }, [id]);
 
   if (!product) {
-    return <div className="text-white">Product not found</div>;
+    return <div className="text-white">Loading...</div>;
   }
 
   return (

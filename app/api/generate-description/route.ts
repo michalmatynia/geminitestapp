@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
   console.log("Received POST request to /api/generate-description");
@@ -18,12 +15,9 @@ export async function POST(req: NextRequest) {
 
   try {
     console.log("Fetching OpenAI API key from database...");
-    // const apiKeySetting = await prisma.setting.findUnique({
-    //   where: { key: "openai_api_key" },
-    // });
-    const apiKeySetting = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY;
 
-    if (!apiKeySetting) {
+    if (!apiKey) {
       console.error("OpenAI API key not configured");
       return NextResponse.json(
         { error: "OpenAI API key not configured" },
@@ -33,7 +27,7 @@ export async function POST(req: NextRequest) {
     console.log("OpenAI API key fetched successfully.");
 
     const openai = new OpenAI({
-      apiKey: apiKeySetting.value,
+      apiKey: apiKey,
     });
 
     console.log("Generating description with OpenAI...");

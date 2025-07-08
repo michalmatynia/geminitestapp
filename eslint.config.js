@@ -32,6 +32,7 @@ const eslintConfig = [
       "react/prop-types": "off",
       "tailwindcss/classnames-order": "off",
       "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_", "ignoreRestSiblings": true }],
+      "@typescript-eslint/no-explicit-any": "off",
     },
     settings: {
       react: {

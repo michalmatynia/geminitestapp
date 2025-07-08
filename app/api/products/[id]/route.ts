@@ -1,9 +1,13 @@
-import { PrismaClient, Product } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
 import { productSchema } from '@/lib/validations/product';
 import { handleProductImageUpload } from '@/lib/utils/productUtils';
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  req: Request,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  { params }: any
+) {
   const prisma = new PrismaClient();
   const { id } = params;
 
@@ -27,38 +31,51 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     }
 
     return NextResponse.json(product);
-  } catch (error) {
-    console.error(`Error fetching product ${id}:`, error);
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to fetch product" }, { status: 500 });
   }
 }
 
 export async function PUT(
   req: Request,
-  { params, prisma: prismaClient }: { params: { id: string }; prisma?: PrismaClient }
-): Promise<NextResponse<Product | { error: string }>> {
-  console.log(`Received PUT request to /api/products/${params.id}`);
-  const prisma = prismaClient || new PrismaClient();
-  const { id } = await params;
+  { params }: any
+): Promise<NextResponse> {
+  const prisma = new PrismaClient();
+  const { id } = params;
   try {
     const formData = await req.formData();
     const name = formData.get("name") as string;
     const price = parseFloat(formData.get("price") as string);
     const sku = formData.get("sku") as string;
     const description = formData.get("description") as string | null;
+    const supplierName = formData.get("supplierName") as string | null;
+    const supplierLink = formData.get("supplierLink") as string | null;
+    const priceComment = formData.get("priceComment") as string | null;
+    const stock = formData.get("stock")
+      ? parseInt(formData.get("stock") as string, 10)
+      : null;
+    const sizeLength = formData.get("sizeLength")
+      ? parseInt(formData.get("sizeLength") as string, 10)
+      : null;
+    const sizeWidth = formData.get("sizeWidth")
+      ? parseInt(formData.get("sizeWidth") as string, 10)
+      : null;
     const image: File | null = formData.get("image") as unknown as File;
     const imageFileId = formData.get("imageFileId") as string | null;
 
-    console.log("Validating product data...");
     const validatedData = productSchema.parse({
       name,
       price,
       sku,
       description,
+      supplierName,
+      supplierLink,
+      priceComment,
+      stock,
+      sizeLength,
+      sizeWidth,
     });
-    console.log("Product data validated successfully:", validatedData);
 
-    console.log("Updating product in database...");
     const updatedProduct = await prisma.$transaction(async (tx) => {
       const product = await tx.product.update({
         where: { id },
@@ -67,15 +84,18 @@ export async function PUT(
           price: validatedData.price,
           sku: validatedData.sku,
           description: validatedData.description,
+          supplierName: validatedData.supplierName,
+          supplierLink: validatedData.supplierLink,
+          priceComment: validatedData.priceComment,
+          stock: validatedData.stock,
+          sizeLength: validatedData.sizeLength,
+          sizeWidth: validatedData.sizeWidth,
         },
       });
-      console.log("Product updated successfully:", product);
 
       if (image) {
-        console.log("Uploading product image...");
         const uploadedImageInfo = await handleProductImageUpload(image);
         if (uploadedImageInfo) {
-          console.log("Creating image file in database...");
           const newImageFile = await tx.imageFile.create({
             data: {
               filename: image.name,
@@ -86,29 +106,23 @@ export async function PUT(
               height: uploadedImageInfo.height,
             },
           });
-          console.log("Image file created successfully:", newImageFile);
 
-          console.log("Creating product image relation in database...");
           await tx.productImage.create({
             data: {
               productId: product.id,
               imageFileId: newImageFile.id,
             },
           });
-          console.log("Product image relation created successfully.");
         }
       } else if (imageFileId) {
-        console.log("Creating product image relation in database...");
         await tx.productImage.create({
           data: {
             productId: product.id,
             imageFileId: imageFileId,
           },
         });
-        console.log("Product image relation created successfully.");
       }
 
-      console.log("Fetching product with images...");
       return tx.product.findUnique({
         where: { id },
         include: {
@@ -123,18 +137,23 @@ export async function PUT(
         },
       });
     });
-    console.log("Product with images fetched successfully:", updatedProduct);
+
+    if (!updatedProduct) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
 
     return NextResponse.json(updatedProduct);
-  } catch (error: unknown) {
-    if (error instanceof Error && "issues" in error) {
-      console.error("Zod validation error:", error);
+  } catch (_error: unknown) {
+    const error = _error as { code?: string; issues?: { message: string }[] };
+    if (error.code === "P2025") {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+    if (error.issues) {
       return NextResponse.json(
-        { error: JSON.parse(error.message) },
+        { error: JSON.stringify(error.issues) },
         { status: 400 }
       );
     }
-    console.error("Error updating product:", error);
     return NextResponse.json(
       { error: "Failed to update product" },
       { status: 500 }
@@ -144,22 +163,22 @@ export async function PUT(
 
 export async function DELETE(
   req: Request,
-  { params, prisma: prismaClient }: { params: { id: string }; prisma?: PrismaClient }
+  { params }: any
 ) {
-  console.log(`Received DELETE request to /api/products/${params.id}`);
-  const prisma = prismaClient || new PrismaClient();
+  const prisma = new PrismaClient();
   const { id } = params;
 
   try {
-    console.log("Deleting product from database...");
     await prisma.product.delete({
       where: { id },
     });
-    console.log("Product deleted successfully.");
 
     return new Response(null, { status: 204 });
-  } catch (error) {
-    console.error(`Error deleting product ${id}:`, error);
+  } catch (_error: unknown) {
+    const error = _error as { code?: string };
+    if (error.code === "P2025") {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
     return NextResponse.json(
       { error: "Failed to delete product" },
       { status: 500 }

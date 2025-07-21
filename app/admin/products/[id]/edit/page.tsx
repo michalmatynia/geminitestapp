@@ -1,31 +1,37 @@
-"use client";
-
 import { Product, ProductImage, ImageFile } from "@prisma/client";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
 
 import EditProductForm from "@/components/products/EditProductForm";
+import prisma from "@/lib/prisma";
 
 type ProductWithImages = Product & {
   images: (ProductImage & { imageFile: ImageFile })[];
 };
 
-export default function EditProductPage() {
-  const params = useParams();
-  const { id } = params;
-  const [product, setProduct] = useState<ProductWithImages | null>(null);
+async function getProduct(id: string) {
+  const product = await prisma.product.findUnique({
+    where: { id },
+    include: {
+      images: {
+        include: {
+          imageFile: true,
+        },
+      },
+    },
+  });
+  return product;
+}
 
-  useEffect(() => {
-    if (id) {
-      void fetch(`/api/products/${id as string}`)
-        .then((res) => res.json())
-        .then((data: ProductWithImages) => setProduct(data));
-    }
-  }, [id]);
+export default async function EditProductPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const { id } = await params;
+  const product = await getProduct(id);
 
   if (!product) {
-    return <div>Loading...</div>;
+    return <div>Product not found</div>;
   }
 
-  return <EditProductForm product={product} />;
+  return <EditProductForm product={product as ProductWithImages} />;
 }

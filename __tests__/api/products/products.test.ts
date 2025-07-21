@@ -212,4 +212,15 @@ describe("Products API", () => {
       expect(productImages.length).toEqual(0);
     });
   });
+
+  describe("GET /api/products/[id]", () => {
+    it("should return a single product", async () => {
+      const product = await createMockProduct(prisma, { name: "Product 1" });
+      const req = new Request(`http://localhost/api/products/${product.id}`);
+      const res = await GET(req, { params: { id: product.id } });
+      const fetchedProduct = await res.json();
+      expect(res.status).toEqual(200);
+      expect(fetchedProduct.name).toEqual("Product 1");
+    });
+  });
 });

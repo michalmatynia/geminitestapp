@@ -287,12 +287,3 @@ export default function ProductForm({ submitButtonText }: ProductFormProps) {
     </form>
   );
 }
-
-
-
-
-
-
-
-
-

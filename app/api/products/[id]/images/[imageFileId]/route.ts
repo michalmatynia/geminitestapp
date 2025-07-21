@@ -5,13 +5,9 @@ const prisma = new PrismaClient();
 
 export async function DELETE(
   req: Request,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  { params }: any
+  { params }: { params: { id: string; imageFileId: string } }
 ) {
-  const { productId, imageFileId } = params as {
-    productId: string;
-    imageFileId: string;
-  };
+  const { id: productId, imageFileId } = params;
 
   try {
     await prisma.productImage.delete({

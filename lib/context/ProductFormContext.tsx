@@ -8,6 +8,7 @@ import {
   createContext,
   FormEvent,
   useContext,
+  useEffect,
   useState,
 } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -68,48 +69,84 @@ export function ProductFormProvider({
       sizeWidth: product?.sizeWidth || 0,
     },
   });
-  const { register, handleSubmit, formState: { errors }, setValue, getValues } = methods;
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    getValues,
+  } = methods;
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [showFileManager, setShowFileManager] = useState(false);
   const [imageFileIds, setImageFileIds] = useState<string[]>([]);
-  const existingImageUrls =
-    product?.images?.map((img: any) => img.imageFile.filepath) || [];
+  const [existingImages, setExistingImages] = useState(product?.images || []);
+  const existingImageUrls = existingImages.map((img: any) => img.imageFile.filepath);
+
+  useEffect(() => {
+    const urls = newImageFiles.map((file) => URL.createObjectURL(file));
+    setPreviewUrls(urls);
+
+    return () => {
+      urls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [newImageFiles]);
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const newPreviewUrls = Array.from(files).map((file) =>
-        URL.createObjectURL(file)
-      );
-      setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
+      setNewImageFiles((prev) => [...prev, ...Array.from(files)]);
     }
   };
 
   const handleFileSelect = (files: { id: string; filepath: string }[]) => {
     const newImageFileIds = files.map((file) => file.id);
-    const newPreviewUrls = files.map((file) => file.filepath);
     setImageFileIds((prev) => [...prev, ...newImageFileIds]);
-    setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
     setShowFileManager(false);
   };
 
   const handleDisconnectImage = async (imageUrl: string) => {
-    if (!product) return;
-    const image = product.images.find(
-      (img: any) => img.imageFile.filepath === imageUrl
-    );
-    if (!image) return;
+    // Check if it's an existing image
+    if (existingImageUrls.includes(imageUrl)) {
+      if (!product) return;
+      const image = existingImages.find(
+        (img: any) => img.imageFile.filepath === imageUrl
+      );
+      if (!image) return;
 
-    try {
-      await fetch(`/api/products/${product.id}/images/${image.imageFile.id}`, {
-        method: "DELETE",
-      });
-      router.refresh();
-    } catch (error) {
-      console.error("Failed to disconnect image:", error);
+      try {
+        const res = await fetch(
+          `/api/products/${product.id}/images/${image.imageFile.id}`,
+          {
+            method: "DELETE",
+          }
+        );
+        if (res.ok) {
+          setExistingImages((prev) =>
+            prev.filter((img: any) => img.imageFile.filepath !== imageUrl)
+          );
+        }
+      } catch (error) {
+        console.error("Failed to disconnect image:", error);
+      }
+    } else {
+      // It's a preview image
+      const fileIndex = previewUrls.indexOf(imageUrl);
+      if (fileIndex > -1) {
+        setNewImageFiles((prev) => {
+          const newFiles = [...prev];
+          newFiles.splice(fileIndex, 1);
+          return newFiles;
+        });
+        setPreviewUrls((prev) => {
+          const newUrls = [...prev];
+          newUrls.splice(fileIndex, 1);
+          return newUrls;
+        });
+      }
     }
   };
 
@@ -125,14 +162,10 @@ export function ProductFormProvider({
       }
     });
 
-    const imageInput = document.getElementById(
-      "image-upload"
-    ) as HTMLInputElement;
-    if (imageInput.files) {
-      for (const file of Array.from(imageInput.files)) {
-        formData.append("images", file);
-      }
+    for (const file of newImageFiles) {
+      formData.append("images", file);
     }
+
     if (imageFileIds.length > 0) {
       for (const id of imageFileIds) {
         formData.append("imageFileIds", id);
@@ -178,7 +211,7 @@ export function ProductFormProvider({
           setShowFileManager,
           handleImageChange,
           handleFileSelect,
-          handleDisconnectImage: product ? handleDisconnectImage : undefined,
+          handleDisconnectImage,
         }}
       >
         {children}

@@ -1,8 +1,8 @@
 import { createMocks } from "node-mocks-http";
-import { GET } from "../../../app/api/files/route";
-import { DELETE } from "../../../app/api/files/[id]/route";
+import { GET } from "@/app/api/files/route";
+import { DELETE } from "@/app/api/files/[id]/route";
 import { PrismaClient } from "@prisma/client";
-import { createMockProduct } from "../../../mocks/products";
+import { createMockProduct } from "@/mocks/products";
 import fs from "fs/promises";
 import path from "path";
 

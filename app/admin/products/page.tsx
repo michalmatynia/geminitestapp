@@ -1,40 +1,78 @@
+"use client";
 
-import { PlusIcon } from "lucide-react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 
-import { columns } from "@/components/columns";
+import { columns, Product } from "@/components/columns";
 import { DataTable } from "@/components/data-table";
-import { Button } from "@/components/ui/button";
-import prisma from "@/lib/prisma";
+import { Input } from "@/components/ui/input";
+import { getProducts } from "@/lib/api";
 
-async function getProducts() {
-  const products = await prisma.product.findMany({
-    include: {
-      images: {
-        include: {
-          imageFile: true,
-        },
-      },
-    },
-  });
-  return products;
-}
+export default function AdminPage() {
+  const [data, setData] = useState<Product[]>([]);
+  // The refreshTrigger state is used to force a re-fetch of the products
+  // when a product is deleted.
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [search, setSearch] = useState<string>("");
+  const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
+  const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
 
-export default async function ProductsPage() {
-  const products = await getProducts();
+  useEffect(() => {
+    const filters = { search, minPrice, maxPrice, startDate, endDate };
+    void getProducts(filters).then(setData);
+  }, [search, minPrice, maxPrice, startDate, endDate, refreshTrigger]);
 
   return (
     <div className="container mx-auto py-10">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Products</h1>
-        <Button asChild>
-          <Link href="/admin/products/create">
-            <PlusIcon className="mr-2 h-4 w-4" />
-            Create Product
-          </Link>
-        </Button>
+      <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
+        <h1 className="mb-4 text-3xl font-bold text-white">Products</h1>
+        <div className="mb-4 flex space-x-4">
+          <Input
+            placeholder="Search by name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="max-w-sm"
+          />
+          <Input
+            type="number"
+            placeholder="Min Price"
+            value={minPrice || ""}
+            onChange={(e) =>
+              setMinPrice(e.target.value ? parseInt(e.target.value, 10) : undefined)
+            }
+            className="max-w-xs"
+          />
+          <Input
+            type="number"
+            placeholder="Max Price"
+            value={maxPrice || ""}
+            onChange={(e) =>
+              setMaxPrice(e.target.value ? parseInt(e.target.value, 10) : undefined)
+            }
+            className="max-w-xs"
+          />
+          <Input
+            type="date"
+            placeholder="Start Date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="max-w-xs"
+          />
+          <Input
+            type="date"
+            placeholder="End Date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="max-w-xs"
+          />
+        </div>
+        <DataTable
+          columns={columns}
+          data={data}
+          setRefreshTrigger={setRefreshTrigger}
+        />
       </div>
-      <DataTable columns={columns} data={products} />
     </div>
   );
 }

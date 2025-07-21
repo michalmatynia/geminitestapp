@@ -1,6 +1,7 @@
 import { createMocks } from "node-mocks-http";
 import { GET, POST } from "../../../app/api/products/route";
 import { PUT, DELETE } from "../../../app/api/products/[id]/route";
+import { DELETE as DELETE_IMAGE } from "../../../app/api/products/[id]/images/[imageFileId]/route";
 import { PrismaClient } from "@prisma/client";
 import { createMockProduct } from "../../../mocks/products";
 
@@ -170,6 +171,45 @@ describe("Products API", () => {
       });
       const res = await DELETE(req, { params: { id: "non-existent-id" } });
       expect(res.status).toEqual(404);
+    });
+  });
+
+  describe("DELETE /api/products/[id]/images/[imageFileId]", () => {
+    it("should unlink an image from a product", async () => {
+      const product = await createMockProduct(prisma, { name: "Product 1" });
+      const imageFile = await prisma.imageFile.create({
+        data: {
+          filename: "test.jpg",
+          filepath: "/test.jpg",
+          mimetype: "image/jpeg",
+          size: 123,
+        },
+      });
+      await prisma.productImage.create({
+        data: {
+          productId: product.id,
+          imageFileId: imageFile.id,
+        },
+      });
+
+      const req = new Request(
+        `http://localhost/api/products/${product.id}/images/${imageFile.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+      const res = await DELETE_IMAGE(req, {
+        params: { id: product.id, imageFileId: imageFile.id },
+      });
+
+      expect(res.status).toEqual(204);
+
+      const productImages = await prisma.productImage.findMany({
+        where: {
+          productId: product.id,
+        },
+      });
+      expect(productImages.length).toEqual(0);
     });
   });
 });

@@ -6,10 +6,9 @@ import { productSchema } from "@/lib/validations/product";
 
 export async function GET(
   req: Request,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  { params }: any
+  { params }: { params: { id: string } }
 ) {
-  const { id } = params as { id: string };
+  const id = params.id;
 
   try {
     const product = await prisma.product.findUnique({
@@ -44,10 +43,9 @@ export async function GET(
 
 export async function PUT(
   req: Request,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  { params }: any
+  { params }: { params: { id: string } }
 ): Promise<NextResponse> {
-  const { id } = params as { id: string };
+  const id = params.id;
   try {
     const formData = await req.formData();
     const name = formData.get("name") as string;
@@ -181,10 +179,9 @@ export async function PUT(
 
 export async function DELETE(
   req: Request,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  { params }: any
+  { params }: { params: { id: string } }
 ) {
-  const { id } = params as { id: string };
+  const id = params.id;
 
   try {
     await prisma.product.delete({

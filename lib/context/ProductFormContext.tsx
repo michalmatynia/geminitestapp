@@ -23,15 +23,15 @@ interface ProductFormContextType {
   errors: any;
   setValue: any;
   getValues: any;
-  existingImageUrl: string | null;
+  existingImageUrls: string[];
   uploading: boolean;
   uploadError: string | null;
-  previewUrl: string | null;
+  previewUrls: string[];
   showFileManager: boolean;
   setShowFileManager: (show: boolean) => void;
   handleImageChange: (e: ChangeEvent<HTMLInputElement>) => void;
-  handleFileSelect: (file: { id: string; filepath: string }) => void;
-  handleDisconnectImage?: () => void;
+  handleFileSelect: (files: { id: string; filepath: string }[]) => void;
+  handleDisconnectImage?: (imageUrl: string) => void;
 }
 
 const ProductFormContext = createContext<ProductFormContextType | null>(null);
@@ -51,7 +51,7 @@ export function ProductFormProvider({
   product,
 }: {
   children: React.ReactNode;
-  product?: Product;
+  product?: any;
 }) {
   const methods = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -72,34 +72,39 @@ export function ProductFormProvider({
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [showFileManager, setShowFileManager] = useState(false);
-  const [imageFileId, setImageFileId] = useState<string | null>(null);
-  const existingImageUrl =
-    (product as any)?.images?.[0]?.imageFile?.filepath || null;
+  const [imageFileIds, setImageFileIds] = useState<string[]>([]);
+  const existingImageUrls =
+    product?.images?.map((img: any) => img.imageFile.filepath) || [];
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    const files = e.target.files;
+    if (files) {
+      const newPreviewUrls = Array.from(files).map((file) =>
+        URL.createObjectURL(file)
+      );
+      setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
     }
   };
 
-  const handleFileSelect = (file: { id: string; filepath: string }) => {
-    setImageFileId(file.id);
-    setPreviewUrl(file.filepath);
+  const handleFileSelect = (files: { id: string; filepath: string }[]) => {
+    const newImageFileIds = files.map((file) => file.id);
+    const newPreviewUrls = files.map((file) => file.filepath);
+    setImageFileIds((prev) => [...prev, ...newImageFileIds]);
+    setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
     setShowFileManager(false);
   };
 
-  const handleDisconnectImage = async () => {
+  const handleDisconnectImage = async (imageUrl: string) => {
     if (!product) return;
-    const imageId = (product as any).images[0].imageFile.id;
+    const image = product.images.find(
+      (img: any) => img.imageFile.filepath === imageUrl
+    );
+    if (!image) return;
+
     try {
-      await fetch(`/api/products/${product.id}/images/${imageId}`, {
+      await fetch(`/api/products/${product.id}/images/${image.imageFile.id}`, {
         method: "DELETE",
       });
       router.refresh();
@@ -123,10 +128,15 @@ export function ProductFormProvider({
     const imageInput = document.getElementById(
       "image-upload"
     ) as HTMLInputElement;
-    if (imageInput.files?.[0]) {
-      formData.append("image", imageInput.files[0]);
-    } else if (imageFileId) {
-      formData.append("imageFileId", imageFileId);
+    if (imageInput.files) {
+      for (const file of Array.from(imageInput.files)) {
+        formData.append("images", file);
+      }
+    }
+    if (imageFileIds.length > 0) {
+      for (const id of imageFileIds) {
+        formData.append("imageFileIds", id);
+      }
     }
 
     try {
@@ -142,6 +152,7 @@ export function ProductFormProvider({
         throw new Error("Failed to save product");
       }
 
+      router.refresh();
       router.push("/admin/products");
     } catch (error) {
       setUploadError("Failed to save product");
@@ -159,10 +170,10 @@ export function ProductFormProvider({
           errors,
           setValue,
           getValues,
-          existingImageUrl,
+          existingImageUrls,
           uploading,
           uploadError,
-          previewUrl,
+          previewUrls,
           showFileManager,
           setShowFileManager,
           handleImageChange,

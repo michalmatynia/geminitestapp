@@ -19,16 +19,17 @@ interface ImageFile {
 }
 
 interface FileManagerProps {
-  onSelectFile?: (fileId: string) => void;
+  onSelectFile?: (files: { id: string; filepath: string }[]) => void;
 }
 
 export default function FileManager({ onSelectFile }: FileManagerProps) {
   const [files, setFiles] = useState<ImageFile[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<
+    { id: string; filepath: string }[]
+  >([]);
   const [filenameSearch, setFilenameSearch] = useState("");
   const [productNameSearch, setProductNameSearch] = useState("");
 
-  // The `fetchFiles` function fetches the files from the API based on the
-  // search criteria.
   const fetchFiles = useCallback(() => {
     const query = new URLSearchParams();
     if (filenameSearch) {
@@ -46,17 +47,20 @@ export default function FileManager({ onSelectFile }: FileManagerProps) {
     fetchFiles();
   }, [fetchFiles]);
 
-  // The `handleSelect` function is called when a file is selected. It calls
-  // the `onSelectFile` callback with the selected file's ID.
-  const handleSelect = (fileId: string) => {
+  const handleToggleSelect = (file: { id: string; filepath: string }) => {
+    setSelectedFiles((prev) =>
+      prev.some((f) => f.id === file.id)
+        ? prev.filter((f) => f.id !== file.id)
+        : [...prev, file]
+    );
+  };
+
+  const handleConfirmSelection = () => {
     if (onSelectFile) {
-      onSelectFile(fileId);
+      onSelectFile(selectedFiles);
     }
   };
 
-  // The `handleDelete` function sends a DELETE request to the API to delete a
-  // file. If the request is successful, it triggers a refresh of the file
-  // list.
   const handleDelete = async (fileId: string) => {
     if (confirm("Are you sure you want to delete this file?")) {
       const res = await fetch(`/api/files/${fileId}`, {
@@ -72,7 +76,14 @@ export default function FileManager({ onSelectFile }: FileManagerProps) {
 
   return (
     <div className="p-4 bg-gray-900 text-white">
-      <h2 className="text-2xl font-bold mb-4">File Manager</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold">File Manager</h2>
+        {onSelectFile && (
+          <Button onClick={handleConfirmSelection}>
+            Confirm Selection ({selectedFiles.length})
+          </Button>
+        )}
+      </div>
       <div className="flex space-x-4 mb-4">
         <input
           type="text"
@@ -91,19 +102,24 @@ export default function FileManager({ onSelectFile }: FileManagerProps) {
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {files.map((file) => (
-          <div key={file.id} className="relative">
-            <div
-              className={onSelectFile ? "cursor-pointer" : ""}
-              onClick={() => handleSelect(file.id)}
-            >
-              <Image
-                src={`/api/files/preview?fileId=${file.id}`}
-                alt={file.filename}
-                width={150}
-                height={150}
-                className="object-cover rounded"
-              />
-            </div>
+          <div
+            key={file.id}
+            className={`relative border-2 ${
+              selectedFiles.some((f) => f.id === file.id)
+                ? "border-blue-500"
+                : "border-transparent"
+            }`}
+            onClick={() =>
+              handleToggleSelect({ id: file.id, filepath: file.filepath })
+            }
+          >
+            <Image
+              src={`/api/files/preview?fileId=${file.id}`}
+              alt={file.filename}
+              width={150}
+              height={150}
+              className="object-cover rounded"
+            />
             <p className="text-center mt-2">{file.filename}</p>
             <div className="text-center text-xs text-gray-400">
               {file.products.map(({ product }) => (
@@ -120,7 +136,8 @@ export default function FileManager({ onSelectFile }: FileManagerProps) {
               variant="destructive"
               size="sm"
               className="absolute top-1 right-1"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 void handleDelete(file.id);
               }}
             >

@@ -29,22 +29,16 @@ function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
 }
 
 function CreateProductForm() {
-  const {
-    handleSubmit,
-    errors,
-    uploading,
-    uploadError,
-    previewUrl,
-    showFileManager,
-    setShowFileManager,
-    handleImageChange,
-    handleFileSelect,
-  } = useProductFormContext();
+  const { showFileManager, handleFileSelect } = useProductFormContext();
 
   return (
     <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
       <div className="mb-4 flex items-center">
-        <Link href="/admin" className="mr-4 text-white hover:text-gray-300">
+        <Link
+          href="/admin/products"
+          className="mr-4 text-white hover:text-gray-300"
+          aria-label="Back to products"
+        >
           <ArrowLeftIcon className="size-6" />
         </Link>
         <h1 className="text-3xl font-bold text-white">Create Product</h1>
@@ -52,17 +46,7 @@ function CreateProductForm() {
       {showFileManager ? (
         <FileManager onSelectFile={handleFileSelect} />
       ) : (
-        <ProductForm
-          handleSubmit={handleSubmit}
-          errors={errors}
-          handleImageChange={handleImageChange}
-          setShowFileManager={setShowFileManager}
-          previewUrl={previewUrl}
-          existingImageUrl={null}
-          uploading={uploading}
-          uploadError={uploadError}
-          submitButtonText="Create"
-        />
+        <ProductForm submitButtonText="Create" />
       )}
     </div>
   );

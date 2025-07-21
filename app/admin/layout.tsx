@@ -16,6 +16,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link href="/admin" className="text-lg font-semibold text-muted-foreground hover:text-foreground">
             Dashboard
           </Link>
+          <Link href="/admin/products" className="text-lg font-semibold text-muted-foreground hover:text-foreground">
+            Products
+          </Link>
           <Link href="/admin/products/create" className="text-lg font-semibold text-muted-foreground hover:text-foreground">
             Create Product
           </Link>

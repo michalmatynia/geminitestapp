@@ -1,12 +1,12 @@
-import { Prisma, PrismaClient, Product } from "@prisma/client";
+import { Prisma, Product } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import prisma from "@/lib/prisma";
 import { handleProductImageUpload } from "@/lib/utils/productUtils";
 import { productSchema } from "@/lib/validations/product";
 
 export async function GET(req: Request) {
-  const prisma = new PrismaClient();
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search") || "";
   const minPrice = searchParams.get("minPrice");
@@ -76,7 +76,6 @@ export async function GET(req: Request) {
 export async function POST(
   req: Request
 ): Promise<NextResponse<Product | { error: string }>> {
-  const prisma = new PrismaClient();
   const formData = await req.formData();
   const name = formData.get("name") as string;
   const price = parseFloat(formData.get("price") as string);
@@ -94,8 +93,8 @@ export async function POST(
   const sizeWidth = formData.get("sizeWidth")
     ? parseInt(formData.get("sizeWidth") as string, 10)
     : null;
-  const image: File | null = formData.get("image") as unknown as File;
-  const imageFileId = formData.get("imageFileId") as string | null;
+  const images: File[] = formData.getAll("images") as unknown as File[];
+  const imageFileIds = formData.getAll("imageFileIds") as string[];
 
   try {
     const validatedData = productSchema.parse({
@@ -126,34 +125,40 @@ export async function POST(
       },
     });
 
-    if (image) {
-      const uploadedImageInfo = await handleProductImageUpload(image);
-      if (uploadedImageInfo) {
-        const newImageFile = await prisma.imageFile.create({
-          data: {
-            filename: image.name,
-            filepath: uploadedImageInfo.filepath,
-            mimetype: image.type,
-            size: image.size,
-            width: uploadedImageInfo.width,
-            height: uploadedImageInfo.height,
-          },
-        });
+    if (images.length > 0) {
+      for (const image of images) {
+        const uploadedImageInfo = await handleProductImageUpload(image);
+        if (uploadedImageInfo) {
+          const newImageFile = await prisma.imageFile.create({
+            data: {
+              filename: image.name,
+              filepath: uploadedImageInfo.filepath,
+              mimetype: image.type,
+              size: image.size,
+              width: uploadedImageInfo.width,
+              height: uploadedImageInfo.height,
+            },
+          });
 
+          await prisma.productImage.create({
+            data: {
+              productId: product.id,
+              imageFileId: newImageFile.id,
+            },
+          });
+        }
+      }
+    }
+
+    if (imageFileIds.length > 0) {
+      for (const imageFileId of imageFileIds) {
         await prisma.productImage.create({
           data: {
             productId: product.id,
-            imageFileId: newImageFile.id,
+            imageFileId: imageFileId,
           },
         });
       }
-    } else if (imageFileId) {
-      await prisma.productImage.create({
-        data: {
-          productId: product.id,
-          imageFileId: imageFileId,
-        },
-      });
     }
 
     const productWithImages = await prisma.product.findUnique({

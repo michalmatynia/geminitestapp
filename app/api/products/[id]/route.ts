@@ -1,6 +1,6 @@
-import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 
+import prisma from "@/lib/prisma";
 import { handleProductImageUpload } from "@/lib/utils/productUtils";
 import { productSchema } from "@/lib/validations/product";
 
@@ -9,7 +9,6 @@ export async function GET(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   { params }: any
 ) {
-  const prisma = new PrismaClient();
   const { id } = params as { id: string };
 
   try {
@@ -48,7 +47,6 @@ export async function PUT(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   { params }: any
 ): Promise<NextResponse> {
-  const prisma = new PrismaClient();
   const { id } = params as { id: string };
   try {
     const formData = await req.formData();
@@ -68,8 +66,8 @@ export async function PUT(
     const sizeWidth = formData.get("sizeWidth")
       ? parseInt(formData.get("sizeWidth") as string, 10)
       : null;
-    const image: File | null = formData.get("image") as unknown as File;
-    const imageFileId = formData.get("imageFileId") as string | null;
+    const images: File[] = formData.getAll("images") as unknown as File[];
+    const imageFileIds = formData.getAll("imageFileIds") as string[];
 
     const validatedData = productSchema.parse({
       name,
@@ -101,34 +99,40 @@ export async function PUT(
         },
       });
 
-      if (image) {
-        const uploadedImageInfo = await handleProductImageUpload(image);
-        if (uploadedImageInfo) {
-          const newImageFile = await tx.imageFile.create({
-            data: {
-              filename: image.name,
-              filepath: uploadedImageInfo.filepath,
-              mimetype: image.type,
-              size: image.size,
-              width: uploadedImageInfo.width,
-              height: uploadedImageInfo.height,
-            },
-          });
+      if (images.length > 0) {
+        for (const image of images) {
+          const uploadedImageInfo = await handleProductImageUpload(image);
+          if (uploadedImageInfo) {
+            const newImageFile = await tx.imageFile.create({
+              data: {
+                filename: image.name,
+                filepath: uploadedImageInfo.filepath,
+                mimetype: image.type,
+                size: image.size,
+                width: uploadedImageInfo.width,
+                height: uploadedImageInfo.height,
+              },
+            });
 
+            await tx.productImage.create({
+              data: {
+                productId: product.id,
+                imageFileId: newImageFile.id,
+              },
+            });
+          }
+        }
+      }
+
+      if (imageFileIds.length > 0) {
+        for (const imageFileId of imageFileIds) {
           await tx.productImage.create({
             data: {
               productId: product.id,
-              imageFileId: newImageFile.id,
+              imageFileId: imageFileId,
             },
           });
         }
-      } else if (imageFileId) {
-        await tx.productImage.create({
-          data: {
-            productId: product.id,
-            imageFileId: imageFileId,
-          },
-        });
       }
 
       return tx.product.findUnique({
@@ -180,7 +184,6 @@ export async function DELETE(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   { params }: any
 ) {
-  const prisma = new PrismaClient();
   const { id } = params as { id: string };
 
   try {

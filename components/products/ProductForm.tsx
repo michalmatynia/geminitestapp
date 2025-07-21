@@ -1,45 +1,32 @@
 "use client";
 
 import Image from "next/image";
-import { ChangeEvent, FormEvent, useState } from "react";
-import {
-  FieldErrors,
-  useFormContext,
-} from "react-hook-form";
+import { useState } from "react";
+import { useFormContext } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useProductFormContext } from "@/lib/context/ProductFormContext";
 import { ProductFormData } from "@/lib/types";
 
-// The `ProductFormProps` interface defines the props for the `ProductForm`
-// component.
 interface ProductFormProps {
-  handleSubmit: (e: FormEvent<HTMLFormElement>) => void;
-  errors: FieldErrors<ProductFormData>;
-  handleImageChange: (e: ChangeEvent<HTMLInputElement>) => void;
-  setShowFileManager: (show: boolean) => void;
-  handleDisconnectImage?: () => void;
-  previewUrl: string | null;
-  existingImageUrl: string | null;
-  uploading: boolean;
-  uploadError: string | null;
   submitButtonText: string;
 }
 
-export default function ProductForm({
-  handleSubmit,
-  errors,
-  handleImageChange,
-  setShowFileManager,
-  handleDisconnectImage,
-  previewUrl,
-  existingImageUrl,
-  uploading,
-  uploadError,
-  submitButtonText,
-}: ProductFormProps) {
+export default function ProductForm({ submitButtonText }: ProductFormProps) {
+  const {
+    handleSubmit,
+    errors,
+    handleImageChange,
+    setShowFileManager,
+    handleDisconnectImage,
+    previewUrls,
+    existingImageUrls,
+    uploading,
+    uploadError,
+  } = useProductFormContext();
   const [generating, setGenerating] = useState(false);
   const { register, getValues, setValue } = useFormContext<ProductFormData>();
 
@@ -63,15 +50,24 @@ export default function ProductForm({
     }
   };
 
+  const allImageUrls = [...existingImageUrls, ...previewUrls];
+
   return (
     <form onSubmit={handleSubmit}>
       <div className="mb-4">
         <Label htmlFor="name">
           Name <span className="text-red-500">*</span>
         </Label>
-        <Input id="name" {...register("name")} />
+        <Input
+          id="name"
+          {...register("name")}
+          aria-required="true"
+          aria-invalid={errors.name ? "true" : "false"}
+        />
         {errors.name && (
-          <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+          <p className="text-red-500 text-sm mt-1" role="alert">
+            {errors.name.message}
+          </p>
         )}
       </div>
       <div className="mb-4">
@@ -82,25 +78,40 @@ export default function ProductForm({
           id="price"
           type="number"
           {...register("price", { valueAsNumber: true })}
+          aria-required="true"
+          aria-invalid={errors.price ? "true" : "false"}
         />
         {errors.price && (
-          <p className="text-red-500 text-sm mt-1">{errors.price.message}</p>
+          <p className="text-red-500 text-sm mt-1" role="alert">
+            {errors.price.message}
+          </p>
         )}
       </div>
       <div className="mb-4">
         <Label htmlFor="sku">
           SKU <span className="text-red-500">*</span>
         </Label>
-        <Input id="sku" {...register("sku")} />
+        <Input
+          id="sku"
+          {...register("sku")}
+          aria-required="true"
+          aria-invalid={errors.sku ? "true" : "false"}
+        />
         {errors.sku && (
-          <p className="text-red-500 text-sm mt-1">{errors.sku.message}</p>
+          <p className="text-red-500 text-sm mt-1" role="alert">
+            {errors.sku.message}
+          </p>
         )}
       </div>
       <div className="mb-4">
         <Label htmlFor="description">Description</Label>
-        <Textarea id="description" {...register("description")} />
+        <Textarea
+          id="description"
+          {...register("description")}
+          aria-invalid={errors.description ? "true" : "false"}
+        />
         {errors.description && (
-          <p className="text-red-500 text-sm mt-1">
+          <p className="text-red-500 text-sm mt-1" role="alert">
             {errors.description.message}
           </p>
         )}
@@ -111,33 +122,47 @@ export default function ProductForm({
           }}
           disabled={generating}
           className="mt-2"
+          aria-label="Generate product description"
+          aria-disabled={generating}
         >
           {generating ? "Generating..." : "Generate Description"}
         </Button>
       </div>
       <div className="mb-4">
         <Label htmlFor="supplierName">Supplier Name</Label>
-        <Input id="supplierName" {...register("supplierName")} />
+        <Input
+          id="supplierName"
+          {...register("supplierName")}
+          aria-invalid={errors.supplierName ? "true" : "false"}
+        />
         {errors.supplierName && (
-          <p className="text-red-500 text-sm mt-1">
+          <p className="text-red-500 text-sm mt-1" role="alert">
             {errors.supplierName.message}
           </p>
         )}
       </div>
       <div className="mb-4">
         <Label htmlFor="supplierLink">Supplier Link</Label>
-        <Input id="supplierLink" {...register("supplierLink")} />
+        <Input
+          id="supplierLink"
+          {...register("supplierLink")}
+          aria-invalid={errors.supplierLink ? "true" : "false"}
+        />
         {errors.supplierLink && (
-          <p className="text-red-500 text-sm mt-1">
+          <p className="text-red-500 text-sm mt-1" role="alert">
             {errors.supplierLink.message}
           </p>
         )}
       </div>
       <div className="mb-4">
         <Label htmlFor="priceComment">Price Comment</Label>
-        <Input id="priceComment" {...register("priceComment")} />
+        <Input
+          id="priceComment"
+          {...register("priceComment")}
+          aria-invalid={errors.priceComment ? "true" : "false"}
+        />
         {errors.priceComment && (
-          <p className="text-red-500 text-sm mt-1">
+          <p className="text-red-500 text-sm mt-1" role="alert">
             {errors.priceComment.message}
           </p>
         )}
@@ -148,9 +173,12 @@ export default function ProductForm({
           id="stock"
           type="number"
           {...register("stock", { valueAsNumber: true })}
+          aria-invalid={errors.stock ? "true" : "false"}
         />
         {errors.stock && (
-          <p className="text-red-500 text-sm mt-1">{errors.stock.message}</p>
+          <p className="text-red-500 text-sm mt-1" role="alert">
+            {errors.stock.message}
+          </p>
         )}
       </div>
       <div className="mb-4">
@@ -159,9 +187,10 @@ export default function ProductForm({
           id="sizeLength"
           type="number"
           {...register("sizeLength", { valueAsNumber: true })}
+          aria-invalid={errors.sizeLength ? "true" : "false"}
         />
         {errors.sizeLength && (
-          <p className="text-red-500 text-sm mt-1">
+          <p className="text-red-500 text-sm mt-1" role="alert">
             {errors.sizeLength.message}
           </p>
         )}
@@ -172,46 +201,55 @@ export default function ProductForm({
           id="sizeWidth"
           type="number"
           {...register("sizeWidth", { valueAsNumber: true })}
+          aria-invalid={errors.sizeWidth ? "true" : "false"}
         />
         {errors.sizeWidth && (
-          <p className="text-red-500 text-sm mt-1">
+          <p className="text-red-500 text-sm mt-1" role="alert">
             {errors.sizeWidth.message}
           </p>
         )}
       </div>
       <div className="mb-4">
-        <Label>Product Image</Label>
-        {(previewUrl || existingImageUrl) && (
-          <div className="mb-2">
-            <Image
-              key={previewUrl || existingImageUrl}
-              src={previewUrl || existingImageUrl!}
-              alt="Product Image"
-              width={128}
-              height={128}
-              className="max-w-xs h-auto"
-            />
-          </div>
-        )}
+        <Label>Product Images</Label>
+        <div className="grid grid-cols-3 gap-4">
+          {allImageUrls.map((url) => (
+            <div key={url} className="relative">
+              <Image
+                src={url}
+                alt="Product Image"
+                width={128}
+                height={128}
+                className="max-w-xs h-auto"
+              />
+              {handleDisconnectImage && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  className="absolute top-0 right-0"
+                  onClick={() => handleDisconnectImage(url)}
+                  aria-label="Remove image"
+                >
+                  X
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
         <div className="mt-2 flex space-x-4">
           <Button
             type="button"
             onClick={() => document.getElementById("image-upload")?.click()}
+            aria-label="Upload new images for the product"
           >
             Upload New
           </Button>
-          <Button type="button" onClick={() => setShowFileManager(true)}>
+          <Button
+            type="button"
+            onClick={() => setShowFileManager(true)}
+            aria-label="Choose existing images for the product"
+          >
             Choose Existing
           </Button>
-          {((previewUrl || existingImageUrl) && handleDisconnectImage) && (
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={handleDisconnectImage}
-            >
-              Remove Image
-            </Button>
-          )}
         </div>
         <Input
           type="file"
@@ -219,9 +257,18 @@ export default function ProductForm({
           accept="image/*"
           onChange={handleImageChange}
           className="hidden"
+          aria-label="Product image upload"
+          multiple
         />
         {uploading && (
-          <div className="mt-2 w-full bg-gray-700 rounded-full h-2.5">
+          <div
+            className="mt-2 w-full bg-gray-700 rounded-full h-2.5"
+            role="progressbar"
+            aria-valuenow={100}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Uploading image"
+          >
             <div
               className="bg-white h-2.5 rounded-full"
               style={{ width: "100%" }}
@@ -229,10 +276,12 @@ export default function ProductForm({
           </div>
         )}
         {uploadError && (
-          <p className="mt-2 text-sm text-red-500">Error: {uploadError}</p>
+          <p className="mt-2 text-sm text-red-500" role="alert">
+            Error: {uploadError}
+          </p>
         )}
       </div>
-      <Button type="submit" disabled={uploading}>
+      <Button type="submit" disabled={uploading} aria-disabled={uploading}>
         {uploading ? "Saving..." : submitButtonText}
       </Button>
     </form>

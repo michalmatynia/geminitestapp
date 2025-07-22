@@ -6,9 +6,10 @@ import { columns, Product } from "@/components/columns";
 import { DataTable } from "@/components/data-table";
 import { Input } from "@/components/ui/input";
 import { getProducts } from "@/lib/api";
+import { ProductWithImages } from "@/lib/types";
 
 export default function AdminPage() {
-  const [data, setData] = useState<Product[]>([]);
+  const [data, setData] = useState<ProductWithImages[]>([]);
   // The refreshTrigger state is used to force a re-fetch of the products
   // when a product is deleted.
   const [refreshTrigger, setRefreshTrigger] = useState(0);

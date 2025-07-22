@@ -1,13 +1,8 @@
-import { Product, ProductImage, ImageFile } from "@prisma/client";
-
+import { ProductWithImages } from "@/lib/types";
 import EditProductForm from "@/components/products/EditProductForm";
 import prisma from "@/lib/prisma";
 
-type ProductWithImages = Product & {
-  images: (ProductImage & { imageFile: ImageFile })[];
-};
-
-async function getProduct(id: string) {
+async function getProduct(id: string): Promise<ProductWithImages | null> {
   const product = await prisma.product.findUnique({
     where: { id },
     include: {
@@ -18,13 +13,13 @@ async function getProduct(id: string) {
       },
     },
   });
-  return product;
+  return product as ProductWithImages | null;
 }
 
 export default async function EditProductPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
   const product = await getProduct(id);

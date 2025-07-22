@@ -1,77 +1,126 @@
 "use client";
 
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
-import { columns, Product } from "@/components/columns";
-import { DataTable } from "@/components/data-table";
-import { Input } from "@/components/ui/input";
-import { getProducts } from "@/lib/api";
+import { ConnectionLogType } from "@/lib/types";
 
-export default function AdminPage() {
-  const [data, setData] = useState<Product[]>([]);
-  // The refreshTrigger state is used to force a re-fetch of the products
-  // when a product is deleted.
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [search, setSearch] = useState<string>("");
-  const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
-  const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
+import { getConnectionLogs } from "@/lib/api";
+import { ConnectionLogType } from "@/lib/types";
+
+interface ConnectionLog {
+  id: string;
+  ip: string | null;
+  userAgent: string | null;
+  language: string | null;
+  connectedAt: string;
+}
+
+export default function AdminDashboard() {
+  const [connections, setConnections] = useState(0);
+  const [logs, setLogs] = useState<ConnectionLogType[]>([]);
+  const [liveConnectionsOpen, setLiveConnectionsOpen] = useState(true);
+  const [recentActivityOpen, setRecentActivityOpen] = useState(true);
 
   useEffect(() => {
-    const filters = { search, minPrice, maxPrice, startDate, endDate };
-    void getProducts(filters).then(setData);
-  }, [search, minPrice, maxPrice, startDate, endDate, refreshTrigger]);
+    const ws = new WebSocket("ws://localhost:3000");
+
+    ws.onopen = () => {
+      console.log("Connected to WebSocket server");
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === "connections") {
+        setConnections(data.count);
+        // Refresh logs when a new connection is made
+        void getConnectionLogs().then(setLogs);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("Disconnected from WebSocket server");
+    };
+
+    // Initial fetch of logs
+    void getConnectionLogs().then(setLogs);
+
+    return () => {
+      ws.close();
+    };
+  }, []);
 
   return (
     <div className="container mx-auto py-10">
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-        <h1 className="mb-4 text-3xl font-bold text-white">Products</h1>
-        <div className="mb-4 flex space-x-4">
-          <Input
-            placeholder="Search by name..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="max-w-sm"
-          />
-          <Input
-            type="number"
-            placeholder="Min Price"
-            value={minPrice || ""}
-            onChange={(e) =>
-              setMinPrice(e.target.value ? parseInt(e.target.value, 10) : undefined)
-            }
-            className="max-w-xs"
-          />
-          <Input
-            type="number"
-            placeholder="Max Price"
-            value={maxPrice || ""}
-            onChange={(e) =>
-              setMaxPrice(e.target.value ? parseInt(e.target.value, 10) : undefined)
-            }
-            className="max-w-xs"
-          />
-          <Input
-            type="date"
-            placeholder="Start Date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="max-w-xs"
-          />
-          <Input
-            type="date"
-            placeholder="End Date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="max-w-xs"
-          />
-        </div>
-        <DataTable
-          columns={columns}
-          data={data}
-          setRefreshTrigger={setRefreshTrigger}
-        />
+      <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+      <div className="space-y-4">
+        <Collapsible.Root
+          open={liveConnectionsOpen}
+          onOpenChange={setLiveConnectionsOpen}
+          className="bg-gray-950 rounded-lg shadow-lg"
+        >
+          <Collapsible.Trigger className="flex items-center justify-between w-full p-6 cursor-pointer">
+            <h2 className="text-xl font-bold">
+              Live Connections: {connections}
+            </h2>
+            {liveConnectionsOpen ? (
+              <ChevronDownIcon className="h-6 w-6" />
+            ) : (
+              <ChevronRightIcon className="h-6 w-6" />
+            )}
+          </Collapsible.Trigger>
+          <Collapsible.Content className="p-6">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>IP Address</TableHead>
+                  <TableHead>User Agent</TableHead>
+                  <TableHead>Language</TableHead>
+                  <TableHead>Connected At</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logs.map((log) => (
+                  <TableRow key={log.id}>
+                    <TableCell>{log.ip}</TableCell>
+                    <TableCell>{log.userAgent}</TableCell>
+                    <TableCell>{log.language}</TableCell>
+                    <TableCell>
+                      {new Date(log.connectedAt).toLocaleString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Collapsible.Content>
+        </Collapsible.Root>
+
+        <Collapsible.Root
+          open={recentActivityOpen}
+          onOpenChange={setRecentActivityOpen}
+          className="bg-gray-950 rounded-lg shadow-lg"
+        >
+          <Collapsible.Trigger className="flex items-center justify-between w-full p-6 cursor-pointer">
+            <h2 className="text-xl font-bold">Recent Activity</h2>
+            {recentActivityOpen ? (
+              <ChevronDownIcon className="h-6 w-6" />
+            ) : (
+              <ChevronRightIcon className="h-6 w-6" />
+            )}
+          </Collapsible.Trigger>
+          <Collapsible.Content className="p-6">
+            <p>Placeholder for recent activity...</p>
+          </Collapsible.Content>
+        </Collapsible.Root>
       </div>
     </div>
   );

@@ -162,6 +162,38 @@ describe("Products API", () => {
       const res = await PUT(req, { params: { id: "non-existent-id" } });
       expect(res.status).toEqual(404);
     });
+
+    it("should link an existing image to a product", async () => {
+      const product = await createMockProduct(prisma, { name: "Product 1" });
+      const imageFile = await prisma.imageFile.create({
+        data: {
+          filename: "test.jpg",
+          filepath: "/test.jpg",
+          mimetype: "image/jpeg",
+          size: 123,
+        },
+      });
+
+      const formData = new FormData();
+      formData.append("name", "Updated Product");
+      formData.append("price", "150");
+      formData.append("sku", "SKU123");
+      formData.append("imageFileIds", imageFile.id);
+
+      const req = new Request(`http://localhost/api/products/${product.id}`, {
+        method: "PUT",
+        body: formData,
+      });
+
+      const res = await PUT(req, { params: { id: product.id } });
+      expect(res.status).toEqual(200);
+
+      const productImages = await prisma.productImage.findMany({
+        where: { productId: product.id },
+      });
+      expect(productImages.length).toEqual(1);
+      expect(productImages[0].imageFileId).toEqual(imageFile.id);
+    });
   });
 
   describe("DELETE /api/products/[id]", () => {

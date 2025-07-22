@@ -1,24 +1,32 @@
-import { Product } from "@/components/columns";
+import { ProductWithImages, ConnectionLogType } from "./types";
 
-// The `getProducts` function fetches a list of products from the API,
-// optionally filtering them based on the provided search criteria.
+// This function fetches a list of products from the API.
 export async function getProducts(filters: {
   search?: string;
   minPrice?: number;
   maxPrice?: number;
   startDate?: string;
   endDate?: string;
-}): Promise<Product[]> {
-  const params = new URLSearchParams();
-  if (filters.search) params.append("search", filters.search);
-  if (filters.minPrice) params.append("minPrice", filters.minPrice.toString());
-  if (filters.maxPrice) params.append("maxPrice", filters.maxPrice.toString());
-  if (filters.startDate) params.append("startDate", filters.startDate);
-  if (filters.endDate) params.append("endDate", filters.endDate);
+}): Promise<ProductWithImages[]> {
+  const query = new URLSearchParams();
+  if (filters.search) query.append("search", filters.search);
+  if (filters.minPrice) query.append("minPrice", String(filters.minPrice));
+  if (filters.maxPrice) query.append("maxPrice", String(filters.maxPrice));
+  if (filters.startDate) query.append("startDate", filters.startDate);
+  if (filters.endDate) query.append("endDate", filters.endDate);
 
-  const res = await fetch(`/api/products?${params.toString()}`);
+  const res = await fetch(`/api/products?${query.toString()}`);
   if (!res.ok) {
-    throw new Error("Failed to fetch data");
+    throw new Error("Failed to fetch products");
   }
-  return res.json() as Promise<Product[]>;
+  return res.json();
+}
+
+// This function fetches the connection logs from the API.
+export async function getConnectionLogs(): Promise<ConnectionLogType[]> {
+  const res = await fetch("/api/connections");
+  if (!res.ok) {
+    throw new Error("Failed to fetch connection logs");
+  }
+  return res.json();
 }

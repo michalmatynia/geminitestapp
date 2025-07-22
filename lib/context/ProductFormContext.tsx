@@ -28,6 +28,7 @@ interface ProductFormContextType {
   uploading: boolean;
   uploadError: string | null;
   previewUrls: string[];
+  selectedImageUrls: string[];
   showFileManager: boolean;
   setShowFileManager: (show: boolean) => void;
   handleImageChange: (e: ChangeEvent<HTMLInputElement>) => void;
@@ -35,7 +36,7 @@ interface ProductFormContextType {
   handleDisconnectImage?: (imageUrl: string) => void;
 }
 
-const ProductFormContext = createContext<ProductFormContextType | null>(null);
+export const ProductFormContext = createContext<ProductFormContextType | null>(null);
 
 export const useProductFormContext = () => {
   const context = useContext(ProductFormContext);
@@ -47,12 +48,16 @@ export const useProductFormContext = () => {
   return context;
 };
 
+import { ProductWithImages } from "@/lib/types";
+
+// This context provides a centralized place for managing the state and logic of the product form.
+// It handles form data, image uploads, and communication with the API.
 export function ProductFormProvider({
   children,
   product,
 }: {
   children: React.ReactNode;
-  product?: any;
+  product?: ProductWithImages;
 }) {
   const methods = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -79,22 +84,33 @@ export function ProductFormProvider({
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [showFileManager, setShowFileManager] = useState(false);
-  const [imageFileIds, setImageFileIds] = useState<string[]>([]);
+
+  // State for images that are already part of the product on load
   const [existingImages, setExistingImages] = useState(product?.images || []);
-  const existingImageUrls = existingImages.map((img: any) => img.imageFile.filepath);
+  // State for new files selected for upload from the user's computer
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
+  // State for existing files selected from the File Manager
+  const [selectedImageFiles, setSelectedImageFiles] = useState<
+    { id: string; filepath: string }[]
+  >([]);
+
+  // Derived URLs for rendering previews in the UI
+  const existingImageUrls = existingImages.map(
+    (img: any) => img.imageFile.filepath
+  );
+  const previewUrls = newImageFiles.map((file) => URL.createObjectURL(file));
+  const selectedImageUrls = selectedImageFiles.map((file) => file.filepath);
 
   useEffect(() => {
-    const urls = newImageFiles.map((file) => URL.createObjectURL(file));
-    setPreviewUrls(urls);
-
+    // This effect is responsible for creating and cleaning up blob URLs for new image previews.
+    // It runs whenever the newImageFiles state changes.
     return () => {
-      urls.forEach((url) => URL.revokeObjectURL(url));
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
     };
-  }, [newImageFiles]);
+  }, [previewUrls]);
 
+  // This function is called when the user selects new image files from their computer.
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
@@ -102,21 +118,42 @@ export function ProductFormProvider({
     }
   };
 
+  // This function is called when the user selects existing files from the File Manager.
   const handleFileSelect = (files: { id: string; filepath: string }[]) => {
-    const newImageFileIds = files.map((file) => file.id);
-    setImageFileIds((prev) => [...prev, ...newImageFileIds]);
+    setSelectedImageFiles((prev) => [...prev, ...files]);
     setShowFileManager(false);
   };
 
+  // This function handles the removal of an image, whether it's a new upload,
+  // a selected existing file, or an image that was already saved with the product.
   const handleDisconnectImage = async (imageUrl: string) => {
-    // Check if it's an existing image
-    if (existingImageUrls.includes(imageUrl)) {
-      if (!product) return;
-      const image = existingImages.find(
-        (img: any) => img.imageFile.filepath === imageUrl
-      );
-      if (!image) return;
+    // Case 1: It's a newly uploaded file (preview)
+    const newFileIndex = previewUrls.indexOf(imageUrl);
+    if (newFileIndex > -1) {
+      setNewImageFiles((prev) => {
+        const newFiles = [...prev];
+        newFiles.splice(newFileIndex, 1);
+        return newFiles;
+      });
+      return;
+    }
 
+    // Case 2: It's an existing file selected from the file manager
+    const selectedFileIndex = selectedImageUrls.indexOf(imageUrl);
+    if (selectedFileIndex > -1) {
+      setSelectedImageFiles((prev) => {
+        const newFiles = [...prev];
+        newFiles.splice(selectedFileIndex, 1);
+        return newFiles;
+      });
+      return;
+    }
+
+    // Case 3: It's an image that was already saved with the product
+    const image = existingImages.find(
+      (img: any) => img.imageFile.filepath === imageUrl
+    );
+    if (image && product) {
       try {
         const res = await fetch(
           `/api/products/${product.id}/images/${image.imageFile.id}`,
@@ -132,24 +169,11 @@ export function ProductFormProvider({
       } catch (error) {
         console.error("Failed to disconnect image:", error);
       }
-    } else {
-      // It's a preview image
-      const fileIndex = previewUrls.indexOf(imageUrl);
-      if (fileIndex > -1) {
-        setNewImageFiles((prev) => {
-          const newFiles = [...prev];
-          newFiles.splice(fileIndex, 1);
-          return newFiles;
-        });
-        setPreviewUrls((prev) => {
-          const newUrls = [...prev];
-          newUrls.splice(fileIndex, 1);
-          return newUrls;
-        });
-      }
     }
   };
 
+  // This function is called when the user submits the form.
+  // It constructs the FormData and sends it to the API.
   const onSubmit = async (data: ProductFormData) => {
     setUploading(true);
     setUploadError(null);
@@ -162,15 +186,15 @@ export function ProductFormProvider({
       }
     });
 
-    for (const file of newImageFiles) {
+    // Append new image files for upload
+    newImageFiles.forEach((file) => {
       formData.append("images", file);
-    }
+    });
 
-    if (imageFileIds.length > 0) {
-      for (const id of imageFileIds) {
-        formData.append("imageFileIds", id);
-      }
-    }
+    // Append IDs of existing images selected from file manager
+    selectedImageFiles.forEach((file) => {
+      formData.append("imageFileIds", file.id);
+    });
 
     try {
       const response = await fetch(
@@ -182,13 +206,14 @@ export function ProductFormProvider({
       );
 
       if (!response.ok) {
-        throw new Error("Failed to save product");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to save product");
       }
 
       router.refresh();
       router.push("/admin/products");
-    } catch (error) {
-      setUploadError("Failed to save product");
+    } catch (error: any) {
+      setUploadError(error.message);
     } finally {
       setUploading(false);
     }
@@ -207,6 +232,7 @@ export function ProductFormProvider({
           uploading,
           uploadError,
           previewUrls,
+          selectedImageUrls,
           showFileManager,
           setShowFileManager,
           handleImageChange,

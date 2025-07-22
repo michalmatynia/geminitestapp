@@ -22,6 +22,8 @@ interface FileManagerProps {
   onSelectFile?: (files: { id: string; filepath: string }[]) => void;
 }
 
+// This component provides a UI for browsing and selecting existing image files.
+// It fetches the list of files from the API and allows the user to filter them.
 export default function FileManager({ onSelectFile }: FileManagerProps) {
   const [files, setFiles] = useState<ImageFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<
@@ -30,6 +32,7 @@ export default function FileManager({ onSelectFile }: FileManagerProps) {
   const [filenameSearch, setFilenameSearch] = useState("");
   const [productNameSearch, setProductNameSearch] = useState("");
 
+  // This function fetches the files from the API based on the search criteria.
   const fetchFiles = useCallback(() => {
     const query = new URLSearchParams();
     if (filenameSearch) {
@@ -47,6 +50,7 @@ export default function FileManager({ onSelectFile }: FileManagerProps) {
     fetchFiles();
   }, [fetchFiles]);
 
+  // This function toggles the selection of a file.
   const handleToggleSelect = (file: { id: string; filepath: string }) => {
     setSelectedFiles((prev) =>
       prev.some((f) => f.id === file.id)
@@ -55,12 +59,15 @@ export default function FileManager({ onSelectFile }: FileManagerProps) {
     );
   };
 
+  // This function is called when the user confirms their selection.
+  // It calls the onSelectFile callback with the selected files.
   const handleConfirmSelection = () => {
     if (onSelectFile) {
       onSelectFile(selectedFiles);
     }
   };
 
+  // This function sends a DELETE request to the API to delete a file.
   const handleDelete = async (fileId: string) => {
     if (confirm("Are you sure you want to delete this file?")) {
       const res = await fetch(`/api/files/${fileId}`, {

@@ -1,18 +1,13 @@
 "use client";
 
-import { Product, ProductImage, ImageFile } from "@prisma/client";
 import Link from "next/link";
-
-import FileManager from "@/components/products/FileManager";
-import ProductForm from "@/components/products/ProductForm";
 import {
   ProductFormProvider,
   useProductFormContext,
 } from "@/lib/context/ProductFormContext";
-
-type ProductWithImages = Product & {
-  images: (ProductImage & { imageFile: ImageFile })[];
-};
+import { ProductWithImages } from "@/lib/types";
+import FileManager from "@/components/products/FileManager";
+import ProductForm from "@/components/products/ProductForm";
 
 function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
   return (

@@ -15,21 +15,23 @@ interface ProductFormProps {
   submitButtonText: string;
 }
 
+import ProductImageManager from "./ProductImageManager";
+
+// This component renders the product form fields and handles user interactions.
+// It consumes the ProductFormContext to access state and functions.
 export default function ProductForm({ submitButtonText }: ProductFormProps) {
   const {
     handleSubmit,
     errors,
     handleImageChange,
     setShowFileManager,
-    handleDisconnectImage,
-    previewUrls,
-    existingImageUrls,
     uploading,
     uploadError,
   } = useProductFormContext();
   const [generating, setGenerating] = useState(false);
   const { register, getValues, setValue } = useFormContext<ProductFormData>();
 
+  // This function calls the API to generate a product description based on the product name.
   const handleGenerateDescription = async () => {
     setGenerating(true);
     const name = getValues("name");
@@ -49,8 +51,6 @@ export default function ProductForm({ submitButtonText }: ProductFormProps) {
       setGenerating(false);
     }
   };
-
-  const allImageUrls = [...existingImageUrls, ...previewUrls];
 
   return (
     <form onSubmit={handleSubmit}>
@@ -211,30 +211,7 @@ export default function ProductForm({ submitButtonText }: ProductFormProps) {
       </div>
       <div className="mb-4">
         <Label>Product Images</Label>
-        <div className="grid grid-cols-3 gap-4">
-          {allImageUrls.map((url) => (
-            <div key={url} className="relative">
-              <Image
-                src={url}
-                alt="Product Image"
-                width={128}
-                height={128}
-                className="max-w-xs h-auto"
-              />
-              {handleDisconnectImage && (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  className="absolute top-0 right-0"
-                  onClick={() => handleDisconnectImage(url)}
-                  aria-label="Remove image"
-                >
-                  X
-                </Button>
-              )}
-            </div>
-          ))}
-        </div>
+        <ProductImageManager />
         <div className="mt-2 flex space-x-4">
           <Button
             type="button"

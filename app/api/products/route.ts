@@ -8,7 +8,7 @@ export async function GET(req: Request) {
   try {
     const products = await getProducts(filters);
     return NextResponse.json(products);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: "Failed to fetch products" },
       { status: 500 }
@@ -21,8 +21,11 @@ export async function POST(req: Request) {
     const formData = await req.formData();
     const product = await createProduct(formData);
     return NextResponse.json(product);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return NextResponse.json({ error: "An unknown error occurred" }, { status: 400 });
   }
 }
 

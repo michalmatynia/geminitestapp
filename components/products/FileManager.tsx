@@ -1,15 +1,21 @@
 "use client";
 
+import { ImageFile } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
+import ImagePreviewModal from "./ImagePreviewModal";
 import { Button } from "@/components/ui/button";
 
 interface ImageFile {
   id: string;
   filename: string;
   filepath: string;
+  mimetype: string;
+  size: number;
+  width: number | null;
+  height: number | null;
   products: {
     product: {
       id: string;
@@ -20,19 +26,23 @@ interface ImageFile {
 
 interface FileManagerProps {
   onSelectFile?: (files: { id: string; filepath: string }[]) => void;
+  mode?: "view" | "select";
 }
 
 // This component provides a UI for browsing and selecting existing image files.
 // It fetches the list of files from the API and allows the user to filter them.
-export default function FileManager({ onSelectFile }: FileManagerProps) {
+export default function FileManager({
+  onSelectFile,
+  mode = "select",
+}: FileManagerProps) {
   const [files, setFiles] = useState<ImageFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<
     { id: string; filepath: string }[]
   >([]);
   const [filenameSearch, setFilenameSearch] = useState("");
   const [productNameSearch, setProductNameSearch] = useState("");
+  const [previewFile, setPreviewFile] = useState<ImageFile | null>(null);
 
-  // This function fetches the files from the API based on the search criteria.
   const fetchFiles = useCallback(() => {
     const query = new URLSearchParams();
     if (filenameSearch) {
@@ -42,13 +52,22 @@ export default function FileManager({ onSelectFile }: FileManagerProps) {
       query.append("productName", productNameSearch);
     }
     void fetch(`/api/files?${query.toString()}`)
-      .then((res) => res.json())
+      .then((res) => res.json() as Promise<ImageFile[]>)
       .then(setFiles);
   }, [filenameSearch, productNameSearch]);
 
+  // This function fetches the files from the API based on the search criteria.
   useEffect(() => {
     fetchFiles();
   }, [fetchFiles]);
+
+  const handleClick = (file: ImageFile) => {
+    if (mode === "select") {
+      handleToggleSelect({ id: file.id, filepath: file.filepath });
+    } else {
+      setPreviewFile(file);
+    }
+  };
 
   // This function toggles the selection of a file.
   const handleToggleSelect = (file: { id: string; filepath: string }) => {
@@ -85,7 +104,7 @@ export default function FileManager({ onSelectFile }: FileManagerProps) {
     <div className="p-4 bg-gray-900 text-white">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">File Manager</h2>
-        {onSelectFile && (
+        {mode === "select" && onSelectFile && (
           <Button onClick={handleConfirmSelection}>
             Confirm Selection ({selectedFiles.length})
           </Button>
@@ -112,16 +131,14 @@ export default function FileManager({ onSelectFile }: FileManagerProps) {
           <div
             key={file.id}
             className={`relative border-2 ${
-              selectedFiles.some((f) => f.id === file.id)
+              selectedFiles.some((f) => f.id === file.id) && mode === "select"
                 ? "border-blue-500"
                 : "border-transparent"
             }`}
-            onClick={() =>
-              handleToggleSelect({ id: file.id, filepath: file.filepath })
-            }
+            onClick={() => handleClick(file)}
           >
             <Image
-              src={`/api/files/preview?fileId=${file.id}`}
+              src={file.filepath}
               alt={file.filename}
               width={150}
               height={150}
@@ -139,20 +156,37 @@ export default function FileManager({ onSelectFile }: FileManagerProps) {
                 </Link>
               ))}
             </div>
-            <Button
-              variant="destructive"
-              size="sm"
-              className="absolute top-1 right-1"
-              onClick={(e) => {
-                e.stopPropagation();
-                void handleDelete(file.id);
-              }}
-            >
-              X
-            </Button>
+            <div className="mt-2 flex justify-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPreviewFile(file);
+                }}
+              >
+                View
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void handleDelete(file.id);
+                }}
+              >
+                X
+              </Button>
+            </div>
           </div>
         ))}
       </div>
+      {previewFile && (
+        <ImagePreviewModal
+          file={previewFile}
+          onClose={() => setPreviewFile(null)}
+        />
+      )}
     </div>
   );
 }

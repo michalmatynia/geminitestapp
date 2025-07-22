@@ -2,7 +2,6 @@ import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { handleProductImageUpload } from "@/lib/utils/productUtils";
 import { productSchema } from "@/lib/validations/product";
-import { ProductFormData } from "@/lib/types";
 
 // This function retrieves a list of products based on the provided filters.
 export async function getProducts(filters: {
@@ -111,6 +110,13 @@ export async function createProduct(formData: FormData) {
 
 // This function updates an existing product.
 export async function updateProduct(id: string, formData: FormData) {
+  const productExists = await prisma.product.findUnique({
+    where: { id },
+  });
+
+  if (!productExists) {
+    return null;
+  }
   console.log(`Updating product ${id} with formData:`, Object.fromEntries(formData.entries()));
   const validatedData = productSchema.parse({
     name: formData.get("name"),
@@ -146,6 +152,13 @@ export async function updateProduct(id: string, formData: FormData) {
 
 // This function deletes a product.
 export async function deleteProduct(id: string) {
+  const productExists = await prisma.product.findUnique({
+    where: { id },
+  });
+
+  if (!productExists) {
+    return null;
+  }
   return await prisma.product.delete({
     where: { id },
   });

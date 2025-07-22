@@ -12,17 +12,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { ConnectionLogType } from "@/lib/types";
-
 import { getConnectionLogs } from "@/lib/api";
 import { ConnectionLogType } from "@/lib/types";
 
-interface ConnectionLog {
-  id: string;
-  ip: string | null;
-  userAgent: string | null;
-  language: string | null;
-  connectedAt: string;
+interface WebSocketData {
+  type: string;
+  count: number;
 }
 
 export default function AdminDashboard() {
@@ -39,7 +34,7 @@ export default function AdminDashboard() {
     };
 
     ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+      const data: WebSocketData = JSON.parse(event.data as string) as WebSocketData;
       if (data.type === "connections") {
         setConnections(data.count);
         // Refresh logs when a new connection is made
@@ -73,9 +68,9 @@ export default function AdminDashboard() {
               Live Connections: {connections}
             </h2>
             {liveConnectionsOpen ? (
-              <ChevronDownIcon className="h-6 w-6" />
+              <ChevronDownIcon className="size-6" />
             ) : (
-              <ChevronRightIcon className="h-6 w-6" />
+              <ChevronRightIcon className="size-6" />
             )}
           </Collapsible.Trigger>
           <Collapsible.Content className="p-6">
@@ -112,9 +107,9 @@ export default function AdminDashboard() {
           <Collapsible.Trigger className="flex items-center justify-between w-full p-6 cursor-pointer">
             <h2 className="text-xl font-bold">Recent Activity</h2>
             {recentActivityOpen ? (
-              <ChevronDownIcon className="h-6 w-6" />
+              <ChevronDownIcon className="size-6" />
             ) : (
-              <ChevronRightIcon className="h-6 w-6" />
+              <ChevronRightIcon className="size-6" />
             )}
           </Collapsible.Trigger>
           <Collapsible.Content className="p-6">

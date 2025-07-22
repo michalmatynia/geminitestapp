@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import FileManager from "@/components/products/FileManager";
+import ProductForm from "@/components/products/ProductForm";
 import {
   ProductFormProvider,
   useProductFormContext,
 } from "@/lib/context/ProductFormContext";
 import { ProductWithImages } from "@/lib/types";
-import FileManager from "@/components/products/FileManager";
-import ProductForm from "@/components/products/ProductForm";
 
 function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
   return (

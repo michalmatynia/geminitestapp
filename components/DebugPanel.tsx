@@ -16,7 +16,7 @@ export default function DebugPanel() {
   // A function to handle circular references in the context for JSON.stringify
   const getCircularReplacer = () => {
     const seen = new WeakSet();
-    return (key: any, value: any) => {
+    return (key: string, value: unknown) => {
       if (typeof value === "object" && value !== null) {
         if (seen.has(value)) {
           return; // Omit circular reference

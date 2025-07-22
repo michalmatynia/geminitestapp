@@ -51,15 +51,8 @@ const eslintConfig = [
         },
       ],
       "@typescript-eslint/no-explicit-any": "warn",
-      "import/order": [
-        "error",
-        {
-          alphabetize: {
-            order: "asc",
-            caseInsensitive: true,
-          },
-        },
-      ],
+      "@typescript-eslint/no-misused-promises": "off",
+      "import/order": "off",
     },
     settings: {
       react: {

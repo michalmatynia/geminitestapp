@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { columns, Product } from "@/components/columns";
+import { columns } from "@/components/columns";
 import { DataTable } from "@/components/data-table";
 import { Input } from "@/components/ui/input";
 import { getProducts } from "@/lib/api";

@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import { PrismaClient } from '@prisma/client';
+import { NextResponse } from 'next/server';
 
 export async function DELETE(
   req: Request,
@@ -23,8 +23,8 @@ export async function DELETE(
     if (imageFile) {
       try {
         await fs.unlink(path.join(process.cwd(), "public", imageFile.filepath));
-      } catch (error: any) {
-        if (error.code !== 'ENOENT') {
+      } catch (error: unknown) {
+        if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
           throw error;
         }
       }

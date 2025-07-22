@@ -18,7 +18,7 @@ export async function GET(
       );
     }
     return NextResponse.json(product);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: "Failed to fetch product" },
       { status: 500 }
@@ -33,9 +33,15 @@ export async function PUT(
   try {
     const formData = await req.formData();
     const product = await updateProduct(params.id, formData);
+    if (!product) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
     return NextResponse.json(product);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return NextResponse.json({ error: "An unknown error occurred" }, { status: 400 });
   }
 }
 
@@ -44,9 +50,12 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await deleteProduct(params.id);
+    const product = await deleteProduct(params.id);
+    if (!product) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
     return new Response(null, { status: 204 });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: "Failed to delete product" },
       { status: 500 }

@@ -1,21 +1,15 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 
+import ProductImageManager from "./ProductImageManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useProductFormContext } from "@/lib/context/ProductFormContext";
 import { ProductFormData } from "@/lib/types";
-
-interface ProductFormProps {
-  submitButtonText: string;
-}
-
-import ProductImageManager from "./ProductImageManager";
 
 // This component renders the product form fields and handles user interactions.
 // It consumes the ProductFormContext to access state and functions.

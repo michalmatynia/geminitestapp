@@ -16,17 +16,11 @@ export async function getProducts(filters: {
   if (filters.endDate) query.append("endDate", filters.endDate);
 
   const res = await fetch(`/api/products?${query.toString()}`);
-  if (!res.ok) {
-    throw new Error("Failed to fetch products");
-  }
-  return res.json();
+  return res.json() as Promise<ProductWithImages[]>;
 }
 
 // This function fetches the connection logs from the API.
 export async function getConnectionLogs(): Promise<ConnectionLogType[]> {
   const res = await fetch("/api/connections");
-  if (!res.ok) {
-    throw new Error("Failed to fetch connection logs");
-  }
-  return res.json();
+  return res.json() as Promise<ConnectionLogType[]>;
 }

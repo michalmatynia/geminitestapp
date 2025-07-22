@@ -1,29 +1,37 @@
 "use client";
 
+import { ProductImage, ImageFile } from "@prisma/client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Product } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import {
   ChangeEvent,
   createContext,
-  FormEvent,
   useContext,
   useEffect,
   useState,
+  BaseSyntheticEvent,
 } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import {
+  UseFormRegister,
+  UseFormSetValue,
+  UseFormGetValues,
+  FieldErrors,
+  FormProvider,
+  useForm,
+} from "react-hook-form";
 import { z } from "zod";
 
+import { ProductWithImages } from "@/lib/types";
 import { productSchema } from "@/lib/validations/product";
 
 export type ProductFormData = z.infer<typeof productSchema>;
 
 interface ProductFormContextType {
-  register: any;
-  handleSubmit: (e: FormEvent<HTMLFormElement>) => void;
-  errors: any;
-  setValue: any;
-  getValues: any;
+  register: UseFormRegister<ProductFormData>;
+  handleSubmit: (e?: BaseSyntheticEvent) => Promise<void>;
+  errors: FieldErrors<ProductFormData>;
+  setValue: UseFormSetValue<ProductFormData>;
+  getValues: UseFormGetValues<ProductFormData>;
   existingImageUrls: string[];
   uploading: boolean;
   uploadError: string | null;
@@ -97,7 +105,7 @@ export function ProductFormProvider({
 
   // Derived URLs for rendering previews in the UI
   const existingImageUrls = existingImages.map(
-    (img: any) => img.imageFile.filepath
+    (img: ProductImage & { imageFile: ImageFile }) => img.imageFile.filepath
   );
   const previewUrls = newImageFiles.map((file) => URL.createObjectURL(file));
   const selectedImageUrls = selectedImageFiles.map((file) => file.filepath);
@@ -151,7 +159,7 @@ export function ProductFormProvider({
 
     // Case 3: It's an image that was already saved with the product
     const image = existingImages.find(
-      (img: any) => img.imageFile.filepath === imageUrl
+      (img: ProductImage & { imageFile: ImageFile }) => img.imageFile.filepath === imageUrl
     );
     if (image && product) {
       try {
@@ -163,7 +171,7 @@ export function ProductFormProvider({
         );
         if (res.ok) {
           setExistingImages((prev) =>
-            prev.filter((img: any) => img.imageFile.filepath !== imageUrl)
+            prev.filter((img: ProductImage & { imageFile: ImageFile }) => img.imageFile.filepath !== imageUrl)
           );
         }
       } catch (error) {
@@ -206,14 +214,18 @@ export function ProductFormProvider({
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json() as { error?: string };
         throw new Error(errorData.error || "Failed to save product");
       }
 
       router.refresh();
       router.push("/admin/products");
-    } catch (error: any) {
-      setUploadError(error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setUploadError(error.message);
+      } else {
+        setUploadError("An unknown error occurred");
+      }
     } finally {
       setUploading(false);
     }
@@ -224,7 +236,7 @@ export function ProductFormProvider({
       <ProductFormContext.Provider
         value={{
           register,
-          handleSubmit: handleSubmit(onSubmit),
+                    handleSubmit: handleSubmit(onSubmit),
           errors,
           setValue,
           getValues,

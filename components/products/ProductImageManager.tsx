@@ -34,7 +34,9 @@ export default function ProductImageManager() {
               type="button"
               variant="destructive"
               className="absolute top-0 right-0"
-              onClick={() => handleDisconnectImage(url)}
+              onClick={() => {
+                void handleDisconnectImage(url);
+              }}
               aria-label="Remove image"
             >
               X

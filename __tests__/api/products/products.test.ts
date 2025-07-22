@@ -1,6 +1,6 @@
 import { createMocks } from "node-mocks-http";
-import { GET, POST } from "../../../app/api/products/route";
-import { PUT, DELETE } from "../../../app/api/products/[id]/route";
+import { GET as GET_LIST, POST } from "../../../app/api/products/route";
+import { GET, PUT, DELETE } from "../../../app/api/products/[id]/route";
 import { DELETE as DELETE_IMAGE } from "../../../app/api/products/[id]/images/[imageFileId]/route";
 import { PrismaClient } from "@prisma/client";
 import { createMockProduct } from "../../../mocks/products";
@@ -23,14 +23,14 @@ describe("Products API", () => {
     it("should return all products when no filters are applied", async () => {
       await createMockProduct(prisma, { name: "Product 1" });
       await createMockProduct(prisma, { name: "Product 2" });
-      const res = await GET(new Request("http://localhost/api/products"));
+      const res = await GET_LIST(new Request("http://localhost/api/products"));
       const products = await res.json();
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(2);
     });
 
     it("should return an empty array if no products exist", async () => {
-      const res = await GET(new Request("http://localhost/api/products"));
+      const res = await GET_LIST(new Request("http://localhost/api/products"));
       const products = await res.json();
       expect(res.status).toEqual(200);
       expect(products).toEqual([]);
@@ -39,7 +39,7 @@ describe("Products API", () => {
     it("should filter products by name using the search parameter", async () => {
       await createMockProduct(prisma, { name: "Laptop" });
       await createMockProduct(prisma, { name: "Mouse" });
-      const res = await GET(
+      const res = await GET_LIST(
         new Request("http://localhost/api/products?search=lap")
       );
       const products = await res.json();
@@ -51,7 +51,7 @@ describe("Products API", () => {
     it("should filter products by minPrice", async () => {
       await createMockProduct(prisma, { price: 100 });
       await createMockProduct(prisma, { price: 500 });
-      const res = await GET(
+      const res = await GET_LIST(
         new Request("http://localhost/api/products?minPrice=200")
       );
       const products = await res.json();
@@ -62,7 +62,7 @@ describe("Products API", () => {
     it("should filter products by maxPrice", async () => {
       await createMockProduct(prisma, { price: 100 });
       await createMockProduct(prisma, { price: 500 });
-      const res = await GET(
+      const res = await GET_LIST(
         new Request("http://localhost/api/products?maxPrice=200")
       );
       const products = await res.json();
@@ -73,7 +73,7 @@ describe("Products API", () => {
     it("should filter products by startDate", async () => {
       await createMockProduct(prisma, { createdAt: new Date("2023-01-01") });
       await createMockProduct(prisma, { createdAt: new Date("2023-04-01") });
-      const res = await GET(
+      const res = await GET_LIST(
         new Request("http://localhost/api/products?startDate=2023-03-01")
       );
       const products = await res.json();
@@ -84,7 +84,7 @@ describe("Products API", () => {
     it("should filter products by endDate", async () => {
       await createMockProduct(prisma, { createdAt: new Date("2023-01-01") });
       await createMockProduct(prisma, { createdAt: new Date("2023-04-01") });
-      const res = await GET(
+      const res = await GET_LIST(
         new Request("http://localhost/api/products?endDate=2023-03-01")
       );
       const products = await res.json();
@@ -95,7 +95,7 @@ describe("Products API", () => {
     it("should filter products by a combination of search, minPrice, and maxPrice", async () => {
       await createMockProduct(prisma, { name: "Laptop", price: 1200 });
       await createMockProduct(prisma, { name: "Mouse", price: 50 });
-      const res = await GET(
+      const res = await GET_LIST(
         new Request(
           "http://localhost/api/products?search=lap&minPrice=1000&maxPrice=1500"
         )
@@ -107,7 +107,7 @@ describe("Products API", () => {
 
     it("should return the correct response structure", async () => {
       await createMockProduct(prisma, { name: "Product 1", price: 100 });
-      const res = await GET(new Request("http://localhost/api/products"));
+      const res = await GET_LIST(new Request("http://localhost/api/products"));
       const products = await res.json();
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);

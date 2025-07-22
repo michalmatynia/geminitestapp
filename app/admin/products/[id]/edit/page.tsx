@@ -1,6 +1,6 @@
-import { ProductWithImages } from "@/lib/types";
 import EditProductForm from "@/components/products/EditProductForm";
 import prisma from "@/lib/prisma";
+import { ProductWithImages } from "@/lib/types";
 
 async function getProduct(id: string): Promise<ProductWithImages | null> {
   const product = await prisma.product.findUnique({
@@ -28,5 +28,5 @@ export default async function EditProductPage({
     return <div>Product not found</div>;
   }
 
-  return <EditProductForm product={product as ProductWithImages} />;
+  return <EditProductForm product={product} />;
 }

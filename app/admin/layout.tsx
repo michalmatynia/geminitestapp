@@ -69,7 +69,7 @@ export default function AdminLayout({
             Import
           </Link>
           <Link
-            href="/databases"
+            href="/admin/databases"
             className="text-lg font-semibold text-muted-foreground hover:text-foreground"
           >
             Databases

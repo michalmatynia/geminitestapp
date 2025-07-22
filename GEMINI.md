@@ -2,6 +2,28 @@
 
 This project is a Next.js application designed as a monochrome admin dashboard with full CRUD (Create, Read, Update, Delete) capabilities for managing products. It leverages modern web technologies to provide a clean, efficient, and type-safe development experience.
 
+## Getting Started
+
+To get the project up and running locally, follow these steps:
+
+1.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+2.  **Initialize the database:**
+    ```bash
+    npx prisma migrate dev
+    ```
+3.  **Seed the database with initial data:**
+    ```bash
+    npm run seed
+    ```
+4.  **Start the development server:**
+    ```bash
+    npm run dev
+    ```
+The application will be available at `http://localhost:3000`.
+
 ## Key Technologies
 
 - **Framework**: Next.js (App Router)
@@ -61,6 +83,12 @@ The application exposes a set of RESTful API endpoints for managing products and
 - **`POST /api/import`**: Imports products from a CSV file.
 - **`GET /api/settings`**: Fetches all application settings.
 - **`POST /api/settings`**: Creates or updates an application setting.
+
+## Code Style and Conventions
+
+- **Linting**: The project uses ESLint with the `next/core-web-vitals` configuration to enforce code quality and consistency.
+- **Formatting**: Prettier is used for automatic code formatting.
+- **Type Checking**: TypeScript is used for static type checking.
 
 ## New Features
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import {
@@ -9,11 +8,10 @@ import {
   getSortedRowModel,
   SortingState,
   useReactTable,
+  Table as ReactTable,
 } from "@tanstack/react-table";
 import { useState } from "react";
 
-import { Product } from "./columns";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -26,7 +24,8 @@ import {
 interface DataTableProps<TData> {
   columns: ColumnDef<TData>[];
   data: TData[];
-  setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;
+  setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
+  footer?: (table: ReactTable<TData>) => React.ReactNode;
 }
 
 declare module "@tanstack/react-table" {
@@ -39,6 +38,7 @@ export function DataTable<TData>({
   columns,
   data,
   setRefreshTrigger,
+  footer,
 }: DataTableProps<TData>) {
   const [rowSelection, setRowSelection] = useState({});
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -55,50 +55,8 @@ export function DataTable<TData>({
       rowSelection,
       sorting,
     },
-    meta: { setRefreshTrigger },
+    meta: setRefreshTrigger ? { setRefreshTrigger } : {},
   });
-
-  // The `handleMassDelete` function sends a DELETE request to the API for
-  // each selected product. If all requests are successful, it shows a
-  // success message. Otherwise, it shows an error message.
-  const handleMassDelete = async () => {
-    const selectedProductIds = table
-      .getSelectedRowModel()
-      .rows.map((row) => (row.original as Product).id);
-
-    if (selectedProductIds.length === 0) {
-      alert("Please select products to delete.");
-      return;
-    }
-
-    if (
-      window.confirm(
-        `Are you sure you want to delete ${selectedProductIds.length} selected products?`
-      )
-    ) {
-      try {
-        const deletePromises = selectedProductIds.map((id) =>
-          fetch(`/api/products/${id}`, {
-            method: "DELETE",
-          })
-        );
-        const results = await Promise.all(deletePromises);
-
-        const failedDeletions = results.filter((res) => !res.ok);
-
-        if (failedDeletions.length > 0) {
-          alert("Some products could not be deleted.");
-        } else {
-          alert("Selected products deleted successfully.");
-        }
-        setRowSelection({}); // Clear selection after deletion
-        setRefreshTrigger((prev) => prev + 1); // Refresh the product list
-      } catch (error) {
-        console.error("Error during mass deletion:", error);
-        alert("An error occurred during deletion.");
-      }
-    }
-  };
 
   return (
     <div className="rounded-md border border-border">
@@ -148,21 +106,7 @@ export function DataTable<TData>({
           )}
         </TableBody>
       </Table>
-      <div className="flex items-center justify-between space-x-2 px-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-        <Button
-          onClick={() => {
-            void handleMassDelete();
-          }}
-          disabled={table.getFilteredSelectedRowModel().rows.length === 0}
-          className="bg-primary text-primary-foreground hover:bg-primary/90"
-        >
-          Delete Selected
-        </Button>
-      </div>
+      {footer && footer(table)}
     </div>
   );
 }

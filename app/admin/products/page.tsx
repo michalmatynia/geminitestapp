@@ -1,12 +1,76 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Table as ReactTable } from "@tanstack/react-table";
 
 import { columns } from "@/components/columns";
 import { DataTable } from "@/components/data-table";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { getProducts } from "@/lib/api";
 import { ProductWithImages } from "@/lib/types";
+
+function DataTableFooter<TData>(
+  table: ReactTable<TData>,
+  setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>
+) {
+  const handleMassDelete = async () => {
+    const selectedProductIds = table
+      .getSelectedRowModel()
+      .rows.map((row) => (row.original as ProductWithImages).id);
+
+    if (selectedProductIds.length === 0) {
+      alert("Please select products to delete.");
+      return;
+    }
+
+    if (
+      window.confirm(
+        `Are you sure you want to delete ${selectedProductIds.length} selected products?`
+      )
+    ) {
+      try {
+        const deletePromises = selectedProductIds.map((id) =>
+          fetch(`/api/products/${id}`, {
+            method: "DELETE",
+          })
+        );
+        const results = await Promise.all(deletePromises);
+
+        const failedDeletions = results.filter((res) => !res.ok);
+
+        if (failedDeletions.length > 0) {
+          alert("Some products could not be deleted.");
+        } else {
+          alert("Selected products deleted successfully.");
+        }
+        table.setRowSelection({}); // Clear selection after deletion
+        setRefreshTrigger((prev) => prev + 1); // Refresh the product list
+      } catch (error) {
+        console.error("Error during mass deletion:", error);
+        alert("An error occurred during deletion.");
+      }
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between space-x-2 px-2 py-4">
+      <div className="flex-1 text-sm text-muted-foreground">
+        {table.getFilteredSelectedRowModel().rows.length} of{" "}
+        {table.getFilteredRowModel().rows.length} row(s) selected.
+      </div>
+      <Button
+        onClick={() => {
+          void handleMassDelete();
+        }}
+        disabled={table.getFilteredSelectedRowModel().rows.length === 0}
+        className="bg-primary text-primary-foreground hover:bg-primary/90"
+      >
+        Delete Selected
+      </Button>
+    </div>
+  );
+}
 
 export default function AdminPage() {
   const [data, setData] = useState<ProductWithImages[]>([]);
@@ -72,6 +136,7 @@ export default function AdminPage() {
           columns={columns}
           data={data}
           setRefreshTrigger={setRefreshTrigger}
+          footer={(table) => DataTableFooter(table, setRefreshTrigger)}
         />
       </div>
     </div>

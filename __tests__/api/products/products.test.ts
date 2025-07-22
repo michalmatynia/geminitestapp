@@ -254,5 +254,14 @@ describe("Products API", () => {
       expect(res.status).toEqual(200);
       expect(fetchedProduct.name).toEqual("Product 1");
     });
+
+    it("should return a single product when params is a Promise", async () => {
+      const product = await createMockProduct(prisma, { name: "Product 1" });
+      const req = new Request(`http://localhost/api/products/${product.id}`);
+      const res = await GET(req, { params: Promise.resolve({ id: product.id }) });
+      const fetchedProduct = await res.json();
+      expect(res.status).toEqual(200);
+      expect(fetchedProduct.name).toEqual("Product 1");
+    });
   });
 });

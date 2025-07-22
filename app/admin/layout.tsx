@@ -68,6 +68,12 @@ export default function AdminLayout({
           >
             Import
           </Link>
+          <Link
+            href="/databases"
+            className="text-lg font-semibold text-muted-foreground hover:text-foreground"
+          >
+            Databases
+          </Link>
         </nav>
       </aside>
       <main className="flex-1 bg-background p-6">

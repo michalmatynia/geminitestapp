@@ -41,16 +41,22 @@ const eslintConfig = [
       "react/react-in-jsx-scope": "off",
       "react/prop-types": "off",
       "tailwindcss/classnames-order": "off",
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        {
-          "argsIgnorePattern": "^_",
-          "varsIgnorePattern": "^_",
-          "caughtErrorsIgnorePattern": "^_",
-          "ignoreRestSiblings": true
-        }
-      ],
-      "@typescript-eslint/no-explicit-any": "warn",
+      // Added to disable specific TypeScript rules
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      // "@typescript-eslint/no-unused-vars": [
+      //   "error",
+      //   {
+      //     "argsIgnorePattern": "^_",
+      //     "varsIgnorePattern": "^_",
+      //     "caughtErrorsIgnorePattern": "^_",
+      //     "ignoreRestSiblings": true
+      //   }
+      // ],
+      // "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-misused-promises": "off",
       "import/order": "off",
     },

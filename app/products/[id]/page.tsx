@@ -1,8 +1,9 @@
 import { getProductById } from "@/lib/services/productService";
 import Image from "next/image";
 
-export default async function ProductPage({ params }: { params: { id: string } }) {
-  const product = await getProductById(params.id);
+export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const product = await getProductById(id);
 
   if (!product) {
     return <div>Product not found</div>;

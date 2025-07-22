@@ -7,10 +7,11 @@ import {
 
 export async function GET(
   req: Request,
-  { params }: any
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const product = await getProductById(params.id);
+    const { id } = await params;
+    const product = await getProductById(id);
     if (!product) {
       return NextResponse.json(
         { error: "Product not found" },

@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { getProducts } from "@/lib/services/productService";
+import ProductCard from "@/components/products/ProductCard";
 
-export default function LandingPage() {
+export default async function HomePage() {
+  const products = await getProducts({});
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="flex h-14 items-center px-4 lg:px-6">
@@ -14,64 +18,21 @@ export default function LandingPage() {
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6">
           <Link
-            href="#"
+            href="/admin"
             className="text-sm font-medium underline-offset-4 hover:underline"
             prefetch={false}
           >
-            Features
-          </Link>
-          <Link
-            href="#"
-            className="text-sm font-medium underline-offset-4 hover:underline"
-            prefetch={false}
-          >
-            Pricing
-          </Link>
-          <Link
-            href="#"
-            className="text-sm font-medium underline-offset-4 hover:underline"
-            prefetch={false}
-          >
-            About
-          </Link>
-          <Link
-            href="#"
-            className="text-sm font-medium underline-offset-4 hover:underline"
-            prefetch={false}
-          >
-            Contact
+            Admin
           </Link>
         </nav>
       </header>
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48">
+        <section className="w-full py-12">
           <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none">
-                  Unlock Your Potential
-                </h1>
-                <p className="mx-auto max-w-[700px] text-gray-400 md:text-xl">
-                  Discover our innovative platform and take your business to the
-                  next level.
-                </p>
-              </div>
-              <div className="space-x-4">
-                <Link
-                  href="#"
-                  className="inline-flex h-9 items-center justify-center rounded-md bg-gray-50 px-4 py-2 text-sm font-medium text-gray-900 shadow transition-colors hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:pointer-events-none disabled:opacity-50"
-                  prefetch={false}
-                >
-                  Get Started
-                </Link>
-                <Link
-                  href="#"
-                  className="inline-flex h-9 items-center justify-center rounded-md border border-gray-200 bg-transparent px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:pointer-events-none disabled:opacity-50"
-                  prefetch={false}
-                >
-                  Learn More
-                </Link>
-              </div>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
             </div>
           </div>
         </section>
@@ -119,4 +80,3 @@ function MountainIcon(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
-

@@ -21,19 +21,28 @@ This application follows a modular architecture that separates concerns and prom
 
 - **`server.cjs`**: A custom Node.js server that runs the Next.js application and a WebSocket server for real-time communication.
 - **`app/`**: Contains the pages and API routes, following the Next.js App Router conventions.
-  - **`app/admin/`**: The main UI for the admin dashboard, featuring a panel-based layout with foldable sections.
+  - **`app/admin/`**: The main UI for the admin dashboard, featuring a panel-based layout with foldable sections for managing products, files, and application settings.
   - **`app/api/`**: Houses the backend API endpoints, which are now thin wrappers around the business logic in the `productService`.
-- **`components/`**: Reusable UI components, including a `DebugPanel` for development and a `ProductImageManager` for handling image uploads.
+- **`components/`**: Reusable UI components, including a `DebugPanel` for development, a `ProductImageManager` for handling image uploads, and a `FileManager` for browsing and selecting existing images. The `data-table.tsx` and `columns.tsx` files provide a generic, reusable table component powered by TanStack Table.
 - **`lib/`**: Contains the core business logic, utilities, and type definitions.
-  - **`lib/services/productService.ts`**: A dedicated service file that encapsulates all business logic for managing products.
+  - **`lib/services/productService.ts`**: A dedicated service file that encapsulates all business logic for managing products, including creating, updating, deleting, and linking images to products.
   - **`lib/api.ts`**: A centralized module for all client-side API calls.
   - **`lib/types.ts`**: A central repository for all custom TypeScript types.
+  - **`lib/context/ProductFormContext.tsx`**: A React context that provides a centralized place for managing the state and logic of the product form.
 - **`prisma/`**: The Prisma schema definition, migrations, and database seeding script.
 - **`__tests__/`**: Unit and integration tests for the API endpoints.
 
-## Data Management
+## Data Model
 
-Prisma is used as the ORM to interact with a SQLite database. The data model includes `Product`, `ImageFile`, `ProductImage`, and a new `ConnectionLog` model for tracking user connections.
+Prisma is used as the ORM to interact with a SQLite database. The data model is defined in `prisma/schema.prisma` and includes the following models:
+
+| Model           | Description                                                                                                                                    |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Product`       | Represents a product in the catalog.                                                                                                           |
+| `ImageFile`     | Represents an image file that can be associated with one or more products.                                                                     |
+| `ProductImage`  | A join table that creates a many-to-many relationship between `Product` and `ImageFile`.                                                       |
+| `Setting`       | A key-value store for application settings.                                                                                                    |
+| `ConnectionLog` | A log of user connections to the WebSocket server.                                                                                             |
 
 ## API Endpoints
 
@@ -45,7 +54,13 @@ The application exposes a set of RESTful API endpoints for managing products and
 - **`PUT /api/products/[id]`**: Updates an existing product.
 - **`DELETE /api/products/[id]`**: Deletes a product.
 - **`DELETE /api/products/[id]/images/[imageFileId]`**: Unlinks an image from a product.
+- **`GET /api/files`**: Fetches a list of image files with filtering options.
+- **`DELETE /api/files/[id]`**: Deletes an image file.
 - **`GET /api/connections`**: Fetches the latest connection logs.
+- **`POST /api/generate-description`**: Generates a product description based on the product name.
+- **`POST /api/import`**: Imports products from a CSV file.
+- **`GET /api/settings`**: Fetches all application settings.
+- **`POST /api/settings`**: Creates or updates an application setting.
 
 ## New Features
 

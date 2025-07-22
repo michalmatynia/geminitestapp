@@ -3,7 +3,7 @@ import { unlinkImageFromProduct } from "@/lib/services/productService";
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string; imageFileId: string } }
+    { params }: any
 ) {
   try {
     await unlinkImageFromProduct(params.id, params.imageFileId);

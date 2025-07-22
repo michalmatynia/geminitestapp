@@ -50,7 +50,7 @@ export default function AdminDashboard() {
     void getConnectionLogs().then(setLogs);
 
     return () => {
-      ws.close();
+      ws.close(1000, "User navigated away");
     };
   }, []);
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { ImageFile } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
@@ -8,7 +7,7 @@ import { useEffect, useState, useCallback } from "react";
 import ImagePreviewModal from "./ImagePreviewModal";
 import { Button } from "@/components/ui/button";
 
-interface ImageFile {
+interface FileManagerImageFile {
   id: string;
   filename: string;
   filepath: string;
@@ -35,13 +34,13 @@ export default function FileManager({
   onSelectFile,
   mode = "select",
 }: FileManagerProps) {
-  const [files, setFiles] = useState<ImageFile[]>([]);
+  const [files, setFiles] = useState<FileManagerImageFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<
     { id: string; filepath: string }[]
   >([]);
   const [filenameSearch, setFilenameSearch] = useState("");
   const [productNameSearch, setProductNameSearch] = useState("");
-  const [previewFile, setPreviewFile] = useState<ImageFile | null>(null);
+  const [previewFile, setPreviewFile] = useState<FileManagerImageFile | null>(null);
 
   const fetchFiles = useCallback(() => {
     const query = new URLSearchParams();
@@ -52,7 +51,7 @@ export default function FileManager({
       query.append("productName", productNameSearch);
     }
     void fetch(`/api/files?${query.toString()}`)
-      .then((res) => res.json() as Promise<ImageFile[]>)
+      .then((res) => res.json() as Promise<FileManagerImageFile[]>)
       .then(setFiles);
   }, [filenameSearch, productNameSearch]);
 
@@ -61,7 +60,7 @@ export default function FileManager({
     fetchFiles();
   }, [fetchFiles]);
 
-  const handleClick = (file: ImageFile) => {
+  const handleClick = (file: FileManagerImageFile) => {
     if (mode === "select") {
       handleToggleSelect({ id: file.id, filepath: file.filepath });
     } else {

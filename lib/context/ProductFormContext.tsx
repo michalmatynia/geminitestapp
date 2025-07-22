@@ -56,7 +56,6 @@ export const useProductFormContext = () => {
   return context;
 };
 
-import { ProductWithImages } from "@/lib/types";
 
 // This context provides a centralized place for managing the state and logic of the product form.
 // It handles form data, image uploads, and communication with the API.
@@ -236,7 +235,7 @@ export function ProductFormProvider({
       <ProductFormContext.Provider
         value={{
           register,
-                    handleSubmit: handleSubmit(onSubmit),
+                    handleSubmit: methods.handleSubmit(onSubmit),
           errors,
           setValue,
           getValues,

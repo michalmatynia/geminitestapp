@@ -10,10 +10,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 export type Product = {
   id: string;
-  name: string;
-  price: number;
-  createdAt: string;
-  updatedAt: string;
+  name: string | null;
+  price: number | null;
+  createdAt: Date;
+  updatedAt: Date;
   images: {
     imageFile: {
       id: string;
@@ -21,8 +21,8 @@ export type Product = {
       filepath: string;
       mimetype: string;
       size: number;
-      width?: number;
-      height?: number;
+      width?: number | null;
+      height?: number | null;
     };
   }[];
 };

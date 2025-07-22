@@ -7,7 +7,7 @@ import {
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   try {
     const product = await getProductById(params.id);
@@ -28,7 +28,7 @@ export async function GET(
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   try {
     const formData = await req.formData();
@@ -47,7 +47,7 @@ export async function PUT(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   try {
     const product = await deleteProduct(params.id);

@@ -11,6 +11,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useProductFormContext } from "@/lib/context/ProductFormContext";
 import { ProductFormData } from "@/lib/types";
 
+interface ProductFormProps {
+  submitButtonText: string;
+}
+
 // This component renders the product form fields and handles user interactions.
 // It consumes the ProductFormContext to access state and functions.
 export default function ProductForm({ submitButtonText }: ProductFormProps) {

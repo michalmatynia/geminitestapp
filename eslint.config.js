@@ -44,11 +44,11 @@ const eslintConfig = [
       "@typescript-eslint/no-unused-vars": [
         "error",
         {
-          argsIgnorePattern: "^_",
-          varsIgnorePattern: "^_",
-          caughtErrorsIgnorePattern: "^_",
-          ignoreRestSiblings: true,
-        },
+          "argsIgnorePattern": "^_",
+          "varsIgnorePattern": "^_",
+          "caughtErrorsIgnorePattern": "^_",
+          "ignoreRestSiblings": true
+        }
       ],
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-misused-promises": "off",

@@ -56,3 +56,10 @@ model ProductImage {
 
   @@id([productId, imageFileId])
 }
+
+model Slug {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
@@ -33,12 +32,11 @@ export async function POST(req: Request) {
       data: { slug },
     });
     return NextResponse.json(newSlug);
-  } catch (error) {
-    const e = error as { code?: string };
-    if (e.code === "P2002") {
+  } catch (error: any) {
+    if (error.code === 'P2002') {
       return NextResponse.json(
         { error: "Slug already exists." },
-        { status: 409 } // 409 Conflict is a good choice here
+        { status: 409 }
       );
     }
     return NextResponse.json(

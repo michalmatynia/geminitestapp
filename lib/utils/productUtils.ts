@@ -1,34 +1,21 @@
-import { writeFile } from "fs/promises";
-import { join } from "path";
+import { PrismaClient } from '@prisma/client';
 
-import sharp from "sharp";
+const prisma = new PrismaClient();
 
-interface UploadedImageInfo {
-  filepath: string;
-  width: number;
-  height: number;
-}
-
-// The `handleProductImageUpload` function takes an image file, saves it to
-// the server, and returns the filepath, width, and height of the image.
-export async function handleProductImageUpload(
-  image: File | null
-): Promise<UploadedImageInfo | undefined> {
-  if (image) {
-    const buffer = Buffer.from(await image.arrayBuffer());
-    const filename = `${Date.now()}-${image.name}`;
-    const uploadPath = join(process.cwd(), "public/uploads/products", filename);
-    await writeFile(uploadPath, buffer);
-
-    const metadata = await sharp(buffer).metadata();
-    const width = metadata.width || 0;
-    const height = metadata.height || 0;
-
-    return {
-      filepath: `/uploads/products/${filename}`,
-      width,
-      height,
-    };
-  }
-  return undefined;
+export async function createMockProduct(productData: { name?: string; price?: string; sku?: string; stock?: number }) {
+  const product = await prisma.product.create({
+    data: {
+      name: productData.name || 'Mock Product',
+      price: productData.price ? parseInt(productData.price) : 100,
+      sku: productData.sku || `MOCK-SKU-${Date.now()}-${Math.random()}`,
+      stock: productData.stock || 10,
+      description: 'This is a mock product description.',
+      supplierName: 'Mock Supplier',
+      supplierLink: 'https://mock.supplier.com',
+      priceComment: 'Mock price comment',
+      sizeLength: 10,
+      sizeWidth: 10,
+    },
+  });
+  return product;
 }

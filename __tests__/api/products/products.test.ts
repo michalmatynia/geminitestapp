@@ -3,7 +3,7 @@ import { GET as GET_LIST, POST } from "../../../app/api/products/route";
 import { GET, PUT, DELETE } from "../../../app/api/products/[id]/route";
 import { DELETE as DELETE_IMAGE } from "../../../app/api/products/[id]/images/[imageFileId]/route";
 import { PrismaClient } from "@prisma/client";
-import { createMockProduct } from "../../../mocks/products";
+import { createMockProduct } from "@/lib/utils/productUtils";
 
 const prisma = new PrismaClient();
 
@@ -21,8 +21,8 @@ describe("Products API", () => {
 
   describe("GET /api/products", () => {
     it("should return all products when no filters are applied", async () => {
-      await createMockProduct(prisma, { name: "Product 1" });
-      await createMockProduct(prisma, { name: "Product 2" });
+      await createMockProduct({ name: "Product 1" });
+      await createMockProduct({ name: "Product 2" });
       const res = await GET_LIST(new Request("http://localhost/api/products"));
       const products = await res.json();
       expect(res.status).toEqual(200);
@@ -37,8 +37,8 @@ describe("Products API", () => {
     });
 
     it("should filter products by name using the search parameter", async () => {
-      await createMockProduct(prisma, { name: "Laptop" });
-      await createMockProduct(prisma, { name: "Mouse" });
+      await createMockProduct({ name: "Laptop" });
+      await createMockProduct({ name: "Mouse" });
       const res = await GET_LIST(
         new Request("http://localhost/api/products?search=lap")
       );
@@ -49,8 +49,8 @@ describe("Products API", () => {
     });
 
     it("should filter products by minPrice", async () => {
-      await createMockProduct(prisma, { price: 100 });
-      await createMockProduct(prisma, { price: 500 });
+      await createMockProduct({ price: "100" });
+      await createMockProduct({ price: "500" });
       const res = await GET_LIST(
         new Request("http://localhost/api/products?minPrice=200")
       );
@@ -60,8 +60,8 @@ describe("Products API", () => {
     });
 
     it("should filter products by maxPrice", async () => {
-      await createMockProduct(prisma, { price: 100 });
-      await createMockProduct(prisma, { price: 500 });
+      await createMockProduct({ price: "100" });
+      await createMockProduct({ price: "500" });
       const res = await GET_LIST(
         new Request("http://localhost/api/products?maxPrice=200")
       );
@@ -71,8 +71,10 @@ describe("Products API", () => {
     });
 
     it("should filter products by startDate", async () => {
-      await createMockProduct(prisma, { createdAt: new Date("2023-01-01") });
-      await createMockProduct(prisma, { createdAt: new Date("2023-04-01") });
+      await createMockProduct({ name: "product", sku: "1", price: "1", stock: 1 });
+      await createMockProduct({ name: "product", sku: "2", price: "1", stock: 1 });
+      await prisma.product.updateMany({ where: { sku: "1" }, data: { createdAt: new Date("2023-01-01") } });
+      await prisma.product.updateMany({ where: { sku: "2" }, data: { createdAt: new Date("2023-04-01") } });
       const res = await GET_LIST(
         new Request("http://localhost/api/products?startDate=2023-03-01")
       );
@@ -82,8 +84,10 @@ describe("Products API", () => {
     });
 
     it("should filter products by endDate", async () => {
-      await createMockProduct(prisma, { createdAt: new Date("2023-01-01") });
-      await createMockProduct(prisma, { createdAt: new Date("2023-04-01") });
+      await createMockProduct({ name: "product", sku: "1", price: "1", stock: 1 });
+      await createMockProduct({ name: "product", sku: "2", price: "1", stock: 1 });
+      await prisma.product.updateMany({ where: { sku: "1" }, data: { createdAt: new Date("2023-01-01") } });
+      await prisma.product.updateMany({ where: { sku: "2" }, data: { createdAt: new Date("2023-04-01") } });
       const res = await GET_LIST(
         new Request("http://localhost/api/products?endDate=2023-03-01")
       );
@@ -93,8 +97,8 @@ describe("Products API", () => {
     });
 
     it("should filter products by a combination of search, minPrice, and maxPrice", async () => {
-      await createMockProduct(prisma, { name: "Laptop", price: 1200 });
-      await createMockProduct(prisma, { name: "Mouse", price: 50 });
+      await createMockProduct({ name: "Laptop", price: "1200" });
+      await createMockProduct({ name: "Mouse", price: "50" });
       const res = await GET_LIST(
         new Request(
           "http://localhost/api/products?search=lap&minPrice=1000&maxPrice=1500"
@@ -106,7 +110,7 @@ describe("Products API", () => {
     });
 
     it("should return the correct response structure", async () => {
-      await createMockProduct(prisma, { name: "Product 1", price: 100 });
+      await createMockProduct({ name: "Product 1", price: "100" });
       const res = await GET_LIST(new Request("http://localhost/api/products"));
       const products = await res.json();
       expect(res.status).toEqual(200);
@@ -164,7 +168,7 @@ describe("Products API", () => {
     });
 
     it("should link an existing image to a product", async () => {
-      const product = await createMockProduct(prisma, { name: "Product 1" });
+      const product = await createMockProduct({ name: "Product 1" });
       const imageFile = await prisma.imageFile.create({
         data: {
           filename: "test.jpg",
@@ -208,7 +212,7 @@ describe("Products API", () => {
 
   describe("DELETE /api/products/[id]/images/[imageFileId]", () => {
     it("should unlink an image from a product", async () => {
-      const product = await createMockProduct(prisma, { name: "Product 1" });
+      const product = await createMockProduct({ name: "Product 1" });
       const imageFile = await prisma.imageFile.create({
         data: {
           filename: "test.jpg",
@@ -247,7 +251,7 @@ describe("Products API", () => {
 
   describe("GET /api/products/[id]", () => {
     it("should return a single product", async () => {
-      const product = await createMockProduct(prisma, { name: "Product 1" });
+      const product = await createMockProduct({ name: "Product 1" });
       const req = new Request(`http://localhost/api/products/${product.id}`);
       const res = await GET(req, { params: { id: product.id } });
       const fetchedProduct = await res.json();
@@ -256,7 +260,7 @@ describe("Products API", () => {
     });
 
     it("should return a single product when params is a Promise", async () => {
-      const product = await createMockProduct(prisma, { name: "Product 1" });
+      const product = await createMockProduct({ name: "Product 1" });
       const req = new Request(`http://localhost/api/products/${product.id}`);
       const res = await GET(req, { params: Promise.resolve({ id: product.id }) });
       const fetchedProduct = await res.json();

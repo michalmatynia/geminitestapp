@@ -2,7 +2,7 @@ import { createMocks } from "node-mocks-http";
 import { GET } from "@/app/api/files/route";
 import { DELETE } from "@/app/api/files/[id]/route";
 import { PrismaClient } from "@prisma/client";
-import { createMockProduct } from "@/mocks/products";
+import { createMockProduct } from "@/lib/utils/productUtils";
 import fs from "fs/promises";
 import path from "path";
 
@@ -19,8 +19,8 @@ describe("Files API", () => {
     await prisma.imageFile.deleteMany({});
     await prisma.product.deleteMany({});
 
-    product1 = await createMockProduct(prisma, { name: "Product A" });
-    product2 = await createMockProduct(prisma, { name: "Product B" });
+    product1 = await createMockProduct({ name: "Product A" });
+    product2 = await createMockProduct({ name: "Product B" });
 
     const imagePath1 = path.join(process.cwd(), "public", "test-image1.jpg");
     const imagePath2 = path.join(process.cwd(), "public", "test-image2.jpg");

@@ -1,9 +1,9 @@
-import { getProductById } from "@/lib/services/productService";
+import { productService } from "@/lib/services/productService";
 import Image from "next/image";
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const product = await getProductById(id);
+  const product = await productService.getProductById(id);
 
   if (!product) {
     return <div>Product not found</div>;

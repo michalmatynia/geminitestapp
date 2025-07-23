@@ -25,6 +25,9 @@ export default function ProductForm({ submitButtonText }: ProductFormProps) {
     setShowFileManager,
     uploading,
     uploadError,
+    existingImageUrls,
+    previewUrls,
+    selectedImageUrls,
   } = useProductFormContext();
   const [generating, setGenerating] = useState(false);
   const { register, getValues, setValue } = useFormContext<ProductFormData>();
@@ -32,14 +35,19 @@ export default function ProductForm({ submitButtonText }: ProductFormProps) {
   // This function calls the API to generate a product description based on the product name.
   const handleGenerateDescription = async () => {
     setGenerating(true);
-    const name = getValues("name");
+    const productData = getValues();
+    const imageUrls = [
+      ...existingImageUrls,
+      ...previewUrls,
+      ...selectedImageUrls,
+    ];
     try {
       const res = await fetch("/api/generate-description", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ productData, imageUrls }),
       });
       const { description } = (await res.json()) as { description: string };
       setValue("description", description);

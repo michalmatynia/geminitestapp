@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { getProducts } from "@/lib/services/productService";
+import { productService } from "@/lib/services/productService";
 import ProductCard from "@/components/products/ProductCard";
 
 export default async function HomePage() {
-  const products = await getProducts({});
+  const products = await productService.getProducts({});
 
   return (
     <div className="flex min-h-screen flex-col">

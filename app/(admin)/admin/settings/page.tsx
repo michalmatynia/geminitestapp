@@ -5,6 +5,14 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Setting {
   key: string;
@@ -13,6 +21,8 @@ interface Setting {
 
 export default function SettingsPage() {
   const [apiKey, setApiKey] = useState("");
+  const [prompt, setPrompt] = useState("");
+  const [model, setModel] = useState("gpt-3.5-turbo");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -25,19 +35,50 @@ export default function SettingsPage() {
         if (apiKeySetting) {
           setApiKey(apiKeySetting.value);
         }
+        const promptSetting = settings.find(
+          (setting) => setting.key === "description_generation_prompt"
+        );
+        if (promptSetting) {
+          setPrompt(promptSetting.value);
+        }
+        const modelSetting = settings.find(
+          (setting) => setting.key === "openai_model"
+        );
+        if (modelSetting) {
+          setModel(modelSetting.value);
+        }
       });
   }, []);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await fetch("/api/settings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ key: "openai_api_key", value: apiKey }),
-      });
+      await Promise.all([
+        fetch("/api/settings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ key: "openai_api_key", value: apiKey }),
+        }),
+        fetch("/api/settings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            key: "description_generation_prompt",
+            value: prompt,
+          }),
+        }),
+        fetch("/api/settings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ key: "openai_model", value: model }),
+        }),
+      ]);
       alert("Settings saved successfully!");
     } catch (error) {
       console.error("Failed to save settings:", error);
@@ -58,7 +99,6 @@ export default function SettingsPage() {
       >
         <div className="mt-4">
           <Label htmlFor="api-key">OpenAI API Key</Label>
-          {/* The hidden username field is to prevent a browser warning about password forms without a username field. */}
           <input
             type="text"
             autoComplete="username"
@@ -71,6 +111,34 @@ export default function SettingsPage() {
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
           />
+        </div>
+        <div className="mt-4">
+          <Label htmlFor="model">Model</Label>
+          <Select value={model} onValueChange={setModel}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a model" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="gpt-3.5-turbo">gpt-3.5-turbo</SelectItem>
+              <SelectItem value="gpt-4o">
+                gpt-4o
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="mt-4">
+          <Label htmlFor="prompt">Description Generation Prompt</Label>
+          <Textarea
+            id="prompt"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            rows={5}
+          />
+          <p className="text-sm text-gray-500 mt-2">
+            Available placeholders: [name], [price], [sku], [description],
+            [supplierName], [supplierLink], [priceComment], [stock],
+            [sizeLength], [sizeWidth], [images]
+          </p>
         </div>
         <Button type="submit" disabled={saving} className="mt-4">
           {saving ? "Saving..." : "Save"}

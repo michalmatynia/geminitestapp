@@ -3,6 +3,7 @@ import { ProductWithImages } from "./types";
 // This function fetches a list of products from the API.
 export async function getProducts(filters: {
   search?: string;
+  sku?: string;
   minPrice?: number;
   maxPrice?: number;
   startDate?: string;
@@ -10,6 +11,7 @@ export async function getProducts(filters: {
 }): Promise<ProductWithImages[]> {
   const query = new URLSearchParams();
   if (filters.search) query.append("search", filters.search);
+  if (filters.sku) query.append("sku", filters.sku);
   if (filters.minPrice) query.append("minPrice", String(filters.minPrice));
   if (filters.maxPrice) query.append("maxPrice", String(filters.maxPrice));
   if (filters.startDate) query.append("startDate", filters.startDate);

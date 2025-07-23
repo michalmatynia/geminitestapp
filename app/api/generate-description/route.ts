@@ -19,7 +19,6 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    console.log("--- [Debug] Fetching settings from database ---");
     const apiKeySetting = await prisma.setting.findUnique({
       where: { key: "openai_api_key" },
     });
@@ -36,13 +35,6 @@ export async function POST(req: NextRequest) {
       promptSetting?.value ||
       "You are a helpful assistant that generates compelling product descriptions.";
 
-    console.log({
-      apiKey: apiKey ? `Loaded (length: ${apiKey.length})` : "Not found",
-      model: model,
-      initialPrompt: systemPrompt,
-    });
-    console.log("--- [Debug] Finished fetching settings ---");
-
     const useImages = systemPrompt.includes("[images]");
     if (useImages) {
       systemPrompt = systemPrompt.replace("[images]", "").trim();
@@ -57,12 +49,8 @@ export async function POST(req: NextRequest) {
         }
       }
     }
-    console.log("--- [Debug] Final prompt after placeholder replacement ---");
-    console.log(systemPrompt);
-    console.log("--- [Debug] End of final prompt ---");
 
     if (!apiKey) {
-      console.error("OpenAI API key not configured");
       return NextResponse.json(
         { error: "OpenAI API key not configured" },
         { status: 500 }
@@ -76,12 +64,11 @@ export async function POST(req: NextRequest) {
     const userContent: any[] = [
       {
         type: "text",
-        text: `Generate a product description for: ${productData.name}`,
+        text: "Generate a product description based on the details provided in the system prompt.",
       },
     ];
 
     if (useImages && imageUrls && imageUrls.length > 0) {
-      console.log("--- [Debug] Processing images for OpenAI ---");
       const imageFiles = await prisma.imageFile.findMany({
         where: { filepath: { in: imageUrls } },
       });
@@ -100,7 +87,6 @@ export async function POST(req: NextRequest) {
 
       const processedImages = await Promise.all(imagePromises);
       userContent.push(...processedImages);
-      console.log(`--- [Debug] Added ${processedImages.length} images to the payload ---`);
     }
 
     const messages: any[] = [
@@ -114,25 +100,11 @@ export async function POST(req: NextRequest) {
       },
     ];
 
-    console.log("--- [Debug] Sending the following payload to OpenAI ---");
-    // Avoid logging the full base64 string to keep logs clean
-    console.log(JSON.stringify(messages.map((m: { content: string | any[]; }) => {
-      if (Array.isArray(m.content)) {
-        return { ...m, content: m.content.map((c: { type: string; }) => c.type === 'image_url' ? { ...c, image_url: { url: '...base64_data...' } } : c) };
-      }
-      return m;
-    }), null, 2));
-    console.log("--- [Debug] End of OpenAI payload ---");
-
     const completion = await openai.chat.completions.create({
       model: model,
       messages: messages,
       max_tokens: 500,
     });
-
-    console.log("--- [Debug] Received response from OpenAI ---");
-    console.log(JSON.stringify(completion, null, 2));
-    console.log("--- [Debug] End of OpenAI response ---");
 
     const description = completion.choices[0].message.content?.trim();
 
@@ -145,9 +117,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ description });
   } catch (error) {
-    console.error("--- [Debug] An error occurred in the API route ---");
-    console.error(error);
-    console.error("--- [Debug] End of error ---");
     return NextResponse.json(
       { error: "Failed to generate description" },
       { status: 500 }

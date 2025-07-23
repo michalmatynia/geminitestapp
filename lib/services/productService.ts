@@ -5,6 +5,7 @@ import { uploadFile } from "@/lib/utils/fileUploader";
 
 async function getProducts(filters: {
   search?: string;
+  sku?: string;
   minPrice?: string;
   maxPrice?: string;
   startDate?: string;
@@ -13,6 +14,9 @@ async function getProducts(filters: {
   const where: Prisma.ProductWhereInput = {
     name: {
       contains: filters.search,
+    },
+    sku: {
+      contains: filters.sku,
     },
   };
 

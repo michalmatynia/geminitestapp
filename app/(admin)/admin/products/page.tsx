@@ -78,15 +78,16 @@ export default function AdminPage() {
   // when a product is deleted.
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [search, setSearch] = useState<string>("");
+  const [sku, setSku] = useState<string>("");
   const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
 
   useEffect(() => {
-    const filters = { search, minPrice, maxPrice, startDate, endDate };
+    const filters = { search, sku, minPrice, maxPrice, startDate, endDate };
     void getProducts(filters).then(setData);
-  }, [search, minPrice, maxPrice, startDate, endDate, refreshTrigger]);
+  }, [search, sku, minPrice, maxPrice, startDate, endDate, refreshTrigger]);
 
   return (
     <div className="container mx-auto py-10">
@@ -97,6 +98,12 @@ export default function AdminPage() {
             placeholder="Search by name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            className="max-w-sm"
+          />
+          <Input
+            placeholder="Search by SKU..."
+            value={sku}
+            onChange={(e) => setSku(e.target.value)}
             className="max-w-sm"
           />
           <Input

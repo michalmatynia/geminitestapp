@@ -1,6 +1,6 @@
 # Project Information
 
-This project is a Next.js application designed as a monochrome admin dashboard with full CRUD (Create, Read, Update, Delete) capabilities for managing products. It leverages modern web technologies to provide a clean, efficient, and type-safe development experience.
+This project is a Next.js application designed as a monochrome admin dashboard with full CRUD (Create, Read, Update, Delete) capabilities for managing products. It leverages modern web technologies to provide a clean, efficient, and type-safe development experience. It also features a user-facing frontend to display the products.
 
 ## Getting Started
 
@@ -29,21 +29,21 @@ The application will be available at `http://localhost:3000`.
 - **Framework**: Next.js (App Router)
 - **Language**: TypeScript
 - **Database ORM**: Prisma (with SQLite for development/testing)
-- **Real-time Communication**: WebSocket (`ws` library)
-- **UI Components**: Radix UI (headless components for accessibility), including `@radix-ui/react-collapsible`
+- **UI Components**: Radix UI (headless components for accessibility), including `@radix-ui/react-collapsible` and `@radix-ui/react-select`
 - **Styling**: Tailwind CSS (utility-first CSS framework)
 - **Form Handling**: React Hook Form with Zod for schema validation
 - **Data Display**: TanStack Table (for efficient and flexible table rendering)
 - **Icons**: Lucide React
 - **Testing**: Jest (testing framework)
+- **AI**: OpenAI API for description generation
 
 ## Architecture
 
 This application follows a modular architecture that separates concerns and promotes maintainability.
 
-- **`server.cjs`**: A custom Node.js server that runs the Next.js application and a WebSocket server for real-time communication.
-- **`app/`**: Contains the pages and API routes, following the Next.js App Router conventions.
-  - **`app/admin/`**: The main UI for the admin dashboard, featuring a panel-based layout with foldable sections for managing products, files, and application settings.
+- **`app/`**: Contains the pages and API routes, following the Next.js App Router conventions. The app is split into two route groups:
+  - **`app/(admin)/`**: The main UI for the admin dashboard, featuring a panel-based layout with foldable sections for managing products, files, and application settings.
+  - **`app/(frontend)/`**: The user-facing pages, including the homepage and product detail pages.
   - **`app/api/`**: Houses the backend API endpoints, which are now thin wrappers around the business logic in the `productService`.
 - **`components/`**: Reusable UI components, including a `DebugPanel` for development, a `ProductImageManager` for handling image uploads, and a `FileManager` for browsing and selecting existing images. The `data-table.tsx` and `columns.tsx` files provide a generic, reusable table component powered by TanStack Table.
 - **`lib/`**: Contains the core business logic, utilities, and type definitions.
@@ -64,7 +64,6 @@ Prisma is used as the ORM to interact with a SQLite database. The data model is 
 | `ImageFile`     | Represents an image file that can be associated with one or more products.                                                                     |
 | `ProductImage`  | A join table that creates a many-to-many relationship between `Product` and `ImageFile`.                                                       |
 | `Setting`       | A key-value store for application settings.                                                                                                    |
-| `ConnectionLog` | A log of user connections to the WebSocket server.                                                                                             |
 
 ## API Endpoints
 
@@ -78,11 +77,15 @@ The application exposes a set of RESTful API endpoints for managing products and
 - **`DELETE /api/products/[id]/images/[imageFileId]`**: Unlinks an image from a product.
 - **`GET /api/files`**: Fetches a list of image files with filtering options.
 - **`DELETE /api/files/[id]`**: Deletes an image file.
-- **`GET /api/connections`**: Fetches the latest connection logs.
-- **`POST /api/generate-description`**: Generates a product description based on the product name.
+- **`POST /api/generate-description`**: Generates a product description based on the product name and other attributes.
 - **`POST /api/import`**: Imports products from a CSV file.
 - **`GET /api/settings`**: Fetches all application settings.
 - **`POST /api/settings`**: Creates or updates an application setting.
+- **`POST /api/databases/upload`**: Uploads a database backup file.
+- **`POST /api/databases/backup`**: Creates a new database backup.
+- **`GET /api/databases/backups`**: Fetches a list of all database backups.
+- **`POST /api/databases/restore`**: Restores a database backup.
+- **`POST /api/databases/delete`**: Deletes a database backup.
 
 ## Code Style and Conventions
 
@@ -92,7 +95,15 @@ The application exposes a set of RESTful API endpoints for managing products and
 
 ## New Features
 
-- **Live Connections Dashboard:** The admin dashboard now features a real-time panel that displays the number of active WebSocket connections and a table of the latest connection logs.
+- **AI-Powered Description Generation:** The admin dashboard now features a tool to generate product descriptions using the OpenAI API. This feature is highly customizable, allowing users to:
+    - Select the AI model (`gpt-3.5-turbo` or `gpt-4o`).
+    - Define a custom prompt with placeholders for product attributes (e.g., `[name]`, `[price]`).
+    - Include product images in the prompt for vision-capable models.
+- **Database Management:** The admin dashboard now includes a database management page where users can:
+    - Create and restore database backups.
+    - Upload and delete existing backup files.
+- **SKU Search:** The product list page now includes a search field for filtering products by SKU.
+- **Frontend/Admin Split:** The application has been restructured into separate frontend and admin sections, each with its own layout and navigation.
 - **Modular Business Logic:** The backend logic has been refactored into a dedicated `productService` for improved maintainability and testability.
 - **Centralized API Calls:** All client-side `fetch` calls have been consolidated into `lib/api.ts`.
 - **Decomposed Components:** The `ProductForm` has been broken down into smaller, more focused components like `ProductImageManager`.
@@ -100,9 +111,9 @@ The application exposes a set of RESTful API endpoints for managing products and
 
 ## Available Scripts
 
-- **`npm run dev`**: Starts the custom Node.js server with the WebSocket server for development.
+- **`npm run dev`**: Starts the Next.js development server.
 - **`npm run build`**: Builds the Next.js application for production.
-- **`npm run start`**: Starts the custom Node.js server for production.
+- **`npm run start`**: Starts the Next.js production server.
 - **`npm run test`**: Runs the Jest test suite.
 - **`npm run seed`**: Seeds the database with initial data.
 - **`npm run lint`**: Lints the codebase.

@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { productService } from "@/lib/services/productService";
 
+/**
+ * GET /api/products
+ * Fetches a list of products with optional filters.
+ */
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const filters = Object.fromEntries(searchParams.entries());
@@ -16,6 +20,10 @@ export async function GET(req: Request) {
   }
 }
 
+/**
+ * POST /api/products
+ * Creates a new product.
+ */
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();

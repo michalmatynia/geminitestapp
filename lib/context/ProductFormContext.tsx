@@ -118,7 +118,10 @@ export function ProductFormProvider({
     };
   }, [previewUrls]);
 
-  // This function is called when the user selects new image files from their computer.
+  /**
+   * Handles the selection of new image files from the user's computer.
+   * @param e - The change event from the file input.
+   */
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
@@ -126,14 +129,20 @@ export function ProductFormProvider({
     }
   };
 
-  // This function is called when the user selects existing files from the File Manager.
+  /**
+   * Handles the selection of existing files from the File Manager.
+   * @param files - The selected files.
+   */
   const handleFileSelect = (files: { id: string; filepath: string }[]) => {
     setSelectedImageFiles((prev) => [...prev, ...files]);
     setShowFileManager(false);
   };
 
-  // This function handles the removal of an image, whether it's a new upload,
-  // a selected existing file, or an image that was already saved with the product.
+  /**
+   * Handles the removal of an image, whether it's a new upload,
+   * a selected existing file, or an image that was already saved with the product.
+   * @param imageUrl - The URL of the image to remove.
+   */
   const handleDisconnectImage = async (imageUrl: string) => {
     // Case 1: It's a newly uploaded file (preview)
     const newFileIndex = previewUrls.indexOf(imageUrl);
@@ -184,8 +193,11 @@ export function ProductFormProvider({
     }
   };
 
-  // This function is called when the user submits the form.
-  // It constructs the FormData and sends it to the API.
+  /**
+   * Handles the form submission.
+   * It constructs the FormData and sends it to the API.
+   * @param data - The product form data.
+   */
   const onSubmit = async (data: ProductFormData) => {
     setUploading(true);
     setUploadError(null);

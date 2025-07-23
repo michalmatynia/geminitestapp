@@ -1,8 +1,15 @@
+// This service encapsulates all business logic for managing products.
+
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { productSchema } from "@/lib/validations/product";
 import { uploadFile } from "@/lib/utils/fileUploader";
 
+/**
+ * Retrieves a list of products based on the provided filters.
+ * @param filters - The filter criteria.
+ * @returns A list of products.
+ */
 async function getProducts(filters: {
   search?: string;
   sku?: string;
@@ -60,6 +67,11 @@ async function getProducts(filters: {
   });
 }
 
+/**
+ * Retrieves a single product by its ID.
+ * @param id - The ID of the product to retrieve.
+ * @returns The product, or null if not found.
+ */
 async function getProductById(id: string) {
   return await prisma.product.findUnique({
     where: { id },
@@ -76,6 +88,11 @@ async function getProductById(id: string) {
   });
 }
 
+/**
+ * Creates a new product.
+ * @param formData - The product data from the form.
+ * @returns The newly created product.
+ */
 async function createProduct(formData: FormData) {
   const validatedData = productSchema.parse(
     Object.fromEntries(formData.entries())
@@ -91,6 +108,12 @@ async function createProduct(formData: FormData) {
   return await getProductById(product.id);
 }
 
+/**
+ * Updates an existing product.
+ * @param id - The ID of the product to update.
+ * @param formData - The updated product data from the form.
+ * @returns The updated product, or null if not found.
+ */
 async function updateProduct(id: string, formData: FormData) {
   const productExists = await prisma.product.findUnique({ where: { id } });
   if (!productExists) return null;
@@ -98,7 +121,6 @@ async function updateProduct(id: string, formData: FormData) {
   const validatedData = productSchema.parse(
     Object.fromEntries(formData.entries())
   );
-  console.log("Validated data:", validatedData);
   await prisma.product.update({
     where: { id },
     data: validatedData,
@@ -111,24 +133,40 @@ async function updateProduct(id: string, formData: FormData) {
   return await getProductById(id);
 }
 
+/**
+ * Deletes a product.
+ * @param id - The ID of the product to delete.
+ * @returns The deleted product, or null if not found.
+ */
 async function deleteProduct(id: string) {
   const productExists = await prisma.product.findUnique({ where: { id } });
   if (!productExists) return null;
   return await prisma.product.delete({ where: { id } });
 }
 
+/**
+ * Unlinks an image from a product.
+ * @param productId - The ID of the product.
+ * @param imageFileId - The ID of the image file.
+ * @returns The result of the deletion.
+ */
 async function unlinkImageFromProduct(productId: string, imageFileId: string) {
   return await prisma.productImage.delete({
     where: { productId_imageFileId: { productId, imageFileId } },
   });
 }
 
+/**
+ * Links images to a product. This includes uploading new images and linking existing ones.
+ * @param productId - The ID of the product.
+ * @param images - The new image files to upload.
+ * @param imageFileIds - The IDs of the existing image files to link.
+ */
 async function linkImagesToProduct(
   productId: string,
   images: File[],
   imageFileIds: string[]
 ) {
-  console.log("Linking images:", { productId, images, imageFileIds });
   const allImageFileIds = [...imageFileIds];
 
   if (images.length > 0) {

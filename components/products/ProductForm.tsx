@@ -15,8 +15,11 @@ interface ProductFormProps {
   submitButtonText: string;
 }
 
-// This component renders the product form fields and handles user interactions.
-// It consumes the ProductFormContext to access state and functions.
+/**
+ * This component renders the product form fields and handles user interactions.
+ * It consumes the ProductFormContext to access state and functions.
+ * @param submitButtonText - The text to display on the submit button.
+ */
 export default function ProductForm({ submitButtonText }: ProductFormProps) {
   const {
     handleSubmit,
@@ -32,7 +35,9 @@ export default function ProductForm({ submitButtonText }: ProductFormProps) {
   const [generating, setGenerating] = useState(false);
   const { register, getValues, setValue } = useFormContext<ProductFormData>();
 
-  // This function calls the API to generate a product description based on the product name.
+  /**
+   * Calls the API to generate a product description based on the current form data.
+   */
   const handleGenerateDescription = async () => {
     setGenerating(true);
     const productData = getValues();

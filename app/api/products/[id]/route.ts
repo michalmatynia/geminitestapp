@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { productService } from "@/lib/services/productService";
 
+/**
+ * GET /api/products/[id]
+ * Fetches a single product by its ID.
+ */
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -23,6 +27,10 @@ export async function GET(
   }
 }
 
+/**
+ * PUT /api/products/[id]
+ * Updates an existing product.
+ */
 export async function PUT(
   req: Request,
   { params }: any
@@ -42,6 +50,10 @@ export async function PUT(
   }
 }
 
+/**
+ * DELETE /api/products/[id]
+ * Deletes a product.
+ */
 export async function DELETE(
   req: Request,
   { params }: any

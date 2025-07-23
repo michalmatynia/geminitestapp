@@ -5,6 +5,10 @@ import { ProductFormData } from "@/lib/types";
 import fs from "fs/promises";
 import path from "path";
 
+/**
+ * POST /api/generate-description
+ * Generates a product description using the OpenAI API.
+ */
 export async function POST(req: NextRequest) {
   const { productData, imageUrls } = (await req.json()) as {
     productData: ProductFormData;

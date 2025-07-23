@@ -1,4 +1,4 @@
-import { Product, ProductImage, ImageFile, ConnectionLog } from "@prisma/client";
+import { Product, ProductImage, ImageFile } from "@prisma/client";
 import { z } from "zod";
 import { productSchema } from "@/lib/validations/product";
 
@@ -9,6 +9,3 @@ export type ProductWithImages = Product & {
 
 // This is the Zod schema for the product form data.
 export type ProductFormData = z.infer<typeof productSchema>;
-
-// This type represents the connection log entry from the database.
-export type ConnectionLogType = ConnectionLog;

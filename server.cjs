@@ -2,9 +2,7 @@ const { createServer } = require('http');
 const { parse } = require('url');
 const next = require('next');
 const { WebSocketServer } = require('ws');
-const { PrismaClient } = require('@prisma/client');
 
-const prisma = new PrismaClient();
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
@@ -20,22 +18,6 @@ app.prepare().then(() => {
   const wss = new WebSocketServer({ server });
 
   wss.on('connection', async (ws, req) => {
-    const ip = req.socket.remoteAddress;
-    const userAgent = req.headers['user-agent'];
-    const language = req.headers['accept-language'];
-
-    try {
-      await prisma.connectionLog.create({
-        data: {
-          ip,
-          userAgent,
-          language,
-        },
-      });
-    } catch (error) {
-      console.error('Failed to log connection:', error);
-    }
-    
     // Send the current connection count to the new client
     ws.send(JSON.stringify({ type: 'connections', count: wss.clients.size }));
 

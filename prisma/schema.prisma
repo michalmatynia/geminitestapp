@@ -56,11 +56,3 @@ model ProductImage {
 
   @@id([productId, imageFileId])
 }
-
-model ConnectionLog {
-  id        String   @id @default(cuid())
-  ip        String?
-  userAgent String?
-  language  String?
-  connectedAt DateTime @default(now())
-}

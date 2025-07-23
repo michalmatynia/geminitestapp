@@ -1,4 +1,4 @@
-import { ProductWithImages, ConnectionLogType } from "./types";
+import { ProductWithImages } from "./types";
 
 // This function fetches a list of products from the API.
 export async function getProducts(filters: {
@@ -17,10 +17,4 @@ export async function getProducts(filters: {
 
   const res = await fetch(`/api/products?${query.toString()}`);
   return res.json() as Promise<ProductWithImages[]>;
-}
-
-// This function fetches the connection logs from the API.
-export async function getConnectionLogs(): Promise<ConnectionLogType[]> {
-  const res = await fetch("/api/connections");
-  return res.json() as Promise<ConnectionLogType[]>;
 }

@@ -58,12 +58,12 @@ export default function FileManager({
 
   // This function fetches the files from the API based on the search criteria.
   useEffect(() => {
-    if (mode === 'select' && showFileManager) {
+    if (mode === 'select') {
       fetchFiles();
     } else if (mode === 'view') {
       fetchFiles();
     }
-  }, [fetchFiles, mode, showFileManager]);
+  }, [fetchFiles, mode]);
 
   const handleClick = (file: FileManagerImageFile) => {
     if (mode === "select") {

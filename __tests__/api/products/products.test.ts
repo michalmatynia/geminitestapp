@@ -181,7 +181,7 @@ describe("Products API", () => {
       const formData = new FormData();
       formData.append("name", "Updated Product");
       formData.append("price", "150");
-      formData.append("sku", "SKU123");
+      formData.append("sku", "SKU456");
       formData.append("imageFileIds", imageFile.id);
 
       const req = new Request(`http://localhost/api/products/${product.id}`, {

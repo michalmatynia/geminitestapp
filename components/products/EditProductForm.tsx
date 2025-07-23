@@ -45,7 +45,7 @@ function EditProductForm() {
         <h1 className="text-3xl font-bold text-white">Edit Product</h1>
       </div>
       {showFileManager ? (
-        <FileManager onSelectFile={handleFileSelect} />
+        <FileManager onSelectFile={handleFileSelect} showFileManager={showFileManager} />
       ) : (
         <ProductForm submitButtonText="Update" />
       )}

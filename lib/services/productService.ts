@@ -1,10 +1,9 @@
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
-import { handleProductImageUpload } from "@/lib/utils/productUtils";
 import { productSchema } from "@/lib/validations/product";
+import { uploadFile } from "@/lib/utils/fileUploader";
 
-// This function retrieves a list of products based on the provided filters.
-export async function getProducts(filters: {
+async function getProducts(filters: {
   search?: string;
   minPrice?: string;
   maxPrice?: string;
@@ -57,8 +56,7 @@ export async function getProducts(filters: {
   });
 }
 
-// This function retrieves a single product by its ID.
-export async function getProductById(id: string) {
+async function getProductById(id: string) {
   return await prisma.product.findUnique({
     where: { id },
     include: {
@@ -74,150 +72,86 @@ export async function getProductById(id: string) {
   });
 }
 
-// This function creates a new product.
-export async function createProduct(formData: FormData) {
-  console.log("Creating product with formData:", Object.fromEntries(formData.entries()));
-  const validatedData = productSchema.parse({
-    name: formData.get("name"),
-    price: parseFloat(formData.get("price") as string),
-    sku: formData.get("sku"),
-    description: formData.get("description"),
-    supplierName: formData.get("supplierName"),
-    supplierLink: formData.get("supplierLink"),
-    priceComment: formData.get("priceComment"),
-    stock: formData.get("stock")
-      ? parseInt(formData.get("stock") as string, 10)
-      : null,
-    sizeLength: formData.get("sizeLength")
-      ? parseInt(formData.get("sizeLength") as string, 10)
-      : null,
-    sizeWidth: formData.get("sizeWidth")
-      ? parseInt(formData.get("sizeWidth") as string, 10)
-      : null,
-  });
-
+async function createProduct(formData: FormData) {
+  const validatedData = productSchema.parse(
+    Object.fromEntries(formData.entries())
+  );
   const product = await prisma.product.create({
     data: validatedData,
   });
 
-  const images: File[] = formData.getAll("images") as unknown as File[];
+  const images = formData.getAll("images") as File[];
   const imageFileIds = formData.getAll("imageFileIds") as string[];
-
   await linkImagesToProduct(product.id, images, imageFileIds);
 
   return await getProductById(product.id);
 }
 
-// This function updates an existing product.
-export async function updateProduct(id: string, formData: FormData) {
-  const productExists = await prisma.product.findUnique({
-    where: { id },
-  });
+async function updateProduct(id: string, formData: FormData) {
+  const productExists = await prisma.product.findUnique({ where: { id } });
+  if (!productExists) return null;
 
-  if (!productExists) {
-    return null;
-  }
-  console.log(`Updating product ${id} with formData:`, Object.fromEntries(formData.entries()));
-  const validatedData = productSchema.parse({
-    name: formData.get("name"),
-    price: parseFloat(formData.get("price") as string),
-    sku: formData.get("sku"),
-    description: formData.get("description"),
-    supplierName: formData.get("supplierName"),
-    supplierLink: formData.get("supplierLink"),
-    priceComment: formData.get("priceComment"),
-    stock: formData.get("stock")
-      ? parseInt(formData.get("stock") as string, 10)
-      : null,
-    sizeLength: formData.get("sizeLength")
-      ? parseInt(formData.get("sizeLength") as string, 10)
-      : null,
-    sizeWidth: formData.get("sizeWidth")
-      ? parseInt(formData.get("sizeWidth") as string, 10)
-      : null,
-  });
-
+  const validatedData = productSchema.parse(
+    Object.fromEntries(formData.entries())
+  );
+  console.log("Validated data:", validatedData);
   await prisma.product.update({
     where: { id },
     data: validatedData,
   });
 
-  const images: File[] = formData.getAll("images") as unknown as File[];
+  const images = formData.getAll("images") as File[];
   const imageFileIds = formData.getAll("imageFileIds") as string[];
-
   await linkImagesToProduct(id, images, imageFileIds);
 
   return await getProductById(id);
 }
 
-// This function deletes a product.
-export async function deleteProduct(id: string) {
-  const productExists = await prisma.product.findUnique({
-    where: { id },
-  });
-
-  if (!productExists) {
-    return null;
-  }
-  return await prisma.product.delete({
-    where: { id },
-  });
+async function deleteProduct(id: string) {
+  const productExists = await prisma.product.findUnique({ where: { id } });
+  if (!productExists) return null;
+  return await prisma.product.delete({ where: { id } });
 }
 
-// This function unlinks an image from a product.
-export async function unlinkImageFromProduct(
-  productId: string,
-  imageFileId: string
-) {
+async function unlinkImageFromProduct(productId: string, imageFileId: string) {
   return await prisma.productImage.delete({
-    where: {
-      productId_imageFileId: {
-        productId,
-        imageFileId,
-      },
-    },
+    where: { productId_imageFileId: { productId, imageFileId } },
   });
 }
 
-// This is a helper function to link images to a product.
 async function linkImagesToProduct(
   productId: string,
   images: File[],
   imageFileIds: string[]
 ) {
+  console.log("Linking images:", { productId, images, imageFileIds });
+  const allImageFileIds = [...imageFileIds];
+
   if (images.length > 0) {
     for (const image of images) {
-      const uploadedImageInfo = await handleProductImageUpload(image);
-      if (uploadedImageInfo) {
-        const newImageFile = await prisma.imageFile.create({
-          data: {
-            filename: image.name,
-            filepath: uploadedImageInfo.filepath,
-            mimetype: image.type,
-            size: image.size,
-            width: uploadedImageInfo.width,
-            height: uploadedImageInfo.height,
-          },
-        });
-
-        await prisma.productImage.create({
-          data: {
-            productId: productId,
-            imageFileId: newImageFile.id,
-          },
-        });
+      // Filter out empty file inputs
+      if (image.size > 0) {
+        const uploadedImage = await uploadFile(image);
+        allImageFileIds.push(uploadedImage.id);
       }
     }
   }
 
-  if (imageFileIds.length > 0) {
-    for (const imageFileId of imageFileIds) {
-      await prisma.productImage.create({
-        data: {
-          productId: productId,
-          imageFileId: imageFileId,
-        },
-      });
-    }
+  if (allImageFileIds.length > 0) {
+    await prisma.productImage.createMany({
+      data: allImageFileIds.map((imageFileId) => ({
+        productId,
+        imageFileId,
+      })),
+    });
   }
 }
+
+export const productService = {
+  getProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  unlinkImageFromProduct,
+};

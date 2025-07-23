@@ -1,9 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-  getProductById,
-  updateProduct,
-  deleteProduct,
-} from "@/lib/services/productService";
+import { productService } from "@/lib/services/productService";
 
 export async function GET(
   req: Request,
@@ -11,7 +7,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const product = await getProductById(id);
+    const product = await productService.getProductById(id);
     if (!product) {
       return NextResponse.json(
         { error: "Product not found" },
@@ -33,7 +29,7 @@ export async function PUT(
 ) {
   try {
     const formData = await req.formData();
-    const product = await updateProduct(params.id, formData);
+    const product = await productService.updateProduct(params.id, formData);
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
@@ -51,7 +47,7 @@ export async function DELETE(
   { params }: any
 ) {
   try {
-    const product = await deleteProduct(params.id);
+    const product = await productService.deleteProduct(params.id);
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }

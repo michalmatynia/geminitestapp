@@ -26,6 +26,7 @@ interface FileManagerImageFile {
 interface FileManagerProps {
   onSelectFile?: (files: { id: string; filepath: string }[]) => void;
   mode?: "view" | "select";
+  showFileManager?: boolean;
 }
 
 // This component provides a UI for browsing and selecting existing image files.
@@ -57,8 +58,12 @@ export default function FileManager({
 
   // This function fetches the files from the API based on the search criteria.
   useEffect(() => {
-    fetchFiles();
-  }, [fetchFiles]);
+    if (mode === 'select' && showFileManager) {
+      fetchFiles();
+    } else if (mode === 'view') {
+      fetchFiles();
+    }
+  }, [fetchFiles, mode, showFileManager]);
 
   const handleClick = (file: FileManagerImageFile) => {
     if (mode === "select") {

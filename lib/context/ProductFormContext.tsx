@@ -44,7 +44,9 @@ interface ProductFormContextType {
   handleDisconnectImage?: (imageUrl: string) => void;
 }
 
-export const ProductFormContext = createContext<ProductFormContextType | null>(null);
+export const ProductFormContext = createContext<ProductFormContextType | null>(
+  null
+);
 
 export const useProductFormContext = () => {
   const context = useContext(ProductFormContext);
@@ -55,7 +57,6 @@ export const useProductFormContext = () => {
   }
   return context;
 };
-
 
 // This context provides a centralized place for managing the state and logic of the product form.
 // It handles form data, image uploads, and communication with the API.
@@ -158,7 +159,8 @@ export function ProductFormProvider({
 
     // Case 3: It's an image that was already saved with the product
     const image = existingImages.find(
-      (img: ProductImage & { imageFile: ImageFile }) => img.imageFile.filepath === imageUrl
+      (img: ProductImage & { imageFile: ImageFile }) =>
+        img.imageFile.filepath === imageUrl
     );
     if (image && product) {
       try {
@@ -170,7 +172,10 @@ export function ProductFormProvider({
         );
         if (res.ok) {
           setExistingImages((prev) =>
-            prev.filter((img: ProductImage & { imageFile: ImageFile }) => img.imageFile.filepath !== imageUrl)
+            prev.filter(
+              (img: ProductImage & { imageFile: ImageFile }) =>
+                img.imageFile.filepath !== imageUrl
+            )
           );
         }
       } catch (error) {
@@ -186,8 +191,8 @@ export function ProductFormProvider({
     setUploadError(null);
 
     const formData = new FormData();
-    Object.keys(data).forEach((key) => {
-      const value = data[key as keyof ProductFormData];
+    // Append all form data
+    Object.entries(data).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
         formData.append(key, String(value));
       }
@@ -213,7 +218,7 @@ export function ProductFormProvider({
       );
 
       if (!response.ok) {
-        const errorData = await response.json() as { error?: string };
+        const errorData = (await response.json()) as { error?: string };
         throw new Error(errorData.error || "Failed to save product");
       }
 
@@ -235,7 +240,7 @@ export function ProductFormProvider({
       <ProductFormContext.Provider
         value={{
           register,
-                    handleSubmit: methods.handleSubmit(onSubmit),
+          handleSubmit: methods.handleSubmit(onSubmit),
           errors,
           setValue,
           getValues,

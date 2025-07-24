@@ -60,6 +60,60 @@ model ProductImage {
 model Slug {
   id        String   @id @default(cuid())
   slug      String   @unique
+  isDefault Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  pages     PageSlug[]
+}
+
+model Page {
+  id          String          @id @default(cuid())
+  name        String
+  slugs       PageSlug[]
+  components  PageComponent[]
+  blocks      PageBlock[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model PageSlug {
+  pageId    String
+  slugId    String
+  assignedAt DateTime @default(now())
+
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  slug      Slug     @relation(fields: [slugId], references: [id], onDelete: Cascade)
+
+  @@id([pageId, slugId])
+}
+
+model PageComponent {
+  id        String   @id @default(cuid())
+  type      String   // e.g., 'hero', 'text', 'image'
+  order     Int
+  content   Json
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Block {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  content   Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  pages     PageBlock[]
+}
+
+model PageBlock {
+  pageId    String
+  blockId   String
+  assignedAt DateTime @default(now())
+
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  block     Block    @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  @@id([pageId, blockId])
 }

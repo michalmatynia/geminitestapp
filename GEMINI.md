@@ -64,6 +64,7 @@ Prisma is used as the ORM to interact with a SQLite database. The data model is 
 | `ImageFile`     | Represents an image file that can be associated with one or more products.                                                                     |
 | `ProductImage`  | A join table that creates a many-to-many relationship between `Product` and `ImageFile`.                                                       |
 | `Setting`       | A key-value store for application settings.                                                                                                    |
+| `Slug`          | Represents a URL slug for a CMS page.                                                                                                          |
 
 ## API Endpoints
 
@@ -86,6 +87,9 @@ The application exposes a set of RESTful API endpoints for managing products and
 - **`GET /api/databases/backups`**: Fetches a list of all database backups.
 - **`POST /api/databases/restore`**: Restores a database backup.
 - **`POST /api/databases/delete`**: Deletes a database backup.
+- **`GET /api/cms/slugs`**: Fetches a list of all slugs.
+- **`POST /api/cms/slugs`**: Creates a new slug.
+- **`DELETE /api/cms/slugs/[id]`**: Deletes a slug.
 
 ## Code Style and Conventions
 
@@ -103,11 +107,20 @@ The application exposes a set of RESTful API endpoints for managing products and
     - Create and restore database backups.
     - Upload and delete existing backup files.
 - **SKU Search:** The product list page now includes a search field for filtering products by SKU.
+- **CMS Slug Management:** The admin dashboard now includes a basic CMS for managing URL slugs.
 - **Frontend/Admin Split:** The application has been restructured into separate frontend and admin sections, each with its own layout and navigation.
 - **Modular Business Logic:** The backend logic has been refactored into a dedicated `productService` for improved maintainability and testability.
 - **Centralized API Calls:** All client-side `fetch` calls have been consolidated into `lib/api.ts`.
 - **Decomposed Components:** The `ProductForm` has been broken down into smaller, more focused components like `ProductImageManager`.
 - **Debugging Features:** A `DebugPanel` can be activated with the `?debug=true` query parameter to provide real-time insights into the product form's state.
+
+## Testing
+
+The project includes a suite of tests for the API endpoints, written with Jest. The tests cover the following areas:
+- **Products API:** Tests for creating, reading, updating, and deleting products, as well as filtering and image linking.
+- **Files API:** Tests for fetching and deleting files.
+- **Databases API:** Tests for creating, restoring, uploading, and deleting database backups.
+- **AI Description Generation API:** Tests for the AI description generation feature, including prompt customization and error handling.
 
 ## Available Scripts
 

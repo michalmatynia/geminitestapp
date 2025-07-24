@@ -46,7 +46,9 @@ export default function SlugsPage() {
         <ul>
           {slugs.map((slug) => (
             <li key={slug.id} className="flex justify-between items-center py-2 border-b border-gray-700">
-              <span>/{slug.slug}</span>
+              <Link href={`/admin/cms/slugs/${slug.id}/edit`}>
+                <span className="hover:underline">/{slug.slug} {slug.isDefault && '(Default)'}</span>
+              </Link>
               <Button variant="destructive" onClick={() => handleDelete(slug.id)}>Delete</Button>
             </li>
           ))}

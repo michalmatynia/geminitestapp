@@ -1,13 +1,10 @@
-import fs from 'fs/promises';
-import path from 'path';
-import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
+import fs from "fs/promises";
+import path from "path";
+import { NextResponse } from "next/server";
 
-export async function DELETE(
-  req: Request,
-  { params }: any
-) {
-  const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
+
+export async function DELETE(req: Request, { params }: any) {
   const { id } = params;
 
   try {
@@ -24,15 +21,15 @@ export async function DELETE(
       try {
         await fs.unlink(path.join(process.cwd(), "public", imageFile.filepath));
       } catch (error: unknown) {
-        if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        if (error instanceof Error && (error as NodeJS.ErrnoException).code !== "ENOENT") {
           throw error;
         }
       }
     }
     
     await prisma.imageFile.delete({
-        where: { id },
-      });
+      where: { id },
+    });
 
     return new Response(null, { status: 204 });
   } catch (error) {

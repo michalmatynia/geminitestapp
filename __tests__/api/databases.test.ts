@@ -28,7 +28,6 @@ describe("Databases API", () => {
 
   describe("POST /api/databases/backup", () => {
     it("should create a backup of the database", async () => {
-      readFileSpy.mockResolvedValue('url = "file:./dev.db"');
       copyFileSpy.mockResolvedValue(undefined);
 
       const res = await POST_BACKUP(
@@ -41,7 +40,6 @@ describe("Databases API", () => {
 
   describe("POST /api/databases/restore", () => {
     it("should restore a database from a backup", async () => {
-      readFileSpy.mockResolvedValueOnce('url = "file:./dev.db"');
       readFileSpy.mockResolvedValueOnce("{}");
       copyFileSpy.mockResolvedValue(undefined);
       writeFileSpy.mockResolvedValue(undefined);

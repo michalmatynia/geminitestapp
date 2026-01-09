@@ -1,12 +1,10 @@
 import { createMocks } from "node-mocks-http";
 import { GET } from "@/app/api/files/route";
 import { DELETE } from "@/app/api/files/[id]/route";
-import { PrismaClient } from "@prisma/client";
 import { createMockProduct } from "@/lib/utils/productUtils";
+import prisma from "@/lib/prisma";
 import fs from "fs/promises";
 import path from "path";
-
-const prisma = new PrismaClient();
 
 describe("Files API", () => {
   let product1: any;

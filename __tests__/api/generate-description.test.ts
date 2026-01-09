@@ -1,7 +1,7 @@
 import { POST } from "@/app/api/generate-description/route";
-import { PrismaClient } from "@prisma/client";
 import OpenAI from "openai";
 
+import prisma from "@/lib/prisma";
 jest.mock("openai", () => {
   const create = jest.fn();
   const mockChat = {
@@ -13,8 +13,6 @@ jest.mock("openai", () => {
     chat: mockChat,
   }));
 });
-
-const prisma = new PrismaClient();
 
 describe("AI Description Generation API", () => {
   let createMock: jest.Mock;

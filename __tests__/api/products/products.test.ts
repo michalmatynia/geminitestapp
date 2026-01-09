@@ -2,10 +2,8 @@ import { createMocks } from "node-mocks-http";
 import { GET as GET_LIST, POST } from "../../../app/api/products/route";
 import { GET, PUT, DELETE } from "../../../app/api/products/[id]/route";
 import { DELETE as DELETE_IMAGE } from "../../../app/api/products/[id]/images/[imageFileId]/route";
-import { PrismaClient } from "@prisma/client";
 import { createMockProduct } from "@/lib/utils/productUtils";
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 describe("Products API", () => {
   beforeEach(async () => {

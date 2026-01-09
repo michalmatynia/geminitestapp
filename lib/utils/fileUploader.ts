@@ -1,8 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 const uploadDir = path.join(process.cwd(), "public", "uploads");
 
 export async function uploadFile(file: File) {

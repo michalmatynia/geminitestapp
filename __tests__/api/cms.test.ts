@@ -1,8 +1,7 @@
 import { GET, POST } from "@/app/api/cms/slugs/route";
 import { DELETE } from "@/app/api/cms/slugs/[id]/route";
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 describe("CMS API", () => {
   beforeEach(async () => {

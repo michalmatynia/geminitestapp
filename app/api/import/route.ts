@@ -1,9 +1,9 @@
 
-import { Prisma, PrismaClient } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import Papa from "papaparse";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 interface CsvRow {
   [key: string]: string;

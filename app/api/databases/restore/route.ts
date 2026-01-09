@@ -2,27 +2,13 @@ import { promises as fs } from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
 
+import { resolveDatabasePath } from "@/lib/utils/database-path";
+
 export async function POST(req: Request) {
   try {
     const { dbName } = await req.json() as { dbName: string };
     const prismaDir = path.join(process.cwd(), "prisma");
-    const schema = await fs.readFile(path.join(prismaDir, "schema.prisma"), "utf-8");
-    const match = schema.match(/url\s*=\s*"file:(.*)"/);
-    let connectedDbPath = match ? path.normalize(match[1]) : null;
-
-    if (connectedDbPath && connectedDbPath.includes("?")) {
-      connectedDbPath = connectedDbPath.split("?")[0];
-    }
-
-    if (!connectedDbPath) {
-      console.error("Could not determine the connected database from schema.prisma.");
-      return NextResponse.json(
-        { error: "Could not determine the connected database." },
-        { status: 500 }
-      );
-    }
-
-    const dbPath = path.join(prismaDir, path.basename(connectedDbPath));
+    const dbPath = resolveDatabasePath();
     const backupDir = path.join(prismaDir, "backups");
     const backupPath = path.join(backupDir, dbName);
     const logPath = path.join(backupDir, "restore-log.json");

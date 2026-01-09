@@ -1,7 +1,7 @@
-import { PrismaClient, Setting } from "@prisma/client";
+import { Setting } from "@prisma/client";
 import { NextResponse } from "next/server";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 export async function GET() {
   console.log("Received GET request to /api/settings");

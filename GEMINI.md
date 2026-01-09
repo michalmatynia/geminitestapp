@@ -130,3 +130,23 @@ The project includes a suite of tests for the API endpoints, written with Jest. 
 - **`npm run test`**: Runs the Jest test suite.
 - **`npm run seed`**: Seeds the database with initial data.
 - **`npm run lint`**: Lints the codebase.
+
+## Project-specific Coding Conventions and Architecture Patterns
+
+This project follows a set of coding conventions and architecture patterns to ensure consistency, maintainability, and scalability.
+
+- **Component-Based Architecture**: The application is built around a component-based architecture, which emphasizes modularity and reusability. The UI is broken down into smaller, independent components that can be easily composed to create complex user interfaces.
+
+- **Styling with Tailwind CSS**: The project uses a utility-first approach to styling, with a preference for inline classes over custom CSS files. This approach allows for rapid development and easy maintenance of the application's visual identity.
+
+- **State Management with React Context and Hooks**: The application uses React Context and Hooks to manage the state of the admin menu. The menu's state is centralized in `AdminLayoutContext`, and custom hooks are used to access and modify the state from different components.
+
+- **Routing and Navigation**: The application uses Next.js's file-based routing system, which simplifies the creation of new pages and API routes. The `useRouter` hook is used for programmatic navigation between pages.
+
+- **API Communication**: All client-side API calls are centralized in `lib/api.ts` for better organization and reusability. This approach makes it easy to manage API endpoints and handle data fetching in a consistent manner.
+
+- **Type Safety with TypeScript**: The project enforces type safety with TypeScript, using interfaces for props and API responses. This helps to prevent common errors and improve the overall quality of the code.
+
+- **Separation of Concerns**: The application follows the principle of separation of concerns, with business logic residing in `lib/services` and UI components in `components`. This separation makes the codebase easier to understand, test, and maintain.
+
+- **Naming Conventions**: The project follows standard naming conventions for React components, hooks, and files. Components are named in `PascalCase`, hooks are named in `camelCase` with a `use` prefix, and files are named in `kebab-case` or `PascalCase` depending on their content.

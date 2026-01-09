@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useAdminLayout } from "@/lib/context/AdminLayoutContext";
+import { useRouter } from "next/navigation";
 
 interface Page {
   id: string;
@@ -16,6 +18,8 @@ interface Page {
 
 export default function PagesPage() {
   const [pages, setPages] = useState<Page[]>([]);
+  const { setIsMenuCollapsed } = useAdminLayout();
+  const router = useRouter();
 
   useEffect(() => {
     void fetch("/api/cms/pages")
@@ -32,13 +36,16 @@ export default function PagesPage() {
     }
   };
 
+  const handleCreatePage = () => {
+    setIsMenuCollapsed(true);
+    router.push("/admin/cms/pages/create");
+  };
+
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Pages</h1>
-        <Button asChild>
-          <Link href="/admin/cms/pages/create">Create Page</Link>
-        </Button>
+        <Button onClick={handleCreatePage}>Create Page</Button>
       </div>
       <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
         <ul>

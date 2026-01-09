@@ -3,21 +3,21 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronRightIcon } from "lucide-react";
 import { useState } from "react";
+import { useAdminLayout } from "@/lib/context/AdminLayoutContext";
 
 interface CollapsibleMenuProps {
   title: string;
   icon: React.ReactNode;
-  isMenuCollapsed: boolean;
   children: React.ReactNode;
 }
 
 export default function CollapsibleMenu({
   title,
   icon,
-  isMenuCollapsed,
   children,
 }: CollapsibleMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { isMenuCollapsed } = useAdminLayout();
 
   return (
     <Collapsible.Root open={isOpen} onOpenChange={setIsOpen}>

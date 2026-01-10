@@ -88,11 +88,13 @@ export function ProductFormProvider({
   product,
   onSuccess,
   requireSku,
+  initialSku,
 }: {
   children: React.ReactNode;
   product?: ProductWithImages;
   onSuccess?: () => void;
   requireSku?: boolean;
+  initialSku?: string;
 }) {
   const methods = useForm<ProductFormData>({
     resolver: zodResolver(product || requireSku ? productUpdateSchema : productCreateSchema),
@@ -101,7 +103,7 @@ export function ProductFormProvider({
       name_pl: product?.name_pl || "",
       name_de: product?.name_de || "",
       price: product?.price || 0,
-      sku: product?.sku || "",
+      sku: product?.sku || initialSku || "",
       description_en: product?.description_en || "",
       description_pl: product?.description_pl || "",
       description_de: product?.description_de || "",

@@ -190,6 +190,56 @@ async function deleteProduct(id: string) {
 }
 
 /**
+ * Duplicates a product without images and with a new SKU.
+ * @param id - The ID of the product to duplicate.
+ * @param sku - The new SKU for the duplicated product.
+ * @returns The duplicated product, or null if not found.
+ */
+async function duplicateProduct(id: string, sku: string) {
+  const product = await prisma.product.findUnique({ where: { id } });
+  if (!product) return null;
+
+  const trimmedSku = sku.trim();
+  const skuPattern = /^[A-Z0-9]+$/;
+  if (!trimmedSku) {
+    throw new Error("SKU is required");
+  }
+  if (!skuPattern.test(trimmedSku)) {
+    throw new Error("SKU must use uppercase letters and numbers only");
+  }
+
+  const existingSku = await prisma.product.findUnique({
+    where: { sku: trimmedSku },
+  });
+  if (existingSku) {
+    throw new Error("SKU already exists");
+  }
+
+  const duplicatedProduct = await prisma.product.create({
+    data: {
+      sku: trimmedSku,
+      name_en: product.name_en,
+      name_pl: product.name_pl,
+      name_de: product.name_de,
+      description_en: product.description_en,
+      description_pl: product.description_pl,
+      description_de: product.description_de,
+      supplierName: product.supplierName,
+      supplierLink: product.supplierLink,
+      priceComment: product.priceComment,
+      stock: product.stock,
+      price: product.price,
+      sizeLength: product.sizeLength,
+      sizeWidth: product.sizeWidth,
+      weight: product.weight,
+      length: product.length,
+    },
+  });
+
+  return await getProductById(duplicatedProduct.id);
+}
+
+/**
  * Unlinks an image from a product.
  * @param productId - The ID of the product.
  * @param imageFileId - The ID of the image file.
@@ -345,5 +395,6 @@ export const productService = {
   createProduct,
   updateProduct,
   deleteProduct,
+  duplicateProduct,
   unlinkImageFromProduct,
 };

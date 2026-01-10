@@ -1,12 +1,19 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, MoreVertical } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export type Product = {
   id: string;
@@ -62,22 +69,69 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
   setRefreshTrigger,
 }) => {
   const product = row.original;
+  const router = useRouter();
+
+  const handleDuplicate = async () => {
+    const sku = window.prompt("Enter a new unique SKU for the duplicate:");
+    if (sku === null) return;
+    const trimmedSku = sku.trim().toUpperCase();
+    const skuPattern = /^[A-Z0-9]+$/;
+    if (!trimmedSku) {
+      alert("SKU is required.");
+      return;
+    }
+    if (!skuPattern.test(trimmedSku)) {
+      alert("SKU must use uppercase letters and numbers only.");
+      return;
+    }
+    const res = await fetch(`/api/products/${product.id}/duplicate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ sku: trimmedSku }),
+    });
+    if (res.ok) {
+      const duplicated = (await res.json()) as { id?: string };
+      setRefreshTrigger((prev) => prev + 1);
+      if (duplicated.id) {
+        router.push(`/admin/products/${duplicated.id}/edit`);
+      }
+    } else {
+      const error = (await res.json()) as { error?: string };
+      alert(error.error || "Failed to duplicate product.");
+    }
+  };
 
   return (
-    <div className="flex gap-2">
-      <Link href={`/admin/products/${product.id}/edit`}>
-        <button className="text-muted-foreground hover:text-foreground">
-          Edit
-        </button>
-      </Link>
-      <button
-        onClick={() => {
-          void handleDelete(product.id, setRefreshTrigger);
-        }}
-        className="text-destructive hover:text-destructive/80"
-      >
-        Delete
-      </button>
+    <div className="flex justify-end">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            className="inline-flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-gray-800 hover:text-white"
+            aria-label="Open row actions"
+          >
+            <MoreVertical className="size-4" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link href={`/admin/products/${product.id}/edit`}>Edit</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={handleDuplicate}>
+            Duplicate
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="text-destructive focus:text-destructive"
+            onSelect={(event) => {
+              event.preventDefault();
+              void handleDelete(product.id, setRefreshTrigger);
+            }}
+          >
+            Remove
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };

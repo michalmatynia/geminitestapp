@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import FileManager from "@/components/products/FileManager";
 import ProductForm from "@/components/products/ProductForm";
 import {
   ProductFormProvider,
   useProductFormContext,
 } from "@/lib/context/ProductFormContext";
+import { ProductWithImages } from "@/lib/types";
 
 function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -53,8 +56,52 @@ function CreateProductForm() {
 }
 
 export default function CreateProductPage() {
+  const router = useRouter();
+  const [initialSku, setInitialSku] = useState<string>("");
+
+  useEffect(() => {
+    const requestSku = async () => {
+      while (true) {
+        const skuInput = window.prompt("Enter a new unique SKU:");
+        if (skuInput === null) {
+          router.push("/admin/products");
+          return;
+        }
+        const sku = skuInput.trim().toUpperCase();
+        const skuPattern = /^[A-Z0-9]+$/;
+        if (!sku) {
+          alert("SKU is required.");
+          continue;
+        }
+        if (!skuPattern.test(sku)) {
+          alert("SKU must use uppercase letters and numbers only.");
+          continue;
+        }
+        const res = await fetch(`/api/products?sku=${encodeURIComponent(sku)}`);
+        if (res.ok) {
+          const products = (await res.json()) as ProductWithImages[];
+          const skuExists = products.some((product) => product.sku === sku);
+          if (skuExists) {
+            alert("SKU already exists.");
+            continue;
+          }
+        }
+        setInitialSku(sku);
+        return;
+      }
+    };
+
+    if (!initialSku) {
+      void requestSku();
+    }
+  }, [initialSku, router]);
+
+  if (!initialSku) {
+    return null;
+  }
+
   return (
-    <ProductFormProvider>
+    <ProductFormProvider initialSku={initialSku}>
       <CreateProductForm />
     </ProductFormProvider>
   );

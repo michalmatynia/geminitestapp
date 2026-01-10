@@ -1,0 +1,36 @@
+import { NextResponse } from "next/server";
+import { productService } from "@/lib/services/productService";
+
+/**
+ * POST /api/products/[id]/duplicate
+ * Duplicates a product with a new SKU.
+ */
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    if (!id) {
+      return NextResponse.json(
+        { error: "Product id is required" },
+        { status: 400 }
+      );
+    }
+    const body = (await req.json()) as { sku?: string };
+    const sku = body.sku ?? "";
+    const product = await productService.duplicateProduct(id, sku);
+    if (!product) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+    return NextResponse.json(product);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return NextResponse.json(
+      { error: "An unknown error occurred" },
+      { status: 400 }
+    );
+  }
+}

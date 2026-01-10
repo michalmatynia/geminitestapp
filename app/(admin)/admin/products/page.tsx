@@ -116,14 +116,43 @@ export default function AdminPage() {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [initialSku, setInitialSku] = useState<string>("");
 
   const handleCloseCreateModal = () => {
     setIsCreateOpen(false);
+    setInitialSku("");
   };
 
   const handleCreateSuccess = () => {
     setIsCreateOpen(false);
+    setInitialSku("");
     setRefreshTrigger((prev) => prev + 1);
+  };
+
+  const handleOpenCreateModal = async () => {
+    const skuInput = window.prompt("Enter a new unique SKU:");
+    if (skuInput === null) return;
+    const sku = skuInput.trim().toUpperCase();
+    const skuPattern = /^[A-Z0-9]+$/;
+    if (!sku) {
+      alert("SKU is required.");
+      return;
+    }
+    if (!skuPattern.test(sku)) {
+      alert("SKU must use uppercase letters and numbers only.");
+      return;
+    }
+    const res = await fetch(`/api/products?sku=${encodeURIComponent(sku)}`);
+    if (res.ok) {
+      const products = (await res.json()) as ProductWithImages[];
+      const skuExists = products.some((product) => product.sku === sku);
+      if (skuExists) {
+        alert("SKU already exists.");
+        return;
+      }
+    }
+    setInitialSku(sku);
+    setIsCreateOpen(true);
   };
 
   useEffect(() => {
@@ -136,7 +165,9 @@ export default function AdminPage() {
       <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
         <div className="mb-4 flex items-center gap-3">
           <Button
-            onClick={() => setIsCreateOpen(true)}
+            onClick={() => {
+              void handleOpenCreateModal();
+            }}
             className="size-11 rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90"
             aria-label="Create product"
           >
@@ -203,7 +234,10 @@ export default function AdminPage() {
           onClick={handleCloseCreateModal}
         >
           <div onClick={(event) => event.stopPropagation()}>
-            <ProductFormProvider onSuccess={handleCreateSuccess}>
+            <ProductFormProvider
+              onSuccess={handleCreateSuccess}
+              initialSku={initialSku}
+            >
               <CreateProductModalContent onClose={handleCloseCreateModal} />
             </ProductFormProvider>
           </div>

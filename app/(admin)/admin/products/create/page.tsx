@@ -29,7 +29,7 @@ function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
 }
 
 function CreateProductForm() {
-  const { showFileManager, handleFileSelect } = useProductFormContext();
+  const { showFileManager, handleMultiFileSelect } = useProductFormContext();
 
   return (
     <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
@@ -44,7 +44,7 @@ function CreateProductForm() {
         <h1 className="text-3xl font-bold text-white">Create Product</h1>
       </div>
       {showFileManager ? (
-        <FileManager onSelectFile={handleFileSelect} />
+        <FileManager onSelectFile={handleMultiFileSelect} />
       ) : (
         <ProductForm submitButtonText="Create" />
       )}

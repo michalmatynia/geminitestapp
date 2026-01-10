@@ -1,15 +1,16 @@
 "use client";
 
-import { ProductImage, ImageFile } from "@prisma/client";
+import { ImageFile, ProductImage } from "@prisma/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import {
-  ChangeEvent,
   createContext,
   useContext,
   useEffect,
   useState,
   BaseSyntheticEvent,
+  useRef,
+  useCallback,
 } from "react";
 import {
   UseFormRegister,
@@ -26,22 +27,38 @@ import { productSchema } from "@/lib/validations/product";
 
 export type ProductFormData = z.infer<typeof productSchema>;
 
+// Represents a single image slot, which can be empty, a new File, or an existing ImageFile
+type ProductImageSlot =
+  | {
+      type: "file"; // A new File object
+      data: File;
+      previewUrl: string;
+      originalIndex?: number; // Optional: original index if moved
+    }
+  | {
+      type: "existing"; // An existing ImageFile from the DB
+      data: ImageFile; // Prisma ImageFile with id
+      previewUrl: string; // The filepath of the existing image
+      originalIndex?: number; // Optional: original index if moved
+    }
+  | null; // Empty slot
+
 interface ProductFormContextType {
   register: UseFormRegister<ProductFormData>;
   handleSubmit: (e?: BaseSyntheticEvent) => Promise<void>;
   errors: FieldErrors<ProductFormData>;
   setValue: UseFormSetValue<ProductFormData>;
   getValues: UseFormGetValues<ProductFormData>;
-  existingImageUrls: string[];
+  imageSlots: (ProductImageSlot | null)[];
   uploading: boolean;
   uploadError: string | null;
-  previewUrls: string[];
-  selectedImageUrls: string[];
   showFileManager: boolean;
   setShowFileManager: (show: boolean) => void;
-  handleImageChange: (e: ChangeEvent<HTMLInputElement>) => void;
-  handleFileSelect: (files: { id: string; filepath: string }[]) => void;
-  handleDisconnectImage?: (imageUrl: string) => void;
+  handleSlotImageChange: (file: File | null, index: number) => void;
+  handleSlotFileSelect: (file: { id: string; filepath: string } | null, index: number) => void;
+  handleSlotDisconnectImage: (index: number) => void;
+  handleMultiImageChange: (files: File[]) => void;
+  handleMultiFileSelect: (files: { id: string; filepath: string }[]) => void;
 }
 
 export const ProductFormContext = createContext<ProductFormContextType | null>(
@@ -57,6 +74,8 @@ export const useProductFormContext = () => {
   }
   return context;
 };
+
+const TOTAL_IMAGE_SLOTS = 15;
 
 // This context provides a centralized place for managing the state and logic of the product form.
 // It handles form data, image uploads, and communication with the API.
@@ -100,130 +119,179 @@ export function ProductFormProvider({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [showFileManager, setShowFileManager] = useState(false);
 
-  // State for images that are already part of the product on load
-  const [existingImages, setExistingImages] = useState(product?.images || []);
-  // State for new files selected for upload from the user's computer
-  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
-  // State for existing files selected from the File Manager
-  const [selectedImageFiles, setSelectedImageFiles] = useState<
-    { id: string; filepath: string }[]
-  >([]);
-
-  // Derived URLs for rendering previews in the UI
-  const existingImageUrls = existingImages.map(
-    (img: ProductImage & { imageFile: ImageFile }) => img.imageFile.filepath
+  // State for managing all 15 image slots
+  const [imageSlots, setImageSlots] = useState<(ProductImageSlot | null)[]>(
+    Array(TOTAL_IMAGE_SLOTS).fill(null)
   );
-  const previewUrls = newImageFiles.map((file) => URL.createObjectURL(file));
-  const selectedImageUrls = selectedImageFiles.map((file) => file.filepath);
+
+  // Ref to keep track of object URLs for cleanup
+  const objectUrlsRef = useRef<string[]>([]);
 
   useEffect(() => {
-    // This effect is responsible for creating and cleaning up blob URLs for new image previews.
-    // It runs whenever the newImageFiles state changes.
-    return () => {
-      previewUrls.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [previewUrls]);
-
-  /**
-   * Handles the selection of new image files from the user's computer.
-   * @param e - The change event from the file input.
-   */
-  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      setNewImageFiles((prev) => [...prev, ...Array.from(files)]);
-    }
-  };
-
-  /**
-   * Handles the selection of existing files from the File Manager.
-   * @param files - The selected files.
-   */
-  const handleFileSelect = (files: { id: string; filepath: string }[]) => {
-    setSelectedImageFiles((prev) => [...prev, ...files]);
-    setShowFileManager(false);
-  };
-
-  /**
-   * Handles the removal of an image, whether it's a new upload,
-   * a selected existing file, or an image that was already saved with the product.
-   * @param imageUrl - The URL of the image to remove.
-   */
-  const handleDisconnectImage = async (imageUrl: string) => {
-    // Case 1: It's a newly uploaded file (preview)
-    const newFileIndex = previewUrls.indexOf(imageUrl);
-    if (newFileIndex > -1) {
-      setNewImageFiles((prev) => {
-        const newFiles = [...prev];
-        newFiles.splice(newFileIndex, 1);
-        return newFiles;
-      });
-      return;
-    }
-
-    // Case 2: It's an existing file selected from the file manager
-    const selectedFileIndex = selectedImageUrls.indexOf(imageUrl);
-    if (selectedFileIndex > -1) {
-      setSelectedImageFiles((prev) => {
-        const newFiles = [...prev];
-        newFiles.splice(selectedFileIndex, 1);
-        return newFiles;
-      });
-      return;
-    }
-
-    // Case 3: It's an image that was already saved with the product
-    const image = existingImages.find(
-      (img: ProductImage & { imageFile: ImageFile }) =>
-        img.imageFile.filepath === imageUrl
-    );
-    if (image && product) {
-      try {
-        const res = await fetch(
-          `/api/products/${product.id}/images/${image.imageFile.id}`,
-          {
-            method: "DELETE",
+    // Populate image slots with existing product images
+    if (product?.images && product.images.length > 0) {
+      setImageSlots((currentSlots) => {
+        const newSlots = [...currentSlots];
+        product.images.slice(0, TOTAL_IMAGE_SLOTS).forEach((pImg, index) => {
+          if (pImg.imageFile) {
+            newSlots[index] = {
+              type: "existing",
+              data: pImg.imageFile,
+              previewUrl: pImg.imageFile.filepath,
+            };
           }
-        );
-        if (res.ok) {
-          setExistingImages((prev) =>
-            prev.filter(
-              (img: ProductImage & { imageFile: ImageFile }) =>
-                img.imageFile.filepath !== imageUrl
-            )
-          );
-        }
-      } catch (error) {
-        console.error("Failed to disconnect image:", error);
-      }
+        });
+        return newSlots;
+      });
     }
-  };
+  }, [product]);
 
-  /**
-   * Handles the form submission.
-   * It constructs the FormData and sends it to the API.
-   * @param data - The product form data.
-   */
+  // Effect to clean up object URLs when component unmounts or imageSlots change
+  useEffect(() => {
+    const currentObjectUrls = imageSlots.map(slot =>
+      slot?.type === 'file' ? slot.previewUrl : null
+    ).filter(Boolean) as string[];
+
+    // Revoke old object URLs that are no longer in use
+    const oldObjectUrls = objectUrlsRef.current.filter(url => !currentObjectUrls.includes(url));
+    oldObjectUrls.forEach(url => URL.revokeObjectURL(url));
+
+    // Update ref with current object URLs
+    objectUrlsRef.current = currentObjectUrls;
+
+    return () => {
+      // Clean up all object URLs on unmount
+      objectUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+      objectUrlsRef.current = [];
+    };
+  }, [imageSlots]);
+
+  const handleSlotImageChange = useCallback((file: File | null, index: number) => {
+    setImageSlots(prevSlots => {
+      const newSlots = [...prevSlots];
+      if (file) {
+        // Revoke existing object URL if replacing an image
+        if (newSlots[index]?.type === 'file') {
+          URL.revokeObjectURL(newSlots[index]!.previewUrl);
+        }
+        newSlots[index] = {
+          type: 'file',
+          data: file,
+          previewUrl: URL.createObjectURL(file),
+        };
+      } else {
+        // Revoke object URL if clearing the slot
+        if (newSlots[index]?.type === 'file') {
+          URL.revokeObjectURL(newSlots[index]!.previewUrl);
+        }
+        newSlots[index] = null;
+      }
+      return newSlots;
+    });
+  }, [imageSlots]);
+
+  const handleSlotFileSelect = useCallback((file: { id: string; filepath: string } | null, index: number) => {
+    setImageSlots(prevSlots => {
+      const newSlots = [...prevSlots];
+      if (file) {
+         // Revoke object URL if replacing a file upload with an existing file
+         if (newSlots[index]?.type === 'file') {
+          URL.revokeObjectURL(newSlots[index]!.previewUrl);
+        }
+        newSlots[index] = {
+          type: 'existing',
+          data: file as ImageFile, // Cast as ImageFile for simplicity, assuming {id, filepath} is enough
+          previewUrl: file.filepath,
+        };
+      } else {
+        // Revoke object URL if clearing the slot (unlikely for 'existing' but good practice)
+        if (newSlots[index]?.type === 'file') {
+          URL.revokeObjectURL(newSlots[index]!.previewUrl);
+        }
+        newSlots[index] = null;
+      }
+      return newSlots;
+    });
+    setShowFileManager(false); // Close file manager after selection
+  }, [imageSlots, setShowFileManager]);
+
+  const handleSlotDisconnectImage = useCallback(async (index: number) => {
+    setImageSlots(prevSlots => {
+      const newSlots = [...prevSlots];
+      const slotToClear = newSlots[index];
+
+      if (slotToClear?.type === 'existing' && product?.id) {
+        // Attempt to disconnect from backend if it's an existing image
+        fetch(`/api/products/${product.id}/images/${slotToClear.data.id}`, {
+          method: "DELETE",
+        }).catch(error => console.error("Failed to disconnect image from product:", error));
+      } else if (slotToClear?.type === 'file') {
+        // Revoke object URL for file uploads
+        URL.revokeObjectURL(slotToClear.previewUrl);
+      }
+
+      newSlots[index] = null;
+      return newSlots;
+    });
+  }, [imageSlots, product]);
+
+  const handleMultiImageChange = useCallback((files: File[]) => {
+    setImageSlots(prevSlots => {
+      const newSlots = [...prevSlots];
+      let fileIndex = 0;
+      for (let i = 0; i < TOTAL_IMAGE_SLOTS && fileIndex < files.length; i++) {
+        if (newSlots[i] === null) {
+          const file = files[fileIndex];
+          newSlots[i] = {
+            type: 'file',
+            data: file,
+            previewUrl: URL.createObjectURL(file),
+          };
+          fileIndex++;
+        }
+      }
+      return newSlots;
+    });
+  }, [imageSlots]);
+
+  const handleMultiFileSelect = useCallback((files: { id: string; filepath: string }[]) => {
+    setImageSlots(prevSlots => {
+      const newSlots = [...prevSlots];
+      let fileIndex = 0;
+      for (let i = 0; i < TOTAL_IMAGE_SLOTS && fileIndex < files.length; i++) {
+        if (newSlots[i] === null) {
+          const file = files[fileIndex];
+          newSlots[i] = {
+            type: 'existing',
+            data: file as ImageFile, // Cast as ImageFile for simplicity
+            previewUrl: file.filepath,
+          };
+          fileIndex++;
+        }
+      }
+      return newSlots;
+    });
+    setShowFileManager(false); // Close file manager after selection
+  }, [imageSlots, setShowFileManager]);
+
   const onSubmit = async (data: ProductFormData) => {
     setUploading(true);
     setUploadError(null);
 
     const formData = new FormData();
-    // Append all form data
     Object.entries(data).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
         formData.append(key, String(value));
       }
     });
 
-    // Append new image files for upload
-    newImageFiles.forEach((file) => {
-      formData.append("images", file);
-    });
-
-    // Append IDs of existing images selected from file manager
-    selectedImageFiles.forEach((file) => {
-      formData.append("imageFileIds", file.id);
+    // Process image slots
+    imageSlots.forEach(slot => {
+      if (slot?.type === 'file') {
+        formData.append("images", slot.data); // Append actual File object
+      } else if (slot?.type === 'existing') {
+        formData.append("imageFileIds", slot.data.id); // Append existing ImageFile ID
+      }
     });
 
     try {
@@ -262,16 +330,16 @@ export function ProductFormProvider({
           errors,
           setValue,
           getValues,
-          existingImageUrls,
+          imageSlots,
           uploading,
           uploadError,
-          previewUrls,
-          selectedImageUrls,
           showFileManager,
           setShowFileManager,
-          handleImageChange,
-          handleFileSelect,
-          handleDisconnectImage,
+          handleSlotImageChange,
+          handleSlotFileSelect,
+          handleSlotDisconnectImage,
+          handleMultiImageChange,
+          handleMultiFileSelect,
         }}
       >
         {children}

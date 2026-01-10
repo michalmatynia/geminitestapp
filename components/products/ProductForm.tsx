@@ -67,9 +67,10 @@ export default function ProductForm({ submitButtonText }: ProductFormProps) {
   return (
     <form onSubmit={handleSubmit}>
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="other">Other</TabsTrigger>
+          <TabsTrigger value="images">Images</TabsTrigger>
         </TabsList>
         <TabsContent value="general" className="mt-4">
           <div className="mb-4">
@@ -325,55 +326,43 @@ export default function ProductForm({ submitButtonText }: ProductFormProps) {
               </p>
             )}
           </div>
+        </TabsContent>
+        <TabsContent value="images" className="mt-4">
           <div className="mb-4">
-            <Label>Product Images</Label>
-            <ProductImageManager />
+            <Label htmlFor="multi-image-upload">Upload Multiple Images</Label>
             <div className="mt-2 flex space-x-4">
               <Button
                 type="button"
-                onClick={() => document.getElementById("image-upload")?.click()}
-                aria-label="Upload new images for the product"
+                onClick={() => document.getElementById("multi-image-upload")?.click()}
+                aria-label="Upload multiple new images for the product"
               >
-                Upload New
+                Upload from Drive
               </Button>
               <Button
                 type="button"
                 onClick={() => setShowFileManager(true)}
-                aria-label="Choose existing images for the product"
+                aria-label="Choose multiple existing images for the product"
               >
-                Choose Existing
+                Choose from File Manager
               </Button>
             </div>
             <Input
               type="file"
-              id="image-upload"
+              id="multi-image-upload"
               accept="image/*"
-              onChange={handleImageChange}
+              onChange={(e) => {
+                if (e.target.files) {
+                  // Convert FileList to an array before passing
+                  handleMultiImageChange(Array.from(e.target.files));
+                  e.target.value = ''; // Clear the input after selection
+                }
+              }}
               className="hidden"
-              aria-label="Product image upload"
+              aria-label="Multiple product image upload"
               multiple
             />
-            {uploading && (
-              <div
-                className="mt-2 w-full bg-gray-700 rounded-full h-2.5"
-                role="progressbar"
-                aria-valuenow={100}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-label="Uploading image"
-              >
-                <div
-                  className="bg-white h-2.5 rounded-full"
-                  style={{ width: "100%" }}
-                ></div>
-              </div>
-            )}
-            {uploadError && (
-              <p className="mt-2 text-sm text-red-500" role="alert">
-                Error: {uploadError}
-              </p>
-            )}
           </div>
+          <ProductImageManager />
         </TabsContent>
       </Tabs>
       <Button type="submit" disabled={uploading} aria-disabled={uploading}>

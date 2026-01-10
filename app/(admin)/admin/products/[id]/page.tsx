@@ -37,9 +37,13 @@ export default function ViewProductPage() {
 
   useEffect(() => {
     if (id) {
-      void fetch(`/api/products/${id as string}`)
+      fetch(`/api/products/${id as string}`)
         .then((res) => res.json())
-        .then((data: ProductWithImages) => setProduct(data));
+        .then((data: ProductWithImages) => setProduct(data))
+        .catch((error) => {
+          console.error("Failed to fetch product:", error);
+          setProduct(null);
+        });
     }
   }, [id]);
 
@@ -135,4 +139,3 @@ export default function ViewProductPage() {
     </div>
   );
 }
-

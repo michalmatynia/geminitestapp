@@ -82,9 +82,11 @@ const TOTAL_IMAGE_SLOTS = 15;
 export function ProductFormProvider({
   children,
   product,
+  onSuccess,
 }: {
   children: React.ReactNode;
   product?: ProductWithImages;
+  onSuccess?: () => void;
 }) {
   const methods = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -310,6 +312,7 @@ export function ProductFormProvider({
 
       router.refresh();
       router.push("/admin/products");
+      onSuccess?.();
     } catch (error: unknown) {
       if (error instanceof Error) {
         setUploadError(error.message);

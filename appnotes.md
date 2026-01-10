@@ -1,8 +1,20 @@
 Application notes
 
-1. Complete migration to PostgreSQL
+Check the Uploaded File Handling policies
 
-2. Retain functionality to create Database Backups
+The images should be import from Base.com links
+
+When I click on the name, I open the Edit Product PAge, Product View can be removed completely
+
+A small 3 dot menu should allow me to duplicate or Delete product
+Also the stock should be present
+
+I should have teh possibility to drag Images around to change their order
+
+In Product Create
+If the field is empty, the text in TAB is slightly Darked
+
+
 
 3. Extend Product Create, Product List and add a matching PRoduct Edit to it all
 

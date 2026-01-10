@@ -23,9 +23,12 @@ import {
 import { z } from "zod";
 
 import { ProductWithImages } from "@/lib/types";
-import { productSchema } from "@/lib/validations/product";
+import {
+  productCreateSchema,
+  productUpdateSchema,
+} from "@/lib/validations/product";
 
-export type ProductFormData = z.infer<typeof productSchema>;
+export type ProductFormData = z.infer<typeof productCreateSchema>;
 
 // Represents a single image slot, which can be empty, a new File, or an existing ImageFile
 type ProductImageSlot =
@@ -52,6 +55,7 @@ interface ProductFormContextType {
   imageSlots: (ProductImageSlot | null)[];
   uploading: boolean;
   uploadError: string | null;
+  uploadSuccess: boolean;
   showFileManager: boolean;
   setShowFileManager: (show: boolean) => void;
   handleSlotImageChange: (file: File | null, index: number) => void;
@@ -83,13 +87,15 @@ export function ProductFormProvider({
   children,
   product,
   onSuccess,
+  requireSku,
 }: {
   children: React.ReactNode;
   product?: ProductWithImages;
   onSuccess?: () => void;
+  requireSku?: boolean;
 }) {
   const methods = useForm<ProductFormData>({
-    resolver: zodResolver(productSchema),
+    resolver: zodResolver(product || requireSku ? productUpdateSchema : productCreateSchema),
     defaultValues: {
       name_en: product?.name_en || "",
       name_pl: product?.name_pl || "",
@@ -119,7 +125,9 @@ export function ProductFormProvider({
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
   const [showFileManager, setShowFileManager] = useState(false);
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // State for managing all 15 image slots
   const [imageSlots, setImageSlots] = useState<(ProductImageSlot | null)[]>(
@@ -132,8 +140,8 @@ export function ProductFormProvider({
   useEffect(() => {
     // Populate image slots with existing product images
     if (product?.images && product.images.length > 0) {
-      setImageSlots((currentSlots) => {
-        const newSlots = [...currentSlots];
+      setImageSlots(() => {
+        const newSlots = Array(TOTAL_IMAGE_SLOTS).fill(null);
         product.images.slice(0, TOTAL_IMAGE_SLOTS).forEach((pImg, index) => {
           if (pImg.imageFile) {
             newSlots[index] = {
@@ -167,6 +175,14 @@ export function ProductFormProvider({
       objectUrlsRef.current = [];
     };
   }, [imageSlots]);
+
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleSlotImageChange = useCallback((file: File | null, index: number) => {
     setImageSlots(prevSlots => {
@@ -277,8 +293,25 @@ export function ProductFormProvider({
   }, [imageSlots, setShowFileManager]);
 
   const onSubmit = async (data: ProductFormData) => {
+    const skuValue = typeof data.sku === "string" ? data.sku.trim() : "";
+    const hasTempImages = imageSlots.some((slot) => {
+      if (!slot) return false;
+      if (slot.type === "file") return true;
+      return slot.previewUrl.startsWith("/uploads/products/temp/");
+    });
+
+    if (!skuValue && hasTempImages) {
+      const shouldContinue = window.confirm(
+        "This product has images without an SKU. They will stay in the temporary folder until you set an SKU. Continue?"
+      );
+      if (!shouldContinue) {
+        return;
+      }
+    }
+
     setUploading(true);
     setUploadError(null);
+    setUploadSuccess(false);
 
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
@@ -310,8 +343,34 @@ export function ProductFormProvider({
         throw new Error(errorData.error || "Failed to save product");
       }
 
+      const savedProduct = (await response.json()) as ProductWithImages;
+      setImageSlots(() => {
+        const newSlots = Array(TOTAL_IMAGE_SLOTS).fill(null);
+        savedProduct.images
+          .slice(0, TOTAL_IMAGE_SLOTS)
+          .forEach((pImg, index) => {
+            if (pImg.imageFile) {
+              newSlots[index] = {
+                type: "existing",
+                data: pImg.imageFile,
+                previewUrl: pImg.imageFile.filepath,
+              };
+            }
+          });
+        return newSlots;
+      });
+      setUploadSuccess(true);
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+      }
+      successTimerRef.current = setTimeout(() => {
+        setUploadSuccess(false);
+      }, 3000);
+
       router.refresh();
-      router.push("/admin/products");
+      if (!product) {
+        router.push("/admin/products");
+      }
       onSuccess?.();
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -336,6 +395,7 @@ export function ProductFormProvider({
           imageSlots,
           uploading,
           uploadError,
+          uploadSuccess,
           showFileManager,
           setShowFileManager,
           handleSlotImageChange,

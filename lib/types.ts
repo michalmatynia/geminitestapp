@@ -1,6 +1,6 @@
 import { Product, ProductImage, ImageFile } from "@prisma/client";
 import { z } from "zod";
-import { productSchema } from "@/lib/validations/product";
+import { productCreateSchema } from "@/lib/validations/product";
 
 // This type represents a product with its associated images and the image files themselves.
 export type ProductWithImages = Product & {
@@ -8,4 +8,4 @@ export type ProductWithImages = Product & {
 };
 
 // This is the Zod schema for the product form data.
-export type ProductFormData = z.infer<typeof productSchema>;
+export type ProductFormData = z.infer<typeof productCreateSchema>;

@@ -1,8 +1,8 @@
 import fs from "fs/promises";
-import path from "path";
 import { NextResponse } from "next/server";
 
 import prisma from "@/lib/prisma";
+import { getDiskPathFromPublicPath } from "@/lib/utils/fileUploader";
 
 export async function DELETE(req: Request, { params }: any) {
   const { id } = params;
@@ -19,7 +19,7 @@ export async function DELETE(req: Request, { params }: any) {
     // Physical file deletion
     if (imageFile) {
       try {
-        await fs.unlink(path.join(process.cwd(), "public", imageFile.filepath));
+        await fs.unlink(getDiskPathFromPublicPath(imageFile.filepath));
       } catch (error: unknown) {
         if (error instanceof Error && (error as NodeJS.ErrnoException).code !== "ENOENT") {
           throw error;

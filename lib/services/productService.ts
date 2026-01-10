@@ -1,9 +1,14 @@
 // This service encapsulates all business logic for managing products.
 
+import fs from "fs/promises";
+import path from "path";
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
-import { productSchema } from "@/lib/validations/product";
-import { uploadFile } from "@/lib/utils/fileUploader";
+import {
+  productCreateSchema,
+  productUpdateSchema,
+} from "@/lib/validations/product";
+import { getDiskPathFromPublicPath, uploadFile } from "@/lib/utils/fileUploader";
 
 /**
  * Retrieves a list of products based on the provided filters.
@@ -126,7 +131,7 @@ async function getProductById(id: string) {
  * @returns The newly created product.
  */
 async function createProduct(formData: FormData) {
-  const validatedData = productSchema.parse(
+  const validatedData = productCreateSchema.parse(
     Object.fromEntries(formData.entries())
   );
   const product = await prisma.product.create({
@@ -135,7 +140,12 @@ async function createProduct(formData: FormData) {
 
   const images = formData.getAll("images") as File[];
   const imageFileIds = formData.getAll("imageFileIds") as string[];
-  await linkImagesToProduct(product.id, images, imageFileIds);
+  await linkImagesToProduct(
+    product.id,
+    images,
+    imageFileIds,
+    validatedData.sku
+  );
 
   return await getProductById(product.id);
 }
@@ -150,7 +160,7 @@ async function updateProduct(id: string, formData: FormData) {
   const productExists = await prisma.product.findUnique({ where: { id } });
   if (!productExists) return null;
 
-  const validatedData = productSchema.parse(
+  const validatedData = productUpdateSchema.parse(
     Object.fromEntries(formData.entries())
   );
   await prisma.product.update({
@@ -160,7 +170,10 @@ async function updateProduct(id: string, formData: FormData) {
 
   const images = formData.getAll("images") as File[];
   const imageFileIds = formData.getAll("imageFileIds") as string[];
-  await linkImagesToProduct(id, images, imageFileIds);
+  await linkImagesToProduct(id, images, imageFileIds, validatedData.sku);
+  if (validatedData.sku) {
+    await moveLinkedTempImagesToSku(id, validatedData.sku);
+  }
 
   return await getProductById(id);
 }
@@ -183,9 +196,51 @@ async function deleteProduct(id: string) {
  * @returns The result of the deletion.
  */
 async function unlinkImageFromProduct(productId: string, imageFileId: string) {
-  return await prisma.productImage.delete({
+  const deletedLink = await prisma.productImage.delete({
     where: { productId_imageFileId: { productId, imageFileId } },
   });
+
+  const remainingLinks = await prisma.productImage.count({
+    where: { imageFileId },
+  });
+
+  if (remainingLinks === 0) {
+    const imageFile = await prisma.imageFile.findUnique({
+      where: { id: imageFileId },
+    });
+
+    if (imageFile) {
+      try {
+        await fs.unlink(getDiskPathFromPublicPath(imageFile.filepath));
+      } catch (error: unknown) {
+        if (error instanceof Error && (error as NodeJS.ErrnoException).code !== "ENOENT") {
+          throw error;
+        }
+      }
+
+      await prisma.imageFile.delete({
+        where: { id: imageFileId },
+      });
+
+      const folderDiskPath = path.dirname(
+        getDiskPathFromPublicPath(imageFile.filepath)
+      );
+      if (folderDiskPath.startsWith(path.join(process.cwd(), "public", "uploads", "products"))) {
+        try {
+          const folderContents = await fs.readdir(folderDiskPath);
+          if (folderContents.length === 0) {
+            await fs.rmdir(folderDiskPath);
+          }
+        } catch (error: unknown) {
+          if (error instanceof Error && (error as NodeJS.ErrnoException).code !== "ENOENT") {
+            throw error;
+          }
+        }
+      }
+    }
+  }
+
+  return deletedLink;
 }
 
 /**
@@ -197,7 +252,8 @@ async function unlinkImageFromProduct(productId: string, imageFileId: string) {
 async function linkImagesToProduct(
   productId: string,
   images: File[],
-  imageFileIds: string[]
+  imageFileIds: string[],
+  productSku?: string | null
 ) {
   const allImageFileIds = [...imageFileIds];
 
@@ -205,10 +261,17 @@ async function linkImagesToProduct(
     for (const image of images) {
       // Filter out empty file inputs
       if (image.size > 0) {
-        const uploadedImage = await uploadFile(image);
+        const uploadedImage = await uploadFile(image, {
+          category: "products",
+          sku: productSku,
+        });
         allImageFileIds.push(uploadedImage.id);
       }
     }
+  }
+
+  if (productSku && imageFileIds.length > 0) {
+    await moveTempImageFilesToSku(imageFileIds, productSku);
   }
 
   if (allImageFileIds.length > 0) {
@@ -218,6 +281,61 @@ async function linkImagesToProduct(
         imageFileId,
       })),
     });
+  }
+}
+
+const tempProductPathPrefix = "/uploads/products/temp/";
+
+async function moveTempImageFilesToSku(imageFileIds: string[], sku: string) {
+  const imageFiles = await prisma.imageFile.findMany({
+    where: {
+      id: { in: imageFileIds },
+    },
+  });
+
+  for (const imageFile of imageFiles) {
+    if (!imageFile.filepath.startsWith(tempProductPathPrefix)) {
+      continue;
+    }
+
+    const filename = imageFile.filepath.slice(tempProductPathPrefix.length);
+    const safeSku = sku.trim().replace(/[^a-zA-Z0-9-_]/g, "_");
+    const targetPublicDir = `/uploads/products/${safeSku}`;
+    const targetPublicPath = `${targetPublicDir}/${filename}`;
+
+    await fs.mkdir(
+      path.join(process.cwd(), "public", "uploads", "products", safeSku),
+      { recursive: true }
+    );
+    await fs.rename(
+      getDiskPathFromPublicPath(imageFile.filepath),
+      getDiskPathFromPublicPath(targetPublicPath)
+    );
+
+    await prisma.imageFile.update({
+      where: { id: imageFile.id },
+      data: { filepath: targetPublicPath },
+    });
+  }
+}
+
+async function moveLinkedTempImagesToSku(productId: string, sku: string) {
+  const imageFiles = await prisma.imageFile.findMany({
+    where: {
+      products: {
+        some: {
+          productId,
+        },
+      },
+    },
+  });
+
+  const imageFileIds = imageFiles
+    .filter((imageFile) => imageFile.filepath.startsWith(tempProductPathPrefix))
+    .map((imageFile) => imageFile.id);
+
+  if (imageFileIds.length > 0) {
+    await moveTempImageFilesToSku(imageFileIds, sku);
   }
 }
 

@@ -15,6 +15,7 @@ import {
   ProductFormProvider,
   useProductFormContext,
 } from "@/lib/context/ProductFormContext";
+import { PlusIcon } from "lucide-react";
 
 function DataTableFooter<TData>(
   table: ReactTable<TData>,
@@ -133,14 +134,15 @@ export default function AdminPage() {
   return (
     <div className="container mx-auto py-10">
       <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-        <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-white">Products</h1>
+        <div className="mb-4 flex items-center gap-3">
           <Button
             onClick={() => setIsCreateOpen(true)}
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            className="size-11 rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90"
+            aria-label="Create product"
           >
-            Create Product
+            <PlusIcon className="size-5" />
           </Button>
+          <h1 className="text-3xl font-bold text-white">Products</h1>
         </div>
         <div className="mb-4 flex space-x-4">
           <Input

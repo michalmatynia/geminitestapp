@@ -14,6 +14,7 @@ import { ProductFormData } from "@/lib/types";
 
 interface ProductFormProps {
   submitButtonText: string;
+  skuRequired?: boolean;
 }
 
 /**
@@ -21,13 +22,17 @@ interface ProductFormProps {
  * It consumes the ProductFormContext to access state and functions.
  * @param submitButtonText - The text to display on the submit button.
  */
-export default function ProductForm({ submitButtonText }: ProductFormProps) {
+export default function ProductForm({
+  submitButtonText,
+  skuRequired = false,
+}: ProductFormProps) {
   const {
     handleSubmit,
     errors,
     setShowFileManager,
     uploading,
     uploadError,
+    uploadSuccess,
     imageSlots, // Use imageSlots from context
     handleMultiImageChange,
   } = useProductFormContext();
@@ -72,13 +77,13 @@ export default function ProductForm({ submitButtonText }: ProductFormProps) {
         <TabsContent value="general" className="mt-4">
           <div className="mb-4">
             <Label htmlFor="sku">
-              SKU <span className="text-red-500">*</span>
+              SKU{skuRequired ? " *" : ""}
             </Label>
             <Input
               id="sku"
               {...register("sku")}
-              aria-required="true"
               aria-invalid={errors.sku ? "true" : "false"}
+              aria-required={skuRequired ? "true" : "false"}
             />
             {errors.sku && (
               <p className="text-red-500 text-sm mt-1" role="alert">
@@ -362,10 +367,25 @@ export default function ProductForm({ submitButtonText }: ProductFormProps) {
           <ProductImageManager />
         </TabsContent>
       </Tabs>
-      <Button type="submit" disabled={uploading} aria-disabled={uploading}>
-        {uploading ? "Saving..." : submitButtonText}
-      </Button>
+      <div className="mt-4">
+        <Button type="submit" disabled={uploading} aria-disabled={uploading}>
+          {uploading ? "Saving..." : submitButtonText}
+        </Button>
+      </div>
+      {(uploadSuccess || uploadError) && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <div
+            className={`rounded-md px-4 py-3 text-sm shadow-lg ${
+              uploadError
+                ? "bg-red-500 text-white"
+                : "bg-emerald-500 text-white"
+            }`}
+            role={uploadError ? "alert" : "status"}
+          >
+            {uploadError ? uploadError : "Saved."}
+          </div>
+        </div>
+      )}
     </form>
   );
 }
-

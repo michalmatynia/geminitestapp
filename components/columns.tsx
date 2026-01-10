@@ -56,7 +56,7 @@ const handleDelete = async (
 };
 
 // The `ActionsCell` component renders the actions for a single product row,
-// including links to view and edit the product, and a button to delete it.
+// including a link to edit the product, and a button to delete it.
 const ActionsCell: React.FC<ColumnActionsProps> = ({
   row,
   setRefreshTrigger,
@@ -65,11 +65,6 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
 
   return (
     <div className="flex gap-2">
-      <Link href={`/admin/products/${product.id}`}>
-        <button className="text-muted-foreground hover:text-foreground">
-          View
-        </button>
-      </Link>
       <Link href={`/admin/products/${product.id}/edit`}>
         <button className="text-muted-foreground hover:text-foreground">
           Edit

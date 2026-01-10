@@ -10,63 +10,54 @@ To get the project up and running locally, follow these steps:
     ```bash
     npm install
     ```
-2.  **Initialize the database:**
+2.  **Set environment variables:**
+    Update `.env` with your database and API keys. For local Postgres:
     ```bash
-    npx prisma migrate dev
+    DATABASE_URL="postgresql://postgresuser@localhost:5432/stardb?schema=public"
+    PG_DUMP_PATH="/usr/local/opt/postgresql@16/bin/pg_dump"
+    PG_RESTORE_PATH="/usr/local/opt/postgresql@16/bin/pg_restore"
     ```
-3.  **Seed the database with initial data:**
+3.  **Initialize the database:**
+    ```bash
+    npx prisma migrate dev --name init
+    ```
+4.  **Seed the database with initial data:**
     ```bash
     npm run seed
     ```
-4.  **Start the development server:**
+5.  **Start the development server:**
     ```bash
     npm run dev
     ```
 The application will be available at `http://localhost:3000`.
 
-## Gemini CLI Agent Recommendations
+## Local Environment Notes
 
-During my analysis, I identified and addressed several issues. However, due to limitations in my execution environment, some steps need to be completed by you.
+- **Database**: PostgreSQL (local). The Prisma client uses the Pg driver adapter.
+- **pg_dump/pg_restore**: Required for the Database admin page. Configure `PG_DUMP_PATH` and `PG_RESTORE_PATH` in `.env` if Postgres is keg-only (Homebrew).
+- **.env**: Must include `DATABASE_URL`, `IMAGEKIT_ID`, `OPENAI_API_KEY`, and the pg tool paths when needed.
 
-### What I've Done
+## Postgres Setup (Local)
 
-*   **Disabled a Failing Feature:** The application was attempting to connect to a WebSocket server that doesn't exist. I've commented out the code that initiates this connection in `app/(admin)/admin/page.tsx` to prevent console errors.
-*   **Created a `.env` file:** I've created a `.env` file in the root of the project with placeholder values for the required environment variables: `IMAGEKIT_ID`, `OPENAI_API_KEY`, and `DATABASE_URL`. You will need to replace the placeholder values with your actual keys.
-*   **Cleaned up Dependencies:** I've removed the unused `hono` and `ws` packages from the `package.json` file.
-
-### Your Next Steps
-
-1.  **Install Dependencies:**
-    You will need to install the project's dependencies by running the following command in your terminal:
-    ```bash
-    npm install
-    ```
-
-2.  **Run Database Migrations:**
-    Once the dependencies are installed, you need to run the database migrations to set up your local database:
-    ```bash
-    npx prisma migrate dev
-    ```
-
-3.  **Seed the Database:**
-    After the migrations are complete, you can seed the database with initial data:
-    ```bash
-    npm run seed
-    ```
-
-4.  **Start the Application:**
-    Finally, you can start the development server:
-    ```bash
-    npm run dev
-    ```
-
-After completing these steps, the application should be running correctly.
+1. **Install PostgreSQL (Homebrew):**
+   ```bash
+   brew install postgresql@16
+   ```
+2. **Start the service:**
+   ```bash
+   brew services start postgresql@16
+   ```
+3. **Create role and database:**
+   ```bash
+   /usr/local/opt/postgresql@16/bin/createuser -s postgresuser
+   /usr/local/opt/postgresql@16/bin/createdb -O postgresuser stardb
+   ```
 
 ## Key Technologies
 
 - **Framework**: Next.js (App Router)
 - **Language**: TypeScript
-- **Database ORM**: Prisma (with SQLite for development/testing)
+- **Database ORM**: Prisma (PostgreSQL)
 - **UI Components**: Radix UI (headless components for accessibility), including `@radix-ui/react-collapsible` and `@radix-ui/react-select`
 - **Styling**: Tailwind CSS (utility-first CSS framework)
 - **Form Handling**: React Hook Form with Zod for schema validation
@@ -94,7 +85,7 @@ This application follows a modular architecture that separates concerns and prom
 
 ## Data Model
 
-Prisma is used as the ORM to interact with a SQLite database. The data model is defined in `prisma/schema.prisma` and includes the following models:
+Prisma is used as the ORM to interact with a PostgreSQL database. The data model is defined in `prisma/schema.prisma` and includes the following models:
 
 | Model           | Description                                                                                                                                    |
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -120,10 +111,10 @@ The application exposes a set of RESTful API endpoints for managing products and
 - **`POST /api/import`**: Imports products from a CSV file.
 - **`GET /api/settings`**: Fetches all application settings.
 - **`POST /api/settings`**: Creates or updates an application setting.
-- **`POST /api/databases/upload`**: Uploads a database backup file.
-- **`POST /api/databases/backup`**: Creates a new database backup.
+- **`POST /api/databases/upload`**: Uploads a `.dump` backup file.
+- **`POST /api/databases/backup`**: Creates a new database backup via `pg_dump`.
 - **`GET /api/databases/backups`**: Fetches a list of all database backups.
-- **`POST /api/databases/restore`**: Restores a database backup.
+- **`POST /api/databases/restore`**: Restores a database backup via `pg_restore`.
 - **`POST /api/databases/delete`**: Deletes a database backup.
 - **`GET /api/cms/slugs`**: Fetches a list of all slugs.
 - **`POST /api/cms/slugs`**: Creates a new slug.
@@ -141,9 +132,9 @@ The application exposes a set of RESTful API endpoints for managing products and
     - Select the AI model (`gpt-3.5-turbo` or `gpt-4o`).
     - Define a custom prompt with placeholders for product attributes (e.g., `[name]`, `[price]`).
     - Include product images in the prompt for vision-capable models.
-- **Database Management:** The admin dashboard now includes a database management page where users can:
-    - Create and restore database backups.
-    - Upload and delete existing backup files.
+- **Database Management:** The admin dashboard includes a database management page where users can:
+    - Create and restore PostgreSQL backups (custom `.dump` format).
+    - Upload and delete backup files stored under `prisma/backups/`.
 - **SKU Search:** The product list page now includes a search field for filtering products by SKU.
 - **CMS Slug Management:** The admin dashboard now includes a basic CMS for managing URL slugs.
 - **Frontend/Admin Split:** The application has been restructured into separate frontend and admin sections, each with its own layout and navigation.
@@ -181,7 +172,7 @@ This project follows a set of coding conventions and architecture patterns to en
 
 - **Routing and Navigation**: The application uses Next.js's file-based routing system, which simplifies the creation of new pages and API routes. The `useRouter` hook is used for programmatic navigation between pages.
 
-- **API Communication**: All client-side API calls are centralized in `lib/api.ts` for better organization and reusability. This approach makes it easy to manage API endpoints and handle data fetching in a consistent manner.
+- **API Communication**: Most client-side API calls are centralized in `lib/api.ts`; some admin flows still use direct `fetch` in page components.
 
 - **Type Safety with TypeScript**: The project enforces type safety with TypeScript, using interfaces for props and API responses. This helps to prevent common errors and improve the overall quality of the code.
 

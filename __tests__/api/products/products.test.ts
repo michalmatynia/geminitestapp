@@ -168,7 +168,18 @@ describe("Products API", () => {
     });
 
     it("should return the correct response structure", async () => {
-      await createMockProduct({ name_en: "Product 1", price: "100", weight: 500, length: 20 });
+      await createMockProduct({
+        name_en: "Product 1 (EN)",
+        name_pl: "Product 1 (PL)",
+        name_de: "Product 1 (DE)",
+        description_en: "Description 1 (EN)",
+        description_pl: "Description 1 (PL)",
+        description_de: "Description 1 (DE)",
+        price: "100",
+        sku: "SKU-001",
+        weight: 500,
+        length: 20,
+      });
       const res = await GET_LIST(new Request("http://localhost/api/products"));
       const products = await res.json();
       expect(res.status).toEqual(200);
@@ -176,7 +187,20 @@ describe("Products API", () => {
       const product = products[0];
       expect(product).toHaveProperty("id");
       expect(product).toHaveProperty("name_en");
+      expect(product.name_en).toEqual("Product 1 (EN)");
+      expect(product).toHaveProperty("name_pl");
+      expect(product.name_pl).toEqual("Product 1 (PL)");
+      expect(product).toHaveProperty("name_de");
+      expect(product.name_de).toEqual("Product 1 (DE)");
+      expect(product).toHaveProperty("description_en");
+      expect(product.description_en).toEqual("Description 1 (EN)");
+      expect(product).toHaveProperty("description_pl");
+      expect(product.description_pl).toEqual("Description 1 (PL)");
+      expect(product).toHaveProperty("description_de");
+      expect(product.description_de).toEqual("Description 1 (DE)");
       expect(product).toHaveProperty("price");
+      expect(product).toHaveProperty("sku");
+      expect(product.sku).toEqual("SKU-001");
       expect(product).toHaveProperty("createdAt");
       expect(product).toHaveProperty("updatedAt");
       expect(product).toHaveProperty("images");

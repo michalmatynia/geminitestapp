@@ -25,7 +25,11 @@ export default function Menu() {
 
   return (
     <nav className="flex flex-col space-y-2">
-      <CollapsibleMenu title="Products" icon={<PackageIcon />}>
+      <CollapsibleMenu
+        title="Products"
+        icon={<PackageIcon />}
+        href="/admin/products"
+      >
         <Link
           href="/admin/products"
           className="block hover:bg-gray-700 p-2 rounded"

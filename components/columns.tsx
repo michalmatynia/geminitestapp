@@ -10,7 +10,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 export type Product = {
   id: string;
-  name: string | null;
+  name_en: string | null;
+  name_pl: string | null;
+  name_de: string | null;
+  sku: string | null;
   price: number | null;
   createdAt: Date;
   updatedAt: Date;
@@ -39,6 +42,9 @@ const handleDelete = async (
   id: string,
   setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>
 ) => {
+  if (!window.confirm("Are you sure you want to delete this product?")) {
+    return;
+  }
   const res = await fetch(`/api/products/${id}`, {
     method: "DELETE",
   });
@@ -125,7 +131,7 @@ export const columns: ColumnDef<Product>[] = [
     },
   },
   {
-    accessorKey: "name",
+    accessorKey: "name_en",
     header: ({ column }) => {
       return (
         <Button
@@ -135,6 +141,17 @@ export const columns: ColumnDef<Product>[] = [
           Name
           <ArrowUpDown className="ml-2 size-4" />
         </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const product = row.original;
+      return (
+        <div>
+          <span>{product.name_en}</span>
+          {product.sku && (
+            <div className="text-sm text-gray-500">{product.sku}</div>
+          )}
+        </div>
       );
     },
   },

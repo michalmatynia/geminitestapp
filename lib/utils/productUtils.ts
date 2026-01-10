@@ -10,6 +10,8 @@ export async function createMockProduct(productData: {
   price?: string;
   sku?: string;
   stock?: number;
+  weight?: number;
+  length?: number;
 }) {
   const product = await prisma.product.create({
     data: {
@@ -27,6 +29,8 @@ export async function createMockProduct(productData: {
       priceComment: "Mock price comment",
       sizeLength: 10,
       sizeWidth: 10,
+      weight: productData.weight || 100,
+      length: productData.length || 20,
     },
   });
   return product;

@@ -19,9 +19,44 @@ async function getProducts(filters: {
   endDate?: string;
 }) {
   const where: Prisma.ProductWhereInput = {
-    name: {
-      contains: filters.search,
-    },
+    OR: [
+      {
+        name_en: {
+          contains: filters.search,
+          mode: "insensitive",
+        },
+      },
+      {
+        name_pl: {
+          contains: filters.search,
+          mode: "insensitive",
+        },
+      },
+      {
+        name_de: {
+          contains: filters.search,
+          mode: "insensitive",
+        },
+      },
+      {
+        description_en: {
+          contains: filters.search,
+          mode: "insensitive",
+        },
+      },
+      {
+        description_pl: {
+          contains: filters.search,
+          mode: "insensitive",
+        },
+      },
+      {
+        description_de: {
+          contains: filters.search,
+          mode: "insensitive",
+        },
+      },
+    ],
     sku: {
       contains: filters.sku,
     },

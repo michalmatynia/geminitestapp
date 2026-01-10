@@ -70,16 +70,22 @@ export function ProductFormProvider({
   const methods = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      name: product?.name || "",
+      name_en: product?.name_en || "",
+      name_pl: product?.name_pl || "",
+      name_de: product?.name_de || "",
       price: product?.price || 0,
       sku: product?.sku || "",
-      description: product?.description || "",
+      description_en: product?.description_en || "",
+      description_pl: product?.description_pl || "",
+      description_de: product?.description_de || "",
       supplierName: product?.supplierName || "",
       supplierLink: product?.supplierLink || "",
       priceComment: product?.priceComment || "",
       stock: product?.stock || 0,
       sizeLength: product?.sizeLength || 0,
       sizeWidth: product?.sizeWidth || 0,
+      weight: product?.weight || 0,
+      length: product?.length || 0,
     },
   });
   const {

@@ -9,8 +9,12 @@ generator client {
 model Product {
   id           String    @id @default(cuid())
   sku          String?   @unique
-  name         String?
-  description  String?
+  name_en      String?
+  name_pl      String?
+  name_de      String?
+  description_en String?
+  description_pl String?
+  description_de String?
   supplierName String?
   supplierLink String?
   priceComment String?
@@ -18,6 +22,8 @@ model Product {
   price        Int?
   sizeLength   Int?
   sizeWidth    Int?
+  weight       Int?
+  length       Int?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   images       ProductImage[]

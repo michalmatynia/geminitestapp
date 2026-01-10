@@ -1,16 +1,30 @@
 import prisma from "@/lib/prisma";
 
-export async function createMockProduct(productData: { name?: string; price?: string; sku?: string; stock?: number }) {
+export async function createMockProduct(productData: {
+  name_en?: string;
+  name_pl?: string;
+  name_de?: string;
+  description_en?: string;
+  description_pl?: string;
+  description_de?: string;
+  price?: string;
+  sku?: string;
+  stock?: number;
+}) {
   const product = await prisma.product.create({
     data: {
-      name: productData.name || 'Mock Product',
+      name_en: productData.name_en || "Mock Product (EN)",
+      name_pl: productData.name_pl || "Mock Product (PL)",
+      name_de: productData.name_de || "Mock Product (DE)",
+      description_en: productData.description_en || "This is a mock product description (EN).",
+      description_pl: productData.description_pl || "This is a mock product description (PL).",
+      description_de: productData.description_de || "This is a mock product description (DE).",
       price: productData.price ? parseInt(productData.price) : 100,
       sku: productData.sku || `MOCK-SKU-${Date.now()}-${Math.random()}`,
       stock: productData.stock || 10,
-      description: 'This is a mock product description.',
-      supplierName: 'Mock Supplier',
-      supplierLink: 'https://mock.supplier.com',
-      priceComment: 'Mock price comment',
+      supplierName: "Mock Supplier",
+      supplierLink: "https://mock.supplier.com",
+      priceComment: "Mock price comment",
       sizeLength: 10,
       sizeWidth: 10,
     },

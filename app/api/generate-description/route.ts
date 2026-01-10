@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     imageUrls: string[];
   };
 
-  if (!productData.name) {
+  if (!productData.name_en) {
     return NextResponse.json(
       { error: "Product name is required" },
       { status: 400 }

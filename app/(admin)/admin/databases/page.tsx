@@ -22,19 +22,28 @@ export default function DatabasesPage() {
     void getBackups().then(setData);
   }, [refreshTrigger]);
 
-  const handleSave = async () => {
+  const handleBackup = async () => {
     try {
       const res = await fetch("/api/databases/backup", {
         method: "POST",
       });
+      const data = (await res.json()) as {
+        message?: string;
+        error?: string;
+        warning?: string;
+      };
       if (res.ok) {
-        alert("Database backed up successfully.");
+        if (data.warning) {
+          alert(`${data.message ?? "Backup created"}: ${data.warning}`);
+        } else {
+          alert(data.message ?? "Backup created successfully.");
+        }
         setRefreshTrigger((prev) => prev + 1);
       } else {
-        alert("Failed to back up database.");
+        alert(data.error ?? "Failed to create backup.");
       }
     } catch (error) {
-      console.error("Error backing up database:", error);
+      console.error("Error creating backup:", error);
       alert("An error occurred during backup.");
     }
   };
@@ -53,14 +62,16 @@ export default function DatabasesPage() {
       });
 
       if (res.ok) {
-        alert("Database uploaded successfully.");
+        alert("Backup uploaded successfully.");
         setRefreshTrigger((prev) => prev + 1);
       } else {
-        alert("Failed to upload database.");
+        alert("Failed to upload backup.");
       }
     } catch (error) {
-      console.error("Error uploading database:", error);
+      console.error("Error uploading backup:", error);
       alert("An error occurred during upload.");
+    } finally {
+      event.target.value = "";
     }
   };
 
@@ -70,17 +81,22 @@ export default function DatabasesPage() {
 
   return (
     <div className="container mx-auto py-10">
+      <div className="mb-2">
+        <p className="text-sm text-gray-400">
+          PostgreSQL backups use pg_dump/pg_restore (.dump files).
+        </p>
+      </div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Databases</h1>
         <div className="space-x-2">
-          <Button onClick={() => { void handleSave(); }}>Save</Button>
-          <Button onClick={triggerFileUpload}>Upload</Button>
+          <Button onClick={() => { void handleBackup(); }}>Create Backup</Button>
+          <Button onClick={triggerFileUpload}>Upload Backup</Button>
           <input
             type="file"
             ref={fileInputRef}
             onChange={handleUpload}
             className="hidden"
-            accept=".db"
+            accept=".dump"
           />
         </div>
       </div>

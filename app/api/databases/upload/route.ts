@@ -1,33 +1,31 @@
-import { NextResponse } from "next/server";
-import fs from "fs/promises";
 import path from "path";
+import fs from "fs/promises";
+import { NextResponse } from "next/server";
 
-const backupsDir = path.join(process.cwd(), "prisma", "backups");
+import { backupsDir, ensureBackupsDir, assertValidBackupName } from "../_utils";
 
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
-    const file = formData.get("file") as File;
+    const file = formData.get("file") as File | null;
 
     if (!file) {
-      return NextResponse.json({ message: "No file provided" }, { status: 400 });
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    if (path.extname(file.name) !== ".db") {
-      return NextResponse.json({ message: "Invalid file type" }, { status: 400 });
-    }
+    assertValidBackupName(file.name);
+    await ensureBackupsDir();
 
     const backupPath = path.join(backupsDir, file.name);
     const fileBuffer = Buffer.from(await file.arrayBuffer());
 
     await fs.writeFile(backupPath, fileBuffer);
 
-    console.log(`Database backup uploaded: ${backupPath}`);
-    return NextResponse.json({ message: "Backup uploaded successfully" });
+    return NextResponse.json({ message: "Backup uploaded" });
   } catch (error) {
-    console.error("Error uploading backup:", error);
+    console.error("Failed to upload backup:", error);
     return NextResponse.json(
-      { message: "Failed to upload backup" },
+      { error: "Failed to upload backup" },
       { status: 500 }
     );
   }

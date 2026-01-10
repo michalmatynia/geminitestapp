@@ -11,47 +11,47 @@ export type DatabaseInfo = {
   lastRestored?: string;
 };
 
-async function handleRestore(dbName: string) {
-  if (window.confirm(`Are you sure you want to restore ${dbName}?`)) {
+async function handleRestore(backupName: string) {
+  if (window.confirm(`Restore backup ${backupName}? This will overwrite current data.`)) {
     try {
       const res = await fetch("/api/databases/restore", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ dbName }),
+        body: JSON.stringify({ backupName }),
       });
       if (res.ok) {
-        alert("Database restored successfully.");
+        alert("Backup restored successfully.");
         window.location.reload();
       } else {
-        alert("Failed to restore database.");
+        alert("Failed to restore backup.");
       }
     } catch (error) {
-      console.error("Error restoring database:", error);
+      console.error("Error restoring backup:", error);
       alert("An error occurred during restoration.");
     }
   }
 }
 
-async function handleDelete(dbName: string) {
-  if (window.confirm(`Are you sure you want to delete ${dbName}? This action cannot be undone.`)) {
+async function handleDelete(backupName: string) {
+  if (window.confirm(`Delete backup ${backupName}? This cannot be undone.`)) {
     try {
       const res = await fetch("/api/databases/delete", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ dbName }),
+        body: JSON.stringify({ backupName }),
       });
       if (res.ok) {
-        alert("Database backup deleted successfully.");
+        alert("Backup deleted successfully.");
         window.location.reload();
       } else {
-        alert("Failed to delete database backup.");
+        alert("Failed to delete backup.");
       }
     } catch (error) {
-      console.error("Error deleting database backup:", error);
+      console.error("Error deleting backup:", error);
       alert("An error occurred during deletion.");
     }
   }
@@ -82,12 +82,12 @@ export const columns: ColumnDef<DatabaseInfo>[] = [
   {
     id: "actions",
     cell: ({ row }) => {
-      const db = row.original;
+      const backup = row.original;
       return (
         <div className="flex space-x-2">
           <Button
             onClick={() => {
-              void handleRestore(db.name);
+              void handleRestore(backup.name);
             }}
           >
             Restore
@@ -95,7 +95,7 @@ export const columns: ColumnDef<DatabaseInfo>[] = [
           <Button
             variant="destructive"
             onClick={() => {
-              void handleDelete(db.name);
+              void handleDelete(backup.name);
             }}
           >
             Delete

@@ -1,47 +1,42 @@
-import { promises as fs } from "fs";
 import path from "path";
+import { promises as fs } from "fs";
 import { NextResponse } from "next/server";
 import { DatabaseInfo } from "@/components/database-columns";
 
+import { backupsDir, ensureBackupsDir } from "../_utils";
+
 async function getBackups(): Promise<DatabaseInfo[]> {
-  const backupDir = path.join(process.cwd(), "prisma", "backups");
-  const logPath = path.join(backupDir, "restore-log.json");
+  await ensureBackupsDir();
+  const logPath = path.join(backupsDir, "restore-log.json");
 
   let logData: Record<string, string> = {};
   try {
     const logFile = await fs.readFile(logPath, "utf-8");
     logData = JSON.parse(logFile) as Record<string, string>;
   } catch (error) {
-    // Log file doesn't exist, no problem
+    // No log yet.
   }
 
-  try {
-    const files = await fs.readdir(backupDir);
-    const dbFiles = files.filter((file) => file.endsWith(".db"));
+  const files = await fs.readdir(backupsDir);
+  const backupFiles = files.filter((file) => file.endsWith(".dump"));
 
-    const databases = await Promise.all(
-      dbFiles.map(async (file) => {
-        const filePath = path.join(backupDir, file);
-        const stats = await fs.stat(filePath);
-        return {
-          name: file,
-          size: `${(stats.size / 1024).toFixed(2)} KB`,
-          created: stats.birthtime.toLocaleString(),
-          lastModified: stats.mtime.toLocaleString(),
-          lastRestored: logData[file]
-            ? new Date(logData[file]).toLocaleString()
-            : undefined,
-        };
-      })
-    );
-    return databases;
-  } catch (error) {
-    // If the backups directory doesn't exist, return an empty array.
-    if (error instanceof Error && (error as NodeJS.ErrnoException).code === 'ENOENT') {
-      return [];
-    }
-    throw error;
-  }
+  const backups = await Promise.all(
+    backupFiles.map(async (file) => {
+      const filePath = path.join(backupsDir, file);
+      const stats = await fs.stat(filePath);
+      return {
+        name: file,
+        size: `${(stats.size / 1024 / 1024).toFixed(2)} MB`,
+        created: stats.birthtime.toLocaleString(),
+        lastModified: stats.mtime.toLocaleString(),
+        lastRestored: logData[file]
+          ? new Date(logData[file]).toLocaleString()
+          : undefined,
+      };
+    })
+  );
+
+  return backups;
 }
 
 export async function GET() {
@@ -49,9 +44,9 @@ export async function GET() {
     const backups = await getBackups();
     return NextResponse.json(backups);
   } catch (error) {
-    console.error(error);
+    console.error("Failed to list backups:", error);
     return NextResponse.json(
-      { error: "Failed to fetch backups" },
+      { error: "Failed to list backups" },
       { status: 500 }
     );
   }

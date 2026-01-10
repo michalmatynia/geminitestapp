@@ -1,37 +1,54 @@
-import { promises as fs } from "fs";
 import path from "path";
+import { promises as fs } from "fs";
 import { NextResponse } from "next/server";
 
-import { resolveDatabasePath } from "@/lib/utils/database-path";
+import {
+  backupsDir,
+  ensureBackupsDir,
+  assertValidBackupName,
+  getPgConnectionUrl,
+  getPgRestoreCommand,
+  execFileAsync,
+} from "../_utils";
 
 export async function POST(req: Request) {
   try {
-    const { dbName } = await req.json() as { dbName: string };
-    const prismaDir = path.join(process.cwd(), "prisma");
-    const dbPath = resolveDatabasePath();
-    const backupDir = path.join(prismaDir, "backups");
-    const backupPath = path.join(backupDir, dbName);
-    const logPath = path.join(backupDir, "restore-log.json");
+    const { backupName } = (await req.json()) as { backupName: string };
+    if (!backupName) {
+      return NextResponse.json({ error: "Backup name is required" }, { status: 400 });
+    }
 
-    await fs.copyFile(backupPath, dbPath);
+    assertValidBackupName(backupName);
+    await ensureBackupsDir();
 
+    const backupPath = path.join(backupsDir, backupName);
+    const databaseUrl = getPgConnectionUrl();
+
+    await execFileAsync(getPgRestoreCommand(), [
+      "--clean",
+      "--if-exists",
+      "--dbname",
+      databaseUrl,
+      backupPath,
+    ]);
+
+    const logPath = path.join(backupsDir, "restore-log.json");
     let logData: Record<string, string> = {};
     try {
       const logFile = await fs.readFile(logPath, "utf-8");
       logData = JSON.parse(logFile) as Record<string, string>;
     } catch (error) {
-      // Log file doesn't exist, create it
+      // No log yet.
     }
 
-    logData[dbName] = new Date().toISOString();
+    logData[backupName] = new Date().toISOString();
     await fs.writeFile(logPath, JSON.stringify(logData, null, 2));
 
-    console.log(`Database restored from ${backupPath} to ${dbPath}`);
-    return NextResponse.json({ message: "Database restored successfully" });
+    return NextResponse.json({ message: "Backup restored" });
   } catch (error) {
-    console.error("Failed to restore database:", error);
+    console.error("Failed to restore backup:", error);
     return NextResponse.json(
-      { error: "Failed to restore database" },
+      { error: "Failed to restore backup" },
       { status: 500 }
     );
   }

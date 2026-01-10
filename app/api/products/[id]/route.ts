@@ -33,11 +33,15 @@ export async function GET(
  */
 export async function PUT(
   req: Request,
-  { params }: any
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+    if (!id) {
+      return NextResponse.json({ error: "Product id is required" }, { status: 400 });
+    }
     const formData = await req.formData();
-    const product = await productService.updateProduct(params.id, formData);
+    const product = await productService.updateProduct(id, formData);
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
@@ -56,10 +60,14 @@ export async function PUT(
  */
 export async function DELETE(
   req: Request,
-  { params }: any
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const product = await productService.deleteProduct(params.id);
+    const { id } = await params;
+    if (!id) {
+      return NextResponse.json({ error: "Product id is required" }, { status: 400 });
+    }
+    const product = await productService.deleteProduct(id);
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
@@ -71,4 +79,3 @@ export async function DELETE(
     );
   }
 }
-

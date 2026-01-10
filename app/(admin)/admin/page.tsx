@@ -13,28 +13,28 @@ export default function AdminDashboard() {
   const [connections, setConnections] = useState(0);
   const [recentActivityOpen, setRecentActivityOpen] = useState(true);
 
-  useEffect(() => {
-    const ws = new WebSocket("ws://localhost:3000");
+  // useEffect(() => {
+  //   const ws = new WebSocket("ws://localhost:3000");
 
-    ws.onopen = () => {
-      console.log("Connected to WebSocket server");
-    };
+  //   ws.onopen = () => {
+  //     console.log("Connected to WebSocket server");
+  //   };
 
-    ws.onmessage = (event) => {
-      const data: WebSocketData = JSON.parse(event.data as string) as WebSocketData;
-      if (data.type === "connections") {
-        setConnections(data.count);
-      }
-    };
+  //   ws.onmessage = (event) => {
+  //     const data: WebSocketData = JSON.parse(event.data as string) as WebSocketData;
+  //     if (data.type === "connections") {
+  //       setConnections(data.count);
+  //     }
+  //   };
 
-    ws.onclose = () => {
-      console.log("Disconnected from WebSocket server");
-    };
+  //   ws.onclose = () => {
+  //     console.log("Disconnected from WebSocket server");
+  //   };
 
-    return () => {
-      ws.close(1000, "User navigated away");
-    };
-  }, []);
+  //   return () => {
+  //     ws.close(1000, "User navigated away");
+  //   };
+  // }, []);
 
   return (
     <div className="container mx-auto py-10">

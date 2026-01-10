@@ -25,13 +25,11 @@ export default function ProductForm({ submitButtonText }: ProductFormProps) {
   const {
     handleSubmit,
     errors,
-    handleImageChange,
     setShowFileManager,
     uploading,
     uploadError,
-    existingImageUrls,
-    previewUrls,
-    selectedImageUrls,
+    imageSlots, // Use imageSlots from context
+    handleMultiImageChange,
   } = useProductFormContext();
   const [generating, setGenerating] = useState(false);
   const { register, getValues, setValue } = useFormContext<ProductFormData>();
@@ -42,11 +40,10 @@ export default function ProductForm({ submitButtonText }: ProductFormProps) {
   const handleGenerateDescription = async () => {
     setGenerating(true);
     const productData = getValues();
-    const imageUrls = [
-      ...existingImageUrls,
-      ...previewUrls,
-      ...selectedImageUrls,
-    ];
+    // Derive imageUrls from imageSlots
+    const imageUrls = imageSlots
+      .filter((slot) => slot !== null)
+      .map((slot) => slot!.previewUrl);
     try {
       const res = await fetch("/api/generate-description", {
         method: "POST",

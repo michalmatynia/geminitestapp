@@ -83,6 +83,29 @@ model Country {
   updatedAt DateTime @updatedAt
 }
 
+model Integration {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  connections IntegrationConnection[]
+}
+
+model IntegrationConnection {
+  id            String      @id @default(cuid())
+  integrationId String      @unique
+  name          String
+  username      String
+  password      String
+  playwrightStorageState String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  integration   Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+}
+
 model PriceGroup {
   id               String      @id @default(cuid())
   groupId          String      @unique

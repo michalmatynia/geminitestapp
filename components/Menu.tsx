@@ -8,6 +8,7 @@ import {
   BookOpenIcon,
   SettingsIcon,
   UploadIcon,
+  PlugIcon,
 } from "lucide-react";
 import CollapsibleMenu from "@/components/CollapsibleMenu";
 import { useAdminLayout } from "@/lib/context/AdminLayoutContext";
@@ -114,6 +115,13 @@ export default function Menu() {
       >
         <UploadIcon className="mr-2" />
         {!isMenuCollapsed && "Import"}
+      </Link>
+      <Link
+        href="/admin/integrations"
+        className="flex items-center hover:bg-gray-700 p-2 rounded"
+      >
+        <PlugIcon className="mr-2" />
+        {!isMenuCollapsed && "Integrations"}
       </Link>
     </nav>
   );

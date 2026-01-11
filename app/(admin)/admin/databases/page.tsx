@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { DataTable } from "@/components/data-table";
-import { columns, DatabaseInfo } from "@/components/database-columns";
+import { getDatabaseColumns, DatabaseInfo } from "@/components/database-columns";
 import { Button } from "@/components/ui/button";
 
 async function getBackups(): Promise<DatabaseInfo[]> {
@@ -17,6 +17,7 @@ export default function DatabasesPage() {
   const [data, setData] = useState<DatabaseInfo[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [truncateBeforeRestore, setTruncateBeforeRestore] = useState(false);
 
   useEffect(() => {
     void getBackups().then(setData);
@@ -79,18 +80,42 @@ export default function DatabasesPage() {
     fileInputRef.current?.click();
   };
 
+  const handlePreview = (backupName: string) => {
+    const url = `/admin/databases/preview?backup=${encodeURIComponent(
+      backupName
+    )}`;
+    window.location.assign(url);
+  };
+
+  const handlePreviewCurrent = () => {
+    window.location.assign("/admin/databases/preview?mode=current");
+  };
+
   return (
     <div className="container mx-auto py-10">
       <div className="mb-2">
         <p className="text-sm text-gray-400">
-          PostgreSQL backups use pg_dump/pg_restore (.dump files).
+          PostgreSQL backups use pg_dump/pg_restore (.dump files). Restores are
+          data-only and preserve your current schema.
         </p>
       </div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col gap-3 mb-6 md:flex-row md:items-center md:justify-between">
         <h1 className="text-3xl font-bold">Databases</h1>
-        <div className="space-x-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-sm text-gray-600">
+            <input
+              type="checkbox"
+              className="size-4 accent-emerald-500"
+              checked={truncateBeforeRestore}
+              onChange={(event) => setTruncateBeforeRestore(event.target.checked)}
+            />
+            Truncate data before restore
+          </label>
           <Button onClick={() => { void handleBackup(); }}>Create Backup</Button>
           <Button onClick={triggerFileUpload}>Upload Backup</Button>
+          <Button variant="secondary" onClick={handlePreviewCurrent}>
+            Preview Current DB
+          </Button>
           <input
             type="file"
             ref={fileInputRef}
@@ -101,7 +126,15 @@ export default function DatabasesPage() {
         </div>
       </div>
       <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-        <DataTable columns={columns} data={data} />
+        <DataTable
+          columns={getDatabaseColumns({
+            truncateBeforeRestore,
+            onPreview: handlePreview,
+          })}
+          data={data}
+          initialSorting={[{ id: "lastModifiedAt", desc: true }]}
+          sortingStorageKey="stardb:database-backups:sorting"
+        />
       </div>
     </div>
   );

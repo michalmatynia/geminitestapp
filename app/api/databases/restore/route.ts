@@ -1,6 +1,7 @@
 import path from "path";
 import { promises as fs } from "fs";
 import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
 
 import {
   backupsDir,
@@ -13,7 +14,10 @@ import {
 
 export async function POST(req: Request) {
   try {
-    const { backupName } = (await req.json()) as { backupName: string };
+    const { backupName, truncateBeforeRestore } = (await req.json()) as {
+      backupName: string;
+      truncateBeforeRestore?: boolean;
+    };
     if (!backupName) {
       return NextResponse.json({ error: "Backup name is required" }, { status: 400 });
     }
@@ -24,9 +28,35 @@ export async function POST(req: Request) {
     const backupPath = path.join(backupsDir, backupName);
     const databaseUrl = getPgConnectionUrl();
 
+    if (truncateBeforeRestore) {
+      const dbUrl = process.env.DATABASE_URL ?? "";
+      if (!dbUrl.startsWith("postgres://") && !dbUrl.startsWith("postgresql://")) {
+        return NextResponse.json(
+          { error: "Truncate before restore is only supported for PostgreSQL." },
+          { status: 400 }
+        );
+      }
+      const tables = (await prisma.$queryRaw<
+        { tablename: string }[]
+      >`SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename != '_prisma_migrations'`)
+        .map((row) => row.tablename)
+        .filter(Boolean);
+      if (tables.length > 0) {
+        const quotedTables = tables
+          .map((name) => `"${name.replace(/"/g, '""')}"`)
+          .join(", ");
+        await prisma.$executeRawUnsafe(
+          `TRUNCATE TABLE ${quotedTables} RESTART IDENTITY CASCADE`
+        );
+      }
+    }
+
     await execFileAsync(getPgRestoreCommand(), [
-      "--clean",
-      "--if-exists",
+      "--data-only",
+      "--disable-triggers",
+      "--no-owner",
+      "--no-privileges",
+      "--single-transaction",
       "--dbname",
       databaseUrl,
       backupPath,

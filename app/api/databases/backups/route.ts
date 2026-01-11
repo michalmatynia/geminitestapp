@@ -28,7 +28,9 @@ async function getBackups(): Promise<DatabaseInfo[]> {
         name: file,
         size: `${(stats.size / 1024 / 1024).toFixed(2)} MB`,
         created: stats.birthtime.toLocaleString(),
+        createdAt: stats.birthtime.toISOString(),
         lastModified: stats.mtime.toLocaleString(),
+        lastModifiedAt: stats.mtime.toISOString(),
         lastRestored: logData[file]
           ? new Date(logData[file]).toLocaleString()
           : undefined,

@@ -31,6 +31,8 @@ export async function GET(
         username: connection.username,
         createdAt: connection.createdAt,
         updatedAt: connection.updatedAt,
+        hasPlaywrightStorageState: Boolean(connection.playwrightStorageState),
+        playwrightStorageStateUpdatedAt: connection.playwrightStorageStateUpdatedAt,
       }))
     );
   } catch (_error) {

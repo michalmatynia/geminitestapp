@@ -16,6 +16,8 @@ type IntegrationConnection = {
   integrationId: string;
   name: string;
   username: string;
+  hasPlaywrightStorageState?: boolean;
+  playwrightStorageStateUpdatedAt?: string | null;
 };
 
 export default function IntegrationsPage() {
@@ -42,6 +44,7 @@ export default function IntegrationsPage() {
   const [selectedStep, setSelectedStep] = useState<
     { step: string; status: "ok" | "failed"; timestamp: string; detail?: string } | null
   >(null);
+  const activeConnection = connections[0] || null;
 
   useEffect(() => {
     const fetchIntegrations = async () => {
@@ -573,6 +576,20 @@ export default function IntegrationsPage() {
                   <p className="mt-1 text-xs text-gray-400">
                     Control how the browser behaves during crosslisting.
                   </p>
+                  <div className="mt-4 rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300">
+                    <p>
+                      <span className="text-gray-400">Session cookie:</span>{" "}
+                      {activeConnection?.hasPlaywrightStorageState ? "Retained" : "Not stored"}
+                    </p>
+                    <p className="mt-1">
+                      <span className="text-gray-400">Obtained:</span>{" "}
+                      {activeConnection?.playwrightStorageStateUpdatedAt
+                        ? new Date(
+                            activeConnection.playwrightStorageStateUpdatedAt
+                          ).toLocaleString()
+                        : "—"}
+                    </p>
+                  </div>
                   <div className="mt-4 space-y-4 text-sm text-gray-200">
                     <label className="flex items-center justify-between gap-4 rounded-md border border-gray-800 bg-gray-950 px-3 py-2">
                       <span className="text-xs text-gray-300">Run headless</span>

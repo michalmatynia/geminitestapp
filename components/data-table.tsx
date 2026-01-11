@@ -10,7 +10,7 @@ import {
   useReactTable,
   Table as ReactTable,
 } from "@tanstack/react-table";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   Table,
@@ -24,6 +24,8 @@ import {
 interface DataTableProps<TData> {
   columns: ColumnDef<TData>[];
   data: TData[];
+  initialSorting?: SortingState;
+  sortingStorageKey?: string;
   setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
   productNameKey?: "name_en" | "name_pl" | "name_de";
   onProductNameClick?: (row: TData) => void;
@@ -44,6 +46,8 @@ declare module "@tanstack/react-table" {
 export function DataTable<TData>({
   columns,
   data,
+  initialSorting,
+  sortingStorageKey,
   setRefreshTrigger,
   productNameKey,
   onProductNameClick,
@@ -52,7 +56,30 @@ export function DataTable<TData>({
   footer,
 }: DataTableProps<TData>) {
   const [rowSelection, setRowSelection] = useState({});
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
+
+  useEffect(() => {
+    if (!sortingStorageKey) return;
+    try {
+      const raw = window.localStorage.getItem(sortingStorageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as SortingState;
+      if (Array.isArray(parsed)) {
+        setSorting(parsed);
+      }
+    } catch {
+      // Ignore invalid localStorage values.
+    }
+  }, [sortingStorageKey]);
+
+  useEffect(() => {
+    if (!sortingStorageKey) return;
+    try {
+      window.localStorage.setItem(sortingStorageKey, JSON.stringify(sorting));
+    } catch {
+      // Ignore storage write errors.
+    }
+  }, [sorting, sortingStorageKey]);
 
   const table = useReactTable<TData>({
     data,

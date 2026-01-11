@@ -366,6 +366,7 @@ export async function POST(
           where: { id: connection.id },
           data: {
             playwrightStorageState: encryptSecret(JSON.stringify(storageState)),
+            playwrightStorageStateUpdatedAt: new Date(),
           },
         });
         pushStep("Saving session", "ok", "Session stored for reuse");

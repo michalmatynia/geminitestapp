@@ -1,5 +1,9 @@
 Application notes
 
+Database Work
+Preview Current Database
+
+
 add playwright settings to adjust playwright behaviour and timing (humanize it)
 
 

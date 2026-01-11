@@ -35,7 +35,11 @@ const renderSortableHeader = (
   );
 };
 
-async function handleRestore(backupName: string, truncateBeforeRestore: boolean) {
+async function handleRestore(
+  backupName: string,
+  truncateBeforeRestore: boolean,
+  onRestore: (log: string) => void
+) {
   if (
     window.confirm(
       `Restore backup ${backupName}? This restores data only and preserves the current schema.`
@@ -57,16 +61,22 @@ async function handleRestore(backupName: string, truncateBeforeRestore: boolean)
         },
         body: JSON.stringify({ backupName, truncateBeforeRestore }),
       });
+      const payload = (await res.json()) as {
+        message?: string;
+        error?: string;
+        errorId?: string;
+        stage?: string;
+        backupName?: string;
+        log?: string;
+      };
+      const log = payload.log ?? "No log available.";
       if (res.ok) {
-        alert("Backup restored successfully.");
-        window.location.reload();
+        onRestore(
+          `${
+            payload.message ?? "Backup restored successfully."
+          }\n\n---LOG---\n${log}`
+        );
       } else {
-        const payload = (await res.json()) as {
-          error?: string;
-          errorId?: string;
-          stage?: string;
-          backupName?: string;
-        };
         const meta = [
           payload.errorId ? `Error ID: ${payload.errorId}` : null,
           payload.stage ? `Stage: ${payload.stage}` : null,
@@ -74,20 +84,20 @@ async function handleRestore(backupName: string, truncateBeforeRestore: boolean)
         ]
           .filter(Boolean)
           .join("\n");
-        alert(
+        onRestore(
           `${payload.error ?? "Failed to restore backup."}${
             meta ? `\n\n${meta}` : ""
-          }`
+          }\n\n---LOG---\n${log}`
         );
       }
     } catch (error) {
       console.error("Error restoring backup:", error);
-      alert("An error occurred during restoration.");
+      onRestore(`An error occurred during restoration.\n\n${String(error)}`);
     }
   }
 }
 
-async function handleDelete(backupName: string) {
+async function handleDelete(backupName: string, onDelete: () => void) {
   if (window.confirm(`Delete backup ${backupName}? This cannot be undone.`)) {
     try {
       const res = await fetch("/api/databases/delete", {
@@ -99,7 +109,7 @@ async function handleDelete(backupName: string) {
       });
       if (res.ok) {
         alert("Backup deleted successfully.");
-        window.location.reload();
+        onDelete();
       } else {
         alert("Failed to delete backup.");
       }
@@ -113,6 +123,8 @@ async function handleDelete(backupName: string) {
 export const getDatabaseColumns = (options?: {
   truncateBeforeRestore?: boolean;
   onPreview?: (backupName: string) => void;
+  onRestore?: (log: string) => void;
+  onDelete?: () => void;
 }): ColumnDef<DatabaseInfo>[] => [
   {
     accessorKey: "name",
@@ -124,7 +136,9 @@ export const getDatabaseColumns = (options?: {
     sortingFn: (rowA, rowB, columnId) => {
       const toNumber = (value: string) =>
         Number.parseFloat(value.replace(/[^0-9.]/g, "")) || 0;
-      return toNumber(rowA.getValue(columnId)) - toNumber(rowB.getValue(columnId));
+      return (
+        toNumber(rowA.getValue(columnId)) - toNumber(rowB.getValue(columnId))
+      );
     },
   },
   {
@@ -162,7 +176,13 @@ export const getDatabaseColumns = (options?: {
           )}
           <Button
             onClick={() => {
-              void handleRestore(backup.name, Boolean(options?.truncateBeforeRestore));
+              if (options?.onRestore) {
+                void handleRestore(
+                  backup.name,
+                  Boolean(options?.truncateBeforeRestore),
+                  options.onRestore
+                );
+              }
             }}
           >
             Restore
@@ -170,7 +190,9 @@ export const getDatabaseColumns = (options?: {
           <Button
             variant="destructive"
             onClick={() => {
-              void handleDelete(backup.name);
+              if (options?.onDelete) {
+                void handleDelete(backup.name, options.onDelete);
+              }
             }}
           >
             Delete

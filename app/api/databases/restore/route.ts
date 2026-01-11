@@ -81,31 +81,71 @@ export async function POST(req: Request) {
     }
 
     stage = "pg_restore";
-    await execFileAsync(getPgRestoreCommand(), [
-      "--data-only",
-      "--disable-triggers",
-      "--no-owner",
-      "--no-privileges",
-      "--single-transaction",
-      "--dbname",
-      databaseUrl,
-      backupPath,
-    ]);
+    const logPath = path.join(backupsDir, `${backupName}.restore.log`);
+    let stdout = "";
+    let stderr = "";
+    try {
+      const result = await execFileAsync(getPgRestoreCommand(), [
+        "--data-only",
+        "--disable-triggers",
+        "--no-owner",
+        "--no-privileges",
+        "--single-transaction",
+        "--dbname",
+        databaseUrl,
+        backupPath,
+      ]);
+      stdout = result.stdout;
+      stderr = result.stderr;
+    } catch (error) {
+      const cause = (error as { cause?: { stdout?: string; stderr?: string } });
+      stdout = cause?.stdout || "";
+      stderr = cause?.stderr || "";
+      await fs.writeFile(logPath, `stdout:\n${stdout}\n\nstderr:\n${stderr}`);
+      console.error("[databases][restore] Failed to restore backup", {
+        errorId,
+        stage,
+        backupName,
+        truncateBeforeRestore,
+        error,
+      });
+      return NextResponse.json(
+        {
+          error: "Failed to restore backup",
+          errorId,
+          stage,
+          backupName,
+          log: `stdout:\n${stdout}\n\nstderr:\n${stderr}`,
+        },
+        { status: 500 }
+      );
+    }
+
+    await fs.writeFile(logPath, `stdout:\n${stdout}\n\nstderr:\n${stderr}`);
 
     stage = "log";
-    const logPath = path.join(backupsDir, "restore-log.json");
-    let logData: Record<string, string> = {};
+    const restoreLogPath = path.join(backupsDir, "restore-log.json");
+    let logData: Record<string, { date: string; logFile: string }> = {};
     try {
-      const logFile = await fs.readFile(logPath, "utf-8");
-      logData = JSON.parse(logFile) as Record<string, string>;
+      const logFile = await fs.readFile(restoreLogPath, "utf-8");
+      logData = JSON.parse(logFile) as Record<
+        string,
+        { date: string; logFile: string }
+      >;
     } catch (error) {
       // No log yet.
     }
 
-    logData[backupName] = new Date().toISOString();
-    await fs.writeFile(logPath, JSON.stringify(logData, null, 2));
+    logData[backupName] = {
+      date: new Date().toISOString(),
+      logFile: `${backupName}.restore.log`,
+    };
+    await fs.writeFile(restoreLogPath, JSON.stringify(logData, null, 2));
 
-    return NextResponse.json({ message: "Backup restored" });
+    return NextResponse.json({
+      message: "Backup restored",
+      log: `stdout:\n${stdout}\n\nstderr:\n${stderr}`,
+    });
   } catch (error) {
     console.error("[databases][restore] Failed to restore backup", {
       errorId,

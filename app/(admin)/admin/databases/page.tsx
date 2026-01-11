@@ -13,11 +13,44 @@ async function getBackups(): Promise<DatabaseInfo[]> {
   return res.json() as Promise<DatabaseInfo[]>;
 }
 
+const LogModal = ({
+  content,
+  onClose,
+}: {
+  content: string;
+  onClose: () => void;
+}) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="rounded-lg bg-gray-900 p-6 shadow-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+      <h2 className="text-xl font-bold mb-4">Operation Log</h2>
+      <pre className="bg-gray-950 p-4 rounded text-sm text-white whitespace-pre-wrap">
+        {content}
+      </pre>
+      <div className="mt-6 text-right">
+        <Button onClick={onClose}>Close</Button>
+      </div>
+    </div>
+  </div>
+);
+
 export default function DatabasesPage() {
   const [data, setData] = useState<DatabaseInfo[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [truncateBeforeRestore, setTruncateBeforeRestore] = useState(false);
+  const [isLogModalOpen, setIsLogModalOpen] = useState(false);
+  const [logModalContent, setLogModalContent] = useState("");
+
+  const openLogModal = (content: string) => {
+    setLogModalContent(content);
+    setIsLogModalOpen(true);
+  };
+
+  const closeLogModal = () => {
+    setIsLogModalOpen(false);
+    setLogModalContent("");
+    setRefreshTrigger((prev) => prev + 1);
+  };
 
   useEffect(() => {
     void getBackups().then(setData);
@@ -32,20 +65,31 @@ export default function DatabasesPage() {
         message?: string;
         error?: string;
         warning?: string;
+        log?: string;
       };
+      const log = data.log ?? "No log available.";
       if (res.ok) {
         if (data.warning) {
-          alert(`${data.message ?? "Backup created"}: ${data.warning}`);
+          openLogModal(
+            `${data.message ?? "Backup created"}: ${
+              data.warning
+            }\n\n---LOG---\n${log}`
+          );
         } else {
-          alert(data.message ?? "Backup created successfully.");
+          openLogModal(
+            `${
+              data.message ?? "Backup created successfully."
+            }\n\n---LOG---\n${log}`
+          );
         }
-        setRefreshTrigger((prev) => prev + 1);
       } else {
-        alert(data.error ?? "Failed to create backup.");
+        openLogModal(
+          `${data.error ?? "Failed to create backup."}\n\n---LOG---\n${log}`
+        );
       }
     } catch (error) {
       console.error("Error creating backup:", error);
-      alert("An error occurred during backup.");
+      openLogModal(`An error occurred during backup.\n\n${String(error)}`);
     }
   };
 
@@ -93,6 +137,9 @@ export default function DatabasesPage() {
 
   return (
     <div className="container mx-auto py-10">
+      {isLogModalOpen && (
+        <LogModal content={logModalContent} onClose={closeLogModal} />
+      )}
       <div className="mb-2">
         <p className="text-sm text-gray-400">
           PostgreSQL backups use pg_dump/pg_restore (.dump files). Restores are
@@ -107,11 +154,19 @@ export default function DatabasesPage() {
               type="checkbox"
               className="size-4 accent-emerald-500"
               checked={truncateBeforeRestore}
-              onChange={(event) => setTruncateBeforeRestore(event.target.checked)}
+              onChange={(event) =>
+                setTruncateBeforeRestore(event.target.checked)
+              }
             />
             Truncate data before restore
           </label>
-          <Button onClick={() => { void handleBackup(); }}>Create Backup</Button>
+          <Button
+            onClick={() => {
+              void handleBackup();
+            }}
+          >
+            Create Backup
+          </Button>
           <Button onClick={triggerFileUpload}>Upload Backup</Button>
           <Button variant="secondary" onClick={handlePreviewCurrent}>
             Preview Current DB
@@ -130,6 +185,8 @@ export default function DatabasesPage() {
           columns={getDatabaseColumns({
             truncateBeforeRestore,
             onPreview: handlePreview,
+            onRestore: (log: string) => openLogModal(log),
+            onDelete: () => setRefreshTrigger((prev) => prev + 1),
           })}
           data={data}
           initialSorting={[{ id: "lastModifiedAt", desc: true }]}

@@ -77,14 +77,25 @@ export default function CreateProductPage() {
           alert("SKU must use uppercase letters and numbers only.");
           continue;
         }
-        const res = await fetch(`/api/products?sku=${encodeURIComponent(sku)}`);
-        if (res.ok) {
+        try {
+          const res = await fetch(`/api/products?sku=${encodeURIComponent(sku)}`);
+          if (!res.ok) {
+            const payload = (await res.json()) as { error?: string; errorId?: string };
+            const message = payload?.error || "Failed to validate SKU";
+            const errorIdSuffix = payload?.errorId ? ` (Error ID: ${payload.errorId})` : "";
+            alert(`${message}${errorIdSuffix}`);
+            continue;
+          }
           const products = (await res.json()) as ProductWithImages[];
           const skuExists = products.some((product) => product.sku === sku);
           if (skuExists) {
             alert("SKU already exists.");
             continue;
           }
+        } catch (error) {
+          console.error("Failed to validate SKU:", error);
+          alert("Failed to validate SKU. Please try again.");
+          continue;
         }
         setInitialSku(sku);
         return;

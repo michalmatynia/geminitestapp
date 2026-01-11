@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { encryptSecret } from "@/lib/utils/encryption";
@@ -37,7 +38,21 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const body = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch (error) {
+      const errorId = randomUUID();
+      console.error("[integrations][connection][PUT] Failed to parse JSON body", {
+        errorId,
+        connectionId: id,
+        error,
+      });
+      return NextResponse.json(
+        { error: "Invalid JSON payload", errorId, connectionId: id },
+        { status: 400 }
+      );
+    }
     const data = connectionSchema.parse(body);
     const connection = await prisma.integrationConnection.update({
       where: { id },
@@ -135,17 +150,36 @@ export async function PUT(
       playwrightDeviceName: connection.playwrightDeviceName,
     });
   } catch (error: unknown) {
+    const errorId = randomUUID();
     if (error instanceof z.ZodError) {
+      console.warn("[integrations][connection][PUT] Invalid payload", {
+        errorId,
+        connectionId: id,
+        issues: error.flatten(),
+      });
       return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten() },
+        { error: "Invalid payload", details: error.flatten(), errorId, connectionId: id },
         { status: 400 }
       );
     }
     if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      console.error("[integrations][connection][PUT] Failed to update connection", {
+        errorId,
+        connectionId: id,
+        message: error.message,
+      });
+      return NextResponse.json(
+        { error: error.message, errorId, connectionId: id },
+        { status: 400 }
+      );
     }
+    console.error("[integrations][connection][PUT] Unknown error", {
+      errorId,
+      connectionId: id,
+      error,
+    });
     return NextResponse.json(
-      { error: "An unknown error occurred" },
+      { error: "An unknown error occurred", errorId, connectionId: id },
       { status: 400 }
     );
   }
@@ -164,11 +198,25 @@ export async function DELETE(
     await prisma.integrationConnection.delete({ where: { id } });
     return new Response(null, { status: 204 });
   } catch (error: unknown) {
+    const errorId = randomUUID();
     if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      console.error("[integrations][connection][DELETE] Failed to delete connection", {
+        errorId,
+        connectionId: id,
+        message: error.message,
+      });
+      return NextResponse.json(
+        { error: error.message, errorId, connectionId: id },
+        { status: 400 }
+      );
     }
+    console.error("[integrations][connection][DELETE] Unknown error", {
+      errorId,
+      connectionId: id,
+      error,
+    });
     return NextResponse.json(
-      { error: "Failed to delete connection" },
+      { error: "Failed to delete connection", errorId, connectionId: id },
       { status: 500 }
     );
   }

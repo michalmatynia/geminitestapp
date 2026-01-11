@@ -5,10 +5,6 @@ add playwright settings to adjust playwright behaviour and timing (humanize it)
 
 
 Add countries to the countries list based on the available langauges,
-
-When I click the name I ented the Edit Modal window
-When I click on the name, I open the Edit Product PAge
-
 Link countries and currencies by number reference
 
 Make the app more robust, add comments and try catch blocks, make it  easier for debugging
@@ -54,3 +50,7 @@ Crosslister
 Vinted flagger
 depop
 shpock
+
+
+Bypassing Captchas
+https://medium.com/@w908683127/how-to-bypass-captcha-with-playwright-an-in-depth-guide-71b0b08e61b5

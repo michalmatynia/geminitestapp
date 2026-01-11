@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { decryptSecret, encryptSecret } from "@/lib/utils/encryption";
 import { chromium, devices } from "playwright";
+import { randomUUID } from "crypto";
+import { mkdir, readdir, stat, unlink, writeFile } from "fs/promises";
+import path from "path";
+import type { Browser, BrowserContext, Page } from "playwright";
 
 /**
  * POST /api/integrations/[id]/connections/[connectionId]/test
@@ -13,6 +17,8 @@ export async function POST(
     params,
   }: { params: Promise<{ id: string; connectionId: string }> }
 ) {
+  let integrationId: string | null = null;
+  let integrationConnectionId: string | null = null;
   const steps: {
     step: string;
     status: "pending" | "ok" | "failed";
@@ -33,13 +39,33 @@ export async function POST(
   };
 
   const fail = (step: string, detail: string, status = 400) => {
+    const errorId = randomUUID();
     const safeDetail = detail?.trim() ? detail : "Unknown error";
     pushStep(step, "failed", safeDetail);
-    return NextResponse.json({ error: safeDetail, steps }, { status });
+    console.error("[integrations][connections][test] Failed", {
+      errorId,
+      integrationId,
+      connectionId: integrationConnectionId,
+      step,
+      status,
+      detail: safeDetail,
+    });
+    return NextResponse.json(
+      {
+        error: safeDetail,
+        steps,
+        errorId,
+        integrationId,
+        connectionId: integrationConnectionId,
+      },
+      { status }
+    );
   };
 
   try {
     const { id, connectionId } = await params;
+    integrationId = id;
+    integrationConnectionId = connectionId;
     pushStep("Loading connection", "pending", "Fetching stored credentials");
     const connection = await prisma.integrationConnection.findFirst({
       where: { id: connectionId, integrationId: id },
@@ -93,9 +119,19 @@ export async function POST(
     const proxyEnabled = connection.playwrightProxyEnabled;
     const proxyServer = connection.playwrightProxyServer?.trim() ?? "";
     const proxyUsername = connection.playwrightProxyUsername?.trim() ?? "";
-    const proxyPassword = connection.playwrightProxyPassword
-      ? decryptSecret(connection.playwrightProxyPassword)
-      : "";
+    let proxyPassword = "";
+    if (connection.playwrightProxyPassword) {
+      try {
+        proxyPassword = decryptSecret(connection.playwrightProxyPassword);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        pushStep(
+          "Proxy setup",
+          "failed",
+          `Failed to decrypt proxy password: ${message}`
+        );
+      }
+    }
     const emulateDevice = connection.playwrightEmulateDevice;
     const deviceName = connection.playwrightDeviceName ?? "";
 
@@ -119,33 +155,165 @@ export async function POST(
     } else if (emulateDevice && deviceProfile) {
       pushStep("Device emulation", "ok", `Using ${deviceName}`);
     }
-    pushStep(
-      "Launching Playwright",
-      "pending",
-      `Starting Chromium (headless=${headless ? "on" : "off"}, slowMo=${slowMo}ms)`
-    );
-    const browser = await chromium.launch({
-      headless,
-      slowMo,
-      proxy: proxyEnabled && proxyServer
-        ? {
-            server: proxyServer,
-            username: proxyUsername || undefined,
-            password: proxyPassword || undefined,
-          }
-        : undefined,
-    });
-    const contextOptions = {
-      ...(deviceProfile ? deviceProfile : {}),
-      ...(storedState ? { storageState: storedState } : {}),
-    };
-    const context = await browser.newContext(contextOptions);
-    context.setDefaultTimeout(defaultTimeout);
-    context.setDefaultNavigationTimeout(navigationTimeout);
-    const page = await context.newPage();
+    let browser: Browser | null = null;
+    let context: BrowserContext | null = null;
+    let page: Page | null = null;
+    try {
+      pushStep(
+        "Launching Playwright",
+        "pending",
+        `Starting Chromium (headless=${headless ? "on" : "off"}, slowMo=${slowMo}ms)`
+      );
+      browser = await chromium.launch({
+        headless,
+        slowMo,
+        proxy: proxyEnabled && proxyServer
+          ? {
+              server: proxyServer,
+              username: proxyUsername || undefined,
+              password: proxyPassword || undefined,
+            }
+          : undefined,
+      });
+      const contextOptions = {
+        ...(deviceProfile ? deviceProfile : {}),
+        ...(storedState ? { storageState: storedState } : {}),
+      };
+      context = await browser.newContext(contextOptions);
+      context.setDefaultTimeout(defaultTimeout);
+      context.setDefaultNavigationTimeout(navigationTimeout);
+      page = await context.newPage();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return fail("Launching Playwright", message);
+    }
     try {
       const randomBetween = (min: number, max: number) =>
         Math.floor(Math.random() * (max - min + 1)) + min;
+      const safeWaitForSelector = async (
+        selector: string,
+        options: Parameters<typeof page.waitForSelector>[1],
+        label: string
+      ) => {
+        try {
+          return await page.waitForSelector(selector, options);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown error";
+          throw new Error(`${label} wait failed: ${message}`);
+        }
+      };
+      const safeWaitFor = async (
+        locator: ReturnType<typeof page.locator>,
+        options: Parameters<ReturnType<typeof page.locator>["waitFor"]>[0],
+        label: string
+      ) => {
+        try {
+          return await locator.waitFor(options);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown error";
+          throw new Error(`${label} wait failed: ${message}`);
+        }
+      };
+      const safeCount = async (
+        locator: ReturnType<typeof page.locator>,
+        label: string
+      ) => {
+        try {
+          return await locator.count();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown error";
+          throw new Error(`${label} count failed: ${message}`);
+        }
+      };
+      const safeIsVisible = async (
+        locator: ReturnType<typeof page.locator>,
+        label: string
+      ) => {
+        try {
+          return await locator.isVisible();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown error";
+          throw new Error(`${label} visibility check failed: ${message}`);
+        }
+      };
+      const safeInnerText = async (
+        locator: ReturnType<typeof page.locator>,
+        label: string
+      ) => {
+        try {
+          return await locator.innerText();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown error";
+          throw new Error(`${label} text read failed: ${message}`);
+        }
+      };
+      const safeGoto = async (
+        url: string,
+        options: Parameters<typeof page.goto>[1],
+        label: string
+      ) => {
+        try {
+          return await page.goto(url, options);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown error";
+          throw new Error(`${label} navigation failed: ${message}`);
+        }
+      };
+      const safeWaitForLoadState = async (
+        state: Parameters<typeof page.waitForLoadState>[0],
+        options: Parameters<typeof page.waitForLoadState>[1],
+        label: string
+      ) => {
+        try {
+          return await page.waitForLoadState(state, options);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown error";
+          throw new Error(`${label} load state failed: ${message}`);
+        }
+      };
+      const captureDebugArtifacts = async (label: string) => {
+        try {
+          const now = new Date().toISOString().replace(/[:.]/g, "-");
+          const safeLabel = label.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40);
+          const baseDir = path.join(process.cwd(), "playwright-debug");
+          await mkdir(baseDir, { recursive: true });
+          try {
+            const entries = await readdir(baseDir);
+            const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+            await Promise.all(
+              entries.map(async (entry) => {
+                const entryPath = path.join(baseDir, entry);
+                const info = await stat(entryPath);
+                if (info.mtimeMs < cutoff) {
+                  await unlink(entryPath);
+                }
+              })
+            );
+          } catch {
+            // best-effort cleanup only
+          }
+          const prefix = `${connection.id}-${now}-${safeLabel || "debug"}`;
+          const screenshotPath = path.join(baseDir, `${prefix}.png`);
+          const htmlPath = path.join(baseDir, `${prefix}.html`);
+          await page.screenshot({ path: screenshotPath, fullPage: true }).catch(() => undefined);
+          const html = await page.content().catch(() => "");
+          if (html) {
+            await writeFile(htmlPath, html, "utf8");
+          }
+          return `Screenshot: ${screenshotPath}\nHTML: ${htmlPath}`;
+        } catch {
+          return "";
+        }
+      };
+      const failWithDebug = async (
+        step: string,
+        detail: string,
+        status = 400
+      ) => {
+        const debugInfo = await captureDebugArtifacts(step);
+        const combined = debugInfo ? `${detail}\n\nDebug:\n${debugInfo}` : detail;
+        return fail(step, combined, status);
+      };
       const humanizedPause = async (min = actionDelayMin, max = actionDelayMax) => {
         if (!humanizeMouse) return;
         const delay = randomBetween(min, max);
@@ -207,21 +375,29 @@ export async function POST(
       let sessionReused = false;
       if (storedState) {
         pushStep("Reusing session", "pending", "Checking existing session");
-        await page.goto("https://www.tradera.com/en", {
-          waitUntil: "domcontentloaded",
-          timeout: 30000,
-        });
-        await humanizedPause();
-        const loggedIn = await page
-          .locator(successSelector)
-          .first()
-          .isVisible()
-          .catch(() => false);
-        if (loggedIn) {
-          pushStep("Reusing session", "ok", "Session still valid");
-          sessionReused = true;
-        } else {
-          pushStep("Reusing session", "failed", "Session invalid or expired");
+        try {
+          await safeGoto(
+            "https://www.tradera.com/en",
+            {
+              waitUntil: "domcontentloaded",
+              timeout: 30000,
+            },
+            "Session check"
+          );
+          await humanizedPause();
+          const loggedIn = await safeIsVisible(
+            page.locator(successSelector).first(),
+            "Session check"
+          ).catch(() => false);
+          if (loggedIn) {
+            pushStep("Reusing session", "ok", "Session still valid");
+            sessionReused = true;
+          } else {
+            pushStep("Reusing session", "failed", "Session invalid or expired");
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown error";
+          pushStep("Reusing session", "failed", `Failed to check session: ${message}`);
         }
       }
 
@@ -233,13 +409,26 @@ export async function POST(
       const openLoginPage = async () => {
         for (const url of loginUrls) {
           pushStep("Opening login page", "pending", url);
-          await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-          await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => undefined);
-          await humanizedPause();
-          const formLocator = page.locator("#sign-in-form").first();
-          if ((await formLocator.count()) > 0) {
-            pushStep("Opening login page", "ok", `Login page loaded: ${url}`);
-            return url;
+          try {
+            await safeGoto(
+              url,
+              { waitUntil: "domcontentloaded", timeout: 30000 },
+              "Opening login page"
+            );
+            await safeWaitForLoadState(
+              "networkidle",
+              { timeout: 15000 },
+              "Opening login page"
+            ).catch(() => undefined);
+            await humanizedPause();
+            const formLocator = page.locator("#sign-in-form").first();
+            if ((await safeCount(formLocator, "Login form")) > 0) {
+              pushStep("Opening login page", "ok", `Login page loaded: ${url}`);
+              return url;
+            }
+          } catch (error) {
+            const message = error instanceof Error ? error.message : "Unknown error";
+            pushStep("Opening login page", "failed", `${url} failed: ${message}`);
           }
         }
         return loginUrls[loginUrls.length - 1];
@@ -258,8 +447,10 @@ export async function POST(
       const findInput = async (selectors: string[]) => {
         for (const selector of selectors) {
           const locator = page.locator(selector).first();
-          if ((await locator.count()) > 0) {
-            const visible = await locator.isVisible().catch(() => false);
+          if ((await safeCount(locator, `Find input ${selector}`)) > 0) {
+            const visible = await safeIsVisible(locator, `Find input ${selector}`).catch(
+              () => false
+            );
             if (visible) {
               return { selector, locator };
             }
@@ -271,13 +462,19 @@ export async function POST(
       if (!sessionReused) {
         pushStep("Locating login form", "pending", "Waiting for sign-in form");
         try {
-          await page.waitForSelector(formSelector, { state: "attached", timeout: 15000 });
+          await safeWaitForSelector(
+            formSelector,
+            { state: "attached", timeout: 15000 },
+            "Login form"
+          );
           const formLocator = page.locator(formSelector).first();
-          const isVisible = await formLocator.isVisible().catch(() => false);
+          const isVisible = await safeIsVisible(formLocator, "Login form").catch(() => false);
           if (!isVisible) {
             throw new Error("Login form not visible yet");
           }
-        } catch {
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown error";
+          pushStep("Locating login form", "failed", `Form not ready: ${message}`);
           const signInTrigger = page
             .locator(
               [
@@ -292,16 +489,59 @@ export async function POST(
               ].join(", ")
             )
             .first();
-          if ((await signInTrigger.count()) > 0) {
+          if ((await safeCount(signInTrigger, "Sign-in trigger")) > 0) {
             pushStep("Locating login form", "pending", "Opening sign-in modal");
-            await humanizedClick(signInTrigger);
-            await humanizedPause();
+            try {
+              await humanizedClick(signInTrigger);
+              await humanizedPause();
+            } catch (clickError) {
+              const clickMessage =
+                clickError instanceof Error ? clickError.message : "Unknown error";
+              pushStep(
+                "Locating login form",
+                "failed",
+                `Failed to open sign-in modal: ${clickMessage}`
+              );
+            }
           }
-          await page.waitForSelector(formSelector, { state: "attached", timeout: 20000 });
-          await page.locator(formSelector).first().waitFor({ state: "visible", timeout: 20000 });
+          try {
+            await safeWaitForSelector(
+              formSelector,
+              { state: "attached", timeout: 20000 },
+              "Login form"
+            );
+            await safeWaitFor(
+              page.locator(formSelector).first(),
+              { state: "visible", timeout: 20000 },
+              "Login form"
+            );
+          } catch (waitError) {
+            const waitMessage =
+              waitError instanceof Error ? waitError.message : "Unknown error";
+            return await failWithDebug(
+              "Locating login form",
+              `Form still not visible: ${waitMessage}`
+            );
+          }
         }
-        await page.locator(emailSelector).first().waitFor({ state: "visible", timeout: 15000 });
-        await page.locator(passwordSelector).first().waitFor({ state: "visible", timeout: 15000 });
+        try {
+          await safeWaitFor(
+            page.locator(emailSelector).first(),
+            { state: "visible", timeout: 15000 },
+            "Email field"
+          );
+          await safeWaitFor(
+            page.locator(passwordSelector).first(),
+            { state: "visible", timeout: 15000 },
+            "Password field"
+          );
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown error";
+          return await failWithDebug(
+            "Locating login form",
+            `Input fields not visible: ${message}`
+          );
+        }
         form = page.locator(formSelector).first();
         pushStep("Locating login form", "ok", "Sign-in form detected");
 
@@ -312,8 +552,11 @@ export async function POST(
         const findInputInForm = async (selectors: string[]) => {
           for (const selector of selectors) {
             const locator = form.locator(selector).first();
-            if ((await locator.count()) > 0) {
-              const visible = await locator.isVisible().catch(() => false);
+            if ((await safeCount(locator, `Find form input ${selector}`)) > 0) {
+              const visible = await safeIsVisible(
+                locator,
+                `Find form input ${selector}`
+              ).catch(() => false);
               if (visible) {
                 return { selector, locator };
               }
@@ -325,14 +568,22 @@ export async function POST(
         const usernameField = await findInputInForm(usernameSelectors);
         const passwordField = await findInputInForm(passwordSelectors);
         if (!usernameField || !passwordField) {
-          return fail(
+          return await failWithDebug(
             "Filling credentials",
             "Login fields not found on Tradera page"
           );
         }
-        await humanizedFill(usernameField.locator, connection.username);
-        await humanizedFill(passwordField.locator, decryptedPassword);
-        await humanizedPause();
+        try {
+          await humanizedFill(usernameField.locator, connection.username);
+          await humanizedFill(passwordField.locator, decryptedPassword);
+          await humanizedPause();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown error";
+          return await failWithDebug(
+            "Filling credentials",
+            `Failed to fill fields: ${message}`
+          );
+        }
         pushStep(
           "Filling credentials",
           "ok",
@@ -343,17 +594,22 @@ export async function POST(
       if (!sessionReused) {
         pushStep("Submitting login", "pending", "Attempting to submit form");
         const stayLoggedIn = page.locator('input[name="keepMeLoggedIn"]').first();
-        if ((await stayLoggedIn.count()) > 0) {
-          const isChecked = await stayLoggedIn.isChecked().catch(() => false);
-          if (!isChecked) {
-            await humanizedClick(stayLoggedIn);
-            await humanizedPause();
-            pushStep("Keep me logged in", "ok", "Enabled stay logged in");
+        try {
+          if ((await safeCount(stayLoggedIn, "Stay logged in")) > 0) {
+            const isChecked = await stayLoggedIn.isChecked().catch(() => false);
+            if (!isChecked) {
+              await humanizedClick(stayLoggedIn);
+              await humanizedPause();
+              pushStep("Keep me logged in", "ok", "Enabled stay logged in");
+            } else {
+              pushStep("Keep me logged in", "ok", "Already enabled");
+            }
           } else {
-            pushStep("Keep me logged in", "ok", "Already enabled");
+            pushStep("Keep me logged in", "failed", "Checkbox not found");
           }
-        } else {
-          pushStep("Keep me logged in", "failed", "Checkbox not found");
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown error";
+          pushStep("Keep me logged in", "failed", `Checkbox error: ${message}`);
         }
         const submitSelectors = [
           'button[data-login-submit="true"]',
@@ -363,26 +619,37 @@ export async function POST(
         ];
         const submitButton = await findInput(submitSelectors);
         if (!submitButton) {
-          return fail("Submitting login", "Submit button not found");
+          return await failWithDebug("Submitting login", "Submit button not found");
         }
-        await Promise.allSettled([
-          page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 15000 }),
-          humanizedClick(submitButton.locator),
-        ]);
-        await humanizedPause();
+        try {
+          await Promise.allSettled([
+            page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 15000 }),
+            humanizedClick(submitButton.locator),
+          ]);
+          await humanizedPause();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown error";
+          return await failWithDebug("Submitting login", `Submit failed: ${message}`);
+        }
         pushStep("Submitting login", "ok", `Clicked ${submitButton.selector}`);
 
-        await page.waitForTimeout(1000);
-        const postSubmitUrl = page.url();
-        const postSubmitError = await page
-          .locator(errorSelector)
-          .first()
-          .innerText()
-          .catch(() => "");
-        const postSubmitDetail = `URL: ${postSubmitUrl}${
-          postSubmitError?.trim() ? `\nError: ${postSubmitError}` : "\nError: (none visible)"
-        }`;
-        pushStep("Post-submit debug", "ok", postSubmitDetail);
+        try {
+          await page.waitForTimeout(1000);
+          const postSubmitUrl = page.url();
+          const postSubmitError = await safeInnerText(
+            page.locator(errorSelector).first(),
+            "Post-submit error"
+          ).catch(() => "");
+          const postSubmitDetail = `URL: ${postSubmitUrl}${
+            postSubmitError?.trim()
+              ? `\nError: ${postSubmitError}`
+              : "\nError: (none visible)"
+          }`;
+          pushStep("Post-submit debug", "ok", postSubmitDetail);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown error";
+          pushStep("Post-submit debug", "failed", `Debug failed: ${message}`);
+        }
 
         const captchaHints = [
           "captcha",
@@ -390,74 +657,97 @@ export async function POST(
           "fylla i captcha",
           "captcha:n",
         ];
-        const postSubmitErrorLower = postSubmitError.toLowerCase();
-        const captchaDetected = captchaHints.some((hint) =>
-          postSubmitErrorLower.includes(hint)
-        );
-        if (captchaDetected) {
-          pushStep(
-            "Captcha required",
-            "pending",
-            "Solve the captcha in the opened browser window to continue."
+        try {
+          const postSubmitErrorLower = (
+            await safeInnerText(
+              page.locator(errorSelector).first(),
+              "Post-submit error"
+            ).catch(() => "")
+          ).toLowerCase();
+          const captchaDetected = captchaHints.some((hint) =>
+            postSubmitErrorLower.includes(hint)
           );
-          const captchaResult = await Promise.race([
-            page
-              .locator(successSelector)
-              .first()
-              .waitFor({ state: "visible", timeout: 120000 })
-              .then(() => "success"),
-            form
-              .waitFor({ state: "hidden", timeout: 120000 })
-              .then(() => "form-hidden"),
-          ]).catch(() => "timeout");
-
-          if (captchaResult === "timeout") {
-            return fail(
+          if (captchaDetected) {
+            pushStep(
               "Captcha required",
-              "Captcha not solved within 2 minutes."
+              "pending",
+              "Solve the captcha in the opened browser window to continue."
             );
+            const captchaResult = await Promise.race([
+              safeWaitFor(
+                page.locator(successSelector).first(),
+                { state: "visible", timeout: 120000 },
+                "Captcha success"
+              ).then(() => "success"),
+              safeWaitFor(
+                form,
+                { state: "hidden", timeout: 120000 },
+                "Captcha form hide"
+              ).then(() => "form-hidden"),
+            ]).catch(() => "timeout");
+
+            if (captchaResult === "timeout") {
+              return await failWithDebug(
+                "Captcha required",
+                "Captcha not solved within 2 minutes."
+              );
+            }
+            pushStep("Captcha required", "ok", "Captcha solved.");
           }
-          pushStep("Captcha required", "ok", "Captcha solved.");
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown error";
+          pushStep("Captcha required", "failed", `Captcha check failed: ${message}`);
         }
 
         pushStep("Verifying session", "pending", "Checking for logged-in state");
-        const formLocator = page.locator(formSelector).first();
+        try {
+          const formLocator = page.locator(formSelector).first();
+          const result = await Promise.race([
+            safeWaitFor(
+              page.locator(successSelector).first(),
+              { state: "visible", timeout: 12000 },
+              "Login success"
+            ).then(() => "success"),
+            safeWaitFor(
+              formLocator,
+              { state: "hidden", timeout: 12000 },
+              "Login form hide"
+            ).then(() => "form-hidden"),
+            safeWaitFor(
+              page.locator(errorSelector).first(),
+              { state: "visible", timeout: 12000 },
+              "Login error"
+            ).then(() => "error"),
+          ]).catch(() => "timeout");
 
-        const result = await Promise.race([
-          page
-            .locator(successSelector)
-            .first()
-            .waitFor({ state: "visible", timeout: 12000 })
-            .then(() => "success"),
-          formLocator
-            .waitFor({ state: "hidden", timeout: 12000 })
-            .then(() => "form-hidden"),
-          page
-            .locator(errorSelector)
-            .first()
-            .waitFor({ state: "visible", timeout: 12000 })
-            .then(() => "error"),
-        ]).catch(() => "timeout");
+          if (result === "error") {
+            const errorText = await safeInnerText(
+              page.locator(errorSelector).first(),
+              "Login error"
+            ).catch(() => "Login error displayed.");
+            const safeErrorText = errorText?.trim()
+              ? errorText
+              : "Login error displayed but no message was found.";
+            return await failWithDebug("Verifying session", safeErrorText);
+          }
 
-        if (result === "error") {
-          const errorText = await page
-            .locator(errorSelector)
-            .first()
-            .innerText()
-            .catch(() => "Login error displayed.");
-          const safeErrorText = errorText?.trim()
-            ? errorText
-            : "Login error displayed but no message was found.";
-          return fail("Verifying session", safeErrorText);
-        }
-
-        if (result === "timeout") {
-          const currentUrl = page.url();
-          const hint =
-            currentUrl === loginUrl || currentUrl.includes("/login")
-              ? "Still on login page (invalid credentials, CAPTCHA, or extra verification required)."
-              : `Current URL: ${currentUrl}`;
-          return fail("Verifying session", `Login verification timed out. ${hint}`);
+          if (result === "timeout") {
+            const currentUrl = page.url();
+            const hint =
+              currentUrl === loginUrl || currentUrl.includes("/login")
+                ? "Still on login page (invalid credentials, CAPTCHA, or extra verification required)."
+                : `Current URL: ${currentUrl}`;
+            return await failWithDebug(
+              "Verifying session",
+              `Login verification timed out. ${hint}`
+            );
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown error";
+          return await failWithDebug(
+            "Verifying session",
+            `Verification failed: ${message}`
+          );
         }
       } else {
         pushStep("Verifying session", "ok", "Session restored from storage");
@@ -481,20 +771,48 @@ export async function POST(
 
       pushStep("Verifying session", "ok", "Login appears successful");
     } finally {
-      await page.close().catch(() => undefined);
-      await context.close().catch(() => undefined);
-      await browser.close().catch(() => undefined);
+      await page?.close().catch(() => undefined);
+      await context?.close().catch(() => undefined);
+      await browser?.close().catch(() => undefined);
     }
 
     return NextResponse.json({ ok: true, steps });
   } catch (error: unknown) {
+    const errorId = randomUUID();
     if (error instanceof Error) {
       pushStep("Unexpected error", "failed", error.message);
-      return NextResponse.json({ error: error.message, steps }, { status: 400 });
+      console.error("[integrations][connections][test] Unexpected error", {
+        errorId,
+        integrationId,
+        connectionId: integrationConnectionId,
+        message: error.message,
+      });
+      return NextResponse.json(
+        {
+          error: error.message,
+          steps,
+          errorId,
+          integrationId,
+          connectionId: integrationConnectionId,
+        },
+        { status: 400 }
+      );
     }
     pushStep("Unexpected error", "failed", "Failed to test connection");
+    console.error("[integrations][connections][test] Unknown error", {
+      errorId,
+      integrationId,
+      connectionId: integrationConnectionId,
+      error,
+    });
     return NextResponse.json(
-      { error: "Failed to test connection", steps },
+      {
+        error: "Failed to test connection",
+        steps,
+        errorId,
+        integrationId,
+        connectionId: integrationConnectionId,
+      },
       { status: 500 }
     );
   }

@@ -1,5 +1,6 @@
 import path from "path";
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { Client } from "pg";
 
 import {
@@ -11,21 +12,45 @@ import {
 } from "../_utils";
 
 export async function POST(req: Request) {
+  const errorId = randomUUID();
+  let stage = "parse";
+  let backupName: string | undefined;
+  let previewMode: "backup" | "current" = "backup";
+  let previewDbName: string | null = null;
+  let safePage = 1;
+  let safePageSize = 20;
   try {
-    const { backupName, mode, page, pageSize } = (await req.json()) as {
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch (error) {
+      console.error("[databases][preview] Failed to parse JSON body", {
+        errorId,
+        error,
+      });
+      return NextResponse.json(
+        { error: "Invalid JSON payload", errorId },
+        { status: 400 }
+      );
+    }
+    const parsed = body as {
       backupName?: string;
       mode?: "backup" | "current";
       page?: number;
       pageSize?: number;
     };
-    const previewMode = mode === "current" ? "current" : "backup";
+    backupName = parsed.backupName;
+    previewMode = parsed.mode === "current" ? "current" : "backup";
+    const page = parsed.page;
+    const pageSize = parsed.pageSize;
     if (previewMode === "backup" && !backupName) {
       return NextResponse.json(
-        { error: "Backup name is required" },
+        { error: "Backup name is required", errorId },
         { status: 400 }
       );
     }
 
+    stage = "validate";
     if (previewMode === "backup") {
       assertValidBackupName(backupName ?? "");
       await ensureBackupsDir();
@@ -34,18 +59,36 @@ export async function POST(req: Request) {
     const dbUrl = process.env.DATABASE_URL ?? "";
     if (!dbUrl.startsWith("postgres://") && !dbUrl.startsWith("postgresql://")) {
       return NextResponse.json(
-        { error: "Preview is only supported for PostgreSQL backups." },
+        { error: "Preview is only supported for PostgreSQL backups.", errorId },
         { status: 400 }
       );
     }
 
     let output = "";
     if (previewMode === "backup") {
+      stage = "pg_restore_list";
       const backupPath = path.join(backupsDir, backupName ?? "");
-      const { stdout, stderr } = await execFileAsync(getPgRestoreCommand(), [
-        "--list",
-        backupPath,
-      ]);
+      let stdout = "";
+      let stderr = "";
+      try {
+        const result = await execFileAsync(getPgRestoreCommand(), [
+          "--list",
+          backupPath,
+        ]);
+        stdout = result.stdout;
+        stderr = result.stderr;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        console.error("[databases][preview] pg_restore --list failed", {
+          errorId,
+          backupName,
+          error: message,
+        });
+        return NextResponse.json(
+          { error: `Failed to inspect backup: ${message}`, errorId, backupName },
+          { status: 500 }
+        );
+      }
       output = [stdout.trim(), stderr.trim()].filter(Boolean).join("\n");
     }
     const tableSet = new Set<string>();
@@ -89,7 +132,7 @@ export async function POST(req: Request) {
     }
     const tableNames = Array.from(tableSet);
 
-    const previewDbName = `stardb_preview_${Date.now()}`;
+    previewDbName = `stardb_preview_${Date.now()}`;
     const adminUrl = new URL(dbUrl);
     adminUrl.pathname = "/postgres";
     adminUrl.searchParams.delete("schema");
@@ -99,8 +142,8 @@ export async function POST(req: Request) {
         : null;
     let previewClient: Client | null = null;
     let tableStats: { name: string; rowEstimate: number }[] = [];
-    const safePage = Math.max(1, Number.isFinite(page) ? Number(page) : 1);
-    const safePageSize = Math.min(
+    safePage = Math.max(1, Number.isFinite(page) ? Number(page) : 1);
+    safePageSize = Math.min(
       200,
       Math.max(1, Number.isFinite(pageSize) ? Number(pageSize) : 20)
     );
@@ -112,6 +155,7 @@ export async function POST(req: Request) {
       totalRows: number;
     }[] = [];
     try {
+      stage = "connect";
       const previewUrl = new URL(dbUrl);
       if (previewMode === "backup") {
         await adminClient?.connect();
@@ -121,6 +165,7 @@ export async function POST(req: Request) {
       previewUrl.searchParams.delete("schema");
 
       if (previewMode === "backup") {
+        stage = "pg_restore_data";
         const backupPath = path.join(backupsDir, backupName ?? "");
         await execFileAsync(getPgRestoreCommand(), [
           "--no-owner",
@@ -132,6 +177,7 @@ export async function POST(req: Request) {
         ]);
       }
 
+      stage = "query";
       previewClient = new Client({ connectionString: previewUrl.toString() });
       await previewClient.connect();
 
@@ -280,6 +326,7 @@ export async function POST(req: Request) {
         );
       }
     } finally {
+      stage = "cleanup";
       if (previewClient) {
         await previewClient.end().catch(() => undefined);
       }
@@ -315,7 +362,25 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to preview backup";
-    console.error("Failed to preview backup:", error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[databases][preview] Failed to preview", {
+      errorId,
+      stage,
+      backupName,
+      previewMode,
+      previewDbName,
+      page: safePage,
+      pageSize: safePageSize,
+      error,
+    });
+    return NextResponse.json(
+      {
+        error: message,
+        errorId,
+        stage,
+        backupName,
+        mode: previewMode,
+      },
+      { status: 500 }
+    );
   }
 }

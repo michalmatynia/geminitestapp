@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
 import { decryptSecret } from "@/lib/utils/encryption";
 
@@ -17,13 +18,17 @@ export async function GET(
     });
     if (!connection) {
       return NextResponse.json(
-        { error: "Connection not found" },
+        { error: "Connection not found", errorId: randomUUID(), connectionId: id },
         { status: 404 }
       );
     }
     if (!connection.playwrightStorageState) {
       return NextResponse.json(
-        { error: "No stored Playwright session." },
+        {
+          error: "No stored Playwright session.",
+          errorId: randomUUID(),
+          connectionId: id,
+        },
         { status: 404 }
       );
     }
@@ -40,11 +45,25 @@ export async function GET(
       updatedAt: connection.playwrightStorageStateUpdatedAt,
     });
   } catch (error: unknown) {
+    const errorId = randomUUID();
     if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      console.error("[integrations][connection][session][GET] Failed to load session", {
+        errorId,
+        connectionId: id,
+        message: error.message,
+      });
+      return NextResponse.json(
+        { error: error.message, errorId, connectionId: id },
+        { status: 400 }
+      );
     }
+    console.error("[integrations][connection][session][GET] Unknown error", {
+      errorId,
+      connectionId: id,
+      error,
+    });
     return NextResponse.json(
-      { error: "Failed to load session" },
+      { error: "Failed to load session", errorId, connectionId: id },
       { status: 500 }
     );
   }

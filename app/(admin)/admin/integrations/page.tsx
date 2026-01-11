@@ -56,6 +56,11 @@ export default function IntegrationsPage() {
   const [showTestLogModal, setShowTestLogModal] = useState(false);
   const [showTestErrorModal, setShowTestErrorModal] = useState(false);
   const [testError, setTestError] = useState<string | null>(null);
+  const [testErrorMeta, setTestErrorMeta] = useState<{
+    errorId?: string;
+    integrationId?: string | null;
+    connectionId?: string | null;
+  } | null>(null);
   const [lastTestError, setLastTestError] = useState<string | null>(null);
   const [showTestSuccessModal, setShowTestSuccessModal] = useState(false);
   const [testSuccessMessage, setTestSuccessMessage] = useState<string | null>(null);
@@ -295,6 +300,7 @@ export default function IntegrationsPage() {
     setShowTestLogModal(false);
     setShowTestErrorModal(false);
     setTestError(null);
+    setTestErrorMeta(null);
     setLastTestError(null);
     setShowTestSuccessModal(false);
     setTestSuccessMessage(null);
@@ -306,6 +312,9 @@ export default function IntegrationsPage() {
       const payload = contentType.includes("application/json")
         ? ((await res.json()) as {
             error?: string;
+            errorId?: string;
+            integrationId?: string | null;
+            connectionId?: string | null;
             steps?: {
               step: string;
               status: "pending" | "ok" | "failed";
@@ -341,6 +350,11 @@ export default function IntegrationsPage() {
             ];
         setTestLog(steps);
         setTestError(errorMessage);
+        setTestErrorMeta({
+          errorId: payload.errorId,
+          integrationId: payload.integrationId,
+          connectionId: payload.connectionId,
+        });
         setLastTestError(errorMessage);
         setShowTestErrorModal(true);
         return;
@@ -353,12 +367,14 @@ export default function IntegrationsPage() {
         `Connection test succeeded.\nURL: ${requestUrl}\nDuration: ${durationMs}ms`
       );
       setShowTestSuccessModal(true);
+      setTestErrorMeta(null);
       await refreshConnections(activeIntegration.id);
     } catch (error) {
       const durationMs = Math.round(performance.now() - startedAt);
       const message = error instanceof Error ? error.message : "Unknown error";
       const errorMessage = `Connection test failed.\nURL: ${requestUrl}\nDuration: ${durationMs}ms\nError: ${message}`;
       setTestError(errorMessage);
+      setTestErrorMeta(null);
       setLastTestError(errorMessage);
       setShowTestErrorModal(true);
     } finally {
@@ -369,10 +385,33 @@ export default function IntegrationsPage() {
   const handleCopyTestError = async () => {
     if (!testError) return;
     try {
-      await navigator.clipboard.writeText(testError);
+      const metaLines = [
+        testErrorMeta?.errorId ? `Error ID: ${testErrorMeta.errorId}` : null,
+        testErrorMeta?.integrationId
+          ? `Integration ID: ${testErrorMeta.integrationId}`
+          : null,
+        testErrorMeta?.connectionId
+          ? `Connection ID: ${testErrorMeta.connectionId}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join("\n");
+      const copyText = metaLines ? `${metaLines}\n\n${testError}` : testError;
+      await navigator.clipboard.writeText(copyText);
     } catch {
       const textarea = document.createElement("textarea");
-      textarea.value = testError;
+      const metaLines = [
+        testErrorMeta?.errorId ? `Error ID: ${testErrorMeta.errorId}` : null,
+        testErrorMeta?.integrationId
+          ? `Integration ID: ${testErrorMeta.integrationId}`
+          : null,
+        testErrorMeta?.connectionId
+          ? `Connection ID: ${testErrorMeta.connectionId}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join("\n");
+      textarea.value = metaLines ? `${metaLines}\n\n${testError}` : testError;
       textarea.setAttribute("readonly", "true");
       textarea.style.position = "absolute";
       textarea.style.left = "-9999px";
@@ -1237,6 +1276,36 @@ export default function IntegrationsPage() {
               <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3 text-xs text-gray-300">
                 Copy the raw error to share or debug it.
               </div>
+              {(testErrorMeta?.errorId ||
+                testErrorMeta?.integrationId ||
+                testErrorMeta?.connectionId) && (
+                <div className="grid gap-2 rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300 md:grid-cols-3">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">
+                      Error ID
+                    </p>
+                    <p className="mt-1 break-all text-gray-200">
+                      {testErrorMeta?.errorId || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">
+                      Integration ID
+                    </p>
+                    <p className="mt-1 break-all text-gray-200">
+                      {testErrorMeta?.integrationId || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">
+                      Connection ID
+                    </p>
+                    <p className="mt-1 break-all text-gray-200">
+                      {testErrorMeta?.connectionId || "—"}
+                    </p>
+                  </div>
+                </div>
+              )}
               <pre className="max-h-72 overflow-auto rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-200">
                 <code className="select-text whitespace-pre-wrap">
                   {testError}

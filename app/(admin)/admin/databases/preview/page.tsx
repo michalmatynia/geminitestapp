@@ -48,6 +48,12 @@ export default function DatabasePreviewPage() {
   const mode = searchParams.get("mode") ?? "backup";
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorMeta, setErrorMeta] = useState<{
+    errorId?: string;
+    stage?: string;
+    backupName?: string;
+    mode?: string;
+  } | null>(null);
   const [content, setContent] = useState("");
   const [groups, setGroups] = useState<PreviewGroup[]>([]);
   const [tables, setTables] = useState<PreviewTable[]>([]);
@@ -63,6 +69,7 @@ export default function DatabasePreviewPage() {
     const fetchPreview = async () => {
       setLoading(true);
       setError(null);
+      setErrorMeta(null);
       setContent("");
       setGroups([]);
       setTables([]);
@@ -76,6 +83,10 @@ export default function DatabasePreviewPage() {
         const payload = (await res.json()) as {
           content?: string;
           error?: string;
+          errorId?: string;
+          stage?: string;
+          backupName?: string;
+          mode?: string;
           tables?: PreviewTable[];
           groups?: PreviewGroup[];
           tableRows?: PreviewRow[];
@@ -84,6 +95,12 @@ export default function DatabasePreviewPage() {
         };
         if (!res.ok) {
           setError(payload.error ?? "Failed to preview backup.");
+          setErrorMeta({
+            errorId: payload.errorId,
+            stage: payload.stage,
+            backupName: payload.backupName,
+            mode: payload.mode,
+          });
           return;
         }
         setContent(payload.content ?? "No preview output.");
@@ -95,6 +112,7 @@ export default function DatabasePreviewPage() {
       } catch (err) {
         console.error("Error loading preview:", err);
         setError("An error occurred during preview.");
+        setErrorMeta(null);
       } finally {
         setLoading(false);
       }
@@ -199,7 +217,37 @@ export default function DatabasePreviewPage() {
             <p className="mt-3 text-xs text-gray-400">Loading preview...</p>
           )}
           {error && (
-            <p className="mt-3 text-xs text-red-300">{error}</p>
+            <div className="mt-3 space-y-2">
+              <p className="text-xs text-red-300">{error}</p>
+              {errorMeta?.errorId && (
+                <div className="grid gap-2 rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300 md:grid-cols-3">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">
+                      Error ID
+                    </p>
+                    <p className="mt-1 break-all text-gray-200">
+                      {errorMeta.errorId}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">
+                      Stage
+                    </p>
+                    <p className="mt-1 break-all text-gray-200">
+                      {errorMeta.stage || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">
+                      Source
+                    </p>
+                    <p className="mt-1 break-all text-gray-200">
+                      {errorMeta.backupName || errorMeta.mode || "—"}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
           {!loading && !error && filteredGroups.length === 0 && (
             <p className="mt-3 text-xs text-gray-500">

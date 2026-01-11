@@ -1,6 +1,7 @@
 import path from "path";
 import { promises as fs } from "fs";
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
 
 import {
@@ -13,15 +14,38 @@ import {
 } from "../_utils";
 
 export async function POST(req: Request) {
+  const errorId = randomUUID();
+  let stage = "parse";
+  let backupName: string | null = null;
+  let truncateBeforeRestore = false;
   try {
-    const { backupName, truncateBeforeRestore } = (await req.json()) as {
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch (error) {
+      console.error("[databases][restore] Failed to parse JSON body", {
+        errorId,
+        error,
+      });
+      return NextResponse.json(
+        { error: "Invalid JSON payload", errorId },
+        { status: 400 }
+      );
+    }
+    const parsed = body as {
       backupName: string;
       truncateBeforeRestore?: boolean;
     };
+    backupName = parsed.backupName;
+    truncateBeforeRestore = Boolean(parsed.truncateBeforeRestore);
     if (!backupName) {
-      return NextResponse.json({ error: "Backup name is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Backup name is required", errorId },
+        { status: 400 }
+      );
     }
 
+    stage = "validate";
     assertValidBackupName(backupName);
     await ensureBackupsDir();
 
@@ -29,10 +53,15 @@ export async function POST(req: Request) {
     const databaseUrl = getPgConnectionUrl();
 
     if (truncateBeforeRestore) {
+      stage = "truncate";
       const dbUrl = process.env.DATABASE_URL ?? "";
       if (!dbUrl.startsWith("postgres://") && !dbUrl.startsWith("postgresql://")) {
         return NextResponse.json(
-          { error: "Truncate before restore is only supported for PostgreSQL." },
+          {
+            error: "Truncate before restore is only supported for PostgreSQL.",
+            errorId,
+            backupName,
+          },
           { status: 400 }
         );
       }
@@ -51,6 +80,7 @@ export async function POST(req: Request) {
       }
     }
 
+    stage = "pg_restore";
     await execFileAsync(getPgRestoreCommand(), [
       "--data-only",
       "--disable-triggers",
@@ -62,6 +92,7 @@ export async function POST(req: Request) {
       backupPath,
     ]);
 
+    stage = "log";
     const logPath = path.join(backupsDir, "restore-log.json");
     let logData: Record<string, string> = {};
     try {
@@ -76,9 +107,20 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ message: "Backup restored" });
   } catch (error) {
-    console.error("Failed to restore backup:", error);
+    console.error("[databases][restore] Failed to restore backup", {
+      errorId,
+      stage,
+      backupName,
+      truncateBeforeRestore,
+      error,
+    });
     return NextResponse.json(
-      { error: "Failed to restore backup" },
+      {
+        error: "Failed to restore backup",
+        errorId,
+        stage,
+        backupName,
+      },
       { status: 500 }
     );
   }

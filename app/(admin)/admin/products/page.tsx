@@ -54,7 +54,18 @@ function DataTableFooter<TData>(
         const failedDeletions = results.filter((res) => !res.ok);
 
         if (failedDeletions.length > 0) {
-          alert("Some products could not be deleted.");
+          let errorIdSuffix = "";
+          try {
+            const payload = (await failedDeletions[0].json()) as {
+              errorId?: string;
+            };
+            if (payload?.errorId) {
+              errorIdSuffix = ` (Error ID: ${payload.errorId})`;
+            }
+          } catch {
+            errorIdSuffix = "";
+          }
+          alert(`Some products could not be deleted.${errorIdSuffix}`);
         } else {
           alert("Selected products deleted successfully.");
         }
@@ -155,6 +166,7 @@ export default function AdminPage() {
   const [initialSku, setInitialSku] = useState<string>("");
   const [editingProduct, setEditingProduct] = useState<ProductWithImages | null>(null);
   const [lastEditedId, setLastEditedId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [nameLocale, setNameLocale] = useState<
     "name_en" | "name_pl" | "name_de"
   >("name_en");
@@ -210,14 +222,25 @@ export default function AdminPage() {
       alert("SKU must use uppercase letters and numbers only.");
       return;
     }
-    const res = await fetch(`/api/products?sku=${encodeURIComponent(sku)}`);
-    if (res.ok) {
+    try {
+      const res = await fetch(`/api/products?sku=${encodeURIComponent(sku)}`);
+      if (!res.ok) {
+        const payload = (await res.json()) as { error?: string; errorId?: string };
+        const message = payload?.error || "Failed to validate SKU";
+        const errorIdSuffix = payload?.errorId ? ` (Error ID: ${payload.errorId})` : "";
+        alert(`${message}${errorIdSuffix}`);
+        return;
+      }
       const products = (await res.json()) as ProductWithImages[];
       const skuExists = products.some((product) => product.sku === sku);
       if (skuExists) {
         alert("SKU already exists.");
         return;
       }
+    } catch (error) {
+      console.error("Failed to validate SKU:", error);
+      alert("Failed to validate SKU. Please try again.");
+      return;
     }
     setInitialSku(sku);
     setIsCreateOpen(true);
@@ -225,7 +248,27 @@ export default function AdminPage() {
 
   useEffect(() => {
     const filters = { search, sku, minPrice, maxPrice, startDate, endDate };
-    void getProducts(filters).then(setData);
+    let cancelled = false;
+    setLoadError(null);
+    const loadProducts = async () => {
+      try {
+        const products = await getProducts(filters);
+        if (!cancelled) {
+          setData(products);
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to load products";
+        console.error("Failed to load products:", error);
+        if (!cancelled) {
+          setLoadError(message);
+        }
+      }
+    };
+    void loadProducts();
+    return () => {
+      cancelled = true;
+    };
   }, [search, sku, minPrice, maxPrice, startDate, endDate, refreshTrigger]);
 
   useEffect(() => {
@@ -275,6 +318,11 @@ export default function AdminPage() {
             </Select>
           </div>
         </div>
+        {loadError && (
+          <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {loadError}
+          </div>
+        )}
         <div className="mb-4 flex space-x-4">
           <Input
             placeholder="Search by name..."

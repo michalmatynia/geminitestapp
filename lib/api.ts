@@ -18,5 +18,20 @@ export async function getProducts(filters: {
   if (filters.endDate) query.append("endDate", filters.endDate);
 
   const res = await fetch(`/api/products?${query.toString()}`);
+  if (!res.ok) {
+    let payload: { error?: string; errorId?: string } | null = null;
+    try {
+      payload = (await res.json()) as { error?: string; errorId?: string };
+    } catch {
+      payload = null;
+    }
+    const message = payload?.error || "Failed to fetch products";
+    const errorId = payload?.errorId;
+    const error = new Error(
+      errorId ? `${message} (Error ID: ${errorId})` : message
+    );
+    (error as { errorId?: string }).errorId = errorId;
+    throw error;
+  }
   return res.json() as Promise<ProductWithImages[]>;
 }

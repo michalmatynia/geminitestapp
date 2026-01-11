@@ -61,7 +61,24 @@ async function handleRestore(backupName: string, truncateBeforeRestore: boolean)
         alert("Backup restored successfully.");
         window.location.reload();
       } else {
-        alert("Failed to restore backup.");
+        const payload = (await res.json()) as {
+          error?: string;
+          errorId?: string;
+          stage?: string;
+          backupName?: string;
+        };
+        const meta = [
+          payload.errorId ? `Error ID: ${payload.errorId}` : null,
+          payload.stage ? `Stage: ${payload.stage}` : null,
+          payload.backupName ? `Backup: ${payload.backupName}` : null,
+        ]
+          .filter(Boolean)
+          .join("\n");
+        alert(
+          `${payload.error ?? "Failed to restore backup."}${
+            meta ? `\n\n${meta}` : ""
+          }`
+        );
       }
     } catch (error) {
       console.error("Error restoring backup:", error);

@@ -244,7 +244,29 @@ export function ProductFormProvider({
         // Attempt to disconnect from backend if it's an existing image
         fetch(`/api/products/${product.id}/images/${slotToClear.data.id}`, {
           method: "DELETE",
-        }).catch(error => console.error("Failed to disconnect image from product:", error));
+        })
+          .then(async (res) => {
+            if (!res.ok) {
+              let payload: { error?: string; errorId?: string } | null = null;
+              try {
+                payload = (await res.json()) as {
+                  error?: string;
+                  errorId?: string;
+                };
+              } catch {
+                payload = null;
+              }
+              console.error("Failed to disconnect image from product:", {
+                error: payload?.error,
+                errorId: payload?.errorId,
+                productId: product.id,
+                imageFileId: slotToClear.data.id,
+              });
+            }
+          })
+          .catch((error) =>
+            console.error("Failed to disconnect image from product:", error)
+          );
       } else if (slotToClear?.type === 'file') {
         // Revoke object URL for file uploads
         URL.revokeObjectURL(slotToClear.previewUrl);
@@ -341,8 +363,20 @@ export function ProductFormProvider({
       );
 
       if (!response.ok) {
-        const errorData = (await response.json()) as { error?: string };
-        throw new Error(errorData.error || "Failed to save product");
+        let errorData: { error?: string; errorId?: string } | null = null;
+        try {
+          errorData = (await response.json()) as {
+            error?: string;
+            errorId?: string;
+          };
+        } catch {
+          errorData = null;
+        }
+        const message = errorData?.error || "Failed to save product";
+        const errorIdSuffix = errorData?.errorId
+          ? ` (Error ID: ${errorData.errorId})`
+          : "";
+        throw new Error(`${message}${errorIdSuffix}`);
       }
 
       const savedProduct = (await response.json()) as ProductWithImages;

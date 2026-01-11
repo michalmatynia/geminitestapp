@@ -57,10 +57,19 @@ export default function ProductForm({
         },
         body: JSON.stringify({ productData, imageUrls }),
       });
+      if (!res.ok) {
+        const payload = (await res.json()) as { error?: string; errorId?: string };
+        const message = payload?.error || "Failed to generate description";
+        const errorIdSuffix = payload?.errorId ? ` (Error ID: ${payload.errorId})` : "";
+        throw new Error(`${message}${errorIdSuffix}`);
+      }
       const { description } = (await res.json()) as { description: string };
       setValue("description_en", description);
     } catch (error) {
       console.error("Failed to generate description:", error);
+      const message =
+        error instanceof Error ? error.message : "Failed to generate description.";
+      alert(message);
     } finally {
       setGenerating(false);
     }

@@ -25,12 +25,19 @@ interface DataTableProps<TData> {
   columns: ColumnDef<TData>[];
   data: TData[];
   setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
+  productNameKey?: "name_en" | "name_pl" | "name_de";
+  onProductNameClick?: (row: TData) => void;
+  onProductEditClick?: (row: TData) => void;
+  getRowId?: (row: TData) => string | number;
   footer?: (table: ReactTable<TData>) => React.ReactNode;
 }
 
 declare module "@tanstack/react-table" {
   interface TableMeta<TData> {
     setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
+    productNameKey?: "name_en" | "name_pl" | "name_de";
+    onProductNameClick?: (row: TData) => void;
+    onProductEditClick?: (row: TData) => void;
   }
 }
 
@@ -38,6 +45,10 @@ export function DataTable<TData>({
   columns,
   data,
   setRefreshTrigger,
+  productNameKey,
+  onProductNameClick,
+  onProductEditClick,
+  getRowId,
   footer,
 }: DataTableProps<TData>) {
   const [rowSelection, setRowSelection] = useState({});
@@ -55,7 +66,12 @@ export function DataTable<TData>({
       rowSelection,
       sorting,
     },
-    meta: setRefreshTrigger ? { setRefreshTrigger } : {},
+    meta: {
+      ...(setRefreshTrigger ? { setRefreshTrigger } : {}),
+      ...(productNameKey ? { productNameKey } : {}),
+      ...(onProductNameClick ? { onProductNameClick } : {}),
+      ...(onProductEditClick ? { onProductEditClick } : {}),
+    },
   });
 
   return (
@@ -86,6 +102,7 @@ export function DataTable<TData>({
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
                 className="border-border"
+                data-row-id={getRowId ? getRowId(row.original) : undefined}
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id} className="text-muted-foreground">

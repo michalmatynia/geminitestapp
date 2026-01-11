@@ -1,7 +1,8 @@
-import { createMocks } from "node-mocks-http";
 import { GET as GET_LIST, POST } from "../../../app/api/products/route";
-import { GET, PUT, DELETE } from "../../../app/api/products/[id]/route";
+import { PUT, DELETE } from "../../../app/api/products/[id]/route";
 import { DELETE as DELETE_IMAGE } from "../../../app/api/products/[id]/images/[imageFileId]/route";
+import { POST as POST_DUPLICATE } from "../../../app/api/products/[id]/duplicate/route";
+import { GET as GET_PUBLIC } from "../../../app/api/public/products/[id]/route";
 import { createMockProduct } from "@/lib/utils/productUtils";
 import prisma from "@/lib/prisma";
 
@@ -167,6 +168,18 @@ describe("Products API", () => {
       expect(products.length).toEqual(1);
     });
 
+    it("should filter products by SKU", async () => {
+      await createMockProduct({ name_en: "SKU 1", sku: "ABC123" });
+      await createMockProduct({ name_en: "SKU 2", sku: "XYZ999" });
+      const res = await GET_LIST(
+        new Request("http://localhost/api/products?sku=ABC")
+      );
+      const products = await res.json();
+      expect(res.status).toEqual(200);
+      expect(products.length).toEqual(1);
+      expect(products[0].sku).toEqual("ABC123");
+    });
+
     it("should return the correct response structure", async () => {
       await createMockProduct({
         name_en: "Product 1 (EN)",
@@ -213,9 +226,9 @@ describe("Products API", () => {
   });
 
   describe("POST /api/products", () => {
-    it("should reject invalid product data (missing name_en)", async () => {
+    it("should reject invalid product data (invalid price)", async () => {
       const formData = new FormData();
-      formData.append("price", "100");
+      formData.append("price", "not-a-number");
       formData.append("sku", "SKU123");
       const req = new Request("http://localhost/api/products", {
         method: "POST",
@@ -404,11 +417,11 @@ describe("Products API", () => {
     });
   });
 
-  describe("GET /api/products/[id]", () => {
+  describe("GET /api/public/products/[id]", () => {
     it("should return a single product", async () => {
       const product = await createMockProduct({ name_en: "Product 1 (EN)" });
       const req = new Request(`http://localhost/api/products/${product.id}`);
-      const res = await GET(req, { params: { id: product.id } });
+      const res = await GET_PUBLIC(req, { params: { id: product.id } });
       const fetchedProduct = await res.json();
       expect(res.status).toEqual(200);
       expect(fetchedProduct.name_en).toEqual("Product 1 (EN)");
@@ -417,10 +430,100 @@ describe("Products API", () => {
     it("should return a single product when params is a Promise", async () => {
       const product = await createMockProduct({ name_en: "Product 1 (EN)" });
       const req = new Request(`http://localhost/api/products/${product.id}`);
-      const res = await GET(req, { params: Promise.resolve({ id: product.id }) });
+      const res = await GET_PUBLIC(req, { params: Promise.resolve({ id: product.id }) });
       const fetchedProduct = await res.json();
       expect(res.status).toEqual(200);
       expect(fetchedProduct.name_en).toEqual("Product 1 (EN)");
+    });
+  });
+
+  describe("POST /api/products/[id]/duplicate", () => {
+    it("should return 404 when product does not exist", async () => {
+      const req = new Request(
+        "http://localhost/api/products/non-existent-id/duplicate",
+        {
+          method: "POST",
+          body: JSON.stringify({ sku: "NEW123" }),
+        }
+      );
+      const res = await POST_DUPLICATE(req, {
+        params: Promise.resolve({ id: "non-existent-id" }),
+      });
+      expect(res.status).toEqual(404);
+    });
+
+    it("should reject invalid SKU format", async () => {
+      const product = await createMockProduct({ name_en: "Product 1 (EN)" });
+      const req = new Request(
+        `http://localhost/api/products/${product.id}/duplicate`,
+        {
+          method: "POST",
+          body: JSON.stringify({ sku: "bad-sku" }),
+        }
+      );
+      const res = await POST_DUPLICATE(req, {
+        params: Promise.resolve({ id: product.id }),
+      });
+      expect(res.status).toEqual(400);
+    });
+
+    it("should reject duplicate SKU", async () => {
+      await createMockProduct({ name_en: "Product 1 (EN)", sku: "DUP123" });
+      const product = await createMockProduct({ name_en: "Product 2 (EN)" });
+      const req = new Request(
+        `http://localhost/api/products/${product.id}/duplicate`,
+        {
+          method: "POST",
+          body: JSON.stringify({ sku: "DUP123" }),
+        }
+      );
+      const res = await POST_DUPLICATE(req, {
+        params: Promise.resolve({ id: product.id }),
+      });
+      expect(res.status).toEqual(400);
+    });
+
+    it("should duplicate a product without images and with a new SKU", async () => {
+      const product = await createMockProduct({
+        name_en: "Product 1 (EN)",
+        sku: "ORIGINAL1",
+        price: "200",
+      });
+      const imageFile = await prisma.imageFile.create({
+        data: {
+          filename: "test.jpg",
+          filepath: "/uploads/products/temp/test.jpg",
+          mimetype: "image/jpeg",
+          size: 123,
+        },
+      });
+      await prisma.productImage.create({
+        data: {
+          productId: product.id,
+          imageFileId: imageFile.id,
+        },
+      });
+
+      const req = new Request(
+        `http://localhost/api/products/${product.id}/duplicate`,
+        {
+          method: "POST",
+          body: JSON.stringify({ sku: "NEW123" }),
+        }
+      );
+      const res = await POST_DUPLICATE(req, {
+        params: Promise.resolve({ id: product.id }),
+      });
+      const duplicated = await res.json();
+
+      expect(res.status).toEqual(200);
+      expect(duplicated.sku).toEqual("NEW123");
+      expect(duplicated.name_en).toEqual("Product 1 (EN)");
+
+      const duplicatedImages = await prisma.productImage.findMany({
+        where: { productId: duplicated.id },
+      });
+      expect(duplicatedImages.length).toEqual(0);
     });
   });
 });

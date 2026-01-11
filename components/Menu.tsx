@@ -42,6 +42,12 @@ export default function Menu() {
         >
           Create Product
         </Link>
+        <Link
+          href="/admin/products/settings"
+          className="block w-full text-left hover:bg-gray-700 p-2 rounded"
+        >
+          Settings
+        </Link>
       </CollapsibleMenu>
       <Link
         href="/admin/files"

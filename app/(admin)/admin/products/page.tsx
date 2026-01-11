@@ -7,6 +7,13 @@ import { columns } from "@/components/columns";
 import { DataTable } from "@/components/data-table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getProducts } from "@/lib/api";
 import { ProductWithImages } from "@/lib/types";
 import FileManager from "@/components/products/FileManager";
@@ -104,6 +111,35 @@ function CreateProductModalContent({ onClose }: { onClose: () => void }) {
   );
 }
 
+function EditProductModalContent({
+  onClose,
+}: {
+  onClose: () => void;
+}) {
+  const { showFileManager, handleMultiFileSelect } = useProductFormContext();
+
+  return (
+    <div className="w-full max-w-6xl rounded-lg bg-gray-950 p-6 shadow-lg md:min-w-[960px]">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-white">Edit Product</h2>
+        <Button
+          onClick={onClose}
+          className="bg-gray-800 text-white hover:bg-gray-700"
+        >
+          Close
+        </Button>
+      </div>
+      <div className="h-[70vh] overflow-y-auto pr-2">
+        {showFileManager ? (
+          <FileManager onSelectFile={handleMultiFileSelect} />
+        ) : (
+          <ProductForm submitButtonText="Update" />
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const [data, setData] = useState<ProductWithImages[]>([]);
   // The refreshTrigger state is used to force a re-fetch of the products
@@ -117,6 +153,22 @@ export default function AdminPage() {
   const [endDate, setEndDate] = useState<string>("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [initialSku, setInitialSku] = useState<string>("");
+  const [editingProduct, setEditingProduct] = useState<ProductWithImages | null>(null);
+  const [lastEditedId, setLastEditedId] = useState<string | null>(null);
+  const [nameLocale, setNameLocale] = useState<
+    "name_en" | "name_pl" | "name_de"
+  >("name_en");
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem("productListNameLocale");
+    if (stored === "name_en" || stored === "name_pl" || stored === "name_de") {
+      setNameLocale(stored);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("productListNameLocale", nameLocale);
+  }, [nameLocale]);
 
   const handleCloseCreateModal = () => {
     setIsCreateOpen(false);
@@ -126,6 +178,22 @@ export default function AdminPage() {
   const handleCreateSuccess = () => {
     setIsCreateOpen(false);
     setInitialSku("");
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
+  const handleOpenEditModal = (product: ProductWithImages) => {
+    setEditingProduct(product);
+  };
+
+  const handleCloseEditModal = () => {
+    setEditingProduct(null);
+  };
+
+  const handleEditSuccess = () => {
+    if (editingProduct) {
+      setLastEditedId(editingProduct.id);
+    }
+    setEditingProduct(null);
     setRefreshTrigger((prev) => prev + 1);
   };
 
@@ -160,20 +228,52 @@ export default function AdminPage() {
     void getProducts(filters).then(setData);
   }, [search, sku, minPrice, maxPrice, startDate, endDate, refreshTrigger]);
 
+  useEffect(() => {
+    if (!lastEditedId) return;
+    if (data.length === 0) return;
+    const target = document.querySelector(
+      `[data-row-id="${lastEditedId}"]`
+    );
+    if (target instanceof HTMLElement) {
+      requestAnimationFrame(() => {
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    }
+  }, [data, lastEditedId]);
+
   return (
     <div className="container mx-auto py-10">
       <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-        <div className="mb-4 flex items-center gap-3">
-          <Button
-            onClick={() => {
-              void handleOpenCreateModal();
-            }}
-            className="size-11 rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90"
-            aria-label="Create product"
-          >
-            <PlusIcon className="size-5" />
-          </Button>
-          <h1 className="text-3xl font-bold text-white">Products</h1>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => {
+                void handleOpenCreateModal();
+              }}
+              className="size-11 rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90"
+              aria-label="Create product"
+            >
+              <PlusIcon className="size-5" />
+            </Button>
+            <h1 className="text-3xl font-bold text-white">Products</h1>
+          </div>
+          <div className="w-44">
+            <Select
+              value={nameLocale}
+              onValueChange={(value) =>
+                setNameLocale(value as "name_en" | "name_pl" | "name_de")
+              }
+            >
+              <SelectTrigger aria-label="Select product name language">
+                <SelectValue placeholder="Language" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name_en">English</SelectItem>
+                <SelectItem value="name_pl">Polish</SelectItem>
+                <SelectItem value="name_de">German</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div className="mb-4 flex space-x-4">
           <Input
@@ -225,6 +325,10 @@ export default function AdminPage() {
           columns={columns}
           data={data}
           setRefreshTrigger={setRefreshTrigger}
+          productNameKey={nameLocale}
+          onProductNameClick={handleOpenEditModal}
+          onProductEditClick={handleOpenEditModal}
+          getRowId={(row) => row.id}
           footer={(table) => DataTableFooter(table, setRefreshTrigger)}
         />
       </div>
@@ -239,6 +343,21 @@ export default function AdminPage() {
               initialSku={initialSku}
             >
               <CreateProductModalContent onClose={handleCloseCreateModal} />
+            </ProductFormProvider>
+          </div>
+        </div>
+      )}
+      {editingProduct && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          onClick={handleCloseEditModal}
+        >
+          <div onClick={(event) => event.stopPropagation()}>
+            <ProductFormProvider
+              product={editingProduct}
+              onSuccess={handleEditSuccess}
+            >
+              <EditProductModalContent onClose={handleCloseEditModal} />
             </ProductFormProvider>
           </div>
         </div>

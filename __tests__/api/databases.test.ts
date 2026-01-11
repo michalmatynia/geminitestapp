@@ -117,7 +117,7 @@ describe("Databases API", () => {
       const res = await POST_DELETE(
         new Request("http://localhost/api/databases/delete", {
           method: "POST",
-          body: JSON.stringify({ dbName: "test.db" }),
+          body: JSON.stringify({ backupName: "test.db" }),
         })
       );
       expect(res.status).toEqual(200);

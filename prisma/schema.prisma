@@ -51,6 +51,58 @@ model ImageFile {
   products    ProductImage[] // Relation to the join table
 }
 
+enum CurrencyCode {
+  USD
+  EUR
+  PLN
+  GBP
+}
+
+enum CountryCode {
+  PL
+  DE
+  GB
+  US
+}
+
+model Currency {
+  id        String       @id @default(cuid())
+  code      CurrencyCode @unique
+  name      String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  priceGroups PriceGroup[]
+}
+
+model Country {
+  id        String   @id @default(cuid())
+  code      CountryCode @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PriceGroup {
+  id               String      @id @default(cuid())
+  groupId          String      @unique
+  isDefault        Boolean     @default(false)
+  name             String
+  description      String?
+  currencyId       String
+  type             String
+  basePriceField   String
+  sourceGroupId    String?
+  priceMultiplier  Float       @default(1)
+  addToPrice       Int         @default(0)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  currency         Currency    @relation(fields: [currencyId], references: [id])
+  sourceGroup      PriceGroup? @relation("PriceGroupDependency", fields: [sourceGroupId], references: [id])
+  dependentGroups  PriceGroup[] @relation("PriceGroupDependency")
+}
+
 model ProductImage {
   productId   String
   imageFileId String

@@ -3,7 +3,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoreVertical } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -40,6 +39,7 @@ export type Product = {
 interface ColumnActionsProps {
   row: { original: Product };
   setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;
+  onProductEditClick?: (row: Product) => void;
 }
 
 // The `handleDelete` function sends a DELETE request to the API to delete a
@@ -67,6 +67,7 @@ const handleDelete = async (
 const ActionsCell: React.FC<ColumnActionsProps> = ({
   row,
   setRefreshTrigger,
+  onProductEditClick,
 }) => {
   const product = row.original;
   const router = useRouter();
@@ -114,10 +115,15 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
             <MoreVertical className="size-4" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem asChild>
-            <Link href={`/admin/products/${product.id}/edit`}>Edit</Link>
-          </DropdownMenuItem>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          onSelect={(event) => {
+            event.preventDefault();
+            onProductEditClick?.(product);
+          }}
+        >
+          Edit
+        </DropdownMenuItem>
           <DropdownMenuItem onSelect={handleDuplicate}>
             Duplicate
           </DropdownMenuItem>
@@ -192,11 +198,25 @@ export const columns: ColumnDef<Product>[] = [
         </Button>
       );
     },
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const product = row.original;
+      const nameKey = table.options.meta?.productNameKey ?? "name_en";
+      const nameValue =
+        product[nameKey] ?? product.name_en ?? product.name_pl ?? product.name_de;
+      const handleNameClick = table.options.meta?.onProductNameClick;
       return (
         <div>
-          <span>{product.name_en}</span>
+          {handleNameClick ? (
+            <button
+              className="text-left text-white hover:underline"
+              onClick={() => handleNameClick(product)}
+              type="button"
+            >
+              {nameValue || "—"}
+            </button>
+          ) : (
+            <span>{nameValue || "—"}</span>
+          )}
           {product.sku && (
             <div className="text-sm text-gray-500">{product.sku}</div>
           )}
@@ -236,8 +256,15 @@ export const columns: ColumnDef<Product>[] = [
     id: "actions",
     cell: ({ row, table }) => {
       const setRefreshTrigger = table.options.meta?.setRefreshTrigger;
+      const onProductEditClick = table.options.meta?.onProductEditClick;
       if (!setRefreshTrigger) return null;
-      return <ActionsCell row={row} setRefreshTrigger={setRefreshTrigger} />;
+      return (
+        <ActionsCell
+          row={row}
+          setRefreshTrigger={setRefreshTrigger}
+          onProductEditClick={onProductEditClick}
+        />
+      );
     },
   },
 ];

@@ -16,6 +16,11 @@ async function getProduct(id: string): Promise<{
             imageFile: true,
           },
         },
+        catalogs: {
+          include: {
+            catalog: true,
+          },
+        },
       },
     });
     return { product: product as ProductWithImages | null };

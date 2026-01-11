@@ -97,6 +97,11 @@ async function getProducts(filters: {
           imageFile: true,
         },
       },
+      catalogs: {
+        include: {
+          catalog: true,
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",
@@ -121,6 +126,11 @@ async function getProductById(id: string) {
           assignedAt: "desc",
         },
       },
+      catalogs: {
+        include: {
+          catalog: true,
+        },
+      },
     },
   });
 }
@@ -140,12 +150,14 @@ async function createProduct(formData: FormData) {
 
   const images = formData.getAll("images") as File[];
   const imageFileIds = formData.getAll("imageFileIds") as string[];
+  const catalogIds = normalizeCatalogIds(formData.getAll("catalogIds"));
   await linkImagesToProduct(
     product.id,
     images,
     imageFileIds,
     validatedData.sku
   );
+  await updateProductCatalogs(product.id, catalogIds);
 
   return await getProductById(product.id);
 }
@@ -170,10 +182,12 @@ async function updateProduct(id: string, formData: FormData) {
 
   const images = formData.getAll("images") as File[];
   const imageFileIds = formData.getAll("imageFileIds") as string[];
+  const catalogIds = normalizeCatalogIds(formData.getAll("catalogIds"));
   await linkImagesToProduct(id, images, imageFileIds, validatedData.sku);
   if (validatedData.sku) {
     await moveLinkedTempImagesToSku(id, validatedData.sku);
   }
+  await updateProductCatalogs(id, catalogIds);
 
   return await getProductById(id);
 }
@@ -335,6 +349,31 @@ async function linkImagesToProduct(
 }
 
 const tempProductPathPrefix = "/uploads/products/temp/";
+
+function normalizeCatalogIds(entries: FormDataEntryValue[]) {
+  return entries
+    .map((entry) => (typeof entry === "string" ? entry.trim() : ""))
+    .filter((entry) => entry.length > 0);
+}
+
+async function updateProductCatalogs(productId: string, catalogIds: string[]) {
+  await prisma.productCatalog.deleteMany({ where: { productId } });
+  if (catalogIds.length === 0) return;
+  const uniqueIds = Array.from(new Set(catalogIds));
+  const existing = await prisma.catalog.findMany({
+    where: { id: { in: uniqueIds } },
+    select: { id: true },
+  });
+  const existingIds = new Set(existing.map((entry) => entry.id));
+  const validIds = uniqueIds.filter((id) => existingIds.has(id));
+  if (validIds.length === 0) return;
+  await prisma.productCatalog.createMany({
+    data: validIds.map((catalogId) => ({
+      productId,
+      catalogId,
+    })),
+  });
+}
 
 async function moveTempImageFilesToSku(imageFileIds: string[], sku: string) {
   const imageFiles = await prisma.imageFile.findMany({

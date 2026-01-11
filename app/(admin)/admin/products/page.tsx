@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Table as ReactTable } from "@tanstack/react-table";
 
 import { columns } from "@/components/columns";
@@ -24,10 +24,33 @@ import {
 } from "@/lib/context/ProductFormContext";
 import { PlusIcon } from "lucide-react";
 
-function DataTableFooter<TData>(
-  table: ReactTable<TData>,
-  setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>
-) {
+type Catalog = {
+  id: string;
+  name: string;
+  description: string | null;
+};
+
+type BulkCatalogMode = "add" | "replace" | "remove";
+
+function DataTableFooter<TData>({
+  table,
+  setRefreshTrigger,
+  catalogs,
+  catalogsLoading,
+  catalogsError,
+}: {
+  table: ReactTable<TData>;
+  setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;
+  catalogs: Catalog[];
+  catalogsLoading: boolean;
+  catalogsError: string | null;
+}) {
+  const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
+  const [bulkMode, setBulkMode] = useState<BulkCatalogMode>("add");
+
+  const selectedCount = table.getFilteredSelectedRowModel().rows.length;
+  const hasSelection = selectedCount > 0;
+
   const handleMassDelete = async () => {
     const selectedProductIds = table
       .getSelectedRowModel()
@@ -78,21 +101,135 @@ function DataTableFooter<TData>(
     }
   };
 
+  const toggleCatalog = (catalogId: string) => {
+    setSelectedCatalogIds((prev) =>
+      prev.includes(catalogId)
+        ? prev.filter((id) => id !== catalogId)
+        : [...prev, catalogId]
+    );
+  };
+
+  const handleBulkCatalogAssign = async () => {
+    const selectedProductIds = table
+      .getSelectedRowModel()
+      .rows.map((row) => (row.original as ProductWithImages).id);
+
+    if (selectedProductIds.length === 0) {
+      alert("Please select products to update catalogs.");
+      return;
+    }
+    if (selectedCatalogIds.length === 0) {
+      alert("Select at least one catalog.");
+      return;
+    }
+    const actionLabel =
+      bulkMode === "replace"
+        ? "replace catalogs"
+        : bulkMode === "remove"
+          ? "remove catalogs"
+          : "add catalogs";
+    if (
+      !window.confirm(
+        `Are you sure you want to ${actionLabel} for ${selectedProductIds.length} selected products?`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/catalogs/assign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productIds: selectedProductIds,
+          catalogIds: selectedCatalogIds,
+          mode: bulkMode,
+        }),
+      });
+      if (!res.ok) {
+        const payload = (await res.json()) as { error?: string; errorId?: string };
+        const message = payload?.error || "Failed to update catalogs.";
+        const errorIdSuffix = payload?.errorId ? ` (Error ID: ${payload.errorId})` : "";
+        alert(`${message}${errorIdSuffix}`);
+        return;
+      }
+      alert("Catalogs updated successfully.");
+      table.setRowSelection({});
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (error) {
+      console.error("Error during bulk catalog assignment:", error);
+      alert("An error occurred while updating catalogs.");
+    }
+  };
+
+  const catalogSummary = useMemo(() => {
+    if (catalogsLoading) return "Loading catalogs...";
+    if (catalogsError) return catalogsError;
+    if (catalogs.length === 0) return "No catalogs available.";
+    return `${selectedCatalogIds.length} selected`;
+  }, [catalogsLoading, catalogsError, catalogs.length, selectedCatalogIds.length]);
+
   return (
-    <div className="flex items-center justify-between space-x-2 px-2 py-4">
-      <div className="flex-1 text-sm text-muted-foreground">
-        {table.getFilteredSelectedRowModel().rows.length} of{" "}
-        {table.getFilteredRowModel().rows.length} row(s) selected.
+    <div className="space-y-3 px-2 py-4">
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">
+          {selectedCount} of {table.getFilteredRowModel().rows.length} row(s) selected.
+        </div>
+        <Button
+          onClick={() => {
+            void handleMassDelete();
+          }}
+          disabled={!hasSelection}
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          Delete Selected
+        </Button>
       </div>
-      <Button
-        onClick={() => {
-          void handleMassDelete();
-        }}
-        disabled={table.getFilteredSelectedRowModel().rows.length === 0}
-        className="bg-primary text-primary-foreground hover:bg-primary/90"
-      >
-        Delete Selected
-      </Button>
+      <div className="flex flex-wrap items-center gap-3 rounded-md border border-gray-800 bg-gray-950/60 px-3 py-3">
+        <div className="text-sm text-gray-300">Catalogs</div>
+        <Select
+          value={bulkMode}
+          onValueChange={(value) => setBulkMode(value as BulkCatalogMode)}
+        >
+          <SelectTrigger className="h-8 w-[140px] text-xs">
+            <SelectValue placeholder="Mode" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="add">Add</SelectItem>
+            <SelectItem value="replace">Replace</SelectItem>
+            <SelectItem value="remove">Remove</SelectItem>
+          </SelectContent>
+        </Select>
+        <div className="flex max-h-20 flex-wrap gap-2 overflow-y-auto text-xs text-gray-200">
+          {catalogs.length === 0 ? (
+            <span className="text-gray-500">{catalogSummary}</span>
+          ) : (
+            catalogs.map((catalog) => (
+              <label
+                key={catalog.id}
+                className="inline-flex items-center gap-2 rounded border border-gray-800 bg-gray-900 px-2 py-1"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedCatalogIds.includes(catalog.id)}
+                  onChange={() => toggleCatalog(catalog.id)}
+                />
+                <span>{catalog.name}</span>
+              </label>
+            ))
+          )}
+        </div>
+        <div className="text-xs text-gray-500">{catalogSummary}</div>
+        <Button
+          onClick={() => {
+            void handleBulkCatalogAssign();
+          }}
+          disabled={!hasSelection || selectedCatalogIds.length === 0}
+          className="h-8 bg-white px-3 text-xs font-semibold text-gray-900 hover:bg-gray-200"
+        >
+          Apply to Selected
+        </Button>
+      </div>
     </div>
   );
 }
@@ -167,6 +304,9 @@ export default function AdminPage() {
   const [editingProduct, setEditingProduct] = useState<ProductWithImages | null>(null);
   const [lastEditedId, setLastEditedId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [catalogs, setCatalogs] = useState<Catalog[]>([]);
+  const [catalogsLoading, setCatalogsLoading] = useState(true);
+  const [catalogsError, setCatalogsError] = useState<string | null>(null);
   const [nameLocale, setNameLocale] = useState<
     "name_en" | "name_pl" | "name_de"
   >("name_en");
@@ -270,6 +410,41 @@ export default function AdminPage() {
       cancelled = true;
     };
   }, [search, sku, minPrice, maxPrice, startDate, endDate, refreshTrigger]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadCatalogs = async () => {
+      try {
+        setCatalogsLoading(true);
+        const res = await fetch("/api/catalogs");
+        if (!res.ok) {
+          const payload = (await res.json()) as { error?: string; errorId?: string };
+          const message = payload?.error || "Failed to load catalogs";
+          const suffix = payload?.errorId ? ` (Error ID: ${payload.errorId})` : "";
+          throw new Error(`${message}${suffix}`);
+        }
+        const data = (await res.json()) as Catalog[];
+        if (!cancelled) {
+          setCatalogs(data);
+        }
+      } catch (error) {
+        console.error("Failed to load catalogs:", error);
+        if (!cancelled) {
+          setCatalogsError(
+            error instanceof Error ? error.message : "Failed to load catalogs"
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setCatalogsLoading(false);
+        }
+      }
+    };
+    void loadCatalogs();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!lastEditedId) return;
@@ -377,7 +552,15 @@ export default function AdminPage() {
           onProductNameClick={handleOpenEditModal}
           onProductEditClick={handleOpenEditModal}
           getRowId={(row) => row.id}
-          footer={(table) => DataTableFooter(table, setRefreshTrigger)}
+          footer={(table) => (
+            <DataTableFooter
+              table={table}
+              setRefreshTrigger={setRefreshTrigger}
+              catalogs={catalogs}
+              catalogsLoading={catalogsLoading}
+              catalogsError={catalogsError}
+            />
+          )}
         />
       </div>
       {isCreateOpen && (

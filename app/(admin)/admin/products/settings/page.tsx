@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-const settingSections = ["Price Groups", "Currencies", "Countries"] as const;
+const settingSections = ["Price Groups", "Currencies", "Countries", "Catalogs"] as const;
 
 type PriceGroupType = "standard" | "dependent";
 
@@ -31,6 +31,13 @@ type CountryOption = {
   id: string;
   code: string;
   name: string;
+};
+
+type Catalog = {
+  id: string;
+  name: string;
+  description: string | null;
+  createdAt: string;
 };
 
 const countryCodeOptions = [
@@ -98,6 +105,8 @@ export default function ProductSettingsPage() {
   const [loadingGroups, setLoadingGroups] = useState(true);
   const [loadingCurrencies, setLoadingCurrencies] = useState(true);
   const [loadingCountries, setLoadingCountries] = useState(true);
+  const [loadingCatalogs, setLoadingCatalogs] = useState(true);
+  const [catalogs, setCatalogs] = useState<Catalog[]>([]);
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [editingCurrencyId, setEditingCurrencyId] = useState<string | null>(null);
@@ -110,6 +119,10 @@ export default function ProductSettingsPage() {
   const [countryForm, setCountryForm] = useState({
     code: "",
     name: "",
+  });
+  const [catalogForm, setCatalogForm] = useState({
+    name: "",
+    description: "",
   });
   const [countrySearch, setCountrySearch] = useState("");
   const [formState, setFormState] = useState({
@@ -201,11 +214,33 @@ export default function ProductSettingsPage() {
     }
   }, []);
 
+  const refreshCatalogs = useCallback(async () => {
+    try {
+      setLoadingCatalogs(true);
+      const res = await fetch("/api/catalogs");
+      if (!res.ok) {
+        throw new Error("Failed to fetch catalogs.");
+      }
+      const data = (await res.json()) as Catalog[];
+      setCatalogs(
+        data.map((catalog) => ({
+          ...catalog,
+          description: catalog.description ?? "",
+        }))
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingCatalogs(false);
+    }
+  }, []);
+
   useEffect(() => {
     void refreshCurrencies();
     void refreshCountries();
     void refreshPriceGroups();
-  }, [refreshCurrencies, refreshCountries, refreshPriceGroups]);
+    void refreshCatalogs();
+  }, [refreshCurrencies, refreshCountries, refreshPriceGroups, refreshCatalogs]);
 
   useEffect(() => {
     if (formState.currencyId) return;
@@ -434,15 +469,58 @@ export default function ProductSettingsPage() {
     );
   });
 
+  const handleCreateCatalog = () => {
+    const createCatalog = async () => {
+      const name = catalogForm.name.trim();
+      const description = catalogForm.description.trim();
+      if (!name) {
+        alert("Catalog name is required.");
+        return;
+      }
+      const res = await fetch("/api/catalogs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, description }),
+      });
+      if (!res.ok) {
+        const error = (await res.json()) as { error?: string; errorId?: string };
+        const message = error.error || "Failed to create catalog.";
+        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+        alert(`${message}${suffix}`);
+        return;
+      }
+      setCatalogForm({ name: "", description: "" });
+      await refreshCatalogs();
+    };
+    void createCatalog();
+  };
+
+  const handleDeleteCatalog = (catalog: Catalog) => {
+    const deleteCatalog = async () => {
+      if (!window.confirm(`Delete catalog "${catalog.name}"?`)) {
+        return;
+      }
+      const res = await fetch(`/api/catalogs/${catalog.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const error = (await res.json()) as { error?: string; errorId?: string };
+        const message = error.error || "Failed to delete catalog.";
+        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+        alert(`${message}${suffix}`);
+        return;
+      }
+      await refreshCatalogs();
+    };
+    void deleteCatalog();
+  };
+
   return (
     <div className="container mx-auto py-10">
       <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
         <h1 className="mb-6 text-3xl font-bold text-white">Product Settings</h1>
         <div className="grid gap-6 md:grid-cols-[240px_1fr]">
           <aside className="rounded-md border border-gray-800 bg-gray-900 p-4">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
-              Categories
-            </p>
             <div className="flex flex-col gap-2">
               {settingSections.map((section) => (
                 <button
@@ -671,6 +749,96 @@ export default function ProductSettingsPage() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+            {activeSection === "Catalogs" && (
+              <div className="space-y-5">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl font-semibold text-white">Catalogs</h2>
+                    <p className="mt-1 text-sm text-gray-400">
+                      Organize products into reusable catalogs.
+                    </p>
+                  </div>
+                  <button
+                    className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
+                    type="button"
+                    onClick={handleCreateCatalog}
+                  >
+                    Add Catalog
+                  </button>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4">
+                    <p className="text-sm font-semibold text-white">New Catalog</p>
+                    <div className="mt-3 space-y-3">
+                      <div>
+                        <label className="text-xs text-gray-400">Name</label>
+                        <input
+                          className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                          value={catalogForm.name}
+                          onChange={(event) =>
+                            setCatalogForm((prev) => ({
+                              ...prev,
+                              name: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-400">Description</label>
+                        <textarea
+                          className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                          rows={3}
+                          value={catalogForm.description}
+                          onChange={(event) =>
+                            setCatalogForm((prev) => ({
+                              ...prev,
+                              description: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4">
+                    <p className="text-sm font-semibold text-white">Existing Catalogs</p>
+                    {loadingCatalogs ? (
+                      <div className="mt-4 rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+                        Loading catalogs...
+                      </div>
+                    ) : catalogs.length === 0 ? (
+                      <div className="mt-4 rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+                        No catalogs yet.
+                      </div>
+                    ) : (
+                      <div className="mt-4 space-y-3">
+                        {catalogs.map((catalog) => (
+                          <div
+                            key={catalog.id}
+                            className="flex items-start justify-between gap-3 rounded-md border border-gray-800 bg-gray-900 px-3 py-2"
+                          >
+                            <div>
+                              <p className="text-sm font-semibold text-white">
+                                {catalog.name}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {catalog.description || "No description"}
+                              </p>
+                            </div>
+                            <button
+                              className="text-xs text-red-400 hover:text-red-300"
+                              type="button"
+                              onClick={() => handleDeleteCatalog(catalog)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </section>

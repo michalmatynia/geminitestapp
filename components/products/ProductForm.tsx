@@ -35,6 +35,11 @@ export default function ProductForm({
     uploadSuccess,
     imageSlots, // Use imageSlots from context
     handleMultiImageChange,
+    catalogs,
+    catalogsLoading,
+    catalogsError,
+    selectedCatalogIds,
+    toggleCatalog,
   } = useProductFormContext();
   const [generating, setGenerating] = useState(false);
   const { register, getValues, setValue } = useFormContext<ProductFormData>();
@@ -335,6 +340,44 @@ export default function ProductForm({
               <p className="text-red-500 text-sm mt-1" role="alert">
                 {errors.stock.message}
               </p>
+            )}
+          </div>
+          <div className="mb-4">
+            <Label>Catalogs</Label>
+            {catalogsLoading ? (
+              <p className="mt-2 text-sm text-gray-400">Loading catalogs...</p>
+            ) : catalogsError ? (
+              <p className="mt-2 text-sm text-red-400">{catalogsError}</p>
+            ) : catalogs.length === 0 ? (
+              <p className="mt-2 text-sm text-gray-400">
+                No catalogs yet. Create one in Product Settings.
+              </p>
+            ) : (
+              <div className="mt-2 space-y-2 rounded-md border border-gray-800 bg-gray-950/40 p-3">
+                {catalogs.map((catalog) => (
+                  <label
+                    key={catalog.id}
+                    className="flex items-start gap-2 text-sm text-gray-200"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedCatalogIds.includes(catalog.id)}
+                      onChange={() => toggleCatalog(catalog.id)}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      <span className="font-medium text-white">
+                        {catalog.name}
+                      </span>
+                      {catalog.description ? (
+                        <span className="block text-xs text-gray-400">
+                          {catalog.description}
+                        </span>
+                      ) : null}
+                    </span>
+                  </label>
+                ))}
+              </div>
             )}
           </div>
         </TabsContent>

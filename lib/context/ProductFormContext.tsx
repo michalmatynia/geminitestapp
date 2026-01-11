@@ -1,6 +1,6 @@
 "use client";
 
-import { ImageFile, ProductImage } from "@prisma/client";
+import type { Catalog, ImageFile, ProductImage } from "@prisma/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import {
@@ -63,6 +63,11 @@ interface ProductFormContextType {
   handleSlotDisconnectImage: (index: number) => void;
   handleMultiImageChange: (files: File[]) => void;
   handleMultiFileSelect: (files: { id: string; filepath: string }[]) => void;
+  catalogs: Catalog[];
+  catalogsLoading: boolean;
+  catalogsError: string | null;
+  selectedCatalogIds: string[];
+  toggleCatalog: (catalogId: string) => void;
 }
 
 export const ProductFormContext = createContext<ProductFormContextType | null>(
@@ -130,6 +135,10 @@ export function ProductFormProvider({
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [showFileManager, setShowFileManager] = useState(false);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [catalogs, setCatalogs] = useState<Catalog[]>([]);
+  const [catalogsLoading, setCatalogsLoading] = useState(true);
+  const [catalogsError, setCatalogsError] = useState<string | null>(null);
+  const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
 
   // State for managing all 15 image slots
   const [imageSlots, setImageSlots] = useState<(ProductImageSlot | null)[]>(
@@ -157,6 +166,46 @@ export function ProductFormProvider({
       });
     }
   }, [product]);
+
+  useEffect(() => {
+    if (!product?.catalogs) return;
+    setSelectedCatalogIds(product.catalogs.map((entry) => entry.catalogId));
+  }, [product]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadCatalogs = async () => {
+      try {
+        setCatalogsLoading(true);
+        const res = await fetch("/api/catalogs");
+        if (!res.ok) {
+          const payload = (await res.json()) as { error?: string; errorId?: string };
+          const message = payload?.error || "Failed to load catalogs";
+          const suffix = payload?.errorId ? ` (Error ID: ${payload.errorId})` : "";
+          throw new Error(`${message}${suffix}`);
+        }
+        const data = (await res.json()) as Catalog[];
+        if (!cancelled) {
+          setCatalogs(data);
+        }
+      } catch (error) {
+        console.error("Failed to load catalogs:", error);
+        if (!cancelled) {
+          setCatalogsError(
+            error instanceof Error ? error.message : "Failed to load catalogs"
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setCatalogsLoading(false);
+        }
+      }
+    };
+    void loadCatalogs();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Effect to clean up object URLs when component unmounts or imageSlots change
   useEffect(() => {
@@ -316,6 +365,14 @@ export function ProductFormProvider({
     setShowFileManager(false); // Close file manager after selection
   }, [imageSlots, setShowFileManager]);
 
+  const toggleCatalog = useCallback((catalogId: string) => {
+    setSelectedCatalogIds((prev) =>
+      prev.includes(catalogId)
+        ? prev.filter((id) => id !== catalogId)
+        : [...prev, catalogId]
+    );
+  }, []);
+
   const onSubmit = async (data: ProductFormData) => {
     const skuValue = typeof data.sku === "string" ? data.sku.trim() : "";
     const hasTempImages = imageSlots.some((slot) => {
@@ -351,6 +408,9 @@ export function ProductFormProvider({
       } else if (slot?.type === 'existing') {
         formData.append("imageFileIds", slot.data.id); // Append existing ImageFile ID
       }
+    });
+    selectedCatalogIds.forEach((catalogId) => {
+      formData.append("catalogIds", catalogId);
     });
 
     try {
@@ -439,6 +499,11 @@ export function ProductFormProvider({
           handleSlotDisconnectImage,
           handleMultiImageChange,
           handleMultiFileSelect,
+          catalogs,
+          catalogsLoading,
+          catalogsError,
+          selectedCatalogIds,
+          toggleCatalog,
         }}
       >
         {children}

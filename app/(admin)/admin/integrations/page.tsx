@@ -18,6 +18,24 @@ type IntegrationConnection = {
   username: string;
   hasPlaywrightStorageState?: boolean;
   playwrightStorageStateUpdatedAt?: string | null;
+  playwrightHeadless?: boolean;
+  playwrightSlowMo?: number;
+  playwrightTimeout?: number;
+  playwrightNavigationTimeout?: number;
+  playwrightHumanizeMouse?: boolean;
+  playwrightMouseJitter?: number;
+  playwrightClickDelayMin?: number;
+  playwrightClickDelayMax?: number;
+  playwrightInputDelayMin?: number;
+  playwrightInputDelayMax?: number;
+  playwrightActionDelayMin?: number;
+  playwrightActionDelayMax?: number;
+  playwrightProxyEnabled?: boolean;
+  playwrightProxyServer?: string | null;
+  playwrightProxyUsername?: string | null;
+  playwrightProxyHasPassword?: boolean;
+  playwrightEmulateDevice?: boolean;
+  playwrightDeviceName?: string | null;
 };
 
 export default function IntegrationsPage() {
@@ -41,10 +59,68 @@ export default function IntegrationsPage() {
   const [lastTestError, setLastTestError] = useState<string | null>(null);
   const [showTestSuccessModal, setShowTestSuccessModal] = useState(false);
   const [testSuccessMessage, setTestSuccessMessage] = useState<string | null>(null);
+  const [showPlaywrightSaved, setShowPlaywrightSaved] = useState(false);
+  const [showSessionModal, setShowSessionModal] = useState(false);
+  const [sessionCookies, setSessionCookies] = useState<
+    {
+      name?: string;
+      value?: string;
+      domain?: string;
+      path?: string;
+      expires?: number;
+      httpOnly?: boolean;
+      secure?: boolean;
+      sameSite?: string;
+    }[]
+  >([]);
+  const [sessionOrigins, setSessionOrigins] = useState<
+    { origin?: string; localStorage?: { name?: string; value?: string }[] }[]
+  >([]);
+  const [sessionUpdatedAt, setSessionUpdatedAt] = useState<string | null>(null);
+  const [sessionError, setSessionError] = useState<string | null>(null);
+  const [isSessionLoading, setIsSessionLoading] = useState(false);
   const [selectedStep, setSelectedStep] = useState<
     { step: string; status: "ok" | "failed"; timestamp: string; detail?: string } | null
   >(null);
+  const defaultPlaywrightSettings = {
+    headless: true,
+    slowMo: 50,
+    timeout: 15000,
+    navigationTimeout: 30000,
+    humanizeMouse: false,
+    mouseJitter: 6,
+    clickDelayMin: 30,
+    clickDelayMax: 120,
+    inputDelayMin: 20,
+    inputDelayMax: 120,
+    actionDelayMin: 200,
+    actionDelayMax: 900,
+    proxyEnabled: false,
+    proxyServer: "",
+    proxyUsername: "",
+    proxyPassword: "",
+    emulateDevice: false,
+    deviceName: "Desktop Chrome",
+  };
+  const deviceOptions = [
+    { value: "Desktop Chrome", label: "Desktop Chrome" },
+    { value: "Desktop Firefox", label: "Desktop Firefox" },
+    { value: "Desktop Safari", label: "Desktop Safari" },
+    { value: "iPhone 13", label: "iPhone 13" },
+    { value: "iPhone 14 Pro", label: "iPhone 14 Pro" },
+    { value: "Pixel 7", label: "Pixel 7" },
+    { value: "iPad (gen 7)", label: "iPad (gen 7)" },
+  ];
+  const [playwrightSettings, setPlaywrightSettings] = useState(
+    defaultPlaywrightSettings
+  );
   const activeConnection = connections[0] || null;
+
+  useEffect(() => {
+    if (!showPlaywrightSaved) return;
+    const timeout = setTimeout(() => setShowPlaywrightSaved(false), 2500);
+    return () => clearTimeout(timeout);
+  }, [showPlaywrightSaved]);
 
   useEffect(() => {
     const fetchIntegrations = async () => {
@@ -83,6 +159,48 @@ export default function IntegrationsPage() {
         name: connection.name,
         username: connection.username,
         password: "",
+      });
+      setPlaywrightSettings({
+        headless: connection.playwrightHeadless ?? defaultPlaywrightSettings.headless,
+        slowMo: connection.playwrightSlowMo ?? defaultPlaywrightSettings.slowMo,
+        timeout: connection.playwrightTimeout ?? defaultPlaywrightSettings.timeout,
+        navigationTimeout:
+          connection.playwrightNavigationTimeout ??
+          defaultPlaywrightSettings.navigationTimeout,
+        humanizeMouse:
+          connection.playwrightHumanizeMouse ?? defaultPlaywrightSettings.humanizeMouse,
+        mouseJitter:
+          connection.playwrightMouseJitter ?? defaultPlaywrightSettings.mouseJitter,
+        clickDelayMin:
+          connection.playwrightClickDelayMin ??
+          defaultPlaywrightSettings.clickDelayMin,
+        clickDelayMax:
+          connection.playwrightClickDelayMax ??
+          defaultPlaywrightSettings.clickDelayMax,
+        inputDelayMin:
+          connection.playwrightInputDelayMin ??
+          defaultPlaywrightSettings.inputDelayMin,
+        inputDelayMax:
+          connection.playwrightInputDelayMax ??
+          defaultPlaywrightSettings.inputDelayMax,
+        actionDelayMin:
+          connection.playwrightActionDelayMin ??
+          defaultPlaywrightSettings.actionDelayMin,
+        actionDelayMax:
+          connection.playwrightActionDelayMax ??
+          defaultPlaywrightSettings.actionDelayMax,
+        proxyEnabled:
+          connection.playwrightProxyEnabled ?? defaultPlaywrightSettings.proxyEnabled,
+        proxyServer:
+          connection.playwrightProxyServer ?? defaultPlaywrightSettings.proxyServer,
+        proxyUsername:
+          connection.playwrightProxyUsername ??
+          defaultPlaywrightSettings.proxyUsername,
+        proxyPassword: "",
+        emulateDevice:
+          connection.playwrightEmulateDevice ?? defaultPlaywrightSettings.emulateDevice,
+        deviceName:
+          connection.playwrightDeviceName ?? defaultPlaywrightSettings.deviceName,
       });
     }
   }, [connections, editingConnectionId]);
@@ -235,6 +353,7 @@ export default function IntegrationsPage() {
         `Connection test succeeded.\nURL: ${requestUrl}\nDuration: ${durationMs}ms`
       );
       setShowTestSuccessModal(true);
+      await refreshConnections(activeIntegration.id);
     } catch (error) {
       const durationMs = Math.round(performance.now() - startedAt);
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -264,17 +383,90 @@ export default function IntegrationsPage() {
     }
   };
 
-  const handleEditConnection = (connection: IntegrationConnection) => {
-    setConnectionForm({
-      name: connection.name,
-      username: connection.username,
-      password: "",
+  const handleOpenSessionModal = async () => {
+    if (!activeConnection) return;
+    setShowSessionModal(true);
+    setSessionError(null);
+    setIsSessionLoading(true);
+    try {
+      const res = await fetch(
+        `/api/integrations/connections/${activeConnection.id}/session`
+      );
+      const payload = (await res.json()) as {
+        error?: string;
+        cookies?: typeof sessionCookies;
+        origins?: typeof sessionOrigins;
+        updatedAt?: string | null;
+      };
+      if (!res.ok) {
+        setSessionError(payload.error || "Failed to load session cookies.");
+        setSessionCookies([]);
+        setSessionOrigins([]);
+        setSessionUpdatedAt(null);
+        return;
+      }
+      setSessionCookies(payload.cookies || []);
+      setSessionOrigins(payload.origins || []);
+      setSessionUpdatedAt(payload.updatedAt ?? null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setSessionError(message);
+      setSessionCookies([]);
+      setSessionOrigins([]);
+      setSessionUpdatedAt(null);
+    } finally {
+      setIsSessionLoading(false);
+    }
+  };
+
+  const handleSavePlaywrightSettings = async () => {
+    const connection = connections[0];
+    if (!connection) return;
+    const res = await fetch(`/api/integrations/connections/${connection.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: connection.name,
+        username: connection.username,
+        playwrightHeadless: playwrightSettings.headless,
+        playwrightSlowMo: playwrightSettings.slowMo,
+        playwrightTimeout: playwrightSettings.timeout,
+        playwrightNavigationTimeout: playwrightSettings.navigationTimeout,
+        playwrightHumanizeMouse: playwrightSettings.humanizeMouse,
+        playwrightMouseJitter: playwrightSettings.mouseJitter,
+        playwrightClickDelayMin: playwrightSettings.clickDelayMin,
+        playwrightClickDelayMax: playwrightSettings.clickDelayMax,
+        playwrightInputDelayMin: playwrightSettings.inputDelayMin,
+        playwrightInputDelayMax: playwrightSettings.inputDelayMax,
+        playwrightActionDelayMin: playwrightSettings.actionDelayMin,
+        playwrightActionDelayMax: playwrightSettings.actionDelayMax,
+        playwrightProxyEnabled: playwrightSettings.proxyEnabled,
+        playwrightProxyServer: playwrightSettings.proxyServer,
+        playwrightProxyUsername: playwrightSettings.proxyUsername,
+        playwrightProxyPassword: playwrightSettings.proxyPassword,
+        playwrightEmulateDevice: playwrightSettings.emulateDevice,
+        playwrightDeviceName: playwrightSettings.deviceName,
+      }),
     });
-    setEditingConnectionId(connection.id);
+    if (!res.ok) {
+      const error = (await res.json()) as { error?: string };
+      alert(error.error || "Failed to save Playwright settings.");
+      return;
+    }
+    const updated = (await res.json()) as IntegrationConnection;
+    setConnections((prev) =>
+      prev.map((item) => (item.id === updated.id ? { ...item, ...updated } : item))
+    );
+    setShowPlaywrightSaved(true);
   };
 
   return (
     <div className="container mx-auto py-10">
+      {showPlaywrightSaved && (
+        <div className="fixed right-6 top-6 z-[200] rounded-md border border-emerald-400/40 bg-emerald-500/20 px-3 py-2 text-xs font-medium text-emerald-100 shadow-lg">
+          Playwright settings saved
+        </div>
+      )}
       <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
         <div className="mb-6 flex items-center justify-between">
           <div>
@@ -306,21 +498,17 @@ export default function IntegrationsPage() {
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3">
                 {integrationNames.includes("Tradera") && (
-                  <button
-                    type="button"
-                    onClick={handleTraderaClick}
-                    className="flex items-center gap-2 rounded-full border border-sky-400/50 bg-sky-500/10 px-3 py-1.5 text-xs text-sky-200 hover:bg-sky-500/20"
-                  >
+                  <div className="flex items-center gap-2 rounded-full border border-sky-400/50 bg-sky-500/10 px-3 py-1.5 text-xs text-sky-200">
                     Tradera
-                    <Link
-                      href="/admin/integrations/tradera"
+                    <button
+                      type="button"
+                      onClick={handleTraderaClick}
                       className="rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20"
-                      onClick={(event) => event.stopPropagation()}
                       aria-label="Manage Tradera settings"
                     >
                       <SettingsIcon className="size-3.5" />
-                    </Link>
-                  </button>
+                    </button>
+                  </div>
                 )}
                 {!integrationNames.includes("Tradera") && (
                   <div className="text-xs text-gray-500">
@@ -347,7 +535,6 @@ export default function IntegrationsPage() {
       {isModalOpen && activeIntegration && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={() => setIsModalOpen(false)}
         >
           <div
             className="w-full max-w-4xl rounded-lg bg-gray-950 p-6 shadow-lg"
@@ -479,13 +666,6 @@ export default function IntegrationsPage() {
                                 Test
                               </button>
                               <button
-                                className="text-xs text-gray-300 hover:text-white"
-                                type="button"
-                                onClick={() => handleEditConnection(connection)}
-                              >
-                                Edit
-                              </button>
-                              <button
                                 className="text-xs text-red-400 hover:text-red-300"
                                 type="button"
                                 onClick={() => handleDeleteConnection(connection)}
@@ -554,22 +734,16 @@ export default function IntegrationsPage() {
                 </div>
               </TabsContent>
               <TabsContent value="settings" className="mt-4">
-                <div className="rounded-lg border border-dashed border-gray-800 p-6 text-center text-sm text-gray-400">
-                  Settings configuration coming soon.
-                </div>
+                <div className="min-h-[220px]" />
               </TabsContent>
               <TabsContent value="price-sync" className="mt-4">
-                <div className="rounded-lg border border-dashed border-gray-800 p-6 text-center text-sm text-gray-400">
-                  Price sync configuration coming soon.
-                </div>
+                <div className="min-h-[220px]" />
               </TabsContent>
               <TabsContent value="inventory-sync" className="mt-4">
-                <div className="rounded-lg border border-dashed border-gray-800 p-6 text-center text-sm text-gray-400">
-                  Inventory sync configuration coming soon.
-                </div>
+                <div className="min-h-[220px]" />
               </TabsContent>
               <TabsContent value="playwright" className="mt-4">
-                <div className="rounded-lg border border-gray-800 bg-gray-900/60 p-4">
+                <div className="max-h-[70vh] overflow-y-auto rounded-lg border border-gray-800 bg-gray-900/60 p-4">
                   <h3 className="text-sm font-semibold text-white">
                     Playwright settings
                   </h3>
@@ -577,10 +751,22 @@ export default function IntegrationsPage() {
                     Control how the browser behaves during crosslisting.
                   </p>
                   <div className="mt-4 rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300">
-                    <p>
-                      <span className="text-gray-400">Session cookie:</span>{" "}
-                      {activeConnection?.hasPlaywrightStorageState ? "Retained" : "Not stored"}
-                    </p>
+                    <div className="flex items-center justify-between gap-3">
+                      <p>
+                        <span className="text-gray-400">Session cookie:</span>{" "}
+                        {activeConnection?.hasPlaywrightStorageState
+                          ? "Retained"
+                          : "Not stored"}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleOpenSessionModal}
+                        disabled={!activeConnection?.hasPlaywrightStorageState}
+                        className="text-xs text-emerald-200 hover:text-emerald-100 disabled:cursor-not-allowed disabled:text-gray-600"
+                      >
+                        View details
+                      </button>
+                    </div>
                     <p className="mt-1">
                       <span className="text-gray-400">Obtained:</span>{" "}
                       {activeConnection?.playwrightStorageStateUpdatedAt
@@ -596,7 +782,13 @@ export default function IntegrationsPage() {
                       <input
                         type="checkbox"
                         className="size-4 accent-emerald-400"
-                        defaultChecked
+                        checked={playwrightSettings.headless}
+                        onChange={(event) =>
+                          setPlaywrightSettings((prev) => ({
+                            ...prev,
+                            headless: event.target.checked,
+                          }))
+                        }
                       />
                     </label>
                     <label className="block space-y-2">
@@ -607,7 +799,13 @@ export default function IntegrationsPage() {
                         type="number"
                         min={0}
                         step={50}
-                        defaultValue={50}
+                        value={playwrightSettings.slowMo}
+                        onChange={(event) =>
+                          setPlaywrightSettings((prev) => ({
+                            ...prev,
+                            slowMo: Number(event.target.value),
+                          }))
+                        }
                         className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white"
                       />
                     </label>
@@ -619,7 +817,13 @@ export default function IntegrationsPage() {
                         type="number"
                         min={1000}
                         step={1000}
-                        defaultValue={15000}
+                        value={playwrightSettings.timeout}
+                        onChange={(event) =>
+                          setPlaywrightSettings((prev) => ({
+                            ...prev,
+                            timeout: Number(event.target.value),
+                          }))
+                        }
                         className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white"
                       />
                     </label>
@@ -631,13 +835,326 @@ export default function IntegrationsPage() {
                         type="number"
                         min={1000}
                         step={1000}
-                        defaultValue={30000}
+                        value={playwrightSettings.navigationTimeout}
+                        onChange={(event) =>
+                          setPlaywrightSettings((prev) => ({
+                            ...prev,
+                            navigationTimeout: Number(event.target.value),
+                          }))
+                        }
                         className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white"
                       />
                     </label>
+                    <label className="flex items-center justify-between gap-4 rounded-md border border-gray-800 bg-gray-950 px-3 py-2">
+                      <span className="text-xs text-gray-300">
+                        Humanize mouse & clicks
+                      </span>
+                      <input
+                        type="checkbox"
+                        className="size-4 accent-emerald-400"
+                        checked={playwrightSettings.humanizeMouse}
+                        onChange={(event) =>
+                          setPlaywrightSettings((prev) => ({
+                            ...prev,
+                            humanizeMouse: event.target.checked,
+                          }))
+                        }
+                      />
+                    </label>
+                    <div
+                      className={`grid gap-3 md:grid-cols-2 lg:grid-cols-3 ${
+                        playwrightSettings.humanizeMouse ? "" : "opacity-50"
+                      }`}
+                      title={
+                        playwrightSettings.humanizeMouse
+                          ? undefined
+                          : "Enable humanization to edit these settings."
+                      }
+                    >
+                      <label className="block space-y-2">
+                        <span className="text-xs text-gray-300">
+                          Mouse jitter (px)
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          step={1}
+                          value={playwrightSettings.mouseJitter}
+                          onChange={(event) =>
+                            setPlaywrightSettings((prev) => ({
+                              ...prev,
+                              mouseJitter: Number(event.target.value),
+                            }))
+                          }
+                          disabled={!playwrightSettings.humanizeMouse}
+                          className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:text-gray-500"
+                        />
+                      </label>
+                      <label className="block space-y-2">
+                        <span className="text-xs text-gray-300">
+                          Click delay min (ms)
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          step={5}
+                          value={playwrightSettings.clickDelayMin}
+                          onChange={(event) =>
+                            setPlaywrightSettings((prev) => ({
+                              ...prev,
+                              clickDelayMin: Number(event.target.value),
+                            }))
+                          }
+                          disabled={!playwrightSettings.humanizeMouse}
+                          className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:text-gray-500"
+                        />
+                      </label>
+                      <label className="block space-y-2">
+                        <span className="text-xs text-gray-300">
+                          Click delay max (ms)
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          step={5}
+                          value={playwrightSettings.clickDelayMax}
+                          onChange={(event) =>
+                            setPlaywrightSettings((prev) => ({
+                              ...prev,
+                              clickDelayMax: Number(event.target.value),
+                            }))
+                          }
+                          disabled={!playwrightSettings.humanizeMouse}
+                          className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:text-gray-500"
+                        />
+                      </label>
+                      <label className="block space-y-2">
+                        <span className="text-xs text-gray-300">
+                          Input delay min (ms)
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          step={5}
+                          value={playwrightSettings.inputDelayMin}
+                          onChange={(event) =>
+                            setPlaywrightSettings((prev) => ({
+                              ...prev,
+                              inputDelayMin: Number(event.target.value),
+                            }))
+                          }
+                          disabled={!playwrightSettings.humanizeMouse}
+                          className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:text-gray-500"
+                        />
+                      </label>
+                      <label className="block space-y-2">
+                        <span className="text-xs text-gray-300">
+                          Input delay max (ms)
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          step={5}
+                          value={playwrightSettings.inputDelayMax}
+                          onChange={(event) =>
+                            setPlaywrightSettings((prev) => ({
+                              ...prev,
+                              inputDelayMax: Number(event.target.value),
+                            }))
+                          }
+                          disabled={!playwrightSettings.humanizeMouse}
+                          className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:text-gray-500"
+                        />
+                      </label>
+                      <label className="block space-y-2">
+                        <span className="text-xs text-gray-300">
+                          Action delay min (ms)
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          step={50}
+                          value={playwrightSettings.actionDelayMin}
+                          onChange={(event) =>
+                            setPlaywrightSettings((prev) => ({
+                              ...prev,
+                              actionDelayMin: Number(event.target.value),
+                            }))
+                          }
+                          disabled={!playwrightSettings.humanizeMouse}
+                          className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:text-gray-500"
+                        />
+                      </label>
+                      <label className="block space-y-2">
+                        <span className="text-xs text-gray-300">
+                          Action delay max (ms)
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          step={50}
+                          value={playwrightSettings.actionDelayMax}
+                          onChange={(event) =>
+                            setPlaywrightSettings((prev) => ({
+                              ...prev,
+                              actionDelayMax: Number(event.target.value),
+                            }))
+                          }
+                          disabled={!playwrightSettings.humanizeMouse}
+                        className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:text-gray-500"
+                      />
+                    </label>
+                  </div>
+                  <div className="pt-2">
+                    <div className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                      Proxy simulation
+                    </div>
+                    <label className="mt-3 flex items-center justify-between gap-4 rounded-md border border-gray-800 bg-gray-950 px-3 py-2">
+                      <span className="text-xs text-gray-300">Enable proxy</span>
+                      <input
+                        type="checkbox"
+                        className="size-4 accent-emerald-400"
+                        checked={playwrightSettings.proxyEnabled}
+                        onChange={(event) =>
+                          setPlaywrightSettings((prev) => ({
+                            ...prev,
+                            proxyEnabled: event.target.checked,
+                          }))
+                        }
+                      />
+                    </label>
+                    <div
+                      className={`mt-3 grid gap-3 md:grid-cols-2 ${
+                        playwrightSettings.proxyEnabled ? "" : "opacity-50"
+                      }`}
+                      title={
+                        playwrightSettings.proxyEnabled
+                          ? undefined
+                          : "Enable proxy to edit these settings."
+                      }
+                    >
+                      <label className="block space-y-2 md:col-span-2">
+                        <span className="text-xs text-gray-300">
+                          Proxy server (e.g. http://host:port)
+                        </span>
+                        <input
+                          type="text"
+                          value={playwrightSettings.proxyServer}
+                          onChange={(event) =>
+                            setPlaywrightSettings((prev) => ({
+                              ...prev,
+                              proxyServer: event.target.value,
+                            }))
+                          }
+                          disabled={!playwrightSettings.proxyEnabled}
+                          className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:text-gray-500"
+                        />
+                      </label>
+                      <label className="block space-y-2">
+                        <span className="text-xs text-gray-300">
+                          Proxy username
+                        </span>
+                        <input
+                          type="text"
+                          value={playwrightSettings.proxyUsername}
+                          onChange={(event) =>
+                            setPlaywrightSettings((prev) => ({
+                              ...prev,
+                              proxyUsername: event.target.value,
+                            }))
+                          }
+                          disabled={!playwrightSettings.proxyEnabled}
+                          className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:text-gray-500"
+                        />
+                      </label>
+                      <label className="block space-y-2">
+                        <span className="text-xs text-gray-300">
+                          Proxy password
+                        </span>
+                        <input
+                          type="password"
+                          value={playwrightSettings.proxyPassword}
+                          onChange={(event) =>
+                            setPlaywrightSettings((prev) => ({
+                              ...prev,
+                              proxyPassword: event.target.value,
+                            }))
+                          }
+                          disabled={!playwrightSettings.proxyEnabled}
+                          placeholder={
+                            activeConnection?.playwrightProxyHasPassword
+                              ? "Saved (leave blank to keep)"
+                              : ""
+                          }
+                          className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white placeholder:text-gray-500 disabled:cursor-not-allowed disabled:text-gray-500"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                  <div className="pt-2">
+                    <div className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                      Device simulation
+                    </div>
+                    <label className="mt-3 flex items-center justify-between gap-4 rounded-md border border-gray-800 bg-gray-950 px-3 py-2">
+                      <span className="text-xs text-gray-300">
+                        Emulate device profile
+                      </span>
+                      <input
+                        type="checkbox"
+                        className="size-4 accent-emerald-400"
+                        checked={playwrightSettings.emulateDevice}
+                        onChange={(event) =>
+                          setPlaywrightSettings((prev) => ({
+                            ...prev,
+                            emulateDevice: event.target.checked,
+                          }))
+                        }
+                      />
+                    </label>
+                    <div
+                      className={`mt-3 ${
+                        playwrightSettings.emulateDevice ? "" : "opacity-50"
+                      }`}
+                      title={
+                        playwrightSettings.emulateDevice
+                          ? undefined
+                          : "Enable device emulation to edit this setting."
+                      }
+                    >
+                      <label className="block space-y-2">
+                        <span className="text-xs text-gray-300">
+                          Device profile
+                        </span>
+                        <select
+                          value={playwrightSettings.deviceName}
+                          onChange={(event) =>
+                            setPlaywrightSettings((prev) => ({
+                              ...prev,
+                              deviceName: event.target.value,
+                            }))
+                          }
+                          disabled={!playwrightSettings.emulateDevice}
+                          className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:text-gray-500"
+                        >
+                          {deviceOptions.map((device) => (
+                            <option key={device.value} value={device.value}>
+                              {device.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  </div>
+                    <button
+                      className="w-full rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
+                      type="button"
+                      onClick={handleSavePlaywrightSettings}
+                    >
+                      Save Playwright settings
+                    </button>
                     <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-400">
-                      Settings are UI-only for now. Hook these into your
-                      Playwright runner when you are ready.
+                      Settings are saved per connection and used during
+                      Playwright runs.
                     </div>
                   </div>
                 </div>
@@ -760,10 +1277,113 @@ export default function IntegrationsPage() {
               </button>
             </div>
             <div className="space-y-3 text-sm text-gray-300">
-              <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-emerald-100">
-                {testSuccessMessage}
+              <div className="max-h-64 overflow-y-auto rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-emerald-100">
+                <p className="whitespace-pre-wrap break-words">
+                  {testSuccessMessage}
+                </p>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {showSessionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-3xl rounded-lg bg-gray-950 p-6 shadow-lg">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-white">
+                  Session cookies
+                </h3>
+                <p className="text-xs text-gray-400">
+                  Stored Playwright session details.
+                </p>
+              </div>
+              <button
+                className="text-sm text-gray-400 hover:text-white"
+                type="button"
+                onClick={() => setShowSessionModal(false)}
+              >
+                Close
+              </button>
+            </div>
+            {isSessionLoading ? (
+              <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4 text-sm text-gray-400">
+                Loading session details...
+              </div>
+            ) : sessionError ? (
+              <div className="rounded-md border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-100">
+                {sessionError}
+              </div>
+            ) : (
+              <div className="space-y-4 text-sm text-gray-200">
+                <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300">
+                  <span className="text-gray-400">Obtained:</span>{" "}
+                  {sessionUpdatedAt
+                    ? new Date(sessionUpdatedAt).toLocaleString()
+                    : "—"}
+                </div>
+                <div className="max-h-96 space-y-3 overflow-y-auto">
+                  {sessionCookies.length === 0 ? (
+                    <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4 text-sm text-gray-400">
+                      No cookies stored.
+                    </div>
+                  ) : (
+                    sessionCookies.map((cookie, index) => (
+                      <div
+                        key={`${cookie.name || "cookie"}-${index}`}
+                        className="rounded-md border border-gray-800 bg-gray-950/60 p-3"
+                      >
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-300">
+                          <span className="rounded-full bg-gray-800 px-2 py-0.5 text-gray-200">
+                            {cookie.name || "unknown"}
+                          </span>
+                          <span className="text-gray-500">
+                            {cookie.domain || "—"}
+                          </span>
+                        </div>
+                        <div className="mt-2 grid gap-2 text-xs text-gray-400 md:grid-cols-2">
+                          <p>
+                            <span className="text-gray-500">Value:</span>{" "}
+                            <span className="break-all text-gray-200">
+                              {cookie.value || "—"}
+                            </span>
+                          </p>
+                          <p>
+                            <span className="text-gray-500">Path:</span>{" "}
+                            {cookie.path || "—"}
+                          </p>
+                          <p>
+                            <span className="text-gray-500">Expires:</span>{" "}
+                            {cookie.expires
+                              ? new Date(cookie.expires * 1000).toLocaleString()
+                              : "Session"}
+                          </p>
+                          <p>
+                            <span className="text-gray-500">Secure:</span>{" "}
+                            {cookie.secure ? "Yes" : "No"}
+                          </p>
+                          <p>
+                            <span className="text-gray-500">HttpOnly:</span>{" "}
+                            {cookie.httpOnly ? "Yes" : "No"}
+                          </p>
+                          <p>
+                            <span className="text-gray-500">SameSite:</span>{" "}
+                            {cookie.sameSite || "—"}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                {sessionOrigins.length > 0 && (
+                  <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3">
+                    <p className="text-xs text-gray-400">
+                      Origins stored: {sessionOrigins.length}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

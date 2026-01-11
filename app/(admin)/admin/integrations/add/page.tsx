@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 const traderaIntegration = {
@@ -12,6 +13,7 @@ const traderaIntegration = {
 
 export default function IntegrationsAddPage() {
   const router = useRouter();
+  const [traderaCount, setTraderaCount] = useState(0);
 
   const handleAdd = async () => {
     const res = await fetch("/api/integrations", {
@@ -29,6 +31,19 @@ export default function IntegrationsAddPage() {
     }
     router.push("/admin/integrations");
   };
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const res = await fetch("/api/integrations");
+      if (!res.ok) return;
+      const data = (await res.json()) as { id: string; slug: string }[];
+      const count = data.filter((integration) => integration.slug === "tradera")
+        .length;
+      setTraderaCount(count);
+    };
+
+    void fetchCounts();
+  }, []);
 
   return (
     <div className="container mx-auto py-10">
@@ -61,9 +76,14 @@ export default function IntegrationsAddPage() {
                   {traderaIntegration.description}
                 </p>
               </div>
-              <span className="rounded-full bg-emerald-500/20 px-2 py-1 text-xs text-emerald-200">
-                Marketplace
-              </span>
+              <div className="flex flex-col items-end gap-2">
+                <span className="rounded-full bg-emerald-500/20 px-2 py-1 text-xs text-emerald-200">
+                  Marketplace
+                </span>
+                <span className="rounded-full bg-gray-800 px-2 py-1 text-xs text-gray-300">
+                  Added: {traderaCount}
+                </span>
+              </div>
             </div>
             <div className="mt-6 flex justify-end">
               <button

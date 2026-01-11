@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { decryptSecret, encryptSecret } from "@/lib/utils/encryption";
-import { chromium } from "playwright";
+import { chromium, devices } from "playwright";
 
 /**
  * POST /api/integrations/[id]/connections/[connectionId]/test
@@ -78,13 +78,111 @@ export async function POST(
       }
     }
 
-    pushStep("Launching Playwright", "pending", "Starting Chromium");
-    const browser = await chromium.launch({ headless: false, slowMo: 50 });
-    const context = storedState
-      ? await browser.newContext({ storageState: storedState })
-      : await browser.newContext();
+    const headless = connection.playwrightHeadless;
+    const slowMo = connection.playwrightSlowMo;
+    const defaultTimeout = connection.playwrightTimeout;
+    const navigationTimeout = connection.playwrightNavigationTimeout;
+    const humanizeMouse = connection.playwrightHumanizeMouse;
+    const mouseJitter = Math.max(0, connection.playwrightMouseJitter);
+    const clickDelayMin = Math.max(0, connection.playwrightClickDelayMin);
+    const clickDelayMax = Math.max(clickDelayMin, connection.playwrightClickDelayMax);
+    const inputDelayMin = Math.max(0, connection.playwrightInputDelayMin);
+    const inputDelayMax = Math.max(inputDelayMin, connection.playwrightInputDelayMax);
+    const actionDelayMin = Math.max(0, connection.playwrightActionDelayMin);
+    const actionDelayMax = Math.max(actionDelayMin, connection.playwrightActionDelayMax);
+    const proxyEnabled = connection.playwrightProxyEnabled;
+    const proxyServer = connection.playwrightProxyServer?.trim() ?? "";
+    const proxyUsername = connection.playwrightProxyUsername?.trim() ?? "";
+    const proxyPassword = connection.playwrightProxyPassword
+      ? decryptSecret(connection.playwrightProxyPassword)
+      : "";
+    const emulateDevice = connection.playwrightEmulateDevice;
+    const deviceName = connection.playwrightDeviceName ?? "";
+
+    if (proxyEnabled && !proxyServer) {
+      return fail("Proxy setup", "Proxy is enabled but no proxy server is set.");
+    }
+    if (proxyEnabled && proxyServer) {
+      pushStep("Proxy setup", "ok", `Using proxy ${proxyServer}`);
+    }
+
+    const deviceProfile =
+      emulateDevice && deviceName && devices[deviceName]
+        ? devices[deviceName]
+        : null;
+    if (emulateDevice && deviceName && !deviceProfile) {
+      pushStep(
+        "Device emulation",
+        "failed",
+        `Unknown device profile: ${deviceName}`
+      );
+    } else if (emulateDevice && deviceProfile) {
+      pushStep("Device emulation", "ok", `Using ${deviceName}`);
+    }
+    pushStep(
+      "Launching Playwright",
+      "pending",
+      `Starting Chromium (headless=${headless ? "on" : "off"}, slowMo=${slowMo}ms)`
+    );
+    const browser = await chromium.launch({
+      headless,
+      slowMo,
+      proxy: proxyEnabled && proxyServer
+        ? {
+            server: proxyServer,
+            username: proxyUsername || undefined,
+            password: proxyPassword || undefined,
+          }
+        : undefined,
+    });
+    const contextOptions = {
+      ...(deviceProfile ? deviceProfile : {}),
+      ...(storedState ? { storageState: storedState } : {}),
+    };
+    const context = await browser.newContext(contextOptions);
+    context.setDefaultTimeout(defaultTimeout);
+    context.setDefaultNavigationTimeout(navigationTimeout);
     const page = await context.newPage();
     try {
+      const randomBetween = (min: number, max: number) =>
+        Math.floor(Math.random() * (max - min + 1)) + min;
+      const humanizedPause = async (min = actionDelayMin, max = actionDelayMax) => {
+        if (!humanizeMouse) return;
+        const delay = randomBetween(min, max);
+        if (delay > 0) {
+          await page.waitForTimeout(delay);
+        }
+      };
+      const humanizedClick = async (locator: ReturnType<typeof page.locator>) => {
+        if (!humanizeMouse) {
+          await locator.click();
+          return;
+        }
+        const box = await locator.boundingBox();
+        if (!box) {
+          await locator.click();
+          return;
+        }
+        const offsetX = randomBetween(-mouseJitter, mouseJitter);
+        const offsetY = randomBetween(-mouseJitter, mouseJitter);
+        const targetX = box.x + box.width / 2 + offsetX;
+        const targetY = box.y + box.height / 2 + offsetY;
+        const steps = randomBetween(8, 18);
+        await page.mouse.move(targetX, targetY, { steps });
+        const delay = randomBetween(clickDelayMin, clickDelayMax);
+        await page.mouse.click(targetX, targetY, { delay });
+      };
+      const humanizedFill = async (
+        locator: ReturnType<typeof page.locator>,
+        value: string
+      ) => {
+        await locator.fill(value);
+        if (!humanizeMouse) return;
+        const delay = randomBetween(inputDelayMin, inputDelayMax);
+        if (delay > 0) {
+          await page.waitForTimeout(delay);
+        }
+      };
       const successSelector = [
         'a[href*="logout"]',
         'a:has-text("Logga ut")',
@@ -113,6 +211,7 @@ export async function POST(
           waitUntil: "domcontentloaded",
           timeout: 30000,
         });
+        await humanizedPause();
         const loggedIn = await page
           .locator(successSelector)
           .first()
@@ -136,6 +235,7 @@ export async function POST(
           pushStep("Opening login page", "pending", url);
           await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
           await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => undefined);
+          await humanizedPause();
           const formLocator = page.locator("#sign-in-form").first();
           if ((await formLocator.count()) > 0) {
             pushStep("Opening login page", "ok", `Login page loaded: ${url}`);
@@ -194,7 +294,8 @@ export async function POST(
             .first();
           if ((await signInTrigger.count()) > 0) {
             pushStep("Locating login form", "pending", "Opening sign-in modal");
-            await signInTrigger.click();
+            await humanizedClick(signInTrigger);
+            await humanizedPause();
           }
           await page.waitForSelector(formSelector, { state: "attached", timeout: 20000 });
           await page.locator(formSelector).first().waitFor({ state: "visible", timeout: 20000 });
@@ -229,8 +330,9 @@ export async function POST(
             "Login fields not found on Tradera page"
           );
         }
-        await usernameField.locator.fill(connection.username);
-        await passwordField.locator.fill(decryptedPassword);
+        await humanizedFill(usernameField.locator, connection.username);
+        await humanizedFill(passwordField.locator, decryptedPassword);
+        await humanizedPause();
         pushStep(
           "Filling credentials",
           "ok",
@@ -244,7 +346,8 @@ export async function POST(
         if ((await stayLoggedIn.count()) > 0) {
           const isChecked = await stayLoggedIn.isChecked().catch(() => false);
           if (!isChecked) {
-            await stayLoggedIn.check().catch(() => undefined);
+            await humanizedClick(stayLoggedIn);
+            await humanizedPause();
             pushStep("Keep me logged in", "ok", "Enabled stay logged in");
           } else {
             pushStep("Keep me logged in", "ok", "Already enabled");
@@ -264,8 +367,9 @@ export async function POST(
         }
         await Promise.allSettled([
           page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 15000 }),
-          submitButton.locator.click(),
+          humanizedClick(submitButton.locator),
         ]);
+        await humanizedPause();
         pushStep("Submitting login", "ok", `Clicked ${submitButton.selector}`);
 
         await page.waitForTimeout(1000);

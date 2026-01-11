@@ -101,6 +101,24 @@ model IntegrationConnection {
   password      String
   playwrightStorageState String?
   playwrightStorageStateUpdatedAt DateTime?
+  playwrightHeadless Boolean @default(true)
+  playwrightSlowMo Int @default(50)
+  playwrightTimeout Int @default(15000)
+  playwrightNavigationTimeout Int @default(30000)
+  playwrightHumanizeMouse Boolean @default(false)
+  playwrightMouseJitter Int @default(6)
+  playwrightClickDelayMin Int @default(30)
+  playwrightClickDelayMax Int @default(120)
+  playwrightInputDelayMin Int @default(20)
+  playwrightInputDelayMax Int @default(120)
+  playwrightActionDelayMin Int @default(200)
+  playwrightActionDelayMax Int @default(900)
+  playwrightProxyEnabled Boolean @default(false)
+  playwrightProxyServer String?
+  playwrightProxyUsername String?
+  playwrightProxyPassword String?
+  playwrightEmulateDevice Boolean @default(false)
+  playwrightDeviceName String?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 

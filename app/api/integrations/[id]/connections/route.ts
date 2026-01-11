@@ -33,6 +33,24 @@ export async function GET(
         updatedAt: connection.updatedAt,
         hasPlaywrightStorageState: Boolean(connection.playwrightStorageState),
         playwrightStorageStateUpdatedAt: connection.playwrightStorageStateUpdatedAt,
+        playwrightHeadless: connection.playwrightHeadless,
+        playwrightSlowMo: connection.playwrightSlowMo,
+        playwrightTimeout: connection.playwrightTimeout,
+        playwrightNavigationTimeout: connection.playwrightNavigationTimeout,
+        playwrightHumanizeMouse: connection.playwrightHumanizeMouse,
+        playwrightMouseJitter: connection.playwrightMouseJitter,
+        playwrightClickDelayMin: connection.playwrightClickDelayMin,
+        playwrightClickDelayMax: connection.playwrightClickDelayMax,
+        playwrightInputDelayMin: connection.playwrightInputDelayMin,
+        playwrightInputDelayMax: connection.playwrightInputDelayMax,
+        playwrightActionDelayMin: connection.playwrightActionDelayMin,
+        playwrightActionDelayMax: connection.playwrightActionDelayMax,
+        playwrightProxyEnabled: connection.playwrightProxyEnabled,
+        playwrightProxyServer: connection.playwrightProxyServer,
+        playwrightProxyUsername: connection.playwrightProxyUsername,
+        playwrightProxyHasPassword: Boolean(connection.playwrightProxyPassword),
+        playwrightEmulateDevice: connection.playwrightEmulateDevice,
+        playwrightDeviceName: connection.playwrightDeviceName,
       }))
     );
   } catch (_error) {
@@ -70,6 +88,7 @@ export async function POST(
         name: data.name,
         username: data.username,
         password: encryptSecret(data.password),
+        playwrightHeadless: true,
       },
     });
     return NextResponse.json(connection);

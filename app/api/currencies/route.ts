@@ -3,9 +3,18 @@ import { z } from "zod";
 import prisma from "@/lib/prisma";
 
 const currencySchema = z.object({
-  code: z.enum(["USD", "EUR", "PLN", "GBP"]),
+  code: z.enum(["USD", "EUR", "PLN", "GBP", "SEK"]),
   name: z.string().trim().min(1),
+  symbol: z.string().trim().min(1).optional(),
 });
+
+const defaultCurrencies = [
+  { code: "USD", name: "US Dollar", symbol: "$" },
+  { code: "EUR", name: "Euro", symbol: "€" },
+  { code: "PLN", name: "Polish Zloty", symbol: "zł" },
+  { code: "GBP", name: "British Pound", symbol: "£" },
+  { code: "SEK", name: "Swedish Krona", symbol: "kr" },
+];
 
 /**
  * GET /api/currencies
@@ -13,6 +22,10 @@ const currencySchema = z.object({
  */
 export async function GET() {
   try {
+    await prisma.currency.createMany({
+      data: defaultCurrencies,
+      skipDuplicates: true,
+    });
     const currencies = await prisma.currency.findMany({
       orderBy: { code: "asc" },
     });

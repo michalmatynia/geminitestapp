@@ -6,6 +6,7 @@ import prisma from "@/lib/prisma";
 const catalogUpdateSchema = z.object({
   name: z.string().trim().min(1).optional(),
   description: z.string().trim().optional().nullable(),
+  languageIds: z.array(z.string().trim().min(1)).optional(),
 });
 
 /**
@@ -51,7 +52,37 @@ export async function PUT(
         description: data.description ?? null,
       },
     });
-    return NextResponse.json(catalog);
+    if (data.languageIds) {
+      const uniqueIds = Array.from(new Set(data.languageIds));
+      const existing = await prisma.language.findMany({
+        where: { id: { in: uniqueIds } },
+        select: { id: true },
+      });
+      const existingIds = new Set(existing.map((entry) => entry.id));
+      const validIds = uniqueIds.filter((languageId) =>
+        existingIds.has(languageId)
+      );
+      await prisma.catalogLanguage.deleteMany({ where: { catalogId: id } });
+      if (validIds.length > 0) {
+        await prisma.catalogLanguage.createMany({
+          data: validIds.map((languageId) => ({
+            catalogId: id,
+            languageId,
+          })),
+        });
+      }
+    }
+    const catalogWithLanguages = await prisma.catalog.findUnique({
+      where: { id },
+      include: {
+        languages: {
+          include: {
+            language: true,
+          },
+        },
+      },
+    });
+    return NextResponse.json(catalogWithLanguages ?? catalog);
   } catch (error: unknown) {
     const errorId = randomUUID();
     if (error instanceof z.ZodError) {

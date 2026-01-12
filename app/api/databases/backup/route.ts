@@ -21,25 +21,24 @@ export async function POST() {
     const backupPath = path.join(backupsDir, backupName);
     const logPath = path.join(backupsDir, `${backupName}.log`);
 
+    const command = getPgDumpCommand();
+    const args = ["-Fc", "--file", backupPath, "--dbname", databaseUrl];
+    const commandString = `${command} ${args.join(" ")}`;
+
     let stdout = "";
     let stderr = "";
     try {
-      const result = await execFileAsync(getPgDumpCommand(), [
-        "-Fc",
-        "--file",
-        backupPath,
-        "--dbname",
-        databaseUrl,
-      ]);
+      const result = await execFileAsync(command, args);
       stdout = result.stdout;
       stderr = result.stderr;
 
-      await fs.writeFile(logPath, `stdout:\n${stdout}\n\nstderr:\n${stderr}`);
+      const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
+      await fs.writeFile(logPath, logContent);
 
       return NextResponse.json({
         message: "Backup created",
         backupName,
-        log: `stdout:\n${stdout}\n\nstderr:\n${stderr}`,
+        log: logContent,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -48,7 +47,8 @@ export async function POST() {
       stdout = cause?.stdout || "";
       stderr = cause?.stderr || "";
 
-      await fs.writeFile(logPath, `stdout:\n${stdout}\n\nstderr:\n${stderr}`);
+      const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
+      await fs.writeFile(logPath, logContent);
 
       const details = stderr.trim();
       const stat = await fs.stat(backupPath).catch(() => null);
@@ -57,14 +57,14 @@ export async function POST() {
           message: "Backup created with warnings",
           backupName,
           warning: details || message,
-          log: `stdout:\n${stdout}\n\nstderr:\n${stderr}`,
+          log: logContent,
         });
       }
 
       return NextResponse.json(
         {
           error: details || message,
-          log: `stdout:\n${stdout}\n\nstderr:\n${stderr}`,
+          log: logContent,
         },
         { status: 500 }
       );

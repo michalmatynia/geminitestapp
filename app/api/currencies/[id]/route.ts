@@ -3,8 +3,9 @@ import { z } from "zod";
 import prisma from "@/lib/prisma";
 
 const currencySchema = z.object({
-  code: z.enum(["USD", "EUR", "PLN", "GBP"]),
+  code: z.enum(["USD", "EUR", "PLN", "GBP", "SEK"]),
   name: z.string().trim().min(1),
+  symbol: z.string().trim().min(1).optional(),
 });
 
 /**

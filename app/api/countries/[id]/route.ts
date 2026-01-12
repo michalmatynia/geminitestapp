@@ -3,8 +3,9 @@ import { z } from "zod";
 import prisma from "@/lib/prisma";
 
 const countrySchema = z.object({
-  code: z.enum(["PL", "DE", "GB", "US"]),
+  code: z.enum(["PL", "DE", "GB", "US", "SE"]),
   name: z.string().trim().min(1),
+  currencyIds: z.array(z.string()).optional(),
 });
 
 /**
@@ -19,11 +20,34 @@ export async function PUT(
     const { id } = await params;
     const body = await req.json();
     const data = countrySchema.parse(body);
-    const country = await prisma.country.update({
-      where: { id },
-      data: {
-        ...data,
-      },
+    const { currencyIds, ...countryData } = data;
+    const country = await prisma.$transaction(async (tx) => {
+      const updated = await tx.country.update({
+        where: { id },
+        data: {
+          ...countryData,
+        },
+      });
+
+      if (currencyIds) {
+        await tx.countryCurrency.deleteMany({ where: { countryId: id } });
+        if (currencyIds.length > 0) {
+          await tx.countryCurrency.createMany({
+            data: currencyIds.map((currencyId) => ({ countryId: id, currencyId })),
+          });
+        }
+      }
+
+      return tx.country.findUnique({
+        where: { id: updated.id },
+        include: {
+          currencies: {
+            include: {
+              currency: true,
+            },
+          },
+        },
+      });
     });
     return NextResponse.json(country);
   } catch (error: unknown) {

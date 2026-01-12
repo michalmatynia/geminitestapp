@@ -82,26 +82,31 @@ export async function POST(req: Request) {
 
     stage = "pg_restore";
     const logPath = path.join(backupsDir, `${backupName}.restore.log`);
+    const command = getPgRestoreCommand();
+    const args = [
+      "--data-only",
+      "--disable-triggers",
+      "--no-owner",
+      "--no-privileges",
+      "--single-transaction",
+      "--dbname",
+      databaseUrl,
+      backupPath,
+    ];
+    const commandString = `${command} ${args.join(" ")}`;
+
     let stdout = "";
     let stderr = "";
     try {
-      const result = await execFileAsync(getPgRestoreCommand(), [
-        "--data-only",
-        "--disable-triggers",
-        "--no-owner",
-        "--no-privileges",
-        "--single-transaction",
-        "--dbname",
-        databaseUrl,
-        backupPath,
-      ]);
+      const result = await execFileAsync(command, args);
       stdout = result.stdout;
       stderr = result.stderr;
     } catch (error) {
       const cause = (error as { cause?: { stdout?: string; stderr?: string } });
       stdout = cause?.stdout || "";
       stderr = cause?.stderr || "";
-      await fs.writeFile(logPath, `stdout:\n${stdout}\n\nstderr:\n${stderr}`);
+      const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
+      await fs.writeFile(logPath, logContent);
       console.error("[databases][restore] Failed to restore backup", {
         errorId,
         stage,
@@ -115,13 +120,13 @@ export async function POST(req: Request) {
           errorId,
           stage,
           backupName,
-          log: `stdout:\n${stdout}\n\nstderr:\n${stderr}`,
+          log: logContent,
         },
         { status: 500 }
       );
     }
-
-    await fs.writeFile(logPath, `stdout:\n${stdout}\n\nstderr:\n${stderr}`);
+    const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
+    await fs.writeFile(logPath, logContent);
 
     stage = "log";
     const restoreLogPath = path.join(backupsDir, "restore-log.json");
@@ -144,7 +149,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       message: "Backup restored",
-      log: `stdout:\n${stdout}\n\nstderr:\n${stderr}`,
+      log: logContent,
     });
   } catch (error) {
     console.error("[databases][restore] Failed to restore backup", {

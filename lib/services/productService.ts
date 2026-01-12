@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 // This service encapsulates all business logic for managing products.
 
 import fs from "fs/promises";
@@ -141,25 +142,32 @@ async function getProductById(id: string) {
  * @returns The newly created product.
  */
 async function createProduct(formData: FormData) {
-  const validatedData = productCreateSchema.parse(
-    Object.fromEntries(formData.entries())
-  );
-  const product = await prisma.product.create({
-    data: validatedData,
-  });
+  logger.log("Creating product...");
+  try {
+    const validatedData = productCreateSchema.parse(
+      Object.fromEntries(formData.entries())
+    );
+    logger.log("Validated data:", validatedData);
+    const product = await prisma.product.create({
+      data: validatedData,
+    });
 
-  const images = formData.getAll("images") as File[];
-  const imageFileIds = formData.getAll("imageFileIds") as string[];
-  const catalogIds = normalizeCatalogIds(formData.getAll("catalogIds"));
-  await linkImagesToProduct(
-    product.id,
-    images,
-    imageFileIds,
-    validatedData.sku
-  );
-  await updateProductCatalogs(product.id, catalogIds);
+    const images = formData.getAll("images") as File[];
+    const imageFileIds = formData.getAll("imageFileIds") as string[];
+    const catalogIds = normalizeCatalogIds(formData.getAll("catalogIds"));
+    await linkImagesToProduct(
+      product.id,
+      images,
+      imageFileIds,
+      validatedData.sku
+    );
+    await updateProductCatalogs(product.id, catalogIds);
 
-  return await getProductById(product.id);
+    return await getProductById(product.id);
+  } catch (error) {
+    logger.error("Error creating product:", error);
+    throw error;
+  }
 }
 
 /**
@@ -169,27 +177,34 @@ async function createProduct(formData: FormData) {
  * @returns The updated product, or null if not found.
  */
 async function updateProduct(id: string, formData: FormData) {
-  const productExists = await prisma.product.findUnique({ where: { id } });
-  if (!productExists) return null;
+  logger.log(`Updating product ${id}...`);
+  try {
+    const productExists = await prisma.product.findUnique({ where: { id } });
+    if (!productExists) return null;
 
-  const validatedData = productUpdateSchema.parse(
-    Object.fromEntries(formData.entries())
-  );
-  await prisma.product.update({
-    where: { id },
-    data: validatedData,
-  });
+    const validatedData = productUpdateSchema.parse(
+      Object.fromEntries(formData.entries())
+    );
+    logger.log("Validated data:", validatedData);
+    await prisma.product.update({
+      where: { id },
+      data: validatedData,
+    });
 
-  const images = formData.getAll("images") as File[];
-  const imageFileIds = formData.getAll("imageFileIds") as string[];
-  const catalogIds = normalizeCatalogIds(formData.getAll("catalogIds"));
-  await linkImagesToProduct(id, images, imageFileIds, validatedData.sku);
-  if (validatedData.sku) {
-    await moveLinkedTempImagesToSku(id, validatedData.sku);
+    const images = formData.getAll("images") as File[];
+    const imageFileIds = formData.getAll("imageFileIds") as string[];
+    const catalogIds = normalizeCatalogIds(formData.getAll("catalogIds"));
+    await linkImagesToProduct(id, images, imageFileIds, validatedData.sku);
+    if (validatedData.sku) {
+      await moveLinkedTempImagesToSku(id, validatedData.sku);
+    }
+    await updateProductCatalogs(id, catalogIds);
+
+    return await getProductById(id);
+  } catch (error) {
+    logger.error("Error updating product:", error);
+    throw error;
   }
-  await updateProductCatalogs(id, catalogIds);
-
-  return await getProductById(id);
 }
 
 /**
@@ -198,9 +213,15 @@ async function updateProduct(id: string, formData: FormData) {
  * @returns The deleted product, or null if not found.
  */
 async function deleteProduct(id: string) {
-  const productExists = await prisma.product.findUnique({ where: { id } });
-  if (!productExists) return null;
-  return await prisma.product.delete({ where: { id } });
+  logger.log(`Deleting product ${id}...`);
+  try {
+    const productExists = await prisma.product.findUnique({ where: { id } });
+    if (!productExists) return null;
+    return await prisma.product.delete({ where: { id } });
+  } catch (error) {
+    logger.error("Error deleting product:", error);
+    throw error;
+  }
 }
 
 /**
@@ -210,47 +231,53 @@ async function deleteProduct(id: string) {
  * @returns The duplicated product, or null if not found.
  */
 async function duplicateProduct(id: string, sku: string) {
-  const product = await prisma.product.findUnique({ where: { id } });
-  if (!product) return null;
+  logger.log(`Duplicating product ${id} with new SKU ${sku}...`);
+  try {
+    const product = await prisma.product.findUnique({ where: { id } });
+    if (!product) return null;
 
-  const trimmedSku = sku.trim();
-  const skuPattern = /^[A-Z0-9]+$/;
-  if (!trimmedSku) {
-    throw new Error("SKU is required");
+    const trimmedSku = sku.trim();
+    const skuPattern = /^[A-Z0-9]+$/;
+    if (!trimmedSku) {
+      throw new Error("SKU is required");
+    }
+    if (!skuPattern.test(trimmedSku)) {
+      throw new Error("SKU must use uppercase letters and numbers only");
+    }
+
+    const existingSku = await prisma.product.findUnique({
+      where: { sku: trimmedSku },
+    });
+    if (existingSku) {
+      throw new Error("SKU already exists");
+    }
+
+    const duplicatedProduct = await prisma.product.create({
+      data: {
+        sku: trimmedSku,
+        name_en: product.name_en,
+        name_pl: product.name_pl,
+        name_de: product.name_de,
+        description_en: product.description_en,
+        description_pl: product.description_pl,
+        description_de: product.description_de,
+        supplierName: product.supplierName,
+        supplierLink: product.supplierLink,
+        priceComment: product.priceComment,
+        stock: product.stock,
+        price: product.price,
+        sizeLength: product.sizeLength,
+        sizeWidth: product.sizeWidth,
+        weight: product.weight,
+        length: product.length,
+      },
+    });
+
+    return await getProductById(duplicatedProduct.id);
+  } catch (error) {
+    logger.error("Error duplicating product:", error);
+    throw error;
   }
-  if (!skuPattern.test(trimmedSku)) {
-    throw new Error("SKU must use uppercase letters and numbers only");
-  }
-
-  const existingSku = await prisma.product.findUnique({
-    where: { sku: trimmedSku },
-  });
-  if (existingSku) {
-    throw new Error("SKU already exists");
-  }
-
-  const duplicatedProduct = await prisma.product.create({
-    data: {
-      sku: trimmedSku,
-      name_en: product.name_en,
-      name_pl: product.name_pl,
-      name_de: product.name_de,
-      description_en: product.description_en,
-      description_pl: product.description_pl,
-      description_de: product.description_de,
-      supplierName: product.supplierName,
-      supplierLink: product.supplierLink,
-      priceComment: product.priceComment,
-      stock: product.stock,
-      price: product.price,
-      sizeLength: product.sizeLength,
-      sizeWidth: product.sizeWidth,
-      weight: product.weight,
-      length: product.length,
-    },
-  });
-
-  return await getProductById(duplicatedProduct.id);
 }
 
 /**

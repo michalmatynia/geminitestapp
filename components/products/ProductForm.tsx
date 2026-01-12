@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
+import { useSearchParams } from "next/navigation";
 
 import ProductImageManager from "./ProductImageManager";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useProductFormContext } from "@/lib/context/ProductFormContext";
 import { ProductFormData } from "@/lib/types";
+import { logger } from "@/lib/logger";
+import DebugPanel from "@/components/DebugPanel";
 
 interface ProductFormProps {
   submitButtonText: string;
@@ -40,15 +43,26 @@ export default function ProductForm({
     catalogsError,
     selectedCatalogIds,
     toggleCatalog,
+    filteredLanguages,
+    generationError,
+    setGenerationError,
   } = useProductFormContext();
   const [generating, setGenerating] = useState(false);
   const { register, getValues, setValue } = useFormContext<ProductFormData>();
+  const searchParams = useSearchParams();
+  const [isDebugOpen, setIsDebugOpen] = useState(false);
+
+  useEffect(() => {
+    setIsDebugOpen(searchParams.get("debug") === "true");
+  }, [searchParams]);
 
   /**
    * Calls the API to generate a product description based on the current form data.
    */
   const handleGenerateDescription = async () => {
+    logger.log("Generating description...");
     setGenerating(true);
+    setGenerationError(null);
     const productData = getValues();
     // Derive imageUrls from imageSlots
     const imageUrls = imageSlots
@@ -71,10 +85,10 @@ export default function ProductForm({
       const { description } = (await res.json()) as { description: string };
       setValue("description_en", description);
     } catch (error) {
-      console.error("Failed to generate description:", error);
+      logger.error("Failed to generate description:", error);
       const message =
         error instanceof Error ? error.message : "Failed to generate description.";
-      alert(message);
+      setGenerationError(message);
     } finally {
       setGenerating(false);
     }
@@ -82,6 +96,7 @@ export default function ProductForm({
 
   return (
     <form onSubmit={handleSubmit}>
+      {isDebugOpen && <DebugPanel />}
       <Tabs defaultValue="general" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="general">General</TabsTrigger>
@@ -108,11 +123,18 @@ export default function ProductForm({
 
           <Tabs defaultValue="english-name" className="mb-4">
             <TabsList>
-              <TabsTrigger value="english-name">English Name</TabsTrigger>
-              <TabsTrigger value="polish-name">Polish Name</TabsTrigger>
-              <TabsTrigger value="german-name">German Name</TabsTrigger>
+              {filteredLanguages.some((language) => language.code === "EN") && (
+                <TabsTrigger value="english-name">English Name</TabsTrigger>
+              )}
+              {filteredLanguages.some((language) => language.code === "PL") && (
+                <TabsTrigger value="polish-name">Polish Name</TabsTrigger>
+              )}
+              {filteredLanguages.some((language) => language.code === "DE") && (
+                <TabsTrigger value="german-name">German Name</TabsTrigger>
+              )}
             </TabsList>
-            <TabsContent value="english-name">
+            {filteredLanguages.some((language) => language.code === "EN") && (
+              <TabsContent value="english-name">
               <Label htmlFor="name_en">English Name</Label>
               <Input
                 id="name_en"
@@ -124,8 +146,10 @@ export default function ProductForm({
                   {errors.name_en.message}
                 </p>
               )}
-            </TabsContent>
-            <TabsContent value="polish-name">
+              </TabsContent>
+            )}
+            {filteredLanguages.some((language) => language.code === "PL") && (
+              <TabsContent value="polish-name">
               <Label htmlFor="name_pl">Polish Name</Label>
               <Input
                 id="name_pl"
@@ -137,8 +161,10 @@ export default function ProductForm({
                   {errors.name_pl.message}
                 </p>
               )}
-            </TabsContent>
-            <TabsContent value="german-name">
+              </TabsContent>
+            )}
+            {filteredLanguages.some((language) => language.code === "DE") && (
+              <TabsContent value="german-name">
               <Label htmlFor="name_de">German Name</Label>
               <Input
                 id="name_de"
@@ -150,7 +176,8 @@ export default function ProductForm({
                   {errors.name_de.message}
                 </p>
               )}
-            </TabsContent>
+              </TabsContent>
+            )}
           </Tabs>
 
           <div className="mb-4">
@@ -227,17 +254,24 @@ export default function ProductForm({
           </div>
           <Tabs defaultValue="english-description" className="mb-4">
             <TabsList>
-              <TabsTrigger value="english-description">
-                English Description
-              </TabsTrigger>
-              <TabsTrigger value="polish-description">
-                Polish Description
-              </TabsTrigger>
-              <TabsTrigger value="german-description">
-                German Description
-              </TabsTrigger>
+              {filteredLanguages.some((language) => language.code === "EN") && (
+                <TabsTrigger value="english-description">
+                  English Description
+                </TabsTrigger>
+              )}
+              {filteredLanguages.some((language) => language.code === "PL") && (
+                <TabsTrigger value="polish-description">
+                  Polish Description
+                </TabsTrigger>
+              )}
+              {filteredLanguages.some((language) => language.code === "DE") && (
+                <TabsTrigger value="german-description">
+                  German Description
+                </TabsTrigger>
+              )}
             </TabsList>
-            <TabsContent value="english-description">
+            {filteredLanguages.some((language) => language.code === "EN") && (
+              <TabsContent value="english-description">
               <Label htmlFor="description_en">English Description</Label>
               <Textarea
                 id="description_en"
@@ -248,6 +282,17 @@ export default function ProductForm({
                 <p className="text-red-500 text-sm mt-1" role="alert">
                   {errors.description_en.message}
                 </p>
+              )}
+              {generationError && (
+                <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                  {generationError}
+                  <Button
+                    onClick={() => setGenerationError(null)}
+                    className="ml-4 bg-transparent text-red-200 hover:bg-red-500/20"
+                  >
+                    Dismiss
+                  </Button>
+                </div>
               )}
               <Button
                 type="button"
@@ -261,8 +306,10 @@ export default function ProductForm({
               >
                 {generating ? "Generating..." : "Generate Description"}
               </Button>
-            </TabsContent>
-            <TabsContent value="polish-description">
+              </TabsContent>
+            )}
+            {filteredLanguages.some((language) => language.code === "PL") && (
+              <TabsContent value="polish-description">
               <Label htmlFor="description_pl">Polish Description</Label>
               <Textarea
                 id="description_pl"
@@ -274,8 +321,10 @@ export default function ProductForm({
                   {errors.description_pl.message}
                 </p>
               )}
-            </TabsContent>
-            <TabsContent value="german-description">
+              </TabsContent>
+            )}
+            {filteredLanguages.some((language) => language.code === "DE") && (
+              <TabsContent value="german-description">
               <Label htmlFor="description_de">German Description</Label>
               <Textarea
                 id="description_de"
@@ -287,7 +336,8 @@ export default function ProductForm({
                   {errors.description_de.message}
                 </p>
               )}
-            </TabsContent>
+              </TabsContent>
+            )}
           </Tabs>
           <div className="mb-4">
             <Label htmlFor="supplierName">Supplier Name</Label>

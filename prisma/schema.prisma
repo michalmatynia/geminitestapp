@@ -57,6 +57,7 @@ enum CurrencyCode {
   EUR
   PLN
   GBP
+  SEK
 }
 
 enum CountryCode {
@@ -64,16 +65,19 @@ enum CountryCode {
   DE
   GB
   US
+  SE
 }
 
 model Currency {
   id        String       @id @default(cuid())
   code      CurrencyCode @unique
   name      String
+  symbol    String?
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
   priceGroups PriceGroup[]
+  countries   CountryCurrency[]
 }
 
 model Country {
@@ -82,6 +86,9 @@ model Country {
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  languages LanguageCountry[]
+  currencies CountryCurrency[]
 }
 
 model Integration {
@@ -126,6 +133,18 @@ model IntegrationConnection {
   integration   Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
 }
 
+model Language {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  nativeName String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  catalogs  CatalogLanguage[]
+  countries LanguageCountry[]
+}
+
 model PriceGroup {
   id               String      @id @default(cuid())
   groupId          String      @unique
@@ -164,6 +183,7 @@ model Catalog {
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   products    ProductCatalog[]
+  languages   CatalogLanguage[]
 }
 
 model ProductCatalog {
@@ -175,6 +195,39 @@ model ProductCatalog {
   catalog     Catalog @relation(fields: [catalogId], references: [id], onDelete: Cascade)
 
   @@id([productId, catalogId])
+}
+
+model CatalogLanguage {
+  catalogId  String
+  languageId String
+  assignedAt DateTime @default(now())
+
+  catalog    Catalog  @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+  language   Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+
+  @@id([catalogId, languageId])
+}
+
+model LanguageCountry {
+  languageId String
+  countryId  String
+  assignedAt DateTime @default(now())
+
+  language   Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  country    Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  @@id([languageId, countryId])
+}
+
+model CountryCurrency {
+  countryId  String
+  currencyId String
+  assignedAt DateTime @default(now())
+
+  country    Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  currency   Currency @relation(fields: [currencyId], references: [id], onDelete: Cascade)
+
+  @@id([countryId, currencyId])
 }
 
 model Slug {

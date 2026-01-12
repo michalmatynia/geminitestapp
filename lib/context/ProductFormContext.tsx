@@ -1,6 +1,12 @@
 "use client";
 
-import type { Catalog, ImageFile, ProductImage } from "@prisma/client";
+import type {
+  Catalog,
+  CatalogLanguage,
+  Language,
+  ImageFile,
+  ProductImage,
+} from "@prisma/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import {
@@ -11,6 +17,7 @@ import {
   BaseSyntheticEvent,
   useRef,
   useCallback,
+  useMemo,
 } from "react";
 import {
   UseFormRegister,
@@ -68,6 +75,9 @@ interface ProductFormContextType {
   catalogsError: string | null;
   selectedCatalogIds: string[];
   toggleCatalog: (catalogId: string) => void;
+  filteredLanguages: Language[];
+  generationError: string | null;
+  setGenerationError: (error: string | null) => void;
 }
 
 export const ProductFormContext = createContext<ProductFormContextType | null>(
@@ -139,6 +149,9 @@ export function ProductFormProvider({
   const [catalogsLoading, setCatalogsLoading] = useState(true);
   const [catalogsError, setCatalogsError] = useState<string | null>(null);
   const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
+  const [languages, setLanguages] = useState<Language[]>([]);
+  const [catalogLanguages, setCatalogLanguages] = useState<CatalogLanguage[]>([]);
+  const [generationError, setGenerationError] = useState<string | null>(null);
 
   // State for managing all 15 image slots
   const [imageSlots, setImageSlots] = useState<(ProductImageSlot | null)[]>(
@@ -184,9 +197,20 @@ export function ProductFormProvider({
           const suffix = payload?.errorId ? ` (Error ID: ${payload.errorId})` : "";
           throw new Error(`${message}${suffix}`);
         }
-        const data = (await res.json()) as Catalog[];
+        const data = (await res.json()) as (Catalog & {
+          languages?: (CatalogLanguage & { language: Language })[];
+        })[];
         if (!cancelled) {
           setCatalogs(data);
+          setCatalogLanguages(
+            data.flatMap((catalog) =>
+              catalog.languages?.map((entry) => ({
+                catalogId: entry.catalogId,
+                languageId: entry.languageId,
+                assignedAt: entry.assignedAt,
+              })) ?? []
+            )
+          );
         }
       } catch (error) {
         console.error("Failed to load catalogs:", error);
@@ -206,6 +230,39 @@ export function ProductFormProvider({
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadLanguages = async () => {
+      try {
+        const res = await fetch("/api/languages");
+        if (!res.ok) return;
+        const data = (await res.json()) as Language[];
+        if (!cancelled) {
+          setLanguages(data);
+        }
+      } catch (error) {
+        console.error("Failed to load languages:", error);
+      }
+    };
+    void loadLanguages();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filteredLanguages = useMemo(() => {
+    if (selectedCatalogIds.length === 0) return languages;
+    const allowedLanguageIds = new Set(
+      catalogLanguages
+        .filter((entry) => selectedCatalogIds.includes(entry.catalogId))
+        .map((entry) => entry.languageId)
+    );
+    if (allowedLanguageIds.size === 0) {
+      return languages;
+    }
+    return languages.filter((language) => allowedLanguageIds.has(language.id));
+  }, [languages, catalogLanguages, selectedCatalogIds]);
 
   // Effect to clean up object URLs when component unmounts or imageSlots change
   useEffect(() => {
@@ -504,6 +561,9 @@ export function ProductFormProvider({
           catalogsError,
           selectedCatalogIds,
           toggleCatalog,
+          filteredLanguages,
+          generationError,
+          setGenerationError,
         }}
       >
         {children}

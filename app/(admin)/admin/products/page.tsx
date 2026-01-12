@@ -23,6 +23,9 @@ import {
   useProductFormContext,
 } from "@/lib/context/ProductFormContext";
 import { PlusIcon } from "lucide-react";
+import { logger } from "@/lib/logger";
+import DebugPanel from "@/components/DebugPanel";
+import { useSearchParams } from "next/navigation";
 
 type Catalog = {
   id: string;
@@ -38,12 +41,14 @@ function DataTableFooter<TData>({
   catalogs,
   catalogsLoading,
   catalogsError,
+  setActionError,
 }: {
   table: ReactTable<TData>;
   setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;
   catalogs: Catalog[];
   catalogsLoading: boolean;
   catalogsError: string | null;
+  setActionError: (error: string | null) => void;
 }) {
   const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
   const [bulkMode, setBulkMode] = useState<BulkCatalogMode>("add");
@@ -52,12 +57,13 @@ function DataTableFooter<TData>({
   const hasSelection = selectedCount > 0;
 
   const handleMassDelete = async () => {
+    logger.log("Mass delete initiated.");
     const selectedProductIds = table
       .getSelectedRowModel()
       .rows.map((row) => (row.original as ProductWithImages).id);
 
     if (selectedProductIds.length === 0) {
-      alert("Please select products to delete.");
+      setActionError("Please select products to delete.");
       return;
     }
 
@@ -88,38 +94,31 @@ function DataTableFooter<TData>({
           } catch {
             errorIdSuffix = "";
           }
-          alert(`Some products could not be deleted.${errorIdSuffix}`);
+          setActionError(`Some products could not be deleted.${errorIdSuffix}`);
         } else {
           alert("Selected products deleted successfully.");
         }
         table.setRowSelection({}); // Clear selection after deletion
         setRefreshTrigger((prev) => prev + 1); // Refresh the product list
       } catch (error) {
-        console.error("Error during mass deletion:", error);
-        alert("An error occurred during deletion.");
+        logger.error("Error during mass deletion:", error);
+        setActionError("An error occurred during deletion.");
       }
     }
   };
 
-  const toggleCatalog = (catalogId: string) => {
-    setSelectedCatalogIds((prev) =>
-      prev.includes(catalogId)
-        ? prev.filter((id) => id !== catalogId)
-        : [...prev, catalogId]
-    );
-  };
-
   const handleBulkCatalogAssign = async () => {
+    logger.log("Bulk catalog assignment initiated.");
     const selectedProductIds = table
       .getSelectedRowModel()
       .rows.map((row) => (row.original as ProductWithImages).id);
 
     if (selectedProductIds.length === 0) {
-      alert("Please select products to update catalogs.");
+      setActionError("Please select products to update catalogs.");
       return;
     }
     if (selectedCatalogIds.length === 0) {
-      alert("Select at least one catalog.");
+      setActionError("Select at least one catalog.");
       return;
     }
     const actionLabel =
@@ -150,15 +149,15 @@ function DataTableFooter<TData>({
         const payload = (await res.json()) as { error?: string; errorId?: string };
         const message = payload?.error || "Failed to update catalogs.";
         const errorIdSuffix = payload?.errorId ? ` (Error ID: ${payload.errorId})` : "";
-        alert(`${message}${errorIdSuffix}`);
+        setActionError(`${message}${errorIdSuffix}`);
         return;
       }
       alert("Catalogs updated successfully.");
       table.setRowSelection({});
       setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
-      console.error("Error during bulk catalog assignment:", error);
-      alert("An error occurred while updating catalogs.");
+      logger.error("Error during bulk catalog assignment:", error);
+      setActionError("An error occurred while updating catalogs.");
     }
   };
 
@@ -289,6 +288,7 @@ function EditProductModalContent({
 }
 
 export default function AdminPage() {
+  const searchParams = useSearchParams();
   const [data, setData] = useState<ProductWithImages[]>([]);
   // The refreshTrigger state is used to force a re-fetch of the products
   // when a product is deleted.
@@ -304,12 +304,18 @@ export default function AdminPage() {
   const [editingProduct, setEditingProduct] = useState<ProductWithImages | null>(null);
   const [lastEditedId, setLastEditedId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [catalogs, setCatalogs] = useState<Catalog[]>([]);
   const [catalogsLoading, setCatalogsLoading] = useState(true);
   const [catalogsError, setCatalogsError] = useState<string | null>(null);
   const [nameLocale, setNameLocale] = useState<
     "name_en" | "name_pl" | "name_de"
   >("name_en");
+  const [isDebugOpen, setIsDebugOpen] = useState(false);
+
+  useEffect(() => {
+    setIsDebugOpen(searchParams.get("debug") === "true");
+  }, [searchParams]);
 
   useEffect(() => {
     const stored = window.localStorage.getItem("productListNameLocale");
@@ -350,16 +356,17 @@ export default function AdminPage() {
   };
 
   const handleOpenCreateModal = async () => {
+    logger.log("Open create modal initiated.");
     const skuInput = window.prompt("Enter a new unique SKU:");
     if (skuInput === null) return;
     const sku = skuInput.trim().toUpperCase();
     const skuPattern = /^[A-Z0-9]+$/;
     if (!sku) {
-      alert("SKU is required.");
+      setActionError("SKU is required.");
       return;
     }
     if (!skuPattern.test(sku)) {
-      alert("SKU must use uppercase letters and numbers only.");
+      setActionError("SKU must use uppercase letters and numbers only.");
       return;
     }
     try {
@@ -368,18 +375,18 @@ export default function AdminPage() {
         const payload = (await res.json()) as { error?: string; errorId?: string };
         const message = payload?.error || "Failed to validate SKU";
         const errorIdSuffix = payload?.errorId ? ` (Error ID: ${payload.errorId})` : "";
-        alert(`${message}${errorIdSuffix}`);
+        setActionError(`${message}${errorIdSuffix}`);
         return;
       }
       const products = (await res.json()) as ProductWithImages[];
       const skuExists = products.some((product) => product.sku === sku);
       if (skuExists) {
-        alert("SKU already exists.");
+        setActionError("SKU already exists.");
         return;
       }
     } catch (error) {
-      console.error("Failed to validate SKU:", error);
-      alert("Failed to validate SKU. Please try again.");
+      logger.error("Failed to validate SKU:", error);
+      setActionError("Failed to validate SKU. Please try again.");
       return;
     }
     setInitialSku(sku);
@@ -399,7 +406,7 @@ export default function AdminPage() {
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Failed to load products";
-        console.error("Failed to load products:", error);
+        logger.error("Failed to load products:", error);
         if (!cancelled) {
           setLoadError(message);
         }
@@ -428,7 +435,7 @@ export default function AdminPage() {
           setCatalogs(data);
         }
       } catch (error) {
-        console.error("Failed to load catalogs:", error);
+        logger.error("Failed to load catalogs:", error);
         if (!cancelled) {
           setCatalogsError(
             error instanceof Error ? error.message : "Failed to load catalogs"
@@ -461,6 +468,7 @@ export default function AdminPage() {
 
   return (
     <div className="container mx-auto py-10">
+      {isDebugOpen && <DebugPanel />}
       <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -496,6 +504,17 @@ export default function AdminPage() {
         {loadError && (
           <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
             {loadError}
+          </div>
+        )}
+        {actionError && (
+          <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {actionError}
+            <Button
+              onClick={() => setActionError(null)}
+              className="ml-4 bg-transparent text-red-200 hover:bg-red-500/20"
+            >
+              Dismiss
+            </Button>
           </div>
         )}
         <div className="mb-4 flex space-x-4">
@@ -559,6 +578,7 @@ export default function AdminPage() {
               catalogs={catalogs}
               catalogsLoading={catalogsLoading}
               catalogsError={catalogsError}
+              setActionError={setActionError}
             />
           )}
         />

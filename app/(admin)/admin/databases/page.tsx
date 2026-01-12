@@ -4,6 +4,8 @@ import { useEffect, useState, useRef } from "react";
 import { DataTable } from "@/components/data-table";
 import { getDatabaseColumns, DatabaseInfo } from "@/components/database-columns";
 import { Button } from "@/components/ui/button";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 async function getBackups(): Promise<DatabaseInfo[]> {
   const res = await fetch("/api/databases/backups");
@@ -23,9 +25,9 @@ const LogModal = ({
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
     <div className="rounded-lg bg-gray-900 p-6 shadow-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto">
       <h2 className="text-xl font-bold mb-4">Operation Log</h2>
-      <pre className="bg-gray-950 p-4 rounded text-sm text-white whitespace-pre-wrap">
+      <SyntaxHighlighter language="bash" style={atomOneDark}>
         {content}
-      </pre>
+      </SyntaxHighlighter>
       <div className="mt-6 text-right">
         <Button onClick={onClose}>Close</Button>
       </div>

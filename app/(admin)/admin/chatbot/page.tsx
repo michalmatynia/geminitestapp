@@ -70,6 +70,47 @@ const readErrorResponse = async (res: Response) => {
   }
 };
 
+const fetchWithTimeout = async (
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  timeoutMs = 15000
+) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+const safeLocalStorageGet = (key: string) => {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const safeLocalStorageSet = (key: string, value: string) => {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // ignore storage failures
+  }
+};
+
+const safeLocalStorageRemove = (key: string) => {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // ignore storage failures
+  }
+};
+
+const isAbortError = (error: unknown) =>
+  error instanceof DOMException && error.name === "AbortError";
+
 const renderInline = (text: string) => {
   const parts = text.split("**");
   return parts.map((part, index) =>
@@ -186,15 +227,18 @@ export default function ChatbotPage() {
   const loadAgentRuns = async () => {
     setAgentRunsLoading(true);
     try {
-      const res = await fetch("/api/chatbot/agent");
+      const res = await fetchWithTimeout("/api/chatbot/agent");
       if (!res.ok) {
         throw new Error("Failed to load agent runs.");
       }
       const data = (await res.json()) as { runs?: AgentRunSummary[] };
       setAgentRuns(data.runs ?? []);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to load agent runs.";
+      const message = isAbortError(error)
+        ? "Loading agent runs timed out."
+        : error instanceof Error
+          ? error.message
+          : "Failed to load agent runs.";
       toast(message, { variant: "error" });
     } finally {
       setAgentRunsLoading(false);
@@ -206,7 +250,7 @@ export default function ChatbotPage() {
     const loadModels = async () => {
       setModelLoading(true);
       try {
-        const res = await fetch("/api/chatbot");
+        const res = await fetchWithTimeout("/api/chatbot");
         if (!res.ok) {
           const error = (await res.json()) as { error?: string; errorId?: string };
           const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
@@ -220,7 +264,11 @@ export default function ChatbotPage() {
           setModel(models[0]);
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Failed to load models.";
+        const message = isAbortError(error)
+          ? "Loading models timed out."
+          : error instanceof Error
+            ? error.message
+            : "Failed to load models.";
         toast(message, { variant: "error" });
       } finally {
         if (isMounted) {
@@ -238,7 +286,11 @@ export default function ChatbotPage() {
     let isMounted = true;
     const loadContext = async () => {
       try {
-        const res = await fetch("/api/settings", { cache: "no-store" });
+        const res = await fetchWithTimeout(
+          "/api/settings",
+          { cache: "no-store" },
+          12000
+        );
         if (!res.ok) {
           const error = (await res.json()) as { error?: string };
           throw new Error(error.error || "Failed to load context.");
@@ -281,8 +333,11 @@ export default function ChatbotPage() {
           setGlobalContext(merged);
         }
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Failed to load context.";
+        const message = isAbortError(error)
+          ? "Loading context timed out."
+          : error instanceof Error
+            ? error.message
+            : "Failed to load context.";
         toast(message, { variant: "error" });
       } finally {
         if (isMounted) {
@@ -309,15 +364,17 @@ export default function ChatbotPage() {
           setInitError(null);
         }
         const sessionParam = searchParams.get("session");
-        const stored = window.localStorage.getItem("chatbotSessionId");
+        const stored = safeLocalStorageGet("chatbotSessionId");
         let activeSessionId = sessionParam || stored;
 
         const fetchMessages = async (sessionId: string) => {
           if (isMounted) {
             setMessagesLoading(true);
           }
-          const res = await fetch(
-            `/api/chatbot/sessions/${sessionId}/messages`
+          const res = await fetchWithTimeout(
+            `/api/chatbot/sessions/${sessionId}/messages`,
+            {},
+            15000
           );
           if (!res.ok) {
             const error = await readErrorResponse(res);
@@ -341,11 +398,15 @@ export default function ChatbotPage() {
         };
 
         const createSession = async () => {
-          const res = await fetch("/api/chatbot/sessions", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({}),
-          });
+          const res = await fetchWithTimeout(
+            "/api/chatbot/sessions",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({}),
+            },
+            12000
+          );
           if (!res.ok) {
             const error = await readErrorResponse(res);
             const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
@@ -357,7 +418,11 @@ export default function ChatbotPage() {
 
         if (!activeSessionId) {
           try {
-            const listRes = await fetch("/api/chatbot/sessions");
+            const listRes = await fetchWithTimeout(
+              "/api/chatbot/sessions",
+              {},
+              12000
+            );
             if (listRes.ok) {
               const listData = (await listRes.json()) as {
                 sessions?: Array<{ id: string }>;
@@ -373,7 +438,7 @@ export default function ChatbotPage() {
           try {
             if (isMounted) {
               setSessionId(activeSessionId);
-              window.localStorage.setItem("chatbotSessionId", activeSessionId);
+              safeLocalStorageSet("chatbotSessionId", activeSessionId);
               setSessionLoading(false);
             }
             await fetchMessages(activeSessionId);
@@ -385,7 +450,7 @@ export default function ChatbotPage() {
                 ? (error as Error & { status?: number }).status
                 : undefined;
             if (status === 404 && stored === activeSessionId) {
-              window.localStorage.removeItem("chatbotSessionId");
+              safeLocalStorageRemove("chatbotSessionId");
               activeSessionId = null;
             } else if (status === 404 && sessionParam === activeSessionId) {
               activeSessionId = null;
@@ -398,13 +463,16 @@ export default function ChatbotPage() {
         activeSessionId = await createSession();
         if (!isMounted) return;
         setSessionId(activeSessionId);
-        window.localStorage.setItem("chatbotSessionId", activeSessionId);
+        safeLocalStorageSet("chatbotSessionId", activeSessionId);
         toast("New chat session created", { variant: "success" });
         setSessionLoading(false);
         await fetchMessages(activeSessionId);
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Failed to load chat session.";
+        const message = isAbortError(error)
+          ? "Loading chat session timed out."
+          : error instanceof Error
+            ? error.message
+            : "Failed to load chat session.";
         setInitError(message);
         toast(message, { variant: "error" });
       } finally {
@@ -444,11 +512,19 @@ export default function ChatbotPage() {
     let searchNote = "";
     if (webSearchEnabled && trimmed) {
       try {
-        const res = await fetch("/api/search", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: trimmed, limit: 5, provider: searchProvider }),
-        });
+        const res = await fetchWithTimeout(
+          "/api/search",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              query: trimmed,
+              limit: 5,
+              provider: searchProvider,
+            }),
+          },
+          12000
+        );
         if (res.ok) {
           const data = (await res.json()) as {
             results?: Array<{ title: string; url: string; description: string }>;
@@ -465,8 +541,11 @@ export default function ChatbotPage() {
           throw new Error(error.error || "Search failed.");
         }
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Web search failed.";
+        const message = isAbortError(error)
+          ? "Web search timed out."
+          : error instanceof Error
+            ? error.message
+            : "Web search failed.";
         toast(message, { variant: "error" });
       }
     }
@@ -486,14 +565,18 @@ export default function ChatbotPage() {
 
     try {
       if (sessionId) {
-        await fetch(`/api/chatbot/sessions/${sessionId}/messages`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            role: "user",
-            content: `${trimmed}${searchNote}${attachmentNote}`.trim(),
-          }),
-        });
+        await fetchWithTimeout(
+          `/api/chatbot/sessions/${sessionId}/messages`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              role: "user",
+              content: `${trimmed}${searchNote}${attachmentNote}`.trim(),
+            }),
+          },
+          12000
+        );
       }
       const trimmedGlobal = globalContext.trim();
       const trimmedLocal = useLocalContext ? localContext.trim() : "";
@@ -537,35 +620,47 @@ export default function ChatbotPage() {
       }
       const startedAt = Date.now();
       const res = agentModeEnabled
-        ? await fetch("/api/chatbot/agent", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              prompt: trimmed,
-              model,
-              tools,
-              searchProvider,
-              agentBrowser,
-            }),
-          })
+        ? await fetchWithTimeout(
+            "/api/chatbot/agent",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                prompt: trimmed,
+                model,
+                tools,
+                searchProvider,
+                agentBrowser,
+              }),
+            },
+            20000
+          )
         : hasFiles
-        ? await fetch("/api/chatbot", {
-            method: "POST",
-            body: (() => {
-              const formData = new FormData();
-              formData.append("messages", JSON.stringify(payloadMessages));
-              formData.append("model", model);
-              attachments.forEach((file) => {
-                formData.append("files", file, file.name);
-              });
-              return formData;
-            })(),
-          })
-        : await fetch("/api/chatbot", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ messages: payloadMessages, model }),
-          });
+          ? await fetchWithTimeout(
+              "/api/chatbot",
+              {
+                method: "POST",
+                body: (() => {
+                  const formData = new FormData();
+                  formData.append("messages", JSON.stringify(payloadMessages));
+                  formData.append("model", model);
+                  attachments.forEach((file) => {
+                    formData.append("files", file, file.name);
+                  });
+                  return formData;
+                })(),
+              },
+              20000
+            )
+          : await fetchWithTimeout(
+              "/api/chatbot",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ messages: payloadMessages, model }),
+              },
+              20000
+            );
 
       if (!res.ok) {
         const error = await readErrorResponse(res);
@@ -595,22 +690,30 @@ export default function ChatbotPage() {
           },
         ]);
         if (sessionId) {
-          await fetch(`/api/chatbot/sessions/${sessionId}/messages`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ role: "assistant", content: agentReply }),
-          });
+          await fetchWithTimeout(
+            `/api/chatbot/sessions/${sessionId}/messages`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ role: "assistant", content: agentReply }),
+            },
+            12000
+          );
         }
         void loadAgentRuns();
       } else {
         const data = (await res.json()) as { message: string };
         setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
         if (sessionId) {
-          await fetch(`/api/chatbot/sessions/${sessionId}/messages`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ role: "assistant", content: data.message }),
-          });
+          await fetchWithTimeout(
+            `/api/chatbot/sessions/${sessionId}/messages`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ role: "assistant", content: data.message }),
+            },
+            12000
+          );
         }
       }
       if (attachments.length > 0) {
@@ -636,7 +739,11 @@ export default function ChatbotPage() {
           },
         }));
       }
-      const message = error instanceof Error ? error.message : "Chatbot error.";
+      const message = isAbortError(error)
+        ? "Chatbot request timed out."
+        : error instanceof Error
+          ? error.message
+          : "Chatbot error.";
       toast(message, { variant: "error" });
     } finally {
       setIsSending(false);
@@ -864,7 +971,7 @@ export default function ChatbotPage() {
                     onClick={async () => {
                       setModelLoading(true);
                       try {
-                        const res = await fetch("/api/chatbot");
+                        const res = await fetchWithTimeout("/api/chatbot");
                         if (!res.ok) {
                           const error = (await res.json()) as {
                             error?: string;
@@ -883,8 +990,9 @@ export default function ChatbotPage() {
                         }
                         toast("Model list refreshed", { variant: "success" });
                       } catch (error) {
-                        const message =
-                          error instanceof Error
+                        const message = isAbortError(error)
+                          ? "Loading models timed out."
+                          : error instanceof Error
                             ? error.message
                             : "Failed to load models.";
                         toast(message, { variant: "error" });
@@ -1031,18 +1139,23 @@ export default function ChatbotPage() {
                           size="sm"
                           onClick={async () => {
                             try {
-                              const res = await fetch(`/api/chatbot/agent/${run.id}`, {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ action: "stop" }),
-                              });
+                              const res = await fetchWithTimeout(
+                                `/api/chatbot/agent/${run.id}`,
+                                {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ action: "stop" }),
+                                },
+                                12000
+                              );
                               if (!res.ok) {
                                 throw new Error("Failed to stop agent run.");
                               }
                               void loadAgentRuns();
                             } catch (error) {
-                              const message =
-                                error instanceof Error
+                              const message = isAbortError(error)
+                                ? "Stopping agent run timed out."
+                                : error instanceof Error
                                   ? error.message
                                   : "Failed to stop agent run.";
                               toast(message, { variant: "error" });

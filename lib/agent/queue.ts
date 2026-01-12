@@ -31,7 +31,14 @@ async function processAgentQueue() {
   const state = getState();
   if (state.running) return;
   state.running = true;
+  const debugEnabled = process.env.DEBUG_CHATBOT === "true";
   try {
+    if (!("chatbotAgentRun" in prisma)) {
+      if (debugEnabled) {
+        console.warn("[chatbot][agent][queue] Agent tables not initialized.");
+      }
+      return;
+    }
     const nextRun = await prisma.chatbotAgentRun.findFirst({
       where: { status: "queued" },
       orderBy: { createdAt: "asc" },
@@ -56,6 +63,14 @@ async function processAgentQueue() {
       await runAgentControlLoop(nextRun.id);
     } catch (error) {
       await logAgentFailure(nextRun.id, error);
+    }
+  } catch (error) {
+    const errorId = randomUUID();
+    if (debugEnabled) {
+      console.error("[chatbot][agent][queue] Failed to process queue", {
+        errorId,
+        error,
+      });
     }
   } finally {
     state.running = false;

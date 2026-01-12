@@ -5,9 +5,11 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
+import ModalShell from "@/components/ui/modal-shell";
 import {
   Select,
   SelectContent,
@@ -33,6 +35,7 @@ type ChatbotDebugState = {
     searchUsed: boolean;
     searchProvider?: string;
     agentBrowser?: string;
+    agentRunHeadless?: boolean;
   };
   lastResponse?: {
     ok: boolean;
@@ -42,15 +45,40 @@ type ChatbotDebugState = {
   };
 };
 
-type AgentRunSummary = {
+type AgentSnapshot = {
   id: string;
-  prompt: string;
-  model: string | null;
-  status: string;
-  requiresHumanIntervention: boolean;
-  searchProvider?: string | null;
-  agentBrowser?: string | null;
+  url: string;
+  title: string | null;
+  domText: string;
+  screenshotData: string | null;
+  screenshotPath: string | null;
+  mouseX: number | null;
+  mouseY: number | null;
+  viewportWidth: number | null;
+  viewportHeight: number | null;
   createdAt: string;
+};
+
+type AgentAuditLog = {
+  id: string;
+  message: string;
+  metadata?: Record<string, unknown> | null;
+  createdAt: string;
+};
+
+type AgentBrowserLog = {
+  id: string;
+  level: string;
+  message: string;
+  createdAt: string;
+};
+
+type AgentPlanStep = {
+  id: string;
+  title: string;
+  status: "pending" | "running" | "completed" | "failed";
+  snapshotId?: string | null;
+  logCount?: number | null;
 };
 
 const readErrorResponse = async (res: Response) => {
@@ -253,6 +281,28 @@ export default function ChatbotPage() {
   const [agentModeEnabled, setAgentModeEnabled] = useState(false);
   const [searchProvider, setSearchProvider] = useState("serpapi");
   const [agentBrowser, setAgentBrowser] = useState("chromium");
+  const [agentRunHeadless, setAgentRunHeadless] = useState(true);
+  const [latestAgentRunId, setLatestAgentRunId] = useState<string | null>(null);
+  const [latestAgentRunStatus, setLatestAgentRunStatus] = useState<string | null>(
+    null
+  );
+  const [agentPreviewSnapshot, setAgentPreviewSnapshot] =
+    useState<AgentSnapshot | null>(null);
+  const [agentPreviewStatus, setAgentPreviewStatus] = useState<
+    "idle" | "connecting" | "live" | "error"
+  >("idle");
+  const [highlightedSnapshotId, setHighlightedSnapshotId] = useState<
+    string | null
+  >(null);
+  const [agentControlUrl, setAgentControlUrl] = useState("");
+  const [agentControlBusy, setAgentControlBusy] = useState(false);
+  const [agentPlanSteps, setAgentPlanSteps] = useState<AgentPlanStep[]>([]);
+  const [stepDetailsOpen, setStepDetailsOpen] = useState(false);
+  const [stepDetailsLoading, setStepDetailsLoading] = useState(false);
+  const [stepDetailsTitle, setStepDetailsTitle] = useState("");
+  const [stepDetailsSnapshot, setStepDetailsSnapshot] =
+    useState<AgentSnapshot | null>(null);
+  const [stepDetailsLogs, setStepDetailsLogs] = useState<AgentBrowserLog[]>([]);
   const [toolSelectValue, setToolSelectValue] = useState("add");
   const [globalContext, setGlobalContext] = useState("");
   const [localContext, setLocalContext] = useState("");
@@ -262,8 +312,6 @@ export default function ChatbotPage() {
   const [contextLoading, setContextLoading] = useState(true);
   const [debugEnabled, setDebugEnabled] = useState(false);
   const [debugState, setDebugState] = useState<ChatbotDebugState>({});
-  const [agentRuns, setAgentRuns] = useState<AgentRunSummary[]>([]);
-  const [agentRunsLoading, setAgentRunsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [initError, setInitError] = useState<string | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -294,27 +342,6 @@ export default function ChatbotPage() {
       content: message.content,
     }));
   }, []);
-
-  const loadAgentRuns = async () => {
-    setAgentRunsLoading(true);
-    try {
-      const res = await fetchWithTimeout("/api/chatbot/agent");
-      if (!res.ok) {
-        throw new Error("Failed to load agent runs.");
-      }
-      const data = (await res.json()) as { runs?: AgentRunSummary[] };
-      setAgentRuns(data.runs ?? []);
-    } catch (error) {
-      const message = isAbortError(error)
-        ? "Loading agent runs timed out."
-        : error instanceof Error
-          ? error.message
-          : "Failed to load agent runs.";
-      toast(message, { variant: "error" });
-    } finally {
-      setAgentRunsLoading(false);
-    }
-  };
 
   useEffect(() => {
     let isMounted = true;
@@ -587,9 +614,6 @@ export default function ChatbotPage() {
     };
   }, [searchParams, toast]);
 
-  useEffect(() => {
-    void loadAgentRuns();
-  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -627,6 +651,220 @@ export default function ChatbotPage() {
     };
   }, [pollingReply, sessionId, messages.length, toast, fetchMessagesForSession]);
 
+  useEffect(() => {
+    if (!latestAgentRunId) return;
+    let isMounted = true;
+    const pollStatus = async () => {
+      try {
+        const res = await fetchWithTimeout(
+          `/api/chatbot/agent/${latestAgentRunId}`,
+          {},
+          12000
+        );
+        if (!res.ok) {
+          throw new Error("Failed to load agent run status.");
+        }
+        const data = (await res.json()) as { run?: { status?: string } };
+        if (isMounted) {
+          setLatestAgentRunStatus(data.run?.status ?? null);
+        }
+      } catch {
+        if (isMounted) {
+          setLatestAgentRunStatus("unknown");
+        }
+      }
+    };
+    void pollStatus();
+    const timer = setInterval(pollStatus, 3000);
+    return () => {
+      isMounted = false;
+      clearInterval(timer);
+    };
+  }, [latestAgentRunId]);
+
+  useEffect(() => {
+    if (!latestAgentRunId) {
+      setAgentPreviewSnapshot(null);
+      setAgentPreviewStatus("idle");
+      setAgentPlanSteps([]);
+      return;
+    }
+    setAgentPreviewStatus("connecting");
+    const source = new EventSource(
+      `/api/chatbot/agent/${latestAgentRunId}/stream`
+    );
+    source.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data) as {
+          snapshot?: AgentSnapshot | null;
+        };
+        if (payload.snapshot) {
+          setAgentPreviewSnapshot(payload.snapshot);
+          setAgentPreviewStatus("live");
+          setAgentControlUrl((prev) =>
+            prev ? prev : payload.snapshot.url || ""
+          );
+        }
+      } catch {
+        setAgentPreviewStatus("error");
+      }
+    };
+    source.onerror = () => {
+      setAgentPreviewStatus("error");
+    };
+    return () => {
+      source.close();
+    };
+  }, [latestAgentRunId]);
+
+  useEffect(() => {
+    if (!latestAgentRunId) return;
+    let isMounted = true;
+    const loadPlan = async () => {
+      try {
+        const res = await fetchWithTimeout(
+          `/api/chatbot/agent/${latestAgentRunId}/audits`,
+          {},
+          12000
+        );
+        if (!res.ok) {
+          return;
+        }
+        const data = (await res.json()) as { audits?: AgentAuditLog[] };
+        const planAudits = (data.audits ?? []).filter((audit) =>
+          Array.isArray(audit.metadata?.steps)
+        );
+        const latestPlan = planAudits[0];
+        const steps = Array.isArray(latestPlan?.metadata?.steps)
+          ? (latestPlan?.metadata?.steps as AgentPlanStep[])
+          : [];
+        const normalizedSteps = steps.map((step, index) => ({
+          ...step,
+          id: step.id || `${latestAgentRunId}-${index}`,
+        }));
+        if (isMounted) {
+          setAgentPlanSteps(normalizedSteps);
+        }
+      } catch {
+        if (isMounted) {
+          setAgentPlanSteps([]);
+        }
+      }
+    };
+    void loadPlan();
+    return () => {
+      isMounted = false;
+    };
+  }, [latestAgentRunId]);
+
+  const runAgentControl = async (
+    action: "goto" | "reload" | "snapshot",
+    overrideUrl?: string
+  ) => {
+    if (!latestAgentRunId) {
+      toast("No agent run available for control.", { variant: "error" });
+      return;
+    }
+    if (action === "goto" && !overrideUrl?.trim()) {
+      toast("Enter a URL to navigate.", { variant: "error" });
+      return;
+    }
+    setAgentControlBusy(true);
+    try {
+      const res = await fetch(`/api/chatbot/agent/${latestAgentRunId}/controls`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+          url: overrideUrl?.trim(),
+        }),
+      });
+      if (!res.ok) {
+        const error = await readErrorResponse(res);
+        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+        throw new Error(`${error.message}${suffix}`);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Control action failed.";
+      toast(message, { variant: "error" });
+    } finally {
+      setAgentControlBusy(false);
+    }
+  };
+
+  const openStepDetails = async (step: AgentPlanStep) => {
+    if (!latestAgentRunId) {
+      toast("No agent run available for step details.", { variant: "error" });
+      return;
+    }
+    setStepDetailsOpen(true);
+    setStepDetailsTitle(step.title);
+    setStepDetailsLoading(true);
+    try {
+      const snapshotPromise = step.snapshotId
+        ? fetchWithTimeout(`/api/chatbot/agent/snapshots/${step.snapshotId}`)
+        : Promise.resolve(null);
+      const logsPromise = fetchWithTimeout(
+        `/api/chatbot/agent/${latestAgentRunId}/logs?stepId=${step.id}`
+      );
+      const [snapshotRes, logsRes] = await Promise.all([snapshotPromise, logsPromise]);
+
+      if (snapshotRes && snapshotRes.ok) {
+        const data = (await snapshotRes.json()) as { snapshot?: AgentSnapshot };
+        setStepDetailsSnapshot(data.snapshot ?? null);
+      } else {
+        setStepDetailsSnapshot(null);
+      }
+
+      if (logsRes.ok) {
+        const data = (await logsRes.json()) as { logs?: AgentBrowserLog[] };
+        setStepDetailsLogs(data.logs ?? []);
+      } else {
+        setStepDetailsLogs([]);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to load step details.";
+      toast(message, { variant: "error" });
+      setStepDetailsSnapshot(null);
+      setStepDetailsLogs([]);
+    } finally {
+      setStepDetailsLoading(false);
+    }
+  };
+
+  const jumpToStepSnapshot = async (step: AgentPlanStep) => {
+    if (!step.snapshotId) {
+      toast("No snapshot captured for this step yet.", { variant: "error" });
+      return;
+    }
+    try {
+      const res = await fetchWithTimeout(
+        `/api/chatbot/agent/snapshots/${step.snapshotId}`
+      );
+      if (!res.ok) {
+        const error = await readErrorResponse(res);
+        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+        throw new Error(`${error.message}${suffix}`);
+      }
+      const data = (await res.json()) as { snapshot?: AgentSnapshot };
+      if (data.snapshot) {
+        setAgentPreviewSnapshot(data.snapshot);
+        setHighlightedSnapshotId(data.snapshot.id);
+        setTimeout(() => {
+          setHighlightedSnapshotId((current) =>
+            current === data.snapshot?.id ? null : current
+          );
+        }, 2500);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to load step snapshot.";
+      toast(message, { variant: "error" });
+    }
+  };
+
   const sendMessage = async () => {
     if (!sessionReady) {
       toast("Chat session is not ready yet.", { variant: "error" });
@@ -636,6 +874,7 @@ export default function ChatbotPage() {
     if ((!trimmed && attachments.length === 0) || isSending) {
       return;
     }
+    const wasAgentModeEnabled = agentModeEnabled;
     if (agentModeEnabled && attachments.length > 0) {
       toast("Agent mode does not support attachments yet.", { variant: "error" });
       return;
@@ -739,6 +978,7 @@ export default function ChatbotPage() {
             searchUsed: Boolean(searchNote),
             searchProvider,
             agentBrowser,
+            agentRunHeadless,
           },
         });
       }
@@ -755,6 +995,7 @@ export default function ChatbotPage() {
               tools,
               searchProvider,
               agentBrowser,
+              runHeadless: agentRunHeadless,
             }),
           },
           20000
@@ -779,6 +1020,8 @@ export default function ChatbotPage() {
 
         const data = (await res.json()) as { runId: string; status: string };
         const agentReply = `Agent mode queued a run (${data.runId}). Check the run queue for progress.`;
+        setLatestAgentRunId(data.runId);
+        setLatestAgentRunStatus(data.status);
         setMessages((prev) => [
           ...prev,
           {
@@ -789,7 +1032,6 @@ export default function ChatbotPage() {
         if (sessionId) {
           await persistSessionMessage(sessionId, "assistant", agentReply);
         }
-        void loadAgentRuns();
       } else {
         const res = await fetchWithTimeout(
           "/api/chatbot/jobs",
@@ -854,6 +1096,9 @@ export default function ChatbotPage() {
           : "Chatbot error.";
       toast(message, { variant: "error" });
     } finally {
+      if (wasAgentModeEnabled && !agentModeEnabled) {
+        setAgentModeEnabled(true);
+      }
       setIsSending(false);
     }
   };
@@ -922,17 +1167,81 @@ export default function ChatbotPage() {
             </Button>
           </div>
         </div>
-        {initError ? (
-          <div className="mb-4 rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-            <p className="font-semibold">Chat session not ready</p>
+      {initError ? (
+        <div className="mb-4 rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          <p className="font-semibold">Chat session not ready</p>
             <p className="mt-1 text-xs text-amber-200/80">
               If you recently updated the schema, run `npx prisma generate` then
               `npx prisma db push`, and restart the dev server.
             </p>
             <p className="mt-2 text-xs text-amber-200/80">{initError}</p>
           </div>
-        ) : null}
-        <div className="flex min-h-[420px] flex-col rounded-md border border-gray-800 bg-gray-900 p-4">
+      ) : null}
+      {stepDetailsOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          onClick={() => setStepDetailsOpen(false)}
+        >
+          <div onClick={(event) => event.stopPropagation()}>
+            <ModalShell
+              title={`Step details: ${stepDetailsTitle || "Agent step"}`}
+              onClose={() => setStepDetailsOpen(false)}
+              size="lg"
+            >
+              {stepDetailsLoading ? (
+                <div className="rounded-md border border-gray-800 bg-gray-950 p-4 text-sm text-gray-400">
+                  Loading step details...
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                    <p className="text-[11px] text-gray-500">Snapshot</p>
+                    <div className="mt-2 overflow-hidden rounded-md border border-gray-800 bg-gray-900">
+                      {stepDetailsSnapshot?.screenshotPath ||
+                      stepDetailsSnapshot?.screenshotData ? (
+                        <img
+                          src={
+                            stepDetailsSnapshot.screenshotPath
+                              ? `/api/chatbot/agent/${latestAgentRunId}/assets/${stepDetailsSnapshot.screenshotPath}`
+                              : stepDetailsSnapshot.screenshotData ?? ""
+                          }
+                          alt="Step snapshot"
+                          className="h-auto w-full"
+                        />
+                      ) : (
+                        <div className="flex min-h-[160px] items-center justify-center text-xs text-gray-500">
+                          No snapshot captured for this step.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                    <p className="text-[11px] text-gray-500">DOM text</p>
+                    <div className="mt-2 max-h-40 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                      {stepDetailsSnapshot?.domText || "No DOM captured."}
+                    </div>
+                  </div>
+                  <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                    <p className="text-[11px] text-gray-500">Logs</p>
+                    <div className="mt-2 max-h-40 space-y-1 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                      {stepDetailsLogs.length === 0 ? (
+                        <p className="text-gray-500">No logs for this step.</p>
+                      ) : (
+                        stepDetailsLogs.map((log) => (
+                          <p key={log.id}>
+                            [{log.level}] {log.message}
+                          </p>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </ModalShell>
+          </div>
+        </div>
+      ) : null}
+      <div className="flex min-h-[420px] flex-col rounded-md border border-gray-800 bg-gray-900 p-4">
           <div className="max-h-[50vh] min-h-[220px] space-y-4 overflow-y-auto pr-2">
             {(sessionLoading || messagesLoading) && !initError ? (
               <div className="rounded-md border border-dashed border-gray-800 bg-gray-950/60 p-6 text-center text-sm text-gray-400">
@@ -956,6 +1265,162 @@ export default function ChatbotPage() {
                 </div>
               ))
             )}
+            {latestAgentRunId ? (
+              <div className="rounded-md border border-blue-500/40 bg-blue-500/10 px-4 py-3 text-xs text-blue-100">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span>
+                    Agent job: {latestAgentRunId}
+                    {latestAgentRunStatus
+                      ? ` · ${latestAgentRunStatus.replace("_", " ")}`
+                      : ""}
+                  </span>
+                  <Link
+                    href="/admin/chatbot/jobs"
+                    className="text-[11px] text-blue-200 underline-offset-2 hover:underline"
+                  >
+                    View job details
+                  </Link>
+                </div>
+              </div>
+            ) : null}
+            {latestAgentRunId ? (
+              <div className="rounded-md border border-slate-800 bg-slate-950/60 px-4 py-3 text-xs text-slate-200">
+                <div className="flex items-center justify-between text-[11px] text-slate-400">
+                  <span>Live browser</span>
+                  <span>
+                    {agentPreviewStatus === "live"
+                      ? "Live"
+                      : agentPreviewStatus === "connecting"
+                        ? "Connecting..."
+                        : agentPreviewStatus === "error"
+                          ? "Error"
+                          : "Idle"}
+                  </span>
+                </div>
+                {agentPlanSteps.length > 0 ? (
+                  <div className="mt-3 rounded-md border border-slate-800 bg-slate-950/80 p-2">
+                    <p className="text-[11px] text-slate-400">Agent plan</p>
+                    <ol className="mt-2 space-y-1 text-[11px] text-slate-200">
+                      {agentPlanSteps.map((step) => (
+                        <li
+                          key={step.id}
+                          className="flex items-start gap-2 rounded-md border border-slate-800 px-2 py-1"
+                        >
+                          <span className="mt-[2px] size-2 rounded-full bg-slate-600" />
+                          <div className="flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-medium text-slate-100">
+                                {step.title}
+                              </span>
+                              <span
+                                className={`rounded-full px-2 py-[2px] text-[10px] uppercase tracking-wide ${
+                                  step.status === "completed"
+                                    ? "bg-emerald-500/15 text-emerald-200"
+                                    : step.status === "running"
+                                      ? "bg-blue-500/15 text-blue-200"
+                                      : step.status === "failed"
+                                        ? "bg-rose-500/15 text-rose-200"
+                                        : "bg-slate-700/40 text-slate-300"
+                                }`}
+                              >
+                                {step.status}
+                              </span>
+                              {step.snapshotId ? (
+                                <span className="rounded-full bg-slate-700/40 px-2 py-[2px] text-[10px] text-slate-300">
+                                  Snapshot
+                                </span>
+                              ) : null}
+                              {typeof step.logCount === "number" ? (
+                                <span className="rounded-full bg-slate-700/40 px-2 py-[2px] text-[10px] text-slate-300">
+                                  Logs: {step.logCount}
+                                </span>
+                              ) : null}
+                              <button
+                                type="button"
+                                className="text-[10px] uppercase tracking-wide text-emerald-200 hover:text-emerald-100"
+                                onClick={() => openStepDetails(step)}
+                              >
+                                View details
+                              </button>
+                              <button
+                                type="button"
+                                className="text-[10px] uppercase tracking-wide text-blue-200 hover:text-blue-100"
+                                onClick={() => jumpToStepSnapshot(step)}
+                              >
+                                Jump to snapshot
+                              </button>
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                ) : null}
+                <div
+                  className={`mt-3 overflow-hidden rounded-md border bg-slate-900 ${
+                    highlightedSnapshotId &&
+                    highlightedSnapshotId === agentPreviewSnapshot?.id
+                      ? "border-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.45)]"
+                      : "border-slate-800"
+                  }`}
+                >
+                  {agentPreviewSnapshot?.screenshotPath ||
+                  agentPreviewSnapshot?.screenshotData ? (
+                    <img
+                      src={
+                        agentPreviewSnapshot.screenshotPath
+                          ? `/api/chatbot/agent/${latestAgentRunId}/assets/${agentPreviewSnapshot.screenshotPath}`
+                          : agentPreviewSnapshot.screenshotData ?? ""
+                      }
+                      alt="Agent preview"
+                      className="h-auto w-full"
+                    />
+                  ) : (
+                    <div className="flex min-h-[180px] items-center justify-center text-xs text-slate-500">
+                      No preview available yet.
+                    </div>
+                  )}
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Input
+                    value={agentControlUrl}
+                    onChange={(event) => setAgentControlUrl(event.target.value)}
+                    placeholder="https://example.com"
+                    className="h-8 w-full min-w-[220px] flex-1 text-xs"
+                    disabled={agentControlBusy}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-8"
+                    onClick={() => runAgentControl("goto", agentControlUrl)}
+                    disabled={agentControlBusy}
+                  >
+                    Go
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8"
+                    onClick={() => runAgentControl("reload")}
+                    disabled={agentControlBusy}
+                  >
+                    Reload
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8"
+                    onClick={() => runAgentControl("snapshot")}
+                    disabled={agentControlBusy}
+                  >
+                    Snapshot
+                  </Button>
+                </div>
+              </div>
+            ) : null}
             <div ref={messagesEndRef} />
           </div>
           <div className="mt-4 space-y-3 border-t border-gray-800 pt-4">
@@ -1107,6 +1572,17 @@ export default function ChatbotPage() {
                         <SelectItem value="webkit">WebKit</SelectItem>
                       </SelectContent>
                     </Select>
+                    <label className="mt-3 flex items-center gap-2 text-[11px] text-gray-400">
+                      <input
+                        type="checkbox"
+                        checked={agentRunHeadless}
+                        onChange={(event) =>
+                          setAgentRunHeadless(event.target.checked)
+                        }
+                        disabled={isSending}
+                      />
+                      Run headless
+                    </label>
                   </div>
                 ) : null}
               </div>
@@ -1261,82 +1737,6 @@ export default function ChatbotPage() {
                 />
               </div>
             ) : null}
-            <div className="rounded-md border border-gray-800 bg-gray-950/70 p-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs text-gray-200">Agent runs</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void loadAgentRuns()}
-                  disabled={agentRunsLoading}
-                >
-                  {agentRunsLoading ? "Refreshing..." : "Refresh"}
-                </Button>
-              </div>
-              {agentRuns.length === 0 ? (
-                <p className="mt-2 text-xs text-gray-500">
-                  No agent runs yet. Enable Agent mode to queue one.
-                </p>
-              ) : (
-                <div className="mt-3 space-y-2 text-xs text-gray-300">
-                  {agentRuns.slice(0, 5).map((run) => (
-                    <div
-                      key={run.id}
-                      className="flex items-start justify-between gap-3 rounded-md border border-gray-800 bg-gray-900 px-3 py-2"
-                    >
-                      <div>
-                        <p className="text-[11px] text-gray-500">
-                          {run.status.replace("_", " ")}
-                          {run.requiresHumanIntervention ? " · needs input" : ""}
-                        </p>
-                        <p className="text-gray-200 line-clamp-2">{run.prompt}</p>
-                        {(run.searchProvider || run.agentBrowser) ? (
-                          <p className="text-[11px] text-gray-500">
-                            {run.searchProvider ? `Search: ${run.searchProvider}` : ""}
-                            {run.searchProvider && run.agentBrowser ? " · " : ""}
-                            {run.agentBrowser ? `Browser: ${run.agentBrowser}` : ""}
-                          </p>
-                        ) : null}
-                      </div>
-                      {["queued", "running", "waiting_human"].includes(run.status) ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={async () => {
-                            try {
-                              const res = await fetchWithTimeout(
-                                `/api/chatbot/agent/${run.id}`,
-                                {
-                                  method: "POST",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ action: "stop" }),
-                                },
-                                12000
-                              );
-                              if (!res.ok) {
-                                throw new Error("Failed to stop agent run.");
-                              }
-                              void loadAgentRuns();
-                            } catch (error) {
-                              const message = isAbortError(error)
-                                ? "Stopping agent run timed out."
-                                : error instanceof Error
-                                  ? error.message
-                                  : "Failed to stop agent run.";
-                              toast(message, { variant: "error" });
-                            }
-                          }}
-                        >
-                          Stop
-                        </Button>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
             <div className="rounded-md border border-gray-800 bg-gray-950/70 p-3">
               <div className="flex items-center justify-between">
                 <Label className="text-xs text-gray-200">Debugging</Label>

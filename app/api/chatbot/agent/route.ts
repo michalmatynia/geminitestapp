@@ -18,6 +18,25 @@ export async function GET() {
     const runs = await prisma.chatbotAgentRun.findMany({
       orderBy: { createdAt: "desc" },
       take: 20,
+      select: {
+        id: true,
+        prompt: true,
+        model: true,
+        tools: true,
+        searchProvider: true,
+        agentBrowser: true,
+        runHeadless: true,
+        status: true,
+        requiresHumanIntervention: true,
+        errorMessage: true,
+        logLines: true,
+        recordingPath: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: { browserSnapshots: true, browserLogs: true },
+        },
+      },
     });
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][agent][GET] Runs loaded", {
@@ -51,6 +70,7 @@ export async function POST(req: Request) {
       tools?: string[];
       searchProvider?: string;
       agentBrowser?: string;
+      runHeadless?: boolean;
     };
 
     if (!body.prompt?.trim()) {
@@ -66,6 +86,7 @@ export async function POST(req: Request) {
         tools: body.tools ?? [],
         searchProvider: body.searchProvider?.trim() || null,
         agentBrowser: body.agentBrowser?.trim() || null,
+        runHeadless: body.runHeadless ?? true,
       });
     }
 
@@ -76,6 +97,7 @@ export async function POST(req: Request) {
         tools: body.tools ?? [],
         searchProvider: body.searchProvider?.trim() || null,
         agentBrowser: body.agentBrowser?.trim() || null,
+        runHeadless: body.runHeadless ?? true,
         logLines: [`[${new Date().toISOString()}] Run queued.`],
       },
     });

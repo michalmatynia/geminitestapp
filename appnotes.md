@@ -1,13 +1,30 @@
 Application notes
 
+extend this next with:
+
+Per‑step tool calls and DOM snapshots tied to step IDs.
+A timeline view with timestamps.
+Step retries and manual overrides.
+
+extend and develop: 
+multi-step planning
+multi-step planning display
+tool call timeline
+human-approval gates
+task persistence/resume
+looping defenses
+
+
+enable agent mode (playwright) to collect files like actual screenshots and recordings for later preview
+
+
+During live preview in Agent Mode, when the agent carries out some actions, enable user to be able to take control at any point
+base.com with email: you@example.com password: YourPassword
+
 Product LIST
 When I create the product, a notification should pop-up that the product has been created
 
-When I click on SEnd, the job should run in the background until it's completed and the results should be written into session. I should also have the access to a job queue
 
-context length slider (I think it's a server setting on Ollama, I can skip it for now)
-
-when I click the Chatbot, I get error notification (failed to load agent runs)
 
 Catalogs 
 -default catalog, the first created catalog is always default one
@@ -27,7 +44,8 @@ categories are draggable into hierarchies
 Each category can only belong to one catalog
 
 
-Move Notification settings to a a separate Section
+context length slider (I think it's a server setting on Ollama, I can skip it for now)
+
 
 TAGS PARAMETERS Additional fields
 

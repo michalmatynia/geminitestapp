@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import {
-  ChevronLeftIcon,
-} from "lucide-react";
+import { ChevronLeftIcon } from "lucide-react";
+import dynamic from "next/dynamic";
 import { AdminLayoutProvider, useAdminLayout } from "@/lib/context/AdminLayoutContext";
-import Menu from "@/components/Menu";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+
+const Menu = dynamic(() => import("@/components/Menu"), { ssr: false });
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const { isMenuCollapsed, setIsMenuCollapsed, isProgrammaticallyCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayout();
@@ -68,6 +68,5 @@ export default function AdminLayout({
     </AdminLayoutProvider>
   );
 }
-
 
 

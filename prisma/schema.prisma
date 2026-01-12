@@ -225,11 +225,13 @@ model ChatbotAgentRun {
   tools     String[]        @default([])
   searchProvider String?
   agentBrowser String?
+  runHeadless Boolean @default(true)
   status    AgentRunStatus  @default(queued)
   logLines  String[]        @default([])
   requiresHumanIntervention Boolean @default(false)
   errorMessage String?
   memoryKey String?
+  recordingPath String?
   startedAt DateTime?
   finishedAt DateTime?
   createdAt DateTime        @default(now())
@@ -237,6 +239,8 @@ model ChatbotAgentRun {
 
   memoryItems AgentMemoryItem[]
   auditLogs   AgentAuditLog[]
+  browserSnapshots AgentBrowserSnapshot[]
+  browserLogs AgentBrowserLog[]
 }
 
 model AgentMemoryItem {
@@ -259,6 +263,37 @@ model AgentAuditLog {
   createdAt DateTime        @default(now())
 
   run       ChatbotAgentRun? @relation(fields: [runId], references: [id], onDelete: Cascade)
+}
+
+model AgentBrowserSnapshot {
+  id              String   @id @default(cuid())
+  runId           String
+  url             String
+  title           String?
+  domHtml         String
+  domText         String
+  screenshotData  String?
+  screenshotPath  String?
+  stepId          String?
+  mouseX          Int?
+  mouseY          Int?
+  viewportWidth   Int?
+  viewportHeight  Int?
+  createdAt       DateTime @default(now())
+
+  run             ChatbotAgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+}
+
+model AgentBrowserLog {
+  id        String   @id @default(cuid())
+  runId     String
+  stepId    String?
+  level     String   @default("info")
+  message   String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  run       ChatbotAgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
 }
 
 model ChatbotSession {

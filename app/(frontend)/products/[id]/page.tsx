@@ -1,5 +1,6 @@
 import { productService } from "@/lib/services/productService";
 import Image from "next/image";
+import MissingImagePlaceholder from "@/components/products/MissingImagePlaceholder";
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -12,19 +13,23 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const imageUrl =
     product.images && product.images.length > 0
       ? product.images[0].imageFile.filepath
-      : "/placeholder.svg";
+      : null;
 
   return (
     <div className="container mx-auto py-12">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         <div>
           <div className="relative h-96 w-full">
-            <Image
-              src={imageUrl}
-              alt={product.name ?? "Product image"}
-              fill
-              className="object-cover rounded-lg"
-            />
+            {imageUrl ? (
+              <Image
+                src={imageUrl}
+                alt={product.name ?? "Product image"}
+                fill
+                className="object-cover rounded-lg"
+              />
+            ) : (
+              <MissingImagePlaceholder className="h-full w-full rounded-lg" />
+            )}
           </div>
         </div>
         <div>

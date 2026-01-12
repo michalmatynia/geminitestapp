@@ -90,7 +90,7 @@ async function getProducts(filters: {
     };
   }
 
-  return await prisma.product.findMany({
+  const products = await prisma.product.findMany({
     where,
     include: {
       images: {
@@ -108,6 +108,39 @@ async function getProducts(filters: {
       createdAt: "desc",
     },
   });
+
+  return Promise.all(
+    products.map(async (product) => {
+      if (!product.images?.length) {
+        return product;
+      }
+
+      const filteredImages = await Promise.all(
+        product.images.map(async (image) => {
+          const filepath = image.imageFile?.filepath;
+          if (!filepath) {
+            return null;
+          }
+
+          if (/^(https?:|data:)/i.test(filepath)) {
+            return image;
+          }
+
+          try {
+            await fs.access(getDiskPathFromPublicPath(filepath));
+            return image;
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      return {
+        ...product,
+        images: filteredImages.filter(Boolean),
+      };
+    })
+  );
 }
 
 /**

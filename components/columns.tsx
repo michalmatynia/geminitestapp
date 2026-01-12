@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/toast";
+import MissingImagePlaceholder from "@/components/products/MissingImagePlaceholder";
 
 export type Product = {
   id: string;
@@ -191,7 +192,9 @@ export const columns: ColumnDef<Product>[] = [
           height={64}
           className="size-16 object-cover rounded-md"
         />
-      ) : null;
+      ) : (
+        <MissingImagePlaceholder className="size-16" />
+      );
     },
   },
   {

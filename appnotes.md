@@ -1,16 +1,15 @@
 Application notes
 
 Product LIST
-length width
 When I create the product, a notification should pop-up that the product has been created
 
 Catalogs 
 -default catalog, the first created catalog is always default one
 --In Edit Catalog
-Available languages in Tag box
-Default Language
-Available price groups
-Default Price group
+Available languages in Tag box (Required to have at least one)
+Default Language (required field) choose from available languages
+Available price groups(Required to have at least one)
+Default Price group (required field) choose from available languages
 
 Categories
 Add Category

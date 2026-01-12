@@ -48,9 +48,11 @@ export default function CollapsibleMenu({
           />
         )}
       </Collapsible.Trigger>
-      {!isMenuCollapsed && (
-        <Collapsible.Content className="pl-4">{children}</Collapsible.Content>
-      )}
+      <Collapsible.Content
+        className={`pl-4 ${isMenuCollapsed ? "hidden" : ""}`}
+      >
+        {children}
+      </Collapsible.Content>
     </Collapsible.Root>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -270,7 +270,30 @@ export default function ChatbotPage() {
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [creatingSession, setCreatingSession] = useState(false);
   const initStartedRef = useRef(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const [pollingReply, setPollingReply] = useState(false);
   const sessionReady = Boolean(sessionId) && !initError;
+
+  const fetchMessagesForSession = useCallback(async (activeSessionId: string) => {
+    const res = await fetchWithTimeout(
+      `/api/chatbot/sessions/${activeSessionId}/messages`,
+      {},
+      15000
+    );
+    if (!res.ok) {
+      const error = await readErrorResponse(res);
+      const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+      throw new Error(`${error.message}${suffix}`);
+    }
+    const data = (await res.json()) as {
+      messages: Array<{ role: ChatMessage["role"]; content: string }>;
+    };
+    return data.messages.map((message) => ({
+      role: message.role,
+      content: message.content,
+    }));
+  }, []);
 
   const loadAgentRuns = async () => {
     setAgentRunsLoading(true);
@@ -569,9 +592,40 @@ export default function ChatbotPage() {
   }, []);
 
   useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  useEffect(() => {
     if (!sessionId) return;
     writeCachedMessages(sessionId, messages);
   }, [messages, sessionId]);
+
+  useEffect(() => {
+    if (!pollingReply || !sessionId) return;
+    if (pollingRef.current) return;
+    const startCount = messages.length;
+    pollingRef.current = setInterval(async () => {
+      try {
+        const loaded = await fetchMessagesForSession(sessionId);
+        setMessages(loaded);
+        const lastMessage = loaded[loaded.length - 1];
+        if (loaded.length > startCount && lastMessage?.role === "assistant") {
+          setPollingReply(false);
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to refresh messages.";
+        toast(message, { variant: "error" });
+        setPollingReply(false);
+      }
+    }, 2000);
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+  }, [pollingReply, sessionId, messages.length, toast, fetchMessagesForSession]);
 
   const sendMessage = async () => {
     if (!sessionReady) {
@@ -636,20 +690,17 @@ export default function ChatbotPage() {
             .map((file) => `- ${file.name} (${Math.round(file.size / 1024)} KB)`)
             .join("\n")}`
         : "";
+    const userMessage = `${trimmed}${searchNote}${attachmentNote}`.trim();
     const nextMessages = [
       ...messages,
-      { role: "user", content: `${trimmed}${searchNote}${attachmentNote}`.trim() },
+      { role: "user", content: userMessage },
     ];
     setMessages(nextMessages);
     setInput("");
 
     try {
-      if (sessionId) {
-        await persistSessionMessage(
-          sessionId,
-          "user",
-          `${trimmed}${searchNote}${attachmentNote}`.trim()
-        );
+      if (sessionId && agentModeEnabled) {
+        await persistSessionMessage(sessionId, "user", userMessage);
       }
       const trimmedGlobal = globalContext.trim();
       const trimmedLocal = useLocalContext ? localContext.trim() : "";
@@ -692,67 +743,40 @@ export default function ChatbotPage() {
         });
       }
       const startedAt = Date.now();
-      const res = agentModeEnabled
-        ? await fetchWithTimeout(
-            "/api/chatbot/agent",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                prompt: trimmed,
-                model,
-                tools,
-                searchProvider,
-                agentBrowser,
-              }),
-            },
-            20000
-          )
-        : hasFiles
-          ? await fetchWithTimeout(
-              "/api/chatbot",
-              {
-                method: "POST",
-                body: (() => {
-                  const formData = new FormData();
-                  formData.append("messages", JSON.stringify(payloadMessages));
-                  formData.append("model", model);
-                  attachments.forEach((file) => {
-                    formData.append("files", file, file.name);
-                  });
-                  return formData;
-                })(),
-              },
-              20000
-            )
-          : await fetchWithTimeout(
-              "/api/chatbot",
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ messages: payloadMessages, model }),
-              },
-              20000
-            );
-
-      if (!res.ok) {
-        const error = await readErrorResponse(res);
-        if (debugEnabled) {
-          setDebugState((prev) => ({
-            ...prev,
-            lastResponse: {
-              ok: false,
-              durationMs: Date.now() - startedAt,
-              error: error.message,
-              errorId: error.errorId,
-            },
-          }));
-        }
-        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-        throw new Error(`${error.message}${suffix}`);
-      }
-
       if (agentModeEnabled) {
+        const res = await fetchWithTimeout(
+          "/api/chatbot/agent",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              prompt: trimmed,
+              model,
+              tools,
+              searchProvider,
+              agentBrowser,
+            }),
+          },
+          20000
+        );
+
+        if (!res.ok) {
+          const error = await readErrorResponse(res);
+          if (debugEnabled) {
+            setDebugState((prev) => ({
+              ...prev,
+              lastResponse: {
+                ok: false,
+                durationMs: Date.now() - startedAt,
+                error: error.message,
+                errorId: error.errorId,
+              },
+            }));
+          }
+          const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+          throw new Error(`${error.message}${suffix}`);
+        }
+
         const data = (await res.json()) as { runId: string; status: string };
         const agentReply = `Agent mode queued a run (${data.runId}). Check the run queue for progress.`;
         setMessages((prev) => [
@@ -767,11 +791,38 @@ export default function ChatbotPage() {
         }
         void loadAgentRuns();
       } else {
-        const data = (await res.json()) as { message: string };
-        setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
-        if (sessionId) {
-          await persistSessionMessage(sessionId, "assistant", data.message);
+        const res = await fetchWithTimeout(
+          "/api/chatbot/jobs",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                sessionId,
+                model,
+                messages: payloadMessages,
+                userMessage,
+              }),
+          },
+          12000
+        );
+        if (!res.ok) {
+          const error = await readErrorResponse(res);
+          if (debugEnabled) {
+            setDebugState((prev) => ({
+              ...prev,
+              lastResponse: {
+                ok: false,
+                durationMs: Date.now() - startedAt,
+                error: error.message,
+                errorId: error.errorId,
+              },
+            }));
+          }
+          const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+          throw new Error(`${error.message}${suffix}`);
         }
+        toast("Reply queued. You can leave this page.", { variant: "success" });
+        setPollingReply(true);
       }
       if (attachments.length > 0) {
         setAttachments([]);
@@ -856,15 +907,20 @@ export default function ChatbotPage() {
       <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-3xl font-bold text-white">Chatbot</h1>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={createNewSession}
-            disabled={creatingSession || isSending || sessionLoading}
-          >
-            {creatingSession ? "Creating..." : "New session"}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button asChild type="button" variant="outline" size="sm">
+              <Link href="/admin/chatbot/jobs">Jobs</Link>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={createNewSession}
+              disabled={creatingSession || isSending || sessionLoading}
+            >
+              {creatingSession ? "Creating..." : "New session"}
+            </Button>
+          </div>
         </div>
         {initError ? (
           <div className="mb-4 rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
@@ -877,7 +933,7 @@ export default function ChatbotPage() {
           </div>
         ) : null}
         <div className="flex min-h-[420px] flex-col rounded-md border border-gray-800 bg-gray-900 p-4">
-          <div className="flex-1 space-y-4 overflow-y-auto pr-2">
+          <div className="max-h-[50vh] min-h-[220px] space-y-4 overflow-y-auto pr-2">
             {(sessionLoading || messagesLoading) && !initError ? (
               <div className="rounded-md border border-dashed border-gray-800 bg-gray-950/60 p-6 text-center text-sm text-gray-400">
                 Loading chat session...
@@ -900,6 +956,7 @@ export default function ChatbotPage() {
                 </div>
               ))
             )}
+            <div ref={messagesEndRef} />
           </div>
           <div className="mt-4 space-y-3 border-t border-gray-800 pt-4">
             <div className="rounded-md border border-gray-800 bg-gray-950/70 p-3">

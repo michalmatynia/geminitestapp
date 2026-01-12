@@ -177,6 +177,12 @@ export default function Menu() {
           Sessions
         </Link>
         <Link
+          href="/admin/chatbot/jobs"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Jobs
+        </Link>
+        <Link
           href="/admin/chatbot"
           className="block hover:bg-gray-700 p-2 rounded"
           onClick={handleOpenChat}

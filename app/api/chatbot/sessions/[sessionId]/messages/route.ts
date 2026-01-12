@@ -90,6 +90,10 @@ export async function POST(
         content: body.content.trim(),
       },
     });
+    await prisma.chatbotSession.update({
+      where: { id: sessionId },
+      data: { updatedAt: new Date() },
+    });
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][sessions][POST] Created", {
         messageId: message.id,

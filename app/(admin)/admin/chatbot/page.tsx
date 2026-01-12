@@ -108,8 +108,55 @@ const safeLocalStorageRemove = (key: string) => {
   }
 };
 
+const readCachedMessages = (sessionId: string) => {
+  try {
+    const raw = window.localStorage.getItem(`chatbotSessionCache:${sessionId}`);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as ChatMessage[];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((message) => message && typeof message.content === "string");
+  } catch {
+    return [];
+  }
+};
+
+const writeCachedMessages = (sessionId: string, messages: ChatMessage[]) => {
+  try {
+    const safeMessages = messages.filter(
+      (message) => message.role !== "system" && message.content.trim().length > 0
+    );
+    window.localStorage.setItem(
+      `chatbotSessionCache:${sessionId}`,
+      JSON.stringify(safeMessages)
+    );
+  } catch {
+    // ignore cache failures
+  }
+};
+
 const isAbortError = (error: unknown) =>
   error instanceof DOMException && error.name === "AbortError";
+
+const persistSessionMessage = async (
+  sessionId: string,
+  role: ChatMessage["role"],
+  content: string
+) => {
+  const res = await fetchWithTimeout(
+    `/api/chatbot/sessions/${sessionId}/messages`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role, content }),
+    },
+    12000
+  );
+  if (!res.ok) {
+    const error = await readErrorResponse(res);
+    const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+    throw new Error(`${error.message}${suffix}`);
+  }
+};
 
 const renderInline = (text: string) => {
   const parts = text.split("**");
@@ -221,6 +268,7 @@ export default function ChatbotPage() {
   const [initError, setInitError] = useState<string | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
   const [messagesLoading, setMessagesLoading] = useState(false);
+  const [creatingSession, setCreatingSession] = useState(false);
   const initStartedRef = useRef(false);
   const sessionReady = Boolean(sessionId) && !initError;
 
@@ -395,6 +443,7 @@ export default function ChatbotPage() {
             setMessages(loaded);
             setMessagesLoading(false);
           }
+          return loaded;
         };
 
         const createSession = async () => {
@@ -440,9 +489,35 @@ export default function ChatbotPage() {
               setSessionId(activeSessionId);
               safeLocalStorageSet("chatbotSessionId", activeSessionId);
               setSessionLoading(false);
+              const cached = readCachedMessages(activeSessionId);
+              if (cached.length > 0) {
+                setMessages(cached);
+              }
             }
-            await fetchMessages(activeSessionId);
+            const loaded = await fetchMessages(activeSessionId);
             if (!isMounted) return;
+            if (loaded.length === 0) {
+              const cached = readCachedMessages(activeSessionId);
+              if (cached.length > 0) {
+                setMessages(cached);
+                for (const message of cached) {
+                  try {
+                    await persistSessionMessage(
+                      activeSessionId,
+                      message.role,
+                      message.content
+                    );
+                  } catch (error) {
+                    const messageText =
+                      error instanceof Error
+                        ? error.message
+                        : "Failed to persist cached message.";
+                    toast(messageText, { variant: "error" });
+                    break;
+                  }
+                }
+              }
+            }
             return;
           } catch (error) {
             const status =
@@ -492,6 +567,11 @@ export default function ChatbotPage() {
   useEffect(() => {
     void loadAgentRuns();
   }, []);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    writeCachedMessages(sessionId, messages);
+  }, [messages, sessionId]);
 
   const sendMessage = async () => {
     if (!sessionReady) {
@@ -565,17 +645,10 @@ export default function ChatbotPage() {
 
     try {
       if (sessionId) {
-        await fetchWithTimeout(
-          `/api/chatbot/sessions/${sessionId}/messages`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              role: "user",
-              content: `${trimmed}${searchNote}${attachmentNote}`.trim(),
-            }),
-          },
-          12000
+        await persistSessionMessage(
+          sessionId,
+          "user",
+          `${trimmed}${searchNote}${attachmentNote}`.trim()
         );
       }
       const trimmedGlobal = globalContext.trim();
@@ -690,30 +763,14 @@ export default function ChatbotPage() {
           },
         ]);
         if (sessionId) {
-          await fetchWithTimeout(
-            `/api/chatbot/sessions/${sessionId}/messages`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ role: "assistant", content: agentReply }),
-            },
-            12000
-          );
+          await persistSessionMessage(sessionId, "assistant", agentReply);
         }
         void loadAgentRuns();
       } else {
         const data = (await res.json()) as { message: string };
         setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
         if (sessionId) {
-          await fetchWithTimeout(
-            `/api/chatbot/sessions/${sessionId}/messages`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ role: "assistant", content: data.message }),
-            },
-            12000
-          );
+          await persistSessionMessage(sessionId, "assistant", data.message);
         }
       }
       if (attachments.length > 0) {
@@ -750,11 +807,64 @@ export default function ChatbotPage() {
     }
   };
 
+  const createNewSession = async () => {
+    if (creatingSession || isSending) return;
+    setCreatingSession(true);
+    try {
+      const res = await fetchWithTimeout(
+        "/api/chatbot/sessions",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        },
+        12000
+      );
+      if (!res.ok) {
+        const error = await readErrorResponse(res);
+        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+        throw new Error(`Failed to create chat session.${suffix}`);
+      }
+      const data = (await res.json()) as { sessionId?: string };
+      if (!data.sessionId) {
+        throw new Error("Failed to create chat session.");
+      }
+      setSessionId(data.sessionId);
+      safeLocalStorageSet("chatbotSessionId", data.sessionId);
+      setMessages([]);
+      setInput("");
+      setAttachments([]);
+      setInitError(null);
+      setSessionLoading(false);
+      setMessagesLoading(false);
+      setDebugState({});
+      toast("New chat session created", { variant: "success" });
+    } catch (error) {
+      const message = isAbortError(error)
+        ? "Creating a new session timed out."
+        : error instanceof Error
+          ? error.message
+          : "Failed to create chat session.";
+      toast(message, { variant: "error" });
+    } finally {
+      setCreatingSession(false);
+    }
+  };
+
   return (
     <div className="container mx-auto py-10">
       <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-        <div className="mb-4">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-3xl font-bold text-white">Chatbot</h1>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={createNewSession}
+            disabled={creatingSession || isSending || sessionLoading}
+          >
+            {creatingSession ? "Creating..." : "New session"}
+          </Button>
         </div>
         {initError ? (
           <div className="mb-4 rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">

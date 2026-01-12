@@ -9,6 +9,7 @@ import {
   SettingsIcon,
   UploadIcon,
   PlugIcon,
+  MessageCircleIcon,
 } from "lucide-react";
 import CollapsibleMenu from "@/components/CollapsibleMenu";
 import { useAdminLayout } from "@/lib/context/AdminLayoutContext";
@@ -130,6 +131,20 @@ export default function Menu() {
         <PlugIcon className="mr-2" />
         {!isMenuCollapsed && "Integrations"}
       </Link>
+      <CollapsibleMenu title="Chatbot" icon={<MessageCircleIcon />}>
+        <Link
+          href="/admin/chatbot"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Chat
+        </Link>
+        <Link
+          href="/admin/chatbot/context"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Global Context
+        </Link>
+      </CollapsibleMenu>
     </nav>
   );
 }

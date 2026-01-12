@@ -1,11 +1,11 @@
 Application notes
 
+Product LIST
+when I created a product I need to click on the modal twice
 
 Catalogs 
 -default catalog, the first created catalog is always default one
 --In Edit Catalog
-Catalog Name
-Description
 Available languages in Tag box
 Default Language
 Available price groups
@@ -19,6 +19,9 @@ Parent Category---->
 Category listing cateogries are grouped by catalogs to which they belong
 categories are draggable into hierarchies
 Each category can only belong to one catalog
+
+
+Move Notification settings to a a separate Section
 
 TAGS PARAMETERS Additional fields
 

@@ -1376,68 +1376,70 @@ export default function ProductSettingsPage() {
                 Set as default catalog
               </label>
               <div>
-                <label className="text-xs text-gray-400">Languages</label>
-                {languagesLoading ? (
-                  <p className="mt-2 text-xs text-gray-500">Loading languages...</p>
-                ) : languagesError ? (
-                  <p className="mt-2 text-xs text-red-400">{languagesError}</p>
-                ) : (
-                  <div className="mt-2 space-y-3">
-                    <Input
-                      placeholder="Search languages..."
-                      value={catalogLanguageQuery}
-                      onChange={(event) =>
-                        setCatalogLanguageQuery(event.target.value)
-                      }
-                    />
-                    <div className="flex flex-wrap gap-2">
-                      {selectedLanguages.length === 0 ? (
-                        <span className="text-[11px] text-gray-500">
-                          No languages selected.
-                        </span>
-                      ) : (
-                        selectedLanguages.map((language) => (
-                          <button
-                            key={language.id}
-                            type="button"
-                            className="inline-flex items-center gap-1 rounded-full border border-gray-700 bg-gray-900 px-3 py-1 text-xs text-gray-200 hover:border-gray-500"
-                            onClick={() => toggleLanguage(language.id)}
-                          >
-                            {language.name}
-                            <span className="text-gray-500">
-                              ({language.code})
-                            </span>
-                            <span className="text-gray-500">×</span>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                    <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-xs text-gray-200">
-                      {availableLanguages.length === 0 ? (
-                        <p className="text-gray-500">
-                          No matching languages.
-                        </p>
-                      ) : (
-                        availableLanguages.map((language) => (
-                          <button
-                            key={language.id}
-                            type="button"
-                            className="flex w-full items-center justify-between rounded-md px-2 py-1 text-left hover:bg-gray-800"
-                            onClick={() => toggleLanguage(language.id)}
-                          >
-                            <span>
+                <div className="rounded-md border border-gray-800 bg-gray-950/70 p-3">
+                  <label className="text-xs text-gray-400">Languages</label>
+                  {languagesLoading ? (
+                    <p className="mt-2 text-xs text-gray-500">Loading languages...</p>
+                  ) : languagesError ? (
+                    <p className="mt-2 text-xs text-red-400">{languagesError}</p>
+                  ) : (
+                    <div className="mt-2 space-y-3">
+                      <Input
+                        placeholder="Search languages..."
+                        value={catalogLanguageQuery}
+                        onChange={(event) =>
+                          setCatalogLanguageQuery(event.target.value)
+                        }
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        {selectedLanguages.length === 0 ? (
+                          <span className="text-[11px] text-gray-500">
+                            No languages selected.
+                          </span>
+                        ) : (
+                          selectedLanguages.map((language) => (
+                            <button
+                              key={language.id}
+                              type="button"
+                              className="inline-flex items-center gap-1 rounded-full border border-gray-700 bg-gray-900 px-3 py-1 text-xs text-gray-200 hover:border-gray-500"
+                              onClick={() => toggleLanguage(language.id)}
+                            >
                               {language.name}
-                              <span className="ml-1 text-gray-500">
+                              <span className="text-gray-500">
                                 ({language.code})
                               </span>
-                            </span>
-                            <span className="text-gray-500">Add</span>
-                          </button>
-                        ))
-                      )}
+                              <span className="text-gray-500">×</span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                      <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-xs text-gray-200">
+                        {availableLanguages.length === 0 ? (
+                          <p className="text-gray-500">
+                            No matching languages.
+                          </p>
+                        ) : (
+                          availableLanguages.map((language) => (
+                            <button
+                              key={language.id}
+                              type="button"
+                              className="flex w-full items-center justify-between rounded-md px-2 py-1 text-left hover:bg-gray-800"
+                              onClick={() => toggleLanguage(language.id)}
+                            >
+                              <span>
+                                {language.name}
+                                <span className="ml-1 text-gray-500">
+                                  ({language.code})
+                                </span>
+                              </span>
+                              <span className="text-gray-500">Add</span>
+                            </button>
+                          ))
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
               <div className="flex items-center justify-end gap-3">
                 <button

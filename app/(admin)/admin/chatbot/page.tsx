@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -29,6 +31,8 @@ type ChatbotDebugState = {
     localContextMode: "override" | "append";
     attachmentCount: number;
     searchUsed: boolean;
+    searchProvider?: string;
+    agentBrowser?: string;
   };
   lastResponse?: {
     ok: boolean;
@@ -36,6 +40,17 @@ type ChatbotDebugState = {
     error?: string;
     errorId?: string;
   };
+};
+
+type AgentRunSummary = {
+  id: string;
+  prompt: string;
+  model: string | null;
+  status: string;
+  requiresHumanIntervention: boolean;
+  searchProvider?: string | null;
+  agentBrowser?: string | null;
+  createdAt: string;
 };
 
 const readErrorResponse = async (res: Response) => {
@@ -136,6 +151,7 @@ const renderFormattedMessage = (content: string) => {
 
 export default function ChatbotPage() {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -146,6 +162,9 @@ export default function ChatbotPage() {
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [useGlobalContext, setUseGlobalContext] = useState(false);
   const [useLocalContext, setUseLocalContext] = useState(false);
+  const [agentModeEnabled, setAgentModeEnabled] = useState(false);
+  const [searchProvider, setSearchProvider] = useState("serpapi");
+  const [agentBrowser, setAgentBrowser] = useState("chromium");
   const [toolSelectValue, setToolSelectValue] = useState("add");
   const [globalContext, setGlobalContext] = useState("");
   const [localContext, setLocalContext] = useState("");
@@ -155,6 +174,29 @@ export default function ChatbotPage() {
   const [contextLoading, setContextLoading] = useState(true);
   const [debugEnabled, setDebugEnabled] = useState(false);
   const [debugState, setDebugState] = useState<ChatbotDebugState>({});
+  const [agentRuns, setAgentRuns] = useState<AgentRunSummary[]>([]);
+  const [agentRunsLoading, setAgentRunsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [initError, setInitError] = useState<string | null>(null);
+  const sessionReady = Boolean(sessionId) && !initError;
+
+  const loadAgentRuns = async () => {
+    setAgentRunsLoading(true);
+    try {
+      const res = await fetch("/api/chatbot/agent");
+      if (!res.ok) {
+        throw new Error("Failed to load agent runs.");
+      }
+      const data = (await res.json()) as { runs?: AgentRunSummary[] };
+      setAgentRuns(data.runs ?? []);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to load agent runs.";
+      toast(message, { variant: "error" });
+    } finally {
+      setAgentRunsLoading(false);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -251,9 +293,79 @@ export default function ChatbotPage() {
     };
   }, [toast]);
 
+  useEffect(() => {
+    let isMounted = true;
+    const initSession = async () => {
+      try {
+        const sessionParam = searchParams.get("session");
+        const stored = window.localStorage.getItem("chatbotSessionId");
+        let activeSessionId = sessionParam || stored;
+        if (!activeSessionId) {
+          const res = await fetch("/api/chatbot/sessions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
+          });
+        if (!res.ok) {
+          const error = await readErrorResponse(res);
+          const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+          throw new Error(`Failed to create chat session.${suffix}`);
+        }
+          const data = (await res.json()) as { sessionId: string };
+          activeSessionId = data.sessionId;
+          window.localStorage.setItem("chatbotSessionId", activeSessionId);
+        }
+        if (!isMounted) return;
+        setSessionId(activeSessionId);
+        window.localStorage.setItem("chatbotSessionId", activeSessionId);
+
+        const messagesRes = await fetch(
+          `/api/chatbot/sessions/${activeSessionId}/messages`
+        );
+        if (!messagesRes.ok) {
+          const error = await readErrorResponse(messagesRes);
+          const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+          throw new Error(`Failed to load chat history.${suffix}`);
+        }
+        const data = (await messagesRes.json()) as {
+          messages: Array<{ role: ChatMessage["role"]; content: string }>;
+        };
+        if (isMounted) {
+          setMessages(
+            data.messages.map((message) => ({
+              role: message.role,
+              content: message.content,
+            }))
+          );
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to load chat session.";
+        setInitError(message);
+        toast(message, { variant: "error" });
+      }
+    };
+    void initSession();
+    return () => {
+      isMounted = false;
+    };
+  }, [searchParams, toast]);
+
+  useEffect(() => {
+    void loadAgentRuns();
+  }, []);
+
   const sendMessage = async () => {
+    if (!sessionReady) {
+      toast("Chat session is not ready yet.", { variant: "error" });
+      return;
+    }
     const trimmed = input.trim();
     if ((!trimmed && attachments.length === 0) || isSending) {
+      return;
+    }
+    if (agentModeEnabled && attachments.length > 0) {
+      toast("Agent mode does not support attachments yet.", { variant: "error" });
       return;
     }
 
@@ -263,7 +375,7 @@ export default function ChatbotPage() {
         const res = await fetch("/api/search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: trimmed, limit: 5 }),
+          body: JSON.stringify({ query: trimmed, limit: 5, provider: searchProvider }),
         });
         if (res.ok) {
           const data = (await res.json()) as {
@@ -302,6 +414,16 @@ export default function ChatbotPage() {
     setIsSending(true);
 
     try {
+      if (sessionId) {
+        await fetch(`/api/chatbot/sessions/${sessionId}/messages`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            role: "user",
+            content: `${trimmed}${searchNote}${attachmentNote}`.trim(),
+          }),
+        });
+      }
       const trimmedGlobal = globalContext.trim();
       const trimmedLocal = useLocalContext ? localContext.trim() : "";
       let mergedContext = "";
@@ -325,6 +447,7 @@ export default function ChatbotPage() {
       if (webSearchEnabled) tools.push("websearch");
       if (useGlobalContext) tools.push("global-context");
       if (useLocalContext) tools.push("local-context");
+      if (agentModeEnabled) tools.push("agent-mode");
       if (debugEnabled) {
         setDebugState({
           lastRequest: {
@@ -336,11 +459,25 @@ export default function ChatbotPage() {
             localContextMode,
             attachmentCount: attachments.length,
             searchUsed: Boolean(searchNote),
+            searchProvider,
+            agentBrowser,
           },
         });
       }
       const startedAt = Date.now();
-      const res = hasFiles
+      const res = agentModeEnabled
+        ? await fetch("/api/chatbot/agent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              prompt: trimmed,
+              model,
+              tools,
+              searchProvider,
+              agentBrowser,
+            }),
+          })
+        : hasFiles
         ? await fetch("/api/chatbot", {
             method: "POST",
             body: (() => {
@@ -376,8 +513,35 @@ export default function ChatbotPage() {
         throw new Error(`${error.message}${suffix}`);
       }
 
-      const data = (await res.json()) as { message: string };
-      setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
+      if (agentModeEnabled) {
+        const data = (await res.json()) as { runId: string; status: string };
+        const agentReply = `Agent mode queued a run (${data.runId}). Check the run queue for progress.`;
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: agentReply,
+          },
+        ]);
+        if (sessionId) {
+          await fetch(`/api/chatbot/sessions/${sessionId}/messages`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ role: "assistant", content: agentReply }),
+          });
+        }
+        void loadAgentRuns();
+      } else {
+        const data = (await res.json()) as { message: string };
+        setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
+        if (sessionId) {
+          await fetch(`/api/chatbot/sessions/${sessionId}/messages`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ role: "assistant", content: data.message }),
+          });
+        }
+      }
       if (attachments.length > 0) {
         setAttachments([]);
       }
@@ -414,6 +578,16 @@ export default function ChatbotPage() {
         <div className="mb-4">
           <h1 className="text-3xl font-bold text-white">Chatbot</h1>
         </div>
+        {initError ? (
+          <div className="mb-4 rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+            <p className="font-semibold">Chat session not ready</p>
+            <p className="mt-1 text-xs text-amber-200/80">
+              If you recently updated the schema, run `npx prisma generate` then
+              `npx prisma db push`, and restart the dev server.
+            </p>
+            <p className="mt-2 text-xs text-amber-200/80">{initError}</p>
+          </div>
+        ) : null}
         <div className="flex min-h-[420px] flex-col rounded-md border border-gray-800 bg-gray-900 p-4">
           <div className="flex-1 space-y-4 overflow-y-auto pr-2">
             {messages.length === 0 ? (
@@ -430,9 +604,7 @@ export default function ChatbotPage() {
                       : "bg-slate-500/10 text-slate-100"
                   }`}
                 >
-                  {message.role === "assistant"
-                    ? renderFormattedMessage(message.content)
-                    : message.content}
+                  {renderFormattedMessage(message.content)}
                 </div>
               ))
             )}
@@ -450,12 +622,23 @@ export default function ChatbotPage() {
                   }
                 }}
                 rows={3}
+                disabled={!sessionReady}
               />
               <div className="mt-2 flex justify-end">
-                <Button onClick={sendMessage} disabled={isSending}>
+                <Button
+                  onClick={sendMessage}
+                  disabled={isSending || !sessionReady}
+                  className={isSending ? "opacity-60" : undefined}
+                >
                   {isSending ? "Sending..." : "Send"}
                 </Button>
               </div>
+              {!sessionReady ? (
+                <p className="mt-2 text-xs text-amber-200/80">
+                  Chat session is not ready. Check the banner above for setup
+                  steps.
+                </p>
+              ) : null}
               <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-200">
                 {webSearchEnabled ? (
                   <button
@@ -487,7 +670,20 @@ export default function ChatbotPage() {
                     <span className="text-blue-200">×</span>
                   </button>
                 ) : null}
-                {!webSearchEnabled && !useGlobalContext && !useLocalContext ? (
+                {agentModeEnabled ? (
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 rounded-full border border-blue-500/40 bg-blue-500/10 px-3 py-1 text-blue-100"
+                    onClick={() => setAgentModeEnabled(false)}
+                  >
+                    Agent mode
+                    <span className="text-blue-200">×</span>
+                  </button>
+                ) : null}
+                {!webSearchEnabled &&
+                !useGlobalContext &&
+                !useLocalContext &&
+                !agentModeEnabled ? (
                   <span className="text-gray-500">No tools enabled.</span>
                 ) : null}
               </div>
@@ -504,6 +700,9 @@ export default function ChatbotPage() {
                     if (value === "local-context") {
                       setUseLocalContext(true);
                     }
+                    if (value === "agent-mode") {
+                      setAgentModeEnabled(true);
+                    }
                     setToolSelectValue("add");
                   }}
                   disabled={isSending}
@@ -516,8 +715,49 @@ export default function ChatbotPage() {
                     <SelectItem value="websearch">Web search</SelectItem>
                     <SelectItem value="global-context">Global context</SelectItem>
                     <SelectItem value="local-context">Local context</SelectItem>
+                    <SelectItem value="agent-mode">Agent mode</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-3">
+                {webSearchEnabled || agentModeEnabled ? (
+                  <div className="w-48">
+                    <label className="text-xs text-gray-400">Search provider</label>
+                    <Select
+                      value={searchProvider}
+                      onValueChange={(value) => setSearchProvider(value)}
+                      disabled={isSending}
+                    >
+                      <SelectTrigger className="mt-2">
+                        <SelectValue placeholder="Provider" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="brave">Brave</SelectItem>
+                        <SelectItem value="google">Google</SelectItem>
+                        <SelectItem value="serpapi">SerpApi</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : null}
+                {agentModeEnabled ? (
+                  <div className="w-48">
+                    <label className="text-xs text-gray-400">Agent browser</label>
+                    <Select
+                      value={agentBrowser}
+                      onValueChange={(value) => setAgentBrowser(value)}
+                      disabled={isSending}
+                    >
+                      <SelectTrigger className="mt-2">
+                        <SelectValue placeholder="Browser" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="chromium">Chromium</SelectItem>
+                        <SelectItem value="firefox">Firefox</SelectItem>
+                        <SelectItem value="webkit">WebKit</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : null}
               </div>
               <div className="mt-3">
                 <label className="text-xs text-gray-400">Model</label>
@@ -671,6 +911,77 @@ export default function ChatbotPage() {
             ) : null}
             <div className="rounded-md border border-gray-800 bg-gray-950/70 p-3">
               <div className="flex items-center justify-between">
+                <Label className="text-xs text-gray-200">Agent runs</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void loadAgentRuns()}
+                  disabled={agentRunsLoading}
+                >
+                  {agentRunsLoading ? "Refreshing..." : "Refresh"}
+                </Button>
+              </div>
+              {agentRuns.length === 0 ? (
+                <p className="mt-2 text-xs text-gray-500">
+                  No agent runs yet. Enable Agent mode to queue one.
+                </p>
+              ) : (
+                <div className="mt-3 space-y-2 text-xs text-gray-300">
+                  {agentRuns.slice(0, 5).map((run) => (
+                    <div
+                      key={run.id}
+                      className="flex items-start justify-between gap-3 rounded-md border border-gray-800 bg-gray-900 px-3 py-2"
+                    >
+                      <div>
+                        <p className="text-[11px] text-gray-500">
+                          {run.status.replace("_", " ")}
+                          {run.requiresHumanIntervention ? " · needs input" : ""}
+                        </p>
+                        <p className="text-gray-200 line-clamp-2">{run.prompt}</p>
+                        {(run.searchProvider || run.agentBrowser) ? (
+                          <p className="text-[11px] text-gray-500">
+                            {run.searchProvider ? `Search: ${run.searchProvider}` : ""}
+                            {run.searchProvider && run.agentBrowser ? " · " : ""}
+                            {run.agentBrowser ? `Browser: ${run.agentBrowser}` : ""}
+                          </p>
+                        ) : null}
+                      </div>
+                      {["queued", "running", "waiting_human"].includes(run.status) ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            try {
+                              const res = await fetch(`/api/chatbot/agent/${run.id}`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ action: "stop" }),
+                              });
+                              if (!res.ok) {
+                                throw new Error("Failed to stop agent run.");
+                              }
+                              void loadAgentRuns();
+                            } catch (error) {
+                              const message =
+                                error instanceof Error
+                                  ? error.message
+                                  : "Failed to stop agent run.";
+                              toast(message, { variant: "error" });
+                            }
+                          }}
+                        >
+                          Stop
+                        </Button>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="rounded-md border border-gray-800 bg-gray-950/70 p-3">
+              <div className="flex items-center justify-between">
                 <Label className="text-xs text-gray-200">Debugging</Label>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 text-[11px] text-gray-400">
@@ -714,6 +1025,14 @@ export default function ChatbotPage() {
                               ? debugState.lastRequest.tools.join(", ")
                               : "None"}
                           </dd>
+                        </div>
+                        <div>
+                          <dt className="text-[11px] text-gray-500">Search provider</dt>
+                          <dd>{debugState.lastRequest.searchProvider || "Default"}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-[11px] text-gray-500">Agent browser</dt>
+                          <dd>{debugState.lastRequest.agentBrowser || "Default"}</dd>
                         </div>
                         <div>
                           <dt className="text-[11px] text-gray-500">Messages</dt>

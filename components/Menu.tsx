@@ -127,6 +127,12 @@ export default function Menu() {
       </Link>
       <CollapsibleMenu title="Chatbot" icon={<MessageCircleIcon />}>
         <Link
+          href="/admin/chatbot/sessions"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Sessions
+        </Link>
+        <Link
           href="/admin/chatbot"
           className="block hover:bg-gray-700 p-2 rounded"
         >

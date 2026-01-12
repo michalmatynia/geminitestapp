@@ -10,6 +10,7 @@ type ChatMessage = {
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3";
+const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 const chatbotTempRoot = path.join(
   process.cwd(),
   "public",
@@ -26,6 +27,7 @@ const createErrorId = () => {
 };
 
 export async function GET() {
+  const requestStart = Date.now();
   try {
     const res = await fetch(`${OLLAMA_BASE_URL}/api/tags`, {
       headers: { "Content-Type": "application/json" },
@@ -50,6 +52,12 @@ export async function GET() {
     const models = (data.models || [])
       .map((model) => model.name)
       .filter((name): name is string => Boolean(name));
+    if (DEBUG_CHATBOT) {
+      console.info("[chatbot][models] Loaded", {
+        count: models.length,
+        durationMs: Date.now() - requestStart,
+      });
+    }
     return NextResponse.json({ models });
   } catch (error) {
     const errorId = createErrorId();
@@ -65,6 +73,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const tempFiles: string[] = [];
+  const requestStart = Date.now();
   try {
     const contentType = req.headers.get("content-type") || "";
     let messages: ChatMessage[] = [];
@@ -72,10 +81,21 @@ export async function POST(req: Request) {
     if (contentType.includes("multipart/form-data")) {
       const formData = await req.formData();
       const rawMessages = formData.get("messages");
-      messages =
-        rawMessages && typeof rawMessages === "string"
-          ? (JSON.parse(rawMessages) as ChatMessage[])
-          : [];
+      if (rawMessages && typeof rawMessages === "string") {
+        try {
+          messages = JSON.parse(rawMessages) as ChatMessage[];
+        } catch (error) {
+          const errorId = createErrorId();
+          console.error("[chatbot][chat] Failed to parse messages JSON", {
+            errorId,
+            error,
+          });
+          return NextResponse.json(
+            { error: "Invalid messages payload.", errorId },
+            { status: 400 }
+          );
+        }
+      }
       const rawModel = formData.get("model");
       requestedModel = typeof rawModel === "string" ? rawModel : null;
       const files = formData.getAll("files");
@@ -87,6 +107,13 @@ export async function POST(req: Request) {
         (file): file is File =>
           file instanceof File && !file.type.startsWith("image/")
       );
+      if (DEBUG_CHATBOT) {
+        console.info("[chatbot][chat] Multipart payload", {
+          fileCount: files.length,
+          imageCount: imageFiles.length,
+          otherCount: otherFiles.length,
+        });
+      }
 
       if (files.length > 0) {
         const requestId = createErrorId();
@@ -147,6 +174,13 @@ export async function POST(req: Request) {
       );
     }
 
+    if (messages.length > 60) {
+      return NextResponse.json(
+        { error: "Too many messages provided." },
+        { status: 400 }
+      );
+    }
+
     const hasValidMessages = messages.every(
       (message) =>
         typeof message?.role === "string" &&
@@ -160,14 +194,47 @@ export async function POST(req: Request) {
       );
     }
 
+    const oversized = messages.some((message) => message.content.length > 10000);
+    if (oversized) {
+      return NextResponse.json(
+        { error: "Message content too large." },
+        { status: 400 }
+      );
+    }
+
+    if (DEBUG_CHATBOT) {
+      console.info("[chatbot][chat] Request summary", {
+        messageCount: messages.length,
+        roles: messages.map((message) => message.role),
+        hasImages: messages.some((message) => Boolean(message.images?.length)),
+        model: requestedModel || OLLAMA_MODEL,
+        contentType,
+        userContentChars: messages
+          .filter((message) => message.role === "user")
+          .reduce((sum, message) => sum + message.content.length, 0),
+        durationMs: Date.now() - requestStart,
+      });
+    }
+
+    const requestPayload = {
+      model: requestedModel || OLLAMA_MODEL,
+      messages,
+      stream: false,
+    };
+
+    if (DEBUG_CHATBOT) {
+      console.info("[chatbot][chat] Sending to Ollama", {
+        url: `${OLLAMA_BASE_URL}/api/chat`,
+        model: requestPayload.model,
+        messageCount: requestPayload.messages.length,
+      });
+    }
+
+    const requestStart = Date.now();
     const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: requestedModel || OLLAMA_MODEL,
-        messages,
-        stream: false,
-      }),
+      body: JSON.stringify(requestPayload),
     });
 
     if (!res.ok) {
@@ -191,6 +258,13 @@ export async function POST(req: Request) {
 
     const message =
       data.message?.content || data.response || "No response from model.";
+
+    if (DEBUG_CHATBOT) {
+      console.info("[chatbot][chat] Ollama response", {
+        durationMs: Date.now() - requestStart,
+        responseChars: message.length,
+      });
+    }
 
     return NextResponse.json({ message });
   } catch (error) {

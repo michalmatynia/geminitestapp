@@ -68,6 +68,26 @@ enum CountryCode {
   SE
 }
 
+enum AgentRunStatus {
+  queued
+  running
+  waiting_human
+  stopped
+  failed
+  completed
+}
+
+enum AgentMemoryScope {
+  session
+  longterm
+}
+
+enum AgentAuditLevel {
+  info
+  warning
+  error
+}
+
 model Currency {
   id        String       @id @default(cuid())
   code      CurrencyCode @unique
@@ -196,6 +216,68 @@ model ProductCatalog {
   catalog     Catalog @relation(fields: [catalogId], references: [id], onDelete: Cascade)
 
   @@id([productId, catalogId])
+}
+
+model ChatbotAgentRun {
+  id        String          @id @default(cuid())
+  prompt    String
+  model     String?
+  tools     String[]        @default([])
+  searchProvider String?
+  agentBrowser String?
+  status    AgentRunStatus  @default(queued)
+  logLines  String[]        @default([])
+  requiresHumanIntervention Boolean @default(false)
+  errorMessage String?
+  memoryKey String?
+  startedAt DateTime?
+  finishedAt DateTime?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  memoryItems AgentMemoryItem[]
+  auditLogs   AgentAuditLog[]
+}
+
+model AgentMemoryItem {
+  id        String           @id @default(cuid())
+  runId     String?
+  scope     AgentMemoryScope @default(session)
+  content   String
+  metadata  Json?
+  createdAt DateTime         @default(now())
+
+  run       ChatbotAgentRun? @relation(fields: [runId], references: [id], onDelete: Cascade)
+}
+
+model AgentAuditLog {
+  id        String          @id @default(cuid())
+  runId     String?
+  level     AgentAuditLevel @default(info)
+  message   String
+  metadata  Json?
+  createdAt DateTime        @default(now())
+
+  run       ChatbotAgentRun? @relation(fields: [runId], references: [id], onDelete: Cascade)
+}
+
+model ChatbotSession {
+  id        String           @id @default(cuid())
+  title     String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  messages  ChatbotMessage[]
+}
+
+model ChatbotMessage {
+  id         String          @id @default(cuid())
+  sessionId  String
+  role       String
+  content    String
+  createdAt  DateTime        @default(now())
+
+  session    ChatbotSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
 
 model CatalogLanguage {

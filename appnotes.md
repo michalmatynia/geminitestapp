@@ -3,6 +3,12 @@ Application notes
 Product LIST
 When I create the product, a notification should pop-up that the product has been created
 
+When I click on SEnd, the job should run in the background until it's completed and the results should be written into session. I should also have the access to a job queue
+
+context length slider (I think it's a server setting on Ollama, I can skip it for now)
+
+when I click the Chatbot, I get error notification (failed to load agent runs)
+
 Catalogs 
 -default catalog, the first created catalog is always default one
 --In Edit Catalog

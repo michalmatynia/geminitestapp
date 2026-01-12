@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -178,6 +178,9 @@ export default function ChatbotPage() {
   const [agentRunsLoading, setAgentRunsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [initError, setInitError] = useState<string | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const initStartedRef = useRef(false);
   const sessionReady = Boolean(sessionId) && !initError;
 
   const loadAgentRuns = async () => {
@@ -297,52 +300,119 @@ export default function ChatbotPage() {
     let isMounted = true;
     const initSession = async () => {
       try {
+        if (initStartedRef.current) {
+          return;
+        }
+        initStartedRef.current = true;
+        if (isMounted) {
+          setSessionLoading(true);
+          setInitError(null);
+        }
         const sessionParam = searchParams.get("session");
         const stored = window.localStorage.getItem("chatbotSessionId");
         let activeSessionId = sessionParam || stored;
-        if (!activeSessionId) {
+
+        const fetchMessages = async (sessionId: string) => {
+          if (isMounted) {
+            setMessagesLoading(true);
+          }
+          const res = await fetch(
+            `/api/chatbot/sessions/${sessionId}/messages`
+          );
+          if (!res.ok) {
+            const error = await readErrorResponse(res);
+            const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+            const message = `Failed to load chat history.${suffix}`;
+            const err = new Error(message) as Error & { status?: number };
+            err.status = res.status;
+            throw err;
+          }
+          const data = (await res.json()) as {
+            messages: Array<{ role: ChatMessage["role"]; content: string }>;
+          };
+          const loaded = data.messages.map((message) => ({
+            role: message.role,
+            content: message.content,
+          }));
+          if (isMounted) {
+            setMessages(loaded);
+            setMessagesLoading(false);
+          }
+        };
+
+        const createSession = async () => {
           const res = await fetch("/api/chatbot/sessions", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({}),
           });
-        if (!res.ok) {
-          const error = await readErrorResponse(res);
-          const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-          throw new Error(`Failed to create chat session.${suffix}`);
-        }
+          if (!res.ok) {
+            const error = await readErrorResponse(res);
+            const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+            throw new Error(`Failed to create chat session.${suffix}`);
+          }
           const data = (await res.json()) as { sessionId: string };
-          activeSessionId = data.sessionId;
-          window.localStorage.setItem("chatbotSessionId", activeSessionId);
+          return data.sessionId;
+        };
+
+        if (!activeSessionId) {
+          try {
+            const listRes = await fetch("/api/chatbot/sessions");
+            if (listRes.ok) {
+              const listData = (await listRes.json()) as {
+                sessions?: Array<{ id: string }>;
+              };
+              activeSessionId = listData.sessions?.[0]?.id || null;
+            }
+          } catch {
+            // fall back to creating a session
+          }
         }
+
+        if (activeSessionId) {
+          try {
+            if (isMounted) {
+              setSessionId(activeSessionId);
+              window.localStorage.setItem("chatbotSessionId", activeSessionId);
+              setSessionLoading(false);
+            }
+            await fetchMessages(activeSessionId);
+            if (!isMounted) return;
+            return;
+          } catch (error) {
+            const status =
+              error instanceof Error && "status" in error
+                ? (error as Error & { status?: number }).status
+                : undefined;
+            if (status === 404 && stored === activeSessionId) {
+              window.localStorage.removeItem("chatbotSessionId");
+              activeSessionId = null;
+            } else if (status === 404 && sessionParam === activeSessionId) {
+              activeSessionId = null;
+            } else {
+              throw error;
+            }
+          }
+        }
+
+        activeSessionId = await createSession();
         if (!isMounted) return;
         setSessionId(activeSessionId);
         window.localStorage.setItem("chatbotSessionId", activeSessionId);
-
-        const messagesRes = await fetch(
-          `/api/chatbot/sessions/${activeSessionId}/messages`
-        );
-        if (!messagesRes.ok) {
-          const error = await readErrorResponse(messagesRes);
-          const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-          throw new Error(`Failed to load chat history.${suffix}`);
-        }
-        const data = (await messagesRes.json()) as {
-          messages: Array<{ role: ChatMessage["role"]; content: string }>;
-        };
-        if (isMounted) {
-          setMessages(
-            data.messages.map((message) => ({
-              role: message.role,
-              content: message.content,
-            }))
-          );
-        }
+        toast("New chat session created", { variant: "success" });
+        setSessionLoading(false);
+        await fetchMessages(activeSessionId);
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Failed to load chat session.";
         setInitError(message);
         toast(message, { variant: "error" });
+      } finally {
+        if (isMounted) {
+          initStartedRef.current = false;
+          setSessionLoading(false);
+          setMessagesLoading(false);
+        }
       }
     };
     void initSession();
@@ -368,6 +438,8 @@ export default function ChatbotPage() {
       toast("Agent mode does not support attachments yet.", { variant: "error" });
       return;
     }
+
+    setIsSending(true);
 
     let searchNote = "";
     if (webSearchEnabled && trimmed) {
@@ -411,7 +483,6 @@ export default function ChatbotPage() {
     ];
     setMessages(nextMessages);
     setInput("");
-    setIsSending(true);
 
     try {
       if (sessionId) {
@@ -590,7 +661,11 @@ export default function ChatbotPage() {
         ) : null}
         <div className="flex min-h-[420px] flex-col rounded-md border border-gray-800 bg-gray-900 p-4">
           <div className="flex-1 space-y-4 overflow-y-auto pr-2">
-            {messages.length === 0 ? (
+            {(sessionLoading || messagesLoading) && !initError ? (
+              <div className="rounded-md border border-dashed border-gray-800 bg-gray-950/60 p-6 text-center text-sm text-gray-400">
+                Loading chat session...
+              </div>
+            ) : messages.length === 0 ? (
               <div className="rounded-md border border-dashed border-gray-700 p-6 text-center text-sm text-gray-400">
                 Start a conversation to see messages here.
               </div>
@@ -633,12 +708,6 @@ export default function ChatbotPage() {
                   {isSending ? "Sending..." : "Send"}
                 </Button>
               </div>
-              {!sessionReady ? (
-                <p className="mt-2 text-xs text-amber-200/80">
-                  Chat session is not ready. Check the banner above for setup
-                  steps.
-                </p>
-              ) : null}
               <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-200">
                 {webSearchEnabled ? (
                   <button
@@ -712,10 +781,18 @@ export default function ChatbotPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="add">Select tool</SelectItem>
-                    <SelectItem value="websearch">Web search</SelectItem>
-                    <SelectItem value="global-context">Global context</SelectItem>
-                    <SelectItem value="local-context">Local context</SelectItem>
-                    <SelectItem value="agent-mode">Agent mode</SelectItem>
+                    {!webSearchEnabled ? (
+                      <SelectItem value="websearch">Web search</SelectItem>
+                    ) : null}
+                    {!useGlobalContext ? (
+                      <SelectItem value="global-context">Global context</SelectItem>
+                    ) : null}
+                    {!useLocalContext ? (
+                      <SelectItem value="local-context">Local context</SelectItem>
+                    ) : null}
+                    {!agentModeEnabled ? (
+                      <SelectItem value="agent-mode">Agent mode</SelectItem>
+                    ) : null}
                   </SelectContent>
                 </Select>
               </div>

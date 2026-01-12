@@ -19,6 +19,50 @@ export default function Menu() {
   const { isMenuCollapsed, setIsMenuCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayout();
   const router = useRouter();
 
+  const handleOpenChat = async (
+    event: React.MouseEvent<HTMLAnchorElement>
+  ) => {
+    if (typeof window === "undefined") return;
+    event.preventDefault();
+    const storedSession = window.localStorage.getItem("chatbotSessionId");
+    if (storedSession) {
+      router.push(`/admin/chatbot?session=${storedSession}`);
+      return;
+    }
+    try {
+      const listRes = await fetch("/api/chatbot/sessions");
+      if (listRes.ok) {
+        const data = (await listRes.json()) as {
+          sessions?: Array<{ id: string }>;
+        };
+        const latestId = data.sessions?.[0]?.id;
+        if (latestId) {
+          window.localStorage.setItem("chatbotSessionId", latestId);
+          router.push(`/admin/chatbot?session=${latestId}`);
+          return;
+        }
+      }
+      const createRes = await fetch("/api/chatbot/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (!createRes.ok) {
+        router.push("/admin/chatbot");
+        return;
+      }
+      const created = (await createRes.json()) as { sessionId?: string };
+      if (created.sessionId) {
+        window.localStorage.setItem("chatbotSessionId", created.sessionId);
+        router.push(`/admin/chatbot?session=${created.sessionId}`);
+      } else {
+        router.push("/admin/chatbot");
+      }
+    } catch {
+      router.push("/admin/chatbot");
+    }
+  };
+
   const handleCreatePageClick = () => {
     setIsMenuCollapsed(true);
     setIsProgrammaticallyCollapsed(true);
@@ -125,7 +169,7 @@ export default function Menu() {
         <PlugIcon className="mr-2" />
         {!isMenuCollapsed && "Integrations"}
       </Link>
-      <CollapsibleMenu title="Chatbot" icon={<MessageCircleIcon />}>
+      <CollapsibleMenu title="Chatbot" icon={<MessageCircleIcon />} href="/admin/chatbot">
         <Link
           href="/admin/chatbot/sessions"
           className="block hover:bg-gray-700 p-2 rounded"
@@ -135,6 +179,7 @@ export default function Menu() {
         <Link
           href="/admin/chatbot"
           className="block hover:bg-gray-700 p-2 rounded"
+          onClick={handleOpenChat}
         >
           Chat
         </Link>

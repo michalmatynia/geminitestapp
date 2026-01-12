@@ -122,3 +122,47 @@ export async function PATCH(req: Request) {
     );
   }
 }
+
+export async function DELETE(req: Request) {
+  const requestStart = Date.now();
+  try {
+    if (!("chatbotSession" in prisma)) {
+      return NextResponse.json(
+        { error: "Chat sessions not initialized. Run prisma generate/db push." },
+        { status: 500 }
+      );
+    }
+    const body = (await req.json()) as { sessionId?: string };
+    if (!body.sessionId) {
+      return NextResponse.json(
+        { error: "Session ID is required." },
+        { status: 400 }
+      );
+    }
+    if (DEBUG_CHATBOT) {
+      console.info("[chatbot][sessions][DELETE] Request", {
+        sessionId: body.sessionId,
+      });
+    }
+    const deleted = await prisma.chatbotSession.delete({
+      where: { id: body.sessionId },
+    });
+    if (DEBUG_CHATBOT) {
+      console.info("[chatbot][sessions][DELETE] Deleted", {
+        sessionId: deleted.id,
+        durationMs: Date.now() - requestStart,
+      });
+    }
+    return NextResponse.json({ session: deleted });
+  } catch (error) {
+    const errorId = randomUUID();
+    console.error("[chatbot][sessions][DELETE] Failed to delete session", {
+      errorId,
+      error,
+    });
+    return NextResponse.json(
+      { error: "Failed to delete session.", errorId },
+      { status: 500 }
+    );
+  }
+}

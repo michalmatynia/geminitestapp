@@ -22,6 +22,7 @@ export default function ChatbotSessionsPage() {
   const [query, setQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftTitle, setDraftTitle] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -94,6 +95,36 @@ export default function ChatbotSessionsPage() {
         error instanceof Error ? error.message : "Failed to update session title.";
       setError(message);
       toast(message, { variant: "error" });
+    }
+  };
+
+  const deleteSession = async (session: ChatbotSession) => {
+    const confirmed = window.confirm(
+      `Delete "${session.title || `Session ${session.id.slice(0, 6)}`}"?`
+    );
+    if (!confirmed) return;
+    setDeletingId(session.id);
+    try {
+      const res = await fetch("/api/chatbot/sessions", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: session.id }),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to delete session.");
+      }
+      setSessions((prev) => prev.filter((item) => item.id !== session.id));
+      if (editingId === session.id) {
+        cancelEditing();
+      }
+      toast("Session deleted", { variant: "success" });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to delete session.";
+      setError(message);
+      toast(message, { variant: "error" });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -177,6 +208,14 @@ export default function ChatbotSessionsPage() {
                         Edit
                       </Button>
                     )}
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      disabled={deletingId === session.id}
+                      onClick={() => void deleteSession(session)}
+                    >
+                      {deletingId === session.id ? "Removing..." : "Remove"}
+                    </Button>
                     <Link
                       href={`/admin/chatbot?session=${session.id}`}
                       onClick={() =>

@@ -10,13 +10,20 @@ export async function GET(
 ) {
   const requestStart = Date.now();
   try {
-    if (!("chatbotMessage" in prisma)) {
+    if (!("chatbotMessage" in prisma) || !("chatbotSession" in prisma)) {
       return NextResponse.json(
-        { error: "Chat messages not initialized. Run prisma generate/db push." },
+        { error: "Chat sessions not initialized. Run prisma generate/db push." },
         { status: 500 }
       );
     }
     const { sessionId } = await params;
+    const session = await prisma.chatbotSession.findUnique({
+      where: { id: sessionId },
+      select: { id: true },
+    });
+    if (!session) {
+      return NextResponse.json({ error: "Session not found." }, { status: 404 });
+    }
     const messages = await prisma.chatbotMessage.findMany({
       where: { sessionId },
       orderBy: { createdAt: "asc" },
@@ -48,13 +55,20 @@ export async function POST(
 ) {
   const requestStart = Date.now();
   try {
-    if (!("chatbotMessage" in prisma)) {
+    if (!("chatbotMessage" in prisma) || !("chatbotSession" in prisma)) {
       return NextResponse.json(
-        { error: "Chat messages not initialized. Run prisma generate/db push." },
+        { error: "Chat sessions not initialized. Run prisma generate/db push." },
         { status: 500 }
       );
     }
     const { sessionId } = await params;
+    const session = await prisma.chatbotSession.findUnique({
+      where: { id: sessionId },
+      select: { id: true },
+    });
+    if (!session) {
+      return NextResponse.json({ error: "Session not found." }, { status: 404 });
+    }
     const body = (await req.json()) as { role?: string; content?: string };
     if (!body.role || !body.content?.trim()) {
       return NextResponse.json(

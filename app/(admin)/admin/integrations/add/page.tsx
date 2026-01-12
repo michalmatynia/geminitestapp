@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/toast";
 
 const traderaIntegration = {
   name: "Tradera",
@@ -14,6 +15,7 @@ const traderaIntegration = {
 export default function IntegrationsAddPage() {
   const router = useRouter();
   const [traderaCount, setTraderaCount] = useState(0);
+  const { toast } = useToast();
 
   const handleAdd = async () => {
     const res = await fetch("/api/integrations", {
@@ -26,7 +28,7 @@ export default function IntegrationsAddPage() {
     });
     if (!res.ok) {
       const error = (await res.json()) as { error?: string };
-      alert(error.error || "Failed to add integration.");
+      toast(error.error || "Failed to add integration.", { variant: "error" });
       return;
     }
     router.push("/admin/integrations");

@@ -1,21 +1,33 @@
 Application notes
 
 
-add playwright settings to adjust playwright behaviour and timing (humanize it)
+Catalogs 
+-default catalog, the first created catalog is always default one
+--In Edit Catalog
+Catalog Name
+Description
+Available languages in Tag box
+Default Language
+Available price groups
+Default Price group
+
+Categories
+Add Category
+---> Category Name
+---> Category Catalog
+Parent Category---->
+Category listing cateogries are grouped by catalogs to which they belong
+categories are draggable into hierarchies
+Each category can only belong to one catalog
+
+TAGS PARAMETERS Additional fields
 
 
-Add countries to the countries list based on the available langauges,
-Link countries and currencies by number reference
-
-Make the app more robust, add comments and try catch blocks, make it  easier for debugging
-
-Price groups
-Multicurrency
-
-Pagination
+Pagination in Product List
 
 Filtering
 Tradera Listing, vinted listing
+
 
 
 add red star
@@ -27,14 +39,13 @@ The images should be import from Base.com links
 
 Also the stock should be present
 
-add try catch blocks for easier debugging
 
 I should have teh possibility to drag Images around to change their order
 
 In Product Create
 If the field is empty, the text in TAB is slightly Darkened
 
-
+Integration with Base
 
 3. Extend Product Create, Product List and add a matching PRoduct Edit to it all
 
@@ -50,6 +61,9 @@ Crosslister
 Vinted flagger
 depop
 shpock
+
+
+Connect email to add orders from email like tradera
 
 
 Bypassing Captchas

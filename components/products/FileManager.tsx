@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from "react";
 
 import ImagePreviewModal from "./ImagePreviewModal";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 
 interface FileManagerImageFile {
   id: string;
@@ -42,6 +43,7 @@ export default function FileManager({
   const [filenameSearch, setFilenameSearch] = useState("");
   const [productNameSearch, setProductNameSearch] = useState("");
   const [previewFile, setPreviewFile] = useState<FileManagerImageFile | null>(null);
+  const { toast } = useToast();
 
   const fetchFiles = useCallback(() => {
     const query = new URLSearchParams();
@@ -99,7 +101,7 @@ export default function FileManager({
       if (res.ok) {
         fetchFiles();
       } else {
-        alert("Failed to delete file.");
+        toast("Failed to delete file.", { variant: "error" });
       }
     }
   };

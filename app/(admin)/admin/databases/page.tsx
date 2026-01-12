@@ -4,8 +4,9 @@ import { useEffect, useState, useRef } from "react";
 import { DataTable } from "@/components/data-table";
 import { getDatabaseColumns, DatabaseInfo } from "@/components/database-columns";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 async function getBackups(): Promise<DatabaseInfo[]> {
   const res = await fetch("/api/databases/backups");
@@ -25,7 +26,7 @@ const LogModal = ({
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
     <div className="rounded-lg bg-gray-900 p-6 shadow-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto">
       <h2 className="text-xl font-bold mb-4">Operation Log</h2>
-      <SyntaxHighlighter language="bash" style={atomOneDark}>
+      <SyntaxHighlighter language="bash" style={atomDark}>
         {content}
       </SyntaxHighlighter>
       <div className="mt-6 text-right">
@@ -42,6 +43,7 @@ export default function DatabasesPage() {
   const [truncateBeforeRestore, setTruncateBeforeRestore] = useState(false);
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [logModalContent, setLogModalContent] = useState("");
+  const { toast } = useToast();
 
   const openLogModal = (content: string) => {
     setLogModalContent(content);
@@ -109,14 +111,14 @@ export default function DatabasesPage() {
       });
 
       if (res.ok) {
-        alert("Backup uploaded successfully.");
+        toast("Backup uploaded successfully.", { variant: "success" });
         setRefreshTrigger((prev) => prev + 1);
       } else {
-        alert("Failed to upload backup.");
+        toast("Failed to upload backup.", { variant: "error" });
       }
     } catch (error) {
       console.error("Error uploading backup:", error);
-      alert("An error occurred during upload.");
+      toast("An error occurred during upload.", { variant: "error" });
     } finally {
       event.target.value = "";
     }
@@ -189,6 +191,8 @@ export default function DatabasesPage() {
             onPreview: handlePreview,
             onRestore: (log: string) => openLogModal(log),
             onDelete: () => setRefreshTrigger((prev) => prev + 1),
+            notify: (message, variant) =>
+              toast(message, { variant: variant ?? "info" }),
           })}
           data={data}
           initialSorting={[{ id: "lastModifiedAt", desc: true }]}

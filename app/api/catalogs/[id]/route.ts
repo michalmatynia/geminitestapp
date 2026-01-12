@@ -7,6 +7,7 @@ const catalogUpdateSchema = z.object({
   name: z.string().trim().min(1).optional(),
   description: z.string().trim().optional().nullable(),
   languageIds: z.array(z.string().trim().min(1)).optional(),
+  isDefault: z.boolean().optional(),
 });
 
 /**
@@ -45,11 +46,15 @@ export async function PUT(
       );
     }
     const data = catalogUpdateSchema.parse(body);
+    if (data.isDefault) {
+      await prisma.catalog.updateMany({ data: { isDefault: false } });
+    }
     const catalog = await prisma.catalog.update({
       where: { id },
       data: {
         name: data.name,
         description: data.description ?? null,
+        isDefault: data.isDefault,
       },
     });
     if (data.languageIds) {

@@ -10,6 +10,7 @@ import {
   useProductFormContext,
 } from "@/lib/context/ProductFormContext";
 import { ProductWithImages } from "@/lib/types";
+import { useToast } from "@/components/ui/toast";
 
 function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -58,6 +59,7 @@ function CreateProductForm() {
 export default function CreateProductPage() {
   const router = useRouter();
   const [initialSku, setInitialSku] = useState<string>("");
+  const { toast } = useToast();
 
   useEffect(() => {
     const requestSku = async () => {
@@ -70,11 +72,13 @@ export default function CreateProductPage() {
         const sku = skuInput.trim().toUpperCase();
         const skuPattern = /^[A-Z0-9]+$/;
         if (!sku) {
-          alert("SKU is required.");
+          toast("SKU is required.", { variant: "error" });
           continue;
         }
         if (!skuPattern.test(sku)) {
-          alert("SKU must use uppercase letters and numbers only.");
+          toast("SKU must use uppercase letters and numbers only.", {
+            variant: "error",
+          });
           continue;
         }
         try {
@@ -83,18 +87,20 @@ export default function CreateProductPage() {
             const payload = (await res.json()) as { error?: string; errorId?: string };
             const message = payload?.error || "Failed to validate SKU";
             const errorIdSuffix = payload?.errorId ? ` (Error ID: ${payload.errorId})` : "";
-            alert(`${message}${errorIdSuffix}`);
+            toast(`${message}${errorIdSuffix}`, { variant: "error" });
             continue;
           }
           const products = (await res.json()) as ProductWithImages[];
           const skuExists = products.some((product) => product.sku === sku);
           if (skuExists) {
-            alert("SKU already exists.");
+            toast("SKU already exists.", { variant: "error" });
             continue;
           }
         } catch (error) {
           console.error("Failed to validate SKU:", error);
-          alert("Failed to validate SKU. Please try again.");
+          toast("Failed to validate SKU. Please try again.", {
+            variant: "error",
+          });
           continue;
         }
         setInitialSku(sku);

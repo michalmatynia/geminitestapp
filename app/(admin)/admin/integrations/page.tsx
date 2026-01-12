@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { PlusIcon, SettingsIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/toast";
 
 type Integration = {
   id: string;
@@ -39,6 +40,7 @@ type IntegrationConnection = {
 };
 
 export default function IntegrationsPage() {
+  const { toast } = useToast();
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [activeIntegration, setActiveIntegration] = useState<Integration | null>(null);
   const [connections, setConnections] = useState<IntegrationConnection[]>([]);
@@ -219,7 +221,7 @@ export default function IntegrationsPage() {
     });
     if (!res.ok) {
       const error = (await res.json()) as { error?: string };
-      alert(error.error || "Failed to add Tradera.");
+      toast(error.error || "Failed to add Tradera.", { variant: "error" });
       return null;
     }
     const created = (await res.json()) as Integration;
@@ -238,11 +240,11 @@ export default function IntegrationsPage() {
   const handleSaveConnection = async () => {
     if (!activeIntegration) return;
     if (!connectionForm.name.trim() || !connectionForm.username.trim()) {
-      alert("Connection name and username are required.");
+      toast("Connection name and username are required.", { variant: "error" });
       return;
     }
     if (!editingConnectionId && !connectionForm.password.trim()) {
-      alert("Password is required.");
+      toast("Password is required.", { variant: "error" });
       return;
     }
     const payload = {
@@ -264,7 +266,7 @@ export default function IntegrationsPage() {
     );
     if (!res.ok) {
       const error = (await res.json()) as { error?: string };
-      alert(error.error || "Failed to save connection.");
+      toast(error.error || "Failed to save connection.", { variant: "error" });
       return;
     }
     setConnectionForm({ name: "", username: "", password: "" });
@@ -280,7 +282,7 @@ export default function IntegrationsPage() {
     });
     if (!res.ok) {
       const error = (await res.json()) as { error?: string };
-      alert(error.error || "Failed to delete connection.");
+      toast(error.error || "Failed to delete connection.", { variant: "error" });
       return;
     }
     if (activeIntegration) {
@@ -489,7 +491,9 @@ export default function IntegrationsPage() {
     });
     if (!res.ok) {
       const error = (await res.json()) as { error?: string };
-      alert(error.error || "Failed to save Playwright settings.");
+      toast(error.error || "Failed to save Playwright settings.", {
+        variant: "error",
+      });
       return;
     }
     const updated = (await res.json()) as IntegrationConnection;

@@ -8,6 +8,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/components/ui/toast";
+import { Input } from "@/components/ui/input";
 
 const settingSections = [
   "Price Groups",
@@ -50,6 +52,7 @@ type Catalog = {
   id: string;
   name: string;
   description: string | null;
+  isDefault: boolean;
   createdAt: string;
   languages?: { languageId: string; language: Language }[];
 };
@@ -166,10 +169,14 @@ export default function ProductSettingsPage() {
   const [catalogForm, setCatalogForm] = useState({
     name: "",
     description: "",
+    isDefault: false,
   });
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [catalogSaving, setCatalogSaving] = useState(false);
   const [showCatalogModal, setShowCatalogModal] = useState(false);
   const [editingCatalogId, setEditingCatalogId] = useState<string | null>(null);
   const [selectedLanguageIds, setSelectedLanguageIds] = useState<string[]>([]);
+  const [catalogLanguageQuery, setCatalogLanguageQuery] = useState("");
   const [countrySearch, setCountrySearch] = useState("");
   const [formState, setFormState] = useState({
     isDefault: false,
@@ -183,6 +190,7 @@ export default function ProductSettingsPage() {
     priceMultiplier: 1,
     addToPrice: 0,
   });
+  const { toast } = useToast();
 
   const refreshPriceGroups = useCallback(async () => {
     try {
@@ -349,22 +357,24 @@ export default function ProductSettingsPage() {
 
   const handleSaveGroup = async () => {
     if (!formState.groupId.trim()) {
-      alert("Price group ID is required.");
+      toast("Price group ID is required.", { variant: "error" });
       return;
     }
     if (!formState.name.trim()) {
-      alert("Price group name is required.");
+      toast("Price group name is required.", { variant: "error" });
       return;
     }
     if (!formState.currencyId) {
-      alert("Currency is required.");
+      toast("Currency is required.", { variant: "error" });
       return;
     }
     if (
       formState.groupType === "dependent" &&
       !formState.sourceGroupId.trim()
     ) {
-      alert("Source price group is required for dependent groups.");
+      toast("Source price group is required for dependent groups.", {
+        variant: "error",
+      });
       return;
     }
 
@@ -391,7 +401,7 @@ export default function ProductSettingsPage() {
     );
     if (!res.ok) {
       const error = (await res.json()) as { error?: string };
-      alert(error.error || "Failed to save price group.");
+      toast(error.error || "Failed to save price group.", { variant: "error" });
       return;
     }
     await refreshPriceGroups();
@@ -426,7 +436,7 @@ export default function ProductSettingsPage() {
     });
     if (!res.ok) {
       const error = (await res.json()) as { error?: string };
-      alert(error.error || "Failed to delete price group.");
+      toast(error.error || "Failed to delete price group.", { variant: "error" });
       return;
     }
     await refreshPriceGroups();
@@ -449,7 +459,7 @@ export default function ProductSettingsPage() {
 
   const handleSaveCurrency = async () => {
     if (!currencyForm.code.trim() || !currencyForm.name.trim()) {
-      alert("Currency code and name are required.");
+      toast("Currency code and name are required.", { variant: "error" });
       return;
     }
     const res = await fetch(
@@ -466,7 +476,7 @@ export default function ProductSettingsPage() {
     );
     if (!res.ok) {
       const error = (await res.json()) as { error?: string };
-      alert(error.error || "Failed to save currency.");
+      toast(error.error || "Failed to save currency.", { variant: "error" });
       return;
     }
     await refreshCurrencies();
@@ -482,7 +492,7 @@ export default function ProductSettingsPage() {
     });
     if (!res.ok) {
       const error = (await res.json()) as { error?: string };
-      alert(error.error || "Failed to delete currency.");
+      toast(error.error || "Failed to delete currency.", { variant: "error" });
       return;
     }
     await refreshCurrencies();
@@ -506,7 +516,7 @@ export default function ProductSettingsPage() {
 
   const handleSaveCountry = async () => {
     if (!countryForm.code.trim() || !countryForm.name.trim()) {
-      alert("Country code and name are required.");
+      toast("Country code and name are required.", { variant: "error" });
       return;
     }
     const res = await fetch(
@@ -523,7 +533,7 @@ export default function ProductSettingsPage() {
     );
     if (!res.ok) {
       const error = (await res.json()) as { error?: string };
-      alert(error.error || "Failed to save country.");
+      toast(error.error || "Failed to save country.", { variant: "error" });
       return;
     }
     await refreshCountries();
@@ -539,7 +549,7 @@ export default function ProductSettingsPage() {
     });
     if (!res.ok) {
       const error = (await res.json()) as { error?: string };
-      alert(error.error || "Failed to delete country.");
+      toast(error.error || "Failed to delete country.", { variant: "error" });
       return;
     }
     await refreshCountries();
@@ -568,46 +578,101 @@ export default function ProductSettingsPage() {
       setCatalogForm({
         name: catalog.name,
         description: catalog.description ?? "",
+        isDefault: catalog.isDefault,
       });
       setSelectedLanguageIds(
         catalog.languages?.map((entry) => entry.languageId) ?? []
       );
     } else {
       setEditingCatalogId(null);
-      setCatalogForm({ name: "", description: "" });
+      setCatalogForm({
+        name: "",
+        description: "",
+        isDefault: catalogs.length === 0,
+      });
       setSelectedLanguageIds([]);
     }
+    setCatalogError(null);
+    setCatalogLanguageQuery("");
     setShowCatalogModal(true);
+  };
+
+  const handleDeleteCatalog = (catalog: Catalog) => {
+    const deleteCatalog = async () => {
+      const confirmed = window.confirm(
+        `Delete catalog "${catalog.name}"? This cannot be undone.`,
+      );
+      if (!confirmed) {
+        return;
+      }
+
+      const res = await fetch(`/api/catalogs/${catalog.id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const error = (await res.json()) as { error?: string; errorId?: string };
+        const message = error.error || "Failed to delete catalog.";
+        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+        toast(`${message}${suffix}`, { variant: "error" });
+        return;
+      }
+
+      await refreshCatalogs();
+    };
+
+    void deleteCatalog();
   };
 
   const handleSubmitCatalog = () => {
     const submitCatalog = async () => {
+      if (catalogSaving) {
+        return;
+      }
       const name = catalogForm.name.trim();
       const description = catalogForm.description.trim();
       if (!name) {
-        alert("Catalog name is required.");
+        toast("Catalog name is required.", { variant: "error" });
         return;
       }
-      const endpoint = editingCatalogId
-        ? `/api/catalogs/${editingCatalogId}`
-        : "/api/catalogs";
-      const res = await fetch(endpoint, {
-        method: editingCatalogId ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description, languageIds: selectedLanguageIds }),
-      });
-      if (!res.ok) {
-        const error = (await res.json()) as { error?: string; errorId?: string };
-        const message = error.error || "Failed to save catalog.";
-        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-        alert(`${message}${suffix}`);
-        return;
+      setCatalogSaving(true);
+      try {
+        const endpoint = editingCatalogId
+          ? `/api/catalogs/${editingCatalogId}`
+          : "/api/catalogs";
+        const res = await fetch(endpoint, {
+          method: editingCatalogId ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            description,
+            languageIds: selectedLanguageIds,
+            isDefault: catalogForm.isDefault,
+          }),
+        });
+        if (!res.ok) {
+          const error = (await res.json()) as {
+            error?: string;
+            errorId?: string;
+          };
+          const message = error.error || "Failed to save catalog.";
+          const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+          setCatalogError(`${message}${suffix}`);
+          return;
+        }
+        setCatalogError(null);
+        toast("Catalog saved.", { variant: "success" });
+        setShowCatalogModal(false);
+        setEditingCatalogId(null);
+        setCatalogForm({ name: "", description: "", isDefault: false });
+        setSelectedLanguageIds([]);
+        refreshCatalogs().catch((error) => {
+          console.error("Failed to refresh catalogs:", error);
+          toast("Catalog saved, but refresh failed.", { variant: "error" });
+        });
+      } finally {
+        setCatalogSaving(false);
       }
-      setShowCatalogModal(false);
-      setEditingCatalogId(null);
-      setCatalogForm({ name: "", description: "" });
-      setSelectedLanguageIds([]);
-      await refreshCatalogs();
     };
     void submitCatalog();
   };
@@ -619,6 +684,28 @@ export default function ProductSettingsPage() {
         : [...prev, languageId]
     );
   };
+
+  const selectedLanguages = useMemo(
+    () =>
+      languages.filter((language) => selectedLanguageIds.includes(language.id)),
+    [languages, selectedLanguageIds]
+  );
+
+  const availableLanguages = useMemo(() => {
+    const query = catalogLanguageQuery.trim().toLowerCase();
+    return languages.filter((language) => {
+      if (selectedLanguageIds.includes(language.id)) {
+        return false;
+      }
+      if (!query) {
+        return true;
+      }
+      return (
+        language.name.toLowerCase().includes(query) ||
+        language.code.toLowerCase().includes(query)
+      );
+    });
+  }, [catalogLanguageQuery, languages, selectedLanguageIds]);
 
   const handleOpenLanguageModal = (language: Language) => {
     setEditingLanguageId(language.id);
@@ -651,7 +738,7 @@ export default function ProductSettingsPage() {
   const handleSaveLanguage = () => {
     const saveLanguage = async () => {
       if (!languageForm.code.trim() || !languageForm.name.trim()) {
-        alert("Language code and name are required.");
+        toast("Language code and name are required.", { variant: "error" });
         return;
       }
       const payload = {
@@ -672,7 +759,7 @@ export default function ProductSettingsPage() {
         const error = (await res.json()) as { error?: string; errorId?: string };
         const message = error.error || "Failed to save language.";
         const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-        alert(`${message}${suffix}`);
+        toast(`${message}${suffix}`, { variant: "error" });
         return;
       }
       setShowLanguageModal(false);
@@ -694,7 +781,7 @@ export default function ProductSettingsPage() {
         const error = (await res.json()) as { error?: string; errorId?: string };
         const message = error.error || "Failed to delete language.";
         const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-        alert(`${message}${suffix}`);
+        toast(`${message}${suffix}`, { variant: "error" });
         return;
       }
       await refreshLanguages();
@@ -836,10 +923,31 @@ export default function ProductSettingsPage() {
                           <div>
                             <p className="text-sm font-semibold text-white">
                               {catalog.name}
+                              {catalog.isDefault ? (
+                                <span className="ml-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-200">
+                                  Default
+                                </span>
+                              ) : null}
                             </p>
                             <p className="text-xs text-gray-400">
                               {catalog.description || "No description"}
                             </p>
+                            {catalog.languages && catalog.languages.length > 0 ? (
+                              <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-300">
+                                {catalog.languages.map((entry) => (
+                                  <span
+                                    key={entry.languageId}
+                                    className="rounded-full border border-gray-700 bg-gray-900 px-2 py-0.5"
+                                  >
+                                    {entry.language?.name ?? "Language"}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="mt-2 text-[11px] text-gray-500">
+                                No languages assigned
+                              </p>
+                            )}
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -859,6 +967,15 @@ export default function ProductSettingsPage() {
                                 }}
                               >
                                 Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-red-400 focus:text-red-300"
+                                onSelect={(event) => {
+                                  event.preventDefault();
+                                  handleDeleteCatalog(catalog);
+                                }}
+                              >
+                                Delete
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -1189,6 +1306,33 @@ export default function ProductSettingsPage() {
               </button>
             </div>
             <div className="space-y-4">
+              {catalogError ? (
+                <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-semibold">Catalog save failed</span>
+                    <button
+                      className="rounded border border-red-400/50 px-2 py-1 text-[11px] text-red-100 hover:bg-red-500/20"
+                      type="button"
+                      onClick={() => {
+                        if (catalogError) {
+                          void navigator.clipboard.writeText(catalogError);
+                          toast("Error copied to clipboard.", {
+                            variant: "success",
+                          });
+                        }
+                      }}
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <textarea
+                    className="mt-2 w-full resize-none rounded-md border border-red-500/30 bg-gray-900/70 p-2 text-[11px] text-red-100"
+                    rows={3}
+                    readOnly
+                    value={catalogError}
+                  />
+                </div>
+              ) : null}
               <div>
                 <label className="text-xs text-gray-400">Name</label>
                 <input
@@ -1216,6 +1360,21 @@ export default function ProductSettingsPage() {
                   }
                 />
               </div>
+              <label className="flex items-center gap-2 text-xs text-gray-300">
+                <input
+                  type="checkbox"
+                  className="accent-emerald-400"
+                  checked={catalogForm.isDefault}
+                  disabled={!editingCatalogId && catalogs.length === 0}
+                  onChange={(event) =>
+                    setCatalogForm((prev) => ({
+                      ...prev,
+                      isDefault: event.target.checked,
+                    }))
+                  }
+                />
+                Set as default catalog
+              </label>
               <div>
                 <label className="text-xs text-gray-400">Languages</label>
                 {languagesLoading ? (
@@ -1223,25 +1382,60 @@ export default function ProductSettingsPage() {
                 ) : languagesError ? (
                   <p className="mt-2 text-xs text-red-400">{languagesError}</p>
                 ) : (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {languages.map((language) => (
-                      <label
-                        key={language.id}
-                        className="inline-flex items-center gap-2 rounded border border-gray-800 bg-gray-900 px-2 py-1 text-xs text-gray-200"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedLanguageIds.includes(language.id)}
-                          onChange={() => toggleLanguage(language.id)}
-                        />
-                        <span>
-                          {language.name}
-                          <span className="ml-1 text-gray-500">
-                            ({language.code})
-                          </span>
+                  <div className="mt-2 space-y-3">
+                    <Input
+                      placeholder="Search languages..."
+                      value={catalogLanguageQuery}
+                      onChange={(event) =>
+                        setCatalogLanguageQuery(event.target.value)
+                      }
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      {selectedLanguages.length === 0 ? (
+                        <span className="text-[11px] text-gray-500">
+                          No languages selected.
                         </span>
-                      </label>
-                    ))}
+                      ) : (
+                        selectedLanguages.map((language) => (
+                          <button
+                            key={language.id}
+                            type="button"
+                            className="inline-flex items-center gap-1 rounded-full border border-gray-700 bg-gray-900 px-3 py-1 text-xs text-gray-200 hover:border-gray-500"
+                            onClick={() => toggleLanguage(language.id)}
+                          >
+                            {language.name}
+                            <span className="text-gray-500">
+                              ({language.code})
+                            </span>
+                            <span className="text-gray-500">×</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                    <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-xs text-gray-200">
+                      {availableLanguages.length === 0 ? (
+                        <p className="text-gray-500">
+                          No matching languages.
+                        </p>
+                      ) : (
+                        availableLanguages.map((language) => (
+                          <button
+                            key={language.id}
+                            type="button"
+                            className="flex w-full items-center justify-between rounded-md px-2 py-1 text-left hover:bg-gray-800"
+                            onClick={() => toggleLanguage(language.id)}
+                          >
+                            <span>
+                              {language.name}
+                              <span className="ml-1 text-gray-500">
+                                ({language.code})
+                              </span>
+                            </span>
+                            <span className="text-gray-500">Add</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -1257,8 +1451,9 @@ export default function ProductSettingsPage() {
                   className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
                   type="button"
                   onClick={handleSubmitCatalog}
+                  disabled={catalogSaving}
                 >
-                  Save
+                  {catalogSaving ? "Saving..." : "Save"}
                 </button>
               </div>
             </div>

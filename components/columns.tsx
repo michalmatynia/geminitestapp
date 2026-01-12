@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/components/ui/toast";
 
 export type Product = {
   id: string;
@@ -47,7 +48,8 @@ interface ColumnActionsProps {
 // product list.
 const handleDelete = async (
   id: string,
-  setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>
+  setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>,
+  notify?: (message: string, variant?: "success" | "error" | "info") => void
 ) => {
   if (!window.confirm("Are you sure you want to delete this product?")) {
     return;
@@ -59,6 +61,7 @@ const handleDelete = async (
     setRefreshTrigger((prev) => prev + 1);
   } else {
     console.error("Failed to delete product:", await res.json());
+    notify?.("Failed to delete product.", "error");
   }
 };
 
@@ -71,6 +74,7 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
 }) => {
   const product = row.original;
   const router = useRouter();
+  const { toast } = useToast();
 
   const handleDuplicate = async () => {
     const sku = window.prompt("Enter a new unique SKU for the duplicate:");
@@ -78,11 +82,13 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
     const trimmedSku = sku.trim().toUpperCase();
     const skuPattern = /^[A-Z0-9]+$/;
     if (!trimmedSku) {
-      alert("SKU is required.");
+      toast("SKU is required.", { variant: "error" });
       return;
     }
     if (!skuPattern.test(trimmedSku)) {
-      alert("SKU must use uppercase letters and numbers only.");
+      toast("SKU must use uppercase letters and numbers only.", {
+        variant: "error",
+      });
       return;
     }
     const res = await fetch(`/api/products/${product.id}/duplicate`, {
@@ -96,11 +102,14 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
       const duplicated = (await res.json()) as { id?: string };
       setRefreshTrigger((prev) => prev + 1);
       if (duplicated.id) {
+        toast("Product duplicated.", { variant: "success" });
         router.push(`/admin/products/${duplicated.id}/edit`);
       }
     } else {
       const error = (await res.json()) as { error?: string };
-      alert(error.error || "Failed to duplicate product.");
+      toast(error.error || "Failed to duplicate product.", {
+        variant: "error",
+      });
     }
   };
 
@@ -131,7 +140,7 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
             className="text-destructive focus:text-destructive"
             onSelect={(event) => {
               event.preventDefault();
-              void handleDelete(product.id, setRefreshTrigger);
+              void handleDelete(product.id, setRefreshTrigger, toast);
             }}
           >
             Remove

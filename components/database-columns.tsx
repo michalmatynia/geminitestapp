@@ -13,6 +13,8 @@ export type DatabaseInfo = {
   lastRestored?: string;
 };
 
+type Notify = (message: string, variant?: "success" | "error" | "info") => void;
+
 const renderSortableHeader = (
   label: string,
   column: {
@@ -97,7 +99,11 @@ async function handleRestore(
   }
 }
 
-async function handleDelete(backupName: string, onDelete: () => void) {
+async function handleDelete(
+  backupName: string,
+  onDelete: () => void,
+  notify?: Notify
+) {
   if (window.confirm(`Delete backup ${backupName}? This cannot be undone.`)) {
     try {
       const res = await fetch("/api/databases/delete", {
@@ -108,14 +114,14 @@ async function handleDelete(backupName: string, onDelete: () => void) {
         body: JSON.stringify({ backupName }),
       });
       if (res.ok) {
-        alert("Backup deleted successfully.");
+        notify?.("Backup deleted successfully.", "success");
         onDelete();
       } else {
-        alert("Failed to delete backup.");
+        notify?.("Failed to delete backup.", "error");
       }
     } catch (error) {
       console.error("Error deleting backup:", error);
-      alert("An error occurred during deletion.");
+      notify?.("An error occurred during deletion.", "error");
     }
   }
 }
@@ -125,6 +131,7 @@ export const getDatabaseColumns = (options?: {
   onPreview?: (backupName: string) => void;
   onRestore?: (log: string) => void;
   onDelete?: () => void;
+  notify?: Notify;
 }): ColumnDef<DatabaseInfo>[] => [
   {
     accessorKey: "name",
@@ -191,7 +198,7 @@ export const getDatabaseColumns = (options?: {
             variant="destructive"
             onClick={() => {
               if (options?.onDelete) {
-                void handleDelete(backup.name, options.onDelete);
+                void handleDelete(backup.name, options.onDelete, options.notify);
               }
             }}
           >

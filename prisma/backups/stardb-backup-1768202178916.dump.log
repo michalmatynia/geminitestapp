@@ -1,0 +1,7 @@
+command:
+/usr/local/opt/postgresql@16/bin/pg_dump -Fc --file /Users/michalmatynia/Desktop/NPM/2025/Gemini/Stardb/prisma/backups/stardb-backup-1768202178916.dump --dbname postgresql://postgresuser@localhost:5432/stardb
+
+stdout:
+
+
+stderr:

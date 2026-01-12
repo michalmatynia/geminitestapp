@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Table as ReactTable } from "@tanstack/react-table";
 
 import { columns } from "@/components/columns";
@@ -26,11 +26,13 @@ import { PlusIcon } from "lucide-react";
 import { logger } from "@/lib/logger";
 import DebugPanel from "@/components/DebugPanel";
 import { useSearchParams } from "next/navigation";
+import { useToast } from "@/components/ui/toast";
 
 type Catalog = {
   id: string;
   name: string;
   description: string | null;
+  isDefault?: boolean;
 };
 
 type BulkCatalogMode = "add" | "replace" | "remove";
@@ -96,7 +98,7 @@ function DataTableFooter<TData>({
           }
           setActionError(`Some products could not be deleted.${errorIdSuffix}`);
         } else {
-          alert("Selected products deleted successfully.");
+          toast("Selected products deleted successfully.", { variant: "success" });
         }
         table.setRowSelection({}); // Clear selection after deletion
         setRefreshTrigger((prev) => prev + 1); // Refresh the product list
@@ -152,7 +154,7 @@ function DataTableFooter<TData>({
         setActionError(`${message}${errorIdSuffix}`);
         return;
       }
-      alert("Catalogs updated successfully.");
+      toast("Catalogs updated successfully.", { variant: "success" });
       table.setRowSelection({});
       setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
@@ -308,10 +310,13 @@ export default function AdminPage() {
   const [catalogs, setCatalogs] = useState<Catalog[]>([]);
   const [catalogsLoading, setCatalogsLoading] = useState(true);
   const [catalogsError, setCatalogsError] = useState<string | null>(null);
+  const [catalogFilter, setCatalogFilter] = useState("all");
   const [nameLocale, setNameLocale] = useState<
     "name_en" | "name_pl" | "name_de"
   >("name_en");
   const [isDebugOpen, setIsDebugOpen] = useState(false);
+  const { toast } = useToast();
+  const catalogFilterInitialized = useRef(false);
 
   useEffect(() => {
     setIsDebugOpen(searchParams.get("debug") === "true");
@@ -327,6 +332,42 @@ export default function AdminPage() {
   useEffect(() => {
     window.localStorage.setItem("productListNameLocale", nameLocale);
   }, [nameLocale]);
+
+  useEffect(() => {
+    const storedCatalog = window.localStorage.getItem("productListCatalogFilter");
+    if (storedCatalog) {
+      setCatalogFilter(storedCatalog);
+      catalogFilterInitialized.current = true;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (catalogFilterInitialized.current) {
+      return;
+    }
+    if (catalogsLoading) {
+      return;
+    }
+    const defaultCatalog = catalogs.find((catalog) => catalog.isDefault);
+    setCatalogFilter(defaultCatalog ? defaultCatalog.id : "all");
+    catalogFilterInitialized.current = true;
+  }, [catalogs, catalogsLoading]);
+
+  useEffect(() => {
+    window.localStorage.setItem("productListCatalogFilter", catalogFilter);
+  }, [catalogFilter]);
+
+  const filteredCatalogData = useMemo(() => {
+    if (catalogFilter === "all") {
+      return data;
+    }
+    if (catalogFilter === "unassigned") {
+      return data.filter((product) => product.catalogs.length === 0);
+    }
+    return data.filter((product) =>
+      product.catalogs.some((entry) => entry.catalogId === catalogFilter)
+    );
+  }, [catalogFilter, data]);
 
   const handleCloseCreateModal = () => {
     setIsCreateOpen(false);
@@ -483,22 +524,40 @@ export default function AdminPage() {
             </Button>
             <h1 className="text-3xl font-bold text-white">Products</h1>
           </div>
-          <div className="w-44">
-            <Select
-              value={nameLocale}
-              onValueChange={(value) =>
-                setNameLocale(value as "name_en" | "name_pl" | "name_de")
-              }
-            >
-              <SelectTrigger aria-label="Select product name language">
-                <SelectValue placeholder="Language" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name_en">English</SelectItem>
-                <SelectItem value="name_pl">Polish</SelectItem>
-                <SelectItem value="name_de">German</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex items-center gap-3">
+            <div className="w-44">
+              <Select
+                value={nameLocale}
+                onValueChange={(value) =>
+                  setNameLocale(value as "name_en" | "name_pl" | "name_de")
+                }
+              >
+                <SelectTrigger aria-label="Select product name language">
+                  <SelectValue placeholder="Language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name_en">English</SelectItem>
+                  <SelectItem value="name_pl">Polish</SelectItem>
+                  <SelectItem value="name_de">German</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-52">
+              <Select value={catalogFilter} onValueChange={setCatalogFilter}>
+                <SelectTrigger aria-label="Filter by catalog">
+                  <SelectValue placeholder="Catalog" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All catalogs</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {catalogs.map((catalog) => (
+                    <SelectItem key={catalog.id} value={catalog.id}>
+                      {catalog.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
         {loadError && (
@@ -565,7 +624,7 @@ export default function AdminPage() {
         </div>
         <DataTable
           columns={columns}
-          data={data}
+          data={filteredCatalogData}
           setRefreshTrigger={setRefreshTrigger}
           productNameKey={nameLocale}
           onProductNameClick={handleOpenEditModal}

@@ -180,6 +180,7 @@ model Catalog {
   id          String          @id @default(cuid())
   name        String
   description String?
+  isDefault   Boolean         @default(false)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   products    ProductCatalog[]

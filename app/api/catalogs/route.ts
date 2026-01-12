@@ -7,6 +7,7 @@ const catalogSchema = z.object({
   name: z.string().trim().min(1),
   description: z.string().trim().optional(),
   languageIds: z.array(z.string().trim().min(1)).optional(),
+  isDefault: z.boolean().optional(),
 });
 
 /**
@@ -57,10 +58,19 @@ export async function POST(req: Request) {
       );
     }
     const data = catalogSchema.parse(body);
+    const existingCount = await prisma.catalog.count();
+    const shouldBeDefault =
+      existingCount === 0 ? true : data.isDefault ?? false;
+
+    if (shouldBeDefault) {
+      await prisma.catalog.updateMany({ data: { isDefault: false } });
+    }
+
     const catalog = await prisma.catalog.create({
       data: {
         name: data.name,
         description: data.description ?? null,
+        isDefault: shouldBeDefault,
       },
     });
     const languageIds = Array.from(new Set(data.languageIds ?? []));

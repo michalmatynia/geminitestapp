@@ -102,13 +102,20 @@ export default function Menu() {
           Create Block
         </Link>
       </CollapsibleMenu>
-      <Link
-        href="/admin/settings"
-        className="flex items-center hover:bg-gray-700 p-2 rounded"
-      >
-        <SettingsIcon className="mr-2" />
-        {!isMenuCollapsed && "Settings"}
-      </Link>
+      <CollapsibleMenu title="Settings" icon={<SettingsIcon />}>
+        <Link
+          href="/admin/settings/notifications"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Notifications
+        </Link>
+        <Link
+          href="/admin/settings/ai"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          AI
+        </Link>
+      </CollapsibleMenu>
       <Link
         href="/admin/import"
         className="flex items-center hover:bg-gray-700 p-2 rounded"

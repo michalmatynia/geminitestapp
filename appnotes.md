@@ -1,7 +1,8 @@
 Application notes
 
 Product LIST
-when I created a product I need to click on the modal twice
+length width
+When I create the product, a notification should pop-up that the product has been created
 
 Catalogs 
 -default catalog, the first created catalog is always default one

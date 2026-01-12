@@ -199,9 +199,41 @@ export default function ChatbotPage() {
           throw new Error(error.error || "Failed to load context.");
         }
         const data = (await res.json()) as Array<{ key: string; value: string }>;
-        const stored = data.find((item) => item.key === "chatbot_global_context");
+        const storedItems = data.find(
+          (item) => item.key === "chatbot_global_context_items"
+        );
+        const storedActive = data.find(
+          (item) => item.key === "chatbot_global_context_active"
+        );
+        const storedLegacy = data.find(
+          (item) => item.key === "chatbot_global_context"
+        );
         if (isMounted) {
-          setGlobalContext(stored?.value || "");
+          let merged = "";
+          if (storedItems?.value) {
+            try {
+              const items = JSON.parse(storedItems.value) as Array<{
+                id: string;
+                content: string;
+              }>;
+              const active =
+                storedActive?.value
+                  ? (JSON.parse(storedActive.value) as string[])
+                  : items.map((item) => item.id);
+              const activeSet = new Set(active);
+              merged = items
+                .filter((item) => activeSet.has(item.id))
+                .map((item) => item.content)
+                .filter(Boolean)
+                .join("\n\n");
+            } catch {
+              merged = "";
+            }
+          }
+          if (!merged) {
+            merged = storedLegacy?.value || "";
+          }
+          setGlobalContext(merged);
         }
       } catch (error) {
         const message =

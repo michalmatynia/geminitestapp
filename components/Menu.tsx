@@ -39,12 +39,6 @@ export default function Menu() {
           All Products
         </Link>
         <Link
-          href="/admin/products/create"
-          className="block w-full text-left hover:bg-gray-700 p-2 rounded"
-        >
-          Create Product
-        </Link>
-        <Link
           href="/admin/products/settings"
           className="block w-full text-left hover:bg-gray-700 p-2 rounded"
         >

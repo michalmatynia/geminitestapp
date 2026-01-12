@@ -3,14 +3,23 @@ import { NextResponse } from "next/server";
 
 import prisma from "@/lib/prisma";
 
+const shouldLog = () => process.env.DEBUG_SETTINGS === "true";
+
 export async function GET() {
-  console.log("Received GET request to /api/settings");
+  if (shouldLog()) {
+    console.log("[settings] GET /api/settings");
+  }
   try {
     const settings = await prisma.setting.findMany();
-    console.log("Settings fetched successfully:", settings);
+    if (shouldLog()) {
+      console.log("[settings] fetched", {
+        count: settings.length,
+        keys: settings.map((setting) => setting.key),
+      });
+    }
     return NextResponse.json(settings);
   } catch (error) {
-    console.error("Error fetching settings:", error);
+    console.error("[settings] failed to fetch", error);
     return NextResponse.json(
       { error: "Failed to fetch settings" },
       { status: 500 }
@@ -19,19 +28,25 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  console.log("Received POST request to /api/settings");
+  if (shouldLog()) {
+    console.log("[settings] POST /api/settings");
+  }
   try {
     const { key, value } = (await req.json()) as Setting;
-    console.log("Upserting setting:", { key, value });
+    if (shouldLog()) {
+      console.log("[settings] upserting", { key, valuePreview: value?.slice?.(0, 40) });
+    }
     const setting = await prisma.setting.upsert({
       where: { key },
       update: { value },
       create: { key, value },
     });
-    console.log("Setting saved successfully:", setting);
+    if (shouldLog()) {
+      console.log("[settings] saved", { key: setting.key });
+    }
     return NextResponse.json(setting);
   } catch (error) {
-    console.error("Error saving setting:", error);
+    console.error("[settings] failed to save", error);
     return NextResponse.json(
       { error: "Failed to save setting" },
       { status: 500 }

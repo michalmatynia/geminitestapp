@@ -27,6 +27,7 @@ import { logger } from "@/lib/logger";
 import DebugPanel from "@/components/DebugPanel";
 import { useSearchParams } from "next/navigation";
 import { useToast } from "@/components/ui/toast";
+import ModalShell from "@/components/ui/modal-shell";
 
 type Catalog = {
   id: string;
@@ -239,24 +240,13 @@ function CreateProductModalContent({ onClose }: { onClose: () => void }) {
   const { showFileManager, handleMultiFileSelect } = useProductFormContext();
 
   return (
-    <div className="w-full max-w-6xl rounded-lg bg-gray-950 p-6 shadow-lg md:min-w-[960px]">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">Create Product</h2>
-        <Button
-          onClick={onClose}
-          className="bg-gray-800 text-white hover:bg-gray-700"
-        >
-          Close
-        </Button>
-      </div>
-      <div className="h-[70vh] overflow-y-auto pr-2">
-        {showFileManager ? (
-          <FileManager onSelectFile={handleMultiFileSelect} />
-        ) : (
-          <ProductForm submitButtonText="Create" />
-        )}
-      </div>
-    </div>
+    <ModalShell title="Create Product" onClose={onClose}>
+      {showFileManager ? (
+        <FileManager onSelectFile={handleMultiFileSelect} />
+      ) : (
+        <ProductForm submitButtonText="Create" />
+      )}
+    </ModalShell>
   );
 }
 
@@ -268,24 +258,13 @@ function EditProductModalContent({
   const { showFileManager, handleMultiFileSelect } = useProductFormContext();
 
   return (
-    <div className="w-full max-w-6xl rounded-lg bg-gray-950 p-6 shadow-lg md:min-w-[960px]">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">Edit Product</h2>
-        <Button
-          onClick={onClose}
-          className="bg-gray-800 text-white hover:bg-gray-700"
-        >
-          Close
-        </Button>
-      </div>
-      <div className="h-[70vh] overflow-y-auto pr-2">
-        {showFileManager ? (
-          <FileManager onSelectFile={handleMultiFileSelect} />
-        ) : (
-          <ProductForm submitButtonText="Update" />
-        )}
-      </div>
-    </div>
+    <ModalShell title="Edit Product" onClose={onClose}>
+      {showFileManager ? (
+        <FileManager onSelectFile={handleMultiFileSelect} />
+      ) : (
+        <ProductForm submitButtonText="Update" />
+      )}
+    </ModalShell>
   );
 }
 
@@ -377,6 +356,7 @@ export default function AdminPage() {
   const handleCreateSuccess = () => {
     setIsCreateOpen(false);
     setInitialSku("");
+    toast("Product created", { variant: "success" });
     setRefreshTrigger((prev) => prev + 1);
   };
 

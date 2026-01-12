@@ -520,11 +520,11 @@ export function ProductFormProvider({
         setUploadSuccess(false);
       }, 3000);
 
+      onSuccess?.();
       router.refresh();
       if (!product) {
         router.push("/admin/products");
       }
-      onSuccess?.();
     } catch (error: unknown) {
       if (error instanceof Error) {
         setUploadError(error.message);

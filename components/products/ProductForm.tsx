@@ -14,6 +14,7 @@ import { useProductFormContext } from "@/lib/context/ProductFormContext";
 import { ProductFormData } from "@/lib/types";
 import { logger } from "@/lib/logger";
 import DebugPanel from "@/components/DebugPanel";
+import { cn } from "@/lib/utils";
 
 interface ProductFormProps {
   submitButtonText: string;
@@ -48,9 +49,16 @@ export default function ProductForm({
     setGenerationError,
   } = useProductFormContext();
   const [generating, setGenerating] = useState(false);
-  const { register, getValues, setValue } = useFormContext<ProductFormData>();
+  const { register, getValues, setValue, watch } =
+    useFormContext<ProductFormData>();
   const searchParams = useSearchParams();
   const [isDebugOpen, setIsDebugOpen] = useState(false);
+  const nameEn = watch("name_en");
+  const namePl = watch("name_pl");
+  const nameDe = watch("name_de");
+  const descriptionEn = watch("description_en");
+  const descriptionPl = watch("description_pl");
+  const descriptionDe = watch("description_de");
 
   useEffect(() => {
     setIsDebugOpen(searchParams.get("debug") === "true");
@@ -124,13 +132,40 @@ export default function ProductForm({
           <Tabs defaultValue="english-name" className="mb-4">
             <TabsList>
               {filteredLanguages.some((language) => language.code === "EN") && (
-                <TabsTrigger value="english-name">English Name</TabsTrigger>
+                <TabsTrigger
+                  value="english-name"
+                  className={cn(
+                    !nameEn?.trim()
+                      ? "text-muted-foreground/90 data-[state=active]:text-muted-foreground/90"
+                      : "text-foreground data-[state=inactive]:text-foreground font-medium"
+                  )}
+                >
+                  English Name
+                </TabsTrigger>
               )}
               {filteredLanguages.some((language) => language.code === "PL") && (
-                <TabsTrigger value="polish-name">Polish Name</TabsTrigger>
+                <TabsTrigger
+                  value="polish-name"
+                  className={cn(
+                    !namePl?.trim()
+                      ? "text-muted-foreground/90 data-[state=active]:text-muted-foreground/90"
+                      : "text-foreground data-[state=inactive]:text-foreground font-medium"
+                  )}
+                >
+                  Polish Name
+                </TabsTrigger>
               )}
               {filteredLanguages.some((language) => language.code === "DE") && (
-                <TabsTrigger value="german-name">German Name</TabsTrigger>
+                <TabsTrigger
+                  value="german-name"
+                  className={cn(
+                    !nameDe?.trim()
+                      ? "text-muted-foreground/90 data-[state=active]:text-muted-foreground/90"
+                      : "text-foreground data-[state=inactive]:text-foreground font-medium"
+                  )}
+                >
+                  German Name
+                </TabsTrigger>
               )}
             </TabsList>
             {filteredLanguages.some((language) => language.code === "EN") && (
@@ -180,61 +215,87 @@ export default function ProductForm({
             )}
           </Tabs>
 
-          <div className="mb-4">
-            <Label htmlFor="weight">Weight</Label>
-            <Input
-              id="weight"
-              type="number"
-              {...register("weight", { valueAsNumber: true })}
-              aria-invalid={errors.weight ? "true" : "false"}
-            />
-            {errors.weight && (
-              <p className="text-red-500 text-sm mt-1" role="alert">
-                {errors.weight.message}
-              </p>
-            )}
-          </div>
-          <div className="mb-4">
-            <Label htmlFor="sizeLength">Length</Label>
-            <Input
-              id="sizeLength"
-              type="number"
-              {...register("sizeLength", { valueAsNumber: true })}
-              aria-invalid={errors.sizeLength ? "true" : "false"}
-            />
-            {errors.sizeLength && (
-              <p className="text-red-500 text-sm mt-1" role="alert">
-                {errors.sizeLength.message}
-              </p>
-            )}
-          </div>
-          <div className="mb-4">
-            <Label htmlFor="sizeWidth">Width</Label>
-            <Input
-              id="sizeWidth"
-              type="number"
-              {...register("sizeWidth", { valueAsNumber: true })}
-              aria-invalid={errors.sizeWidth ? "true" : "false"}
-            />
-            {errors.sizeWidth && (
-              <p className="text-red-500 text-sm mt-1" role="alert">
-                {errors.sizeWidth.message}
-              </p>
-            )}
-          </div>
-          <div className="mb-4">
-            <Label htmlFor="length">Height</Label>
-            <Input
-              id="length"
-              type="number"
-              {...register("length", { valueAsNumber: true })}
-              aria-invalid={errors.length ? "true" : "false"}
-            />
-            {errors.length && (
-              <p className="text-red-500 text-sm mt-1" role="alert">
-                {errors.length.message}
-              </p>
-            )}
+          <div className="mb-4 grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="space-y-1">
+              <Label htmlFor="weight">Weight</Label>
+              <div className="relative max-w-[160px]">
+                <Input
+                  id="weight"
+                  type="number"
+                  className="pr-10"
+                  {...register("weight", { valueAsNumber: true })}
+                  aria-invalid={errors.weight ? "true" : "false"}
+                />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
+                  kg
+                </span>
+              </div>
+              {errors.weight && (
+                <p className="text-red-500 text-sm" role="alert">
+                  {errors.weight.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="sizeLength">Length</Label>
+              <div className="relative max-w-[160px]">
+                <Input
+                  id="sizeLength"
+                  type="number"
+                  className="pr-10"
+                  {...register("sizeLength", { valueAsNumber: true })}
+                  aria-invalid={errors.sizeLength ? "true" : "false"}
+                />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
+                  cm
+                </span>
+              </div>
+              {errors.sizeLength && (
+                <p className="text-red-500 text-sm" role="alert">
+                  {errors.sizeLength.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="sizeWidth">Width</Label>
+              <div className="relative max-w-[160px]">
+                <Input
+                  id="sizeWidth"
+                  type="number"
+                  className="pr-10"
+                  {...register("sizeWidth", { valueAsNumber: true })}
+                  aria-invalid={errors.sizeWidth ? "true" : "false"}
+                />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
+                  cm
+                </span>
+              </div>
+              {errors.sizeWidth && (
+                <p className="text-red-500 text-sm" role="alert">
+                  {errors.sizeWidth.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="length">Height</Label>
+              <div className="relative max-w-[160px]">
+                <Input
+                  id="length"
+                  type="number"
+                  className="pr-10"
+                  {...register("length", { valueAsNumber: true })}
+                  aria-invalid={errors.length ? "true" : "false"}
+                />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
+                  cm
+                </span>
+              </div>
+              {errors.length && (
+                <p className="text-red-500 text-sm" role="alert">
+                  {errors.length.message}
+                </p>
+              )}
+            </div>
           </div>
         </TabsContent>
         <TabsContent value="other" className="mt-4">
@@ -255,17 +316,38 @@ export default function ProductForm({
           <Tabs defaultValue="english-description" className="mb-4">
             <TabsList>
               {filteredLanguages.some((language) => language.code === "EN") && (
-                <TabsTrigger value="english-description">
+                <TabsTrigger
+                  value="english-description"
+                  className={cn(
+                    !descriptionEn?.trim()
+                      ? "text-muted-foreground/90 data-[state=active]:text-muted-foreground/90"
+                      : "text-foreground data-[state=inactive]:text-foreground font-medium"
+                  )}
+                >
                   English Description
                 </TabsTrigger>
               )}
               {filteredLanguages.some((language) => language.code === "PL") && (
-                <TabsTrigger value="polish-description">
+                <TabsTrigger
+                  value="polish-description"
+                  className={cn(
+                    !descriptionPl?.trim()
+                      ? "text-muted-foreground/90 data-[state=active]:text-muted-foreground/90"
+                      : "text-foreground data-[state=inactive]:text-foreground font-medium"
+                  )}
+                >
                   Polish Description
                 </TabsTrigger>
               )}
               {filteredLanguages.some((language) => language.code === "DE") && (
-                <TabsTrigger value="german-description">
+                <TabsTrigger
+                  value="german-description"
+                  className={cn(
+                    !descriptionDe?.trim()
+                      ? "text-muted-foreground/90 data-[state=active]:text-muted-foreground/90"
+                      : "text-foreground data-[state=inactive]:text-foreground font-medium"
+                  )}
+                >
                   German Description
                 </TabsTrigger>
               )}

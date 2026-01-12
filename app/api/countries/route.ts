@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 
@@ -117,9 +118,14 @@ export async function GET() {
       },
     });
     return NextResponse.json(countries);
-  } catch (_error) {
+  } catch (error) {
+    const errorId = randomUUID();
+    console.error("[countries][GET] Failed to fetch countries", {
+      errorId,
+      error,
+    });
     return NextResponse.json(
-      { error: "Failed to fetch countries" },
+      { error: "Failed to fetch countries", errorId },
       { status: 500 }
     );
   }
@@ -155,17 +161,27 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(country);
   } catch (error: unknown) {
+    const errorId = randomUUID();
     if (error instanceof z.ZodError) {
+      console.warn("[countries][POST] Invalid payload", {
+        errorId,
+        issues: error.flatten(),
+      });
       return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten() },
+        { error: "Invalid payload", details: error.flatten(), errorId },
         { status: 400 }
       );
     }
     if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      console.error("[countries][POST] Failed to create country", {
+        errorId,
+        message: error.message,
+      });
+      return NextResponse.json({ error: error.message, errorId }, { status: 400 });
     }
+    console.error("[countries][POST] Unknown error", { errorId, error });
     return NextResponse.json(
-      { error: "An unknown error occurred" },
+      { error: "An unknown error occurred", errorId },
       { status: 400 }
     );
   }

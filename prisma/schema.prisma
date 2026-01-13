@@ -232,6 +232,9 @@ model ChatbotAgentRun {
   errorMessage String?
   memoryKey String?
   recordingPath String?
+  planState Json?
+  activeStepId String?
+  checkpointedAt DateTime?
   startedAt DateTime?
   finishedAt DateTime?
   createdAt DateTime        @default(now())

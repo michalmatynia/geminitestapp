@@ -57,6 +57,8 @@ type AgentRun = {
   errorMessage?: string | null;
   logLines: string[];
   recordingPath?: string | null;
+  activeStepId?: string | null;
+  checkpointedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   _count: {
@@ -331,9 +333,20 @@ export default function ChatbotJobsPage() {
       agentAudits.filter((audit) => audit.metadata?.type === "planner-context"),
     [agentAudits]
   );
+  const planAudits = useMemo(
+    () => agentAudits.filter((audit) => audit.metadata?.type === "plan"),
+    [agentAudits]
+  );
+  const branchAudits = useMemo(
+    () => agentAudits.filter((audit) => audit.metadata?.type === "plan-branch"),
+    [agentAudits]
+  );
   const latestSessionContext = sessionContextLogs.at(-1)?.metadata ?? null;
   const latestLoginCandidates = loginCandidateLogs.at(-1)?.metadata ?? null;
   const latestPlannerContext = plannerContextAudits.at(-1)?.metadata ?? null;
+  const latestPlanHierarchy =
+    (planAudits.at(-1)?.metadata as { hierarchy?: { goals?: unknown[] } } | null)
+      ?.hierarchy ?? null;
 
   const closeAgentModal = () => {
     setSelectedAgentRunId(null);
@@ -412,16 +425,16 @@ export default function ChatbotJobsPage() {
                       </p>
                     ) : null}
                     {job.kind === "agent" ? (
-                      <div className="mt-2 text-xs text-gray-400">
-                        <p className="text-xs text-gray-300 line-clamp-2">
-                          Prompt: {job.prompt}
-                        </p>
-                        <p className="text-[11px] text-gray-500">
-                          Run ID: {job.id}
-                        </p>
-                        Snapshots: {job.snapshotCount} · Logs: {job.logCount}
-                        {job.requiresHumanIntervention ? " · needs input" : ""}
-                      </div>
+      <div className="mt-2 text-xs text-gray-400">
+        <p className="text-xs text-gray-300 line-clamp-2">
+          Prompt: {job.prompt}
+        </p>
+        <p className="text-[11px] text-gray-500">
+          Run ID: {job.id}
+        </p>
+        Snapshots: {job.snapshotCount} · Logs: {job.logCount}
+        {job.requiresHumanIntervention ? " · needs input" : ""}
+      </div>
                     ) : null}
                     {job.errorMessage ? (
                       <p className="mt-1 text-xs text-red-300">{job.errorMessage}</p>
@@ -497,6 +510,24 @@ export default function ChatbotJobsPage() {
                           ? " · needs input"
                           : ""}
                       </div>
+                      {selectedAgentRun.checkpointedAt ? (
+                        <div className="mt-2 rounded-md border border-emerald-500/20 bg-emerald-500/5 p-2 text-[11px] text-emerald-200">
+                          Checkpoint saved{" "}
+                          {new Date(
+                            selectedAgentRun.checkpointedAt
+                          ).toLocaleString()}
+                          {selectedAgentRun.activeStepId ? (
+                            <span className="text-emerald-300">
+                              {" "}
+                              · Active step {selectedAgentRun.activeStepId}
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <div className="mt-2 text-[11px] text-gray-500">
+                          No checkpoint saved yet.
+                        </div>
+                      )}
                       {selectedAgentRun.recordingPath ? (
                         <div className="mt-2 text-xs text-gray-400">
                           Recording:{" "}
@@ -577,6 +608,199 @@ export default function ChatbotJobsPage() {
                 </TabsContent>
                 <TabsContent value="steps" className="mt-4">
                   <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                    <div className="mb-3 flex items-center justify-between text-[11px] text-gray-400">
+                      <span>Checkpoint status</span>
+                      {selectedAgentRun?.checkpointedAt ? (
+                        <span className="text-emerald-300">
+                          {new Date(
+                            selectedAgentRun.checkpointedAt
+                          ).toLocaleString()}
+                        </span>
+                      ) : (
+                        <span className="text-gray-500">None</span>
+                      )}
+                    </div>
+                    {selectedAgentRun?.checkpointedAt ? (
+                      <div className="mb-3 rounded-md border border-emerald-500/20 bg-emerald-500/5 p-2 text-[11px] text-emerald-200">
+                        {selectedAgentRun.activeStepId
+                          ? `Active step: ${selectedAgentRun.activeStepId}`
+                          : "Active step: unknown"}
+                      </div>
+                    ) : null}
+                    <p className="text-[11px] text-gray-500">Plan hierarchy</p>
+                    {latestPlanHierarchy?.goals?.length ? (
+                      <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                        {(latestPlanHierarchy.goals as Array<{
+                          id?: string;
+                          title?: string;
+                          successCriteria?: string | null;
+                          subgoals?: Array<{
+                            id?: string;
+                            title?: string;
+                            successCriteria?: string | null;
+                            steps?: Array<{
+                              title?: string;
+                              tool?: string | null;
+                              expectedObservation?: string | null;
+                              successCriteria?: string | null;
+                            }>;
+                          }>;
+                        }>).map((goal, goalIndex) => (
+                          <div
+                            key={goal.id ?? `goal-${goalIndex}`}
+                            className="rounded-md border border-gray-800 bg-gray-950 p-2"
+                          >
+                            <p className="text-xs text-slate-200">
+                              Goal {goalIndex + 1}: {goal.title}
+                            </p>
+                            {goal.successCriteria ? (
+                              <p className="mt-1 text-[10px] text-gray-400">
+                                Success: {goal.successCriteria}
+                              </p>
+                            ) : null}
+                            <div className="mt-2 space-y-2 pl-3">
+                              {goal.subgoals?.map((subgoal, subIndex) => (
+                                <div
+                                  key={subgoal.id ?? `subgoal-${goalIndex}-${subIndex}`}
+                                  className="rounded-md border border-gray-800 bg-gray-900 p-2"
+                                >
+                                  <p className="text-[11px] text-slate-100">
+                                    Subgoal {goalIndex + 1}.{subIndex + 1}:{" "}
+                                    {subgoal.title}
+                                  </p>
+                                  {subgoal.successCriteria ? (
+                                    <p className="mt-1 text-[10px] text-gray-400">
+                                      Success: {subgoal.successCriteria}
+                                    </p>
+                                  ) : null}
+                                  <ul className="mt-2 space-y-1 pl-3 text-[10px] text-gray-300">
+                                    {subgoal.steps?.map((step, stepIndex) => (
+                                      <li key={`${goalIndex}-${subIndex}-${stepIndex}`}>
+                                        <span className="text-slate-100">
+                                          Step {goalIndex + 1}.{subIndex + 1}.
+                                          {stepIndex + 1}:
+                                        </span>{" "}
+                                        {step.title}
+                                        {step.tool ? (
+                                          <span className="ml-2 text-[9px] text-gray-500">
+                                            ({step.tool})
+                                          </span>
+                                        ) : null}
+                                        {step.successCriteria ? (
+                                          <div className="mt-1 text-[9px] text-gray-400">
+                                            Success: {step.successCriteria}
+                                          </div>
+                                        ) : null}
+                                        {step.expectedObservation ? (
+                                          <div className="mt-1 text-[9px] text-gray-500">
+                                            Expected: {step.expectedObservation}
+                                          </div>
+                                        ) : null}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )) ?? (
+                                <p className="text-[10px] text-gray-500">
+                                  No subgoals captured.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-gray-500">
+                        No hierarchy captured yet.
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-4 rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200">
+                        Branch
+                      </span>
+                      <p className="text-[11px] text-gray-500">Recovery branches</p>
+                    </div>
+                    {branchAudits.length ? (
+                      <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                        {branchAudits.map((audit, index) => {
+                          const meta = audit.metadata as {
+                            failedStepId?: string;
+                            reason?: string;
+                            branchSteps?: Array<{
+                              id?: string;
+                              title?: string;
+                              tool?: string | null;
+                              expectedObservation?: string | null;
+                              successCriteria?: string | null;
+                            }>;
+                          } | null;
+                          return (
+                            <div
+                              key={audit.id ?? `branch-${index}`}
+                              className="rounded-md border border-gray-800 bg-gray-950 p-2"
+                            >
+                              <div className="flex items-center justify-between text-[10px] text-gray-500">
+                                <span>
+                                  {new Date(audit.createdAt).toLocaleTimeString()}
+                                </span>
+                                {meta?.reason ? (
+                                  <span className="text-amber-200">
+                                    {meta.reason}
+                                  </span>
+                                ) : null}
+                              </div>
+                              <p className="mt-1 text-[11px] text-gray-200">
+                                {audit.message}
+                              </p>
+                              {meta?.failedStepId ? (
+                                <p className="mt-1 text-[10px] text-gray-400">
+                                  Failed step: {meta.failedStepId}
+                                </p>
+                              ) : null}
+                              {meta?.branchSteps?.length ? (
+                                <ul className="mt-2 space-y-1 pl-3 text-[10px] text-gray-300">
+                                  {meta.branchSteps.map((step, stepIndex) => (
+                                    <li key={step.id ?? `branch-step-${stepIndex}`}>
+                                      <span className="text-slate-100">
+                                        Step {stepIndex + 1}:
+                                      </span>{" "}
+                                      {step.title}
+                                      {step.tool ? (
+                                        <span className="ml-2 text-[9px] text-gray-500">
+                                          ({step.tool})
+                                        </span>
+                                      ) : null}
+                                      {step.successCriteria ? (
+                                        <div className="mt-1 text-[9px] text-gray-400">
+                                          Success: {step.successCriteria}
+                                        </div>
+                                      ) : null}
+                                      {step.expectedObservation ? (
+                                        <div className="mt-1 text-[9px] text-gray-500">
+                                          Expected: {step.expectedObservation}
+                                        </div>
+                                      ) : null}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="mt-2 text-[10px] text-gray-500">
+                                  No branch steps captured.
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-gray-500">
+                        No branches recorded yet.
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-4 rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
                     <p className="text-[11px] text-gray-500">Agent steps</p>
                     <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
                       {agentAudits.length === 0 ? (

@@ -31,6 +31,8 @@ export async function GET() {
         errorMessage: true,
         logLines: true,
         recordingPath: true,
+        activeStepId: true,
+        checkpointedAt: true,
         createdAt: true,
         updatedAt: true,
         _count: {

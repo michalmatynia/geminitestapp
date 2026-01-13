@@ -38,6 +38,14 @@ model Setting {
   updatedAt DateTime @updatedAt
 }
 
+model ChatbotSettings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  settings  Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 
 model ImageFile {
   id          String        @id @default(cuid())

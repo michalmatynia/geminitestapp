@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ runId: string }> }
 ) {
   const requestStart = Date.now();
@@ -17,10 +17,14 @@ export async function GET(
       );
     }
     const { runId } = await params;
+    const url = new URL(req.url);
+    const stepId = url.searchParams.get("stepId");
+    const limit = Number(url.searchParams.get("limit") ?? "12");
+    const take = Number.isFinite(limit) ? Math.min(Math.max(limit, 1), 50) : 12;
     const snapshots = await prisma.agentBrowserSnapshot.findMany({
-      where: { runId },
+      where: { runId, ...(stepId ? { stepId } : {}) },
       orderBy: { createdAt: "desc" },
-      take: 5,
+      take,
     });
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][agent][snapshots] Loaded", {

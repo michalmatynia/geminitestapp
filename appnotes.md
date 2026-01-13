@@ -1,11 +1,27 @@
 Application notes
 base.com with email: you@example.com password: YourPassword
 
-implement LLM-powered guards against unnecessary looping
+Enhance functionality of
+1. Planner/replanner vs. executor (already split for you) V
+2. Self‑questioning/critique (already split for you) V
+3. Extraction/validation model (evidence checking, schema validation, de‑duplication) V
+4. Memory validation + summarization (fast model to filter, stronger model to write) V
+5. Tool selection & fallback strategy (small model for routing)
+6. Loop detection + recovery (fast heuristic + LLM guard) V
+7. Safety/approval gate checks (separate policy model) V
+8. DOM/selector inference (cheap model good at pattern matching) V
+9. Result formatting/normalization (small model to clean outputs) V
 
-extend debugging mechanism for the Agent model
+add separate model choices for Memory validation and summarization (fast model to filter, stronger model to write) 
 
-enable file hygiene in chatbot
+why do you use "llama3" in my codebase ? It's not even a choice in my model list, remove all instances of "llama3" and use a respective model instead
+analyze my current model list and the model choices and their respective tasks and choose automatically the best model for each task and save this choice as default settings in chatbox settings
+
+when planning or replanning of Agent Job was done by a specific model, stamp the model signature and make it visible Job details
+when planning or replanning of Agent Job Step was done by a specific model, stamp the model signature and make it visible in Step Details
+ETC.
+
+Refactor
 
 Product LIST
 When I create the product, a notification should pop-up that the product has been created
@@ -38,8 +54,6 @@ Pagination in Product List
 
 Filtering
 Tradera Listing, vinted listing
-
-
 
 add red star
 

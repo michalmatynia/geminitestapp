@@ -1,5 +1,9 @@
 import prisma from "@/lib/prisma";
 
+const DEFAULT_MEMORY_VALIDATION_MODEL =
+  process.env.MEMORY_VALIDATION_MODEL ?? process.env.OLLAMA_MODEL ?? "llama3";
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
+
 export type MemoryScope = "session" | "longterm";
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -103,6 +107,104 @@ export async function addAgentLongTermMemory(params: {
     }
     throw error;
   }
+}
+
+export async function validateAgentLongTermMemory(params: {
+  model?: string | null;
+  prompt?: string | null;
+  content: string;
+  summary?: string | null;
+  metadata?: Record<string, unknown>;
+}) {
+  const model = params.model?.trim() || DEFAULT_MEMORY_VALIDATION_MODEL;
+  const prompt = params.prompt ?? "";
+  try {
+    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        stream: false,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You validate long-term memory entries. Return only JSON with keys: valid (boolean), issues (array of strings), reason. Mark invalid if the prompt implies a target URL/domain that conflicts with metadata.url or metadata.run.url. Prefer strictness if evidence is missing.",
+          },
+          {
+            role: "user",
+            content: JSON.stringify({
+              prompt,
+              content: params.content,
+              summary: params.summary ?? null,
+              metadata: params.metadata ?? null,
+            }),
+          },
+        ],
+        options: { temperature: 0.2 },
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(`Memory validation failed (${response.status}).`);
+    }
+    const payload = await response.json();
+    const content = payload?.message?.content || "";
+    const match = content.match(/\{[\s\S]*\}/);
+    const parsed = match ? JSON.parse(match[0]) : JSON.parse(content);
+    const issues = Array.isArray(parsed?.issues)
+      ? parsed.issues.filter((item: unknown) => typeof item === "string")
+      : [];
+    return {
+      valid: typeof parsed?.valid === "boolean" ? parsed.valid : true,
+      issues,
+      reason: typeof parsed?.reason === "string" ? parsed.reason : null,
+      model,
+    };
+  } catch (error) {
+    return {
+      valid: false,
+      issues: [
+        `Memory validation failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ],
+      reason: null,
+      model,
+    };
+  }
+}
+
+export async function validateAndAddAgentLongTermMemory(params: {
+  memoryKey: string;
+  runId?: string | null;
+  content: string;
+  summary?: string | null;
+  tags?: string[];
+  metadata?: Record<string, unknown>;
+  importance?: number | null;
+  model?: string | null;
+  prompt?: string | null;
+}) {
+  const validation = await validateAgentLongTermMemory({
+    model: params.model,
+    prompt: params.prompt,
+    content: params.content,
+    summary: params.summary ?? null,
+    metadata: params.metadata,
+  });
+  if (!validation.valid) {
+    return { skipped: true, validation };
+  }
+  const record = await addAgentLongTermMemory({
+    memoryKey: params.memoryKey,
+    runId: params.runId ?? null,
+    content: params.content,
+    summary: params.summary ?? null,
+    tags: params.tags ?? [],
+    metadata: params.metadata,
+    importance: params.importance ?? null,
+  });
+  return { skipped: false, validation, record };
 }
 
 export async function listAgentLongTermMemory(params: {

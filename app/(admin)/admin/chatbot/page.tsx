@@ -39,12 +39,24 @@ type ChatbotDebugState = {
     agentRunHeadless?: boolean;
     ignoreRobotsTxt?: boolean;
     requireHumanApproval?: boolean;
+    memoryValidationModel?: string;
+    plannerModel?: string;
+    selfCheckModel?: string;
+    extractionValidationModel?: string;
+    loopGuardModel?: string;
+    approvalGateModel?: string;
+    memorySummarizationModel?: string;
+    selectorInferenceModel?: string;
+    outputNormalizationModel?: string;
     agentPlanSettings?: {
       maxSteps: number;
       maxStepAttempts: number;
       maxReplanCalls: number;
       replanEverySteps: number;
       maxSelfChecks: number;
+      loopGuardThreshold: number;
+      loopBackoffBaseMs: number;
+      loopBackoffMaxMs: number;
     };
   };
   lastResponse?: {
@@ -53,6 +65,70 @@ type ChatbotDebugState = {
     error?: string;
     errorId?: string;
   };
+};
+
+type ChatbotSettingsPayload = {
+  model: string;
+  webSearchEnabled: boolean;
+  useGlobalContext: boolean;
+  useLocalContext: boolean;
+  localContextMode: "override" | "append";
+  searchProvider: string;
+  agentModeEnabled: boolean;
+  agentBrowser: string;
+  runHeadless: boolean;
+  ignoreRobotsTxt: boolean;
+  requireHumanApproval: boolean;
+  memoryValidationModel: string;
+  plannerModel: string;
+  selfCheckModel: string;
+  extractionValidationModel: string;
+  loopGuardModel: string;
+  approvalGateModel: string;
+  memorySummarizationModel: string;
+  selectorInferenceModel: string;
+  outputNormalizationModel: string;
+  maxSteps: number;
+  maxStepAttempts: number;
+  maxReplanCalls: number;
+  replanEverySteps: number;
+  maxSelfChecks: number;
+  loopGuardThreshold: number;
+  loopBackoffBaseMs: number;
+  loopBackoffMaxMs: number;
+};
+
+const CHATBOT_SETTINGS_KEY = "default";
+const CHATBOT_SETTINGS_STORAGE_KEY = "chatbot.settings.v1";
+const DEFAULT_CHATBOT_SETTINGS: ChatbotSettingsPayload = {
+  model: "llama3",
+  webSearchEnabled: false,
+  useGlobalContext: false,
+  useLocalContext: false,
+  localContextMode: "override",
+  searchProvider: "serpapi",
+  agentModeEnabled: false,
+  agentBrowser: "chromium",
+  runHeadless: true,
+  ignoreRobotsTxt: false,
+  requireHumanApproval: false,
+  memoryValidationModel: "llama3",
+  plannerModel: "llama3",
+  selfCheckModel: "llama3",
+  extractionValidationModel: "llama3",
+  loopGuardModel: "llama3",
+  approvalGateModel: "llama3",
+  memorySummarizationModel: "llama3",
+  selectorInferenceModel: "llama3",
+  outputNormalizationModel: "llama3",
+  maxSteps: 12,
+  maxStepAttempts: 2,
+  maxReplanCalls: 2,
+  replanEverySteps: 2,
+  maxSelfChecks: 4,
+  loopGuardThreshold: 2,
+  loopBackoffBaseMs: 2000,
+  loopBackoffMaxMs: 12000,
 };
 
 type AgentSnapshot = {
@@ -133,24 +209,163 @@ type AgentSettingsPayload = {
   runHeadless: boolean;
   ignoreRobotsTxt: boolean;
   requireHumanApproval: boolean;
+  memoryValidationModel: string;
+  plannerModel: string;
+  selfCheckModel: string;
+  extractionValidationModel: string;
+  loopGuardModel: string;
+  approvalGateModel: string;
+  memorySummarizationModel: string;
+  selectorInferenceModel: string;
+  outputNormalizationModel: string;
   maxSteps: number;
   maxStepAttempts: number;
   maxReplanCalls: number;
   replanEverySteps: number;
   maxSelfChecks: number;
+  loopGuardThreshold: number;
+  loopBackoffBaseMs: number;
+  loopBackoffMaxMs: number;
 };
 
-const AGENT_SETTINGS_KEY = "chatbot.agentSettings.v1";
+type ModelProfile = {
+  name: string;
+  normalized: string;
+  size: number | null;
+  isEmbedding: boolean;
+  isRerank: boolean;
+  isVision: boolean;
+  isCode: boolean;
+  isInstruct: boolean;
+  isChat: boolean;
+  isReasoning: boolean;
+};
+
+type ModelTaskRule = {
+  targetSize?: number;
+  preferLarge?: boolean;
+  preferSmall?: boolean;
+  minSize?: number;
+  maxSize?: number;
+  preferReasoning?: boolean;
+};
+
+const MODEL_TASK_RULES: Record<string, ModelTaskRule> = {
+  main: { preferLarge: true, minSize: 7, preferReasoning: true },
+  planner: { preferLarge: true, minSize: 7, preferReasoning: true },
+  selfCheck: { preferLarge: true, minSize: 7 },
+  extractionValidation: { preferLarge: true, minSize: 7 },
+  approvalGate: { preferLarge: true, minSize: 7, preferReasoning: true },
+  memoryValidation: { preferLarge: true, minSize: 7 },
+  memorySummarization: { preferSmall: true, targetSize: 7, maxSize: 13 },
+  loopGuard: { preferSmall: true, targetSize: 7, maxSize: 13 },
+  selectorInference: { preferSmall: true, targetSize: 7, maxSize: 13 },
+  outputNormalization: { preferSmall: true, targetSize: 3, maxSize: 7 },
+};
+
+const parseModelSize = (normalized: string) => {
+  const mixMatch = normalized.match(/(\d+)\s*x\s*(\d+(?:\.\d+)?)b/);
+  if (mixMatch) {
+    return Number(mixMatch[1]) * Number(mixMatch[2]);
+  }
+  const sizeMatch = normalized.match(/(\d+(?:\.\d+)?)b/);
+  if (sizeMatch) return Number(sizeMatch[1]);
+  if (normalized.includes("xxl")) return 34;
+  if (normalized.includes("xlarge") || normalized.includes("xl")) return 13;
+  if (normalized.includes("large")) return 13;
+  if (normalized.includes("medium")) return 7;
+  if (normalized.includes("small") || normalized.includes("mini")) return 3;
+  if (normalized.includes("tiny")) return 1.5;
+  return null;
+};
+
+const buildModelProfile = (name: string): ModelProfile => {
+  const normalized = name.toLowerCase();
+  const isEmbedding = ["embed", "embedding", "text-embedding", "nomic-embed", "bge", "e5", "gte"].some(
+    (tag) => normalized.includes(tag)
+  );
+  const isRerank = ["rerank", "reranker", "cross-encoder"].some((tag) =>
+    normalized.includes(tag)
+  );
+  const isVision = ["vision", "llava", "bakllava", "minicpm", "moondream", "qwen-vl", "cogvlm"].some(
+    (tag) => normalized.includes(tag)
+  );
+  const isCode = ["code", "coder", "codestral", "codeqwen", "starcoder", "codegen"].some(
+    (tag) => normalized.includes(tag)
+  );
+  const isInstruct = ["instruct", "assistant"].some((tag) => normalized.includes(tag));
+  const isChat = normalized.includes("chat");
+  const isReasoning =
+    normalized.includes("reasoner") || /(^|[^a-z0-9])r1($|[^a-z0-9])/.test(normalized);
+  return {
+    name,
+    normalized,
+    size: parseModelSize(normalized),
+    isEmbedding,
+    isRerank,
+    isVision,
+    isCode,
+    isInstruct,
+    isChat,
+    isReasoning,
+  };
+};
+
+const scoreModelForTask = (profile: ModelProfile, rule: ModelTaskRule) => {
+  if (profile.isEmbedding || profile.isRerank) return Number.NEGATIVE_INFINITY;
+  const size = profile.size ?? 7;
+  let score = 0;
+  if (profile.isInstruct || profile.isChat) score += 1;
+  if (profile.isReasoning) score += rule.preferReasoning ? 1.2 : 0.3;
+  if (profile.isVision) score -= 1.5;
+  if (profile.isCode) score -= 0.4;
+  if (rule.preferLarge) score += size * 0.35;
+  if (rule.preferSmall) score += (10 - size) * 0.25;
+  if (rule.targetSize) score -= Math.abs(size - rule.targetSize) * 0.7;
+  if (rule.minSize && size < rule.minSize) {
+    score -= (rule.minSize - size) * 0.9;
+  }
+  if (rule.maxSize && size > rule.maxSize) {
+    score -= (size - rule.maxSize) * 0.4;
+  }
+  return score;
+};
+
+const pickBestModel = (profiles: ModelProfile[], rule: ModelTaskRule) => {
+  let best: { name: string; score: number; size: number } | null = null;
+  profiles.forEach((profile) => {
+    const score = scoreModelForTask(profile, rule);
+    if (!Number.isFinite(score)) return;
+    const size = profile.size ?? 0;
+    if (!best || score > best.score || (score === best.score && size > best.size)) {
+      best = { name: profile.name, score, size };
+    }
+  });
+  return best?.name ?? null;
+};
+
 const DEFAULT_AGENT_SETTINGS: AgentSettingsPayload = {
   agentBrowser: "chromium",
   runHeadless: true,
   ignoreRobotsTxt: false,
   requireHumanApproval: false,
+  memoryValidationModel: "llama3",
+  plannerModel: "llama3",
+  selfCheckModel: "llama3",
+  extractionValidationModel: "llama3",
+  loopGuardModel: "llama3",
+  approvalGateModel: "llama3",
+  memorySummarizationModel: "llama3",
+  selectorInferenceModel: "llama3",
+  outputNormalizationModel: "llama3",
   maxSteps: 12,
   maxStepAttempts: 2,
   maxReplanCalls: 2,
   replanEverySteps: 2,
   maxSelfChecks: 4,
+  loopGuardThreshold: 2,
+  loopBackoffBaseMs: 2000,
+  loopBackoffMaxMs: 12000,
 };
 
 const readErrorResponse = async (res: Response) => {
@@ -639,11 +854,28 @@ export default function ChatbotPage() {
   const [agentRunHeadless, setAgentRunHeadless] = useState(true);
   const [agentIgnoreRobotsTxt, setAgentIgnoreRobotsTxt] = useState(false);
   const [agentRequireHumanApproval, setAgentRequireHumanApproval] = useState(false);
+  const [agentMemoryValidationModel, setAgentMemoryValidationModel] =
+    useState("llama3");
+  const [agentPlannerModel, setAgentPlannerModel] = useState("llama3");
+  const [agentSelfCheckModel, setAgentSelfCheckModel] = useState("llama3");
+  const [agentExtractionValidationModel, setAgentExtractionValidationModel] =
+    useState("llama3");
+  const [agentLoopGuardModel, setAgentLoopGuardModel] = useState("llama3");
+  const [agentApprovalGateModel, setAgentApprovalGateModel] = useState("llama3");
+  const [agentMemorySummarizationModel, setAgentMemorySummarizationModel] =
+    useState("llama3");
+  const [agentSelectorInferenceModel, setAgentSelectorInferenceModel] =
+    useState("llama3");
+  const [agentOutputNormalizationModel, setAgentOutputNormalizationModel] =
+    useState("llama3");
   const [agentMaxSteps, setAgentMaxSteps] = useState(12);
   const [agentMaxStepAttempts, setAgentMaxStepAttempts] = useState(2);
   const [agentMaxReplanCalls, setAgentMaxReplanCalls] = useState(2);
   const [agentReplanEverySteps, setAgentReplanEverySteps] = useState(2);
   const [agentMaxSelfChecks, setAgentMaxSelfChecks] = useState(4);
+  const [agentLoopGuardThreshold, setAgentLoopGuardThreshold] = useState(2);
+  const [agentLoopBackoffBaseMs, setAgentLoopBackoffBaseMs] = useState(2000);
+  const [agentLoopBackoffMaxMs, setAgentLoopBackoffMaxMs] = useState(12000);
   const [latestAgentRunId, setLatestAgentRunId] = useState<string | null>(null);
   const [latestAgentRunStatus, setLatestAgentRunStatus] = useState<string | null>(
     null
@@ -674,7 +906,11 @@ export default function ChatbotPage() {
   const [stepDetailsTitle, setStepDetailsTitle] = useState("");
   const [stepDetailsSnapshot, setStepDetailsSnapshot] =
     useState<AgentSnapshot | null>(null);
+  const [stepDetailsSnapshots, setStepDetailsSnapshots] = useState<AgentSnapshot[]>(
+    []
+  );
   const [stepDetailsLogs, setStepDetailsLogs] = useState<AgentBrowserLog[]>([]);
+  const [stepDetailsAudits, setStepDetailsAudits] = useState<AgentAuditLog[]>([]);
   const [snapshotLightboxOpen, setSnapshotLightboxOpen] = useState(false);
   const [snapshotLightbox, setSnapshotLightbox] = useState<AgentSnapshot | null>(
     null
@@ -690,6 +926,10 @@ export default function ChatbotPage() {
     recordingPath?: string | null;
     planState?: Record<string, unknown> | null;
   } | null>(null);
+  const [agentPromptDraft, setAgentPromptDraft] = useState("");
+  const [agentPromptDirty, setAgentPromptDirty] = useState(false);
+  const [settingsDirty, setSettingsDirty] = useState(false);
+  const [settingsSaving, setSettingsSaving] = useState(false);
   const [agentRunLogs, setAgentRunLogs] = useState<AgentBrowserLog[]>([]);
   const [agentRunAudits, setAgentRunAudits] = useState<AgentAuditLog[]>([]);
   const [resumeStepId, setResumeStepId] = useState<string>("");
@@ -711,8 +951,8 @@ export default function ChatbotPage() {
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [creatingSession, setCreatingSession] = useState(false);
   const initStartedRef = useRef(false);
-  const agentSettingsLoadedRef = useRef(false);
-  const agentSettingsSaveRef = useRef<NodeJS.Timeout | null>(null);
+  const chatbotSettingsLoadedRef = useRef(false);
+  const lastSavedSettingsRef = useRef<string>("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const agentResultSentRef = useRef<Set<string>>(new Set());
@@ -812,90 +1052,212 @@ export default function ChatbotPage() {
     if (!Number.isFinite(value)) return fallback;
     return Math.min(Math.max(Math.round(value), min), max);
   };
-  const readAgentSettings = (raw: unknown): AgentSettingsPayload => {
-    if (!raw || typeof raw !== "object") return DEFAULT_AGENT_SETTINGS;
-    const settings = raw as Partial<AgentSettingsPayload>;
+  const readChatbotSettings = (raw: unknown): ChatbotSettingsPayload => {
+    if (!raw || typeof raw !== "object") return DEFAULT_CHATBOT_SETTINGS;
+    const settings = raw as Partial<ChatbotSettingsPayload>;
     const browser =
       settings.agentBrowser === "firefox" ||
       settings.agentBrowser === "webkit" ||
       settings.agentBrowser === "chromium"
         ? settings.agentBrowser
-        : DEFAULT_AGENT_SETTINGS.agentBrowser;
+        : DEFAULT_CHATBOT_SETTINGS.agentBrowser;
     return {
+      model:
+        typeof settings.model === "string"
+          ? settings.model
+          : DEFAULT_CHATBOT_SETTINGS.model,
+      webSearchEnabled:
+        typeof settings.webSearchEnabled === "boolean"
+          ? settings.webSearchEnabled
+          : DEFAULT_CHATBOT_SETTINGS.webSearchEnabled,
+      useGlobalContext:
+        typeof settings.useGlobalContext === "boolean"
+          ? settings.useGlobalContext
+          : DEFAULT_CHATBOT_SETTINGS.useGlobalContext,
+      useLocalContext:
+        typeof settings.useLocalContext === "boolean"
+          ? settings.useLocalContext
+          : DEFAULT_CHATBOT_SETTINGS.useLocalContext,
+      localContextMode:
+        settings.localContextMode === "append"
+          ? "append"
+          : DEFAULT_CHATBOT_SETTINGS.localContextMode,
+      searchProvider:
+        typeof settings.searchProvider === "string"
+          ? settings.searchProvider
+          : DEFAULT_CHATBOT_SETTINGS.searchProvider,
+      agentModeEnabled:
+        typeof settings.agentModeEnabled === "boolean"
+          ? settings.agentModeEnabled
+          : DEFAULT_CHATBOT_SETTINGS.agentModeEnabled,
       agentBrowser: browser,
       runHeadless:
         typeof settings.runHeadless === "boolean"
           ? settings.runHeadless
-          : DEFAULT_AGENT_SETTINGS.runHeadless,
+          : DEFAULT_CHATBOT_SETTINGS.runHeadless,
       ignoreRobotsTxt:
         typeof settings.ignoreRobotsTxt === "boolean"
           ? settings.ignoreRobotsTxt
-          : DEFAULT_AGENT_SETTINGS.ignoreRobotsTxt,
+          : DEFAULT_CHATBOT_SETTINGS.ignoreRobotsTxt,
       requireHumanApproval:
         typeof settings.requireHumanApproval === "boolean"
           ? settings.requireHumanApproval
-          : DEFAULT_AGENT_SETTINGS.requireHumanApproval,
+          : DEFAULT_CHATBOT_SETTINGS.requireHumanApproval,
+      memoryValidationModel:
+        typeof settings.memoryValidationModel === "string" &&
+        settings.memoryValidationModel.trim()
+          ? settings.memoryValidationModel
+          : DEFAULT_CHATBOT_SETTINGS.memoryValidationModel,
+      plannerModel:
+        typeof settings.plannerModel === "string" && settings.plannerModel.trim()
+          ? settings.plannerModel
+          : DEFAULT_CHATBOT_SETTINGS.plannerModel,
+      selfCheckModel:
+        typeof settings.selfCheckModel === "string" && settings.selfCheckModel.trim()
+          ? settings.selfCheckModel
+          : DEFAULT_CHATBOT_SETTINGS.selfCheckModel,
+      extractionValidationModel:
+        typeof settings.extractionValidationModel === "string" &&
+        settings.extractionValidationModel.trim()
+          ? settings.extractionValidationModel
+          : DEFAULT_CHATBOT_SETTINGS.extractionValidationModel,
+      loopGuardModel:
+        typeof settings.loopGuardModel === "string" && settings.loopGuardModel.trim()
+          ? settings.loopGuardModel
+          : DEFAULT_CHATBOT_SETTINGS.loopGuardModel,
+      approvalGateModel:
+        typeof settings.approvalGateModel === "string" &&
+        settings.approvalGateModel.trim()
+          ? settings.approvalGateModel
+          : DEFAULT_CHATBOT_SETTINGS.approvalGateModel,
+      memorySummarizationModel:
+        typeof settings.memorySummarizationModel === "string" &&
+        settings.memorySummarizationModel.trim()
+          ? settings.memorySummarizationModel
+          : DEFAULT_CHATBOT_SETTINGS.memorySummarizationModel,
+      selectorInferenceModel:
+        typeof settings.selectorInferenceModel === "string" &&
+        settings.selectorInferenceModel.trim()
+          ? settings.selectorInferenceModel
+          : DEFAULT_CHATBOT_SETTINGS.selectorInferenceModel,
+      outputNormalizationModel:
+        typeof settings.outputNormalizationModel === "string" &&
+        settings.outputNormalizationModel.trim()
+          ? settings.outputNormalizationModel
+          : DEFAULT_CHATBOT_SETTINGS.outputNormalizationModel,
       maxSteps: clampAgentSetting(
         Number(settings.maxSteps),
         1,
         20,
-        DEFAULT_AGENT_SETTINGS.maxSteps
+        DEFAULT_CHATBOT_SETTINGS.maxSteps
       ),
       maxStepAttempts: clampAgentSetting(
         Number(settings.maxStepAttempts),
         1,
         5,
-        DEFAULT_AGENT_SETTINGS.maxStepAttempts
+        DEFAULT_CHATBOT_SETTINGS.maxStepAttempts
       ),
       maxReplanCalls: clampAgentSetting(
         Number(settings.maxReplanCalls),
         0,
         6,
-        DEFAULT_AGENT_SETTINGS.maxReplanCalls
+        DEFAULT_CHATBOT_SETTINGS.maxReplanCalls
       ),
       replanEverySteps: clampAgentSetting(
         Number(settings.replanEverySteps),
         1,
         10,
-        DEFAULT_AGENT_SETTINGS.replanEverySteps
+        DEFAULT_CHATBOT_SETTINGS.replanEverySteps
       ),
       maxSelfChecks: clampAgentSetting(
         Number(settings.maxSelfChecks),
         0,
         8,
-        DEFAULT_AGENT_SETTINGS.maxSelfChecks
+        DEFAULT_CHATBOT_SETTINGS.maxSelfChecks
+      ),
+      loopGuardThreshold: clampAgentSetting(
+        Number(settings.loopGuardThreshold),
+        1,
+        5,
+        DEFAULT_CHATBOT_SETTINGS.loopGuardThreshold
+      ),
+      loopBackoffBaseMs: clampAgentSetting(
+        Number(settings.loopBackoffBaseMs),
+        250,
+        20000,
+        DEFAULT_CHATBOT_SETTINGS.loopBackoffBaseMs
+      ),
+      loopBackoffMaxMs: clampAgentSetting(
+        Number(settings.loopBackoffMaxMs),
+        1000,
+        60000,
+        DEFAULT_CHATBOT_SETTINGS.loopBackoffMaxMs
       ),
     };
   };
-  const buildAgentSettingsPayload = (): AgentSettingsPayload => ({
+  const buildChatbotSettingsPayload = (): ChatbotSettingsPayload => ({
+    model,
+    webSearchEnabled,
+    useGlobalContext,
+    useLocalContext,
+    localContextMode,
+    searchProvider,
+    agentModeEnabled,
     agentBrowser,
     runHeadless: agentRunHeadless,
     ignoreRobotsTxt: agentIgnoreRobotsTxt,
     requireHumanApproval: agentRequireHumanApproval,
-    maxSteps: clampAgentSetting(agentMaxSteps, 1, 20, DEFAULT_AGENT_SETTINGS.maxSteps),
+    memoryValidationModel: agentMemoryValidationModel,
+    plannerModel: agentPlannerModel,
+    selfCheckModel: agentSelfCheckModel,
+    extractionValidationModel: agentExtractionValidationModel,
+    loopGuardModel: agentLoopGuardModel,
+    approvalGateModel: agentApprovalGateModel,
+    memorySummarizationModel: agentMemorySummarizationModel,
+    selectorInferenceModel: agentSelectorInferenceModel,
+    outputNormalizationModel: agentOutputNormalizationModel,
+    maxSteps: clampAgentSetting(agentMaxSteps, 1, 20, DEFAULT_CHATBOT_SETTINGS.maxSteps),
     maxStepAttempts: clampAgentSetting(
       agentMaxStepAttempts,
       1,
       5,
-      DEFAULT_AGENT_SETTINGS.maxStepAttempts
+      DEFAULT_CHATBOT_SETTINGS.maxStepAttempts
     ),
     maxReplanCalls: clampAgentSetting(
       agentMaxReplanCalls,
       0,
       6,
-      DEFAULT_AGENT_SETTINGS.maxReplanCalls
+      DEFAULT_CHATBOT_SETTINGS.maxReplanCalls
     ),
     replanEverySteps: clampAgentSetting(
       agentReplanEverySteps,
       1,
       10,
-      DEFAULT_AGENT_SETTINGS.replanEverySteps
+      DEFAULT_CHATBOT_SETTINGS.replanEverySteps
     ),
     maxSelfChecks: clampAgentSetting(
       agentMaxSelfChecks,
       0,
       8,
-      DEFAULT_AGENT_SETTINGS.maxSelfChecks
+      DEFAULT_CHATBOT_SETTINGS.maxSelfChecks
+    ),
+    loopGuardThreshold: clampAgentSetting(
+      agentLoopGuardThreshold,
+      1,
+      5,
+      DEFAULT_CHATBOT_SETTINGS.loopGuardThreshold
+    ),
+    loopBackoffBaseMs: clampAgentSetting(
+      agentLoopBackoffBaseMs,
+      250,
+      20000,
+      DEFAULT_CHATBOT_SETTINGS.loopBackoffBaseMs
+    ),
+    loopBackoffMaxMs: clampAgentSetting(
+      agentLoopBackoffMaxMs,
+      1000,
+      60000,
+      DEFAULT_CHATBOT_SETTINGS.loopBackoffMaxMs
     ),
   });
 
@@ -919,6 +1281,126 @@ export default function ChatbotPage() {
     }));
   }, []);
 
+  const updateModelSelections = (models: string[]) => {
+    setModelOptions(models);
+    if (models.length === 0) return;
+    const fallback = models[0];
+    if (!models.includes(model)) {
+      setModel(fallback);
+    }
+    if (!models.includes(agentMemoryValidationModel)) {
+      setAgentMemoryValidationModel(fallback);
+    }
+    if (!models.includes(agentPlannerModel)) {
+      setAgentPlannerModel(fallback);
+    }
+    if (!models.includes(agentSelfCheckModel)) {
+      setAgentSelfCheckModel(fallback);
+    }
+    if (!models.includes(agentExtractionValidationModel)) {
+      setAgentExtractionValidationModel(fallback);
+    }
+    if (!models.includes(agentLoopGuardModel)) {
+      setAgentLoopGuardModel(fallback);
+    }
+    if (!models.includes(agentApprovalGateModel)) {
+      setAgentApprovalGateModel(fallback);
+    }
+    if (!models.includes(agentMemorySummarizationModel)) {
+      setAgentMemorySummarizationModel(fallback);
+    }
+    if (!models.includes(agentSelectorInferenceModel)) {
+      setAgentSelectorInferenceModel(fallback);
+    }
+    if (!models.includes(agentOutputNormalizationModel)) {
+      setAgentOutputNormalizationModel(fallback);
+    }
+  };
+
+  const autoSelectModels = async () => {
+    if (settingsSaving) return;
+    if (modelOptions.length === 0) {
+      toast("No models available. Refresh the model list first.", {
+        variant: "error",
+      });
+      return;
+    }
+    const profiles = modelOptions.map(buildModelProfile);
+    const usableProfiles = profiles.filter(
+      (profile) => !profile.isEmbedding && !profile.isRerank
+    );
+    if (usableProfiles.length === 0) {
+      toast("No chat-capable models found to auto-select.", { variant: "error" });
+      return;
+    }
+    const pick = (rule: ModelTaskRule) =>
+      pickBestModel(usableProfiles, rule) || modelOptions[0];
+    const selections = {
+      model: pick(MODEL_TASK_RULES.main),
+      memoryValidationModel: pick(MODEL_TASK_RULES.memoryValidation),
+      plannerModel: pick(MODEL_TASK_RULES.planner),
+      selfCheckModel: pick(MODEL_TASK_RULES.selfCheck),
+      extractionValidationModel: pick(MODEL_TASK_RULES.extractionValidation),
+      loopGuardModel: pick(MODEL_TASK_RULES.loopGuard),
+      approvalGateModel: pick(MODEL_TASK_RULES.approvalGate),
+      memorySummarizationModel: pick(MODEL_TASK_RULES.memorySummarization),
+      selectorInferenceModel: pick(MODEL_TASK_RULES.selectorInference),
+      outputNormalizationModel: pick(MODEL_TASK_RULES.outputNormalization),
+    };
+    setModel(selections.model);
+    setAgentMemoryValidationModel(selections.memoryValidationModel);
+    setAgentPlannerModel(selections.plannerModel);
+    setAgentSelfCheckModel(selections.selfCheckModel);
+    setAgentExtractionValidationModel(selections.extractionValidationModel);
+    setAgentLoopGuardModel(selections.loopGuardModel);
+    setAgentApprovalGateModel(selections.approvalGateModel);
+    setAgentMemorySummarizationModel(selections.memorySummarizationModel);
+    setAgentSelectorInferenceModel(selections.selectorInferenceModel);
+    setAgentOutputNormalizationModel(selections.outputNormalizationModel);
+    const payload: ChatbotSettingsPayload = {
+      ...buildChatbotSettingsPayload(),
+      model: selections.model,
+      memoryValidationModel: selections.memoryValidationModel,
+      plannerModel: selections.plannerModel,
+      selfCheckModel: selections.selfCheckModel,
+      extractionValidationModel: selections.extractionValidationModel,
+      loopGuardModel: selections.loopGuardModel,
+      approvalGateModel: selections.approvalGateModel,
+      memorySummarizationModel: selections.memorySummarizationModel,
+      selectorInferenceModel: selections.selectorInferenceModel,
+      outputNormalizationModel: selections.outputNormalizationModel,
+    };
+    await persistChatbotSettings(payload, "Auto-selected model defaults saved.");
+  };
+
+  const refreshModelOptions = async () => {
+    setModelLoading(true);
+    try {
+      const res = await fetchWithTimeout("/api/chatbot");
+      if (!res.ok) {
+        const error = (await res.json()) as {
+          error?: string;
+          errorId?: string;
+        };
+        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+        throw new Error(`${error.error || "Failed to load models."}${suffix}`);
+      }
+      const data = (await res.json()) as { models?: string[] };
+      const models = (data.models || []).filter(Boolean);
+      updateModelSelections(models);
+      toast("Model list refreshed", { variant: "success" });
+    } catch (error) {
+      const message = isAbortError(error)
+        ? "Loading models timed out."
+        : error instanceof Error
+          ? error.message
+          : "Failed to load models.";
+      toast(message, { variant: "error" });
+    } finally {
+      setModelLoading(false);
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
     const loadModels = async () => {
@@ -933,10 +1415,7 @@ export default function ChatbotPage() {
         const data = (await res.json()) as { models?: string[] };
         const models = (data.models || []).filter(Boolean);
         if (!isMounted) return;
-        setModelOptions(models);
-        if (models.length > 0 && !models.includes(model)) {
-          setModel(models[0]);
-        }
+        updateModelSelections(models);
       } catch (error) {
         const message = isAbortError(error)
           ? "Loading models timed out."
@@ -958,79 +1437,175 @@ export default function ChatbotPage() {
 
   useEffect(() => {
     let isMounted = true;
-    const loadAgentSettings = async () => {
+    const loadChatbotSettings = async () => {
       try {
-        const res = await fetchWithTimeout("/api/settings", {}, 12000);
-        if (!res.ok) return;
-        const data = (await res.json()) as Array<{ key: string; value: string }>;
-        const stored = data.find((item) => item.key === AGENT_SETTINGS_KEY);
-        if (!stored?.value) {
-          agentSettingsLoadedRef.current = true;
-          return;
+        const res = await fetchWithTimeout(
+          `/api/chatbot/settings?key=${CHATBOT_SETTINGS_KEY}`,
+          {},
+          12000
+        );
+        if (!res.ok) {
+          throw new Error("Failed to load chatbot settings.");
         }
-        const parsed = JSON.parse(stored.value) as unknown;
+        const data = (await res.json()) as {
+          settings?: { settings?: unknown } | null;
+        };
+        if (!data.settings?.settings) {
+          throw new Error("No chatbot settings saved.");
+        }
         if (!isMounted) return;
-        const next = readAgentSettings(parsed);
+        const next = readChatbotSettings(data.settings.settings);
+        lastSavedSettingsRef.current = JSON.stringify(next);
+        setModel(next.model);
+        setWebSearchEnabled(next.webSearchEnabled);
+        setUseGlobalContext(next.useGlobalContext);
+        setUseLocalContext(next.useLocalContext);
+        setLocalContextMode(next.localContextMode);
+        setSearchProvider(next.searchProvider);
+        setAgentModeEnabled(next.agentModeEnabled);
         setAgentBrowser(next.agentBrowser);
         setAgentRunHeadless(next.runHeadless);
         setAgentIgnoreRobotsTxt(next.ignoreRobotsTxt);
         setAgentRequireHumanApproval(next.requireHumanApproval);
+        setAgentMemoryValidationModel(next.memoryValidationModel);
+        setAgentPlannerModel(next.plannerModel);
+        setAgentSelfCheckModel(next.selfCheckModel);
+        setAgentExtractionValidationModel(next.extractionValidationModel);
+        setAgentLoopGuardModel(next.loopGuardModel);
+        setAgentApprovalGateModel(next.approvalGateModel);
+        setAgentMemorySummarizationModel(next.memorySummarizationModel);
+        setAgentSelectorInferenceModel(next.selectorInferenceModel);
+        setAgentOutputNormalizationModel(next.outputNormalizationModel);
         setAgentMaxSteps(next.maxSteps);
         setAgentMaxStepAttempts(next.maxStepAttempts);
         setAgentMaxReplanCalls(next.maxReplanCalls);
         setAgentReplanEverySteps(next.replanEverySteps);
         setAgentMaxSelfChecks(next.maxSelfChecks);
-        agentSettingsLoadedRef.current = true;
+        setAgentLoopGuardThreshold(next.loopGuardThreshold);
+        setAgentLoopBackoffBaseMs(next.loopBackoffBaseMs);
+        setAgentLoopBackoffMaxMs(next.loopBackoffMaxMs);
+        chatbotSettingsLoadedRef.current = true;
       } catch {
-        agentSettingsLoadedRef.current = true;
+        const cached = safeLocalStorageGet(CHATBOT_SETTINGS_STORAGE_KEY);
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached) as unknown;
+            if (!isMounted) return;
+            const next = readChatbotSettings(parsed);
+            lastSavedSettingsRef.current = JSON.stringify(next);
+            setModel(next.model);
+            setWebSearchEnabled(next.webSearchEnabled);
+            setUseGlobalContext(next.useGlobalContext);
+            setUseLocalContext(next.useLocalContext);
+            setLocalContextMode(next.localContextMode);
+            setSearchProvider(next.searchProvider);
+            setAgentModeEnabled(next.agentModeEnabled);
+            setAgentBrowser(next.agentBrowser);
+            setAgentRunHeadless(next.runHeadless);
+            setAgentIgnoreRobotsTxt(next.ignoreRobotsTxt);
+            setAgentRequireHumanApproval(next.requireHumanApproval);
+            setAgentMemoryValidationModel(next.memoryValidationModel);
+            setAgentPlannerModel(next.plannerModel);
+            setAgentSelfCheckModel(next.selfCheckModel);
+            setAgentExtractionValidationModel(next.extractionValidationModel);
+            setAgentLoopGuardModel(next.loopGuardModel);
+            setAgentApprovalGateModel(next.approvalGateModel);
+            setAgentMemorySummarizationModel(next.memorySummarizationModel);
+            setAgentSelectorInferenceModel(next.selectorInferenceModel);
+            setAgentOutputNormalizationModel(next.outputNormalizationModel);
+            setAgentMaxSteps(next.maxSteps);
+            setAgentMaxStepAttempts(next.maxStepAttempts);
+            setAgentMaxReplanCalls(next.maxReplanCalls);
+            setAgentReplanEverySteps(next.replanEverySteps);
+            setAgentMaxSelfChecks(next.maxSelfChecks);
+            setAgentLoopGuardThreshold(next.loopGuardThreshold);
+            setAgentLoopBackoffBaseMs(next.loopBackoffBaseMs);
+            setAgentLoopBackoffMaxMs(next.loopBackoffMaxMs);
+          } catch {
+            // ignore cache parse failures
+          }
+        }
+        chatbotSettingsLoadedRef.current = true;
       }
     };
-    void loadAgentSettings();
+    void loadChatbotSettings();
     return () => {
       isMounted = false;
     };
   }, []);
 
   useEffect(() => {
-    if (!agentSettingsLoadedRef.current) return;
-    if (agentSettingsSaveRef.current) {
-      clearTimeout(agentSettingsSaveRef.current);
-    }
-    agentSettingsSaveRef.current = setTimeout(async () => {
-      try {
-        const payload = buildAgentSettingsPayload();
-        await fetchWithTimeout(
-          "/api/settings",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              key: AGENT_SETTINGS_KEY,
-              value: JSON.stringify(payload),
-            }),
-          },
-          12000
-        );
-      } catch {
-        // ignore persistence failures
-      }
-    }, 600);
-    return () => {
-      if (agentSettingsSaveRef.current) {
-        clearTimeout(agentSettingsSaveRef.current);
-      }
-    };
+    if (!chatbotSettingsLoadedRef.current) return;
+    const payload = buildChatbotSettingsPayload();
+    const serialized = JSON.stringify(payload);
+    setSettingsDirty(serialized !== lastSavedSettingsRef.current);
   }, [
+    model,
+    webSearchEnabled,
+    useGlobalContext,
+    useLocalContext,
+    localContextMode,
+    searchProvider,
+    agentModeEnabled,
     agentBrowser,
     agentRunHeadless,
     agentIgnoreRobotsTxt,
     agentRequireHumanApproval,
+    agentMemoryValidationModel,
+    agentPlannerModel,
+    agentSelfCheckModel,
+    agentExtractionValidationModel,
+    agentLoopGuardModel,
+    agentApprovalGateModel,
+    agentMemorySummarizationModel,
+    agentSelectorInferenceModel,
+    agentOutputNormalizationModel,
     agentMaxSteps,
     agentMaxStepAttempts,
     agentMaxReplanCalls,
     agentReplanEverySteps,
     agentMaxSelfChecks,
+    agentLoopGuardThreshold,
+    agentLoopBackoffBaseMs,
+    agentLoopBackoffMaxMs,
   ]);
+
+  const persistChatbotSettings = async (
+    payload: ChatbotSettingsPayload,
+    successMessage = "Chatbot settings saved."
+  ) => {
+    if (settingsSaving) return;
+    setSettingsSaving(true);
+    try {
+      safeLocalStorageSet(CHATBOT_SETTINGS_STORAGE_KEY, JSON.stringify(payload));
+      await fetchWithTimeout(
+        "/api/chatbot/settings",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            key: CHATBOT_SETTINGS_KEY,
+            settings: payload,
+          }),
+        },
+        12000
+      );
+      lastSavedSettingsRef.current = JSON.stringify(payload);
+      setSettingsDirty(false);
+      toast(successMessage, { variant: "success" });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to save settings.";
+      toast(message, { variant: "error" });
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
+  const saveChatbotSettings = async () => {
+    const payload = buildChatbotSettingsPayload();
+    await persistChatbotSettings(payload);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -1660,6 +2235,16 @@ export default function ChatbotPage() {
     void loadDetails();
   }, [agentRunDetailsOpen, latestAgentRunId, refreshAgentRunDetails]);
 
+  useEffect(() => {
+    if (!agentRunDetails?.prompt) {
+      setAgentPromptDraft("");
+      setAgentPromptDirty(false);
+      return;
+    }
+    setAgentPromptDraft(agentRunDetails.prompt);
+    setAgentPromptDirty(false);
+  }, [agentRunDetails?.prompt]);
+
   const runAgentControl = async (
     action: "goto" | "reload" | "snapshot",
     overrideUrl?: string
@@ -1696,19 +2281,24 @@ export default function ChatbotPage() {
     }
   };
 
-  const resumeAgentRun = async (stepId?: string) => {
+  const resumeAgentRun = async (stepId?: string, promptOverride?: string) => {
     if (!latestAgentRunId) {
       toast("No agent run available to resume.", { variant: "error" });
       return;
     }
     setAgentResumeBusy(true);
     try {
+      const nextPrompt =
+        typeof promptOverride === "string" && promptOverride.trim()
+          ? promptOverride.trim()
+          : undefined;
       const res = await fetch(`/api/chatbot/agent/${latestAgentRunId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "resume",
           ...(stepId ? { stepId } : {}),
+          ...(nextPrompt ? { prompt: nextPrompt } : {}),
         }),
       });
       if (!res.ok) {
@@ -1718,12 +2308,44 @@ export default function ChatbotPage() {
       }
       toast("Agent run queued for resume.", { variant: "success" });
       setAgentRunDetailsOpen(true);
+      if (nextPrompt) {
+        setAgentPromptDirty(false);
+        setAgentPromptDraft(nextPrompt);
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to resume agent run.";
       toast(message, { variant: "error" });
     } finally {
       setAgentResumeBusy(false);
+    }
+  };
+
+  const stopAgentRun = async () => {
+    if (!latestAgentRunId) {
+      toast("No agent run available to stop.", { variant: "error" });
+      return;
+    }
+    setAgentControlBusy(true);
+    try {
+      const res = await fetch(`/api/chatbot/agent/${latestAgentRunId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "stop" }),
+      });
+      if (!res.ok) {
+        const error = await readErrorResponse(res);
+        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+        throw new Error(`${error.message}${suffix}`);
+      }
+      toast("Agent run stopped.", { variant: "success" });
+      await refreshAgentRunDetails(latestAgentRunId);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to stop agent run.";
+      toast(message, { variant: "error" });
+    } finally {
+      setAgentControlBusy(false);
     }
   };
 
@@ -1823,18 +2445,23 @@ export default function ChatbotPage() {
     setStepDetailsTitle(step.title);
     setStepDetailsLoading(true);
     try {
-      const snapshotPromise = step.snapshotId
-        ? fetchWithTimeout(`/api/chatbot/agent/snapshots/${step.snapshotId}`)
-        : Promise.resolve(null);
-      const logsPromise = fetchWithTimeout(
-        `/api/chatbot/agent/${latestAgentRunId}/logs?stepId=${step.id}`
-      );
-      const [snapshotRes, logsRes] = await Promise.all([snapshotPromise, logsPromise]);
+      const [snapshotsRes, logsRes, auditsRes] = await Promise.all([
+        fetchWithTimeout(
+          `/api/chatbot/agent/${latestAgentRunId}/snapshots?stepId=${step.id}&limit=12`
+        ),
+        fetchWithTimeout(`/api/chatbot/agent/${latestAgentRunId}/logs?stepId=${step.id}`),
+        fetchWithTimeout(
+          `/api/chatbot/agent/${latestAgentRunId}/audits?stepId=${step.id}&limit=200`
+        ),
+      ]);
 
-      if (snapshotRes && snapshotRes.ok) {
-        const data = (await snapshotRes.json()) as { snapshot?: AgentSnapshot };
-        setStepDetailsSnapshot(data.snapshot ?? null);
+      if (snapshotsRes.ok) {
+        const data = (await snapshotsRes.json()) as { snapshots?: AgentSnapshot[] };
+        const snapshots = data.snapshots ?? [];
+        setStepDetailsSnapshots(snapshots);
+        setStepDetailsSnapshot(snapshots[0] ?? null);
       } else {
+        setStepDetailsSnapshots([]);
         setStepDetailsSnapshot(null);
       }
 
@@ -1844,12 +2471,21 @@ export default function ChatbotPage() {
       } else {
         setStepDetailsLogs([]);
       }
+
+      if (auditsRes.ok) {
+        const data = (await auditsRes.json()) as { audits?: AgentAuditLog[] };
+        setStepDetailsAudits(data.audits ?? []);
+      } else {
+        setStepDetailsAudits([]);
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to load step details.";
       toast(message, { variant: "error" });
       setStepDetailsSnapshot(null);
+      setStepDetailsSnapshots([]);
       setStepDetailsLogs([]);
+      setStepDetailsAudits([]);
     } finally {
       setStepDetailsLoading(false);
     }
@@ -2009,13 +2645,31 @@ export default function ChatbotPage() {
       if (useGlobalContext) tools.push("global-context");
       if (useLocalContext) tools.push("local-context");
       if (agentModeEnabled) tools.push("agent-mode");
-      const agentPlanSettings = agentModeEnabled
+          const agentPlanSettings = agentModeEnabled
         ? {
             maxSteps: clampAgentSetting(agentMaxSteps, 1, 20, 12),
             maxStepAttempts: clampAgentSetting(agentMaxStepAttempts, 1, 5, 2),
             maxReplanCalls: clampAgentSetting(agentMaxReplanCalls, 0, 6, 2),
             replanEverySteps: clampAgentSetting(agentReplanEverySteps, 1, 10, 2),
             maxSelfChecks: clampAgentSetting(agentMaxSelfChecks, 0, 8, 4),
+            loopGuardThreshold: clampAgentSetting(
+              agentLoopGuardThreshold,
+              1,
+              5,
+              2
+            ),
+            loopBackoffBaseMs: clampAgentSetting(
+              agentLoopBackoffBaseMs,
+              250,
+              20000,
+              2000
+            ),
+            loopBackoffMaxMs: clampAgentSetting(
+              agentLoopBackoffMaxMs,
+              1000,
+              60000,
+              12000
+            ),
           }
         : undefined;
       if (debugEnabled) {
@@ -2034,6 +2688,15 @@ export default function ChatbotPage() {
             agentRunHeadless,
             ignoreRobotsTxt: agentIgnoreRobotsTxt,
             requireHumanApproval: agentRequireHumanApproval,
+            memoryValidationModel: agentMemoryValidationModel,
+            plannerModel: agentPlannerModel,
+            selfCheckModel: agentSelfCheckModel,
+            extractionValidationModel: agentExtractionValidationModel,
+            loopGuardModel: agentLoopGuardModel,
+            approvalGateModel: agentApprovalGateModel,
+            memorySummarizationModel: agentMemorySummarizationModel,
+            selectorInferenceModel: agentSelectorInferenceModel,
+            outputNormalizationModel: agentOutputNormalizationModel,
             agentPlanSettings,
           },
         });
@@ -2054,6 +2717,15 @@ export default function ChatbotPage() {
               runHeadless: agentRunHeadless,
               ignoreRobotsTxt: agentIgnoreRobotsTxt,
               requireHumanApproval: agentRequireHumanApproval,
+              memoryValidationModel: agentMemoryValidationModel,
+              plannerModel: agentPlannerModel,
+              selfCheckModel: agentSelfCheckModel,
+              extractionValidationModel: agentExtractionValidationModel,
+              loopGuardModel: agentLoopGuardModel,
+              approvalGateModel: agentApprovalGateModel,
+              memorySummarizationModel: agentMemorySummarizationModel,
+              selectorInferenceModel: agentSelectorInferenceModel,
+              outputNormalizationModel: agentOutputNormalizationModel,
               planSettings: agentPlanSettings,
             }),
           },
@@ -2391,11 +3063,141 @@ export default function ChatbotPage() {
                         </div>
                       )}
                     </div>
+                    {stepDetailsSnapshots.length > 1 ? (
+                      <div className="mt-3">
+                        <p className="text-[11px] text-gray-500">All snapshots</p>
+                        <div className="mt-2 grid max-h-40 grid-cols-4 gap-2 overflow-y-auto">
+                          {stepDetailsSnapshots.map((snap) => (
+                            <button
+                              key={snap.id}
+                              type="button"
+                              className={`overflow-hidden rounded border ${
+                                stepDetailsSnapshot?.id === snap.id
+                                  ? "border-emerald-400"
+                                  : "border-gray-800"
+                              }`}
+                              onClick={() => setStepDetailsSnapshot(snap)}
+                            >
+                              {snap.screenshotPath || snap.screenshotData ? (
+                                <img
+                                  src={
+                                    snap.screenshotPath
+                                      ? `/api/chatbot/agent/${latestAgentRunId}/assets/${snap.screenshotPath}`
+                                      : snap.screenshotData ?? ""
+                                  }
+                                  alt="Step snapshot"
+                                  className="h-16 w-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-16 items-center justify-center text-[10px] text-gray-500">
+                                  No image
+                                </div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                   <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
                     <p className="text-[11px] text-gray-500">DOM text</p>
                     <div className="mt-2 max-h-40 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
                       {stepDetailsSnapshot?.domText || "No DOM captured."}
+                    </div>
+                  </div>
+                  <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                    <p className="text-[11px] text-gray-500">Captures</p>
+                    <div className="mt-2 max-h-40 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                      {stepDetailsAudits.filter((audit) =>
+                        [
+                          "Captured UI inventory.",
+                          "Captured session context.",
+                          "Captured DOM snapshot.",
+                        ].includes(audit.message)
+                      ).length === 0 ? (
+                        <p className="text-gray-500">No captures logged.</p>
+                      ) : (
+                        stepDetailsAudits
+                          .filter((audit) =>
+                            [
+                              "Captured UI inventory.",
+                              "Captured session context.",
+                              "Captured DOM snapshot.",
+                            ].includes(audit.message)
+                          )
+                          .map((audit) => (
+                            <div
+                              key={audit.id}
+                              className="rounded-md border border-gray-800 bg-gray-950/60 p-2"
+                            >
+                              <div className="flex items-center justify-between text-[10px] text-gray-500">
+                                <span>{audit.message}</span>
+                                <span>
+                                  {new Date(audit.createdAt).toLocaleTimeString()}
+                                </span>
+                              </div>
+                              {audit.metadata ? (
+                                <pre className="mt-2 whitespace-pre-wrap text-[10px] text-gray-300">
+                                  {JSON.stringify(audit.metadata, null, 2)}
+                                </pre>
+                              ) : null}
+                            </div>
+                          ))
+                      )}
+                    </div>
+                  </div>
+                  <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                    <p className="text-[11px] text-gray-500">Replanning</p>
+                    <div className="mt-2 max-h-40 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                      {stepDetailsAudits.filter(
+                        (audit) =>
+                          audit.metadata?.type === "plan-replan" ||
+                          audit.metadata?.type === "plan-branch" ||
+                          audit.metadata?.type === "self-check-replan"
+                      ).length === 0 ? (
+                        <p className="text-gray-500">No replanning events.</p>
+                      ) : (
+                        stepDetailsAudits
+                          .filter(
+                            (audit) =>
+                              audit.metadata?.type === "plan-replan" ||
+                              audit.metadata?.type === "plan-branch" ||
+                              audit.metadata?.type === "self-check-replan"
+                          )
+                          .map((audit) => {
+                            const meta = audit.metadata as
+                              | {
+                                  reason?: string;
+                                  steps?: Array<{ title?: string }>;
+                                }
+                              | null;
+                            return (
+                              <div
+                                key={audit.id}
+                                className="rounded-md border border-gray-800 bg-gray-950/60 p-2"
+                              >
+                                <div className="flex items-center justify-between text-[10px] text-gray-500">
+                                  <span>{audit.message}</span>
+                                  <span>
+                                    {new Date(audit.createdAt).toLocaleTimeString()}
+                                  </span>
+                                </div>
+                                {meta?.reason ? (
+                                  <p className="mt-1 text-gray-300">{meta.reason}</p>
+                                ) : null}
+                                {meta?.steps?.length ? (
+                                  <ul className="mt-2 list-disc space-y-1 pl-4 text-gray-300">
+                                    {meta.steps.slice(0, 6).map((step, idx) => (
+                                      <li key={`${audit.id}-step-${idx}`}>
+                                        {step.title || "Step"}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : null}
+                              </div>
+                            );
+                          })
+                      )}
                     </div>
                   </div>
                   <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
@@ -2599,6 +3401,64 @@ export default function ChatbotPage() {
                                 ) : (
                                   <span className="text-gray-500">none yet</span>
                                 )}
+                              </div>
+                              <div className="mt-3 rounded-md border border-gray-800 bg-gray-950 p-2 text-[11px] text-gray-300">
+                                <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                  Prompt control
+                                </p>
+                                <div className="mt-2 space-y-2">
+                                  <Textarea
+                                    value={agentPromptDraft}
+                                    rows={3}
+                                    className="min-h-[72px] text-xs"
+                                    onChange={(event) => {
+                                      const nextValue = event.target.value;
+                                      setAgentPromptDraft(nextValue);
+                                      setAgentPromptDirty(
+                                        nextValue.trim() !==
+                                          (agentRunDetails.prompt ?? "").trim()
+                                      );
+                                    }}
+                                  />
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    {agentRunDetails.status === "running" ? (
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        disabled={agentControlBusy}
+                                        onClick={stopAgentRun}
+                                      >
+                                        Stop run
+                                      </Button>
+                                    ) : null}
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      disabled={
+                                        agentResumeBusy ||
+                                        agentRunDetails.status === "running" ||
+                                        agentRunDetails.status === "queued" ||
+                                        !agentPromptDraft.trim()
+                                      }
+                                      onClick={() =>
+                                        resumeAgentRun(
+                                          undefined,
+                                          agentPromptDraft.trim()
+                                        )
+                                      }
+                                    >
+                                      {agentPromptDirty
+                                        ? "Resume with updated prompt"
+                                        : "Resume run"}
+                                    </Button>
+                                    {agentPromptDirty ? (
+                                      <span className="text-[10px] text-amber-200">
+                                        Prompt updated
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                </div>
                               </div>
                               {agentRunDetails.status === "waiting_human" &&
                               resolveApprovalStepId(agentRunDetails.planState) ? (
@@ -4131,6 +4991,13 @@ export default function ChatbotPage() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                {settingsDirty ? (
+                  <span className="text-amber-200">Unsaved changes</span>
+                ) : (
+                  <span className="text-gray-500">Settings saved</span>
+                )}
+              </div>
               <div className="mt-3 flex flex-wrap gap-3">
                 {webSearchEnabled || agentModeEnabled ? (
                   <div className="w-48">
@@ -4203,39 +5070,493 @@ export default function ChatbotPage() {
                     </label>
                   </div>
                 ) : null}
+              </div>
+              <div className="mt-3 flex flex-wrap items-start gap-3">
                 {agentModeEnabled ? (
                   <div className="w-full max-w-xl">
+                    <div className="mt-3">
+                      <label className="text-[11px] text-gray-400">
+                        Memory validation model
+                      </label>
+                      <div className="mt-1 flex items-center gap-2">
+                        <div className="flex-1">
+                          <Select
+                            value={agentMemoryValidationModel}
+                            onValueChange={(value) =>
+                              setAgentMemoryValidationModel(value)
+                            }
+                            disabled={
+                              isSending ||
+                              modelLoading ||
+                              modelOptions.length === 0
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select model" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {modelOptions.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={refreshModelOptions}
+                          disabled={isSending || modelLoading}
+                        >
+                          Refresh
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <label className="text-[11px] text-gray-400">
+                        Planner/replanner model
+                      </label>
+                      <div className="mt-1 flex items-center gap-2">
+                        <div className="flex-1">
+                          <Select
+                            value={agentPlannerModel}
+                            onValueChange={(value) => setAgentPlannerModel(value)}
+                            disabled={
+                              isSending ||
+                              modelLoading ||
+                              modelOptions.length === 0
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select model" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {modelOptions.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={refreshModelOptions}
+                          disabled={isSending || modelLoading}
+                        >
+                          Refresh
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <label className="text-[11px] text-gray-400">
+                        Self-questioning model
+                      </label>
+                      <div className="mt-1 flex items-center gap-2">
+                        <div className="flex-1">
+                          <Select
+                            value={agentSelfCheckModel}
+                            onValueChange={(value) => setAgentSelfCheckModel(value)}
+                            disabled={
+                              isSending ||
+                              modelLoading ||
+                              modelOptions.length === 0
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select model" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {modelOptions.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={refreshModelOptions}
+                          disabled={isSending || modelLoading}
+                        >
+                          Refresh
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <label className="text-[11px] text-gray-400">
+                        Extraction validation model
+                      </label>
+                      <div className="mt-1 flex items-center gap-2">
+                        <div className="flex-1">
+                          <Select
+                            value={agentExtractionValidationModel}
+                            onValueChange={(value) =>
+                              setAgentExtractionValidationModel(value)
+                            }
+                            disabled={
+                              isSending ||
+                              modelLoading ||
+                              modelOptions.length === 0
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select model" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {modelOptions.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={refreshModelOptions}
+                          disabled={isSending || modelLoading}
+                        >
+                          Refresh
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <label className="text-[11px] text-gray-400">
+                        Loop-guard model
+                      </label>
+                      <div className="mt-1 flex items-center gap-2">
+                        <div className="flex-1">
+                          <Select
+                            value={agentLoopGuardModel}
+                            onValueChange={(value) => setAgentLoopGuardModel(value)}
+                            disabled={
+                              isSending ||
+                              modelLoading ||
+                              modelOptions.length === 0
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select model" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {modelOptions.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={refreshModelOptions}
+                          disabled={isSending || modelLoading}
+                        >
+                          Refresh
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <label className="text-[11px] text-gray-400">
+                        Approval gate model
+                      </label>
+                      <div className="mt-1 flex items-center gap-2">
+                        <div className="flex-1">
+                          <Select
+                            value={agentApprovalGateModel}
+                            onValueChange={(value) => setAgentApprovalGateModel(value)}
+                            disabled={
+                              isSending ||
+                              modelLoading ||
+                              modelOptions.length === 0
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select model" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {modelOptions.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={refreshModelOptions}
+                          disabled={isSending || modelLoading}
+                        >
+                          Refresh
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <label className="text-[11px] text-gray-400">
+                        Memory summarization model
+                      </label>
+                      <div className="mt-1 flex items-center gap-2">
+                        <div className="flex-1">
+                          <Select
+                            value={agentMemorySummarizationModel}
+                            onValueChange={(value) =>
+                              setAgentMemorySummarizationModel(value)
+                            }
+                            disabled={
+                              isSending ||
+                              modelLoading ||
+                              modelOptions.length === 0
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select model" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {modelOptions.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={refreshModelOptions}
+                          disabled={isSending || modelLoading}
+                        >
+                          Refresh
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <label className="text-[11px] text-gray-400">
+                        Selector inference model
+                      </label>
+                      <div className="mt-1 flex items-center gap-2">
+                        <div className="flex-1">
+                          <Select
+                            value={agentSelectorInferenceModel}
+                            onValueChange={(value) =>
+                              setAgentSelectorInferenceModel(value)
+                            }
+                            disabled={
+                              isSending ||
+                              modelLoading ||
+                              modelOptions.length === 0
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select model" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {modelOptions.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={refreshModelOptions}
+                          disabled={isSending || modelLoading}
+                        >
+                          Refresh
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <label className="text-[11px] text-gray-400">
+                        Output normalization model
+                      </label>
+                      <div className="mt-1 flex items-center gap-2">
+                        <div className="flex-1">
+                          <Select
+                            value={agentOutputNormalizationModel}
+                            onValueChange={(value) =>
+                              setAgentOutputNormalizationModel(value)
+                            }
+                            disabled={
+                              isSending ||
+                              modelLoading ||
+                              modelOptions.length === 0
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select model" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {modelOptions.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={refreshModelOptions}
+                          disabled={isSending || modelLoading}
+                        >
+                          Refresh
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+                <div className="w-48">
+                  <label className="text-xs text-gray-400">Model</label>
+                  <div className="mt-2 flex items-center gap-2">
+                    <div className="w-48">
+                      <Select
+                        value={model}
+                        onValueChange={(value) => setModel(value)}
+                        disabled={isSending || modelLoading || modelOptions.length === 0}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select model" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {modelOptions.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={refreshModelOptions}
+                      disabled={isSending || modelLoading}
+                    >
+                      Refresh
+                    </Button>
+                  </div>
+                  <div className="mt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={autoSelectModels}
+                      disabled={
+                        settingsSaving || modelLoading || modelOptions.length === 0
+                      }
+                    >
+                      Auto-pick models
+                    </Button>
+                  </div>
+                  {modelOptions.length === 0 && !modelLoading ? (
+                    <p className="mt-2 text-xs text-gray-500">
+                      No models found. Pull one with `ollama pull llama3`.
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+              {agentModeEnabled ? (
+                <div className="mt-3 w-full max-w-xl">
                     <div className="flex items-center justify-between">
                       <p className="text-xs text-gray-400">Agent settings</p>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setAgentBrowser(DEFAULT_AGENT_SETTINGS.agentBrowser);
-                          setAgentRunHeadless(DEFAULT_AGENT_SETTINGS.runHeadless);
-                          setAgentIgnoreRobotsTxt(
-                            DEFAULT_AGENT_SETTINGS.ignoreRobotsTxt
-                          );
-                          setAgentRequireHumanApproval(
-                            DEFAULT_AGENT_SETTINGS.requireHumanApproval
-                          );
-                          setAgentMaxSteps(DEFAULT_AGENT_SETTINGS.maxSteps);
-                          setAgentMaxStepAttempts(
-                            DEFAULT_AGENT_SETTINGS.maxStepAttempts
-                          );
-                          setAgentMaxReplanCalls(
-                            DEFAULT_AGENT_SETTINGS.maxReplanCalls
-                          );
-                          setAgentReplanEverySteps(
-                            DEFAULT_AGENT_SETTINGS.replanEverySteps
-                          );
-                          setAgentMaxSelfChecks(DEFAULT_AGENT_SETTINGS.maxSelfChecks);
-                        }}
-                        disabled={isSending}
-                      >
-                        Reset defaults
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={!settingsDirty || settingsSaving}
+                          onClick={saveChatbotSettings}
+                        >
+                          {settingsSaving ? "Saving..." : "Save settings"}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setAgentBrowser(DEFAULT_AGENT_SETTINGS.agentBrowser);
+                            setAgentRunHeadless(DEFAULT_AGENT_SETTINGS.runHeadless);
+                            setAgentIgnoreRobotsTxt(
+                              DEFAULT_AGENT_SETTINGS.ignoreRobotsTxt
+                            );
+                            setAgentRequireHumanApproval(
+                              DEFAULT_AGENT_SETTINGS.requireHumanApproval
+                            );
+                            setAgentMemoryValidationModel(
+                              DEFAULT_AGENT_SETTINGS.memoryValidationModel
+                            );
+                            setAgentPlannerModel(DEFAULT_AGENT_SETTINGS.plannerModel);
+                            setAgentSelfCheckModel(
+                              DEFAULT_AGENT_SETTINGS.selfCheckModel
+                            );
+                            setAgentExtractionValidationModel(
+                              DEFAULT_AGENT_SETTINGS.extractionValidationModel
+                            );
+                            setAgentLoopGuardModel(
+                              DEFAULT_AGENT_SETTINGS.loopGuardModel
+                            );
+                            setAgentApprovalGateModel(
+                              DEFAULT_AGENT_SETTINGS.approvalGateModel
+                            );
+                            setAgentMemorySummarizationModel(
+                              DEFAULT_AGENT_SETTINGS.memorySummarizationModel
+                            );
+                            setAgentSelectorInferenceModel(
+                              DEFAULT_AGENT_SETTINGS.selectorInferenceModel
+                            );
+                            setAgentOutputNormalizationModel(
+                              DEFAULT_AGENT_SETTINGS.outputNormalizationModel
+                            );
+                            setAgentMaxSteps(DEFAULT_AGENT_SETTINGS.maxSteps);
+                            setAgentMaxStepAttempts(
+                              DEFAULT_AGENT_SETTINGS.maxStepAttempts
+                            );
+                            setAgentMaxReplanCalls(
+                              DEFAULT_AGENT_SETTINGS.maxReplanCalls
+                            );
+                            setAgentReplanEverySteps(
+                              DEFAULT_AGENT_SETTINGS.replanEverySteps
+                            );
+                            setAgentMaxSelfChecks(DEFAULT_AGENT_SETTINGS.maxSelfChecks);
+                            setAgentLoopGuardThreshold(
+                              DEFAULT_AGENT_SETTINGS.loopGuardThreshold
+                            );
+                            setAgentLoopBackoffBaseMs(
+                              DEFAULT_AGENT_SETTINGS.loopBackoffBaseMs
+                            );
+                            setAgentLoopBackoffMaxMs(
+                              DEFAULT_AGENT_SETTINGS.loopBackoffMaxMs
+                            );
+                          }}
+                          disabled={isSending}
+                        >
+                          Reset defaults
+                        </Button>
+                      </div>
                     </div>
                     <div className="mt-2 grid gap-3 sm:grid-cols-2">
                       <div>
@@ -4318,76 +5639,58 @@ export default function ChatbotPage() {
                           className="mt-1"
                         />
                       </div>
+                      <div>
+                        <label className="text-[11px] text-gray-400">
+                          Loop guard threshold
+                        </label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={5}
+                          value={agentLoopGuardThreshold}
+                          onChange={(event) =>
+                            setAgentLoopGuardThreshold(Number(event.target.value))
+                          }
+                          disabled={isSending}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-gray-400">
+                          Loop backoff base (ms)
+                        </label>
+                        <Input
+                          type="number"
+                          min={250}
+                          max={20000}
+                          step={250}
+                          value={agentLoopBackoffBaseMs}
+                          onChange={(event) =>
+                            setAgentLoopBackoffBaseMs(Number(event.target.value))
+                          }
+                          disabled={isSending}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-gray-400">
+                          Loop backoff max (ms)
+                        </label>
+                        <Input
+                          type="number"
+                          min={1000}
+                          max={60000}
+                          step={500}
+                          value={agentLoopBackoffMaxMs}
+                          onChange={(event) =>
+                            setAgentLoopBackoffMaxMs(Number(event.target.value))
+                          }
+                          disabled={isSending}
+                          className="mt-1"
+                        />
+                      </div>
                     </div>
                   </div>
-                ) : null}
-              </div>
-              <div className="mt-3">
-                <label className="text-xs text-gray-400">Model</label>
-                <div className="mt-2 flex items-center gap-2">
-                  <div className="w-48">
-                    <Select
-                      value={model}
-                      onValueChange={(value) => setModel(value)}
-                      disabled={isSending || modelLoading || modelOptions.length === 0}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select model" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {modelOptions.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={async () => {
-                      setModelLoading(true);
-                      try {
-                        const res = await fetchWithTimeout("/api/chatbot");
-                        if (!res.ok) {
-                          const error = (await res.json()) as {
-                            error?: string;
-                            errorId?: string;
-                          };
-                          const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-                          throw new Error(
-                            `${error.error || "Failed to load models."}${suffix}`
-                          );
-                        }
-                        const data = (await res.json()) as { models?: string[] };
-                        const models = (data.models || []).filter(Boolean);
-                        setModelOptions(models);
-                        if (models.length > 0 && !models.includes(model)) {
-                          setModel(models[0]);
-                        }
-                        toast("Model list refreshed", { variant: "success" });
-                      } catch (error) {
-                        const message = isAbortError(error)
-                          ? "Loading models timed out."
-                          : error instanceof Error
-                            ? error.message
-                            : "Failed to load models.";
-                        toast(message, { variant: "error" });
-                      } finally {
-                        setModelLoading(false);
-                      }
-                    }}
-                    disabled={isSending || modelLoading}
-                  >
-                    Refresh
-                  </Button>
-                </div>
-                {modelOptions.length === 0 && !modelLoading ? (
-                  <p className="mt-2 text-xs text-gray-500">
-                    No models found. Pull one with `ollama pull llama3`.
-                  </p>
                 ) : null}
               </div>
             </div>
@@ -4545,7 +5848,7 @@ export default function ChatbotPage() {
                               Agent settings
                             </dt>
                             <dd>
-                              {`steps ${debugState.lastRequest.agentPlanSettings.maxSteps}, attempts ${debugState.lastRequest.agentPlanSettings.maxStepAttempts}, replan every ${debugState.lastRequest.agentPlanSettings.replanEverySteps}, replans ${debugState.lastRequest.agentPlanSettings.maxReplanCalls}, self-checks ${debugState.lastRequest.agentPlanSettings.maxSelfChecks}`}
+                              {`steps ${debugState.lastRequest.agentPlanSettings.maxSteps}, attempts ${debugState.lastRequest.agentPlanSettings.maxStepAttempts}, replan every ${debugState.lastRequest.agentPlanSettings.replanEverySteps}, replans ${debugState.lastRequest.agentPlanSettings.maxReplanCalls}, self-checks ${debugState.lastRequest.agentPlanSettings.maxSelfChecks}, loop guard ${debugState.lastRequest.agentPlanSettings.loopGuardThreshold}, backoff ${debugState.lastRequest.agentPlanSettings.loopBackoffBaseMs}-${debugState.lastRequest.agentPlanSettings.loopBackoffMaxMs}ms`}
                             </dd>
                           </div>
                         ) : null}
@@ -4610,7 +5913,6 @@ export default function ChatbotPage() {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 }

@@ -448,8 +448,24 @@ export default function ChatbotJobsPage() {
     () => agentAudits.filter((audit) => audit.metadata?.type === "plan"),
     [agentAudits]
   );
+  const planUpdateAudits = useMemo(
+    () =>
+      agentAudits.filter((audit) =>
+        ["plan", "plan-update"].includes(String(audit.metadata?.type ?? ""))
+      ),
+    [agentAudits]
+  );
   const branchAudits = useMemo(
     () => agentAudits.filter((audit) => audit.metadata?.type === "plan-branch"),
+    [agentAudits]
+  );
+  const replanAudits = useMemo(
+    () =>
+      agentAudits.filter((audit) =>
+        ["plan-replan", "plan-adapt", "self-check-replan"].includes(
+          String(audit.metadata?.type ?? "")
+        )
+      ),
     [agentAudits]
   );
   const latestSessionContext = sessionContextLogs.at(-1)?.metadata ?? null;
@@ -458,6 +474,37 @@ export default function ChatbotJobsPage() {
   const latestPlanHierarchy =
     (planAudits.at(-1)?.metadata as { hierarchy?: { goals?: unknown[] } } | null)
       ?.hierarchy ?? null;
+  const latestPlanSteps = useMemo(() => {
+    const latestPlan = planUpdateAudits.find((audit) =>
+      Array.isArray(audit.metadata?.steps)
+    );
+    return Array.isArray(latestPlan?.metadata?.steps)
+      ? (latestPlan?.metadata?.steps as Array<{
+          id?: string;
+          title?: string;
+          status?: string;
+          tool?: string | null;
+          expectedObservation?: string | null;
+          successCriteria?: string | null;
+          phase?: string | null;
+        }>)
+      : [];
+  }, [planUpdateAudits]);
+  const planningEventsByStep = useMemo(() => {
+    const map = new Map<string, AgentAuditLog[]>();
+    [...branchAudits, ...replanAudits].forEach((audit) => {
+      const meta = audit.metadata as
+        | { stepId?: string; failedStepId?: string; activeStepId?: string }
+        | null;
+      const stepId =
+        meta?.stepId ?? meta?.failedStepId ?? meta?.activeStepId ?? null;
+      if (!stepId) return;
+      const list = map.get(stepId) ?? [];
+      list.push(audit);
+      map.set(stepId, list);
+    });
+    return map;
+  }, [branchAudits, replanAudits]);
 
   const closeAgentModal = () => {
     setSelectedAgentRunId(null);
@@ -882,6 +929,59 @@ export default function ChatbotJobsPage() {
                       <p className="mt-2 text-gray-500">
                         No hierarchy captured yet.
                       </p>
+                    )}
+                  </div>
+                  <div className="mt-4 rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                    <p className="text-[11px] text-gray-500">Plan steps</p>
+                    {latestPlanSteps.length ? (
+                      <div className="mt-2 max-h-56 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                        {latestPlanSteps.map((step, index) => {
+                          const stepId = step.id ?? `step-${index}`;
+                          const events = planningEventsByStep.get(stepId) ?? [];
+                          return (
+                            <div
+                              key={stepId}
+                              className="rounded-md border border-gray-800 bg-gray-950 p-2"
+                            >
+                              <div className="flex items-center justify-between text-[10px] text-gray-500">
+                                <span>{step.status ?? "pending"}</span>
+                                {step.phase ? (
+                                  <span className="text-amber-200">{step.phase}</span>
+                                ) : null}
+                              </div>
+                              <p className="mt-1 text-[11px] text-gray-200">
+                                {step.title || `Step ${index + 1}`}
+                              </p>
+                              {step.successCriteria ? (
+                                <p className="mt-1 text-[10px] text-gray-400">
+                                  Success: {step.successCriteria}
+                                </p>
+                              ) : null}
+                              {step.expectedObservation ? (
+                                <p className="mt-1 text-[10px] text-gray-500">
+                                  Expected: {step.expectedObservation}
+                                </p>
+                              ) : null}
+                              {events.length > 0 ? (
+                                <div className="mt-2 rounded-md border border-gray-800 bg-gray-900 p-2">
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                    Planning events
+                                  </p>
+                                  <ul className="mt-1 space-y-1 text-[10px] text-gray-300">
+                                    {events.map((event) => (
+                                      <li key={event.id}>
+                                        {event.message}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ) : null}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-gray-500">No plan steps found.</p>
                     )}
                   </div>
                   <div className="mt-4 rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">

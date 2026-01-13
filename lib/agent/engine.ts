@@ -2,10 +2,10 @@ import prisma from "@/lib/prisma";
 import { randomUUID } from "crypto";
 import { logAgentAudit } from "@/lib/agent/audit";
 import {
-  addAgentLongTermMemory,
   addAgentMemory,
   listAgentLongTermMemory,
   listAgentMemory,
+  validateAndAddAgentLongTermMemory,
 } from "@/lib/agent/memory";
 import { runAgentBrowserControl, runAgentTool } from "@/lib/agent/tools";
 
@@ -72,11 +72,20 @@ type AgentPlanSettings = {
   maxReplanCalls: number;
   replanEverySteps: number;
   maxSelfChecks: number;
+  loopGuardThreshold: number;
+  loopBackoffBaseMs: number;
+  loopBackoffMaxMs: number;
 };
 
 type AgentPlanPreferences = {
   ignoreRobotsTxt?: boolean;
   requireHumanApproval?: boolean;
+  memoryValidationModel?: string;
+  plannerModel?: string;
+  selfCheckModel?: string;
+  loopGuardModel?: string;
+  approvalGateModel?: string;
+  memorySummarizationModel?: string;
 };
 
 type AgentCheckpoint = {
@@ -105,6 +114,9 @@ const MAX_STEP_ATTEMPTS = 2;
 const MAX_REPLAN_CALLS = 2;
 const REPLAN_EVERY_STEPS = 2;
 const MAX_SELF_CHECKS = 4;
+const LOOP_GUARD_THRESHOLD = 2;
+const LOOP_BACKOFF_BASE_MS = 2000;
+const LOOP_BACKOFF_MAX_MS = 12000;
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
 const DEFAULT_OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? "qwen3-vl:30b";
 const DEFAULT_AGENT_SETTINGS: AgentPlanSettings = {
@@ -113,6 +125,9 @@ const DEFAULT_AGENT_SETTINGS: AgentPlanSettings = {
   maxReplanCalls: MAX_REPLAN_CALLS,
   replanEverySteps: REPLAN_EVERY_STEPS,
   maxSelfChecks: MAX_SELF_CHECKS,
+  loopGuardThreshold: LOOP_GUARD_THRESHOLD,
+  loopBackoffBaseMs: LOOP_BACKOFF_BASE_MS,
+  loopBackoffMaxMs: LOOP_BACKOFF_MAX_MS,
 };
 
 const clampInt = (value: unknown, min: number, max: number, fallback: number) => {
@@ -157,6 +172,24 @@ function resolveAgentPlanSettings(planState: unknown): AgentPlanSettings {
       8,
       DEFAULT_AGENT_SETTINGS.maxSelfChecks
     ),
+    loopGuardThreshold: clampInt(
+      rawSettings?.loopGuardThreshold,
+      1,
+      5,
+      DEFAULT_AGENT_SETTINGS.loopGuardThreshold
+    ),
+    loopBackoffBaseMs: clampInt(
+      rawSettings?.loopBackoffBaseMs,
+      250,
+      20000,
+      DEFAULT_AGENT_SETTINGS.loopBackoffBaseMs
+    ),
+    loopBackoffMaxMs: clampInt(
+      rawSettings?.loopBackoffMaxMs,
+      1000,
+      60000,
+      DEFAULT_AGENT_SETTINGS.loopBackoffMaxMs
+    ),
   };
 }
 
@@ -168,6 +201,30 @@ function resolveAgentPreferences(planState: unknown): AgentPlanPreferences {
   return {
     ignoreRobotsTxt: Boolean(rawPreferences?.ignoreRobotsTxt),
     requireHumanApproval: Boolean(rawPreferences?.requireHumanApproval),
+    memoryValidationModel:
+      typeof rawPreferences?.memoryValidationModel === "string"
+        ? rawPreferences.memoryValidationModel
+        : undefined,
+    plannerModel:
+      typeof rawPreferences?.plannerModel === "string"
+        ? rawPreferences.plannerModel
+        : undefined,
+    selfCheckModel:
+      typeof rawPreferences?.selfCheckModel === "string"
+        ? rawPreferences.selfCheckModel
+        : undefined,
+    loopGuardModel:
+      typeof rawPreferences?.loopGuardModel === "string"
+        ? rawPreferences.loopGuardModel
+        : undefined,
+    approvalGateModel:
+      typeof rawPreferences?.approvalGateModel === "string"
+        ? rawPreferences.approvalGateModel
+        : undefined,
+    memorySummarizationModel:
+      typeof rawPreferences?.memorySummarizationModel === "string"
+        ? rawPreferences.memorySummarizationModel
+        : undefined,
   };
 }
 
@@ -243,6 +300,37 @@ export async function runAgentControlLoop(runId: string) {
       ...(selfImprovementPlaybook ? [selfImprovementPlaybook] : []),
     ].slice(-10);
     const resolvedModel = run.model || DEFAULT_OLLAMA_MODEL;
+    const settings = resolveAgentPlanSettings(run.planState);
+    const preferences = resolveAgentPreferences(run.planState);
+    const memoryValidationModel =
+      typeof preferences.memoryValidationModel === "string" &&
+      preferences.memoryValidationModel.trim()
+        ? preferences.memoryValidationModel.trim()
+        : null;
+    const plannerModel =
+      typeof preferences.plannerModel === "string" && preferences.plannerModel.trim()
+        ? preferences.plannerModel.trim()
+        : resolvedModel;
+    const selfCheckModel =
+      typeof preferences.selfCheckModel === "string" &&
+      preferences.selfCheckModel.trim()
+        ? preferences.selfCheckModel.trim()
+        : plannerModel;
+    const loopGuardModel =
+      typeof preferences.loopGuardModel === "string" &&
+      preferences.loopGuardModel.trim()
+        ? preferences.loopGuardModel.trim()
+        : plannerModel;
+    const approvalGateModel =
+      typeof preferences.approvalGateModel === "string" &&
+      preferences.approvalGateModel.trim()
+        ? preferences.approvalGateModel.trim()
+        : null;
+    const memorySummarizationModel =
+      typeof preferences.memorySummarizationModel === "string" &&
+      preferences.memorySummarizationModel.trim()
+        ? preferences.memorySummarizationModel.trim()
+        : resolvedModel;
     const browserContext = await getBrowserContextSummary(run.id);
     if (longTermImprovementItems.length > 0) {
       await logAgentAudit(run.id, "info", "Self-improvement memory loaded.", {
@@ -259,7 +347,7 @@ export async function runAgentControlLoop(runId: string) {
       type: "planner-context",
       reason: "initial",
       prompt: run.prompt,
-      model: resolvedModel,
+      model: plannerModel,
       memory: memoryContext,
       browserContext,
     });
@@ -268,8 +356,6 @@ export async function runAgentControlLoop(runId: string) {
     let hasBrowserContext = Boolean(
       browserContext?.url && browserContext.url !== "about:blank"
     );
-    const settings = resolveAgentPlanSettings(run.planState);
-    const preferences = resolveAgentPreferences(run.planState);
     let decision: AgentDecision = decideNextAction(run.prompt, memoryContext);
     let planHierarchy: {
       goals: Array<{
@@ -306,6 +392,22 @@ export async function runAgentControlLoop(runId: string) {
           checkpointPreferences.requireHumanApproval
         );
       }
+      if (typeof checkpointPreferences?.plannerModel === "string") {
+        preferences.plannerModel = checkpointPreferences.plannerModel;
+      }
+      if (typeof checkpointPreferences?.selfCheckModel === "string") {
+        preferences.selfCheckModel = checkpointPreferences.selfCheckModel;
+      }
+      if (typeof checkpointPreferences?.loopGuardModel === "string") {
+        preferences.loopGuardModel = checkpointPreferences.loopGuardModel;
+      }
+      if (typeof checkpointPreferences?.approvalGateModel === "string") {
+        preferences.approvalGateModel = checkpointPreferences.approvalGateModel;
+      }
+      if (typeof checkpointPreferences?.memorySummarizationModel === "string") {
+        preferences.memorySummarizationModel =
+          checkpointPreferences.memorySummarizationModel;
+      }
       if (typeof checkpoint.summaryCheckpoint === "number") {
         summaryCheckpoint = checkpoint.summaryCheckpoint;
       }
@@ -318,7 +420,7 @@ export async function runAgentControlLoop(runId: string) {
         const resumeReview = await buildResumePlanReview({
           prompt: run.prompt,
           memory: memoryContext,
-          model: resolvedModel,
+          model: memorySummarizationModel,
           browserContext: resumeContext,
           currentPlan: planSteps,
           activeStepId: checkpoint.activeStepId ?? null,
@@ -387,7 +489,8 @@ export async function runAgentControlLoop(runId: string) {
       const planResult = await buildPlanWithLLM({
         prompt: run.prompt,
         memory: memoryContext,
-        model: resolvedModel,
+        model: plannerModel,
+        guardModel: loopGuardModel,
         browserContext,
         maxSteps: settings.maxSteps,
         maxStepAttempts: settings.maxStepAttempts,
@@ -460,6 +563,8 @@ export async function runAgentControlLoop(runId: string) {
       let lastStableUrl = lastContextUrl;
       let lastExtractionCheckAt = 0;
       let loopGuardCooldown = 0;
+      let loopSignalStreak = 0;
+      let loopBackoffMs = 0;
       const recentStepTrace: Array<{
         title: string;
         status: PlanStep["status"];
@@ -479,7 +584,7 @@ export async function runAgentControlLoop(runId: string) {
         const briefContext = await getBrowserContextSummary(run.id);
         const brief = await buildCheckpointBriefWithLLM({
           prompt: run.prompt,
-          model: resolvedModel,
+          model: memorySummarizationModel,
           memory: memoryContext,
           steps: planSteps,
           activeStepId: activeStepIdForBrief,
@@ -536,9 +641,41 @@ export async function runAgentControlLoop(runId: string) {
           stepIndex += 1;
           continue;
         }
+        let requiresApproval = false;
+        let approvalReason: string | null = null;
+        let approvalRisk: string | null = null;
+        let approvalSource = "heuristic";
+        if (preferences.requireHumanApproval && approvalGrantedStepId !== step.id) {
+          requiresApproval = requiresHumanApproval(step, run.prompt);
+          if (!requiresApproval && approvalGateModel) {
+            const gateContext = await getBrowserContextSummary(run.id);
+            const gateDecision = await evaluateApprovalGateWithLLM({
+              prompt: run.prompt,
+              step,
+              model: approvalGateModel,
+              browserContext: gateContext,
+              runId: run.id,
+            });
+            if (gateDecision) {
+              requiresApproval = gateDecision.requiresApproval;
+              approvalReason = gateDecision.reason ?? null;
+              approvalRisk = gateDecision.riskLevel ?? null;
+              approvalSource = "policy-model";
+              await logAgentAudit(run.id, "info", "Approval gate evaluated.", {
+                type: "approval-gate-review",
+                stepId: step.id,
+                stepTitle: step.title,
+                requiresApproval,
+                reason: approvalReason,
+                riskLevel: approvalRisk,
+                model: approvalGateModel,
+              });
+            }
+          }
+        }
         if (
           preferences.requireHumanApproval &&
-          requiresHumanApproval(step, run.prompt) &&
+          requiresApproval &&
           approvalGrantedStepId !== step.id
         ) {
           approvalRequestedStepId = step.id;
@@ -569,6 +706,9 @@ export async function runAgentControlLoop(runId: string) {
             type: "approval-gate",
             stepId: step.id,
             stepTitle: step.title,
+            source: approvalSource,
+            reason: approvalReason,
+            riskLevel: approvalRisk,
           });
           return;
         }
@@ -617,7 +757,7 @@ export async function runAgentControlLoop(runId: string) {
             const summaryContext = await getBrowserContextSummary(run.id);
             const summary = await summarizePlannerMemoryWithLLM({
               prompt: run.prompt,
-              model: resolvedModel,
+              model: memorySummarizationModel,
               memory: memoryContext,
               steps: planSteps,
               browserContext: summaryContext,
@@ -760,16 +900,31 @@ export async function runAgentControlLoop(runId: string) {
           recentStepTrace.splice(0, recentStepTrace.length - 6);
         }
         const loopSignal = detectLoopPattern(recentStepTrace);
+        if (loopSignal) {
+          loopSignalStreak += 1;
+        } else {
+          loopSignalStreak = 0;
+          loopBackoffMs = 0;
+        }
         if (
           loopSignal &&
+          loopSignalStreak >= settings.loopGuardThreshold &&
           loopGuardCooldown === 0 &&
           replanCount < settings.maxReplanCalls
         ) {
+          const baseBackoff = Math.max(0, settings.loopBackoffBaseMs);
+          const maxBackoff = Math.max(baseBackoff, settings.loopBackoffMaxMs);
+          loopBackoffMs = loopBackoffMs
+            ? Math.min(loopBackoffMs * 2, maxBackoff)
+            : baseBackoff;
+          if (loopBackoffMs > 0) {
+            await sleep(loopBackoffMs);
+          }
           const loopContext = await getBrowserContextSummary(run.id);
           const loopReview = await buildLoopGuardReview({
             prompt: run.prompt,
             memory: memoryContext,
-            model: resolvedModel,
+            model: loopGuardModel,
             browserContext: loopContext,
             currentPlan: planSteps,
             completedIndex: stepIndex,
@@ -785,6 +940,8 @@ export async function runAgentControlLoop(runId: string) {
             action: loopReview.action,
             reason: loopReview.reason,
             loop: loopSignal,
+            backoffMs: loopBackoffMs,
+            streak: loopSignalStreak,
           });
           if (loopReview.action === "wait_human") {
             requiresHuman = true;
@@ -796,7 +953,7 @@ export async function runAgentControlLoop(runId: string) {
             const remainingSlots = Math.max(1, settings.maxSteps - nextIndex);
             const guardedSteps = await guardRepetitionWithLLM({
               prompt: run.prompt,
-              model: resolvedModel,
+              model: loopGuardModel,
               memory: memoryContext,
               currentPlan: planSteps,
               candidateSteps: loopReview.steps,
@@ -813,8 +970,75 @@ export async function runAgentControlLoop(runId: string) {
               reason: loopReview.reason,
               plannerMeta: loopReview.meta ?? null,
               hierarchy: loopReview.hierarchy ?? null,
+              stepId: step.id,
+              activeStepId: step.id,
             });
             await logBranchAlternatives(loopReview.meta, "loop-guard");
+            await persistCheckpoint({
+              runId: run.id,
+              steps: planSteps,
+              activeStepId: planSteps[nextIndex]?.id ?? null,
+              lastError,
+              taskType,
+              approvalRequestedStepId,
+              approvalGrantedStepId,
+              summaryCheckpoint,
+              settings,
+              preferences,
+            });
+            stepIndex = nextIndex;
+            overallOk = true;
+            lastError = null;
+            continue;
+          }
+        }
+
+        if (toolResult.ok && replanCount < settings.maxReplanCalls) {
+          const stepContext = await getBrowserContextSummary(run.id);
+          const stepReview = await buildAdaptivePlanReview({
+            prompt: run.prompt,
+            memory: memoryContext,
+            model: plannerModel,
+            browserContext: stepContext,
+            currentPlan: planSteps,
+            completedIndex: stepIndex,
+            runId: run.id,
+            maxSteps: settings.maxSteps,
+            maxStepAttempts: settings.maxStepAttempts,
+            trigger: "step-complete",
+            signals: {
+              stepId: step.id,
+              stepTitle: step.title,
+              stepStatus: "completed",
+              url: lastContextUrl,
+            },
+          });
+          if (stepReview.shouldReplan && stepReview.steps.length > 0) {
+            const nextIndex = stepIndex + 1;
+            const remainingSlots = Math.max(1, settings.maxSteps - nextIndex);
+            const guardedSteps = await guardRepetitionWithLLM({
+              prompt: run.prompt,
+              model: loopGuardModel,
+              memory: memoryContext,
+              currentPlan: planSteps,
+              candidateSteps: stepReview.steps,
+              runId: run.id,
+              maxSteps: remainingSlots,
+            });
+            const nextSteps = guardedSteps.slice(0, remainingSlots);
+            planSteps = [...planSteps.slice(0, nextIndex), ...nextSteps];
+            taskType = stepReview.meta?.taskType ?? taskType;
+            replanCount += 1;
+            await logAgentAudit(run.id, "warning", "Plan re-evaluated.", {
+              type: "plan-replan",
+              steps: planSteps,
+              reason: stepReview.reason ?? "step-complete",
+              plannerMeta: stepReview.meta ?? null,
+              hierarchy: stepReview.hierarchy ?? null,
+              stepId: step.id,
+              activeStepId: step.id,
+            });
+            await logBranchAlternatives(stepReview.meta, "step-complete");
             await persistCheckpoint({
               runId: run.id,
               steps: planSteps,
@@ -844,7 +1068,7 @@ export async function runAgentControlLoop(runId: string) {
               type: "planner-context",
               reason: "replan-after-failure",
               prompt: run.prompt,
-              model: resolvedModel,
+              model: plannerModel,
               memory: memoryContext,
               browserContext: replanBrowserContext,
               lastError,
@@ -858,7 +1082,8 @@ export async function runAgentControlLoop(runId: string) {
             const branchResult = await buildPlanWithLLM({
               prompt: run.prompt,
               memory: memoryContext,
-              model: resolvedModel,
+              model: plannerModel,
+              guardModel: loopGuardModel,
               lastError,
               runId: run.id,
               browserContext: replanBrowserContext,
@@ -890,6 +1115,8 @@ export async function runAgentControlLoop(runId: string) {
                 reason: "step-failed",
                 lastError,
                 plannerMeta: branchResult.meta ?? null,
+                stepId: step.id,
+                activeStepId: step.id,
               });
               if (memoryKey && lastError) {
                 await addProblemSolutionMemory({
@@ -903,6 +1130,8 @@ export async function runAgentControlLoop(runId: string) {
                     reason: "step-failed",
                   },
                   tags: ["branch"],
+                  model: memoryValidationModel ?? resolvedModel,
+                  prompt: run.prompt,
                 });
               }
               branchedStepIds.add(step.id);
@@ -931,7 +1160,8 @@ export async function runAgentControlLoop(runId: string) {
             const replanResult = await buildPlanWithLLM({
               prompt: run.prompt,
               memory: memoryContext,
-              model: resolvedModel,
+              model: plannerModel,
+              guardModel: loopGuardModel,
               previousPlan: planSteps,
               lastError,
               runId: run.id,
@@ -949,6 +1179,8 @@ export async function runAgentControlLoop(runId: string) {
                 reason: "replan-after-failure",
                 hierarchy: replanResult.hierarchy ?? null,
                 plannerMeta: replanResult.meta ?? null,
+                stepId: step.id,
+                activeStepId: step.id,
               });
               const branchAlternatives = buildBranchStepsFromAlternatives(
                 replanResult.meta?.alternatives,
@@ -975,6 +1207,8 @@ export async function runAgentControlLoop(runId: string) {
                     reason: "replan-after-failure",
                   },
                   tags: ["replan"],
+                  model: memoryValidationModel ?? resolvedModel,
+                  prompt: run.prompt,
                 });
               }
               decision = replanResult.decision;
@@ -1001,7 +1235,7 @@ export async function runAgentControlLoop(runId: string) {
             const deadEndReview = await buildAdaptivePlanReview({
               prompt: run.prompt,
               memory: memoryContext,
-              model: resolvedModel,
+              model: plannerModel,
               browserContext: failureContext,
               currentPlan: planSteps,
               completedIndex: stepIndex,
@@ -1022,15 +1256,17 @@ export async function runAgentControlLoop(runId: string) {
               planSteps = [...planSteps.slice(0, nextIndex), ...nextSteps];
               taskType = deadEndReview.meta?.taskType ?? taskType;
               replanCount += 1;
-            await logAgentAudit(run.id, "warning", "Plan re-evaluated.", {
-              type: "plan-replan",
-              steps: planSteps,
-              reason: "dead-end",
-              plannerMeta: deadEndReview.meta ?? null,
-              hierarchy: deadEndReview.hierarchy ?? null,
-            });
-            await logBranchAlternatives(deadEndReview.meta, "dead-end");
-            if (memoryKey) {
+              await logAgentAudit(run.id, "warning", "Plan re-evaluated.", {
+                type: "plan-replan",
+                steps: planSteps,
+                reason: "dead-end",
+                plannerMeta: deadEndReview.meta ?? null,
+                hierarchy: deadEndReview.hierarchy ?? null,
+                stepId: step.id,
+                activeStepId: step.id,
+              });
+              await logBranchAlternatives(deadEndReview.meta, "dead-end");
+              if (memoryKey) {
                 await addProblemSolutionMemory({
                   memoryKey,
                   runId: run.id,
@@ -1042,6 +1278,8 @@ export async function runAgentControlLoop(runId: string) {
                     reason: "dead-end",
                   },
                   tags: ["dead-end"],
+                  model: memoryValidationModel ?? resolvedModel,
+                  prompt: run.prompt,
                 });
               }
               await persistCheckpoint({
@@ -1076,7 +1314,7 @@ export async function runAgentControlLoop(runId: string) {
           const stagnationReview = await buildAdaptivePlanReview({
             prompt: run.prompt,
             memory: memoryContext,
-            model: resolvedModel,
+            model: plannerModel,
             browserContext: stagnationContext,
             currentPlan: planSteps,
             completedIndex: stepIndex,
@@ -1103,6 +1341,8 @@ export async function runAgentControlLoop(runId: string) {
               reason: "stagnation",
               plannerMeta: stagnationReview.meta ?? null,
               hierarchy: stagnationReview.hierarchy ?? null,
+              stepId: step.id,
+              activeStepId: step.id,
             });
             await logBranchAlternatives(stagnationReview.meta, "stagnation");
             await persistCheckpoint({
@@ -1139,7 +1379,7 @@ export async function runAgentControlLoop(runId: string) {
             const extractionReview = await buildAdaptivePlanReview({
               prompt: run.prompt,
               memory: memoryContext,
-              model: resolvedModel,
+              model: plannerModel,
               browserContext: extractionContext,
               currentPlan: planSteps,
               completedIndex: stepIndex,
@@ -1165,6 +1405,8 @@ export async function runAgentControlLoop(runId: string) {
                 reason: "missing-extraction",
                 plannerMeta: extractionReview.meta ?? null,
                 hierarchy: extractionReview.hierarchy ?? null,
+                stepId: step.id,
+                activeStepId: step.id,
               });
               await logBranchAlternatives(
                 extractionReview.meta,
@@ -1193,7 +1435,7 @@ export async function runAgentControlLoop(runId: string) {
           const summaryContext = await getBrowserContextSummary(run.id);
           const summary = await summarizePlannerMemoryWithLLM({
             prompt: run.prompt,
-            model: resolvedModel,
+            model: memorySummarizationModel,
             memory: memoryContext,
             steps: planSteps,
             browserContext: summaryContext,
@@ -1235,7 +1477,7 @@ export async function runAgentControlLoop(runId: string) {
           const noContextReview = await buildAdaptivePlanReview({
             prompt: run.prompt,
             memory: memoryContext,
-            model: resolvedModel,
+            model: plannerModel,
             browserContext: await getBrowserContextSummary(run.id),
             currentPlan: planSteps,
             completedIndex: stepIndex,
@@ -1262,6 +1504,8 @@ export async function runAgentControlLoop(runId: string) {
               reason: "no-browser-context",
               plannerMeta: noContextReview.meta ?? null,
               hierarchy: noContextReview.hierarchy ?? null,
+              stepId: step.id,
+              activeStepId: step.id,
             });
             await logBranchAlternatives(
               noContextReview.meta,
@@ -1289,7 +1533,7 @@ export async function runAgentControlLoop(runId: string) {
           const adaptContext = await getBrowserContextSummary(run.id);
           const adaptResult = await buildMidRunAdaptationWithLLM({
             prompt: run.prompt,
-            model: resolvedModel,
+            model: plannerModel,
             memory: memoryContext,
             steps: planSteps,
             browserContext: adaptContext,
@@ -1302,7 +1546,7 @@ export async function runAgentControlLoop(runId: string) {
             const remainingSlots = Math.max(1, settings.maxSteps - nextIndex);
             const guardedSteps = await guardRepetitionWithLLM({
               prompt: run.prompt,
-              model: resolvedModel,
+              model: loopGuardModel,
               memory: memoryContext,
               currentPlan: planSteps,
               candidateSteps: adaptResult.steps,
@@ -1319,6 +1563,8 @@ export async function runAgentControlLoop(runId: string) {
               reason: adaptResult.reason,
               plannerMeta: adaptResult.meta ?? null,
               hierarchy: adaptResult.hierarchy ?? null,
+              stepId: step.id,
+              activeStepId: step.id,
             });
             await logBranchAlternatives(adaptResult.meta, "mid-run-adapt");
             await persistCheckpoint({
@@ -1340,7 +1586,7 @@ export async function runAgentControlLoop(runId: string) {
           const selfCheck = await buildSelfCheckReview({
             prompt: run.prompt,
             memory: memoryContext,
-            model: resolvedModel,
+            model: selfCheckModel,
             browserContext: selfCheckContext,
             step,
             stepIndex,
@@ -1385,7 +1631,7 @@ export async function runAgentControlLoop(runId: string) {
             const remainingSlots = Math.max(1, settings.maxSteps - nextIndex);
             const guardedSteps = await guardRepetitionWithLLM({
               prompt: run.prompt,
-              model: resolvedModel,
+              model: loopGuardModel,
               memory: memoryContext,
               currentPlan: planSteps,
               candidateSteps: selfCheck.steps,
@@ -1401,6 +1647,8 @@ export async function runAgentControlLoop(runId: string) {
               reason: selfCheck.reason,
               plannerMeta: selfCheck.meta ?? null,
               hierarchy: selfCheck.hierarchy ?? null,
+              stepId: step.id,
+              activeStepId: step.id,
             });
             await logBranchAlternatives(selfCheck.meta, "self-check");
             await persistCheckpoint({
@@ -1427,7 +1675,7 @@ export async function runAgentControlLoop(runId: string) {
           const shiftReview = await buildAdaptivePlanReview({
             prompt: run.prompt,
             memory: memoryContext,
-            model: resolvedModel,
+            model: plannerModel,
             browserContext: shiftContext,
             currentPlan: planSteps,
             completedIndex: stepIndex,
@@ -1453,6 +1701,8 @@ export async function runAgentControlLoop(runId: string) {
               reason: "context-shift",
               plannerMeta: shiftReview.meta ?? null,
               hierarchy: shiftReview.hierarchy ?? null,
+              stepId: step.id,
+              activeStepId: step.id,
             });
             await logBranchAlternatives(shiftReview.meta, "context-shift");
             if (memoryKey) {
@@ -1467,6 +1717,8 @@ export async function runAgentControlLoop(runId: string) {
                   reason: "context-shift",
                 },
                 tags: ["context-shift"],
+                model: memoryValidationModel ?? resolvedModel,
+                prompt: run.prompt,
               });
             }
             await persistCheckpoint({
@@ -1491,7 +1743,7 @@ export async function runAgentControlLoop(runId: string) {
           const reviewResult = await buildAdaptivePlanReview({
             prompt: run.prompt,
             memory: memoryContext,
-            model: resolvedModel,
+            model: plannerModel,
             browserContext: reviewContext,
             currentPlan: planSteps,
             completedIndex: stepIndex,
@@ -1509,7 +1761,7 @@ export async function runAgentControlLoop(runId: string) {
             const remainingSlots = Math.max(1, settings.maxSteps - nextIndex);
             const guardedSteps = await guardRepetitionWithLLM({
               prompt: run.prompt,
-              model: resolvedModel,
+              model: loopGuardModel,
               memory: memoryContext,
               currentPlan: planSteps,
               candidateSteps: reviewResult.steps,
@@ -1526,6 +1778,8 @@ export async function runAgentControlLoop(runId: string) {
               reason: reviewResult.reason,
               plannerMeta: reviewResult.meta ?? null,
               hierarchy: reviewResult.hierarchy ?? null,
+              stepId: step.id,
+              activeStepId: step.id,
             });
             await logBranchAlternatives(
               reviewResult.meta,
@@ -1589,7 +1843,7 @@ export async function runAgentControlLoop(runId: string) {
       const verificationContext = await getBrowserContextSummary(run.id);
       const verification = await verifyPlanWithLLM({
         prompt: run.prompt,
-        model: resolvedModel,
+        model: plannerModel,
         memory: memoryContext,
         steps: planSteps,
         browserContext: verificationContext,
@@ -1597,7 +1851,7 @@ export async function runAgentControlLoop(runId: string) {
       });
       const improvementReview = await buildSelfImprovementReviewWithLLM({
         prompt: run.prompt,
-        model: resolvedModel,
+        model: memorySummarizationModel,
         memory: memoryContext,
         steps: planSteps,
         verification,
@@ -1643,42 +1897,53 @@ export async function runAgentControlLoop(runId: string) {
           },
         });
         if (memoryKey) {
-        await addAgentLongTermMemory({
-          memoryKey,
-          runId: run.id,
-          content: [
-            `Self-improvement review: ${improvementReview.summary}`,
-            improvementReview.mistakes.length
-              ? reminderList("Mistakes", improvementReview.mistakes)
-              : null,
-            improvementReview.improvements.length
-              ? reminderList("Improvements", improvementReview.improvements)
-              : null,
-            improvementReview.guardrails.length
-              ? reminderList("Guardrails", improvementReview.guardrails)
-              : null,
-            improvementReview.toolAdjustments.length
-              ? reminderList("Tool adjustments", improvementReview.toolAdjustments)
-              : null,
-          ]
-            .filter(Boolean)
-            .join("\n"),
-          summary: improvementReview.summary,
-          tags: ["self-improvement", overallOk ? "completed" : "failed"],
-          metadata: {
+          const memoryResult = await validateAndAddAgentLongTermMemory({
+            memoryKey,
+            runId: run.id,
+            content: [
+              `Self-improvement review: ${improvementReview.summary}`,
+              improvementReview.mistakes.length
+                ? reminderList("Mistakes", improvementReview.mistakes)
+                : null,
+              improvementReview.improvements.length
+                ? reminderList("Improvements", improvementReview.improvements)
+                : null,
+              improvementReview.guardrails.length
+                ? reminderList("Guardrails", improvementReview.guardrails)
+                : null,
+              improvementReview.toolAdjustments.length
+                ? reminderList("Tool adjustments", improvementReview.toolAdjustments)
+                : null,
+            ]
+              .filter(Boolean)
+              .join("\n"),
+            summary: improvementReview.summary,
+            tags: ["self-improvement", overallOk ? "completed" : "failed"],
+            metadata: {
+              prompt: run.prompt,
+              taskType,
+              status: overallOk ? "completed" : "failed",
+              verification: verification ?? null,
+              mistakes: improvementReview.mistakes,
+              improvements: improvementReview.improvements,
+              guardrails: improvementReview.guardrails,
+              toolAdjustments: improvementReview.toolAdjustments,
+              confidence: improvementReview.confidence ?? null,
+            },
+            importance: overallOk ? 3 : 4,
+            model: memoryValidationModel ?? resolvedModel,
             prompt: run.prompt,
-            taskType,
-            status: overallOk ? "completed" : "failed",
-            verification: verification ?? null,
-            mistakes: improvementReview.mistakes,
-            improvements: improvementReview.improvements,
-            guardrails: improvementReview.guardrails,
-            toolAdjustments: improvementReview.toolAdjustments,
-            confidence: improvementReview.confidence ?? null,
-          },
-          importance: overallOk ? 3 : 4,
-        });
-      }
+          });
+          if (memoryResult?.skipped) {
+            await logAgentAudit(run.id, "warning", "Long-term memory rejected.", {
+              type: "memory-validation",
+              model: memoryResult.validation.model,
+              issues: memoryResult.validation.issues,
+              reason: memoryResult.validation.reason,
+              scope: "self-improvement",
+            });
+          }
+        }
       }
       if (memoryKey) {
         const finalUrl = verificationContext?.url ?? null;
@@ -1730,7 +1995,27 @@ export async function runAgentControlLoop(runId: string) {
             : null,
         ].filter(Boolean);
         const summary = summaryLines.join(" · ");
-        await addAgentLongTermMemory({
+        const runDetails = {
+          id: run.id,
+          prompt: run.prompt,
+          model: run.model,
+          tools: run.tools,
+          searchProvider: run.searchProvider,
+          agentBrowser: run.agentBrowser,
+          runHeadless: run.runHeadless,
+          status: overallOk ? "completed" : "failed",
+          requiresHumanIntervention: run.requiresHumanIntervention,
+          errorMessage: run.errorMessage,
+          memoryKey: run.memoryKey,
+          recordingPath: run.recordingPath,
+          activeStepId: run.activeStepId,
+          startedAt: run.startedAt,
+          finishedAt: run.finishedAt,
+          createdAt: run.createdAt,
+          updatedAt: run.updatedAt,
+          planState: run.planState ?? null,
+        };
+        const memoryResult = await validateAndAddAgentLongTermMemory({
           memoryKey,
           runId: run.id,
           content: [
@@ -1758,6 +2043,7 @@ export async function runAgentControlLoop(runId: string) {
           summary,
           tags: ["agent-run", overallOk ? "completed" : "failed"],
           metadata: {
+            run: runDetails,
             prompt: run.prompt,
             taskType,
             status: overallOk ? "completed" : "failed",
@@ -1768,7 +2054,18 @@ export async function runAgentControlLoop(runId: string) {
             extraction: extractionSummary,
           },
           importance: overallOk ? 3 : 2,
+          model: memoryValidationModel ?? resolvedModel,
+          prompt: run.prompt,
         });
+        if (memoryResult?.skipped) {
+          await logAgentAudit(run.id, "warning", "Long-term memory rejected.", {
+            type: "memory-validation",
+            model: memoryResult.validation.model,
+            issues: memoryResult.validation.issues,
+            reason: memoryResult.validation.reason,
+            scope: "run-summary",
+          });
+        }
       }
       await logAgentAudit(
         run.id,
@@ -2067,6 +2364,7 @@ async function buildPlanWithLLM({
   prompt,
   memory,
   model,
+  guardModel,
   previousPlan,
   lastError,
   runId,
@@ -2079,6 +2377,7 @@ async function buildPlanWithLLM({
   prompt: string;
   memory: string[];
   model: string;
+  guardModel?: string;
   previousPlan?: PlanStep[];
   lastError?: string | null;
   runId?: string;
@@ -2130,6 +2429,8 @@ async function buildPlanWithLLM({
     5,
     MAX_STEP_ATTEMPTS
   );
+  const repetitionModel =
+    typeof guardModel === "string" && guardModel.trim() ? guardModel.trim() : model;
   const fallbackPlanTitles = buildPlan(prompt, maxSteps);
   const fallbackSteps = fallbackPlanTitles.map((title) => ({
     id: randomUUID(),
@@ -2228,7 +2529,7 @@ async function buildPlanWithLLM({
     ).slice(0, maxSteps);
     const dedupeResult = await dedupePlanStepsWithLLM({
       prompt,
-      model,
+      model: repetitionModel,
       memory,
       steps,
       meta,
@@ -2241,7 +2542,7 @@ async function buildPlanWithLLM({
     }
     const initialGuarded = await guardRepetitionWithLLM({
       prompt,
-      model,
+      model: repetitionModel,
       memory,
       currentPlan: steps,
       candidateSteps: steps,
@@ -2268,7 +2569,7 @@ async function buildPlanWithLLM({
       }
       const optimization = await optimizePlanWithLLM({
         prompt,
-        model,
+        model: repetitionModel,
         memory,
         steps,
         hierarchy,
@@ -3549,6 +3850,10 @@ function reminderList(label: string, items: string[]) {
   return `${label}: ${items.join(" | ")}`;
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function buildSelfImprovementPlaybook(
   items: Array<{
     summary?: string | null;
@@ -3614,6 +3919,104 @@ function requiresHumanApproval(step: PlanStep, prompt: string) {
   );
 }
 
+const parseJsonObject = (content: string) => {
+  try {
+    return JSON.parse(content);
+  } catch {
+    const start = content.indexOf("{");
+    const end = content.lastIndexOf("}");
+    if (start === -1 || end <= start) return null;
+    try {
+      return JSON.parse(content.slice(start, end + 1));
+    } catch {
+      return null;
+    }
+  }
+};
+
+async function evaluateApprovalGateWithLLM({
+  prompt,
+  step,
+  model,
+  browserContext,
+  runId,
+}: {
+  prompt: string;
+  step: PlanStep;
+  model: string;
+  browserContext?: {
+    url: string;
+    title: string | null;
+  } | null;
+  runId?: string;
+}): Promise<{
+  requiresApproval: boolean;
+  reason?: string | null;
+  riskLevel?: "low" | "medium" | "high" | string;
+} | null> {
+  try {
+    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        stream: false,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You decide whether a planned web action requires human approval. Return only JSON with keys: requiresApproval (boolean), reason (string), riskLevel (low|medium|high), riskySignals (array). Flag any step that involves login, payments, deletions, account changes, admin actions, or irreversible changes.",
+          },
+          {
+            role: "user",
+            content: JSON.stringify({
+              prompt,
+              step: {
+                title: step.title,
+                tool: step.tool ?? null,
+                expectedObservation: step.expectedObservation ?? null,
+                successCriteria: step.successCriteria ?? null,
+              },
+              browserContext: browserContext
+                ? { url: browserContext.url, title: browserContext.title }
+                : null,
+            }),
+          },
+        ],
+        options: { temperature: 0.1 },
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(`Approval gate model failed (${response.status}).`);
+    }
+    const payload = await response.json();
+    const content = payload?.message?.content?.trim() ?? "";
+    const parsed = parseJsonObject(content) as
+      | {
+          requiresApproval?: boolean;
+          reason?: string;
+          riskLevel?: string;
+        }
+      | null;
+    if (!parsed || typeof parsed.requiresApproval !== "boolean") {
+      throw new Error("Approval gate model returned invalid JSON.");
+    }
+    return {
+      requiresApproval: parsed.requiresApproval,
+      reason: parsed.reason ?? null,
+      riskLevel: parsed.riskLevel ?? null,
+    };
+  } catch (error) {
+    if (runId && DEBUG_CHATBOT) {
+      console.warn("[chatbot][agent][engine] Approval gate model failed", {
+        runId,
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+    return null;
+  }
+}
+
 async function addProblemSolutionMemory({
   memoryKey,
   runId,
@@ -3621,6 +4024,8 @@ async function addProblemSolutionMemory({
   countermeasure,
   context,
   tags = [],
+  model,
+  prompt,
 }: {
   memoryKey: string;
   runId: string;
@@ -3628,10 +4033,12 @@ async function addProblemSolutionMemory({
   countermeasure: string;
   context?: Record<string, unknown>;
   tags?: string[];
+  model?: string | null;
+  prompt?: string | null;
 }) {
   if (!memoryKey || !problem || !countermeasure) return;
   const summary = `Problem: ${problem} · Countermeasure: ${countermeasure}`;
-  await addAgentLongTermMemory({
+  await validateAndAddAgentLongTermMemory({
     memoryKey,
     runId,
     content: summary,
@@ -3643,6 +4050,8 @@ async function addProblemSolutionMemory({
       ...context,
     },
     importance: 4,
+    model,
+    prompt,
   });
 }
 

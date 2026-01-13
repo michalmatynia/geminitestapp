@@ -18,12 +18,43 @@ const chatbotTempRoot = path.join(
   "chatbot",
   "temp"
 );
+const TEMP_CLEANUP_TTL_MS = 1000 * 60 * 60 * 24;
+const TEMP_CLEANUP_INTERVAL_MS = 1000 * 60 * 10;
+let lastTempCleanupAt = 0;
 
 const createErrorId = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
   }
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+};
+
+const cleanupChatbotTemp = async () => {
+  const now = Date.now();
+  if (now - lastTempCleanupAt < TEMP_CLEANUP_INTERVAL_MS) return;
+  lastTempCleanupAt = now;
+  try {
+    await fs.mkdir(chatbotTempRoot, { recursive: true });
+    const entries = await fs.readdir(chatbotTempRoot, { withFileTypes: true });
+    await Promise.all(
+      entries.map(async (entry) => {
+        const fullPath = path.join(chatbotTempRoot, entry.name);
+        try {
+          const stats = await fs.stat(fullPath);
+          if (now - stats.mtimeMs < TEMP_CLEANUP_TTL_MS) return;
+          if (entry.isDirectory()) {
+            await fs.rm(fullPath, { recursive: true, force: true });
+          } else {
+            await fs.unlink(fullPath);
+          }
+        } catch {
+          // best-effort cleanup
+        }
+      })
+    );
+  } catch {
+    // best-effort cleanup
+  }
 };
 
 export async function GET() {
@@ -73,8 +104,10 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const tempFiles: string[] = [];
+  const tempDirs: string[] = [];
   const requestStart = Date.now();
   try {
+    await cleanupChatbotTemp();
     const contentType = req.headers.get("content-type") || "";
     let messages: ChatMessage[] = [];
     let requestedModel: string | null = null;
@@ -119,6 +152,7 @@ export async function POST(req: Request) {
         const requestId = createErrorId();
         const requestDir = path.join(chatbotTempRoot, requestId);
         await fs.mkdir(requestDir, { recursive: true });
+        tempDirs.push(requestDir);
         await Promise.all(
           files
             .filter((file): file is File => file instanceof File)
@@ -282,6 +316,17 @@ export async function POST(req: Request) {
         tempFiles.map(async (filepath) => {
           try {
             await fs.unlink(filepath);
+          } catch {
+            // best-effort cleanup
+          }
+        })
+      );
+    }
+    if (tempDirs.length > 0) {
+      await Promise.all(
+        tempDirs.map(async (dirpath) => {
+          try {
+            await fs.rm(dirpath, { recursive: true, force: true });
           } catch {
             // best-effort cleanup
           }

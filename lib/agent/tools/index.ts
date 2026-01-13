@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { addAgentLongTermMemory } from "@/lib/agent/memory";
+import { validateAndAddAgentLongTermMemory } from "@/lib/agent/memory";
 import { randomUUID } from "crypto";
 import { promises as fs } from "fs";
 import path from "path";
@@ -91,6 +91,58 @@ const parseExtractionRequest = (prompt?: string) => {
   return null;
 };
 
+const getTargetHostname = (prompt?: string) => {
+  const url = extractTargetUrl(prompt);
+  if (!url) return null;
+  try {
+    return new URL(url).hostname.replace(/^www\./i, "");
+  } catch {
+    return null;
+  }
+};
+
+const isAllowedUrl = (url: string, targetHostname: string | null) => {
+  if (!targetHostname) return true;
+  try {
+    const hostname = new URL(url).hostname.replace(/^www\./i, "");
+    return hostname === targetHostname || hostname.endsWith(`.${targetHostname}`);
+  } catch {
+    return false;
+  }
+};
+
+const normalizeProductNames = (items: string[]) => {
+  const seen = new Set<string>();
+  return items
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .filter((item) => /[a-z]/i.test(item))
+    .filter((item) => !/^[a-f0-9]{16,}$/i.test(item))
+    .filter((item) => !/^[a-f0-9]{32,}$/i.test(item))
+    .filter((item) => {
+      const key = item.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+};
+
+const buildEvidenceSnippets = (items: string[], domText: string) => {
+  const evidence: Array<{ item: string; snippet: string }> = [];
+  if (!domText) return evidence;
+  const lowerText = domText.toLowerCase();
+  for (const item of items) {
+    const query = item.trim().toLowerCase();
+    if (!query) continue;
+    const index = lowerText.indexOf(query);
+    if (index === -1) continue;
+    const start = Math.max(0, index - 60);
+    const end = Math.min(domText.length, index + query.length + 60);
+    evidence.push({ item, snippet: domText.slice(start, end) });
+  }
+  return evidence;
+};
+
 const toDataUrl = (buffer: Buffer) =>
   `data:image/png;base64,${buffer.toString("base64")}`;
 
@@ -114,7 +166,7 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
   return Boolean(prefs?.ignoreRobotsTxt);
 };
 
-export async function runAgentTool(request: AgentToolRequest): Promise<AgentToolResult> {
+  export async function runAgentTool(request: AgentToolRequest): Promise<AgentToolResult> {
   const { runId, prompt, browser, runHeadless, stepId, stepLabel } = request.input;
   const debugEnabled = process.env.DEBUG_CHATBOT === "true";
   if (!runId) {
@@ -130,6 +182,7 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
 
   try {
     const targetUrl = extractTargetUrl(prompt) ?? "about:blank";
+    const targetHostname = getTargetHostname(prompt);
     const runRecord =
       "chatbotAgentRun" in prisma
         ? await prisma.chatbotAgentRun.findUnique({
@@ -146,8 +199,213 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
     const resolvedSearchProvider = runRecord?.searchProvider ?? "brave";
     const ignoreRobotsTxt = resolveIgnoreRobotsTxt(runRecord?.planState);
     const memoryKey = runRecord?.memoryKey ?? null;
+    const memoryValidationModel =
+      runRecord?.planState &&
+      typeof runRecord.planState === "object" &&
+      typeof (runRecord.planState as { preferences?: { memoryValidationModel?: string } })
+        .preferences?.memoryValidationModel === "string"
+        ? (
+            runRecord.planState as {
+              preferences?: { memoryValidationModel?: string };
+            }
+          ).preferences?.memoryValidationModel ?? null
+        : null;
+    const extractionValidationModel =
+      runRecord?.planState &&
+      typeof runRecord.planState === "object" &&
+      typeof (runRecord.planState as { preferences?: { extractionValidationModel?: string } })
+        .preferences?.extractionValidationModel === "string"
+        ? (
+            runRecord.planState as {
+              preferences?: { extractionValidationModel?: string };
+            }
+          ).preferences?.extractionValidationModel ?? null
+        : null;
+    const selectorInferenceModel =
+      runRecord?.planState &&
+      typeof runRecord.planState === "object" &&
+      typeof (runRecord.planState as { preferences?: { selectorInferenceModel?: string } })
+        .preferences?.selectorInferenceModel === "string"
+        ? (
+            runRecord.planState as {
+              preferences?: { selectorInferenceModel?: string };
+            }
+          ).preferences?.selectorInferenceModel ?? null
+        : null;
+    const outputNormalizationModel =
+      runRecord?.planState &&
+      typeof runRecord.planState === "object" &&
+      typeof (runRecord.planState as { preferences?: { outputNormalizationModel?: string } })
+        .preferences?.outputNormalizationModel === "string"
+        ? (
+            runRecord.planState as {
+              preferences?: { outputNormalizationModel?: string };
+            }
+          ).preferences?.outputNormalizationModel ?? null
+        : null;
     const browserType =
       browser === "firefox" ? firefox : browser === "webkit" ? webkit : chromium;
+
+    const validateExtractionWithLLM = async (params: {
+      prompt: string;
+      url: string;
+      extractionType: "product_names" | "emails";
+      requiredCount: number;
+      items: string[];
+      domTextSample: string;
+      targetHostname: string | null;
+      evidence: Array<{ item: string; snippet: string }>;
+    }) => {
+      const {
+        prompt,
+        url,
+        extractionType,
+        requiredCount,
+        items,
+        domTextSample,
+        targetHostname,
+        evidence,
+      } = params;
+      try {
+        const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: extractionValidationModel ?? resolvedModel,
+            stream: false,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You validate extraction results against the user goal. Return only JSON with keys: valid (boolean), acceptedItems (array), rejectedItems (array), issues (array of strings), missingCount (number), evidence (array of {item, snippet, reason}). Each accepted item must cite evidence from the provided snippets. If the URL hostname does not match targetHostname (when provided), mark valid=false. For product_names, reject non-product UI text (cookies, headings, nav labels).",
+              },
+              {
+                role: "user",
+                content: JSON.stringify({
+                  prompt,
+                  url,
+                  extractionType,
+                  requiredCount,
+                  items,
+                  domTextSample,
+                  targetHostname,
+                  evidence,
+                }),
+              },
+            ],
+            options: { temperature: 0.2 },
+          }),
+        });
+        if (!response.ok) {
+          throw new Error(`Extraction validation failed (${response.status}).`);
+        }
+        const payload = await response.json();
+        const content = payload?.message?.content || "";
+        const match = content.match(/\{[\s\S]*\}/);
+        const parsed = match ? JSON.parse(match[0]) : JSON.parse(content);
+        const acceptedItems = Array.isArray(parsed?.acceptedItems)
+          ? parsed.acceptedItems.filter((item: unknown) => typeof item === "string")
+          : [];
+        const rejectedItems = Array.isArray(parsed?.rejectedItems)
+          ? parsed.rejectedItems.filter((item: unknown) => typeof item === "string")
+          : [];
+        const issues = Array.isArray(parsed?.issues)
+          ? parsed.issues.filter((item: unknown) => typeof item === "string")
+          : [];
+        const missingCount =
+          typeof parsed?.missingCount === "number"
+            ? parsed.missingCount
+            : Math.max(0, requiredCount - acceptedItems.length);
+        const valid =
+          typeof parsed?.valid === "boolean"
+            ? parsed.valid
+            : acceptedItems.length >= requiredCount;
+        return {
+          valid,
+          acceptedItems,
+          rejectedItems,
+          issues,
+          missingCount,
+          evidence: Array.isArray(parsed?.evidence) ? parsed.evidence : [],
+        };
+      } catch (error) {
+        const fallbackAccepted = evidence.map((entry) => entry.item);
+        return {
+          valid: fallbackAccepted.length >= requiredCount,
+          acceptedItems: fallbackAccepted,
+          rejectedItems: items.filter((item) => !fallbackAccepted.includes(item)),
+          issues: [
+            `LLM validation failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          ],
+          missingCount: Math.max(0, requiredCount - fallbackAccepted.length),
+          evidence,
+        };
+      }
+    };
+
+    const normalizeExtractionItemsWithLLM = async (params: {
+      prompt: string;
+      extractionType: "product_names" | "emails";
+      items: string[];
+    }) => {
+      const { prompt: normalizePrompt, extractionType, items } = params;
+      if (!outputNormalizationModel || items.length === 0) {
+        return items;
+      }
+      try {
+        const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: outputNormalizationModel,
+            stream: false,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You clean extracted outputs. Return only JSON with key 'items' as an array of cleaned strings. Remove hashes, IDs, boilerplate, and duplicates. Keep original ordering where possible. For emails, return lowercase valid emails only.",
+              },
+              {
+                role: "user",
+                content: JSON.stringify({
+                  prompt: normalizePrompt,
+                  extractionType,
+                  items,
+                }),
+              },
+            ],
+            options: { temperature: 0.1 },
+          }),
+        });
+        if (!response.ok) {
+          throw new Error(`Output normalization failed (${response.status}).`);
+        }
+        const payload = await response.json();
+        const content = payload?.message?.content?.trim() ?? "";
+        const parsed = (() => {
+          try {
+            return JSON.parse(content);
+          } catch {
+            const start = content.indexOf("{");
+            const end = content.lastIndexOf("}");
+            if (start === -1 || end <= start) return null;
+            try {
+              return JSON.parse(content.slice(start, end + 1));
+            } catch {
+              return null;
+            }
+          }
+        })();
+        const cleaned = Array.isArray(parsed?.items)
+          ? parsed.items.filter((item: unknown) => typeof item === "string")
+          : [];
+        return cleaned.length > 0 ? cleaned : items;
+      } catch {
+        return items;
+      }
+    };
 
     let launch: Browser | null = null;
     let context: BrowserContext | null = null;
@@ -166,13 +424,42 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
       message: string,
       metadata?: Record<string, unknown>
     ) => {
+      const normalizeLogMetadata = async (payload?: Record<string, unknown>) => {
+        if (!payload || !outputNormalizationModel) return payload;
+        const extractionType = payload.extractionType;
+        if (extractionType !== "product_names" && extractionType !== "emails") {
+          return payload;
+        }
+        const normalizeField = async (key: string) => {
+          const value = payload[key];
+          if (!Array.isArray(value)) return;
+          const items = value.filter((item) => typeof item === "string") as string[];
+          if (items.length === 0) return;
+          const normalized = await normalizeExtractionItemsWithLLM({
+            prompt: prompt ?? "",
+            extractionType,
+            items,
+          });
+          payload[key] = normalized;
+        };
+        await Promise.all([
+          normalizeField("items"),
+          normalizeField("names"),
+          normalizeField("extractedItems"),
+          normalizeField("extractedNames"),
+        ]);
+        return payload;
+      };
+      const normalizedMetadata = await normalizeLogMetadata(
+        metadata ? { ...metadata } : undefined
+      );
       await prisma.agentBrowserLog.create({
         data: {
           runId,
           stepId: activeStepId,
           level,
           message,
-          metadata,
+          metadata: normalizedMetadata,
         },
       });
     };
@@ -475,6 +762,64 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
       return null;
     };
 
+    const captureSessionContext = async (label: string) => {
+      if (!page || !context) return;
+      try {
+        const cookies = await context.cookies();
+        const cookieSummary = cookies.map((cookie) => ({
+          name: cookie.name,
+          domain: cookie.domain,
+          path: cookie.path,
+          expires: cookie.expires,
+          httpOnly: cookie.httpOnly,
+          secure: cookie.secure,
+          sameSite: cookie.sameSite,
+          valueLength: cookie.value?.length ?? 0,
+        }));
+
+        const storageSummary = await page.evaluate(() => {
+          const localKeys = Object.keys(localStorage ?? {});
+          const sessionKeys = Object.keys(sessionStorage ?? {});
+          return {
+            localKeys,
+            sessionKeys,
+            localCount: localKeys.length,
+            sessionCount: sessionKeys.length,
+          };
+        });
+
+        await prisma.agentAuditLog.create({
+          data: {
+            runId,
+            level: "info",
+            message: "Captured session context.",
+            metadata: {
+              label,
+              url: page.url(),
+              title: await page.title(),
+              cookies: cookieSummary,
+              storage: storageSummary,
+              stepId: activeStepId ?? null,
+            },
+          },
+        });
+        await log("info", "Captured session context.", {
+          label,
+          url: page.url(),
+          title: await page.title(),
+          cookies: cookieSummary,
+          storage: storageSummary,
+          stepId: activeStepId ?? null,
+        });
+      } catch (error) {
+        await log("warning", "Failed to capture session context.", {
+          label,
+          error: error instanceof Error ? error.message : String(error),
+          stepId: activeStepId ?? null,
+        });
+      }
+    };
+
     const captureSnapshot = async (label: string, activeStepId?: string) => {
       if (!page) {
         return { domText: "", domHtml: "", url: "" };
@@ -517,6 +862,7 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
         stepId: activeStepId ?? null,
       });
       await collectUiInventory(label, activeStepId);
+      await captureSessionContext(label);
       return { domText, domHtml, url: snapshotUrl };
     };
 
@@ -775,7 +1121,7 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: resolvedModel,
+            model: selectorInferenceModel ?? resolvedModel,
             stream: false,
             messages: [
               {
@@ -848,7 +1194,7 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: resolvedModel,
+            model: selectorInferenceModel ?? resolvedModel,
             stream: false,
             messages: [
               {
@@ -935,7 +1281,7 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: resolvedModel,
+            model: selectorInferenceModel ?? resolvedModel,
             stream: false,
             messages: [
               {
@@ -998,7 +1344,7 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
         });
         if (memoryKey) {
           const summary = `Problem: ${request.type} · Countermeasure: ${plan.reason || "Applied recovery plan."}`;
-          await addAgentLongTermMemory({
+          const memoryResult = await validateAndAddAgentLongTermMemory({
             memoryKey,
             runId,
             content: summary,
@@ -1011,7 +1357,16 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
               stepId: activeStepId ?? null,
             },
             importance: 4,
+            model: memoryValidationModel ?? resolvedModel,
+            prompt: request.prompt,
           });
+          if (memoryResult?.skipped) {
+            await log("warning", "Long-term memory rejected.", {
+              issues: memoryResult.validation.issues,
+              reason: memoryResult.validation.reason,
+              model: memoryResult.validation.model,
+            });
+          }
         }
         await prisma.agentAuditLog.create({
           data: {
@@ -1046,49 +1401,6 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
         }
       }
       return null;
-    };
-
-    const captureSessionContext = async (label: string) => {
-      if (!page || !context) return;
-      try {
-        const cookies = await context.cookies();
-        const cookieSummary = cookies.map((cookie) => ({
-          name: cookie.name,
-          domain: cookie.domain,
-          path: cookie.path,
-          expires: cookie.expires,
-          httpOnly: cookie.httpOnly,
-          secure: cookie.secure,
-          sameSite: cookie.sameSite,
-          valueLength: cookie.value?.length ?? 0,
-        }));
-
-        const storageSummary = await page.evaluate(() => {
-          const localKeys = Object.keys(localStorage ?? {});
-          const sessionKeys = Object.keys(sessionStorage ?? {});
-          return {
-            localKeys,
-            sessionKeys,
-            localCount: localKeys.length,
-            sessionCount: sessionKeys.length,
-          };
-        });
-
-        await log("info", "Captured session context.", {
-          label,
-          url: page.url(),
-          title: await page.title(),
-          cookies: cookieSummary,
-          storage: storageSummary,
-          stepId: activeStepId ?? null,
-        });
-      } catch (error) {
-        await log("warning", "Failed to capture session context.", {
-          label,
-          error: error instanceof Error ? error.message : String(error),
-          stepId: activeStepId ?? null,
-        });
-      }
     };
 
     const inferLoginCandidates = async () => {
@@ -1479,8 +1791,31 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
       if (!query) return null;
       const results = await fetchSearchResults(query);
       if (results.length === 0) return null;
-      const picked = await pickSearchResultWithLLM(query, results);
-      const fallback = picked || results[0]?.url;
+      const allowedResults = targetHostname
+        ? results.filter((result) => isAllowedUrl(result.url, targetHostname))
+        : results;
+      if (targetHostname && allowedResults.length === 0) {
+        await log("warning", "Search escalation returned no allowed results.", {
+          stepId: activeStepId ?? null,
+          query,
+          targetHostname,
+        });
+        return null;
+      }
+      const picked = await pickSearchResultWithLLM(query, allowedResults);
+      const resolvedPicked =
+        picked && (!targetHostname || isAllowedUrl(picked, targetHostname))
+          ? picked
+          : null;
+      if (picked && !resolvedPicked) {
+        await log("warning", "Search escalation ignored disallowed URL.", {
+          stepId: activeStepId ?? null,
+          query,
+          url: picked,
+          targetHostname,
+        });
+      }
+      const fallback = resolvedPicked || allowedResults[0]?.url;
       if (fallback) {
         await log("info", "Search escalation selected URL.", {
           stepId: activeStepId ?? null,
@@ -1535,7 +1870,7 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
         });
         if (memoryKey && parsed?.reason) {
           const summary = `Problem: uncertain navigation target · Countermeasure: ${useSearchFirst ? "search-first" : "direct-navigation"} (${parsed.reason})`;
-          await addAgentLongTermMemory({
+          const memoryResult = await validateAndAddAgentLongTermMemory({
             memoryKey,
             runId,
             content: summary,
@@ -1548,7 +1883,16 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
               inferredUrl: targetUrl,
             },
             importance: 3,
+            model: memoryValidationModel ?? resolvedModel,
+            prompt: prompt ?? null,
           });
+          if (memoryResult?.skipped) {
+            await log("warning", "Long-term memory rejected.", {
+              issues: memoryResult.validation.issues,
+              reason: memoryResult.validation.reason,
+              model: memoryResult.validation.model,
+            });
+          }
         }
         await prisma.agentAuditLog.create({
           data: {
@@ -1582,10 +1926,34 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
         if (searchFirstDecision?.useSearchFirst) {
           const query = searchFirstDecision.query;
           const results = query ? await fetchSearchResults(query) : [];
-          const picked = query
-            ? await pickSearchResultWithLLM(query, results)
-            : null;
-          const fallback = picked || results[0]?.url || null;
+          const allowedResults = targetHostname
+            ? results.filter((result) => isAllowedUrl(result.url, targetHostname))
+            : results;
+          if (targetHostname && allowedResults.length === 0) {
+            await log("warning", "Search-first returned no allowed results.", {
+              stepId: activeStepId ?? null,
+              query,
+              targetHostname,
+            });
+          }
+          const picked =
+            query && allowedResults.length
+              ? await pickSearchResultWithLLM(query, allowedResults)
+              : null;
+          const resolvedPicked =
+            picked && (!targetHostname || isAllowedUrl(picked, targetHostname))
+              ? picked
+              : null;
+          if (picked && !resolvedPicked) {
+            await log("warning", "Search-first ignored disallowed URL.", {
+              stepId: activeStepId ?? null,
+              query,
+              url: picked,
+              targetHostname,
+            });
+          }
+          const fallback =
+            resolvedPicked || (allowedResults.length ? allowedResults[0]?.url : null);
           if (fallback) {
             if (!(await enforceRobotsPolicy(fallback))) {
               return { ok: false, error: "Blocked by robots.txt." };
@@ -1698,6 +2066,36 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
 
       const extractionRequest = parseExtractionRequest(prompt);
       if (extractionRequest) {
+        if (targetHostname && !isAllowedUrl(finalUrl, targetHostname)) {
+          await log("warning", "Extraction blocked; navigated outside target domain.", {
+            url: finalUrl,
+            targetHostname,
+            stepId: activeStepId ?? null,
+          });
+          await prisma.agentAuditLog.create({
+            data: {
+              runId,
+              level: "warning",
+              message: "Extraction blocked; navigated outside target domain.",
+              metadata: {
+                url: finalUrl,
+                targetHostname,
+              },
+            },
+          });
+          return {
+            ok: false,
+            error: "Extraction blocked; navigated outside target domain.",
+            output: {
+              url: finalUrl,
+              domText,
+              extractedItems: [],
+              extractedTotal: 0,
+              extractionType: extractionRequest.type,
+              extractionPlan: null,
+            },
+          };
+        }
         const requiredCount = extractionRequest.count ?? 10;
         const domSample = (
           await page.evaluate(
@@ -1725,8 +2123,70 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
           const extractedEmails = Array.from(
             new Set((emailMatches ?? []).map((item) => item.trim()))
           );
-          const extractedTotal = extractedEmails.length;
-          const limitedEmails = extractedEmails.slice(
+          const emailEvidence = buildEvidenceSnippets(extractedEmails, rawText);
+          const emailValidation = await validateExtractionWithLLM({
+            prompt: prompt ?? "",
+            url: finalUrl,
+            extractionType: "emails",
+            requiredCount,
+            items: extractedEmails,
+            domTextSample: rawText.slice(0, 2000),
+            targetHostname,
+            evidence: emailEvidence,
+          });
+          if (!emailValidation.valid) {
+            await prisma.agentAuditLog.create({
+              data: {
+                runId,
+                level: "warning",
+                message: "Extraction validation failed.",
+                metadata: {
+                  extractionType: "emails",
+                  url: finalUrl,
+                  requestedCount: requiredCount,
+                  acceptedCount: emailValidation.acceptedItems.length,
+                  rejectedItems: emailValidation.rejectedItems,
+                  issues: emailValidation.issues,
+                  evidence: emailValidation.evidence,
+                },
+              },
+            });
+            await log("warning", "Extraction validation failed.", {
+              extractionType: "emails",
+              url: finalUrl,
+              requestedCount: requiredCount,
+              acceptedCount: emailValidation.acceptedItems.length,
+              rejectedItems: emailValidation.rejectedItems,
+              issues: emailValidation.issues,
+            });
+            const normalizedEmails = await normalizeExtractionItemsWithLLM({
+              prompt: prompt ?? "",
+              extractionType: "emails",
+              items: emailValidation.acceptedItems,
+            });
+            return {
+              ok: false,
+              error: "Extraction validation failed.",
+              output: {
+                url: finalUrl,
+                domText: rawText,
+                extractedItems: normalizedEmails,
+                extractedTotal: normalizedEmails.length,
+                extractionType: "emails",
+                extractionPlan,
+              },
+            };
+          }
+          const validatedEmails = emailValidation.acceptedItems.length
+            ? emailValidation.acceptedItems
+            : extractedEmails;
+          const normalizedEmails = await normalizeExtractionItemsWithLLM({
+            prompt: prompt ?? "",
+            extractionType: "emails",
+            items: validatedEmails,
+          });
+          const extractedTotal = validatedEmails.length;
+          const limitedEmails = normalizedEmails.slice(
             0,
             Math.max(requiredCount, 10)
           );
@@ -1791,7 +2251,12 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
               }
             }
             if (recoveryPlan?.listingUrls?.length) {
-              for (const url of recoveryPlan.listingUrls.slice(0, 3)) {
+              const recoveryUrls = targetHostname
+                ? recoveryPlan.listingUrls.filter((url) =>
+                    isAllowedUrl(url, targetHostname)
+                  )
+                : recoveryPlan.listingUrls;
+              for (const url of recoveryUrls.slice(0, 3)) {
                 try {
                   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
                   await dismissConsent("email-recovery-navigation");
@@ -1856,7 +2321,8 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
         }
 
         await waitForProductContent();
-        let extractedNames = await extractProductNames();
+        const cleanProductNames = (items: string[]) => normalizeProductNames(items);
+        let extractedNames = cleanProductNames(await extractProductNames());
         if (extractedNames.length === 0) {
           await log("warning", "No product names found on first pass; scrolling.", {
             url: finalUrl,
@@ -1867,7 +2333,7 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
             activeStepId ?? undefined
           );
           domText = scrolledSnapshot.domText;
-          extractedNames = await extractProductNames();
+          extractedNames = cleanProductNames(await extractProductNames());
         }
         if (extractedNames.length === 0) {
           const listingUrls = await findProductListingUrls();
@@ -1881,7 +2347,7 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
             );
             domText = listingSnapshot.domText;
             finalUrl = listingSnapshot.url;
-            extractedNames = await extractProductNames();
+            extractedNames = cleanProductNames(await extractProductNames());
             if (extractedNames.length > 0) {
               await log("info", "Found product names after listing navigation.", {
                 url,
@@ -1910,21 +2376,27 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
           );
           const planSelectors = extractionPlan?.primarySelectors ?? [];
           if (planSelectors.length > 0 && extractedNames.length === 0) {
-            extractedNames = await extractProductNamesFromSelectors(planSelectors);
+            extractedNames = cleanProductNames(
+              await extractProductNamesFromSelectors(planSelectors)
+            );
           }
           if (inferredSelectors.length) {
             await log("info", "Trying inferred selectors for product extraction.", {
               selectors: inferredSelectors,
               stepId: activeStepId ?? null,
             });
-            extractedNames = await extractProductNamesFromSelectors(inferredSelectors);
+            extractedNames = cleanProductNames(
+              await extractProductNamesFromSelectors(inferredSelectors)
+            );
           }
           if (
             extractedNames.length === 0 &&
             (extractionPlan?.fallbackSelectors ?? []).length > 0
           ) {
-            extractedNames = await extractProductNamesFromSelectors(
-              extractionPlan?.fallbackSelectors ?? []
+            extractedNames = cleanProductNames(
+              await extractProductNamesFromSelectors(
+                extractionPlan?.fallbackSelectors ?? []
+              )
             );
           }
           if (extractedNames.length === 0) {
@@ -1936,7 +2408,9 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
               "[class*='name' i]",
               "[class*='heading' i]",
             ];
-            extractedNames = await extractProductNamesFromSelectors(headingSelectors);
+            extractedNames = cleanProductNames(
+              await extractProductNamesFromSelectors(headingSelectors)
+            );
           }
         }
         if (extractedNames.length === 0) {
@@ -1981,12 +2455,17 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
             }
           }
           if (recoveryPlan?.selectors?.length) {
-            extractedNames = await extractProductNamesFromSelectors(
-              recoveryPlan.selectors
+            extractedNames = cleanProductNames(
+              await extractProductNamesFromSelectors(recoveryPlan.selectors)
             );
           }
           if (extractedNames.length === 0 && recoveryPlan?.listingUrls?.length) {
-            for (const url of recoveryPlan.listingUrls.slice(0, 3)) {
+            const recoveryUrls = targetHostname
+              ? recoveryPlan.listingUrls.filter((url) =>
+                  isAllowedUrl(url, targetHostname)
+                )
+              : recoveryPlan.listingUrls;
+            for (const url of recoveryUrls.slice(0, 3)) {
               try {
                 await page.goto(url, {
                   waitUntil: "domcontentloaded",
@@ -2000,7 +2479,7 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
                 );
                 domText = listingSnapshot.domText;
                 finalUrl = listingSnapshot.url;
-                extractedNames = await extractProductNames();
+                extractedNames = cleanProductNames(await extractProductNames());
                 if (extractedNames.length > 0) break;
               } catch (error) {
                 await log("warning", "Product recovery navigation failed.", {
@@ -2011,8 +2490,77 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
             }
           }
         }
-        const extractedTotal = extractedNames.length;
-        const limitedNames = extractedNames.slice(0, Math.max(requiredCount, 10));
+        const productDomText =
+          domText ||
+          (await page.evaluate(
+            () => document.body?.innerText || document.documentElement?.innerText || ""
+          ));
+        const productEvidence = buildEvidenceSnippets(extractedNames, productDomText);
+        const productValidation = await validateExtractionWithLLM({
+          prompt: prompt ?? "",
+          url: finalUrl,
+          extractionType: "product_names",
+          requiredCount,
+          items: extractedNames,
+          domTextSample: productDomText.slice(0, 2000),
+          targetHostname,
+          evidence: productEvidence,
+        });
+        if (!productValidation.valid) {
+          await prisma.agentAuditLog.create({
+            data: {
+              runId,
+              level: "warning",
+              message: "Extraction validation failed.",
+              metadata: {
+                extractionType: "product_names",
+                url: finalUrl,
+                requestedCount: requiredCount,
+                acceptedCount: productValidation.acceptedItems.length,
+                rejectedItems: productValidation.rejectedItems,
+                issues: productValidation.issues,
+                evidence: productValidation.evidence,
+                extractionPlan,
+              },
+            },
+          });
+          await log("warning", "Extraction validation failed.", {
+            extractionType: "product_names",
+            url: finalUrl,
+            requestedCount: requiredCount,
+            acceptedCount: productValidation.acceptedItems.length,
+            rejectedItems: productValidation.rejectedItems,
+            issues: productValidation.issues,
+          });
+          const normalizedNames = await normalizeExtractionItemsWithLLM({
+            prompt: prompt ?? "",
+            extractionType: "product_names",
+            items: productValidation.acceptedItems,
+          });
+          return {
+            ok: false,
+            error: "Extraction validation failed.",
+            output: {
+              url: finalUrl,
+              domText,
+              extractedNames: normalizedNames,
+              extractedItems: normalizedNames,
+              extractedTotal: normalizedNames.length,
+              extractionType: "product_names",
+              extractionPlan,
+            },
+          };
+        }
+        const validatedNames = productValidation.acceptedItems.length
+          ? productValidation.acceptedItems
+          : extractedNames;
+        const normalizedNames = await normalizeExtractionItemsWithLLM({
+          prompt: prompt ?? "",
+          extractionType: "product_names",
+          items: validatedNames,
+        });
+        const extractedTotal = validatedNames.length;
+        const limitedNames = normalizedNames.slice(0, Math.max(requiredCount, 10));
         await prisma.agentAuditLog.create({
           data: {
             runId,
@@ -2450,6 +2998,160 @@ export async function runAgentBrowserControl({
       });
     };
 
+    const captureSessionContext = async (label: string) => {
+      if (!page || !context) return;
+      try {
+        const cookies = await context.cookies();
+        const cookieSummary = cookies.map((cookie) => ({
+          name: cookie.name,
+          domain: cookie.domain,
+          path: cookie.path,
+          expires: cookie.expires,
+          httpOnly: cookie.httpOnly,
+          secure: cookie.secure,
+          sameSite: cookie.sameSite,
+          valueLength: cookie.value?.length ?? 0,
+        }));
+
+        const storageSummary = await page.evaluate(() => {
+          const localKeys = Object.keys(localStorage ?? {});
+          const sessionKeys = Object.keys(sessionStorage ?? {});
+          return {
+            localKeys,
+            sessionKeys,
+            localCount: localKeys.length,
+            sessionCount: sessionKeys.length,
+          };
+        });
+
+        await prisma.agentAuditLog.create({
+          data: {
+            runId,
+            level: "info",
+            message: "Captured session context.",
+            metadata: {
+              label,
+              url: page.url(),
+              title: await page.title(),
+              cookies: cookieSummary,
+              storage: storageSummary,
+              stepId: activeStepId ?? null,
+            },
+          },
+        });
+        await log("info", "Captured session context.", {
+          label,
+          url: page.url(),
+          title: await page.title(),
+          cookies: cookieSummary,
+          storage: storageSummary,
+          stepId: activeStepId ?? null,
+        });
+      } catch (error) {
+        await log("warning", "Failed to capture session context.", {
+          label,
+          error: error instanceof Error ? error.message : String(error),
+          stepId: activeStepId ?? null,
+        });
+      }
+    };
+
+    const collectUiInventory = async (label: string) => {
+      if (!page) return null;
+      try {
+        const uiInventory = await page.evaluate(() => {
+          const normalizeText = (value: string | null | undefined) => {
+            if (!value) return null;
+            const trimmed = value.replace(/\s+/g, " ").trim();
+            return trimmed || null;
+          };
+          const limit = 250;
+          const describe = (el: Element) => {
+            const tag = el.tagName.toLowerCase();
+            const ariaLabel = el.getAttribute("aria-label");
+            const name = el.getAttribute("name");
+            const type = (el as HTMLInputElement).type || null;
+            const placeholder = (el as HTMLInputElement).placeholder || null;
+            const text = normalizeText((el as HTMLElement).innerText);
+            const href = (el as HTMLAnchorElement).href || null;
+            const role = el.getAttribute("role");
+            return {
+              id: el.id || null,
+              tag,
+              href,
+              name,
+              role,
+              text,
+              type,
+              selector: el.tagName ? el.tagName.toLowerCase() : null,
+              ariaLabel,
+              placeholder,
+            };
+          };
+          const collect = (selector: string) =>
+            Array.from(document.querySelectorAll(selector))
+              .slice(0, limit)
+              .map(describe);
+          return {
+            url: location.href,
+            forms: collect("form"),
+            links: collect("a[href]"),
+            title: document.title,
+            counts: {
+              forms: document.querySelectorAll("form").length,
+              links: document.querySelectorAll("a[href]").length,
+              inputs: document.querySelectorAll("input, textarea, select").length,
+              buttons: document.querySelectorAll("button, [role='button']").length,
+              headings: document.querySelectorAll("h1, h2, h3, h4, h5, h6")
+                .length,
+            },
+            inputs: collect("input, textarea, select"),
+            buttons: collect("button, [role='button']"),
+            headings: collect("h1, h2, h3, h4, h5, h6"),
+            truncated: {
+              forms: document.querySelectorAll("form").length > limit,
+              links: document.querySelectorAll("a[href]").length > limit,
+              inputs:
+                document.querySelectorAll("input, textarea, select").length >
+                limit,
+              buttons:
+                document.querySelectorAll("button, [role='button']").length >
+                limit,
+              headings:
+                document.querySelectorAll("h1, h2, h3, h4, h5, h6").length >
+                limit,
+            },
+          };
+        });
+
+        await log("info", "Captured UI inventory.", {
+          label,
+          stepId: activeStepId ?? null,
+          uiInventory,
+        });
+        await prisma.agentAuditLog.create({
+          data: {
+            runId,
+            level: "info",
+            message: "Captured UI inventory.",
+            metadata: {
+              label,
+              stepId: activeStepId ?? null,
+              uiInventory,
+            },
+          },
+        });
+        return uiInventory;
+      } catch (error) {
+        await log("warning", "Failed to capture UI inventory.", {
+          label,
+          stepId: activeStepId ?? null,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+      return null;
+    };
+
     const latestSnapshot = await prisma.agentBrowserSnapshot.findFirst({
       where: { runId },
       orderBy: { createdAt: "desc" },
@@ -2532,6 +3234,8 @@ export async function runAgentBrowserControl({
       screenshotFile,
       stepId: stepId ?? null,
     });
+    await collectUiInventory(safeLabel);
+    await captureSessionContext(safeLabel);
 
     const logCount = await prisma.agentBrowserLog.count({ where: { runId } });
     return {

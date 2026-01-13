@@ -61,6 +61,7 @@ export async function POST(
       action?: string;
       stepId?: string;
       status?: "completed" | "failed" | "pending";
+      prompt?: string;
     };
     if (
       !body.action ||
@@ -92,6 +93,10 @@ export async function POST(
       if (run.status === "running") {
         return NextResponse.json({ status: run.status });
       }
+      const nextPrompt =
+        typeof body.prompt === "string" && body.prompt.trim()
+          ? body.prompt.trim()
+          : null;
       const resumeStepId =
         typeof body.stepId === "string" && body.stepId.trim()
           ? body.stepId.trim()
@@ -101,10 +106,12 @@ export async function POST(
           ? {
               ...(run.planState as Record<string, unknown>),
               resumeRequestedAt: new Date().toISOString(),
+              ...(nextPrompt ? { promptUpdatedAt: new Date().toISOString() } : {}),
               ...(resumeStepId ? { activeStepId: resumeStepId } : {}),
             }
           : {
               resumeRequestedAt: new Date().toISOString(),
+              ...(nextPrompt ? { promptUpdatedAt: new Date().toISOString() } : {}),
               ...(resumeStepId ? { activeStepId: resumeStepId } : {}),
             };
       const updated = await prisma.chatbotAgentRun.update({
@@ -117,11 +124,17 @@ export async function POST(
           checkpointedAt: new Date(),
           planState: resumePlanState,
           ...(resumeStepId ? { activeStepId: resumeStepId } : {}),
+          ...(nextPrompt ? { prompt: nextPrompt } : {}),
           logLines: {
             push: `[${new Date().toISOString()}] Run resume requested.`,
           },
         },
       });
+      if (nextPrompt && nextPrompt !== run.prompt) {
+        await logAgentAudit(updated.id, "warning", "Agent prompt updated.", {
+          promptLength: nextPrompt.length,
+        });
+      }
       await logAgentAudit(updated.id, "info", "Agent run resume requested.");
       if (DEBUG_CHATBOT) {
         console.info("[chatbot][agent][POST] Resumed", {

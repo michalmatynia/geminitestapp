@@ -77,12 +77,23 @@ export async function POST(req: Request) {
       runHeadless?: boolean;
       ignoreRobotsTxt?: boolean;
       requireHumanApproval?: boolean;
+      memoryValidationModel?: string;
+      plannerModel?: string;
+      selfCheckModel?: string;
+      extractionValidationModel?: string;
+      loopGuardModel?: string;
+      memorySummarizationModel?: string;
+      selectorInferenceModel?: string;
+      outputNormalizationModel?: string;
       planSettings?: {
         maxSteps?: number;
         maxStepAttempts?: number;
         maxReplanCalls?: number;
         replanEverySteps?: number;
         maxSelfChecks?: number;
+        loopGuardThreshold?: number;
+        loopBackoffBaseMs?: number;
+        loopBackoffMaxMs?: number;
       };
     };
 
@@ -99,6 +110,9 @@ export async function POST(req: Request) {
         maxReplanCalls?: number;
         replanEverySteps?: number;
         maxSelfChecks?: number;
+        loopGuardThreshold?: number;
+        loopBackoffBaseMs?: number;
+        loopBackoffMaxMs?: number;
       }
     ) => {
       if (!input) return null;
@@ -118,6 +132,9 @@ export async function POST(req: Request) {
         maxReplanCalls: clampInt(input.maxReplanCalls, 0, 6, 2),
         replanEverySteps: clampInt(input.replanEverySteps, 1, 10, 2),
         maxSelfChecks: clampInt(input.maxSelfChecks, 0, 8, 4),
+        loopGuardThreshold: clampInt(input.loopGuardThreshold, 1, 5, 2),
+        loopBackoffBaseMs: clampInt(input.loopBackoffBaseMs, 250, 20000, 2000),
+        loopBackoffMaxMs: clampInt(input.loopBackoffMaxMs, 1000, 60000, 12000),
       };
     };
 
@@ -133,6 +150,14 @@ export async function POST(req: Request) {
         runHeadless: body.runHeadless ?? true,
         ignoreRobotsTxt: body.ignoreRobotsTxt ?? false,
         requireHumanApproval: body.requireHumanApproval ?? false,
+        memoryValidationModel: body.memoryValidationModel?.trim() || null,
+        plannerModel: body.plannerModel?.trim() || null,
+        selfCheckModel: body.selfCheckModel?.trim() || null,
+        extractionValidationModel: body.extractionValidationModel?.trim() || null,
+        loopGuardModel: body.loopGuardModel?.trim() || null,
+        memorySummarizationModel: body.memorySummarizationModel?.trim() || null,
+        selectorInferenceModel: body.selectorInferenceModel?.trim() || null,
+        outputNormalizationModel: body.outputNormalizationModel?.trim() || null,
         planSettings,
       });
     }
@@ -155,6 +180,30 @@ export async function POST(req: Request) {
                 preferences: {
                   ignoreRobotsTxt: Boolean(body.ignoreRobotsTxt),
                   requireHumanApproval: Boolean(body.requireHumanApproval),
+                  ...(body.memoryValidationModel?.trim()
+                    ? { memoryValidationModel: body.memoryValidationModel.trim() }
+                    : {}),
+                  ...(body.plannerModel?.trim()
+                    ? { plannerModel: body.plannerModel.trim() }
+                    : {}),
+                  ...(body.selfCheckModel?.trim()
+                    ? { selfCheckModel: body.selfCheckModel.trim() }
+                    : {}),
+                  ...(body.extractionValidationModel?.trim()
+                    ? { extractionValidationModel: body.extractionValidationModel.trim() }
+                    : {}),
+                  ...(body.loopGuardModel?.trim()
+                    ? { loopGuardModel: body.loopGuardModel.trim() }
+                    : {}),
+                  ...(body.memorySummarizationModel?.trim()
+                    ? { memorySummarizationModel: body.memorySummarizationModel.trim() }
+                    : {}),
+                  ...(body.selectorInferenceModel?.trim()
+                    ? { selectorInferenceModel: body.selectorInferenceModel.trim() }
+                    : {}),
+                  ...(body.outputNormalizationModel?.trim()
+                    ? { outputNormalizationModel: body.outputNormalizationModel.trim() }
+                    : {}),
                 },
               },
             }

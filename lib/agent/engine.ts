@@ -8,6 +8,8 @@ import {
   validateAndAddAgentLongTermMemory,
 } from "@/lib/agent/memory";
 import { runAgentBrowserControl, runAgentTool } from "@/lib/agent/tools";
+import { launchBrowser } from "@/lib/agent/tools/playwright/browser";
+import type { Browser } from "playwright";
 
 type AgentDecision = {
   action: "respond" | "tool" | "wait_human";
@@ -229,6 +231,7 @@ function resolveAgentPreferences(planState: unknown): AgentPlanPreferences {
 }
 
 export async function runAgentControlLoop(runId: string) {
+  let sharedBrowser: Browser | null = null;
   try {
     if (!("chatbotAgentRun" in prisma)) {
       if (DEBUG_CHATBOT) {
@@ -247,6 +250,8 @@ export async function runAgentControlLoop(runId: string) {
       }
       return;
     }
+
+    sharedBrowser = await launchBrowser(run.agentBrowser || "chromium", run.runHeadless ?? true);
 
     await logAgentAudit(run.id, "info", "Agent loop started.");
     let memoryKey = run.memoryKey;
@@ -836,7 +841,7 @@ export async function runAgentControlLoop(runId: string) {
                     stepId: step.id,
                     stepLabel: step.title,
                   },
-                })
+                }, sharedBrowser!)
               : await runAgentBrowserControl({
                   runId: run.id,
                   action: "snapshot",
@@ -1855,7 +1860,7 @@ export async function runAgentControlLoop(runId: string) {
             runId: run.id,
             runHeadless: run.runHeadless,
           },
-        });
+        }, sharedBrowser!);
         overallOk = toolResult.ok;
         lastError = toolResult.ok ? null : toolResult.error || "Tool failed.";
       }
@@ -2219,6 +2224,10 @@ export async function runAgentControlLoop(runId: string) {
           innerError,
         });
       }
+    }
+  } finally {
+    if (sharedBrowser) {
+      await sharedBrowser.close().catch(() => {});
     }
   }
 }

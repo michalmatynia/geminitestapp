@@ -103,7 +103,7 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
   return Boolean(prefs?.ignoreRobotsTxt);
 };
 
-export async function runAgentTool(request: AgentToolRequest): Promise<AgentToolResult> {
+export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: Browser, injectedContext?: BrowserContext): Promise<AgentToolResult> {
   const { runId, prompt, browser, runHeadless, stepId, stepLabel } = request.input;
   const debugEnabled = process.env.DEBUG_CHATBOT === "true";
   if (!runId) {
@@ -157,7 +157,16 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
     const runDir = path.join(process.cwd(), "tmp", "chatbot-agent", runId);
     await fs.mkdir(runDir, { recursive: true });
 
-    launch = await launchBrowser(browser, runHeadless);
+    if (injectedContext) {
+      context = injectedContext;
+      launch = context.browser();
+    } else if (injectedBrowser) {
+      launch = injectedBrowser;
+      context = await createBrowserContext(launch, runDir);
+    } else {
+      launch = await launchBrowser(browser, runHeadless);
+      context = await createBrowserContext(launch, runDir);
+    }
 
     const activeStepId = stepId ?? null;
     const log = async (
@@ -1497,10 +1506,10 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
       }
 
     } finally {
-      if (context) {
+      if (context && !injectedContext) {
         await context.close();
       }
-      if (launch) {
+      if (launch && !injectedBrowser && !injectedContext) {
         await launch.close();
       }
       try {

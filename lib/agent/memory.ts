@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 
 const DEFAULT_MEMORY_VALIDATION_MODEL =
-  process.env.MEMORY_VALIDATION_MODEL ?? process.env.OLLAMA_MODEL ?? "llama3";
+  process.env.MEMORY_VALIDATION_MODEL ?? process.env.OLLAMA_MODEL;
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
 
 export type MemoryScope = "session" | "longterm";
@@ -118,6 +118,9 @@ export async function validateAgentLongTermMemory(params: {
 }) {
   const model = params.model?.trim() || DEFAULT_MEMORY_VALIDATION_MODEL;
   const prompt = params.prompt ?? "";
+  if (!model) {
+    throw new Error("MEMORY_VALIDATION_MODEL/OLLAMA_MODEL is not configured.");
+  }
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: "POST",
@@ -179,17 +182,59 @@ export async function validateAndAddAgentLongTermMemory(params: {
   runId?: string | null;
   content: string;
   summary?: string | null;
+  summaryModel?: string | null;
   tags?: string[];
   metadata?: Record<string, unknown>;
   importance?: number | null;
   model?: string | null;
   prompt?: string | null;
 }) {
+  const summaryModel = params.summaryModel?.trim();
+  let summary = params.summary ?? null;
+  if (summaryModel) {
+    try {
+      const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: summaryModel,
+          stream: false,
+          messages: [
+            {
+              role: "system",
+              content:
+                "You write concise long-term memory summaries. Return only JSON with key summary (string). Keep it 1-2 sentences.",
+            },
+            {
+              role: "user",
+              content: JSON.stringify({
+                prompt: params.prompt ?? null,
+                content: params.content,
+                metadata: params.metadata ?? null,
+              }),
+            },
+          ],
+          options: { temperature: 0.2 },
+        }),
+      });
+      if (response.ok) {
+        const payload = await response.json();
+        const content = payload?.message?.content || "";
+        const match = content.match(/\{[\s\S]*\}/);
+        const parsed = match ? JSON.parse(match[0]) : JSON.parse(content);
+        if (typeof parsed?.summary === "string" && parsed.summary.trim()) {
+          summary = parsed.summary.trim();
+        }
+      }
+    } catch {
+      // keep existing summary if summarization fails
+    }
+  }
   const validation = await validateAgentLongTermMemory({
     model: params.model,
     prompt: params.prompt,
     content: params.content,
-    summary: params.summary ?? null,
+    summary,
     metadata: params.metadata,
   });
   if (!validation.valid) {
@@ -199,7 +244,7 @@ export async function validateAndAddAgentLongTermMemory(params: {
     memoryKey: params.memoryKey,
     runId: params.runId ?? null,
     content: params.content,
-    summary: params.summary ?? null,
+    summary,
     tags: params.tags ?? [],
     metadata: params.metadata,
     importance: params.importance ?? null,

@@ -24,6 +24,7 @@ const STUCK_RUN_THRESHOLD_MS = 10 * 60 * 1000;
 export function startAgentQueue() {
   const state = getState();
   if (state.timer) return;
+  void processAgentQueue();
   state.timer = setInterval(() => {
     void processAgentQueue();
   }, 2000);

@@ -17,7 +17,7 @@ describe("Chatbot API", () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce(
       new Response(
         JSON.stringify({
-          models: [{ name: "llama3" }, { name: "llava" }],
+          models: [{ name: "test-model" }, { name: "llava" }],
         })
       )
     );
@@ -26,7 +26,7 @@ describe("Chatbot API", () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data.models).toEqual(["llama3", "llava"]);
+    expect(data.models).toEqual(["test-model", "llava"]);
   });
 
   it("should return an error when model listing fails", async () => {
@@ -66,7 +66,7 @@ describe("Chatbot API", () => {
     const req = new Request("http://localhost/api/chatbot", {
       method: "POST",
       body: JSON.stringify({
-        model: "llama3",
+        model: "test-model",
         messages: [{ role: "user", content: "Hello" }],
       }),
     });
@@ -92,7 +92,7 @@ describe("Chatbot API", () => {
     const req = new Request("http://localhost/api/chatbot", {
       method: "POST",
       body: JSON.stringify({
-        model: "llama3",
+        model: "test-model",
         messages: [{ role: "user", content: "Hello" }],
       }),
     });
@@ -112,7 +112,7 @@ describe("Chatbot API", () => {
     const req = new Request("http://localhost/api/chatbot", {
       method: "POST",
       body: JSON.stringify({
-        model: "llama3",
+        model: "test-model",
         messages: [{ role: "user", content: "Hello" }],
       }),
     });

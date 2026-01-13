@@ -11,6 +11,7 @@ const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 export async function GET() {
   const requestStart = Date.now();
   try {
+    startAgentQueue();
     if (!("chatbotAgentRun" in prisma)) {
       return NextResponse.json(
         { error: "Agent runs not initialized. Run prisma generate/db push." },

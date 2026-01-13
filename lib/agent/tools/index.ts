@@ -113,18 +113,35 @@ const isAllowedUrl = (url: string, targetHostname: string | null) => {
 
 const normalizeProductNames = (items: string[]) => {
   const seen = new Set<string>();
+  const uiNoise =
+    /^(add to cart|quick view|view details|view product|choose options|select options|in stock|out of stock|sold out|sale|new|buy now|learn more|load more|show more|filters?|sort by)$/i;
   return items
-    .map((item) => item.trim())
+    .map((item) => item.replace(/\s+/g, " ").trim())
     .filter(Boolean)
     .filter((item) => /[a-z]/i.test(item))
     .filter((item) => !/^[a-f0-9]{16,}$/i.test(item))
     .filter((item) => !/^[a-f0-9]{32,}$/i.test(item))
+    .filter((item) => !/^\$?\d+(?:\.\d+)?$/.test(item))
+    .filter((item) => !uiNoise.test(item))
     .filter((item) => {
       const key = item.toLowerCase();
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
+};
+
+const normalizeEmailCandidates = (items: string[]) => {
+  const seen = new Set<string>();
+  const cleaned = items
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean)
+    .filter((item) => /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(item));
+  return cleaned.filter((item) => {
+    if (seen.has(item)) return false;
+    seen.add(item);
+    return true;
+  });
 };
 
 const buildEvidenceSnippets = (items: string[], domText: string) => {
@@ -134,11 +151,15 @@ const buildEvidenceSnippets = (items: string[], domText: string) => {
   for (const item of items) {
     const query = item.trim().toLowerCase();
     if (!query) continue;
-    const index = lowerText.indexOf(query);
-    if (index === -1) continue;
-    const start = Math.max(0, index - 60);
-    const end = Math.min(domText.length, index + query.length + 60);
-    evidence.push({ item, snippet: domText.slice(start, end) });
+    let index = lowerText.indexOf(query);
+    let occurrences = 0;
+    while (index !== -1 && occurrences < 2) {
+      const start = Math.max(0, index - 60);
+      const end = Math.min(domText.length, index + query.length + 60);
+      evidence.push({ item, snippet: domText.slice(start, end) });
+      occurrences += 1;
+      index = lowerText.indexOf(query, index + query.length);
+    }
   }
   return evidence;
 };
@@ -210,6 +231,17 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
             }
           ).preferences?.memoryValidationModel ?? null
         : null;
+    const memorySummarizationModel =
+      runRecord?.planState &&
+      typeof runRecord.planState === "object" &&
+      typeof (runRecord.planState as { preferences?: { memorySummarizationModel?: string } })
+        .preferences?.memorySummarizationModel === "string"
+        ? (
+            runRecord.planState as {
+              preferences?: { memorySummarizationModel?: string };
+            }
+          ).preferences?.memorySummarizationModel ?? null
+        : null;
     const extractionValidationModel =
       runRecord?.planState &&
       typeof runRecord.planState === "object" &&
@@ -255,6 +287,8 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
       domTextSample: string;
       targetHostname: string | null;
       evidence: Array<{ item: string; snippet: string }>;
+      stepId?: string | null;
+      stepLabel?: string | null;
     }) => {
       const {
         prompt,
@@ -265,6 +299,8 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
         domTextSample,
         targetHostname,
         evidence,
+        stepId,
+        stepLabel,
       } = params;
       try {
         const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
@@ -277,7 +313,7 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
               {
                 role: "system",
                 content:
-                  "You validate extraction results against the user goal. Return only JSON with keys: valid (boolean), acceptedItems (array), rejectedItems (array), issues (array of strings), missingCount (number), evidence (array of {item, snippet, reason}). Each accepted item must cite evidence from the provided snippets. If the URL hostname does not match targetHostname (when provided), mark valid=false. For product_names, reject non-product UI text (cookies, headings, nav labels).",
+                  "You validate extraction results against the user goal. Return only JSON with keys: valid (boolean), acceptedItems (array), rejectedItems (array), issues (array of strings), missingCount (number), evidence (array of {item, snippet, reason}). Each accepted item must cite evidence from the provided snippets. If the URL hostname does not match targetHostname (when provided), mark valid=false. If stepLabel is provided, ensure accepted items align with that step context. For product_names, reject non-product UI text (cookies, headings, nav labels).",
               },
               {
                 role: "user",
@@ -290,6 +326,8 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
                   domTextSample,
                   targetHostname,
                   evidence,
+                  stepId,
+                  stepLabel,
                 }),
               },
             ],
@@ -407,6 +445,56 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
       }
     };
 
+    const recordExtractionValidation = async (params: {
+      extractionType: "product_names" | "emails";
+      url: string;
+      requiredCount: number;
+      acceptedItems: string[];
+      rejectedItems: string[];
+      missingCount: number;
+      issues: string[];
+      evidence: Array<{ item: string; snippet: string }>;
+    }) => {
+      const {
+        extractionType,
+        url,
+        requiredCount,
+        acceptedItems,
+        rejectedItems,
+        missingCount,
+        issues,
+        evidence,
+      } = params;
+      const metadata = {
+        stepId: activeStepId ?? null,
+        stepLabel: stepLabel ?? null,
+        extractionType,
+        url,
+        requestedCount: requiredCount,
+        acceptedCount: acceptedItems.length,
+        rejectedCount: rejectedItems.length,
+        missingCount,
+        acceptedItems,
+        rejectedItems,
+        issues,
+        evidence,
+        model: extractionValidationModel ?? resolvedModel,
+      };
+      await prisma.agentAuditLog.create({
+        data: {
+          runId,
+          level: missingCount > 0 ? "warning" : "info",
+          message: "Extraction validation summary.",
+          metadata,
+        },
+      });
+      await log(
+        missingCount > 0 ? "warning" : "info",
+        "Extraction validation summary.",
+        metadata
+      );
+    };
+
     let launch: Browser | null = null;
     let context: BrowserContext | null = null;
     let page: Page | null = null;
@@ -447,6 +535,8 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
           normalizeField("names"),
           normalizeField("extractedItems"),
           normalizeField("extractedNames"),
+          normalizeField("acceptedItems"),
+          normalizeField("rejectedItems"),
         ]);
         return payload;
       };
@@ -920,6 +1010,60 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
           "h4",
         ];
 
+        const parseJson = (value: string | null) => {
+          if (!value) return null;
+          try {
+            return JSON.parse(value);
+          } catch {
+            return null;
+          }
+        };
+
+        const collectFromSchema = (node: unknown) => {
+          if (!node) return;
+          if (Array.isArray(node)) {
+            node.forEach(collectFromSchema);
+            return;
+          }
+          if (typeof node !== "object") return;
+          const record = node as Record<string, unknown>;
+          const typeValue = record["@type"];
+          const typeList = Array.isArray(typeValue)
+            ? typeValue
+            : typeof typeValue === "string"
+              ? [typeValue]
+              : [];
+          const typeNames = typeList.map((value) => value.toLowerCase());
+          if (
+            typeNames.includes("product") ||
+            typeNames.includes("productgroup") ||
+            typeNames.includes("productmodel")
+          ) {
+            if (typeof record.name === "string") {
+              pushName(record.name);
+            }
+          }
+          if (typeNames.includes("itemlist") && Array.isArray(record.itemListElement)) {
+            record.itemListElement.forEach((entry) => {
+              if (!entry || typeof entry !== "object") return;
+              const itemRecord = entry as Record<string, unknown>;
+              const item = itemRecord.item;
+              if (typeof itemRecord.name === "string") {
+                pushName(itemRecord.name);
+              }
+              if (item && typeof item === "object") {
+                const itemObj = item as Record<string, unknown>;
+                if (typeof itemObj.name === "string") {
+                  pushName(itemObj.name);
+                }
+              }
+            });
+          }
+          if (record["@graph"]) {
+            collectFromSchema(record["@graph"]);
+          }
+        };
+
         for (const selector of productSelectors) {
           document.querySelectorAll(selector).forEach((node) => {
             const element = node as HTMLElement;
@@ -950,6 +1094,15 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
         document.querySelectorAll("h2, h3, h4").forEach((heading) => {
           pushName((heading as HTMLElement).innerText);
         });
+
+        document
+          .querySelectorAll("script[type='application/ld+json']")
+          .forEach((script) => {
+            const parsed = parseJson(script.textContent);
+            if (parsed) {
+              collectFromSchema(parsed);
+            }
+          });
 
         return candidates;
       });
@@ -988,6 +1141,36 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
 
         return candidates;
       }, selectors);
+    };
+
+    const extractEmailsFromDom = async () => {
+      if (!page) return [];
+      return page.evaluate(() => {
+        const emails = new Set<string>();
+        document.querySelectorAll("a[href^='mailto:']").forEach((link) => {
+          const href = (link as HTMLAnchorElement).getAttribute("href") || "";
+          const email = href.replace(/^mailto:/i, "").split("?")[0]?.trim();
+          if (email) emails.add(email);
+        });
+        document
+          .querySelectorAll("[data-email], [data-mail], [data-contact]")
+          .forEach((node) => {
+            const element = node as HTMLElement;
+            const value =
+              element.getAttribute("data-email") ||
+              element.getAttribute("data-mail") ||
+              element.getAttribute("data-contact") ||
+              "";
+            if (value.includes("@")) {
+              value
+                .split(/[,\s]+/)
+                .map((item) => item.trim())
+                .filter(Boolean)
+                .forEach((item) => emails.add(item));
+            }
+          });
+        return Array.from(emails);
+      });
     };
 
     const waitForProductContent = async () => {
@@ -1358,6 +1541,7 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
             },
             importance: 4,
             model: memoryValidationModel ?? resolvedModel,
+            summaryModel: memorySummarizationModel ?? resolvedModel,
             prompt: request.prompt,
           });
           if (memoryResult?.skipped) {
@@ -1884,6 +2068,7 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
             },
             importance: 3,
             model: memoryValidationModel ?? resolvedModel,
+            summaryModel: memorySummarizationModel ?? resolvedModel,
             prompt: prompt ?? null,
           });
           if (memoryResult?.skipped) {
@@ -2117,12 +2302,14 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
             (await page.evaluate(
               () => document.body?.innerText || document.documentElement?.innerText || ""
             ));
+          const domEmails = normalizeEmailCandidates(await extractEmailsFromDom());
           const emailMatches = rawText.match(
             /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi
           );
-          const extractedEmails = Array.from(
-            new Set((emailMatches ?? []).map((item) => item.trim()))
-          );
+          const extractedEmails = normalizeEmailCandidates([
+            ...domEmails,
+            ...(emailMatches ?? []),
+          ]);
           const emailEvidence = buildEvidenceSnippets(extractedEmails, rawText);
           const emailValidation = await validateExtractionWithLLM({
             prompt: prompt ?? "",
@@ -2133,6 +2320,18 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
             domTextSample: rawText.slice(0, 2000),
             targetHostname,
             evidence: emailEvidence,
+            stepId: activeStepId ?? null,
+            stepLabel: stepLabel ?? null,
+          });
+          await recordExtractionValidation({
+            extractionType: "emails",
+            url: finalUrl,
+            requiredCount,
+            acceptedItems: emailValidation.acceptedItems,
+            rejectedItems: emailValidation.rejectedItems,
+            missingCount: emailValidation.missingCount,
+            issues: emailValidation.issues,
+            evidence: emailValidation.evidence ?? emailEvidence,
           });
           if (!emailValidation.valid) {
             await prisma.agentAuditLog.create({
@@ -2141,6 +2340,8 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
                 level: "warning",
                 message: "Extraction validation failed.",
                 metadata: {
+                  stepId: activeStepId ?? null,
+                  stepLabel: stepLabel ?? null,
                   extractionType: "emails",
                   url: finalUrl,
                   requestedCount: requiredCount,
@@ -2152,6 +2353,8 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
               },
             });
             await log("warning", "Extraction validation failed.", {
+              stepId: activeStepId ?? null,
+              stepLabel: stepLabel ?? null,
               extractionType: "emails",
               url: finalUrl,
               requestedCount: requiredCount,
@@ -2164,14 +2367,15 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
               extractionType: "emails",
               items: emailValidation.acceptedItems,
             });
+            const fallbackNormalizedEmails = normalizeEmailCandidates(normalizedEmails);
             return {
               ok: false,
               error: "Extraction validation failed.",
               output: {
                 url: finalUrl,
                 domText: rawText,
-                extractedItems: normalizedEmails,
-                extractedTotal: normalizedEmails.length,
+                extractedItems: fallbackNormalizedEmails,
+                extractedTotal: fallbackNormalizedEmails.length,
                 extractionType: "emails",
                 extractionPlan,
               },
@@ -2185,8 +2389,9 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
             extractionType: "emails",
             items: validatedEmails,
           });
-          const extractedTotal = validatedEmails.length;
-          const limitedEmails = normalizedEmails.slice(
+          const fallbackNormalizedEmails = normalizeEmailCandidates(normalizedEmails);
+          const extractedTotal = fallbackNormalizedEmails.length;
+          const limitedEmails = fallbackNormalizedEmails.slice(
             0,
             Math.max(requiredCount, 10)
           );
@@ -2198,6 +2403,8 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
                 ? "Extracted emails."
                 : "No emails extracted.",
               metadata: {
+                stepId: activeStepId ?? null,
+                stepLabel: stepLabel ?? null,
                 requestedCount: requiredCount,
                 extractedCount: extractedTotal,
                 items: limitedEmails,
@@ -2211,6 +2418,8 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
             extractedTotal ? "info" : "warning",
             extractedTotal ? "Extracted emails." : "No emails extracted.",
             {
+              stepId: activeStepId ?? null,
+              stepLabel: stepLabel ?? null,
               requestedCount: requiredCount,
               extractedCount: extractedTotal,
               items: limitedEmails,
@@ -2264,12 +2473,16 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
                   const updatedText = await page.evaluate(
                     () => document.body?.innerText || document.documentElement?.innerText || ""
                   );
+                  const updatedDomEmails = normalizeEmailCandidates(
+                    await extractEmailsFromDom()
+                  );
                   const updatedMatches = updatedText.match(
                     /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi
                   );
-                  const updatedEmails = Array.from(
-                    new Set((updatedMatches ?? []).map((item) => item.trim()))
-                  );
+                  const updatedEmails = normalizeEmailCandidates([
+                    ...updatedDomEmails,
+                    ...(updatedMatches ?? []),
+                  ]);
                   if (updatedEmails.length > 0) {
                     return {
                       ok: true,
@@ -2505,6 +2718,18 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
           domTextSample: productDomText.slice(0, 2000),
           targetHostname,
           evidence: productEvidence,
+          stepId: activeStepId ?? null,
+          stepLabel: stepLabel ?? null,
+        });
+        await recordExtractionValidation({
+          extractionType: "product_names",
+          url: finalUrl,
+          requiredCount,
+          acceptedItems: productValidation.acceptedItems,
+          rejectedItems: productValidation.rejectedItems,
+          missingCount: productValidation.missingCount,
+          issues: productValidation.issues,
+          evidence: productValidation.evidence ?? productEvidence,
         });
         if (!productValidation.valid) {
           await prisma.agentAuditLog.create({
@@ -2513,6 +2738,8 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
               level: "warning",
               message: "Extraction validation failed.",
               metadata: {
+                stepId: activeStepId ?? null,
+                stepLabel: stepLabel ?? null,
                 extractionType: "product_names",
                 url: finalUrl,
                 requestedCount: requiredCount,
@@ -2525,6 +2752,8 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
             },
           });
           await log("warning", "Extraction validation failed.", {
+            stepId: activeStepId ?? null,
+            stepLabel: stepLabel ?? null,
             extractionType: "product_names",
             url: finalUrl,
             requestedCount: requiredCount,
@@ -2537,15 +2766,16 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
             extractionType: "product_names",
             items: productValidation.acceptedItems,
           });
+          const fallbackNormalizedNames = normalizeProductNames(normalizedNames);
           return {
             ok: false,
             error: "Extraction validation failed.",
             output: {
               url: finalUrl,
               domText,
-              extractedNames: normalizedNames,
-              extractedItems: normalizedNames,
-              extractedTotal: normalizedNames.length,
+              extractedNames: fallbackNormalizedNames,
+              extractedItems: fallbackNormalizedNames,
+              extractedTotal: fallbackNormalizedNames.length,
               extractionType: "product_names",
               extractionPlan,
             },
@@ -2559,8 +2789,12 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
           extractionType: "product_names",
           items: validatedNames,
         });
-        const extractedTotal = validatedNames.length;
-        const limitedNames = normalizedNames.slice(0, Math.max(requiredCount, 10));
+        const fallbackNormalizedNames = normalizeProductNames(normalizedNames);
+        const extractedTotal = fallbackNormalizedNames.length;
+        const limitedNames = fallbackNormalizedNames.slice(
+          0,
+          Math.max(requiredCount, 10)
+        );
         await prisma.agentAuditLog.create({
           data: {
             runId,
@@ -2569,6 +2803,8 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
               ? "Extracted product names."
               : "No product names extracted.",
             metadata: {
+              stepId: activeStepId ?? null,
+              stepLabel: stepLabel ?? null,
               requestedCount: requiredCount,
               extractedCount: extractedTotal,
               names: limitedNames,
@@ -2583,6 +2819,8 @@ const resolveIgnoreRobotsTxt = (planState: unknown) => {
           extractedTotal ? "info" : "warning",
           extractedTotal ? "Extracted product names." : "No product names extracted.",
           {
+            stepId: activeStepId ?? null,
+            stepLabel: stepLabel ?? null,
             requestedCount: requiredCount,
             extractedCount: extractedTotal,
             names: limitedNames,

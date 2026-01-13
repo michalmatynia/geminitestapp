@@ -802,25 +802,65 @@ export async function runAgentControlLoop(runId: string) {
           run.prompt,
           shouldRunExtraction ? "extract_info" : taskType
         );
-        const toolResult =
-          shouldInitializeBrowser || shouldRunExtraction
-            ? await runAgentTool({
-                name: "playwright",
-                input: {
-                  prompt: toolPrompt,
-                  browser: run.agentBrowser || "chromium",
+        const toolName = shouldInitializeBrowser || shouldRunExtraction
+          ? "playwright"
+          : "snapshot";
+        const toolStart = Date.now();
+        const toolContext = {
+          type: "tool-execution",
+          toolName,
+          stepId: step.id,
+          stepTitle: step.title,
+          shouldRunExtraction,
+          shouldInitializeBrowser,
+        };
+        await logAgentAudit(run.id, "info", "Tool execution started.", toolContext);
+        const toolTimeoutId = setTimeout(() => {
+          void logAgentAudit(run.id, "warning", "Tool execution taking longer than expected.", {
+            ...toolContext,
+            elapsedMs: Date.now() - toolStart,
+          });
+        }, 20000);
+        let toolResult: Awaited<ReturnType<typeof runAgentTool>> | null = null;
+        let toolError: unknown = null;
+        try {
+          toolResult =
+            shouldInitializeBrowser || shouldRunExtraction
+              ? await runAgentTool({
+                  name: "playwright",
+                  input: {
+                    prompt: toolPrompt,
+                    browser: run.agentBrowser || "chromium",
+                    runId: run.id,
+                    runHeadless: run.runHeadless,
+                    stepId: step.id,
+                    stepLabel: step.title,
+                  },
+                })
+              : await runAgentBrowserControl({
                   runId: run.id,
-                  runHeadless: run.runHeadless,
+                  action: "snapshot",
                   stepId: step.id,
                   stepLabel: step.title,
-                },
-              })
-            : await runAgentBrowserControl({
-                runId: run.id,
-                action: "snapshot",
-                stepId: step.id,
-                stepLabel: step.title,
-              });
+                });
+        } catch (error) {
+          toolError = error;
+        } finally {
+          clearTimeout(toolTimeoutId);
+          await logAgentAudit(run.id, toolError ? "error" : "info", "Tool execution finished.", {
+            ...toolContext,
+            ok: toolResult?.ok ?? false,
+            error:
+              toolResult?.error ??
+              (toolError instanceof Error ? toolError.message : toolError ? String(toolError) : null),
+            durationMs: Date.now() - toolStart,
+          });
+        }
+        if (toolError || !toolResult) {
+          throw toolError instanceof Error
+            ? toolError
+            : new Error("Tool execution failed.");
+        }
 
         if (!toolResult.ok) {
           overallOk = false;
@@ -1131,6 +1171,7 @@ export async function runAgentControlLoop(runId: string) {
                   },
                   tags: ["branch"],
                   model: memoryValidationModel ?? resolvedModel,
+                  summaryModel: memorySummarizationModel ?? resolvedModel,
                   prompt: run.prompt,
                 });
               }
@@ -1208,6 +1249,7 @@ export async function runAgentControlLoop(runId: string) {
                   },
                   tags: ["replan"],
                   model: memoryValidationModel ?? resolvedModel,
+                  summaryModel: memorySummarizationModel ?? resolvedModel,
                   prompt: run.prompt,
                 });
               }
@@ -1279,6 +1321,7 @@ export async function runAgentControlLoop(runId: string) {
                   },
                   tags: ["dead-end"],
                   model: memoryValidationModel ?? resolvedModel,
+                  summaryModel: memorySummarizationModel ?? resolvedModel,
                   prompt: run.prompt,
                 });
               }
@@ -1716,10 +1759,11 @@ export async function runAgentControlLoop(runId: string) {
                   stepTitle: step.title,
                   reason: "context-shift",
                 },
-                tags: ["context-shift"],
-                model: memoryValidationModel ?? resolvedModel,
-                prompt: run.prompt,
-              });
+                  tags: ["context-shift"],
+                  model: memoryValidationModel ?? resolvedModel,
+                  summaryModel: memorySummarizationModel ?? resolvedModel,
+                  prompt: run.prompt,
+                });
             }
             await persistCheckpoint({
               runId: run.id,
@@ -1932,6 +1976,7 @@ export async function runAgentControlLoop(runId: string) {
             },
             importance: overallOk ? 3 : 4,
             model: memoryValidationModel ?? resolvedModel,
+            summaryModel: memorySummarizationModel ?? resolvedModel,
             prompt: run.prompt,
           });
           if (memoryResult?.skipped) {
@@ -2055,6 +2100,7 @@ export async function runAgentControlLoop(runId: string) {
           },
           importance: overallOk ? 3 : 2,
           model: memoryValidationModel ?? resolvedModel,
+          summaryModel: memorySummarizationModel ?? resolvedModel,
           prompt: run.prompt,
         });
         if (memoryResult?.skipped) {
@@ -4026,6 +4072,7 @@ async function addProblemSolutionMemory({
   tags = [],
   model,
   prompt,
+  summaryModel,
 }: {
   memoryKey: string;
   runId: string;
@@ -4035,6 +4082,7 @@ async function addProblemSolutionMemory({
   tags?: string[];
   model?: string | null;
   prompt?: string | null;
+  summaryModel?: string | null;
 }) {
   if (!memoryKey || !problem || !countermeasure) return;
   const summary = `Problem: ${problem} · Countermeasure: ${countermeasure}`;
@@ -4051,6 +4099,7 @@ async function addProblemSolutionMemory({
     },
     importance: 4,
     model,
+    summaryModel,
     prompt,
   });
 }

@@ -101,7 +101,7 @@ type ChatbotSettingsPayload = {
 const CHATBOT_SETTINGS_KEY = "default";
 const CHATBOT_SETTINGS_STORAGE_KEY = "chatbot.settings.v1";
 const DEFAULT_CHATBOT_SETTINGS: ChatbotSettingsPayload = {
-  model: "llama3",
+  model: "",
   webSearchEnabled: false,
   useGlobalContext: false,
   useLocalContext: false,
@@ -112,15 +112,15 @@ const DEFAULT_CHATBOT_SETTINGS: ChatbotSettingsPayload = {
   runHeadless: true,
   ignoreRobotsTxt: false,
   requireHumanApproval: false,
-  memoryValidationModel: "llama3",
-  plannerModel: "llama3",
-  selfCheckModel: "llama3",
-  extractionValidationModel: "llama3",
-  loopGuardModel: "llama3",
-  approvalGateModel: "llama3",
-  memorySummarizationModel: "llama3",
-  selectorInferenceModel: "llama3",
-  outputNormalizationModel: "llama3",
+  memoryValidationModel: "",
+  plannerModel: "",
+  selfCheckModel: "",
+  extractionValidationModel: "",
+  loopGuardModel: "",
+  approvalGateModel: "",
+  memorySummarizationModel: "",
+  selectorInferenceModel: "",
+  outputNormalizationModel: "",
   maxSteps: 12,
   maxStepAttempts: 2,
   maxReplanCalls: 2,
@@ -256,8 +256,8 @@ const MODEL_TASK_RULES: Record<string, ModelTaskRule> = {
   selfCheck: { preferLarge: true, minSize: 7 },
   extractionValidation: { preferLarge: true, minSize: 7 },
   approvalGate: { preferLarge: true, minSize: 7, preferReasoning: true },
-  memoryValidation: { preferLarge: true, minSize: 7 },
-  memorySummarization: { preferSmall: true, targetSize: 7, maxSize: 13 },
+  memoryValidation: { preferSmall: true, targetSize: 7, maxSize: 13 },
+  memorySummarization: { preferLarge: true, minSize: 7, preferReasoning: true },
   loopGuard: { preferSmall: true, targetSize: 7, maxSize: 13 },
   selectorInference: { preferSmall: true, targetSize: 7, maxSize: 13 },
   outputNormalization: { preferSmall: true, targetSize: 3, maxSize: 7 },
@@ -349,15 +349,15 @@ const DEFAULT_AGENT_SETTINGS: AgentSettingsPayload = {
   runHeadless: true,
   ignoreRobotsTxt: false,
   requireHumanApproval: false,
-  memoryValidationModel: "llama3",
-  plannerModel: "llama3",
-  selfCheckModel: "llama3",
-  extractionValidationModel: "llama3",
-  loopGuardModel: "llama3",
-  approvalGateModel: "llama3",
-  memorySummarizationModel: "llama3",
-  selectorInferenceModel: "llama3",
-  outputNormalizationModel: "llama3",
+  memoryValidationModel: "",
+  plannerModel: "",
+  selfCheckModel: "",
+  extractionValidationModel: "",
+  loopGuardModel: "",
+  approvalGateModel: "",
+  memorySummarizationModel: "",
+  selectorInferenceModel: "",
+  outputNormalizationModel: "",
   maxSteps: 12,
   maxStepAttempts: 2,
   maxReplanCalls: 2,
@@ -843,7 +843,7 @@ export default function ChatbotPage() {
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [modelOptions, setModelOptions] = useState<string[]>([]);
-  const [model, setModel] = useState("llama3");
+  const [model, setModel] = useState("");
   const [modelLoading, setModelLoading] = useState(true);
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [useGlobalContext, setUseGlobalContext] = useState(false);
@@ -855,19 +855,19 @@ export default function ChatbotPage() {
   const [agentIgnoreRobotsTxt, setAgentIgnoreRobotsTxt] = useState(false);
   const [agentRequireHumanApproval, setAgentRequireHumanApproval] = useState(false);
   const [agentMemoryValidationModel, setAgentMemoryValidationModel] =
-    useState("llama3");
-  const [agentPlannerModel, setAgentPlannerModel] = useState("llama3");
-  const [agentSelfCheckModel, setAgentSelfCheckModel] = useState("llama3");
+    useState("");
+  const [agentPlannerModel, setAgentPlannerModel] = useState("");
+  const [agentSelfCheckModel, setAgentSelfCheckModel] = useState("");
   const [agentExtractionValidationModel, setAgentExtractionValidationModel] =
-    useState("llama3");
-  const [agentLoopGuardModel, setAgentLoopGuardModel] = useState("llama3");
-  const [agentApprovalGateModel, setAgentApprovalGateModel] = useState("llama3");
+    useState("");
+  const [agentLoopGuardModel, setAgentLoopGuardModel] = useState("");
+  const [agentApprovalGateModel, setAgentApprovalGateModel] = useState("");
   const [agentMemorySummarizationModel, setAgentMemorySummarizationModel] =
-    useState("llama3");
+    useState("");
   const [agentSelectorInferenceModel, setAgentSelectorInferenceModel] =
-    useState("llama3");
+    useState("");
   const [agentOutputNormalizationModel, setAgentOutputNormalizationModel] =
-    useState("llama3");
+    useState("");
   const [agentMaxSteps, setAgentMaxSteps] = useState(12);
   const [agentMaxStepAttempts, setAgentMaxStepAttempts] = useState(2);
   const [agentMaxReplanCalls, setAgentMaxReplanCalls] = useState(2);
@@ -5076,7 +5076,7 @@ export default function ChatbotPage() {
                   <div className="w-full max-w-xl">
                     <div className="mt-3">
                       <label className="text-[11px] text-gray-400">
-                        Memory validation model
+                        Memory validation model (fast filter)
                       </label>
                       <div className="mt-1 flex items-center gap-2">
                         <div className="flex-1">
@@ -5308,7 +5308,7 @@ export default function ChatbotPage() {
                     </div>
                     <div className="mt-3">
                       <label className="text-[11px] text-gray-400">
-                        Memory summarization model
+                        Memory summarization model (writer)
                       </label>
                       <div className="mt-1 flex items-center gap-2">
                         <div className="flex-1">
@@ -5474,7 +5474,11 @@ export default function ChatbotPage() {
                   </div>
                   {modelOptions.length === 0 && !modelLoading ? (
                     <p className="mt-2 text-xs text-gray-500">
-                      No models found. Pull one with `ollama pull llama3`.
+                      No models found. Pull one with{" "}
+                      <code className="rounded bg-slate-900 px-1 py-[1px] text-[11px] text-gray-300">
+                        {"ollama pull <model>"}
+                      </code>
+                      .
                     </p>
                   ) : null}
                 </div>

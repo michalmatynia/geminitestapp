@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
 import { logAgentAudit } from "@/lib/agent/audit";
+import { startAgentQueue } from "@/lib/agent/queue";
 import { promises as fs } from "fs";
 import path from "path";
 
@@ -13,6 +14,7 @@ export async function GET(
 ) {
   const requestStart = Date.now();
   try {
+    startAgentQueue();
     if (!("chatbotAgentRun" in prisma)) {
       return NextResponse.json(
         { error: "Agent runs not initialized. Run prisma generate/db push." },

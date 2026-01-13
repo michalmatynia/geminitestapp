@@ -9,7 +9,7 @@ type ChatMessage = {
 };
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3";
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL;
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 const chatbotTempRoot = path.join(
   process.cwd(),
@@ -107,6 +107,12 @@ export async function POST(req: Request) {
   const tempDirs: string[] = [];
   const requestStart = Date.now();
   try {
+    if (!OLLAMA_MODEL) {
+      return NextResponse.json(
+        { error: "OLLAMA_MODEL is not configured." },
+        { status: 500 }
+      );
+    }
     await cleanupChatbotTemp();
     const contentType = req.headers.get("content-type") || "";
     let messages: ChatMessage[] = [];

@@ -1,14 +1,18 @@
 Application notes
+base.com with email: you@example.com password: YourPassword
 
 extend this next with:
 
 Per‑step tool calls and DOM snapshots tied to step IDs.
+per‑step timeline view.
 A timeline view with timestamps.
 Step retries and manual overrides.
 
-extend and develop: 
+
+design an LLM powered  : 
 multi-step planning
 multi-step planning display
+self-questioning flow
 tool call timeline
 human-approval gates
 task persistence/resume
@@ -17,9 +21,9 @@ looping defenses
 
 enable agent mode (playwright) to collect files like actual screenshots and recordings for later preview
 
+enable file hygiene in chatbot
 
 During live preview in Agent Mode, when the agent carries out some actions, enable user to be able to take control at any point
-base.com with email: you@example.com password: YourPassword
 
 Product LIST
 When I create the product, a notification should pop-up that the product has been created

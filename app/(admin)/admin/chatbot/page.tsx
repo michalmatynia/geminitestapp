@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
 import ModalShell from "@/components/ui/modal-shell";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -70,6 +71,7 @@ type AgentBrowserLog = {
   id: string;
   level: string;
   message: string;
+  metadata?: Record<string, unknown> | null;
   createdAt: string;
 };
 
@@ -303,6 +305,21 @@ export default function ChatbotPage() {
   const [stepDetailsSnapshot, setStepDetailsSnapshot] =
     useState<AgentSnapshot | null>(null);
   const [stepDetailsLogs, setStepDetailsLogs] = useState<AgentBrowserLog[]>([]);
+  const [agentRunDetailsOpen, setAgentRunDetailsOpen] = useState(false);
+  const [agentRunDetailsLoading, setAgentRunDetailsLoading] = useState(false);
+  const [agentRunDetails, setAgentRunDetails] = useState<{
+    id: string;
+    prompt: string;
+    model?: string | null;
+    status?: string | null;
+    requiresHumanIntervention?: boolean | null;
+    recordingPath?: string | null;
+  } | null>(null);
+  const [agentRunLogs, setAgentRunLogs] = useState<AgentBrowserLog[]>([]);
+  const [agentRunAudits, setAgentRunAudits] = useState<AgentAuditLog[]>([]);
+  const [expandedRunAuditIds, setExpandedRunAuditIds] = useState<
+    Record<string, boolean>
+  >({});
   const [toolSelectValue, setToolSelectValue] = useState("add");
   const [globalContext, setGlobalContext] = useState("");
   const [localContext, setLocalContext] = useState("");
@@ -322,6 +339,21 @@ export default function ChatbotPage() {
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const [pollingReply, setPollingReply] = useState(false);
   const sessionReady = Boolean(sessionId) && !initError;
+  const sessionContextLogs = useMemo(
+    () => agentRunLogs.filter((log) => log.message === "Captured session context."),
+    [agentRunLogs]
+  );
+  const loginCandidateLogs = useMemo(
+    () => agentRunLogs.filter((log) => log.message === "Inferred login candidates."),
+    [agentRunLogs]
+  );
+  const uiInventoryLogs = useMemo(
+    () => agentRunLogs.filter((log) => log.message === "Captured UI inventory."),
+    [agentRunLogs]
+  );
+  const latestSessionContext = sessionContextLogs.at(-1)?.metadata ?? null;
+  const latestLoginCandidates = loginCandidateLogs.at(-1)?.metadata ?? null;
+  const latestUiInventory = uiInventoryLogs.at(-1)?.metadata ?? null;
 
   const fetchMessagesForSession = useCallback(async (activeSessionId: string) => {
     const res = await fetchWithTimeout(
@@ -756,6 +788,63 @@ export default function ChatbotPage() {
       isMounted = false;
     };
   }, [latestAgentRunId]);
+
+  useEffect(() => {
+    if (!latestAgentRunId || !agentRunDetailsOpen) {
+      setAgentRunLogs([]);
+      setAgentRunAudits([]);
+      setAgentRunDetails(null);
+      return;
+    }
+    let isMounted = true;
+    const loadDetails = async () => {
+      setAgentRunDetailsLoading(true);
+      try {
+        const [runRes, logsRes, auditsRes] = await Promise.all([
+          fetchWithTimeout(`/api/chatbot/agent/${latestAgentRunId}`, {}, 12000),
+          fetchWithTimeout(`/api/chatbot/agent/${latestAgentRunId}/logs`, {}, 12000),
+          fetchWithTimeout(
+            `/api/chatbot/agent/${latestAgentRunId}/audits`,
+            {},
+            12000
+          ),
+        ]);
+        if (!runRes.ok) {
+          const error = await readErrorResponse(runRes);
+          throw new Error(error.message);
+        }
+        if (!logsRes.ok) {
+          throw new Error("Failed to load agent logs.");
+        }
+        if (!auditsRes.ok) {
+          throw new Error("Failed to load agent steps.");
+        }
+        const runData = (await runRes.json()) as { run?: typeof agentRunDetails };
+        const logsData = (await logsRes.json()) as { logs?: AgentBrowserLog[] };
+        const auditsData = (await auditsRes.json()) as { audits?: AgentAuditLog[] };
+        if (!isMounted) return;
+        if (runData.run) {
+          setAgentRunDetails(runData.run);
+        }
+        setAgentRunLogs(logsData.logs ?? []);
+        setAgentRunAudits(auditsData.audits ?? []);
+      } catch (error) {
+        if (isMounted) {
+          const message =
+            error instanceof Error ? error.message : "Failed to load agent run.";
+          toast(message, { variant: "error" });
+        }
+      } finally {
+        if (isMounted) {
+          setAgentRunDetailsLoading(false);
+        }
+      }
+    };
+    void loadDetails();
+    return () => {
+      isMounted = false;
+    };
+  }, [agentRunDetailsOpen, latestAgentRunId, toast]);
 
   const runAgentControl = async (
     action: "goto" | "reload" | "snapshot",
@@ -1274,12 +1363,449 @@ export default function ChatbotPage() {
                       ? ` · ${latestAgentRunStatus.replace("_", " ")}`
                       : ""}
                   </span>
-                  <Link
-                    href="/admin/chatbot/jobs"
-                    className="text-[11px] text-blue-200 underline-offset-2 hover:underline"
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="text-[11px] text-blue-200 underline-offset-2 hover:underline"
+                      onClick={() => setAgentRunDetailsOpen(true)}
+                    >
+                      View run details
+                    </button>
+                    <Link
+                      href="/admin/chatbot/jobs"
+                      className="text-[11px] text-blue-200 underline-offset-2 hover:underline"
+                    >
+                      Jobs
+                    </Link>
+                  </div>
+                </div>
+                {latestAgentRunStatus === "waiting_human" ? (
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
+                    <span>
+                      Cloudflare detected — run paused for manual intervention.
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="text-[11px] text-amber-200 underline-offset-2 hover:underline"
+                        onClick={() => setAgentRunDetailsOpen(true)}
+                      >
+                        Open preview
+                      </button>
+                      <Link
+                        href="/admin/chatbot/jobs"
+                        className="text-[11px] text-amber-200 underline-offset-2 hover:underline"
+                      >
+                        View in jobs
+                      </Link>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+            {agentRunDetailsOpen ? (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+                onClick={() => setAgentRunDetailsOpen(false)}
+              >
+                <div onClick={(event) => event.stopPropagation()}>
+                  <ModalShell
+                    title="Agent run details"
+                    onClose={() => setAgentRunDetailsOpen(false)}
+                    size="xl"
                   >
-                    View job details
-                  </Link>
+                    {agentRunDetailsLoading ? (
+                      <div className="rounded-md border border-gray-800 bg-gray-950 p-4 text-sm text-gray-400">
+                        Loading agent run details...
+                      </div>
+                    ) : (
+                      <Tabs defaultValue="summary" className="w-full">
+                        <TabsList className="grid w-full grid-cols-8">
+                          <TabsTrigger value="summary">Summary</TabsTrigger>
+                          <TabsTrigger value="preview">Preview</TabsTrigger>
+                          <TabsTrigger value="dom">DOM</TabsTrigger>
+                          <TabsTrigger value="steps">Steps</TabsTrigger>
+                          <TabsTrigger value="logs">Logs</TabsTrigger>
+                          <TabsTrigger value="context">Context</TabsTrigger>
+                          <TabsTrigger value="elements">Elements</TabsTrigger>
+                          <TabsTrigger value="ui">UI</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="summary" className="mt-4 space-y-3">
+                          {agentRunDetails ? (
+                            <div className="rounded-md border border-gray-800 bg-gray-900 p-3 text-xs text-gray-300">
+                              <p className="text-[11px] text-gray-500">Run summary</p>
+                              <p className="mt-1 text-sm text-white">
+                                {agentRunDetails.prompt}
+                              </p>
+                              <div className="mt-2 text-xs text-gray-400">
+                                Status:{" "}
+                                {agentRunDetails.status?.replace("_", " ") ||
+                                  "unknown"}{" "}
+                                · Model: {agentRunDetails.model || "Default"}
+                                {agentRunDetails.requiresHumanIntervention
+                                  ? " · needs input"
+                                  : ""}
+                              </div>
+                              {agentRunDetails.recordingPath ? (
+                                <div className="mt-2 text-xs text-gray-400">
+                                  Recording:{" "}
+                                  <a
+                                    className="text-emerald-300 hover:text-emerald-200"
+                                    href={`/api/chatbot/agent/${agentRunDetails.id}/assets/${agentRunDetails.recordingPath}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  >
+                                    View recording
+                                  </a>
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </TabsContent>
+                        <TabsContent value="preview" className="mt-4">
+                          <div className="rounded-md border border-gray-800 bg-gray-950 p-3">
+                            <div className="flex items-center justify-between text-xs text-gray-400">
+                              <span>Preview</span>
+                              <span>
+                                {agentPreviewStatus === "live"
+                                  ? "Live"
+                                  : agentPreviewStatus === "connecting"
+                                    ? "Connecting..."
+                                    : agentPreviewStatus === "error"
+                                      ? "Fallback"
+                                      : "Idle"}
+                              </span>
+                            </div>
+                            <div className="mt-3 overflow-hidden rounded-md border border-gray-800 bg-gray-900">
+                              {agentPreviewSnapshot?.screenshotPath ||
+                              agentPreviewSnapshot?.screenshotData ? (
+                                <img
+                                  src={
+                                    agentPreviewSnapshot.screenshotPath
+                                      ? `/api/chatbot/agent/${latestAgentRunId}/assets/${agentPreviewSnapshot.screenshotPath}`
+                                      : agentPreviewSnapshot.screenshotData ?? ""
+                                  }
+                                  alt="Agent preview"
+                                  className="h-auto w-full"
+                                />
+                              ) : (
+                                <div className="flex min-h-[200px] items-center justify-center text-xs text-gray-500">
+                                  No preview yet.
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="dom" className="mt-4">
+                          <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                            <p className="text-[11px] text-gray-500">DOM snapshot</p>
+                            <div className="mt-2 max-h-48 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                              {agentPreviewSnapshot?.domText ||
+                                "No DOM captured yet."}
+                            </div>
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="steps" className="mt-4">
+                          <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                            <p className="text-[11px] text-gray-500">Agent steps</p>
+                            <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                              {agentRunAudits.length === 0 ? (
+                                <p className="text-gray-500">No steps yet.</p>
+                              ) : (
+                                agentRunAudits.map((step) => (
+                                  <div
+                                    key={step.id}
+                                    className="rounded-md border border-gray-800 px-2 py-1"
+                                  >
+                                    <div className="flex items-center justify-between text-[10px] text-gray-500">
+                                      <span className="uppercase tracking-wide">
+                                        {step.level}
+                                      </span>
+                                      <span>
+                                        {new Date(step.createdAt).toLocaleTimeString()}
+                                      </span>
+                                    </div>
+                                    <p className="mt-1 text-gray-200">
+                                      {step.message}
+                                    </p>
+                                    {step.metadata ? (
+                                      <div className="mt-2">
+                                        <button
+                                          type="button"
+                                          className="text-[10px] uppercase tracking-wide text-slate-400 hover:text-slate-200"
+                                          onClick={() =>
+                                            setExpandedRunAuditIds((prev) => ({
+                                              ...prev,
+                                              [step.id]: !prev[step.id],
+                                            }))
+                                          }
+                                        >
+                                          {expandedRunAuditIds[step.id]
+                                            ? "Hide metadata"
+                                            : "Show metadata"}
+                                        </button>
+                                        {expandedRunAuditIds[step.id] ? (
+                                          <pre className="mt-2 whitespace-pre-wrap rounded-md border border-gray-800 bg-gray-900 p-2 text-[10px] text-gray-300">
+                                            {JSON.stringify(step.metadata, null, 2)}
+                                          </pre>
+                                        ) : null}
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="logs" className="mt-4">
+                          <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                            <p className="text-[11px] text-gray-500">Logs</p>
+                            <div className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                              {agentRunLogs.length === 0 ? (
+                                <p className="text-gray-500">No logs yet.</p>
+                              ) : (
+                                agentRunLogs.map((log) => (
+                                  <p key={log.id}>
+                                    [{log.level}] {log.message}
+                                  </p>
+                                ))
+                              )}
+                            </div>
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="context" className="mt-4">
+                          <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                            <p className="text-[11px] text-gray-500">
+                              Session context
+                            </p>
+                            {latestSessionContext ? (
+                              <div className="mt-2 space-y-3">
+                                <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                    Cookies
+                                  </p>
+                                  <div className="mt-1 max-h-36 overflow-y-auto">
+                                    {(latestSessionContext.cookies as Array<{
+                                      name: string;
+                                      domain: string;
+                                      path: string;
+                                      expires: number;
+                                      httpOnly: boolean;
+                                      secure: boolean;
+                                      sameSite: string;
+                                      valueLength: number;
+                                    }> | undefined)?.map((cookie, index) => (
+                                      <div key={`${cookie.name}-${index}`} className="mt-1">
+                                        <span className="text-slate-100">
+                                          {cookie.name}
+                                        </span>{" "}
+                                        <span className="text-gray-500">
+                                          {cookie.domain}
+                                        </span>
+                                        <span className="ml-2 text-gray-500">
+                                          len {cookie.valueLength}
+                                        </span>
+                                      </div>
+                                    )) ?? (
+                                      <p className="text-gray-500">
+                                        No cookies captured.
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                    Storage keys
+                                  </p>
+                                  <div className="mt-1 text-gray-300">
+                                    <p>
+                                      Local:{" "}
+                                      {(latestSessionContext.storage as {
+                                        localCount?: number;
+                                      })?.localCount ?? 0}
+                                      {" · "}
+                                      Session:{" "}
+                                      {(latestSessionContext.storage as {
+                                        sessionCount?: number;
+                                      })?.sessionCount ?? 0}
+                                    </p>
+                                    <div className="mt-1 max-h-20 overflow-y-auto text-[10px] text-gray-400">
+                                      {(latestSessionContext.storage as {
+                                        localKeys?: string[];
+                                        sessionKeys?: string[];
+                                      })?.localKeys?.join(", ") ||
+                                        "No localStorage keys."}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="mt-2 text-gray-500">
+                                No session context captured yet.
+                              </p>
+                            )}
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="elements" className="mt-4">
+                          <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                            <p className="text-[11px] text-gray-500">
+                              Login candidates
+                            </p>
+                            {latestLoginCandidates ? (
+                              <div className="mt-2 grid gap-3 md:grid-cols-2">
+                                <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                    Inputs
+                                  </p>
+                                  <div className="mt-1 max-h-36 space-y-1 overflow-y-auto">
+                                    {(latestLoginCandidates.inputs as Array<{
+                                      tag: string;
+                                      id: string | null;
+                                      name: string | null;
+                                      type: string | null;
+                                      placeholder: string | null;
+                                      ariaLabel: string | null;
+                                      score: number;
+                                    }> | undefined)?.map((input, index) => (
+                                      <div key={`${input.name}-${index}`}>
+                                        <span className="text-slate-100">
+                                          {input.name ||
+                                            input.id ||
+                                            input.type ||
+                                            "input"}
+                                        </span>{" "}
+                                        <span className="text-gray-500">
+                                          score {input.score}
+                                        </span>
+                                      </div>
+                                    )) ?? (
+                                      <p className="text-gray-500">
+                                        No inputs captured.
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                    Buttons
+                                  </p>
+                                  <div className="mt-1 max-h-36 space-y-1 overflow-y-auto">
+                                    {(latestLoginCandidates.buttons as Array<{
+                                      tag: string;
+                                      id: string | null;
+                                      name: string | null;
+                                      type: string | null;
+                                      text: string | null;
+                                      score: number;
+                                    }> | undefined)?.map((button, index) => (
+                                      <div key={`${button.text}-${index}`}>
+                                        <span className="text-slate-100">
+                                          {button.text ||
+                                            button.id ||
+                                            button.name ||
+                                            "button"}
+                                        </span>{" "}
+                                        <span className="text-gray-500">
+                                          score {button.score}
+                                        </span>
+                                      </div>
+                                    )) ?? (
+                                      <p className="text-gray-500">
+                                        No buttons captured.
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="mt-2 text-gray-500">
+                                No candidate elements captured yet.
+                              </p>
+                            )}
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="ui" className="mt-4">
+                          <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                            <p className="text-[11px] text-gray-500">
+                              UI inventory
+                            </p>
+                            {latestUiInventory ? (
+                              <div className="mt-2 space-y-3">
+                                <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                    Counts
+                                  </p>
+                                  <div className="mt-1 grid grid-cols-2 gap-2 text-[10px] text-gray-400">
+                                    {Object.entries(
+                                      (latestUiInventory.counts as Record<string, number>) || {}
+                                    ).map(([key, value]) => (
+                                      <span key={key}>
+                                        {key}: {value}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div className="grid gap-3 md:grid-cols-2">
+                                  {(
+                                    [
+                                      "inputs",
+                                      "buttons",
+                                      "links",
+                                      "headings",
+                                      "forms",
+                                    ] as const
+                                  ).map((section) => (
+                                    <div
+                                      key={section}
+                                      className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200"
+                                    >
+                                      <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                        {section}
+                                      </p>
+                                      <div className="mt-1 max-h-32 space-y-1 overflow-y-auto text-[10px] text-gray-400">
+                                        {(
+                                          (latestUiInventory as Record<string, unknown>)[
+                                            section
+                                          ] as Array<{
+                                            selector?: string | null;
+                                            text?: string | null;
+                                            name?: string | null;
+                                            id?: string | null;
+                                            type?: string | null;
+                                          }> | undefined
+                                        )?.map((item, index) => (
+                                          <div key={`${section}-${index}`}>
+                                            <span className="text-slate-100">
+                                              {item.text ||
+                                                item.name ||
+                                                item.id ||
+                                                item.type ||
+                                                "item"}
+                                            </span>
+                                            {item.selector ? (
+                                              <span className="ml-2 text-gray-500">
+                                                {item.selector}
+                                              </span>
+                                            ) : null}
+                                          </div>
+                                        )) ?? (
+                                          <span>No {section} captured.</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="mt-2 text-gray-500">
+                                No UI inventory captured yet.
+                              </p>
+                            )}
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                    )}
+                  </ModalShell>
                 </div>
               </div>
             ) : null}

@@ -22,6 +22,8 @@ type ToolOutput = {
   domText?: string;
   snapshotId?: string | null;
   logCount?: number | null;
+  extractedNames?: string[];
+  extractedTotal?: number;
 };
 
 export type AgentToolResult = {
@@ -37,6 +39,10 @@ const extractTargetUrl = (prompt?: string) => {
   if (!prompt) return null;
   const urlMatch = prompt.match(/https?:\/\/[^\s)]+/i);
   if (urlMatch) return urlMatch[0];
+  const domainMatch = prompt.match(/\b([a-z0-9-]+\.)+[a-z]{2,}\b/i);
+  if (domainMatch) {
+    return `https://${domainMatch[0]}`;
+  }
   if (/base\.com/i.test(prompt)) {
     return "https://base.com";
   }
@@ -55,10 +61,20 @@ const parseCredentials = (prompt?: string) => {
   return { email, username, password };
 };
 
+const parseExtractionRequest = (prompt?: string) => {
+  if (!prompt) return null;
+  if (!/extract/i.test(prompt) || !/product/i.test(prompt)) return null;
+  const countMatch = prompt.match(/(\d+)\s*(?:products?|product names?)/i);
+  const count = countMatch ? Number(countMatch[1]) : null;
+  return { count };
+};
+
 const toDataUrl = (buffer: Buffer) =>
   `data:image/png;base64,${buffer.toString("base64")}`;
 
 const safeText = (value: string | null | undefined) => value ?? "";
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
+const DEFAULT_OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? "qwen3-vl:30b";
 
 export async function runAgentTool(request: AgentToolRequest): Promise<AgentToolResult> {
   const { runId, prompt, browser, runHeadless, stepId, stepLabel } = request.input;
@@ -76,6 +92,14 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
 
   try {
     const targetUrl = extractTargetUrl(prompt) ?? "about:blank";
+    const runRecord =
+      "chatbotAgentRun" in prisma
+        ? await prisma.chatbotAgentRun.findUnique({
+            where: { id: runId },
+            select: { model: true },
+          })
+        : null;
+    const resolvedModel = runRecord?.model || DEFAULT_OLLAMA_MODEL;
     const browserType =
       browser === "firefox" ? firefox : browser === "webkit" ? webkit : chromium;
 
@@ -131,6 +155,29 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
         error: req.failure()?.errorText,
       });
     });
+    let cloudflareDetected = false;
+    const detectChallenge = (text: string) =>
+      /cloudflare|attention required|cf-browser-verification|challenge-platform|cf-turnstile/i.test(
+        text
+      );
+    const flagCloudflare = async (source: string, detail?: string) => {
+      if (cloudflareDetected) return;
+      cloudflareDetected = true;
+      await log("warning", "Cloudflare challenge detected.", {
+        source,
+        detail,
+        stepId: stepId ?? null,
+      });
+    };
+    page.on("response", async (res) => {
+      const status = res.status();
+      if (status === 403) {
+        const url = res.url();
+        if (/cloudflare|cdn-cgi|login\.baselinker\.com/i.test(url)) {
+          await flagCloudflare("response-403", url);
+        }
+      }
+    });
 
     await log("info", "Playwright tool started.", {
       browser: browser || "chromium",
@@ -138,9 +185,142 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
       targetUrl,
     });
 
+    const collectUiInventory = async (label: string, activeStepId?: string) => {
+      if (!page) return null;
+      try {
+        const uiInventory = await page.evaluate(() => {
+          const cssPath = (el: Element) => {
+            if (!(el instanceof Element)) return null;
+            if (el.id) return `#${CSS.escape(el.id)}`;
+            const parts: string[] = [];
+            let node: Element | null = el;
+            while (node && node.nodeType === 1 && node !== document.documentElement) {
+              let part = node.tagName.toLowerCase();
+              const name = node.getAttribute("name");
+              const dataTest =
+                node.getAttribute("data-testid") ||
+                node.getAttribute("data-test") ||
+                node.getAttribute("data-qa");
+              if (name) {
+                part += `[name="${name.replace(/"/g, '\\"')}"]`;
+              } else if (dataTest) {
+                part += `[data-testid="${dataTest.replace(/"/g, '\\"')}"]`;
+              }
+              const parent = node.parentElement;
+              if (parent) {
+                const siblings = Array.from(parent.children).filter(
+                  (child) => child.tagName === node!.tagName
+                );
+                if (siblings.length > 1) {
+                  part += `:nth-of-type(${siblings.indexOf(node) + 1})`;
+                }
+              }
+              parts.unshift(part);
+              node = node.parentElement;
+            }
+            return parts.join(" > ");
+          };
+
+          const visible = (el: Element) =>
+            (el as HTMLElement).offsetParent !== null;
+          const describe = (el: Element) => ({
+            tag: el.tagName.toLowerCase(),
+            id: (el as HTMLElement).id || null,
+            name: (el as HTMLInputElement).name || null,
+            type: (el as HTMLInputElement).type || null,
+            text: (el as HTMLElement).innerText?.trim().slice(0, 160) || null,
+            placeholder: (el as HTMLInputElement).placeholder || null,
+            ariaLabel: el.getAttribute("aria-label"),
+            role: el.getAttribute("role"),
+            selector: cssPath(el),
+          });
+
+          const cap = 200;
+          const inputs = Array.from(document.querySelectorAll("input, textarea, select"))
+            .filter(visible)
+            .map(describe);
+          const buttons = Array.from(
+            document.querySelectorAll("button, input[type='submit'], input[type='button']")
+          )
+            .filter(visible)
+            .map(describe);
+          const links = Array.from(document.querySelectorAll("a[href]"))
+            .filter(visible)
+            .map((el) => ({
+              ...describe(el),
+              href: (el as HTMLAnchorElement).href,
+            }));
+          const headings = Array.from(
+            document.querySelectorAll("h1, h2, h3, h4, h5, h6")
+          )
+            .filter(visible)
+            .map(describe);
+          const forms = Array.from(document.querySelectorAll("form"))
+            .filter(visible)
+            .map((el) => ({
+              ...describe(el),
+              action: (el as HTMLFormElement).action || null,
+              method: (el as HTMLFormElement).method || null,
+            }));
+
+          const truncated = {
+            inputs: inputs.length > cap,
+            buttons: buttons.length > cap,
+            links: links.length > cap,
+            headings: headings.length > cap,
+            forms: forms.length > cap,
+          };
+
+          return {
+            url: location.href,
+            title: document.title,
+            counts: {
+              inputs: inputs.length,
+              buttons: buttons.length,
+              links: links.length,
+              headings: headings.length,
+              forms: forms.length,
+            },
+            inputs: inputs.slice(0, cap),
+            buttons: buttons.slice(0, cap),
+            links: links.slice(0, cap),
+            headings: headings.slice(0, cap),
+            forms: forms.slice(0, cap),
+            truncated,
+          };
+        });
+
+        await log("info", "Captured UI inventory.", {
+          label,
+          stepId: activeStepId ?? null,
+          uiInventory,
+        });
+        await prisma.agentAuditLog.create({
+          data: {
+            runId,
+            level: "info",
+            message: "Captured UI inventory.",
+            metadata: {
+              label,
+              stepId: activeStepId ?? null,
+              uiInventory,
+            },
+          },
+        });
+        return uiInventory;
+      } catch (error) {
+        await log("warning", "Failed to capture UI inventory.", {
+          label,
+          stepId: activeStepId ?? null,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+      return null;
+    };
+
     const captureSnapshot = async (label: string, activeStepId?: string) => {
       if (!page) {
-        return { domText: "", url: "" };
+        return { domText: "", domHtml: "", url: "" };
       }
       const domHtml = await page.content();
       const domText = await page.evaluate(
@@ -175,9 +355,257 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
       await log("info", "Captured DOM snapshot.", {
         label,
         screenshotFile,
+        domTextLength: domText.length,
+        domHtmlLength: domHtml.length,
         stepId: activeStepId ?? null,
       });
-      return { domText, url: snapshotUrl };
+      await collectUiInventory(label, activeStepId);
+      return { domText, domHtml, url: snapshotUrl };
+    };
+
+    const extractProductNames = async () => {
+      if (!page) return [];
+      return page.evaluate(() => {
+        const normalize = (value: string) => value.replace(/\s+/g, " ").trim();
+        const candidates: string[] = [];
+        const seen = new Set<string>();
+
+        const pushName = (value: string | null | undefined) => {
+          if (!value) return;
+          const cleaned = normalize(value);
+          if (cleaned.length < 3 || cleaned.length > 140) return;
+          if (seen.has(cleaned.toLowerCase())) return;
+          seen.add(cleaned.toLowerCase());
+          candidates.push(cleaned);
+        };
+
+        const productSelectors = [
+          "[data-product]",
+          "[data-product-name]",
+          "[data-testid*='product' i]",
+          "[itemtype*='Product']",
+          ".product",
+          ".product-item",
+          ".product-card",
+          ".product-tile",
+          ".product-grid > *",
+          ".collection-product",
+          ".collection-item",
+          ".grid-item",
+          "article",
+          "[class*='product' i]",
+        ];
+        const nameSelectors = [
+          "[data-product-name]",
+          "[data-testid*='title' i]",
+          "[itemprop='name']",
+          ".product-title",
+          ".product-name",
+          ".product-card__title",
+          ".card__heading",
+          ".product-item__title",
+          "h1",
+          "h2",
+          "h3",
+          "h4",
+        ];
+
+        for (const selector of productSelectors) {
+          document.querySelectorAll(selector).forEach((node) => {
+            const element = node as HTMLElement;
+            for (const nameSelector of nameSelectors) {
+              const nameNode = element.querySelector(nameSelector) as HTMLElement | null;
+              if (nameNode?.innerText) {
+                pushName(nameNode.innerText);
+                break;
+              }
+            }
+            if (element.getAttribute("data-product-name")) {
+              pushName(element.getAttribute("data-product-name"));
+            }
+            const img = element.querySelector("img[alt]") as HTMLImageElement | null;
+            if (img?.alt) {
+              pushName(img.alt);
+            }
+          });
+        }
+
+        document
+          .querySelectorAll("a[href*='/product' i], a[href*='product' i]")
+          .forEach((link) => {
+            const text = (link as HTMLElement).innerText;
+            if (text) pushName(text);
+          });
+
+        document.querySelectorAll("h2, h3, h4").forEach((heading) => {
+          pushName((heading as HTMLElement).innerText);
+        });
+
+        return candidates;
+      });
+    };
+
+    const extractProductNamesFromSelectors = async (selectors: string[]) => {
+      if (!page || selectors.length === 0) return [];
+      return page.evaluate((selectorsParam) => {
+        const normalize = (value: string) => value.replace(/\s+/g, " ").trim();
+        const candidates: string[] = [];
+        const seen = new Set<string>();
+
+        const pushName = (value: string | null | undefined) => {
+          if (!value) return;
+          const cleaned = normalize(value);
+          if (cleaned.length < 3 || cleaned.length > 140) return;
+          if (seen.has(cleaned.toLowerCase())) return;
+          seen.add(cleaned.toLowerCase());
+          candidates.push(cleaned);
+        };
+
+        selectorsParam.forEach((selector) => {
+          document.querySelectorAll(selector).forEach((node) => {
+            const element = node as HTMLElement;
+            const text = element.innerText || element.textContent;
+            if (text) pushName(text);
+            if (element.getAttribute("data-product-name")) {
+              pushName(element.getAttribute("data-product-name"));
+            }
+            const img = element.querySelector("img[alt]") as HTMLImageElement | null;
+            if (img?.alt) {
+              pushName(img.alt);
+            }
+          });
+        });
+
+        return candidates;
+      }, selectors);
+    };
+
+    const waitForProductContent = async () => {
+      if (!page) return;
+      const productSelectors = [
+        "[data-product]",
+        "[data-product-name]",
+        "[data-testid*='product' i]",
+        "[itemtype*='Product']",
+        ".product",
+        ".product-item",
+        ".product-card",
+        ".product-tile",
+        ".product-grid > *",
+        ".collection-product",
+        ".collection-item",
+        ".grid-item",
+        "article",
+        "[class*='product' i]",
+      ];
+      try {
+        await page.waitForLoadState("networkidle", { timeout: 15000 });
+      } catch {
+        // Ignore network idle timeouts.
+      }
+      try {
+        await Promise.race(
+          productSelectors.map((selector) =>
+            page.waitForSelector(selector, { timeout: 4000 })
+          )
+        );
+      } catch {
+        // Ignore if no product selectors appear quickly.
+      }
+    };
+
+    const autoScroll = async () => {
+      if (!page) return;
+      await page.evaluate(async () => {
+        const totalHeight = document.body.scrollHeight;
+        const distance = Math.min(800, window.innerHeight || 800);
+        let current = 0;
+        while (current < totalHeight) {
+          window.scrollBy(0, distance);
+          current += distance;
+          await new Promise((resolve) => setTimeout(resolve, 250));
+        }
+        window.scrollTo(0, 0);
+      });
+    };
+
+    const checkForChallenge = async (source: string) => {
+      if (!page) return false;
+      const html = await page.content();
+      const text = await page.evaluate(
+        () => document.body?.innerText || document.documentElement?.innerText || ""
+      );
+      if (detectChallenge(text) || detectChallenge(html)) {
+        await flagCloudflare(source, "challenge markers in DOM/HTML");
+        return true;
+      }
+      return false;
+    };
+
+    const inferSelectorsFromLLM = async (
+      uiInventory: unknown,
+      domTextSample: string
+    ) => {
+      if (!uiInventory) return [];
+      try {
+        const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: resolvedModel,
+            stream: false,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are a DOM selector expert. Return only JSON with a 'selectors' array. Use concise, robust CSS selectors.",
+              },
+              {
+                role: "user",
+                content: JSON.stringify({
+                  task: "Extract product names from this page.",
+                  domTextSample,
+                  uiInventory,
+                }),
+              },
+            ],
+            options: { temperature: 0.2 },
+          }),
+        });
+        if (!response.ok) {
+          throw new Error(`LLM selector inference failed (${response.status}).`);
+        }
+        const json = await response.json();
+        const content = json?.message?.content || "";
+        const match = content.match(/\{[\s\S]*\}/);
+        const parsed = match ? JSON.parse(match[0]) : JSON.parse(content);
+        const selectors = Array.isArray(parsed?.selectors)
+          ? parsed.selectors.filter((selector: unknown) => typeof selector === "string")
+          : [];
+        await log("info", "LLM selector inference completed.", {
+          stepId: activeStepId ?? null,
+          selectors,
+        });
+        await prisma.agentAuditLog.create({
+          data: {
+            runId,
+            level: "info",
+            message: "LLM selector inference completed.",
+            metadata: {
+              selectors,
+              model: resolvedModel,
+              stepId: activeStepId ?? null,
+            },
+          },
+        });
+        return selectors;
+      } catch (error) {
+        await log("warning", "LLM selector inference failed.", {
+          stepId: activeStepId ?? null,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return [];
+      }
     };
 
     const findFirstVisible = async (locator: ReturnType<Page["locator"]>) => {
@@ -189,6 +617,207 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
         }
       }
       return null;
+    };
+
+    const captureSessionContext = async (label: string) => {
+      if (!page || !context) return;
+      try {
+        const cookies = await context.cookies();
+        const cookieSummary = cookies.map((cookie) => ({
+          name: cookie.name,
+          domain: cookie.domain,
+          path: cookie.path,
+          expires: cookie.expires,
+          httpOnly: cookie.httpOnly,
+          secure: cookie.secure,
+          sameSite: cookie.sameSite,
+          valueLength: cookie.value?.length ?? 0,
+        }));
+
+        const storageSummary = await page.evaluate(() => {
+          const localKeys = Object.keys(localStorage ?? {});
+          const sessionKeys = Object.keys(sessionStorage ?? {});
+          return {
+            localKeys,
+            sessionKeys,
+            localCount: localKeys.length,
+            sessionCount: sessionKeys.length,
+          };
+        });
+
+        await log("info", "Captured session context.", {
+          label,
+          url: page.url(),
+          title: await page.title(),
+          cookies: cookieSummary,
+          storage: storageSummary,
+          stepId: activeStepId ?? null,
+        });
+      } catch (error) {
+        await log("warning", "Failed to capture session context.", {
+          label,
+          error: error instanceof Error ? error.message : String(error),
+          stepId: activeStepId ?? null,
+        });
+      }
+    };
+
+    const inferLoginCandidates = async () => {
+      if (!page) return null;
+      try {
+        const candidates = await page.evaluate(() => {
+          const cssPath = (el: Element) => {
+            if (!(el instanceof Element)) return null;
+            if (el.id) {
+              return `#${CSS.escape(el.id)}`;
+            }
+            const parts: string[] = [];
+            let node: Element | null = el;
+            while (node && node.nodeType === 1 && node !== document.documentElement) {
+              let part = node.tagName.toLowerCase();
+              const name = node.getAttribute("name");
+              const dataTest =
+                node.getAttribute("data-testid") ||
+                node.getAttribute("data-test") ||
+                node.getAttribute("data-qa");
+              if (name) {
+                part += `[name="${name.replace(/"/g, '\\"')}"]`;
+              } else if (dataTest) {
+                part += `[data-testid="${dataTest.replace(/"/g, '\\"')}"]`;
+              }
+              const parent = node.parentElement;
+              if (parent) {
+                const siblings = Array.from(parent.children).filter(
+                  (child) => child.tagName === node!.tagName
+                );
+                if (siblings.length > 1) {
+                  const index = siblings.indexOf(node) + 1;
+                  part += `:nth-of-type(${index})`;
+                }
+              }
+              parts.unshift(part);
+              node = node.parentElement;
+            }
+            return parts.join(" > ");
+          };
+
+          const scoreInput = (el: HTMLInputElement) => {
+            const attrs = [
+              el.name,
+              el.id,
+              el.placeholder,
+              el.getAttribute("aria-label"),
+              el.getAttribute("autocomplete"),
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase();
+            let score = 0;
+            if (el.type === "email") score += 5;
+            if (el.type === "password") score += 5;
+            if (attrs.includes("email")) score += 4;
+            if (attrs.includes("user") || attrs.includes("login")) score += 3;
+            if (attrs.includes("password") || attrs.includes("pass")) score += 4;
+            return score;
+          };
+
+          const describe = (el: Element) => ({
+            tag: el.tagName.toLowerCase(),
+            id: (el as HTMLElement).id || null,
+            name: (el as HTMLInputElement).name || null,
+            type: (el as HTMLInputElement).type || null,
+            text: (el as HTMLElement).innerText?.trim().slice(0, 120) || null,
+            placeholder: (el as HTMLInputElement).placeholder || null,
+            ariaLabel: el.getAttribute("aria-label"),
+            selector: cssPath(el),
+          });
+
+          const inputs = Array.from(
+            document.querySelectorAll("input, textarea, select")
+          )
+            .filter((el) => (el as HTMLElement).offsetParent !== null)
+            .map((el) => ({
+              ...describe(el),
+              score:
+                el instanceof HTMLInputElement ? scoreInput(el) : 0,
+            }))
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 12);
+
+          const buttons = Array.from(
+            document.querySelectorAll("button, input[type='submit'], input[type='button']")
+          )
+            .filter((el) => (el as HTMLElement).offsetParent !== null)
+            .map((el) => ({
+              ...describe(el),
+              score: /log in|login|sign in|submit|continue|zaloguj|zaloguj się/i.test(
+                (el as HTMLElement).innerText || (el as HTMLInputElement).value || ""
+              )
+                ? 5
+                : 1,
+            }))
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 12);
+
+          return { inputs, buttons };
+        });
+
+        await log("info", "Inferred login candidates.", {
+          stepId: activeStepId ?? null,
+          candidates,
+        });
+        return candidates;
+      } catch (error) {
+        await log("warning", "Failed to infer login candidates.", {
+          error: error instanceof Error ? error.message : String(error),
+          stepId: activeStepId ?? null,
+        });
+      }
+      return null;
+    };
+
+    const ensureLoginFormVisible = async () => {
+      if (!page) return;
+      const passwordSelector =
+        'input[type="password"], input[name*="pass" i], input[autocomplete*="current-password" i]';
+      const passwordField = await findFirstVisible(page.locator(passwordSelector));
+      if (passwordField) return true;
+
+      const loginTrigger = await findFirstVisible(
+        page.locator(
+          'a, button, [role="button"]'
+        ).filter({
+          hasText: /log in|login|sign in|zaloguj|zalogować|zaloguj się|inloggen|logga in|connexion|accedi/i,
+        })
+      );
+
+      if (loginTrigger) {
+        await loginTrigger.click();
+        await log("info", "Clicked login trigger.");
+        await captureSessionContext("after-login-trigger");
+        try {
+          await page.waitForSelector(passwordSelector, { timeout: 10000 });
+        } catch {
+          await log("warning", "Login form did not appear after clicking trigger.");
+        }
+        const postClickPassword = await findFirstVisible(page.locator(passwordSelector));
+        if (postClickPassword) return true;
+      }
+
+      const currentUrl = page.url();
+      try {
+        const target = new URL(currentUrl);
+        const loginUrl = `${target.origin}/login`;
+        await page.goto(loginUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
+        await log("info", "Navigated to fallback login URL.", { loginUrl });
+        await captureSessionContext("after-login-fallback");
+      } catch {
+        await log("warning", "Failed to navigate to fallback login URL.");
+      }
+      const fallbackPassword = await findFirstVisible(page.locator(passwordSelector));
+      if (fallbackPassword) return true;
+      await log("warning", "Login form still not visible after fallback navigation.");
+      return false;
     };
 
     let domText = "";
@@ -210,13 +839,131 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
       );
       domText = initialSnapshot.domText;
       finalUrl = initialSnapshot.url;
+      await captureSessionContext("after-initial-navigation");
+      if (detectChallenge(domText) || detectChallenge(initialSnapshot.domHtml)) {
+        await flagCloudflare("dom", "challenge markers in DOM/HTML");
+      }
+      if (cloudflareDetected) {
+        return {
+          ok: false,
+          error: "Cloudflare challenge detected; requires human.",
+        };
+      }
+
+      const extractionRequest = parseExtractionRequest(prompt);
+      if (extractionRequest) {
+        const requiredCount = extractionRequest.count ?? 10;
+        await waitForProductContent();
+        let extractedNames = await extractProductNames();
+        if (extractedNames.length === 0) {
+          await log("warning", "No product names found on first pass; scrolling.", {
+            url: finalUrl,
+          });
+          await autoScroll();
+          const scrolledSnapshot = await captureSnapshot(
+            "after-scroll",
+            activeStepId ?? undefined
+          );
+          domText = scrolledSnapshot.domText;
+          extractedNames = await extractProductNames();
+        }
+        if (extractedNames.length === 0) {
+          const domSample = (
+            await page.evaluate(
+              () => document.body?.innerText || document.documentElement?.innerText || ""
+            )
+          ).slice(0, 2000);
+          const uiInventory = await collectUiInventory(
+            "selector-inference",
+            activeStepId ?? undefined
+          );
+          const inferredSelectors = await inferSelectorsFromLLM(uiInventory, domSample);
+          if (inferredSelectors.length) {
+            await log("info", "Trying inferred selectors for product extraction.", {
+              selectors: inferredSelectors,
+              stepId: activeStepId ?? null,
+            });
+            extractedNames = await extractProductNamesFromSelectors(inferredSelectors);
+          }
+        }
+        const extractedTotal = extractedNames.length;
+        const limitedNames = extractedNames.slice(0, Math.max(requiredCount, 10));
+        await prisma.agentAuditLog.create({
+          data: {
+            runId,
+            level: extractedTotal ? "info" : "warning",
+            message: extractedTotal
+              ? "Extracted product names."
+              : "No product names extracted.",
+            metadata: {
+              requestedCount: requiredCount,
+              extractedCount: extractedTotal,
+              names: limitedNames,
+              url: finalUrl,
+            },
+          },
+        });
+        await log(
+          extractedTotal ? "info" : "warning",
+          extractedTotal ? "Extracted product names." : "No product names extracted.",
+          {
+            requestedCount: requiredCount,
+            extractedCount: extractedTotal,
+            names: limitedNames,
+            url: finalUrl,
+          }
+        );
+        if (extractedTotal === 0) {
+          return {
+            ok: false,
+            error: "No product names extracted.",
+            output: {
+              url: finalUrl,
+              domText,
+              extractedNames: [],
+              extractedTotal: 0,
+            },
+          };
+        }
+        return {
+          ok: true,
+          output: {
+            url: finalUrl,
+            domText,
+            extractedNames: limitedNames,
+            extractedTotal,
+          },
+        };
+      }
 
       const credentials = parseCredentials(prompt);
       if (credentials) {
+        let loginFormVisible = false;
+        let submitPerformed = false;
+        let usernameFilled = false;
+        let passwordFilled = false;
         await log("info", "Detected login credentials.", {
           email: credentials.email ? "[redacted]" : null,
           username: credentials.username ? "[redacted]" : null,
         });
+        loginFormVisible = await ensureLoginFormVisible();
+        await checkForChallenge("dom-after-login");
+        if (cloudflareDetected) {
+          return {
+            ok: false,
+            error: "Cloudflare challenge detected; requires human.",
+          };
+        }
+        if (!loginFormVisible) {
+          await log("error", "Login form not visible after attempting to open.", {
+            stepId: activeStepId ?? null,
+          });
+          return {
+            ok: false,
+            error: "Login form not visible after attempting to open.",
+          };
+        }
+        await inferLoginCandidates();
         const emailInput = await findFirstVisible(
           page.locator(
             'input[type="email"], input[name*="email" i], input[autocomplete*="email" i]'
@@ -238,6 +985,7 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
         if (usernameInput && (credentials.email || credentials.username)) {
           const value = credentials.email ?? credentials.username ?? "";
           await usernameInput.fill(value);
+          usernameFilled = true;
           await log("info", "Filled username/email field.");
         } else {
           await log("warning", "No visible username/email field found.");
@@ -245,6 +993,7 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
 
         if (passwordInput) {
           await passwordInput.fill(credentials.password);
+          passwordFilled = true;
           await log("info", "Filled password field.");
         } else {
           await log("warning", "No visible password field found.");
@@ -257,13 +1006,35 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
         );
         if (submitButton) {
           await submitButton.click();
+          submitPerformed = true;
           await log("info", "Submitted login form.");
         } else if (passwordInput) {
           await passwordInput.press("Enter");
+          submitPerformed = true;
           await log("info", "Submitted login form with Enter.");
         } else {
           await log("warning", "No submit action performed.");
         }
+        await log("info", "Login attempt summary.", {
+          loginFormVisible,
+          usernameFilled,
+          passwordFilled,
+          submitPerformed,
+          stepId: activeStepId ?? null,
+        });
+        if (!usernameFilled && !passwordFilled) {
+          return {
+            ok: false,
+            error: "Login fields not detected on the page.",
+          };
+        }
+        if (!submitPerformed) {
+          return {
+            ok: false,
+            error: "No submit action performed for login.",
+          };
+        }
+        await captureSessionContext("after-login-submit");
 
         try {
           await Promise.race([

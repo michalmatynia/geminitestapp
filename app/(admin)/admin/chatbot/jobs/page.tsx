@@ -316,6 +316,24 @@ export default function ChatbotJobsPage() {
     () => agentRuns.find((run) => run.id === selectedAgentRunId) ?? null,
     [agentRuns, selectedAgentRunId]
   );
+  const sessionContextLogs = useMemo(
+    () =>
+      agentLogs.filter((log) => log.message === "Captured session context."),
+    [agentLogs]
+  );
+  const loginCandidateLogs = useMemo(
+    () =>
+      agentLogs.filter((log) => log.message === "Inferred login candidates."),
+    [agentLogs]
+  );
+  const plannerContextAudits = useMemo(
+    () =>
+      agentAudits.filter((audit) => audit.metadata?.type === "planner-context"),
+    [agentAudits]
+  );
+  const latestSessionContext = sessionContextLogs.at(-1)?.metadata ?? null;
+  const latestLoginCandidates = loginCandidateLogs.at(-1)?.metadata ?? null;
+  const latestPlannerContext = plannerContextAudits.at(-1)?.metadata ?? null;
 
   const closeAgentModal = () => {
     setSelectedAgentRunId(null);
@@ -398,6 +416,9 @@ export default function ChatbotJobsPage() {
                         <p className="text-xs text-gray-300 line-clamp-2">
                           Prompt: {job.prompt}
                         </p>
+                        <p className="text-[11px] text-gray-500">
+                          Run ID: {job.id}
+                        </p>
                         Snapshots: {job.snapshotCount} · Logs: {job.logCount}
                         {job.requiresHumanIntervention ? " · needs input" : ""}
                       </div>
@@ -453,12 +474,14 @@ export default function ChatbotJobsPage() {
               size="xl"
             >
               <Tabs defaultValue="summary" className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
+                <TabsList className="grid w-full grid-cols-7">
                   <TabsTrigger value="summary">Summary</TabsTrigger>
                   <TabsTrigger value="preview">Preview</TabsTrigger>
                   <TabsTrigger value="dom">DOM</TabsTrigger>
                   <TabsTrigger value="steps">Steps</TabsTrigger>
                   <TabsTrigger value="logs">Logs</TabsTrigger>
+                  <TabsTrigger value="context">Context</TabsTrigger>
+                  <TabsTrigger value="elements">Elements</TabsTrigger>
                 </TabsList>
                 <TabsContent value="summary" className="mt-4 space-y-3">
                   {selectedAgentRun ? (
@@ -616,6 +639,152 @@ export default function ChatbotJobsPage() {
                         ))
                       )}
                     </div>
+                  </div>
+                </TabsContent>
+                <TabsContent value="context" className="mt-4">
+                  <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                    <p className="text-[11px] text-gray-500">Planner context</p>
+                    {latestPlannerContext ? (
+                      <div className="mt-2 max-h-48 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                        <pre className="whitespace-pre-wrap break-words">
+                          {JSON.stringify(latestPlannerContext, null, 2)}
+                        </pre>
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-gray-500">
+                        No planner context captured yet.
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-4 rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                    <p className="text-[11px] text-gray-500">Session context</p>
+                    {latestSessionContext ? (
+                      <div className="mt-2 space-y-3">
+                        <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                          <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                            Cookies
+                          </p>
+                          <div className="mt-1 max-h-36 overflow-y-auto">
+                            {(latestSessionContext.cookies as Array<{
+                              name: string;
+                              domain: string;
+                              path: string;
+                              expires: number;
+                              httpOnly: boolean;
+                              secure: boolean;
+                              sameSite: string;
+                              valueLength: number;
+                            }> | undefined)?.map((cookie, index) => (
+                              <div key={`${cookie.name}-${index}`} className="mt-1">
+                                <span className="text-slate-100">
+                                  {cookie.name}
+                                </span>{" "}
+                                <span className="text-gray-500">
+                                  {cookie.domain}
+                                </span>
+                                <span className="ml-2 text-gray-500">
+                                  len {cookie.valueLength}
+                                </span>
+                              </div>
+                            )) ?? (
+                              <p className="text-gray-500">No cookies captured.</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                          <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                            Storage keys
+                          </p>
+                          <div className="mt-1 text-gray-300">
+                            <p>
+                              Local:{" "}
+                              {(latestSessionContext.storage as { localCount?: number })
+                                ?.localCount ?? 0}
+                              {" · "}
+                              Session:{" "}
+                              {(latestSessionContext.storage as { sessionCount?: number })
+                                ?.sessionCount ?? 0}
+                            </p>
+                            <div className="mt-1 max-h-20 overflow-y-auto text-[10px] text-gray-400">
+                              {(latestSessionContext.storage as {
+                                localKeys?: string[];
+                                sessionKeys?: string[];
+                              })?.localKeys?.join(", ") || "No localStorage keys."}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-gray-500">
+                        No session context captured yet.
+                      </p>
+                    )}
+                  </div>
+                </TabsContent>
+                <TabsContent value="elements" className="mt-4">
+                  <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                    <p className="text-[11px] text-gray-500">Login candidates</p>
+                    {latestLoginCandidates ? (
+                      <div className="mt-2 grid gap-3 md:grid-cols-2">
+                        <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                          <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                            Inputs
+                          </p>
+                          <div className="mt-1 max-h-36 space-y-1 overflow-y-auto">
+                            {(latestLoginCandidates.inputs as Array<{
+                              tag: string;
+                              id: string | null;
+                              name: string | null;
+                              type: string | null;
+                              placeholder: string | null;
+                              ariaLabel: string | null;
+                              score: number;
+                            }> | undefined)?.map((input, index) => (
+                              <div key={`${input.name}-${index}`}>
+                                <span className="text-slate-100">
+                                  {input.name || input.id || input.type || "input"}
+                                </span>{" "}
+                                <span className="text-gray-500">
+                                  score {input.score}
+                                </span>
+                              </div>
+                            )) ?? (
+                              <p className="text-gray-500">No inputs captured.</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                          <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                            Buttons
+                          </p>
+                          <div className="mt-1 max-h-36 space-y-1 overflow-y-auto">
+                            {(latestLoginCandidates.buttons as Array<{
+                              tag: string;
+                              id: string | null;
+                              name: string | null;
+                              type: string | null;
+                              text: string | null;
+                              score: number;
+                            }> | undefined)?.map((button, index) => (
+                              <div key={`${button.text}-${index}`}>
+                                <span className="text-slate-100">
+                                  {button.text || button.id || button.name || "button"}
+                                </span>{" "}
+                                <span className="text-gray-500">
+                                  score {button.score}
+                                </span>
+                              </div>
+                            )) ?? (
+                              <p className="text-gray-500">No buttons captured.</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-gray-500">
+                        No candidate elements captured yet.
+                      </p>
+                    )}
                   </div>
                 </TabsContent>
               </Tabs>

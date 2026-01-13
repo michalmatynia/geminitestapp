@@ -251,8 +251,21 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
       return true;
     };
 
-    context = await createBrowserContext(launch, runDir);
-    page = await context.newPage();
+    if (!context) {
+      context = await createBrowserContext(launch!, runDir);
+    }
+
+    if (injectedContext && context.pages().length > 0) {
+      page = context.pages()[0];
+      await page.bringToFront().catch(() => {});
+      page.removeAllListeners("console");
+      page.removeAllListeners("pageerror");
+      page.removeAllListeners("requestfailed");
+      page.removeAllListeners("response");
+    } else {
+      page = await context.newPage();
+    }
+    
     if (!page) {
       throw new Error("Failed to initialize Playwright page.");
     }

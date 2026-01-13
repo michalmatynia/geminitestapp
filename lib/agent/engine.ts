@@ -8,8 +8,10 @@ import {
   validateAndAddAgentLongTermMemory,
 } from "@/lib/agent/memory";
 import { runAgentBrowserControl, runAgentTool } from "@/lib/agent/tools";
-import { launchBrowser } from "@/lib/agent/tools/playwright/browser";
-import type { Browser } from "playwright";
+import { launchBrowser, createBrowserContext } from "@/lib/agent/tools/playwright/browser";
+import type { Browser, BrowserContext } from "playwright";
+import path from "path";
+import { promises as fs } from "fs";
 
 type AgentDecision = {
   action: "respond" | "tool" | "wait_human";
@@ -232,6 +234,7 @@ function resolveAgentPreferences(planState: unknown): AgentPlanPreferences {
 
 export async function runAgentControlLoop(runId: string) {
   let sharedBrowser: Browser | null = null;
+  let sharedContext: BrowserContext | null = null;
   try {
     if (!("chatbotAgentRun" in prisma)) {
       if (DEBUG_CHATBOT) {
@@ -252,6 +255,9 @@ export async function runAgentControlLoop(runId: string) {
     }
 
     sharedBrowser = await launchBrowser(run.agentBrowser || "chromium", run.runHeadless ?? true);
+    const runDir = path.join(process.cwd(), "tmp", "chatbot-agent", runId);
+    await fs.mkdir(runDir, { recursive: true });
+    sharedContext = await createBrowserContext(sharedBrowser, runDir);
 
     await logAgentAudit(run.id, "info", "Agent loop started.");
     let memoryKey = run.memoryKey;
@@ -841,7 +847,7 @@ export async function runAgentControlLoop(runId: string) {
                     stepId: step.id,
                     stepLabel: step.title,
                   },
-                }, sharedBrowser!)
+                }, sharedBrowser!, sharedContext!)
               : await runAgentBrowserControl({
                   runId: run.id,
                   action: "snapshot",
@@ -1860,7 +1866,7 @@ export async function runAgentControlLoop(runId: string) {
             runId: run.id,
             runHeadless: run.runHeadless,
           },
-        }, sharedBrowser!);
+        }, sharedBrowser!, sharedContext!);
         overallOk = toolResult.ok;
         lastError = toolResult.ok ? null : toolResult.error || "Tool failed.";
       }
@@ -2226,6 +2232,9 @@ export async function runAgentControlLoop(runId: string) {
       }
     }
   } finally {
+    if (sharedContext) {
+      await sharedContext.close().catch(() => {});
+    }
     if (sharedBrowser) {
       await sharedBrowser.close().catch(() => {});
     }

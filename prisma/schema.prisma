@@ -241,6 +241,7 @@ model ChatbotAgentRun {
   updatedAt DateTime        @updatedAt
 
   memoryItems AgentMemoryItem[]
+  longTermMemory AgentLongTermMemory[]
   auditLogs   AgentAuditLog[]
   browserSnapshots AgentBrowserSnapshot[]
   browserLogs AgentBrowserLog[]
@@ -255,6 +256,27 @@ model AgentMemoryItem {
   createdAt DateTime         @default(now())
 
   run       ChatbotAgentRun? @relation(fields: [runId], references: [id], onDelete: Cascade)
+}
+
+model AgentLongTermMemory {
+  id        String           @id @default(cuid())
+  memoryKey String
+  runId     String?
+  scope     AgentMemoryScope @default(longterm)
+  content   String
+  summary   String?
+  tags      String[]         @default([])
+  metadata  Json?
+  importance Int?
+  lastAccessedAt DateTime?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  run       ChatbotAgentRun? @relation(fields: [runId], references: [id], onDelete: SetNull)
+
+  @@index([memoryKey])
+  @@index([runId])
+  @@index([updatedAt])
 }
 
 model AgentAuditLog {

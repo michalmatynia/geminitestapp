@@ -23,6 +23,10 @@ export default function ChatbotSessionsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftTitle, setDraftTitle] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [selectingAll, setSelectingAll] = useState(false);
+  const [skipBulkConfirm, setSkipBulkConfirm] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -117,6 +121,12 @@ export default function ChatbotSessionsPage() {
       if (editingId === session.id) {
         cancelEditing();
       }
+      setSelectedIds((prev) => {
+        if (!prev.has(session.id)) return prev;
+        const next = new Set(prev);
+        next.delete(session.id);
+        return next;
+      });
       toast("Session deleted", { variant: "success" });
     } catch (error) {
       const message =
@@ -125,6 +135,89 @@ export default function ChatbotSessionsPage() {
       toast(message, { variant: "error" });
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const toggleSelected = (sessionId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(sessionId)) {
+        next.delete(sessionId);
+      } else {
+        next.add(sessionId);
+      }
+      return next;
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const selectAllVisible = () => {
+    setSelectedIds(new Set(filteredSessions.map((session) => session.id)));
+  };
+
+  const selectAllMatching = async () => {
+    if (selectingAll) return;
+    setSelectingAll(true);
+    try {
+      const params = new URLSearchParams({ scope: "ids" });
+      const term = query.trim();
+      if (term) params.set("query", term);
+      const res = await fetch(`/api/chatbot/sessions?${params.toString()}`);
+      if (!res.ok) {
+        throw new Error("Failed to load session ids.");
+      }
+      const data = (await res.json()) as { ids?: string[] };
+      const ids = Array.isArray(data.ids) ? data.ids : [];
+      setSelectedIds(new Set(ids));
+      toast(
+        ids.length
+          ? `Selected ${ids.length} sessions`
+          : "No matching sessions found",
+        { variant: "default" }
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to select sessions.";
+      setError(message);
+      toast(message, { variant: "error" });
+    } finally {
+      setSelectingAll(false);
+    }
+  };
+
+  const bulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!skipBulkConfirm) {
+      const confirmed = window.confirm(
+        `Delete ${selectedIds.size} selected session${
+          selectedIds.size === 1 ? "" : "s"
+        }?`
+      );
+      if (!confirmed) return;
+    }
+    setBulkDeleting(true);
+    try {
+      const res = await fetch("/api/chatbot/sessions", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionIds: Array.from(selectedIds) }),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to delete sessions.");
+      }
+      setSessions((prev) => prev.filter((item) => !selectedIds.has(item.id)));
+      clearSelection();
+      toast("Selected sessions deleted", { variant: "success" });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to delete sessions.";
+      setError(message);
+      toast(message, { variant: "error" });
+    } finally {
+      setBulkDeleting(false);
     }
   };
 
@@ -162,13 +255,67 @@ export default function ChatbotSessionsPage() {
                 }}
               />
             </div>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400">
+              <span>
+                Selected: {selectedIds.size}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={selectAllVisible}
+                disabled={filteredSessions.length === 0 || bulkDeleting || selectingAll}
+              >
+                Select all visible
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={selectAllMatching}
+                disabled={bulkDeleting || selectingAll}
+              >
+                {selectingAll ? "Selecting..." : "Select all (all pages)"}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearSelection}
+                disabled={selectedIds.size === 0 || bulkDeleting || selectingAll}
+              >
+                Clear selection
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={bulkDelete}
+                disabled={selectedIds.size === 0 || bulkDeleting || selectingAll}
+              >
+                {bulkDeleting ? "Removing..." : "Remove selected"}
+              </Button>
+              <label className="flex items-center gap-2 text-[11px] text-gray-500">
+                <input
+                  type="checkbox"
+                  checked={skipBulkConfirm}
+                  onChange={(event) => setSkipBulkConfirm(event.target.checked)}
+                  disabled={bulkDeleting || selectingAll}
+                />
+                Skip confirmation
+              </label>
+            </div>
             <div className="space-y-3">
               {filteredSessions.map((session) => (
                 <div
                   key={session.id}
                   className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-900 px-4 py-3"
                 >
-                  <div>
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(session.id)}
+                      onChange={() => toggleSelected(session.id)}
+                      aria-label={`Select session ${session.title || session.id}`}
+                      className="mt-1"
+                    />
+                    <div>
                     {editingId === session.id ? (
                       <Input
                         value={draftTitle}
@@ -184,6 +331,7 @@ export default function ChatbotSessionsPage() {
                     <p className="text-xs text-gray-500">
                       Updated {new Date(session.updatedAt).toLocaleString()}
                     </p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     {editingId === session.id ? (

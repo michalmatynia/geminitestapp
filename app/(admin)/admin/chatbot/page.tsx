@@ -37,6 +37,15 @@ type ChatbotDebugState = {
     searchProvider?: string;
     agentBrowser?: string;
     agentRunHeadless?: boolean;
+    ignoreRobotsTxt?: boolean;
+    requireHumanApproval?: boolean;
+    agentPlanSettings?: {
+      maxSteps: number;
+      maxStepAttempts: number;
+      maxReplanCalls: number;
+      replanEverySteps: number;
+      maxSelfChecks: number;
+    };
   };
   lastResponse?: {
     ok: boolean;
@@ -75,12 +84,23 @@ type AgentBrowserLog = {
   createdAt: string;
 };
 
+type TimelineEntry = {
+  id: string;
+  source: "audit" | "browser";
+  level?: string | null;
+  message: string;
+  createdAt: string;
+};
+
 type AgentPlanStep = {
   id: string;
   title: string;
   status: "pending" | "running" | "completed" | "failed";
   snapshotId?: string | null;
   logCount?: number | null;
+  dependsOn?: string[] | null;
+  phase?: string | null;
+  priority?: number | null;
 };
 
 type ExtractionPlan = {
@@ -106,6 +126,31 @@ type PlannerMeta = {
     rationale?: string | null;
     steps?: Array<{ title?: string | null }>;
   }>;
+};
+
+type AgentSettingsPayload = {
+  agentBrowser: string;
+  runHeadless: boolean;
+  ignoreRobotsTxt: boolean;
+  requireHumanApproval: boolean;
+  maxSteps: number;
+  maxStepAttempts: number;
+  maxReplanCalls: number;
+  replanEverySteps: number;
+  maxSelfChecks: number;
+};
+
+const AGENT_SETTINGS_KEY = "chatbot.agentSettings.v1";
+const DEFAULT_AGENT_SETTINGS: AgentSettingsPayload = {
+  agentBrowser: "chromium",
+  runHeadless: true,
+  ignoreRobotsTxt: false,
+  requireHumanApproval: false,
+  maxSteps: 12,
+  maxStepAttempts: 2,
+  maxReplanCalls: 2,
+  replanEverySteps: 2,
+  maxSelfChecks: 4,
 };
 
 const readErrorResponse = async (res: Response) => {
@@ -189,6 +234,20 @@ const writeCachedMessages = (sessionId: string, messages: ChatMessage[]) => {
   }
 };
 
+const resolveIgnoreRobots = (planState?: Record<string, unknown> | null) => {
+  if (!planState || typeof planState !== "object") return false;
+  const prefs = (planState as { preferences?: { ignoreRobotsTxt?: boolean } })
+    .preferences;
+  return Boolean(prefs?.ignoreRobotsTxt);
+};
+
+const resolveApprovalStepId = (planState?: Record<string, unknown> | null) => {
+  if (!planState || typeof planState !== "object") return null;
+  const approval = (planState as { approvalRequestedStepId?: string | null })
+    .approvalRequestedStepId;
+  return typeof approval === "string" ? approval : null;
+};
+
 const buildAgentResultMessage = (
   audits: AgentAuditLog[],
   status: string | null
@@ -252,30 +311,9 @@ const buildAgentResultMessage = (
         : null;
     return `No information extracted${url ? ` from ${url}` : ""}.`;
   }
-  const summaryAudit = audits.find((audit) => {
-    const summary =
-      typeof audit.metadata?.summary === "string"
-        ? audit.metadata.summary
-        : typeof (audit.metadata as { plannerMeta?: { summary?: string } } | null)
-            ?.plannerMeta?.summary === "string"
-          ? (audit.metadata as { plannerMeta?: { summary?: string } }).plannerMeta
-              ?.summary
-          : null;
-    return Boolean(summary && summary.trim());
-  });
   if (status === "completed") {
     if (resolvedTaskType === "extract_info") {
       return "No information extracted.";
-    }
-    if (summaryAudit) {
-      const summary =
-        typeof summaryAudit.metadata?.summary === "string"
-          ? summaryAudit.metadata.summary.trim()
-          : (summaryAudit.metadata as { plannerMeta?: { summary?: string } })
-              ?.plannerMeta?.summary?.trim() || "";
-      if (summary) {
-        return `Agent summary: ${summary}`;
-      }
     }
     if (resolvedTaskType === "web_task") {
       return "Agent run completed. Actions executed in agent mode.";
@@ -313,6 +351,47 @@ const buildAgentResumeSummaryMessage = (audits: AgentAuditLog[]) => {
       : "";
   if (!summary) return null;
   return `Resume summary:\n${summary}`;
+};
+
+const buildToolTimeline = (
+  logs: AgentBrowserLog[],
+  audits: AgentAuditLog[]
+) => {
+  const auditEntries: TimelineEntry[] = audits
+    .filter((audit) =>
+      /tool|playwright|snapshot|selector|extraction|login|search|navigation/i.test(
+        audit.message
+      )
+    )
+    .map((audit) => ({
+      id: `audit-${audit.id}`,
+      source: "audit",
+      level: null,
+      message: audit.message,
+      createdAt: audit.createdAt,
+    }));
+  const logEntries: TimelineEntry[] = logs.map((log) => ({
+    id: `browser-${log.id}`,
+    source: "browser",
+    level: log.level,
+    message: log.message,
+    createdAt: log.createdAt,
+  }));
+  return [...auditEntries, ...logEntries].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
+};
+
+const formatDependencies = (dependsOn?: string[] | null) => {
+  if (!dependsOn || dependsOn.length === 0) return null;
+  const readable = dependsOn.map((item) => {
+    const match = item.match(/^step-(\d+)$/);
+    if (!match) return item;
+    const index = Number(match[1]);
+    if (!Number.isFinite(index)) return item;
+    return `#${index + 1}`;
+  });
+  return readable.join(", ");
 };
 
 const renderExtractionPlan = (plan: ExtractionPlan) => (
@@ -372,6 +451,71 @@ const getSelfCheckAudits = (audits: AgentAuditLog[]) =>
       audit.message === "Self-check completed." ||
       audit.metadata?.type === "self-check"
   );
+
+const getAuditList = (value: unknown) =>
+  Array.isArray(value)
+    ? value
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    : [];
+
+const formatAdaptiveReason = (reason?: string | null) => {
+  if (!reason) return "unspecified";
+  const trimmed = reason.trim();
+  if (!trimmed) return "unspecified";
+  if (trimmed.includes(" ")) return trimmed;
+  return trimmed.replace(/-/g, " ");
+};
+
+const getLatestAdaptiveTrigger = (audits: AgentAuditLog[]) => {
+  const candidates = audits
+    .map((audit) => {
+      const metadata = audit.metadata as
+        | { type?: string; reason?: string | null }
+        | null;
+      const type = metadata?.type;
+      if (
+        type !== "plan-replan" &&
+        type !== "plan-adapt" &&
+        type !== "self-check-replan"
+      ) {
+        return null;
+      }
+      const label =
+        type === "plan-adapt"
+          ? "mid-run adaptation"
+          : type === "self-check-replan"
+            ? "self-check replan"
+            : "adaptive replan";
+      return {
+        id: audit.id,
+        createdAt: audit.createdAt,
+        reason: typeof metadata?.reason === "string" ? metadata.reason : null,
+        label,
+      };
+    })
+    .filter(Boolean) as Array<{
+    id: string;
+    createdAt: string;
+    reason: string | null;
+    label: string;
+  }>;
+  if (candidates.length === 0) return null;
+  return candidates.reduce((latest, current) => {
+    const latestTime = Date.parse(latest.createdAt);
+    const currentTime = Date.parse(current.createdAt);
+    return currentTime > latestTime ? current : latest;
+  }, candidates[0]);
+};
+
+const getLatestAuditByType = (
+  audits: AgentAuditLog[],
+  type: string
+): AgentAuditLog | null => {
+  const filtered = audits.filter((audit) => audit.metadata?.type === type);
+  return filtered.length ? filtered[filtered.length - 1] : null;
+};
 
 const isAbortError = (error: unknown) =>
   error instanceof DOMException && error.name === "AbortError";
@@ -493,6 +637,13 @@ export default function ChatbotPage() {
   const [searchProvider, setSearchProvider] = useState("serpapi");
   const [agentBrowser, setAgentBrowser] = useState("chromium");
   const [agentRunHeadless, setAgentRunHeadless] = useState(true);
+  const [agentIgnoreRobotsTxt, setAgentIgnoreRobotsTxt] = useState(false);
+  const [agentRequireHumanApproval, setAgentRequireHumanApproval] = useState(false);
+  const [agentMaxSteps, setAgentMaxSteps] = useState(12);
+  const [agentMaxStepAttempts, setAgentMaxStepAttempts] = useState(2);
+  const [agentMaxReplanCalls, setAgentMaxReplanCalls] = useState(2);
+  const [agentReplanEverySteps, setAgentReplanEverySteps] = useState(2);
+  const [agentMaxSelfChecks, setAgentMaxSelfChecks] = useState(4);
   const [latestAgentRunId, setLatestAgentRunId] = useState<string | null>(null);
   const [latestAgentRunStatus, setLatestAgentRunStatus] = useState<string | null>(
     null
@@ -505,12 +656,19 @@ export default function ChatbotPage() {
   const [highlightedSnapshotId, setHighlightedSnapshotId] = useState<
     string | null
   >(null);
+  const [latestAgentIgnoreRobots, setLatestAgentIgnoreRobots] = useState(false);
+  const [latestApprovalStepId, setLatestApprovalStepId] = useState<string | null>(
+    null
+  );
   const [agentControlUrl, setAgentControlUrl] = useState("");
   const [agentControlBusy, setAgentControlBusy] = useState(false);
   const [agentResumeBusy, setAgentResumeBusy] = useState(false);
   const [agentProgressOpen, setAgentProgressOpen] = useState(false);
   const [agentPlanSteps, setAgentPlanSteps] = useState<AgentPlanStep[]>([]);
   const [agentPlanMeta, setAgentPlanMeta] = useState<PlannerMeta | null>(null);
+  const [agentStepActionBusyId, setAgentStepActionBusyId] = useState<string | null>(
+    null
+  );
   const [stepDetailsOpen, setStepDetailsOpen] = useState(false);
   const [stepDetailsLoading, setStepDetailsLoading] = useState(false);
   const [stepDetailsTitle, setStepDetailsTitle] = useState("");
@@ -530,6 +688,7 @@ export default function ChatbotPage() {
     status?: string | null;
     requiresHumanIntervention?: boolean | null;
     recordingPath?: string | null;
+    planState?: Record<string, unknown> | null;
   } | null>(null);
   const [agentRunLogs, setAgentRunLogs] = useState<AgentBrowserLog[]>([]);
   const [agentRunAudits, setAgentRunAudits] = useState<AgentAuditLog[]>([]);
@@ -552,6 +711,8 @@ export default function ChatbotPage() {
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [creatingSession, setCreatingSession] = useState(false);
   const initStartedRef = useRef(false);
+  const agentSettingsLoadedRef = useRef(false);
+  const agentSettingsSaveRef = useRef<NodeJS.Timeout | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const agentResultSentRef = useRef<Set<string>>(new Set());
@@ -560,6 +721,51 @@ export default function ChatbotPage() {
   const sessionReady = Boolean(sessionId) && !initError;
   const selfCheckAudits = useMemo(
     () => getSelfCheckAudits(agentRunAudits),
+    [agentRunAudits]
+  );
+  const branchAudits = useMemo(
+    () => agentRunAudits.filter((audit) => audit.metadata?.type === "plan-branch"),
+    [agentRunAudits]
+  );
+  const selfImprovementAudits = useMemo(
+    () =>
+      agentRunAudits.filter(
+        (audit) =>
+          audit.metadata?.type === "self-improvement" ||
+          audit.message === "Self-improvement review completed."
+      ),
+    [agentRunAudits]
+  );
+  const latestPlannerContext = useMemo(
+    () => getLatestAuditByType(agentRunAudits, "planner-context"),
+    [agentRunAudits]
+  );
+  const latestLoopGuard = useMemo(
+    () => getLatestAuditByType(agentRunAudits, "loop-guard"),
+    [agentRunAudits]
+  );
+  const latestSelfImprovementContext = useMemo(
+    () => getLatestAuditByType(agentRunAudits, "self-improvement-context"),
+    [agentRunAudits]
+  );
+  const latestSelfImprovementPlaybook = useMemo(
+    () => getLatestAuditByType(agentRunAudits, "self-improvement-playbook"),
+    [agentRunAudits]
+  );
+  const latestPlanReplan = useMemo(
+    () => getLatestAuditByType(agentRunAudits, "plan-replan"),
+    [agentRunAudits]
+  );
+  const latestPlanAdapt = useMemo(
+    () => getLatestAuditByType(agentRunAudits, "plan-adapt"),
+    [agentRunAudits]
+  );
+  const latestSelfCheckReplan = useMemo(
+    () => getLatestAuditByType(agentRunAudits, "self-check-replan"),
+    [agentRunAudits]
+  );
+  const latestAdaptiveTrigger = useMemo(
+    () => getLatestAdaptiveTrigger(agentRunAudits),
     [agentRunAudits]
   );
   const sessionContextLogs = useMemo(
@@ -577,10 +783,121 @@ export default function ChatbotPage() {
   const latestSessionContext = sessionContextLogs.at(-1)?.metadata ?? null;
   const latestLoginCandidates = loginCandidateLogs.at(-1)?.metadata ?? null;
   const latestUiInventory = uiInventoryLogs.at(-1)?.metadata ?? null;
+  const toolTimeline = useMemo(
+    () => buildToolTimeline(agentRunLogs, agentRunAudits),
+    [agentRunLogs, agentRunAudits]
+  );
   const currentPlanStep =
     agentPlanSteps.find((step) => step.status === "running") ??
     agentPlanSteps.find((step) => step.status === "pending") ??
     null;
+  const robotsStatus = useMemo(() => {
+    if (agentRunLogs.length === 0) return null;
+    if (agentRunLogs.some((log) => log.message === "Blocked by robots.txt.")) {
+      return "Blocked by robots.txt";
+    }
+    if (
+      agentRunLogs.some((log) => log.message === "Robots.txt unavailable; proceeding.")
+    ) {
+      return "Robots.txt unavailable";
+    }
+    return "Allowed or not checked";
+  }, [agentRunLogs]);
+  const clampAgentSetting = (
+    value: number,
+    min: number,
+    max: number,
+    fallback: number
+  ) => {
+    if (!Number.isFinite(value)) return fallback;
+    return Math.min(Math.max(Math.round(value), min), max);
+  };
+  const readAgentSettings = (raw: unknown): AgentSettingsPayload => {
+    if (!raw || typeof raw !== "object") return DEFAULT_AGENT_SETTINGS;
+    const settings = raw as Partial<AgentSettingsPayload>;
+    const browser =
+      settings.agentBrowser === "firefox" ||
+      settings.agentBrowser === "webkit" ||
+      settings.agentBrowser === "chromium"
+        ? settings.agentBrowser
+        : DEFAULT_AGENT_SETTINGS.agentBrowser;
+    return {
+      agentBrowser: browser,
+      runHeadless:
+        typeof settings.runHeadless === "boolean"
+          ? settings.runHeadless
+          : DEFAULT_AGENT_SETTINGS.runHeadless,
+      ignoreRobotsTxt:
+        typeof settings.ignoreRobotsTxt === "boolean"
+          ? settings.ignoreRobotsTxt
+          : DEFAULT_AGENT_SETTINGS.ignoreRobotsTxt,
+      requireHumanApproval:
+        typeof settings.requireHumanApproval === "boolean"
+          ? settings.requireHumanApproval
+          : DEFAULT_AGENT_SETTINGS.requireHumanApproval,
+      maxSteps: clampAgentSetting(
+        Number(settings.maxSteps),
+        1,
+        20,
+        DEFAULT_AGENT_SETTINGS.maxSteps
+      ),
+      maxStepAttempts: clampAgentSetting(
+        Number(settings.maxStepAttempts),
+        1,
+        5,
+        DEFAULT_AGENT_SETTINGS.maxStepAttempts
+      ),
+      maxReplanCalls: clampAgentSetting(
+        Number(settings.maxReplanCalls),
+        0,
+        6,
+        DEFAULT_AGENT_SETTINGS.maxReplanCalls
+      ),
+      replanEverySteps: clampAgentSetting(
+        Number(settings.replanEverySteps),
+        1,
+        10,
+        DEFAULT_AGENT_SETTINGS.replanEverySteps
+      ),
+      maxSelfChecks: clampAgentSetting(
+        Number(settings.maxSelfChecks),
+        0,
+        8,
+        DEFAULT_AGENT_SETTINGS.maxSelfChecks
+      ),
+    };
+  };
+  const buildAgentSettingsPayload = (): AgentSettingsPayload => ({
+    agentBrowser,
+    runHeadless: agentRunHeadless,
+    ignoreRobotsTxt: agentIgnoreRobotsTxt,
+    requireHumanApproval: agentRequireHumanApproval,
+    maxSteps: clampAgentSetting(agentMaxSteps, 1, 20, DEFAULT_AGENT_SETTINGS.maxSteps),
+    maxStepAttempts: clampAgentSetting(
+      agentMaxStepAttempts,
+      1,
+      5,
+      DEFAULT_AGENT_SETTINGS.maxStepAttempts
+    ),
+    maxReplanCalls: clampAgentSetting(
+      agentMaxReplanCalls,
+      0,
+      6,
+      DEFAULT_AGENT_SETTINGS.maxReplanCalls
+    ),
+    replanEverySteps: clampAgentSetting(
+      agentReplanEverySteps,
+      1,
+      10,
+      DEFAULT_AGENT_SETTINGS.replanEverySteps
+    ),
+    maxSelfChecks: clampAgentSetting(
+      agentMaxSelfChecks,
+      0,
+      8,
+      DEFAULT_AGENT_SETTINGS.maxSelfChecks
+    ),
+  });
 
   const fetchMessagesForSession = useCallback(async (activeSessionId: string) => {
     const res = await fetchWithTimeout(
@@ -638,6 +955,82 @@ export default function ChatbotPage() {
       isMounted = false;
     };
   }, [model, toast]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadAgentSettings = async () => {
+      try {
+        const res = await fetchWithTimeout("/api/settings", {}, 12000);
+        if (!res.ok) return;
+        const data = (await res.json()) as Array<{ key: string; value: string }>;
+        const stored = data.find((item) => item.key === AGENT_SETTINGS_KEY);
+        if (!stored?.value) {
+          agentSettingsLoadedRef.current = true;
+          return;
+        }
+        const parsed = JSON.parse(stored.value) as unknown;
+        if (!isMounted) return;
+        const next = readAgentSettings(parsed);
+        setAgentBrowser(next.agentBrowser);
+        setAgentRunHeadless(next.runHeadless);
+        setAgentIgnoreRobotsTxt(next.ignoreRobotsTxt);
+        setAgentRequireHumanApproval(next.requireHumanApproval);
+        setAgentMaxSteps(next.maxSteps);
+        setAgentMaxStepAttempts(next.maxStepAttempts);
+        setAgentMaxReplanCalls(next.maxReplanCalls);
+        setAgentReplanEverySteps(next.replanEverySteps);
+        setAgentMaxSelfChecks(next.maxSelfChecks);
+        agentSettingsLoadedRef.current = true;
+      } catch {
+        agentSettingsLoadedRef.current = true;
+      }
+    };
+    void loadAgentSettings();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!agentSettingsLoadedRef.current) return;
+    if (agentSettingsSaveRef.current) {
+      clearTimeout(agentSettingsSaveRef.current);
+    }
+    agentSettingsSaveRef.current = setTimeout(async () => {
+      try {
+        const payload = buildAgentSettingsPayload();
+        await fetchWithTimeout(
+          "/api/settings",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              key: AGENT_SETTINGS_KEY,
+              value: JSON.stringify(payload),
+            }),
+          },
+          12000
+        );
+      } catch {
+        // ignore persistence failures
+      }
+    }, 600);
+    return () => {
+      if (agentSettingsSaveRef.current) {
+        clearTimeout(agentSettingsSaveRef.current);
+      }
+    };
+  }, [
+    agentBrowser,
+    agentRunHeadless,
+    agentIgnoreRobotsTxt,
+    agentRequireHumanApproval,
+    agentMaxSteps,
+    agentMaxStepAttempts,
+    agentMaxReplanCalls,
+    agentReplanEverySteps,
+    agentMaxSelfChecks,
+  ]);
 
   useEffect(() => {
     let isMounted = true;
@@ -932,10 +1325,18 @@ export default function ChatbotPage() {
         if (!res.ok) {
           throw new Error("Failed to load agent run status.");
         }
-        const data = (await res.json()) as { run?: { status?: string } };
+        const data = (await res.json()) as {
+          run?: { status?: string; planState?: Record<string, unknown> | null };
+        };
         if (isMounted) {
           const nextStatus = data.run?.status ?? null;
           setLatestAgentRunStatus(nextStatus);
+          setLatestAgentIgnoreRobots(
+            resolveIgnoreRobots(data.run?.planState ?? null)
+          );
+          setLatestApprovalStepId(
+            resolveApprovalStepId(data.run?.planState ?? null)
+          );
           if (
             nextStatus &&
             ["completed", "failed", "stopped", "waiting_human"].includes(
@@ -964,6 +1365,67 @@ export default function ChatbotPage() {
       clearInterval(timer);
     };
   }, [latestAgentRunId]);
+
+  const refreshAgentRunDetails = useCallback(
+    async (runId: string) => {
+      setAgentRunDetailsLoading(true);
+      try {
+        const [runRes, logsRes, auditsRes] = await Promise.all([
+          fetchWithTimeout(`/api/chatbot/agent/${runId}`, {}, 12000),
+          fetchWithTimeout(`/api/chatbot/agent/${runId}/logs`, {}, 12000),
+          fetchWithTimeout(`/api/chatbot/agent/${runId}/audits`, {}, 12000),
+        ]);
+        if (!runRes.ok) {
+          const error = await readErrorResponse(runRes);
+          throw new Error(error.message);
+        }
+        if (!logsRes.ok) {
+          throw new Error("Failed to load agent logs.");
+        }
+        if (!auditsRes.ok) {
+          throw new Error("Failed to load agent steps.");
+        }
+        const runData = (await runRes.json()) as { run?: typeof agentRunDetails };
+        const logsData = (await logsRes.json()) as { logs?: AgentBrowserLog[] };
+        const auditsData = (await auditsRes.json()) as { audits?: AgentAuditLog[] };
+        if (runData.run) {
+          setAgentRunDetails(runData.run);
+        }
+        const audits = auditsData.audits ?? [];
+        setAgentRunLogs(logsData.logs ?? []);
+        setAgentRunAudits(audits);
+        if (runData.run) {
+          const storedFlag = safeLocalStorageGet(
+            `chatbotAgentResultSent:${runData.run.id}`
+          );
+          if (
+            !agentResultSentRef.current.has(runData.run.id) &&
+            storedFlag !== "true"
+          ) {
+            const message = buildAgentResultMessage(
+              audits,
+              runData.run.status ?? null
+            );
+            if (message) {
+              setMessages((prev) => [...prev, { role: "assistant", content: message }]);
+              if (sessionId) {
+                await persistSessionMessage(sessionId, "assistant", message);
+              }
+              agentResultSentRef.current.add(runData.run.id);
+              safeLocalStorageSet(`chatbotAgentResultSent:${runData.run.id}`, "true");
+            }
+          }
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to load agent run.";
+        toast(message, { variant: "error" });
+      } finally {
+        setAgentRunDetailsLoading(false);
+      }
+    },
+    [sessionId, toast]
+  );
 
   useEffect(() => {
     if (!latestAgentRunId || !latestAgentRunStatus) return;
@@ -1191,79 +1653,12 @@ export default function ChatbotPage() {
       setAgentRunDetails(null);
       return;
     }
-    let isMounted = true;
     const loadDetails = async () => {
-      setAgentRunDetailsLoading(true);
-      try {
-        const [runRes, logsRes, auditsRes] = await Promise.all([
-          fetchWithTimeout(`/api/chatbot/agent/${latestAgentRunId}`, {}, 12000),
-          fetchWithTimeout(`/api/chatbot/agent/${latestAgentRunId}/logs`, {}, 12000),
-          fetchWithTimeout(
-            `/api/chatbot/agent/${latestAgentRunId}/audits`,
-            {},
-            12000
-          ),
-        ]);
-        if (!runRes.ok) {
-          const error = await readErrorResponse(runRes);
-          throw new Error(error.message);
-        }
-        if (!logsRes.ok) {
-          throw new Error("Failed to load agent logs.");
-        }
-        if (!auditsRes.ok) {
-          throw new Error("Failed to load agent steps.");
-        }
-        const runData = (await runRes.json()) as { run?: typeof agentRunDetails };
-        const logsData = (await logsRes.json()) as { logs?: AgentBrowserLog[] };
-        const auditsData = (await auditsRes.json()) as { audits?: AgentAuditLog[] };
-        if (!isMounted) return;
-        if (runData.run) {
-          setAgentRunDetails(runData.run);
-        }
-        const audits = auditsData.audits ?? [];
-        setAgentRunLogs(logsData.logs ?? []);
-        setAgentRunAudits(audits);
-        if (runData.run) {
-          const runId = runData.run.id;
-          const storedFlag = safeLocalStorageGet(
-            `chatbotAgentResultSent:${runId}`
-          );
-          if (
-            !agentResultSentRef.current.has(runId) &&
-            storedFlag !== "true"
-          ) {
-            const message = buildAgentResultMessage(
-              audits,
-              runData.run.status ?? null
-            );
-            if (message) {
-              setMessages((prev) => [...prev, { role: "assistant", content: message }]);
-              if (sessionId) {
-                await persistSessionMessage(sessionId, "assistant", message);
-              }
-              agentResultSentRef.current.add(runId);
-              safeLocalStorageSet(`chatbotAgentResultSent:${runId}`, "true");
-            }
-          }
-        }
-      } catch (error) {
-        if (isMounted) {
-          const message =
-            error instanceof Error ? error.message : "Failed to load agent run.";
-          toast(message, { variant: "error" });
-        }
-      } finally {
-        if (isMounted) {
-          setAgentRunDetailsLoading(false);
-        }
-      }
+      if (!latestAgentRunId) return;
+      await refreshAgentRunDetails(latestAgentRunId);
     };
     void loadDetails();
-    return () => {
-      isMounted = false;
-    };
-  }, [agentRunDetailsOpen, latestAgentRunId, toast]);
+  }, [agentRunDetailsOpen, latestAgentRunId, refreshAgentRunDetails]);
 
   const runAgentControl = async (
     action: "goto" | "reload" | "snapshot",
@@ -1329,6 +1724,93 @@ export default function ChatbotPage() {
       toast(message, { variant: "error" });
     } finally {
       setAgentResumeBusy(false);
+    }
+  };
+
+  const retryAgentStep = async (stepId: string) => {
+    if (!latestAgentRunId) {
+      toast("No agent run available for step retry.", { variant: "error" });
+      return;
+    }
+    try {
+      setAgentStepActionBusyId(stepId);
+      const res = await fetch(`/api/chatbot/agent/${latestAgentRunId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "retry_step", stepId }),
+      });
+      if (!res.ok) {
+        const error = await readErrorResponse(res);
+        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+        throw new Error(`${error.message}${suffix}`);
+      }
+      toast("Step retry queued.", { variant: "success" });
+      await refreshAgentRunDetails(latestAgentRunId);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to retry step.";
+      toast(message, { variant: "error" });
+    } finally {
+      setAgentStepActionBusyId(null);
+    }
+  };
+
+  const overrideAgentStep = async (
+    stepId: string,
+    status: "completed" | "failed" | "pending"
+  ) => {
+    if (!latestAgentRunId) {
+      toast("No agent run available for step override.", { variant: "error" });
+      return;
+    }
+    try {
+      setAgentStepActionBusyId(stepId);
+      const res = await fetch(`/api/chatbot/agent/${latestAgentRunId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "override_step", stepId, status }),
+      });
+      if (!res.ok) {
+        const error = await readErrorResponse(res);
+        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+        throw new Error(`${error.message}${suffix}`);
+      }
+      toast(`Step marked ${status}.`, { variant: "success" });
+      await refreshAgentRunDetails(latestAgentRunId);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to override step.";
+      toast(message, { variant: "error" });
+    } finally {
+      setAgentStepActionBusyId(null);
+    }
+  };
+
+  const approveAgentStep = async (stepId: string) => {
+    if (!latestAgentRunId) {
+      toast("No agent run available for approval.", { variant: "error" });
+      return;
+    }
+    try {
+      setAgentStepActionBusyId(stepId);
+      const res = await fetch(`/api/chatbot/agent/${latestAgentRunId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "approve_step", stepId }),
+      });
+      if (!res.ok) {
+        const error = await readErrorResponse(res);
+        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+        throw new Error(`${error.message}${suffix}`);
+      }
+      toast("Step approved. Run queued.", { variant: "success" });
+      await refreshAgentRunDetails(latestAgentRunId);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to approve step.";
+      toast(message, { variant: "error" });
+    } finally {
+      setAgentStepActionBusyId(null);
     }
   };
 
@@ -1527,6 +2009,15 @@ export default function ChatbotPage() {
       if (useGlobalContext) tools.push("global-context");
       if (useLocalContext) tools.push("local-context");
       if (agentModeEnabled) tools.push("agent-mode");
+      const agentPlanSettings = agentModeEnabled
+        ? {
+            maxSteps: clampAgentSetting(agentMaxSteps, 1, 20, 12),
+            maxStepAttempts: clampAgentSetting(agentMaxStepAttempts, 1, 5, 2),
+            maxReplanCalls: clampAgentSetting(agentMaxReplanCalls, 0, 6, 2),
+            replanEverySteps: clampAgentSetting(agentReplanEverySteps, 1, 10, 2),
+            maxSelfChecks: clampAgentSetting(agentMaxSelfChecks, 0, 8, 4),
+          }
+        : undefined;
       if (debugEnabled) {
         setDebugState({
           lastRequest: {
@@ -1541,6 +2032,9 @@ export default function ChatbotPage() {
             searchProvider,
             agentBrowser,
             agentRunHeadless,
+            ignoreRobotsTxt: agentIgnoreRobotsTxt,
+            requireHumanApproval: agentRequireHumanApproval,
+            agentPlanSettings,
           },
         });
       }
@@ -1558,6 +2052,9 @@ export default function ChatbotPage() {
               searchProvider,
               agentBrowser,
               runHeadless: agentRunHeadless,
+              ignoreRobotsTxt: agentIgnoreRobotsTxt,
+              requireHumanApproval: agentRequireHumanApproval,
+              planSettings: agentPlanSettings,
             }),
           },
           20000
@@ -1833,6 +2330,9 @@ export default function ChatbotPage() {
             <Button asChild type="button" variant="outline" size="sm">
               <Link href="/admin/chatbot/jobs">Jobs</Link>
             </Button>
+            <Button asChild type="button" variant="outline" size="sm">
+              <Link href="/admin/chatbot/memory">Memory</Link>
+            </Button>
             <Button
               type="button"
               variant="outline"
@@ -2046,16 +2546,18 @@ export default function ChatbotPage() {
                       </div>
                     ) : (
                       <Tabs defaultValue="summary" className="w-full">
-                        <TabsList className="grid w-full grid-cols-8">
-                          <TabsTrigger value="summary">Summary</TabsTrigger>
-                          <TabsTrigger value="preview">Preview</TabsTrigger>
-                          <TabsTrigger value="dom">DOM</TabsTrigger>
-                          <TabsTrigger value="steps">Steps</TabsTrigger>
-                          <TabsTrigger value="logs">Logs</TabsTrigger>
-                          <TabsTrigger value="context">Context</TabsTrigger>
-                          <TabsTrigger value="elements">Elements</TabsTrigger>
-                          <TabsTrigger value="ui">UI</TabsTrigger>
-                        </TabsList>
+                      <TabsList className="grid w-full grid-cols-10">
+                        <TabsTrigger value="summary">Summary</TabsTrigger>
+                        <TabsTrigger value="preview">Preview</TabsTrigger>
+                        <TabsTrigger value="dom">DOM</TabsTrigger>
+                        <TabsTrigger value="steps">Steps</TabsTrigger>
+                        <TabsTrigger value="timeline">Timeline</TabsTrigger>
+                        <TabsTrigger value="logs">Logs</TabsTrigger>
+                        <TabsTrigger value="context">Context</TabsTrigger>
+                        <TabsTrigger value="elements">Elements</TabsTrigger>
+                        <TabsTrigger value="ui">UI</TabsTrigger>
+                        <TabsTrigger value="debug">Debug</TabsTrigger>
+                      </TabsList>
                         <TabsContent value="summary" className="mt-4 space-y-3">
                           {agentRunDetails ? (
                             <div className="rounded-md border border-gray-800 bg-gray-900 p-3 text-xs text-gray-300">
@@ -2072,6 +2574,60 @@ export default function ChatbotPage() {
                                   ? " · needs input"
                                   : ""}
                               </div>
+                              <div className="mt-1 text-xs text-gray-400">
+                                Robots:{" "}
+                                {resolveIgnoreRobots(agentRunDetails.planState)
+                                  ? "Ignored"
+                                  : robotsStatus || "Unknown"}
+                              </div>
+                              <div className="mt-1 text-xs text-gray-400">
+                                Adaptive trigger:{" "}
+                                {latestAdaptiveTrigger ? (
+                                  <>
+                                    {latestAdaptiveTrigger.label}
+                                    {latestAdaptiveTrigger.reason
+                                      ? ` · ${formatAdaptiveReason(
+                                          latestAdaptiveTrigger.reason
+                                        )}`
+                                      : ""}
+                                    {latestAdaptiveTrigger.createdAt
+                                      ? ` · ${new Date(
+                                          latestAdaptiveTrigger.createdAt
+                                        ).toLocaleTimeString()}`
+                                      : ""}
+                                  </>
+                                ) : (
+                                  <span className="text-gray-500">none yet</span>
+                                )}
+                              </div>
+                              {agentRunDetails.status === "waiting_human" &&
+                              resolveApprovalStepId(agentRunDetails.planState) ? (
+                                <div className="mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-[11px] text-amber-100">
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <span>
+                                      Approval required for step:{" "}
+                                      {agentPlanSteps.find(
+                                        (step) =>
+                                          step.id ===
+                                          resolveApprovalStepId(agentRunDetails.planState)
+                                      )?.title || "Unknown step"}
+                                    </span>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      disabled={agentStepActionBusyId !== null}
+                                      onClick={() =>
+                                        approveAgentStep(
+                                          resolveApprovalStepId(agentRunDetails.planState)!
+                                        )
+                                      }
+                                    >
+                                      Approve
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : null}
                               {selfCheckAudits.length > 0 ? (
                                 <div className="mt-3 rounded-md border border-gray-800 bg-gray-950 p-2 text-[11px] text-gray-300">
                                   <p className="text-[10px] uppercase tracking-wide text-gray-500">
@@ -2091,20 +2647,322 @@ export default function ChatbotPage() {
                                             ).toLocaleTimeString()}
                                           </span>
                                         </div>
-                                        {audit.metadata ? (
-                                          <div className="mt-1 text-[11px] text-gray-200">
-                                            {typeof audit.metadata.reason === "string" ? (
-                                              <p>{audit.metadata.reason}</p>
-                                            ) : null}
-                                            {typeof audit.metadata.notes === "string" ? (
-                                              <p className="mt-1 text-gray-400">
-                                                {audit.metadata.notes}
-                                              </p>
-                                            ) : null}
-                                          </div>
-                                        ) : null}
+                                        {audit.metadata
+                                          ? (() => {
+                                              const meta = audit.metadata as Record<
+                                                string,
+                                                unknown
+                                              >;
+                                              const questions = getAuditList(meta.questions);
+                                              const evidence = getAuditList(meta.evidence);
+                                              const missingInfo = getAuditList(
+                                                meta.missingInfo
+                                              );
+                                              const blockers = getAuditList(meta.blockers);
+                                              const hypotheses = getAuditList(
+                                                meta.hypotheses
+                                              );
+                                              const verificationSteps = getAuditList(
+                                                meta.verificationSteps
+                                              );
+                                              const abortSignals = getAuditList(
+                                                meta.abortSignals
+                                              );
+                                              const finishSignals = getAuditList(
+                                                meta.finishSignals
+                                              );
+                                              const toolSwitch =
+                                                typeof meta.toolSwitch === "string"
+                                                  ? meta.toolSwitch.trim()
+                                                  : "";
+                                              return (
+                                                <div className="mt-1 space-y-2 text-[11px] text-gray-200">
+                                                  {typeof meta.reason === "string" ? (
+                                                    <p>{meta.reason}</p>
+                                                  ) : null}
+                                                  {typeof meta.notes === "string" ? (
+                                                    <p className="text-gray-400">
+                                                      {meta.notes}
+                                                    </p>
+                                                  ) : null}
+                                                  {toolSwitch ? (
+                                                    <p className="text-gray-300">
+                                                      Tool switch:{" "}
+                                                      <span className="text-gray-100">
+                                                        {toolSwitch}
+                                                      </span>
+                                                    </p>
+                                                  ) : null}
+                                                  {questions.length > 0 ? (
+                                                    <div>
+                                                      <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                        Questions
+                                                      </p>
+                                                      <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                        {questions.map((item) => (
+                                                          <li key={item}>{item}</li>
+                                                        ))}
+                                                      </ul>
+                                                    </div>
+                                                  ) : null}
+                                                  {evidence.length > 0 ? (
+                                                    <div>
+                                                      <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                        Evidence
+                                                      </p>
+                                                      <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                        {evidence.map((item) => (
+                                                          <li key={item}>{item}</li>
+                                                        ))}
+                                                      </ul>
+                                                    </div>
+                                                  ) : null}
+                                                  {missingInfo.length > 0 ? (
+                                                    <div>
+                                                      <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                        Missing info
+                                                      </p>
+                                                      <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                        {missingInfo.map((item) => (
+                                                          <li key={item}>{item}</li>
+                                                        ))}
+                                                      </ul>
+                                                    </div>
+                                                  ) : null}
+                                                  {blockers.length > 0 ? (
+                                                    <div>
+                                                      <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                        Blockers
+                                                      </p>
+                                                      <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                        {blockers.map((item) => (
+                                                          <li key={item}>{item}</li>
+                                                        ))}
+                                                      </ul>
+                                                    </div>
+                                                  ) : null}
+                                                  {hypotheses.length > 0 ? (
+                                                    <div>
+                                                      <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                        Hypotheses
+                                                      </p>
+                                                      <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                        {hypotheses.map((item) => (
+                                                          <li key={item}>{item}</li>
+                                                        ))}
+                                                      </ul>
+                                                    </div>
+                                                  ) : null}
+                                                  {verificationSteps.length > 0 ? (
+                                                    <div>
+                                                      <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                        Verification
+                                                      </p>
+                                                      <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                        {verificationSteps.map(
+                                                          (item) => (
+                                                            <li key={item}>{item}</li>
+                                                          )
+                                                        )}
+                                                      </ul>
+                                                    </div>
+                                                  ) : null}
+                                                  {abortSignals.length > 0 ? (
+                                                    <div>
+                                                      <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                        Abort signals
+                                                      </p>
+                                                      <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                        {abortSignals.map((item) => (
+                                                          <li key={item}>{item}</li>
+                                                        ))}
+                                                      </ul>
+                                                    </div>
+                                                  ) : null}
+                                                  {finishSignals.length > 0 ? (
+                                                    <div>
+                                                      <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                        Finish signals
+                                                      </p>
+                                                      <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                        {finishSignals.map((item) => (
+                                                          <li key={item}>{item}</li>
+                                                        ))}
+                                                      </ul>
+                                                    </div>
+                                                  ) : null}
+                                                </div>
+                                              );
+                                            })()
+                                          : null}
                                       </div>
                                     ))}
+                                  </div>
+                                </div>
+                              ) : null}
+                              {branchAudits.length > 0 ? (
+                                <div className="mt-3 rounded-md border border-gray-800 bg-gray-950 p-2 text-[11px] text-gray-300">
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                    Branches
+                                  </p>
+                                  <div className="mt-2 space-y-2">
+                                    {branchAudits.slice(0, 3).map((audit) => {
+                                      const meta = audit.metadata as
+                                        | {
+                                            branchSteps?: Array<{
+                                              id?: string;
+                                              title?: string;
+                                            }>;
+                                            reason?: string;
+                                          }
+                                        | null;
+                                      const branchSteps = Array.isArray(meta?.branchSteps)
+                                        ? meta?.branchSteps
+                                        : [];
+                                      return (
+                                        <div
+                                          key={audit.id}
+                                          className="rounded-md border border-gray-800 bg-gray-900/70 p-2"
+                                        >
+                                          <div className="flex items-center justify-between text-[10px] text-gray-500">
+                                            <span>
+                                              {meta?.reason
+                                                ? `Reason: ${formatAdaptiveReason(
+                                                    meta.reason
+                                                  )}`
+                                                : "Branch alternatives"}
+                                            </span>
+                                            <span>
+                                              {new Date(
+                                                audit.createdAt
+                                              ).toLocaleTimeString()}
+                                            </span>
+                                          </div>
+                                          {branchSteps.length > 0 ? (
+                                            <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                              {branchSteps.map((step, index) => (
+                                                <li
+                                                  key={
+                                                    step.id ??
+                                                    `branch-step-${index}`
+                                                  }
+                                                >
+                                                  {step.title || "Branch step"}
+                                                </li>
+                                              ))}
+                                            </ul>
+                                          ) : (
+                                            <p className="mt-1 text-gray-500">
+                                              No branch steps captured.
+                                            </p>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ) : null}
+                              {selfImprovementAudits.length > 0 ? (
+                                <div className="mt-3 rounded-md border border-gray-800 bg-gray-950 p-2 text-[11px] text-gray-300">
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                    Self-improvement
+                                  </p>
+                                  <div className="mt-2 space-y-2">
+                                    {selfImprovementAudits.slice(0, 3).map((audit) => {
+                                      const meta = audit.metadata as Record<
+                                        string,
+                                        unknown
+                                      > | null;
+                                      const mistakes = getAuditList(meta?.mistakes);
+                                      const improvements = getAuditList(
+                                        meta?.improvements
+                                      );
+                                      const guardrails = getAuditList(meta?.guardrails);
+                                      const toolAdjustments = getAuditList(
+                                        meta?.toolAdjustments
+                                      );
+                                      const summary =
+                                        typeof meta?.summary === "string"
+                                          ? meta.summary
+                                          : "";
+                                      const confidence =
+                                        typeof meta?.confidence === "number"
+                                          ? meta.confidence
+                                          : null;
+                                      return (
+                                        <div
+                                          key={audit.id}
+                                          className="rounded-md border border-gray-800 bg-gray-900/70 p-2"
+                                        >
+                                          <div className="flex items-center justify-between text-[10px] text-gray-500">
+                                            <span>{audit.message}</span>
+                                            <span>
+                                              {new Date(
+                                                audit.createdAt
+                                              ).toLocaleTimeString()}
+                                            </span>
+                                          </div>
+                                          {summary ? (
+                                            <p className="mt-1 text-gray-200">
+                                              {summary}
+                                            </p>
+                                          ) : null}
+                                          {confidence !== null ? (
+                                            <p className="mt-1 text-gray-400">
+                                              Confidence: {confidence}
+                                            </p>
+                                          ) : null}
+                                          {mistakes.length > 0 ? (
+                                            <div className="mt-2">
+                                              <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                Mistakes
+                                              </p>
+                                              <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                {mistakes.map((item) => (
+                                                  <li key={item}>{item}</li>
+                                                ))}
+                                              </ul>
+                                            </div>
+                                          ) : null}
+                                          {improvements.length > 0 ? (
+                                            <div className="mt-2">
+                                              <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                Improvements
+                                              </p>
+                                              <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                {improvements.map((item) => (
+                                                  <li key={item}>{item}</li>
+                                                ))}
+                                              </ul>
+                                            </div>
+                                          ) : null}
+                                          {guardrails.length > 0 ? (
+                                            <div className="mt-2">
+                                              <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                Guardrails
+                                              </p>
+                                              <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                {guardrails.map((item) => (
+                                                  <li key={item}>{item}</li>
+                                                ))}
+                                              </ul>
+                                            </div>
+                                          ) : null}
+                                          {toolAdjustments.length > 0 ? (
+                                            <div className="mt-2">
+                                              <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                Tool tweaks
+                                              </p>
+                                              <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                {toolAdjustments.map((item) => (
+                                                  <li key={item}>{item}</li>
+                                                ))}
+                                              </ul>
+                                            </div>
+                                          ) : null}
+                                        </div>
+                                      );
+                                    })}
                                   </div>
                                 </div>
                               ) : null}
@@ -2221,6 +3079,107 @@ export default function ChatbotPage() {
                           <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
                             <p className="text-[11px] text-gray-500">Agent steps</p>
                             {renderPlannerNotes(agentPlanMeta)}
+                            {agentPlanSteps.length > 0 ? (
+                              <div className="mt-3 rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                                <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                  Plan steps with dependencies
+                                </p>
+                                <ol className="mt-2 space-y-2">
+                                  {agentPlanSteps.map((step, index) => {
+                                    const deps = formatDependencies(step.dependsOn);
+                                    return (
+                                      <li
+                                        key={step.id || `${index}-plan-step`}
+                                        className="rounded-md border border-gray-800 bg-gray-950/70 px-2 py-2"
+                                      >
+                                        <div className="flex items-center justify-between text-[10px] text-gray-500">
+                                          <span className="uppercase">#{index + 1}</span>
+                                          <span className="uppercase">
+                                            {step.status}
+                                            {step.phase ? ` · ${step.phase}` : ""}
+                                            {typeof step.priority === "number"
+                                              ? ` · p${step.priority}`
+                                              : ""}
+                                          </span>
+                                        </div>
+                                        <p className="mt-1 text-slate-100">
+                                          {step.title}
+                                        </p>
+                                        {deps ? (
+                                          <p className="mt-1 text-[10px] text-slate-400">
+                                            Depends on: {deps}
+                                          </p>
+                                        ) : null}
+                                      </li>
+                                    );
+                                  })}
+                                </ol>
+                              </div>
+                            ) : null}
+                            {agentPlanSteps.length > 0 ? (
+                              <div className="mt-3 rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                                <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                  Step retries & overrides
+                                </p>
+                                <ol className="mt-2 space-y-2">
+                                  {agentPlanSteps.map((step) => (
+                                    <li
+                                      key={step.id}
+                                      className="rounded-md border border-gray-800 bg-gray-950/70 px-2 py-2"
+                                    >
+                                      <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-gray-400">
+                                        <span className="uppercase">
+                                          {step.status}
+                                        </span>
+                                        <span>{step.title}</span>
+                                      </div>
+                                      <div className="mt-2 flex flex-wrap gap-2">
+                                        <Button
+                                          type="button"
+                                          size="sm"
+                                          variant="outline"
+                                          disabled={
+                                            agentRunDetails?.status === "running" ||
+                                            agentStepActionBusyId === step.id
+                                          }
+                                          onClick={() => retryAgentStep(step.id)}
+                                        >
+                                          Retry
+                                        </Button>
+                                        <Button
+                                          type="button"
+                                          size="sm"
+                                          variant="outline"
+                                          disabled={
+                                            agentRunDetails?.status === "running" ||
+                                            agentStepActionBusyId === step.id
+                                          }
+                                          onClick={() =>
+                                            overrideAgentStep(step.id, "completed")
+                                          }
+                                        >
+                                          Mark done
+                                        </Button>
+                                        <Button
+                                          type="button"
+                                          size="sm"
+                                          variant="outline"
+                                          disabled={
+                                            agentRunDetails?.status === "running" ||
+                                            agentStepActionBusyId === step.id
+                                          }
+                                          onClick={() =>
+                                            overrideAgentStep(step.id, "failed")
+                                          }
+                                        >
+                                          Mark failed
+                                        </Button>
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ol>
+                              </div>
+                            ) : null}
                             {agentRunAudits.some(
                               (audit) =>
                                 audit.message === "LLM extraction plan created." &&
@@ -2244,6 +3203,125 @@ export default function ChatbotPage() {
                                         {renderExtractionPlan(
                                           audit.metadata?.plan as ExtractionPlan
                                         )}
+                                      </div>
+                                    ))}
+                                </div>
+                              </div>
+                            ) : null}
+                            {agentRunAudits.some(
+                              (audit) => audit.message === "Plan evaluated."
+                            ) ? (
+                              <div className="mt-3 rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                                <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                  Planner evaluation
+                                </p>
+                                <div className="mt-2 space-y-2">
+                                  {agentRunAudits
+                                    .filter(
+                                      (audit) => audit.message === "Plan evaluated."
+                                    )
+                                    .slice(0, 2)
+                                    .map((audit) => (
+                                      <div
+                                        key={audit.id}
+                                        className="rounded-md border border-gray-800 bg-gray-950 p-2 text-[10px] text-gray-300"
+                                      >
+                                        <p>
+                                          Score:{" "}
+                                          {typeof audit.metadata?.score === "number"
+                                            ? audit.metadata.score
+                                            : "n/a"}
+                                        </p>
+                                        {Array.isArray(audit.metadata?.issues) &&
+                                        audit.metadata?.issues?.length ? (
+                                          <ul className="mt-1 list-disc space-y-1 pl-4">
+                                            {audit.metadata.issues.map(
+                                              (issue: string, index: number) => (
+                                                <li key={`${audit.id}-issue-${index}`}>
+                                                  {issue}
+                                                </li>
+                                              )
+                                            )}
+                                          </ul>
+                                        ) : (
+                                          <p className="mt-1 text-gray-500">
+                                            No issues reported.
+                                          </p>
+                                        )}
+                                      </div>
+                                    ))}
+                                </div>
+                              </div>
+                            ) : null}
+                            {agentRunAudits.some(
+                              (audit) =>
+                                audit.message === "Plan verification completed."
+                            ) ? (
+                              <div className="mt-3 rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                                <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                  Plan verification
+                                </p>
+                                <div className="mt-2 space-y-2">
+                                  {agentRunAudits
+                                    .filter(
+                                      (audit) =>
+                                        audit.message ===
+                                        "Plan verification completed."
+                                    )
+                                    .slice(0, 2)
+                                    .map((audit) => (
+                                      <div
+                                        key={audit.id}
+                                        className="rounded-md border border-gray-800 bg-gray-950 p-2 text-[10px] text-gray-300"
+                                      >
+                                        <p>
+                                          Verdict:{" "}
+                                          {typeof audit.metadata?.verdict === "string"
+                                            ? audit.metadata.verdict
+                                            : "unknown"}
+                                        </p>
+                                        {Array.isArray(audit.metadata?.evidence) &&
+                                        audit.metadata?.evidence?.length ? (
+                                          <div className="mt-1">
+                                            <p className="text-gray-400">
+                                              Evidence
+                                            </p>
+                                            <ul className="mt-1 list-disc space-y-1 pl-4">
+                                              {audit.metadata.evidence.map(
+                                                (item: string, index: number) => (
+                                                  <li
+                                                    key={`${audit.id}-evidence-${index}`}
+                                                  >
+                                                    {item}
+                                                  </li>
+                                                )
+                                              )}
+                                            </ul>
+                                          </div>
+                                        ) : null}
+                                        {Array.isArray(audit.metadata?.missing) &&
+                                        audit.metadata?.missing?.length ? (
+                                          <div className="mt-2">
+                                            <p className="text-gray-400">Missing</p>
+                                            <ul className="mt-1 list-disc space-y-1 pl-4">
+                                              {audit.metadata.missing.map(
+                                                (item: string, index: number) => (
+                                                  <li
+                                                    key={`${audit.id}-missing-${index}`}
+                                                  >
+                                                    {item}
+                                                  </li>
+                                                )
+                                              )}
+                                            </ul>
+                                          </div>
+                                        ) : null}
+                                        {typeof audit.metadata?.followUp === "string" &&
+                                        audit.metadata.followUp.trim() ? (
+                                          <p className="mt-2 text-gray-400">
+                                            Follow-up: {audit.metadata.followUp}
+                                          </p>
+                                        ) : null}
                                       </div>
                                     ))}
                                 </div>
@@ -2296,6 +3374,40 @@ export default function ChatbotPage() {
                                 ))
                               )}
                             </div>
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="timeline" className="mt-4">
+                          <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                            <p className="text-[11px] text-gray-500">
+                              Tool call timeline
+                            </p>
+                            {toolTimeline.length === 0 ? (
+                              <p className="mt-2 text-gray-500">
+                                No tool calls logged yet.
+                              </p>
+                            ) : (
+                              <ol className="mt-2 space-y-2">
+                                {toolTimeline.map((entry) => (
+                                  <li
+                                    key={entry.id}
+                                    className="rounded-md border border-gray-800 bg-gray-900/70 px-2 py-1"
+                                  >
+                                    <div className="flex items-center justify-between text-[10px] text-gray-500">
+                                      <span className="uppercase">
+                                        {entry.source}
+                                        {entry.level ? ` · ${entry.level}` : ""}
+                                      </span>
+                                      <span>
+                                        {new Date(entry.createdAt).toLocaleTimeString()}
+                                      </span>
+                                    </div>
+                                    <p className="mt-1 text-[11px] text-gray-200">
+                                      {entry.message}
+                                    </p>
+                                  </li>
+                                ))}
+                              </ol>
+                            )}
                           </div>
                         </TabsContent>
                         <TabsContent value="logs" className="mt-4">
@@ -2569,6 +3681,113 @@ export default function ChatbotPage() {
                             )}
                           </div>
                         </TabsContent>
+                        <TabsContent value="debug" className="mt-4">
+                          <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                            <p className="text-[11px] text-gray-500">Agent debug</p>
+                            <div className="mt-2 space-y-3">
+                              {agentRunDetails?.planState ? (
+                                <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                    Settings
+                                  </p>
+                                  <pre className="mt-1 whitespace-pre-wrap text-[10px] text-gray-300">
+                                    {JSON.stringify(agentRunDetails.planState, null, 2)}
+                                  </pre>
+                                </div>
+                              ) : null}
+                              {latestPlannerContext ? (
+                                <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                    Planner context
+                                  </p>
+                                  <pre className="mt-1 whitespace-pre-wrap text-[10px] text-gray-300">
+                                    {JSON.stringify(latestPlannerContext.metadata, null, 2)}
+                                  </pre>
+                                </div>
+                              ) : null}
+                              {latestPlanReplan ? (
+                                <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                    Latest replan
+                                  </p>
+                                  <pre className="mt-1 whitespace-pre-wrap text-[10px] text-gray-300">
+                                    {JSON.stringify(latestPlanReplan.metadata, null, 2)}
+                                  </pre>
+                                </div>
+                              ) : null}
+                              {latestPlanAdapt ? (
+                                <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                    Latest adaptation
+                                  </p>
+                                  <pre className="mt-1 whitespace-pre-wrap text-[10px] text-gray-300">
+                                    {JSON.stringify(latestPlanAdapt.metadata, null, 2)}
+                                  </pre>
+                                </div>
+                              ) : null}
+                              {latestSelfCheckReplan ? (
+                                <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                    Latest self-check replan
+                                  </p>
+                                  <pre className="mt-1 whitespace-pre-wrap text-[10px] text-gray-300">
+                                    {JSON.stringify(latestSelfCheckReplan.metadata, null, 2)}
+                                  </pre>
+                                </div>
+                              ) : null}
+                              {latestLoopGuard ? (
+                                <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                    Loop guard
+                                  </p>
+                                  <pre className="mt-1 whitespace-pre-wrap text-[10px] text-gray-300">
+                                    {JSON.stringify(latestLoopGuard.metadata, null, 2)}
+                                  </pre>
+                                </div>
+                              ) : null}
+                              {latestSelfImprovementContext ? (
+                                <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                    Self-improvement context
+                                  </p>
+                                  <pre className="mt-1 whitespace-pre-wrap text-[10px] text-gray-300">
+                                    {JSON.stringify(
+                                      latestSelfImprovementContext.metadata,
+                                      null,
+                                      2
+                                    )}
+                                  </pre>
+                                </div>
+                              ) : null}
+                              {latestSelfImprovementPlaybook ? (
+                                <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                    Self-improvement playbook
+                                  </p>
+                                  <pre className="mt-1 whitespace-pre-wrap text-[10px] text-gray-300">
+                                    {JSON.stringify(
+                                      latestSelfImprovementPlaybook.metadata,
+                                      null,
+                                      2
+                                    )}
+                                  </pre>
+                                </div>
+                              ) : null}
+                              {!agentRunDetails?.planState &&
+                              !latestPlannerContext &&
+                              !latestPlanReplan &&
+                              !latestPlanAdapt &&
+                              !latestSelfCheckReplan &&
+                              !latestLoopGuard &&
+                              !latestSelfImprovementContext &&
+                              !latestSelfImprovementPlaybook ? (
+                                <p className="text-gray-500">
+                                  No debug data captured yet.
+                                </p>
+                              ) : null}
+                            </div>
+                          </div>
+                        </TabsContent>
                       </Tabs>
                     )}
                   </ModalShell>
@@ -2603,6 +3822,43 @@ export default function ChatbotPage() {
                     ? `Current: ${currentPlanStep.title}`
                     : "No active step"}
                 </button>
+                <div className="mt-2 text-[10px] text-slate-400">
+                  Robots:{" "}
+                  {latestAgentIgnoreRobots
+                    ? "Ignored"
+                    : robotsStatus || "Unknown"}
+                </div>
+                {latestAgentRunStatus === "waiting_human" &&
+                (resolveApprovalStepId(agentRunDetails?.planState ?? null) ||
+                  latestApprovalStepId) ? (
+                  <div className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[10px] text-amber-100">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span>
+                        Approval required:{" "}
+                        {agentPlanSteps.find(
+                          (step) =>
+                            step.id ===
+                            (resolveApprovalStepId(agentRunDetails?.planState ?? null) ||
+                              latestApprovalStepId)
+                        )?.title || "Unknown step"}
+                      </span>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={agentStepActionBusyId !== null}
+                        onClick={() =>
+                          approveAgentStep(
+                            (resolveApprovalStepId(agentRunDetails?.planState ?? null) ||
+                              latestApprovalStepId)!
+                          )
+                        }
+                      >
+                        Approve
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
                 <div className="mt-3 flex items-start justify-center gap-4">
                   <div
                     className={`w-full max-w-[520px] max-h-[360px] overflow-hidden rounded-md border bg-slate-900 ${
@@ -2677,6 +3933,42 @@ export default function ChatbotPage() {
                                 >
                                   View details
                                 </button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={
+                                    latestAgentRunStatus === "running" ||
+                                    agentStepActionBusyId === step.id
+                                  }
+                                  onClick={() => retryAgentStep(step.id)}
+                                >
+                                  Retry
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={
+                                    latestAgentRunStatus === "running" ||
+                                    agentStepActionBusyId === step.id
+                                  }
+                                  onClick={() => overrideAgentStep(step.id, "completed")}
+                                >
+                                  Mark done
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={
+                                    latestAgentRunStatus === "running" ||
+                                    agentStepActionBusyId === step.id
+                                  }
+                                  onClick={() => overrideAgentStep(step.id, "failed")}
+                                >
+                                  Mark failed
+                                </Button>
                               </div>
                             </li>
                           ))}
@@ -2887,6 +4179,146 @@ export default function ChatbotPage() {
                       />
                       Run headless
                     </label>
+                    <label className="mt-2 flex items-center gap-2 text-[11px] text-gray-400">
+                      <input
+                        type="checkbox"
+                        checked={agentIgnoreRobotsTxt}
+                        onChange={(event) =>
+                          setAgentIgnoreRobotsTxt(event.target.checked)
+                        }
+                        disabled={isSending}
+                      />
+                      Ignore robots.txt
+                    </label>
+                    <label className="mt-2 flex items-center gap-2 text-[11px] text-gray-400">
+                      <input
+                        type="checkbox"
+                        checked={agentRequireHumanApproval}
+                        onChange={(event) =>
+                          setAgentRequireHumanApproval(event.target.checked)
+                        }
+                        disabled={isSending}
+                      />
+                      Require human approval for risky steps
+                    </label>
+                  </div>
+                ) : null}
+                {agentModeEnabled ? (
+                  <div className="w-full max-w-xl">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-gray-400">Agent settings</p>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setAgentBrowser(DEFAULT_AGENT_SETTINGS.agentBrowser);
+                          setAgentRunHeadless(DEFAULT_AGENT_SETTINGS.runHeadless);
+                          setAgentIgnoreRobotsTxt(
+                            DEFAULT_AGENT_SETTINGS.ignoreRobotsTxt
+                          );
+                          setAgentRequireHumanApproval(
+                            DEFAULT_AGENT_SETTINGS.requireHumanApproval
+                          );
+                          setAgentMaxSteps(DEFAULT_AGENT_SETTINGS.maxSteps);
+                          setAgentMaxStepAttempts(
+                            DEFAULT_AGENT_SETTINGS.maxStepAttempts
+                          );
+                          setAgentMaxReplanCalls(
+                            DEFAULT_AGENT_SETTINGS.maxReplanCalls
+                          );
+                          setAgentReplanEverySteps(
+                            DEFAULT_AGENT_SETTINGS.replanEverySteps
+                          );
+                          setAgentMaxSelfChecks(DEFAULT_AGENT_SETTINGS.maxSelfChecks);
+                        }}
+                        disabled={isSending}
+                      >
+                        Reset defaults
+                      </Button>
+                    </div>
+                    <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="text-[11px] text-gray-400">
+                          Max steps
+                        </label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={20}
+                          value={agentMaxSteps}
+                          onChange={(event) =>
+                            setAgentMaxSteps(Number(event.target.value))
+                          }
+                          disabled={isSending}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-gray-400">
+                          Max step attempts
+                        </label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={5}
+                          value={agentMaxStepAttempts}
+                          onChange={(event) =>
+                            setAgentMaxStepAttempts(Number(event.target.value))
+                          }
+                          disabled={isSending}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-gray-400">
+                          Replan every N steps
+                        </label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={10}
+                          value={agentReplanEverySteps}
+                          onChange={(event) =>
+                            setAgentReplanEverySteps(Number(event.target.value))
+                          }
+                          disabled={isSending}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-gray-400">
+                          Max replan calls
+                        </label>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={6}
+                          value={agentMaxReplanCalls}
+                          onChange={(event) =>
+                            setAgentMaxReplanCalls(Number(event.target.value))
+                          }
+                          disabled={isSending}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-gray-400">
+                          Max self-checks
+                        </label>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={8}
+                          value={agentMaxSelfChecks}
+                          onChange={(event) =>
+                            setAgentMaxSelfChecks(Number(event.target.value))
+                          }
+                          disabled={isSending}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
                   </div>
                 ) : null}
               </div>
@@ -3095,6 +4527,28 @@ export default function ChatbotPage() {
                           <dt className="text-[11px] text-gray-500">Agent browser</dt>
                           <dd>{debugState.lastRequest.agentBrowser || "Default"}</dd>
                         </div>
+                        <div>
+                          <dt className="text-[11px] text-gray-500">Ignore robots</dt>
+                          <dd>{debugState.lastRequest.ignoreRobotsTxt ? "Yes" : "No"}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-[11px] text-gray-500">
+                            Human approval
+                          </dt>
+                          <dd>
+                            {debugState.lastRequest.requireHumanApproval ? "Yes" : "No"}
+                          </dd>
+                        </div>
+                        {debugState.lastRequest.agentPlanSettings ? (
+                          <div>
+                            <dt className="text-[11px] text-gray-500">
+                              Agent settings
+                            </dt>
+                            <dd>
+                              {`steps ${debugState.lastRequest.agentPlanSettings.maxSteps}, attempts ${debugState.lastRequest.agentPlanSettings.maxStepAttempts}, replan every ${debugState.lastRequest.agentPlanSettings.replanEverySteps}, replans ${debugState.lastRequest.agentPlanSettings.maxReplanCalls}, self-checks ${debugState.lastRequest.agentPlanSettings.maxSelfChecks}`}
+                            </dd>
+                          </div>
+                        ) : null}
                         <div>
                           <dt className="text-[11px] text-gray-500">Messages</dt>
                           <dd>{debugState.lastRequest.messageCount}</dd>

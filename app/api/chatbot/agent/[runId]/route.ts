@@ -57,8 +57,17 @@ export async function POST(
       );
     }
     const { runId } = await params;
-    const body = (await req.json()) as { action?: string; stepId?: string };
-    if (!body.action || !["stop", "resume"].includes(body.action)) {
+    const body = (await req.json()) as {
+      action?: string;
+      stepId?: string;
+      status?: "completed" | "failed" | "pending";
+    };
+    if (
+      !body.action ||
+      !["stop", "resume", "retry_step", "override_step", "approve_step"].includes(
+        body.action
+      )
+    ) {
       return NextResponse.json(
         { error: "Unsupported action." },
         { status: 400 }
@@ -118,6 +127,205 @@ export async function POST(
         console.info("[chatbot][agent][POST] Resumed", {
           runId,
           status: updated.status,
+          durationMs: Date.now() - requestStart,
+        });
+      }
+      return NextResponse.json({ status: updated.status });
+    }
+
+    if (body.action === "retry_step") {
+      if (run.status === "running") {
+        return NextResponse.json(
+          { error: "Run is running. Stop it before retrying steps." },
+          { status: 409 }
+        );
+      }
+      if (!body.stepId?.trim()) {
+        return NextResponse.json(
+          { error: "stepId is required for retry_step." },
+          { status: 400 }
+        );
+      }
+      const planState =
+        run.planState && typeof run.planState === "object"
+          ? (run.planState as Record<string, unknown>)
+          : null;
+      const steps = Array.isArray(planState?.steps) ? planState?.steps : null;
+      if (!steps) {
+        return NextResponse.json(
+          { error: "No plan steps available to retry." },
+          { status: 400 }
+        );
+      }
+      const nextSteps = steps.map((step) => {
+        if (step && typeof step === "object" && step.id === body.stepId) {
+          const typed = step as {
+            id: string;
+            status?: string;
+            attempts?: number;
+            maxAttempts?: number;
+          };
+          return {
+            ...typed,
+            status: "pending",
+            attempts: 0,
+            maxAttempts: (typed.maxAttempts ?? 1) + 1,
+          };
+        }
+        return step;
+      });
+      const now = new Date().toISOString();
+      const updated = await prisma.chatbotAgentRun.update({
+        where: { id: runId },
+        data: {
+          status: "queued",
+          requiresHumanIntervention: false,
+          errorMessage: null,
+          finishedAt: null,
+          checkpointedAt: new Date(),
+          planState: {
+            ...(planState ?? {}),
+            steps: nextSteps,
+            activeStepId: body.stepId,
+            resumeRequestedAt: now,
+            updatedAt: now,
+          },
+          activeStepId: body.stepId,
+          logLines: {
+            push: `[${new Date().toISOString()}] Step retry requested (${body.stepId}).`,
+          },
+        },
+      });
+      await logAgentAudit(updated.id, "warning", "Step retry requested.", {
+        stepId: body.stepId,
+      });
+      if (DEBUG_CHATBOT) {
+        console.info("[chatbot][agent][POST] Step retry queued", {
+          runId,
+          stepId: body.stepId,
+          durationMs: Date.now() - requestStart,
+        });
+      }
+      return NextResponse.json({ status: updated.status });
+    }
+
+    if (body.action === "override_step") {
+      if (run.status === "running") {
+        return NextResponse.json(
+          { error: "Run is running. Stop it before overriding steps." },
+          { status: 409 }
+        );
+      }
+      if (!body.stepId?.trim() || !body.status) {
+        return NextResponse.json(
+          { error: "stepId and status are required for override_step." },
+          { status: 400 }
+        );
+      }
+      const planState =
+        run.planState && typeof run.planState === "object"
+          ? (run.planState as Record<string, unknown>)
+          : null;
+      const steps = Array.isArray(planState?.steps) ? planState?.steps : null;
+      if (!steps) {
+        return NextResponse.json(
+          { error: "No plan steps available to override." },
+          { status: 400 }
+        );
+      }
+      const nextSteps = steps.map((step) => {
+        if (step && typeof step === "object" && step.id === body.stepId) {
+          return { ...step, status: body.status };
+        }
+        return step;
+      });
+      const nextActive =
+        body.status === "completed"
+          ? (nextSteps.find(
+              (step) =>
+                step &&
+                typeof step === "object" &&
+                (step as { status?: string }).status !== "completed"
+            ) as { id?: string } | undefined)?.id ?? null
+          : body.stepId;
+      const now = new Date().toISOString();
+      const updated = await prisma.chatbotAgentRun.update({
+        where: { id: runId },
+        data: {
+          planState: {
+            ...(planState ?? {}),
+            steps: nextSteps,
+            activeStepId: nextActive,
+            updatedAt: now,
+          },
+          activeStepId: nextActive,
+          checkpointedAt: new Date(),
+          logLines: {
+            push: `[${new Date().toISOString()}] Step overridden (${body.stepId} -> ${body.status}).`,
+          },
+        },
+      });
+      await logAgentAudit(updated.id, "warning", "Step overridden.", {
+        stepId: body.stepId,
+        status: body.status,
+      });
+      if (DEBUG_CHATBOT) {
+        console.info("[chatbot][agent][POST] Step overridden", {
+          runId,
+          stepId: body.stepId,
+          status: body.status,
+          durationMs: Date.now() - requestStart,
+        });
+      }
+      return NextResponse.json({ status: updated.status });
+    }
+
+    if (body.action === "approve_step") {
+      if (run.status === "running") {
+        return NextResponse.json(
+          { error: "Run is running. Stop it before approving steps." },
+          { status: 409 }
+        );
+      }
+      if (!body.stepId?.trim()) {
+        return NextResponse.json(
+          { error: "stepId is required for approve_step." },
+          { status: 400 }
+        );
+      }
+      const planState =
+        run.planState && typeof run.planState === "object"
+          ? (run.planState as Record<string, unknown>)
+          : null;
+      const now = new Date().toISOString();
+      const updated = await prisma.chatbotAgentRun.update({
+        where: { id: runId },
+        data: {
+          status: "queued",
+          requiresHumanIntervention: false,
+          errorMessage: null,
+          finishedAt: null,
+          checkpointedAt: new Date(),
+          planState: {
+            ...(planState ?? {}),
+            approvalRequestedStepId: null,
+            approvalGrantedStepId: body.stepId.trim(),
+            activeStepId: body.stepId.trim(),
+            updatedAt: now,
+          },
+          activeStepId: body.stepId.trim(),
+          logLines: {
+            push: `[${new Date().toISOString()}] Step approval granted (${body.stepId}).`,
+          },
+        },
+      });
+      await logAgentAudit(updated.id, "warning", "Step approval granted.", {
+        stepId: body.stepId.trim(),
+      });
+      if (DEBUG_CHATBOT) {
+        console.info("[chatbot][agent][POST] Step approved", {
+          runId,
+          stepId: body.stepId.trim(),
           durationMs: Date.now() - requestStart,
         });
       }

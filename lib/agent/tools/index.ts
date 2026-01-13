@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { addAgentLongTermMemory } from "@/lib/agent/memory";
 import { randomUUID } from "crypto";
 import { promises as fs } from "fs";
 import path from "path";
@@ -51,6 +52,9 @@ const extractTargetUrl = (prompt?: string) => {
   return null;
 };
 
+const hasExplicitUrl = (prompt?: string) =>
+  Boolean(prompt?.match(/https?:\/\/[^\s)]+/i));
+
 const parseCredentials = (prompt?: string) => {
   if (!prompt) return null;
   const emailMatch = prompt.match(/email\s*[:=]\s*([^\s]+)/i);
@@ -65,11 +69,11 @@ const parseCredentials = (prompt?: string) => {
 
 const parseExtractionRequest = (prompt?: string) => {
   if (!prompt) return null;
-  if (/task type:\s*web_task/i.test(prompt)) return null;
   const taskTypeHint = /task type:\s*extract_info/i.test(prompt);
   const wantsExtraction =
     taskTypeHint ||
     /(extract|collect|find|list|get)\b/i.test(prompt);
+  if (/task type:\s*web_task/i.test(prompt) && !wantsExtraction) return null;
   if (!wantsExtraction) return null;
   const isProduct = /product/i.test(prompt);
   const isEmail = /email/i.test(prompt);
@@ -93,6 +97,22 @@ const toDataUrl = (buffer: Buffer) =>
 const safeText = (value: string | null | undefined) => value ?? "";
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
 const DEFAULT_OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? "qwen3-vl:30b";
+const BRAVE_SEARCH_API_KEY = process.env.BRAVE_SEARCH_API_KEY;
+const BRAVE_SEARCH_API_URL =
+  process.env.BRAVE_SEARCH_API_URL || "https://api.search.brave.com/res/v1/web/search";
+const GOOGLE_SEARCH_API_KEY = process.env.GOOGLE_SEARCH_API_KEY;
+const GOOGLE_SEARCH_ENGINE_ID = process.env.GOOGLE_SEARCH_ENGINE_ID;
+const GOOGLE_SEARCH_API_URL =
+  process.env.GOOGLE_SEARCH_API_URL || "https://www.googleapis.com/customsearch/v1";
+const SERPAPI_API_KEY = process.env.SERPAPI_API_KEY;
+const SERPAPI_API_URL = process.env.SERPAPI_API_URL || "https://serpapi.com/search.json";
+
+const resolveIgnoreRobotsTxt = (planState: unknown) => {
+  if (!planState || typeof planState !== "object") return false;
+  const prefs = (planState as { preferences?: { ignoreRobotsTxt?: boolean } })
+    .preferences;
+  return Boolean(prefs?.ignoreRobotsTxt);
+};
 
 export async function runAgentTool(request: AgentToolRequest): Promise<AgentToolResult> {
   const { runId, prompt, browser, runHeadless, stepId, stepLabel } = request.input;
@@ -114,10 +134,18 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
       "chatbotAgentRun" in prisma
         ? await prisma.chatbotAgentRun.findUnique({
             where: { id: runId },
-            select: { model: true },
+            select: {
+              model: true,
+              searchProvider: true,
+              planState: true,
+              memoryKey: true,
+            },
           })
         : null;
     const resolvedModel = runRecord?.model || DEFAULT_OLLAMA_MODEL;
+    const resolvedSearchProvider = runRecord?.searchProvider ?? "brave";
+    const ignoreRobotsTxt = resolveIgnoreRobotsTxt(runRecord?.planState);
+    const memoryKey = runRecord?.memoryKey ?? null;
     const browserType =
       browser === "firefox" ? firefox : browser === "webkit" ? webkit : chromium;
 
@@ -147,6 +175,117 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
           metadata,
         },
       });
+    };
+
+    const loadRobotsTxt = async (url: string) => {
+      try {
+        const target = new URL(url);
+        const robotsUrl = `${target.origin}/robots.txt`;
+        const response = await fetch(robotsUrl, { method: "GET" });
+        if (!response.ok) {
+          return { ok: false, status: response.status, content: "" };
+        }
+        const content = await response.text();
+        return { ok: true, status: response.status, content };
+      } catch (error) {
+        return {
+          ok: false,
+          status: null,
+          content: "",
+          error: error instanceof Error ? error.message : String(error),
+        };
+      }
+    };
+
+    const parseRobotsRules = (robotsTxt: string) => {
+      const rules = new Map<string, Array<{ type: "allow" | "disallow"; path: string }>>();
+      let currentAgents: string[] = [];
+      const lines = robotsTxt.split(/\r?\n/);
+      for (const rawLine of lines) {
+        const line = rawLine.split("#")[0]?.trim();
+        if (!line) continue;
+        const [rawKey, ...rest] = line.split(":");
+        const key = rawKey?.trim().toLowerCase();
+        const value = rest.join(":").trim();
+        if (!key) continue;
+        if (key === "user-agent") {
+          const agent = value.toLowerCase();
+          currentAgents = agent ? [agent] : [];
+          for (const entry of currentAgents) {
+            if (!rules.has(entry)) {
+              rules.set(entry, []);
+            }
+          }
+          continue;
+        }
+        if (key === "allow" || key === "disallow") {
+          if (currentAgents.length === 0) continue;
+          for (const agent of currentAgents) {
+            const list = rules.get(agent) ?? [];
+            list.push({ type: key as "allow" | "disallow", path: value });
+            rules.set(agent, list);
+          }
+        }
+      }
+      return rules;
+    };
+
+    const evaluateRobotsRules = (
+      rules: Array<{ type: "allow" | "disallow"; path: string }>,
+      path: string
+    ) => {
+      let bestMatch: { type: "allow" | "disallow"; path: string } | null = null;
+      for (const rule of rules) {
+        if (!rule.path) {
+          if (rule.type === "allow" && !bestMatch) {
+            bestMatch = rule;
+          }
+          continue;
+        }
+        if (path.startsWith(rule.path)) {
+          if (!bestMatch || rule.path.length > bestMatch.path.length) {
+            bestMatch = rule;
+          } else if (
+            bestMatch &&
+            rule.path.length === bestMatch.path.length &&
+            rule.type === "allow"
+          ) {
+            bestMatch = rule;
+          }
+        }
+      }
+      if (!bestMatch) return { allowed: true, matchedRule: null };
+      return {
+        allowed: bestMatch.type !== "disallow",
+        matchedRule: bestMatch,
+      };
+    };
+
+    const enforceRobotsPolicy = async (url: string) => {
+      if (ignoreRobotsTxt) return true;
+      if (!url || url === "about:blank") return true;
+      const robots = await loadRobotsTxt(url);
+      if (!robots.ok) {
+        await log("warning", "Robots.txt unavailable; proceeding.", {
+          url,
+          status: robots.status,
+          error: robots.error ?? null,
+        });
+        return true;
+      }
+      const parsed = parseRobotsRules(robots.content);
+      const rules = parsed.get("*") ?? [];
+      const pathName = new URL(url).pathname || "/";
+      const evaluation = evaluateRobotsRules(rules, pathName);
+      if (!evaluation.allowed) {
+        await log("warning", "Blocked by robots.txt.", {
+          url,
+          path: pathName,
+          matchedRule: evaluation.matchedRule,
+        });
+        return false;
+      }
+      return true;
     };
 
     context = await launch.newContext({
@@ -781,6 +920,123 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
       }
     };
 
+    const buildFailureRecoveryPlan = async (request: {
+      type: "bad_selectors" | "login_stuck" | "missing_extraction";
+      prompt: string;
+      url: string;
+      domTextSample: string;
+      uiInventory: unknown;
+      extractionPlan?: unknown;
+      loginCandidates?: unknown;
+    }) => {
+      if (!request.uiInventory) return null;
+      try {
+        const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: resolvedModel,
+            stream: false,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You recover failed web automation. Return only JSON with keys: reason, selectors, listingUrls, clickSelector, loginUrl, usernameSelector, passwordSelector, submitSelector, notes. Provide only fields relevant to the failure type.",
+              },
+              {
+                role: "user",
+                content: JSON.stringify({
+                  failureType: request.type,
+                  prompt: request.prompt,
+                  url: request.url,
+                  domTextSample: request.domTextSample,
+                  uiInventory: request.uiInventory,
+                  extractionPlan: request.extractionPlan ?? null,
+                  loginCandidates: request.loginCandidates ?? null,
+                }),
+              },
+            ],
+            options: { temperature: 0.2 },
+          }),
+        });
+        if (!response.ok) {
+          throw new Error(`Failure recovery planner failed (${response.status}).`);
+        }
+        const json = await response.json();
+        const content = json?.message?.content || "";
+        const match = content.match(/\{[\s\S]*\}/);
+        const parsed = match ? JSON.parse(match[0]) : JSON.parse(content);
+        const selectors = Array.isArray(parsed?.selectors)
+          ? parsed.selectors.filter((selector: unknown) => typeof selector === "string")
+          : [];
+        const listingUrls = Array.isArray(parsed?.listingUrls)
+          ? parsed.listingUrls.filter((item: unknown) => typeof item === "string")
+          : [];
+        const plan = {
+          reason: typeof parsed?.reason === "string" ? parsed.reason : null,
+          selectors,
+          listingUrls,
+          clickSelector:
+            typeof parsed?.clickSelector === "string" ? parsed.clickSelector : null,
+          loginUrl: typeof parsed?.loginUrl === "string" ? parsed.loginUrl : null,
+          usernameSelector:
+            typeof parsed?.usernameSelector === "string"
+              ? parsed.usernameSelector
+              : null,
+          passwordSelector:
+            typeof parsed?.passwordSelector === "string"
+              ? parsed.passwordSelector
+              : null,
+          submitSelector:
+            typeof parsed?.submitSelector === "string" ? parsed.submitSelector : null,
+          notes: typeof parsed?.notes === "string" ? parsed.notes : null,
+        };
+        await log("info", "LLM failure recovery plan created.", {
+          stepId: activeStepId ?? null,
+          failureType: request.type,
+          plan,
+        });
+        if (memoryKey) {
+          const summary = `Problem: ${request.type} · Countermeasure: ${plan.reason || "Applied recovery plan."}`;
+          await addAgentLongTermMemory({
+            memoryKey,
+            runId,
+            content: summary,
+            summary,
+            tags: ["problem-solution", request.type],
+            metadata: {
+              failureType: request.type,
+              plan,
+              url: request.url,
+              stepId: activeStepId ?? null,
+            },
+            importance: 4,
+          });
+        }
+        await prisma.agentAuditLog.create({
+          data: {
+            runId,
+            level: "info",
+            message: "LLM failure recovery plan created.",
+            metadata: {
+              failureType: request.type,
+              plan,
+              model: resolvedModel,
+              stepId: activeStepId ?? null,
+            },
+          },
+        });
+        return plan;
+      } catch (error) {
+        await log("warning", "LLM failure recovery plan failed.", {
+          stepId: activeStepId ?? null,
+          failureType: request.type,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return null;
+      }
+    };
+
     const findFirstVisible = async (locator: ReturnType<Page["locator"]>) => {
       const count = await locator.count();
       for (let i = 0; i < count; i += 1) {
@@ -993,17 +1249,414 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
       return false;
     };
 
+    const buildSearchQueryWithLLM = async () => {
+      try {
+        const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: resolvedModel,
+            stream: false,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You craft concise web search queries. Return only JSON with keys: query, intent.",
+              },
+              {
+                role: "user",
+                content: JSON.stringify({ prompt }),
+              },
+            ],
+            options: { temperature: 0.2 },
+          }),
+        });
+        if (!response.ok) {
+          throw new Error(`Search query inference failed (${response.status}).`);
+        }
+        const payload = await response.json();
+        const content = payload?.message?.content || "";
+        const match = content.match(/\{[\s\S]*\}/);
+        const parsed = match ? JSON.parse(match[0]) : JSON.parse(content);
+        const query =
+          typeof parsed?.query === "string" ? parsed.query.trim() : "";
+        return query || null;
+      } catch (error) {
+        await log("warning", "LLM search query inference failed.", {
+          stepId: activeStepId ?? null,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return null;
+      }
+    };
+
+    const fetchSearchResults = async (query: string) => {
+      const provider = resolvedSearchProvider.toLowerCase();
+      if (provider === "brave") {
+        try {
+          if (!BRAVE_SEARCH_API_KEY) {
+            throw new Error("Brave search API key not configured.");
+          }
+          const url = new URL(BRAVE_SEARCH_API_URL);
+          url.searchParams.set("q", query);
+          url.searchParams.set("count", "6");
+          const res = await fetch(url.toString(), {
+            headers: {
+              Accept: "application/json",
+              "X-Subscription-Token": BRAVE_SEARCH_API_KEY,
+            },
+          });
+          if (!res.ok) {
+            const text = await res.text();
+            throw new Error(text || `Search failed (${res.status}).`);
+          }
+          const data = (await res.json()) as {
+            web?: { results?: Array<{ title?: string; url?: string }> };
+          };
+          return (
+            data.web?.results
+              ?.map((item) => ({
+                title: item.title || "Untitled",
+                url: item.url || "",
+              }))
+              .filter((item) => item.url) || []
+          );
+        } catch (error) {
+          await log("warning", "Brave search failed; falling back to DuckDuckGo.", {
+            stepId: activeStepId ?? null,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return await fetchDuckDuckGoResults(query);
+        }
+      }
+      if (provider === "google") {
+        try {
+          if (!GOOGLE_SEARCH_API_KEY || !GOOGLE_SEARCH_ENGINE_ID) {
+            throw new Error("Google search API key/engine not configured.");
+          }
+          const url = new URL(GOOGLE_SEARCH_API_URL);
+          url.searchParams.set("key", GOOGLE_SEARCH_API_KEY);
+          url.searchParams.set("cx", GOOGLE_SEARCH_ENGINE_ID);
+          url.searchParams.set("q", query);
+          url.searchParams.set("num", "6");
+          const res = await fetch(url.toString());
+          if (!res.ok) {
+            const text = await res.text();
+            throw new Error(text || `Search failed (${res.status}).`);
+          }
+          const data = (await res.json()) as {
+            items?: Array<{ title?: string; link?: string }>;
+          };
+          return (
+            data.items
+              ?.map((item) => ({
+                title: item.title || "Untitled",
+                url: item.link || "",
+              }))
+              .filter((item) => item.url) || []
+          );
+        } catch (error) {
+          await log("warning", "Google search failed; falling back to DuckDuckGo.", {
+            stepId: activeStepId ?? null,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return await fetchDuckDuckGoResults(query);
+        }
+      }
+      if (provider === "serpapi") {
+        try {
+          if (!SERPAPI_API_KEY) {
+            throw new Error("SerpApi key not configured.");
+          }
+          const url = new URL(SERPAPI_API_URL);
+          url.searchParams.set("api_key", SERPAPI_API_KEY);
+          url.searchParams.set("engine", "google");
+          url.searchParams.set("q", query);
+          url.searchParams.set("num", "6");
+          const res = await fetch(url.toString());
+          if (!res.ok) {
+            const text = await res.text();
+            throw new Error(text || `Search failed (${res.status}).`);
+          }
+          const data = (await res.json()) as {
+            organic_results?: Array<{ title?: string; link?: string }>;
+          };
+          return (
+            data.organic_results
+              ?.map((item) => ({
+                title: item.title || "Untitled",
+                url: item.link || "",
+              }))
+              .filter((item) => item.url) || []
+          );
+        } catch (error) {
+          await log("warning", "SerpApi search failed; falling back to DuckDuckGo.", {
+            stepId: activeStepId ?? null,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return await fetchDuckDuckGoResults(query);
+        }
+      }
+      await log("warning", "Unsupported search provider; falling back to DuckDuckGo.", {
+        stepId: activeStepId ?? null,
+        provider,
+      });
+      return await fetchDuckDuckGoResults(query);
+    };
+
+    const fetchDuckDuckGoResults = async (query: string) => {
+      const searchUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+      const response = await fetch(searchUrl);
+      if (!response.ok) {
+        throw new Error(`Search fetch failed (${response.status}).`);
+      }
+      const html = await response.text();
+      const results: Array<{ title: string; url: string; snippet?: string }> = [];
+      const resultRegex =
+        /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>(.*?)<\/a>/gi;
+      let match: RegExpExecArray | null;
+      while ((match = resultRegex.exec(html))) {
+        const rawUrl = match[1];
+        const title = match[2].replace(/<[^>]+>/g, "").trim();
+        const url = rawUrl.includes("duckduckgo.com/l/")
+          ? decodeURIComponent(
+              new URL(rawUrl).searchParams.get("uddg") ?? rawUrl
+            )
+          : rawUrl;
+        if (title && url) {
+          results.push({ title, url });
+        }
+        if (results.length >= 6) break;
+      }
+      return results;
+    };
+
+    const pickSearchResultWithLLM = async (
+      query: string,
+      results: Array<{ title: string; url: string }>
+    ) => {
+      try {
+        const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: resolvedModel,
+            stream: false,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You select the best URL for the user task. Return only JSON with key: url.",
+              },
+              {
+                role: "user",
+                content: JSON.stringify({ query, prompt, results }),
+              },
+            ],
+            options: { temperature: 0.2 },
+          }),
+        });
+        if (!response.ok) {
+          throw new Error(`Search result selection failed (${response.status}).`);
+        }
+        const payload = await response.json();
+        const content = payload?.message?.content || "";
+        const match = content.match(/\{[\s\S]*\}/);
+        const parsed = match ? JSON.parse(match[0]) : JSON.parse(content);
+        const url = typeof parsed?.url === "string" ? parsed.url.trim() : "";
+        return url || null;
+      } catch (error) {
+        await log("warning", "LLM search result selection failed.", {
+          stepId: activeStepId ?? null,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return null;
+      }
+    };
+
+    const attemptSearchEscalation = async () => {
+      const query = (await buildSearchQueryWithLLM()) ?? prompt ?? "";
+      if (!query) return null;
+      const results = await fetchSearchResults(query);
+      if (results.length === 0) return null;
+      const picked = await pickSearchResultWithLLM(query, results);
+      const fallback = picked || results[0]?.url;
+      if (fallback) {
+        await log("info", "Search escalation selected URL.", {
+          stepId: activeStepId ?? null,
+          query,
+          url: fallback,
+        });
+      }
+      return fallback ?? null;
+    };
+
+    const decideSearchFirstWithLLM = async () => {
+      if (!prompt || hasExplicitUrl(prompt)) return null;
+      try {
+        const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: resolvedModel,
+            stream: false,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You decide whether to use web search before direct navigation. Return only JSON with keys: useSearchFirst (boolean), reason, query.",
+              },
+              {
+                role: "user",
+                content: JSON.stringify({
+                  prompt,
+                  inferredUrl: targetUrl,
+                  hasExplicitUrl: hasExplicitUrl(prompt),
+                }),
+              },
+            ],
+            options: { temperature: 0.2 },
+          }),
+        });
+        if (!response.ok) {
+          throw new Error(`Tool selection failed (${response.status}).`);
+        }
+        const payload = await response.json();
+        const content = payload?.message?.content || "";
+        const match = content.match(/\{[\s\S]*\}/);
+        const parsed = match ? JSON.parse(match[0]) : JSON.parse(content);
+        const useSearchFirst = Boolean(parsed?.useSearchFirst);
+        const query = typeof parsed?.query === "string" ? parsed.query.trim() : "";
+        await log("info", "Tool selection decision.", {
+          stepId: activeStepId ?? null,
+          decision: useSearchFirst ? "search-first" : "direct-navigation",
+          reason: typeof parsed?.reason === "string" ? parsed.reason : null,
+          query: query || null,
+        });
+        if (memoryKey && parsed?.reason) {
+          const summary = `Problem: uncertain navigation target · Countermeasure: ${useSearchFirst ? "search-first" : "direct-navigation"} (${parsed.reason})`;
+          await addAgentLongTermMemory({
+            memoryKey,
+            runId,
+            content: summary,
+            summary,
+            tags: ["problem-solution", "tool-selection"],
+            metadata: {
+              decision: useSearchFirst ? "search-first" : "direct-navigation",
+              reason: parsed.reason,
+              query: query || null,
+              inferredUrl: targetUrl,
+            },
+            importance: 3,
+          });
+        }
+        await prisma.agentAuditLog.create({
+          data: {
+            runId,
+            level: "info",
+            message: "Tool selection decision.",
+            metadata: {
+              decision: useSearchFirst ? "search-first" : "direct-navigation",
+              reason: typeof parsed?.reason === "string" ? parsed.reason : null,
+              query: query || null,
+              inferredUrl: targetUrl,
+            },
+          },
+        });
+        return { useSearchFirst, query: query || null };
+      } catch (error) {
+        await log("warning", "Tool selection decision failed.", {
+          stepId: activeStepId ?? null,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return null;
+      }
+    };
+
     let domText = "";
     let finalUrl = targetUrl;
     try {
+      const searchFirstDecision = await decideSearchFirstWithLLM();
+      let navigatedViaSearch = false;
       if (targetUrl !== "about:blank") {
-        await page.goto(targetUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
+        if (searchFirstDecision?.useSearchFirst) {
+          const query = searchFirstDecision.query;
+          const results = query ? await fetchSearchResults(query) : [];
+          const picked = query
+            ? await pickSearchResultWithLLM(query, results)
+            : null;
+          const fallback = picked || results[0]?.url || null;
+          if (fallback) {
+            if (!(await enforceRobotsPolicy(fallback))) {
+              return { ok: false, error: "Blocked by robots.txt." };
+            }
+            await page.goto(fallback, {
+              waitUntil: "domcontentloaded",
+              timeout: 30000,
+            });
+            navigatedViaSearch = true;
+          } else {
+            await log("warning", "Search-first produced no results; falling back.", {
+              stepId: activeStepId ?? null,
+              query,
+            });
+          }
+        }
+        if (!navigatedViaSearch) {
+          if (!(await enforceRobotsPolicy(targetUrl))) {
+            return {
+              ok: false,
+              error: "Blocked by robots.txt.",
+            };
+          }
+          try {
+            await page.goto(targetUrl, {
+              waitUntil: "domcontentloaded",
+              timeout: 30000,
+            });
+          } catch (error) {
+            await log("warning", "Direct navigation failed; attempting search.", {
+              stepId: activeStepId ?? null,
+              url: targetUrl,
+              error: error instanceof Error ? error.message : String(error),
+            });
+            const searchUrl = await attemptSearchEscalation();
+            if (searchUrl) {
+              if (!(await enforceRobotsPolicy(searchUrl))) {
+                return {
+                  ok: false,
+                  error: "Blocked by robots.txt.",
+                };
+              }
+              await page.goto(searchUrl, {
+                waitUntil: "domcontentloaded",
+                timeout: 30000,
+              });
+            } else {
+              throw error;
+            }
+          }
+        }
       } else {
-        await page.setContent(
-          `<html><head><title>Agent preview</title></head><body><h1>Agent browser</h1><p>${safeText(
-            prompt
-          )}</p></body></html>`
-        );
+        const searchUrl = await attemptSearchEscalation();
+        if (searchUrl) {
+          if (!(await enforceRobotsPolicy(searchUrl))) {
+            return {
+              ok: false,
+              error: "Blocked by robots.txt.",
+            };
+          }
+          await page.goto(searchUrl, {
+            waitUntil: "domcontentloaded",
+            timeout: 30000,
+          });
+        } else {
+          await page.setContent(
+            `<html><head><title>Agent preview</title></head><body><h1>Agent browser</h1><p>${safeText(
+              prompt
+            )}</p></body></html>`
+          );
+        }
       }
 
       const initialSnapshot = await captureSnapshot(
@@ -1107,6 +1760,75 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
             }
           );
           if (extractedTotal === 0) {
+            const recoveryDomSample = (
+              await page.evaluate(
+                () => document.body?.innerText || document.documentElement?.innerText || ""
+              )
+            ).slice(0, 2000);
+            const recoveryInventory = await collectUiInventory(
+              "failure-recovery",
+              activeStepId ?? undefined
+            );
+            const recoveryPlan = await buildFailureRecoveryPlan({
+              type: "missing_extraction",
+              prompt: prompt ?? "",
+              url: finalUrl,
+              domTextSample: recoveryDomSample,
+              uiInventory: recoveryInventory,
+              extractionPlan,
+            });
+            if (recoveryPlan?.clickSelector) {
+              try {
+                const clickTarget = page.locator(recoveryPlan.clickSelector).first();
+                await clickTarget.click({ timeout: 4000 });
+                await page.waitForTimeout(1500);
+                await captureSnapshot("email-recovery-click", activeStepId ?? undefined);
+              } catch (error) {
+                await log("warning", "Email recovery click failed.", {
+                  selector: recoveryPlan.clickSelector,
+                  error: error instanceof Error ? error.message : String(error),
+                });
+              }
+            }
+            if (recoveryPlan?.listingUrls?.length) {
+              for (const url of recoveryPlan.listingUrls.slice(0, 3)) {
+                try {
+                  await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
+                  await dismissConsent("email-recovery-navigation");
+                  await captureSnapshot("email-recovery-navigation", activeStepId ?? undefined);
+                  const updatedText = await page.evaluate(
+                    () => document.body?.innerText || document.documentElement?.innerText || ""
+                  );
+                  const updatedMatches = updatedText.match(
+                    /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi
+                  );
+                  const updatedEmails = Array.from(
+                    new Set((updatedMatches ?? []).map((item) => item.trim()))
+                  );
+                  if (updatedEmails.length > 0) {
+                    return {
+                      ok: true,
+                      output: {
+                        url: page.url(),
+                        domText: updatedText,
+                        extractedItems: updatedEmails.slice(
+                          0,
+                          Math.max(requiredCount, 10)
+                        ),
+                        extractedTotal: updatedEmails.length,
+                        extractionType: "emails",
+                        extractionPlan,
+                      },
+                    };
+                  }
+                } catch (error) {
+                  await log("warning", "Email recovery navigation failed.", {
+                    url,
+                    error: error instanceof Error ? error.message : String(error),
+                  });
+                }
+              }
+            }
             return {
               ok: false,
               error: "No emails extracted.",
@@ -1217,6 +1939,78 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
             extractedNames = await extractProductNamesFromSelectors(headingSelectors);
           }
         }
+        if (extractedNames.length === 0) {
+          const recoveryDomSample = (
+            await page.evaluate(
+              () => document.body?.innerText || document.documentElement?.innerText || ""
+            )
+          ).slice(0, 2000);
+          const recoveryInventory = await collectUiInventory(
+            "failure-recovery",
+            activeStepId ?? undefined
+          );
+          const recoveryType =
+            (extractionPlan?.primarySelectors ?? []).length > 0 ||
+            (extractionPlan?.fallbackSelectors ?? []).length > 0
+              ? "bad_selectors"
+              : "missing_extraction";
+          const recoveryPlan = await buildFailureRecoveryPlan({
+            type: recoveryType,
+            prompt: prompt ?? "",
+            url: finalUrl,
+            domTextSample: recoveryDomSample,
+            uiInventory: recoveryInventory,
+            extractionPlan,
+          });
+          if (recoveryPlan?.clickSelector) {
+            try {
+              const clickTarget = page.locator(recoveryPlan.clickSelector).first();
+              await clickTarget.click({ timeout: 4000 });
+              await page.waitForTimeout(1500);
+              const clickSnapshot = await captureSnapshot(
+                "product-recovery-click",
+                activeStepId ?? undefined
+              );
+              domText = clickSnapshot.domText;
+              finalUrl = clickSnapshot.url;
+            } catch (error) {
+              await log("warning", "Product recovery click failed.", {
+                selector: recoveryPlan.clickSelector,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
+          }
+          if (recoveryPlan?.selectors?.length) {
+            extractedNames = await extractProductNamesFromSelectors(
+              recoveryPlan.selectors
+            );
+          }
+          if (extractedNames.length === 0 && recoveryPlan?.listingUrls?.length) {
+            for (const url of recoveryPlan.listingUrls.slice(0, 3)) {
+              try {
+                await page.goto(url, {
+                  waitUntil: "domcontentloaded",
+                  timeout: 25000,
+                });
+                await dismissConsent("product-recovery-navigation");
+                await waitForProductContent();
+                const listingSnapshot = await captureSnapshot(
+                  "product-recovery-navigation",
+                  activeStepId ?? undefined
+                );
+                domText = listingSnapshot.domText;
+                finalUrl = listingSnapshot.url;
+                extractedNames = await extractProductNames();
+                if (extractedNames.length > 0) break;
+              } catch (error) {
+                await log("warning", "Product recovery navigation failed.", {
+                  url,
+                  error: error instanceof Error ? error.message : String(error),
+                });
+              }
+            }
+          }
+        }
         const extractedTotal = extractedNames.length;
         const limitedNames = extractedNames.slice(0, Math.max(requiredCount, 10));
         await prisma.agentAuditLog.create({
@@ -1285,6 +2079,19 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
         let submitPerformed = false;
         let usernameFilled = false;
         let passwordFilled = false;
+        let recoveryPlan:
+          | {
+              reason: string | null;
+              selectors: string[];
+              listingUrls: string[];
+              clickSelector: string | null;
+              loginUrl: string | null;
+              usernameSelector: string | null;
+              passwordSelector: string | null;
+              submitSelector: string | null;
+              notes: string | null;
+            }
+          | null = null;
         await log("info", "Detected login credentials.", {
           email: credentials.email ? "[redacted]" : null,
           username: credentials.username ? "[redacted]" : null,
@@ -1298,32 +2105,116 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
           };
         }
         if (!loginFormVisible) {
-          await log("error", "Login form not visible after attempting to open.", {
-            stepId: activeStepId ?? null,
+          const recoveryDomSample = (
+            await page.evaluate(
+              () => document.body?.innerText || document.documentElement?.innerText || ""
+            )
+          ).slice(0, 2000);
+          const recoveryInventory = await collectUiInventory(
+            "login-failure-recovery",
+            activeStepId ?? undefined
+          );
+          const loginCandidates = await inferLoginCandidates();
+          recoveryPlan = await buildFailureRecoveryPlan({
+            type: "login_stuck",
+            prompt: prompt ?? "",
+            url: page.url(),
+            domTextSample: recoveryDomSample,
+            uiInventory: recoveryInventory,
+            loginCandidates,
           });
-          return {
-            ok: false,
-            error: "Login form not visible after attempting to open.",
-          };
+          if (recoveryPlan?.loginUrl) {
+            try {
+              await page.goto(recoveryPlan.loginUrl, {
+                waitUntil: "domcontentloaded",
+                timeout: 20000,
+              });
+              await captureSessionContext("login-recovery-url");
+            } catch (error) {
+              await log("warning", "Login recovery URL navigation failed.", {
+                url: recoveryPlan.loginUrl,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
+          }
+          if (recoveryPlan?.clickSelector) {
+            try {
+              const clickTarget = page.locator(recoveryPlan.clickSelector).first();
+              await clickTarget.click({ timeout: 4000 });
+              await page.waitForTimeout(1500);
+              await captureSessionContext("login-recovery-click");
+            } catch (error) {
+              await log("warning", "Login recovery click failed.", {
+                selector: recoveryPlan.clickSelector,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
+          }
+          loginFormVisible = await ensureLoginFormVisible();
+          if (!loginFormVisible) {
+            await log("error", "Login form not visible after attempting to open.", {
+              stepId: activeStepId ?? null,
+            });
+            return {
+              ok: false,
+              error: "Login form not visible after attempting to open.",
+            };
+          }
         }
-        await inferLoginCandidates();
+        const locateBySelector = async (selector: string | null) => {
+          if (!selector) return null;
+          try {
+            return await findFirstVisible(page.locator(selector));
+          } catch {
+            return null;
+          }
+        };
+        const loginCandidates = await inferLoginCandidates();
         const emailInput = await findFirstVisible(
           page.locator(
             'input[type="email"], input[name*="email" i], input[autocomplete*="email" i]'
           )
         );
-        const usernameInput =
+        let usernameInput =
           emailInput ??
           (await findFirstVisible(
             page.locator(
               'input[name*="user" i], input[name*="login" i], input[autocomplete*="username" i], input[type="text"]'
             )
           ));
-        const passwordInput = await findFirstVisible(
+        let passwordInput = await findFirstVisible(
           page.locator(
             'input[type="password"], input[name*="pass" i], input[autocomplete*="current-password" i]'
           )
         );
+        if (!usernameInput || !passwordInput) {
+          if (!recoveryPlan) {
+            const recoveryDomSample = (
+              await page.evaluate(
+                () =>
+                  document.body?.innerText || document.documentElement?.innerText || ""
+              )
+            ).slice(0, 2000);
+            const recoveryInventory = await collectUiInventory(
+              "login-field-recovery",
+              activeStepId ?? undefined
+            );
+            recoveryPlan = await buildFailureRecoveryPlan({
+              type: "login_stuck",
+              prompt: prompt ?? "",
+              url: page.url(),
+              domTextSample: recoveryDomSample,
+              uiInventory: recoveryInventory,
+              loginCandidates,
+            });
+          }
+          if (!usernameInput && recoveryPlan?.usernameSelector) {
+            usernameInput = await locateBySelector(recoveryPlan.usernameSelector);
+          }
+          if (!passwordInput && recoveryPlan?.passwordSelector) {
+            passwordInput = await locateBySelector(recoveryPlan.passwordSelector);
+          }
+        }
 
         if (usernameInput && (credentials.email || credentials.username)) {
           const value = credentials.email ?? credentials.username ?? "";
@@ -1342,11 +2233,14 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
           await log("warning", "No visible password field found.");
         }
 
-        const submitButton = await findFirstVisible(
+        let submitButton = await findFirstVisible(
           page.locator(
             'button[type="submit"], input[type="submit"], button:has-text("Log in"), button:has-text("Sign in"), button:has-text("Continue")'
           )
         );
+        if (!submitButton && recoveryPlan?.submitSelector) {
+          submitButton = await locateBySelector(recoveryPlan.submitSelector);
+        }
         if (submitButton) {
           await submitButton.click();
           submitPerformed = true;

@@ -44,7 +44,7 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const requestStart = Date.now();
   try {
     if (!("chatbotSession" in prisma)) {
@@ -53,9 +53,35 @@ export async function GET() {
         { status: 500 }
       );
     }
+    const url = new URL(req.url);
+    const scope = url.searchParams.get("scope") ?? "default";
+    const query = url.searchParams.get("query")?.trim() ?? "";
+    const where = query
+      ? {
+          OR: [
+            { title: { contains: query, mode: "insensitive" as const } },
+            { id: { contains: query } },
+          ],
+        }
+      : undefined;
+    if (scope === "ids") {
+      const sessions = await prisma.chatbotSession.findMany({
+        where,
+        select: { id: true },
+        orderBy: { updatedAt: "desc" },
+      });
+      if (DEBUG_CHATBOT) {
+        console.info("[chatbot][sessions][GET] Listed ids", {
+          count: sessions.length,
+          durationMs: Date.now() - requestStart,
+        });
+      }
+      return NextResponse.json({ ids: sessions.map((session) => session.id) });
+    }
     const sessions = await prisma.chatbotSession.findMany({
+      where,
       orderBy: { updatedAt: "desc" },
-      take: 50,
+      take: scope === "all" ? undefined : 50,
     });
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][sessions][GET] Listed", {
@@ -132,12 +158,35 @@ export async function DELETE(req: Request) {
         { status: 500 }
       );
     }
-    const body = (await req.json()) as { sessionId?: string };
-    if (!body.sessionId) {
+    const body = (await req.json()) as {
+      sessionId?: string;
+      sessionIds?: string[];
+    };
+    const sessionIds = Array.isArray(body.sessionIds)
+      ? body.sessionIds.filter((id) => typeof id === "string" && id.trim())
+      : [];
+    if (!body.sessionId && sessionIds.length === 0) {
       return NextResponse.json(
         { error: "Session ID is required." },
         { status: 400 }
       );
+    }
+    if (sessionIds.length > 0) {
+      if (DEBUG_CHATBOT) {
+        console.info("[chatbot][sessions][DELETE] Bulk request", {
+          count: sessionIds.length,
+        });
+      }
+      const result = await prisma.chatbotSession.deleteMany({
+        where: { id: { in: sessionIds } },
+      });
+      if (DEBUG_CHATBOT) {
+        console.info("[chatbot][sessions][DELETE] Bulk deleted", {
+          deleted: result.count,
+          durationMs: Date.now() - requestStart,
+        });
+      }
+      return NextResponse.json({ deleted: result.count });
     }
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][sessions][DELETE] Request", {

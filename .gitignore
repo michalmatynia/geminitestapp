@@ -38,3 +38,6 @@ next-env.d.ts
 
 # files
 /public
+
+# chatbot
+/tmp/chatbot-agent

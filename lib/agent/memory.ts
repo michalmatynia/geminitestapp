@@ -64,3 +64,86 @@ export async function listAgentMemory(params: {
     throw error;
   }
 }
+
+export async function addAgentLongTermMemory(params: {
+  memoryKey: string;
+  runId?: string | null;
+  content: string;
+  summary?: string | null;
+  tags?: string[];
+  metadata?: Record<string, unknown>;
+  importance?: number | null;
+}) {
+  if (!("agentLongTermMemory" in prisma)) {
+    if (DEBUG_CHATBOT) {
+      console.warn("[chatbot][agent][memory] Long-term memory table not initialized.");
+    }
+    return null;
+  }
+  try {
+    return prisma.agentLongTermMemory.create({
+      data: {
+        memoryKey: params.memoryKey,
+        runId: params.runId ?? null,
+        content: params.content,
+        summary: params.summary ?? null,
+        tags: params.tags ?? [],
+        metadata: params.metadata,
+        importance: params.importance ?? null,
+        lastAccessedAt: new Date(),
+      },
+    });
+  } catch (error) {
+    if (DEBUG_CHATBOT) {
+      console.error("[chatbot][agent][memory] Failed to add long-term memory", {
+        memoryKey: params.memoryKey,
+        runId: params.runId,
+        error,
+      });
+    }
+    throw error;
+  }
+}
+
+export async function listAgentLongTermMemory(params: {
+  memoryKey: string;
+  limit?: number;
+  tags?: string[];
+}) {
+  if (!("agentLongTermMemory" in prisma)) {
+    if (DEBUG_CHATBOT) {
+      console.warn("[chatbot][agent][memory] Long-term memory table not initialized.");
+    }
+    return [];
+  }
+  try {
+    const tagFilter =
+      params.tags && params.tags.length > 0
+        ? { hasSome: params.tags }
+        : undefined;
+    const items = await prisma.agentLongTermMemory.findMany({
+      where: {
+        memoryKey: params.memoryKey,
+        ...(tagFilter ? { tags: tagFilter } : {}),
+      },
+      orderBy: { updatedAt: "desc" },
+      take: params.limit ?? 5,
+    });
+    const ids = items.map((item) => item.id);
+    if (ids.length > 0) {
+      await prisma.agentLongTermMemory.updateMany({
+        where: { id: { in: ids } },
+        data: { lastAccessedAt: new Date() },
+      });
+    }
+    return items;
+  } catch (error) {
+    if (DEBUG_CHATBOT) {
+      console.error("[chatbot][agent][memory] Failed to list long-term memory", {
+        memoryKey: params.memoryKey,
+        error,
+      });
+    }
+    throw error;
+  }
+}

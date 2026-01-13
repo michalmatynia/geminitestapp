@@ -75,6 +75,15 @@ export async function POST(req: Request) {
       searchProvider?: string;
       agentBrowser?: string;
       runHeadless?: boolean;
+      ignoreRobotsTxt?: boolean;
+      requireHumanApproval?: boolean;
+      planSettings?: {
+        maxSteps?: number;
+        maxStepAttempts?: number;
+        maxReplanCalls?: number;
+        replanEverySteps?: number;
+        maxSelfChecks?: number;
+      };
     };
 
     if (!body.prompt?.trim()) {
@@ -83,6 +92,37 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    const normalizePlanSettings = (
+      input?: {
+        maxSteps?: number;
+        maxStepAttempts?: number;
+        maxReplanCalls?: number;
+        replanEverySteps?: number;
+        maxSelfChecks?: number;
+      }
+    ) => {
+      if (!input) return null;
+      const clampInt = (value: unknown, min: number, max: number, fallback: number) => {
+        const numeric =
+          typeof value === "number"
+            ? value
+            : typeof value === "string"
+              ? Number(value)
+              : NaN;
+        if (!Number.isFinite(numeric)) return fallback;
+        return Math.min(Math.max(Math.round(numeric), min), max);
+      };
+      return {
+        maxSteps: clampInt(input.maxSteps, 1, 20, 12),
+        maxStepAttempts: clampInt(input.maxStepAttempts, 1, 5, 2),
+        maxReplanCalls: clampInt(input.maxReplanCalls, 0, 6, 2),
+        replanEverySteps: clampInt(input.replanEverySteps, 1, 10, 2),
+        maxSelfChecks: clampInt(input.maxSelfChecks, 0, 8, 4),
+      };
+    };
+
+    const planSettings = normalizePlanSettings(body.planSettings);
+
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][agent][POST] Request", {
         promptLength: body.prompt.trim().length,
@@ -91,6 +131,9 @@ export async function POST(req: Request) {
         searchProvider: body.searchProvider?.trim() || null,
         agentBrowser: body.agentBrowser?.trim() || null,
         runHeadless: body.runHeadless ?? true,
+        ignoreRobotsTxt: body.ignoreRobotsTxt ?? false,
+        requireHumanApproval: body.requireHumanApproval ?? false,
+        planSettings,
       });
     }
 
@@ -103,6 +146,19 @@ export async function POST(req: Request) {
         agentBrowser: body.agentBrowser?.trim() || null,
         runHeadless: body.runHeadless ?? true,
         logLines: [`[${new Date().toISOString()}] Run queued.`],
+        ...(planSettings ||
+        body.ignoreRobotsTxt !== undefined ||
+        body.requireHumanApproval !== undefined
+          ? {
+              planState: {
+                ...(planSettings ? { settings: planSettings } : {}),
+                preferences: {
+                  ignoreRobotsTxt: Boolean(body.ignoreRobotsTxt),
+                  requireHumanApproval: Boolean(body.requireHumanApproval),
+                },
+              },
+            }
+          : {}),
       },
     });
     await logAgentAudit(run.id, "info", "Agent run queued.", {

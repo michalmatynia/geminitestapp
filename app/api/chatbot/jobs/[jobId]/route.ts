@@ -77,3 +77,51 @@ export async function POST(
     );
   }
 }
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ jobId: string }> }
+) {
+  try {
+    if (!("chatbotJob" in prisma)) {
+      return NextResponse.json(
+        { error: "Chatbot jobs not initialized. Run prisma generate/db push." },
+        { status: 500 }
+      );
+    }
+    const { jobId } = await params;
+    const job = await prisma.chatbotJob.findUnique({ where: { id: jobId } });
+    if (!job) {
+      return NextResponse.json({ error: "Job not found." }, { status: 404 });
+    }
+    const url = new URL(req.url);
+    const force = url.searchParams.get("force") === "true";
+    if (job.status === "running" && !force) {
+      return NextResponse.json(
+        { error: "Job is running. Cancel it before deleting." },
+        { status: 409 }
+      );
+    }
+    if (job.status === "running" && force) {
+      await prisma.chatbotJob.update({
+        where: { id: jobId },
+        data: { status: "failed", finishedAt: new Date() },
+      });
+    }
+    await prisma.chatbotJob.delete({ where: { id: jobId } });
+    if (DEBUG_CHATBOT) {
+      console.info("[chatbot][jobs][DELETE] Deleted", { jobId });
+    }
+    return NextResponse.json({ deleted: true });
+  } catch (error) {
+    const errorId = randomUUID();
+    console.error("[chatbot][jobs][DELETE] Failed to delete job", {
+      errorId,
+      error,
+    });
+    return NextResponse.json(
+      { error: "Failed to delete job.", errorId },
+      { status: 500 }
+    );
+  }
+}

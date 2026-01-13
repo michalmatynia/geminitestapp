@@ -19,22 +19,64 @@ type PlanStep = {
   successCriteria?: string | null;
   goalId?: string | null;
   subgoalId?: string | null;
+  phase?: "observe" | "act" | "verify" | "recover" | null;
+  priority?: number | null;
+  dependsOn?: string[] | null;
   attempts?: number;
   maxAttempts?: number;
   snapshotId?: string | null;
   logCount?: number | null;
 };
 
+type PlannerCritique = {
+  assumptions?: string[];
+  risks?: string[];
+  unknowns?: string[];
+  safetyChecks?: string[];
+  questions?: string[];
+};
+
+type PlannerAlternative = {
+  title: string;
+  rationale?: string | null;
+  steps: Array<{
+    title?: string;
+    tool?: string;
+    expectedObservation?: string;
+    successCriteria?: string;
+    phase?: string;
+    priority?: number;
+    dependsOn?: number[] | string[];
+  }>;
+};
+
+type PlannerMeta = {
+  critique?: PlannerCritique | null;
+  alternatives?: PlannerAlternative[] | null;
+  safetyChecks?: string[];
+  questions?: string[];
+  taskType?: "web_task" | "extract_info";
+  summary?: string | null;
+  constraints?: string[];
+  successSignals?: string[];
+};
+
 type AgentCheckpoint = {
   steps: PlanStep[];
   activeStepId: string | null;
   lastError?: string | null;
+  taskType?: PlannerMeta["taskType"] | null;
+  resumeRequestedAt?: string | null;
+  resumeProcessedAt?: string | null;
   updatedAt: string;
 };
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
-const MAX_PLAN_STEPS = 6;
+const MAX_PLAN_STEPS = 12;
 const MAX_STEP_ATTEMPTS = 2;
+const MAX_REPLAN_CALLS = 2;
+const REPLAN_EVERY_STEPS = 2;
+const MAX_SELF_CHECKS = 4;
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
 const DEFAULT_OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? "qwen3-vl:30b";
 
@@ -79,6 +121,10 @@ export async function runAgentControlLoop(runId: string) {
       browserContext,
     });
     let planSteps: PlanStep[] = [];
+    let taskType: PlannerMeta["taskType"] | null = null;
+    let hasBrowserContext = Boolean(
+      browserContext?.url && browserContext.url !== "about:blank"
+    );
     let decision: AgentDecision = decideNextAction(run.prompt, memoryContext);
     let planHierarchy: {
       goals: Array<{
@@ -103,7 +149,52 @@ export async function runAgentControlLoop(runId: string) {
     const checkpoint = parseCheckpoint(run.planState);
     if (checkpoint?.steps?.length) {
       planSteps = checkpoint.steps;
-      if (checkpoint.activeStepId) {
+      taskType = checkpoint.taskType ?? null;
+      let resumedWithNewPlan = false;
+      if (checkpoint.resumeRequestedAt &&
+        checkpoint.resumeRequestedAt !== checkpoint.resumeProcessedAt) {
+        const resumeContext = await getBrowserContextSummary(run.id);
+        const resumeReview = await buildResumePlanReview({
+          prompt: run.prompt,
+          memory: memoryContext,
+          model: resolvedModel,
+          browserContext: resumeContext,
+          currentPlan: planSteps,
+          activeStepId: checkpoint.activeStepId ?? null,
+          lastError: checkpoint.lastError ?? null,
+          runId: run.id,
+        });
+        if (resumeReview.shouldReplan && resumeReview.steps.length > 0) {
+          planSteps = resumeReview.steps;
+          stepIndex = 0;
+          resumedWithNewPlan = true;
+          taskType = resumeReview.meta?.taskType ?? taskType;
+          await logAgentAudit(run.id, "warning", "Resume plan refreshed.", {
+            type: "resume-plan",
+            steps: planSteps,
+            reason: resumeReview.reason,
+            plannerMeta: resumeReview.meta ?? null,
+            hierarchy: resumeReview.hierarchy ?? null,
+          });
+        } else {
+          await logAgentAudit(run.id, "info", "Resume summary prepared.", {
+            type: "resume-summary",
+            summary: resumeReview.summary ?? null,
+            reason: resumeReview.reason,
+            plannerMeta: resumeReview.meta ?? null,
+          });
+        }
+        await persistCheckpoint({
+          runId: run.id,
+          steps: planSteps,
+          activeStepId: planSteps[stepIndex]?.id ?? null,
+          lastError: checkpoint.lastError ?? null,
+          taskType,
+          resumeRequestedAt: checkpoint.resumeRequestedAt,
+          resumeProcessedAt: new Date().toISOString(),
+        });
+      }
+      if (!resumedWithNewPlan && checkpoint.activeStepId) {
         const activeIndex = planSteps.findIndex(
           (step) => step.id === checkpoint.activeStepId
         );
@@ -134,12 +225,14 @@ export async function runAgentControlLoop(runId: string) {
 
       planSteps = planResult.steps;
       planHierarchy = planResult.hierarchy ?? null;
+      taskType = planResult.meta?.taskType ?? null;
       if (planSteps.length > 0) {
         await logAgentAudit(run.id, "info", "Plan created.", {
           type: "plan",
           steps: planSteps,
           source: planResult.source,
           hierarchy: planHierarchy,
+          plannerMeta: planResult.meta ?? null,
         });
       }
       decision = planResult.decision;
@@ -148,6 +241,7 @@ export async function runAgentControlLoop(runId: string) {
         steps: planSteps,
         activeStepId: planSteps[0]?.id ?? null,
         lastError: null,
+        taskType,
       });
     }
 
@@ -164,6 +258,8 @@ export async function runAgentControlLoop(runId: string) {
       let lastError: string | null = null;
       let requiresHuman = false;
       const branchedStepIds = new Set<string>();
+      let replanCount = 0;
+      let selfCheckCount = 0;
       while (stepIndex < planSteps.length) {
         const step = planSteps[stepIndex];
         if (step.status === "completed") {
@@ -200,25 +296,27 @@ export async function runAgentControlLoop(runId: string) {
           continue;
         }
 
-        const toolResult =
-          stepIndex === 0
-            ? await runAgentTool({
-                name: "playwright",
-                input: {
-                  prompt: run.prompt,
-                  browser: run.agentBrowser || "chromium",
-                  runId: run.id,
-                  runHeadless: run.runHeadless,
-                  stepId: step.id,
-                  stepLabel: step.title,
-                },
-              })
-            : await runAgentBrowserControl({
+        const toolPrompt = appendTaskTypeToPrompt(run.prompt, taskType);
+        const shouldInitializeBrowser =
+          !hasBrowserContext || stepIndex === 0;
+        const toolResult = shouldInitializeBrowser
+          ? await runAgentTool({
+              name: "playwright",
+              input: {
+                prompt: toolPrompt,
+                browser: run.agentBrowser || "chromium",
                 runId: run.id,
-                action: "snapshot",
+                runHeadless: run.runHeadless,
                 stepId: step.id,
                 stepLabel: step.title,
-              });
+              },
+            })
+          : await runAgentBrowserControl({
+              runId: run.id,
+              action: "snapshot",
+              stepId: step.id,
+              stepLabel: step.title,
+            });
 
         if (!toolResult.ok) {
           overallOk = false;
@@ -242,6 +340,13 @@ export async function runAgentControlLoop(runId: string) {
               }
             : item
         );
+        if (toolResult.output?.snapshotId) {
+          const outputUrl =
+            typeof toolResult.output?.url === "string"
+              ? toolResult.output.url
+              : null;
+          hasBrowserContext = Boolean(outputUrl && outputUrl !== "about:blank");
+        }
         await logAgentAudit(run.id, "info", "Plan updated.", {
           type: "plan-update",
           steps: planSteps,
@@ -254,6 +359,7 @@ export async function runAgentControlLoop(runId: string) {
             ? planSteps[stepIndex + 1]?.id ?? null
             : step.id,
           lastError,
+          taskType,
         });
 
         if (!toolResult.ok) {
@@ -309,6 +415,7 @@ export async function runAgentControlLoop(runId: string) {
                 branchSteps: branchResult.branchSteps,
                 reason: "step-failed",
                 lastError,
+                plannerMeta: branchResult.meta ?? null,
               });
               branchedStepIds.add(step.id);
               await logAgentAudit(run.id, "info", "Plan updated.", {
@@ -321,6 +428,7 @@ export async function runAgentControlLoop(runId: string) {
                 steps: planSteps,
                 activeStepId: planSteps[insertAt]?.id ?? null,
                 lastError,
+                taskType,
               });
               stepIndex = insertAt;
               overallOk = true;
@@ -338,12 +446,14 @@ export async function runAgentControlLoop(runId: string) {
             });
             if (replanResult.steps.length > 0) {
               planSteps = replanResult.steps;
+              taskType = replanResult.meta?.taskType ?? taskType;
               await logAgentAudit(run.id, "warning", "Plan created.", {
                 type: "plan",
                 steps: planSteps,
                 source: replanResult.source,
                 reason: "replan-after-failure",
                 hierarchy: replanResult.hierarchy ?? null,
+                plannerMeta: replanResult.meta ?? null,
               });
               decision = replanResult.decision;
               await persistCheckpoint({
@@ -351,6 +461,7 @@ export async function runAgentControlLoop(runId: string) {
                 steps: planSteps,
                 activeStepId: planSteps[0]?.id ?? null,
                 lastError,
+                taskType,
               });
               stepIndex = 0;
               overallOk = true;
@@ -360,6 +471,90 @@ export async function runAgentControlLoop(runId: string) {
           }
           break;
         }
+        if (selfCheckCount < MAX_SELF_CHECKS) {
+          const selfCheckContext = await getBrowserContextSummary(run.id);
+          const selfCheck = await buildSelfCheckReview({
+            prompt: run.prompt,
+            memory: memoryContext,
+            model: resolvedModel,
+            browserContext: selfCheckContext,
+            step,
+            stepIndex,
+            runId: run.id,
+          });
+          selfCheckCount += 1;
+          await logAgentAudit(run.id, "info", "Self-check completed.", {
+            type: "self-check",
+            stepId: step.id,
+            stepTitle: step.title,
+            action: selfCheck.action,
+            reason: selfCheck.reason,
+            notes: selfCheck.notes,
+          });
+          if (selfCheck.action === "wait_human") {
+            requiresHuman = true;
+            lastError = selfCheck.reason ?? "Self-check requested human input.";
+            break;
+          }
+          if (selfCheck.action === "replan" && selfCheck.steps.length > 0) {
+            const nextIndex = stepIndex + 1;
+            const remainingSlots = Math.max(1, MAX_PLAN_STEPS - nextIndex);
+            const nextSteps = selfCheck.steps.slice(0, remainingSlots);
+            planSteps = [...planSteps.slice(0, nextIndex), ...nextSteps];
+            taskType = selfCheck.meta?.taskType ?? taskType;
+            await logAgentAudit(run.id, "warning", "Plan replaced by self-check.", {
+              type: "self-check-replan",
+              steps: planSteps,
+              reason: selfCheck.reason,
+              plannerMeta: selfCheck.meta ?? null,
+              hierarchy: selfCheck.hierarchy ?? null,
+            });
+            await persistCheckpoint({
+              runId: run.id,
+              steps: planSteps,
+              activeStepId: planSteps[nextIndex]?.id ?? null,
+              lastError,
+              taskType,
+            });
+          }
+        }
+        if (
+          shouldEvaluateReplan(stepIndex, planSteps) &&
+          replanCount < MAX_REPLAN_CALLS
+        ) {
+          const reviewContext = await getBrowserContextSummary(run.id);
+          const reviewResult = await buildAdaptivePlanReview({
+            prompt: run.prompt,
+            memory: memoryContext,
+            model: resolvedModel,
+            browserContext: reviewContext,
+            currentPlan: planSteps,
+            completedIndex: stepIndex,
+            runId: run.id,
+          });
+          if (reviewResult.shouldReplan && reviewResult.steps.length > 0) {
+            const nextIndex = stepIndex + 1;
+            const remainingSlots = Math.max(1, MAX_PLAN_STEPS - nextIndex);
+            const nextSteps = reviewResult.steps.slice(0, remainingSlots);
+            planSteps = [...planSteps.slice(0, nextIndex), ...nextSteps];
+            taskType = reviewResult.meta?.taskType ?? taskType;
+            replanCount += 1;
+            await logAgentAudit(run.id, "warning", "Plan re-evaluated.", {
+              type: "plan-replan",
+              steps: planSteps,
+              reason: reviewResult.reason,
+              plannerMeta: reviewResult.meta ?? null,
+              hierarchy: reviewResult.hierarchy ?? null,
+            });
+            await persistCheckpoint({
+              runId: run.id,
+              steps: planSteps,
+              activeStepId: planSteps[nextIndex]?.id ?? null,
+              lastError,
+              taskType,
+            });
+          }
+        }
         stepIndex += 1;
       }
 
@@ -367,7 +562,7 @@ export async function runAgentControlLoop(runId: string) {
         const toolResult = await runAgentTool({
           name: "playwright",
           input: {
-            prompt: run.prompt,
+            prompt: appendTaskTypeToPrompt(run.prompt, taskType),
             browser: run.agentBrowser || "chromium",
             runId: run.id,
             runHeadless: run.runHeadless,
@@ -504,6 +699,9 @@ function parseCheckpoint(payload: unknown): AgentCheckpoint | null {
     steps: raw.steps as PlanStep[],
     activeStepId: raw.activeStepId ?? null,
     lastError: raw.lastError ?? null,
+    taskType: raw.taskType ?? null,
+    resumeRequestedAt: raw.resumeRequestedAt ?? null,
+    resumeProcessedAt: raw.resumeProcessedAt ?? null,
     updatedAt: raw.updatedAt ?? new Date().toISOString(),
   };
 }
@@ -512,11 +710,17 @@ function buildCheckpointState(payload: {
   steps: PlanStep[];
   activeStepId: string | null;
   lastError?: string | null;
+  taskType?: PlannerMeta["taskType"] | null;
+  resumeRequestedAt?: string | null;
+  resumeProcessedAt?: string | null;
 }) {
   return {
     steps: payload.steps,
     activeStepId: payload.activeStepId,
     lastError: payload.lastError ?? null,
+    taskType: payload.taskType ?? null,
+    resumeRequestedAt: payload.resumeRequestedAt ?? null,
+    resumeProcessedAt: payload.resumeProcessedAt ?? null,
     updatedAt: new Date().toISOString(),
   };
 }
@@ -526,6 +730,9 @@ async function persistCheckpoint(payload: {
   steps: PlanStep[];
   activeStepId: string | null;
   lastError?: string | null;
+  taskType?: PlannerMeta["taskType"] | null;
+  resumeRequestedAt?: string | null;
+  resumeProcessedAt?: string | null;
 }) {
   await prisma.chatbotAgentRun.update({
     where: { id: payload.runId },
@@ -649,6 +856,7 @@ async function buildPlanWithLLM({
   decision: AgentDecision;
   source: "llm" | "heuristic";
   branchSteps?: PlanStep[];
+  meta?: PlannerMeta;
   hierarchy?: {
     goals: Array<{
       id: string;
@@ -675,6 +883,10 @@ async function buildPlanWithLLM({
     status: "pending" as const,
     tool: "playwright" as const,
     expectedObservation: null,
+    successCriteria: null,
+    phase: "act" as const,
+    priority: null,
+    dependsOn: null,
     attempts: 0,
     maxAttempts: MAX_STEP_ATTEMPTS,
   }));
@@ -682,8 +894,8 @@ async function buildPlanWithLLM({
   try {
     const systemPrompt =
       mode === "branch"
-        ? "You are an agent planner. Output only JSON with keys: decision, branchSteps. decision: {action, reason, toolName}. branchSteps: array of {title, tool, expectedObservation, successCriteria}. Provide 1-4 alternate steps to recover from the failed step. tool is 'playwright' or 'none'."
-        : "You are an agent planner. Output only JSON with keys: decision and goals. decision: {action, reason, toolName}. goals: array of {title, successCriteria, subgoals:[{title, successCriteria, steps:[{title, tool, expectedObservation, successCriteria}]}]}. Use max 6 total steps. tool is 'playwright' or 'none'. If you cannot provide goals, you may include steps: array of {title, tool, expectedObservation, successCriteria}.";
+        ? "You are an agent planner. Output only JSON with keys: decision, branchSteps, critique, alternatives, taskType, summary, constraints, successSignals. decision: {action, reason, toolName}. branchSteps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. taskType is 'web_task' or 'extract_info'. summary is a 1-2 sentence plan summary. constraints is an array of key constraints. successSignals is a list of observable success indicators. Provide 1-4 alternate steps to recover from the failed step. tool is 'playwright' or 'none'."
+        : `You are an agent planner. Output only JSON with keys: decision, goals, critique, alternatives, taskType, summary, constraints, successSignals. decision: {action, reason, toolName}. goals: array of {title, successCriteria, subgoals:[{title, successCriteria, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}]}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. taskType is 'web_task' or 'extract_info'. summary is a 1-2 sentence plan summary. constraints is an array of key constraints. successSignals is a list of observable success indicators. Use max ${MAX_PLAN_STEPS} total steps. tool is 'playwright' or 'none'. If you cannot provide goals, you may include steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}.`;
 
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: "POST",
@@ -723,33 +935,15 @@ async function buildPlanWithLLM({
     if (!parsed) {
       throw new Error("Planner LLM returned invalid JSON.");
     }
+    const meta = normalizePlannerMeta(parsed);
     const hierarchy = mode === "plan" ? normalizePlanHierarchy(parsed) : null;
     const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
     const stepSpecs =
       hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
-    const steps = stepSpecs
-      .slice(0, MAX_PLAN_STEPS)
-      .map(
-        (step: {
-          title?: string;
-          tool?: string;
-          expectedObservation?: string;
-          successCriteria?: string;
-          goalId?: string | null;
-          subgoalId?: string | null;
-        }) => ({
-          id: randomUUID(),
-          title: step.title?.trim() || "Review the page state.",
-          status: "pending" as const,
-          tool: step.tool === "none" ? "none" : "playwright",
-          expectedObservation: step.expectedObservation?.trim() || null,
-          successCriteria: step.successCriteria?.trim() || null,
-          goalId: step.goalId ?? null,
-          subgoalId: step.subgoalId ?? null,
-          attempts: 0,
-          maxAttempts: MAX_STEP_ATTEMPTS,
-        })
-      );
+    const steps = buildPlanStepsFromSpecs(stepSpecs, meta, mode === "plan").slice(
+      0,
+      MAX_PLAN_STEPS
+    );
     const branchSpecs = (parsed.branchSteps ?? parsed.steps ?? []).slice(0, 4);
     const branchSteps = branchSpecs.map(
       (step: {
@@ -773,6 +967,7 @@ async function buildPlanWithLLM({
       steps: steps.length ? steps : fallbackSteps,
       decision,
       source: "llm",
+      meta,
       hierarchy,
       branchSteps: branchSteps.length ? branchSteps : undefined,
     };
@@ -787,19 +982,670 @@ async function buildPlanWithLLM({
       steps: fallbackSteps,
       decision: decideNextAction(prompt, memory),
       source: "heuristic",
+      meta: null,
     };
+  }
+}
+
+function shouldEvaluateReplan(stepIndex: number, steps: PlanStep[]) {
+  if (steps.length < 3) return false;
+  const nextIndex = stepIndex + 1;
+  if (nextIndex >= steps.length) return false;
+  return (nextIndex % REPLAN_EVERY_STEPS) === 0;
+}
+
+function appendTaskTypeToPrompt(
+  prompt: string,
+  taskType: PlannerMeta["taskType"] | null
+) {
+  if (!taskType) return prompt;
+  return `${prompt}\n\nTask type: ${taskType}`;
+}
+
+async function buildAdaptivePlanReview({
+  prompt,
+  memory,
+  model,
+  browserContext,
+  currentPlan,
+  completedIndex,
+  runId,
+}: {
+  prompt: string;
+  memory: string[];
+  model: string;
+  browserContext?: {
+    url: string;
+    title: string | null;
+    domTextSample: string;
+    logs: { level: string; message: string }[];
+    uiInventory?: unknown;
+  } | null;
+  currentPlan: PlanStep[];
+  completedIndex: number;
+  runId?: string;
+}): Promise<{
+  shouldReplan: boolean;
+  reason?: string;
+  steps: PlanStep[];
+  hierarchy?: ReturnType<typeof normalizePlanHierarchy> | null;
+  meta?: PlannerMeta | null;
+}> {
+  try {
+    const systemPrompt =
+      "You are an agent replanner. Output only JSON with keys: shouldReplan, reason, goals, critique, alternatives, taskType, summary, constraints, successSignals. shouldReplan is boolean. taskType is 'web_task' or 'extract_info'. If shouldReplan is true, include goals (same schema as planner) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. summary is a short plan summary. constraints and successSignals are arrays.";
+    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        stream: false,
+        messages: [
+          { role: "system", content: systemPrompt },
+          {
+            role: "user",
+            content: JSON.stringify({
+              prompt,
+              memory,
+              browserContext,
+              completedStepIndex: completedIndex,
+              currentPlan: currentPlan.map((step) => ({
+                title: step.title,
+                status: step.status,
+                tool: step.tool,
+                expectedObservation: step.expectedObservation,
+                successCriteria: step.successCriteria,
+              })),
+              maxSteps: MAX_PLAN_STEPS,
+            }),
+          },
+        ],
+        options: { temperature: 0.2 },
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(`Planner review failed (${response.status}).`);
+    }
+    const payload = await response.json();
+    const content = payload?.message?.content?.trim() ?? "";
+    const parsed = parsePlanJson(content) as
+      | {
+          shouldReplan?: boolean;
+          reason?: string;
+          steps?: Array<{
+            title?: string;
+            tool?: string;
+            expectedObservation?: string;
+            successCriteria?: string;
+            phase?: string;
+            priority?: number;
+            dependsOn?: number[] | string[];
+          }>;
+          goals?: Array<{
+            title?: string;
+            successCriteria?: string;
+            subgoals?: Array<{
+              title?: string;
+              successCriteria?: string;
+              steps?: Array<{
+                title?: string;
+                tool?: string;
+                expectedObservation?: string;
+                successCriteria?: string;
+                phase?: string;
+                priority?: number;
+                dependsOn?: number[] | string[];
+              }>;
+            }>;
+          }>;
+          critique?: PlannerCritique;
+          alternatives?: PlannerAlternative[];
+          summary?: string;
+          constraints?: string[];
+          successSignals?: string[];
+          taskType?: string;
+        }
+      | null;
+    if (!parsed) {
+      throw new Error("Planner review returned invalid JSON.");
+    }
+    const shouldReplan = Boolean(parsed.shouldReplan);
+    const meta = normalizePlannerMeta(parsed);
+    const hierarchy = normalizePlanHierarchy(parsed);
+    const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
+    const stepSpecs =
+      hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
+    const steps = shouldReplan
+      ? buildPlanStepsFromSpecs(stepSpecs, meta, true).slice(0, MAX_PLAN_STEPS)
+      : [];
+    if (shouldReplan && steps.length === 0) {
+      return { shouldReplan: false, reason: parsed.reason, steps: [] };
+    }
+    return {
+      shouldReplan,
+      reason: parsed.reason,
+      steps,
+      hierarchy,
+      meta,
+    };
+  } catch (error) {
+    if (DEBUG_CHATBOT) {
+      console.warn("[chatbot][agent][engine] Planner review fallback", {
+        runId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+    return { shouldReplan: false, steps: [] };
+  }
+}
+
+async function buildSelfCheckReview({
+  prompt,
+  memory,
+  model,
+  browserContext,
+  step,
+  stepIndex,
+  runId,
+}: {
+  prompt: string;
+  memory: string[];
+  model: string;
+  browserContext?: {
+    url: string;
+    title: string | null;
+    domTextSample: string;
+    logs: { level: string; message: string }[];
+    uiInventory?: unknown;
+  } | null;
+  step: PlanStep;
+  stepIndex: number;
+  runId?: string;
+}): Promise<{
+  action: "continue" | "replan" | "wait_human";
+  reason?: string;
+  notes?: string;
+  steps: PlanStep[];
+  hierarchy?: ReturnType<typeof normalizePlanHierarchy> | null;
+  meta?: PlannerMeta | null;
+}> {
+  try {
+    const systemPrompt =
+      "You are an agent self-checker. Output only JSON with keys: action, reason, notes, goals, critique, alternatives, taskType, summary, constraints, successSignals. action is 'continue', 'replan', or 'wait_human'. If action is 'replan', include goals (planner schema) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. summary is a short plan summary. constraints and successSignals are arrays.";
+    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        stream: false,
+        messages: [
+          { role: "system", content: systemPrompt },
+          {
+            role: "user",
+            content: JSON.stringify({
+              prompt,
+              memory,
+              browserContext,
+              step: {
+                id: step.id,
+                title: step.title,
+                status: step.status,
+                tool: step.tool,
+                expectedObservation: step.expectedObservation,
+                successCriteria: step.successCriteria,
+              },
+              stepIndex,
+              maxSteps: MAX_PLAN_STEPS,
+            }),
+          },
+        ],
+        options: { temperature: 0.2 },
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(`Self-check failed (${response.status}).`);
+    }
+    const payload = await response.json();
+    const content = payload?.message?.content?.trim() ?? "";
+    const parsed = parsePlanJson(content) as
+      | {
+          action?: string;
+          reason?: string;
+          notes?: string;
+          steps?: Array<{
+            title?: string;
+            tool?: string;
+            expectedObservation?: string;
+            successCriteria?: string;
+            phase?: string;
+            priority?: number;
+            dependsOn?: number[] | string[];
+          }>;
+          goals?: Array<{
+            title?: string;
+            successCriteria?: string;
+            subgoals?: Array<{
+              title?: string;
+              successCriteria?: string;
+              steps?: Array<{
+                title?: string;
+                tool?: string;
+                expectedObservation?: string;
+                successCriteria?: string;
+                phase?: string;
+                priority?: number;
+                dependsOn?: number[] | string[];
+              }>;
+            }>;
+          }>;
+          critique?: PlannerCritique;
+          alternatives?: PlannerAlternative[];
+          summary?: string;
+          constraints?: string[];
+          successSignals?: string[];
+          taskType?: string;
+        }
+      | null;
+    if (!parsed) {
+      throw new Error("Self-check returned invalid JSON.");
+    }
+    const action =
+      parsed.action === "replan" || parsed.action === "wait_human"
+        ? parsed.action
+        : "continue";
+    const meta = normalizePlannerMeta(parsed);
+    const hierarchy = normalizePlanHierarchy(parsed);
+    const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
+    const stepSpecs =
+      hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
+    const steps =
+      action === "replan"
+        ? buildPlanStepsFromSpecs(stepSpecs, meta, true).slice(0, MAX_PLAN_STEPS)
+        : [];
+    return {
+      action,
+      reason: parsed.reason,
+      notes: parsed.notes,
+      steps,
+      hierarchy,
+      meta,
+    };
+  } catch (error) {
+    if (DEBUG_CHATBOT) {
+      console.warn("[chatbot][agent][engine] Self-check fallback", {
+        runId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+    return { action: "continue", steps: [] };
+  }
+}
+
+async function buildResumePlanReview({
+  prompt,
+  memory,
+  model,
+  browserContext,
+  currentPlan,
+  activeStepId,
+  lastError,
+  runId,
+}: {
+  prompt: string;
+  memory: string[];
+  model: string;
+  browserContext?: {
+    url: string;
+    title: string | null;
+    domTextSample: string;
+    logs: { level: string; message: string }[];
+    uiInventory?: unknown;
+  } | null;
+  currentPlan: PlanStep[];
+  activeStepId: string | null;
+  lastError?: string | null;
+  runId?: string;
+}): Promise<{
+  shouldReplan: boolean;
+  reason?: string;
+  summary?: string | null;
+  steps: PlanStep[];
+  hierarchy?: ReturnType<typeof normalizePlanHierarchy> | null;
+  meta?: PlannerMeta | null;
+}> {
+  try {
+    const systemPrompt =
+      "You are an agent resume planner. Output only JSON with keys: shouldReplan, reason, summary, goals, critique, alternatives, taskType, constraints, successSignals. shouldReplan is boolean. summary is a short resume briefing. taskType is 'web_task' or 'extract_info'. If shouldReplan is true, include goals (same schema as planner) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. constraints and successSignals are arrays.";
+    const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        stream: false,
+        messages: [
+          { role: "system", content: systemPrompt },
+          {
+            role: "user",
+            content: JSON.stringify({
+              prompt,
+              memory,
+              browserContext,
+              activeStepId,
+              lastError,
+              currentPlan: currentPlan.map((step) => ({
+                id: step.id,
+                title: step.title,
+                status: step.status,
+                tool: step.tool,
+                expectedObservation: step.expectedObservation,
+                successCriteria: step.successCriteria,
+              })),
+              maxSteps: MAX_PLAN_STEPS,
+            }),
+          },
+        ],
+        options: { temperature: 0.2 },
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(`Resume planner failed (${response.status}).`);
+    }
+    const payload = await response.json();
+    const content = payload?.message?.content?.trim() ?? "";
+    const parsed = parsePlanJson(content) as
+      | {
+          shouldReplan?: boolean;
+          reason?: string;
+          summary?: string;
+          steps?: Array<{
+            title?: string;
+            tool?: string;
+            expectedObservation?: string;
+            successCriteria?: string;
+            phase?: string;
+            priority?: number;
+            dependsOn?: number[] | string[];
+          }>;
+          goals?: Array<{
+            title?: string;
+            successCriteria?: string;
+            subgoals?: Array<{
+              title?: string;
+              successCriteria?: string;
+              steps?: Array<{
+                title?: string;
+                tool?: string;
+                expectedObservation?: string;
+                successCriteria?: string;
+                phase?: string;
+                priority?: number;
+                dependsOn?: number[] | string[];
+              }>;
+            }>;
+          }>;
+          critique?: PlannerCritique;
+          alternatives?: PlannerAlternative[];
+          summary?: string;
+          constraints?: string[];
+          successSignals?: string[];
+          taskType?: string;
+        }
+      | null;
+    if (!parsed) {
+      throw new Error("Resume planner returned invalid JSON.");
+    }
+    const shouldReplan = Boolean(parsed.shouldReplan);
+    const meta = normalizePlannerMeta(parsed);
+    const hierarchy = normalizePlanHierarchy(parsed);
+    const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
+    const stepSpecs =
+      hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
+    const steps = shouldReplan
+      ? buildPlanStepsFromSpecs(stepSpecs, meta, true).slice(0, MAX_PLAN_STEPS)
+      : [];
+    return {
+      shouldReplan,
+      reason: parsed.reason,
+      summary: parsed.summary?.trim() || null,
+      steps,
+      hierarchy,
+      meta,
+    };
+  } catch (error) {
+    if (DEBUG_CHATBOT) {
+      console.warn("[chatbot][agent][engine] Resume planner fallback", {
+        runId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+    return { shouldReplan: false, steps: [] };
   }
 }
 
 function parsePlanJson(content: string) {
   if (!content) return null;
-  const match = content.match(/\{[\s\S]*\}$/);
-  const jsonText = match ? match[0] : content;
+  const fencedMatch = content.match(/```json\s*([\s\S]*?)```/i);
+  const raw = fencedMatch ? fencedMatch[1] : content;
+  const match = raw.match(/\{[\s\S]*\}$/);
+  const jsonText = match ? match[0] : raw;
   try {
     return JSON.parse(jsonText);
   } catch {
     return null;
   }
+}
+
+function normalizePlannerMeta(parsed: {
+  critique?: PlannerCritique;
+  selfCritique?: PlannerCritique;
+  alternatives?: PlannerAlternative[];
+  safetyChecks?: string[];
+  questions?: string[];
+  taskType?: string;
+  summary?: string;
+  constraints?: string[];
+  successSignals?: string[];
+}) {
+  const critique = normalizeCritique(parsed.critique ?? parsed.selfCritique);
+  const safetyChecks = normalizeStringList(parsed.safetyChecks);
+  const questions = normalizeStringList(parsed.questions);
+  const normalizedSafetyChecks = [
+    ...new Set([
+      ...(critique?.safetyChecks ?? []),
+      ...(safetyChecks ?? []),
+    ]),
+  ];
+  const normalizedQuestions = [
+    ...new Set([...(critique?.questions ?? []), ...(questions ?? [])]),
+  ];
+  const alternatives = normalizeAlternatives(parsed.alternatives);
+  const taskType = normalizeTaskType(parsed.taskType);
+  const summary =
+    typeof parsed.summary === "string" ? parsed.summary.trim() : null;
+  const constraints = normalizeStringList(parsed.constraints);
+  const successSignals = normalizeStringList(parsed.successSignals);
+  return {
+    critique,
+    alternatives,
+    safetyChecks: normalizedSafetyChecks.length ? normalizedSafetyChecks : undefined,
+    questions: normalizedQuestions.length ? normalizedQuestions : undefined,
+    taskType,
+    summary: summary || undefined,
+    constraints: constraints.length ? constraints : undefined,
+    successSignals: successSignals.length ? successSignals : undefined,
+  } satisfies PlannerMeta;
+}
+
+function normalizeCritique(value?: PlannerCritique | null) {
+  if (!value) return null;
+  const assumptions = normalizeStringList(value.assumptions);
+  const risks = normalizeStringList(value.risks);
+  const unknowns = normalizeStringList(value.unknowns);
+  const safetyChecks = normalizeStringList(value.safetyChecks);
+  const questions = normalizeStringList(value.questions);
+  const hasAny =
+    assumptions.length ||
+    risks.length ||
+    unknowns.length ||
+    safetyChecks.length ||
+    questions.length;
+  if (!hasAny) return null;
+  return {
+    assumptions: assumptions.length ? assumptions : undefined,
+    risks: risks.length ? risks : undefined,
+    unknowns: unknowns.length ? unknowns : undefined,
+    safetyChecks: safetyChecks.length ? safetyChecks : undefined,
+    questions: questions.length ? questions : undefined,
+  } satisfies PlannerCritique;
+}
+
+function normalizeStringList(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item) => typeof item === "string")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function normalizeAlternatives(value: unknown) {
+  if (!Array.isArray(value)) return null;
+  const alternatives = value
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") return null;
+      const typed = entry as PlannerAlternative;
+      const title = typeof typed.title === "string" ? typed.title.trim() : "";
+      const steps = Array.isArray(typed.steps) ? typed.steps : [];
+      if (!title || steps.length === 0) return null;
+      return {
+        title,
+        rationale:
+          typeof typed.rationale === "string" ? typed.rationale.trim() : null,
+        steps,
+      } satisfies PlannerAlternative;
+    })
+    .filter(Boolean) as PlannerAlternative[];
+  return alternatives.length ? alternatives : null;
+}
+
+function normalizeTaskType(value: unknown) {
+  if (value === "web_task" || value === "extract_info") return value;
+  return undefined;
+}
+
+function buildSafetyCheckSteps(meta?: PlannerMeta) {
+  const checks = [
+    ...(meta?.safetyChecks ?? []),
+    ...(meta?.critique?.safetyChecks ?? []),
+  ]
+    .map((check) => check.trim())
+    .filter(Boolean);
+  if (checks.length === 0) return [];
+  const limited = checks.slice(0, 3);
+  return limited.map((check) => ({
+    id: randomUUID(),
+    title: `Safety check: ${check}`,
+    status: "pending" as const,
+    tool: "none" as const,
+    expectedObservation: null,
+    successCriteria: null,
+    phase: "observe" as const,
+    priority: null,
+    dependsOn: null,
+    attempts: 0,
+    maxAttempts: MAX_STEP_ATTEMPTS,
+  }));
+}
+
+function buildVerificationSteps(meta?: PlannerMeta) {
+  const signals = meta?.successSignals ?? [];
+  if (signals.length === 0) return [];
+  const limited = signals.slice(0, 3);
+  return limited.map((signal) => ({
+    id: randomUUID(),
+    title: `Verify: ${signal}`,
+    status: "pending" as const,
+    tool: "none" as const,
+    expectedObservation: null,
+    successCriteria: null,
+    phase: "verify" as const,
+    priority: null,
+    dependsOn: null,
+    attempts: 0,
+    maxAttempts: MAX_STEP_ATTEMPTS,
+  }));
+}
+
+function buildPlanStepsFromSpecs(
+  stepSpecs: Array<{
+    title?: string;
+    tool?: string;
+    expectedObservation?: string;
+    successCriteria?: string;
+    phase?: string;
+    priority?: number;
+    dependsOn?: number[] | string[];
+    goalId?: string | null;
+    subgoalId?: string | null;
+  }>,
+  meta?: PlannerMeta | null,
+  includeSafety = false
+) {
+  const preflightSteps = includeSafety ? buildSafetyCheckSteps(meta ?? undefined) : [];
+  const plannedSteps = stepSpecs.map((step, index) => ({
+    id: randomUUID(),
+    title: step.title?.trim() || "Review the page state.",
+    status: "pending" as const,
+    tool: step.tool === "none" ? "none" : "playwright",
+    expectedObservation: step.expectedObservation?.trim() || null,
+    successCriteria: step.successCriteria?.trim() || null,
+    goalId: step.goalId ?? null,
+    subgoalId: step.subgoalId ?? null,
+    phase: normalizePhase(step.phase),
+    priority: typeof step.priority === "number" ? step.priority : null,
+    dependsOn: normalizeDependencies(step.dependsOn, stepSpecs),
+    attempts: 0,
+    maxAttempts: MAX_STEP_ATTEMPTS,
+  }));
+  const verificationSteps = includeSafety
+    ? buildVerificationSteps(meta ?? undefined)
+    : [];
+  return [...preflightSteps, ...plannedSteps, ...verificationSteps];
+}
+
+function normalizePhase(value?: string) {
+  if (!value) return null;
+  const normalized = value.toLowerCase();
+  if (normalized === "observe") return "observe";
+  if (normalized === "act") return "act";
+  if (normalized === "verify") return "verify";
+  if (normalized === "recover") return "recover";
+  return null;
+}
+
+function normalizeDependencies(
+  value: number[] | string[] | undefined,
+  stepSpecs: Array<{ title?: string }>
+) {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  if (typeof value[0] === "number") {
+    return (value as number[])
+      .filter((idx) => Number.isInteger(idx) && idx >= 0 && idx < stepSpecs.length)
+      .map((idx) => `step-${idx}`);
+  }
+  if (typeof value[0] === "string") {
+    const names = value as string[];
+    return names
+      .map((name) => name.trim())
+      .filter(Boolean)
+      .map((name) => {
+        const found = stepSpecs.findIndex(
+          (spec) => spec.title?.trim().toLowerCase() === name.toLowerCase()
+        );
+        return found >= 0 ? `step-${found}` : null;
+      })
+      .filter(Boolean) as string[];
+  }
+  return null;
 }
 
 function normalizePlanHierarchy(parsed: {
@@ -814,6 +1660,9 @@ function normalizePlanHierarchy(parsed: {
         tool?: string;
         expectedObservation?: string;
         successCriteria?: string;
+        phase?: string;
+        priority?: number;
+        dependsOn?: number[] | string[];
       }>;
     }>;
   }>;
@@ -840,6 +1689,9 @@ function normalizePlanHierarchy(parsed: {
             tool: step.tool === "none" ? "none" : "playwright",
             expectedObservation: step.expectedObservation?.trim() || null,
             successCriteria: step.successCriteria?.trim() || null,
+            phase: step.phase ?? null,
+            priority: step.priority ?? null,
+            dependsOn: step.dependsOn ?? null,
           })),
         };
       }),
@@ -862,6 +1714,9 @@ function flattenPlanHierarchy(hierarchy: {
         tool?: "playwright" | "none";
         expectedObservation?: string | null;
         successCriteria?: string | null;
+        phase?: string | null;
+        priority?: number | null;
+        dependsOn?: number[] | string[] | null;
       }>;
     }>;
   }>;
@@ -871,6 +1726,9 @@ function flattenPlanHierarchy(hierarchy: {
     tool?: "playwright" | "none";
     expectedObservation?: string | null;
     successCriteria?: string | null;
+    phase?: string | null;
+    priority?: number | null;
+    dependsOn?: number[] | string[] | null;
     goalId?: string | null;
     subgoalId?: string | null;
   }> = [];

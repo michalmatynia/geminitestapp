@@ -103,6 +103,9 @@ export default function ChatbotJobsPage() {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [cancelingId, setCancelingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [bulkDeletingJobs, setBulkDeletingJobs] = useState(false);
+  const [bulkDeletingAgents, setBulkDeletingAgents] = useState(false);
   const [agentRuns, setAgentRuns] = useState<AgentRun[]>([]);
   const [agentLoading, setAgentLoading] = useState(false);
   const [selectedAgentRunId, setSelectedAgentRunId] = useState<string | null>(null);
@@ -314,6 +317,114 @@ export default function ChatbotJobsPage() {
     }
   };
 
+  const deleteJob = async (jobId: string, force = false) => {
+    setDeletingId(jobId);
+    try {
+      const confirmed = window.confirm(
+        "Delete this job permanently? This cannot be undone."
+      );
+      if (!confirmed) return;
+      const url = force
+        ? `/api/chatbot/jobs/${jobId}?force=true`
+        : `/api/chatbot/jobs/${jobId}`;
+      const res = await fetch(url, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        throw new Error(data.error || "Failed to delete job.");
+      }
+      await loadJobs();
+      toast("Job deleted", { variant: "success" });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to delete job.";
+      toast(message, { variant: "error" });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const deleteAgentRun = async (runId: string, force = false) => {
+    setDeletingId(runId);
+    try {
+      const confirmed = window.confirm(
+        "Delete this agent run and its files permanently? This cannot be undone."
+      );
+      if (!confirmed) return;
+      const url = force
+        ? `/api/chatbot/agent/${runId}?force=true`
+        : `/api/chatbot/agent/${runId}`;
+      const res = await fetch(url, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        throw new Error(data.error || "Failed to delete agent run.");
+      }
+      if (selectedAgentRunId === runId) {
+        closeAgentModal();
+      }
+      await loadAgentRuns();
+      toast("Agent run deleted", { variant: "success" });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to delete agent run.";
+      toast(message, { variant: "error" });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const deleteCompletedJobs = async () => {
+    setBulkDeletingJobs(true);
+    try {
+      const confirmed = window.confirm(
+        "Delete all completed jobs? This cannot be undone."
+      );
+      if (!confirmed) return;
+      const res = await fetch("/api/chatbot/jobs?scope=terminal", {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        throw new Error(data.error || "Failed to delete jobs.");
+      }
+      await loadJobs();
+      toast("Completed jobs deleted", { variant: "success" });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to delete jobs.";
+      toast(message, { variant: "error" });
+    } finally {
+      setBulkDeletingJobs(false);
+    }
+  };
+
+  const deleteCompletedAgentRuns = async () => {
+    setBulkDeletingAgents(true);
+    try {
+      const confirmed = window.confirm(
+        "Delete all completed agent runs and their files? This cannot be undone."
+      );
+      if (!confirmed) return;
+      const res = await fetch("/api/chatbot/agent?scope=terminal", {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        throw new Error(data.error || "Failed to delete agent runs.");
+      }
+      await loadAgentRuns();
+      toast("Completed agent runs deleted", { variant: "success" });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to delete agent runs.";
+      toast(message, { variant: "error" });
+    } finally {
+      setBulkDeletingAgents(false);
+    }
+  };
+
   const selectedAgentRun = useMemo(
     () => agentRuns.find((run) => run.id === selectedAgentRunId) ?? null,
     [agentRuns, selectedAgentRunId]
@@ -372,17 +483,37 @@ export default function ChatbotJobsPage() {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              void loadJobs();
-              void loadAgentRuns();
-            }}
-            disabled={loading || agentLoading}
-          >
-            {loading || agentLoading ? "Refreshing..." : "Refresh"}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void loadJobs();
+                void loadAgentRuns();
+              }}
+              disabled={loading || agentLoading}
+            >
+              {loading || agentLoading ? "Refreshing..." : "Refresh"}
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => void deleteCompletedJobs()}
+              disabled={bulkDeletingJobs}
+            >
+              {bulkDeletingJobs ? "Deleting jobs..." : "Delete completed jobs"}
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => void deleteCompletedAgentRuns()}
+              disabled={bulkDeletingAgents}
+            >
+              {bulkDeletingAgents
+                ? "Deleting agent runs..."
+                : "Delete completed agent runs"}
+            </Button>
+          </div>
         </div>
         {loading ? (
           <p className="text-sm text-gray-400">Loading jobs...</p>
@@ -458,15 +589,53 @@ export default function ChatbotJobsPage() {
                             {cancelingId === job.id ? "Canceling..." : "Cancel"}
                           </Button>
                         ) : null}
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          disabled={deletingId === job.id}
+                          onClick={() => void deleteJob(job.id)}
+                        >
+                          {deletingId === job.id ? "Deleting..." : "Delete"}
+                        </Button>
+                        {job.status === "running" ? (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            disabled={deletingId === job.id}
+                            onClick={() => void deleteJob(job.id, true)}
+                          >
+                            {deletingId === job.id ? "Deleting..." : "Force delete"}
+                          </Button>
+                        ) : null}
                       </>
                     ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedAgentRunId(job.id)}
-                      >
-                        View details
-                      </Button>
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedAgentRunId(job.id)}
+                        >
+                          View details
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          disabled={deletingId === job.id}
+                          onClick={() => void deleteAgentRun(job.id)}
+                        >
+                          {deletingId === job.id ? "Deleting..." : "Delete"}
+                        </Button>
+                        {job.status === "running" ? (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            disabled={deletingId === job.id}
+                            onClick={() => void deleteAgentRun(job.id, true)}
+                          >
+                            {deletingId === job.id ? "Deleting..." : "Force delete"}
+                          </Button>
+                        ) : null}
+                      </>
                     )}
                   </div>
                 </div>

@@ -83,6 +83,31 @@ type AgentPlanStep = {
   logCount?: number | null;
 };
 
+type ExtractionPlan = {
+  target?: string | null;
+  fields?: string[];
+  primarySelectors?: string[];
+  fallbackSelectors?: string[];
+  notes?: string | null;
+};
+
+type PlannerMeta = {
+  critique?: {
+    assumptions?: string[];
+    risks?: string[];
+    unknowns?: string[];
+    safetyChecks?: string[];
+    questions?: string[];
+  };
+  safetyChecks?: string[];
+  questions?: string[];
+  alternatives?: Array<{
+    title: string;
+    rationale?: string | null;
+    steps?: Array<{ title?: string | null }>;
+  }>;
+};
+
 const readErrorResponse = async (res: Response) => {
   try {
     const data = (await res.json()) as { error?: string; errorId?: string };
@@ -163,6 +188,190 @@ const writeCachedMessages = (sessionId: string, messages: ChatMessage[]) => {
     // ignore cache failures
   }
 };
+
+const buildAgentResultMessage = (
+  audits: AgentAuditLog[],
+  status: string | null
+) => {
+  const taskType = audits
+    .map((audit) => audit.metadata)
+    .find(
+      (metadata) =>
+        metadata &&
+        typeof (metadata as { plannerMeta?: { taskType?: string } }).plannerMeta
+          ?.taskType === "string"
+    );
+  const resolvedTaskType =
+    (taskType as { plannerMeta?: { taskType?: string } })?.plannerMeta
+      ?.taskType ?? null;
+  const extractionAudit = audits.find(
+    (audit) =>
+      Array.isArray(audit.metadata?.items) ||
+      Array.isArray(audit.metadata?.names)
+  );
+  if (extractionAudit) {
+    const extractionItems = Array.isArray(extractionAudit.metadata?.items)
+      ? extractionAudit.metadata.items
+      : Array.isArray(extractionAudit.metadata?.names)
+        ? extractionAudit.metadata.names
+        : [];
+    const items = extractionItems
+      .filter((name) => typeof name === "string")
+      .map((name) => name.trim())
+      .filter(Boolean);
+    if (items.length > 0) {
+      const url =
+        typeof extractionAudit.metadata?.url === "string"
+          ? extractionAudit.metadata.url
+          : null;
+      const extractionType =
+        typeof extractionAudit.metadata?.extractionType === "string"
+          ? extractionAudit.metadata.extractionType
+          : null;
+      const label =
+        extractionType === "emails"
+          ? "Extracted emails"
+          : extractionType === "product_names"
+            ? "Extracted product names"
+            : "Extracted information";
+      const intro = url
+        ? `${label} found on ${url}:`
+        : `${label}:`;
+      return `${intro}\n${items.map((name) => `- ${name}`).join("\n")}`;
+    }
+  }
+  const emptyAudit = audits.find(
+    (audit) =>
+      audit.message === "No product names extracted." ||
+      audit.message === "No emails extracted."
+  );
+  if (emptyAudit) {
+    const url =
+      typeof emptyAudit.metadata?.url === "string"
+        ? emptyAudit.metadata.url
+        : null;
+    return `No information extracted${url ? ` from ${url}` : ""}.`;
+  }
+  const summaryAudit = audits.find((audit) => {
+    const summary =
+      typeof audit.metadata?.summary === "string"
+        ? audit.metadata.summary
+        : typeof (audit.metadata as { plannerMeta?: { summary?: string } } | null)
+            ?.plannerMeta?.summary === "string"
+          ? (audit.metadata as { plannerMeta?: { summary?: string } }).plannerMeta
+              ?.summary
+          : null;
+    return Boolean(summary && summary.trim());
+  });
+  if (status === "completed") {
+    if (resolvedTaskType === "extract_info") {
+      return "No information extracted.";
+    }
+    if (summaryAudit) {
+      const summary =
+        typeof summaryAudit.metadata?.summary === "string"
+          ? summaryAudit.metadata.summary.trim()
+          : (summaryAudit.metadata as { plannerMeta?: { summary?: string } })
+              ?.plannerMeta?.summary?.trim() || "";
+      if (summary) {
+        return `Agent summary: ${summary}`;
+      }
+    }
+    if (resolvedTaskType === "web_task") {
+      return "Agent run completed. Actions executed in agent mode.";
+    }
+    return "Agent run completed. No extractable results.";
+  }
+  if (status === "failed") {
+    return "Agent run failed. Check the agent run details for errors.";
+  }
+  if (status === "waiting_human") {
+    return "Agent run needs human input to continue.";
+  }
+  return null;
+};
+
+const buildAgentResumeSummaryMessage = (audits: AgentAuditLog[]) => {
+  const resumeAudit = audits.find(
+    (audit) =>
+      audit.message === "Resume summary prepared." &&
+      typeof audit.metadata?.summary === "string"
+  );
+  const autoResumeAudit = audits.find(
+    (audit) => audit.message === "Auto-resume queued for stuck run."
+  );
+  if (!resumeAudit) {
+    if (!autoResumeAudit) return null;
+    const timestamp = autoResumeAudit.createdAt
+      ? new Date(autoResumeAudit.createdAt).toLocaleString()
+      : null;
+    return `Auto-resume queued for stuck run${timestamp ? ` (${timestamp})` : ""}.`;
+  }
+  const summary =
+    typeof resumeAudit.metadata?.summary === "string"
+      ? resumeAudit.metadata.summary.trim()
+      : "";
+  if (!summary) return null;
+  return `Resume summary:\n${summary}`;
+};
+
+const renderExtractionPlan = (plan: ExtractionPlan) => (
+  <div className="rounded-md border border-gray-800 bg-gray-950 p-2 text-[10px] text-gray-300">
+    <div className="flex flex-wrap gap-2 text-[10px] text-gray-500">
+      <span>Target:</span>
+      <span className="text-gray-200">{plan.target || "unknown"}</span>
+    </div>
+    {plan.fields?.length ? (
+      <div className="mt-2">
+        <p className="text-[10px] uppercase tracking-wide text-gray-500">Fields</p>
+        <div className="mt-1 flex flex-wrap gap-1">
+          {plan.fields.map((field) => (
+            <span
+              key={field}
+              className="rounded-full border border-gray-800 bg-gray-900 px-2 py-[1px]"
+            >
+              {field}
+            </span>
+          ))}
+        </div>
+      </div>
+    ) : null}
+    {plan.primarySelectors?.length ? (
+      <div className="mt-2">
+        <p className="text-[10px] uppercase tracking-wide text-gray-500">
+          Primary selectors
+        </p>
+        <ul className="mt-1 list-disc space-y-1 pl-4">
+          {plan.primarySelectors.map((selector) => (
+            <li key={selector}>{selector}</li>
+          ))}
+        </ul>
+      </div>
+    ) : null}
+    {plan.fallbackSelectors?.length ? (
+      <div className="mt-2">
+        <p className="text-[10px] uppercase tracking-wide text-gray-500">
+          Fallback selectors
+        </p>
+        <ul className="mt-1 list-disc space-y-1 pl-4">
+          {plan.fallbackSelectors.map((selector) => (
+            <li key={selector}>{selector}</li>
+          ))}
+        </ul>
+      </div>
+    ) : null}
+    {plan.notes ? (
+      <p className="mt-2 text-gray-400">{plan.notes}</p>
+    ) : null}
+  </div>
+);
+
+const getSelfCheckAudits = (audits: AgentAuditLog[]) =>
+  audits.filter(
+    (audit) =>
+      audit.message === "Self-check completed." ||
+      audit.metadata?.type === "self-check"
+  );
 
 const isAbortError = (error: unknown) =>
   error instanceof DOMException && error.name === "AbortError";
@@ -298,13 +507,20 @@ export default function ChatbotPage() {
   >(null);
   const [agentControlUrl, setAgentControlUrl] = useState("");
   const [agentControlBusy, setAgentControlBusy] = useState(false);
+  const [agentResumeBusy, setAgentResumeBusy] = useState(false);
+  const [agentProgressOpen, setAgentProgressOpen] = useState(false);
   const [agentPlanSteps, setAgentPlanSteps] = useState<AgentPlanStep[]>([]);
+  const [agentPlanMeta, setAgentPlanMeta] = useState<PlannerMeta | null>(null);
   const [stepDetailsOpen, setStepDetailsOpen] = useState(false);
   const [stepDetailsLoading, setStepDetailsLoading] = useState(false);
   const [stepDetailsTitle, setStepDetailsTitle] = useState("");
   const [stepDetailsSnapshot, setStepDetailsSnapshot] =
     useState<AgentSnapshot | null>(null);
   const [stepDetailsLogs, setStepDetailsLogs] = useState<AgentBrowserLog[]>([]);
+  const [snapshotLightboxOpen, setSnapshotLightboxOpen] = useState(false);
+  const [snapshotLightbox, setSnapshotLightbox] = useState<AgentSnapshot | null>(
+    null
+  );
   const [agentRunDetailsOpen, setAgentRunDetailsOpen] = useState(false);
   const [agentRunDetailsLoading, setAgentRunDetailsLoading] = useState(false);
   const [agentRunDetails, setAgentRunDetails] = useState<{
@@ -317,6 +533,7 @@ export default function ChatbotPage() {
   } | null>(null);
   const [agentRunLogs, setAgentRunLogs] = useState<AgentBrowserLog[]>([]);
   const [agentRunAudits, setAgentRunAudits] = useState<AgentAuditLog[]>([]);
+  const [resumeStepId, setResumeStepId] = useState<string>("");
   const [expandedRunAuditIds, setExpandedRunAuditIds] = useState<
     Record<string, boolean>
   >({});
@@ -337,8 +554,14 @@ export default function ChatbotPage() {
   const initStartedRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const agentResultSentRef = useRef<Set<string>>(new Set());
+  const agentResumeSummarySentRef = useRef<Set<string>>(new Set());
   const [pollingReply, setPollingReply] = useState(false);
   const sessionReady = Boolean(sessionId) && !initError;
+  const selfCheckAudits = useMemo(
+    () => getSelfCheckAudits(agentRunAudits),
+    [agentRunAudits]
+  );
   const sessionContextLogs = useMemo(
     () => agentRunLogs.filter((log) => log.message === "Captured session context."),
     [agentRunLogs]
@@ -354,6 +577,10 @@ export default function ChatbotPage() {
   const latestSessionContext = sessionContextLogs.at(-1)?.metadata ?? null;
   const latestLoginCandidates = loginCandidateLogs.at(-1)?.metadata ?? null;
   const latestUiInventory = uiInventoryLogs.at(-1)?.metadata ?? null;
+  const currentPlanStep =
+    agentPlanSteps.find((step) => step.status === "running") ??
+    agentPlanSteps.find((step) => step.status === "pending") ??
+    null;
 
   const fetchMessagesForSession = useCallback(async (activeSessionId: string) => {
     const res = await fetchWithTimeout(
@@ -657,6 +884,14 @@ export default function ChatbotPage() {
   }, [messages, sessionId]);
 
   useEffect(() => {
+    if (!sessionId || latestAgentRunId) return;
+    const stored = safeLocalStorageGet(`chatbotLatestAgentRunId:${sessionId}`);
+    if (stored) {
+      setLatestAgentRunId(stored);
+    }
+  }, [sessionId, latestAgentRunId]);
+
+  useEffect(() => {
     if (!pollingReply || !sessionId) return;
     if (pollingRef.current) return;
     const startCount = messages.length;
@@ -686,6 +921,7 @@ export default function ChatbotPage() {
   useEffect(() => {
     if (!latestAgentRunId) return;
     let isMounted = true;
+    let isTerminal = false;
     const pollStatus = async () => {
       try {
         const res = await fetchWithTimeout(
@@ -698,7 +934,16 @@ export default function ChatbotPage() {
         }
         const data = (await res.json()) as { run?: { status?: string } };
         if (isMounted) {
-          setLatestAgentRunStatus(data.run?.status ?? null);
+          const nextStatus = data.run?.status ?? null;
+          setLatestAgentRunStatus(nextStatus);
+          if (
+            nextStatus &&
+            ["completed", "failed", "stopped", "waiting_human"].includes(
+              nextStatus
+            )
+          ) {
+            isTerminal = true;
+          }
         }
       } catch {
         if (isMounted) {
@@ -707,7 +952,13 @@ export default function ChatbotPage() {
       }
     };
     void pollStatus();
-    const timer = setInterval(pollStatus, 3000);
+    const timer = setInterval(() => {
+      if (isTerminal) {
+        clearInterval(timer);
+        return;
+      }
+      void pollStatus();
+    }, 3000);
     return () => {
       isMounted = false;
       clearInterval(timer);
@@ -715,10 +966,150 @@ export default function ChatbotPage() {
   }, [latestAgentRunId]);
 
   useEffect(() => {
+    if (!latestAgentRunId || !latestAgentRunStatus) return;
+    const runId = latestAgentRunId;
+    const storedFlag = safeLocalStorageGet(`chatbotAgentResultSent:${runId}`);
+    if (agentResultSentRef.current.has(runId) || storedFlag === "true") {
+      return;
+    }
+    if (!["completed", "failed", "waiting_human"].includes(latestAgentRunStatus)) {
+      return;
+    }
+    let isMounted = true;
+    const publishResult = async () => {
+      try {
+        const res = await fetchWithTimeout(
+          `/api/chatbot/agent/${runId}/audits`,
+          {},
+          12000
+        );
+        if (!res.ok) return;
+        const data = (await res.json()) as { audits?: AgentAuditLog[] };
+        const message = buildAgentResultMessage(
+          data.audits ?? [],
+          latestAgentRunStatus
+        );
+        if (!message) return;
+        if (!isMounted) return;
+        setMessages((prev) => [...prev, { role: "assistant", content: message }]);
+        if (sessionId) {
+          await persistSessionMessage(sessionId, "assistant", message);
+        }
+        agentResultSentRef.current.add(runId);
+        safeLocalStorageSet(`chatbotAgentResultSent:${runId}`, "true");
+      } catch (error) {
+        if (error instanceof Error) {
+          toast(error.message, { variant: "error" });
+        }
+      }
+    };
+    void publishResult();
+    return () => {
+      isMounted = false;
+    };
+  }, [latestAgentRunId, latestAgentRunStatus, sessionId, toast]);
+
+  useEffect(() => {
+    if (!latestAgentRunId) return;
+    const runId = latestAgentRunId;
+    let isMounted = true;
+    let stopPolling = false;
+    const pollAudits = async () => {
+      if (stopPolling) return;
+      if (
+        latestAgentRunStatus &&
+        ["completed", "failed", "stopped", "waiting_human"].includes(
+          latestAgentRunStatus
+        )
+      ) {
+        stopPolling = true;
+        return;
+      }
+      const storedFlag = safeLocalStorageGet(`chatbotAgentResultSent:${runId}`);
+      if (agentResultSentRef.current.has(runId) || storedFlag === "true") {
+        stopPolling = true;
+        return;
+      }
+      try {
+        const res = await fetchWithTimeout(
+          `/api/chatbot/agent/${runId}/audits`,
+          {},
+          12000
+        );
+        if (!res.ok) return;
+        const data = (await res.json()) as { audits?: AgentAuditLog[] };
+        const message = buildAgentResultMessage(
+          data.audits ?? [],
+          latestAgentRunStatus ?? null
+        );
+        if (!message || !isMounted) return;
+        setMessages((prev) => [...prev, { role: "assistant", content: message }]);
+        if (sessionId) {
+          await persistSessionMessage(sessionId, "assistant", message);
+        }
+        agentResultSentRef.current.add(runId);
+        safeLocalStorageSet(`chatbotAgentResultSent:${runId}`, "true");
+        stopPolling = true;
+      } catch (error) {
+        if (error instanceof Error) {
+          toast(error.message, { variant: "error" });
+        }
+      }
+    };
+    void pollAudits();
+    const timer = setInterval(pollAudits, 5000);
+    return () => {
+      isMounted = false;
+      clearInterval(timer);
+    };
+  }, [latestAgentRunId, sessionId, toast]);
+
+  useEffect(() => {
+    if (!latestAgentRunId || !latestAgentRunStatus) return;
+    const runId = latestAgentRunId;
+    const storedFlag = safeLocalStorageGet(
+      `chatbotAgentResumeSummarySent:${runId}`
+    );
+    if (agentResumeSummarySentRef.current.has(runId) || storedFlag === "true") {
+      return;
+    }
+    let isMounted = true;
+    const publishSummary = async () => {
+      try {
+        const res = await fetchWithTimeout(
+          `/api/chatbot/agent/${runId}/audits`,
+          {},
+          12000
+        );
+        if (!res.ok) return;
+        const data = (await res.json()) as { audits?: AgentAuditLog[] };
+        const message = buildAgentResumeSummaryMessage(data.audits ?? []);
+        if (!message) return;
+        if (!isMounted) return;
+        setMessages((prev) => [...prev, { role: "assistant", content: message }]);
+        if (sessionId) {
+          await persistSessionMessage(sessionId, "assistant", message);
+        }
+        agentResumeSummarySentRef.current.add(runId);
+        safeLocalStorageSet(`chatbotAgentResumeSummarySent:${runId}`, "true");
+      } catch (error) {
+        if (error instanceof Error) {
+          toast(error.message, { variant: "error" });
+        }
+      }
+    };
+    void publishSummary();
+    return () => {
+      isMounted = false;
+    };
+  }, [latestAgentRunId, latestAgentRunStatus, sessionId, toast]);
+
+  useEffect(() => {
     if (!latestAgentRunId) {
       setAgentPreviewSnapshot(null);
       setAgentPreviewStatus("idle");
       setAgentPlanSteps([]);
+      setAgentPlanMeta(null);
       return;
     }
     setAgentPreviewStatus("connecting");
@@ -770,16 +1161,20 @@ export default function ChatbotPage() {
         const steps = Array.isArray(latestPlan?.metadata?.steps)
           ? (latestPlan?.metadata?.steps as AgentPlanStep[])
           : [];
+        const plannerMeta = (latestPlan?.metadata as { plannerMeta?: PlannerMeta } | null)
+          ?.plannerMeta;
         const normalizedSteps = steps.map((step, index) => ({
           ...step,
           id: step.id || `${latestAgentRunId}-${index}`,
         }));
         if (isMounted) {
           setAgentPlanSteps(normalizedSteps);
+          setAgentPlanMeta(plannerMeta ?? null);
         }
       } catch {
         if (isMounted) {
           setAgentPlanSteps([]);
+          setAgentPlanMeta(null);
         }
       }
     };
@@ -826,8 +1221,32 @@ export default function ChatbotPage() {
         if (runData.run) {
           setAgentRunDetails(runData.run);
         }
+        const audits = auditsData.audits ?? [];
         setAgentRunLogs(logsData.logs ?? []);
-        setAgentRunAudits(auditsData.audits ?? []);
+        setAgentRunAudits(audits);
+        if (runData.run) {
+          const runId = runData.run.id;
+          const storedFlag = safeLocalStorageGet(
+            `chatbotAgentResultSent:${runId}`
+          );
+          if (
+            !agentResultSentRef.current.has(runId) &&
+            storedFlag !== "true"
+          ) {
+            const message = buildAgentResultMessage(
+              audits,
+              runData.run.status ?? null
+            );
+            if (message) {
+              setMessages((prev) => [...prev, { role: "assistant", content: message }]);
+              if (sessionId) {
+                await persistSessionMessage(sessionId, "assistant", message);
+              }
+              agentResultSentRef.current.add(runId);
+              safeLocalStorageSet(`chatbotAgentResultSent:${runId}`, "true");
+            }
+          }
+        }
       } catch (error) {
         if (isMounted) {
           const message =
@@ -882,6 +1301,37 @@ export default function ChatbotPage() {
     }
   };
 
+  const resumeAgentRun = async (stepId?: string) => {
+    if (!latestAgentRunId) {
+      toast("No agent run available to resume.", { variant: "error" });
+      return;
+    }
+    setAgentResumeBusy(true);
+    try {
+      const res = await fetch(`/api/chatbot/agent/${latestAgentRunId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "resume",
+          ...(stepId ? { stepId } : {}),
+        }),
+      });
+      if (!res.ok) {
+        const error = await readErrorResponse(res);
+        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+        throw new Error(`${error.message}${suffix}`);
+      }
+      toast("Agent run queued for resume.", { variant: "success" });
+      setAgentRunDetailsOpen(true);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to resume agent run.";
+      toast(message, { variant: "error" });
+    } finally {
+      setAgentResumeBusy(false);
+    }
+  };
+
   const openStepDetails = async (step: AgentPlanStep) => {
     if (!latestAgentRunId) {
       toast("No agent run available for step details.", { variant: "error" });
@@ -920,6 +1370,29 @@ export default function ChatbotPage() {
       setStepDetailsLogs([]);
     } finally {
       setStepDetailsLoading(false);
+    }
+  };
+
+  const openSnapshotLightbox = async (step: AgentPlanStep) => {
+    if (!latestAgentRunId || !step.snapshotId) {
+      toast("No snapshot available for this step.", { variant: "error" });
+      return;
+    }
+    try {
+      const res = await fetchWithTimeout(
+        `/api/chatbot/agent/snapshots/${step.snapshotId}`
+      );
+      if (!res.ok) {
+        const error = await readErrorResponse(res);
+        throw new Error(error.message);
+      }
+      const data = (await res.json()) as { snapshot?: AgentSnapshot };
+      setSnapshotLightbox(data.snapshot ?? null);
+      setSnapshotLightboxOpen(true);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to load snapshot.";
+      toast(message, { variant: "error" });
     }
   };
 
@@ -1111,6 +1584,9 @@ export default function ChatbotPage() {
         const agentReply = `Agent mode queued a run (${data.runId}). Check the run queue for progress.`;
         setLatestAgentRunId(data.runId);
         setLatestAgentRunStatus(data.status);
+        if (sessionId) {
+          safeLocalStorageSet(`chatbotLatestAgentRunId:${sessionId}`, data.runId);
+        }
         setMessages((prev) => [
           ...prev,
           {
@@ -1219,6 +1695,14 @@ export default function ChatbotPage() {
       setMessages([]);
       setInput("");
       setAttachments([]);
+      setLatestAgentRunId(null);
+      setLatestAgentRunStatus(null);
+      setAgentPreviewSnapshot(null);
+      setAgentPreviewStatus("idle");
+      setAgentPlanSteps([]);
+      setAgentPlanMeta(null);
+      setAgentControlUrl("");
+      safeLocalStorageRemove(`chatbotLatestAgentRunId:${data.sessionId}`);
       setInitError(null);
       setSessionLoading(false);
       setMessagesLoading(false);
@@ -1234,6 +1718,110 @@ export default function ChatbotPage() {
     } finally {
       setCreatingSession(false);
     }
+  };
+
+  const renderPlannerNotes = (meta: PlannerMeta | null) => {
+    if (!meta) return null;
+    return (
+      <div className="mt-3 rounded-md border border-slate-800 bg-slate-950/80 p-2 text-[11px] text-slate-200">
+        <p className="text-[11px] text-slate-400">Planner notes</p>
+        <div className="mt-2 grid gap-2 md:grid-cols-2">
+          {meta.critique?.assumptions?.length ? (
+            <div className="rounded-md border border-slate-800 bg-slate-900/70 p-2">
+              <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                Assumptions
+              </p>
+              <ul className="mt-1 list-disc space-y-1 pl-4">
+                {meta.critique.assumptions.map((item, index) => (
+                  <li key={`assumption-${index}`}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {meta.critique?.risks?.length ? (
+            <div className="rounded-md border border-slate-800 bg-slate-900/70 p-2">
+              <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                Risks
+              </p>
+              <ul className="mt-1 list-disc space-y-1 pl-4">
+                {meta.critique.risks.map((item, index) => (
+                  <li key={`risk-${index}`}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {meta.critique?.unknowns?.length ? (
+            <div className="rounded-md border border-slate-800 bg-slate-900/70 p-2">
+              <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                Unknowns
+              </p>
+              <ul className="mt-1 list-disc space-y-1 pl-4">
+                {meta.critique.unknowns.map((item, index) => (
+                  <li key={`unknown-${index}`}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {meta.critique?.questions?.length || meta.questions?.length ? (
+            <div className="rounded-md border border-slate-800 bg-slate-900/70 p-2">
+              <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                Questions
+              </p>
+              <ul className="mt-1 list-disc space-y-1 pl-4">
+                {(meta.critique?.questions ?? meta.questions ?? []).map(
+                  (item, index) => (
+                    <li key={`question-${index}`}>{item}</li>
+                  )
+                )}
+              </ul>
+            </div>
+          ) : null}
+          {meta.critique?.safetyChecks?.length || meta.safetyChecks?.length ? (
+            <div className="rounded-md border border-slate-800 bg-slate-900/70 p-2">
+              <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                Safety checks
+              </p>
+              <ul className="mt-1 list-disc space-y-1 pl-4">
+                {(meta.critique?.safetyChecks ?? meta.safetyChecks ?? []).map(
+                  (item, index) => (
+                    <li key={`safety-${index}`}>{item}</li>
+                  )
+                )}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+        {meta.alternatives?.length ? (
+          <div className="mt-3 rounded-md border border-slate-800 bg-slate-900/70 p-2">
+            <p className="text-[10px] uppercase tracking-wide text-slate-400">
+              Alternatives
+            </p>
+            <div className="mt-2 space-y-2">
+              {meta.alternatives.map((alt, index) => (
+                <div
+                  key={`alternative-${index}`}
+                  className="rounded-md border border-slate-800 bg-slate-950/80 p-2"
+                >
+                  <p className="text-slate-100">{alt.title}</p>
+                  {alt.rationale ? (
+                    <p className="mt-1 text-slate-400">{alt.rationale}</p>
+                  ) : null}
+                  {alt.steps?.length ? (
+                    <ul className="mt-2 list-disc space-y-1 pl-4 text-slate-300">
+                      {alt.steps.map((step, stepIndex) => (
+                        <li key={`alternative-${index}-step-${stepIndex}`}>
+                          {step.title || "Step"}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
   };
 
   return (
@@ -1327,6 +1915,44 @@ export default function ChatbotPage() {
                 </div>
               )}
             </ModalShell>
+          </div>
+        </div>
+      ) : null}
+      {snapshotLightboxOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setSnapshotLightboxOpen(false)}
+        >
+          <div
+            className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-md border border-gray-800 bg-gray-950"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-gray-800 px-4 py-2 text-xs text-gray-400">
+              <span>Snapshot preview</span>
+              <button
+                type="button"
+                className="text-gray-400 hover:text-gray-200"
+                onClick={() => setSnapshotLightboxOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+            {snapshotLightbox?.screenshotPath ||
+            snapshotLightbox?.screenshotData ? (
+              <img
+                src={
+                  snapshotLightbox.screenshotPath
+                    ? `/api/chatbot/agent/${latestAgentRunId}/assets/${snapshotLightbox.screenshotPath}`
+                    : snapshotLightbox.screenshotData ?? ""
+                }
+                alt="Snapshot preview"
+                className="h-auto w-full object-contain"
+              />
+            ) : (
+              <div className="flex min-h-[240px] items-center justify-center text-xs text-gray-500">
+                No snapshot available.
+              </div>
+            )}
           </div>
         </div>
       ) : null}
@@ -1446,6 +2072,92 @@ export default function ChatbotPage() {
                                   ? " · needs input"
                                   : ""}
                               </div>
+                              {selfCheckAudits.length > 0 ? (
+                                <div className="mt-3 rounded-md border border-gray-800 bg-gray-950 p-2 text-[11px] text-gray-300">
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                    Self-checks
+                                  </p>
+                                  <div className="mt-2 space-y-2">
+                                    {selfCheckAudits.slice(0, 4).map((audit) => (
+                                      <div
+                                        key={audit.id}
+                                        className="rounded-md border border-gray-800 bg-gray-900/70 p-2"
+                                      >
+                                        <div className="flex items-center justify-between text-[10px] text-gray-500">
+                                          <span>{audit.message}</span>
+                                          <span>
+                                            {new Date(
+                                              audit.createdAt
+                                            ).toLocaleTimeString()}
+                                          </span>
+                                        </div>
+                                        {audit.metadata ? (
+                                          <div className="mt-1 text-[11px] text-gray-200">
+                                            {typeof audit.metadata.reason === "string" ? (
+                                              <p>{audit.metadata.reason}</p>
+                                            ) : null}
+                                            {typeof audit.metadata.notes === "string" ? (
+                                              <p className="mt-1 text-gray-400">
+                                                {audit.metadata.notes}
+                                              </p>
+                                            ) : null}
+                                          </div>
+                                        ) : null}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ) : null}
+                              {["waiting_human", "stopped", "failed"].includes(
+                                agentRunDetails.status || ""
+                              ) ? (
+                                <div className="mt-3">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => resumeAgentRun()}
+                                    disabled={agentResumeBusy}
+                                  >
+                                    {agentResumeBusy ? "Resuming..." : "Resume run"}
+                                  </Button>
+                                </div>
+                              ) : null}
+                              {agentPlanSteps.length > 0 &&
+                              ["waiting_human", "stopped", "failed"].includes(
+                                agentRunDetails.status || ""
+                              ) ? (
+                                <div className="mt-3 rounded-md border border-gray-800 bg-gray-950 p-2 text-[11px] text-gray-300">
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                    Resume from step
+                                  </p>
+                                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                                    <select
+                                      value={resumeStepId}
+                                      onChange={(event) =>
+                                        setResumeStepId(event.target.value)
+                                      }
+                                      className="h-8 min-w-[220px] rounded-md border border-gray-800 bg-gray-900 px-2 text-xs text-gray-200"
+                                    >
+                                      <option value="">Select step…</option>
+                                      {agentPlanSteps.map((step) => (
+                                        <option key={step.id} value={step.id}>
+                                          {step.title}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      disabled={agentResumeBusy || !resumeStepId}
+                                      onClick={() => resumeAgentRun(resumeStepId)}
+                                    >
+                                      {agentResumeBusy ? "Resuming..." : "Resume"}
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : null}
                               {agentRunDetails.recordingPath ? (
                                 <div className="mt-2 text-xs text-gray-400">
                                   Recording:{" "}
@@ -1476,7 +2188,7 @@ export default function ChatbotPage() {
                                       : "Idle"}
                               </span>
                             </div>
-                            <div className="mt-3 overflow-hidden rounded-md border border-gray-800 bg-gray-900">
+                            <div className="mt-3 max-h-[320px] overflow-hidden rounded-md border border-gray-800 bg-gray-900">
                               {agentPreviewSnapshot?.screenshotPath ||
                               agentPreviewSnapshot?.screenshotData ? (
                                 <img
@@ -1486,7 +2198,7 @@ export default function ChatbotPage() {
                                       : agentPreviewSnapshot.screenshotData ?? ""
                                   }
                                   alt="Agent preview"
-                                  className="h-auto w-full"
+                                  className="h-auto w-full object-cover"
                                 />
                               ) : (
                                 <div className="flex min-h-[200px] items-center justify-center text-xs text-gray-500">
@@ -1508,6 +2220,35 @@ export default function ChatbotPage() {
                         <TabsContent value="steps" className="mt-4">
                           <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
                             <p className="text-[11px] text-gray-500">Agent steps</p>
+                            {renderPlannerNotes(agentPlanMeta)}
+                            {agentRunAudits.some(
+                              (audit) =>
+                                audit.message === "LLM extraction plan created." &&
+                                audit.metadata?.plan
+                            ) ? (
+                              <div className="mt-3 rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                                <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                  Extraction plan
+                                </p>
+                                <div className="mt-2 space-y-2">
+                                  {agentRunAudits
+                                    .filter(
+                                      (audit) =>
+                                        audit.message ===
+                                          "LLM extraction plan created." &&
+                                        audit.metadata?.plan
+                                    )
+                                    .slice(0, 2)
+                                    .map((audit) => (
+                                      <div key={audit.id}>
+                                        {renderExtractionPlan(
+                                          audit.metadata?.plan as ExtractionPlan
+                                        )}
+                                      </div>
+                                    ))}
+                                </div>
+                              </div>
+                            ) : null}
                             <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
                               {agentRunAudits.length === 0 ? (
                                 <p className="text-gray-500">No steps yet.</p>
@@ -1645,6 +2386,31 @@ export default function ChatbotPage() {
                               </p>
                             )}
                           </div>
+                          {agentRunAudits.some(
+                            (audit) => audit.metadata?.type === "planner-context"
+                          ) ? (
+                            <div className="mt-3 rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                              <p className="text-[11px] text-gray-500">
+                                Planner debug
+                              </p>
+                              <div className="mt-2 space-y-2">
+                                {agentRunAudits
+                                  .filter(
+                                    (audit) =>
+                                      audit.metadata?.type === "planner-context"
+                                  )
+                                  .slice(0, 2)
+                                  .map((audit) => (
+                                    <pre
+                                      key={audit.id}
+                                      className="whitespace-pre-wrap rounded-md border border-gray-800 bg-gray-900 p-2 text-[10px] text-gray-300"
+                                    >
+                                      {JSON.stringify(audit.metadata, null, 2)}
+                                    </pre>
+                                  ))}
+                              </div>
+                            </div>
+                          ) : null}
                         </TabsContent>
                         <TabsContent value="elements" className="mt-4">
                           <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
@@ -1823,89 +2589,101 @@ export default function ChatbotPage() {
                           : "Idle"}
                   </span>
                 </div>
-                {agentPlanSteps.length > 0 ? (
-                  <div className="mt-3 rounded-md border border-slate-800 bg-slate-950/80 p-2">
-                    <p className="text-[11px] text-slate-400">Agent plan</p>
-                    <ol className="mt-2 space-y-1 text-[11px] text-slate-200">
-                      {agentPlanSteps.map((step) => (
-                        <li
-                          key={step.id}
-                          className="flex items-start gap-2 rounded-md border border-slate-800 px-2 py-1"
-                        >
-                          <span className="mt-[2px] size-2 rounded-full bg-slate-600" />
-                          <div className="flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="font-medium text-slate-100">
-                                {step.title}
-                              </span>
-                              <span
-                                className={`rounded-full px-2 py-[2px] text-[10px] uppercase tracking-wide ${
-                                  step.status === "completed"
-                                    ? "bg-emerald-500/15 text-emerald-200"
-                                    : step.status === "running"
-                                      ? "bg-blue-500/15 text-blue-200"
-                                      : step.status === "failed"
-                                        ? "bg-rose-500/15 text-rose-200"
-                                        : "bg-slate-700/40 text-slate-300"
-                                }`}
-                              >
-                                {step.status}
-                              </span>
-                              {step.snapshotId ? (
-                                <span className="rounded-full bg-slate-700/40 px-2 py-[2px] text-[10px] text-slate-300">
-                                  Snapshot
-                                </span>
-                              ) : null}
-                              {typeof step.logCount === "number" ? (
-                                <span className="rounded-full bg-slate-700/40 px-2 py-[2px] text-[10px] text-slate-300">
-                                  Logs: {step.logCount}
-                                </span>
-                              ) : null}
-                              <button
-                                type="button"
-                                className="text-[10px] uppercase tracking-wide text-emerald-200 hover:text-emerald-100"
-                                onClick={() => openStepDetails(step)}
-                              >
-                                View details
-                              </button>
-                              <button
-                                type="button"
-                                className="text-[10px] uppercase tracking-wide text-blue-200 hover:text-blue-100"
-                                onClick={() => jumpToStepSnapshot(step)}
-                              >
-                                Jump to snapshot
-                              </button>
-                            </div>
-                          </div>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                ) : null}
-                <div
-                  className={`mt-3 overflow-hidden rounded-md border bg-slate-900 ${
-                    highlightedSnapshotId &&
-                    highlightedSnapshotId === agentPreviewSnapshot?.id
-                      ? "border-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.45)]"
-                      : "border-slate-800"
-                  }`}
+                <button
+                  type="button"
+                  className="mt-3 w-full rounded-md border border-slate-800 bg-slate-900/70 px-3 py-2 text-left text-[11px] text-slate-200 hover:border-slate-700"
+                  onClick={() => setAgentProgressOpen((prev) => !prev)}
                 >
-                  {agentPreviewSnapshot?.screenshotPath ||
-                  agentPreviewSnapshot?.screenshotData ? (
-                    <img
-                      src={
-                        agentPreviewSnapshot.screenshotPath
-                          ? `/api/chatbot/agent/${latestAgentRunId}/assets/${agentPreviewSnapshot.screenshotPath}`
-                          : agentPreviewSnapshot.screenshotData ?? ""
-                      }
-                      alt="Agent preview"
-                      className="h-auto w-full"
-                    />
-                  ) : (
-                    <div className="flex min-h-[180px] items-center justify-center text-xs text-slate-500">
-                      No preview available yet.
+                  <span className="text-slate-400">Agent progress:</span>{" "}
+                  {latestAgentRunStatus
+                    ? latestAgentRunStatus.replace("_", " ")
+                    : "unknown"}{" "}
+                  ·{" "}
+                  {currentPlanStep
+                    ? `Current: ${currentPlanStep.title}`
+                    : "No active step"}
+                </button>
+                <div className="mt-3 flex items-start justify-center gap-4">
+                  <div
+                    className={`w-full max-w-[520px] max-h-[360px] overflow-hidden rounded-md border bg-slate-900 ${
+                      highlightedSnapshotId &&
+                      highlightedSnapshotId === agentPreviewSnapshot?.id
+                        ? "border-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.45)]"
+                        : "border-slate-800"
+                    }`}
+                  >
+                    {agentPreviewSnapshot?.screenshotPath ||
+                    agentPreviewSnapshot?.screenshotData ? (
+                      <img
+                        src={
+                          agentPreviewSnapshot.screenshotPath
+                            ? `/api/chatbot/agent/${latestAgentRunId}/assets/${agentPreviewSnapshot.screenshotPath}`
+                            : agentPreviewSnapshot.screenshotData ?? ""
+                        }
+                        alt="Agent preview"
+                        className="h-auto w-full object-contain"
+                      />
+                    ) : (
+                      <div className="flex min-h-[180px] items-center justify-center text-xs text-slate-500">
+                        No preview available yet.
+                      </div>
+                    )}
+                  </div>
+                  {agentProgressOpen ? (
+                    <div className="w-full max-w-[320px] max-h-[360px] overflow-y-auto rounded-md border border-slate-800 bg-slate-900/70 p-3 text-[11px] text-slate-200">
+                      <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                        Agent progress
+                      </p>
+                      {renderPlannerNotes(agentPlanMeta)}
+                      {agentPlanSteps.length === 0 ? (
+                        <p className="mt-2 text-slate-500">No steps yet.</p>
+                      ) : (
+                        <ol className="mt-2 space-y-2">
+                          {agentPlanSteps.map((step) => (
+                            <li
+                              key={step.id}
+                              className="rounded-md border border-slate-800 px-2 py-1"
+                            >
+                              <div className="flex items-center justify-between text-[10px] text-slate-500">
+                                <span
+                                  className={`rounded-full px-2 py-[1px] text-[9px] uppercase tracking-wide ${
+                                    step.status === "completed"
+                                      ? "bg-emerald-500/15 text-emerald-200"
+                                      : step.status === "running"
+                                        ? "bg-blue-500/15 text-blue-200"
+                                        : step.status === "failed"
+                                          ? "bg-rose-500/15 text-rose-200"
+                                          : "bg-slate-700/40 text-slate-300"
+                                  }`}
+                                >
+                                  {step.status}
+                                </span>
+                                {step.snapshotId ? (
+                                  <button
+                                    type="button"
+                                    className="text-[10px] text-emerald-200 hover:text-emerald-100"
+                                    onClick={() => openSnapshotLightbox(step)}
+                                  >
+                                    Snapshot
+                                  </button>
+                                ) : null}
+                              </div>
+                              <p className="mt-1 text-slate-100">{step.title}</p>
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                <button
+                                  type="button"
+                                  className="text-[10px] uppercase tracking-wide text-slate-300 hover:text-white"
+                                  onClick={() => openStepDetails(step)}
+                                >
+                                  View details
+                                </button>
+                              </div>
+                            </li>
+                          ))}
+                        </ol>
+                      )}
                     </div>
-                  )}
+                  ) : null}
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <Input

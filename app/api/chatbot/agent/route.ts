@@ -3,6 +3,8 @@ import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
 import { startAgentQueue } from "@/lib/agent/queue";
 import { logAgentAudit } from "@/lib/agent/audit";
+import { promises as fs } from "fs";
+import path from "path";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -129,6 +131,63 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(
       { error: "Failed to enqueue agent run.", errorId },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: Request) {
+  const requestStart = Date.now();
+  try {
+    if (!("chatbotAgentRun" in prisma)) {
+      return NextResponse.json(
+        { error: "Agent runs not initialized. Run prisma generate/db push." },
+        { status: 500 }
+      );
+    }
+    const url = new URL(req.url);
+    const scope = url.searchParams.get("scope") ?? "terminal";
+    const terminalStatuses = ["completed", "failed", "stopped", "waiting_human"];
+    if (scope !== "terminal") {
+      return NextResponse.json(
+        { error: "Unsupported delete scope." },
+        { status: 400 }
+      );
+    }
+    const runs = await prisma.chatbotAgentRun.findMany({
+      where: { status: { in: terminalStatuses } },
+      select: { id: true },
+    });
+    const ids = runs.map((run) => run.id);
+    if (ids.length === 0) {
+      return NextResponse.json({ deleted: 0 });
+    }
+    await prisma.chatbotAgentRun.deleteMany({
+      where: { id: { in: ids } },
+    });
+    await Promise.all(
+      ids.map((runId) =>
+        fs.rm(path.join(process.cwd(), "tmp", "chatbot-agent", runId), {
+          recursive: true,
+          force: true,
+        })
+      )
+    );
+    if (DEBUG_CHATBOT) {
+      console.info("[chatbot][agent][DELETE] Deleted", {
+        count: ids.length,
+        durationMs: Date.now() - requestStart,
+      });
+    }
+    return NextResponse.json({ deleted: ids.length });
+  } catch (error) {
+    const errorId = randomUUID();
+    console.error("[chatbot][agent][DELETE] Failed to delete runs", {
+      errorId,
+      error,
+    });
+    return NextResponse.json(
+      { error: "Failed to delete agent runs.", errorId },
       { status: 500 }
     );
   }

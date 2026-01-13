@@ -24,6 +24,8 @@ type ToolOutput = {
   logCount?: number | null;
   extractedNames?: string[];
   extractedTotal?: number;
+  extractedItems?: string[];
+  extractionType?: "product_names" | "emails";
 };
 
 export type AgentToolResult = {
@@ -63,10 +65,26 @@ const parseCredentials = (prompt?: string) => {
 
 const parseExtractionRequest = (prompt?: string) => {
   if (!prompt) return null;
-  if (!/extract/i.test(prompt) || !/product/i.test(prompt)) return null;
-  const countMatch = prompt.match(/(\d+)\s*(?:products?|product names?)/i);
+  if (/task type:\s*web_task/i.test(prompt)) return null;
+  const taskTypeHint = /task type:\s*extract_info/i.test(prompt);
+  const wantsExtraction =
+    taskTypeHint ||
+    /(extract|collect|find|list|get)\b/i.test(prompt);
+  if (!wantsExtraction) return null;
+  const isProduct = /product/i.test(prompt);
+  const isEmail = /email/i.test(prompt);
+  const countMatch = prompt.match(/(\d+)\s*(?:products?|product names?|emails?)/i);
   const count = countMatch ? Number(countMatch[1]) : null;
-  return { count };
+  if (isEmail) {
+    return { type: "emails" as const, count };
+  }
+  if (isProduct) {
+    return { type: "product_names" as const, count };
+  }
+  if (taskTypeHint) {
+    return { type: "emails" as const, count };
+  }
+  return null;
 };
 
 const toDataUrl = (buffer: Buffer) =>
@@ -394,6 +412,9 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
           ".grid-item",
           "article",
           "[class*='product' i]",
+          "[class*='card' i]",
+          "[class*='grid' i]",
+          "[class*='item' i]",
         ];
         const nameSelectors = [
           "[data-product-name]",
@@ -404,6 +425,10 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
           ".product-card__title",
           ".card__heading",
           ".product-item__title",
+          ".card-title",
+          ".card__title",
+          ".item-title",
+          ".listing-title",
           "h1",
           "h2",
           "h3",
@@ -497,6 +522,9 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
         ".grid-item",
         "article",
         "[class*='product' i]",
+        "[class*='card' i]",
+        "[class*='grid' i]",
+        "[class*='item' i]",
       ];
       try {
         await page.waitForLoadState("networkidle", { timeout: 15000 });
@@ -542,9 +570,65 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
       return false;
     };
 
+    const dismissConsent = async (label: string) => {
+      if (!page) return;
+      const buttonText =
+        /accept|agree|ok|got it|allow all|accept all|dismiss|close/i;
+      const selectors = [
+        "button",
+        "[role='button']",
+        "input[type='button']",
+        "input[type='submit']",
+        "[data-testid*='consent' i]",
+        "[data-testid*='cookie' i]",
+        "[aria-label*='accept' i]",
+        "[aria-label*='cookie' i]",
+      ];
+      try {
+        const candidates = page.locator(selectors.join(", "));
+        const count = await candidates.count();
+        for (let i = 0; i < count; i += 1) {
+          const candidate = candidates.nth(i);
+          const text = (await candidate.innerText()).trim();
+          if (text && buttonText.test(text)) {
+            await candidate.click({ timeout: 2000 });
+            await log("info", "Dismissed consent banner.", {
+              label,
+              text,
+              stepId: activeStepId ?? null,
+            });
+            return;
+          }
+        }
+      } catch {
+        // ignore consent failures
+      }
+    };
+
+    const findProductListingUrls = async () => {
+      if (!page) return [];
+      return page.evaluate(() => {
+        const keywords =
+          /(shop|store|product|collection|catalog|menu|shopall|shop-all|merch)/i;
+        const origin = location.origin;
+        const urls = new Set<string>();
+        document.querySelectorAll("a[href]").forEach((link) => {
+          const href = (link as HTMLAnchorElement).href;
+          const text = (link as HTMLElement).innerText || "";
+          if (!href || !href.startsWith(origin)) return;
+          if (keywords.test(href) || keywords.test(text)) {
+            urls.add(href);
+          }
+        });
+        return Array.from(urls).slice(0, 5);
+      });
+    };
+
     const inferSelectorsFromLLM = async (
       uiInventory: unknown,
-      domTextSample: string
+      domTextSample: string,
+      task: string,
+      label: string
     ) => {
       if (!uiInventory) return [];
       try {
@@ -563,7 +647,7 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
               {
                 role: "user",
                 content: JSON.stringify({
-                  task: "Extract product names from this page.",
+                  task,
                   domTextSample,
                   uiInventory,
                 }),
@@ -584,6 +668,8 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
           : [];
         await log("info", "LLM selector inference completed.", {
           stepId: activeStepId ?? null,
+          label,
+          task,
           selectors,
         });
         await prisma.agentAuditLog.create({
@@ -592,6 +678,8 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
             level: "info",
             message: "LLM selector inference completed.",
             metadata: {
+              label,
+              task,
               selectors,
               model: resolvedModel,
               stepId: activeStepId ?? null,
@@ -602,9 +690,94 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
       } catch (error) {
         await log("warning", "LLM selector inference failed.", {
           stepId: activeStepId ?? null,
+          label,
+          task,
           error: error instanceof Error ? error.message : String(error),
         });
         return [];
+      }
+    };
+
+    const buildExtractionPlan = async (request: {
+      type: "product_names" | "emails";
+      domTextSample: string;
+      uiInventory: unknown;
+    }) => {
+      if (!request.uiInventory) return null;
+      try {
+        const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: resolvedModel,
+            stream: false,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are an extraction planner. Return only JSON with keys: target, fields, primarySelectors, fallbackSelectors, notes. target is the data entity. fields is an array of field names. primarySelectors/fallbackSelectors are arrays of CSS selectors.",
+              },
+              {
+                role: "user",
+                content: JSON.stringify({
+                  request: request.type,
+                  domTextSample: request.domTextSample,
+                  uiInventory: request.uiInventory,
+                }),
+              },
+            ],
+            options: { temperature: 0.2 },
+          }),
+        });
+        if (!response.ok) {
+          throw new Error(`Extraction planner failed (${response.status}).`);
+        }
+        const json = await response.json();
+        const content = json?.message?.content || "";
+        const match = content.match(/\{[\s\S]*\}/);
+        const parsed = match ? JSON.parse(match[0]) : JSON.parse(content);
+        const primarySelectors = Array.isArray(parsed?.primarySelectors)
+          ? parsed.primarySelectors.filter(
+              (selector: unknown) => typeof selector === "string"
+            )
+          : [];
+        const fallbackSelectors = Array.isArray(parsed?.fallbackSelectors)
+          ? parsed.fallbackSelectors.filter(
+              (selector: unknown) => typeof selector === "string"
+            )
+          : [];
+        const plan = {
+          target: typeof parsed?.target === "string" ? parsed.target : null,
+          fields: Array.isArray(parsed?.fields)
+            ? parsed.fields.filter((field: unknown) => typeof field === "string")
+            : [],
+          primarySelectors,
+          fallbackSelectors,
+          notes: typeof parsed?.notes === "string" ? parsed.notes : null,
+        };
+        await log("info", "LLM extraction plan created.", {
+          stepId: activeStepId ?? null,
+          plan,
+        });
+        await prisma.agentAuditLog.create({
+          data: {
+            runId,
+            level: "info",
+            message: "LLM extraction plan created.",
+            metadata: {
+              plan,
+              model: resolvedModel,
+              stepId: activeStepId ?? null,
+            },
+          },
+        });
+        return plan;
+      } catch (error) {
+        await log("warning", "LLM extraction plan failed.", {
+          stepId: activeStepId ?? null,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return null;
       }
     };
 
@@ -840,6 +1013,7 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
       domText = initialSnapshot.domText;
       finalUrl = initialSnapshot.url;
       await captureSessionContext("after-initial-navigation");
+      await dismissConsent("after-initial-navigation");
       if (detectChallenge(domText) || detectChallenge(initialSnapshot.domHtml)) {
         await flagCloudflare("dom", "challenge markers in DOM/HTML");
       }
@@ -850,9 +1024,115 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
         };
       }
 
+      if (stepLabel) {
+        const domSample = (
+          await page.evaluate(
+            () => document.body?.innerText || document.documentElement?.innerText || ""
+          )
+        ).slice(0, 2000);
+        const uiInventory = await collectUiInventory(
+          `selector-inference:${stepLabel}`,
+          activeStepId ?? undefined
+        );
+        const taskDescription = `Action step: ${stepLabel}. User request: ${prompt ?? ""}`;
+        await inferSelectorsFromLLM(
+          uiInventory,
+          domSample,
+          taskDescription,
+          "action-step"
+        );
+      }
+
       const extractionRequest = parseExtractionRequest(prompt);
       if (extractionRequest) {
         const requiredCount = extractionRequest.count ?? 10;
+        const domSample = (
+          await page.evaluate(
+            () => document.body?.innerText || document.documentElement?.innerText || ""
+          )
+        ).slice(0, 2000);
+        const uiInventory = await collectUiInventory(
+          "extraction-plan",
+          activeStepId ?? undefined
+        );
+        const extractionPlan = await buildExtractionPlan({
+          type: extractionRequest.type,
+          domTextSample: domSample,
+          uiInventory,
+        });
+        if (extractionRequest.type === "emails") {
+          const rawText =
+            domText ||
+            (await page.evaluate(
+              () => document.body?.innerText || document.documentElement?.innerText || ""
+            ));
+          const emailMatches = rawText.match(
+            /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi
+          );
+          const extractedEmails = Array.from(
+            new Set((emailMatches ?? []).map((item) => item.trim()))
+          );
+          const extractedTotal = extractedEmails.length;
+          const limitedEmails = extractedEmails.slice(
+            0,
+            Math.max(requiredCount, 10)
+          );
+          await prisma.agentAuditLog.create({
+            data: {
+              runId,
+              level: extractedTotal ? "info" : "warning",
+              message: extractedTotal
+                ? "Extracted emails."
+                : "No emails extracted.",
+              metadata: {
+                requestedCount: requiredCount,
+                extractedCount: extractedTotal,
+                items: limitedEmails,
+                extractionType: "emails",
+                extractionPlan,
+                url: finalUrl,
+              },
+            },
+          });
+          await log(
+            extractedTotal ? "info" : "warning",
+            extractedTotal ? "Extracted emails." : "No emails extracted.",
+            {
+              requestedCount: requiredCount,
+              extractedCount: extractedTotal,
+              items: limitedEmails,
+              extractionType: "emails",
+              extractionPlan,
+              url: finalUrl,
+            }
+          );
+          if (extractedTotal === 0) {
+            return {
+              ok: false,
+              error: "No emails extracted.",
+              output: {
+                url: finalUrl,
+                domText,
+                extractedItems: [],
+                extractedTotal: 0,
+                extractionType: "emails",
+                extractionPlan,
+              },
+            };
+          }
+          return {
+            ok: true,
+            output: {
+              url: finalUrl,
+              domText,
+              extractedItems: limitedEmails,
+              extractedTotal,
+              extractionType: "emails",
+              extractionPlan,
+            },
+          };
+        }
+
         await waitForProductContent();
         let extractedNames = await extractProductNames();
         if (extractedNames.length === 0) {
@@ -868,6 +1148,29 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
           extractedNames = await extractProductNames();
         }
         if (extractedNames.length === 0) {
+          const listingUrls = await findProductListingUrls();
+          for (const url of listingUrls) {
+            await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+            await dismissConsent("after-listing-navigation");
+            await waitForProductContent();
+            const listingSnapshot = await captureSnapshot(
+              "listing-navigation",
+              activeStepId ?? undefined
+            );
+            domText = listingSnapshot.domText;
+            finalUrl = listingSnapshot.url;
+            extractedNames = await extractProductNames();
+            if (extractedNames.length > 0) {
+              await log("info", "Found product names after listing navigation.", {
+                url,
+                extractedCount: extractedNames.length,
+                stepId: activeStepId ?? null,
+              });
+              break;
+            }
+          }
+        }
+        if (extractedNames.length === 0) {
           const domSample = (
             await page.evaluate(
               () => document.body?.innerText || document.documentElement?.innerText || ""
@@ -877,13 +1180,41 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
             "selector-inference",
             activeStepId ?? undefined
           );
-          const inferredSelectors = await inferSelectorsFromLLM(uiInventory, domSample);
+          const inferredSelectors = await inferSelectorsFromLLM(
+            uiInventory,
+            domSample,
+            "Extract product names from this page.",
+            "product-extraction"
+          );
+          const planSelectors = extractionPlan?.primarySelectors ?? [];
+          if (planSelectors.length > 0 && extractedNames.length === 0) {
+            extractedNames = await extractProductNamesFromSelectors(planSelectors);
+          }
           if (inferredSelectors.length) {
             await log("info", "Trying inferred selectors for product extraction.", {
               selectors: inferredSelectors,
               stepId: activeStepId ?? null,
             });
             extractedNames = await extractProductNamesFromSelectors(inferredSelectors);
+          }
+          if (
+            extractedNames.length === 0 &&
+            (extractionPlan?.fallbackSelectors ?? []).length > 0
+          ) {
+            extractedNames = await extractProductNamesFromSelectors(
+              extractionPlan?.fallbackSelectors ?? []
+            );
+          }
+          if (extractedNames.length === 0) {
+            const headingSelectors = [
+              "h1",
+              "h2",
+              "h3",
+              "[class*='title' i]",
+              "[class*='name' i]",
+              "[class*='heading' i]",
+            ];
+            extractedNames = await extractProductNamesFromSelectors(headingSelectors);
           }
         }
         const extractedTotal = extractedNames.length;
@@ -899,6 +1230,9 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
               requestedCount: requiredCount,
               extractedCount: extractedTotal,
               names: limitedNames,
+              items: limitedNames,
+              extractionType: "product_names",
+              extractionPlan,
               url: finalUrl,
             },
           },
@@ -910,6 +1244,9 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
             requestedCount: requiredCount,
             extractedCount: extractedTotal,
             names: limitedNames,
+            items: limitedNames,
+            extractionType: "product_names",
+            extractionPlan,
             url: finalUrl,
           }
         );
@@ -921,7 +1258,10 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
               url: finalUrl,
               domText,
               extractedNames: [],
+              extractedItems: [],
               extractedTotal: 0,
+              extractionType: "product_names",
+              extractionPlan,
             },
           };
         }
@@ -931,7 +1271,10 @@ export async function runAgentTool(request: AgentToolRequest): Promise<AgentTool
             url: finalUrl,
             domText,
             extractedNames: limitedNames,
+            extractedItems: limitedNames,
             extractedTotal,
+            extractionType: "product_names",
+            extractionPlan,
           },
         };
       }
@@ -1218,10 +1561,15 @@ export async function runAgentBrowserControl({
       orderBy: { createdAt: "desc" },
     });
 
+    const fallbackUrl = extractTargetUrl(run.prompt) ?? null;
+    const latestUrl =
+      latestSnapshot?.url && latestSnapshot.url !== "about:blank"
+        ? latestSnapshot.url
+        : null;
     const targetUrl =
       action === "goto" && url?.trim()
         ? url.trim()
-        : latestSnapshot?.url ?? null;
+        : latestUrl ?? fallbackUrl;
 
     if (!targetUrl && action !== "snapshot") {
       return { ok: false, error: "No target URL available for control action." };

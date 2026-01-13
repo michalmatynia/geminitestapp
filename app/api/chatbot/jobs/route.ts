@@ -127,3 +127,40 @@ export async function POST(req: Request) {
     );
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    if (!("chatbotJob" in prisma)) {
+      return NextResponse.json(
+        { error: "Chatbot jobs not initialized. Run prisma generate/db push." },
+        { status: 500 }
+      );
+    }
+    const url = new URL(req.url);
+    const scope = url.searchParams.get("scope") ?? "terminal";
+    const terminalStatuses = ["completed", "failed", "canceled"] as const;
+    if (scope !== "terminal") {
+      return NextResponse.json(
+        { error: "Unsupported delete scope." },
+        { status: 400 }
+      );
+    }
+    const result = await prisma.chatbotJob.deleteMany({
+      where: { status: { in: terminalStatuses } },
+    });
+    if (DEBUG_CHATBOT) {
+      console.info("[chatbot][jobs][DELETE] Deleted", { count: result.count });
+    }
+    return NextResponse.json({ deleted: result.count });
+  } catch (error) {
+    const errorId = randomUUID();
+    console.error("[chatbot][jobs][DELETE] Failed to delete jobs", {
+      errorId,
+      error,
+    });
+    return NextResponse.json(
+      { error: "Failed to delete jobs.", errorId },
+      { status: 500 }
+    );
+  }
+}

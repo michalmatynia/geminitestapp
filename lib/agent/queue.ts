@@ -19,6 +19,8 @@ const getState = (): AgentQueueState => {
   return globalState.__agentQueueState;
 };
 
+const STUCK_RUN_THRESHOLD_MS = 10 * 60 * 1000;
+
 export function startAgentQueue() {
   const state = getState();
   if (state.timer) return;
@@ -39,6 +41,7 @@ async function processAgentQueue() {
       }
       return;
     }
+    await recoverStuckRuns();
     const nextRun = await prisma.chatbotAgentRun.findFirst({
       where: { status: "queued" },
       orderBy: { createdAt: "asc" },
@@ -74,6 +77,46 @@ async function processAgentQueue() {
     }
   } finally {
     state.running = false;
+  }
+}
+
+async function recoverStuckRuns() {
+  if (!("chatbotAgentRun" in prisma)) return;
+  const cutoff = new Date(Date.now() - STUCK_RUN_THRESHOLD_MS);
+  const stuckRuns = await prisma.chatbotAgentRun.findMany({
+    where: {
+      status: "running",
+      updatedAt: { lt: cutoff },
+    },
+    select: { id: true, planState: true },
+  });
+  if (stuckRuns.length === 0) return;
+  for (const run of stuckRuns) {
+    const resumePlanState =
+      run.planState && typeof run.planState === "object"
+        ? {
+            ...(run.planState as Record<string, unknown>),
+            resumeRequestedAt: new Date().toISOString(),
+          }
+        : { resumeRequestedAt: new Date().toISOString() };
+    await prisma.chatbotAgentRun.update({
+      where: { id: run.id },
+      data: {
+        status: "queued",
+        requiresHumanIntervention: false,
+        errorMessage: null,
+        finishedAt: null,
+        checkpointedAt: new Date(),
+        planState: resumePlanState,
+        logLines: {
+          push: `[${new Date().toISOString()}] Auto-resume queued for stuck run.`,
+        },
+      },
+    });
+    await logAgentAudit(run.id, "warning", "Auto-resume queued for stuck run.", {
+      reason: "stale-running",
+      thresholdMs: STUCK_RUN_THRESHOLD_MS,
+    });
   }
 }
 

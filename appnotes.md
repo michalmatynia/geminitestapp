@@ -6,24 +6,39 @@ extend this next with:
 Per‑step tool calls and DOM snapshots tied to step IDs.
 per‑step timeline view.
 A timeline view with timestamps.
-Step retries and manual overrides.
 
 
-design an LLM powered  : 
-multi-step planning
-multi-step planning display
-self-questioning flow
+design an LLM powered multi-step planning display
+V-Bimplement an LLM powered self-questioning flow (in the agent loop the self step after each action )
 tool call timeline
 human-approval gates
 task persistence/resume
 looping defenses
+Add a “planner debug” section in the Agent job details so you can see what context the planner received.
+Step retries and manual overrides.
+develop the intelligence of an LLM-powered multistep planning in Agent Mode
+Show multistep planning and self questioning flow 
 
+Do you want planner outputs surfaced in the UI (plan tree, rationale, step confidence), or purely backend behavior?
+Any limits to change (max steps, LLM model, latency budget)?
+V-Should planning adapt mid‑run (dynamic replans) or mainly improve the initial plan quality?
+Any specific failure modes to address (bad selectors, stuck on login, missing final extraction)?
 
-enable agent mode (playwright) to collect files like actual screenshots and recordings for later preview
+Add copy button to Agent steps, so that I can copy all steps easily as text to paste the for debuggning
+
+vastly extend LLM powered multi-step planning especially for the agent mode in Chatbot
+V - Hierarchical planning: goals → subgoals → steps, with per‑step success criteria.
+V - Adaptive branching: if a step fails, LLM proposes alternate paths (e.g., try different login entry points).
+V - Selector inference phase: LLM proposes selectors from DOM inventory before action steps.
+LLM powered Extraction plan: “what to extract + where” with structured output.
+LLM powered Tool choice escalation: e.g., use search first if direct nav fails, then Playwright.
+V - LLM powered Checkpointing: per‑step state saved so the plan can resume mid‑run.
+
+V- Add the branch details to the Steps tab UI (e.g., a “Branch” badge + reason).
+V- Include lastError in the branch audit payload for quicker debugging.
+V-Add a guard to prevent repeated branching on the same failed step.
 
 enable file hygiene in chatbot
-
-During live preview in Agent Mode, when the agent carries out some actions, enable user to be able to take control at any point
 
 Product LIST
 When I create the product, a notification should pop-up that the product has been created

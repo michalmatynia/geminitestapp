@@ -1,4 +1,3 @@
-
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import Papa from "papaparse";
@@ -25,11 +24,16 @@ export async function POST(req: NextRequest) {
     for (const row of parsed.data) {
       const productData: Prisma.ProductCreateInput = {
         sku: row["SKU"],
-        name: row["My name"],
+
+        name_pl: (row["Name PL"] ?? "").toString().trim(),
+        name_en: (row["Name EN"] ?? "").toString().trim(),
+        name_de: (row["Name DE"] ?? "").toString().trim(),
         price: row["Cena sprzedaży Retail Online (in EUR)"]
           ? parseInt(row["Cena sprzedaży Retail Online (in EUR)"])
           : 0,
-        description: `${row["EN"]}\n\n${row["PL"]}`,
+        description_en: `${row["EN"]}`,
+        description_de: `${row["DE"]}`,
+        description_pl: `${row["PL"]}`,
       };
 
       // Filter out entries with null or empty sku

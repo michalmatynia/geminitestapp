@@ -8,6 +8,32 @@ import type {
 } from "@/lib/agent/engine-types";
 import { MAX_PLAN_STEPS, MAX_STEP_ATTEMPTS } from "@/lib/agent/engine-config";
 
+export type PlanHierarchy = {
+  goals: Array<{
+    id: string;
+    title: string;
+    successCriteria?: string | null;
+    priority?: number | null;
+    dependsOn?: number[] | string[] | null;
+    subgoals: Array<{
+      id: string;
+      title: string;
+      successCriteria?: string | null;
+      priority?: number | null;
+      dependsOn?: number[] | string[] | null;
+      steps: Array<{
+        title: string;
+        tool?: "playwright" | "none";
+        expectedObservation?: string | null;
+        successCriteria?: string | null;
+        phase?: string | null;
+        priority?: number | null;
+        dependsOn?: number[] | string[] | null;
+      }>;
+    }>;
+  }>;
+};
+
 export function parsePlanJson(content: string): unknown {
   if (!content) return null;
   const fencedMatch = content.match(/```json\s*([\s\S]*?)```/i);
@@ -36,12 +62,14 @@ export function normalizePlannerMeta(parsed: {
   const critique = normalizeCritique(parsed.critique ?? parsed.selfCritique);
   const safetyChecks = normalizeStringList(parsed.safetyChecks);
   const questions = normalizeStringList(parsed.questions);
-  const normalizedSafetyChecks = [
-    ...new Set([...(critique?.safetyChecks ?? []), ...(safetyChecks ?? [])]),
-  ];
-  const normalizedQuestions = [
-    ...new Set([...(critique?.questions ?? []), ...(questions ?? [])]),
-  ];
+  const normalizedSafetyChecks = uniqStrings([
+    ...(critique?.safetyChecks ?? []),
+    ...(safetyChecks ?? []),
+  ]);
+  const normalizedQuestions = uniqStrings([
+    ...(critique?.questions ?? []),
+    ...(questions ?? []),
+  ]);
   const alternatives = normalizeAlternatives(parsed.alternatives);
   const taskType = normalizeTaskType(parsed.taskType);
   const summary =
@@ -91,6 +119,17 @@ export function normalizeStringList(value: unknown) {
     .filter((item) => typeof item === "string")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function uniqStrings(values: string[]) {
+  const result: string[] = [];
+  for (let index = 0; index < values.length; index += 1) {
+    const value = values[index];
+    if (!result.includes(value)) {
+      result.push(value);
+    }
+  }
+  return result;
 }
 
 export function normalizeAlternatives(value: unknown) {
@@ -298,11 +337,11 @@ export function normalizePlanHierarchy(parsed: {
       }>;
     }>;
   }>;
-}) {
+}): PlanHierarchy | null {
   if (!Array.isArray(parsed.goals) || parsed.goals.length === 0) {
     return null;
   }
-  const goals = parsed.goals.map((goal) => {
+  const goals: PlanHierarchy["goals"] = parsed.goals.map((goal) => {
     const goalId = randomUUID();
     const subgoals = Array.isArray(goal.subgoals) ? goal.subgoals : [];
     return {
@@ -339,31 +378,7 @@ export function normalizePlanHierarchy(parsed: {
   return { goals };
 }
 
-export function flattenPlanHierarchy(hierarchy: {
-  goals: Array<{
-    id: string;
-    title: string;
-    successCriteria?: string | null;
-    priority?: number | null;
-    dependsOn?: number[] | string[] | null;
-    subgoals: Array<{
-      id: string;
-      title: string;
-      successCriteria?: string | null;
-      priority?: number | null;
-      dependsOn?: number[] | string[] | null;
-      steps: Array<{
-        title: string;
-        tool?: "playwright" | "none";
-        expectedObservation?: string | null;
-        successCriteria?: string | null;
-        phase?: string | null;
-        priority?: number | null;
-        dependsOn?: number[] | string[] | null;
-      }>;
-    }>;
-  }>;
-}) {
+export function flattenPlanHierarchy(hierarchy: PlanHierarchy) {
   const steps: Array<{
     title: string;
     tool?: "playwright" | "none";

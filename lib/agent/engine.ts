@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { randomUUID } from "crypto";
 import { logAgentAudit } from "@/lib/agent/audit";
 import {
@@ -280,7 +281,7 @@ export async function runAgentControlLoop(runId: string) {
           model: memorySummarizationModel,
           browserContext: resumeContext,
           currentPlan: planSteps,
-          activeStepId: checkpoint.activeStepId ?? null,
+          completedIndex: Math.max(stepIndex, 0),
           lastError: checkpoint.lastError ?? null,
           runId: run.id,
           maxSteps: settings.maxSteps,
@@ -1111,7 +1112,7 @@ export async function runAgentControlLoop(runId: string) {
                 activeStepId: step.id,
               });
               const branchAlternatives = buildBranchStepsFromAlternatives(
-                replanResult.meta?.alternatives,
+                replanResult.meta?.alternatives ?? undefined,
                 settings.maxStepAttempts,
                 Math.min(6, settings.maxSteps)
               );
@@ -1485,7 +1486,7 @@ export async function runAgentControlLoop(runId: string) {
             maxSteps: settings.maxSteps,
             maxStepAttempts: settings.maxStepAttempts,
           });
-          if (adaptResult.shouldReplan && adaptResult.steps.length > 0) {
+          if (adaptResult.shouldAdapt && adaptResult.steps.length > 0) {
             const nextIndex = stepIndex + 1;
             const remainingSlots = Math.max(1, settings.maxSteps - nextIndex);
             const guardedSteps = await guardRepetitionWithLLM({
@@ -2110,7 +2111,7 @@ export async function runAgentControlLoop(runId: string) {
         planState: buildCheckpointState({
           steps: planSteps,
           activeStepId: planSteps[stepIndex]?.id ?? null,
-          lastError,
+          lastError: checkpoint?.lastError ?? null,
           approvalRequestedStepId: null,
           approvalGrantedStepId: null,
           summaryCheckpoint,
@@ -2146,7 +2147,7 @@ export async function runAgentControlLoop(runId: string) {
             errorMessage: message,
             finishedAt: new Date(),
             activeStepId: null,
-            planState: null,
+            planState: Prisma.JsonNull,
             checkpointedAt: new Date(),
             logLines: {
               push: `[${new Date().toISOString()}] Agent failed (${errorId}).`,

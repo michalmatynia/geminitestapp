@@ -15,6 +15,28 @@ import {
   parsePlanJson,
 } from "@/lib/agent/engine-plan-utils";
 
+type PlanStepSpecInput = {
+  title?: string;
+  tool?: string;
+  expectedObservation?: string | null;
+  successCriteria?: string | null;
+  phase?: string | null;
+  priority?: number | null;
+  dependsOn?: number[] | string[] | null;
+  goalId?: string | null;
+  subgoalId?: string | null;
+};
+
+const normalizePlanStepSpecs = (steps: PlanStepSpecInput[]) =>
+  steps.map((step) => ({
+    ...step,
+    expectedObservation: step.expectedObservation ?? undefined,
+    successCriteria: step.successCriteria ?? undefined,
+    phase: step.phase ?? undefined,
+    priority: step.priority ?? undefined,
+    dependsOn: step.dependsOn ?? undefined,
+  }));
+
 export const detectLoopPattern = (
   recent: Array<{
     title: string;
@@ -196,14 +218,16 @@ export async function buildLoopGuardReview({
       hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
     let steps =
       action === "replan"
-        ? buildPlanStepsFromSpecs(stepSpecs, meta, true, maxStepAttempts).slice(
-            0,
-            maxSteps
-          )
+        ? buildPlanStepsFromSpecs(
+            normalizePlanStepSpecs(stepSpecs),
+            meta,
+            true,
+            maxStepAttempts
+          ).slice(0, maxSteps)
         : [];
     if (action === "replan" && steps.length === 0) {
       const fallbackBranch = buildBranchStepsFromAlternatives(
-        meta?.alternatives,
+        meta?.alternatives ?? undefined,
         maxStepAttempts,
         maxSteps
       );

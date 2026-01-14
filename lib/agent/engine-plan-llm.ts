@@ -27,6 +27,28 @@ import {
   parsePlanJson,
 } from "@/lib/agent/engine-plan-utils";
 
+type PlanStepSpecInput = {
+  title?: string;
+  tool?: string;
+  expectedObservation?: string | null;
+  successCriteria?: string | null;
+  phase?: string | null;
+  priority?: number | null;
+  dependsOn?: number[] | string[] | null;
+  goalId?: string | null;
+  subgoalId?: string | null;
+};
+
+const normalizePlanStepSpecs = (steps: PlanStepSpecInput[]) =>
+  steps.map((step) => ({
+    ...step,
+    expectedObservation: step.expectedObservation ?? undefined,
+    successCriteria: step.successCriteria ?? undefined,
+    phase: step.phase ?? undefined,
+    priority: step.priority ?? undefined,
+    dependsOn: step.dependsOn ?? undefined,
+  }));
+
 export async function buildPlanWithLLM({
   prompt,
   memory,
@@ -235,8 +257,9 @@ export async function buildPlanWithLLM({
     const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
     const stepSpecs =
       hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
+    const normalizedStepSpecs = normalizePlanStepSpecs(stepSpecs);
     let steps = buildPlanStepsFromSpecs(
-      stepSpecs,
+      normalizedStepSpecs,
       meta,
       mode === "plan",
       maxStepAttempts
@@ -301,7 +324,7 @@ export async function buildPlanWithLLM({
       }
     }
     const branchSpecs = (parsed.branchSteps ?? parsed.steps ?? []).slice(0, 4);
-    const branchSteps = branchSpecs.map(
+    const branchSteps: PlanStep[] = branchSpecs.map(
       (step: {
         title?: string;
         tool?: string;
@@ -319,7 +342,7 @@ export async function buildPlanWithLLM({
       })
     );
     const fallbackBranchSteps = buildBranchStepsFromAlternatives(
-      meta?.alternatives,
+      meta?.alternatives ?? undefined,
       maxStepAttempts,
       maxSteps
     );
@@ -347,7 +370,7 @@ export async function buildPlanWithLLM({
       steps: fallbackSteps,
       decision: decideNextAction(prompt, memory),
       source: "heuristic",
-      meta: null,
+      meta: undefined,
     };
   }
 }
@@ -466,7 +489,7 @@ export async function buildAdaptivePlanReview({
       successSignals?: string[];
       taskType?: string;
     } | null;
-    if (!parsed) {
+  if (!parsed) {
       throw new Error("Planner review returned invalid JSON.");
     }
     const shouldReplan = Boolean(parsed.shouldReplan);
@@ -475,15 +498,21 @@ export async function buildAdaptivePlanReview({
     const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
     const stepSpecs =
       hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
+    const normalizedStepSpecs = normalizePlanStepSpecs(stepSpecs);
     let steps = shouldReplan
-      ? buildPlanStepsFromSpecs(stepSpecs, meta, true, maxStepAttempts).slice(
+      ? buildPlanStepsFromSpecs(
+          normalizedStepSpecs,
+          meta,
+          true,
+          maxStepAttempts
+        ).slice(
           0,
           maxSteps
         )
       : [];
     if (shouldReplan && steps.length === 0) {
       const fallbackBranch = buildBranchStepsFromAlternatives(
-        meta?.alternatives,
+        meta?.alternatives ?? undefined,
         maxStepAttempts,
         maxSteps
       );
@@ -679,16 +708,22 @@ export async function buildSelfCheckReview({
     const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
     const stepSpecs =
       hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
+    const normalizedStepSpecs = normalizePlanStepSpecs(stepSpecs);
     let steps =
       action === "replan"
-        ? buildPlanStepsFromSpecs(stepSpecs, meta, true, maxStepAttempts).slice(
+        ? buildPlanStepsFromSpecs(
+            normalizedStepSpecs,
+            meta,
+            true,
+            maxStepAttempts
+          ).slice(
             0,
             maxSteps
           )
         : [];
     if (action === "replan" && steps.length === 0) {
       const fallbackBranch = buildBranchStepsFromAlternatives(
-        meta?.alternatives,
+        meta?.alternatives ?? undefined,
         maxStepAttempts,
         maxSteps
       );
@@ -850,15 +885,21 @@ export async function buildResumePlanReview({
     const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
     const stepSpecs =
       hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
+    const normalizedStepSpecs = normalizePlanStepSpecs(stepSpecs);
     let steps = shouldReplan
-      ? buildPlanStepsFromSpecs(stepSpecs, meta, true, maxStepAttempts).slice(
+      ? buildPlanStepsFromSpecs(
+          normalizedStepSpecs,
+          meta,
+          true,
+          maxStepAttempts
+        ).slice(
           0,
           maxSteps
         )
       : [];
     if (shouldReplan && steps.length === 0) {
       const fallbackBranch = buildBranchStepsFromAlternatives(
-        meta?.alternatives,
+        meta?.alternatives ?? undefined,
         maxStepAttempts,
         maxSteps
       );
@@ -993,7 +1034,7 @@ export async function evaluatePlanWithLLM({
         : (parsed.revisedSteps ?? []);
     const revisedSteps = revisedSpecs.length
       ? buildPlanStepsFromSpecs(
-          revisedSpecs,
+          normalizePlanStepSpecs(revisedSpecs),
           meta,
           true,
           maxStepAttempts
@@ -1442,14 +1483,14 @@ export async function buildMidRunAdaptationWithLLM({
     const stepSpecs =
       hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
     let stepsResult = buildPlanStepsFromSpecs(
-      stepSpecs,
+      normalizePlanStepSpecs(stepSpecs),
       meta,
       true,
       maxStepAttempts
     ).slice(0, maxSteps);
     if (stepsResult.length === 0) {
       const fallbackBranch = buildBranchStepsFromAlternatives(
-        meta?.alternatives,
+        meta?.alternatives ?? undefined,
         maxStepAttempts,
         maxSteps
       );
@@ -1550,7 +1591,7 @@ export async function dedupePlanStepsWithLLM({
     } | null;
     if (!parsed?.steps?.length) return steps;
     const dedupedSteps = buildPlanStepsFromSpecs(
-      parsed.steps,
+      normalizePlanStepSpecs(parsed.steps),
       meta,
       true,
       maxStepAttempts
@@ -1656,10 +1697,11 @@ export async function guardRepetitionWithLLM({
       }>;
     } | null;
     if (!parsed?.steps?.length) return candidateSteps;
-    const guarded = buildPlanStepsFromSpecs(parsed.steps, null, true).slice(
-      0,
-      maxSteps
-    );
+    const guarded = buildPlanStepsFromSpecs(
+      normalizePlanStepSpecs(parsed.steps),
+      null,
+      true
+    ).slice(0, maxSteps);
     if ("agentAuditLog" in prisma && runId) {
       await prisma.agentAuditLog.create({
         data: {
@@ -1893,7 +1935,7 @@ export async function optimizePlanWithLLM({
         : (parsed.optimizedSteps ?? []);
     const optimizedSteps = optimizedSpecs.length
       ? buildPlanStepsFromSpecs(
-          optimizedSpecs,
+          normalizePlanStepSpecs(optimizedSpecs),
           meta,
           true,
           maxStepAttempts

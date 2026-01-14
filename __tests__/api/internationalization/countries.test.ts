@@ -42,7 +42,9 @@ describe("Countries API", () => {
 
       // Check specific seeded data
       const pl = countries.find((c: any) => c.code === "PL");
-      expect(pl).toBeDefined();
+      if (!pl) {
+        throw new Error("Expected seeded country PL.");
+      }
       expect(pl.name).toBe("Poland");
       expect(pl.currencies.length).toBeGreaterThan(0);
       expect(pl.currencies[0].currency.code).toBe("PLN");

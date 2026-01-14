@@ -26,6 +26,7 @@ import {
   FieldErrors,
   FormProvider,
   useForm,
+  Resolver,
 } from "react-hook-form";
 import { z } from "zod";
 
@@ -111,8 +112,9 @@ export function ProductFormProvider({
   requireSku?: boolean;
   initialSku?: string;
 }) {
+  const formSchema = product || requireSku ? productUpdateSchema : productCreateSchema;
   const methods = useForm<ProductFormData>({
-    resolver: zodResolver(product || requireSku ? productUpdateSchema : productCreateSchema),
+    resolver: zodResolver(formSchema) as Resolver<ProductFormData>,
     defaultValues: {
       name_en: product?.name_en || "",
       name_pl: product?.name_pl || "",

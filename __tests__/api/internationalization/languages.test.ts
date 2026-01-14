@@ -32,7 +32,9 @@ describe("Languages API", () => {
       expect(dbLanguages.length).toBeGreaterThan(0);
 
       const en = languages.find((l: any) => l.code === "EN");
-      expect(en).toBeDefined();
+      if (!en) {
+        throw new Error("Expected seeded language EN.");
+      }
       expect(en.name).toBe("English");
       expect(en.nativeName).toBe("English");
     });

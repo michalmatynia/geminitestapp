@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
 import { logAgentAudit } from "@/lib/agent/audit";
@@ -192,6 +193,13 @@ export async function POST(
         return step;
       });
       const now = new Date().toISOString();
+      const nextPlanState = {
+        ...(planState ?? {}),
+        steps: nextSteps,
+        activeStepId: body.stepId,
+        resumeRequestedAt: now,
+        updatedAt: now,
+      };
       const updated = await prisma.chatbotAgentRun.update({
         where: { id: runId },
         data: {
@@ -200,13 +208,7 @@ export async function POST(
           errorMessage: null,
           finishedAt: null,
           checkpointedAt: new Date(),
-          planState: {
-            ...(planState ?? {}),
-            steps: nextSteps,
-            activeStepId: body.stepId,
-            resumeRequestedAt: now,
-            updatedAt: now,
-          },
+          planState: nextPlanState as Prisma.InputJsonValue,
           activeStepId: body.stepId,
           logLines: {
             push: `[${new Date().toISOString()}] Step retry requested (${body.stepId}).`,
@@ -268,15 +270,16 @@ export async function POST(
             ) as { id?: string } | undefined)?.id ?? null
           : body.stepId;
       const now = new Date().toISOString();
+      const nextPlanState = {
+        ...(planState ?? {}),
+        steps: nextSteps,
+        activeStepId: nextActive,
+        updatedAt: now,
+      };
       const updated = await prisma.chatbotAgentRun.update({
         where: { id: runId },
         data: {
-          planState: {
-            ...(planState ?? {}),
-            steps: nextSteps,
-            activeStepId: nextActive,
-            updatedAt: now,
-          },
+          planState: nextPlanState as Prisma.InputJsonValue,
           activeStepId: nextActive,
           checkpointedAt: new Date(),
           logLines: {

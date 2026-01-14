@@ -29,7 +29,9 @@ describe("Currencies API", () => {
       expect(dbCurrencies.length).toBeGreaterThan(0);
 
       const usd = currencies.find((c: any) => c.code === "USD");
-      expect(usd).toBeDefined();
+      if (!usd) {
+        throw new Error("Expected seeded currency USD.");
+      }
       expect(usd.name).toBe("US Dollar");
       expect(usd.symbol).toBe("$");
     });

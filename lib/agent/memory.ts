@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 
 const DEFAULT_MEMORY_VALIDATION_MODEL =
   process.env.MEMORY_VALIDATION_MODEL ?? process.env.OLLAMA_MODEL;
@@ -43,7 +44,7 @@ export async function addAgentMemory(params: {
         runId: params.runId ?? null,
         scope: params.scope,
         content: params.content,
-        metadata: params.metadata,
+        metadata: params.metadata as Prisma.InputJsonValue | undefined,
       },
     });
   } catch (error) {
@@ -110,7 +111,7 @@ export async function addAgentLongTermMemory(params: {
         content: params.content,
         summary: params.summary ?? null,
         tags: params.tags ?? [],
-        metadata: params.metadata,
+        metadata: params.metadata as Prisma.InputJsonValue | undefined,
         importance: params.importance ?? null,
         lastAccessedAt: new Date(),
       },

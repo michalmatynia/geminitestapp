@@ -70,7 +70,7 @@ export const collectUiInventory = async (
         .filter(visible)
         .map((el) => ({
           ...describe(el),
-          href: el.href,
+          href: (el as HTMLAnchorElement).href,
         }));
       const headings = Array.from(
         document.querySelectorAll("h1, h2, h3, h4, h5, h6")

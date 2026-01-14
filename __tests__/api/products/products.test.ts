@@ -3,6 +3,7 @@ import { PUT, DELETE } from "../../../app/api/products/[id]/route";
 import { DELETE as DELETE_IMAGE } from "../../../app/api/products/[id]/images/[imageFileId]/route";
 import { POST as POST_DUPLICATE } from "../../../app/api/products/[id]/duplicate/route";
 import { GET as GET_PUBLIC } from "../../../app/api/public/products/[id]/route";
+import { NextRequest } from "next/server";
 import { createMockProduct } from "@/lib/utils/productUtils";
 import prisma from "@/lib/prisma";
 
@@ -292,7 +293,9 @@ describe("Products API", () => {
         method: "PUT",
         body: formData,
       });
-      const res = await PUT(req, { params: { id: "non-existent-id" } });
+      const res = await PUT(req, {
+        params: Promise.resolve({ id: "non-existent-id" }),
+      });
       expect(res.status).toEqual(404);
     });
 
@@ -318,7 +321,9 @@ describe("Products API", () => {
         body: formData,
       });
 
-      const res = await PUT(req, { params: { id: product.id } });
+      const res = await PUT(req, {
+        params: Promise.resolve({ id: product.id }),
+      });
       expect(res.status).toEqual(200);
 
       const productImages = await prisma.productImage.findMany({
@@ -350,7 +355,9 @@ describe("Products API", () => {
         method: "PUT",
         body: formData,
       });
-      const res = await PUT(req, { params: { id: product.id } });
+      const res = await PUT(req, {
+        params: Promise.resolve({ id: product.id }),
+      });
       const updatedProduct = await res.json();
 
       expect(res.status).toEqual(200);
@@ -373,7 +380,9 @@ describe("Products API", () => {
       const req = new Request("http://localhost/api/products/non-existent-id", {
         method: "DELETE",
       });
-      const res = await DELETE(req, { params: { id: "non-existent-id" } });
+      const res = await DELETE(req, {
+        params: Promise.resolve({ id: "non-existent-id" }),
+      });
       expect(res.status).toEqual(404);
     });
   });
@@ -396,7 +405,7 @@ describe("Products API", () => {
         },
       });
 
-      const req = new Request(
+      const req = new NextRequest(
         `http://localhost/api/products/${product.id}/images/${imageFile.id}`,
         {
           method: "DELETE",
@@ -421,7 +430,9 @@ describe("Products API", () => {
     it("should return a single product", async () => {
       const product = await createMockProduct({ name_en: "Product 1 (EN)" });
       const req = new Request(`http://localhost/api/products/${product.id}`);
-      const res = await GET_PUBLIC(req, { params: { id: product.id } });
+      const res = await GET_PUBLIC(req, {
+        params: Promise.resolve({ id: product.id }),
+      });
       const fetchedProduct = await res.json();
       expect(res.status).toEqual(200);
       expect(fetchedProduct.name_en).toEqual("Product 1 (EN)");

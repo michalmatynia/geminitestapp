@@ -20,20 +20,20 @@ describe("Databases API", () => {
   beforeEach(() => {
     jest.resetAllMocks();
     const execFileMock = execFile as jest.MockedFunction<typeof execFile>;
-    execFileMock.mockImplementation(
-      (command, args, callback) => {
+    execFileMock.mockImplementation((...args) => {
+      const callback = args[args.length - 1];
+      if (typeof callback === "function") {
         callback(null, "stdout", "stderr");
       }
-    );
+      return {} as ReturnType<typeof execFile>;
+    });
   });
 
   describe("POST /api/databases/backup", () => {
     it("should create a backup of the database", async () => {
       jest.spyOn(fs, "writeFile").mockResolvedValue(undefined);
 
-      const res = await POST_BACKUP(
-        new Request("http://localhost/api/databases/backup", { method: "POST" })
-      );
+      const res = await POST_BACKUP();
       expect(res.status).toEqual(200);
       expect(execFile).toHaveBeenCalledTimes(1);
     });
@@ -73,9 +73,7 @@ describe("Databases API", () => {
         mtime: new Date(),
       } as any);
 
-      const res = await GET_BACKUPS(
-        new Request("http://localhost/api/databases/backups")
-      );
+      const res = await GET_BACKUPS();
       const backups = await res.json();
       expect(res.status).toEqual(200);
       expect(backups.length).toEqual(1);

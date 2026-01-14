@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { POST } from "@/app/api/generate-description/route";
 import OpenAI from "openai";
 
@@ -17,7 +18,7 @@ jest.mock("openai", () => {
 describe("AI Description Generation API", () => {
   beforeEach(async () => {
     await prisma.setting.deleteMany({});
-    (OpenAI as jest.Mock).mockClear();
+    (OpenAI as unknown as jest.Mock).mockClear();
     createMock.mockClear();
   });
 
@@ -35,12 +36,12 @@ describe("AI Description Generation API", () => {
     };
     createMock.mockResolvedValue(mockCompletion);
 
-    const req = new Request(
+    const req = new NextRequest(
       "http://localhost/api/generate-description",
       {
         method: "POST",
         body: JSON.stringify({
-          productData: { name: "Test Product" },
+          productData: { name_en: "Test Product" },
           imageUrls: [],
         }),
       }
@@ -54,7 +55,7 @@ describe("AI Description Generation API", () => {
   });
 
   it("should fail if product name is missing", async () => {
-    const req = new Request(
+    const req = new NextRequest(
       "http://localhost/api/generate-description",
       {
         method: "POST",
@@ -67,12 +68,12 @@ describe("AI Description Generation API", () => {
   });
 
   it("should fail if API key is not configured", async () => {
-    const req = new Request(
+    const req = new NextRequest(
       "http://localhost/api/generate-description",
       {
         method: "POST",
         body: JSON.stringify({
-          productData: { name: "Test Product" },
+          productData: { name_en: "Test Product" },
           imageUrls: [],
         }),
       }
@@ -98,12 +99,12 @@ describe("AI Description Generation API", () => {
     };
     createMock.mockResolvedValue(mockCompletion);
 
-    const req = new Request(
+    const req = new NextRequest(
       "http://localhost/api/generate-description",
       {
         method: "POST",
         body: JSON.stringify({
-          productData: { name: "Test Product" },
+          productData: { name_en: "Test Product" },
           imageUrls: [],
         }),
       }

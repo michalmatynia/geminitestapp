@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { GET, POST } from "@/app/api/cms/slugs/route";
 import { DELETE } from "@/app/api/cms/slugs/[id]/route";
 
@@ -42,8 +43,7 @@ describe("CMS API", () => {
       data: [{ slug: "test-slug-1" }, { slug: "test-slug-2" }],
     });
 
-    const req = new Request("http://localhost/api/cms/slugs");
-    const res = await GET(req);
+    const res = await GET();
     const data = await res.json();
 
     expect(res.status).toBe(200);
@@ -53,7 +53,7 @@ describe("CMS API", () => {
   it("should delete a slug", async () => {
     const slug = await prisma.slug.create({ data: { slug: "test-slug" } });
 
-    const req = new Request(`http://localhost/api/cms/slugs/${slug.id}`, {
+    const req = new NextRequest(`http://localhost/api/cms/slugs/${slug.id}`, {
       method: "DELETE",
     });
 

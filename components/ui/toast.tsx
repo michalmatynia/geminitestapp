@@ -4,7 +4,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -99,25 +98,24 @@ const getToastClasses = (variant: ToastVariant, accent: ToastSettings["accent"])
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
-  const [settings, setSettings] = useState<ToastSettings>(defaultSettings);
-  const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
-
-  useEffect(() => {
+  const [settings, setSettings] = useState<ToastSettings>(() => {
+    if (typeof window === "undefined") return defaultSettings;
     const stored = window.localStorage.getItem("toastSettings");
-    if (!stored) {
-      return;
-    }
+    if (!stored) return defaultSettings;
     try {
       const parsed = JSON.parse(stored) as ToastSettings;
       const position =
-        parsed.position in positionStyles ? parsed.position : defaultSettings.position;
+        parsed.position in positionStyles
+          ? parsed.position
+          : defaultSettings.position;
       const accent =
         parsed.accent in accentStyles ? parsed.accent : defaultSettings.accent;
-      setSettings((prev) => ({ ...prev, position, accent }));
+      return { ...defaultSettings, position, accent };
     } catch {
-      // Ignore invalid local storage payloads.
+      return defaultSettings;
     }
-  }, []);
+  });
+  const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
 
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));

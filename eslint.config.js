@@ -11,6 +11,22 @@ const compat = new FlatCompat({
   baseDirectory: __dirname,
 });
 
+const configFiles = [
+  "eslint.config.js",
+  "jest.config.cjs",
+  "next.config.mjs",
+  "postcss.config.mjs",
+  "prisma/seed.js",
+  "server.cjs",
+];
+
+const disableTypeCheckedForConfigFiles = compat
+  .extends("plugin:@typescript-eslint/disable-type-checked")
+  .map((config) => ({
+    ...config,
+    files: configFiles,
+  }));
+
 const eslintConfig = [
   ...nextCoreWebVitals,
   {
@@ -79,6 +95,18 @@ const eslintConfig = [
       "@typescript-eslint/no-unnecessary-type-constraint": "off",
       "@typescript-eslint/no-wrapper-object-types": "off",
       "@typescript-eslint/no-unsafe-function-type": "off",
+    },
+  },
+  ...disableTypeCheckedForConfigFiles,
+  {
+    files: configFiles,
+    languageOptions: {
+      parserOptions: {
+        project: null,
+      },
+    },
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
     },
   },
 ];

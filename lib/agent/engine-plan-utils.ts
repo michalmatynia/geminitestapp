@@ -8,14 +8,15 @@ import type {
 } from "@/lib/agent/engine-types";
 import { MAX_PLAN_STEPS, MAX_STEP_ATTEMPTS } from "@/lib/agent/engine-config";
 
-export function parsePlanJson(content: string) {
+export function parsePlanJson(content: string): unknown {
   if (!content) return null;
   const fencedMatch = content.match(/```json\s*([\s\S]*?)```/i);
   const raw = fencedMatch ? fencedMatch[1] : content;
   const match = raw.match(/\{[\s\S]*\}$/);
   const jsonText = match ? match[0] : raw;
   try {
-    return JSON.parse(jsonText);
+    const parsed: unknown = JSON.parse(jsonText);
+    return parsed;
   } catch {
     return null;
   }

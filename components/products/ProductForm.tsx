@@ -74,8 +74,8 @@ export default function ProductForm({
     const productData = getValues();
     // Derive imageUrls from imageSlots
     const imageUrls = imageSlots
-      .filter((slot) => slot !== null)
-      .map((slot) => slot!.previewUrl);
+      .filter((slot): slot is NonNullable<typeof slot> => slot !== null)
+      .map((slot) => slot.previewUrl);
     try {
       const res = await fetch("/api/generate-description", {
         method: "POST",

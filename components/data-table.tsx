@@ -81,6 +81,8 @@ export function DataTable<TData>({
     }
   }, [sorting, sortingStorageKey]);
 
+  // TanStack Table is not compatible with React Compiler memoization warnings.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable<TData>({
     data,
     columns,

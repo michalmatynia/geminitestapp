@@ -153,9 +153,54 @@ export async function buildPlanWithLLM({
     if (!response.ok) {
       throw new Error(`Planner LLM failed (${response.status}).`);
     }
-    const payload = await response.json();
-    const content = payload?.message?.content?.trim() ?? "";
-    const parsed = parsePlanJson(content);
+    const payload = (await response.json()) as {
+      message?: { content?: string };
+    };
+    const content = payload.message?.content?.trim() ?? "";
+    const parsed = parsePlanJson(content) as {
+      decision?: Partial<AgentDecision>;
+      steps?: Array<{
+        title?: string;
+        tool?: string;
+        expectedObservation?: string;
+        successCriteria?: string;
+        phase?: string;
+        priority?: number;
+        dependsOn?: number[] | string[];
+      }>;
+      branchSteps?: Array<{
+        title?: string;
+        tool?: string;
+        expectedObservation?: string;
+        successCriteria?: string;
+        phase?: string;
+        priority?: number;
+        dependsOn?: number[] | string[];
+      }>;
+      goals?: Array<{
+        title?: string;
+        successCriteria?: string;
+        subgoals?: Array<{
+          title?: string;
+          successCriteria?: string;
+          steps?: Array<{
+            title?: string;
+            tool?: string;
+            expectedObservation?: string;
+            successCriteria?: string;
+            phase?: string;
+            priority?: number;
+            dependsOn?: number[] | string[];
+          }>;
+        }>;
+      }>;
+      critique?: PlannerCritique;
+      alternatives?: PlannerAlternative[];
+      taskType?: string;
+      summary?: string;
+      constraints?: string[];
+      successSignals?: string[];
+    } | null;
     if (!parsed) {
       throw new Error("Planner LLM returned invalid JSON.");
     }
@@ -381,8 +426,10 @@ export async function buildAdaptivePlanReview({
     if (!response.ok) {
       throw new Error(`Planner review failed (${response.status}).`);
     }
-    const payload = await response.json();
-    const content = payload?.message?.content?.trim() ?? "";
+    const payload = (await response.json()) as {
+      message?: { content?: string };
+    };
+    const content = payload.message?.content?.trim() ?? "";
     const parsed = parsePlanJson(content) as {
       shouldReplan?: boolean;
       reason?: string;
@@ -569,8 +616,10 @@ export async function buildSelfCheckReview({
     if (!response.ok) {
       throw new Error(`Self-check failed (${response.status}).`);
     }
-    const payload = await response.json();
-    const content = payload?.message?.content?.trim() ?? "";
+    const payload = (await response.json()) as {
+      message?: { content?: string };
+    };
+    const content = payload.message?.content?.trim() ?? "";
     const parsed = parsePlanJson(content) as {
       action?: string;
       reason?: string;
@@ -752,8 +801,10 @@ export async function buildResumePlanReview({
     if (!response.ok) {
       throw new Error(`Resume review failed (${response.status}).`);
     }
-    const payload = await response.json();
-    const content = payload?.message?.content?.trim() ?? "";
+    const payload = (await response.json()) as {
+      message?: { content?: string };
+    };
+    const content = payload.message?.content?.trim() ?? "";
     const parsed = parsePlanJson(content) as {
       shouldReplan?: boolean;
       reason?: string;
@@ -897,8 +948,10 @@ export async function evaluatePlanWithLLM({
     if (!response.ok) {
       throw new Error(`Planner evaluation failed (${response.status}).`);
     }
-    const payload = await response.json();
-    const content = payload?.message?.content?.trim() ?? "";
+    const payload = (await response.json()) as {
+      message?: { content?: string };
+    };
+    const content = payload.message?.content?.trim() ?? "";
     const parsed = parsePlanJson(content) as {
       score?: number;
       issues?: string[];
@@ -1033,8 +1086,10 @@ export async function verifyPlanWithLLM({
     if (!response.ok) {
       throw new Error(`Plan verification failed (${response.status}).`);
     }
-    const payload = await response.json();
-    const content = payload?.message?.content?.trim() ?? "";
+    const payload = (await response.json()) as {
+      message?: { content?: string };
+    };
+    const content = payload.message?.content?.trim() ?? "";
     const parsed = parsePlanJson(content) as {
       verdict?: "pass" | "partial" | "fail";
       evidence?: string[];
@@ -1141,8 +1196,10 @@ export async function buildSelfImprovementReviewWithLLM({
     if (!response.ok) {
       throw new Error(`Self-improvement review failed (${response.status}).`);
     }
-    const payload = await response.json();
-    const content = payload?.message?.content?.trim() ?? "";
+    const payload = (await response.json()) as {
+      message?: { content?: string };
+    };
+    const content = payload.message?.content?.trim() ?? "";
     const parsed = parsePlanJson(content) as {
       summary?: string;
       mistakes?: string[];
@@ -1226,8 +1283,10 @@ export async function summarizePlannerMemoryWithLLM({
     if (!response.ok) {
       throw new Error(`Planner summary failed (${response.status}).`);
     }
-    const payload = await response.json();
-    const content = payload?.message?.content?.trim() ?? "";
+    const payload = (await response.json()) as {
+      message?: { content?: string };
+    };
+    const content = payload.message?.content?.trim() ?? "";
     const parsed = parsePlanJson(content) as {
       summary?: string;
       keyDecisions?: string[];
@@ -1335,8 +1394,10 @@ export async function buildMidRunAdaptationWithLLM({
     if (!response.ok) {
       throw new Error(`Mid-run adaptation failed (${response.status}).`);
     }
-    const payload = await response.json();
-    const content = payload?.message?.content?.trim() ?? "";
+    const payload = (await response.json()) as {
+      message?: { content?: string };
+    };
+    const content = payload.message?.content?.trim() ?? "";
     const parsed = parsePlanJson(content) as {
       shouldAdapt?: boolean;
       reason?: string;
@@ -1472,8 +1533,10 @@ export async function dedupePlanStepsWithLLM({
     if (!response.ok) {
       throw new Error(`Plan dedupe failed (${response.status}).`);
     }
-    const payload = await response.json();
-    const content = payload?.message?.content?.trim() ?? "";
+    const payload = (await response.json()) as {
+      message?: { content?: string };
+    };
+    const content = payload.message?.content?.trim() ?? "";
     const parsed = parsePlanJson(content) as {
       steps?: Array<{
         title?: string;
@@ -1577,8 +1640,10 @@ export async function guardRepetitionWithLLM({
     if (!response.ok) {
       throw new Error(`Repetition guard failed (${response.status}).`);
     }
-    const payload = await response.json();
-    const content = payload?.message?.content?.trim() ?? "";
+    const payload = (await response.json()) as {
+      message?: { content?: string };
+    };
+    const content = payload.message?.content?.trim() ?? "";
     const parsed = parsePlanJson(content) as {
       steps?: Array<{
         title?: string;
@@ -1681,8 +1746,10 @@ export async function buildCheckpointBriefWithLLM({
     if (!response.ok) {
       throw new Error(`Checkpoint brief failed (${response.status}).`);
     }
-    const payload = await response.json();
-    const content = payload?.message?.content?.trim() ?? "";
+    const payload = (await response.json()) as {
+      message?: { content?: string };
+    };
+    const content = payload.message?.content?.trim() ?? "";
     const parsed = parsePlanJson(content) as {
       summary?: string;
       nextActions?: string[];
@@ -1783,8 +1850,10 @@ export async function optimizePlanWithLLM({
     if (!response.ok) {
       throw new Error(`Plan optimization failed (${response.status}).`);
     }
-    const payload = await response.json();
-    const content = payload?.message?.content?.trim() ?? "";
+    const payload = (await response.json()) as {
+      message?: { content?: string };
+    };
+    const content = payload.message?.content?.trim() ?? "";
     const parsed = parsePlanJson(content) as {
       reason?: string;
       optimizedGoals?: Array<{
@@ -1889,8 +1958,10 @@ export async function enrichPlanHierarchyWithLLM({
     if (!response.ok) {
       throw new Error(`Hierarchy enrichment failed (${response.status}).`);
     }
-    const payload = await response.json();
-    const content = payload?.message?.content?.trim() ?? "";
+    const payload = (await response.json()) as {
+      message?: { content?: string };
+    };
+    const content = payload.message?.content?.trim() ?? "";
     const parsed = parsePlanJson(content) as {
       goals?: Array<{
         title?: string;
@@ -1990,8 +2061,10 @@ export async function expandHierarchyFromStepsWithLLM({
     if (!response.ok) {
       throw new Error(`Hierarchy expansion failed (${response.status}).`);
     }
-    const payload = await response.json();
-    const content = payload?.message?.content?.trim() ?? "";
+    const payload = (await response.json()) as {
+      message?: { content?: string };
+    };
+    const content = payload.message?.content?.trim() ?? "";
     const parsed = parsePlanJson(content) as {
       goals?: Array<{
         title?: string;

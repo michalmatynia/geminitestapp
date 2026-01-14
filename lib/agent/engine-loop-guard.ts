@@ -147,8 +147,10 @@ export async function buildLoopGuardReview({
     if (!response.ok) {
       throw new Error(`Loop guard failed (${response.status}).`);
     }
-    const payload = await response.json();
-    const content = payload?.message?.content?.trim() ?? "";
+    const payload = (await response.json()) as {
+      message?: { content?: string };
+    };
+    const content = payload.message?.content?.trim() ?? "";
     const parsed = parsePlanJson(content) as {
       action?: string;
       reason?: string;

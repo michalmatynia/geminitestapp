@@ -139,9 +139,14 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
     
     // Resolve specific models from preferences
     const getPrefModel = (key: string) => {
-      if (!runRecord?.planState || typeof runRecord.planState !== "object") return null;
-      const prefs = (runRecord.planState as { preferences?: Record<string, unknown> }).preferences;
-      return typeof prefs?.[key] === "string" ? (prefs[key] as string) : null;
+      if (!runRecord?.planState || typeof runRecord.planState !== "object") {
+        return null;
+      }
+      const prefs = (
+        runRecord.planState as { preferences?: Record<string, unknown> }
+      ).preferences;
+      const value = prefs?.[key];
+      return typeof value === "string" ? value : null;
     };
 
     const memoryValidationModel = getPrefModel("memoryValidationModel");
@@ -181,11 +186,14 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
           return payload;
         }
         // Helper to normalize fields in metadata using LLM if configured
-         const normalizeField = async (key: string) => {
+        const normalizeField = async (key: string) => {
           const value = payload[key];
           if (!Array.isArray(value)) return;
-          const items = value.filter((item) => typeof item === "string") as string[];
+          const items = value.filter(
+            (item): item is string => typeof item === "string"
+          );
           if (items.length === 0) return;
+          const typedExtractionType: "product_names" | "emails" = extractionType;
           const normalized = await normalizeExtractionItemsWithLLM(
             {
                 model: resolvedModel,
@@ -194,7 +202,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
             },
             {
             prompt: prompt ?? "",
-            extractionType: extractionType as "product_names" | "emails",
+            extractionType: typedExtractionType,
             items,
             normalizationModel: outputNormalizationModel
           });
@@ -822,12 +830,18 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
                         });
                     }
                 }
-                                 if (recoveryPlan?.listingUrls?.length) {
-                                     const recoveryUrls = targetHostname
-                                        ? recoveryPlan.listingUrls.filter((url: string) =>
-                                            isAllowedUrl(url, targetHostname)
-                                        )
-                                        : recoveryPlan.listingUrls;                     for (const url of recoveryUrls.slice(0, 3)) {
+                const listingUrls = Array.isArray(recoveryPlan?.listingUrls)
+                  ? recoveryPlan.listingUrls.filter(
+                      (url): url is string => typeof url === "string"
+                    )
+                  : [];
+                if (listingUrls.length > 0) {
+                  const recoveryUrls = targetHostname
+                    ? listingUrls.filter((url) =>
+                        isAllowedUrl(url, targetHostname)
+                      )
+                    : listingUrls;
+                  for (const url of recoveryUrls.slice(0, 3)) {
                          try {
                              await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
                              await dismissConsent(page, "email-recovery-navigation", log, activeStepId);
@@ -1079,12 +1093,17 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
                 );
              }
 
-             if (extractedNames.length === 0 && recoveryPlan?.listingUrls?.length) {
+             const listingUrls = Array.isArray(recoveryPlan?.listingUrls)
+               ? recoveryPlan.listingUrls.filter(
+                   (url): url is string => typeof url === "string"
+                 )
+               : [];
+             if (extractedNames.length === 0 && listingUrls.length > 0) {
                  const recoveryUrls = targetHostname
-                    ? recoveryPlan.listingUrls.filter((url: string) =>
+                    ? listingUrls.filter((url) =>
                         isAllowedUrl(url, targetHostname)
-                        )
-                    : recoveryPlan.listingUrls;
+                      )
+                    : listingUrls;
                 for (const url of recoveryUrls.slice(0, 3)) {
                      try {
                          await page.goto(url, {

@@ -149,7 +149,7 @@ export async function POST(req: Request) {
     );
     const offset = (safePage - 1) * safePageSize;
 
-    let tableRows: {
+    const tableRows: {
       name: string;
       rows: Record<string, unknown>[];
       totalRows: number;

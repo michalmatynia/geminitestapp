@@ -10,6 +10,24 @@ type LLMContext = {
   stepLabel?: string | null;
 };
 
+const extractMessageContent = (payload: unknown) => {
+  if (!payload || typeof payload !== "object") return "";
+  const message = (payload as { message?: { content?: unknown } }).message;
+  return typeof message?.content === "string" ? message.content : "";
+};
+
+const parseJsonObject = (raw: string): unknown => {
+  if (!raw) return null;
+  const match = raw.match(/\{[\s\S]*\}/);
+  const jsonText = match ? match[0] : raw;
+  try {
+    const parsed: unknown = JSON.parse(jsonText);
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
 export const validateExtractionWithLLM = async (
   context: LLMContext,
   params: {
@@ -71,9 +89,15 @@ export const validateExtractionWithLLM = async (
       throw new Error(`Extraction validation failed (${response.status}).`);
     }
     const payload = await response.json();
-    const content = payload?.message?.content || "";
-    const match = content.match(/\{[\s\S]*\}/);
-    const parsed = match ? JSON.parse(match[0]) : JSON.parse(content);
+    const content = extractMessageContent(payload);
+    const parsed = parseJsonObject(content) as {
+      acceptedItems?: unknown;
+      rejectedItems?: unknown;
+      issues?: unknown;
+      missingCount?: unknown;
+      valid?: unknown;
+      evidence?: unknown;
+    } | null;
     const acceptedItems = Array.isArray(parsed?.acceptedItems)
       ? parsed.acceptedItems.filter((item: unknown) => typeof item === "string")
       : [];
@@ -158,21 +182,8 @@ export const normalizeExtractionItemsWithLLM = async (
       throw new Error(`Output normalization failed (${response.status}).`);
     }
     const payload = await response.json();
-    const content = payload?.message?.content?.trim() ?? "";
-    const parsed = (() => {
-      try {
-        return JSON.parse(content);
-      } catch {
-        const start = content.indexOf("{");
-        const end = content.lastIndexOf("}");
-        if (start === -1 || end <= start) return null;
-        try {
-          return JSON.parse(content.slice(start, end + 1));
-        } catch {
-          return null;
-        }
-      }
-    })();
+    const content = extractMessageContent(payload).trim();
+    const parsed = parseJsonObject(content) as { items?: unknown } | null;
     const cleaned = Array.isArray(parsed?.items)
       ? parsed.items.filter((item: unknown) => typeof item === "string")
       : [];
@@ -221,9 +232,8 @@ export const inferSelectorsFromLLM = async (
       throw new Error(`LLM selector inference failed (${response.status}).`);
     }
     const json = await response.json();
-    const content = json?.message?.content || "";
-    const match = content.match(/\{[\s\S]*\}/);
-    const parsed = match ? JSON.parse(match[0]) : JSON.parse(content);
+    const content = extractMessageContent(json);
+    const parsed = parseJsonObject(content) as { selectors?: unknown } | null;
     const selectors = Array.isArray(parsed?.selectors)
       ? parsed.selectors.filter((selector: unknown) => typeof selector === "string")
       : [];
@@ -303,9 +313,8 @@ export const buildExtractionPlan = async (
       throw new Error(`Extraction planner failed (${response.status}).`);
     }
     const json = await response.json();
-    const content = json?.message?.content || "";
-    const match = content.match(/\{[\s\S]*\}/);
-    const parsed = match ? JSON.parse(match[0]) : JSON.parse(content);
+    const content = extractMessageContent(json);
+    const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const primarySelectors = Array.isArray(parsed?.primarySelectors)
       ? parsed.primarySelectors.filter(
           (selector: unknown) => typeof selector === "string"
@@ -403,9 +412,8 @@ export const buildFailureRecoveryPlan = async (
       throw new Error(`Failure recovery planner failed (${response.status}).`);
     }
     const json = await response.json();
-    const content = json?.message?.content || "";
-    const match = content.match(/\{[\s\S]*\}/);
-    const parsed = match ? JSON.parse(match[0]) : JSON.parse(content);
+    const content = extractMessageContent(json);
+    const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const selectors = Array.isArray(parsed?.selectors)
       ? parsed.selectors.filter((selector: unknown) => typeof selector === "string")
       : [];
@@ -494,9 +502,8 @@ export const buildSearchQueryWithLLM = async (
       throw new Error(`Search query inference failed (${response.status}).`);
     }
     const payload = await response.json();
-    const content = payload?.message?.content || "";
-    const match = content.match(/\{[\s\S]*\}/);
-    const parsed = match ? JSON.parse(match[0]) : JSON.parse(content);
+    const content = extractMessageContent(payload);
+    const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const query =
       typeof parsed?.query === "string" ? parsed.query.trim() : "";
     return query || null;
@@ -543,9 +550,8 @@ export const pickSearchResultWithLLM = async (
       throw new Error(`Search result selection failed (${response.status}).`);
     }
     const payload = await response.json();
-    const content = payload?.message?.content || "";
-    const match = content.match(/\{[\s\S]*\}/);
-    const parsed = match ? JSON.parse(match[0]) : JSON.parse(content);
+    const content = extractMessageContent(payload);
+    const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const url = typeof parsed?.url === "string" ? parsed.url.trim() : "";
     return url || null;
   } catch (error) {
@@ -599,9 +605,8 @@ export const decideSearchFirstWithLLM = async (
       throw new Error(`Tool selection failed (${response.status}).`);
     }
     const payload = await response.json();
-    const content = payload?.message?.content || "";
-    const match = content.match(/\{[\s\S]*\}/);
-    const parsed = match ? JSON.parse(match[0]) : JSON.parse(content);
+    const content = extractMessageContent(payload);
+    const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const useSearchFirst = Boolean(parsed?.useSearchFirst);
     const query = typeof parsed?.query === "string" ? parsed.query.trim() : "";
     if (log) {

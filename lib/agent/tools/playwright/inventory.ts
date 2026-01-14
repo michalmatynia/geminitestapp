@@ -70,7 +70,7 @@ export const collectUiInventory = async (
         .filter(visible)
         .map((el) => ({
           ...describe(el),
-          href: (el as HTMLAnchorElement).href,
+          href: el.href,
         }));
       const headings = Array.from(
         document.querySelectorAll("h1, h2, h3, h4, h5, h6")
@@ -81,8 +81,8 @@ export const collectUiInventory = async (
         .filter(visible)
         .map((el) => ({
           ...describe(el),
-          action: (el as HTMLFormElement).action || null,
-          method: (el as HTMLFormElement).method || null,
+          action: el.action || null,
+          method: el.method || null,
         }));
 
       const truncated = {

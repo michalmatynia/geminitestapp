@@ -6,15 +6,21 @@ import { POST as POST_DELETE } from "@/app/api/databases/delete/route";
 import fs from "fs/promises";
 import { execFile } from "child_process";
 
-jest.mock("child_process", () => ({
-  ...jest.requireActual("child_process"),
-  execFile: jest.fn(),
-}));
+jest.mock("child_process", () => {
+  const actual = jest.requireActual<typeof import("child_process")>(
+    "child_process"
+  );
+  return {
+    ...actual,
+    execFile: jest.fn(),
+  };
+});
 
 describe("Databases API", () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    (execFile as jest.Mock).mockImplementation(
+    const execFileMock = execFile as jest.MockedFunction<typeof execFile>;
+    execFileMock.mockImplementation(
       (command, args, callback) => {
         callback(null, "stdout", "stderr");
       }

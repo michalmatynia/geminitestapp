@@ -1,6 +1,12 @@
 import { GET, POST } from "../../../app/api/currencies/route";
 import prisma from "@/lib/prisma";
 
+type CurrencyResponse = {
+  code: string;
+  name: string;
+  symbol: string;
+};
+
 describe("Currencies API", () => {
   beforeEach(async () => {
     await prisma.countryCurrency.deleteMany({});
@@ -14,7 +20,7 @@ describe("Currencies API", () => {
   describe("GET /api/currencies", () => {
     it("should seed default currencies on first call", async () => {
       const res = await GET();
-      const currencies = await res.json();
+      const currencies = (await res.json()) as CurrencyResponse[];
 
       expect(res.status).toEqual(200);
       expect(currencies.length).toBeGreaterThan(0);

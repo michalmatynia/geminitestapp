@@ -1754,6 +1754,9 @@ export async function runAgentControlLoop(runId: string) {
       }
 
       if (planSteps.length === 0) {
+        if (!sharedBrowser || !sharedContext) {
+          throw new Error("Browser context is not available.");
+        }
         const toolResult = await runAgentTool(
           {
             name: "playwright",
@@ -1764,8 +1767,8 @@ export async function runAgentControlLoop(runId: string) {
               runHeadless: run.runHeadless,
             },
           },
-          sharedBrowser!,
-          sharedContext!
+          sharedBrowser,
+          sharedContext
         );
         overallOk = toolResult.ok;
         lastError = toolResult.ok ? null : toolResult.error || "Tool failed.";

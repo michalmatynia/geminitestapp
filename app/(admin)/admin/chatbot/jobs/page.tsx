@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+/* eslint-disable @next/next/no-img-element */
+
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -124,7 +126,7 @@ export default function ChatbotJobsPage() {
     "idle" | "connecting" | "live" | "error"
   >("idle");
 
-  const loadJobs = async () => {
+  const loadJobs = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/chatbot/jobs");
@@ -141,13 +143,13 @@ export default function ChatbotJobsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     void loadJobs();
-  }, []);
+  }, [loadJobs]);
 
-  const loadAgentRuns = async () => {
+  const loadAgentRuns = useCallback(async () => {
     setAgentLoading(true);
     try {
       const res = await fetch("/api/chatbot/agent");
@@ -163,11 +165,11 @@ export default function ChatbotJobsPage() {
     } finally {
       setAgentLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     void loadAgentRuns();
-  }, []);
+  }, [loadAgentRuns]);
 
   useEffect(() => {
     if (!selectedAgentRunId) return;
@@ -466,9 +468,11 @@ export default function ChatbotJobsPage() {
   );
   const planUpdateAudits = useMemo(
     () =>
-      agentAudits.filter((audit) =>
-        ["plan", "plan-update"].includes(String(audit.metadata?.type ?? ""))
-      ),
+      agentAudits.filter((audit) => {
+        const auditType =
+          typeof audit.metadata?.type === "string" ? audit.metadata.type : "";
+        return ["plan", "plan-update"].includes(auditType);
+      }),
     [agentAudits]
   );
   const branchAudits = useMemo(
@@ -477,11 +481,13 @@ export default function ChatbotJobsPage() {
   );
   const replanAudits = useMemo(
     () =>
-      agentAudits.filter((audit) =>
-        ["plan-replan", "plan-adapt", "self-check-replan"].includes(
-          String(audit.metadata?.type ?? "")
-        )
-      ),
+      agentAudits.filter((audit) => {
+        const auditType =
+          typeof audit.metadata?.type === "string" ? audit.metadata.type : "";
+        return ["plan-replan", "plan-adapt", "self-check-replan"].includes(
+          auditType
+        );
+      }),
     [agentAudits]
   );
   const latestSessionContext = sessionContextLogs.at(-1)?.metadata ?? null;

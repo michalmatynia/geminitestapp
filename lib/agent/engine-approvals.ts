@@ -1,15 +1,17 @@
 import type { PlanStep } from "@/lib/agent/engine-types";
 import { DEBUG_CHATBOT, OLLAMA_BASE_URL } from "@/lib/agent/engine-config";
 
-const parseJsonObject = (content: string) => {
+const parseJsonObject = (content: string): unknown => {
   try {
-    return JSON.parse(content);
+    const parsed: unknown = JSON.parse(content);
+    return parsed;
   } catch {
     const start = content.indexOf("{");
     const end = content.lastIndexOf("}");
     if (start === -1 || end <= start) return null;
     try {
-      return JSON.parse(content.slice(start, end + 1));
+      const parsed: unknown = JSON.parse(content.slice(start, end + 1));
+      return parsed;
     } catch {
       return null;
     }
@@ -42,7 +44,7 @@ export async function evaluateApprovalGateWithLLM({
 }): Promise<{
   requiresApproval: boolean;
   reason?: string | null;
-  riskLevel?: "low" | "medium" | "high" | string;
+  riskLevel?: string | null;
 } | null> {
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
@@ -79,8 +81,10 @@ export async function evaluateApprovalGateWithLLM({
     if (!response.ok) {
       throw new Error(`Approval gate model failed (${response.status}).`);
     }
-    const payload = await response.json();
-    const content = payload?.message?.content?.trim() ?? "";
+    const payload = (await response.json()) as {
+      message?: { content?: string };
+    };
+    const content = payload.message?.content?.trim() ?? "";
     const parsed = parseJsonObject(content) as {
       requiresApproval?: boolean;
       reason?: string;

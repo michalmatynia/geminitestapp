@@ -13,7 +13,7 @@ export function parseCheckpoint(payload: unknown): AgentCheckpoint | null {
   const raw = payload as Partial<AgentCheckpoint>;
   if (!Array.isArray(raw.steps)) return null;
   return {
-    steps: raw.steps as PlanStep[],
+    steps: raw.steps,
     activeStepId: raw.activeStepId ?? null,
     lastError: raw.lastError ?? null,
     taskType: raw.taskType ?? null,
@@ -30,10 +30,10 @@ export function parseCheckpoint(payload: unknown): AgentCheckpoint | null {
     checkpointBrief:
       typeof raw.checkpointBrief === "string" ? raw.checkpointBrief : null,
     checkpointNextActions: Array.isArray(raw.checkpointNextActions)
-      ? (raw.checkpointNextActions as string[])
+      ? raw.checkpointNextActions
       : null,
     checkpointRisks: Array.isArray(raw.checkpointRisks)
-      ? (raw.checkpointRisks as string[])
+      ? raw.checkpointRisks
       : null,
     checkpointStepId:
       typeof raw.checkpointStepId === "string" ? raw.checkpointStepId : null,

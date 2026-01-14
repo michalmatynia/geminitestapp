@@ -2,6 +2,12 @@ import { GET, POST } from "../../../app/api/countries/route";
 import { PUT } from "../../../app/api/countries/[id]/route";
 import prisma from "@/lib/prisma";
 
+type CountryResponse = {
+  code: string;
+  name: string;
+  currencies: Array<{ currency: { code: string } }>;
+};
+
 describe("Countries API", () => {
   beforeEach(async () => {
     // Clear the database before each test
@@ -19,7 +25,7 @@ describe("Countries API", () => {
   describe("GET /api/countries", () => {
     it("should seed default countries, currencies, and languages on first call", async () => {
       const res = await GET();
-      const countries = await res.json();
+      const countries = (await res.json()) as CountryResponse[];
 
       expect(res.status).toEqual(200);
       expect(countries.length).toBeGreaterThan(0);
@@ -49,7 +55,7 @@ describe("Countries API", () => {
 
       // Second call
       const res = await GET();
-      const countries = await res.json();
+      const countries = (await res.json()) as CountryResponse[];
       const secondCount = await prisma.country.count();
 
       expect(res.status).toEqual(200);

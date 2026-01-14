@@ -440,7 +440,25 @@ export default function DatabasePreviewPage() {
                                         key={`${table.name}-${rowIndex}-${column}`}
                                         className="whitespace-nowrap px-3 py-2 align-top"
                                       >
-                                        {String(row[column] ?? "")}
+                                        {(() => {
+                                          const value = row[column];
+                                          if (
+                                            typeof value === "string" ||
+                                            typeof value === "number" ||
+                                            typeof value === "boolean"
+                                          ) {
+                                            return String(value);
+                                          }
+                                          if (value instanceof Date) {
+                                            return value.toISOString();
+                                          }
+                                          if (value == null) return "";
+                                          try {
+                                            return JSON.stringify(value);
+                                          } catch {
+                                            return "";
+                                          }
+                                        })()}
                                       </td>
                                     ))}
                                   </tr>

@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 type Params = { id: string };
-type Ctx = { params: Promise<Params> } | { params: Params };
+type Ctx = { params: Params | Promise<Params> };
 
 async function getParams(ctx: Ctx): Promise<Params> {
-  // Works whether Next provides params as an object or a Promise (your build expects Promise)
-  return await Promise.resolve((ctx as any).params);
+  // Works whether Next provides params as an object or a Promise.
+  return await Promise.resolve(ctx.params);
 }
 
 /**

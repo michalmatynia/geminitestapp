@@ -14,12 +14,14 @@ Enhance functionality of
 8. DOM/selector inference (cheap model good at pattern matching) V
 9. Result formatting/normalization (small model to clean outputs) V
 
-Select if I want to enable per step Planning or Replanning
 when planning or replanning of Agent Job was done by a specific model, stamp the model signature and make it visible Job details
 ETC.
 
+
+
 segment agent engine.ts and make it modular
-disassociate type models
+disassociate types models
+increase type safety
 
 I need the ability to take control and log in to the website and give back control. I need a mini website viewer
 

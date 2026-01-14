@@ -7,6 +7,24 @@ const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
 export type MemoryScope = "session" | "longterm";
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
+const extractMessageContent = (payload: unknown) => {
+  if (!payload || typeof payload !== "object") return "";
+  const message = (payload as { message?: { content?: unknown } }).message;
+  return typeof message?.content === "string" ? message.content : "";
+};
+
+const parseJsonObject = (raw: string): unknown => {
+  if (!raw) return null;
+  const match = raw.match(/\{[\s\S]*\}/);
+  const jsonText = match ? match[0] : raw;
+  try {
+    const parsed: unknown = JSON.parse(jsonText);
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
 export async function addAgentMemory(params: {
   runId?: string | null;
   scope: MemoryScope;
@@ -151,9 +169,12 @@ export async function validateAgentLongTermMemory(params: {
       throw new Error(`Memory validation failed (${response.status}).`);
     }
     const payload = await response.json();
-    const content = payload?.message?.content || "";
-    const match = content.match(/\{[\s\S]*\}/);
-    const parsed = match ? JSON.parse(match[0]) : JSON.parse(content);
+    const content = extractMessageContent(payload);
+    const parsed = parseJsonObject(content) as {
+      valid?: unknown;
+      issues?: unknown;
+      reason?: unknown;
+    } | null;
     const issues = Array.isArray(parsed?.issues)
       ? parsed.issues.filter((item: unknown) => typeof item === "string")
       : [];
@@ -219,9 +240,10 @@ export async function validateAndAddAgentLongTermMemory(params: {
       });
       if (response.ok) {
         const payload = await response.json();
-        const content = payload?.message?.content || "";
-        const match = content.match(/\{[\s\S]*\}/);
-        const parsed = match ? JSON.parse(match[0]) : JSON.parse(content);
+        const content = extractMessageContent(payload);
+        const parsed = parseJsonObject(content) as {
+          summary?: unknown;
+        } | null;
         if (typeof parsed?.summary === "string" && parsed.summary.trim()) {
           summary = parsed.summary.trim();
         }

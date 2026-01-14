@@ -66,9 +66,20 @@ const coerceStatus = (value: unknown): TestStatus => {
 const normalizeSteps = (value: unknown): TestLogEntry[] => {
   if (!Array.isArray(value)) return [];
   return value.map((raw) => {
-    const s = raw as any;
+    const s =
+      raw && typeof raw === "object"
+        ? (raw as Record<string, unknown>)
+        : {};
+    const stepValue = s?.step;
     return {
-      step: typeof s?.step === "string" ? s.step : String(s?.step ?? ""),
+      step:
+        typeof stepValue === "string"
+          ? stepValue
+          : stepValue == null
+            ? ""
+            : typeof stepValue === "number" || typeof stepValue === "boolean"
+              ? String(stepValue)
+              : JSON.stringify(stepValue),
       status: coerceStatus(s?.status),
       timestamp:
         typeof s?.timestamp === "string"
@@ -77,6 +88,27 @@ const normalizeSteps = (value: unknown): TestLogEntry[] => {
       detail: typeof s?.detail === "string" ? s.detail : undefined,
     };
   });
+};
+
+const defaultPlaywrightSettings = {
+  headless: true,
+  slowMo: 50,
+  timeout: 15000,
+  navigationTimeout: 30000,
+  humanizeMouse: false,
+  mouseJitter: 6,
+  clickDelayMin: 30,
+  clickDelayMax: 120,
+  inputDelayMin: 20,
+  inputDelayMax: 120,
+  actionDelayMin: 200,
+  actionDelayMax: 900,
+  proxyEnabled: false,
+  proxyServer: "",
+  proxyUsername: "",
+  proxyPassword: "",
+  emulateDevice: false,
+  deviceName: "Desktop Chrome",
 };
 
 export default function IntegrationsPage() {
@@ -134,27 +166,6 @@ export default function IntegrationsPage() {
   const [selectedStep, setSelectedStep] = useState<
     (TestLogEntry & { status: Exclude<TestStatus, "pending"> }) | null
   >(null);
-
-  const defaultPlaywrightSettings = {
-    headless: true,
-    slowMo: 50,
-    timeout: 15000,
-    navigationTimeout: 30000,
-    humanizeMouse: false,
-    mouseJitter: 6,
-    clickDelayMin: 30,
-    clickDelayMax: 120,
-    inputDelayMin: 20,
-    inputDelayMax: 120,
-    actionDelayMin: 200,
-    actionDelayMax: 900,
-    proxyEnabled: false,
-    proxyServer: "",
-    proxyUsername: "",
-    proxyPassword: "",
-    emulateDevice: false,
-    deviceName: "Desktop Chrome",
-  };
 
   const deviceOptions = [
     { value: "Desktop Chrome", label: "Desktop Chrome" },

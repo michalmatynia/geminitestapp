@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ChevronLeftIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -34,11 +34,6 @@ export default function NotificationSettingsPage() {
   const { toast } = useToast();
   const [position, setPosition] = useState(settings.position);
   const [accent, setAccent] = useState(settings.accent);
-
-  useEffect(() => {
-    setPosition(settings.position);
-    setAccent(settings.accent);
-  }, [settings.position, settings.accent]);
 
   const handleSave = () => {
     updateSettings({ position, accent });

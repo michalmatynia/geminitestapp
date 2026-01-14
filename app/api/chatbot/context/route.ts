@@ -33,8 +33,8 @@ export async function POST(req: Request) {
 
     let pdfParse: ((buffer: Buffer) => Promise<{ text: string }>) | null = null;
     try {
-      const module = await import("pdf-parse");
-      pdfParse = module.default;
+      const pdfModule = await import("pdf-parse");
+      pdfParse = pdfModule.default;
     } catch {
       return NextResponse.json(
         { error: "PDF parser not installed. Run `npm install pdf-parse`." },

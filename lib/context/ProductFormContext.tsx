@@ -165,7 +165,10 @@ export function ProductFormProvider({
     // Populate image slots with existing product images
     if (product?.images && product.images.length > 0) {
       setImageSlots(() => {
-        const newSlots = Array(TOTAL_IMAGE_SLOTS).fill(null);
+        const newSlots: ProductImageSlot[] = Array.from(
+          { length: TOTAL_IMAGE_SLOTS },
+          () => null
+        );
         product.images.slice(0, TOTAL_IMAGE_SLOTS).forEach((pImg, index) => {
           if (pImg.imageFile) {
             newSlots[index] = {
@@ -293,55 +296,59 @@ export function ProductFormProvider({
   }, []);
 
   const handleSlotImageChange = useCallback((file: File | null, index: number) => {
-    setImageSlots(prevSlots => {
+    setImageSlots((prevSlots) => {
       const newSlots = [...prevSlots];
       if (file) {
         // Revoke existing object URL if replacing an image
-        if (newSlots[index]?.type === 'file') {
-          URL.revokeObjectURL(newSlots[index]!.previewUrl);
+        const existingSlot = newSlots[index];
+        if (existingSlot?.type === "file") {
+          URL.revokeObjectURL(existingSlot.previewUrl);
         }
         newSlots[index] = {
-          type: 'file',
+          type: "file",
           data: file,
           previewUrl: URL.createObjectURL(file),
         };
       } else {
         // Revoke object URL if clearing the slot
-        if (newSlots[index]?.type === 'file') {
-          URL.revokeObjectURL(newSlots[index]!.previewUrl);
+        const existingSlot = newSlots[index];
+        if (existingSlot?.type === "file") {
+          URL.revokeObjectURL(existingSlot.previewUrl);
         }
         newSlots[index] = null;
       }
       return newSlots;
     });
-  }, [imageSlots]);
+  }, []);
 
   const handleSlotFileSelect = useCallback((file: { id: string; filepath: string } | null, index: number) => {
-    setImageSlots(prevSlots => {
+    setImageSlots((prevSlots) => {
       const newSlots = [...prevSlots];
       if (file) {
          // Revoke object URL if replacing a file upload with an existing file
-         if (newSlots[index]?.type === 'file') {
-          URL.revokeObjectURL(newSlots[index]!.previewUrl);
+         const existingSlot = newSlots[index];
+         if (existingSlot?.type === "file") {
+          URL.revokeObjectURL(existingSlot.previewUrl);
         }
         newSlots[index] = {
-          type: 'existing',
+          type: "existing",
           data: file as ImageFile, // Cast as ImageFile for simplicity, assuming {id, filepath} is enough
           previewUrl: file.filepath,
         };
       } else {
         // Revoke object URL if clearing the slot (unlikely for 'existing' but good practice)
-        if (newSlots[index]?.type === 'file') {
-          URL.revokeObjectURL(newSlots[index]!.previewUrl);
+        const existingSlot = newSlots[index];
+        if (existingSlot?.type === "file") {
+          URL.revokeObjectURL(existingSlot.previewUrl);
         }
         newSlots[index] = null;
       }
       return newSlots;
     });
     setShowFileManager(false); // Close file manager after selection
-  }, [imageSlots, setShowFileManager]);
+  }, [setShowFileManager]);
 
-  const handleSlotDisconnectImage = useCallback(async (index: number) => {
+  const handleSlotDisconnectImage = useCallback((index: number) => {
     setImageSlots(prevSlots => {
       const newSlots = [...prevSlots];
       const slotToClear = newSlots[index];
@@ -381,7 +388,7 @@ export function ProductFormProvider({
       newSlots[index] = null;
       return newSlots;
     });
-  }, [imageSlots, product]);
+  }, [product]);
 
   const handleMultiImageChange = useCallback((files: File[]) => {
     setImageSlots(prevSlots => {
@@ -400,7 +407,7 @@ export function ProductFormProvider({
       }
       return newSlots;
     });
-  }, [imageSlots]);
+  }, []);
 
   const handleMultiFileSelect = useCallback((files: { id: string; filepath: string }[]) => {
     setImageSlots(prevSlots => {
@@ -420,7 +427,7 @@ export function ProductFormProvider({
       return newSlots;
     });
     setShowFileManager(false); // Close file manager after selection
-  }, [imageSlots, setShowFileManager]);
+  }, []);
 
   const toggleCatalog = useCallback((catalogId: string) => {
     setSelectedCatalogIds((prev) =>
@@ -498,7 +505,10 @@ export function ProductFormProvider({
 
       const savedProduct = (await response.json()) as ProductWithImages;
       setImageSlots(() => {
-        const newSlots = Array(TOTAL_IMAGE_SLOTS).fill(null);
+        const newSlots: ProductImageSlot[] = Array.from(
+          { length: TOTAL_IMAGE_SLOTS },
+          () => null
+        );
         savedProduct.images
           .slice(0, TOTAL_IMAGE_SLOTS)
           .forEach((pImg, index) => {

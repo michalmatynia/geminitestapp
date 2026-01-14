@@ -2,11 +2,11 @@ import { POST } from "@/app/api/generate-description/route";
 import OpenAI from "openai";
 
 import prisma from "@/lib/prisma";
+const createMock = jest.fn();
 jest.mock("openai", () => {
-  const create = jest.fn();
   const mockChat = {
     completions: {
-      create,
+      create: createMock,
     },
   };
   return jest.fn().mockImplementation(() => ({
@@ -15,12 +15,10 @@ jest.mock("openai", () => {
 });
 
 describe("AI Description Generation API", () => {
-  let createMock: jest.Mock;
-
   beforeEach(async () => {
     await prisma.setting.deleteMany({});
     (OpenAI as jest.Mock).mockClear();
-    createMock = (new OpenAI()).chat.completions.create as jest.Mock;
+    createMock.mockClear();
   });
 
   afterAll(async () => {

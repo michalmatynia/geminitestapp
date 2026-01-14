@@ -165,7 +165,9 @@ export async function POST(
         run.planState && typeof run.planState === "object"
           ? (run.planState as Record<string, unknown>)
           : null;
-      const steps = Array.isArray(planState?.steps) ? planState?.steps : null;
+      const steps = Array.isArray(planState?.steps)
+        ? (planState.steps as Array<Record<string, unknown>>)
+        : null;
       if (!steps) {
         return NextResponse.json(
           { error: "No plan steps available to retry." },
@@ -241,7 +243,9 @@ export async function POST(
         run.planState && typeof run.planState === "object"
           ? (run.planState as Record<string, unknown>)
           : null;
-      const steps = Array.isArray(planState?.steps) ? planState?.steps : null;
+      const steps = Array.isArray(planState?.steps)
+        ? (planState.steps as Array<Record<string, unknown>>)
+        : null;
       if (!steps) {
         return NextResponse.json(
           { error: "No plan steps available to override." },

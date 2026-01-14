@@ -3,10 +3,10 @@ import { randomUUID } from "crypto";
 import { productService } from "@/lib/services/productService";
 
 type Params = { id: string; imageFileId: string };
-type Ctx = { params: Promise<Params> } | { params: Params };
+type Ctx = { params: Params | Promise<Params> };
 
 async function getParams(ctx: Ctx): Promise<Params> {
-  return await Promise.resolve((ctx as any).params);
+  return await Promise.resolve(ctx.params);
 }
 
 /**

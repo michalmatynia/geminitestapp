@@ -57,7 +57,8 @@ export const extractProductNames = async (page: Page) => {
     const parseJson = (value: string | null) => {
       if (!value) return null;
       try {
-        return JSON.parse(value);
+        const parsed: unknown = JSON.parse(value);
+        return parsed;
       } catch {
         return null;
       }
@@ -73,7 +74,7 @@ export const extractProductNames = async (page: Page) => {
       const record = node as Record<string, unknown>;
       const typeValue = record["@type"];
       const typeList = Array.isArray(typeValue)
-        ? typeValue
+        ? typeValue.filter((value): value is string => typeof value === "string")
         : typeof typeValue === "string"
           ? [typeValue]
           : [];
@@ -110,9 +111,10 @@ export const extractProductNames = async (page: Page) => {
 
     for (const selector of productSelectors) {
       document.querySelectorAll(selector).forEach((node) => {
-        const element = node as HTMLElement;
+        if (!(node instanceof HTMLElement)) return;
+        const element = node;
         for (const nameSelector of nameSelectors) {
-          const nameNode = element.querySelector(nameSelector) as HTMLElement | null;
+          const nameNode = element.querySelector<HTMLElement>(nameSelector);
           if (nameNode?.innerText) {
             pushName(nameNode.innerText);
             break;
@@ -121,7 +123,7 @@ export const extractProductNames = async (page: Page) => {
         if (element.getAttribute("data-product-name")) {
           pushName(element.getAttribute("data-product-name"));
         }
-        const img = element.querySelector("img[alt]") as HTMLImageElement | null;
+        const img = element.querySelector<HTMLImageElement>("img[alt]");
         if (img?.alt) {
           pushName(img.alt);
         }
@@ -131,12 +133,14 @@ export const extractProductNames = async (page: Page) => {
     document
       .querySelectorAll("a[href*='/product' i], a[href*='product' i]")
       .forEach((link) => {
-        const text = (link as HTMLElement).innerText;
+        if (!(link instanceof HTMLElement)) return;
+        const text = link.innerText;
         if (text) pushName(text);
       });
 
     document.querySelectorAll("h2, h3, h4").forEach((heading) => {
-      pushName((heading as HTMLElement).innerText);
+      if (!(heading instanceof HTMLElement)) return;
+      pushName(heading.innerText);
     });
 
     document
@@ -173,13 +177,14 @@ export const extractProductNamesFromSelectors = async (
 
     selectorsParam.forEach((selector) => {
       document.querySelectorAll(selector).forEach((node) => {
-        const element = node as HTMLElement;
+        if (!(node instanceof HTMLElement)) return;
+        const element = node;
         const text = element.innerText || element.textContent;
         if (text) pushName(text);
         if (element.getAttribute("data-product-name")) {
           pushName(element.getAttribute("data-product-name"));
         }
-        const img = element.querySelector("img[alt]") as HTMLImageElement | null;
+        const img = element.querySelector<HTMLImageElement>("img[alt]");
         if (img?.alt) {
           pushName(img.alt);
         }
@@ -195,14 +200,16 @@ export const extractEmailsFromDom = async (page: Page) => {
   return page.evaluate(() => {
     const emails = new Set<string>();
     document.querySelectorAll("a[href^='mailto:']").forEach((link) => {
-      const href = (link as HTMLAnchorElement).getAttribute("href") || "";
+      if (!(link instanceof HTMLAnchorElement)) return;
+      const href = link.getAttribute("href") || "";
       const email = href.replace(/^mailto:/i, "").split("?")[0]?.trim();
       if (email) emails.add(email);
     });
     document
       .querySelectorAll("[data-email], [data-mail], [data-contact]")
       .forEach((node) => {
-        const element = node as HTMLElement;
+        if (!(node instanceof HTMLElement)) return;
+        const element = node;
         const value =
           element.getAttribute("data-email") ||
           element.getAttribute("data-mail") ||

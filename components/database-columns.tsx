@@ -95,7 +95,6 @@ async function handleRestore(
         );
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error("Error restoring backup:", error);
       onRestore(`An error occurred during restoration.\n\n${String(error)}`);
     }
@@ -122,7 +121,6 @@ async function handleDelete(
         notify?.("Failed to delete backup.", "error");
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error("Error deleting backup:", error);
       notify?.("An error occurred during deletion.", "error");
     }

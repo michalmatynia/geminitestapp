@@ -121,7 +121,7 @@ export const parseRobotsRules = (robotsTxt: string) => {
       if (currentAgents.length === 0) continue;
       for (const agent of currentAgents) {
         const list = rules.get(agent) ?? [];
-        list.push({ type: key as "allow" | "disallow", path: value });
+        list.push({ type: key, path: value });
         rules.set(agent, list);
       }
     }

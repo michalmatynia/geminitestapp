@@ -2,6 +2,13 @@ import { GET, POST } from "../../../app/api/languages/route";
 import { DELETE, PUT } from "../../../app/api/languages/[id]/route";
 import prisma from "@/lib/prisma";
 
+type LanguageResponse = {
+  code: string;
+  name: string;
+  nativeName?: string | null;
+  countries?: Array<{ countryId: string }>;
+};
+
 describe("Languages API", () => {
   beforeEach(async () => {
     await prisma.languageCountry.deleteMany({});
@@ -16,7 +23,7 @@ describe("Languages API", () => {
   describe("GET /api/languages", () => {
     it("should seed default languages on first call", async () => {
       const res = await GET();
-      const languages = await res.json();
+      const languages = (await res.json()) as LanguageResponse[];
 
       expect(res.status).toEqual(200);
       expect(languages.length).toBeGreaterThan(0);

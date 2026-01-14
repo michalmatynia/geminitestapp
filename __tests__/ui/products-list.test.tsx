@@ -80,7 +80,7 @@ describe("Admin Products List UI", () => {
       .spyOn(global, "fetch")
       .mockResolvedValue({
         ok: true,
-        json: async () => [],
+        json: () => Promise.resolve([]),
       } as Response);
 
     render(<AdminProductsPage />);
@@ -89,7 +89,7 @@ describe("Admin Products List UI", () => {
     await user.click(screen.getByLabelText("Create product"));
 
     await screen.findByText("Create Product");
-    const skuInput = screen.getByLabelText("SKU") as HTMLInputElement;
+    const skuInput = screen.getByLabelText<HTMLInputElement>("SKU");
     await waitFor(() => {
       expect(skuInput.value).toBe("ABC123");
     });

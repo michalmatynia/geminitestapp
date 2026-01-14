@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import React, {
   useCallback,
   useEffect,
@@ -136,6 +138,9 @@ const DEFAULT_CHATBOT_SETTINGS: ChatbotSettingsPayload = {
   loopBackoffBaseMs: 2000,
   loopBackoffMaxMs: 12000,
 };
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === "object" && !Array.isArray(value);
 
 type AgentSnapshot = {
   id: string;
@@ -1101,231 +1106,265 @@ export default function ChatbotPage() {
     }
     return "Allowed or not checked";
   }, [agentRunLogs]);
-  const clampAgentSetting = (
-    value: number,
-    min: number,
-    max: number,
-    fallback: number
-  ) => {
-    if (!Number.isFinite(value)) return fallback;
-    return Math.min(Math.max(Math.round(value), min), max);
-  };
-  const readChatbotSettings = (raw: unknown): ChatbotSettingsPayload => {
-    if (!raw || typeof raw !== "object") return DEFAULT_CHATBOT_SETTINGS;
-    const settings = raw as Partial<ChatbotSettingsPayload>;
-    const browser =
-      settings.agentBrowser === "firefox" ||
-      settings.agentBrowser === "webkit" ||
-      settings.agentBrowser === "chromium"
-        ? settings.agentBrowser
-        : DEFAULT_CHATBOT_SETTINGS.agentBrowser;
-    return {
-      model:
-        typeof settings.model === "string"
-          ? settings.model
-          : DEFAULT_CHATBOT_SETTINGS.model,
-      webSearchEnabled:
-        typeof settings.webSearchEnabled === "boolean"
-          ? settings.webSearchEnabled
-          : DEFAULT_CHATBOT_SETTINGS.webSearchEnabled,
-      useGlobalContext:
-        typeof settings.useGlobalContext === "boolean"
-          ? settings.useGlobalContext
-          : DEFAULT_CHATBOT_SETTINGS.useGlobalContext,
-      useLocalContext:
-        typeof settings.useLocalContext === "boolean"
-          ? settings.useLocalContext
-          : DEFAULT_CHATBOT_SETTINGS.useLocalContext,
-      localContextMode:
-        settings.localContextMode === "append"
-          ? "append"
-          : DEFAULT_CHATBOT_SETTINGS.localContextMode,
-      searchProvider:
-        typeof settings.searchProvider === "string"
-          ? settings.searchProvider
-          : DEFAULT_CHATBOT_SETTINGS.searchProvider,
-      agentModeEnabled:
-        typeof settings.agentModeEnabled === "boolean"
-          ? settings.agentModeEnabled
-          : DEFAULT_CHATBOT_SETTINGS.agentModeEnabled,
-      agentBrowser: browser,
-      runHeadless:
-        typeof settings.runHeadless === "boolean"
-          ? settings.runHeadless
-          : DEFAULT_CHATBOT_SETTINGS.runHeadless,
-      ignoreRobotsTxt:
-        typeof settings.ignoreRobotsTxt === "boolean"
-          ? settings.ignoreRobotsTxt
-          : DEFAULT_CHATBOT_SETTINGS.ignoreRobotsTxt,
-      requireHumanApproval:
-        typeof settings.requireHumanApproval === "boolean"
-          ? settings.requireHumanApproval
-          : DEFAULT_CHATBOT_SETTINGS.requireHumanApproval,
-      memoryValidationModel:
-        typeof settings.memoryValidationModel === "string" &&
-        settings.memoryValidationModel.trim()
-          ? settings.memoryValidationModel
-          : DEFAULT_CHATBOT_SETTINGS.memoryValidationModel,
-      plannerModel:
-        typeof settings.plannerModel === "string" &&
-        settings.plannerModel.trim()
-          ? settings.plannerModel
-          : DEFAULT_CHATBOT_SETTINGS.plannerModel,
-      selfCheckModel:
-        typeof settings.selfCheckModel === "string" &&
-        settings.selfCheckModel.trim()
-          ? settings.selfCheckModel
-          : DEFAULT_CHATBOT_SETTINGS.selfCheckModel,
-      extractionValidationModel:
-        typeof settings.extractionValidationModel === "string" &&
-        settings.extractionValidationModel.trim()
-          ? settings.extractionValidationModel
-          : DEFAULT_CHATBOT_SETTINGS.extractionValidationModel,
-      loopGuardModel:
-        typeof settings.loopGuardModel === "string" &&
-        settings.loopGuardModel.trim()
-          ? settings.loopGuardModel
-          : DEFAULT_CHATBOT_SETTINGS.loopGuardModel,
-      approvalGateModel:
-        typeof settings.approvalGateModel === "string" &&
-        settings.approvalGateModel.trim()
-          ? settings.approvalGateModel
-          : DEFAULT_CHATBOT_SETTINGS.approvalGateModel,
-      memorySummarizationModel:
-        typeof settings.memorySummarizationModel === "string" &&
-        settings.memorySummarizationModel.trim()
-          ? settings.memorySummarizationModel
-          : DEFAULT_CHATBOT_SETTINGS.memorySummarizationModel,
-      selectorInferenceModel:
-        typeof settings.selectorInferenceModel === "string" &&
-        settings.selectorInferenceModel.trim()
-          ? settings.selectorInferenceModel
-          : DEFAULT_CHATBOT_SETTINGS.selectorInferenceModel,
-      outputNormalizationModel:
-        typeof settings.outputNormalizationModel === "string" &&
-        settings.outputNormalizationModel.trim()
-          ? settings.outputNormalizationModel
-          : DEFAULT_CHATBOT_SETTINGS.outputNormalizationModel,
+  const clampAgentSetting = useCallback(
+    (value: number, min: number, max: number, fallback: number) => {
+      if (!Number.isFinite(value)) return fallback;
+      return Math.min(Math.max(Math.round(value), min), max);
+    },
+    []
+  );
+  const readChatbotSettings = useCallback(
+    (raw: unknown): ChatbotSettingsPayload => {
+      if (!raw || typeof raw !== "object") return DEFAULT_CHATBOT_SETTINGS;
+      const settings = raw as Partial<ChatbotSettingsPayload>;
+      const browser =
+        settings.agentBrowser === "firefox" ||
+        settings.agentBrowser === "webkit" ||
+        settings.agentBrowser === "chromium"
+          ? settings.agentBrowser
+          : DEFAULT_CHATBOT_SETTINGS.agentBrowser;
+      return {
+        model:
+          typeof settings.model === "string"
+            ? settings.model
+            : DEFAULT_CHATBOT_SETTINGS.model,
+        webSearchEnabled:
+          typeof settings.webSearchEnabled === "boolean"
+            ? settings.webSearchEnabled
+            : DEFAULT_CHATBOT_SETTINGS.webSearchEnabled,
+        useGlobalContext:
+          typeof settings.useGlobalContext === "boolean"
+            ? settings.useGlobalContext
+            : DEFAULT_CHATBOT_SETTINGS.useGlobalContext,
+        useLocalContext:
+          typeof settings.useLocalContext === "boolean"
+            ? settings.useLocalContext
+            : DEFAULT_CHATBOT_SETTINGS.useLocalContext,
+        localContextMode:
+          settings.localContextMode === "append"
+            ? "append"
+            : DEFAULT_CHATBOT_SETTINGS.localContextMode,
+        searchProvider:
+          typeof settings.searchProvider === "string"
+            ? settings.searchProvider
+            : DEFAULT_CHATBOT_SETTINGS.searchProvider,
+        agentModeEnabled:
+          typeof settings.agentModeEnabled === "boolean"
+            ? settings.agentModeEnabled
+            : DEFAULT_CHATBOT_SETTINGS.agentModeEnabled,
+        agentBrowser: browser,
+        runHeadless:
+          typeof settings.runHeadless === "boolean"
+            ? settings.runHeadless
+            : DEFAULT_CHATBOT_SETTINGS.runHeadless,
+        ignoreRobotsTxt:
+          typeof settings.ignoreRobotsTxt === "boolean"
+            ? settings.ignoreRobotsTxt
+            : DEFAULT_CHATBOT_SETTINGS.ignoreRobotsTxt,
+        requireHumanApproval:
+          typeof settings.requireHumanApproval === "boolean"
+            ? settings.requireHumanApproval
+            : DEFAULT_CHATBOT_SETTINGS.requireHumanApproval,
+        memoryValidationModel:
+          typeof settings.memoryValidationModel === "string" &&
+          settings.memoryValidationModel.trim()
+            ? settings.memoryValidationModel
+            : DEFAULT_CHATBOT_SETTINGS.memoryValidationModel,
+        plannerModel:
+          typeof settings.plannerModel === "string" &&
+          settings.plannerModel.trim()
+            ? settings.plannerModel
+            : DEFAULT_CHATBOT_SETTINGS.plannerModel,
+        selfCheckModel:
+          typeof settings.selfCheckModel === "string" &&
+          settings.selfCheckModel.trim()
+            ? settings.selfCheckModel
+            : DEFAULT_CHATBOT_SETTINGS.selfCheckModel,
+        extractionValidationModel:
+          typeof settings.extractionValidationModel === "string" &&
+          settings.extractionValidationModel.trim()
+            ? settings.extractionValidationModel
+            : DEFAULT_CHATBOT_SETTINGS.extractionValidationModel,
+        loopGuardModel:
+          typeof settings.loopGuardModel === "string" &&
+          settings.loopGuardModel.trim()
+            ? settings.loopGuardModel
+            : DEFAULT_CHATBOT_SETTINGS.loopGuardModel,
+        approvalGateModel:
+          typeof settings.approvalGateModel === "string" &&
+          settings.approvalGateModel.trim()
+            ? settings.approvalGateModel
+            : DEFAULT_CHATBOT_SETTINGS.approvalGateModel,
+        memorySummarizationModel:
+          typeof settings.memorySummarizationModel === "string" &&
+          settings.memorySummarizationModel.trim()
+            ? settings.memorySummarizationModel
+            : DEFAULT_CHATBOT_SETTINGS.memorySummarizationModel,
+        selectorInferenceModel:
+          typeof settings.selectorInferenceModel === "string" &&
+          settings.selectorInferenceModel.trim()
+            ? settings.selectorInferenceModel
+            : DEFAULT_CHATBOT_SETTINGS.selectorInferenceModel,
+        outputNormalizationModel:
+          typeof settings.outputNormalizationModel === "string" &&
+          settings.outputNormalizationModel.trim()
+            ? settings.outputNormalizationModel
+            : DEFAULT_CHATBOT_SETTINGS.outputNormalizationModel,
+        maxSteps: clampAgentSetting(
+          Number(settings.maxSteps),
+          1,
+          20,
+          DEFAULT_CHATBOT_SETTINGS.maxSteps
+        ),
+        maxStepAttempts: clampAgentSetting(
+          Number(settings.maxStepAttempts),
+          1,
+          5,
+          DEFAULT_CHATBOT_SETTINGS.maxStepAttempts
+        ),
+        maxReplanCalls: clampAgentSetting(
+          Number(settings.maxReplanCalls),
+          0,
+          6,
+          DEFAULT_CHATBOT_SETTINGS.maxReplanCalls
+        ),
+        replanEverySteps: clampAgentSetting(
+          Number(settings.replanEverySteps),
+          1,
+          10,
+          DEFAULT_CHATBOT_SETTINGS.replanEverySteps
+        ),
+        maxSelfChecks: clampAgentSetting(
+          Number(settings.maxSelfChecks),
+          0,
+          8,
+          DEFAULT_CHATBOT_SETTINGS.maxSelfChecks
+        ),
+        loopGuardThreshold: clampAgentSetting(
+          Number(settings.loopGuardThreshold),
+          1,
+          5,
+          DEFAULT_CHATBOT_SETTINGS.loopGuardThreshold
+        ),
+        loopBackoffBaseMs: clampAgentSetting(
+          Number(settings.loopBackoffBaseMs),
+          250,
+          20000,
+          DEFAULT_CHATBOT_SETTINGS.loopBackoffBaseMs
+        ),
+        loopBackoffMaxMs: clampAgentSetting(
+          Number(settings.loopBackoffMaxMs),
+          1000,
+          60000,
+          DEFAULT_CHATBOT_SETTINGS.loopBackoffMaxMs
+        ),
+      };
+    },
+    [clampAgentSetting]
+  );
+  const buildChatbotSettingsPayload = useCallback(
+    (): ChatbotSettingsPayload => ({
+      model,
+      webSearchEnabled,
+      useGlobalContext,
+      useLocalContext,
+      localContextMode,
+      searchProvider,
+      agentModeEnabled,
+      agentBrowser,
+      runHeadless: agentRunHeadless,
+      ignoreRobotsTxt: agentIgnoreRobotsTxt,
+      requireHumanApproval: agentRequireHumanApproval,
+      memoryValidationModel: agentMemoryValidationModel,
+      plannerModel: agentPlannerModel,
+      selfCheckModel: agentSelfCheckModel,
+      extractionValidationModel: agentExtractionValidationModel,
+      loopGuardModel: agentLoopGuardModel,
+      approvalGateModel: agentApprovalGateModel,
+      memorySummarizationModel: agentMemorySummarizationModel,
+      selectorInferenceModel: agentSelectorInferenceModel,
+      outputNormalizationModel: agentOutputNormalizationModel,
       maxSteps: clampAgentSetting(
-        Number(settings.maxSteps),
+        agentMaxSteps,
         1,
         20,
         DEFAULT_CHATBOT_SETTINGS.maxSteps
       ),
       maxStepAttempts: clampAgentSetting(
-        Number(settings.maxStepAttempts),
+        agentMaxStepAttempts,
         1,
         5,
         DEFAULT_CHATBOT_SETTINGS.maxStepAttempts
       ),
       maxReplanCalls: clampAgentSetting(
-        Number(settings.maxReplanCalls),
+        agentMaxReplanCalls,
         0,
         6,
         DEFAULT_CHATBOT_SETTINGS.maxReplanCalls
       ),
       replanEverySteps: clampAgentSetting(
-        Number(settings.replanEverySteps),
+        agentReplanEverySteps,
         1,
         10,
         DEFAULT_CHATBOT_SETTINGS.replanEverySteps
       ),
       maxSelfChecks: clampAgentSetting(
-        Number(settings.maxSelfChecks),
+        agentMaxSelfChecks,
         0,
         8,
         DEFAULT_CHATBOT_SETTINGS.maxSelfChecks
       ),
       loopGuardThreshold: clampAgentSetting(
-        Number(settings.loopGuardThreshold),
+        agentLoopGuardThreshold,
         1,
         5,
         DEFAULT_CHATBOT_SETTINGS.loopGuardThreshold
       ),
       loopBackoffBaseMs: clampAgentSetting(
-        Number(settings.loopBackoffBaseMs),
+        agentLoopBackoffBaseMs,
         250,
         20000,
         DEFAULT_CHATBOT_SETTINGS.loopBackoffBaseMs
       ),
       loopBackoffMaxMs: clampAgentSetting(
-        Number(settings.loopBackoffMaxMs),
+        agentLoopBackoffMaxMs,
         1000,
         60000,
         DEFAULT_CHATBOT_SETTINGS.loopBackoffMaxMs
       ),
-    };
-  };
-  const buildChatbotSettingsPayload = (): ChatbotSettingsPayload => ({
-    model,
-    webSearchEnabled,
-    useGlobalContext,
-    useLocalContext,
-    localContextMode,
-    searchProvider,
-    agentModeEnabled,
-    agentBrowser,
-    runHeadless: agentRunHeadless,
-    ignoreRobotsTxt: agentIgnoreRobotsTxt,
-    requireHumanApproval: agentRequireHumanApproval,
-    memoryValidationModel: agentMemoryValidationModel,
-    plannerModel: agentPlannerModel,
-    selfCheckModel: agentSelfCheckModel,
-    extractionValidationModel: agentExtractionValidationModel,
-    loopGuardModel: agentLoopGuardModel,
-    approvalGateModel: agentApprovalGateModel,
-    memorySummarizationModel: agentMemorySummarizationModel,
-    selectorInferenceModel: agentSelectorInferenceModel,
-    outputNormalizationModel: agentOutputNormalizationModel,
-    maxSteps: clampAgentSetting(
-      agentMaxSteps,
-      1,
-      20,
-      DEFAULT_CHATBOT_SETTINGS.maxSteps
-    ),
-    maxStepAttempts: clampAgentSetting(
-      agentMaxStepAttempts,
-      1,
-      5,
-      DEFAULT_CHATBOT_SETTINGS.maxStepAttempts
-    ),
-    maxReplanCalls: clampAgentSetting(
-      agentMaxReplanCalls,
-      0,
-      6,
-      DEFAULT_CHATBOT_SETTINGS.maxReplanCalls
-    ),
-    replanEverySteps: clampAgentSetting(
-      agentReplanEverySteps,
-      1,
-      10,
-      DEFAULT_CHATBOT_SETTINGS.replanEverySteps
-    ),
-    maxSelfChecks: clampAgentSetting(
-      agentMaxSelfChecks,
-      0,
-      8,
-      DEFAULT_CHATBOT_SETTINGS.maxSelfChecks
-    ),
-    loopGuardThreshold: clampAgentSetting(
-      agentLoopGuardThreshold,
-      1,
-      5,
-      DEFAULT_CHATBOT_SETTINGS.loopGuardThreshold
-    ),
-    loopBackoffBaseMs: clampAgentSetting(
+    }),
+    [
+      agentApprovalGateModel,
+      agentBrowser,
+      agentExtractionValidationModel,
+      agentIgnoreRobotsTxt,
       agentLoopBackoffBaseMs,
-      250,
-      20000,
-      DEFAULT_CHATBOT_SETTINGS.loopBackoffBaseMs
-    ),
-    loopBackoffMaxMs: clampAgentSetting(
       agentLoopBackoffMaxMs,
-      1000,
-      60000,
-      DEFAULT_CHATBOT_SETTINGS.loopBackoffMaxMs
-    ),
-  });
+      agentLoopGuardModel,
+      agentLoopGuardThreshold,
+      agentMaxReplanCalls,
+      agentMaxSelfChecks,
+      agentMaxStepAttempts,
+      agentMaxSteps,
+      agentMemorySummarizationModel,
+      agentMemoryValidationModel,
+      agentModeEnabled,
+      agentOutputNormalizationModel,
+      agentPlannerModel,
+      agentReplanEverySteps,
+      agentRequireHumanApproval,
+      agentRunHeadless,
+      agentSelectorInferenceModel,
+      agentSelfCheckModel,
+      clampAgentSetting,
+      localContextMode,
+      model,
+      searchProvider,
+      useGlobalContext,
+      useLocalContext,
+      webSearchEnabled,
+    ]
+  );
 
   const fetchMessagesForSession = useCallback(
     async (activeSessionId: string) => {
@@ -1350,41 +1389,26 @@ export default function ChatbotPage() {
     []
   );
 
-  const updateModelSelections = (models: string[]) => {
+  const updateModelSelections = useCallback((models: string[]) => {
     setModelOptions(models);
     if (models.length === 0) return;
     const fallback = models[0];
-    if (!models.includes(model)) {
-      setModel(fallback);
-    }
-    if (!models.includes(agentMemoryValidationModel)) {
-      setAgentMemoryValidationModel(fallback);
-    }
-    if (!models.includes(agentPlannerModel)) {
-      setAgentPlannerModel(fallback);
-    }
-    if (!models.includes(agentSelfCheckModel)) {
-      setAgentSelfCheckModel(fallback);
-    }
-    if (!models.includes(agentExtractionValidationModel)) {
-      setAgentExtractionValidationModel(fallback);
-    }
-    if (!models.includes(agentLoopGuardModel)) {
-      setAgentLoopGuardModel(fallback);
-    }
-    if (!models.includes(agentApprovalGateModel)) {
-      setAgentApprovalGateModel(fallback);
-    }
-    if (!models.includes(agentMemorySummarizationModel)) {
-      setAgentMemorySummarizationModel(fallback);
-    }
-    if (!models.includes(agentSelectorInferenceModel)) {
-      setAgentSelectorInferenceModel(fallback);
-    }
-    if (!models.includes(agentOutputNormalizationModel)) {
-      setAgentOutputNormalizationModel(fallback);
-    }
-  };
+    const ensureModel = (
+      setter: React.Dispatch<React.SetStateAction<string>>
+    ) => {
+      setter((current) => (models.includes(current) ? current : fallback));
+    };
+    ensureModel(setModel);
+    ensureModel(setAgentMemoryValidationModel);
+    ensureModel(setAgentPlannerModel);
+    ensureModel(setAgentSelfCheckModel);
+    ensureModel(setAgentExtractionValidationModel);
+    ensureModel(setAgentLoopGuardModel);
+    ensureModel(setAgentApprovalGateModel);
+    ensureModel(setAgentMemorySummarizationModel);
+    ensureModel(setAgentSelectorInferenceModel);
+    ensureModel(setAgentOutputNormalizationModel);
+  }, []);
 
   const autoSelectModels = async () => {
     if (settingsSaving) return;
@@ -1512,7 +1536,7 @@ export default function ChatbotPage() {
     return () => {
       isMounted = false;
     };
-  }, [model, toast]);
+  }, [model, toast, updateModelSelections]);
 
   useEffect(() => {
     let isMounted = true;
@@ -1611,43 +1635,14 @@ export default function ChatbotPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [readChatbotSettings]);
 
   useEffect(() => {
     if (!chatbotSettingsLoadedRef.current) return;
     const payload = buildChatbotSettingsPayload();
     const serialized = JSON.stringify(payload);
     setSettingsDirty(serialized !== lastSavedSettingsRef.current);
-  }, [
-    model,
-    webSearchEnabled,
-    useGlobalContext,
-    useLocalContext,
-    localContextMode,
-    searchProvider,
-    agentModeEnabled,
-    agentBrowser,
-    agentRunHeadless,
-    agentIgnoreRobotsTxt,
-    agentRequireHumanApproval,
-    agentMemoryValidationModel,
-    agentPlannerModel,
-    agentSelfCheckModel,
-    agentExtractionValidationModel,
-    agentLoopGuardModel,
-    agentApprovalGateModel,
-    agentMemorySummarizationModel,
-    agentSelectorInferenceModel,
-    agentOutputNormalizationModel,
-    agentMaxSteps,
-    agentMaxStepAttempts,
-    agentMaxReplanCalls,
-    agentReplanEverySteps,
-    agentMaxSelfChecks,
-    agentLoopGuardThreshold,
-    agentLoopBackoffBaseMs,
-    agentLoopBackoffMaxMs,
-  ]);
+  }, [buildChatbotSettingsPayload]);
 
   const persistChatbotSettings = async (
     payload: ChatbotSettingsPayload,
@@ -2208,7 +2203,7 @@ export default function ChatbotPage() {
       isMounted = false;
       clearInterval(timer);
     };
-  }, [latestAgentRunId, sessionId, toast]);
+  }, [latestAgentRunId, latestAgentRunStatus, sessionId, toast]);
 
   useEffect(() => {
     if (!latestAgentRunId || !latestAgentRunStatus) return;
@@ -3675,10 +3670,7 @@ export default function ChatbotPage() {
                                           {audit.metadata
                                             ? (() => {
                                                 const meta =
-                                                  audit.metadata as Record<
-                                                    string,
-                                                    unknown
-                                                  >;
+                                                  audit.metadata ?? {};
                                                 const questions = getAuditList(
                                                   meta.questions
                                                 );
@@ -4805,39 +4797,49 @@ export default function ChatbotPage() {
                                         {section}
                                       </p>
                                       <div className="mt-1 max-h-32 space-y-1 overflow-y-auto text-[10px] text-gray-400">
-                                        {(
-                                          (
-                                            latestUiInventory as Record<
-                                              string,
-                                              unknown
-                                            >
-                                          )[section] as
-                                            | Array<{
-                                                selector?: string | null;
-                                                text?: string | null;
-                                                name?: string | null;
-                                                id?: string | null;
-                                                type?: string | null;
-                                              }>
-                                            | undefined
-                                        )?.map((item, index) => (
-                                          <div key={`${section}-${index}`}>
-                                            <span className="text-slate-100">
-                                              {item.text ||
-                                                item.name ||
-                                                item.id ||
-                                                item.type ||
-                                                "item"}
-                                            </span>
-                                            {item.selector ? (
-                                              <span className="ml-2 text-gray-500">
-                                                {item.selector}
-                                              </span>
-                                            ) : null}
-                                          </div>
-                                        )) ?? (
-                                          <span>No {section} captured.</span>
-                                        )}
+                                        {(() => {
+                                          const sectionItems = isRecord(
+                                            latestUiInventory
+                                          )
+                                            ? latestUiInventory[section]
+                                            : null;
+                                          const items = Array.isArray(sectionItems)
+                                            ? sectionItems
+                                            : [];
+                                          if (items.length === 0) {
+                                            return (
+                                              <span>No {section} captured.</span>
+                                            );
+                                          }
+                                          return items.map((item, index) => {
+                                            if (!item || typeof item !== "object") {
+                                              return null;
+                                            }
+                                            const entry = item as {
+                                              selector?: string | null;
+                                              text?: string | null;
+                                              name?: string | null;
+                                              id?: string | null;
+                                              type?: string | null;
+                                            };
+                                            return (
+                                              <div key={`${section}-${index}`}>
+                                                <span className="text-slate-100">
+                                                  {entry.text ||
+                                                    entry.name ||
+                                                    entry.id ||
+                                                    entry.type ||
+                                                    "item"}
+                                                </span>
+                                                {entry.selector ? (
+                                                  <span className="ml-2 text-gray-500">
+                                                    {entry.selector}
+                                                  </span>
+                                                ) : null}
+                                              </div>
+                                            );
+                                          });
+                                        })()}
                                       </div>
                                     </div>
                                   ))}

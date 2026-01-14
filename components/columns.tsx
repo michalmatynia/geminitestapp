@@ -46,10 +46,8 @@ const handleDelete = async (
   }
 
   try {
-    // eslint-disable-next-line no-console
     console.error("Failed to delete product:", await res.json());
   } catch {
-    // eslint-disable-next-line no-console
     console.error("Failed to delete product.");
   }
 

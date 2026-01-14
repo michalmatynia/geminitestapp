@@ -43,7 +43,7 @@ export default function EditPagePage() {
   }
 
   return (
-    <CmsLayout page={page} setPage={setPage}>
+    <CmsLayout>
       {/* Page preview will go here */}
       <div className="flex justify-end">
         <Button onClick={handleSave}>Save</Button>

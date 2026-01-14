@@ -8,6 +8,7 @@ interface Slug {
   id: string;
   slug: string;
   createdAt: string;
+  isDefault: boolean;
 }
 
 export default function SlugsPage() {
@@ -45,11 +46,21 @@ export default function SlugsPage() {
       <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
         <ul>
           {slugs.map((slug) => (
-            <li key={slug.id} className="flex justify-between items-center py-2 border-b border-gray-700">
+            <li
+              key={slug.id}
+              className="flex justify-between items-center py-2 border-b border-gray-700"
+            >
               <Link href={`/admin/cms/slugs/${slug.id}/edit`}>
-                <span className="hover:underline">/{slug.slug} {slug.isDefault && '(Default)'}</span>
+                <span className="hover:underline">
+                  /{slug.slug} {slug.isDefault && "(Default)"}
+                </span>
               </Link>
-              <Button variant="destructive" onClick={() => handleDelete(slug.id)}>Delete</Button>
+              <Button
+                variant="destructive"
+                onClick={() => handleDelete(slug.id)}
+              >
+                Delete
+              </Button>
             </li>
           ))}
         </ul>

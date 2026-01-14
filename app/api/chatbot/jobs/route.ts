@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
 import { startChatbotJobQueue } from "@/lib/chatbot/jobs/queue";
+import { ChatbotJobStatus } from "@prisma/client";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -18,17 +19,23 @@ export async function GET() {
         { status: 500 }
       );
     }
+
     const jobs = await prisma.chatbotJob.findMany({
       orderBy: { createdAt: "desc" },
       take: 50,
     });
+
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][jobs][GET] Listed", { count: jobs.length });
     }
+
     return NextResponse.json({ jobs });
   } catch (error) {
     const errorId = randomUUID();
-    console.error("[chatbot][jobs][GET] Failed to list jobs", { errorId, error });
+    console.error("[chatbot][jobs][GET] Failed to list jobs", {
+      errorId,
+      error,
+    });
     return NextResponse.json(
       { error: "Failed to list jobs.", errorId },
       { status: 500 }
@@ -44,6 +51,7 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
+
     const body = (await req.json()) as {
       sessionId?: string;
       model?: string;
@@ -57,7 +65,12 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    if (!body.model || !Array.isArray(body.messages) || body.messages.length === 0) {
+
+    if (
+      !body.model ||
+      !Array.isArray(body.messages) ||
+      body.messages.length === 0
+    ) {
       return NextResponse.json(
         { error: "Model and messages are required." },
         { status: 400 }
@@ -68,8 +81,12 @@ export async function POST(req: Request) {
       where: { id: body.sessionId },
       select: { id: true },
     });
+
     if (!session) {
-      return NextResponse.json({ error: "Session not found." }, { status: 404 });
+      return NextResponse.json(
+        { error: "Session not found." },
+        { status: 404 }
+      );
     }
 
     const trimmedUserMessage = body.userMessage?.trim();
@@ -79,7 +96,12 @@ export async function POST(req: Request) {
         orderBy: { createdAt: "desc" },
         select: { role: true, content: true },
       });
-      if (!latest || latest.role !== "user" || latest.content !== trimmedUserMessage) {
+
+      if (
+        !latest ||
+        latest.role !== "user" ||
+        latest.content !== trimmedUserMessage
+      ) {
         await prisma.chatbotMessage.create({
           data: {
             sessionId: body.sessionId,
@@ -87,6 +109,7 @@ export async function POST(req: Request) {
             content: trimmedUserMessage,
           },
         });
+
         await prisma.chatbotSession.update({
           where: { id: body.sessionId },
           data: { updatedAt: new Date() },
@@ -136,21 +159,32 @@ export async function DELETE(req: Request) {
         { status: 500 }
       );
     }
+
     const url = new URL(req.url);
     const scope = url.searchParams.get("scope") ?? "terminal";
-    const terminalStatuses = ["completed", "failed", "canceled"] as const;
+
+    // IMPORTANT: Use Prisma enum values (typed, mutable array) — no "as const"
+    const terminalStatuses: ChatbotJobStatus[] = [
+      ChatbotJobStatus.completed,
+      ChatbotJobStatus.failed,
+      ChatbotJobStatus.canceled,
+    ];
+
     if (scope !== "terminal") {
       return NextResponse.json(
         { error: "Unsupported delete scope." },
         { status: 400 }
       );
     }
+
     const result = await prisma.chatbotJob.deleteMany({
       where: { status: { in: terminalStatuses } },
     });
+
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][jobs][DELETE] Deleted", { count: result.count });
     }
+
     return NextResponse.json({ deleted: result.count });
   } catch (error) {
     const errorId = randomUUID();

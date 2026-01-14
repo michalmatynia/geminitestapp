@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
+
+export const runtime = "nodejs";
 
 const countrySchema = z.object({
   code: z.enum(["PL", "DE", "GB", "US", "SE"]),
@@ -9,21 +12,30 @@ const countrySchema = z.object({
   currencyIds: z.array(z.string()).optional(),
 });
 
-const defaultCountries = [
+// Derive the *exact* Prisma types for enum-backed code fields
+type CountryCode = Prisma.CountryCreateManyInput["code"];
+type LanguageCode = Prisma.LanguageCreateManyInput["code"];
+type CurrencyCode = Prisma.CurrencyCreateManyInput["code"];
+
+const defaultCountries: Array<{ code: CountryCode; name: string }> = [
   { code: "PL", name: "Poland" },
   { code: "DE", name: "Germany" },
   { code: "GB", name: "United Kingdom" },
   { code: "SE", name: "Sweden" },
 ];
 
-const defaultLanguages = [
+const defaultLanguages: Array<{
+  code: LanguageCode;
+  name: string;
+  nativeName: string;
+}> = [
   { code: "EN", name: "English", nativeName: "English" },
   { code: "PL", name: "Polish", nativeName: "Polski" },
   { code: "DE", name: "German", nativeName: "Deutsch" },
   { code: "SV", name: "Swedish", nativeName: "Svenska" },
 ];
 
-const defaultCurrencies = [
+const defaultCurrencies: Array<{ code: CurrencyCode; name: string }> = [
   { code: "USD", name: "US Dollar" },
   { code: "EUR", name: "Euro" },
   { code: "PLN", name: "Polish Zloty" },
@@ -31,7 +43,11 @@ const defaultCurrencies = [
   { code: "SEK", name: "Swedish Krona" },
 ];
 
-const countryMappings = [
+const countryMappings: Array<{
+  countryCode: CountryCode;
+  currencyCode: CurrencyCode;
+  languageCodes: LanguageCode[];
+}> = [
   { countryCode: "PL", currencyCode: "PLN", languageCodes: ["PL"] },
   { countryCode: "DE", currencyCode: "EUR", languageCodes: ["DE"] },
   { countryCode: "GB", currencyCode: "GBP", languageCodes: ["EN"] },
@@ -40,7 +56,7 @@ const countryMappings = [
 
 /**
  * GET /api/countries
- * Fetches all countries.
+ * Fetches all countries (and ensures defaults exist).
  */
 export async function GET() {
   try {
@@ -49,10 +65,12 @@ export async function GET() {
         data: defaultCurrencies,
         skipDuplicates: true,
       });
+
       await tx.language.createMany({
         data: defaultLanguages,
         skipDuplicates: true,
       });
+
       await tx.country.createMany({
         data: defaultCountries,
         skipDuplicates: true,
@@ -64,22 +82,31 @@ export async function GET() {
         tx.language.findMany({ select: { id: true, code: true } }),
       ]);
 
-      const countryByCode = new Map(
+      const countryByCode = new Map<CountryCode, string>(
         countries.map((country) => [country.code, country.id])
       );
-      const currencyByCode = new Map(
+
+      const currencyByCode = new Map<CurrencyCode, string>(
         currencies.map((currency) => [currency.code, currency.id])
       );
-      const languageByCode = new Map(
+
+      const languageByCode = new Map<LanguageCode, string>(
         languages.map((language) => [language.code, language.id])
       );
 
-      const countryCurrencyRows = [];
-      const languageCountryRows = [];
+      const countryCurrencyRows: Array<{
+        countryId: string;
+        currencyId: string;
+      }> = [];
+      const languageCountryRows: Array<{
+        countryId: string;
+        languageId: string;
+      }> = [];
 
       for (const mapping of countryMappings) {
         const countryId = countryByCode.get(mapping.countryCode);
         const currencyId = currencyByCode.get(mapping.currencyCode);
+
         if (countryId && currencyId) {
           countryCurrencyRows.push({ countryId, currencyId });
         }
@@ -111,12 +138,11 @@ export async function GET() {
       orderBy: { name: "asc" },
       include: {
         currencies: {
-          include: {
-            currency: true,
-          },
+          include: { currency: true },
         },
       },
     });
+
     return NextResponse.json(countries);
   } catch (error) {
     const errorId = randomUUID();
@@ -139,10 +165,13 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const data = countrySchema.parse(body);
+
     const { currencyIds, ...countryData } = data;
+
     const country = await prisma.country.create({
       data: {
-        ...countryData,
+        // countryData.code is a zod enum union; Prisma code is an enum too (compatible)
+        ...(countryData as unknown as { code: CountryCode; name: string }),
         currencies: currencyIds?.length
           ? {
               createMany: {
@@ -153,15 +182,15 @@ export async function POST(req: Request) {
       },
       include: {
         currencies: {
-          include: {
-            currency: true,
-          },
+          include: { currency: true },
         },
       },
     });
+
     return NextResponse.json(country);
   } catch (error: unknown) {
     const errorId = randomUUID();
+
     if (error instanceof z.ZodError) {
       console.warn("[countries][POST] Invalid payload", {
         errorId,
@@ -172,13 +201,18 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+
     if (error instanceof Error) {
       console.error("[countries][POST] Failed to create country", {
         errorId,
         message: error.message,
       });
-      return NextResponse.json({ error: error.message, errorId }, { status: 400 });
+      return NextResponse.json(
+        { error: error.message, errorId },
+        { status: 400 }
+      );
     }
+
     console.error("[countries][POST] Unknown error", { errorId, error });
     return NextResponse.json(
       { error: "An unknown error occurred", errorId },

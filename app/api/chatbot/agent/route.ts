@@ -5,6 +5,7 @@ import { startAgentQueue } from "@/lib/agent/queue";
 import { logAgentAudit } from "@/lib/agent/audit";
 import { promises as fs } from "fs";
 import path from "path";
+import { AgentRunStatus } from "@prisma/client";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -52,7 +53,10 @@ export async function GET() {
     return NextResponse.json({ runs });
   } catch (error) {
     const errorId = randomUUID();
-    console.error("[chatbot][agent][GET] Failed to fetch runs", { errorId, error });
+    console.error("[chatbot][agent][GET] Failed to fetch runs", {
+      errorId,
+      error,
+    });
     return NextResponse.json(
       { error: "Failed to fetch agent runs.", errorId },
       { status: 500 }
@@ -104,20 +108,23 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    const normalizePlanSettings = (
-      input?: {
-        maxSteps?: number;
-        maxStepAttempts?: number;
-        maxReplanCalls?: number;
-        replanEverySteps?: number;
-        maxSelfChecks?: number;
-        loopGuardThreshold?: number;
-        loopBackoffBaseMs?: number;
-        loopBackoffMaxMs?: number;
-      }
-    ) => {
+    const normalizePlanSettings = (input?: {
+      maxSteps?: number;
+      maxStepAttempts?: number;
+      maxReplanCalls?: number;
+      replanEverySteps?: number;
+      maxSelfChecks?: number;
+      loopGuardThreshold?: number;
+      loopBackoffBaseMs?: number;
+      loopBackoffMaxMs?: number;
+    }) => {
       if (!input) return null;
-      const clampInt = (value: unknown, min: number, max: number, fallback: number) => {
+      const clampInt = (
+        value: unknown,
+        min: number,
+        max: number,
+        fallback: number
+      ) => {
         const numeric =
           typeof value === "number"
             ? value
@@ -154,7 +161,8 @@ export async function POST(req: Request) {
         memoryValidationModel: body.memoryValidationModel?.trim() || null,
         plannerModel: body.plannerModel?.trim() || null,
         selfCheckModel: body.selfCheckModel?.trim() || null,
-        extractionValidationModel: body.extractionValidationModel?.trim() || null,
+        extractionValidationModel:
+          body.extractionValidationModel?.trim() || null,
         loopGuardModel: body.loopGuardModel?.trim() || null,
         memorySummarizationModel: body.memorySummarizationModel?.trim() || null,
         selectorInferenceModel: body.selectorInferenceModel?.trim() || null,
@@ -182,7 +190,10 @@ export async function POST(req: Request) {
                   ignoreRobotsTxt: Boolean(body.ignoreRobotsTxt),
                   requireHumanApproval: Boolean(body.requireHumanApproval),
                   ...(body.memoryValidationModel?.trim()
-                    ? { memoryValidationModel: body.memoryValidationModel.trim() }
+                    ? {
+                        memoryValidationModel:
+                          body.memoryValidationModel.trim(),
+                      }
                     : {}),
                   ...(body.plannerModel?.trim()
                     ? { plannerModel: body.plannerModel.trim() }
@@ -191,19 +202,31 @@ export async function POST(req: Request) {
                     ? { selfCheckModel: body.selfCheckModel.trim() }
                     : {}),
                   ...(body.extractionValidationModel?.trim()
-                    ? { extractionValidationModel: body.extractionValidationModel.trim() }
+                    ? {
+                        extractionValidationModel:
+                          body.extractionValidationModel.trim(),
+                      }
                     : {}),
                   ...(body.loopGuardModel?.trim()
                     ? { loopGuardModel: body.loopGuardModel.trim() }
                     : {}),
                   ...(body.memorySummarizationModel?.trim()
-                    ? { memorySummarizationModel: body.memorySummarizationModel.trim() }
+                    ? {
+                        memorySummarizationModel:
+                          body.memorySummarizationModel.trim(),
+                      }
                     : {}),
                   ...(body.selectorInferenceModel?.trim()
-                    ? { selectorInferenceModel: body.selectorInferenceModel.trim() }
+                    ? {
+                        selectorInferenceModel:
+                          body.selectorInferenceModel.trim(),
+                      }
                     : {}),
                   ...(body.outputNormalizationModel?.trim()
-                    ? { outputNormalizationModel: body.outputNormalizationModel.trim() }
+                    ? {
+                        outputNormalizationModel:
+                          body.outputNormalizationModel.trim(),
+                      }
                     : {}),
                 },
               },
@@ -253,7 +276,12 @@ export async function DELETE(req: Request) {
     }
     const url = new URL(req.url);
     const scope = url.searchParams.get("scope") ?? "terminal";
-    const terminalStatuses = ["completed", "failed", "stopped", "waiting_human"];
+    const terminalStatuses: AgentRunStatus[] = [
+      AgentRunStatus.completed,
+      AgentRunStatus.failed,
+      AgentRunStatus.stopped,
+      AgentRunStatus.waiting_human,
+    ];
     if (scope !== "terminal") {
       return NextResponse.json(
         { error: "Unsupported delete scope." },

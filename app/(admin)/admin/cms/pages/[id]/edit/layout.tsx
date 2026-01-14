@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import AdminLayout from "@/app/(admin)/layout";
 import CmsSideMenu from "@/components/cms/CmsSideMenu";
 
@@ -9,15 +10,9 @@ interface Page {
   components: any[];
 }
 
-export default function CmsLayout({
-  children,
-  page,
-  setPage,
-}: {
-  children: React.ReactNode;
-  page: Page;
-  setPage: React.Dispatch<React.SetStateAction<Page | null>>;
-}) {
+export default function CmsLayout({ children }: { children: React.ReactNode }) {
+  const [page, setPage] = React.useState<Page | null>(null);
+
   return (
     <AdminLayout isCollapsed={true}>
       <div className="flex h-screen bg-gray-900 text-white">

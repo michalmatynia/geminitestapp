@@ -86,6 +86,7 @@ type AgentBrowserLog = {
   level: string;
   message: string;
   createdAt: string;
+  metadata?: Record<string, unknown> | null;
 };
 
 type AgentAuditLog = {
@@ -108,13 +109,17 @@ export default function ChatbotJobsPage() {
   const [bulkDeletingAgents, setBulkDeletingAgents] = useState(false);
   const [agentRuns, setAgentRuns] = useState<AgentRun[]>([]);
   const [agentLoading, setAgentLoading] = useState(false);
-  const [selectedAgentRunId, setSelectedAgentRunId] = useState<string | null>(null);
-  const [agentSnapshot, setAgentSnapshot] = useState<AgentSnapshot | null>(null);
+  const [selectedAgentRunId, setSelectedAgentRunId] = useState<string | null>(
+    null
+  );
+  const [agentSnapshot, setAgentSnapshot] = useState<AgentSnapshot | null>(
+    null
+  );
   const [agentLogs, setAgentLogs] = useState<AgentBrowserLog[]>([]);
   const [agentAudits, setAgentAudits] = useState<AgentAuditLog[]>([]);
-  const [expandedAuditIds, setExpandedAuditIds] = useState<Record<string, boolean>>(
-    {}
-  );
+  const [expandedAuditIds, setExpandedAuditIds] = useState<
+    Record<string, boolean>
+  >({});
   const [agentStreamStatus, setAgentStreamStatus] = useState<
     "idle" | "connecting" | "live" | "error"
   >("idle");
@@ -129,7 +134,8 @@ export default function ChatbotJobsPage() {
       const data = (await res.json()) as { jobs?: ChatbotJob[] };
       setJobs(data.jobs ?? []);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to load jobs.";
+      const message =
+        error instanceof Error ? error.message : "Failed to load jobs.";
       setError(message);
       toast(message, { variant: "error" });
     } finally {
@@ -173,7 +179,9 @@ export default function ChatbotJobsPage() {
     );
     source.onmessage = (event) => {
       try {
-        const payload = JSON.parse(event.data) as { snapshot?: AgentSnapshot | null };
+        const payload = JSON.parse(event.data) as {
+          snapshot?: AgentSnapshot | null;
+        };
         if (payload.snapshot) {
           setAgentSnapshot(payload.snapshot);
         }
@@ -189,7 +197,9 @@ export default function ChatbotJobsPage() {
 
     const loadSnapshot = async () => {
       try {
-        const res = await fetch(`/api/chatbot/agent/${selectedAgentRunId}/snapshots`);
+        const res = await fetch(
+          `/api/chatbot/agent/${selectedAgentRunId}/snapshots`
+        );
         if (!res.ok) {
           throw new Error("Failed to load agent snapshots.");
         }
@@ -204,7 +214,9 @@ export default function ChatbotJobsPage() {
 
     const loadLogs = async () => {
       try {
-        const res = await fetch(`/api/chatbot/agent/${selectedAgentRunId}/logs`);
+        const res = await fetch(
+          `/api/chatbot/agent/${selectedAgentRunId}/logs`
+        );
         if (!res.ok) {
           throw new Error("Failed to load agent logs.");
         }
@@ -219,7 +231,9 @@ export default function ChatbotJobsPage() {
 
     const loadAudits = async () => {
       try {
-        const res = await fetch(`/api/chatbot/agent/${selectedAgentRunId}/audits`);
+        const res = await fetch(
+          `/api/chatbot/agent/${selectedAgentRunId}/audits`
+        );
         if (!res.ok) {
           throw new Error("Failed to load agent steps.");
         }
@@ -310,7 +324,8 @@ export default function ChatbotJobsPage() {
       await loadJobs();
       toast("Job canceled", { variant: "success" });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to cancel job.";
+      const message =
+        error instanceof Error ? error.message : "Failed to cancel job.";
       toast(message, { variant: "error" });
     } finally {
       setCancelingId(null);
@@ -337,7 +352,8 @@ export default function ChatbotJobsPage() {
       await loadJobs();
       toast("Job deleted", { variant: "success" });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to delete job.";
+      const message =
+        error instanceof Error ? error.message : "Failed to delete job.";
       toast(message, { variant: "error" });
     } finally {
       setDeletingId(null);
@@ -472,8 +488,11 @@ export default function ChatbotJobsPage() {
   const latestLoginCandidates = loginCandidateLogs.at(-1)?.metadata ?? null;
   const latestPlannerContext = plannerContextAudits.at(-1)?.metadata ?? null;
   const latestPlanHierarchy =
-    (planAudits.at(-1)?.metadata as { hierarchy?: { goals?: unknown[] } } | null)
-      ?.hierarchy ?? null;
+    (
+      planAudits.at(-1)?.metadata as {
+        hierarchy?: { goals?: unknown[] };
+      } | null
+    )?.hierarchy ?? null;
   const latestPlanSteps = useMemo(() => {
     const latestPlan = planUpdateAudits.find((audit) =>
       Array.isArray(audit.metadata?.steps)
@@ -493,9 +512,11 @@ export default function ChatbotJobsPage() {
   const planningEventsByStep = useMemo(() => {
     const map = new Map<string, AgentAuditLog[]>();
     [...branchAudits, ...replanAudits].forEach((audit) => {
-      const meta = audit.metadata as
-        | { stepId?: string; failedStepId?: string; activeStepId?: string }
-        | null;
+      const meta = audit.metadata as {
+        stepId?: string;
+        failedStepId?: string;
+        activeStepId?: string;
+      } | null;
       const stepId =
         meta?.stepId ?? meta?.failedStepId ?? meta?.activeStepId ?? null;
       if (!stepId) return;
@@ -517,7 +538,10 @@ export default function ChatbotJobsPage() {
   return (
     <div className="container mx-auto py-10">
       <div className="mb-6">
-        <Link href="/admin/chatbot" className="text-sm text-blue-300 hover:text-blue-200">
+        <Link
+          href="/admin/chatbot"
+          className="text-sm text-blue-300 hover:text-blue-200"
+        >
           ← Back to chatbot
         </Link>
         <h1 className="mt-3 text-3xl font-bold text-white">Chatbot Jobs</h1>
@@ -581,7 +605,8 @@ export default function ChatbotJobsPage() {
                       {job.kind === "agent" ? "Agent job" : "Chat job"}
                     </p>
                     <p className="text-sm text-white">
-                      {job.status.toUpperCase()} · {job.model || "Default model"}
+                      {job.status.toUpperCase()} ·{" "}
+                      {job.model || "Default model"}
                     </p>
                     <p className="text-xs text-gray-500">
                       Created {new Date(job.createdAt).toLocaleString()}
@@ -591,7 +616,10 @@ export default function ChatbotJobsPage() {
                         Prompt:{" "}
                         {(() => {
                           const payload = job.payload as {
-                            messages?: Array<{ role?: string; content?: string }>;
+                            messages?: Array<{
+                              role?: string;
+                              content?: string;
+                            }>;
                           };
                           const userMessage = payload.messages
                             ?.filter((msg) => msg.role === "user")
@@ -603,19 +631,21 @@ export default function ChatbotJobsPage() {
                       </p>
                     ) : null}
                     {job.kind === "agent" ? (
-      <div className="mt-2 text-xs text-gray-400">
-        <p className="text-xs text-gray-300 line-clamp-2">
-          Prompt: {job.prompt}
-        </p>
-        <p className="text-[11px] text-gray-500">
-          Run ID: {job.id}
-        </p>
-        Snapshots: {job.snapshotCount} · Logs: {job.logCount}
-        {job.requiresHumanIntervention ? " · needs input" : ""}
-      </div>
+                      <div className="mt-2 text-xs text-gray-400">
+                        <p className="text-xs text-gray-300 line-clamp-2">
+                          Prompt: {job.prompt}
+                        </p>
+                        <p className="text-[11px] text-gray-500">
+                          Run ID: {job.id}
+                        </p>
+                        Snapshots: {job.snapshotCount} · Logs: {job.logCount}
+                        {job.requiresHumanIntervention ? " · needs input" : ""}
+                      </div>
                     ) : null}
                     {job.errorMessage ? (
-                      <p className="mt-1 text-xs text-red-300">{job.errorMessage}</p>
+                      <p className="mt-1 text-xs text-red-300">
+                        {job.errorMessage}
+                      </p>
                     ) : null}
                   </div>
                   <div className="flex items-center gap-2">
@@ -651,7 +681,9 @@ export default function ChatbotJobsPage() {
                             disabled={deletingId === job.id}
                             onClick={() => void deleteJob(job.id, true)}
                           >
-                            {deletingId === job.id ? "Deleting..." : "Force delete"}
+                            {deletingId === job.id
+                              ? "Deleting..."
+                              : "Force delete"}
                           </Button>
                         ) : null}
                       </>
@@ -679,7 +711,9 @@ export default function ChatbotJobsPage() {
                             disabled={deletingId === job.id}
                             onClick={() => void deleteAgentRun(job.id, true)}
                           >
-                            {deletingId === job.id ? "Deleting..." : "Force delete"}
+                            {deletingId === job.id
+                              ? "Deleting..."
+                              : "Force delete"}
                           </Button>
                         ) : null}
                       </>
@@ -720,8 +754,8 @@ export default function ChatbotJobsPage() {
                         {selectedAgentRun.prompt}
                       </p>
                       <div className="mt-2 text-xs text-gray-400">
-                        Status: {selectedAgentRun.status.replace("_", " ")} · Model:{" "}
-                        {selectedAgentRun.model || "Default"}
+                        Status: {selectedAgentRun.status.replace("_", " ")} ·
+                        Model: {selectedAgentRun.model || "Default"}
                         {selectedAgentRun.requiresHumanIntervention
                           ? " · needs input"
                           : ""}
@@ -782,7 +816,7 @@ export default function ChatbotJobsPage() {
                             src={
                               agentSnapshot.screenshotPath
                                 ? `/api/chatbot/agent/${selectedAgentRunId}/assets/${agentSnapshot.screenshotPath}`
-                                : agentSnapshot.screenshotData ?? ""
+                                : (agentSnapshot.screenshotData ?? "")
                             }
                             alt="Agent preview"
                             className="h-auto w-full"
@@ -795,11 +829,13 @@ export default function ChatbotJobsPage() {
                               className="absolute size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.8)]"
                               style={{
                                 left: `${
-                                  (agentSnapshot.mouseX / agentSnapshot.viewportWidth) *
+                                  (agentSnapshot.mouseX /
+                                    agentSnapshot.viewportWidth) *
                                   100
                                 }%`,
                                 top: `${
-                                  (agentSnapshot.mouseY / agentSnapshot.viewportHeight) *
+                                  (agentSnapshot.mouseY /
+                                    agentSnapshot.viewportHeight) *
                                   100
                                 }%`,
                               }}
@@ -846,22 +882,24 @@ export default function ChatbotJobsPage() {
                     <p className="text-[11px] text-gray-500">Plan hierarchy</p>
                     {latestPlanHierarchy?.goals?.length ? (
                       <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
-                        {(latestPlanHierarchy.goals as Array<{
-                          id?: string;
-                          title?: string;
-                          successCriteria?: string | null;
-                          subgoals?: Array<{
+                        {(
+                          latestPlanHierarchy.goals as Array<{
                             id?: string;
                             title?: string;
                             successCriteria?: string | null;
-                            steps?: Array<{
+                            subgoals?: Array<{
+                              id?: string;
                               title?: string;
-                              tool?: string | null;
-                              expectedObservation?: string | null;
                               successCriteria?: string | null;
+                              steps?: Array<{
+                                title?: string;
+                                tool?: string | null;
+                                expectedObservation?: string | null;
+                                successCriteria?: string | null;
+                              }>;
                             }>;
-                          }>;
-                        }>).map((goal, goalIndex) => (
+                          }>
+                        ).map((goal, goalIndex) => (
                           <div
                             key={goal.id ?? `goal-${goalIndex}`}
                             className="rounded-md border border-gray-800 bg-gray-950 p-2"
@@ -877,7 +915,10 @@ export default function ChatbotJobsPage() {
                             <div className="mt-2 space-y-2 pl-3">
                               {goal.subgoals?.map((subgoal, subIndex) => (
                                 <div
-                                  key={subgoal.id ?? `subgoal-${goalIndex}-${subIndex}`}
+                                  key={
+                                    subgoal.id ??
+                                    `subgoal-${goalIndex}-${subIndex}`
+                                  }
                                   className="rounded-md border border-gray-800 bg-gray-900 p-2"
                                 >
                                   <p className="text-[11px] text-slate-100">
@@ -891,7 +932,9 @@ export default function ChatbotJobsPage() {
                                   ) : null}
                                   <ul className="mt-2 space-y-1 pl-3 text-[10px] text-gray-300">
                                     {subgoal.steps?.map((step, stepIndex) => (
-                                      <li key={`${goalIndex}-${subIndex}-${stepIndex}`}>
+                                      <li
+                                        key={`${goalIndex}-${subIndex}-${stepIndex}`}
+                                      >
                                         <span className="text-slate-100">
                                           Step {goalIndex + 1}.{subIndex + 1}.
                                           {stepIndex + 1}:
@@ -946,7 +989,9 @@ export default function ChatbotJobsPage() {
                               <div className="flex items-center justify-between text-[10px] text-gray-500">
                                 <span>{step.status ?? "pending"}</span>
                                 {step.phase ? (
-                                  <span className="text-amber-200">{step.phase}</span>
+                                  <span className="text-amber-200">
+                                    {step.phase}
+                                  </span>
                                 ) : null}
                               </div>
                               <p className="mt-1 text-[11px] text-gray-200">
@@ -969,9 +1014,7 @@ export default function ChatbotJobsPage() {
                                   </p>
                                   <ul className="mt-1 space-y-1 text-[10px] text-gray-300">
                                     {events.map((event) => (
-                                      <li key={event.id}>
-                                        {event.message}
-                                      </li>
+                                      <li key={event.id}>{event.message}</li>
                                     ))}
                                   </ul>
                                 </div>
@@ -989,7 +1032,9 @@ export default function ChatbotJobsPage() {
                       <span className="rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200">
                         Branch
                       </span>
-                      <p className="text-[11px] text-gray-500">Recovery branches</p>
+                      <p className="text-[11px] text-gray-500">
+                        Recovery branches
+                      </p>
                     </div>
                     {branchAudits.length ? (
                       <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
@@ -1012,7 +1057,9 @@ export default function ChatbotJobsPage() {
                             >
                               <div className="flex items-center justify-between text-[10px] text-gray-500">
                                 <span>
-                                  {new Date(audit.createdAt).toLocaleTimeString()}
+                                  {new Date(
+                                    audit.createdAt
+                                  ).toLocaleTimeString()}
                                 </span>
                                 {meta?.reason ? (
                                   <span className="text-amber-200">
@@ -1031,7 +1078,11 @@ export default function ChatbotJobsPage() {
                               {meta?.branchSteps?.length ? (
                                 <ul className="mt-2 space-y-1 pl-3 text-[10px] text-gray-300">
                                   {meta.branchSteps.map((step, stepIndex) => (
-                                    <li key={step.id ?? `branch-step-${stepIndex}`}>
+                                    <li
+                                      key={
+                                        step.id ?? `branch-step-${stepIndex}`
+                                      }
+                                    >
                                       <span className="text-slate-100">
                                         Step {stepIndex + 1}:
                                       </span>{" "}
@@ -1158,17 +1209,24 @@ export default function ChatbotJobsPage() {
                             Cookies
                           </p>
                           <div className="mt-1 max-h-36 overflow-y-auto">
-                            {(latestSessionContext.cookies as Array<{
-                              name: string;
-                              domain: string;
-                              path: string;
-                              expires: number;
-                              httpOnly: boolean;
-                              secure: boolean;
-                              sameSite: string;
-                              valueLength: number;
-                            }> | undefined)?.map((cookie, index) => (
-                              <div key={`${cookie.name}-${index}`} className="mt-1">
+                            {(
+                              latestSessionContext.cookies as
+                                | Array<{
+                                    name: string;
+                                    domain: string;
+                                    path: string;
+                                    expires: number;
+                                    httpOnly: boolean;
+                                    secure: boolean;
+                                    sameSite: string;
+                                    valueLength: number;
+                                  }>
+                                | undefined
+                            )?.map((cookie, index) => (
+                              <div
+                                key={`${cookie.name}-${index}`}
+                                className="mt-1"
+                              >
                                 <span className="text-slate-100">
                                   {cookie.name}
                                 </span>{" "}
@@ -1180,7 +1238,9 @@ export default function ChatbotJobsPage() {
                                 </span>
                               </div>
                             )) ?? (
-                              <p className="text-gray-500">No cookies captured.</p>
+                              <p className="text-gray-500">
+                                No cookies captured.
+                              </p>
                             )}
                           </div>
                         </div>
@@ -1191,18 +1251,27 @@ export default function ChatbotJobsPage() {
                           <div className="mt-1 text-gray-300">
                             <p>
                               Local:{" "}
-                              {(latestSessionContext.storage as { localCount?: number })
-                                ?.localCount ?? 0}
+                              {(
+                                latestSessionContext.storage as {
+                                  localCount?: number;
+                                }
+                              )?.localCount ?? 0}
                               {" · "}
                               Session:{" "}
-                              {(latestSessionContext.storage as { sessionCount?: number })
-                                ?.sessionCount ?? 0}
+                              {(
+                                latestSessionContext.storage as {
+                                  sessionCount?: number;
+                                }
+                              )?.sessionCount ?? 0}
                             </p>
                             <div className="mt-1 max-h-20 overflow-y-auto text-[10px] text-gray-400">
-                              {(latestSessionContext.storage as {
-                                localKeys?: string[];
-                                sessionKeys?: string[];
-                              })?.localKeys?.join(", ") || "No localStorage keys."}
+                              {(
+                                latestSessionContext.storage as {
+                                  localKeys?: string[];
+                                  sessionKeys?: string[];
+                                }
+                              )?.localKeys?.join(", ") ||
+                                "No localStorage keys."}
                             </div>
                           </div>
                         </div>
@@ -1216,7 +1285,9 @@ export default function ChatbotJobsPage() {
                 </TabsContent>
                 <TabsContent value="elements" className="mt-4">
                   <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
-                    <p className="text-[11px] text-gray-500">Login candidates</p>
+                    <p className="text-[11px] text-gray-500">
+                      Login candidates
+                    </p>
                     {latestLoginCandidates ? (
                       <div className="mt-2 grid gap-3 md:grid-cols-2">
                         <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
@@ -1224,25 +1295,34 @@ export default function ChatbotJobsPage() {
                             Inputs
                           </p>
                           <div className="mt-1 max-h-36 space-y-1 overflow-y-auto">
-                            {(latestLoginCandidates.inputs as Array<{
-                              tag: string;
-                              id: string | null;
-                              name: string | null;
-                              type: string | null;
-                              placeholder: string | null;
-                              ariaLabel: string | null;
-                              score: number;
-                            }> | undefined)?.map((input, index) => (
+                            {(
+                              latestLoginCandidates.inputs as
+                                | Array<{
+                                    tag: string;
+                                    id: string | null;
+                                    name: string | null;
+                                    type: string | null;
+                                    placeholder: string | null;
+                                    ariaLabel: string | null;
+                                    score: number;
+                                  }>
+                                | undefined
+                            )?.map((input, index) => (
                               <div key={`${input.name}-${index}`}>
                                 <span className="text-slate-100">
-                                  {input.name || input.id || input.type || "input"}
+                                  {input.name ||
+                                    input.id ||
+                                    input.type ||
+                                    "input"}
                                 </span>{" "}
                                 <span className="text-gray-500">
                                   score {input.score}
                                 </span>
                               </div>
                             )) ?? (
-                              <p className="text-gray-500">No inputs captured.</p>
+                              <p className="text-gray-500">
+                                No inputs captured.
+                              </p>
                             )}
                           </div>
                         </div>
@@ -1251,24 +1331,33 @@ export default function ChatbotJobsPage() {
                             Buttons
                           </p>
                           <div className="mt-1 max-h-36 space-y-1 overflow-y-auto">
-                            {(latestLoginCandidates.buttons as Array<{
-                              tag: string;
-                              id: string | null;
-                              name: string | null;
-                              type: string | null;
-                              text: string | null;
-                              score: number;
-                            }> | undefined)?.map((button, index) => (
+                            {(
+                              latestLoginCandidates.buttons as
+                                | Array<{
+                                    tag: string;
+                                    id: string | null;
+                                    name: string | null;
+                                    type: string | null;
+                                    text: string | null;
+                                    score: number;
+                                  }>
+                                | undefined
+                            )?.map((button, index) => (
                               <div key={`${button.text}-${index}`}>
                                 <span className="text-slate-100">
-                                  {button.text || button.id || button.name || "button"}
+                                  {button.text ||
+                                    button.id ||
+                                    button.name ||
+                                    "button"}
                                 </span>{" "}
                                 <span className="text-gray-500">
                                   score {button.score}
                                 </span>
                               </div>
                             )) ?? (
-                              <p className="text-gray-500">No buttons captured.</p>
+                              <p className="text-gray-500">
+                                No buttons captured.
+                              </p>
                             )}
                           </div>
                         </div>

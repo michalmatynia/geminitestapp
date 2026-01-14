@@ -281,22 +281,42 @@ const parseModelSize = (normalized: string) => {
 
 const buildModelProfile = (name: string): ModelProfile => {
   const normalized = name.toLowerCase();
-  const isEmbedding = ["embed", "embedding", "text-embedding", "nomic-embed", "bge", "e5", "gte"].some(
-    (tag) => normalized.includes(tag)
-  );
+  const isEmbedding = [
+    "embed",
+    "embedding",
+    "text-embedding",
+    "nomic-embed",
+    "bge",
+    "e5",
+    "gte",
+  ].some((tag) => normalized.includes(tag));
   const isRerank = ["rerank", "reranker", "cross-encoder"].some((tag) =>
     normalized.includes(tag)
   );
-  const isVision = ["vision", "llava", "bakllava", "minicpm", "moondream", "qwen-vl", "cogvlm"].some(
-    (tag) => normalized.includes(tag)
+  const isVision = [
+    "vision",
+    "llava",
+    "bakllava",
+    "minicpm",
+    "moondream",
+    "qwen-vl",
+    "cogvlm",
+  ].some((tag) => normalized.includes(tag));
+  const isCode = [
+    "code",
+    "coder",
+    "codestral",
+    "codeqwen",
+    "starcoder",
+    "codegen",
+  ].some((tag) => normalized.includes(tag));
+  const isInstruct = ["instruct", "assistant"].some((tag) =>
+    normalized.includes(tag)
   );
-  const isCode = ["code", "coder", "codestral", "codeqwen", "starcoder", "codegen"].some(
-    (tag) => normalized.includes(tag)
-  );
-  const isInstruct = ["instruct", "assistant"].some((tag) => normalized.includes(tag));
   const isChat = normalized.includes("chat");
   const isReasoning =
-    normalized.includes("reasoner") || /(^|[^a-z0-9])r1($|[^a-z0-9])/.test(normalized);
+    normalized.includes("reasoner") ||
+    /(^|[^a-z0-9])r1($|[^a-z0-9])/.test(normalized);
   return {
     name,
     normalized,
@@ -332,12 +352,16 @@ const scoreModelForTask = (profile: ModelProfile, rule: ModelTaskRule) => {
 };
 
 const pickBestModel = (profiles: ModelProfile[], rule: ModelTaskRule) => {
-  let best: { name: string; score: number; size: number } | null = null;
+  let best: { name: string; score: number; size: number | null } | null = null;
   profiles.forEach((profile) => {
     const score = scoreModelForTask(profile, rule);
     if (!Number.isFinite(score)) return;
     const size = profile.size ?? 0;
-    if (!best || score > best.score || (score === best.score && size > best.size)) {
+    if (
+      !best ||
+      score > best.score ||
+      (score === best.score && size > best.size)
+    ) {
       best = { name: profile.name, score, size };
     }
   });
@@ -429,7 +453,9 @@ const readCachedMessages = (sessionId: string) => {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as ChatMessage[];
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter((message) => message && typeof message.content === "string");
+    return parsed.filter(
+      (message) => message && typeof message.content === "string"
+    );
   } catch {
     return [];
   }
@@ -438,7 +464,8 @@ const readCachedMessages = (sessionId: string) => {
 const writeCachedMessages = (sessionId: string, messages: ChatMessage[]) => {
   try {
     const safeMessages = messages.filter(
-      (message) => message.role !== "system" && message.content.trim().length > 0
+      (message) =>
+        message.role !== "system" && message.content.trim().length > 0
     );
     window.localStorage.setItem(
       `chatbotSessionCache:${sessionId}`,
@@ -508,9 +535,7 @@ const buildAgentResultMessage = (
           : extractionType === "product_names"
             ? "Extracted product names"
             : "Extracted information";
-      const intro = url
-        ? `${label} found on ${url}:`
-        : `${label}:`;
+      const intro = url ? `${label} found on ${url}:` : `${label}:`;
       return `${intro}\n${items.map((name) => `- ${name}`).join("\n")}`;
     }
   }
@@ -617,7 +642,9 @@ const renderExtractionPlan = (plan: ExtractionPlan) => (
     </div>
     {plan.fields?.length ? (
       <div className="mt-2">
-        <p className="text-[10px] uppercase tracking-wide text-gray-500">Fields</p>
+        <p className="text-[10px] uppercase tracking-wide text-gray-500">
+          Fields
+        </p>
         <div className="mt-1 flex flex-wrap gap-1">
           {plan.fields.map((field) => (
             <span
@@ -654,9 +681,7 @@ const renderExtractionPlan = (plan: ExtractionPlan) => (
         </ul>
       </div>
     ) : null}
-    {plan.notes ? (
-      <p className="mt-2 text-gray-400">{plan.notes}</p>
-    ) : null}
+    {plan.notes ? <p className="mt-2 text-gray-400">{plan.notes}</p> : null}
   </div>
 );
 
@@ -686,9 +711,10 @@ const formatAdaptiveReason = (reason?: string | null) => {
 const getLatestAdaptiveTrigger = (audits: AgentAuditLog[]) => {
   const candidates = audits
     .map((audit) => {
-      const metadata = audit.metadata as
-        | { type?: string; reason?: string | null }
-        | null;
+      const metadata = audit.metadata as {
+        type?: string;
+        reason?: string | null;
+      } | null;
       const type = metadata?.type;
       if (
         type !== "plan-replan" &&
@@ -759,7 +785,11 @@ const persistSessionMessage = async (
 const renderInline = (text: string) => {
   const parts = text.split("**");
   return parts.map((part, index) =>
-    index % 2 === 1 ? <strong key={index}>{part}</strong> : <span key={index}>{part}</span>
+    index % 2 === 1 ? (
+      <strong key={index}>{part}</strong>
+    ) : (
+      <span key={index}>{part}</span>
+    )
   );
 };
 
@@ -853,7 +883,8 @@ export default function ChatbotPage() {
   const [agentBrowser, setAgentBrowser] = useState("chromium");
   const [agentRunHeadless, setAgentRunHeadless] = useState(true);
   const [agentIgnoreRobotsTxt, setAgentIgnoreRobotsTxt] = useState(false);
-  const [agentRequireHumanApproval, setAgentRequireHumanApproval] = useState(false);
+  const [agentRequireHumanApproval, setAgentRequireHumanApproval] =
+    useState(false);
   const [agentMemoryValidationModel, setAgentMemoryValidationModel] =
     useState("");
   const [agentPlannerModel, setAgentPlannerModel] = useState("");
@@ -877,9 +908,9 @@ export default function ChatbotPage() {
   const [agentLoopBackoffBaseMs, setAgentLoopBackoffBaseMs] = useState(2000);
   const [agentLoopBackoffMaxMs, setAgentLoopBackoffMaxMs] = useState(12000);
   const [latestAgentRunId, setLatestAgentRunId] = useState<string | null>(null);
-  const [latestAgentRunStatus, setLatestAgentRunStatus] = useState<string | null>(
-    null
-  );
+  const [latestAgentRunStatus, setLatestAgentRunStatus] = useState<
+    string | null
+  >(null);
   const [agentPreviewSnapshot, setAgentPreviewSnapshot] =
     useState<AgentSnapshot | null>(null);
   const [agentPreviewStatus, setAgentPreviewStatus] = useState<
@@ -889,32 +920,33 @@ export default function ChatbotPage() {
     string | null
   >(null);
   const [latestAgentIgnoreRobots, setLatestAgentIgnoreRobots] = useState(false);
-  const [latestApprovalStepId, setLatestApprovalStepId] = useState<string | null>(
-    null
-  );
+  const [latestApprovalStepId, setLatestApprovalStepId] = useState<
+    string | null
+  >(null);
   const [agentControlUrl, setAgentControlUrl] = useState("");
   const [agentControlBusy, setAgentControlBusy] = useState(false);
   const [agentResumeBusy, setAgentResumeBusy] = useState(false);
   const [agentProgressOpen, setAgentProgressOpen] = useState(false);
   const [agentPlanSteps, setAgentPlanSteps] = useState<AgentPlanStep[]>([]);
   const [agentPlanMeta, setAgentPlanMeta] = useState<PlannerMeta | null>(null);
-  const [agentStepActionBusyId, setAgentStepActionBusyId] = useState<string | null>(
-    null
-  );
+  const [agentStepActionBusyId, setAgentStepActionBusyId] = useState<
+    string | null
+  >(null);
   const [stepDetailsOpen, setStepDetailsOpen] = useState(false);
   const [stepDetailsLoading, setStepDetailsLoading] = useState(false);
   const [stepDetailsTitle, setStepDetailsTitle] = useState("");
   const [stepDetailsSnapshot, setStepDetailsSnapshot] =
     useState<AgentSnapshot | null>(null);
-  const [stepDetailsSnapshots, setStepDetailsSnapshots] = useState<AgentSnapshot[]>(
+  const [stepDetailsSnapshots, setStepDetailsSnapshots] = useState<
+    AgentSnapshot[]
+  >([]);
+  const [stepDetailsLogs, setStepDetailsLogs] = useState<AgentBrowserLog[]>([]);
+  const [stepDetailsAudits, setStepDetailsAudits] = useState<AgentAuditLog[]>(
     []
   );
-  const [stepDetailsLogs, setStepDetailsLogs] = useState<AgentBrowserLog[]>([]);
-  const [stepDetailsAudits, setStepDetailsAudits] = useState<AgentAuditLog[]>([]);
   const [snapshotLightboxOpen, setSnapshotLightboxOpen] = useState(false);
-  const [snapshotLightbox, setSnapshotLightbox] = useState<AgentSnapshot | null>(
-    null
-  );
+  const [snapshotLightbox, setSnapshotLightbox] =
+    useState<AgentSnapshot | null>(null);
   const [agentRunDetailsOpen, setAgentRunDetailsOpen] = useState(false);
   const [agentRunDetailsLoading, setAgentRunDetailsLoading] = useState(false);
   const [agentRunDetails, setAgentRunDetails] = useState<{
@@ -939,9 +971,9 @@ export default function ChatbotPage() {
   const [toolSelectValue, setToolSelectValue] = useState("add");
   const [globalContext, setGlobalContext] = useState("");
   const [localContext, setLocalContext] = useState("");
-  const [localContextMode, setLocalContextMode] = useState<"override" | "append">(
-    "override"
-  );
+  const [localContextMode, setLocalContextMode] = useState<
+    "override" | "append"
+  >("override");
   const [contextLoading, setContextLoading] = useState(true);
   const [debugEnabled, setDebugEnabled] = useState(false);
   const [debugState, setDebugState] = useState<ChatbotDebugState>({});
@@ -964,7 +996,8 @@ export default function ChatbotPage() {
     [agentRunAudits]
   );
   const branchAudits = useMemo(
-    () => agentRunAudits.filter((audit) => audit.metadata?.type === "plan-branch"),
+    () =>
+      agentRunAudits.filter((audit) => audit.metadata?.type === "plan-branch"),
     [agentRunAudits]
   );
   const selfImprovementAudits = useMemo(
@@ -1009,15 +1042,20 @@ export default function ChatbotPage() {
     [agentRunAudits]
   );
   const sessionContextLogs = useMemo(
-    () => agentRunLogs.filter((log) => log.message === "Captured session context."),
+    () =>
+      agentRunLogs.filter((log) => log.message === "Captured session context."),
     [agentRunLogs]
   );
   const loginCandidateLogs = useMemo(
-    () => agentRunLogs.filter((log) => log.message === "Inferred login candidates."),
+    () =>
+      agentRunLogs.filter(
+        (log) => log.message === "Inferred login candidates."
+      ),
     [agentRunLogs]
   );
   const uiInventoryLogs = useMemo(
-    () => agentRunLogs.filter((log) => log.message === "Captured UI inventory."),
+    () =>
+      agentRunLogs.filter((log) => log.message === "Captured UI inventory."),
     [agentRunLogs]
   );
   const latestSessionContext = sessionContextLogs.at(-1)?.metadata ?? null;
@@ -1037,7 +1075,9 @@ export default function ChatbotPage() {
       return "Blocked by robots.txt";
     }
     if (
-      agentRunLogs.some((log) => log.message === "Robots.txt unavailable; proceeding.")
+      agentRunLogs.some(
+        (log) => log.message === "Robots.txt unavailable; proceeding."
+      )
     ) {
       return "Robots.txt unavailable";
     }
@@ -1109,11 +1149,13 @@ export default function ChatbotPage() {
           ? settings.memoryValidationModel
           : DEFAULT_CHATBOT_SETTINGS.memoryValidationModel,
       plannerModel:
-        typeof settings.plannerModel === "string" && settings.plannerModel.trim()
+        typeof settings.plannerModel === "string" &&
+        settings.plannerModel.trim()
           ? settings.plannerModel
           : DEFAULT_CHATBOT_SETTINGS.plannerModel,
       selfCheckModel:
-        typeof settings.selfCheckModel === "string" && settings.selfCheckModel.trim()
+        typeof settings.selfCheckModel === "string" &&
+        settings.selfCheckModel.trim()
           ? settings.selfCheckModel
           : DEFAULT_CHATBOT_SETTINGS.selfCheckModel,
       extractionValidationModel:
@@ -1122,7 +1164,8 @@ export default function ChatbotPage() {
           ? settings.extractionValidationModel
           : DEFAULT_CHATBOT_SETTINGS.extractionValidationModel,
       loopGuardModel:
-        typeof settings.loopGuardModel === "string" && settings.loopGuardModel.trim()
+        typeof settings.loopGuardModel === "string" &&
+        settings.loopGuardModel.trim()
           ? settings.loopGuardModel
           : DEFAULT_CHATBOT_SETTINGS.loopGuardModel,
       approvalGateModel:
@@ -1216,7 +1259,12 @@ export default function ChatbotPage() {
     memorySummarizationModel: agentMemorySummarizationModel,
     selectorInferenceModel: agentSelectorInferenceModel,
     outputNormalizationModel: agentOutputNormalizationModel,
-    maxSteps: clampAgentSetting(agentMaxSteps, 1, 20, DEFAULT_CHATBOT_SETTINGS.maxSteps),
+    maxSteps: clampAgentSetting(
+      agentMaxSteps,
+      1,
+      20,
+      DEFAULT_CHATBOT_SETTINGS.maxSteps
+    ),
     maxStepAttempts: clampAgentSetting(
       agentMaxStepAttempts,
       1,
@@ -1261,25 +1309,28 @@ export default function ChatbotPage() {
     ),
   });
 
-  const fetchMessagesForSession = useCallback(async (activeSessionId: string) => {
-    const res = await fetchWithTimeout(
-      `/api/chatbot/sessions/${activeSessionId}/messages`,
-      {},
-      15000
-    );
-    if (!res.ok) {
-      const error = await readErrorResponse(res);
-      const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-      throw new Error(`${error.message}${suffix}`);
-    }
-    const data = (await res.json()) as {
-      messages: Array<{ role: ChatMessage["role"]; content: string }>;
-    };
-    return data.messages.map((message) => ({
-      role: message.role,
-      content: message.content,
-    }));
-  }, []);
+  const fetchMessagesForSession = useCallback(
+    async (activeSessionId: string) => {
+      const res = await fetchWithTimeout(
+        `/api/chatbot/sessions/${activeSessionId}/messages`,
+        {},
+        15000
+      );
+      if (!res.ok) {
+        const error = await readErrorResponse(res);
+        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+        throw new Error(`${error.message}${suffix}`);
+      }
+      const data = (await res.json()) as {
+        messages: Array<{ role: ChatMessage["role"]; content: string }>;
+      };
+      return data.messages.map((message) => ({
+        role: message.role,
+        content: message.content,
+      }));
+    },
+    []
+  );
 
   const updateModelSelections = (models: string[]) => {
     setModelOptions(models);
@@ -1330,7 +1381,9 @@ export default function ChatbotPage() {
       (profile) => !profile.isEmbedding && !profile.isRerank
     );
     if (usableProfiles.length === 0) {
-      toast("No chat-capable models found to auto-select.", { variant: "error" });
+      toast("No chat-capable models found to auto-select.", {
+        variant: "error",
+      });
       return;
     }
     const pick = (rule: ModelTaskRule) =>
@@ -1370,7 +1423,10 @@ export default function ChatbotPage() {
       selectorInferenceModel: selections.selectorInferenceModel,
       outputNormalizationModel: selections.outputNormalizationModel,
     };
-    await persistChatbotSettings(payload, "Auto-selected model defaults saved.");
+    await persistChatbotSettings(
+      payload,
+      "Auto-selected model defaults saved."
+    );
   };
 
   const refreshModelOptions = async () => {
@@ -1408,9 +1464,14 @@ export default function ChatbotPage() {
       try {
         const res = await fetchWithTimeout("/api/chatbot");
         if (!res.ok) {
-          const error = (await res.json()) as { error?: string; errorId?: string };
+          const error = (await res.json()) as {
+            error?: string;
+            errorId?: string;
+          };
           const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-          throw new Error(`${error.error || "Failed to load models."}${suffix}`);
+          throw new Error(
+            `${error.error || "Failed to load models."}${suffix}`
+          );
         }
         const data = (await res.json()) as { models?: string[] };
         const models = (data.models || []).filter(Boolean);
@@ -1577,7 +1638,10 @@ export default function ChatbotPage() {
     if (settingsSaving) return;
     setSettingsSaving(true);
     try {
-      safeLocalStorageSet(CHATBOT_SETTINGS_STORAGE_KEY, JSON.stringify(payload));
+      safeLocalStorageSet(
+        CHATBOT_SETTINGS_STORAGE_KEY,
+        JSON.stringify(payload)
+      );
       await fetchWithTimeout(
         "/api/chatbot/settings",
         {
@@ -1620,7 +1684,10 @@ export default function ChatbotPage() {
           const error = (await res.json()) as { error?: string };
           throw new Error(error.error || "Failed to load context.");
         }
-        const data = (await res.json()) as Array<{ key: string; value: string }>;
+        const data = (await res.json()) as Array<{
+          key: string;
+          value: string;
+        }>;
         const storedItems = data.find(
           (item) => item.key === "chatbot_global_context_items"
         );
@@ -1638,10 +1705,9 @@ export default function ChatbotPage() {
                 id: string;
                 content: string;
               }>;
-              const active =
-                storedActive?.value
-                  ? (JSON.parse(storedActive.value) as string[])
-                  : items.map((item) => item.id);
+              const active = storedActive?.value
+                ? (JSON.parse(storedActive.value) as string[])
+                : items.map((item) => item.id);
               const activeSet = new Set(active);
               merged = items
                 .filter((item) => activeSet.has(item.id))
@@ -1841,7 +1907,6 @@ export default function ChatbotPage() {
     };
   }, [searchParams, toast]);
 
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -1873,7 +1938,9 @@ export default function ChatbotPage() {
         }
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Failed to refresh messages.";
+          error instanceof Error
+            ? error.message
+            : "Failed to refresh messages.";
         toast(message, { variant: "error" });
         setPollingReply(false);
       }
@@ -1884,7 +1951,13 @@ export default function ChatbotPage() {
         pollingRef.current = null;
       }
     };
-  }, [pollingReply, sessionId, messages.length, toast, fetchMessagesForSession]);
+  }, [
+    pollingReply,
+    sessionId,
+    messages.length,
+    toast,
+    fetchMessagesForSession,
+  ]);
 
   useEffect(() => {
     if (!latestAgentRunId) return;
@@ -1960,9 +2033,13 @@ export default function ChatbotPage() {
         if (!auditsRes.ok) {
           throw new Error("Failed to load agent steps.");
         }
-        const runData = (await runRes.json()) as { run?: typeof agentRunDetails };
+        const runData = (await runRes.json()) as {
+          run?: typeof agentRunDetails;
+        };
         const logsData = (await logsRes.json()) as { logs?: AgentBrowserLog[] };
-        const auditsData = (await auditsRes.json()) as { audits?: AgentAuditLog[] };
+        const auditsData = (await auditsRes.json()) as {
+          audits?: AgentAuditLog[];
+        };
         if (runData.run) {
           setAgentRunDetails(runData.run);
         }
@@ -1982,12 +2059,18 @@ export default function ChatbotPage() {
               runData.run.status ?? null
             );
             if (message) {
-              setMessages((prev) => [...prev, { role: "assistant", content: message }]);
+              setMessages((prev) => [
+                ...prev,
+                { role: "assistant", content: message },
+              ]);
               if (sessionId) {
                 await persistSessionMessage(sessionId, "assistant", message);
               }
               agentResultSentRef.current.add(runData.run.id);
-              safeLocalStorageSet(`chatbotAgentResultSent:${runData.run.id}`, "true");
+              safeLocalStorageSet(
+                `chatbotAgentResultSent:${runData.run.id}`,
+                "true"
+              );
             }
           }
         }
@@ -2009,7 +2092,9 @@ export default function ChatbotPage() {
     if (agentResultSentRef.current.has(runId) || storedFlag === "true") {
       return;
     }
-    if (!["completed", "failed", "waiting_human"].includes(latestAgentRunStatus)) {
+    if (
+      !["completed", "failed", "waiting_human"].includes(latestAgentRunStatus)
+    ) {
       return;
     }
     let isMounted = true;
@@ -2028,7 +2113,10 @@ export default function ChatbotPage() {
         );
         if (!message) return;
         if (!isMounted) return;
-        setMessages((prev) => [...prev, { role: "assistant", content: message }]);
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: message },
+        ]);
         if (sessionId) {
           await persistSessionMessage(sessionId, "assistant", message);
         }
@@ -2080,7 +2168,10 @@ export default function ChatbotPage() {
           latestAgentRunStatus ?? null
         );
         if (!message || !isMounted) return;
-        setMessages((prev) => [...prev, { role: "assistant", content: message }]);
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: message },
+        ]);
         if (sessionId) {
           await persistSessionMessage(sessionId, "assistant", message);
         }
@@ -2123,7 +2214,10 @@ export default function ChatbotPage() {
         const message = buildAgentResumeSummaryMessage(data.audits ?? []);
         if (!message) return;
         if (!isMounted) return;
-        setMessages((prev) => [...prev, { role: "assistant", content: message }]);
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: message },
+        ]);
         if (sessionId) {
           await persistSessionMessage(sessionId, "assistant", message);
         }
@@ -2198,8 +2292,9 @@ export default function ChatbotPage() {
         const steps = Array.isArray(latestPlan?.metadata?.steps)
           ? (latestPlan?.metadata?.steps as AgentPlanStep[])
           : [];
-        const plannerMeta = (latestPlan?.metadata as { plannerMeta?: PlannerMeta } | null)
-          ?.plannerMeta;
+        const plannerMeta = (
+          latestPlan?.metadata as { plannerMeta?: PlannerMeta } | null
+        )?.plannerMeta;
         const normalizedSteps = steps.map((step, index) => ({
           ...step,
           id: step.id || `${latestAgentRunId}-${index}`,
@@ -2259,14 +2354,17 @@ export default function ChatbotPage() {
     }
     setAgentControlBusy(true);
     try {
-      const res = await fetch(`/api/chatbot/agent/${latestAgentRunId}/controls`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action,
-          url: overrideUrl?.trim(),
-        }),
-      });
+      const res = await fetch(
+        `/api/chatbot/agent/${latestAgentRunId}/controls`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action,
+            url: overrideUrl?.trim(),
+          }),
+        }
+      );
       if (!res.ok) {
         const error = await readErrorResponse(res);
         const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
@@ -2449,14 +2547,18 @@ export default function ChatbotPage() {
         fetchWithTimeout(
           `/api/chatbot/agent/${latestAgentRunId}/snapshots?stepId=${step.id}&limit=12`
         ),
-        fetchWithTimeout(`/api/chatbot/agent/${latestAgentRunId}/logs?stepId=${step.id}`),
+        fetchWithTimeout(
+          `/api/chatbot/agent/${latestAgentRunId}/logs?stepId=${step.id}`
+        ),
         fetchWithTimeout(
           `/api/chatbot/agent/${latestAgentRunId}/audits?stepId=${step.id}&limit=200`
         ),
       ]);
 
       if (snapshotsRes.ok) {
-        const data = (await snapshotsRes.json()) as { snapshots?: AgentSnapshot[] };
+        const data = (await snapshotsRes.json()) as {
+          snapshots?: AgentSnapshot[];
+        };
         const snapshots = data.snapshots ?? [];
         setStepDetailsSnapshots(snapshots);
         setStepDetailsSnapshot(snapshots[0] ?? null);
@@ -2540,7 +2642,9 @@ export default function ChatbotPage() {
       }
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to load step snapshot.";
+        error instanceof Error
+          ? error.message
+          : "Failed to load step snapshot.";
       toast(message, { variant: "error" });
     }
   };
@@ -2556,7 +2660,9 @@ export default function ChatbotPage() {
     }
     const wasAgentModeEnabled = agentModeEnabled;
     if (agentModeEnabled && attachments.length > 0) {
-      toast("Agent mode does not support attachments yet.", { variant: "error" });
+      toast("Agent mode does not support attachments yet.", {
+        variant: "error",
+      });
       return;
     }
 
@@ -2580,7 +2686,11 @@ export default function ChatbotPage() {
         );
         if (res.ok) {
           const data = (await res.json()) as {
-            results?: Array<{ title: string; url: string; description: string }>;
+            results?: Array<{
+              title: string;
+              url: string;
+              description: string;
+            }>;
           };
           if (data.results && data.results.length > 0) {
             const lines = data.results.map(
@@ -2606,13 +2716,15 @@ export default function ChatbotPage() {
     const attachmentNote =
       attachments.length > 0
         ? `\n\nAttached files:\n${attachments
-            .map((file) => `- ${file.name} (${Math.round(file.size / 1024)} KB)`)
+            .map(
+              (file) => `- ${file.name} (${Math.round(file.size / 1024)} KB)`
+            )
             .join("\n")}`
         : "";
     const userMessage = `${trimmed}${searchNote}${attachmentNote}`.trim();
-    const nextMessages = [
+    const nextMessages: ChatMessage[] = [
       ...messages,
-      { role: "user", content: userMessage },
+      { role: "user" as const, content: userMessage },
     ];
     setMessages(nextMessages);
     setInput("");
@@ -2637,7 +2749,10 @@ export default function ChatbotPage() {
         mergedContext = trimmedGlobal;
       }
       const payloadMessages = mergedContext
-        ? ([{ role: "system", content: `Context:\n${mergedContext}` }, ...nextMessages] as ChatMessage[])
+        ? ([
+            { role: "system", content: `Context:\n${mergedContext}` },
+            ...nextMessages,
+          ] as ChatMessage[])
         : nextMessages;
       const hasFiles = attachments.length > 0;
       const tools: string[] = [];
@@ -2645,12 +2760,17 @@ export default function ChatbotPage() {
       if (useGlobalContext) tools.push("global-context");
       if (useLocalContext) tools.push("local-context");
       if (agentModeEnabled) tools.push("agent-mode");
-          const agentPlanSettings = agentModeEnabled
+      const agentPlanSettings = agentModeEnabled
         ? {
             maxSteps: clampAgentSetting(agentMaxSteps, 1, 20, 12),
             maxStepAttempts: clampAgentSetting(agentMaxStepAttempts, 1, 5, 2),
             maxReplanCalls: clampAgentSetting(agentMaxReplanCalls, 0, 6, 2),
-            replanEverySteps: clampAgentSetting(agentReplanEverySteps, 1, 10, 2),
+            replanEverySteps: clampAgentSetting(
+              agentReplanEverySteps,
+              1,
+              10,
+              2
+            ),
             maxSelfChecks: clampAgentSetting(agentMaxSelfChecks, 0, 8, 4),
             loopGuardThreshold: clampAgentSetting(
               agentLoopGuardThreshold,
@@ -2754,7 +2874,10 @@ export default function ChatbotPage() {
         setLatestAgentRunId(data.runId);
         setLatestAgentRunStatus(data.status);
         if (sessionId) {
-          safeLocalStorageSet(`chatbotLatestAgentRunId:${sessionId}`, data.runId);
+          safeLocalStorageSet(
+            `chatbotLatestAgentRunId:${sessionId}`,
+            data.runId
+          );
         }
         setMessages((prev) => [
           ...prev,
@@ -2772,12 +2895,12 @@ export default function ChatbotPage() {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                sessionId,
-                model,
-                messages: payloadMessages,
-                userMessage,
-              }),
+            body: JSON.stringify({
+              sessionId,
+              model,
+              messages: payloadMessages,
+              userMessage,
+            }),
           },
           12000
         );
@@ -3016,162 +3139,118 @@ export default function ChatbotPage() {
             </Button>
           </div>
         </div>
-      {initError ? (
-        <div className="mb-4 rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-          <p className="font-semibold">Chat session not ready</p>
+        {initError ? (
+          <div className="mb-4 rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+            <p className="font-semibold">Chat session not ready</p>
             <p className="mt-1 text-xs text-amber-200/80">
               If you recently updated the schema, run `npx prisma generate` then
               `npx prisma db push`, and restart the dev server.
             </p>
             <p className="mt-2 text-xs text-amber-200/80">{initError}</p>
           </div>
-      ) : null}
-      {stepDetailsOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={() => setStepDetailsOpen(false)}
-        >
-          <div onClick={(event) => event.stopPropagation()}>
-            <ModalShell
-              title={`Step details: ${stepDetailsTitle || "Agent step"}`}
-              onClose={() => setStepDetailsOpen(false)}
-              size="lg"
-            >
-              {stepDetailsLoading ? (
-                <div className="rounded-md border border-gray-800 bg-gray-950 p-4 text-sm text-gray-400">
-                  Loading step details...
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
-                    <p className="text-[11px] text-gray-500">Snapshot</p>
-                    <div className="mt-2 overflow-hidden rounded-md border border-gray-800 bg-gray-900">
-                      {stepDetailsSnapshot?.screenshotPath ||
-                      stepDetailsSnapshot?.screenshotData ? (
-                        <img
-                          src={
-                            stepDetailsSnapshot.screenshotPath
-                              ? `/api/chatbot/agent/${latestAgentRunId}/assets/${stepDetailsSnapshot.screenshotPath}`
-                              : stepDetailsSnapshot.screenshotData ?? ""
-                          }
-                          alt="Step snapshot"
-                          className="h-auto w-full"
-                        />
-                      ) : (
-                        <div className="flex min-h-[160px] items-center justify-center text-xs text-gray-500">
-                          No snapshot captured for this step.
-                        </div>
-                      )}
-                    </div>
-                    {stepDetailsSnapshots.length > 1 ? (
-                      <div className="mt-3">
-                        <p className="text-[11px] text-gray-500">All snapshots</p>
-                        <div className="mt-2 grid max-h-40 grid-cols-4 gap-2 overflow-y-auto">
-                          {stepDetailsSnapshots.map((snap) => (
-                            <button
-                              key={snap.id}
-                              type="button"
-                              className={`overflow-hidden rounded border ${
-                                stepDetailsSnapshot?.id === snap.id
-                                  ? "border-emerald-400"
-                                  : "border-gray-800"
-                              }`}
-                              onClick={() => setStepDetailsSnapshot(snap)}
-                            >
-                              {snap.screenshotPath || snap.screenshotData ? (
-                                <img
-                                  src={
-                                    snap.screenshotPath
-                                      ? `/api/chatbot/agent/${latestAgentRunId}/assets/${snap.screenshotPath}`
-                                      : snap.screenshotData ?? ""
-                                  }
-                                  alt="Step snapshot"
-                                  className="h-16 w-full object-cover"
-                                />
-                              ) : (
-                                <div className="flex h-16 items-center justify-center text-[10px] text-gray-500">
-                                  No image
-                                </div>
-                              )}
-                            </button>
-                          ))}
-                        </div>
+        ) : null}
+        {stepDetailsOpen ? (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+            onClick={() => setStepDetailsOpen(false)}
+          >
+            <div onClick={(event) => event.stopPropagation()}>
+              <ModalShell
+                title={`Step details: ${stepDetailsTitle || "Agent step"}`}
+                onClose={() => setStepDetailsOpen(false)}
+                size="lg"
+              >
+                {stepDetailsLoading ? (
+                  <div className="rounded-md border border-gray-800 bg-gray-950 p-4 text-sm text-gray-400">
+                    Loading step details...
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                      <p className="text-[11px] text-gray-500">Snapshot</p>
+                      <div className="mt-2 overflow-hidden rounded-md border border-gray-800 bg-gray-900">
+                        {stepDetailsSnapshot?.screenshotPath ||
+                        stepDetailsSnapshot?.screenshotData ? (
+                          <img
+                            src={
+                              stepDetailsSnapshot.screenshotPath
+                                ? `/api/chatbot/agent/${latestAgentRunId}/assets/${stepDetailsSnapshot.screenshotPath}`
+                                : (stepDetailsSnapshot.screenshotData ?? "")
+                            }
+                            alt="Step snapshot"
+                            className="h-auto w-full"
+                          />
+                        ) : (
+                          <div className="flex min-h-[160px] items-center justify-center text-xs text-gray-500">
+                            No snapshot captured for this step.
+                          </div>
+                        )}
                       </div>
-                    ) : null}
-                  </div>
-                  <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
-                    <p className="text-[11px] text-gray-500">DOM text</p>
-                    <div className="mt-2 max-h-40 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
-                      {stepDetailsSnapshot?.domText || "No DOM captured."}
+                      {stepDetailsSnapshots.length > 1 ? (
+                        <div className="mt-3">
+                          <p className="text-[11px] text-gray-500">
+                            All snapshots
+                          </p>
+                          <div className="mt-2 grid max-h-40 grid-cols-4 gap-2 overflow-y-auto">
+                            {stepDetailsSnapshots.map((snap) => (
+                              <button
+                                key={snap.id}
+                                type="button"
+                                className={`overflow-hidden rounded border ${
+                                  stepDetailsSnapshot?.id === snap.id
+                                    ? "border-emerald-400"
+                                    : "border-gray-800"
+                                }`}
+                                onClick={() => setStepDetailsSnapshot(snap)}
+                              >
+                                {snap.screenshotPath || snap.screenshotData ? (
+                                  <img
+                                    src={
+                                      snap.screenshotPath
+                                        ? `/api/chatbot/agent/${latestAgentRunId}/assets/${snap.screenshotPath}`
+                                        : (snap.screenshotData ?? "")
+                                    }
+                                    alt="Step snapshot"
+                                    className="h-16 w-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex h-16 items-center justify-center text-[10px] text-gray-500">
+                                    No image
+                                  </div>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
-                  </div>
-                  <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
-                    <p className="text-[11px] text-gray-500">Captures</p>
-                    <div className="mt-2 max-h-40 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
-                      {stepDetailsAudits.filter((audit) =>
-                        [
-                          "Captured UI inventory.",
-                          "Captured session context.",
-                          "Captured DOM snapshot.",
-                        ].includes(audit.message)
-                      ).length === 0 ? (
-                        <p className="text-gray-500">No captures logged.</p>
-                      ) : (
-                        stepDetailsAudits
-                          .filter((audit) =>
-                            [
-                              "Captured UI inventory.",
-                              "Captured session context.",
-                              "Captured DOM snapshot.",
-                            ].includes(audit.message)
-                          )
-                          .map((audit) => (
-                            <div
-                              key={audit.id}
-                              className="rounded-md border border-gray-800 bg-gray-950/60 p-2"
-                            >
-                              <div className="flex items-center justify-between text-[10px] text-gray-500">
-                                <span>{audit.message}</span>
-                                <span>
-                                  {new Date(audit.createdAt).toLocaleTimeString()}
-                                </span>
-                              </div>
-                              {audit.metadata ? (
-                                <pre className="mt-2 whitespace-pre-wrap text-[10px] text-gray-300">
-                                  {JSON.stringify(audit.metadata, null, 2)}
-                                </pre>
-                              ) : null}
-                            </div>
-                          ))
-                      )}
+                    <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                      <p className="text-[11px] text-gray-500">DOM text</p>
+                      <div className="mt-2 max-h-40 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                        {stepDetailsSnapshot?.domText || "No DOM captured."}
+                      </div>
                     </div>
-                  </div>
-                  <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
-                    <p className="text-[11px] text-gray-500">Replanning</p>
-                    <div className="mt-2 max-h-40 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
-                      {stepDetailsAudits.filter(
-                        (audit) =>
-                          audit.metadata?.type === "plan-replan" ||
-                          audit.metadata?.type === "plan-branch" ||
-                          audit.metadata?.type === "self-check-replan"
-                      ).length === 0 ? (
-                        <p className="text-gray-500">No replanning events.</p>
-                      ) : (
-                        stepDetailsAudits
-                          .filter(
-                            (audit) =>
-                              audit.metadata?.type === "plan-replan" ||
-                              audit.metadata?.type === "plan-branch" ||
-                              audit.metadata?.type === "self-check-replan"
-                          )
-                          .map((audit) => {
-                            const meta = audit.metadata as
-                              | {
-                                  reason?: string;
-                                  steps?: Array<{ title?: string }>;
-                                }
-                              | null;
-                            return (
+                    <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                      <p className="text-[11px] text-gray-500">Captures</p>
+                      <div className="mt-2 max-h-40 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                        {stepDetailsAudits.filter((audit) =>
+                          [
+                            "Captured UI inventory.",
+                            "Captured session context.",
+                            "Captured DOM snapshot.",
+                          ].includes(audit.message)
+                        ).length === 0 ? (
+                          <p className="text-gray-500">No captures logged.</p>
+                        ) : (
+                          stepDetailsAudits
+                            .filter((audit) =>
+                              [
+                                "Captured UI inventory.",
+                                "Captured session context.",
+                                "Captured DOM snapshot.",
+                              ].includes(audit.message)
+                            )
+                            .map((audit) => (
                               <div
                                 key={audit.id}
                                 className="rounded-md border border-gray-800 bg-gray-950/60 p-2"
@@ -3179,86 +3258,140 @@ export default function ChatbotPage() {
                                 <div className="flex items-center justify-between text-[10px] text-gray-500">
                                   <span>{audit.message}</span>
                                   <span>
-                                    {new Date(audit.createdAt).toLocaleTimeString()}
+                                    {new Date(
+                                      audit.createdAt
+                                    ).toLocaleTimeString()}
                                   </span>
                                 </div>
-                                {meta?.reason ? (
-                                  <p className="mt-1 text-gray-300">{meta.reason}</p>
-                                ) : null}
-                                {meta?.steps?.length ? (
-                                  <ul className="mt-2 list-disc space-y-1 pl-4 text-gray-300">
-                                    {meta.steps.slice(0, 6).map((step, idx) => (
-                                      <li key={`${audit.id}-step-${idx}`}>
-                                        {step.title || "Step"}
-                                      </li>
-                                    ))}
-                                  </ul>
+                                {audit.metadata ? (
+                                  <pre className="mt-2 whitespace-pre-wrap text-[10px] text-gray-300">
+                                    {JSON.stringify(audit.metadata, null, 2)}
+                                  </pre>
                                 ) : null}
                               </div>
-                            );
-                          })
-                      )}
+                            ))
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
-                    <p className="text-[11px] text-gray-500">Logs</p>
-                    <div className="mt-2 max-h-40 space-y-1 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
-                      {stepDetailsLogs.length === 0 ? (
-                        <p className="text-gray-500">No logs for this step.</p>
-                      ) : (
-                        stepDetailsLogs.map((log) => (
-                          <p key={log.id}>
-                            [{log.level}] {log.message}
+                    <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                      <p className="text-[11px] text-gray-500">Replanning</p>
+                      <div className="mt-2 max-h-40 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                        {stepDetailsAudits.filter(
+                          (audit) =>
+                            audit.metadata?.type === "plan-replan" ||
+                            audit.metadata?.type === "plan-branch" ||
+                            audit.metadata?.type === "self-check-replan"
+                        ).length === 0 ? (
+                          <p className="text-gray-500">No replanning events.</p>
+                        ) : (
+                          stepDetailsAudits
+                            .filter(
+                              (audit) =>
+                                audit.metadata?.type === "plan-replan" ||
+                                audit.metadata?.type === "plan-branch" ||
+                                audit.metadata?.type === "self-check-replan"
+                            )
+                            .map((audit) => {
+                              const meta = audit.metadata as {
+                                reason?: string;
+                                steps?: Array<{ title?: string }>;
+                              } | null;
+                              return (
+                                <div
+                                  key={audit.id}
+                                  className="rounded-md border border-gray-800 bg-gray-950/60 p-2"
+                                >
+                                  <div className="flex items-center justify-between text-[10px] text-gray-500">
+                                    <span>{audit.message}</span>
+                                    <span>
+                                      {new Date(
+                                        audit.createdAt
+                                      ).toLocaleTimeString()}
+                                    </span>
+                                  </div>
+                                  {meta?.reason ? (
+                                    <p className="mt-1 text-gray-300">
+                                      {meta.reason}
+                                    </p>
+                                  ) : null}
+                                  {meta?.steps?.length ? (
+                                    <ul className="mt-2 list-disc space-y-1 pl-4 text-gray-300">
+                                      {meta.steps
+                                        .slice(0, 6)
+                                        .map((step, idx) => (
+                                          <li key={`${audit.id}-step-${idx}`}>
+                                            {step.title || "Step"}
+                                          </li>
+                                        ))}
+                                    </ul>
+                                  ) : null}
+                                </div>
+                              );
+                            })
+                        )}
+                      </div>
+                    </div>
+                    <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                      <p className="text-[11px] text-gray-500">Logs</p>
+                      <div className="mt-2 max-h-40 space-y-1 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                        {stepDetailsLogs.length === 0 ? (
+                          <p className="text-gray-500">
+                            No logs for this step.
                           </p>
-                        ))
-                      )}
+                        ) : (
+                          stepDetailsLogs.map((log) => (
+                            <p key={log.id}>
+                              [{log.level}] {log.message}
+                            </p>
+                          ))
+                        )}
+                      </div>
                     </div>
                   </div>
+                )}
+              </ModalShell>
+            </div>
+          </div>
+        ) : null}
+        {snapshotLightboxOpen ? (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+            onClick={() => setSnapshotLightboxOpen(false)}
+          >
+            <div
+              className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-md border border-gray-800 bg-gray-950"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-gray-800 px-4 py-2 text-xs text-gray-400">
+                <span>Snapshot preview</span>
+                <button
+                  type="button"
+                  className="text-gray-400 hover:text-gray-200"
+                  onClick={() => setSnapshotLightboxOpen(false)}
+                >
+                  Close
+                </button>
+              </div>
+              {snapshotLightbox?.screenshotPath ||
+              snapshotLightbox?.screenshotData ? (
+                <img
+                  src={
+                    snapshotLightbox.screenshotPath
+                      ? `/api/chatbot/agent/${latestAgentRunId}/assets/${snapshotLightbox.screenshotPath}`
+                      : (snapshotLightbox.screenshotData ?? "")
+                  }
+                  alt="Snapshot preview"
+                  className="h-auto w-full object-contain"
+                />
+              ) : (
+                <div className="flex min-h-[240px] items-center justify-center text-xs text-gray-500">
+                  No snapshot available.
                 </div>
               )}
-            </ModalShell>
-          </div>
-        </div>
-      ) : null}
-      {snapshotLightboxOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-          onClick={() => setSnapshotLightboxOpen(false)}
-        >
-          <div
-            className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-md border border-gray-800 bg-gray-950"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-gray-800 px-4 py-2 text-xs text-gray-400">
-              <span>Snapshot preview</span>
-              <button
-                type="button"
-                className="text-gray-400 hover:text-gray-200"
-                onClick={() => setSnapshotLightboxOpen(false)}
-              >
-                Close
-              </button>
             </div>
-            {snapshotLightbox?.screenshotPath ||
-            snapshotLightbox?.screenshotData ? (
-              <img
-                src={
-                  snapshotLightbox.screenshotPath
-                    ? `/api/chatbot/agent/${latestAgentRunId}/assets/${snapshotLightbox.screenshotPath}`
-                    : snapshotLightbox.screenshotData ?? ""
-                }
-                alt="Snapshot preview"
-                className="h-auto w-full object-contain"
-              />
-            ) : (
-              <div className="flex min-h-[240px] items-center justify-center text-xs text-gray-500">
-                No snapshot available.
-              </div>
-            )}
           </div>
-        </div>
-      ) : null}
-      <div className="flex min-h-[420px] flex-col rounded-md border border-gray-800 bg-gray-900 p-4">
+        ) : null}
+        <div className="flex min-h-[420px] flex-col rounded-md border border-gray-800 bg-gray-900 p-4">
           <div className="max-h-[50vh] min-h-[220px] space-y-4 overflow-y-auto pr-2">
             {(sessionLoading || messagesLoading) && !initError ? (
               <div className="rounded-md border border-dashed border-gray-800 bg-gray-950/60 p-6 text-center text-sm text-gray-400">
@@ -3348,22 +3481,24 @@ export default function ChatbotPage() {
                       </div>
                     ) : (
                       <Tabs defaultValue="summary" className="w-full">
-                      <TabsList className="grid w-full grid-cols-10">
-                        <TabsTrigger value="summary">Summary</TabsTrigger>
-                        <TabsTrigger value="preview">Preview</TabsTrigger>
-                        <TabsTrigger value="dom">DOM</TabsTrigger>
-                        <TabsTrigger value="steps">Steps</TabsTrigger>
-                        <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                        <TabsTrigger value="logs">Logs</TabsTrigger>
-                        <TabsTrigger value="context">Context</TabsTrigger>
-                        <TabsTrigger value="elements">Elements</TabsTrigger>
-                        <TabsTrigger value="ui">UI</TabsTrigger>
-                        <TabsTrigger value="debug">Debug</TabsTrigger>
-                      </TabsList>
+                        <TabsList className="grid w-full grid-cols-10">
+                          <TabsTrigger value="summary">Summary</TabsTrigger>
+                          <TabsTrigger value="preview">Preview</TabsTrigger>
+                          <TabsTrigger value="dom">DOM</TabsTrigger>
+                          <TabsTrigger value="steps">Steps</TabsTrigger>
+                          <TabsTrigger value="timeline">Timeline</TabsTrigger>
+                          <TabsTrigger value="logs">Logs</TabsTrigger>
+                          <TabsTrigger value="context">Context</TabsTrigger>
+                          <TabsTrigger value="elements">Elements</TabsTrigger>
+                          <TabsTrigger value="ui">UI</TabsTrigger>
+                          <TabsTrigger value="debug">Debug</TabsTrigger>
+                        </TabsList>
                         <TabsContent value="summary" className="mt-4 space-y-3">
                           {agentRunDetails ? (
                             <div className="rounded-md border border-gray-800 bg-gray-900 p-3 text-xs text-gray-300">
-                              <p className="text-[11px] text-gray-500">Run summary</p>
+                              <p className="text-[11px] text-gray-500">
+                                Run summary
+                              </p>
                               <p className="mt-1 text-sm text-white">
                                 {agentRunDetails.prompt}
                               </p>
@@ -3399,7 +3534,9 @@ export default function ChatbotPage() {
                                       : ""}
                                   </>
                                 ) : (
-                                  <span className="text-gray-500">none yet</span>
+                                  <span className="text-gray-500">
+                                    none yet
+                                  </span>
                                 )}
                               </div>
                               <div className="mt-3 rounded-md border border-gray-800 bg-gray-950 p-2 text-[11px] text-gray-300">
@@ -3461,7 +3598,9 @@ export default function ChatbotPage() {
                                 </div>
                               </div>
                               {agentRunDetails.status === "waiting_human" &&
-                              resolveApprovalStepId(agentRunDetails.planState) ? (
+                              resolveApprovalStepId(
+                                agentRunDetails.planState
+                              ) ? (
                                 <div className="mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-[11px] text-amber-100">
                                   <div className="flex flex-wrap items-center justify-between gap-2">
                                     <span>
@@ -3469,7 +3608,9 @@ export default function ChatbotPage() {
                                       {agentPlanSteps.find(
                                         (step) =>
                                           step.id ===
-                                          resolveApprovalStepId(agentRunDetails.planState)
+                                          resolveApprovalStepId(
+                                            agentRunDetails.planState
+                                          )
                                       )?.title || "Unknown step"}
                                     </span>
                                     <Button
@@ -3479,7 +3620,9 @@ export default function ChatbotPage() {
                                       disabled={agentStepActionBusyId !== null}
                                       onClick={() =>
                                         approveAgentStep(
-                                          resolveApprovalStepId(agentRunDetails.planState)!
+                                          resolveApprovalStepId(
+                                            agentRunDetails.planState
+                                          )!
                                         )
                                       }
                                     >
@@ -3494,169 +3637,217 @@ export default function ChatbotPage() {
                                     Self-checks
                                   </p>
                                   <div className="mt-2 space-y-2">
-                                    {selfCheckAudits.slice(0, 4).map((audit) => (
-                                      <div
-                                        key={audit.id}
-                                        className="rounded-md border border-gray-800 bg-gray-900/70 p-2"
-                                      >
-                                        <div className="flex items-center justify-between text-[10px] text-gray-500">
-                                          <span>{audit.message}</span>
-                                          <span>
-                                            {new Date(
-                                              audit.createdAt
-                                            ).toLocaleTimeString()}
-                                          </span>
+                                    {selfCheckAudits
+                                      .slice(0, 4)
+                                      .map((audit) => (
+                                        <div
+                                          key={audit.id}
+                                          className="rounded-md border border-gray-800 bg-gray-900/70 p-2"
+                                        >
+                                          <div className="flex items-center justify-between text-[10px] text-gray-500">
+                                            <span>{audit.message}</span>
+                                            <span>
+                                              {new Date(
+                                                audit.createdAt
+                                              ).toLocaleTimeString()}
+                                            </span>
+                                          </div>
+                                          {audit.metadata
+                                            ? (() => {
+                                                const meta =
+                                                  audit.metadata as Record<
+                                                    string,
+                                                    unknown
+                                                  >;
+                                                const questions = getAuditList(
+                                                  meta.questions
+                                                );
+                                                const evidence = getAuditList(
+                                                  meta.evidence
+                                                );
+                                                const missingInfo =
+                                                  getAuditList(
+                                                    meta.missingInfo
+                                                  );
+                                                const blockers = getAuditList(
+                                                  meta.blockers
+                                                );
+                                                const hypotheses = getAuditList(
+                                                  meta.hypotheses
+                                                );
+                                                const verificationSteps =
+                                                  getAuditList(
+                                                    meta.verificationSteps
+                                                  );
+                                                const abortSignals =
+                                                  getAuditList(
+                                                    meta.abortSignals
+                                                  );
+                                                const finishSignals =
+                                                  getAuditList(
+                                                    meta.finishSignals
+                                                  );
+                                                const toolSwitch =
+                                                  typeof meta.toolSwitch ===
+                                                  "string"
+                                                    ? meta.toolSwitch.trim()
+                                                    : "";
+                                                return (
+                                                  <div className="mt-1 space-y-2 text-[11px] text-gray-200">
+                                                    {typeof meta.reason ===
+                                                    "string" ? (
+                                                      <p>{meta.reason}</p>
+                                                    ) : null}
+                                                    {typeof meta.notes ===
+                                                    "string" ? (
+                                                      <p className="text-gray-400">
+                                                        {meta.notes}
+                                                      </p>
+                                                    ) : null}
+                                                    {toolSwitch ? (
+                                                      <p className="text-gray-300">
+                                                        Tool switch:{" "}
+                                                        <span className="text-gray-100">
+                                                          {toolSwitch}
+                                                        </span>
+                                                      </p>
+                                                    ) : null}
+                                                    {questions.length > 0 ? (
+                                                      <div>
+                                                        <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                          Questions
+                                                        </p>
+                                                        <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                          {questions.map(
+                                                            (item) => (
+                                                              <li key={item}>
+                                                                {item}
+                                                              </li>
+                                                            )
+                                                          )}
+                                                        </ul>
+                                                      </div>
+                                                    ) : null}
+                                                    {evidence.length > 0 ? (
+                                                      <div>
+                                                        <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                          Evidence
+                                                        </p>
+                                                        <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                          {evidence.map(
+                                                            (item) => (
+                                                              <li key={item}>
+                                                                {item}
+                                                              </li>
+                                                            )
+                                                          )}
+                                                        </ul>
+                                                      </div>
+                                                    ) : null}
+                                                    {missingInfo.length > 0 ? (
+                                                      <div>
+                                                        <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                          Missing info
+                                                        </p>
+                                                        <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                          {missingInfo.map(
+                                                            (item) => (
+                                                              <li key={item}>
+                                                                {item}
+                                                              </li>
+                                                            )
+                                                          )}
+                                                        </ul>
+                                                      </div>
+                                                    ) : null}
+                                                    {blockers.length > 0 ? (
+                                                      <div>
+                                                        <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                          Blockers
+                                                        </p>
+                                                        <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                          {blockers.map(
+                                                            (item) => (
+                                                              <li key={item}>
+                                                                {item}
+                                                              </li>
+                                                            )
+                                                          )}
+                                                        </ul>
+                                                      </div>
+                                                    ) : null}
+                                                    {hypotheses.length > 0 ? (
+                                                      <div>
+                                                        <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                          Hypotheses
+                                                        </p>
+                                                        <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                          {hypotheses.map(
+                                                            (item) => (
+                                                              <li key={item}>
+                                                                {item}
+                                                              </li>
+                                                            )
+                                                          )}
+                                                        </ul>
+                                                      </div>
+                                                    ) : null}
+                                                    {verificationSteps.length >
+                                                    0 ? (
+                                                      <div>
+                                                        <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                          Verification
+                                                        </p>
+                                                        <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                          {verificationSteps.map(
+                                                            (item) => (
+                                                              <li key={item}>
+                                                                {item}
+                                                              </li>
+                                                            )
+                                                          )}
+                                                        </ul>
+                                                      </div>
+                                                    ) : null}
+                                                    {abortSignals.length > 0 ? (
+                                                      <div>
+                                                        <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                          Abort signals
+                                                        </p>
+                                                        <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                          {abortSignals.map(
+                                                            (item) => (
+                                                              <li key={item}>
+                                                                {item}
+                                                              </li>
+                                                            )
+                                                          )}
+                                                        </ul>
+                                                      </div>
+                                                    ) : null}
+                                                    {finishSignals.length >
+                                                    0 ? (
+                                                      <div>
+                                                        <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                          Finish signals
+                                                        </p>
+                                                        <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                          {finishSignals.map(
+                                                            (item) => (
+                                                              <li key={item}>
+                                                                {item}
+                                                              </li>
+                                                            )
+                                                          )}
+                                                        </ul>
+                                                      </div>
+                                                    ) : null}
+                                                  </div>
+                                                );
+                                              })()
+                                            : null}
                                         </div>
-                                        {audit.metadata
-                                          ? (() => {
-                                              const meta = audit.metadata as Record<
-                                                string,
-                                                unknown
-                                              >;
-                                              const questions = getAuditList(meta.questions);
-                                              const evidence = getAuditList(meta.evidence);
-                                              const missingInfo = getAuditList(
-                                                meta.missingInfo
-                                              );
-                                              const blockers = getAuditList(meta.blockers);
-                                              const hypotheses = getAuditList(
-                                                meta.hypotheses
-                                              );
-                                              const verificationSteps = getAuditList(
-                                                meta.verificationSteps
-                                              );
-                                              const abortSignals = getAuditList(
-                                                meta.abortSignals
-                                              );
-                                              const finishSignals = getAuditList(
-                                                meta.finishSignals
-                                              );
-                                              const toolSwitch =
-                                                typeof meta.toolSwitch === "string"
-                                                  ? meta.toolSwitch.trim()
-                                                  : "";
-                                              return (
-                                                <div className="mt-1 space-y-2 text-[11px] text-gray-200">
-                                                  {typeof meta.reason === "string" ? (
-                                                    <p>{meta.reason}</p>
-                                                  ) : null}
-                                                  {typeof meta.notes === "string" ? (
-                                                    <p className="text-gray-400">
-                                                      {meta.notes}
-                                                    </p>
-                                                  ) : null}
-                                                  {toolSwitch ? (
-                                                    <p className="text-gray-300">
-                                                      Tool switch:{" "}
-                                                      <span className="text-gray-100">
-                                                        {toolSwitch}
-                                                      </span>
-                                                    </p>
-                                                  ) : null}
-                                                  {questions.length > 0 ? (
-                                                    <div>
-                                                      <p className="text-[10px] uppercase tracking-wide text-gray-500">
-                                                        Questions
-                                                      </p>
-                                                      <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
-                                                        {questions.map((item) => (
-                                                          <li key={item}>{item}</li>
-                                                        ))}
-                                                      </ul>
-                                                    </div>
-                                                  ) : null}
-                                                  {evidence.length > 0 ? (
-                                                    <div>
-                                                      <p className="text-[10px] uppercase tracking-wide text-gray-500">
-                                                        Evidence
-                                                      </p>
-                                                      <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
-                                                        {evidence.map((item) => (
-                                                          <li key={item}>{item}</li>
-                                                        ))}
-                                                      </ul>
-                                                    </div>
-                                                  ) : null}
-                                                  {missingInfo.length > 0 ? (
-                                                    <div>
-                                                      <p className="text-[10px] uppercase tracking-wide text-gray-500">
-                                                        Missing info
-                                                      </p>
-                                                      <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
-                                                        {missingInfo.map((item) => (
-                                                          <li key={item}>{item}</li>
-                                                        ))}
-                                                      </ul>
-                                                    </div>
-                                                  ) : null}
-                                                  {blockers.length > 0 ? (
-                                                    <div>
-                                                      <p className="text-[10px] uppercase tracking-wide text-gray-500">
-                                                        Blockers
-                                                      </p>
-                                                      <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
-                                                        {blockers.map((item) => (
-                                                          <li key={item}>{item}</li>
-                                                        ))}
-                                                      </ul>
-                                                    </div>
-                                                  ) : null}
-                                                  {hypotheses.length > 0 ? (
-                                                    <div>
-                                                      <p className="text-[10px] uppercase tracking-wide text-gray-500">
-                                                        Hypotheses
-                                                      </p>
-                                                      <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
-                                                        {hypotheses.map((item) => (
-                                                          <li key={item}>{item}</li>
-                                                        ))}
-                                                      </ul>
-                                                    </div>
-                                                  ) : null}
-                                                  {verificationSteps.length > 0 ? (
-                                                    <div>
-                                                      <p className="text-[10px] uppercase tracking-wide text-gray-500">
-                                                        Verification
-                                                      </p>
-                                                      <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
-                                                        {verificationSteps.map(
-                                                          (item) => (
-                                                            <li key={item}>{item}</li>
-                                                          )
-                                                        )}
-                                                      </ul>
-                                                    </div>
-                                                  ) : null}
-                                                  {abortSignals.length > 0 ? (
-                                                    <div>
-                                                      <p className="text-[10px] uppercase tracking-wide text-gray-500">
-                                                        Abort signals
-                                                      </p>
-                                                      <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
-                                                        {abortSignals.map((item) => (
-                                                          <li key={item}>{item}</li>
-                                                        ))}
-                                                      </ul>
-                                                    </div>
-                                                  ) : null}
-                                                  {finishSignals.length > 0 ? (
-                                                    <div>
-                                                      <p className="text-[10px] uppercase tracking-wide text-gray-500">
-                                                        Finish signals
-                                                      </p>
-                                                      <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
-                                                        {finishSignals.map((item) => (
-                                                          <li key={item}>{item}</li>
-                                                        ))}
-                                                      </ul>
-                                                    </div>
-                                                  ) : null}
-                                                </div>
-                                              );
-                                            })()
-                                          : null}
-                                      </div>
-                                    ))}
+                                      ))}
                                   </div>
                                 </div>
                               ) : null}
@@ -3667,16 +3858,16 @@ export default function ChatbotPage() {
                                   </p>
                                   <div className="mt-2 space-y-2">
                                     {branchAudits.slice(0, 3).map((audit) => {
-                                      const meta = audit.metadata as
-                                        | {
-                                            branchSteps?: Array<{
-                                              id?: string;
-                                              title?: string;
-                                            }>;
-                                            reason?: string;
-                                          }
-                                        | null;
-                                      const branchSteps = Array.isArray(meta?.branchSteps)
+                                      const meta = audit.metadata as {
+                                        branchSteps?: Array<{
+                                          id?: string;
+                                          title?: string;
+                                        }>;
+                                        reason?: string;
+                                      } | null;
+                                      const branchSteps = Array.isArray(
+                                        meta?.branchSteps
+                                      )
                                         ? meta?.branchSteps
                                         : [];
                                       return (
@@ -3700,16 +3891,19 @@ export default function ChatbotPage() {
                                           </div>
                                           {branchSteps.length > 0 ? (
                                             <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
-                                              {branchSteps.map((step, index) => (
-                                                <li
-                                                  key={
-                                                    step.id ??
-                                                    `branch-step-${index}`
-                                                  }
-                                                >
-                                                  {step.title || "Branch step"}
-                                                </li>
-                                              ))}
+                                              {branchSteps.map(
+                                                (step, index) => (
+                                                  <li
+                                                    key={
+                                                      step.id ??
+                                                      `branch-step-${index}`
+                                                    }
+                                                  >
+                                                    {step.title ||
+                                                      "Branch step"}
+                                                  </li>
+                                                )
+                                              )}
                                             </ul>
                                           ) : (
                                             <p className="mt-1 text-gray-500">
@@ -3728,101 +3922,109 @@ export default function ChatbotPage() {
                                     Self-improvement
                                   </p>
                                   <div className="mt-2 space-y-2">
-                                    {selfImprovementAudits.slice(0, 3).map((audit) => {
-                                      const meta = audit.metadata as Record<
-                                        string,
-                                        unknown
-                                      > | null;
-                                      const mistakes = getAuditList(meta?.mistakes);
-                                      const improvements = getAuditList(
-                                        meta?.improvements
-                                      );
-                                      const guardrails = getAuditList(meta?.guardrails);
-                                      const toolAdjustments = getAuditList(
-                                        meta?.toolAdjustments
-                                      );
-                                      const summary =
-                                        typeof meta?.summary === "string"
-                                          ? meta.summary
-                                          : "";
-                                      const confidence =
-                                        typeof meta?.confidence === "number"
-                                          ? meta.confidence
-                                          : null;
-                                      return (
-                                        <div
-                                          key={audit.id}
-                                          className="rounded-md border border-gray-800 bg-gray-900/70 p-2"
-                                        >
-                                          <div className="flex items-center justify-between text-[10px] text-gray-500">
-                                            <span>{audit.message}</span>
-                                            <span>
-                                              {new Date(
-                                                audit.createdAt
-                                              ).toLocaleTimeString()}
-                                            </span>
+                                    {selfImprovementAudits
+                                      .slice(0, 3)
+                                      .map((audit) => {
+                                        const meta = audit.metadata as Record<
+                                          string,
+                                          unknown
+                                        > | null;
+                                        const mistakes = getAuditList(
+                                          meta?.mistakes
+                                        );
+                                        const improvements = getAuditList(
+                                          meta?.improvements
+                                        );
+                                        const guardrails = getAuditList(
+                                          meta?.guardrails
+                                        );
+                                        const toolAdjustments = getAuditList(
+                                          meta?.toolAdjustments
+                                        );
+                                        const summary =
+                                          typeof meta?.summary === "string"
+                                            ? meta.summary
+                                            : "";
+                                        const confidence =
+                                          typeof meta?.confidence === "number"
+                                            ? meta.confidence
+                                            : null;
+                                        return (
+                                          <div
+                                            key={audit.id}
+                                            className="rounded-md border border-gray-800 bg-gray-900/70 p-2"
+                                          >
+                                            <div className="flex items-center justify-between text-[10px] text-gray-500">
+                                              <span>{audit.message}</span>
+                                              <span>
+                                                {new Date(
+                                                  audit.createdAt
+                                                ).toLocaleTimeString()}
+                                              </span>
+                                            </div>
+                                            {summary ? (
+                                              <p className="mt-1 text-gray-200">
+                                                {summary}
+                                              </p>
+                                            ) : null}
+                                            {confidence !== null ? (
+                                              <p className="mt-1 text-gray-400">
+                                                Confidence: {confidence}
+                                              </p>
+                                            ) : null}
+                                            {mistakes.length > 0 ? (
+                                              <div className="mt-2">
+                                                <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                  Mistakes
+                                                </p>
+                                                <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                  {mistakes.map((item) => (
+                                                    <li key={item}>{item}</li>
+                                                  ))}
+                                                </ul>
+                                              </div>
+                                            ) : null}
+                                            {improvements.length > 0 ? (
+                                              <div className="mt-2">
+                                                <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                  Improvements
+                                                </p>
+                                                <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                  {improvements.map((item) => (
+                                                    <li key={item}>{item}</li>
+                                                  ))}
+                                                </ul>
+                                              </div>
+                                            ) : null}
+                                            {guardrails.length > 0 ? (
+                                              <div className="mt-2">
+                                                <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                  Guardrails
+                                                </p>
+                                                <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                  {guardrails.map((item) => (
+                                                    <li key={item}>{item}</li>
+                                                  ))}
+                                                </ul>
+                                              </div>
+                                            ) : null}
+                                            {toolAdjustments.length > 0 ? (
+                                              <div className="mt-2">
+                                                <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                  Tool tweaks
+                                                </p>
+                                                <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
+                                                  {toolAdjustments.map(
+                                                    (item) => (
+                                                      <li key={item}>{item}</li>
+                                                    )
+                                                  )}
+                                                </ul>
+                                              </div>
+                                            ) : null}
                                           </div>
-                                          {summary ? (
-                                            <p className="mt-1 text-gray-200">
-                                              {summary}
-                                            </p>
-                                          ) : null}
-                                          {confidence !== null ? (
-                                            <p className="mt-1 text-gray-400">
-                                              Confidence: {confidence}
-                                            </p>
-                                          ) : null}
-                                          {mistakes.length > 0 ? (
-                                            <div className="mt-2">
-                                              <p className="text-[10px] uppercase tracking-wide text-gray-500">
-                                                Mistakes
-                                              </p>
-                                              <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
-                                                {mistakes.map((item) => (
-                                                  <li key={item}>{item}</li>
-                                                ))}
-                                              </ul>
-                                            </div>
-                                          ) : null}
-                                          {improvements.length > 0 ? (
-                                            <div className="mt-2">
-                                              <p className="text-[10px] uppercase tracking-wide text-gray-500">
-                                                Improvements
-                                              </p>
-                                              <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
-                                                {improvements.map((item) => (
-                                                  <li key={item}>{item}</li>
-                                                ))}
-                                              </ul>
-                                            </div>
-                                          ) : null}
-                                          {guardrails.length > 0 ? (
-                                            <div className="mt-2">
-                                              <p className="text-[10px] uppercase tracking-wide text-gray-500">
-                                                Guardrails
-                                              </p>
-                                              <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
-                                                {guardrails.map((item) => (
-                                                  <li key={item}>{item}</li>
-                                                ))}
-                                              </ul>
-                                            </div>
-                                          ) : null}
-                                          {toolAdjustments.length > 0 ? (
-                                            <div className="mt-2">
-                                              <p className="text-[10px] uppercase tracking-wide text-gray-500">
-                                                Tool tweaks
-                                              </p>
-                                              <ul className="mt-1 list-disc space-y-1 pl-4 text-gray-300">
-                                                {toolAdjustments.map((item) => (
-                                                  <li key={item}>{item}</li>
-                                                ))}
-                                              </ul>
-                                            </div>
-                                          ) : null}
-                                        </div>
-                                      );
-                                    })}
+                                        );
+                                      })}
                                   </div>
                                 </div>
                               ) : null}
@@ -3837,7 +4039,9 @@ export default function ChatbotPage() {
                                     onClick={() => resumeAgentRun()}
                                     disabled={agentResumeBusy}
                                   >
-                                    {agentResumeBusy ? "Resuming..." : "Resume run"}
+                                    {agentResumeBusy
+                                      ? "Resuming..."
+                                      : "Resume run"}
                                   </Button>
                                 </div>
                               ) : null}
@@ -3868,10 +4072,16 @@ export default function ChatbotPage() {
                                       type="button"
                                       size="sm"
                                       variant="outline"
-                                      disabled={agentResumeBusy || !resumeStepId}
-                                      onClick={() => resumeAgentRun(resumeStepId)}
+                                      disabled={
+                                        agentResumeBusy || !resumeStepId
+                                      }
+                                      onClick={() =>
+                                        resumeAgentRun(resumeStepId)
+                                      }
                                     >
-                                      {agentResumeBusy ? "Resuming..." : "Resume"}
+                                      {agentResumeBusy
+                                        ? "Resuming..."
+                                        : "Resume"}
                                     </Button>
                                   </div>
                                 </div>
@@ -3913,7 +4123,8 @@ export default function ChatbotPage() {
                                   src={
                                     agentPreviewSnapshot.screenshotPath
                                       ? `/api/chatbot/agent/${latestAgentRunId}/assets/${agentPreviewSnapshot.screenshotPath}`
-                                      : agentPreviewSnapshot.screenshotData ?? ""
+                                      : (agentPreviewSnapshot.screenshotData ??
+                                        "")
                                   }
                                   alt="Agent preview"
                                   className="h-auto w-full object-cover"
@@ -3928,7 +4139,9 @@ export default function ChatbotPage() {
                         </TabsContent>
                         <TabsContent value="dom" className="mt-4">
                           <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
-                            <p className="text-[11px] text-gray-500">DOM snapshot</p>
+                            <p className="text-[11px] text-gray-500">
+                              DOM snapshot
+                            </p>
                             <div className="mt-2 max-h-48 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
                               {agentPreviewSnapshot?.domText ||
                                 "No DOM captured yet."}
@@ -3937,7 +4150,9 @@ export default function ChatbotPage() {
                         </TabsContent>
                         <TabsContent value="steps" className="mt-4">
                           <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
-                            <p className="text-[11px] text-gray-500">Agent steps</p>
+                            <p className="text-[11px] text-gray-500">
+                              Agent steps
+                            </p>
                             {renderPlannerNotes(agentPlanMeta)}
                             {agentPlanSteps.length > 0 ? (
                               <div className="mt-3 rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
@@ -3946,17 +4161,23 @@ export default function ChatbotPage() {
                                 </p>
                                 <ol className="mt-2 space-y-2">
                                   {agentPlanSteps.map((step, index) => {
-                                    const deps = formatDependencies(step.dependsOn);
+                                    const deps = formatDependencies(
+                                      step.dependsOn
+                                    );
                                     return (
                                       <li
                                         key={step.id || `${index}-plan-step`}
                                         className="rounded-md border border-gray-800 bg-gray-950/70 px-2 py-2"
                                       >
                                         <div className="flex items-center justify-between text-[10px] text-gray-500">
-                                          <span className="uppercase">#{index + 1}</span>
+                                          <span className="uppercase">
+                                            #{index + 1}
+                                          </span>
                                           <span className="uppercase">
                                             {step.status}
-                                            {step.phase ? ` · ${step.phase}` : ""}
+                                            {step.phase
+                                              ? ` · ${step.phase}`
+                                              : ""}
                                             {typeof step.priority === "number"
                                               ? ` · p${step.priority}`
                                               : ""}
@@ -3999,10 +4220,13 @@ export default function ChatbotPage() {
                                           size="sm"
                                           variant="outline"
                                           disabled={
-                                            agentRunDetails?.status === "running" ||
+                                            agentRunDetails?.status ===
+                                              "running" ||
                                             agentStepActionBusyId === step.id
                                           }
-                                          onClick={() => retryAgentStep(step.id)}
+                                          onClick={() =>
+                                            retryAgentStep(step.id)
+                                          }
                                         >
                                           Retry
                                         </Button>
@@ -4011,11 +4235,15 @@ export default function ChatbotPage() {
                                           size="sm"
                                           variant="outline"
                                           disabled={
-                                            agentRunDetails?.status === "running" ||
+                                            agentRunDetails?.status ===
+                                              "running" ||
                                             agentStepActionBusyId === step.id
                                           }
                                           onClick={() =>
-                                            overrideAgentStep(step.id, "completed")
+                                            overrideAgentStep(
+                                              step.id,
+                                              "completed"
+                                            )
                                           }
                                         >
                                           Mark done
@@ -4025,7 +4253,8 @@ export default function ChatbotPage() {
                                           size="sm"
                                           variant="outline"
                                           disabled={
-                                            agentRunDetails?.status === "running" ||
+                                            agentRunDetails?.status ===
+                                              "running" ||
                                             agentStepActionBusyId === step.id
                                           }
                                           onClick={() =>
@@ -4042,7 +4271,8 @@ export default function ChatbotPage() {
                             ) : null}
                             {agentRunAudits.some(
                               (audit) =>
-                                audit.message === "LLM extraction plan created." &&
+                                audit.message ===
+                                  "LLM extraction plan created." &&
                                 audit.metadata?.plan
                             ) ? (
                               <div className="mt-3 rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
@@ -4078,7 +4308,8 @@ export default function ChatbotPage() {
                                 <div className="mt-2 space-y-2">
                                   {agentRunAudits
                                     .filter(
-                                      (audit) => audit.message === "Plan evaluated."
+                                      (audit) =>
+                                        audit.message === "Plan evaluated."
                                     )
                                     .slice(0, 2)
                                     .map((audit) => (
@@ -4088,16 +4319,23 @@ export default function ChatbotPage() {
                                       >
                                         <p>
                                           Score:{" "}
-                                          {typeof audit.metadata?.score === "number"
+                                          {typeof audit.metadata?.score ===
+                                          "number"
                                             ? audit.metadata.score
                                             : "n/a"}
                                         </p>
-                                        {Array.isArray(audit.metadata?.issues) &&
-                                        audit.metadata?.issues?.length ? (
+                                        {Array.isArray(
+                                          audit.metadata?.issues
+                                        ) && audit.metadata?.issues?.length ? (
                                           <ul className="mt-1 list-disc space-y-1 pl-4">
                                             {audit.metadata.issues.map(
-                                              (issue: string, index: number) => (
-                                                <li key={`${audit.id}-issue-${index}`}>
+                                              (
+                                                issue: string,
+                                                index: number
+                                              ) => (
+                                                <li
+                                                  key={`${audit.id}-issue-${index}`}
+                                                >
                                                   {issue}
                                                 </li>
                                               )
@@ -4136,11 +4374,14 @@ export default function ChatbotPage() {
                                       >
                                         <p>
                                           Verdict:{" "}
-                                          {typeof audit.metadata?.verdict === "string"
+                                          {typeof audit.metadata?.verdict ===
+                                          "string"
                                             ? audit.metadata.verdict
                                             : "unknown"}
                                         </p>
-                                        {Array.isArray(audit.metadata?.evidence) &&
+                                        {Array.isArray(
+                                          audit.metadata?.evidence
+                                        ) &&
                                         audit.metadata?.evidence?.length ? (
                                           <div className="mt-1">
                                             <p className="text-gray-400">
@@ -4148,7 +4389,10 @@ export default function ChatbotPage() {
                                             </p>
                                             <ul className="mt-1 list-disc space-y-1 pl-4">
                                               {audit.metadata.evidence.map(
-                                                (item: string, index: number) => (
+                                                (
+                                                  item: string,
+                                                  index: number
+                                                ) => (
                                                   <li
                                                     key={`${audit.id}-evidence-${index}`}
                                                   >
@@ -4159,13 +4403,19 @@ export default function ChatbotPage() {
                                             </ul>
                                           </div>
                                         ) : null}
-                                        {Array.isArray(audit.metadata?.missing) &&
-                                        audit.metadata?.missing?.length ? (
+                                        {Array.isArray(
+                                          audit.metadata?.missing
+                                        ) && audit.metadata?.missing?.length ? (
                                           <div className="mt-2">
-                                            <p className="text-gray-400">Missing</p>
+                                            <p className="text-gray-400">
+                                              Missing
+                                            </p>
                                             <ul className="mt-1 list-disc space-y-1 pl-4">
                                               {audit.metadata.missing.map(
-                                                (item: string, index: number) => (
+                                                (
+                                                  item: string,
+                                                  index: number
+                                                ) => (
                                                   <li
                                                     key={`${audit.id}-missing-${index}`}
                                                   >
@@ -4176,7 +4426,8 @@ export default function ChatbotPage() {
                                             </ul>
                                           </div>
                                         ) : null}
-                                        {typeof audit.metadata?.followUp === "string" &&
+                                        {typeof audit.metadata?.followUp ===
+                                          "string" &&
                                         audit.metadata.followUp.trim() ? (
                                           <p className="mt-2 text-gray-400">
                                             Follow-up: {audit.metadata.followUp}
@@ -4201,7 +4452,9 @@ export default function ChatbotPage() {
                                         {step.level}
                                       </span>
                                       <span>
-                                        {new Date(step.createdAt).toLocaleTimeString()}
+                                        {new Date(
+                                          step.createdAt
+                                        ).toLocaleTimeString()}
                                       </span>
                                     </div>
                                     <p className="mt-1 text-gray-200">
@@ -4225,7 +4478,11 @@ export default function ChatbotPage() {
                                         </button>
                                         {expandedRunAuditIds[step.id] ? (
                                           <pre className="mt-2 whitespace-pre-wrap rounded-md border border-gray-800 bg-gray-900 p-2 text-[10px] text-gray-300">
-                                            {JSON.stringify(step.metadata, null, 2)}
+                                            {JSON.stringify(
+                                              step.metadata,
+                                              null,
+                                              2
+                                            )}
                                           </pre>
                                         ) : null}
                                       </div>
@@ -4258,7 +4515,9 @@ export default function ChatbotPage() {
                                         {entry.level ? ` · ${entry.level}` : ""}
                                       </span>
                                       <span>
-                                        {new Date(entry.createdAt).toLocaleTimeString()}
+                                        {new Date(
+                                          entry.createdAt
+                                        ).toLocaleTimeString()}
                                       </span>
                                     </div>
                                     <p className="mt-1 text-[11px] text-gray-200">
@@ -4298,17 +4557,24 @@ export default function ChatbotPage() {
                                     Cookies
                                   </p>
                                   <div className="mt-1 max-h-36 overflow-y-auto">
-                                    {(latestSessionContext.cookies as Array<{
-                                      name: string;
-                                      domain: string;
-                                      path: string;
-                                      expires: number;
-                                      httpOnly: boolean;
-                                      secure: boolean;
-                                      sameSite: string;
-                                      valueLength: number;
-                                    }> | undefined)?.map((cookie, index) => (
-                                      <div key={`${cookie.name}-${index}`} className="mt-1">
+                                    {(
+                                      latestSessionContext.cookies as
+                                        | Array<{
+                                            name: string;
+                                            domain: string;
+                                            path: string;
+                                            expires: number;
+                                            httpOnly: boolean;
+                                            secure: boolean;
+                                            sameSite: string;
+                                            valueLength: number;
+                                          }>
+                                        | undefined
+                                    )?.map((cookie, index) => (
+                                      <div
+                                        key={`${cookie.name}-${index}`}
+                                        className="mt-1"
+                                      >
                                         <span className="text-slate-100">
                                           {cookie.name}
                                         </span>{" "}
@@ -4333,20 +4599,26 @@ export default function ChatbotPage() {
                                   <div className="mt-1 text-gray-300">
                                     <p>
                                       Local:{" "}
-                                      {(latestSessionContext.storage as {
-                                        localCount?: number;
-                                      })?.localCount ?? 0}
+                                      {(
+                                        latestSessionContext.storage as {
+                                          localCount?: number;
+                                        }
+                                      )?.localCount ?? 0}
                                       {" · "}
                                       Session:{" "}
-                                      {(latestSessionContext.storage as {
-                                        sessionCount?: number;
-                                      })?.sessionCount ?? 0}
+                                      {(
+                                        latestSessionContext.storage as {
+                                          sessionCount?: number;
+                                        }
+                                      )?.sessionCount ?? 0}
                                     </p>
                                     <div className="mt-1 max-h-20 overflow-y-auto text-[10px] text-gray-400">
-                                      {(latestSessionContext.storage as {
-                                        localKeys?: string[];
-                                        sessionKeys?: string[];
-                                      })?.localKeys?.join(", ") ||
+                                      {(
+                                        latestSessionContext.storage as {
+                                          localKeys?: string[];
+                                          sessionKeys?: string[];
+                                        }
+                                      )?.localKeys?.join(", ") ||
                                         "No localStorage keys."}
                                     </div>
                                   </div>
@@ -4359,7 +4631,8 @@ export default function ChatbotPage() {
                             )}
                           </div>
                           {agentRunAudits.some(
-                            (audit) => audit.metadata?.type === "planner-context"
+                            (audit) =>
+                              audit.metadata?.type === "planner-context"
                           ) ? (
                             <div className="mt-3 rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
                               <p className="text-[11px] text-gray-500">
@@ -4396,15 +4669,19 @@ export default function ChatbotPage() {
                                     Inputs
                                   </p>
                                   <div className="mt-1 max-h-36 space-y-1 overflow-y-auto">
-                                    {(latestLoginCandidates.inputs as Array<{
-                                      tag: string;
-                                      id: string | null;
-                                      name: string | null;
-                                      type: string | null;
-                                      placeholder: string | null;
-                                      ariaLabel: string | null;
-                                      score: number;
-                                    }> | undefined)?.map((input, index) => (
+                                    {(
+                                      latestLoginCandidates.inputs as
+                                        | Array<{
+                                            tag: string;
+                                            id: string | null;
+                                            name: string | null;
+                                            type: string | null;
+                                            placeholder: string | null;
+                                            ariaLabel: string | null;
+                                            score: number;
+                                          }>
+                                        | undefined
+                                    )?.map((input, index) => (
                                       <div key={`${input.name}-${index}`}>
                                         <span className="text-slate-100">
                                           {input.name ||
@@ -4428,14 +4705,18 @@ export default function ChatbotPage() {
                                     Buttons
                                   </p>
                                   <div className="mt-1 max-h-36 space-y-1 overflow-y-auto">
-                                    {(latestLoginCandidates.buttons as Array<{
-                                      tag: string;
-                                      id: string | null;
-                                      name: string | null;
-                                      type: string | null;
-                                      text: string | null;
-                                      score: number;
-                                    }> | undefined)?.map((button, index) => (
+                                    {(
+                                      latestLoginCandidates.buttons as
+                                        | Array<{
+                                            tag: string;
+                                            id: string | null;
+                                            name: string | null;
+                                            type: string | null;
+                                            text: string | null;
+                                            score: number;
+                                          }>
+                                        | undefined
+                                    )?.map((button, index) => (
                                       <div key={`${button.text}-${index}`}>
                                         <span className="text-slate-100">
                                           {button.text ||
@@ -4475,7 +4756,10 @@ export default function ChatbotPage() {
                                   </p>
                                   <div className="mt-1 grid grid-cols-2 gap-2 text-[10px] text-gray-400">
                                     {Object.entries(
-                                      (latestUiInventory.counts as Record<string, number>) || {}
+                                      (latestUiInventory.counts as Record<
+                                        string,
+                                        number
+                                      >) || {}
                                     ).map(([key, value]) => (
                                       <span key={key}>
                                         {key}: {value}
@@ -4502,15 +4786,20 @@ export default function ChatbotPage() {
                                       </p>
                                       <div className="mt-1 max-h-32 space-y-1 overflow-y-auto text-[10px] text-gray-400">
                                         {(
-                                          (latestUiInventory as Record<string, unknown>)[
-                                            section
-                                          ] as Array<{
-                                            selector?: string | null;
-                                            text?: string | null;
-                                            name?: string | null;
-                                            id?: string | null;
-                                            type?: string | null;
-                                          }> | undefined
+                                          (
+                                            latestUiInventory as Record<
+                                              string,
+                                              unknown
+                                            >
+                                          )[section] as
+                                            | Array<{
+                                                selector?: string | null;
+                                                text?: string | null;
+                                                name?: string | null;
+                                                id?: string | null;
+                                                type?: string | null;
+                                              }>
+                                            | undefined
                                         )?.map((item, index) => (
                                           <div key={`${section}-${index}`}>
                                             <span className="text-slate-100">
@@ -4543,7 +4832,9 @@ export default function ChatbotPage() {
                         </TabsContent>
                         <TabsContent value="debug" className="mt-4">
                           <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
-                            <p className="text-[11px] text-gray-500">Agent debug</p>
+                            <p className="text-[11px] text-gray-500">
+                              Agent debug
+                            </p>
                             <div className="mt-2 space-y-3">
                               {agentRunDetails?.planState ? (
                                 <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
@@ -4551,7 +4842,11 @@ export default function ChatbotPage() {
                                     Settings
                                   </p>
                                   <pre className="mt-1 whitespace-pre-wrap text-[10px] text-gray-300">
-                                    {JSON.stringify(agentRunDetails.planState, null, 2)}
+                                    {JSON.stringify(
+                                      agentRunDetails.planState,
+                                      null,
+                                      2
+                                    )}
                                   </pre>
                                 </div>
                               ) : null}
@@ -4561,7 +4856,11 @@ export default function ChatbotPage() {
                                     Planner context
                                   </p>
                                   <pre className="mt-1 whitespace-pre-wrap text-[10px] text-gray-300">
-                                    {JSON.stringify(latestPlannerContext.metadata, null, 2)}
+                                    {JSON.stringify(
+                                      latestPlannerContext.metadata,
+                                      null,
+                                      2
+                                    )}
                                   </pre>
                                 </div>
                               ) : null}
@@ -4571,7 +4870,11 @@ export default function ChatbotPage() {
                                     Latest replan
                                   </p>
                                   <pre className="mt-1 whitespace-pre-wrap text-[10px] text-gray-300">
-                                    {JSON.stringify(latestPlanReplan.metadata, null, 2)}
+                                    {JSON.stringify(
+                                      latestPlanReplan.metadata,
+                                      null,
+                                      2
+                                    )}
                                   </pre>
                                 </div>
                               ) : null}
@@ -4581,7 +4884,11 @@ export default function ChatbotPage() {
                                     Latest adaptation
                                   </p>
                                   <pre className="mt-1 whitespace-pre-wrap text-[10px] text-gray-300">
-                                    {JSON.stringify(latestPlanAdapt.metadata, null, 2)}
+                                    {JSON.stringify(
+                                      latestPlanAdapt.metadata,
+                                      null,
+                                      2
+                                    )}
                                   </pre>
                                 </div>
                               ) : null}
@@ -4591,7 +4898,11 @@ export default function ChatbotPage() {
                                     Latest self-check replan
                                   </p>
                                   <pre className="mt-1 whitespace-pre-wrap text-[10px] text-gray-300">
-                                    {JSON.stringify(latestSelfCheckReplan.metadata, null, 2)}
+                                    {JSON.stringify(
+                                      latestSelfCheckReplan.metadata,
+                                      null,
+                                      2
+                                    )}
                                   </pre>
                                 </div>
                               ) : null}
@@ -4601,7 +4912,11 @@ export default function ChatbotPage() {
                                     Loop guard
                                   </p>
                                   <pre className="mt-1 whitespace-pre-wrap text-[10px] text-gray-300">
-                                    {JSON.stringify(latestLoopGuard.metadata, null, 2)}
+                                    {JSON.stringify(
+                                      latestLoopGuard.metadata,
+                                      null,
+                                      2
+                                    )}
                                   </pre>
                                 </div>
                               ) : null}
@@ -4698,8 +5013,9 @@ export default function ChatbotPage() {
                         {agentPlanSteps.find(
                           (step) =>
                             step.id ===
-                            (resolveApprovalStepId(agentRunDetails?.planState ?? null) ||
-                              latestApprovalStepId)
+                            (resolveApprovalStepId(
+                              agentRunDetails?.planState ?? null
+                            ) || latestApprovalStepId)
                         )?.title || "Unknown step"}
                       </span>
                       <Button
@@ -4709,8 +5025,9 @@ export default function ChatbotPage() {
                         disabled={agentStepActionBusyId !== null}
                         onClick={() =>
                           approveAgentStep(
-                            (resolveApprovalStepId(agentRunDetails?.planState ?? null) ||
-                              latestApprovalStepId)!
+                            (resolveApprovalStepId(
+                              agentRunDetails?.planState ?? null
+                            ) || latestApprovalStepId)!
                           )
                         }
                       >
@@ -4734,7 +5051,7 @@ export default function ChatbotPage() {
                         src={
                           agentPreviewSnapshot.screenshotPath
                             ? `/api/chatbot/agent/${latestAgentRunId}/assets/${agentPreviewSnapshot.screenshotPath}`
-                            : agentPreviewSnapshot.screenshotData ?? ""
+                            : (agentPreviewSnapshot.screenshotData ?? "")
                         }
                         alt="Agent preview"
                         className="h-auto w-full object-contain"
@@ -4784,7 +5101,9 @@ export default function ChatbotPage() {
                                   </button>
                                 ) : null}
                               </div>
-                              <p className="mt-1 text-slate-100">{step.title}</p>
+                              <p className="mt-1 text-slate-100">
+                                {step.title}
+                              </p>
                               <div className="mt-2 flex flex-wrap gap-2">
                                 <button
                                   type="button"
@@ -4813,7 +5132,9 @@ export default function ChatbotPage() {
                                     latestAgentRunStatus === "running" ||
                                     agentStepActionBusyId === step.id
                                   }
-                                  onClick={() => overrideAgentStep(step.id, "completed")}
+                                  onClick={() =>
+                                    overrideAgentStep(step.id, "completed")
+                                  }
                                 >
                                   Mark done
                                 </Button>
@@ -4825,7 +5146,9 @@ export default function ChatbotPage() {
                                     latestAgentRunStatus === "running" ||
                                     agentStepActionBusyId === step.id
                                   }
-                                  onClick={() => overrideAgentStep(step.id, "failed")}
+                                  onClick={() =>
+                                    overrideAgentStep(step.id, "failed")
+                                  }
                                 >
                                   Mark failed
                                 </Button>
@@ -4980,10 +5303,14 @@ export default function ChatbotPage() {
                       <SelectItem value="websearch">Web search</SelectItem>
                     ) : null}
                     {!useGlobalContext ? (
-                      <SelectItem value="global-context">Global context</SelectItem>
+                      <SelectItem value="global-context">
+                        Global context
+                      </SelectItem>
                     ) : null}
                     {!useLocalContext ? (
-                      <SelectItem value="local-context">Local context</SelectItem>
+                      <SelectItem value="local-context">
+                        Local context
+                      </SelectItem>
                     ) : null}
                     {!agentModeEnabled ? (
                       <SelectItem value="agent-mode">Agent mode</SelectItem>
@@ -5001,7 +5328,9 @@ export default function ChatbotPage() {
               <div className="mt-3 flex flex-wrap gap-3">
                 {webSearchEnabled || agentModeEnabled ? (
                   <div className="w-48">
-                    <label className="text-xs text-gray-400">Search provider</label>
+                    <label className="text-xs text-gray-400">
+                      Search provider
+                    </label>
                     <Select
                       value={searchProvider}
                       onValueChange={(value) => setSearchProvider(value)}
@@ -5020,7 +5349,9 @@ export default function ChatbotPage() {
                 ) : null}
                 {agentModeEnabled ? (
                   <div className="w-48">
-                    <label className="text-xs text-gray-400">Agent browser</label>
+                    <label className="text-xs text-gray-400">
+                      Agent browser
+                    </label>
                     <Select
                       value={agentBrowser}
                       onValueChange={(value) => setAgentBrowser(value)}
@@ -5122,7 +5453,9 @@ export default function ChatbotPage() {
                         <div className="flex-1">
                           <Select
                             value={agentPlannerModel}
-                            onValueChange={(value) => setAgentPlannerModel(value)}
+                            onValueChange={(value) =>
+                              setAgentPlannerModel(value)
+                            }
                             disabled={
                               isSending ||
                               modelLoading ||
@@ -5160,7 +5493,9 @@ export default function ChatbotPage() {
                         <div className="flex-1">
                           <Select
                             value={agentSelfCheckModel}
-                            onValueChange={(value) => setAgentSelfCheckModel(value)}
+                            onValueChange={(value) =>
+                              setAgentSelfCheckModel(value)
+                            }
                             disabled={
                               isSending ||
                               modelLoading ||
@@ -5238,7 +5573,9 @@ export default function ChatbotPage() {
                         <div className="flex-1">
                           <Select
                             value={agentLoopGuardModel}
-                            onValueChange={(value) => setAgentLoopGuardModel(value)}
+                            onValueChange={(value) =>
+                              setAgentLoopGuardModel(value)
+                            }
                             disabled={
                               isSending ||
                               modelLoading ||
@@ -5276,7 +5613,9 @@ export default function ChatbotPage() {
                         <div className="flex-1">
                           <Select
                             value={agentApprovalGateModel}
-                            onValueChange={(value) => setAgentApprovalGateModel(value)}
+                            onValueChange={(value) =>
+                              setAgentApprovalGateModel(value)
+                            }
                             disabled={
                               isSending ||
                               modelLoading ||
@@ -5435,7 +5774,9 @@ export default function ChatbotPage() {
                       <Select
                         value={model}
                         onValueChange={(value) => setModel(value)}
-                        disabled={isSending || modelLoading || modelOptions.length === 0}
+                        disabled={
+                          isSending || modelLoading || modelOptions.length === 0
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select model" />
@@ -5466,7 +5807,9 @@ export default function ChatbotPage() {
                       size="sm"
                       onClick={autoSelectModels}
                       disabled={
-                        settingsSaving || modelLoading || modelOptions.length === 0
+                        settingsSaving ||
+                        modelLoading ||
+                        modelOptions.length === 0
                       }
                     >
                       Auto-pick models
@@ -5485,438 +5828,488 @@ export default function ChatbotPage() {
               </div>
               {agentModeEnabled ? (
                 <div className="mt-3 w-full max-w-xl">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-gray-400">Agent settings</p>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          disabled={!settingsDirty || settingsSaving}
-                          onClick={saveChatbotSettings}
-                        >
-                          {settingsSaving ? "Saving..." : "Save settings"}
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setAgentBrowser(DEFAULT_AGENT_SETTINGS.agentBrowser);
-                            setAgentRunHeadless(DEFAULT_AGENT_SETTINGS.runHeadless);
-                            setAgentIgnoreRobotsTxt(
-                              DEFAULT_AGENT_SETTINGS.ignoreRobotsTxt
-                            );
-                            setAgentRequireHumanApproval(
-                              DEFAULT_AGENT_SETTINGS.requireHumanApproval
-                            );
-                            setAgentMemoryValidationModel(
-                              DEFAULT_AGENT_SETTINGS.memoryValidationModel
-                            );
-                            setAgentPlannerModel(DEFAULT_AGENT_SETTINGS.plannerModel);
-                            setAgentSelfCheckModel(
-                              DEFAULT_AGENT_SETTINGS.selfCheckModel
-                            );
-                            setAgentExtractionValidationModel(
-                              DEFAULT_AGENT_SETTINGS.extractionValidationModel
-                            );
-                            setAgentLoopGuardModel(
-                              DEFAULT_AGENT_SETTINGS.loopGuardModel
-                            );
-                            setAgentApprovalGateModel(
-                              DEFAULT_AGENT_SETTINGS.approvalGateModel
-                            );
-                            setAgentMemorySummarizationModel(
-                              DEFAULT_AGENT_SETTINGS.memorySummarizationModel
-                            );
-                            setAgentSelectorInferenceModel(
-                              DEFAULT_AGENT_SETTINGS.selectorInferenceModel
-                            );
-                            setAgentOutputNormalizationModel(
-                              DEFAULT_AGENT_SETTINGS.outputNormalizationModel
-                            );
-                            setAgentMaxSteps(DEFAULT_AGENT_SETTINGS.maxSteps);
-                            setAgentMaxStepAttempts(
-                              DEFAULT_AGENT_SETTINGS.maxStepAttempts
-                            );
-                            setAgentMaxReplanCalls(
-                              DEFAULT_AGENT_SETTINGS.maxReplanCalls
-                            );
-                            setAgentReplanEverySteps(
-                              DEFAULT_AGENT_SETTINGS.replanEverySteps
-                            );
-                            setAgentMaxSelfChecks(DEFAULT_AGENT_SETTINGS.maxSelfChecks);
-                            setAgentLoopGuardThreshold(
-                              DEFAULT_AGENT_SETTINGS.loopGuardThreshold
-                            );
-                            setAgentLoopBackoffBaseMs(
-                              DEFAULT_AGENT_SETTINGS.loopBackoffBaseMs
-                            );
-                            setAgentLoopBackoffMaxMs(
-                              DEFAULT_AGENT_SETTINGS.loopBackoffMaxMs
-                            );
-                          }}
-                          disabled={isSending}
-                        >
-                          Reset defaults
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <label className="text-[11px] text-gray-400">
-                          Max steps
-                        </label>
-                        <Input
-                          type="number"
-                          min={1}
-                          max={20}
-                          value={agentMaxSteps}
-                          onChange={(event) =>
-                            setAgentMaxSteps(Number(event.target.value))
-                          }
-                          disabled={isSending}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[11px] text-gray-400">
-                          Max step attempts
-                        </label>
-                        <Input
-                          type="number"
-                          min={1}
-                          max={5}
-                          value={agentMaxStepAttempts}
-                          onChange={(event) =>
-                            setAgentMaxStepAttempts(Number(event.target.value))
-                          }
-                          disabled={isSending}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[11px] text-gray-400">
-                          Replan every N steps
-                        </label>
-                        <Input
-                          type="number"
-                          min={1}
-                          max={10}
-                          value={agentReplanEverySteps}
-                          onChange={(event) =>
-                            setAgentReplanEverySteps(Number(event.target.value))
-                          }
-                          disabled={isSending}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[11px] text-gray-400">
-                          Max replan calls
-                        </label>
-                        <Input
-                          type="number"
-                          min={0}
-                          max={6}
-                          value={agentMaxReplanCalls}
-                          onChange={(event) =>
-                            setAgentMaxReplanCalls(Number(event.target.value))
-                          }
-                          disabled={isSending}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[11px] text-gray-400">
-                          Max self-checks
-                        </label>
-                        <Input
-                          type="number"
-                          min={0}
-                          max={8}
-                          value={agentMaxSelfChecks}
-                          onChange={(event) =>
-                            setAgentMaxSelfChecks(Number(event.target.value))
-                          }
-                          disabled={isSending}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[11px] text-gray-400">
-                          Loop guard threshold
-                        </label>
-                        <Input
-                          type="number"
-                          min={1}
-                          max={5}
-                          value={agentLoopGuardThreshold}
-                          onChange={(event) =>
-                            setAgentLoopGuardThreshold(Number(event.target.value))
-                          }
-                          disabled={isSending}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[11px] text-gray-400">
-                          Loop backoff base (ms)
-                        </label>
-                        <Input
-                          type="number"
-                          min={250}
-                          max={20000}
-                          step={250}
-                          value={agentLoopBackoffBaseMs}
-                          onChange={(event) =>
-                            setAgentLoopBackoffBaseMs(Number(event.target.value))
-                          }
-                          disabled={isSending}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[11px] text-gray-400">
-                          Loop backoff max (ms)
-                        </label>
-                        <Input
-                          type="number"
-                          min={1000}
-                          max={60000}
-                          step={500}
-                          value={agentLoopBackoffMaxMs}
-                          onChange={(event) =>
-                            setAgentLoopBackoffMaxMs(Number(event.target.value))
-                          }
-                          disabled={isSending}
-                          className="mt-1"
-                        />
-                      </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-gray-400">Agent settings</p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={!settingsDirty || settingsSaving}
+                        onClick={saveChatbotSettings}
+                      >
+                        {settingsSaving ? "Saving..." : "Save settings"}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setAgentBrowser(DEFAULT_AGENT_SETTINGS.agentBrowser);
+                          setAgentRunHeadless(
+                            DEFAULT_AGENT_SETTINGS.runHeadless
+                          );
+                          setAgentIgnoreRobotsTxt(
+                            DEFAULT_AGENT_SETTINGS.ignoreRobotsTxt
+                          );
+                          setAgentRequireHumanApproval(
+                            DEFAULT_AGENT_SETTINGS.requireHumanApproval
+                          );
+                          setAgentMemoryValidationModel(
+                            DEFAULT_AGENT_SETTINGS.memoryValidationModel
+                          );
+                          setAgentPlannerModel(
+                            DEFAULT_AGENT_SETTINGS.plannerModel
+                          );
+                          setAgentSelfCheckModel(
+                            DEFAULT_AGENT_SETTINGS.selfCheckModel
+                          );
+                          setAgentExtractionValidationModel(
+                            DEFAULT_AGENT_SETTINGS.extractionValidationModel
+                          );
+                          setAgentLoopGuardModel(
+                            DEFAULT_AGENT_SETTINGS.loopGuardModel
+                          );
+                          setAgentApprovalGateModel(
+                            DEFAULT_AGENT_SETTINGS.approvalGateModel
+                          );
+                          setAgentMemorySummarizationModel(
+                            DEFAULT_AGENT_SETTINGS.memorySummarizationModel
+                          );
+                          setAgentSelectorInferenceModel(
+                            DEFAULT_AGENT_SETTINGS.selectorInferenceModel
+                          );
+                          setAgentOutputNormalizationModel(
+                            DEFAULT_AGENT_SETTINGS.outputNormalizationModel
+                          );
+                          setAgentMaxSteps(DEFAULT_AGENT_SETTINGS.maxSteps);
+                          setAgentMaxStepAttempts(
+                            DEFAULT_AGENT_SETTINGS.maxStepAttempts
+                          );
+                          setAgentMaxReplanCalls(
+                            DEFAULT_AGENT_SETTINGS.maxReplanCalls
+                          );
+                          setAgentReplanEverySteps(
+                            DEFAULT_AGENT_SETTINGS.replanEverySteps
+                          );
+                          setAgentMaxSelfChecks(
+                            DEFAULT_AGENT_SETTINGS.maxSelfChecks
+                          );
+                          setAgentLoopGuardThreshold(
+                            DEFAULT_AGENT_SETTINGS.loopGuardThreshold
+                          );
+                          setAgentLoopBackoffBaseMs(
+                            DEFAULT_AGENT_SETTINGS.loopBackoffBaseMs
+                          );
+                          setAgentLoopBackoffMaxMs(
+                            DEFAULT_AGENT_SETTINGS.loopBackoffMaxMs
+                          );
+                        }}
+                        disabled={isSending}
+                      >
+                        Reset defaults
+                      </Button>
                     </div>
                   </div>
+                  <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="text-[11px] text-gray-400">
+                        Max steps
+                      </label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={20}
+                        value={agentMaxSteps}
+                        onChange={(event) =>
+                          setAgentMaxSteps(Number(event.target.value))
+                        }
+                        disabled={isSending}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-gray-400">
+                        Max step attempts
+                      </label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={5}
+                        value={agentMaxStepAttempts}
+                        onChange={(event) =>
+                          setAgentMaxStepAttempts(Number(event.target.value))
+                        }
+                        disabled={isSending}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-gray-400">
+                        Replan every N steps
+                      </label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={10}
+                        value={agentReplanEverySteps}
+                        onChange={(event) =>
+                          setAgentReplanEverySteps(Number(event.target.value))
+                        }
+                        disabled={isSending}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-gray-400">
+                        Max replan calls
+                      </label>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={6}
+                        value={agentMaxReplanCalls}
+                        onChange={(event) =>
+                          setAgentMaxReplanCalls(Number(event.target.value))
+                        }
+                        disabled={isSending}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-gray-400">
+                        Max self-checks
+                      </label>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={8}
+                        value={agentMaxSelfChecks}
+                        onChange={(event) =>
+                          setAgentMaxSelfChecks(Number(event.target.value))
+                        }
+                        disabled={isSending}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-gray-400">
+                        Loop guard threshold
+                      </label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={5}
+                        value={agentLoopGuardThreshold}
+                        onChange={(event) =>
+                          setAgentLoopGuardThreshold(Number(event.target.value))
+                        }
+                        disabled={isSending}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-gray-400">
+                        Loop backoff base (ms)
+                      </label>
+                      <Input
+                        type="number"
+                        min={250}
+                        max={20000}
+                        step={250}
+                        value={agentLoopBackoffBaseMs}
+                        onChange={(event) =>
+                          setAgentLoopBackoffBaseMs(Number(event.target.value))
+                        }
+                        disabled={isSending}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-gray-400">
+                        Loop backoff max (ms)
+                      </label>
+                      <Input
+                        type="number"
+                        min={1000}
+                        max={60000}
+                        step={500}
+                        value={agentLoopBackoffMaxMs}
+                        onChange={(event) =>
+                          setAgentLoopBackoffMaxMs(Number(event.target.value))
+                        }
+                        disabled={isSending}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center justify-between">
+              <label className="text-xs text-gray-400">Attachments</label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setAttachments([])}
+                disabled={attachments.length === 0}
+              >
+                Clear attachments
+              </Button>
+            </div>
+            <input
+              type="file"
+              multiple
+              className="mt-2 block w-full text-sm text-gray-300 file:mr-3 file:rounded-md file:border-0 file:bg-gray-800 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-gray-200 hover:file:bg-gray-700"
+              onChange={(event) => {
+                const next = Array.from(event.target.files ?? []);
+                if (next.length > 0) {
+                  setAttachments((prev) => [...prev, ...next]);
+                }
+                event.target.value = "";
+              }}
+            />
+            {attachments.length > 0 ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {attachments.map((file) => (
+                  <button
+                    key={`${file.name}-${file.lastModified}`}
+                    type="button"
+                    className="rounded-full border border-gray-700 bg-gray-900 px-3 py-1 text-xs text-gray-200 hover:border-gray-500"
+                    onClick={() =>
+                      setAttachments((prev) =>
+                        prev.filter((item) => item !== file)
+                      )
+                    }
+                  >
+                    {file.name}
+                    <span className="ml-1 text-gray-500">×</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-xs text-gray-500">
+                Add multiple files if needed.
+              </p>
+            )}
+          </div>
+          {useLocalContext ? (
+            <div>
+              <Label className="text-xs text-gray-200">
+                Conversation context
+              </Label>
+              <p className="text-[11px] text-gray-500">
+                Choose whether local context overrides or appends the global
+                context.
+              </p>
+              <div className="mt-2 w-40">
+                <Select
+                  value={localContextMode}
+                  onValueChange={(value) =>
+                    setLocalContextMode(value as "override" | "append")
+                  }
+                  disabled={isSending}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Context mode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="override">Override</SelectItem>
+                    <SelectItem value="append">Append</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Textarea
+                className="mt-2"
+                placeholder="Provide context for this conversation..."
+                value={localContext}
+                onChange={(event) => setLocalContext(event.target.value)}
+                rows={3}
+                disabled={isSending}
+              />
+            </div>
+          ) : null}
+          <div className="rounded-md border border-gray-800 bg-gray-950/70 p-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs text-gray-200">Debugging</Label>
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 text-[11px] text-gray-400">
+                  <input
+                    type="checkbox"
+                    checked={debugEnabled}
+                    onChange={(event) => setDebugEnabled(event.target.checked)}
+                  />
+                  Enable debugging
+                </label>
+                {debugEnabled &&
+                (debugState.lastRequest || debugState.lastResponse) ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDebugState({})}
+                  >
+                    Clear
+                  </Button>
                 ) : null}
               </div>
             </div>
-            <div>
-              <div className="flex items-center justify-between">
-                <label className="text-xs text-gray-400">Attachments</label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setAttachments([])}
-                  disabled={attachments.length === 0}
-                >
-                  Clear attachments
-                </Button>
-              </div>
-              <input
-                type="file"
-                multiple
-                className="mt-2 block w-full text-sm text-gray-300 file:mr-3 file:rounded-md file:border-0 file:bg-gray-800 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-gray-200 hover:file:bg-gray-700"
-                onChange={(event) => {
-                  const next = Array.from(event.target.files ?? []);
-                  if (next.length > 0) {
-                    setAttachments((prev) => [...prev, ...next]);
-                  }
-                  event.target.value = "";
-                }}
-              />
-              {attachments.length > 0 ? (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {attachments.map((file) => (
-                    <button
-                      key={`${file.name}-${file.lastModified}`}
-                      type="button"
-                      className="rounded-full border border-gray-700 bg-gray-900 px-3 py-1 text-xs text-gray-200 hover:border-gray-500"
-                      onClick={() =>
-                        setAttachments((prev) =>
-                          prev.filter((item) => item !== file)
-                        )
-                      }
-                    >
-                      {file.name}
-                      <span className="ml-1 text-gray-500">×</span>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-2 text-xs text-gray-500">
-                  Add multiple files if needed.
-                </p>
-              )}
-            </div>
-            {useLocalContext ? (
-              <div>
-                <Label className="text-xs text-gray-200">Conversation context</Label>
-                <p className="text-[11px] text-gray-500">
-                  Choose whether local context overrides or appends the global context.
-                </p>
-                <div className="mt-2 w-40">
-                  <Select
-                    value={localContextMode}
-                    onValueChange={(value) =>
-                      setLocalContextMode(value as "override" | "append")
-                    }
-                    disabled={isSending}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Context mode" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="override">Override</SelectItem>
-                      <SelectItem value="append">Append</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Textarea
-                  className="mt-2"
-                  placeholder="Provide context for this conversation..."
-                  value={localContext}
-                  onChange={(event) => setLocalContext(event.target.value)}
-                  rows={3}
-                  disabled={isSending}
-                />
-              </div>
-            ) : null}
-            <div className="rounded-md border border-gray-800 bg-gray-950/70 p-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs text-gray-200">Debugging</Label>
-                <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-2 text-[11px] text-gray-400">
-                    <input
-                      type="checkbox"
-                      checked={debugEnabled}
-                      onChange={(event) => setDebugEnabled(event.target.checked)}
-                    />
-                    Enable debugging
-                  </label>
-                  {debugEnabled && (debugState.lastRequest || debugState.lastResponse) ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setDebugState({})}
-                    >
-                      Clear
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
-              {!debugEnabled ? (
-                <p className="mt-2 text-xs text-gray-500">
-                  Enable to capture request and response metadata.
-                </p>
-              ) : (
-                <div className="mt-3 space-y-3 text-xs text-gray-300">
-                  <div>
-                    <p className="text-[11px] uppercase text-gray-500">Last request</p>
-                    {debugState.lastRequest ? (
-                      <dl className="mt-2 grid gap-2 sm:grid-cols-2">
-                        <div>
-                          <dt className="text-[11px] text-gray-500">Model</dt>
-                          <dd>{debugState.lastRequest.model}</dd>
-                        </div>
-                        <div>
-                          <dt className="text-[11px] text-gray-500">Tools</dt>
-                          <dd>
-                            {debugState.lastRequest.tools.length > 0
-                              ? debugState.lastRequest.tools.join(", ")
-                              : "None"}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt className="text-[11px] text-gray-500">Search provider</dt>
-                          <dd>{debugState.lastRequest.searchProvider || "Default"}</dd>
-                        </div>
-                        <div>
-                          <dt className="text-[11px] text-gray-500">Agent browser</dt>
-                          <dd>{debugState.lastRequest.agentBrowser || "Default"}</dd>
-                        </div>
-                        <div>
-                          <dt className="text-[11px] text-gray-500">Ignore robots</dt>
-                          <dd>{debugState.lastRequest.ignoreRobotsTxt ? "Yes" : "No"}</dd>
-                        </div>
+            {!debugEnabled ? (
+              <p className="mt-2 text-xs text-gray-500">
+                Enable to capture request and response metadata.
+              </p>
+            ) : (
+              <div className="mt-3 space-y-3 text-xs text-gray-300">
+                <div>
+                  <p className="text-[11px] uppercase text-gray-500">
+                    Last request
+                  </p>
+                  {debugState.lastRequest ? (
+                    <dl className="mt-2 grid gap-2 sm:grid-cols-2">
+                      <div>
+                        <dt className="text-[11px] text-gray-500">Model</dt>
+                        <dd>{debugState.lastRequest.model}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-[11px] text-gray-500">Tools</dt>
+                        <dd>
+                          {debugState.lastRequest.tools.length > 0
+                            ? debugState.lastRequest.tools.join(", ")
+                            : "None"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[11px] text-gray-500">
+                          Search provider
+                        </dt>
+                        <dd>
+                          {debugState.lastRequest.searchProvider || "Default"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[11px] text-gray-500">
+                          Agent browser
+                        </dt>
+                        <dd>
+                          {debugState.lastRequest.agentBrowser || "Default"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[11px] text-gray-500">
+                          Ignore robots
+                        </dt>
+                        <dd>
+                          {debugState.lastRequest.ignoreRobotsTxt
+                            ? "Yes"
+                            : "No"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[11px] text-gray-500">
+                          Human approval
+                        </dt>
+                        <dd>
+                          {debugState.lastRequest.requireHumanApproval
+                            ? "Yes"
+                            : "No"}
+                        </dd>
+                      </div>
+                      {debugState.lastRequest.agentPlanSettings ? (
                         <div>
                           <dt className="text-[11px] text-gray-500">
-                            Human approval
+                            Agent settings
                           </dt>
                           <dd>
-                            {debugState.lastRequest.requireHumanApproval ? "Yes" : "No"}
+                            {`steps ${debugState.lastRequest.agentPlanSettings.maxSteps}, attempts ${debugState.lastRequest.agentPlanSettings.maxStepAttempts}, replan every ${debugState.lastRequest.agentPlanSettings.replanEverySteps}, replans ${debugState.lastRequest.agentPlanSettings.maxReplanCalls}, self-checks ${debugState.lastRequest.agentPlanSettings.maxSelfChecks}, loop guard ${debugState.lastRequest.agentPlanSettings.loopGuardThreshold}, backoff ${debugState.lastRequest.agentPlanSettings.loopBackoffBaseMs}-${debugState.lastRequest.agentPlanSettings.loopBackoffMaxMs}ms`}
                           </dd>
                         </div>
-                        {debugState.lastRequest.agentPlanSettings ? (
-                          <div>
-                            <dt className="text-[11px] text-gray-500">
-                              Agent settings
-                            </dt>
-                            <dd>
-                              {`steps ${debugState.lastRequest.agentPlanSettings.maxSteps}, attempts ${debugState.lastRequest.agentPlanSettings.maxStepAttempts}, replan every ${debugState.lastRequest.agentPlanSettings.replanEverySteps}, replans ${debugState.lastRequest.agentPlanSettings.maxReplanCalls}, self-checks ${debugState.lastRequest.agentPlanSettings.maxSelfChecks}, loop guard ${debugState.lastRequest.agentPlanSettings.loopGuardThreshold}, backoff ${debugState.lastRequest.agentPlanSettings.loopBackoffBaseMs}-${debugState.lastRequest.agentPlanSettings.loopBackoffMaxMs}ms`}
-                            </dd>
-                          </div>
-                        ) : null}
-                        <div>
-                          <dt className="text-[11px] text-gray-500">Messages</dt>
-                          <dd>{debugState.lastRequest.messageCount}</dd>
-                        </div>
-                        <div>
-                          <dt className="text-[11px] text-gray-500">Attachments</dt>
-                          <dd>{debugState.lastRequest.attachmentCount}</dd>
-                        </div>
-                        <div>
-                          <dt className="text-[11px] text-gray-500">Global context</dt>
-                          <dd>{debugState.lastRequest.hasGlobalContext ? "Yes" : "No"}</dd>
-                        </div>
-                        <div>
-                          <dt className="text-[11px] text-gray-500">Local context</dt>
-                          <dd>
-                            {debugState.lastRequest.hasLocalContext
-                              ? `Yes (${debugState.lastRequest.localContextMode})`
-                              : "No"}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt className="text-[11px] text-gray-500">Search used</dt>
-                          <dd>{debugState.lastRequest.searchUsed ? "Yes" : "No"}</dd>
-                        </div>
-                      </dl>
-                    ) : (
-                      <p className="mt-2 text-gray-500">No request sent yet.</p>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-[11px] uppercase text-gray-500">Last response</p>
-                    {debugState.lastResponse ? (
-                      <dl className="mt-2 grid gap-2 sm:grid-cols-2">
-                        <div>
-                          <dt className="text-[11px] text-gray-500">Status</dt>
-                          <dd>{debugState.lastResponse.ok ? "Success" : "Error"}</dd>
-                        </div>
-                        <div>
-                          <dt className="text-[11px] text-gray-500">Duration</dt>
-                          <dd>{debugState.lastResponse.durationMs} ms</dd>
-                        </div>
-                        <div className="sm:col-span-2">
-                          <dt className="text-[11px] text-gray-500">Error</dt>
-                          <dd>{debugState.lastResponse.error || "None"}</dd>
-                        </div>
-                        {debugState.lastResponse.errorId ? (
-                          <div className="sm:col-span-2">
-                            <dt className="text-[11px] text-gray-500">Error ID</dt>
-                            <dd>{debugState.lastResponse.errorId}</dd>
-                          </div>
-                        ) : null}
-                      </dl>
-                    ) : (
-                      <p className="mt-2 text-gray-500">No response captured yet.</p>
-                    )}
-                  </div>
+                      ) : null}
+                      <div>
+                        <dt className="text-[11px] text-gray-500">Messages</dt>
+                        <dd>{debugState.lastRequest.messageCount}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-[11px] text-gray-500">
+                          Attachments
+                        </dt>
+                        <dd>{debugState.lastRequest.attachmentCount}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-[11px] text-gray-500">
+                          Global context
+                        </dt>
+                        <dd>
+                          {debugState.lastRequest.hasGlobalContext
+                            ? "Yes"
+                            : "No"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[11px] text-gray-500">
+                          Local context
+                        </dt>
+                        <dd>
+                          {debugState.lastRequest.hasLocalContext
+                            ? `Yes (${debugState.lastRequest.localContextMode})`
+                            : "No"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[11px] text-gray-500">
+                          Search used
+                        </dt>
+                        <dd>
+                          {debugState.lastRequest.searchUsed ? "Yes" : "No"}
+                        </dd>
+                      </div>
+                    </dl>
+                  ) : (
+                    <p className="mt-2 text-gray-500">No request sent yet.</p>
+                  )}
                 </div>
-              )}
-            </div>
+                <div>
+                  <p className="text-[11px] uppercase text-gray-500">
+                    Last response
+                  </p>
+                  {debugState.lastResponse ? (
+                    <dl className="mt-2 grid gap-2 sm:grid-cols-2">
+                      <div>
+                        <dt className="text-[11px] text-gray-500">Status</dt>
+                        <dd>
+                          {debugState.lastResponse.ok ? "Success" : "Error"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[11px] text-gray-500">Duration</dt>
+                        <dd>{debugState.lastResponse.durationMs} ms</dd>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <dt className="text-[11px] text-gray-500">Error</dt>
+                        <dd>{debugState.lastResponse.error || "None"}</dd>
+                      </div>
+                      {debugState.lastResponse.errorId ? (
+                        <div className="sm:col-span-2">
+                          <dt className="text-[11px] text-gray-500">
+                            Error ID
+                          </dt>
+                          <dd>{debugState.lastResponse.errorId}</dd>
+                        </div>
+                      ) : null}
+                    </dl>
+                  ) : (
+                    <p className="mt-2 text-gray-500">
+                      No response captured yet.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
+      </div>
     </div>
   );
 }

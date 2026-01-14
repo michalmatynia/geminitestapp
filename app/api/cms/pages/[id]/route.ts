@@ -1,17 +1,24 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+
+type Params = { id: string };
+type Ctx = { params: Promise<Params> } | { params: Params };
+
+async function getId(ctx: Ctx): Promise<string> {
+  const p = await Promise.resolve((ctx as any).params);
+  return p.id as string;
+}
 
 /**
  * GET /api/cms/pages/[id]
  * Fetches a single page by its ID.
  */
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, ctx: Ctx) {
   try {
+    const id = await getId(ctx);
+
     const page = await prisma.page.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         slugs: {
           include: {
@@ -25,9 +32,11 @@ export async function GET(
         },
       },
     });
+
     if (!page) {
       return NextResponse.json({ error: "Page not found" }, { status: 404 });
     }
+
     return NextResponse.json(page);
   } catch (error) {
     return NextResponse.json(
@@ -41,15 +50,18 @@ export async function GET(
  * PUT /api/cms/pages/[id]
  * Updates a page.
  */
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: NextRequest, ctx: Ctx) {
   try {
-    const { name, slugIds, components } = (await req.json()) as { name: string; slugIds: string[]; components: any[] };
+    const id = await getId(ctx);
+
+    const { name, slugIds, components } = (await req.json()) as {
+      name: string;
+      slugIds: string[];
+      components: any[];
+    };
 
     const updatedPage = await prisma.page.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name,
         slugs: {
@@ -70,6 +82,7 @@ export async function PUT(
         },
       },
     });
+
     return NextResponse.json(updatedPage);
   } catch (error) {
     return NextResponse.json(
@@ -83,14 +96,14 @@ export async function PUT(
  * DELETE /api/cms/pages/[id]
  * Deletes a page.
  */
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, ctx: Ctx) {
   try {
+    const id = await getId(ctx);
+
     await prisma.page.delete({
-      where: { id: params.id },
+      where: { id },
     });
+
     return new Response(null, { status: 204 });
   } catch (error) {
     return NextResponse.json(

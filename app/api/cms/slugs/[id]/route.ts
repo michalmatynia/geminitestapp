@@ -1,21 +1,30 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+
+type Params = { id: string };
+type Ctx = { params: Promise<Params> } | { params: Params };
+
+async function getId(ctx: Ctx): Promise<string> {
+  const p = await Promise.resolve((ctx as any).params);
+  return p.id as string;
+}
 
 /**
  * GET /api/cms/slugs/[id]
  * Fetches a single slug by its ID.
  */
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, ctx: Ctx) {
   try {
+    const id = await getId(ctx);
+
     const slug = await prisma.slug.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
+
     if (!slug) {
       return NextResponse.json({ error: "Slug not found" }, { status: 404 });
     }
+
     return NextResponse.json(slug);
   } catch (error) {
     return NextResponse.json(
@@ -29,14 +38,14 @@ export async function GET(
  * DELETE /api/cms/slugs/[id]
  * Deletes a slug.
  */
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, ctx: Ctx) {
   try {
+    const id = await getId(ctx);
+
     await prisma.slug.delete({
-      where: { id: params.id },
+      where: { id },
     });
+
     return new Response(null, { status: 204 });
   } catch (error) {
     return NextResponse.json(
@@ -50,12 +59,14 @@ export async function DELETE(
  * PUT /api/cms/slugs/[id]
  * Updates a slug.
  */
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: NextRequest, ctx: Ctx) {
   try {
-    const { slug, isDefault } = (await req.json()) as { slug: string; isDefault: boolean };
+    const id = await getId(ctx);
+
+    const { slug, isDefault } = (await req.json()) as {
+      slug: string;
+      isDefault: boolean;
+    };
 
     if (isDefault) {
       await prisma.slug.updateMany({
@@ -65,9 +76,10 @@ export async function PUT(
     }
 
     const updatedSlug = await prisma.slug.update({
-      where: { id: params.id },
+      where: { id },
       data: { slug, isDefault },
     });
+
     return NextResponse.json(updatedSlug);
   } catch (error) {
     return NextResponse.json(

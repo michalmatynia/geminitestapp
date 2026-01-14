@@ -43,7 +43,10 @@ export default function ChatbotSessionsPage() {
         }
       } catch (error) {
         if (isMounted) {
-          setError(error instanceof Error ? error.message : "Failed to load sessions.");
+          const message =
+            error instanceof Error ? error.message : "Failed to load sessions.";
+          setError(message);
+          toast(message, { variant: "error" });
         }
       } finally {
         if (isMounted) {
@@ -55,7 +58,7 @@ export default function ChatbotSessionsPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [toast]);
 
   const filteredSessions = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -96,7 +99,9 @@ export default function ChatbotSessionsPage() {
       toast("Session title updated", { variant: "success" });
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to update session title.";
+        error instanceof Error
+          ? error.message
+          : "Failed to update session title.";
       setError(message);
       toast(message, { variant: "error" });
     }
@@ -156,6 +161,11 @@ export default function ChatbotSessionsPage() {
 
   const selectAllVisible = () => {
     setSelectedIds(new Set(filteredSessions.map((session) => session.id)));
+    toast(
+      filteredSessions.length
+        ? `Selected ${filteredSessions.length} visible sessions`
+        : "No visible sessions to select"
+    );
   };
 
   const selectAllMatching = async () => {
@@ -175,8 +185,7 @@ export default function ChatbotSessionsPage() {
       toast(
         ids.length
           ? `Selected ${ids.length} sessions`
-          : "No matching sessions found",
-        { variant: "default" }
+          : "No matching sessions found"
       );
     } catch (error) {
       const message =
@@ -224,7 +233,10 @@ export default function ChatbotSessionsPage() {
   return (
     <div className="container mx-auto py-10">
       <div className="mb-6">
-        <Link href="/admin/chatbot" className="text-sm text-blue-300 hover:text-blue-200">
+        <Link
+          href="/admin/chatbot"
+          className="text-sm text-blue-300 hover:text-blue-200"
+        >
           ← Back to chatbot
         </Link>
         <h1 className="mt-3 text-3xl font-bold text-white">Chat Sessions</h1>
@@ -247,23 +259,24 @@ export default function ChatbotSessionsPage() {
                   if (event.key === "Enter") {
                     const value = query.trim();
                     if (!value) {
-                      toast("Search cleared", { variant: "default" });
+                      toast("Search cleared");
                     } else {
-                      toast(`Searching “${value}”`, { variant: "default" });
+                      toast(`Searching “${value}”`);
                     }
                   }
                 }}
               />
             </div>
+
             <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400">
-              <span>
-                Selected: {selectedIds.size}
-              </span>
+              <span>Selected: {selectedIds.size}</span>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={selectAllVisible}
-                disabled={filteredSessions.length === 0 || bulkDeleting || selectingAll}
+                disabled={
+                  filteredSessions.length === 0 || bulkDeleting || selectingAll
+                }
               >
                 Select all visible
               </Button>
@@ -279,7 +292,9 @@ export default function ChatbotSessionsPage() {
                 variant="ghost"
                 size="sm"
                 onClick={clearSelection}
-                disabled={selectedIds.size === 0 || bulkDeleting || selectingAll}
+                disabled={
+                  selectedIds.size === 0 || bulkDeleting || selectingAll
+                }
               >
                 Clear selection
               </Button>
@@ -287,7 +302,9 @@ export default function ChatbotSessionsPage() {
                 variant="destructive"
                 size="sm"
                 onClick={bulkDelete}
-                disabled={selectedIds.size === 0 || bulkDeleting || selectingAll}
+                disabled={
+                  selectedIds.size === 0 || bulkDeleting || selectingAll
+                }
               >
                 {bulkDeleting ? "Removing..." : "Remove selected"}
               </Button>
@@ -301,6 +318,7 @@ export default function ChatbotSessionsPage() {
                 Skip confirmation
               </label>
             </div>
+
             <div className="space-y-3">
               {filteredSessions.map((session) => (
                 <div
@@ -316,23 +334,26 @@ export default function ChatbotSessionsPage() {
                       className="mt-1"
                     />
                     <div>
-                    {editingId === session.id ? (
-                      <Input
-                        value={draftTitle}
-                        onChange={(event) => setDraftTitle(event.target.value)}
-                        className="max-w-xs"
-                        placeholder="Session title"
-                      />
-                    ) : (
-                      <p className="text-sm text-white">
-                        {session.title || `Session ${session.id.slice(0, 6)}`}
+                      {editingId === session.id ? (
+                        <Input
+                          value={draftTitle}
+                          onChange={(event) =>
+                            setDraftTitle(event.target.value)
+                          }
+                          className="max-w-xs"
+                          placeholder="Session title"
+                        />
+                      ) : (
+                        <p className="text-sm text-white">
+                          {session.title || `Session ${session.id.slice(0, 6)}`}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-500">
+                        Updated {new Date(session.updatedAt).toLocaleString()}
                       </p>
-                    )}
-                    <p className="text-xs text-gray-500">
-                      Updated {new Date(session.updatedAt).toLocaleString()}
-                    </p>
                     </div>
                   </div>
+
                   <div className="flex items-center gap-2">
                     {editingId === session.id ? (
                       <>
@@ -343,7 +364,11 @@ export default function ChatbotSessionsPage() {
                         >
                           Save
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={cancelEditing}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={cancelEditing}
+                        >
                           Cancel
                         </Button>
                       </>
@@ -366,9 +391,7 @@ export default function ChatbotSessionsPage() {
                     </Button>
                     <Link
                       href={`/admin/chatbot?session=${session.id}`}
-                      onClick={() =>
-                        toast("Opening session...", { variant: "default" })
-                      }
+                      onClick={() => toast("Opening session...")}
                     >
                       <Button variant="outline" size="sm">
                         Open

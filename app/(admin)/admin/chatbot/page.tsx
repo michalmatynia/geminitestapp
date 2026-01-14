@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -150,6 +156,7 @@ type AgentAuditLog = {
   message: string;
   metadata?: Record<string, unknown> | null;
   createdAt: string;
+  level: "info" | "warning" | "error";
 };
 
 type AgentBrowserLog = {
@@ -351,21 +358,32 @@ const scoreModelForTask = (profile: ModelProfile, rule: ModelTaskRule) => {
   return score;
 };
 
-const pickBestModel = (profiles: ModelProfile[], rule: ModelTaskRule) => {
-  let best: { name: string; score: number; size: number | null } | null = null;
-  profiles.forEach((profile) => {
+const pickBestModel = (
+  profiles: readonly ModelProfile[],
+  rule: ModelTaskRule
+): string | null => {
+  let bestName: string | null = null;
+  let bestScore = Number.NEGATIVE_INFINITY;
+  let bestSize = -1;
+
+  for (const profile of profiles) {
     const score = scoreModelForTask(profile, rule);
-    if (!Number.isFinite(score)) return;
+    if (!Number.isFinite(score)) continue;
+
     const size = profile.size ?? 0;
+
     if (
-      !best ||
-      score > best.score ||
-      (score === best.score && size > best.size)
+      bestName === null ||
+      score > bestScore ||
+      (score === bestScore && size > bestSize)
     ) {
-      best = { name: profile.name, score, size };
+      bestName = profile.name;
+      bestScore = score;
+      bestSize = size;
     }
-  });
-  return best?.name ?? null;
+  }
+
+  return bestName;
 };
 
 const DEFAULT_AGENT_SETTINGS: AgentSettingsPayload = {
@@ -795,7 +813,7 @@ const renderInline = (text: string) => {
 
 const renderFormattedMessage = (content: string) => {
   const lines = content.split("\n");
-  const blocks: JSX.Element[] = [];
+  const blocks: React.ReactNode[] = [];
   let listItems: string[] = [];
 
   const flushList = (key: string) => {
@@ -2255,9 +2273,11 @@ export default function ChatbotPage() {
         if (payload.snapshot) {
           setAgentPreviewSnapshot(payload.snapshot);
           setAgentPreviewStatus("live");
-          setAgentControlUrl((prev) =>
-            prev ? prev : payload.snapshot.url || ""
-          );
+          setAgentControlUrl((prev) => {
+            if (prev) return prev;
+            const url = payload.snapshot?.url ?? "";
+            return url;
+          });
         }
       } catch {
         setAgentPreviewStatus("error");

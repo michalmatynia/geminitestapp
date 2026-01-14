@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Table as ReactTable } from "@tanstack/react-table";
 
 import { columns } from "@/components/columns";
@@ -285,7 +285,7 @@ function EditProductModalContent({ onClose }: { onClose: () => void }) {
   );
 }
 
-export default function AdminPage() {
+function AdminPageInner() {
   const searchParams = useSearchParams();
   const [data, setData] = useState<ProductWithImages[]>([]);
   // The refreshTrigger state is used to force a re-fetch of the products
@@ -685,5 +685,13 @@ export default function AdminPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-gray-500">Loading...</div>}>
+      <AdminPageInner />
+    </Suspense>
   );
 }

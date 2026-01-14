@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   BoxesIcon,
@@ -42,7 +42,7 @@ const groupIconMap: Record<string, React.ComponentType<{ className?: string }>> 
   EXTENSION: FileTextIcon,
 };
 
-export default function DatabasePreviewPage() {
+function DatabasePreviewPageInner() {
   const searchParams = useSearchParams();
   const backupName = searchParams.get("backup") ?? "";
   const mode = searchParams.get("mode") ?? "backup";
@@ -498,5 +498,13 @@ export default function DatabasePreviewPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DatabasePreviewPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-gray-500">Loading...</div>}>
+      <DatabasePreviewPageInner />
+    </Suspense>
   );
 }

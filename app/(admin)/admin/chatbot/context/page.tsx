@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ChevronLeftIcon, PlusIcon } from "lucide-react";
 
@@ -66,7 +66,7 @@ const buildActiveIds = (rawActive?: string, items?: ContextItem[]) => {
   return items ? items.map((item) => item.id) : [];
 };
 
-export default function ChatbotContextPage() {
+function ChatbotContextPageInner() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const initializedFilters = useRef(false);
@@ -662,5 +662,13 @@ export default function ChatbotContextPage() {
         </div>
       ) : null}
     </div>
+  );
+}
+
+export default function ChatbotContextPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-gray-500">Loading...</div>}>
+      <ChatbotContextPageInner />
+    </Suspense>
   );
 }

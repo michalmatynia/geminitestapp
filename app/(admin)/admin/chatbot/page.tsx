@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import React, {
+  Suspense,
   useCallback,
   useEffect,
   useMemo,
@@ -888,7 +889,7 @@ const renderFormattedMessage = (content: string) => {
   return <div className="space-y-2">{blocks}</div>;
 };
 
-export default function ChatbotPage() {
+function ChatbotPageInner() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -6333,5 +6334,13 @@ export default function ChatbotPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ChatbotPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-gray-500">Loading...</div>}>
+      <ChatbotPageInner />
+    </Suspense>
   );
 }

@@ -1,12 +1,30 @@
 import Link from "next/link";
+import prisma from "@/lib/prisma";
 import { productService } from "@/lib/services/productService";
 import ProductCard from "@/components/products/ProductCard";
-import prisma from "@/lib/prisma";
+import type { ProductWithImages } from "@/lib/types";
+
+const notNull = <T,>(value: T | null | undefined): value is T => value != null;
 
 export default async function HomePage() {
   const defaultSlug = await prisma.slug.findFirst({
     where: { isDefault: true },
   });
+
+  type MaybeImages = {
+    images?: (ProductWithImages["images"][number] | null)[] | null;
+    catalogs?: (ProductWithImages["catalogs"][number] | null)[] | null;
+  };
+
+  const normalizeProduct = (
+    p: ProductWithImages | (ProductWithImages & MaybeImages)
+  ): ProductWithImages => {
+    return {
+      ...p,
+      images: Array.isArray(p.images) ? p.images.filter(notNull) : [],
+      catalogs: Array.isArray(p.catalogs) ? p.catalogs.filter(notNull) : [],
+    };
+  };
 
   if (defaultSlug) {
     return (
@@ -33,7 +51,9 @@ export default async function HomePage() {
         <main className="flex-1">
           <section className="w-full py-12">
             <div className="container px-4 md:px-6">
-              <h1 className="text-3xl font-bold">Welcome to {defaultSlug.slug}</h1>
+              <h1 className="text-3xl font-bold">
+                Welcome to {defaultSlug.slug}
+              </h1>
             </div>
           </section>
         </main>
@@ -62,7 +82,10 @@ export default async function HomePage() {
     );
   }
 
-  const products = await productService.getProducts({});
+  const productsRaw = await productService.getProducts({});
+  const products = (
+    productsRaw as (ProductWithImages | (ProductWithImages & MaybeImages))[]
+  ).map(normalizeProduct);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -85,6 +108,7 @@ export default async function HomePage() {
           </Link>
         </nav>
       </header>
+
       <main className="flex-1">
         <section className="w-full py-12">
           <div className="container px-4 md:px-6">
@@ -96,6 +120,7 @@ export default async function HomePage() {
           </div>
         </section>
       </main>
+
       <footer className="flex w-full shrink-0 flex-col items-center gap-2 border-t border-gray-800 px-4 py-6 sm:flex-row md:px-6">
         <p className="text-xs text-gray-400">
           &copy; 2024 Acme Inc. All rights reserved.

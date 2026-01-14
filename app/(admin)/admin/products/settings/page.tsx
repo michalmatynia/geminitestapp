@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { MoreVertical } from "lucide-react";
 import {
   DropdownMenu,
@@ -73,7 +79,7 @@ const countryCodeOptions = [
   { code: "US", name: "United States" },
 ];
 
-const countryFlagMap: Record<string, JSX.Element> = {
+const countryFlagMap: Record<string, ReactNode> = {
   PL: (
     <svg viewBox="0 0 24 16" aria-hidden="true">
       <rect width="24" height="8" fill="#ffffff" />
@@ -90,16 +96,8 @@ const countryFlagMap: Record<string, JSX.Element> = {
   GB: (
     <svg viewBox="0 0 24 16" aria-hidden="true">
       <rect width="24" height="16" fill="#012169" />
-      <path
-        d="M0 0L24 16M24 0L0 16"
-        stroke="#ffffff"
-        strokeWidth="3"
-      />
-      <path
-        d="M0 0L24 16M24 0L0 16"
-        stroke="#c8102e"
-        strokeWidth="1.5"
-      />
+      <path d="M0 0L24 16M24 0L0 16" stroke="#ffffff" strokeWidth="3" />
+      <path d="M0 0L24 16M24 0L0 16" stroke="#c8102e" strokeWidth="1.5" />
       <rect x="10" width="4" height="16" fill="#ffffff" />
       <rect y="6" width="24" height="4" fill="#ffffff" />
       <rect x="11" width="2" height="16" fill="#c8102e" />
@@ -128,9 +126,8 @@ const countryFlagMap: Record<string, JSX.Element> = {
 };
 
 export default function ProductSettingsPage() {
-  const [activeSection, setActiveSection] = useState<(typeof settingSections)[number]>(
-    "Price Groups"
-  );
+  const [activeSection, setActiveSection] =
+    useState<(typeof settingSections)[number]>("Price Groups");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [priceGroups, setPriceGroups] = useState<PriceGroup[]>([]);
   const [currencyOptions, setCurrencyOptions] = useState<CurrencyOption[]>([]);
@@ -144,7 +141,9 @@ export default function ProductSettingsPage() {
   const [languagesLoading, setLanguagesLoading] = useState(true);
   const [languagesError, setLanguagesError] = useState<string | null>(null);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
-  const [editingLanguageId, setEditingLanguageId] = useState<string | null>(null);
+  const [editingLanguageId, setEditingLanguageId] = useState<string | null>(
+    null
+  );
   const [selectedCountryIds, setSelectedCountryIds] = useState<string[]>([]);
   const [languageForm, setLanguageForm] = useState({
     code: "",
@@ -153,7 +152,9 @@ export default function ProductSettingsPage() {
   });
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
-  const [editingCurrencyId, setEditingCurrencyId] = useState<string | null>(null);
+  const [editingCurrencyId, setEditingCurrencyId] = useState<string | null>(
+    null
+  );
   const [showCountryModal, setShowCountryModal] = useState(false);
   const [editingCountryId, setEditingCountryId] = useState<string | null>(null);
   const [selectedCurrencyIds, setSelectedCurrencyIds] = useState<string[]>([]);
@@ -294,9 +295,14 @@ export default function ProductSettingsPage() {
       setLanguagesLoading(true);
       const res = await fetch("/api/languages");
       if (!res.ok) {
-        const payload = (await res.json()) as { error?: string; errorId?: string };
+        const payload = (await res.json()) as {
+          error?: string;
+          errorId?: string;
+        };
         const message = payload?.error || "Failed to fetch languages.";
-        const suffix = payload?.errorId ? ` (Error ID: ${payload.errorId})` : "";
+        const suffix = payload?.errorId
+          ? ` (Error ID: ${payload.errorId})`
+          : "";
         throw new Error(`${message}${suffix}`);
       }
       const data = (await res.json()) as Language[];
@@ -392,7 +398,9 @@ export default function ProductSettingsPage() {
     };
 
     const res = await fetch(
-      editingGroupId ? `/api/price-groups/${editingGroupId}` : "/api/price-groups",
+      editingGroupId
+        ? `/api/price-groups/${editingGroupId}`
+        : "/api/price-groups",
       {
         method: editingGroupId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
@@ -427,16 +435,16 @@ export default function ProductSettingsPage() {
   };
 
   const handleDeleteGroup = async (group: PriceGroup) => {
-    const confirmed = window.confirm(
-      `Delete price group "${group.name}"?`
-    );
+    const confirmed = window.confirm(`Delete price group "${group.name}"?`);
     if (!confirmed) return;
     const res = await fetch(`/api/price-groups/${group.id}`, {
       method: "DELETE",
     });
     if (!res.ok) {
       const error = (await res.json()) as { error?: string };
-      toast(error.error || "Failed to delete price group.", { variant: "error" });
+      toast(error.error || "Failed to delete price group.", {
+        variant: "error",
+      });
       return;
     }
     await refreshPriceGroups();
@@ -463,7 +471,9 @@ export default function ProductSettingsPage() {
       return;
     }
     const res = await fetch(
-      editingCurrencyId ? `/api/currencies/${editingCurrencyId}` : "/api/currencies",
+      editingCurrencyId
+        ? `/api/currencies/${editingCurrencyId}`
+        : "/api/currencies",
       {
         method: editingCurrencyId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
@@ -520,7 +530,9 @@ export default function ProductSettingsPage() {
       return;
     }
     const res = await fetch(
-      editingCountryId ? `/api/countries/${editingCountryId}` : "/api/countries",
+      editingCountryId
+        ? `/api/countries/${editingCountryId}`
+        : "/api/countries",
       {
         method: editingCountryId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
@@ -600,7 +612,7 @@ export default function ProductSettingsPage() {
   const handleDeleteCatalog = (catalog: Catalog) => {
     const deleteCatalog = async () => {
       const confirmed = window.confirm(
-        `Delete catalog "${catalog.name}"? This cannot be undone.`,
+        `Delete catalog "${catalog.name}"? This cannot be undone.`
       );
       if (!confirmed) {
         return;
@@ -611,7 +623,10 @@ export default function ProductSettingsPage() {
       });
 
       if (!res.ok) {
-        const error = (await res.json()) as { error?: string; errorId?: string };
+        const error = (await res.json()) as {
+          error?: string;
+          errorId?: string;
+        };
         const message = error.error || "Failed to delete catalog.";
         const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
         toast(`${message}${suffix}`, { variant: "error" });
@@ -748,7 +763,9 @@ export default function ProductSettingsPage() {
         countryIds: selectedCountryIds,
       };
       const res = await fetch(
-        editingLanguageId ? `/api/languages/${editingLanguageId}` : "/api/languages",
+        editingLanguageId
+          ? `/api/languages/${editingLanguageId}`
+          : "/api/languages",
         {
           method: editingLanguageId ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
@@ -756,7 +773,10 @@ export default function ProductSettingsPage() {
         }
       );
       if (!res.ok) {
-        const error = (await res.json()) as { error?: string; errorId?: string };
+        const error = (await res.json()) as {
+          error?: string;
+          errorId?: string;
+        };
         const message = error.error || "Failed to save language.";
         const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
         toast(`${message}${suffix}`, { variant: "error" });
@@ -778,7 +798,10 @@ export default function ProductSettingsPage() {
         method: "DELETE",
       });
       if (!res.ok) {
-        const error = (await res.json()) as { error?: string; errorId?: string };
+        const error = (await res.json()) as {
+          error?: string;
+          errorId?: string;
+        };
         const message = error.error || "Failed to delete language.";
         const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
         toast(`${message}${suffix}`, { variant: "error" });
@@ -904,7 +927,9 @@ export default function ProductSettingsPage() {
                   </button>
                 </div>
                 <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4">
-                  <p className="text-sm font-semibold text-white">Existing Catalogs</p>
+                  <p className="text-sm font-semibold text-white">
+                    Existing Catalogs
+                  </p>
                   {loadingCatalogs ? (
                     <div className="mt-4 rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
                       Loading catalogs...
@@ -932,7 +957,8 @@ export default function ProductSettingsPage() {
                             <p className="text-xs text-gray-400">
                               {catalog.description || "No description"}
                             </p>
-                            {catalog.languages && catalog.languages.length > 0 ? (
+                            {catalog.languages &&
+                            catalog.languages.length > 0 ? (
                               <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-300">
                                 {catalog.languages.map((entry) => (
                                   <span
@@ -1094,7 +1120,9 @@ export default function ProductSettingsPage() {
                           className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                           placeholder="Search countries..."
                           value={countrySearch}
-                          onChange={(event) => setCountrySearch(event.target.value)}
+                          onChange={(event) =>
+                            setCountrySearch(event.target.value)
+                          }
                         />
                       </div>
                       <p className="text-xs text-gray-500">
@@ -1184,7 +1212,9 @@ export default function ProductSettingsPage() {
                 <div className="space-y-4">
                   <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-white">Languages</p>
+                      <p className="text-sm font-semibold text-white">
+                        Languages
+                      </p>
                       <button
                         className="rounded-md bg-white px-3 py-2 text-xs font-semibold text-gray-900 hover:bg-gray-200"
                         type="button"
@@ -1233,7 +1263,8 @@ export default function ProductSettingsPage() {
                                       title={entry.country.name}
                                     >
                                       <span className="h-3 w-4 overflow-hidden rounded-sm border border-gray-700">
-                                        {countryFlagMap[entry.country.code] ?? null}
+                                        {countryFlagMap[entry.country.code] ??
+                                          null}
                                       </span>
                                       <span>{entry.country.name}</span>
                                     </div>
@@ -1379,9 +1410,13 @@ export default function ProductSettingsPage() {
                 <div className="rounded-md border border-gray-800 bg-gray-950/70 p-3">
                   <label className="text-xs text-gray-400">Languages</label>
                   {languagesLoading ? (
-                    <p className="mt-2 text-xs text-gray-500">Loading languages...</p>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Loading languages...
+                    </p>
                   ) : languagesError ? (
-                    <p className="mt-2 text-xs text-red-400">{languagesError}</p>
+                    <p className="mt-2 text-xs text-red-400">
+                      {languagesError}
+                    </p>
                   ) : (
                     <div className="mt-2 space-y-3">
                       <Input
@@ -1717,7 +1752,9 @@ export default function ProductSettingsPage() {
                 </div>
               )}
               <div>
-                <label className="text-sm text-gray-300">Base Price Field</label>
+                <label className="text-sm text-gray-300">
+                  Base Price Field
+                </label>
                 <input
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
                   value={formState.basePriceField}
@@ -1748,9 +1785,7 @@ export default function ProductSettingsPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-gray-300">
-                    Add To Price
-                  </label>
+                  <label className="text-sm text-gray-300">Add To Price</label>
                   <input
                     className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
                     type="number"
@@ -1933,7 +1968,9 @@ export default function ProductSettingsPage() {
               <div>
                 <label className="text-sm text-gray-300">Currencies</label>
                 {loadingCurrencies ? (
-                  <p className="mt-2 text-xs text-gray-500">Loading currencies...</p>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Loading currencies...
+                  </p>
                 ) : (
                   <div className="mt-2 flex max-h-64 flex-wrap gap-2 overflow-y-auto">
                     {currencyOptions.map((currency) => (

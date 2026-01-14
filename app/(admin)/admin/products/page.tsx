@@ -56,8 +56,16 @@ function DataTableFooter<TData>({
   const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
   const [bulkMode, setBulkMode] = useState<BulkCatalogMode>("add");
 
+  const toggleCatalog = (catalogId: string) => {
+    setSelectedCatalogIds((prev) =>
+      prev.includes(catalogId)
+        ? prev.filter((id) => id !== catalogId)
+        : [...prev, catalogId]
+    );
+  };
   const selectedCount = table.getFilteredSelectedRowModel().rows.length;
   const hasSelection = selectedCount > 0;
+  const { toast } = useToast();
 
   const handleMassDelete = async () => {
     logger.log("Mass delete initiated.");
@@ -99,7 +107,9 @@ function DataTableFooter<TData>({
           }
           setActionError(`Some products could not be deleted.${errorIdSuffix}`);
         } else {
-          toast("Selected products deleted successfully.", { variant: "success" });
+          toast("Selected products deleted successfully.", {
+            variant: "success",
+          });
         }
         table.setRowSelection({}); // Clear selection after deletion
         setRefreshTrigger((prev) => prev + 1); // Refresh the product list
@@ -149,9 +159,14 @@ function DataTableFooter<TData>({
         }),
       });
       if (!res.ok) {
-        const payload = (await res.json()) as { error?: string; errorId?: string };
+        const payload = (await res.json()) as {
+          error?: string;
+          errorId?: string;
+        };
         const message = payload?.error || "Failed to update catalogs.";
-        const errorIdSuffix = payload?.errorId ? ` (Error ID: ${payload.errorId})` : "";
+        const errorIdSuffix = payload?.errorId
+          ? ` (Error ID: ${payload.errorId})`
+          : "";
         setActionError(`${message}${errorIdSuffix}`);
         return;
       }
@@ -169,13 +184,19 @@ function DataTableFooter<TData>({
     if (catalogsError) return catalogsError;
     if (catalogs.length === 0) return "No catalogs available.";
     return `${selectedCatalogIds.length} selected`;
-  }, [catalogsLoading, catalogsError, catalogs.length, selectedCatalogIds.length]);
+  }, [
+    catalogsLoading,
+    catalogsError,
+    catalogs.length,
+    selectedCatalogIds.length,
+  ]);
 
   return (
     <div className="space-y-3 px-2 py-4">
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          {selectedCount} of {table.getFilteredRowModel().rows.length} row(s) selected.
+          {selectedCount} of {table.getFilteredRowModel().rows.length} row(s)
+          selected.
         </div>
         <Button
           onClick={() => {
@@ -250,11 +271,7 @@ function CreateProductModalContent({ onClose }: { onClose: () => void }) {
   );
 }
 
-function EditProductModalContent({
-  onClose,
-}: {
-  onClose: () => void;
-}) {
+function EditProductModalContent({ onClose }: { onClose: () => void }) {
   const { showFileManager, handleMultiFileSelect } = useProductFormContext();
 
   return (
@@ -282,7 +299,8 @@ export default function AdminPage() {
   const [endDate, setEndDate] = useState<string>("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [initialSku, setInitialSku] = useState<string>("");
-  const [editingProduct, setEditingProduct] = useState<ProductWithImages | null>(null);
+  const [editingProduct, setEditingProduct] =
+    useState<ProductWithImages | null>(null);
   const [lastEditedId, setLastEditedId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -313,7 +331,9 @@ export default function AdminPage() {
   }, [nameLocale]);
 
   useEffect(() => {
-    const storedCatalog = window.localStorage.getItem("productListCatalogFilter");
+    const storedCatalog = window.localStorage.getItem(
+      "productListCatalogFilter"
+    );
     if (storedCatalog) {
       setCatalogFilter(storedCatalog);
       catalogFilterInitialized.current = true;
@@ -393,9 +413,14 @@ export default function AdminPage() {
     try {
       const res = await fetch(`/api/products?sku=${encodeURIComponent(sku)}`);
       if (!res.ok) {
-        const payload = (await res.json()) as { error?: string; errorId?: string };
+        const payload = (await res.json()) as {
+          error?: string;
+          errorId?: string;
+        };
         const message = payload?.error || "Failed to validate SKU";
-        const errorIdSuffix = payload?.errorId ? ` (Error ID: ${payload.errorId})` : "";
+        const errorIdSuffix = payload?.errorId
+          ? ` (Error ID: ${payload.errorId})`
+          : "";
         setActionError(`${message}${errorIdSuffix}`);
         return;
       }
@@ -446,9 +471,14 @@ export default function AdminPage() {
         setCatalogsLoading(true);
         const res = await fetch("/api/catalogs");
         if (!res.ok) {
-          const payload = (await res.json()) as { error?: string; errorId?: string };
+          const payload = (await res.json()) as {
+            error?: string;
+            errorId?: string;
+          };
           const message = payload?.error || "Failed to load catalogs";
-          const suffix = payload?.errorId ? ` (Error ID: ${payload.errorId})` : "";
+          const suffix = payload?.errorId
+            ? ` (Error ID: ${payload.errorId})`
+            : "";
           throw new Error(`${message}${suffix}`);
         }
         const data = (await res.json()) as Catalog[];
@@ -477,9 +507,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (!lastEditedId) return;
     if (data.length === 0) return;
-    const target = document.querySelector(
-      `[data-row-id="${lastEditedId}"]`
-    );
+    const target = document.querySelector(`[data-row-id="${lastEditedId}"]`);
     if (target instanceof HTMLElement) {
       requestAnimationFrame(() => {
         target.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -574,7 +602,9 @@ export default function AdminPage() {
             placeholder="Min Price"
             value={minPrice || ""}
             onChange={(e) =>
-              setMinPrice(e.target.value ? parseInt(e.target.value, 10) : undefined)
+              setMinPrice(
+                e.target.value ? parseInt(e.target.value, 10) : undefined
+              )
             }
             className="max-w-xs"
           />
@@ -583,7 +613,9 @@ export default function AdminPage() {
             placeholder="Max Price"
             value={maxPrice || ""}
             onChange={(e) =>
-              setMaxPrice(e.target.value ? parseInt(e.target.value, 10) : undefined)
+              setMaxPrice(
+                e.target.value ? parseInt(e.target.value, 10) : undefined
+              )
             }
             className="max-w-xs"
           />

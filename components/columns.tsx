@@ -1,6 +1,6 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoreVertical } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -15,28 +15,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/toast";
 import MissingImagePlaceholder from "@/components/products/MissingImagePlaceholder";
+import type { ProductWithImages } from "@/lib/types";
 
-export type Product = {
-  id: string;
-  name_en: string | null;
-  name_pl: string | null;
-  name_de: string | null;
-  sku: string | null;
-  price: number | null;
-  createdAt: Date;
-  updatedAt: Date;
-  images: {
-    imageFile: {
-      id: string;
-      filename: string;
-      filepath: string;
-      mimetype: string;
-      size: number;
-      width?: number | null;
-      height?: number | null;
-    };
-  }[];
-};
+// Keep the exported name `Product` in case other files import it from here.
+export type Product = ProductWithImages;
+
+type ProductNameKey = "name_en" | "name_pl" | "name_de";
+
+type ToastFn = (
+  message: string,
+  options?: { variant?: "success" | "error" | "info" | "warning" }
+) => void;
 
 interface ColumnActionsProps {
   row: { original: Product };
@@ -44,30 +33,32 @@ interface ColumnActionsProps {
   onProductEditClick?: (row: Product) => void;
 }
 
-// The `handleDelete` function sends a DELETE request to the API to delete a
-// product. If the request is successful, it triggers a refresh of the
-// product list.
+// Sends a DELETE request to delete a product and triggers refresh on success.
 const handleDelete = async (
   id: string,
   setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>,
-  notify?: (message: string, variant?: "success" | "error" | "info") => void
+  notify?: ToastFn
 ) => {
-  if (!window.confirm("Are you sure you want to delete this product?")) {
-    return;
-  }
-  const res = await fetch(`/api/products/${id}`, {
-    method: "DELETE",
-  });
+  if (!window.confirm("Are you sure you want to delete this product?")) return;
+
+  const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
   if (res.ok) {
     setRefreshTrigger((prev) => prev + 1);
-  } else {
-    console.error("Failed to delete product:", await res.json());
-    notify?.("Failed to delete product.", "error");
+    return;
   }
+
+  try {
+    // best-effort read error body for console
+    // eslint-disable-next-line no-console
+    console.error("Failed to delete product:", await res.json());
+  } catch {
+    // eslint-disable-next-line no-console
+    console.error("Failed to delete product.");
+  }
+
+  notify?.("Failed to delete product.", { variant: "error" });
 };
 
-// The `ActionsCell` component renders the actions for a single product row,
-// including a link to edit the product, and a button to delete it.
 const ActionsCell: React.FC<ColumnActionsProps> = ({
   row,
   setRefreshTrigger,
@@ -80,8 +71,10 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
   const handleDuplicate = async () => {
     const sku = window.prompt("Enter a new unique SKU for the duplicate:");
     if (sku === null) return;
+
     const trimmedSku = sku.trim().toUpperCase();
     const skuPattern = /^[A-Z0-9]+$/;
+
     if (!trimmedSku) {
       toast("SKU is required.", { variant: "error" });
       return;
@@ -92,13 +85,13 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
       });
       return;
     }
+
     const res = await fetch(`/api/products/${product.id}/duplicate`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sku: trimmedSku }),
     });
+
     if (res.ok) {
       const duplicated = (await res.json()) as { id?: string };
       setRefreshTrigger((prev) => prev + 1);
@@ -106,12 +99,11 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
         toast("Product duplicated.", { variant: "success" });
         router.push(`/admin/products/${duplicated.id}/edit`);
       }
-    } else {
-      const error = (await res.json()) as { error?: string };
-      toast(error.error || "Failed to duplicate product.", {
-        variant: "error",
-      });
+      return;
     }
+
+    const error = (await res.json()) as { error?: string };
+    toast(error.error || "Failed to duplicate product.", { variant: "error" });
   };
 
   return (
@@ -121,22 +113,31 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
           <button
             className="inline-flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-gray-800 hover:text-white"
             aria-label="Open row actions"
+            type="button"
           >
             <MoreVertical className="size-4" />
           </button>
         </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem
-          onSelect={(event) => {
-            event.preventDefault();
-            onProductEditClick?.(product);
-          }}
-        >
-          Edit
-        </DropdownMenuItem>
-          <DropdownMenuItem onSelect={handleDuplicate}>
+
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onSelect={(event) => {
+              event.preventDefault();
+              onProductEditClick?.(product);
+            }}
+          >
+            Edit
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            onSelect={(event) => {
+              event.preventDefault();
+              void handleDuplicate();
+            }}
+          >
             Duplicate
           </DropdownMenuItem>
+
           <DropdownMenuItem
             className="text-destructive focus:text-destructive"
             onSelect={(event) => {
@@ -152,7 +153,7 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
   );
 };
 
-export const columns: ColumnDef<Product>[] = [
+export const columns: ColumnDef<ProductWithImages>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -175,6 +176,7 @@ export const columns: ColumnDef<Product>[] = [
     enableSorting: false,
     enableHiding: false,
   },
+
   {
     accessorKey: "images",
     header: "Image",
@@ -182,40 +184,52 @@ export const columns: ColumnDef<Product>[] = [
       const product = row.original;
       const imageUrl =
         product.images && product.images.length > 0
-          ? product.images[0].imageFile.filepath
+          ? product.images[0]?.imageFile?.filepath
           : undefined;
+
       return imageUrl ? (
         <Image
           src={imageUrl}
           alt="Product Image"
           width={64}
           height={64}
-          className="size-16 object-cover rounded-md"
+          className="size-16 rounded-md object-cover"
         />
       ) : (
         <MissingImagePlaceholder className="size-16" />
       );
     },
   },
+
   {
     accessorKey: "name_en",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting()}
-        >
-          Name
-          <ArrowUpDown className="ml-2 size-4" />
-        </Button>
-      );
-    },
+    header: ({ column }) => (
+      <Button variant="ghost" onClick={() => column.toggleSorting()}>
+        Name
+        <ArrowUpDown className="ml-2 size-4" />
+      </Button>
+    ),
     cell: ({ row, table }) => {
       const product = row.original;
-      const nameKey = table.options.meta?.productNameKey ?? "name_en";
+
+      const meta = table.options.meta as
+        | {
+            productNameKey?: ProductNameKey;
+            onProductNameClick?: (p: ProductWithImages) => void;
+          }
+        | undefined;
+
+      const nameKey: ProductNameKey = meta?.productNameKey ?? "name_en";
+
+      // Safe fallback order if a localized field is missing/null.
       const nameValue =
-        product[nameKey] ?? product.name_en ?? product.name_pl ?? product.name_de;
-      const handleNameClick = table.options.meta?.onProductNameClick;
+        (product as any)[nameKey] ??
+        (product as any).name_en ??
+        (product as any).name_pl ??
+        (product as any).name_de;
+
+      const handleNameClick = meta?.onProductNameClick;
+
       return (
         <div>
           {handleNameClick ? (
@@ -229,50 +243,53 @@ export const columns: ColumnDef<Product>[] = [
           ) : (
             <span>{nameValue || "—"}</span>
           )}
-          {product.sku && (
-            <div className="text-sm text-gray-500">{product.sku}</div>
+
+          {(product as any).sku && (
+            <div className="text-sm text-gray-500">{(product as any).sku}</div>
           )}
         </div>
       );
     },
   },
+
   {
     accessorKey: "price",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting()}
-        >
-          Price
-          <ArrowUpDown className="ml-2 size-4" />
-        </Button>
-      );
-    },
+    header: ({ column }) => (
+      <Button variant="ghost" onClick={() => column.toggleSorting()}>
+        Price
+        <ArrowUpDown className="ml-2 size-4" />
+      </Button>
+    ),
   },
+
   {
     accessorKey: "createdAt",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting()}
-        >
-          Created At
-          <ArrowUpDown className="ml-2 size-4" />
-        </Button>
-      );
-    },
+    header: ({ column }) => (
+      <Button variant="ghost" onClick={() => column.toggleSorting()}>
+        Created At
+        <ArrowUpDown className="ml-2 size-4" />
+      </Button>
+    ),
   },
+
   {
     id: "actions",
     cell: ({ row, table }) => {
-      const setRefreshTrigger = table.options.meta?.setRefreshTrigger;
-      const onProductEditClick = table.options.meta?.onProductEditClick;
+      const meta = table.options.meta as
+        | {
+            setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
+            onProductEditClick?: (p: ProductWithImages) => void;
+          }
+        | undefined;
+
+      const setRefreshTrigger = meta?.setRefreshTrigger;
+      const onProductEditClick = meta?.onProductEditClick;
+
       if (!setRefreshTrigger) return null;
+
       return (
         <ActionsCell
-          row={row}
+          row={row as any}
           setRefreshTrigger={setRefreshTrigger}
           onProductEditClick={onProductEditClick}
         />

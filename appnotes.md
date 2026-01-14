@@ -20,6 +20,9 @@ ETC.
 
 I need the ability to take control and log in to the website and give back control. I need a mini website viewer
 
+
+Sending another prompt during an agent work means I am adjusting, so at this point stop running, do a replan taking the last prompt into consideration and adjust behavior
+
 ---
 
 Refactor

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
 import { decryptSecret } from "@/lib/utils/encryption";
@@ -8,26 +8,36 @@ import { decryptSecret } from "@/lib/utils/encryption";
  * Returns stored Playwright session cookies for a connection.
  */
 export async function GET(
-  _req: Request,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let connectionId: string | null = null;
+
   try {
     const { id } = await params;
+    connectionId = id;
+
     const connection = await prisma.integrationConnection.findFirst({
-      where: { id },
+      where: { id: connectionId },
     });
+
     if (!connection) {
       return NextResponse.json(
-        { error: "Connection not found", errorId: randomUUID(), connectionId: id },
+        {
+          error: "Connection not found",
+          errorId: randomUUID(),
+          connectionId,
+        },
         { status: 404 }
       );
     }
+
     if (!connection.playwrightStorageState) {
       return NextResponse.json(
         {
           error: "No stored Playwright session.",
           errorId: randomUUID(),
-          connectionId: id,
+          connectionId,
         },
         { status: 404 }
       );
@@ -46,24 +56,30 @@ export async function GET(
     });
   } catch (error: unknown) {
     const errorId = randomUUID();
+
     if (error instanceof Error) {
-      console.error("[integrations][connection][session][GET] Failed to load session", {
-        errorId,
-        connectionId: id,
-        message: error.message,
-      });
+      console.error(
+        "[integrations][connection][session][GET] Failed to load session",
+        {
+          errorId,
+          connectionId,
+          message: error.message,
+        }
+      );
       return NextResponse.json(
-        { error: error.message, errorId, connectionId: id },
+        { error: error.message, errorId, connectionId },
         { status: 400 }
       );
     }
+
     console.error("[integrations][connection][session][GET] Unknown error", {
       errorId,
-      connectionId: id,
+      connectionId,
       error,
     });
+
     return NextResponse.json(
-      { error: "Failed to load session", errorId, connectionId: id },
+      { error: "Failed to load session", errorId, connectionId },
       { status: 500 }
     );
   }

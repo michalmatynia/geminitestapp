@@ -23,6 +23,7 @@ I need the ability to take control and log in to the website and give back contr
 
 Sending another prompt during an agent work means I am adjusting, so at this point stop running, do a replan taking the last prompt into consideration and adjust behavior
 
+Connect GPT API to my Agentic Framework
 ---
 
 Refactor

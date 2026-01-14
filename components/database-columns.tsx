@@ -1,6 +1,6 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, Column } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 
 export type DatabaseInfo = {
@@ -15,19 +15,21 @@ export type DatabaseInfo = {
 
 type Notify = (message: string, variant?: "success" | "error" | "info") => void;
 
-const renderSortableHeader = (
+// ✅ Use TanStack's Column type, and accept that the handler may be undefined.
+const renderSortableHeader = <TData, TValue>(
   label: string,
-  column: {
-    getIsSorted: () => false | "asc" | "desc";
-    getToggleSortingHandler: () => () => void;
-  }
+  column: Column<TData, TValue>
 ) => {
-  const direction = column.getIsSorted();
+  const direction = column.getIsSorted(); // false | "asc" | "desc"
+  const handler = column.getToggleSortingHandler(); // ((event) => void) | undefined
+
   return (
     <button
       type="button"
-      onClick={column.getToggleSortingHandler()}
-      className="inline-flex items-center gap-1 text-left text-sm font-medium text-foreground"
+      onClick={handler ?? undefined}
+      // optional: prevent "clickable" affordance if it can't sort
+      disabled={!handler}
+      className="inline-flex items-center gap-1 text-left text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60"
     >
       {label}
       <span className="text-xs text-muted-foreground">
@@ -58,11 +60,10 @@ async function handleRestore(
     try {
       const res = await fetch("/api/databases/restore", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ backupName, truncateBeforeRestore }),
       });
+
       const payload = (await res.json()) as {
         message?: string;
         error?: string;
@@ -71,12 +72,12 @@ async function handleRestore(
         backupName?: string;
         log?: string;
       };
+
       const log = payload.log ?? "No log available.";
+
       if (res.ok) {
         onRestore(
-          `${
-            payload.message ?? "Backup restored successfully."
-          }\n\n---LOG---\n${log}`
+          `${payload.message ?? "Backup restored successfully."}\n\n---LOG---\n${log}`
         );
       } else {
         const meta = [
@@ -86,6 +87,7 @@ async function handleRestore(
         ]
           .filter(Boolean)
           .join("\n");
+
         onRestore(
           `${payload.error ?? "Failed to restore backup."}${
             meta ? `\n\n${meta}` : ""
@@ -93,6 +95,7 @@ async function handleRestore(
         );
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Error restoring backup:", error);
       onRestore(`An error occurred during restoration.\n\n${String(error)}`);
     }
@@ -108,11 +111,10 @@ async function handleDelete(
     try {
       const res = await fetch("/api/databases/delete", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ backupName }),
       });
+
       if (res.ok) {
         notify?.("Backup deleted successfully.", "success");
         onDelete();
@@ -120,6 +122,7 @@ async function handleDelete(
         notify?.("Failed to delete backup.", "error");
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Error deleting backup:", error);
       notify?.("An error occurred during deletion.", "error");
     }
@@ -174,13 +177,12 @@ export const getDatabaseColumns = (options?: {
           {options?.onPreview && (
             <Button
               variant="secondary"
-              onClick={() => {
-                options.onPreview?.(backup.name);
-              }}
+              onClick={() => options.onPreview?.(backup.name)}
             >
               Preview
             </Button>
           )}
+
           <Button
             onClick={() => {
               if (options?.onRestore) {
@@ -194,11 +196,16 @@ export const getDatabaseColumns = (options?: {
           >
             Restore
           </Button>
+
           <Button
             variant="destructive"
             onClick={() => {
               if (options?.onDelete) {
-                void handleDelete(backup.name, options.onDelete, options.notify);
+                void handleDelete(
+                  backup.name,
+                  options.onDelete,
+                  options.notify
+                );
               }
             }}
           >

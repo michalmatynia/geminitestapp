@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ProductWithImages } from "@/lib/types";
+import type { ProductWithImages } from "@/lib/types";
 import {
   Card,
   CardContent,
@@ -16,9 +16,16 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const imageUrl =
-    product.images && product.images.length > 0
-      ? product.images[0].imageFile.filepath
+    Array.isArray(product.images) && product.images.length > 0
+      ? (product.images[0]?.imageFile?.filepath ?? null)
       : null;
+
+  // ✅ Localized name fallback: en -> pl -> de -> generic
+  const name =
+    (product as any).name_en ??
+    (product as any).name_pl ??
+    (product as any).name_de ??
+    "Product";
 
   return (
     <Link href={`/products/${product.id}`}>
@@ -28,22 +35,22 @@ export default function ProductCard({ product }: ProductCardProps) {
             {imageUrl ? (
               <Image
                 src={imageUrl}
-                alt={product.name ?? "Product image"}
+                alt={name}
                 fill
-                className="object-cover rounded-t-lg"
+                className="rounded-t-lg object-cover"
               />
             ) : (
               <MissingImagePlaceholder className="h-full w-full rounded-t-lg" />
             )}
           </div>
         </CardHeader>
+
         <CardContent>
-          <CardTitle className="text-lg">{product.name}</CardTitle>
+          <CardTitle className="text-lg">{name}</CardTitle>
         </CardContent>
+
         <CardFooter>
-          <p className="text-lg font-semibold">
-            ${product.price}
-          </p>
+          <p className="text-lg font-semibold">${product.price}</p>
         </CardFooter>
       </Card>
     </Link>

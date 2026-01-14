@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
@@ -33,35 +33,43 @@ const connectionSchema = z.object({
  * Updates an integration connection.
  */
 export async function PUT(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let connectionId: string | null = null;
+
   try {
     const { id } = await params;
+    connectionId = id;
+
     let body: unknown;
     try {
       body = await req.json();
     } catch (error) {
       const errorId = randomUUID();
-      console.error("[integrations][connection][PUT] Failed to parse JSON body", {
-        errorId,
-        connectionId: id,
-        error,
-      });
+      console.error(
+        "[integrations][connection][PUT] Failed to parse JSON body",
+        {
+          errorId,
+          connectionId,
+          error,
+        }
+      );
       return NextResponse.json(
-        { error: "Invalid JSON payload", errorId, connectionId: id },
+        { error: "Invalid JSON payload", errorId, connectionId },
         { status: 400 }
       );
     }
+
     const data = connectionSchema.parse(body);
+
     const connection = await prisma.integrationConnection.update({
-      where: { id },
+      where: { id: connectionId },
       data: {
         name: data.name,
         username: data.username,
-        ...(data.password
-          ? { password: encryptSecret(data.password) }
-          : {}),
+        ...(data.password ? { password: encryptSecret(data.password) } : {}),
+
         ...(typeof data.playwrightHeadless === "boolean"
           ? { playwrightHeadless: data.playwrightHeadless }
           : {}),
@@ -123,6 +131,7 @@ export async function PUT(
           : {}),
       },
     });
+
     return NextResponse.json({
       id: connection.id,
       integrationId: connection.integrationId,
@@ -151,35 +160,46 @@ export async function PUT(
     });
   } catch (error: unknown) {
     const errorId = randomUUID();
+
     if (error instanceof z.ZodError) {
       console.warn("[integrations][connection][PUT] Invalid payload", {
         errorId,
-        connectionId: id,
+        connectionId,
         issues: error.flatten(),
       });
       return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten(), errorId, connectionId: id },
+        {
+          error: "Invalid payload",
+          details: error.flatten(),
+          errorId,
+          connectionId,
+        },
         { status: 400 }
       );
     }
+
     if (error instanceof Error) {
-      console.error("[integrations][connection][PUT] Failed to update connection", {
-        errorId,
-        connectionId: id,
-        message: error.message,
-      });
+      console.error(
+        "[integrations][connection][PUT] Failed to update connection",
+        {
+          errorId,
+          connectionId,
+          message: error.message,
+        }
+      );
       return NextResponse.json(
-        { error: error.message, errorId, connectionId: id },
+        { error: error.message, errorId, connectionId },
         { status: 400 }
       );
     }
+
     console.error("[integrations][connection][PUT] Unknown error", {
       errorId,
-      connectionId: id,
+      connectionId,
       error,
     });
     return NextResponse.json(
-      { error: "An unknown error occurred", errorId, connectionId: id },
+      { error: "An unknown error occurred", errorId, connectionId },
       { status: 400 }
     );
   }
@@ -190,33 +210,42 @@ export async function PUT(
  * Deletes an integration connection.
  */
 export async function DELETE(
-  _req: Request,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let connectionId: string | null = null;
+
   try {
     const { id } = await params;
-    await prisma.integrationConnection.delete({ where: { id } });
+    connectionId = id;
+
+    await prisma.integrationConnection.delete({ where: { id: connectionId } });
     return new Response(null, { status: 204 });
   } catch (error: unknown) {
     const errorId = randomUUID();
+
     if (error instanceof Error) {
-      console.error("[integrations][connection][DELETE] Failed to delete connection", {
-        errorId,
-        connectionId: id,
-        message: error.message,
-      });
+      console.error(
+        "[integrations][connection][DELETE] Failed to delete connection",
+        {
+          errorId,
+          connectionId,
+          message: error.message,
+        }
+      );
       return NextResponse.json(
-        { error: error.message, errorId, connectionId: id },
+        { error: error.message, errorId, connectionId },
         { status: 400 }
       );
     }
+
     console.error("[integrations][connection][DELETE] Unknown error", {
       errorId,
-      connectionId: id,
+      connectionId,
       error,
     });
     return NextResponse.json(
-      { error: "Failed to delete connection", errorId, connectionId: id },
+      { error: "Failed to delete connection", errorId, connectionId },
       { status: 500 }
     );
   }

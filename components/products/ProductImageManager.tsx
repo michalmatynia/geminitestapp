@@ -4,31 +4,33 @@ import Image from "next/image";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useProductFormContext } from "@/lib/context/ProductFormContext";
 import { PlusIcon, XIcon } from "lucide-react";
+
+type DebugInfo = {
+  action: string;
+  message: string;
+  slotIndex?: number;
+  filename?: string;
+  timestamp: string;
+};
 
 export default function ProductImageManager() {
   const {
     imageSlots,
     handleSlotImageChange,
     handleSlotDisconnectImage,
-    setShowFileManager, // For opening the file manager modal for existing images
+    setShowFileManager,
     uploadError,
   } = useProductFormContext();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentSlotIndexRef = useRef<number | null>(null);
-  const [debugInfo, setDebugInfo] = useState<{
-    action: string;
-    message: string;
-    slotIndex?: number;
-    filename?: string;
-    timestamp: string;
-  } | null>(null);
+
+  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [showDebug, setShowDebug] = useState(false);
 
-  const pushDebug = (info: Omit<typeof debugInfo, "timestamp">) => {
+  const pushDebug = (info: Omit<DebugInfo, "timestamp">) => {
     setDebugInfo({
       ...info,
       timestamp: new Date().toISOString(),
@@ -50,6 +52,7 @@ export default function ProductImageManager() {
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+
     if (!file) {
       pushDebug({
         action: "file-change",
@@ -58,9 +61,17 @@ export default function ProductImageManager() {
       });
       return;
     }
-    if (file && currentSlotIndexRef.current !== null) {
+
+    const slotIndex = currentSlotIndexRef.current;
+    if (slotIndex === null) {
+      pushDebug({
+        action: "file-change",
+        message: "Slot index was not set",
+        filename: file.name,
+      });
+    } else {
       try {
-        handleSlotImageChange(file, currentSlotIndexRef.current);
+        handleSlotImageChange(file, slotIndex);
       } catch (error) {
         pushDebug({
           action: "file-change",
@@ -68,15 +79,14 @@ export default function ProductImageManager() {
             error instanceof Error
               ? error.message
               : "Failed to assign image to slot",
-          slotIndex: currentSlotIndexRef.current,
+          slotIndex,
           filename: file.name,
         });
       }
     }
-    // Reset file input value to allow re-uploading the same file
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+
+    // Reset file input to allow re-uploading the same file
+    if (fileInputRef.current) fileInputRef.current.value = "";
     currentSlotIndexRef.current = null;
   };
 
@@ -107,6 +117,7 @@ export default function ProductImageManager() {
           {showDebug ? "Hide debug" : "Show debug"}
         </Button>
       </div>
+
       {showDebug && (uploadError || debugInfo) && (
         <div className="mb-3 space-y-2 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-200">
           {uploadError ? <div>Upload error: {uploadError}</div> : null}
@@ -126,6 +137,7 @@ export default function ProductImageManager() {
           ) : null}
         </div>
       )}
+
       <div className="grid grid-cols-5 gap-2">
         {imageSlots.map((slot, index) => (
           <div
@@ -198,7 +210,7 @@ export default function ProductImageManager() {
           </div>
         ))}
       </div>
-      {/* Hidden file input for actual file selection */}
+
       <Input
         type="file"
         ref={fileInputRef}

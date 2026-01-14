@@ -1,6 +1,6 @@
 "use client";
 
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, Row } from "@tanstack/react-table";
 import { ArrowUpDown, MoreVertical } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -22,15 +22,13 @@ export type Product = ProductWithImages;
 
 type ProductNameKey = "name_en" | "name_pl" | "name_de";
 
-type ToastFn = (
-  message: string,
-  options?: { variant?: "success" | "error" | "info" | "warning" }
-) => void;
+// ✅ Use the real toast function type from your hook (no more variant mismatch)
+type ToastFn = ReturnType<typeof useToast>["toast"];
 
 interface ColumnActionsProps {
-  row: { original: Product };
+  row: Row<ProductWithImages>;
   setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;
-  onProductEditClick?: (row: Product) => void;
+  onProductEditClick?: (row: ProductWithImages) => void;
 }
 
 // Sends a DELETE request to delete a product and triggers refresh on success.
@@ -48,7 +46,6 @@ const handleDelete = async (
   }
 
   try {
-    // best-effort read error body for console
     // eslint-disable-next-line no-console
     console.error("Failed to delete product:", await res.json());
   } catch {
@@ -95,6 +92,7 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
     if (res.ok) {
       const duplicated = (await res.json()) as { id?: string };
       setRefreshTrigger((prev) => prev + 1);
+
       if (duplicated.id) {
         toast("Product duplicated.", { variant: "success" });
         router.push(`/admin/products/${duplicated.id}/edit`);
@@ -220,13 +218,11 @@ export const columns: ColumnDef<ProductWithImages>[] = [
         | undefined;
 
       const nameKey: ProductNameKey = meta?.productNameKey ?? "name_en";
-
-      // Safe fallback order if a localized field is missing/null.
       const nameValue =
-        (product as any)[nameKey] ??
-        (product as any).name_en ??
-        (product as any).name_pl ??
-        (product as any).name_de;
+        product[nameKey] ??
+        product.name_en ??
+        product.name_pl ??
+        product.name_de;
 
       const handleNameClick = meta?.onProductNameClick;
 
@@ -244,8 +240,8 @@ export const columns: ColumnDef<ProductWithImages>[] = [
             <span>{nameValue || "—"}</span>
           )}
 
-          {(product as any).sku && (
-            <div className="text-sm text-gray-500">{(product as any).sku}</div>
+          {product.sku && (
+            <div className="text-sm text-gray-500">{product.sku}</div>
           )}
         </div>
       );
@@ -289,7 +285,7 @@ export const columns: ColumnDef<ProductWithImages>[] = [
 
       return (
         <ActionsCell
-          row={row as any}
+          row={row}
           setRefreshTrigger={setRefreshTrigger}
           onProductEditClick={onProductEditClick}
         />

@@ -16,6 +16,13 @@ export async function GET(req: Request) {
     filters.search = searchParams.get("search")!;
   }
 
+  if (searchParams.has("searchScope")) {
+    const scope = searchParams.get("searchScope");
+    if (scope === "both" || scope === "title" || scope === "content") {
+      filters.searchScope = scope;
+    }
+  }
+
   if (searchParams.has("isPinned")) {
     filters.isPinned = searchParams.get("isPinned") === "true";
   }

@@ -49,7 +49,7 @@ export default function ModalShell({
         </div>
       )}
       <div
-        className={`h-[70vh] overflow-y-auto pr-2${bodyClassName ? ` ${bodyClassName}` : ""}`}
+        className={`h-[80vh] overflow-y-auto pr-2${bodyClassName ? ` ${bodyClassName}` : ""}`}
       >
         {children}
       </div>

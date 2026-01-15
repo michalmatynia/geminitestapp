@@ -1,21 +1,22 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Search, Pin, Archive } from "lucide-react";
-import type { NoteWithRelations, TagRecord, CategoryRecord, CategoryWithChildren } from "@/types/notes";
+import { Plus, Search, Pin, Archive, ChevronRight, FileText, Heading } from "lucide-react";
+import type { NoteWithRelations, TagRecord, CategoryWithChildren } from "@/types/notes";
 import { Button } from "@/components/ui/button";
 import ModalShell from "@/components/ui/modal-shell";
 import { FolderTree } from "./components/FolderTree";
+import { useToast } from "@/components/ui/toast";
 
 function NoteForm({
   note,
-  categories,
+  folderTree,
   defaultFolderId,
   onClose,
   onSuccess,
 }: {
   note?: NoteWithRelations | null;
-  categories: CategoryRecord[];
+  folderTree: CategoryWithChildren[];
   defaultFolderId?: string | null;
   onClose: () => void;
   onSuccess: () => void;
@@ -29,6 +30,21 @@ function NoteForm({
     note?.categories[0]?.categoryId || defaultFolderId || ""
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+
+  // Flatten the folder tree with hierarchy markers
+  const flattenFolderTree = (folders: CategoryWithChildren[], level = 0): Array<{ id: string; name: string; level: number }> => {
+    const result: Array<{ id: string; name: string; level: number }> = [];
+    for (const folder of folders) {
+      result.push({ id: folder.id, name: folder.name, level });
+      if (folder.children.length > 0) {
+        result.push(...flattenFolderTree(folder.children, level + 1));
+      }
+    }
+    return result;
+  };
+
+  const flatFolders = flattenFolderTree(folderTree);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +70,7 @@ function NoteForm({
       });
 
       if (response.ok) {
+        toast(note ? "Note updated successfully" : "Note created successfully");
         onSuccess();
       }
     } catch (error) {
@@ -78,6 +95,33 @@ function NoteForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Action Buttons at Top */}
+      <div className="flex gap-2 pb-4 border-b border-gray-700">
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
+        >
+          {isSubmitting ? "Saving..." : note ? "Update" : "Create"}
+        </Button>
+        {note && (
+          <Button
+            type="button"
+            onClick={handleDelete}
+            className="bg-red-600 text-white hover:bg-red-700"
+          >
+            Delete
+          </Button>
+        )}
+        <Button
+          type="button"
+          onClick={onClose}
+          className="bg-gray-700 text-white hover:bg-gray-600"
+        >
+          Cancel
+        </Button>
+      </div>
+
       <div>
         <label className="mb-2 block text-sm font-medium text-white">Title</label>
         <input
@@ -110,9 +154,9 @@ function NoteForm({
           className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white"
         >
           <option value="">No Folder</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.name}
+          {flatFolders.map((folder) => (
+            <option key={folder.id} value={folder.id}>
+              {"\u00A0\u00A0".repeat(folder.level)}{folder.name}
             </option>
           ))}
         </select>
@@ -148,32 +192,6 @@ function NoteForm({
           <span className="text-sm">Archived</span>
         </label>
       </div>
-
-      <div className="flex gap-2 pt-4">
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
-        >
-          {isSubmitting ? "Saving..." : note ? "Update" : "Create"}
-        </Button>
-        {note && (
-          <Button
-            type="button"
-            onClick={handleDelete}
-            className="bg-red-600 text-white hover:bg-red-700"
-          >
-            Delete
-          </Button>
-        )}
-        <Button
-          type="button"
-          onClick={onClose}
-          className="bg-gray-700 text-white hover:bg-gray-600"
-        >
-          Cancel
-        </Button>
-      </div>
     </form>
   );
 }
@@ -182,36 +200,91 @@ const getCategoryIdsWithDescendants = (
   targetId: string,
   categories: CategoryWithChildren[]
 ): string[] => {
-  const ids: string[] = [];
-  
-  for (const cat of categories) {
-    if (cat.id === targetId) {
-      ids.push(cat.id);
-      if (cat.children) {
-        const traverse = (nodes: CategoryWithChildren[]) => {
-          for (const node of nodes) {
-            ids.push(node.id);
-            if (node.children) traverse(node.children);
-          }
-        };
-        traverse(cat.children);
+  // Helper to recursively collect all descendant IDs
+  const collectAllDescendantIds = (node: CategoryWithChildren): string[] => {
+    const ids = [node.id];
+    if (node.children && node.children.length > 0) {
+      for (const child of node.children) {
+        ids.push(...collectAllDescendantIds(child));
       }
-      return ids;
     }
-    
-    if (cat.children) {
-      const found = getCategoryIdsWithDescendants(targetId, cat.children);
-      if (found.length > 0) return found;
+    return ids;
+  };
+
+  // Find the target category in the tree
+  const findCategory = (cats: CategoryWithChildren[]): CategoryWithChildren | null => {
+    for (const cat of cats) {
+      if (cat.id === targetId) {
+        return cat;
+      }
+      if (cat.children && cat.children.length > 0) {
+        const found = findCategory(cat.children);
+        if (found) return found;
+      }
     }
+    return null;
+  };
+
+  const targetCategory = findCategory(categories);
+  if (!targetCategory) {
+    return [];
   }
-  
-  return [];
+
+  return collectAllDescendantIds(targetCategory);
+};
+
+// Helper to build breadcrumb path from root to current folder/note
+const buildBreadcrumbPath = (
+  folderId: string | null,
+  noteTitle: string | null,
+  folderTree: CategoryWithChildren[]
+): Array<{ id: string | null; name: string; isNote: boolean }> => {
+  const path: Array<{ id: string | null; name: string; isNote: boolean }> = [
+    { id: null, name: "All Notes", isNote: false },
+  ];
+
+  if (!folderId) {
+    if (noteTitle) {
+      path.push({ id: null, name: noteTitle, isNote: true });
+    }
+    return path;
+  }
+
+  // Find the folder and build path to root
+  const findPath = (
+    categories: CategoryWithChildren[],
+    targetId: string,
+    currentPath: Array<{ id: string; name: string }>
+  ): Array<{ id: string; name: string }> | null => {
+    for (const cat of categories) {
+      if (cat.id === targetId) {
+        return [...currentPath, { id: cat.id, name: cat.name }];
+      }
+      if (cat.children.length > 0) {
+        const found = findPath(cat.children, targetId, [...currentPath, { id: cat.id, name: cat.name }]);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const folderPath = findPath(folderTree, folderId, []);
+  if (folderPath) {
+    folderPath.forEach((folder) => {
+      path.push({ id: folder.id, name: folder.name, isNote: false });
+    });
+  }
+
+  if (noteTitle) {
+    path.push({ id: null, name: noteTitle, isNote: true });
+  }
+
+  return path;
 };
 
 export default function NotesPage() {
   const [notes, setNotes] = useState<NoteWithRelations[]>([]);
   const [tags, setTags] = useState<TagRecord[]>([]);
-  const [categories, setCategories] = useState<CategoryRecord[]>([]);
   const [folderTree, setFolderTree] = useState<CategoryWithChildren[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -222,6 +295,7 @@ export default function NotesPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [creatingFolderParentId, setCreatingFolderParentId] = useState<string | null | undefined>(undefined);
+  const [searchScope, setSearchScope] = useState<"both" | "title" | "content">("both");
 
   const fetchFolderTree = React.useCallback(async () => {
     try {
@@ -234,23 +308,26 @@ export default function NotesPage() {
   }, []);
 
 
+  const folderTreeRef = React.useRef(folderTree);
+  React.useEffect(() => {
+    folderTreeRef.current = folderTree;
+  }, [folderTree]);
+
   const fetchNotes = React.useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (searchQuery) params.append("search", searchQuery);
+      if (searchQuery) {
+        params.append("search", searchQuery);
+        params.append("searchScope", searchScope);
+      }
       if (filterPinned !== undefined) params.append("isPinned", String(filterPinned));
       if (filterArchived !== undefined) params.append("isArchived", String(filterArchived));
-      
+
       if (selectedFolderId) {
-        // Note: we need to pass the current tree to this function or use a ref/functional update if tree updates
-        // However, selectedFolderId updates usually trigger a re-fetch.
-        // To be safe and avoid circular dependencies with fetchFolderTree (which updates tree),
-        // we might need to rely on the current state of folderTree.
-        // But folderTree is in state.
-        const descendantIds = getCategoryIdsWithDescendants(selectedFolderId, folderTree);
+        const descendantIds = getCategoryIdsWithDescendants(selectedFolderId, folderTreeRef.current);
         if (descendantIds.length > 0) {
-          descendantIds.forEach((id) => params.append("categoryIds", id));
+          params.append("categoryIds", descendantIds.join(","));
         } else {
           params.append("categoryIds", selectedFolderId);
         }
@@ -264,7 +341,7 @@ export default function NotesPage() {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, filterPinned, filterArchived, selectedFolderId, folderTree]);
+  }, [searchQuery, searchScope, filterPinned, filterArchived, selectedFolderId]);
 
   const fetchTags = React.useCallback(async () => {
     try {
@@ -276,21 +353,10 @@ export default function NotesPage() {
     }
   }, []);
 
-  const fetchCategories = React.useCallback(async () => {
-    try {
-      const response = await fetch("/api/notes/categories", { cache: "no-store" });
-      const data = await response.json();
-      setCategories(data);
-    } catch (error) {
-      console.error("Failed to fetch categories:", error);
-    }
-  }, []);
-
   useEffect(() => {
     void fetchTags();
-    void fetchCategories();
     void fetchFolderTree();
-  }, [fetchTags, fetchCategories, fetchFolderTree]);
+  }, [fetchTags, fetchFolderTree]);
 
   useEffect(() => {
     void fetchNotes();
@@ -312,7 +378,6 @@ export default function NotesPage() {
 
       if (response.ok) {
         await fetchFolderTree();
-        await fetchCategories();
       }
     } catch (error) {
       console.error("Failed to create folder:", error);
@@ -352,7 +417,6 @@ export default function NotesPage() {
 
       if (response.ok) {
         await fetchFolderTree();
-        await fetchCategories();
       }
     } catch (error) {
       console.error("Failed to rename folder:", error);
@@ -371,6 +435,7 @@ export default function NotesPage() {
   const handleCreateSuccess = () => {
     setIsCreating(false);
     void fetchNotes();
+    void fetchFolderTree();
   };
 
   const handleSelectNote = (note: NoteWithRelations) => {
@@ -394,9 +459,49 @@ export default function NotesPage() {
   const handleUpdateSuccess = () => {
     setIsEditing(false);
     void fetchNotes();
+    void fetchFolderTree();
     // Refresh selected note to show updated content
     if (selectedNote) {
       void handleSelectNoteFromTree(selectedNote.id);
+    }
+  };
+
+  const handleMoveNoteToFolder = async (noteId: string, folderId: string | null) => {
+    try {
+      const response = await fetch(`/api/notes/${noteId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          categoryIds: folderId ? [folderId] : [],
+        }),
+      });
+
+      if (response.ok) {
+        // Fetch folder tree first, then notes will use the updated tree via ref
+        await fetchFolderTree();
+        await fetchNotes();
+      }
+    } catch (error) {
+      console.error("Failed to move note:", error);
+    }
+  };
+
+  const handleMoveFolderToFolder = async (folderId: string, targetParentId: string | null) => {
+    try {
+      const response = await fetch(`/api/notes/categories/${folderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          parentId: targetParentId,
+        }),
+      });
+
+      if (response.ok) {
+        await fetchFolderTree();
+        await fetchNotes();
+      }
+    } catch (error) {
+      console.error("Failed to move folder:", error);
     }
   };
 
@@ -418,6 +523,8 @@ export default function NotesPage() {
             onRenameFolder={handleRenameFolder}
             onSelectNote={handleSelectNoteFromTree}
             selectedNoteId={selectedNote?.id}
+            onDropNote={handleMoveNoteToFolder}
+            onDropFolder={handleMoveFolderToFolder}
           />
         </div>
 
@@ -442,18 +549,50 @@ export default function NotesPage() {
                   </Button>
                 )}
               </div>
-              
+
+              {/* Breadcrumb for selected note */}
+              <div className="mb-4 flex items-center gap-2 text-sm text-gray-400">
+                {buildBreadcrumbPath(
+                  selectedNote.categories[0]?.categoryId || null,
+                  selectedNote.title,
+                  folderTree
+                ).map((crumb, index, array) => (
+                  <React.Fragment key={index}>
+                    {crumb.isNote ? (
+                      <span className="text-gray-300">{crumb.name}</span>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setSelectedFolderId(crumb.id);
+                          setSelectedNote(null);
+                          setIsEditing(false);
+                        }}
+                        className="hover:text-blue-400 transition"
+                      >
+                        {crumb.name}
+                      </button>
+                    )}
+                    {index < array.length - 1 && (
+                      <ChevronRight size={16} className="text-gray-600" />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+
               {isEditing ? (
                 <div className="flex-1 overflow-y-auto">
                   <NoteForm
                     note={selectedNote}
-                    categories={categories}
+                    folderTree={folderTree}
                     onClose={() => setIsEditing(false)}
                     onSuccess={handleUpdateSuccess}
                   />
                 </div>
               ) : (
-                <div className="flex-1 overflow-y-auto rounded-lg border border-gray-800 bg-gray-900 p-6">
+                <div
+                  className="flex-1 overflow-y-auto rounded-lg border border-gray-800 bg-gray-900 p-6 cursor-text"
+                  onDoubleClick={() => setIsEditing(true)}
+                >
                   <h1 className="mb-4 text-3xl font-bold text-white">{selectedNote.title}</h1>
                   <div className="prose prose-invert max-w-none whitespace-pre-wrap text-gray-300">
                     {selectedNote.content}
@@ -475,7 +614,7 @@ export default function NotesPage() {
               </div>
 
               {/* Filters */}
-              <div className="mb-6 flex gap-4">
+              <div className="mb-4 flex gap-4">
                 <div className="flex-1">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -486,6 +625,43 @@ export default function NotesPage() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 pl-10 pr-4 text-white placeholder-gray-400"
                     />
+                  </div>
+                  {/* Search Scope Toggle */}
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      onClick={() => setSearchScope("both")}
+                      className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
+                        searchScope === "both"
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                      }`}
+                      title="Search in title and content"
+                    >
+                      <FileText size={14} />
+                      <Heading size={14} />
+                    </button>
+                    <button
+                      onClick={() => setSearchScope("title")}
+                      className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
+                        searchScope === "title"
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                      }`}
+                      title="Search in title only"
+                    >
+                      <Heading size={14} />
+                    </button>
+                    <button
+                      onClick={() => setSearchScope("content")}
+                      className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
+                        searchScope === "content"
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                      }`}
+                      title="Search in content only"
+                    >
+                      <FileText size={14} />
+                    </button>
                   </div>
                 </div>
                 <Button
@@ -510,6 +686,29 @@ export default function NotesPage() {
                 </Button>
               </div>
 
+              {/* Breadcrumb */}
+              {selectedFolderId && (
+                <div className="mb-6 flex items-center gap-2 text-sm text-gray-400">
+                  {buildBreadcrumbPath(selectedFolderId, null, folderTree).map((crumb, index, array) => (
+                    <React.Fragment key={index}>
+                      <button
+                        onClick={() => {
+                          setSelectedFolderId(crumb.id);
+                          setSelectedNote(null);
+                          setIsEditing(false);
+                        }}
+                        className="hover:text-blue-400 transition"
+                      >
+                        {crumb.name}
+                      </button>
+                      {index < array.length - 1 && (
+                        <ChevronRight size={16} className="text-gray-600" />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              )}
+
               {/* Notes Grid */}
               {loading ? (
                 <div className="text-center text-gray-400">Loading...</div>
@@ -522,9 +721,20 @@ export default function NotesPage() {
                   {notes.map((note) => (
                     <div
                       key={note.id}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData("noteId", note.id);
+                        e.dataTransfer.effectAllowed = "move";
+                        const target = e.currentTarget as HTMLElement;
+                        target.style.opacity = "0.5";
+                      }}
+                      onDragEnd={(e) => {
+                        const target = e.currentTarget as HTMLElement;
+                        target.style.opacity = "1";
+                      }}
                       onClick={() => handleSelectNote(note)}
                       style={{ backgroundColor: note.color || "#ffffff" }}
-                      className="cursor-pointer rounded-lg border border-gray-700 p-4 shadow-sm transition hover:shadow-md"
+                      className="cursor-grab active:cursor-grabbing rounded-lg border border-gray-700 p-4 shadow-sm transition hover:shadow-md"
                     >
                       <div className="mb-2 flex items-start justify-between">
                         <h3 className="font-semibold text-gray-900">{note.title}</h3>
@@ -559,7 +769,7 @@ export default function NotesPage() {
           <div onClick={(e) => e.stopPropagation()}>
             <ModalShell title="Create Note" onClose={handleCloseCreateModal}>
               <NoteForm
-                categories={categories}
+                folderTree={folderTree}
                 defaultFolderId={selectedFolderId}
                 onClose={handleCloseCreateModal}
                 onSuccess={handleCreateSuccess}

@@ -14,6 +14,8 @@ interface FolderTreeProps {
   onRenameFolder: (folderId: string) => void;
   onSelectNote: (noteId: string) => void;
   selectedNoteId?: string;
+  onDropNote: (noteId: string, folderId: string | null) => void;
+  onDropFolder: (folderId: string, targetParentId: string | null) => void;
 }
 
 interface FolderNodeProps {
@@ -26,6 +28,12 @@ interface FolderNodeProps {
   onRename: (folderId: string) => void;
   onSelectNote: (noteId: string) => void;
   selectedNoteId?: string;
+  onDropNote: (noteId: string, folderId: string | null) => void;
+  onDropFolder: (folderId: string, targetParentId: string | null) => void;
+  draggedFolderId: string | null;
+  onDragStart: (folderId: string) => void;
+  onDragEnd: () => void;
+  allFolders: CategoryWithChildren[];
 }
 
 function FolderNode({
@@ -38,21 +46,100 @@ function FolderNode({
   onRename,
   onSelectNote,
   selectedNoteId,
+  onDropNote,
+  onDropFolder,
+  draggedFolderId,
+  onDragStart: onDragStartProp,
+  onDragEnd: onDragEndProp,
+  allFolders,
 }: FolderNodeProps) {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isDragOver, setIsDragOver] = useState(false);
   const hasChildren = folder.children.length > 0;
   const hasNotes = folder.notes && folder.notes.length > 0;
   const isSelected = selectedFolderId === folder.id && !selectedNoteId;
 
+  // Find a folder by ID in the tree
+  const findFolder = (folders: CategoryWithChildren[], id: string): CategoryWithChildren | null => {
+    for (const f of folders) {
+      if (f.id === id) return f;
+      const found = findFolder(f.children, id);
+      if (found) return found;
+    }
+    return null;
+  };
+
+  // Check if targetId is a descendant of folder (or is the folder itself)
+  const isDescendantOf = (checkFolder: CategoryWithChildren, targetId: string): boolean => {
+    if (checkFolder.id === targetId) return true;
+    return checkFolder.children.some((child) => isDescendantOf(child, targetId));
+  };
+
+  // Can drop if:
+  // 1. No folder is being dragged, OR
+  // 2. We're not dropping onto the dragged folder itself, AND
+  // 3. We're not dropping onto a descendant of the dragged folder
+  const canDropHere = (() => {
+    if (!draggedFolderId) return true;
+    if (draggedFolderId === folder.id) return false;
+
+    const draggedFolder = findFolder(allFolders, draggedFolderId);
+    if (!draggedFolder) return true;
+
+    // Check if current folder (drop target) is a descendant of the dragged folder
+    return !isDescendantOf(draggedFolder, folder.id);
+  })();
+
   return (
     <div>
       <div
-        className={`group flex items-center gap-1 rounded px-2 py-1.5 cursor-pointer transition ${
+        draggable
+        onDragStart={(e) => {
+          e.stopPropagation();
+          e.dataTransfer.setData("folderId", folder.id);
+          e.dataTransfer.effectAllowed = "move";
+          onDragStartProp(folder.id);
+          const target = e.currentTarget as HTMLElement;
+          target.style.opacity = "0.5";
+        }}
+        onDragEnd={(e) => {
+          const target = e.currentTarget as HTMLElement;
+          target.style.opacity = "1";
+          onDragEndProp();
+        }}
+        className={`group flex items-center gap-1 rounded px-2 py-1.5 cursor-grab active:cursor-grabbing transition ${
           isSelected
             ? "bg-blue-600 text-white"
+            : isDragOver && canDropHere
+            ? "bg-green-600 text-white"
             : "text-gray-300 hover:bg-gray-800"
         }`}
         style={{ paddingLeft: `${level * 16 + 8}px` }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (canDropHere) {
+            setIsDragOver(true);
+          }
+        }}
+        onDragLeave={(e) => {
+          e.stopPropagation();
+          setIsDragOver(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsDragOver(false);
+
+          const noteId = e.dataTransfer.getData("noteId");
+          const folderId = e.dataTransfer.getData("folderId");
+
+          if (noteId) {
+            onDropNote(noteId, folder.id);
+          } else if (folderId && canDropHere) {
+            onDropFolder(folderId, folder.id);
+          }
+        }}
       >
         {hasChildren || hasNotes ? (
           <button
@@ -122,11 +209,25 @@ function FolderNode({
             return (
               <div
                 key={note.id}
+                draggable
+                onDragStart={(e) => {
+                  e.stopPropagation();
+                  e.dataTransfer.setData("noteId", note.id);
+                  e.dataTransfer.effectAllowed = "move";
+                  // Add visual feedback
+                  const target = e.currentTarget as HTMLElement;
+                  target.style.opacity = "0.5";
+                }}
+                onDragEnd={(e) => {
+                  // Reset opacity after drag
+                  const target = e.currentTarget as HTMLElement;
+                  target.style.opacity = "1";
+                }}
                 onClick={(e) => {
                   e.stopPropagation();
                   onSelectNote(note.id);
                 }}
-                className={`group flex items-center gap-2 rounded px-2 py-1.5 cursor-pointer transition ${
+                className={`group flex items-center gap-2 rounded px-2 py-1.5 cursor-grab active:cursor-grabbing transition ${
                   isNoteSelected
                     ? "bg-blue-600 text-white"
                     : "text-gray-300 hover:bg-gray-800 hover:text-white"
@@ -150,6 +251,12 @@ function FolderNode({
               onRename={onRename}
               onSelectNote={onSelectNote}
               selectedNoteId={selectedNoteId}
+              onDropNote={onDropNote}
+              onDropFolder={onDropFolder}
+              draggedFolderId={draggedFolderId}
+              onDragStart={onDragStartProp}
+              onDragEnd={onDragEndProp}
+              allFolders={allFolders}
             />
           ))}
         </div>
@@ -167,7 +274,12 @@ export function FolderTree({
   onRenameFolder,
   onSelectNote,
   selectedNoteId,
+  onDropNote,
+  onDropFolder,
 }: FolderTreeProps) {
+  const [isAllNotesDragOver, setIsAllNotesDragOver] = useState(false);
+  const [draggedFolderId, setDraggedFolderId] = useState<string | null>(null);
+
   return (
     <div className="flex h-full flex-col bg-gray-900 border-r border-gray-800">
       <div className="p-4 border-b border-gray-800">
@@ -183,9 +295,29 @@ export function FolderTree({
         </div>
         <button
           onClick={() => onSelectFolder(null)}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsAllNotesDragOver(true);
+          }}
+          onDragLeave={() => {
+            setIsAllNotesDragOver(false);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsAllNotesDragOver(false);
+            const noteId = e.dataTransfer.getData("noteId");
+            const folderId = e.dataTransfer.getData("folderId");
+            if (noteId) {
+              onDropNote(noteId, null);
+            } else if (folderId) {
+              onDropFolder(folderId, null);
+            }
+          }}
           className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition ${
             selectedFolderId === null && !selectedNoteId
               ? "bg-blue-600 text-white"
+              : isAllNotesDragOver
+              ? "bg-green-600 text-white"
               : "text-gray-300 hover:bg-gray-800"
           }`}
         >
@@ -213,6 +345,12 @@ export function FolderTree({
                 onRename={onRenameFolder}
                 onSelectNote={onSelectNote}
                 selectedNoteId={selectedNoteId}
+                onDropNote={onDropNote}
+                onDropFolder={onDropFolder}
+                draggedFolderId={draggedFolderId}
+                onDragStart={setDraggedFolderId}
+                onDragEnd={() => setDraggedFolderId(null)}
+                allFolders={folders}
               />
             ))}
           </div>

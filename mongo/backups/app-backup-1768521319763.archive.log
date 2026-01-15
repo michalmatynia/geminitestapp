@@ -1,0 +1,7 @@
+command:
+mongodump --uri mongodb+srv://mmatynia:mlokos16@cluster0.zv9e9.azure.mongodb.net/ --db app --archive=/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768521319763.archive --gzip
+
+stdout:
+
+
+stderr:

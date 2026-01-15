@@ -43,6 +43,7 @@ export type TagUpdateInput = Partial<TagCreateInput>;
 
 export type NoteFilters = {
   search?: string;
+  searchScope?: "both" | "title" | "content";
   isPinned?: boolean;
   isArchived?: boolean;
   tagIds?: string[];

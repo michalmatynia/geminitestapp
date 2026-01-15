@@ -8,8 +8,10 @@ import { useToast } from "@/components/ui/toast";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
-async function getBackups(): Promise<DatabaseInfo[]> {
-  const res = await fetch("/api/databases/backups");
+type DatabaseType = "postgresql" | "mongodb";
+
+async function getBackups(dbType: DatabaseType): Promise<DatabaseInfo[]> {
+  const res = await fetch(`/api/databases/backups?type=${dbType}`);
   if (!res.ok) {
     throw new Error("Failed to fetch backups");
   }
@@ -37,6 +39,7 @@ const LogModal = ({
 );
 
 export default function DatabasesPage() {
+  const [activeTab, setActiveTab] = useState<DatabaseType>("postgresql");
   const [data, setData] = useState<DatabaseInfo[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -57,12 +60,12 @@ export default function DatabasesPage() {
   };
 
   useEffect(() => {
-    void getBackups().then(setData);
-  }, [refreshTrigger]);
+    void getBackups(activeTab).then(setData);
+  }, [refreshTrigger, activeTab]);
 
   const handleBackup = async () => {
     try {
-      const res = await fetch("/api/databases/backup", {
+      const res = await fetch(`/api/databases/backup?type=${activeTab}`, {
         method: "POST",
       });
       const data = (await res.json()) as {
@@ -103,6 +106,7 @@ export default function DatabasesPage() {
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("type", activeTab);
 
     try {
       const res = await fetch("/api/databases/upload", {
@@ -131,12 +135,12 @@ export default function DatabasesPage() {
   const handlePreview = (backupName: string) => {
     const url = `/admin/databases/preview?backup=${encodeURIComponent(
       backupName
-    )}`;
+    )}&type=${activeTab}`;
     window.location.assign(url);
   };
 
   const handlePreviewCurrent = () => {
-    window.location.assign("/admin/databases/preview?mode=current");
+    window.location.assign(`/admin/databases/preview?mode=current&type=${activeTab}`);
   };
 
   return (
@@ -144,14 +148,42 @@ export default function DatabasesPage() {
       {isLogModalOpen && (
         <LogModal content={logModalContent} onClose={closeLogModal} />
       )}
+
+      {/* Tabs */}
+      <div className="mb-6 border-b border-gray-700">
+        <div className="flex gap-4">
+          <button
+            onClick={() => setActiveTab("postgresql")}
+            className={`px-4 py-2 font-medium transition ${
+              activeTab === "postgresql"
+                ? "border-b-2 border-blue-500 text-blue-500"
+                : "text-gray-400 hover:text-gray-300"
+            }`}
+          >
+            PostgreSQL
+          </button>
+          <button
+            onClick={() => setActiveTab("mongodb")}
+            className={`px-4 py-2 font-medium transition ${
+              activeTab === "mongodb"
+                ? "border-b-2 border-blue-500 text-blue-500"
+                : "text-gray-400 hover:text-gray-300"
+            }`}
+          >
+            MongoDB
+          </button>
+        </div>
+      </div>
+
       <div className="mb-2">
         <p className="text-sm text-gray-400">
-          PostgreSQL backups use pg_dump/pg_restore (.dump files). Restores are
-          data-only and preserve your current schema.
+          {activeTab === "postgresql"
+            ? "PostgreSQL backups use pg_dump/pg_restore (.dump files). Restores are data-only and preserve your current schema."
+            : "MongoDB backups use mongodump/mongorestore (.archive files). Full database dumps with BSON format."}
         </p>
       </div>
       <div className="flex flex-col gap-3 mb-6 md:flex-row md:items-center md:justify-between">
-        <h1 className="text-3xl font-bold">Databases</h1>
+        <h1 className="text-3xl font-bold">Databases - {activeTab === "postgresql" ? "PostgreSQL" : "MongoDB"}</h1>
         <div className="flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-sm text-gray-600">
             <input
@@ -180,7 +212,7 @@ export default function DatabasesPage() {
             ref={fileInputRef}
             onChange={handleUpload}
             className="hidden"
-            accept=".dump"
+            accept={activeTab === "postgresql" ? ".dump" : ".archive"}
           />
         </div>
       </div>
@@ -193,10 +225,11 @@ export default function DatabasesPage() {
             onDelete: () => setRefreshTrigger((prev) => prev + 1),
             notify: (message, variant) =>
               toast(message, { variant: variant ?? "info" }),
+            dbType: activeTab,
           })}
           data={data}
           initialSorting={[{ id: "lastModifiedAt", desc: true }]}
-          sortingStorageKey="stardb:database-backups:sorting"
+          sortingStorageKey={`stardb:database-backups:${activeTab}:sorting`}
         />
       </div>
     </div>

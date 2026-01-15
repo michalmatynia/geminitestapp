@@ -105,7 +105,15 @@ const buildSearchFilter = (filters: NoteFilters = {}): Filter<NoteDocument> => {
 
   if (filters.search) {
     const regex = { $regex: filters.search, $options: "i" };
-    filter.$or = [{ title: regex }, { content: regex }];
+    const searchScope = filters.searchScope || "both";
+
+    if (searchScope === "both") {
+      filter.$or = [{ title: regex }, { content: regex }];
+    } else if (searchScope === "title") {
+      filter.title = regex;
+    } else if (searchScope === "content") {
+      filter.content = regex;
+    }
   }
 
   if (typeof filters.isPinned === "boolean") {
@@ -215,7 +223,7 @@ export const mongoNoteRepository: NoteRepository = {
     };
 
     // Handle tags update
-    if (data.tagIds) {
+    if (data.tagIds !== undefined) {
       let tags: NoteTagEmbedded[] = [];
       if (data.tagIds.length > 0) {
         const now = new Date();
@@ -238,7 +246,7 @@ export const mongoNoteRepository: NoteRepository = {
     }
 
     // Handle categories update
-    if (data.categoryIds) {
+    if (data.categoryIds !== undefined) {
       let categories: NoteCategoryEmbedded[] = [];
       if (data.categoryIds.length > 0) {
         const now = new Date();

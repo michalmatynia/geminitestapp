@@ -8,6 +8,10 @@ add proper debugging on visual studio code
 I should 
 
 ## Note List
+Connect notifications, for example when the note is updated or created.
+
+Notes should show creation date and last modified date. 
+
 Note Filters
 
 see the list of notes , created time, thumbnail, name
@@ -18,11 +22,16 @@ File handling (10 file slots benath, the first one being the thumbnail)
 
 have AI to format my notes, validate the truth in my notes, Search the web to validate my notes, give me note suggestions (that I can Accept or Refuse), extend/refactor my notes, 
 
-Move image/catalog operations behind a data-access abstraction so Mongo can fully own product data.
 
 Chatbot connection
 
 The folder tree state (which folders are collapse or not, should be in note settings, I should also have the option to uncollapse everythihng under the currently selected folder)
+
+Note history
+
+At some point there should be note import and also the notes should be downloadable as markdown
+
+NOTEBOOKS
 
 ---
 
@@ -30,8 +39,8 @@ The folder tree state (which folders are collapse or not, should be in note sett
 base.com with email: you@example.com password: YourPassword
 remove  Agent job panel from the chatbox window, it duplicates what is already shown
 
-At some point there should be note import and also the notes should be downloadable as markdown
 
+Move image/catalog operations behind a data-access abstraction so Mongo can fully own product data.
 
 
 # Database work

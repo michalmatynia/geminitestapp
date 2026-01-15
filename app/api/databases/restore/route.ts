@@ -3,15 +3,26 @@ import { promises as fs } from "fs";
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
+import { getMongoDb } from "@/lib/db/mongo-client";
 
 import {
-  backupsDir,
-  ensureBackupsDir,
-  assertValidBackupName,
+  backupsDir as pgBackupsDir,
+  ensureBackupsDir as ensurePgBackupsDir,
+  assertValidBackupName as assertValidPgBackupName,
   getPgConnectionUrl,
   getPgRestoreCommand,
-  execFileAsync,
+  execFileAsync as pgExecFileAsync,
 } from "../_utils";
+
+import {
+  backupsDir as mongoBackupsDir,
+  ensureBackupsDir as ensureMongoBackupsDir,
+  assertValidBackupName as assertValidMongoBackupName,
+  getMongoConnectionUrl,
+  getMongoDatabaseName,
+  getMongoRestoreCommand,
+  execFileAsync as mongoExecFileAsync,
+} from "../_utils-mongo";
 
 type ExecOutputishError = {
   stdout?: string;
@@ -29,6 +40,9 @@ export async function POST(req: Request) {
   let truncateBeforeRestore = false;
 
   try {
+    const { searchParams } = new URL(req.url);
+    const type = searchParams.get("type") || "postgresql";
+
     let body: unknown;
     try {
       body = await req.json();
@@ -58,12 +72,114 @@ export async function POST(req: Request) {
       );
     }
 
-    stage = "validate";
-    assertValidBackupName(backupName);
-    await ensureBackupsDir();
+    if (type === "mongodb") {
+      // MongoDB restore
+      stage = "validate";
+      assertValidMongoBackupName(backupName);
+      await ensureMongoBackupsDir();
 
-    const backupPath = path.join(backupsDir, backupName);
-    const databaseUrl = getPgConnectionUrl();
+      const backupPath = path.join(mongoBackupsDir, backupName);
+      const mongoUri = getMongoConnectionUrl();
+      const databaseName = getMongoDatabaseName();
+
+      if (truncateBeforeRestore) {
+        stage = "truncate";
+        const db = await getMongoDb();
+        const collections = await db.listCollections().toArray();
+
+        for (const collection of collections) {
+          await db.collection(collection.name).drop();
+        }
+      }
+
+      stage = "mongorestore";
+      const logPath = path.join(mongoBackupsDir, `${backupName}.restore.log`);
+      const command = getMongoRestoreCommand();
+
+      const args = [
+        "--uri",
+        mongoUri,
+        "--db",
+        databaseName,
+        "--archive=" + backupPath,
+        "--gzip",
+        "--drop",
+      ];
+
+      const commandString = `${command} ${args.join(" ")}`;
+
+      let stdout = "";
+      let stderr = "";
+
+      try {
+        const result = await mongoExecFileAsync(command, args);
+        stdout = result.stdout;
+        stderr = result.stderr;
+      } catch (error) {
+        const err = error as ExecOutputishError;
+
+        stdout = err.stdout ?? err.cause?.stdout ?? "";
+        stderr = err.stderr ?? err.cause?.stderr ?? "";
+
+        const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
+        await fs.writeFile(logPath, logContent);
+
+        console.error("[databases][restore] Failed to restore backup", {
+          errorId,
+          stage,
+          backupName,
+          truncateBeforeRestore,
+          error,
+        });
+
+        return NextResponse.json(
+          {
+            error: "Failed to restore backup",
+            errorId,
+            stage,
+            backupName,
+            log: logContent,
+          },
+          { status: 500 }
+        );
+      }
+
+      const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
+      await fs.writeFile(logPath, logContent);
+
+      stage = "log";
+      const restoreLogPath = path.join(mongoBackupsDir, "restore-log.json");
+      let logData: Record<string, { date: string; logFile: string }> = {};
+
+      try {
+        const logFile = await fs.readFile(restoreLogPath, "utf-8");
+        logData = JSON.parse(logFile) as Record<
+          string,
+          { date: string; logFile: string }
+        >;
+      } catch {
+        // No log yet.
+      }
+
+      logData[backupName] = {
+        date: new Date().toISOString(),
+        logFile: `${backupName}.restore.log`,
+      };
+
+      await fs.writeFile(restoreLogPath, JSON.stringify(logData, null, 2));
+
+      return NextResponse.json({
+        message: "Backup restored",
+        log: logContent,
+      });
+    } else {
+      // PostgreSQL restore
+      stage = "validate";
+      assertValidPgBackupName(backupName);
+      await ensurePgBackupsDir();
+
+      const backupPath = path.join(pgBackupsDir, backupName);
+      const databaseUrl = getPgConnectionUrl();
 
     if (truncateBeforeRestore) {
       stage = "truncate";

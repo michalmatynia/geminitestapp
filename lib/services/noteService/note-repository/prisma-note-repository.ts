@@ -4,15 +4,21 @@ import prisma from "@/lib/prisma";
 
 export const prismaNoteRepository: NoteRepository = {
   async getAll(filters: NoteFilters): Promise<NoteWithRelations[]> {
-    const { search, isPinned, isArchived, tagIds, categoryIds } = filters;
+    const { search, searchScope = "both", isPinned, isArchived, tagIds, categoryIds } = filters;
 
     const where: any = {};
 
     if (search) {
-      where.OR = [
-        { title: { contains: search, mode: "insensitive" } },
-        { content: { contains: search, mode: "insensitive" } },
-      ];
+      if (searchScope === "both") {
+        where.OR = [
+          { title: { contains: search, mode: "insensitive" } },
+          { content: { contains: search, mode: "insensitive" } },
+        ];
+      } else if (searchScope === "title") {
+        where.title = { contains: search, mode: "insensitive" };
+      } else if (searchScope === "content") {
+        where.content = { contains: search, mode: "insensitive" };
+      }
     }
 
     if (typeof isPinned === "boolean") where.isPinned = isPinned;
@@ -73,14 +79,14 @@ export const prismaNoteRepository: NoteRepository = {
 
     const updateData: any = { ...rest };
 
-    if (tagIds) {
+    if (tagIds !== undefined) {
       updateData.tags = {
         deleteMany: {},
         create: tagIds.map((tagId) => ({ tag: { connect: { id: tagId } } })),
       };
     }
 
-    if (categoryIds) {
+    if (categoryIds !== undefined) {
       updateData.categories = {
         deleteMany: {},
         create: categoryIds.map((categoryId) => ({

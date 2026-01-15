@@ -12,6 +12,8 @@ Add MongoDB connections to CMS
 Add MongoDB connections to Application Settings in General
 
 # Product
+# UI
+Add shadcn
 
 # Integrations
 Integration with Base
@@ -94,9 +96,6 @@ categories are draggable into hierarchies
 Each category can only belong to one catalog
 
 
-context length slider (I think it's a server setting on Ollama, I can skip it for now)
-
-
 TAGS PARAMETERS Additional fields
 
 
@@ -114,10 +113,7 @@ The images should be import from Base.com links
 
 Also the stock should be present
 
-
 I should have teh possibility to drag Images around to change their order
-
-
 
 
 Data Importer and data mapper

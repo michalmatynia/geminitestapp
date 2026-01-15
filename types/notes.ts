@@ -10,6 +10,7 @@ export type NoteWithRelations = Note & {
 
 export type CategoryWithChildren = Category & {
   children: CategoryWithChildren[];
+  notes: Note[];
 };
 
 export type NoteCreateInput = {

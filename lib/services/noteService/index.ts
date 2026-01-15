@@ -16,6 +16,11 @@ function getNoteService(): NoteRepository {
       _noteService = prismaNoteRepository;
     }
   }
+  
+  if (!_noteService) {
+    throw new Error("Failed to initialize note service");
+  }
+
   return _noteService;
 }
 

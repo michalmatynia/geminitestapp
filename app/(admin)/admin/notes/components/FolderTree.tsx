@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Folder, FolderOpen, ChevronRight, ChevronDown, Plus, Trash2, Edit2 } from "lucide-react";
-import type { CategoryWithChildren } from "@/types/notes";
+import { Folder, FolderOpen, ChevronRight, ChevronDown, Plus, Trash2, Edit2, FileText } from "lucide-react";
+import type { CategoryWithChildren, NoteWithRelations } from "@/types/notes";
 import { Button } from "@/components/ui/button";
 
 interface FolderTreeProps {
@@ -12,6 +12,8 @@ interface FolderTreeProps {
   onCreateFolder: (parentId?: string | null) => void;
   onDeleteFolder: (folderId: string) => void;
   onRenameFolder: (folderId: string) => void;
+  onSelectNote: (noteId: string) => void;
+  selectedNoteId?: string;
 }
 
 interface FolderNodeProps {
@@ -22,6 +24,8 @@ interface FolderNodeProps {
   onCreateSubfolder: (parentId: string) => void;
   onDelete: (folderId: string) => void;
   onRename: (folderId: string) => void;
+  onSelectNote: (noteId: string) => void;
+  selectedNoteId?: string;
 }
 
 function FolderNode({
@@ -32,9 +36,12 @@ function FolderNode({
   onCreateSubfolder,
   onDelete,
   onRename,
+  onSelectNote,
+  selectedNoteId,
 }: FolderNodeProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const hasChildren = folder.children.length > 0;
+  const hasNotes = folder.notes && folder.notes.length > 0;
   const isSelected = selectedFolderId === folder.id;
 
   return (
@@ -47,7 +54,7 @@ function FolderNode({
         }`}
         style={{ paddingLeft: `${level * 16 + 8}px` }}
       >
-        {hasChildren ? (
+        {hasChildren || hasNotes ? (
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="p-0.5 hover:bg-gray-700 rounded"
@@ -108,8 +115,29 @@ function FolderNode({
         </div>
       </div>
 
-      {isExpanded && hasChildren && (
+      {isExpanded && (
         <div>
+          {folder.notes?.map((note) => {
+            const isNoteSelected = selectedNoteId === note.id;
+            return (
+              <div
+                key={note.id}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectNote(note.id);
+                }}
+                className={`group flex items-center gap-2 rounded px-2 py-1.5 cursor-pointer transition ${
+                  isNoteSelected
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                }`}
+                style={{ paddingLeft: `${(level + 1) * 16 + 28}px` }}
+              >
+                <FileText className={`size-4 flex-shrink-0 ${isNoteSelected ? "text-white" : "text-gray-500 group-hover:text-gray-300"}`} />
+                <span className="text-sm truncate">{note.title}</span>
+              </div>
+            );
+          })}
           {folder.children.map((child) => (
             <FolderNode
               key={child.id}
@@ -120,6 +148,8 @@ function FolderNode({
               onCreateSubfolder={onCreateSubfolder}
               onDelete={onDelete}
               onRename={onRename}
+              onSelectNote={onSelectNote}
+              selectedNoteId={selectedNoteId}
             />
           ))}
         </div>
@@ -135,6 +165,8 @@ export function FolderTree({
   onCreateFolder,
   onDeleteFolder,
   onRenameFolder,
+  onSelectNote,
+  selectedNoteId,
 }: FolderTreeProps) {
   return (
     <div className="flex h-full flex-col bg-gray-900 border-r border-gray-800">
@@ -179,6 +211,8 @@ export function FolderTree({
                 onCreateSubfolder={onCreateFolder}
                 onDelete={onDeleteFolder}
                 onRename={onRenameFolder}
+                onSelectNote={onSelectNote}
+                selectedNoteId={selectedNoteId}
               />
             ))}
           </div>

@@ -150,13 +150,23 @@ export const prismaNoteRepository: NoteRepository = {
   },
 
   async getCategoryTree(): Promise<CategoryWithChildren[]> {
-    const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
+    const categories = await prisma.category.findMany({
+      orderBy: { name: "asc" },
+      include: {
+        notes: {
+          include: {
+            note: true,
+          },
+        },
+      },
+    });
     
     const buildTree = (parentId: string | null): CategoryWithChildren[] => {
       return categories
         .filter((cat) => cat.parentId === parentId)
         .map((cat) => ({
           ...cat,
+          notes: cat.notes.map((nc) => nc.note),
           children: buildTree(cat.id),
         }));
     };

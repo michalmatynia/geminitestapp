@@ -189,6 +189,7 @@ export default function NotesPage() {
   const [filterArchived, setFilterArchived] = useState<boolean | undefined>(undefined);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedNote, setSelectedNote] = useState<NoteWithRelations | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [creatingFolderParentId, setCreatingFolderParentId] = useState<string | null | undefined>(undefined);
 
@@ -199,6 +200,36 @@ export default function NotesPage() {
     fetchFolderTree();
   }, [searchQuery, filterPinned, filterArchived, selectedFolderId]);
 
+  const getCategoryIdsWithDescendants = (
+    targetId: string,
+    categories: CategoryWithChildren[]
+  ): string[] => {
+    let ids: string[] = [];
+    
+    for (const cat of categories) {
+      if (cat.id === targetId) {
+        ids.push(cat.id);
+        if (cat.children) {
+          const traverse = (nodes: CategoryWithChildren[]) => {
+            for (const node of nodes) {
+              ids.push(node.id);
+              if (node.children) traverse(node.children);
+            }
+          };
+          traverse(cat.children);
+        }
+        return ids;
+      }
+      
+      if (cat.children) {
+        const found = getCategoryIdsWithDescendants(targetId, cat.children);
+        if (found.length > 0) return found;
+      }
+    }
+    
+    return [];
+  };
+
   const fetchNotes = async () => {
     setLoading(true);
     try {
@@ -206,7 +237,16 @@ export default function NotesPage() {
       if (searchQuery) params.append("search", searchQuery);
       if (filterPinned !== undefined) params.append("isPinned", String(filterPinned));
       if (filterArchived !== undefined) params.append("isArchived", String(filterArchived));
-      if (selectedFolderId) params.append("categoryIds", selectedFolderId);
+      
+      if (selectedFolderId) {
+        const descendantIds = getCategoryIdsWithDescendants(selectedFolderId, folderTree);
+        if (descendantIds.length > 0) {
+          descendantIds.forEach((id) => params.append("categoryIds", id));
+        } else {
+          // Fallback if tree traversal fails or empty (though if selectedFolderId is set, it should be in tree)
+          params.append("categoryIds", selectedFolderId);
+        }
+      }
 
       const response = await fetch(`/api/notes?${params}`);
       const data = await response.json();
@@ -325,17 +365,31 @@ export default function NotesPage() {
     fetchNotes();
   };
 
-  const handleOpenEditModal = (note: NoteWithRelations) => {
+  const handleSelectNote = (note: NoteWithRelations) => {
     setSelectedNote(note);
+    setIsEditing(false);
   };
 
-  const handleCloseEditModal = () => {
-    setSelectedNote(null);
+  const handleSelectNoteFromTree = async (noteId: string) => {
+    try {
+      const response = await fetch(`/api/notes/${noteId}`);
+      if (response.ok) {
+        const note = await response.json();
+        setSelectedNote(note);
+        setIsEditing(false);
+      }
+    } catch (error) {
+      console.error("Failed to fetch note:", error);
+    }
   };
 
-  const handleEditSuccess = () => {
-    setSelectedNote(null);
+  const handleUpdateSuccess = () => {
+    setIsEditing(false);
     fetchNotes();
+    // Refresh selected note to show updated content
+    if (selectedNote) {
+      handleSelectNoteFromTree(selectedNote.id);
+    }
   };
 
   return (
@@ -346,99 +400,147 @@ export default function NotesPage() {
           <FolderTree
             folders={folderTree}
             selectedFolderId={selectedFolderId}
-            onSelectFolder={setSelectedFolderId}
+            onSelectFolder={(id) => {
+              setSelectedFolderId(id);
+              setSelectedNote(null);
+              setIsEditing(false);
+            }}
             onCreateFolder={handleCreateFolder}
             onDeleteFolder={handleDeleteFolder}
             onRenameFolder={handleRenameFolder}
+            onSelectNote={handleSelectNoteFromTree}
+            selectedNoteId={selectedNote?.id}
           />
         </div>
 
         {/* Main Content Area */}
         <div className="lg:col-span-4 rounded-lg bg-gray-950 p-6 shadow-lg overflow-hidden flex flex-col">
-        <div className="mb-4 flex items-center gap-3">
-          <Button
-            onClick={handleOpenCreateModal}
-            className="size-11 rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90"
-            aria-label="Create note"
-          >
-            <Plus className="size-5" />
-          </Button>
-          <h1 className="text-3xl font-bold text-white">Notes</h1>
-        </div>
-
-        {/* Filters */}
-        <div className="mb-6 flex gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-              <input
-                type="text"
-                placeholder="Search notes..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 pl-10 pr-4 text-white placeholder-gray-400"
-              />
-            </div>
-          </div>
-          <Button
-            onClick={() => setFilterPinned(filterPinned === true ? undefined : true)}
-            className={`rounded-lg border px-4 py-2 ${
-              filterPinned === true
-                ? "border-blue-500 bg-blue-600 text-white"
-                : "border-gray-700 bg-gray-800 text-gray-300"
-            }`}
-          >
-            <Pin size={20} />
-          </Button>
-          <Button
-            onClick={() => setFilterArchived(filterArchived === true ? undefined : true)}
-            className={`rounded-lg border px-4 py-2 ${
-              filterArchived === true
-                ? "border-gray-500 bg-gray-700 text-white"
-                : "border-gray-700 bg-gray-800 text-gray-300"
-            }`}
-          >
-            <Archive size={20} />
-          </Button>
-        </div>
-
-        {/* Notes Grid */}
-        {loading ? (
-          <div className="text-center text-gray-400">Loading...</div>
-        ) : notes.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-gray-700 p-12 text-center text-gray-400">
-            No notes found. Create your first note!
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {notes.map((note) => (
-              <div
-                key={note.id}
-                onClick={() => handleOpenEditModal(note)}
-                style={{ backgroundColor: note.color || "#ffffff" }}
-                className="cursor-pointer rounded-lg border border-gray-700 p-4 shadow-sm transition hover:shadow-md"
-              >
-                <div className="mb-2 flex items-start justify-between">
-                  <h3 className="font-semibold text-gray-900">{note.title}</h3>
-                  {note.isPinned && <Pin size={16} className="text-blue-600" />}
+          {selectedNote ? (
+            <div className="flex h-full flex-col">
+              <div className="mb-4 flex items-center justify-between">
+                <Button
+                  onClick={() => setSelectedNote(null)}
+                  variant="outline"
+                  className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+                >
+                  Back to List
+                </Button>
+                {!isEditing && (
+                  <Button
+                    onClick={() => setIsEditing(true)}
+                    className="bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    Edit
+                  </Button>
+                )}
+              </div>
+              
+              {isEditing ? (
+                <div className="flex-1 overflow-y-auto">
+                  <NoteForm
+                    note={selectedNote}
+                    categories={categories}
+                    onClose={() => setIsEditing(false)}
+                    onSuccess={handleUpdateSuccess}
+                  />
                 </div>
-                <p className="mb-3 line-clamp-3 text-sm text-gray-700">{note.content}</p>
-                <div className="flex flex-wrap gap-2">
-                  {note.tags.map((nt) => (
-                    <span
-                      key={nt.tagId}
-                      style={{ backgroundColor: nt.tag.color || "#3b82f6" }}
-                      className="rounded-full px-2 py-1 text-xs text-white"
+              ) : (
+                <div className="flex-1 overflow-y-auto rounded-lg border border-gray-800 bg-gray-900 p-6">
+                  <h1 className="mb-4 text-3xl font-bold text-white">{selectedNote.title}</h1>
+                  <div className="prose prose-invert max-w-none whitespace-pre-wrap text-gray-300">
+                    {selectedNote.content}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="mb-4 flex items-center gap-3">
+                <Button
+                  onClick={handleOpenCreateModal}
+                  className="size-11 rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90"
+                  aria-label="Create note"
+                >
+                  <Plus className="size-5" />
+                </Button>
+                <h1 className="text-3xl font-bold text-white">Notes</h1>
+              </div>
+
+              {/* Filters */}
+              <div className="mb-6 flex gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    <input
+                      type="text"
+                      placeholder="Search notes..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 pl-10 pr-4 text-white placeholder-gray-400"
+                    />
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setFilterPinned(filterPinned === true ? undefined : true)}
+                  className={`rounded-lg border px-4 py-2 ${
+                    filterPinned === true
+                      ? "border-blue-500 bg-blue-600 text-white"
+                      : "border-gray-700 bg-gray-800 text-gray-300"
+                  }`}
+                >
+                  <Pin size={20} />
+                </Button>
+                <Button
+                  onClick={() => setFilterArchived(filterArchived === true ? undefined : true)}
+                  className={`rounded-lg border px-4 py-2 ${
+                    filterArchived === true
+                      ? "border-gray-500 bg-gray-700 text-white"
+                      : "border-gray-700 bg-gray-800 text-gray-300"
+                  }`}
+                >
+                  <Archive size={20} />
+                </Button>
+              </div>
+
+              {/* Notes Grid */}
+              {loading ? (
+                <div className="text-center text-gray-400">Loading...</div>
+              ) : notes.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-gray-700 p-12 text-center text-gray-400">
+                  No notes found. Create your first note!
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {notes.map((note) => (
+                    <div
+                      key={note.id}
+                      onClick={() => handleSelectNote(note)}
+                      style={{ backgroundColor: note.color || "#ffffff" }}
+                      className="cursor-pointer rounded-lg border border-gray-700 p-4 shadow-sm transition hover:shadow-md"
                     >
-                      {nt.tag.name}
-                    </span>
+                      <div className="mb-2 flex items-start justify-between">
+                        <h3 className="font-semibold text-gray-900">{note.title}</h3>
+                        {note.isPinned && <Pin size={16} className="text-blue-600" />}
+                      </div>
+                      <p className="mb-3 line-clamp-3 text-sm text-gray-700">{note.content}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {note.tags.map((nt) => (
+                          <span
+                            key={nt.tagId}
+                            style={{ backgroundColor: nt.tag.color || "#3b82f6" }}
+                            className="rounded-full px-2 py-1 text-xs text-white"
+                          >
+                            {nt.tag.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              )}
+            </>
+          )}
+        </div>
 
       {/* Create Modal */}
       {isCreating && (
@@ -458,26 +560,7 @@ export default function NotesPage() {
           </div>
         </div>
       )}
-
-        {/* Edit Modal */}
-        {selectedNote && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-            onClick={handleCloseEditModal}
-          >
-            <div onClick={(e) => e.stopPropagation()}>
-              <ModalShell title="Edit Note" onClose={handleCloseEditModal}>
-                <NoteForm
-                  note={selectedNote}
-                  categories={categories}
-                  onClose={handleCloseEditModal}
-                  onSuccess={handleEditSuccess}
-                />
-              </ModalShell>
-            </div>
-          </div>
-        )}
-        </div>
       </div>
+    </div>
   );
 }

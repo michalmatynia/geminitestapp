@@ -195,14 +195,17 @@ export const mongoNoteRepository: NoteRepository = {
   async getCategoryTree(): Promise<CategoryWithChildren[]> {
     const db = await getDb();
     const categories = await db.collection("categories").find().sort({ name: 1 }).toArray();
+    const notes = await db.collection("notes").find({}, { projection: { title: 1, categoryIds: 1 } }).toArray();
     
-    const mapped = categories.map((c: any) => ({ ...c, id: c._id.toString() }));
+    const mappedCategories = categories.map((c: any) => ({ ...c, id: c._id.toString() }));
+    const mappedNotes = notes.map((n: any) => ({ ...n, id: n._id.toString() }));
 
     const buildTree = (parentId: string | null): CategoryWithChildren[] => {
-      return mapped
+      return mappedCategories
         .filter((cat: any) => cat.parentId === parentId)
         .map((cat: any) => ({
           ...cat,
+          notes: mappedNotes.filter((n: any) => n.categoryIds?.includes(cat.id)),
           children: buildTree(cat.id),
         }));
     };

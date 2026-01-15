@@ -4,6 +4,8 @@ import { productService } from "@/lib/services/productService";
 import ProductCard from "@/components/products/ProductCard";
 import type { ProductWithImages } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+
 const notNull = <T,>(value: T | null | undefined): value is T => value != null;
 
 export default async function HomePage() {

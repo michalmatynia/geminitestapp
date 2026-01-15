@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
+import { getCatalogRepository } from "@/lib/services/catalog-repository";
+import { getProductRepository } from "@/lib/services/product-repository";
 
 const assignSchema = z.object({
   productIds: z.array(z.string().trim().min(1)).min(1),
@@ -33,10 +34,9 @@ export async function POST(req: Request) {
     const mode = data.mode ?? "add";
 
     const uniqueCatalogIds = Array.from(new Set(data.catalogIds));
-    const existingCatalogs = await prisma.catalog.findMany({
-      where: { id: { in: uniqueCatalogIds } },
-      select: { id: true },
-    });
+    const catalogRepository = await getCatalogRepository();
+    const existingCatalogs =
+      await catalogRepository.getCatalogsByIds(uniqueCatalogIds);
     const existingIds = new Set(existingCatalogs.map((entry) => entry.id));
     const validCatalogIds = uniqueCatalogIds.filter((id) => existingIds.has(id));
     if (validCatalogIds.length === 0) {
@@ -47,36 +47,30 @@ export async function POST(req: Request) {
     }
 
     const uniqueProductIds = Array.from(new Set(data.productIds));
+    const productRepository = await getProductRepository();
 
-    if (mode === "replace") {
-      await prisma.productCatalog.deleteMany({
-        where: { productId: { in: uniqueProductIds } },
-      });
+    for (const productId of uniqueProductIds) {
+      const product = await productRepository.getProductById(productId);
+      if (!product) {
+        continue;
+      }
+      const existingCatalogIds = product.catalogs.map(
+        (entry) => entry.catalogId
+      );
+      let nextCatalogIds = existingCatalogIds;
+      if (mode === "replace") {
+        nextCatalogIds = validCatalogIds;
+      } else if (mode === "remove") {
+        nextCatalogIds = existingCatalogIds.filter(
+          (catalogId) => !validCatalogIds.includes(catalogId)
+        );
+      } else {
+        nextCatalogIds = Array.from(
+          new Set([...existingCatalogIds, ...validCatalogIds])
+        );
+      }
+      await productRepository.replaceProductCatalogs(productId, nextCatalogIds);
     }
-
-    if (mode === "remove") {
-      await prisma.productCatalog.deleteMany({
-        where: {
-          productId: { in: uniqueProductIds },
-          catalogId: { in: validCatalogIds },
-        },
-      });
-      return NextResponse.json({
-        updated: uniqueProductIds.length,
-        catalogs: validCatalogIds.length,
-        mode,
-      });
-    }
-
-    await prisma.productCatalog.createMany({
-      data: uniqueProductIds.flatMap((productId) =>
-        validCatalogIds.map((catalogId) => ({
-          productId,
-          catalogId,
-        }))
-      ),
-      skipDuplicates: true,
-    });
 
     return NextResponse.json({
       updated: uniqueProductIds.length,

@@ -414,13 +414,16 @@ export async function runPlanStepLoop(
                   prompt: toolPrompt,
                   browser: run.agentBrowser || "chromium",
                   runId: run.id,
-                  runHeadless: run.runHeadless,
+                  runHeadless:
+                    typeof run.runHeadless === "boolean"
+                      ? run.runHeadless
+                      : undefined,
                   stepId: step.id,
                   stepLabel: step.title,
                 },
               },
-              sharedBrowser,
-              sharedContext
+              sharedBrowser ?? undefined,
+              sharedContext ?? undefined
             )
           : await runAgentBrowserControl({
               runId: run.id,

@@ -1,6 +1,7 @@
-import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { getImageFileRepository } from "@/lib/services/image-file-repository";
+import { getProductRepository } from "@/lib/services/product-repository";
+import type { ProductWithImages } from "@/lib/types";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -9,57 +10,49 @@ export async function GET(req: Request) {
   const productId = searchParams.get("productId")?.trim() || null;
   const productName = searchParams.get("productName")?.trim() || null;
 
-  const and: Prisma.ImageFileWhereInput[] = [];
+  const imageFileRepository = await getImageFileRepository();
+  const productRepository = await getProductRepository();
+  const files = await imageFileRepository.listImageFiles({ filename });
 
-  if (filename) {
-    and.push({
-      filename: {
-        contains: filename,
-        mode: "insensitive",
-      },
-    });
+  const getProductDisplayName = (product: ProductWithImages) =>
+    product.name_en ?? product.name_pl ?? product.name_de ?? "Product";
+
+  const products = await productRepository.getProducts(
+    productName ? { search: productName } : {}
+  );
+  const filteredProducts = productId
+    ? products.filter((product) => product.id === productId)
+    : products;
+
+  const imageFileToProducts = new Map<
+    string,
+    Array<{ product: { id: string; name: string } }>
+  >();
+  for (const product of filteredProducts) {
+    const name = getProductDisplayName(product);
+    for (const image of product.images ?? []) {
+      if (!imageFileToProducts.has(image.imageFileId)) {
+        imageFileToProducts.set(image.imageFileId, []);
+      }
+      imageFileToProducts.get(image.imageFileId)?.push({
+        product: { id: product.id, name },
+      });
+    }
   }
 
-  if (productId) {
-    and.push({
-      products: {
-        some: {
-          productId: productId,
-        },
-      },
-    });
-  }
+  const allowedImageFileIds =
+    productId || productName
+      ? new Set(imageFileToProducts.keys())
+      : null;
 
-  if (productName) {
-    and.push({
-      products: {
-        some: {
-          product: {
-            is: {
-              OR: [
-                { name_pl: { contains: productName, mode: "insensitive" } },
-                { name_en: { contains: productName, mode: "insensitive" } },
-                { name_de: { contains: productName, mode: "insensitive" } },
-              ],
-            },
-          },
-        },
-      },
-    });
-  }
+  const result = files
+    .filter((file) =>
+      allowedImageFileIds ? allowedImageFileIds.has(file.id) : true
+    )
+    .map((file) => ({
+      ...file,
+      products: imageFileToProducts.get(file.id) ?? [],
+    }));
 
-  const where: Prisma.ImageFileWhereInput = and.length ? { AND: and } : {};
-
-  const files = await prisma.imageFile.findMany({
-    where,
-    include: {
-      products: {
-        include: {
-          product: true,
-        },
-      },
-    },
-  });
-
-  return NextResponse.json(files);
+  return NextResponse.json(result);
 }

@@ -3,29 +3,23 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
+import type { ImageFileRecord, ImageFileSelection } from "@/lib/types";
 
 import ImagePreviewModal from "./ImagePreviewModal";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 
-interface FileManagerImageFile {
-  id: string;
-  filename: string;
-  filepath: string;
-  mimetype: string;
-  size: number;
-  width: number | null;
-  height: number | null;
+type FileManagerImageFile = ImageFileRecord & {
   products: {
     product: {
       id: string;
       name: string;
     };
   }[];
-}
+};
 
 interface FileManagerProps {
-  onSelectFile?: (files: { id: string; filepath: string }[]) => void;
+  onSelectFile?: (files: ImageFileSelection[]) => void;
   mode?: "view" | "select";
   showFileManager?: boolean;
 }
@@ -37,9 +31,7 @@ export default function FileManager({
   mode = "select",
 }: FileManagerProps) {
   const [files, setFiles] = useState<FileManagerImageFile[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<
-    { id: string; filepath: string }[]
-  >([]);
+  const [selectedFiles, setSelectedFiles] = useState<ImageFileSelection[]>([]);
   const [filenameSearch, setFilenameSearch] = useState("");
   const [productNameSearch, setProductNameSearch] = useState("");
   const [previewFile, setPreviewFile] = useState<FileManagerImageFile | null>(null);
@@ -76,7 +68,7 @@ export default function FileManager({
   };
 
   // This function toggles the selection of a file.
-  const handleToggleSelect = (file: { id: string; filepath: string }) => {
+  const handleToggleSelect = (file: ImageFileSelection) => {
     setSelectedFiles((prev) =>
       prev.some((f) => f.id === file.id)
         ? prev.filter((f) => f.id !== file.id)

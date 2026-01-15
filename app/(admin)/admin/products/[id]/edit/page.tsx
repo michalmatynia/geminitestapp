@@ -1,29 +1,15 @@
 import EditProductForm from "@/components/products/EditProductForm";
 import { randomUUID } from "crypto";
-import prisma from "@/lib/prisma";
-import { ProductWithImages } from "@/lib/types";
+import { productService } from "@/lib/services/productService";
+import type { ProductWithImages } from "@/lib/types";
 
 async function getProduct(id: string): Promise<{
   product: ProductWithImages | null;
   errorId?: string;
 }> {
   try {
-    const product = await prisma.product.findUnique({
-      where: { id },
-      include: {
-        images: {
-          include: {
-            imageFile: true,
-          },
-        },
-        catalogs: {
-          include: {
-            catalog: true,
-          },
-        },
-      },
-    });
-    return { product: product as ProductWithImages | null };
+    const product = await productService.getProductById(id);
+    return { product };
   } catch (error) {
     const errorId = randomUUID();
     console.error("[products][EDIT] Failed to load product", {

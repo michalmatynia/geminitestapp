@@ -1,12 +1,6 @@
 "use client";
 
-import type {
-  Catalog,
-  CatalogLanguage,
-  Language,
-  ImageFile,
-  ProductImage,
-} from "@prisma/client";
+import type { Language } from "@prisma/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import {
@@ -30,7 +24,11 @@ import {
 } from "react-hook-form";
 import { z } from "zod";
 
-import { ProductWithImages } from "@/lib/types";
+import type {
+  CatalogRecord,
+  ImageFileSelection,
+  ProductWithImages,
+} from "@/lib/types";
 import {
   productCreateSchema,
   productUpdateSchema,
@@ -48,7 +46,7 @@ type ProductImageSlot =
     }
   | {
       type: "existing"; // An existing ImageFile from the DB
-      data: ImageFile; // Prisma ImageFile with id
+      data: ImageFileSelection;
       previewUrl: string; // The filepath of the existing image
       originalIndex?: number; // Optional: original index if moved
     }
@@ -67,11 +65,11 @@ interface ProductFormContextType {
   showFileManager: boolean;
   setShowFileManager: (show: boolean) => void;
   handleSlotImageChange: (file: File | null, index: number) => void;
-  handleSlotFileSelect: (file: { id: string; filepath: string } | null, index: number) => void;
+  handleSlotFileSelect: (file: ImageFileSelection | null, index: number) => void;
   handleSlotDisconnectImage: (index: number) => void;
   handleMultiImageChange: (files: File[]) => void;
-  handleMultiFileSelect: (files: { id: string; filepath: string }[]) => void;
-  catalogs: Catalog[];
+  handleMultiFileSelect: (files: ImageFileSelection[]) => void;
+  catalogs: CatalogRecord[];
   catalogsLoading: boolean;
   catalogsError: string | null;
   selectedCatalogIds: string[];
@@ -147,12 +145,11 @@ export function ProductFormProvider({
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [showFileManager, setShowFileManager] = useState(false);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [catalogs, setCatalogs] = useState<Catalog[]>([]);
+  const [catalogs, setCatalogs] = useState<CatalogRecord[]>([]);
   const [catalogsLoading, setCatalogsLoading] = useState(true);
   const [catalogsError, setCatalogsError] = useState<string | null>(null);
   const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
-  const [catalogLanguages, setCatalogLanguages] = useState<CatalogLanguage[]>([]);
   const [generationError, setGenerationError] = useState<string | null>(null);
 
   // State for managing all 15 image slots
@@ -202,20 +199,9 @@ export function ProductFormProvider({
           const suffix = payload?.errorId ? ` (Error ID: ${payload.errorId})` : "";
           throw new Error(`${message}${suffix}`);
         }
-        const data = (await res.json()) as (Catalog & {
-          languages?: (CatalogLanguage & { language: Language })[];
-        })[];
+        const data = (await res.json()) as CatalogRecord[];
         if (!cancelled) {
           setCatalogs(data);
-          setCatalogLanguages(
-            data.flatMap((catalog) =>
-              catalog.languages?.map((entry) => ({
-                catalogId: entry.catalogId,
-                languageId: entry.languageId,
-                assignedAt: entry.assignedAt,
-              })) ?? []
-            )
-          );
         }
       } catch (error) {
         console.error("Failed to load catalogs:", error);
@@ -259,15 +245,15 @@ export function ProductFormProvider({
   const filteredLanguages = useMemo(() => {
     if (selectedCatalogIds.length === 0) return languages;
     const allowedLanguageIds = new Set(
-      catalogLanguages
-        .filter((entry) => selectedCatalogIds.includes(entry.catalogId))
-        .map((entry) => entry.languageId)
+      catalogs
+        .filter((catalog) => selectedCatalogIds.includes(catalog.id))
+        .flatMap((catalog) => catalog.languageIds ?? [])
     );
     if (allowedLanguageIds.size === 0) {
       return languages;
     }
     return languages.filter((language) => allowedLanguageIds.has(language.id));
-  }, [languages, catalogLanguages, selectedCatalogIds]);
+  }, [languages, catalogs, selectedCatalogIds]);
 
   // Effect to clean up object URLs when component unmounts or imageSlots change
   useEffect(() => {
@@ -323,7 +309,7 @@ export function ProductFormProvider({
     });
   }, []);
 
-  const handleSlotFileSelect = useCallback((file: { id: string; filepath: string } | null, index: number) => {
+  const handleSlotFileSelect = useCallback((file: ImageFileSelection | null, index: number) => {
     setImageSlots((prevSlots) => {
       const newSlots = [...prevSlots];
       if (file) {
@@ -334,7 +320,7 @@ export function ProductFormProvider({
         }
         newSlots[index] = {
           type: "existing",
-          data: file as ImageFile, // Cast as ImageFile for simplicity, assuming {id, filepath} is enough
+          data: file,
           previewUrl: file.filepath,
         };
       } else {
@@ -411,7 +397,7 @@ export function ProductFormProvider({
     });
   }, []);
 
-  const handleMultiFileSelect = useCallback((files: { id: string; filepath: string }[]) => {
+  const handleMultiFileSelect = useCallback((files: ImageFileSelection[]) => {
     setImageSlots(prevSlots => {
       const newSlots = [...prevSlots];
       let fileIndex = 0;
@@ -420,7 +406,7 @@ export function ProductFormProvider({
           const file = files[fileIndex];
           newSlots[i] = {
             type: 'existing',
-            data: file as ImageFile, // Cast as ImageFile for simplicity
+            data: file,
             previewUrl: file.filepath,
           };
           fileIndex++;

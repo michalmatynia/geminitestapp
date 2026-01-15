@@ -1,8 +1,8 @@
-import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import Papa from "papaparse";
 
-import prisma from "@/lib/prisma";
+import { getProductRepository } from "@/lib/services/product-repository";
+import { productCreateSchema } from "@/lib/validations/product";
 
 interface CsvRow {
   [key: string]: string;
@@ -20,9 +20,10 @@ export async function POST(req: NextRequest) {
     const text = await file.text();
 
     const parsed = Papa.parse<CsvRow>(text, { header: true });
+    const productRepository = await getProductRepository();
 
     for (const row of parsed.data) {
-      const productData: Prisma.ProductCreateInput = {
+      const productData = {
         sku: row["SKU"],
 
         name_pl: (row["Name PL"] ?? "").toString().trim(),
@@ -38,9 +39,8 @@ export async function POST(req: NextRequest) {
 
       // Filter out entries with null or empty sku
       if (productData.sku) {
-        await prisma.product.create({
-          data: productData,
-        });
+        const validated = productCreateSchema.parse(productData);
+        await productRepository.createProduct(validated);
       }
     }
 

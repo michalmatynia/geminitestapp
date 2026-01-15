@@ -34,3 +34,6 @@ export const productCreateSchema = productBaseSchema.extend({
 export const productUpdateSchema = productBaseSchema.extend({
   sku: optionalSku.optional(),
 });
+
+export type ProductCreateData = z.infer<typeof productCreateSchema>;
+export type ProductUpdateData = z.infer<typeof productUpdateSchema>;

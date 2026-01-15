@@ -1,6 +1,7 @@
 import { logAgentAudit } from "@/lib/agent/audit";
 import type {
   AgentDecision,
+  AgentPlanSettings,
   PlanStep,
   PlannerMeta,
 } from "@/lib/agent/engine-types";
@@ -35,7 +36,7 @@ type InitializePlanInput = {
   checkpoint: CheckpointState;
   memoryContext: string[];
   browserContext: Awaited<ReturnType<typeof getBrowserContextSummary>>;
-  settings: { maxSteps: number; maxStepAttempts: number };
+  settings: AgentPlanSettings;
   preferences: Record<string, unknown>;
   plannerModel: string;
   loopGuardModel: string;

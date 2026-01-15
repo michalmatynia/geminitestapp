@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 
-import prisma from "@/lib/prisma";
+import { getImageFileRepository } from "@/lib/services/image-file-repository";
 
 const uploadsRoot = path.join(process.cwd(), "public", "uploads");
 const productsRoot = path.join(uploadsRoot, "products");
@@ -47,13 +47,12 @@ export async function uploadFile(
   await fs.mkdir(diskDir, { recursive: true });
   await fs.writeFile(filepath, fileBuffer);
 
-  const imageFile = await prisma.imageFile.create({
-    data: {
-      filename,
-      filepath: `${publicDir}/${filename}`,
-      mimetype: file.type,
-      size: file.size,
-    },
+  const imageFileRepository = await getImageFileRepository();
+  const imageFile = await imageFileRepository.createImageFile({
+    filename,
+    filepath: `${publicDir}/${filename}`,
+    mimetype: file.type,
+    size: file.size,
   });
 
   return imageFile;

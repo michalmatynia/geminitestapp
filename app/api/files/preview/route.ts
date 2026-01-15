@@ -4,7 +4,7 @@ import path from "path";
 import mime from "mime-types";
 import { NextRequest, NextResponse } from "next/server";
 
-import prisma from "@/lib/prisma";
+import { getImageFileRepository } from "@/lib/services/image-file-repository";
 
 export async function GET(req: NextRequest) {
   const fileId = req.nextUrl.searchParams.get("fileId");
@@ -14,9 +14,8 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const imageFile = await prisma.imageFile.findUnique({
-      where: { id: fileId },
-    });
+    const imageFileRepository = await getImageFileRepository();
+    const imageFile = await imageFileRepository.getImageFileById(fileId);
 
     if (!imageFile) {
       return NextResponse.json({ error: "File not found" }, { status: 404 });

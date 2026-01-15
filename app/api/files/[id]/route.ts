@@ -1,16 +1,15 @@
 import fs from "fs/promises";
 import { NextResponse } from "next/server";
 
-import prisma from "@/lib/prisma";
 import { getDiskPathFromPublicPath } from "@/lib/utils/fileUploader";
+import { getImageFileRepository } from "@/lib/services/image-file-repository";
 
 export async function DELETE(req: Request, { params }: any) {
   const { id } = params;
 
   try {
-    const imageFile = await prisma.imageFile.findUnique({
-      where: { id },
-    });
+    const imageFileRepository = await getImageFileRepository();
+    const imageFile = await imageFileRepository.getImageFileById(id);
 
     if (!imageFile) {
       return NextResponse.json({ error: "File not found" }, { status: 404 });
@@ -27,9 +26,7 @@ export async function DELETE(req: Request, { params }: any) {
       }
     }
     
-    await prisma.imageFile.delete({
-      where: { id },
-    });
+    await imageFileRepository.deleteImageFile(id);
 
     return new Response(null, { status: 204 });
   } catch (error) {

@@ -1,4 +1,13 @@
 Application notes
+
+Move image/catalog operations behind a data-access abstraction so Mongo can fully own product data.
+
+mongodb data in .env example
+Increase the level of implementation of mongodb in Product. IN product settings, the user should be able to swich between local  postgreSQL and cloud MongoDB. 
+
+I would like to be able to switch between databases in relation to product
+
+
 base.com with email: you@example.com password: YourPassword
 remove  Agent job panel from the chatbox window, it duplicates what is already shown
 

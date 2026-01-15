@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
+import { getCatalogRepository } from "@/lib/services/catalog-repository";
 
 const catalogUpdateSchema = z.object({
   name: z.string().trim().min(1).optional(),
@@ -46,48 +46,20 @@ export async function PUT(
       );
     }
     const data = catalogUpdateSchema.parse(body);
-    if (data.isDefault) {
-      await prisma.catalog.updateMany({ data: { isDefault: false } });
-    }
-    const catalog = await prisma.catalog.update({
-      where: { id },
-      data: {
-        name: data.name,
-        description: data.description ?? null,
-        isDefault: data.isDefault,
-      },
+    const catalogRepository = await getCatalogRepository();
+    const catalog = await catalogRepository.updateCatalog(id, {
+      name: data.name,
+      description: data.description ?? undefined,
+      isDefault: data.isDefault,
+      languageIds: data.languageIds,
     });
-    if (data.languageIds) {
-      const uniqueIds = Array.from(new Set(data.languageIds));
-      const existing = await prisma.language.findMany({
-        where: { id: { in: uniqueIds } },
-        select: { id: true },
-      });
-      const existingIds = new Set(existing.map((entry) => entry.id));
-      const validIds = uniqueIds.filter((languageId) =>
-        existingIds.has(languageId)
+    if (!catalog) {
+      return NextResponse.json(
+        { error: "Catalog not found", errorId: randomUUID() },
+        { status: 404 }
       );
-      await prisma.catalogLanguage.deleteMany({ where: { catalogId: id } });
-      if (validIds.length > 0) {
-        await prisma.catalogLanguage.createMany({
-          data: validIds.map((languageId) => ({
-            catalogId: id,
-            languageId,
-          })),
-        });
-      }
     }
-    const catalogWithLanguages = await prisma.catalog.findUnique({
-      where: { id },
-      include: {
-        languages: {
-          include: {
-            language: true,
-          },
-        },
-      },
-    });
-    return NextResponse.json(catalogWithLanguages ?? catalog);
+    return NextResponse.json(catalog);
   } catch (error: unknown) {
     const errorId = randomUUID();
     if (error instanceof z.ZodError) {
@@ -140,7 +112,8 @@ export async function DELETE(
         { status: 400 }
       );
     }
-    await prisma.catalog.delete({ where: { id } });
+    const catalogRepository = await getCatalogRepository();
+    await catalogRepository.deleteCatalog(id);
     return new Response(null, { status: 204 });
   } catch (error) {
     const errorId = randomUUID();

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
+import { getCatalogRepository } from "@/lib/services/catalog-repository";
 
 const catalogSchema = z.object({
   name: z.string().trim().min(1),
@@ -16,16 +16,8 @@ const catalogSchema = z.object({
  */
 export async function GET() {
   try {
-    const catalogs = await prisma.catalog.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        languages: {
-          include: {
-            language: true,
-          },
-        },
-      },
-    });
+    const catalogRepository = await getCatalogRepository();
+    const catalogs = await catalogRepository.listCatalogs();
     return NextResponse.json(catalogs);
   } catch (error) {
     const errorId = randomUUID();
@@ -58,49 +50,17 @@ export async function POST(req: Request) {
       );
     }
     const data = catalogSchema.parse(body);
-    const existingCount = await prisma.catalog.count();
+    const catalogRepository = await getCatalogRepository();
+    const existingCatalogs = await catalogRepository.listCatalogs();
     const shouldBeDefault =
-      existingCount === 0 ? true : data.isDefault ?? false;
-
-    if (shouldBeDefault) {
-      await prisma.catalog.updateMany({ data: { isDefault: false } });
-    }
-
-    const catalog = await prisma.catalog.create({
-      data: {
-        name: data.name,
-        description: data.description ?? null,
-        isDefault: shouldBeDefault,
-      },
+      existingCatalogs.length === 0 ? true : data.isDefault ?? false;
+    const catalog = await catalogRepository.createCatalog({
+      name: data.name,
+      description: data.description ?? null,
+      isDefault: shouldBeDefault,
+      languageIds: data.languageIds ?? [],
     });
-    const languageIds = Array.from(new Set(data.languageIds ?? []));
-    if (languageIds.length > 0) {
-      const existing = await prisma.language.findMany({
-        where: { id: { in: languageIds } },
-        select: { id: true },
-      });
-      const existingIds = new Set(existing.map((entry) => entry.id));
-      const validIds = languageIds.filter((id) => existingIds.has(id));
-      if (validIds.length > 0) {
-        await prisma.catalogLanguage.createMany({
-          data: validIds.map((languageId) => ({
-            catalogId: catalog.id,
-            languageId,
-          })),
-        });
-      }
-    }
-    const catalogWithLanguages = await prisma.catalog.findUnique({
-      where: { id: catalog.id },
-      include: {
-        languages: {
-          include: {
-            language: true,
-          },
-        },
-      },
-    });
-    return NextResponse.json(catalogWithLanguages ?? catalog);
+    return NextResponse.json(catalog);
   } catch (error: unknown) {
     const errorId = randomUUID();
     if (error instanceof z.ZodError) {

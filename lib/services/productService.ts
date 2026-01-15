@@ -3,111 +3,26 @@ import { logger } from "@/lib/logger";
 
 import fs from "fs/promises";
 import path from "path";
-import { Prisma } from "@prisma/client";
-import prisma from "@/lib/prisma";
 import {
   productCreateSchema,
   productUpdateSchema,
 } from "@/lib/validations/product";
 import { getDiskPathFromPublicPath, uploadFile } from "@/lib/utils/fileUploader";
+import { getProductRepository } from "@/lib/services/product-repository";
+import type { ProductFilters } from "@/lib/services/product-repository/types";
+import { getImageFileRepository } from "@/lib/services/image-file-repository";
+
+const resolveProductRepository = async () => getProductRepository();
+const resolveImageFileRepository = async () => getImageFileRepository();
 
 /**
  * Retrieves a list of products based on the provided filters.
  * @param filters - The filter criteria.
  * @returns A list of products.
  */
-async function getProducts(filters: {
-  search?: string;
-  sku?: string;
-  minPrice?: string;
-  maxPrice?: string;
-  startDate?: string;
-  endDate?: string;
-}) {
-  const where: Prisma.ProductWhereInput = {
-    sku: {
-      contains: filters.sku,
-    },
-  };
-
-  if (filters.search) {
-    where.OR = [
-      {
-        name_en: {
-          contains: filters.search,
-        },
-      },
-      {
-        name_pl: {
-          contains: filters.search,
-        },
-      },
-      {
-        name_de: {
-          contains: filters.search,
-        },
-      },
-      {
-        description_en: {
-          contains: filters.search,
-        },
-      },
-      {
-        description_pl: {
-          contains: filters.search,
-        },
-      },
-      {
-        description_de: {
-          contains: filters.search,
-        },
-      },
-    ];
-  }
-
-  if (filters.minPrice) {
-    where.price = {
-      ...(where.price as Prisma.IntFilter),
-      gte: parseInt(filters.minPrice, 10),
-    };
-  }
-  if (filters.maxPrice) {
-    where.price = {
-      ...(where.price as Prisma.IntFilter),
-      lte: parseInt(filters.maxPrice, 10),
-    };
-  }
-  if (filters.startDate) {
-    where.createdAt = {
-      ...(where.createdAt as Prisma.DateTimeFilter),
-      gte: new Date(filters.startDate),
-    };
-  }
-  if (filters.endDate) {
-    where.createdAt = {
-      ...(where.createdAt as Prisma.DateTimeFilter),
-      lte: new Date(filters.endDate),
-    };
-  }
-
-  const products = await prisma.product.findMany({
-    where,
-    include: {
-      images: {
-        include: {
-          imageFile: true,
-        },
-      },
-      catalogs: {
-        include: {
-          catalog: true,
-        },
-      },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+async function getProducts(filters: ProductFilters) {
+  const productRepository = await resolveProductRepository();
+  const products = await productRepository.getProducts(filters);
 
   return Promise.all(
     products.map(async (product) => {
@@ -149,24 +64,8 @@ async function getProducts(filters: {
  * @returns The product, or null if not found.
  */
 async function getProductById(id: string) {
-  return await prisma.product.findUnique({
-    where: { id },
-    include: {
-      images: {
-        include: {
-          imageFile: true,
-        },
-        orderBy: {
-          assignedAt: "desc",
-        },
-      },
-      catalogs: {
-        include: {
-          catalog: true,
-        },
-      },
-    },
-  });
+  const productRepository = await resolveProductRepository();
+  return productRepository.getProductById(id);
 }
 
 /**
@@ -181,9 +80,8 @@ async function createProduct(formData: FormData) {
       Object.fromEntries(formData.entries())
     );
     logger.log("Validated data:", validatedData);
-    const product = await prisma.product.create({
-      data: validatedData,
-    });
+    const productRepository = await resolveProductRepository();
+    const product = await productRepository.createProduct(validatedData);
 
     const images = formData.getAll("images") as File[];
     const imageFileIds = formData.getAll("imageFileIds") as string[];
@@ -212,17 +110,16 @@ async function createProduct(formData: FormData) {
 async function updateProduct(id: string, formData: FormData) {
   logger.log(`Updating product ${id}...`);
   try {
-    const productExists = await prisma.product.findUnique({ where: { id } });
-    if (!productExists) return null;
-
     const validatedData = productUpdateSchema.parse(
       Object.fromEntries(formData.entries())
     );
     logger.log("Validated data:", validatedData);
-    await prisma.product.update({
-      where: { id },
-      data: validatedData,
-    });
+    const productRepository = await resolveProductRepository();
+    const updatedProduct = await productRepository.updateProduct(
+      id,
+      validatedData
+    );
+    if (!updatedProduct) return null;
 
     const images = formData.getAll("images") as File[];
     const imageFileIds = formData.getAll("imageFileIds") as string[];
@@ -233,7 +130,7 @@ async function updateProduct(id: string, formData: FormData) {
     }
     await updateProductCatalogs(id, catalogIds);
 
-    return await getProductById(id);
+    return await getProductById(updatedProduct.id);
   } catch (error) {
     logger.error("Error updating product:", error);
     throw error;
@@ -248,9 +145,8 @@ async function updateProduct(id: string, formData: FormData) {
 async function deleteProduct(id: string) {
   logger.log(`Deleting product ${id}...`);
   try {
-    const productExists = await prisma.product.findUnique({ where: { id } });
-    if (!productExists) return null;
-    return await prisma.product.delete({ where: { id } });
+    const productRepository = await resolveProductRepository();
+    return await productRepository.deleteProduct(id);
   } catch (error) {
     logger.error("Error deleting product:", error);
     throw error;
@@ -266,9 +162,6 @@ async function deleteProduct(id: string) {
 async function duplicateProduct(id: string, sku: string) {
   logger.log(`Duplicating product ${id} with new SKU ${sku}...`);
   try {
-    const product = await prisma.product.findUnique({ where: { id } });
-    if (!product) return null;
-
     const trimmedSku = sku.trim();
     const skuPattern = /^[A-Z0-9]+$/;
     if (!trimmedSku) {
@@ -278,34 +171,12 @@ async function duplicateProduct(id: string, sku: string) {
       throw new Error("SKU must use uppercase letters and numbers only");
     }
 
-    const existingSku = await prisma.product.findUnique({
-      where: { sku: trimmedSku },
-    });
-    if (existingSku) {
-      throw new Error("SKU already exists");
-    }
-
-    const duplicatedProduct = await prisma.product.create({
-      data: {
-        sku: trimmedSku,
-        name_en: product.name_en,
-        name_pl: product.name_pl,
-        name_de: product.name_de,
-        description_en: product.description_en,
-        description_pl: product.description_pl,
-        description_de: product.description_de,
-        supplierName: product.supplierName,
-        supplierLink: product.supplierLink,
-        priceComment: product.priceComment,
-        stock: product.stock,
-        price: product.price,
-        sizeLength: product.sizeLength,
-        sizeWidth: product.sizeWidth,
-        weight: product.weight,
-        length: product.length,
-      },
-    });
-
+    const productRepository = await resolveProductRepository();
+    const duplicatedProduct = await productRepository.duplicateProduct(
+      id,
+      trimmedSku
+    );
+    if (!duplicatedProduct) return null;
     return await getProductById(duplicatedProduct.id);
   } catch (error) {
     logger.error("Error duplicating product:", error);
@@ -320,18 +191,14 @@ async function duplicateProduct(id: string, sku: string) {
  * @returns The result of the deletion.
  */
 async function unlinkImageFromProduct(productId: string, imageFileId: string) {
-  const deletedLink = await prisma.productImage.delete({
-    where: { productId_imageFileId: { productId, imageFileId } },
-  });
-
-  const remainingLinks = await prisma.productImage.count({
-    where: { imageFileId },
-  });
+  const productRepository = await resolveProductRepository();
+  const imageFileRepository = await resolveImageFileRepository();
+  await productRepository.removeProductImage(productId, imageFileId);
+  const remainingLinks =
+    await productRepository.countProductsByImageFileId(imageFileId);
 
   if (remainingLinks === 0) {
-    const imageFile = await prisma.imageFile.findUnique({
-      where: { id: imageFileId },
-    });
+    const imageFile = await imageFileRepository.getImageFileById(imageFileId);
 
     if (imageFile) {
       try {
@@ -342,9 +209,7 @@ async function unlinkImageFromProduct(productId: string, imageFileId: string) {
         }
       }
 
-      await prisma.imageFile.delete({
-        where: { id: imageFileId },
-      });
+      await imageFileRepository.deleteImageFile(imageFileId);
 
       const folderDiskPath = path.dirname(
         getDiskPathFromPublicPath(imageFile.filepath)
@@ -364,7 +229,7 @@ async function unlinkImageFromProduct(productId: string, imageFileId: string) {
     }
   }
 
-  return deletedLink;
+  return null;
 }
 
 /**
@@ -379,6 +244,7 @@ async function linkImagesToProduct(
   imageFileIds: string[],
   productSku?: string | null
 ) {
+  const productRepository = await resolveProductRepository();
   const allImageFileIds = [...imageFileIds];
 
   if (images.length > 0) {
@@ -399,12 +265,7 @@ async function linkImagesToProduct(
   }
 
   if (allImageFileIds.length > 0) {
-    await prisma.productImage.createMany({
-      data: allImageFileIds.map((imageFileId) => ({
-        productId,
-        imageFileId,
-      })),
-    });
+    await productRepository.addProductImages(productId, allImageFileIds);
   }
 }
 
@@ -417,30 +278,15 @@ function normalizeCatalogIds(entries: FormDataEntryValue[]) {
 }
 
 async function updateProductCatalogs(productId: string, catalogIds: string[]) {
-  await prisma.productCatalog.deleteMany({ where: { productId } });
-  if (catalogIds.length === 0) return;
-  const uniqueIds = Array.from(new Set(catalogIds));
-  const existing = await prisma.catalog.findMany({
-    where: { id: { in: uniqueIds } },
-    select: { id: true },
-  });
-  const existingIds = new Set(existing.map((entry) => entry.id));
-  const validIds = uniqueIds.filter((id) => existingIds.has(id));
-  if (validIds.length === 0) return;
-  await prisma.productCatalog.createMany({
-    data: validIds.map((catalogId) => ({
-      productId,
-      catalogId,
-    })),
-  });
+  const productRepository = await resolveProductRepository();
+  await productRepository.replaceProductCatalogs(productId, catalogIds);
 }
 
 async function moveTempImageFilesToSku(imageFileIds: string[], sku: string) {
-  const imageFiles = await prisma.imageFile.findMany({
-    where: {
-      id: { in: imageFileIds },
-    },
-  });
+  const imageFileRepository = await resolveImageFileRepository();
+  const imageFiles = await imageFileRepository.findImageFilesByIds(
+    imageFileIds
+  );
 
   for (const imageFile of imageFiles) {
     if (!imageFile.filepath.startsWith(tempProductPathPrefix)) {
@@ -461,28 +307,22 @@ async function moveTempImageFilesToSku(imageFileIds: string[], sku: string) {
       getDiskPathFromPublicPath(targetPublicPath)
     );
 
-    await prisma.imageFile.update({
-      where: { id: imageFile.id },
-      data: { filepath: targetPublicPath },
-    });
+    await imageFileRepository.updateImageFilePath(
+      imageFile.id,
+      targetPublicPath
+    );
   }
 }
 
 async function moveLinkedTempImagesToSku(productId: string, sku: string) {
-  const imageFiles = await prisma.imageFile.findMany({
-    where: {
-      products: {
-        some: {
-          productId,
-        },
-      },
-    },
-  });
-
-  const imageFileIds = imageFiles
-    .filter((imageFile) => imageFile.filepath.startsWith(tempProductPathPrefix))
-    .map((imageFile) => imageFile.id);
-
+  const productRepository = await resolveProductRepository();
+  const product = await productRepository.getProductById(productId);
+  const imageFileIds =
+    product?.images
+      .filter((image) =>
+        image.imageFile.filepath.startsWith(tempProductPathPrefix)
+      )
+      .map((image) => image.imageFileId) ?? [];
   if (imageFileIds.length > 0) {
     await moveTempImageFilesToSku(imageFileIds, sku);
   }

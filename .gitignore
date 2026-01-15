@@ -41,3 +41,21 @@ next-env.d.ts
 
 # chatbot
 /tmp/chatbot-agent
+
+# prisma
+/prisma/dev.db
+/prisma/dev.db-journal
+/prisma/migrations/
+/prisma/.env
+/prisma/generated/
+/.prisma/client/
+/prisma/stardb.db
+/prisma/stardb.db-journal
+/prisma/seed.js
+/prisma/seed.ts
+/prisma/seed.sh
+/prisma/.seed.lock
+
+# Docker
+compose.yaml
+

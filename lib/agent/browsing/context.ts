@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { DEBUG_CHATBOT } from "@/lib/agent/engine-config";
+import { DEBUG_CHATBOT } from "@/lib/agent/core/config";
 
 export async function getBrowserContextSummary(runId: string) {
   if (!("agentBrowserSnapshot" in prisma) || !("agentBrowserLog" in prisma)) {

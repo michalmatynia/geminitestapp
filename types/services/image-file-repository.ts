@@ -1,4 +1,4 @@
-import type { ImageFileRecord } from "@/lib/types";
+import type { ImageFileRecord } from "@/types";
 
 export type { ImageFileRecord };
 

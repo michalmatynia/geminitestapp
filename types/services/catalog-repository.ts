@@ -1,4 +1,4 @@
-import type { CatalogRecord } from "@/lib/types";
+import type { CatalogRecord } from "@/types";
 
 export type { CatalogRecord };
 

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
-import type { ImageFileRecord, ImageFileSelection } from "@/lib/types";
+import type { ImageFileRecord, ImageFileSelection } from "@/types";
 
 import ImagePreviewModal from "./ImagePreviewModal";
 import { Button } from "@/components/ui/button";

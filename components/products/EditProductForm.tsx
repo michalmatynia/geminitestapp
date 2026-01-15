@@ -7,7 +7,7 @@ import {
   ProductFormProvider,
   useProductFormContext,
 } from "@/lib/context/ProductFormContext";
-import { ProductWithImages } from "@/lib/types";
+import { ProductWithImages } from "@/types";
 
 function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
   return (

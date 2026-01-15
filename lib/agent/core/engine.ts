@@ -15,24 +15,24 @@ import type {
   AgentDecision,
   PlanStep,
   PlannerMeta,
-} from "@/lib/agent/engine-types";
+} from "@/types/agent";
 import {
   DEFAULT_OLLAMA_MODEL,
   DEBUG_CHATBOT,
-} from "@/lib/agent/engine-config";
-import { reminderList } from "@/lib/agent/engine-utils";
+} from "@/lib/agent/core/config";
+import { reminderList } from "@/lib/agent/core/utils";
 import {
   appendTaskTypeToPrompt,
   decideNextAction,
-} from "@/lib/agent/engine-plan-utils";
+} from "@/lib/agent/planning/utils";
 import {
   buildCheckpointState,
   parseCheckpoint,
-} from "@/lib/agent/engine-checkpoint";
-import { prepareRunContext } from "@/lib/agent/engine-run-context";
-import { initializePlanState } from "@/lib/agent/engine-run-plan";
-import { runPlanStepLoop } from "@/lib/agent/engine-step-runner";
-import { finalizeAgentRun } from "@/lib/agent/engine-run-finalize";
+} from "@/lib/agent/memory/checkpoint";
+import { prepareRunContext } from "@/lib/agent/execution/context";
+import { initializePlanState } from "@/lib/agent/execution/plan";
+import { runPlanStepLoop } from "@/lib/agent/execution/step-runner";
+import { finalizeAgentRun } from "@/lib/agent/execution/finalize";
 
 export async function runAgentControlLoop(runId: string) {
   let sharedBrowser: Browser | null = null;

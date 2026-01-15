@@ -9,12 +9,12 @@ import {
   DEFAULT_OLLAMA_MODEL,
   resolveAgentPlanSettings,
   resolveAgentPreferences,
-} from "@/lib/agent/engine-config";
+} from "@/lib/agent/core/config";
 import {
   buildSelfImprovementPlaybook,
   jsonValueToRecord,
-} from "@/lib/agent/engine-utils";
-import { getBrowserContextSummary } from "@/lib/agent/engine-browser-context";
+} from "@/lib/agent/core/utils";
+import { getBrowserContextSummary } from "@/lib/agent/browsing/context";
 
 type AgentRunContextInput = {
   id: string;

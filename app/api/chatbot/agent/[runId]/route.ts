@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
 import { logAgentAudit } from "@/lib/agent/audit";
-import { startAgentQueue } from "@/lib/agent/queue";
+import { startAgentQueue } from "@/lib/agent/core/queue";
 import { promises as fs } from "fs";
 import path from "path";
 

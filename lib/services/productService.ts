@@ -9,7 +9,7 @@ import {
 } from "@/lib/validations/product";
 import { getDiskPathFromPublicPath, uploadFile } from "@/lib/utils/fileUploader";
 import { getProductRepository } from "@/lib/services/product-repository";
-import type { ProductFilters } from "@/lib/services/product-repository/types";
+import type { ProductFilters } from "@/types/services/product-repository";
 import { getImageFileRepository } from "@/lib/services/image-file-repository";
 
 const resolveProductRepository = async () => getProductRepository();

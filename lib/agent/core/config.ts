@@ -1,4 +1,4 @@
-import type { AgentPlanPreferences, AgentPlanSettings } from "@/lib/agent/engine-types";
+import type { AgentPlanPreferences, AgentPlanSettings } from "@/types/agent";
 
 export const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 export const MAX_PLAN_STEPS = 12;

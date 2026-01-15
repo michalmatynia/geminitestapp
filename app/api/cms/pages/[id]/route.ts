@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { parseJsonBody } from "@/lib/api/parse-json";
+import { Prisma } from "@prisma/client";
 
 type Params = { id: string };
 type Ctx = { params: Promise<Params> } | { params: Params };
@@ -91,7 +92,7 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
           deleteMany: {},
           create: components.map((component, index) => ({
             type: component.type,
-            content: component.content,
+            content: component.content as Prisma.InputJsonValue,
             order: index,
           })),
         },

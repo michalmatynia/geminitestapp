@@ -1,4 +1,4 @@
-import type { ProductWithImages, ProductRecord } from "@/lib/types";
+import type { ProductWithImages, ProductRecord } from "@/types";
 import type {
   ProductCreateData,
   ProductUpdateData,

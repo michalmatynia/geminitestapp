@@ -6,7 +6,7 @@ import type {
   AgentPlanSettings,
   PlanStep,
   PlannerMeta,
-} from "@/lib/agent/engine-types";
+} from "@/types/agent";
 
 export function parseCheckpoint(payload: unknown): AgentCheckpoint | null {
   if (!payload || typeof payload !== "object") return null;

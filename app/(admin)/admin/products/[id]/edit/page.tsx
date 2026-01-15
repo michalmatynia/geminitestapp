@@ -1,7 +1,7 @@
 import EditProductForm from "@/components/products/EditProductForm";
 import { randomUUID } from "crypto";
 import { productService } from "@/lib/services/productService";
-import type { ProductWithImages } from "@/lib/types";
+import type { ProductWithImages } from "@/types";
 
 async function getProduct(id: string): Promise<{
   product: ProductWithImages | null;

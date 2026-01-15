@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useProductFormContext } from "@/lib/context/ProductFormContext";
-import { ProductFormData } from "@/lib/types";
+import { ProductFormData } from "@/types";
 import { logger } from "@/lib/logger";
 import DebugPanel from "@/components/DebugPanel";
 import { cn } from "@/lib/utils";

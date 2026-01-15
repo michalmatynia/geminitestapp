@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import { randomUUID } from "crypto";
-import { runAgentControlLoop } from "@/lib/agent/engine";
+import { runAgentControlLoop } from "@/lib/agent/core/engine";
 import { logAgentAudit } from "@/lib/agent/audit";
 
 type AgentQueueState = {

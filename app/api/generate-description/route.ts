@@ -6,7 +6,7 @@ import type {
 } from "openai/resources/chat/completions";
 import prisma from "@/lib/prisma";
 import { getImageFileRepository } from "@/lib/services/image-file-repository";
-import type { ImageFileRecord, ProductFormData } from "@/lib/types";
+import type { ImageFileRecord, ProductFormData } from "@/types";
 import fs from "fs/promises";
 import path from "path";
 

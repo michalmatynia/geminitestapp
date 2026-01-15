@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/toast";
 import MissingImagePlaceholder from "@/components/products/MissingImagePlaceholder";
-import type { ProductWithImages } from "@/lib/types";
+import type { ProductWithImages } from "@/types";
 
 // Keep the exported name `Product` in case other files import it from here.
 export type Product = ProductWithImages;

@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import type { Filter, WithId } from "mongodb";
 import { getMongoDb } from "@/lib/db/mongo-client";
-import type { ProductRecord, ProductWithImages } from "@/lib/types";
+import type { ProductRecord, ProductWithImages } from "@/types";
 import { mongoCatalogRepository } from "@/lib/services/catalog-repository/mongo-catalog-repository";
 import { mongoImageFileRepository } from "@/lib/services/image-file-repository/mongo-image-file-repository";
 import type {
@@ -9,7 +9,7 @@ import type {
   ProductFilters,
   ProductRepository,
   UpdateProductInput,
-} from "@/lib/services/product-repository/types";
+} from "@/types/services/product-repository";
 
 type ProductDocument = ProductRecord & {
   _id: string;

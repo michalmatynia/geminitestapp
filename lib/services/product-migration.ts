@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import type { WithId } from "mongodb";
-import type { CatalogRecord, ImageFileRecord } from "@/lib/types";
+import type { CatalogRecord, ImageFileRecord } from "@/types";
 
 export type MigrationDirection = "prisma-to-mongo" | "mongo-to-prisma";
 

@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getProducts } from "@/lib/api";
-import { ProductWithImages } from "@/lib/types";
+import { ProductWithImages } from "@/types";
 import FileManager from "@/components/products/FileManager";
 import ProductForm from "@/components/products/ProductForm";
 import {

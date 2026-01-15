@@ -1,12 +1,12 @@
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
-import type { CatalogRecord, ImageFileRecord, ProductRecord } from "@/lib/types";
+import type { CatalogRecord, ImageFileRecord, ProductRecord } from "@/types";
 import type {
   CreateProductInput,
   ProductFilters,
   ProductRepository,
   UpdateProductInput,
-} from "@/lib/services/product-repository/types";
+} from "@/types/services/product-repository";
 
 const buildProductWhere = (filters: ProductFilters) => {
   const where: Prisma.ProductWhereInput = {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
-import { startAgentQueue } from "@/lib/agent/queue";
+import { startAgentQueue } from "@/lib/agent/core/queue";
 import { logAgentAudit } from "@/lib/agent/audit";
 import { promises as fs } from "fs";
 import path from "path";

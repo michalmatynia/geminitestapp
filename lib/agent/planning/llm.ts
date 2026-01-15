@@ -6,14 +6,14 @@ import type {
   PlannerAlternative,
   PlannerCritique,
   PlannerMeta,
-} from "@/lib/agent/engine-types";
+} from "@/types/agent";
 import {
   DEBUG_CHATBOT,
   MAX_PLAN_STEPS,
   MAX_STEP_ATTEMPTS,
   OLLAMA_BASE_URL,
   clampInt,
-} from "@/lib/agent/engine-config";
+} from "@/lib/agent/core/config";
 import {
   buildBranchStepsFromAlternatives,
   buildPlan,
@@ -25,7 +25,7 @@ import {
   normalizePlannerMeta,
   normalizeStringList,
   parsePlanJson,
-} from "@/lib/agent/engine-plan-utils";
+} from "@/lib/agent/planning/utils";
 
 type PlanStepSpecInput = {
   title?: string;

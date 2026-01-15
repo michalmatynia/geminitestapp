@@ -6,7 +6,7 @@ import type {
   ImageFileListFilters,
   ImageFileRecord,
   ImageFileRepository,
-} from "@/lib/services/image-file-repository/types";
+} from "@/types/services/image-file-repository";
 
 type ImageFileDocument = {
   _id: string;

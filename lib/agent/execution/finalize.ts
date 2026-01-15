@@ -1,18 +1,18 @@
 import prisma from "@/lib/prisma";
 import { logAgentAudit } from "@/lib/agent/audit";
 import { addAgentMemory } from "@/lib/agent/memory";
-import { buildCheckpointState } from "@/lib/agent/engine-checkpoint";
+import { buildCheckpointState } from "@/lib/agent/memory/checkpoint";
 import {
   buildSelfImprovementReviewWithLLM,
   verifyPlanWithLLM,
-} from "@/lib/agent/engine-plan-llm";
-import { getBrowserContextSummary } from "@/lib/agent/engine-browser-context";
+} from "@/lib/agent/planning/llm";
+import { getBrowserContextSummary } from "@/lib/agent/browsing/context";
 import type {
   AgentPlanPreferences,
   AgentPlanSettings,
   PlanStep,
   PlannerMeta,
-} from "@/lib/agent/engine-types";
+} from "@/types/agent";
 
 type FinalizeRunInput = {
   run: {

@@ -5,8 +5,8 @@ import type {
   PlannerAlternative,
   PlannerCritique,
   PlannerMeta,
-} from "@/lib/agent/engine-types";
-import { MAX_PLAN_STEPS, MAX_STEP_ATTEMPTS } from "@/lib/agent/engine-config";
+} from "@/types/agent";
+import { MAX_PLAN_STEPS, MAX_STEP_ATTEMPTS } from "@/lib/agent/core/config";
 
 export type PlanHierarchy = {
   goals: Array<{

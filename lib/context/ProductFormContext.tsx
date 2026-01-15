@@ -28,7 +28,7 @@ import type {
   CatalogRecord,
   ImageFileSelection,
   ProductWithImages,
-} from "@/lib/types";
+} from "@/types";
 import {
   productCreateSchema,
   productUpdateSchema,

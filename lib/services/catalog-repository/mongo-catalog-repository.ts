@@ -6,7 +6,7 @@ import type {
   CatalogRecord,
   CatalogRepository,
   CatalogUpdateInput,
-} from "@/lib/services/catalog-repository/types";
+} from "@/types/services/catalog-repository";
 
 type CatalogDocument = {
   _id: string;

@@ -9,25 +9,25 @@ import type {
   AgentPlanSettings,
   PlanStep,
   PlannerMeta,
-} from "@/lib/agent/engine-types";
+} from "@/types/agent";
 import {
   appendTaskTypeToPrompt,
   buildBranchStepsFromAlternatives,
   isExtractionStep,
   shouldEvaluateReplan,
-} from "@/lib/agent/engine-plan-utils";
+} from "@/lib/agent/planning/utils";
 import {
   buildCheckpointState,
   persistCheckpoint,
-} from "@/lib/agent/engine-checkpoint";
+} from "@/lib/agent/memory/checkpoint";
 import {
   evaluateApprovalGateWithLLM,
   requiresHumanApproval,
-} from "@/lib/agent/engine-approvals";
+} from "@/lib/agent/audit/gate";
 import {
   buildLoopGuardReview,
   detectLoopPattern,
-} from "@/lib/agent/engine-loop-guard";
+} from "@/lib/agent/execution/loop-guard";
 import {
   buildAdaptivePlanReview,
   buildCheckpointBriefWithLLM,
@@ -36,10 +36,10 @@ import {
   buildSelfCheckReview,
   guardRepetitionWithLLM,
   summarizePlannerMemoryWithLLM,
-} from "@/lib/agent/engine-plan-llm";
-import { getBrowserContextSummary } from "@/lib/agent/engine-browser-context";
-import { addProblemSolutionMemory } from "@/lib/agent/engine-memory";
-import { sleep } from "@/lib/agent/engine-utils";
+} from "@/lib/agent/planning/llm";
+import { getBrowserContextSummary } from "@/lib/agent/browsing/context";
+import { addProblemSolutionMemory } from "@/lib/agent/memory/context";
+import { sleep } from "@/lib/agent/core/utils";
 
 type StepLoopInput = {
   run: {

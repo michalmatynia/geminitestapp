@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { parseJsonBody } from "@/lib/api/parse-json";
+import { Prisma } from "@prisma/client";
 
 type Params = { id: string };
 type Ctx = { params: Params | Promise<Params> };
@@ -59,7 +60,10 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
 
     const updatedBlock = await prisma.block.update({
       where: { id },
-      data: { name, content },
+      data: {
+        name,
+        content: content as Prisma.InputJsonValue,
+      },
     });
 
     return NextResponse.json(updatedBlock);

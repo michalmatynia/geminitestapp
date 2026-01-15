@@ -4,21 +4,21 @@ import type {
   AgentPlanSettings,
   PlanStep,
   PlannerMeta,
-} from "@/lib/agent/engine-types";
+} from "@/types/agent";
 import {
   buildBranchStepsFromAlternatives,
   decideNextAction,
-} from "@/lib/agent/engine-plan-utils";
+} from "@/lib/agent/planning/utils";
 import {
   buildPlanWithLLM,
   buildResumePlanReview,
-} from "@/lib/agent/engine-plan-llm";
-import { getBrowserContextSummary } from "@/lib/agent/engine-browser-context";
-import { persistCheckpoint } from "@/lib/agent/engine-checkpoint";
-import type { PlanHierarchy } from "@/lib/agent/engine-plan-utils";
+} from "@/lib/agent/planning/llm";
+import { getBrowserContextSummary } from "@/lib/agent/browsing/context";
+import { persistCheckpoint } from "@/lib/agent/memory/checkpoint";
+import type { PlanHierarchy } from "@/lib/agent/planning/utils";
 
 type CheckpointState = ReturnType<
-  typeof import("@/lib/agent/engine-checkpoint").parseCheckpoint
+  typeof import("@/lib/agent/memory/checkpoint").parseCheckpoint
 >;
 
 type PlanInitializationResult = {

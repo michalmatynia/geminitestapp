@@ -3,8 +3,8 @@ import type {
   LoopSignal,
   PlanStep,
   PlannerMeta,
-} from "@/lib/agent/engine-types";
-import { DEBUG_CHATBOT, OLLAMA_BASE_URL } from "@/lib/agent/engine-config";
+} from "@/types/agent";
+import { DEBUG_CHATBOT, OLLAMA_BASE_URL } from "@/lib/agent/core/config";
 import {
   buildBranchStepsFromAlternatives,
   buildPlanStepsFromSpecs,
@@ -13,7 +13,7 @@ import {
   normalizePlannerMeta,
   normalizeStringList,
   parsePlanJson,
-} from "@/lib/agent/engine-plan-utils";
+} from "@/lib/agent/planning/utils";
 
 type PlanStepSpecInput = {
   title?: string;

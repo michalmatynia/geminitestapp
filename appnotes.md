@@ -11,6 +11,8 @@ Add MongoDB connections to Chatbot and agentic flow
 Add MongoDB connections to CMS
 Add MongoDB connections to Application Settings in General
 
+# Address Redundancy
+
 # Product
 # UI
 Add shadcn

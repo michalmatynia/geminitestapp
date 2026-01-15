@@ -2,7 +2,7 @@ import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { productService } from "@/lib/services/productService";
 import ProductCard from "@/components/products/ProductCard";
-import type { ProductWithImages } from "@/lib/types";
+import type { ProductWithImages } from "@/types";
 
 export const dynamic = "force-dynamic";
 

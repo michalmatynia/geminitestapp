@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getImageFileRepository } from "@/lib/services/image-file-repository";
 import { getProductRepository } from "@/lib/services/product-repository";
-import type { ProductWithImages } from "@/lib/types";
+import type { ProductWithImages } from "@/types";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);

@@ -1,4 +1,4 @@
-import { ProductWithImages } from "./types";
+import { ProductWithImages } from "@/types";
 
 // This function fetches a list of products from the API.
 export async function getProducts(filters: {

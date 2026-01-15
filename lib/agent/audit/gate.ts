@@ -1,5 +1,5 @@
-import type { PlanStep } from "@/lib/agent/engine-types";
-import { DEBUG_CHATBOT, OLLAMA_BASE_URL } from "@/lib/agent/engine-config";
+import type { PlanStep } from "@/types/agent";
+import { DEBUG_CHATBOT, OLLAMA_BASE_URL } from "@/lib/agent/core/config";
 
 const parseJsonObject = (content: string): unknown => {
   try {

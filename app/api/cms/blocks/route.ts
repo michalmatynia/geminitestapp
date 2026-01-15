@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { parseJsonBody } from "@/lib/api/parse-json";
+import { Prisma } from "@prisma/client";
 
 const blockSchema = z.object({
   name: z.string().trim().min(1),
@@ -46,7 +47,10 @@ export async function POST(req: Request) {
     console.log("Received request to create block:", parsed.data);
     const { name, content } = parsed.data;
     const newBlock = await prisma.block.create({
-      data: { name, content },
+      data: {
+        name,
+        content: content as Prisma.InputJsonValue,
+      },
     });
     console.log("Successfully created block:", newBlock);
     return NextResponse.json(newBlock);

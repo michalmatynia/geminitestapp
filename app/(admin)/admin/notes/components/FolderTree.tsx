@@ -42,7 +42,7 @@ function FolderNode({
   const [isExpanded, setIsExpanded] = useState(true);
   const hasChildren = folder.children.length > 0;
   const hasNotes = folder.notes && folder.notes.length > 0;
-  const isSelected = selectedFolderId === folder.id;
+  const isSelected = selectedFolderId === folder.id && !selectedNoteId;
 
   return (
     <div>
@@ -70,7 +70,10 @@ function FolderNode({
         )}
 
         <div
-          onClick={() => onSelect(folder.id)}
+          onClick={() => {
+            onSelect(folder.id);
+            setIsExpanded(!isExpanded);
+          }}
           className="flex items-center gap-2 flex-1"
         >
           {isExpanded || !hasChildren ? (
@@ -184,7 +187,7 @@ export function FolderTree({
         <button
           onClick={() => onSelectFolder(null)}
           className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition ${
-            selectedFolderId === null
+            selectedFolderId === null && !selectedNoteId
               ? "bg-blue-600 text-white"
               : "text-gray-300 hover:bg-gray-800"
           }`}

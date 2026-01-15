@@ -69,10 +69,22 @@ const toCategoryResponse = (doc: WithId<CategoryDocument>): CategoryRecord => ({
   updatedAt: doc.updatedAt ?? new Date(),
 });
 
-const buildTree = (categories: CategoryRecord[]): CategoryWithChildren[] => {
+const buildTree = (
+  categories: CategoryRecord[],
+  notes: NoteRecord[] = []
+): CategoryWithChildren[] => {
   const categoryMap: Record<string, CategoryWithChildren> = {};
   categories.forEach((cat) => {
     categoryMap[cat.id] = { ...cat, children: [], notes: [] };
+  });
+
+  // Distribute notes to their respective categories
+  notes.forEach((note) => {
+    note.categories.forEach((nc) => {
+      if (categoryMap[nc.categoryId]) {
+        categoryMap[nc.categoryId].notes.push(note);
+      }
+    });
   });
 
   const rootCategories: CategoryWithChildren[] = [];
@@ -204,33 +216,49 @@ export const mongoNoteRepository: NoteRepository = {
 
     // Handle tags update
     if (data.tagIds) {
-      const now = new Date();
-      const tagCollection = db.collection<TagDocument>(tagCollectionName);
-      const tagDocs = await tagCollection
-        .find({ $or: data.tagIds.map((tagId) => ({ $or: [{ id: tagId }, { _id: tagId }] })) })
-        .toArray();
-      const tags: NoteTagEmbedded[] = tagDocs.map((tag) => ({
-        noteId: id,
-        tagId: tag.id ?? tag._id,
-        assignedAt: now,
-        tag: toTagResponse(tag),
-      }));
+      let tags: NoteTagEmbedded[] = [];
+      if (data.tagIds.length > 0) {
+        const now = new Date();
+        const tagCollection = db.collection<TagDocument>(tagCollectionName);
+        const tagDocs = await tagCollection
+          .find({
+            $or: data.tagIds.map((tagId) => ({
+              $or: [{ id: tagId }, { _id: tagId }],
+            })),
+          })
+          .toArray();
+        tags = tagDocs.map((tag) => ({
+          noteId: id,
+          tagId: tag.id ?? tag._id,
+          assignedAt: now,
+          tag: toTagResponse(tag),
+        }));
+      }
       updateDoc.$set.tags = tags;
     }
 
     // Handle categories update
     if (data.categoryIds) {
-      const now = new Date();
-      const categoryCollection = db.collection<CategoryDocument>(categoryCollectionName);
-      const categoryDocs = await categoryCollection
-        .find({ $or: data.categoryIds.map((catId) => ({ $or: [{ id: catId }, { _id: catId }] })) })
-        .toArray();
-      const categories: NoteCategoryEmbedded[] = categoryDocs.map((cat) => ({
-        noteId: id,
-        categoryId: cat.id ?? cat._id,
-        assignedAt: now,
-        category: toCategoryResponse(cat),
-      }));
+      let categories: NoteCategoryEmbedded[] = [];
+      if (data.categoryIds.length > 0) {
+        const now = new Date();
+        const categoryCollection = db.collection<CategoryDocument>(
+          categoryCollectionName
+        );
+        const categoryDocs = await categoryCollection
+          .find({
+            $or: data.categoryIds.map((catId) => ({
+              $or: [{ id: catId }, { _id: catId }],
+            })),
+          })
+          .toArray();
+        categories = categoryDocs.map((cat) => ({
+          noteId: id,
+          categoryId: cat.id ?? cat._id,
+          assignedAt: now,
+          category: toCategoryResponse(cat),
+        }));
+      }
       updateDoc.$set.categories = categories;
     }
 
@@ -343,7 +371,15 @@ export const mongoNoteRepository: NoteRepository = {
     const collection = db.collection<CategoryDocument>(categoryCollectionName);
     const docs = await collection.find({}).sort({ name: 1 }).toArray();
     const categories = docs.map(toCategoryResponse);
-    return buildTree(categories);
+
+    // Fetch all notes that have categories to populate the tree
+    const noteCollection = db.collection<NoteDocument>(noteCollectionName);
+    const noteDocs = await noteCollection
+      .find({ "categories.0": { $exists: true } })
+      .toArray();
+    const notes = noteDocs.map(toNoteResponse);
+
+    return buildTree(categories, notes);
   },
 
   async createCategory(data) {

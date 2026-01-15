@@ -425,7 +425,7 @@ export default function NotesPage() {
         <div className="lg:col-span-4 rounded-lg bg-gray-950 p-6 shadow-lg overflow-hidden flex flex-col">
           {selectedNote ? (
             <div className="flex h-full flex-col">
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-4 flex items-center gap-4">
                 <Button
                   onClick={() => setSelectedNote(null)}
                   variant="outline"

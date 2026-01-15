@@ -4,6 +4,29 @@ npx tsc
 npx eslint
 add proper debugging on visual studio code
 
+# Note Taking App
+I should 
+see the list of notes , created time, thumbnail, name
+Note tags
+Note parameters, that I can add cusomized, that I can use later on with AI to Identify and extra categorize my notes 
+Each note needs a bread crumb
+File handling (10 file slots benath, the first one being the thumbnail)
+
+have AI to format my notes, validate the truth in my notes, Search the web to validate my notes, give me note suggestions (that I can Accept or Refuse), extend/refactor my notes, 
+
+Move image/catalog operations behind a data-access abstraction so Mongo can fully own product data.
+
+Chatbot connection
+
+---
+
+
+base.com with email: you@example.com password: YourPassword
+remove  Agent job panel from the chatbox window, it duplicates what is already shown
+
+At some point there should be note import and also the notes should be downloadable as markdown
+
+
 
 # Database work
 Set the cloud database mongoDB backup to local mongoDB setUP
@@ -37,15 +60,6 @@ Add Error Boundaries - should I add them ? or only during debugging
 Increase Type Safety
 Try Catch Blocks
 
-# Note Taking App
-Move image/catalog operations behind a data-access abstraction so Mongo can fully own product data.
-
-Chatbot connection
-
-base.com with email: you@example.com password: YourPassword
-remove  Agent job panel from the chatbox window, it duplicates what is already shown
-
-At some point there should be note import and also the notes should be downloadable as markdown
 
 # Develop components
 Enhance Components

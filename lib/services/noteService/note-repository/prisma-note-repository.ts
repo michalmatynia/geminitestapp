@@ -157,7 +157,12 @@ export const prismaNoteRepository: NoteRepository = {
       include: {
         notes: {
           include: {
-            note: true,
+            note: {
+              include: {
+                tags: { include: { tag: true } },
+                categories: { include: { category: true } },
+              },
+            },
           },
         },
       },

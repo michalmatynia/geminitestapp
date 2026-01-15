@@ -165,13 +165,13 @@ export const useChatbotLogic = () => {
 
   // Fetch sessions on mount
   useEffect(() => {
-    fetchSessions();
+    void fetchSessions();
   }, [fetchSessions]);
 
   // Load session messages when session changes
   useEffect(() => {
     if (sessionId) {
-      loadSessionMessages(sessionId);
+      void loadSessionMessages(sessionId);
     } else {
       setMessages([]);
     }
@@ -185,8 +185,8 @@ export const useChatbotLogic = () => {
         const response = await fetch(`${ollamaBaseUrl}/api/tags`);
 
         if (response.ok) {
-          const data = await response.json();
-          const models = data.models?.map((m: any) => m.name) || [];
+          const data = (await response.json()) as { models?: { name: string }[] };
+          const models = data.models?.map((m) => m.name) || [];
           setModelOptions(models);
 
           // Set first model as default if no model is set
@@ -204,8 +204,8 @@ export const useChatbotLogic = () => {
       }
     };
 
-    fetchModels();
-  }, []);
+    void fetchModels();
+  }, [model, toast]);
 
   const loadChatbotSettings = useCallback(async () => {
     try {

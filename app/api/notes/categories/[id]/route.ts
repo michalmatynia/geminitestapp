@@ -8,8 +8,9 @@ import { noteService } from "@/lib/services/noteService";
  */
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     const body = await req.json();
     const category = await noteService.updateCategory(params.id, body);
@@ -45,8 +46,9 @@ export async function PATCH(
  */
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     await noteService.deleteCategory(params.id);
     return NextResponse.json({ success: true });

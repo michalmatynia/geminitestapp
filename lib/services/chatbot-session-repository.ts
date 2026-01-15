@@ -1,4 +1,4 @@
-import { getMongoDb } from "@/lib/mongodb";
+import { getMongoDb } from "@/lib/db/mongo-client";
 import { ObjectId } from "mongodb";
 import type {
   ChatSession,

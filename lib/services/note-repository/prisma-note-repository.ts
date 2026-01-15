@@ -1,19 +1,39 @@
 import { PrismaClient } from "@prisma/client";
 import type {
-  NoteWithRelations,
-  CreateNoteInput,
-  UpdateNoteInput,
+  NoteWithRelations as NoteRecord,
+  NoteCreateInput as CreateNoteInput,
+  NoteUpdateInput as UpdateNoteInput,
   NoteFilters,
   TagRecord,
   CategoryRecord,
-  CreateTagInput,
-  UpdateTagInput,
-  CreateCategoryInput,
-  UpdateCategoryInput,
+  TagCreateInput as CreateTagInput,
+  TagUpdateInput as UpdateTagInput,
+  CategoryCreateInput as CreateCategoryInput,
+  CategoryUpdateInput as UpdateCategoryInput,
+  CategoryWithChildren,
 } from "@/types/notes";
 import type { NoteRepository } from "@/types/services/note-repository";
 
 const prisma = new PrismaClient();
+
+const buildTree = (categories: CategoryRecord[]): CategoryWithChildren[] => {
+  const categoryMap: Record<string, CategoryWithChildren> = {};
+  categories.forEach((cat) => {
+    categoryMap[cat.id] = { ...cat, children: [], notes: [] };
+  });
+
+  const rootCategories: CategoryWithChildren[] = [];
+
+  categories.forEach((cat) => {
+    if (cat.parentId && categoryMap[cat.parentId]) {
+      categoryMap[cat.parentId].children.push(categoryMap[cat.id]);
+    } else {
+      rootCategories.push(categoryMap[cat.id]);
+    }
+  });
+
+  return rootCategories;
+};
 
 export const prismaNoteRepository: NoteRepository = {
   // Note CRUD operations
@@ -82,7 +102,7 @@ export const prismaNoteRepository: NoteRepository = {
         assignedAt: nc.assignedAt,
         category: nc.category,
       })),
-    })) as NoteWithRelations[];
+    })) as NoteRecord[];
   },
 
   async getById(id) {
@@ -118,7 +138,7 @@ export const prismaNoteRepository: NoteRepository = {
         assignedAt: nc.assignedAt,
         category: nc.category,
       })),
-    } as NoteWithRelations;
+    } as NoteRecord;
   },
 
   async create(data) {
@@ -172,7 +192,7 @@ export const prismaNoteRepository: NoteRepository = {
         assignedAt: nc.assignedAt,
         category: nc.category,
       })),
-    } as NoteWithRelations;
+    } as NoteRecord;
   },
 
   async update(id, data) {
@@ -236,11 +256,16 @@ export const prismaNoteRepository: NoteRepository = {
         assignedAt: nc.assignedAt,
         category: nc.category,
       })),
-    } as NoteWithRelations;
+    } as NoteRecord;
   },
 
   async delete(id) {
-    await prisma.note.delete({ where: { id } });
+    try {
+      await prisma.note.delete({ where: { id } });
+      return true;
+    } catch {
+      return false;
+    }
   },
 
   // Tag operations
@@ -274,7 +299,12 @@ export const prismaNoteRepository: NoteRepository = {
   },
 
   async deleteTag(id) {
-    await prisma.tag.delete({ where: { id } });
+    try {
+      await prisma.tag.delete({ where: { id } });
+      return true;
+    } catch {
+      return false;
+    }
   },
 
   // Category operations
@@ -288,12 +318,20 @@ export const prismaNoteRepository: NoteRepository = {
     return prisma.category.findUnique({ where: { id } });
   },
 
+  async getCategoryTree() {
+    const categories = await prisma.category.findMany({
+      orderBy: { name: "asc" },
+    });
+    return buildTree(categories);
+  },
+
   async createCategory(data) {
     return prisma.category.create({
       data: {
         name: data.name,
         description: data.description,
         color: data.color,
+        parentId: data.parentId,
       },
     });
   },
@@ -305,50 +343,17 @@ export const prismaNoteRepository: NoteRepository = {
         ...(data.name !== undefined && { name: data.name }),
         ...(data.description !== undefined && { description: data.description }),
         ...(data.color !== undefined && { color: data.color }),
+        ...(data.parentId !== undefined && { parentId: data.parentId }),
       },
     });
   },
 
   async deleteCategory(id) {
-    await prisma.category.delete({ where: { id } });
-  },
-
-  // Tag/Category assignment operations
-  async assignTags(noteId, tagIds) {
-    await prisma.noteTag.createMany({
-      data: tagIds.map((tagId) => ({
-        noteId,
-        tagId,
-      })),
-      skipDuplicates: true,
-    });
-  },
-
-  async removeTags(noteId, tagIds) {
-    await prisma.noteTag.deleteMany({
-      where: {
-        noteId,
-        tagId: { in: tagIds },
-      },
-    });
-  },
-
-  async assignCategories(noteId, categoryIds) {
-    await prisma.noteCategory.createMany({
-      data: categoryIds.map((categoryId) => ({
-        noteId,
-        categoryId,
-      })),
-      skipDuplicates: true,
-    });
-  },
-
-  async removeCategories(noteId, categoryIds) {
-    await prisma.noteCategory.deleteMany({
-      where: {
-        noteId,
-        categoryId: { in: categoryIds },
-      },
-    });
+    try {
+      await prisma.category.delete({ where: { id } });
+      return true;
+    } catch {
+      return false;
+    }
   },
 };

@@ -1,13 +1,28 @@
 import { NextResponse } from "next/server";
 import { chatbotSessionRepository } from "@/lib/services/chatbot-session-repository";
+import type { ChatSession } from "@/app/(admin)/admin/chatbot/types";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
+
+type CreateSessionBody = {
+  title?: string;
+  settings?: ChatSession["settings"];
+};
+
+type UpdateSessionBody = {
+  sessionId: string;
+  title?: string;
+};
+
+type DeleteSessionBody = {
+  sessionId: string;
+};
 
 // POST /api/chatbot/sessions - Create new session
 export async function POST(req: Request) {
   const requestStart = Date.now();
   try {
-    const body = await req.json();
+    const body = (await req.json()) as CreateSessionBody;
     const { title, settings } = body;
 
     if (DEBUG_CHATBOT) {
@@ -65,7 +80,7 @@ export async function GET() {
 export async function PATCH(req: Request) {
   const requestStart = Date.now();
   try {
-    const body = await req.json();
+    const body = (await req.json()) as UpdateSessionBody;
     const { sessionId, title } = body;
 
     if (!sessionId) {
@@ -114,7 +129,7 @@ export async function PATCH(req: Request) {
 export async function DELETE(req: Request) {
   const requestStart = Date.now();
   try {
-    const body = await req.json();
+    const body = (await req.json()) as DeleteSessionBody;
     const { sessionId } = body;
 
     if (!sessionId) {

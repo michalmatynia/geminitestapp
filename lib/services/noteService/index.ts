@@ -6,13 +6,13 @@ const USE_MONGO = process.env.NOTE_DB_PROVIDER === "mongodb";
 // Lazy load to avoid initializing Prisma when using MongoDB
 let _noteService: NoteRepository | null = null;
 
-function getNoteService(): NoteRepository {
+async function getNoteService(): Promise<NoteRepository> {
   if (!_noteService) {
     if (USE_MONGO) {
-      const { mongoNoteRepository } = require("./note-repository/mongo-note-repository");
+      const { mongoNoteRepository } = await import("./note-repository/mongo-note-repository");
       _noteService = mongoNoteRepository;
     } else {
-      const { prismaNoteRepository } = require("./note-repository/prisma-note-repository");
+      const { prismaNoteRepository } = await import("./note-repository/prisma-note-repository");
       _noteService = prismaNoteRepository;
     }
   }
@@ -26,8 +26,14 @@ function getNoteService(): NoteRepository {
 
 export const noteService: NoteRepository = new Proxy({} as NoteRepository, {
   get(target, prop) {
-    const service = getNoteService();
-    const value = service[prop as keyof NoteRepository];
-    return typeof value === 'function' ? value.bind(service) : value;
+    return async (...args: any[]) => {
+      const service = await getNoteService();
+      const value = service[prop as keyof NoteRepository];
+      if (typeof value === 'function') {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return (value as (...args: any[]) => Promise<any>).apply(service, args);
+      }
+      return value;
+    };
   }
 });

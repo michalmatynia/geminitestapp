@@ -104,7 +104,7 @@ function ChatbotPageInner() {
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    sendMessage();
+    void sendMessage();
   };
 
   return (

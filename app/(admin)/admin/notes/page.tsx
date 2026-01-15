@@ -178,6 +178,36 @@ function NoteForm({
   );
 }
 
+const getCategoryIdsWithDescendants = (
+  targetId: string,
+  categories: CategoryWithChildren[]
+): string[] => {
+  const ids: string[] = [];
+  
+  for (const cat of categories) {
+    if (cat.id === targetId) {
+      ids.push(cat.id);
+      if (cat.children) {
+        const traverse = (nodes: CategoryWithChildren[]) => {
+          for (const node of nodes) {
+            ids.push(node.id);
+            if (node.children) traverse(node.children);
+          }
+        };
+        traverse(cat.children);
+      }
+      return ids;
+    }
+    
+    if (cat.children) {
+      const found = getCategoryIdsWithDescendants(targetId, cat.children);
+      if (found.length > 0) return found;
+    }
+  }
+  
+  return [];
+};
+
 export default function NotesPage() {
   const [notes, setNotes] = useState<NoteWithRelations[]>([]);
   const [tags, setTags] = useState<TagRecord[]>([]);
@@ -193,44 +223,27 @@ export default function NotesPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [creatingFolderParentId, setCreatingFolderParentId] = useState<string | null | undefined>(undefined);
 
-  useEffect(() => {
-    fetchNotes();
-    fetchTags();
-    fetchCategories();
-    fetchFolderTree();
-  }, [searchQuery, filterPinned, filterArchived, selectedFolderId]);
-
-  const getCategoryIdsWithDescendants = (
-    targetId: string,
-    categories: CategoryWithChildren[]
-  ): string[] => {
-    let ids: string[] = [];
-    
-    for (const cat of categories) {
-      if (cat.id === targetId) {
-        ids.push(cat.id);
-        if (cat.children) {
-          const traverse = (nodes: CategoryWithChildren[]) => {
-            for (const node of nodes) {
-              ids.push(node.id);
-              if (node.children) traverse(node.children);
-            }
-          };
-          traverse(cat.children);
-        }
-        return ids;
-      }
-      
-      if (cat.children) {
-        const found = getCategoryIdsWithDescendants(targetId, cat.children);
-        if (found.length > 0) return found;
-      }
+  const fetchFolderTree = React.useCallback(async () => {
+    try {
+      const response = await fetch("/api/notes/categories/tree");
+      const data = await response.json();
+      setFolderTree(data);
+    } catch (error) {
+      console.error("Failed to fetch folder tree:", error);
     }
-    
-    return [];
-  };
+  }, []);
 
-  const fetchNotes = async () => {
+  const fetchFolderTree = React.useCallback(async () => {
+    try {
+      const response = await fetch("/api/notes/categories/tree");
+      const data = await response.json();
+      setFolderTree(data);
+    } catch (error) {
+      console.error("Failed to fetch folder tree:", error);
+    }
+  }, []);
+
+  const fetchNotes = React.useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -239,11 +252,15 @@ export default function NotesPage() {
       if (filterArchived !== undefined) params.append("isArchived", String(filterArchived));
       
       if (selectedFolderId) {
+        // Note: we need to pass the current tree to this function or use a ref/functional update if tree updates
+        // However, selectedFolderId updates usually trigger a re-fetch.
+        // To be safe and avoid circular dependencies with fetchFolderTree (which updates tree),
+        // we might need to rely on the current state of folderTree.
+        // But folderTree is in state.
         const descendantIds = getCategoryIdsWithDescendants(selectedFolderId, folderTree);
         if (descendantIds.length > 0) {
           descendantIds.forEach((id) => params.append("categoryIds", id));
         } else {
-          // Fallback if tree traversal fails or empty (though if selectedFolderId is set, it should be in tree)
           params.append("categoryIds", selectedFolderId);
         }
       }
@@ -256,9 +273,9 @@ export default function NotesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery, filterPinned, filterArchived, selectedFolderId, folderTree]);
 
-  const fetchTags = async () => {
+  const fetchTags = React.useCallback(async () => {
     try {
       const response = await fetch("/api/notes/tags");
       const data = await response.json();
@@ -266,9 +283,9 @@ export default function NotesPage() {
     } catch (error) {
       console.error("Failed to fetch tags:", error);
     }
-  };
+  }, []);
 
-  const fetchCategories = async () => {
+  const fetchCategories = React.useCallback(async () => {
     try {
       const response = await fetch("/api/notes/categories");
       const data = await response.json();
@@ -276,17 +293,14 @@ export default function NotesPage() {
     } catch (error) {
       console.error("Failed to fetch categories:", error);
     }
-  };
+  }, []);
 
-  const fetchFolderTree = async () => {
-    try {
-      const response = await fetch("/api/notes/categories/tree");
-      const data = await response.json();
-      setFolderTree(data);
-    } catch (error) {
-      console.error("Failed to fetch folder tree:", error);
-    }
-  };
+  useEffect(() => {
+    void fetchNotes();
+    void fetchTags();
+    void fetchCategories();
+    void fetchFolderTree();
+  }, [fetchNotes, fetchTags, fetchCategories, fetchFolderTree]);
 
   const handleCreateFolder = async (parentId?: string | null) => {
     const folderName = prompt("Enter folder name:");
@@ -362,7 +376,7 @@ export default function NotesPage() {
 
   const handleCreateSuccess = () => {
     setIsCreating(false);
-    fetchNotes();
+    void fetchNotes();
   };
 
   const handleSelectNote = (note: NoteWithRelations) => {
@@ -385,10 +399,10 @@ export default function NotesPage() {
 
   const handleUpdateSuccess = () => {
     setIsEditing(false);
-    fetchNotes();
+    void fetchNotes();
     // Refresh selected note to show updated content
     if (selectedNote) {
-      handleSelectNoteFromTree(selectedNote.id);
+      void handleSelectNoteFromTree(selectedNote.id);
     }
   };
 

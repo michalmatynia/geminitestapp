@@ -6,8 +6,9 @@ const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 // GET /api/chatbot/sessions/[sessionId] - Get session by ID
 export async function GET(
   req: Request,
-  { params }: { params: { sessionId: string } }
+  props: { params: Promise<{ sessionId: string }> }
 ) {
+  const params = await props.params;
   try {
     const session = await chatbotSessionRepository.findById(params.sessionId);
 

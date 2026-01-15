@@ -1,8 +1,24 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
+import { z } from "zod";
 import prisma from "@/lib/prisma";
+import { parseJsonBody } from "@/lib/api/parse-json";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
+
+const sessionCreateSchema = z.object({
+  title: z.string().trim().optional(),
+});
+
+const sessionUpdateSchema = z.object({
+  sessionId: z.string().trim().optional(),
+  title: z.string().trim().optional(),
+});
+
+const sessionDeleteSchema = z.object({
+  sessionId: z.string().trim().optional(),
+  sessionIds: z.array(z.string().trim().min(1)).optional(),
+});
 
 export async function POST(req: Request) {
   const requestStart = Date.now();
@@ -13,15 +29,21 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
-    const body = (await req.json().catch(() => ({}))) as { title?: string };
+    const parsed = await parseJsonBody(req, sessionCreateSchema, {
+      logPrefix: "chatbot-sessions",
+      allowEmpty: true,
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][sessions][POST] Request", {
-        titleProvided: Boolean(body.title?.trim()),
+        titleProvided: Boolean(parsed.data.title?.trim()),
       });
     }
     const session = await prisma.chatbotSession.create({
       data: {
-        title: body.title?.trim() || null,
+        title: parsed.data.title?.trim() || null,
       },
     });
     if (DEBUG_CHATBOT) {
@@ -112,8 +134,13 @@ export async function PATCH(req: Request) {
         { status: 500 }
       );
     }
-    const body = (await req.json()) as { sessionId?: string; title?: string };
-    if (!body.sessionId) {
+    const parsed = await parseJsonBody(req, sessionUpdateSchema, {
+      logPrefix: "chatbot-sessions",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    if (!parsed.data.sessionId) {
       return NextResponse.json(
         { error: "Session ID is required." },
         { status: 400 }
@@ -121,13 +148,13 @@ export async function PATCH(req: Request) {
     }
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][sessions][PATCH] Request", {
-        sessionId: body.sessionId,
-        titleProvided: Boolean(body.title?.trim()),
+        sessionId: parsed.data.sessionId,
+        titleProvided: Boolean(parsed.data.title?.trim()),
       });
     }
     const updated = await prisma.chatbotSession.update({
-      where: { id: body.sessionId },
-      data: { title: body.title?.trim() || null },
+      where: { id: parsed.data.sessionId },
+      data: { title: parsed.data.title?.trim() || null },
     });
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][sessions][PATCH] Updated", {
@@ -158,14 +185,16 @@ export async function DELETE(req: Request) {
         { status: 500 }
       );
     }
-    const body = (await req.json()) as {
-      sessionId?: string;
-      sessionIds?: string[];
-    };
-    const sessionIds = Array.isArray(body.sessionIds)
-      ? body.sessionIds.filter((id) => typeof id === "string" && id.trim())
+    const parsed = await parseJsonBody(req, sessionDeleteSchema, {
+      logPrefix: "chatbot-sessions",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const sessionIds = Array.isArray(parsed.data.sessionIds)
+      ? parsed.data.sessionIds.filter((id) => typeof id === "string" && id.trim())
       : [];
-    if (!body.sessionId && sessionIds.length === 0) {
+    if (!parsed.data.sessionId && sessionIds.length === 0) {
       return NextResponse.json(
         { error: "Session ID is required." },
         { status: 400 }
@@ -190,11 +219,11 @@ export async function DELETE(req: Request) {
     }
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][sessions][DELETE] Request", {
-        sessionId: body.sessionId,
+        sessionId: parsed.data.sessionId,
       });
     }
     const deleted = await prisma.chatbotSession.delete({
-      where: { id: body.sessionId },
+      where: { id: parsed.data.sessionId },
     });
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][sessions][DELETE] Deleted", {

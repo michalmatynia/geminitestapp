@@ -1,17 +1,50 @@
 Application notes
 
+npx tsc
+npx eslint
+add proper debugging on visual studio code
+
+# Database work
+Set the cloud database mongoDB backup to local mongoDB setUP
+Add Prisma and MongoDB Tabs for Database Management
+Add MongoDB connections to Chatbot and agentic flow
+Add MongoDB connections to CMS
+Add MongoDB connections to Application Settings in General
+
+# Product
+
+# Integrations
+Integration with Base
+
+# Set Global Settings
+* Move Product Database Choice there
+* Choose Global Database as well as individual database for different aspects of the page.
+
+# Page refactor
+Get rid of bloated code files by segmenting then
+Make them more modular
+Make the whole Application more Type safe
+Move Types into Types Folder
+
+# Increase Debugging
+For each section add tests
+Add Error Boundaries - should I add them ? or only during debugging
+Increase Type Safety
+Try Catch Blocks
+
+# Note Taking App
 Move image/catalog operations behind a data-access abstraction so Mongo can fully own product data.
-
-mongodb data in .env example
-Increase the level of implementation of mongodb in Product. IN product settings, the user should be able to swich between local  postgreSQL and cloud MongoDB. 
-
-I would like to be able to switch between databases in relation to product
-
 
 base.com with email: you@example.com password: YourPassword
 remove  Agent job panel from the chatbox window, it duplicates what is already shown
 
---- Agentic AI ---
+# Develop components
+Enhance Components
+Make components more robust and modular
+Segment them into proper sections
+
+
+# Agentic AI
 Enhance functionality of
 1. Planner/replanner vs. executor (already split for you) V
 2. Self‑questioning/critique (already split for you) V
@@ -25,8 +58,6 @@ Enhance functionality of
 
 when planning or replanning of Agent Job was done by a specific model, stamp the model signature and make it visible Job details
 ETC.
-
-
 
 segment agent engine.ts and make it modular
 disassociate types models
@@ -86,15 +117,7 @@ Also the stock should be present
 
 I should have teh possibility to drag Images around to change their order
 
-In Product Create
-If the field is empty, the text in TAB is slightly Darkened
 
-Integration with Base
-
-3. Extend Product Create, Product List and add a matching PRoduct Edit to it all
-
-
-Create Product  is not working
 
 
 Data Importer and data mapper

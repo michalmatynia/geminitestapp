@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
+import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { startChatbotJobQueue } from "@/lib/chatbot/jobs/queue";
 import { ChatbotJobStatus } from "@prisma/client";
+import { parseJsonBody } from "@/lib/api/parse-json";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -10,6 +12,18 @@ type ChatMessage = {
   role: "user" | "assistant" | "system";
   content: string;
 };
+
+const chatMessageSchema = z.object({
+  role: z.enum(["user", "assistant", "system"]),
+  content: z.string(),
+});
+
+const enqueueJobSchema = z.object({
+  sessionId: z.string().trim().min(1),
+  model: z.string().trim().min(1),
+  messages: z.array(chatMessageSchema).min(1),
+  userMessage: z.string().trim().optional(),
+});
 
 export async function GET() {
   try {
@@ -52,33 +66,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = (await req.json()) as {
-      sessionId?: string;
-      model?: string;
-      messages?: ChatMessage[];
-      userMessage?: string;
-    };
-
-    if (!body.sessionId) {
-      return NextResponse.json(
-        { error: "Session ID is required." },
-        { status: 400 }
-      );
-    }
-
-    if (
-      !body.model ||
-      !Array.isArray(body.messages) ||
-      body.messages.length === 0
-    ) {
-      return NextResponse.json(
-        { error: "Model and messages are required." },
-        { status: 400 }
-      );
+    const parsed = await parseJsonBody(req, enqueueJobSchema, {
+      logPrefix: "chatbot-jobs",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
     }
 
     const session = await prisma.chatbotSession.findUnique({
-      where: { id: body.sessionId },
+      where: { id: parsed.data.sessionId },
       select: { id: true },
     });
 
@@ -89,10 +85,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const trimmedUserMessage = body.userMessage?.trim();
+    const trimmedUserMessage = parsed.data.userMessage?.trim();
     if (trimmedUserMessage) {
       const latest = await prisma.chatbotMessage.findFirst({
-        where: { sessionId: body.sessionId },
+        where: { sessionId: parsed.data.sessionId },
         orderBy: { createdAt: "desc" },
         select: { role: true, content: true },
       });
@@ -104,14 +100,14 @@ export async function POST(req: Request) {
       ) {
         await prisma.chatbotMessage.create({
           data: {
-            sessionId: body.sessionId,
+            sessionId: parsed.data.sessionId,
             role: "user",
             content: trimmedUserMessage,
           },
         });
 
         await prisma.chatbotSession.update({
-          where: { id: body.sessionId },
+          where: { id: parsed.data.sessionId },
           data: { updatedAt: new Date() },
         });
       }
@@ -119,11 +115,11 @@ export async function POST(req: Request) {
 
     const job = await prisma.chatbotJob.create({
       data: {
-        sessionId: body.sessionId,
-        model: body.model,
+        sessionId: parsed.data.sessionId,
+        model: parsed.data.model,
         payload: {
-          model: body.model,
-          messages: body.messages,
+          model: parsed.data.model,
+          messages: parsed.data.messages as ChatMessage[],
         },
       },
     });

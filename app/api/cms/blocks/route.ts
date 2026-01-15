@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import prisma from "@/lib/prisma";
+import { parseJsonBody } from "@/lib/api/parse-json";
+
+const blockSchema = z.object({
+  name: z.string().trim().min(1),
+  content: z.unknown(),
+});
 
 /**
  * GET /api/cms/blocks
@@ -30,9 +37,14 @@ export async function GET() {
  */
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as { name: string; content: any };
-    console.log("Received request to create block:", body);
-    const { name, content } = body;
+    const parsed = await parseJsonBody(req, blockSchema, {
+      logPrefix: "cms-blocks",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    console.log("Received request to create block:", parsed.data);
+    const { name, content } = parsed.data;
     const newBlock = await prisma.block.create({
       data: { name, content },
     });

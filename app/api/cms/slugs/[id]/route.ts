@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import prisma from "@/lib/prisma";
+import { parseJsonBody } from "@/lib/api/parse-json";
 
 type Params = { id: string };
 type Ctx = { params: Promise<Params> } | { params: Params };
 
 async function getId(ctx: Ctx): Promise<string> {
-  const p = await Promise.resolve((ctx as any).params);
-  return p.id as string;
+  const p = await Promise.resolve(ctx.params);
+  return p.id;
 }
+
+const slugUpdateSchema = z.object({
+  slug: z.string().trim().min(1),
+  isDefault: z.boolean().optional(),
+});
 
 /**
  * GET /api/cms/slugs/[id]
@@ -63,10 +70,13 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
   try {
     const id = await getId(ctx);
 
-    const { slug, isDefault } = (await req.json()) as {
-      slug: string;
-      isDefault: boolean;
-    };
+    const parsed = await parseJsonBody(req, slugUpdateSchema, {
+      logPrefix: "cms-slugs",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const { slug, isDefault } = parsed.data;
 
     if (isDefault) {
       await prisma.slug.updateMany({

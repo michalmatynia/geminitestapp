@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import prisma from "@/lib/prisma";
+import { parseJsonBody } from "@/lib/api/parse-json";
 
 type Params = { id: string };
 type Ctx = { params: Params | Promise<Params> };
@@ -8,6 +10,11 @@ async function getParams(ctx: Ctx): Promise<Params> {
   // Works whether Next provides params as an object or a Promise.
   return await Promise.resolve(ctx.params);
 }
+
+const blockUpdateSchema = z.object({
+  name: z.string().trim().min(1),
+  content: z.unknown(),
+});
 
 /**
  * GET /api/cms/blocks/[id]
@@ -42,10 +49,13 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
   try {
     const { id } = await getParams(ctx);
 
-    const { name, content } = (await req.json()) as {
-      name: string;
-      content: any;
-    };
+    const parsed = await parseJsonBody(req, blockUpdateSchema, {
+      logPrefix: "cms-blocks",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const { name, content } = parsed.data;
 
     const updatedBlock = await prisma.block.update({
       where: { id },

@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
+import { z } from "zod";
 import prisma from "@/lib/prisma";
+import { parseJsonBody } from "@/lib/api/parse-json";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
+
+const jobActionSchema = z.object({
+  action: z.string().trim().optional(),
+});
 
 export async function GET(
   _req: Request,
@@ -43,8 +49,13 @@ export async function POST(
       );
     }
     const { jobId } = await params;
-    const body = (await req.json()) as { action?: string };
-    if (body.action !== "cancel") {
+    const parsed = await parseJsonBody(req, jobActionSchema, {
+      logPrefix: "chatbot-jobs",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    if (parsed.data.action !== "cancel") {
       return NextResponse.json(
         { error: "Unsupported action." },
         { status: 400 }

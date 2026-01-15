@@ -1,13 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import prisma from "@/lib/prisma";
+import { parseJsonBody } from "@/lib/api/parse-json";
 
 type Params = { id: string };
 type Ctx = { params: Promise<Params> } | { params: Params };
 
 async function getId(ctx: Ctx): Promise<string> {
-  const p = await Promise.resolve((ctx as any).params);
-  return p.id as string;
+  const p = await Promise.resolve(ctx.params);
+  return p.id;
 }
+
+const pageUpdateSchema = z.object({
+  name: z.string().trim().min(1),
+  slugIds: z.array(z.string().trim().min(1)),
+  components: z.array(
+    z.object({
+      type: z.string().trim().min(1),
+      content: z.unknown(),
+    })
+  ),
+});
 
 /**
  * GET /api/cms/pages/[id]
@@ -54,11 +67,13 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
   try {
     const id = await getId(ctx);
 
-    const { name, slugIds, components } = (await req.json()) as {
-      name: string;
-      slugIds: string[];
-      components: any[];
-    };
+    const parsed = await parseJsonBody(req, pageUpdateSchema, {
+      logPrefix: "cms-pages",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const { name, slugIds, components } = parsed.data;
 
     const updatedPage = await prisma.page.update({
       where: { id },

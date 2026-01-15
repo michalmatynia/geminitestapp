@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { parseJsonBody } from "@/lib/api/parse-json";
 
 type BraveSearchResult = {
   title?: string;
@@ -22,6 +24,12 @@ type GoogleSearchResponse = {
   items?: GoogleSearchItem[];
 };
 
+const searchSchema = z.object({
+  query: z.string().trim().optional(),
+  limit: z.coerce.number().int().optional(),
+  provider: z.string().trim().optional(),
+});
+
 const BRAVE_SEARCH_API_KEY = process.env.BRAVE_SEARCH_API_KEY;
 const BRAVE_SEARCH_API_URL =
   process.env.BRAVE_SEARCH_API_URL || "https://api.search.brave.com/res/v1/web/search";
@@ -34,14 +42,15 @@ const SERPAPI_API_URL = process.env.SERPAPI_API_URL || "https://serpapi.com/sear
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as {
-      query?: string;
-      limit?: number;
-      provider?: string;
-    };
-    const query = body.query?.trim() || "";
-    const limit = Math.min(Math.max(body.limit ?? 5, 1), 10);
-    const provider = body.provider?.toLowerCase() || "brave";
+    const parsed = await parseJsonBody(req, searchSchema, {
+      logPrefix: "search",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const query = parsed.data.query ?? "";
+    const limit = Math.min(Math.max(parsed.data.limit ?? 5, 1), 10);
+    const provider = parsed.data.provider?.toLowerCase() || "brave";
 
     if (!query) {
       return NextResponse.json({ error: "Query is required." }, { status: 400 });

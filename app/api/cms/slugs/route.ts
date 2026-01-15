@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import prisma from "@/lib/prisma";
+import { parseJsonBody } from "@/lib/api/parse-json";
+
+const slugSchema = z.object({
+  slug: z.string().trim().min(1),
+});
 
 /**
  * GET /api/cms/slugs
@@ -27,7 +33,13 @@ export async function GET() {
  */
 export async function POST(req: Request) {
   try {
-    const { slug } = (await req.json()) as { slug: string };
+    const parsed = await parseJsonBody(req, slugSchema, {
+      logPrefix: "cms-slugs",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const { slug } = parsed.data;
     const newSlug = await prisma.slug.create({
       data: { slug },
     });

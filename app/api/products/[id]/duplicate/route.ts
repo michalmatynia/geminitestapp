@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
+import { z } from "zod";
 import { productService } from "@/lib/services/productService";
+import { parseJsonBody } from "@/lib/api/parse-json";
+
+const duplicateSchema = z.object({
+  sku: z.string().trim().optional(),
+});
 
 /**
  * POST /api/products/[id]/duplicate
@@ -22,22 +28,13 @@ export async function POST(
         { status: 400 }
       );
     }
-    let body: { sku?: string };
-    try {
-      body = (await req.json()) as { sku?: string };
-    } catch (error) {
-      const errorId = randomUUID();
-      console.error("[products][DUPLICATE] Failed to parse JSON body", {
-        errorId,
-        error,
-        productId,
-      });
-      return NextResponse.json(
-        { error: "Invalid JSON payload", errorId },
-        { status: 400 }
-      );
+    const parsed = await parseJsonBody(req, duplicateSchema, {
+      logPrefix: "products-duplicate",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
     }
-    const sku = body.sku ?? "";
+    const sku = parsed.data.sku ?? "";
     const product = await productService.duplicateProduct(id, sku);
     if (!product) {
       const errorId = randomUUID();

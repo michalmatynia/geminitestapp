@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import prisma from "@/lib/prisma";
+import { parseJsonBody } from "@/lib/api/parse-json";
+
+const pageCreateSchema = z.object({
+  name: z.string().trim().min(1),
+  slugIds: z.array(z.string().trim().min(1)).default([]),
+});
 
 /**
  * GET /api/cms/pages
@@ -34,7 +41,13 @@ export async function GET() {
  */
 export async function POST(req: Request) {
   try {
-    const { name, slugIds } = (await req.json()) as { name: string; slugIds: string[] };
+    const parsed = await parseJsonBody(req, pageCreateSchema, {
+      logPrefix: "cms-pages",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const { name, slugIds } = parsed.data;
     const newPage = await prisma.page.create({
       data: {
         name,

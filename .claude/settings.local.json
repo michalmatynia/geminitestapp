@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc:*)",
+      "Bash(head:*)",
+      "Bash(\"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/app/\\(admin\\)/admin/chatbot/page.tsx.tmp\")",
+      "Bash(npm run lint)",
+      "Bash(curl:*)"
+    ]
+  }
+}

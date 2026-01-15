@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CurrencyOption, CountryOption, Language } from "../types";
+import { CurrencyOption, CountryOption, Language } from "@/types/products";
 import { countryFlagMap } from "../constants";
 
 type InternationalizationSettingsProps = {

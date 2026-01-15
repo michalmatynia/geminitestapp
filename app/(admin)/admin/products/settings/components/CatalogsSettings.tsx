@@ -1,5 +1,5 @@
 import React from "react";
-import { Catalog } from "../types";
+import { Catalog } from "@/types/products";
 
 type CatalogsSettingsProps = {
   loadingCatalogs: boolean;

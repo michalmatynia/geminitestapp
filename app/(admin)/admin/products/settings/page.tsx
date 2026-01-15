@@ -23,7 +23,7 @@ import {
   ProductDbProvider,
   ProductMigrationDirection,
   Language,
-} from "./types";
+} from "@/types/products";
 import { PriceGroupsSettings } from "./components/PriceGroupsSettings";
 import { DataSourceSettings } from "./components/DataSourceSettings";
 import { CatalogsSettings } from "./components/CatalogsSettings";

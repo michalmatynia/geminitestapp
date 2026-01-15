@@ -1,5 +1,5 @@
 import React from "react";
-import { ProductDbProvider, ProductMigrationDirection } from "../types";
+import { ProductDbProvider, ProductMigrationDirection } from "@/types/products";
 import { productDbOptions } from "../constants";
 
 type DataSourceSettingsProps = {

@@ -1,5 +1,5 @@
 import React from "react";
-import { PriceGroup } from "../types";
+import { PriceGroup } from "@/types/products";
 
 type PriceGroupsSettingsProps = {
   loadingGroups: boolean;

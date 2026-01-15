@@ -465,3 +465,57 @@ model PageBlock {
 
   @@id([pageId, blockId])
 }
+
+model Note {
+  id          String    @id @default(cuid())
+  title       String
+  content     String
+  color       String?   @default("#ffffff")
+  isPinned    Boolean   @default(false)
+  isArchived  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  tags        NoteTag[]
+  categories  NoteCategory[]
+}
+
+model Tag {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  color     String?   @default("#3b82f6")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  notes     NoteTag[]
+}
+
+model Category {
+  id          String         @id @default(cuid())
+  name        String         @unique
+  description String?
+  color       String?        @default("#10b981")
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  notes       NoteCategory[]
+}
+
+model NoteTag {
+  noteId     String
+  tagId      String
+  assignedAt DateTime @default(now())
+
+  note       Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([noteId, tagId])
+}
+
+model NoteCategory {
+  noteId     String
+  categoryId String
+  assignedAt DateTime @default(now())
+
+  note       Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([noteId, categoryId])
+}

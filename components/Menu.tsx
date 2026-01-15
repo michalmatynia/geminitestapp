@@ -10,6 +10,7 @@ import {
   UploadIcon,
   PlugIcon,
   MessageCircleIcon,
+  StickyNoteIcon,
 } from "lucide-react";
 import CollapsibleMenu from "@/components/CollapsibleMenu";
 import { useAdminLayout } from "@/lib/context/AdminLayoutContext";
@@ -87,6 +88,18 @@ export default function Menu() {
           className="block w-full text-left hover:bg-gray-700 p-2 rounded"
         >
           Settings
+        </Link>
+      </CollapsibleMenu>
+      <CollapsibleMenu
+        title="Notes"
+        icon={<StickyNoteIcon />}
+        href="/admin/notes"
+      >
+        <Link
+          href="/admin/notes"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Note List
         </Link>
       </CollapsibleMenu>
       <Link

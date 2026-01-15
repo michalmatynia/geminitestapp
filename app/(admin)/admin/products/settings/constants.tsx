@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { ProductDbProvider } from "./types";
+import { ProductDbProvider } from "@/types/products";
 
 export const settingSections = [
   "Price Groups",

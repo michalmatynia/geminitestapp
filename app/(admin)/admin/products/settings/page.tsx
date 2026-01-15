@@ -7,144 +7,27 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { MoreVertical } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/toast";
 import { Input } from "@/components/ui/input";
 
-const settingSections = [
-  "Price Groups",
-  "Catalogs",
-  "Data Source",
-  "Internationalization",
-] as const;
-
-type PriceGroupType = "standard" | "dependent";
-
-type PriceGroup = {
-  id: string;
-  groupId: string;
-  name: string;
-  description: string;
-  currencyId: string;
-  currencyCode: string;
-  isDefault: boolean;
-  groupType: PriceGroupType;
-  basePriceField: string;
-  sourceGroupId?: string | null;
-  priceMultiplier: number;
-  addToPrice: number;
-};
-
-type CurrencyOption = {
-  id: string;
-  code: string;
-  name: string;
-  symbol?: string | null;
-};
-
-type CountryOption = {
-  id: string;
-  code: string;
-  name: string;
-  currencies?: { currencyId: string; currency: CurrencyOption }[];
-};
-
-type Catalog = {
-  id: string;
-  name: string;
-  description: string | null;
-  isDefault: boolean;
-  createdAt: string;
-  languageIds: string[];
-};
-
-type ProductDbProvider = "prisma" | "mongodb";
-type ProductMigrationDirection = "prisma-to-mongo" | "mongo-to-prisma";
-
-const productDbOptions: Array<{
-  value: ProductDbProvider;
-  label: string;
-  description: string;
-}> = [
-  {
-    value: "prisma",
-    label: "Postgres (Prisma)",
-    description: "Default relational storage for product data.",
-  },
-  {
-    value: "mongodb",
-    label: "MongoDB",
-    description: "Document storage for product data.",
-  },
-];
-
-type Language = {
-  id: string;
-  code: string;
-  name: string;
-  nativeName?: string | null;
-  countries?: { countryId: string; country: CountryOption }[];
-};
-
-const countryCodeOptions = [
-  { code: "PL", name: "Poland" },
-  { code: "DE", name: "Germany" },
-  { code: "GB", name: "United Kingdom" },
-  { code: "SE", name: "Sweden" },
-  { code: "US", name: "United States" },
-];
-
-const countryFlagMap: Record<string, ReactNode> = {
-  PL: (
-    <svg viewBox="0 0 24 16" aria-hidden="true">
-      <rect width="24" height="8" fill="#ffffff" />
-      <rect y="8" width="24" height="8" fill="#dc143c" />
-    </svg>
-  ),
-  DE: (
-    <svg viewBox="0 0 24 16" aria-hidden="true">
-      <rect width="24" height="5.33" fill="#000000" />
-      <rect y="5.33" width="24" height="5.33" fill="#dd0000" />
-      <rect y="10.66" width="24" height="5.34" fill="#ffce00" />
-    </svg>
-  ),
-  GB: (
-    <svg viewBox="0 0 24 16" aria-hidden="true">
-      <rect width="24" height="16" fill="#012169" />
-      <path d="M0 0L24 16M24 0L0 16" stroke="#ffffff" strokeWidth="3" />
-      <path d="M0 0L24 16M24 0L0 16" stroke="#c8102e" strokeWidth="1.5" />
-      <rect x="10" width="4" height="16" fill="#ffffff" />
-      <rect y="6" width="24" height="4" fill="#ffffff" />
-      <rect x="11" width="2" height="16" fill="#c8102e" />
-      <rect y="7" width="24" height="2" fill="#c8102e" />
-    </svg>
-  ),
-  SE: (
-    <svg viewBox="0 0 24 16" aria-hidden="true">
-      <rect width="24" height="16" fill="#005293" />
-      <rect x="6" width="4" height="16" fill="#fecb00" />
-      <rect y="6" width="24" height="4" fill="#fecb00" />
-    </svg>
-  ),
-  US: (
-    <svg viewBox="0 0 24 16" aria-hidden="true">
-      <rect width="24" height="16" fill="#ffffff" />
-      <g fill="#b22234">
-        <rect y="0" width="24" height="2" />
-        <rect y="4" width="24" height="2" />
-        <rect y="8" width="24" height="2" />
-        <rect y="12" width="24" height="2" />
-      </g>
-      <rect width="10" height="8" fill="#3c3b6e" />
-    </svg>
-  ),
-};
+import {
+  settingSections,
+  countryCodeOptions,
+} from "./constants";
+import {
+  PriceGroup,
+  PriceGroupType,
+  CurrencyOption,
+  CountryOption,
+  Catalog,
+  ProductDbProvider,
+  ProductMigrationDirection,
+  Language,
+} from "./types";
+import { PriceGroupsSettings } from "./components/PriceGroupsSettings";
+import { DataSourceSettings } from "./components/DataSourceSettings";
+import { CatalogsSettings } from "./components/CatalogsSettings";
+import { InternationalizationSettings } from "./components/InternationalizationSettings";
 
 export default function ProductSettingsPage() {
   const [activeSection, setActiveSection] =
@@ -1027,625 +910,60 @@ export default function ProductSettingsPage() {
           </aside>
           <section className="rounded-md border border-gray-800 bg-gray-900 p-6">
             {activeSection === "Price Groups" && (
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between gap-4">
-                    <h2 className="text-xl font-semibold text-white">
-                      Price Groups
-                    </h2>
-                    <button
-                      className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
-                      type="button"
-                      onClick={handleOpenCreate}
-                    >
-                      Add Price Group
-                    </button>
-                  </div>
-                  <p className="mt-1 text-sm text-gray-400">
-                    Configure pricing tiers and group rules for products.
-                  </p>
-                </div>
-                {loadingGroups ? (
-                  <div className="rounded-md border border-dashed border-gray-700 p-6 text-center text-gray-400">
-                    Loading price groups...
-                  </div>
-                ) : priceGroups.length === 0 ? (
-                  <div className="rounded-md border border-dashed border-gray-700 p-6 text-center text-gray-400">
-                    Select a price group to edit or add a new one.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {priceGroups.map((group) => (
-                      <div
-                        key={group.id}
-                        className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-950/60 px-4 py-3"
-                      >
-                        <div>
-                          <div className="flex items-center gap-2 text-white">
-                            <span className="font-semibold">{group.name}</span>
-                            {group.isDefault && (
-                              <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs text-emerald-200">
-                                Default
-                              </span>
-                            )}
-                            <span className="rounded-full bg-gray-800 px-2 py-0.5 text-xs text-gray-300">
-                              {group.groupId}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-400">
-                            {group.currencyCode} · {group.groupType}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm text-gray-500">
-                            {group.description || "No description"}
-                          </span>
-                          <button
-                            className="text-sm text-gray-300 hover:text-white"
-                            type="button"
-                            onClick={() => handleEditGroup(group)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="text-sm text-red-400 hover:text-red-300"
-                            type="button"
-                            onClick={() => handleDeleteGroup(group)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <PriceGroupsSettings
+                loadingGroups={loadingGroups}
+                priceGroups={priceGroups}
+                handleOpenCreate={handleOpenCreate}
+                handleEditGroup={handleEditGroup}
+                handleDeleteGroup={handleDeleteGroup}
+              />
             )}
             {activeSection === "Data Source" && (
-              <div className="space-y-4">
-                <div>
-                  <h2 className="text-xl font-semibold text-white">
-                    Product Data Source
-                  </h2>
-                  <p className="mt-1 text-sm text-gray-400">
-                    Choose which database backs product data.
-                  </p>
-                </div>
-                {productDbLoading ? (
-                  <div className="rounded-md border border-dashed border-gray-700 p-6 text-center text-gray-400">
-                    Loading product settings...
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label
-                        htmlFor="product-db-provider"
-                        className="text-sm font-medium text-gray-200"
-                      >
-                        Database provider
-                      </label>
-                      <select
-                        id="product-db-provider"
-                        className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-600"
-                        value={productDbProvider}
-                        onChange={(event) => {
-                          const value =
-                            event.target.value === "mongodb"
-                              ? "mongodb"
-                              : "prisma";
-                          setProductDbProvider(value);
-                          setProductDbDirty(true);
-                        }}
-                      >
-                        {productDbOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                      <p className="text-xs text-gray-400">
-                        {productDbOptions.find(
-                          (option) => option.value === productDbProvider
-                        )?.description ?? ""}
-                      </p>
-                    </div>
-                    <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100">
-                      Switching data sources does not migrate existing product
-                      data. Make sure the target database is prepared.
-                    </div>
-                    <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4 text-sm text-gray-200">
-                      <p className="font-semibold text-white">
-                        Migration helper
-                      </p>
-                      <p className="mt-1 text-xs text-gray-400">
-                        Copy product data between databases. This overwrites the
-                        target product data.
-                      </p>
-                      {(migrationRunning || migrationProcessed > 0) && (
-                        <div className="mt-4 rounded-md border border-gray-800 bg-gray-900 p-3 text-xs text-gray-200">
-                          <div className="flex items-center justify-between">
-                            <span>
-                              {migrationDirection
-                                ? `Migrating ${migrationDirection.replace("-", " ")}`
-                                : "Migration summary"}
-                            </span>
-                            <span>
-                              {migrationTotal > 0
-                                ? `${migrationProcessed}/${migrationTotal}`
-                                : `${migrationProcessed}`}
-                            </span>
-                          </div>
-                          <div className="mt-2 h-2 w-full rounded-full bg-gray-800">
-                            <div
-                              className="h-2 rounded-full bg-emerald-400 transition-all"
-                              style={{
-                                width:
-                                  migrationTotal > 0
-                                    ? `${Math.min(
-                                        100,
-                                        Math.round(
-                                          (migrationProcessed /
-                                            migrationTotal) *
-                                            100
-                                        )
-                                      )}%`
-                                    : "0%",
-                              }}
-                            />
-                          </div>
-                          {migrationTotal > 0 && (
-                            <p className="mt-2 text-[11px] text-gray-400">
-                              {Math.min(
-                                100,
-                                Math.round(
-                                  (migrationProcessed / migrationTotal) * 100
-                                )
-                              )}
-                              % complete
-                            </p>
-                          )}
-                          {missingImageIds.length > 0 ||
-                          missingCatalogIds.length > 0 ? (
-                            <p className="mt-2 text-[11px] text-amber-200">
-                              Missing refs — Images: {missingImageIds.length},
-                              Catalogs: {missingCatalogIds.length}
-                            </p>
-                          ) : null}
-                        </div>
-                      )}
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <button
-                          className="rounded-md border border-gray-700 px-3 py-2 text-xs font-semibold text-gray-200 hover:border-gray-500 disabled:cursor-not-allowed disabled:opacity-60"
-                          type="button"
-                          disabled={migrationRunning}
-                          onClick={() => runProductMigration("prisma-to-mongo")}
-                        >
-                          Copy Prisma → Mongo
-                        </button>
-                        <button
-                          className="rounded-md border border-gray-700 px-3 py-2 text-xs font-semibold text-gray-200 hover:border-gray-500 disabled:cursor-not-allowed disabled:opacity-60"
-                          type="button"
-                          disabled={migrationRunning}
-                          onClick={() => runProductMigration("mongo-to-prisma")}
-                        >
-                          Copy Mongo → Prisma
-                        </button>
-                      </div>
-                      {migrationRunning ? (
-                        <p className="mt-2 text-xs text-gray-400">
-                          Migration running...
-                        </p>
-                      ) : null}
-                    </div>
-                    <button
-                      className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-600 disabled:text-gray-300"
-                      type="button"
-                      disabled={!productDbDirty || productDbSaving}
-                      onClick={handleSaveProductDbProvider}
-                    >
-                      {productDbSaving ? "Saving..." : "Save data source"}
-                    </button>
-                  </div>
-                )}
-              </div>
+              <DataSourceSettings
+                productDbLoading={productDbLoading}
+                productDbProvider={productDbProvider}
+                setProductDbProvider={setProductDbProvider}
+                setProductDbDirty={setProductDbDirty}
+                productDbDirty={productDbDirty}
+                productDbSaving={productDbSaving}
+                handleSaveProductDbProvider={handleSaveProductDbProvider}
+                migrationRunning={migrationRunning}
+                migrationProcessed={migrationProcessed}
+                migrationTotal={migrationTotal}
+                migrationDirection={migrationDirection}
+                missingImageIds={missingImageIds}
+                missingCatalogIds={missingCatalogIds}
+                runProductMigration={runProductMigration}
+              />
             )}
             {activeSection === "Catalogs" && (
-              <div className="space-y-5">
-                <div className="flex justify-start">
-                  <button
-                    className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
-                    type="button"
-                    onClick={() => handleOpenCatalogModal()}
-                  >
-                    Add Catalog
-                  </button>
-                </div>
-                <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4">
-                  <p className="text-sm font-semibold text-white">
-                    Existing Catalogs
-                  </p>
-                  {loadingCatalogs ? (
-                    <div className="mt-4 rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
-                      Loading catalogs...
-                    </div>
-                  ) : catalogs.length === 0 ? (
-                    <div className="mt-4 rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
-                      No catalogs yet.
-                    </div>
-                  ) : (
-                    <div className="mt-4 space-y-3">
-                      {catalogs.map((catalog) => (
-                        <div
-                          key={catalog.id}
-                          className="flex items-start justify-between gap-3 rounded-md border border-gray-800 bg-gray-900 px-3 py-2"
-                        >
-                          <div>
-                            <p className="text-sm font-semibold text-white">
-                              {catalog.name}
-                              {catalog.isDefault ? (
-                                <span className="ml-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-200">
-                                  Default
-                                </span>
-                              ) : null}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              {catalog.description || "No description"}
-                            </p>
-                            {catalog.languageIds &&
-                            catalog.languageIds.length > 0 ? (
-                              <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-300">
-                                {catalog.languageIds.map((languageId) => (
-                                  <span
-                                    key={languageId}
-                                    className="rounded-full border border-gray-700 bg-gray-900 px-2 py-0.5"
-                                  >
-                                    {languageNameMap.get(languageId) ??
-                                      "Language"}
-                                  </span>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="mt-2 text-[11px] text-gray-500">
-                                No languages assigned
-                              </p>
-                            )}
-                          </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button
-                                className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-800 hover:text-white"
-                                aria-label="Catalog actions"
-                                type="button"
-                              >
-                                <MoreVertical className="size-4" />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onSelect={(event) => {
-                                  event.preventDefault();
-                                  handleOpenCatalogModal(catalog);
-                                }}
-                              >
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="text-red-400 focus:text-red-300"
-                                onSelect={(event) => {
-                                  event.preventDefault();
-                                  handleDeleteCatalog(catalog);
-                                }}
-                              >
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <CatalogsSettings
+                loadingCatalogs={loadingCatalogs}
+                catalogs={catalogs}
+                handleOpenCatalogModal={handleOpenCatalogModal}
+                handleEditCatalog={handleOpenCatalogModal}
+                handleDeleteCatalog={handleDeleteCatalog}
+              />
             )}
             {activeSection === "Internationalization" && (
-              <div className="space-y-6">
-                <div className="grid gap-6 lg:grid-cols-2">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <h2 className="text-xl font-semibold text-white">
-                          Currencies
-                        </h2>
-                        <p className="mt-1 text-sm text-gray-400">
-                          Manage currency codes available for price groups.
-                        </p>
-                      </div>
-                      <button
-                        className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
-                        type="button"
-                        onClick={() => handleOpenCurrencyModal()}
-                      >
-                        Add Currency
-                      </button>
-                    </div>
-                    {loadingCurrencies ? (
-                      <div className="rounded-md border border-dashed border-gray-700 p-6 text-center text-gray-400">
-                        Loading currencies...
-                      </div>
-                    ) : currencyOptions.length === 0 ? (
-                      <div className="rounded-md border border-dashed border-gray-700 p-6 text-center text-gray-400">
-                        No currencies yet.
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {currencyOptions.map((currency) => (
-                          <div
-                            key={currency.id}
-                            className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-950/60 px-4 py-3"
-                          >
-                            <div>
-                              <p className="font-semibold text-white">
-                                {currency.code}
-                                {currency.symbol ? (
-                                  <span className="ml-2 text-sm text-gray-400">
-                                    {currency.symbol}
-                                  </span>
-                                ) : null}
-                              </p>
-                              <p className="text-sm text-gray-400">
-                                {currency.name}
-                              </p>
-                            </div>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <button
-                                  className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-800 hover:text-white"
-                                  aria-label="Currency actions"
-                                  type="button"
-                                >
-                                  <MoreVertical className="size-4" />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onSelect={(event) => {
-                                    event.preventDefault();
-                                    handleOpenCurrencyModal(currency);
-                                  }}
-                                >
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-red-300 focus:text-red-300"
-                                  onSelect={(event) => {
-                                    event.preventDefault();
-                                    void handleDeleteCurrency(currency);
-                                  }}
-                                >
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <h2 className="text-xl font-semibold text-white">
-                          Countries
-                        </h2>
-                        <p className="mt-1 text-sm text-gray-400">
-                          Manage countries for regional settings.
-                        </p>
-                      </div>
-                      <button
-                        className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
-                        type="button"
-                        onClick={() => handleOpenCountryModal()}
-                      >
-                        Add Country
-                      </button>
-                    </div>
-                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                      <div className="w-full md:max-w-sm">
-                        <input
-                          className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
-                          placeholder="Search countries..."
-                          value={countrySearch}
-                          onChange={(event) =>
-                            setCountrySearch(event.target.value)
-                          }
-                        />
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        {filteredCountries.length} result(s)
-                      </p>
-                    </div>
-                    {loadingCountries ? (
-                      <div className="rounded-md border border-dashed border-gray-700 p-6 text-center text-gray-400">
-                        Loading countries...
-                      </div>
-                    ) : filteredCountries.length === 0 ? (
-                      <div className="rounded-md border border-dashed border-gray-700 p-6 text-center text-gray-400">
-                        No countries yet.
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {filteredCountries.map((country) => (
-                          <div
-                            key={country.id}
-                            className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-950/60 px-4 py-3"
-                          >
-                            <div>
-                              <div className="flex items-center gap-3">
-                                <span className="h-4 w-6 overflow-hidden rounded-sm border border-gray-700">
-                                  {countryFlagMap[country.code] ?? null}
-                                </span>
-                                <p className="font-semibold text-white">
-                                  {country.code}
-                                </p>
-                              </div>
-                              <p className="text-sm text-gray-400">
-                                {country.name}
-                              </p>
-                              <div className="mt-1 flex flex-wrap gap-2">
-                                {country.currencies?.length ? (
-                                  country.currencies.map((entry) => (
-                                    <span
-                                      key={entry.currencyId}
-                                      className="rounded-full border border-gray-700 bg-gray-900 px-2 py-0.5 text-[10px] font-semibold text-gray-200"
-                                    >
-                                      {entry.currency.code}
-                                    </span>
-                                  ))
-                                ) : (
-                                  <span className="text-xs text-gray-500">
-                                    No currencies assigned
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <button
-                                  className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-800 hover:text-white"
-                                  aria-label="Country actions"
-                                  type="button"
-                                >
-                                  <MoreVertical className="size-4" />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onSelect={(event) => {
-                                    event.preventDefault();
-                                    handleOpenCountryModal(country);
-                                  }}
-                                >
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-red-300 focus:text-red-300"
-                                  onSelect={(event) => {
-                                    event.preventDefault();
-                                    void handleDeleteCountry(country);
-                                  }}
-                                >
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-white">
-                        Languages
-                      </p>
-                      <button
-                        className="rounded-md bg-white px-3 py-2 text-xs font-semibold text-gray-900 hover:bg-gray-200"
-                        type="button"
-                        onClick={handleOpenNewLanguageModal}
-                      >
-                        Add Language
-                      </button>
-                    </div>
-                    {languagesLoading ? (
-                      <div className="mt-4 rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
-                        Loading languages...
-                      </div>
-                    ) : languagesError ? (
-                      <div className="mt-4 rounded-md border border-dashed border-red-500/40 p-4 text-center text-sm text-red-200">
-                        {languagesError}
-                      </div>
-                    ) : languages.length === 0 ? (
-                      <div className="mt-4 rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
-                        No languages yet.
-                      </div>
-                    ) : (
-                      <div className="mt-4 space-y-3">
-                        {languages.map((language) => (
-                          <div
-                            key={language.id}
-                            className="flex items-start justify-between gap-3 rounded-md border border-gray-800 bg-gray-900 px-3 py-2"
-                          >
-                            <div>
-                              <p className="text-sm font-semibold text-white">
-                                {language.name}
-                                <span className="ml-2 text-xs text-gray-500">
-                                  ({language.code})
-                                </span>
-                              </p>
-                              {language.nativeName ? (
-                                <p className="text-xs text-gray-500">
-                                  {language.nativeName}
-                                </p>
-                              ) : null}
-                              <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-400">
-                                {language.countries?.length ? (
-                                  language.countries.map((entry) => (
-                                    <div
-                                      key={entry.countryId}
-                                      className="flex items-center gap-2 rounded-full border border-gray-700 bg-gray-900 px-2 py-0.5 text-[10px] font-semibold text-gray-200"
-                                      title={entry.country.name}
-                                    >
-                                      <span className="h-3 w-4 overflow-hidden rounded-sm border border-gray-700">
-                                        {countryFlagMap[entry.country.code] ??
-                                          null}
-                                      </span>
-                                      <span>{entry.country.name}</span>
-                                    </div>
-                                  ))
-                                ) : (
-                                  <span>No countries assigned</span>
-                                )}
-                              </div>
-                            </div>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <button
-                                  className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-800 hover:text-white"
-                                  aria-label="Language actions"
-                                  type="button"
-                                >
-                                  <MoreVertical className="size-4" />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onSelect={(event) => {
-                                    event.preventDefault();
-                                    handleOpenLanguageModal(language);
-                                  }}
-                                >
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-red-300 focus:text-red-300"
-                                  onSelect={(event) => {
-                                    event.preventDefault();
-                                    handleDeleteLanguage(language);
-                                  }}
-                                >
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <InternationalizationSettings
+                loadingCurrencies={loadingCurrencies}
+                currencyOptions={currencyOptions}
+                handleOpenCurrencyModal={handleOpenCurrencyModal}
+                handleDeleteCurrency={handleDeleteCurrency}
+                loadingCountries={loadingCountries}
+                filteredCountries={filteredCountries}
+                countrySearch={countrySearch}
+                setCountrySearch={setCountrySearch}
+                handleOpenCountryModal={handleOpenCountryModal}
+                handleDeleteCountry={handleDeleteCountry}
+                languagesLoading={languagesLoading}
+                languagesError={languagesError}
+                languages={languages}
+                handleOpenNewLanguageModal={handleOpenNewLanguageModal}
+                handleOpenLanguageModal={handleOpenLanguageModal}
+                handleDeleteLanguage={handleDeleteLanguage}
+              />
             )}
           </section>
         </div>

@@ -89,6 +89,8 @@ export const prismaNoteRepository: NoteRepository = {
       };
     }
 
+    console.log("[PrismaNoteRepository][update] updateData:", JSON.stringify(updateData, null, 2)); // Debug log
+
     try {
       return await prisma.note.update({
         where: { id },

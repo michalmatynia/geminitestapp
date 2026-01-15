@@ -225,7 +225,7 @@ export default function NotesPage() {
 
   const fetchFolderTree = React.useCallback(async () => {
     try {
-      const response = await fetch("/api/notes/categories/tree");
+      const response = await fetch("/api/notes/categories/tree", { cache: "no-store" });
       const data = await response.json();
       setFolderTree(data);
     } catch (error) {
@@ -233,15 +233,6 @@ export default function NotesPage() {
     }
   }, []);
 
-  const fetchFolderTree = React.useCallback(async () => {
-    try {
-      const response = await fetch("/api/notes/categories/tree");
-      const data = await response.json();
-      setFolderTree(data);
-    } catch (error) {
-      console.error("Failed to fetch folder tree:", error);
-    }
-  }, []);
 
   const fetchNotes = React.useCallback(async () => {
     setLoading(true);
@@ -265,7 +256,7 @@ export default function NotesPage() {
         }
       }
 
-      const response = await fetch(`/api/notes?${params}`);
+      const response = await fetch(`/api/notes?${params}`, { cache: "no-store" });
       const data = await response.json();
       setNotes(data);
     } catch (error) {
@@ -277,7 +268,7 @@ export default function NotesPage() {
 
   const fetchTags = React.useCallback(async () => {
     try {
-      const response = await fetch("/api/notes/tags");
+      const response = await fetch("/api/notes/tags", { cache: "no-store" });
       const data = await response.json();
       setTags(data);
     } catch (error) {
@@ -287,7 +278,7 @@ export default function NotesPage() {
 
   const fetchCategories = React.useCallback(async () => {
     try {
-      const response = await fetch("/api/notes/categories");
+      const response = await fetch("/api/notes/categories", { cache: "no-store" });
       const data = await response.json();
       setCategories(data);
     } catch (error) {
@@ -296,11 +287,14 @@ export default function NotesPage() {
   }, []);
 
   useEffect(() => {
-    void fetchNotes();
     void fetchTags();
     void fetchCategories();
     void fetchFolderTree();
-  }, [fetchNotes, fetchTags, fetchCategories, fetchFolderTree]);
+  }, [fetchTags, fetchCategories, fetchFolderTree]);
+
+  useEffect(() => {
+    void fetchNotes();
+  }, [fetchNotes]);
 
   const handleCreateFolder = async (parentId?: string | null) => {
     const folderName = prompt("Enter folder name:");
@@ -386,7 +380,7 @@ export default function NotesPage() {
 
   const handleSelectNoteFromTree = async (noteId: string) => {
     try {
-      const response = await fetch(`/api/notes/${noteId}`);
+      const response = await fetch(`/api/notes/${noteId}`, { cache: "no-store" });
       if (response.ok) {
         const note = await response.json();
         setSelectedNote(note);

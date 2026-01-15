@@ -44,6 +44,7 @@ export async function PATCH(
   const { id } = await params;
   try {
     const body = await req.json();
+    console.log("[API][notes][PATCH] Body:", JSON.stringify(body, null, 2)); // Debug log
     const note = await noteService.update(id, body);
     return NextResponse.json(note);
   } catch (error: unknown) {

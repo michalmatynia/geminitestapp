@@ -6,6 +6,10 @@ add proper debugging on visual studio code
 
 # Note Taking App
 I should 
+
+## Note List
+Note Filters
+
 see the list of notes , created time, thumbnail, name
 Note tags
 Note parameters, that I can add cusomized, that I can use later on with AI to Identify and extra categorize my notes 
@@ -17,6 +21,8 @@ have AI to format my notes, validate the truth in my notes, Search the web to va
 Move image/catalog operations behind a data-access abstraction so Mongo can fully own product data.
 
 Chatbot connection
+
+The folder tree state (which folders are collapse or not, should be in note settings, I should also have the option to uncollapse everythihng under the currently selected folder)
 
 ---
 

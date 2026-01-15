@@ -70,10 +70,7 @@ function FolderNode({
         )}
 
         <div
-          onClick={() => {
-            onSelect(folder.id);
-            setIsExpanded(!isExpanded);
-          }}
+          onClick={() => onSelect(folder.id)}
           className="flex items-center gap-2 flex-1"
         >
           {isExpanded || !hasChildren ? (

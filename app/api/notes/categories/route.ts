@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { noteService } from "@/lib/services/noteService";
+import { noteService } from "@/lib/services/noteService/index";
 
 /**
  * GET /api/notes/categories

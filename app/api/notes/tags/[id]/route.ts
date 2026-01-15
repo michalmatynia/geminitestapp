@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { noteService } from "@/lib/services/noteService";
+import { noteService } from "@/lib/services/noteService/index";
 
 /**
  * PATCH /api/notes/tags/[id]
@@ -8,28 +8,18 @@ import { noteService } from "@/lib/services/noteService";
  */
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const body = await req.json();
-    const tag = await noteService.updateTag(params.id, body);
+    const tag = await noteService.updateTag(id, body);
     return NextResponse.json(tag);
-  } catch (error: unknown) {
+  } catch (error) {
     const errorId = randomUUID();
-    if (error instanceof Error) {
-      console.error("[tags][PATCH] Failed to update tag", {
-        errorId,
-        tagId: params.id,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 500 }
-      );
-    }
-    console.error("[tags][PATCH] Unknown error updating tag", {
+    console.error("[tags][PATCH] Failed to update tag", {
       errorId,
-      tagId: params.id,
+      tagId: id,
       error,
     });
     return NextResponse.json(
@@ -45,16 +35,17 @@ export async function PATCH(
  */
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
-    await noteService.deleteTag(params.id);
+    await noteService.deleteTag(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     const errorId = randomUUID();
     console.error("[tags][DELETE] Failed to delete tag", {
       errorId,
-      tagId: params.id,
+      tagId: id,
       error,
     });
     return NextResponse.json(

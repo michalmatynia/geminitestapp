@@ -321,6 +321,7 @@ export const mongoNoteRepository: NoteRepository = {
       name: data.name,
       description: data.description ?? null,
       color: data.color ?? "#10b981",
+      parentId: data.parentId ?? null,
       createdAt: now,
       updatedAt: now,
     };
@@ -339,6 +340,7 @@ export const mongoNoteRepository: NoteRepository = {
         ...(data.name !== undefined && { name: data.name }),
         ...(data.description !== undefined && { description: data.description }),
         ...(data.color !== undefined && { color: data.color }),
+        ...(data.parentId !== undefined && { parentId: data.parentId }),
       },
     };
 
@@ -355,6 +357,18 @@ export const mongoNoteRepository: NoteRepository = {
   async deleteCategory(id) {
     const db = await getMongoDb();
     const collection = db.collection<CategoryDocument>(categoryCollectionName);
+
+    // Get the category to find its parent
+    const category = await collection.findOne({ $or: [{ id }, { _id: id }] });
+    if (!category) return;
+
+    // Move children to parent (or null if deleting root folder)
+    await collection.updateMany(
+      { parentId: id },
+      { $set: { parentId: category.parentId } }
+    );
+
+    // Delete the category
     await collection.deleteOne({ $or: [{ id }, { _id: id }] });
 
     // Remove category from all notes

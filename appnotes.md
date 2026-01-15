@@ -4,6 +4,7 @@ npx tsc
 npx eslint
 add proper debugging on visual studio code
 
+
 # Database work
 Set the cloud database mongoDB backup to local mongoDB setUP
 Add Prisma and MongoDB Tabs for Database Management
@@ -39,8 +40,12 @@ Try Catch Blocks
 # Note Taking App
 Move image/catalog operations behind a data-access abstraction so Mongo can fully own product data.
 
+Chatbot connection
+
 base.com with email: you@example.com password: YourPassword
 remove  Agent job panel from the chatbox window, it duplicates what is already shown
+
+At some point there should be note import and also the notes should be downloadable as markdown
 
 # Develop components
 Enhance Components

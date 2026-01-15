@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { noteService } from "@/lib/services/noteService";
+import { noteService } from "@/lib/services/noteService/index";
 
 /**
  * GET /api/notes/[id]
@@ -8,10 +8,11 @@ import { noteService } from "@/lib/services/noteService";
  */
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
-    const note = await noteService.getById(params.id);
+    const note = await noteService.getById(id);
 
     if (!note) {
       return NextResponse.json({ error: "Note not found" }, { status: 404 });
@@ -22,7 +23,7 @@ export async function GET(
     const errorId = randomUUID();
     console.error("[notes][GET] Failed to fetch note", {
       errorId,
-      noteId: params.id,
+      noteId: id,
       error,
     });
     return NextResponse.json(
@@ -38,18 +39,19 @@ export async function GET(
  */
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const body = await req.json();
-    const note = await noteService.update(params.id, body);
+    const note = await noteService.update(id, body);
     return NextResponse.json(note);
   } catch (error: unknown) {
     const errorId = randomUUID();
     if (error instanceof Error) {
       console.error("[notes][PATCH] Failed to update note", {
         errorId,
-        noteId: params.id,
+        noteId: id,
         message: error.message,
       });
       return NextResponse.json(
@@ -59,7 +61,7 @@ export async function PATCH(
     }
     console.error("[notes][PATCH] Unknown error updating note", {
       errorId,
-      noteId: params.id,
+      noteId: id,
       error,
     });
     return NextResponse.json(
@@ -75,16 +77,17 @@ export async function PATCH(
  */
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
-    await noteService.delete(params.id);
+    await noteService.delete(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     const errorId = randomUUID();
     console.error("[notes][DELETE] Failed to delete note", {
       errorId,
-      noteId: params.id,
+      noteId: id,
       error,
     });
     return NextResponse.json(

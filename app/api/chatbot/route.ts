@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
+import { chatbotSessionRepository } from "@/lib/services/chatbot-session-repository";
 
 export const runtime = "nodejs";
 
@@ -248,9 +249,13 @@ export async function POST(req: Request) {
       const body = (await req.json()) as {
         messages?: ChatMessage[];
         model?: string;
+        sessionId?: string;
       };
       messages = body.messages ?? [];
       requestedModel = body.model ?? null;
+
+      // Store sessionId for later use
+      (req as any).sessionId = body.sessionId;
     }
 
     if (!Array.isArray(messages) || messages.length === 0) {
@@ -354,6 +359,40 @@ export async function POST(req: Request) {
         durationMs: Date.now() - ollamaRequestStart,
         responseChars: responseMessage.length,
       });
+    }
+
+    // Save messages to session if sessionId provided
+    const sessionId = (req as any).sessionId;
+    if (sessionId) {
+      try {
+        // Get the last user message
+        const lastUserMessage = messages[messages.length - 1];
+
+        // Add user message to session
+        await chatbotSessionRepository.addMessage(sessionId, {
+          role: lastUserMessage.role,
+          content: lastUserMessage.content,
+          images: lastUserMessage.images,
+          timestamp: new Date(),
+        });
+
+        // Add assistant response to session
+        await chatbotSessionRepository.addMessage(sessionId, {
+          role: "assistant",
+          content: responseMessage,
+          timestamp: new Date(),
+        });
+
+        if (DEBUG_CHATBOT) {
+          console.info("[chatbot][chat] Saved to session", { sessionId });
+        }
+      } catch (error) {
+        console.error("[chatbot][chat] Failed to save to session", {
+          sessionId,
+          error,
+        });
+        // Don't fail the request if saving to session fails
+      }
     }
 
     return NextResponse.json({ message: responseMessage });

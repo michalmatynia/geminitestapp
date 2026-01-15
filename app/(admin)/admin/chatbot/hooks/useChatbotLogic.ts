@@ -22,6 +22,7 @@ import {
   ChatbotSettingsPayload,
   ChatbotDebugState,
 } from "@/types/chatbot";
+import type { ChatSession } from "../types";
 import { useSearchParams } from "next/navigation";
 import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from "../constants";
 
@@ -32,21 +33,9 @@ export const useChatbotLogic = () => {
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isSending, setIsSending] = useState(false);
-  const [modelOptions, setModelOptions] = useState<string[]>([
-    "gpt-4o",
-    "gpt-4o-mini",
-    "gpt-4-turbo",
-    "gpt-3.5-turbo",
-    "claude-3-5-sonnet-20241022",
-    "claude-3-opus-20240229",
-    "claude-3-sonnet-20240229",
-    "claude-3-haiku-20240307",
-    "gemini-2.0-flash-exp",
-    "gemini-1.5-pro",
-    "gemini-1.5-flash",
-  ]);
-  const [model, setModel] = useState("gpt-4o");
-  const [modelLoading, setModelLoading] = useState(false);
+  const [modelOptions, setModelOptions] = useState<string[]>([]);
+  const [model, setModel] = useState("");
+  const [modelLoading, setModelLoading] = useState(true);
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [useGlobalContext, setUseGlobalContext] = useState(false);
   const [useLocalContext, setUseLocalContext] = useState(false);
@@ -89,22 +78,134 @@ export const useChatbotLogic = () => {
   const [settingsDirty, setSettingsDirty] = useState(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
 
-  const sessionId = useMemo(() => {
-    return searchParams.get("session") || "default";
-  }, [searchParams]);
+  // Session management
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
 
+  const sessionId = useMemo(() => {
+    return currentSessionId || searchParams.get("session") || null;
+  }, [currentSessionId, searchParams]);
+
+  const fetchSessions = useCallback(async () => {
+    setSessionsLoading(true);
+    try {
+      const response = await fetch("/api/chatbot/sessions");
+      if (response.ok) {
+        const data = await response.json();
+        setSessions(data.sessions || []);
+
+        // If no current session and sessions exist, select the first one
+        if (!currentSessionId && data.sessions.length > 0) {
+          setCurrentSessionId(data.sessions[0].id);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch sessions:", error);
+      toast("Failed to load chat sessions", { variant: "error" });
+    } finally {
+      setSessionsLoading(false);
+    }
+  }, [currentSessionId, toast]);
+
+  const loadSessionMessages = useCallback(async (id: string) => {
+    try {
+      const response = await fetch(`/api/chatbot/sessions/${id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setMessages(data.session.messages || []);
+      }
+    } catch (error) {
+      console.error("Failed to load session messages:", error);
+    }
+  }, []);
+
+  const createNewSession = useCallback(async () => {
+    try {
+      const response = await fetch("/api/chatbot/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: `Chat ${new Date().toLocaleString()}`,
+          settings: { model, webSearchEnabled, useGlobalContext, useLocalContext },
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        await fetchSessions();
+        setCurrentSessionId(data.sessionId);
+        setMessages([]);
+      }
+    } catch (error) {
+      console.error("Failed to create session:", error);
+      toast("Failed to create new chat session", { variant: "error" });
+    }
+  }, [model, webSearchEnabled, useGlobalContext, useLocalContext, fetchSessions, toast]);
+
+  const deleteSession = useCallback(async (id: string) => {
+    try {
+      const response = await fetch("/api/chatbot/sessions", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: id }),
+      });
+
+      if (response.ok) {
+        await fetchSessions();
+        if (currentSessionId === id) {
+          setCurrentSessionId(sessions[0]?.id || null);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to delete session:", error);
+      toast("Failed to delete chat session", { variant: "error" });
+    }
+  }, [currentSessionId, sessions, fetchSessions, toast]);
+
+  // Fetch sessions on mount
   useEffect(() => {
-    const cached = readCachedMessages(sessionId);
-    if (cached.length > 0) {
-      setMessages(cached);
+    fetchSessions();
+  }, [fetchSessions]);
+
+  // Load session messages when session changes
+  useEffect(() => {
+    if (sessionId) {
+      loadSessionMessages(sessionId);
     } else {
       setMessages([]);
     }
-  }, [sessionId]);
+  }, [sessionId, loadSessionMessages]);
 
   useEffect(() => {
-    writeCachedMessages(sessionId, messages);
-  }, [messages, sessionId]);
+    const fetchModels = async () => {
+      setModelLoading(true);
+      try {
+        const ollamaBaseUrl = process.env.NEXT_PUBLIC_OLLAMA_BASE_URL || "http://localhost:11434";
+        const response = await fetch(`${ollamaBaseUrl}/api/tags`);
+
+        if (response.ok) {
+          const data = await response.json();
+          const models = data.models?.map((m: any) => m.name) || [];
+          setModelOptions(models);
+
+          // Set first model as default if no model is set
+          if (models.length > 0 && !model) {
+            setModel(models[0]);
+          }
+        } else {
+          throw new Error("Failed to fetch Ollama models");
+        }
+      } catch (error) {
+        console.error("Error fetching Ollama models:", error);
+        toast("Failed to load models from Ollama server", { variant: "error" });
+      } finally {
+        setModelLoading(false);
+      }
+    };
+
+    fetchModels();
+  }, []);
 
   const loadChatbotSettings = useCallback(async () => {
     try {
@@ -192,11 +293,56 @@ export const useChatbotLogic = () => {
     }
   };
 
+  const sendMessage = useCallback(async () => {
+    if (!input.trim() || isSending) return;
+
+    const userMessage: ChatMessage = {
+      role: "user",
+      content: input.trim(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setIsSending(true);
+
+    try {
+      const response = await fetch("/api/chatbot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [...messages, userMessage],
+          model,
+          sessionId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send message");
+      }
+
+      const data = await response.json();
+
+      if (data.message) {
+        const assistantMessage: ChatMessage = {
+          role: "assistant",
+          content: data.message,
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast("Failed to send message", { variant: "error" });
+    } finally {
+      setIsSending(false);
+    }
+  }, [input, isSending, messages, model, sessionId, toast]);
+
   return {
     messages,
     setMessages,
     input,
     setInput,
+    sendMessage,
     attachments,
     setAttachments,
     isSending,
@@ -276,5 +422,12 @@ export const useChatbotLogic = () => {
     sessionId,
     loadChatbotSettings,
     saveChatbotSettings,
+    // Session management
+    sessions,
+    currentSessionId,
+    sessionsLoading,
+    createNewSession,
+    deleteSession,
+    selectSession: setCurrentSessionId,
   };
 };

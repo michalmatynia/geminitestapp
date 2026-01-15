@@ -6,6 +6,7 @@ import { useChatbotLogic } from "./hooks/useChatbotLogic";
 import { ChatInterface } from "./components/ChatInterface";
 import { SettingsTab } from "./components/SettingsTab";
 import { DebugPanel } from "./components/DebugPanel";
+import { SessionSidebar } from "./components/SessionSidebar";
 
 function ChatbotPageInner() {
   const logic = useChatbotLogic();
@@ -14,6 +15,7 @@ function ChatbotPageInner() {
     input,
     setInput,
     isSending,
+    sendMessage,
     debugState,
   } = logic;
 
@@ -102,12 +104,24 @@ function ChatbotPageInner() {
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    // Implementation of sending logic would be here
+    sendMessage();
   };
 
   return (
     <div className="container mx-auto h-[calc(100vh-120px)] py-6">
-      <div className="grid h-full grid-cols-1 gap-6 lg:grid-cols-4">
+      <div className="grid h-full grid-cols-1 gap-6 lg:grid-cols-5">
+        {/* Session Sidebar */}
+        <div className="hidden lg:block overflow-hidden rounded-lg border border-gray-800 bg-gray-950">
+          <SessionSidebar
+            sessions={logic.sessions}
+            currentSessionId={logic.currentSessionId}
+            onSelectSession={logic.selectSession}
+            onNewSession={logic.createNewSession}
+            onDeleteSession={logic.deleteSession}
+          />
+        </div>
+
+        {/* Main Chat Area */}
         <div className="flex flex-col overflow-hidden rounded-lg border border-gray-800 bg-gray-950 lg:col-span-3">
           <Tabs defaultValue="chat" className="flex h-full flex-col">
             <div className="border-b border-gray-800 bg-gray-900/50 px-4 py-2">

@@ -2,16 +2,21 @@
 
 import React, { useState, useEffect } from "react";
 import { Plus, Search, Pin, Archive } from "lucide-react";
-import type { NoteWithRelations, TagRecord, CategoryRecord } from "@/types/notes";
+import type { NoteWithRelations, TagRecord, CategoryRecord, CategoryWithChildren } from "@/types/notes";
 import { Button } from "@/components/ui/button";
 import ModalShell from "@/components/ui/modal-shell";
+import { FolderTree } from "./components/FolderTree";
 
 function NoteForm({
   note,
+  categories,
+  defaultFolderId,
   onClose,
   onSuccess,
 }: {
   note?: NoteWithRelations | null;
+  categories: CategoryRecord[];
+  defaultFolderId?: string | null;
   onClose: () => void;
   onSuccess: () => void;
 }) {
@@ -20,11 +25,8 @@ function NoteForm({
   const [color, setColor] = useState(note?.color || "#ffffff");
   const [isPinned, setIsPinned] = useState(note?.isPinned || false);
   const [isArchived, setIsArchived] = useState(note?.isArchived || false);
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
-    note?.tags.map((t) => t.tagId) || []
-  );
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
-    note?.categories.map((c) => c.categoryId) || []
+  const [selectedFolderId, setSelectedFolderId] = useState<string>(
+    note?.categories[0]?.categoryId || defaultFolderId || ""
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -46,8 +48,8 @@ function NoteForm({
           color,
           isPinned,
           isArchived,
-          tagIds: selectedTagIds,
-          categoryIds: selectedCategoryIds,
+          tagIds: [],
+          categoryIds: selectedFolderId ? [selectedFolderId] : [],
         }),
       });
 
@@ -98,6 +100,22 @@ function NoteForm({
           className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white"
           required
         />
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-medium text-white">Folder</label>
+        <select
+          value={selectedFolderId}
+          onChange={(e) => setSelectedFolderId(e.target.value)}
+          className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white"
+        >
+          <option value="">No Folder</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div>
@@ -164,18 +182,22 @@ export default function NotesPage() {
   const [notes, setNotes] = useState<NoteWithRelations[]>([]);
   const [tags, setTags] = useState<TagRecord[]>([]);
   const [categories, setCategories] = useState<CategoryRecord[]>([]);
+  const [folderTree, setFolderTree] = useState<CategoryWithChildren[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPinned, setFilterPinned] = useState<boolean | undefined>(undefined);
   const [filterArchived, setFilterArchived] = useState<boolean | undefined>(undefined);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedNote, setSelectedNote] = useState<NoteWithRelations | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [creatingFolderParentId, setCreatingFolderParentId] = useState<string | null | undefined>(undefined);
 
   useEffect(() => {
     fetchNotes();
     fetchTags();
     fetchCategories();
-  }, [searchQuery, filterPinned, filterArchived]);
+    fetchFolderTree();
+  }, [searchQuery, filterPinned, filterArchived, selectedFolderId]);
 
   const fetchNotes = async () => {
     setLoading(true);
@@ -184,6 +206,7 @@ export default function NotesPage() {
       if (searchQuery) params.append("search", searchQuery);
       if (filterPinned !== undefined) params.append("isPinned", String(filterPinned));
       if (filterArchived !== undefined) params.append("isArchived", String(filterArchived));
+      if (selectedFolderId) params.append("categoryIds", selectedFolderId);
 
       const response = await fetch(`/api/notes?${params}`);
       const data = await response.json();
@@ -212,6 +235,79 @@ export default function NotesPage() {
       setCategories(data);
     } catch (error) {
       console.error("Failed to fetch categories:", error);
+    }
+  };
+
+  const fetchFolderTree = async () => {
+    try {
+      const response = await fetch("/api/notes/categories/tree");
+      const data = await response.json();
+      setFolderTree(data);
+    } catch (error) {
+      console.error("Failed to fetch folder tree:", error);
+    }
+  };
+
+  const handleCreateFolder = async (parentId?: string | null) => {
+    const folderName = prompt("Enter folder name:");
+    if (!folderName) return;
+
+    try {
+      const response = await fetch("/api/notes/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: folderName,
+          parentId: parentId ?? null,
+        }),
+      });
+
+      if (response.ok) {
+        await fetchFolderTree();
+        await fetchCategories();
+      }
+    } catch (error) {
+      console.error("Failed to create folder:", error);
+    }
+  };
+
+  const handleDeleteFolder = async (folderId: string) => {
+    if (!confirm("Delete this folder? Subfolders will be moved up one level.")) return;
+
+    try {
+      const response = await fetch(`/api/notes/categories/${folderId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        await fetchFolderTree();
+        await fetchCategories();
+        if (selectedFolderId === folderId) {
+          setSelectedFolderId(null);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to delete folder:", error);
+    }
+  };
+
+  const handleRenameFolder = async (folderId: string) => {
+    const newName = prompt("Enter new folder name:");
+    if (!newName) return;
+
+    try {
+      const response = await fetch(`/api/notes/categories/${folderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName }),
+      });
+
+      if (response.ok) {
+        await fetchFolderTree();
+        await fetchCategories();
+      }
+    } catch (error) {
+      console.error("Failed to rename folder:", error);
     }
   };
 
@@ -244,7 +340,21 @@ export default function NotesPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-[calc(100vh-120px)]">
+        {/* Folder Tree Sidebar */}
+        <div className="hidden lg:block overflow-hidden rounded-lg border border-gray-800 bg-gray-950">
+          <FolderTree
+            folders={folderTree}
+            selectedFolderId={selectedFolderId}
+            onSelectFolder={setSelectedFolderId}
+            onCreateFolder={handleCreateFolder}
+            onDeleteFolder={handleDeleteFolder}
+            onRenameFolder={handleRenameFolder}
+          />
+        </div>
+
+        {/* Main Content Area */}
+        <div className="lg:col-span-4 rounded-lg bg-gray-950 p-6 shadow-lg overflow-hidden flex flex-col">
         <div className="mb-4 flex items-center gap-3">
           <Button
             onClick={handleOpenCreateModal}
@@ -338,29 +448,36 @@ export default function NotesPage() {
         >
           <div onClick={(e) => e.stopPropagation()}>
             <ModalShell title="Create Note" onClose={handleCloseCreateModal}>
-              <NoteForm onClose={handleCloseCreateModal} onSuccess={handleCreateSuccess} />
-            </ModalShell>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Modal */}
-      {selectedNote && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-          onClick={handleCloseEditModal}
-        >
-          <div onClick={(e) => e.stopPropagation()}>
-            <ModalShell title="Edit Note" onClose={handleCloseEditModal}>
               <NoteForm
-                note={selectedNote}
-                onClose={handleCloseEditModal}
-                onSuccess={handleEditSuccess}
+                categories={categories}
+                defaultFolderId={selectedFolderId}
+                onClose={handleCloseCreateModal}
+                onSuccess={handleCreateSuccess}
               />
             </ModalShell>
           </div>
         </div>
       )}
-    </div>
+
+        {/* Edit Modal */}
+        {selectedNote && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            onClick={handleCloseEditModal}
+          >
+            <div onClick={(e) => e.stopPropagation()}>
+              <ModalShell title="Edit Note" onClose={handleCloseEditModal}>
+                <NoteForm
+                  note={selectedNote}
+                  categories={categories}
+                  onClose={handleCloseEditModal}
+                  onSuccess={handleEditSuccess}
+                />
+              </ModalShell>
+            </div>
+          </div>
+        )}
+        </div>
+      </div>
   );
 }

@@ -1,42 +1,25 @@
-import type {
-  NoteRecord,
-  NoteWithRelations,
-  CreateNoteInput,
-  UpdateNoteInput,
-  NoteFilters,
-  TagRecord,
-  CategoryRecord,
-  CreateTagInput,
-  UpdateTagInput,
-  CreateCategoryInput,
-  UpdateCategoryInput,
-} from "../notes";
+import type { NoteWithRelations, NoteCreateInput, NoteUpdateInput, CategoryRecord, TagRecord, CategoryWithChildren, CategoryCreateInput, CategoryUpdateInput, TagCreateInput, TagUpdateInput, NoteFilters } from "@/types/notes";
 
-export interface NoteRepository {
-  // Note CRUD operations
-  getAll(filters?: NoteFilters): Promise<NoteWithRelations[]>;
+export type NoteRepository = {
+  // Notes
+  getAll(filters: NoteFilters): Promise<NoteWithRelations[]>;
   getById(id: string): Promise<NoteWithRelations | null>;
-  create(data: CreateNoteInput): Promise<NoteWithRelations>;
-  update(id: string, data: UpdateNoteInput): Promise<NoteWithRelations>;
-  delete(id: string): Promise<void>;
+  create(data: NoteCreateInput): Promise<NoteWithRelations>;
+  update(id: string, data: NoteUpdateInput): Promise<NoteWithRelations | null>;
+  delete(id: string): Promise<boolean>;
 
-  // Tag operations
+  // Tags
   getAllTags(): Promise<TagRecord[]>;
   getTagById(id: string): Promise<TagRecord | null>;
-  createTag(data: CreateTagInput): Promise<TagRecord>;
-  updateTag(id: string, data: UpdateTagInput): Promise<TagRecord>;
-  deleteTag(id: string): Promise<void>;
+  createTag(data: TagCreateInput): Promise<TagRecord>;
+  updateTag(id: string, data: TagUpdateInput): Promise<TagRecord | null>;
+  deleteTag(id: string): Promise<boolean>;
 
-  // Category operations
+  // Categories
   getAllCategories(): Promise<CategoryRecord[]>;
   getCategoryById(id: string): Promise<CategoryRecord | null>;
-  createCategory(data: CreateCategoryInput): Promise<CategoryRecord>;
-  updateCategory(id: string, data: UpdateCategoryInput): Promise<CategoryRecord>;
-  deleteCategory(id: string): Promise<void>;
-
-  // Tag/Category assignment
-  assignTags(noteId: string, tagIds: string[]): Promise<void>;
-  removeTags(noteId: string, tagIds: string[]): Promise<void>;
-  assignCategories(noteId: string, categoryIds: string[]): Promise<void>;
-  removeCategories(noteId: string, categoryIds: string[]): Promise<void>;
-}
+  getCategoryTree(): Promise<CategoryWithChildren[]>;
+  createCategory(data: CategoryCreateInput): Promise<CategoryRecord>;
+  updateCategory(id: string, data: CategoryUpdateInput): Promise<CategoryRecord | null>;
+  deleteCategory(id: string): Promise<boolean>;
+};

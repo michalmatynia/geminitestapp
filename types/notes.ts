@@ -1,61 +1,44 @@
-export type NoteRecord = {
-  id: string;
+import type { Note, Tag, Category, NoteTag, NoteCategory } from "@prisma/client";
+
+export type TagRecord = Tag;
+export type CategoryRecord = Category;
+
+export type NoteWithRelations = Note & {
+  tags: (NoteTag & { tag: Tag })[];
+  categories: (NoteCategory & { category: Category })[];
+};
+
+export type CategoryWithChildren = Category & {
+  children: CategoryWithChildren[];
+};
+
+export type NoteCreateInput = {
   title: string;
   content: string;
-  color: string | null;
-  isPinned: boolean;
-  isArchived: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-export type TagRecord = {
-  id: string;
-  name: string;
-  color: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-export type CategoryRecord = {
-  id: string;
-  name: string;
-  description: string | null;
-  color: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-export type NoteTagRecord = {
-  noteId: string;
-  tagId: string;
-  assignedAt: Date;
-  tag: TagRecord;
-};
-
-export type NoteCategoryRecord = {
-  noteId: string;
-  categoryId: string;
-  assignedAt: Date;
-  category: CategoryRecord;
-};
-
-export type NoteWithRelations = NoteRecord & {
-  tags: NoteTagRecord[];
-  categories: NoteCategoryRecord[];
-};
-
-export type CreateNoteInput = {
-  title: string;
-  content: string;
-  color?: string;
+  color?: string | null;
   isPinned?: boolean;
   isArchived?: boolean;
   tagIds?: string[];
   categoryIds?: string[];
 };
 
-export type UpdateNoteInput = Partial<CreateNoteInput>;
+export type NoteUpdateInput = Partial<NoteCreateInput>;
+
+export type CategoryCreateInput = {
+  name: string;
+  description?: string | null;
+  color?: string | null;
+  parentId?: string | null;
+};
+
+export type CategoryUpdateInput = Partial<CategoryCreateInput>;
+
+export type TagCreateInput = {
+  name: string;
+  color?: string | null;
+};
+
+export type TagUpdateInput = Partial<TagCreateInput>;
 
 export type NoteFilters = {
   search?: string;
@@ -64,18 +47,3 @@ export type NoteFilters = {
   tagIds?: string[];
   categoryIds?: string[];
 };
-
-export type CreateTagInput = {
-  name: string;
-  color?: string;
-};
-
-export type UpdateTagInput = Partial<CreateTagInput>;
-
-export type CreateCategoryInput = {
-  name: string;
-  description?: string;
-  color?: string;
-};
-
-export type UpdateCategoryInput = Partial<CreateCategoryInput>;

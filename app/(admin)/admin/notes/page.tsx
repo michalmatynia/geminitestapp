@@ -194,7 +194,7 @@ export default function NotesPage() {
   );
 
   const themeMap = React.useMemo(
-    () => new Map(themes.map((theme) => [theme.id, theme])),
+    () => new Map(themes.map((theme) => [String(theme.id), theme])),
     [themes]
   );
 
@@ -395,14 +395,34 @@ export default function NotesPage() {
     return luminance > 0.7 ? "#0f172a" : "#f8fafc";
   };
 
+  const fallbackTheme = React.useMemo(
+    () => ({
+      textColor: "#e5e7eb",
+      backgroundColor: "#111827",
+      markdownHeadingColor: "#f9fafb",
+      markdownLinkColor: "#93c5fd",
+      markdownCodeBackground: "#1f2937",
+      markdownCodeText: "#e5e7eb",
+      relatedNoteBorderWidth: 1,
+      relatedNoteBorderColor: "#374151",
+      relatedNoteBackgroundColor: "#1f2937",
+      relatedNoteTextColor: "#e5e7eb",
+    }),
+    []
+  );
+
+  const effectivePreviewTheme = selectedNoteTheme ?? fallbackTheme;
+
   const previewStyle = React.useMemo(() => {
-    const fallback = "#1f2937";
     const normalizedColor = selectedNote?.color?.toLowerCase().trim();
     const isDefaultColor = !normalizedColor || normalizedColor === "#ffffff";
     const color =
       !isDefaultColor
-        ? normalizedColor ?? selectedNote?.color ?? fallback
-        : selectedNoteTheme?.backgroundColor || normalizedColor || selectedNote?.color || fallback;
+        ? normalizedColor ?? selectedNote?.color ?? effectivePreviewTheme.backgroundColor
+        : effectivePreviewTheme.backgroundColor ||
+          normalizedColor ||
+          selectedNote?.color ||
+          "#1f2937";
     const hex = color.replace("#", "");
     if (!/^[0-9a-fA-F]{6}$/.test(hex)) {
       return { backgroundColor: color };
@@ -420,24 +440,27 @@ export default function NotesPage() {
   }, [selectedNote?.color, selectedNoteTheme?.backgroundColor]);
 
   const previewTextColor = React.useMemo(() => {
-    const fallback = "#1f2937";
     const normalizedColor = selectedNote?.color?.toLowerCase().trim();
     const isDefaultColor = !normalizedColor || normalizedColor === "#ffffff";
     const background =
       !isDefaultColor
-        ? normalizedColor ?? selectedNote?.color ?? fallback
-        : selectedNoteTheme?.backgroundColor || normalizedColor || selectedNote?.color || fallback;
-    if (selectedNoteTheme?.textColor && !isDefaultColor) {
+        ? normalizedColor ?? selectedNote?.color ?? effectivePreviewTheme.backgroundColor
+        : effectivePreviewTheme.backgroundColor ||
+          normalizedColor ||
+          selectedNote?.color ||
+          "#1f2937";
+    if (effectivePreviewTheme.textColor && !isDefaultColor) {
       return getReadableTextColor(background);
     }
-    return selectedNoteTheme?.textColor ?? getReadableTextColor(background);
-  }, [selectedNote?.color, selectedNoteTheme?.backgroundColor, selectedNoteTheme?.textColor]);
+    return effectivePreviewTheme.textColor ?? getReadableTextColor(background);
+  }, [selectedNote?.color, effectivePreviewTheme]);
 
   const previewTypographyStyle = React.useMemo(
     () => ({
       color: previewTextColor,
       ["--tw-prose-body" as never]: previewTextColor,
-      ["--tw-prose-headings" as never]: selectedNoteTheme?.markdownHeadingColor ?? previewTextColor,
+      ["--tw-prose-headings" as never]:
+        effectivePreviewTheme.markdownHeadingColor ?? previewTextColor,
       ["--tw-prose-lead" as never]: previewTextColor,
       ["--tw-prose-bold" as never]: previewTextColor,
       ["--tw-prose-counters" as never]: previewTextColor,
@@ -446,37 +469,32 @@ export default function NotesPage() {
       ["--tw-prose-quote-borders" as never]: "rgba(148, 163, 184, 0.35)",
       ["--tw-prose-hr" as never]: "rgba(148, 163, 184, 0.35)",
       ["--note-link-color" as never]:
-        selectedNoteTheme?.markdownLinkColor ?? "#38bdf8",
+        effectivePreviewTheme.markdownLinkColor ?? "#38bdf8",
       ["--note-code-bg" as never]:
-        selectedNoteTheme?.markdownCodeBackground ?? "#0f172a",
+        effectivePreviewTheme.markdownCodeBackground ?? "#0f172a",
       ["--note-code-text" as never]:
-        selectedNoteTheme?.markdownCodeText ?? "#e2e8f0",
+        effectivePreviewTheme.markdownCodeText ?? "#e2e8f0",
       ["--note-inline-code-bg" as never]:
-        selectedNoteTheme?.markdownCodeBackground ?? "rgba(15, 23, 42, 0.12)",
+        effectivePreviewTheme.markdownCodeBackground ?? "rgba(15, 23, 42, 0.12)",
     }),
     [
       previewTextColor,
-      selectedNoteTheme?.markdownHeadingColor,
-      selectedNoteTheme?.markdownLinkColor,
-      selectedNoteTheme?.markdownCodeBackground,
-      selectedNoteTheme?.markdownCodeText,
+      effectivePreviewTheme,
     ]
   );
 
   const relatedPreviewStyle = React.useMemo(
     () => ({
-      borderWidth: `${selectedNoteTheme?.relatedNoteBorderWidth ?? 1}px`,
+      borderWidth: `${effectivePreviewTheme.relatedNoteBorderWidth ?? 1}px`,
       borderColor:
-        selectedNoteTheme?.relatedNoteBorderColor ?? "rgba(15, 23, 42, 0.2)",
+        effectivePreviewTheme.relatedNoteBorderColor ?? "rgba(15, 23, 42, 0.2)",
       backgroundColor:
-        selectedNoteTheme?.relatedNoteBackgroundColor ?? "rgba(15, 23, 42, 0.05)",
-      color: selectedNoteTheme?.relatedNoteTextColor ?? "#f8fafc",
+        effectivePreviewTheme.relatedNoteBackgroundColor ??
+        "rgba(15, 23, 42, 0.05)",
+      color: effectivePreviewTheme.relatedNoteTextColor ?? "#f8fafc",
     }),
     [
-      selectedNoteTheme?.relatedNoteBorderWidth,
-      selectedNoteTheme?.relatedNoteBorderColor,
-      selectedNoteTheme?.relatedNoteBackgroundColor,
-      selectedNoteTheme?.relatedNoteTextColor,
+      effectivePreviewTheme,
     ]
   );
 
@@ -894,25 +912,58 @@ export default function NotesPage() {
 
   const handleUnlinkFromPreview = React.useCallback(async (relatedId: string) => {
     if (!selectedNote) return;
-    const relationIds =
-      selectedNote.relations?.map((rel) => rel.id) ||
-      [
-        ...(selectedNote.relationsFrom ?? []).map((rel) => rel.targetNote.id),
-        ...(selectedNote.relationsTo ?? []).map((rel) => rel.sourceNote.id),
-      ].filter(
-        (id, index, array) => array.findIndex((entry) => entry === id) === index
-      );
-    const nextIds = relationIds.filter((id) => id !== relatedId);
     try {
-      const response = await fetch(`/api/notes/${selectedNote.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ relatedNoteIds: nextIds }),
-      });
-      if (!response.ok) {
+      const [sourceRes, targetRes] = await Promise.all([
+        fetch(`/api/notes/${selectedNote.id}`, { cache: "no-store" }),
+        fetch(`/api/notes/${relatedId}`, { cache: "no-store" }),
+      ]);
+      if (!sourceRes.ok || !targetRes.ok) {
         toast("Failed to unlink note", { variant: "error" });
         return;
       }
+      const [sourceNote, targetNote] = (await Promise.all([
+        sourceRes.json(),
+        targetRes.json(),
+      ])) as [NoteWithRelations, NoteWithRelations];
+
+      const sourceRelations =
+        sourceNote.relations?.map((rel) => rel.id) ||
+        [
+          ...(sourceNote.relationsFrom ?? []).map((rel) => rel.targetNote.id),
+          ...(sourceNote.relationsTo ?? []).map((rel) => rel.sourceNote.id),
+        ].filter(
+          (id, index, array) => array.findIndex((entry) => entry === id) === index
+        );
+      const targetRelations =
+        targetNote.relations?.map((rel) => rel.id) ||
+        [
+          ...(targetNote.relationsFrom ?? []).map((rel) => rel.targetNote.id),
+          ...(targetNote.relationsTo ?? []).map((rel) => rel.sourceNote.id),
+        ].filter(
+          (id, index, array) => array.findIndex((entry) => entry === id) === index
+        );
+
+      const nextSourceIds = sourceRelations.filter((id) => id !== relatedId);
+      const nextTargetIds = targetRelations.filter((id) => id !== selectedNote.id);
+
+      const [sourcePatch, targetPatch] = await Promise.all([
+        fetch(`/api/notes/${selectedNote.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ relatedNoteIds: nextSourceIds }),
+        }),
+        fetch(`/api/notes/${relatedId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ relatedNoteIds: nextTargetIds }),
+        }),
+      ]);
+
+      if (!sourcePatch.ok || !targetPatch.ok) {
+        toast("Failed to unlink note", { variant: "error" });
+        return;
+      }
+
       toast("Note unlinked");
       await fetchNotes();
       void handleSelectNoteFromTree(selectedNote.id);

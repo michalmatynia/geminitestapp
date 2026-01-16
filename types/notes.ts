@@ -4,7 +4,7 @@ export type NotebookRecord = {
   id: string;
   name: string;
   color: string | null;
-  defaultThemeId: string | null;
+  defaultThemeId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 };

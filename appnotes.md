@@ -4,18 +4,72 @@ npx tsc
 npx eslint
 add proper debugging on visual studio code
 
-If you use Prisma, run npx prisma migrate dev and npx prisma generate to apply the
 
-Apply GPT Notes
-## Note App Chatbot connection
+# PRODUCT LIST START
 
-Infer text from image and write a snippet
+We are in PRODUCT now
 
-have AI to format my notes, validate the truth in my notes, Search the web to validate my notes, give me note suggestions (that I can Accept or Refuse), extend/refactor my notes, 
+In product settings, Internationalization is gone, I can no longer see COuntries Languages and currencies, add Poland Germany United Kingdom and Sweden to Internationalization
 
-Make code AI Valide code snippets
+## Product List
+Pagination in Product List should reflect the pagination in notes App, same placement same component
 
-Prompted search, I can search by means of
+## Catalogs
+Catalogs are categories to which products belong. There should be a default catalog
+
+When I create the product, a notification should pop-up that the product has been created
+
+Catalogs 
+-default catalog, the first created catalog is always default one
+--In Edit Catalog
+Available languages in Tag box (Required to have at least one)
+Default Language (required field) choose from available languages
+Available price groups(Required to have at least one)
+Default Price group (required field) choose from available languages
+
+## Categories
+Categories
+Add Category
+---> Category Name
+---> Category Catalog
+Parent Category---->
+Category listing cateogries are grouped by catalogs to which they belong
+categories are draggable into hierarchies
+Each category can only belong to one catalog
+
+
+TAGS PARAMETERS Additional fields
+
+
+Filtering
+Tradera Listing, vinted listing
+
+add red star
+
+Check the Uploaded File Handling policies
+
+The images should be import from Base.com links
+
+
+Also the stock should be present
+
+I should have teh possibility to drag Images around to change their order
+
+
+Data Importer and data mapper
+
+Connection to Base.com
+
+Crosslister
+Vinted flagger
+depop
+shpock
+
+
+Connect email to add orders from email like tradera
+
+
+# PRODUCT LIST END
 
 # Database Restore not working
 
@@ -29,8 +83,19 @@ The same goes for folder tree whether it's in a collapsed or expanded state at t
 LATER Note parameters, that I can add cusomized, that I can use later on with AI to Identify and extra categorize my notes.
 
 ## Note history
-
+Undo history during edit
 At some point there should be note import and also the notes should be downloadable as markdown
+
+## Note App Chatbot connection
+Apply GPT Notes
+
+Infer text from image and write a snippet
+
+have AI to format my notes, validate the truth in my notes, Search the web to validate my notes, give me note suggestions (that I can Accept or Refuse), extend/refactor my notes, 
+
+Make code AI Valide code snippets
+
+Prompted search, I can search by means of
 
 # Note Taking App END
 
@@ -39,7 +104,6 @@ remove  Agent job panel from the chatbox window, it duplicates what is already s
 
 
 Move image/catalog operations behind a data-access abstraction so Mongo can fully own product data.
-
 
 # Database work
 Set the cloud database mongoDB backup to local mongoDB setUP
@@ -63,7 +127,6 @@ Integration with Base
 Enhance Components
 Make components more robust and modular
 Segment them into proper sections
-
 
 # Agentic AI
 Enhance functionality of
@@ -92,60 +155,6 @@ Sending another prompt during an agent work means I am adjusting, so at this poi
 Connect GPT API to my Agentic Framework
 ---
 
-Refactor
-
-Product LIST
-When I create the product, a notification should pop-up that the product has been created
-
-Catalogs 
--default catalog, the first created catalog is always default one
---In Edit Catalog
-Available languages in Tag box (Required to have at least one)
-Default Language (required field) choose from available languages
-Available price groups(Required to have at least one)
-Default Price group (required field) choose from available languages
-
-Categories
-Add Category
----> Category Name
----> Category Catalog
-Parent Category---->
-Category listing cateogries are grouped by catalogs to which they belong
-categories are draggable into hierarchies
-Each category can only belong to one catalog
-
-
-TAGS PARAMETERS Additional fields
-
-
-Pagination in Product List
-
-Filtering
-Tradera Listing, vinted listing
-
-add red star
-
-Check the Uploaded File Handling policies
-
-The images should be import from Base.com links
-
-
-Also the stock should be present
-
-I should have teh possibility to drag Images around to change their order
-
-
-Data Importer and data mapper
-
-Connection to Base.com
-
-Crosslister
-Vinted flagger
-depop
-shpock
-
-
-Connect email to add orders from email like tradera
 
 
 Bypassing Captchas

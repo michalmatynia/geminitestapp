@@ -7,6 +7,7 @@ export const noteCreateSchema = z
     color: z.string().nullable().optional(),
     isPinned: z.boolean().optional(),
     isArchived: z.boolean().optional(),
+    isFavorite: z.boolean().optional(),
     tagIds: z.array(z.string()).optional(),
     categoryIds: z.array(z.string()).optional(),
     relatedNoteIds: z.array(z.string()).optional(),
@@ -39,6 +40,7 @@ export const categoryCreateSchema = z
     color: z.string().nullable().optional(),
     parentId: z.string().nullable().optional(),
     notebookId: z.string().nullable().optional(),
+    themeId: z.string().nullable().optional(),
   })
   .strict();
 
@@ -58,3 +60,25 @@ export const notebookUpdateSchema = notebookCreateSchema.partial().strict();
 
 export type NotebookCreateData = z.infer<typeof notebookCreateSchema>;
 export type NotebookUpdateData = z.infer<typeof notebookUpdateSchema>;
+
+export const themeCreateSchema = z
+  .object({
+    name: z.string().min(1),
+    notebookId: z.string().nullable().optional(),
+    textColor: z.string().optional(),
+    backgroundColor: z.string().optional(),
+    markdownHeadingColor: z.string().optional(),
+    markdownLinkColor: z.string().optional(),
+    markdownCodeBackground: z.string().optional(),
+    markdownCodeText: z.string().optional(),
+    relatedNoteBorderWidth: z.number().optional(),
+    relatedNoteBorderColor: z.string().optional(),
+    relatedNoteBackgroundColor: z.string().optional(),
+    relatedNoteTextColor: z.string().optional(),
+  })
+  .strict();
+
+export const themeUpdateSchema = themeCreateSchema.partial().strict();
+
+export type ThemeCreateData = z.infer<typeof themeCreateSchema>;
+export type ThemeUpdateData = z.infer<typeof themeUpdateSchema>;

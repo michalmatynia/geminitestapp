@@ -473,6 +473,7 @@ model Note {
   color       String?   @default("#ffffff")
   isPinned    Boolean   @default(false)
   isArchived  Boolean   @default(false)
+  isFavorite  Boolean   @default(false)
   notebookId  String?
   notebook    Notebook? @relation(fields: [notebookId], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
@@ -481,6 +482,46 @@ model Note {
   categories  NoteCategory[]
   relationsFrom NoteRelation[] @relation("NoteRelationsFrom")
   relationsTo   NoteRelation[] @relation("NoteRelationsTo")
+  files       NoteFile[]
+}
+
+model NoteFile {
+  id          String   @id @default(cuid())
+  noteId      String
+  slotIndex   Int
+  filename    String
+  filepath    String
+  mimetype    String
+  size        Int
+  width       Int?
+  height      Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  note        Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@unique([noteId, slotIndex])
+}
+
+model Theme {
+  id                        String   @id @default(cuid())
+  name                      String
+  notebookId                String?
+  notebook                  Notebook? @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+  textColor                 String   @default("#e2e8f0")
+  backgroundColor           String   @default("#0f172a")
+  markdownHeadingColor      String   @default("#f8fafc")
+  markdownLinkColor         String   @default("#38bdf8")
+  markdownCodeBackground    String   @default("#0b1220")
+  markdownCodeText          String   @default("#e2e8f0")
+  relatedNoteBorderWidth    Int      @default(1)
+  relatedNoteBorderColor    String   @default("#34d399")
+  relatedNoteBackgroundColor String  @default("#0f3a2f")
+  relatedNoteTextColor      String   @default("#ecfdf5")
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  @@unique([notebookId, name])
 }
 
 model Tag {
@@ -504,8 +545,10 @@ model Category {
   parentId    String?
   parent      Category?      @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children    Category[]     @relation("CategoryHierarchy")
+  themeId     String?
   notebookId  String?
   notebook    Notebook?      @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+  theme       Theme?         @relation(fields: [themeId], references: [id], onDelete: SetNull)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   notes       NoteCategory[]

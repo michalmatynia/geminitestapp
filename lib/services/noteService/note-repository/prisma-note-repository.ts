@@ -15,6 +15,11 @@ import type {
   NotebookRecord,
   NotebookCreateInput,
   NotebookUpdateInput,
+  NoteFileRecord,
+  NoteFileCreateInput,
+  ThemeRecord,
+  ThemeCreateInput,
+  ThemeUpdateInput,
 } from "@/types/notes";
 import prisma from "@/lib/prisma";
 
@@ -46,7 +51,16 @@ export const prismaNoteRepository: NoteRepository = {
   },
 
   async getAll(filters: NoteFilters): Promise<NoteWithRelations[]> {
-    const { search, searchScope = "both", isPinned, isArchived, tagIds, categoryIds, notebookId } = filters;
+    const {
+      search,
+      searchScope = "both",
+      isPinned,
+      isArchived,
+      isFavorite,
+      tagIds,
+      categoryIds,
+      notebookId,
+    } = filters;
 
     const where: Prisma.NoteWhereInput = {};
     const resolvedNotebookId =
@@ -68,6 +82,7 @@ export const prismaNoteRepository: NoteRepository = {
 
     if (typeof isPinned === "boolean") where.isPinned = isPinned;
     if (typeof isArchived === "boolean") where.isArchived = isArchived;
+    if (typeof isFavorite === "boolean") where.isFavorite = isFavorite;
 
     if (tagIds && tagIds.length > 0) {
       where.tags = { some: { tagId: { in: tagIds } } };
@@ -92,6 +107,7 @@ export const prismaNoteRepository: NoteRepository = {
             sourceNote: { select: { id: true, title: true, color: true } },
           },
         },
+        files: { orderBy: { slotIndex: "asc" } },
       },
       orderBy: { updatedAt: "desc" },
     });
@@ -113,6 +129,7 @@ export const prismaNoteRepository: NoteRepository = {
             sourceNote: { select: { id: true, title: true, color: true } },
           },
         },
+        files: { orderBy: { slotIndex: "asc" } },
       },
     });
   },
@@ -153,6 +170,7 @@ export const prismaNoteRepository: NoteRepository = {
             sourceNote: { select: { id: true, title: true, color: true } },
           },
         },
+        files: { orderBy: { slotIndex: "asc" } },
       },
     });
   },
@@ -161,7 +179,7 @@ export const prismaNoteRepository: NoteRepository = {
     const { tagIds, categoryIds, relatedNoteIds, notebookId, ...rest } = data;
 
     const updateData: Prisma.NoteUpdateInput = { ...rest };
-    if (notebookId !== undefined) {
+    if (notebookId !== undefined && notebookId !== null) {
       updateData.notebook = { connect: { id: notebookId } };
     }
 
@@ -207,6 +225,7 @@ export const prismaNoteRepository: NoteRepository = {
               sourceNote: { select: { id: true, title: true, color: true } },
             },
           },
+          files: { orderBy: { slotIndex: "asc" } },
         },
       });
     } catch {
@@ -314,20 +333,26 @@ export const prismaNoteRepository: NoteRepository = {
   async createCategory(data: CategoryCreateInput): Promise<CategoryRecord> {
     const resolvedNotebookId =
       data.notebookId ?? (await prismaNoteRepository.getOrCreateDefaultNotebook()).id;
-    return prisma.category.create({
-      data: {
-        name: data.name,
-        description: data.description,
-        color: data.color,
-        parentId: data.parentId,
-        notebook: { connect: { id: resolvedNotebookId } },
-      },
-    });
+
+    const createData: Prisma.CategoryCreateInput = {
+      name: data.name,
+      notebook: { connect: { id: resolvedNotebookId } },
+    };
+    if (data.description !== undefined) createData.description = data.description;
+    if (data.color !== undefined) createData.color = data.color;
+    if (data.parentId) createData.parent = { connect: { id: data.parentId } };
+    if (data.themeId) createData.theme = { connect: { id: data.themeId } };
+
+    return prisma.category.create({ data: createData });
   },
 
   async updateCategory(id: string, data: CategoryUpdateInput): Promise<CategoryRecord | null> {
     try {
-      return await prisma.category.update({ where: { id }, data });
+      const updateData: Prisma.CategoryUpdateInput = { ...data };
+      if (data.themeId !== undefined) {
+        updateData.theme = data.themeId ? { connect: { id: data.themeId } } : { disconnect: true };
+      }
+      return await prisma.category.update({ where: { id }, data: updateData });
     } catch {
       return null;
     }
@@ -420,6 +445,109 @@ export const prismaNoteRepository: NoteRepository = {
   async deleteNotebook(id: string): Promise<boolean> {
     try {
       await prisma.notebook.delete({ where: { id } });
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  async getAllThemes(notebookId?: string | null): Promise<ThemeRecord[]> {
+    const resolvedNotebookId =
+      notebookId ?? (await prismaNoteRepository.getOrCreateDefaultNotebook()).id;
+    return prisma.theme.findMany({
+      where: { notebookId: resolvedNotebookId },
+      orderBy: { name: "asc" },
+    });
+  },
+
+  async getThemeById(id: string): Promise<ThemeRecord | null> {
+    return prisma.theme.findUnique({ where: { id } });
+  },
+
+  async createTheme(data: ThemeCreateInput): Promise<ThemeRecord> {
+    const resolvedNotebookId =
+      data.notebookId ?? (await prismaNoteRepository.getOrCreateDefaultNotebook()).id;
+    return prisma.theme.create({
+      data: {
+        name: data.name,
+        notebookId: resolvedNotebookId,
+        textColor: data.textColor ?? "#e2e8f0",
+        backgroundColor: data.backgroundColor ?? "#0f172a",
+        markdownHeadingColor: data.markdownHeadingColor ?? "#f8fafc",
+        markdownLinkColor: data.markdownLinkColor ?? "#38bdf8",
+        markdownCodeBackground: data.markdownCodeBackground ?? "#0b1220",
+        markdownCodeText: data.markdownCodeText ?? "#e2e8f0",
+        relatedNoteBorderWidth: data.relatedNoteBorderWidth ?? 1,
+        relatedNoteBorderColor: data.relatedNoteBorderColor ?? "#34d399",
+        relatedNoteBackgroundColor:
+          data.relatedNoteBackgroundColor ?? "#0f3a2f",
+        relatedNoteTextColor: data.relatedNoteTextColor ?? "#ecfdf5",
+      },
+    });
+  },
+
+  async updateTheme(id: string, data: ThemeUpdateInput): Promise<ThemeRecord | null> {
+    try {
+      return await prisma.theme.update({
+        where: { id },
+        data: {
+          name: data.name,
+          notebookId: data.notebookId ?? undefined,
+          textColor: data.textColor,
+          backgroundColor: data.backgroundColor,
+          markdownHeadingColor: data.markdownHeadingColor,
+          markdownLinkColor: data.markdownLinkColor,
+          markdownCodeBackground: data.markdownCodeBackground,
+          markdownCodeText: data.markdownCodeText,
+          relatedNoteBorderWidth: data.relatedNoteBorderWidth,
+          relatedNoteBorderColor: data.relatedNoteBorderColor,
+          relatedNoteBackgroundColor: data.relatedNoteBackgroundColor,
+          relatedNoteTextColor: data.relatedNoteTextColor,
+        },
+      });
+    } catch {
+      return null;
+    }
+  },
+
+  async deleteTheme(id: string): Promise<boolean> {
+    try {
+      await prisma.theme.delete({ where: { id } });
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  async createNoteFile(data: NoteFileCreateInput): Promise<NoteFileRecord> {
+    return prisma.noteFile.create({
+      data: {
+        noteId: data.noteId,
+        slotIndex: data.slotIndex,
+        filename: data.filename,
+        filepath: data.filepath,
+        mimetype: data.mimetype,
+        size: data.size,
+        width: data.width,
+        height: data.height,
+      },
+    });
+  },
+
+  async getNoteFiles(noteId: string): Promise<NoteFileRecord[]> {
+    return prisma.noteFile.findMany({
+      where: { noteId },
+      orderBy: { slotIndex: "asc" },
+    });
+  },
+
+  async deleteNoteFile(noteId: string, slotIndex: number): Promise<boolean> {
+    try {
+      await prisma.noteFile.delete({
+        where: {
+          noteId_slotIndex: { noteId, slotIndex },
+        },
+      });
       return true;
     } catch {
       return false;

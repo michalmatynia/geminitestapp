@@ -10,6 +10,11 @@ import type {
   NotebookRecord,
   NotebookCreateInput,
   NotebookUpdateInput,
+  NoteFileRecord,
+  NoteFileCreateInput,
+  ThemeRecord,
+  ThemeCreateInput,
+  ThemeUpdateInput,
 } from "@/types/notes";
 import type { NoteRepository } from "@/types/services/note-repository";
 
@@ -59,11 +64,15 @@ type NoteDocument = Omit<NoteRecord, "tags" | "categories" | "relationsFrom" | "
 type TagDocument = TagRecord & { _id: string };
 type CategoryDocument = CategoryRecord & { _id: string };
 type NotebookDocument = NotebookRecord & { _id: string };
+type NoteFileDocument = NoteFileRecord & { _id: string };
+type ThemeDocument = ThemeRecord & { _id: string };
 
 const noteCollectionName = "notes";
 const tagCollectionName = "tags";
 const categoryCollectionName = "categories";
 const notebookCollectionName = "notebooks";
+const noteFileCollectionName = "noteFiles";
+const themeCollectionName = "themes";
 
 const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => ({
   id: doc.id ?? doc._id,
@@ -72,6 +81,7 @@ const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => ({
   color: doc.color ?? null,
   isPinned: doc.isPinned ?? false,
   isArchived: doc.isArchived ?? false,
+  isFavorite: doc.isFavorite ?? false,
   notebookId: doc.notebookId ?? null,
   createdAt: doc.createdAt ?? new Date(),
   updatedAt: doc.updatedAt ?? new Date(),
@@ -97,6 +107,7 @@ const toCategoryResponse = (doc: WithId<CategoryDocument>): CategoryRecord => ({
   color: doc.color ?? null,
   parentId: doc.parentId ?? null,
   notebookId: doc.notebookId ?? null,
+  themeId: doc.themeId ?? null,
   createdAt: doc.createdAt ?? new Date(),
   updatedAt: doc.updatedAt ?? new Date(),
 });
@@ -105,6 +116,38 @@ const toNotebookResponse = (doc: WithId<NotebookDocument>): NotebookRecord => ({
   id: doc.id ?? doc._id,
   name: doc.name,
   color: doc.color ?? null,
+  createdAt: doc.createdAt ?? new Date(),
+  updatedAt: doc.updatedAt ?? new Date(),
+});
+
+const toThemeResponse = (doc: WithId<ThemeDocument>): ThemeRecord => ({
+  id: doc.id ?? doc._id,
+  name: doc.name,
+  notebookId: doc.notebookId ?? null,
+  textColor: doc.textColor,
+  backgroundColor: doc.backgroundColor,
+  markdownHeadingColor: doc.markdownHeadingColor,
+  markdownLinkColor: doc.markdownLinkColor,
+  markdownCodeBackground: doc.markdownCodeBackground,
+  markdownCodeText: doc.markdownCodeText,
+  relatedNoteBorderWidth: doc.relatedNoteBorderWidth,
+  relatedNoteBorderColor: doc.relatedNoteBorderColor,
+  relatedNoteBackgroundColor: doc.relatedNoteBackgroundColor,
+  relatedNoteTextColor: doc.relatedNoteTextColor,
+  createdAt: doc.createdAt ?? new Date(),
+  updatedAt: doc.updatedAt ?? new Date(),
+});
+
+const toNoteFileResponse = (doc: WithId<NoteFileDocument>): NoteFileRecord => ({
+  id: doc.id ?? doc._id,
+  noteId: doc.noteId,
+  slotIndex: doc.slotIndex,
+  filename: doc.filename,
+  filepath: doc.filepath,
+  mimetype: doc.mimetype,
+  size: doc.size,
+  width: doc.width ?? null,
+  height: doc.height ?? null,
   createdAt: doc.createdAt ?? new Date(),
   updatedAt: doc.updatedAt ?? new Date(),
 });
@@ -195,6 +238,10 @@ const buildSearchFilter = (filters: NoteFilters = {}): Filter<NoteDocument> => {
     filter.isArchived = filters.isArchived;
   }
 
+  if (typeof filters.isFavorite === "boolean") {
+    filter.isFavorite = filters.isFavorite;
+  }
+
   if (filters.tagIds && filters.tagIds.length > 0) {
     filter["tags.tagId"] = { $in: filters.tagIds };
   }
@@ -259,9 +306,25 @@ export const mongoNoteRepository: NoteRepository = {
     const searchFilter = buildSearchFilter(effectiveFilters);
     const docs = await collection.find(searchFilter).sort({ updatedAt: -1 }).toArray();
     const notes = docs.map(toNoteResponse);
+    const noteIds = notes.map((note) => note.id);
+    const noteFileCollection = db.collection<NoteFileDocument>(noteFileCollectionName);
+    const noteFiles = noteIds.length
+      ? await noteFileCollection
+          .find({ noteId: { $in: noteIds } })
+          .sort({ slotIndex: 1 })
+          .toArray()
+      : [];
+    const filesByNoteId = new Map<string, NoteFileRecord[]>();
+    noteFiles.forEach((fileDoc) => {
+      const record = toNoteFileResponse(fileDoc);
+      const list = filesByNoteId.get(record.noteId) ?? [];
+      list.push(record);
+      filesByNoteId.set(record.noteId, list);
+    });
     const incomingMap = buildIncomingRelationsMap(notes);
     return notes.map((note) => ({
       ...note,
+      files: filesByNoteId.get(note.id) ?? [],
       relationsTo: incomingMap.get(note.id) ?? [],
     }));
   },
@@ -272,6 +335,11 @@ export const mongoNoteRepository: NoteRepository = {
     const doc = await collection.findOne({ $or: [{ id }, { _id: id }] });
     if (!doc) return null;
     const note = toNoteResponse(doc);
+    const noteFileCollection = db.collection<NoteFileDocument>(noteFileCollectionName);
+    const noteFiles = await noteFileCollection
+      .find({ noteId: note.id })
+      .sort({ slotIndex: 1 })
+      .toArray();
     const incomingDocs = await collection
       .find({ "relationsFrom.targetNoteId": note.id })
       .toArray();
@@ -295,7 +363,7 @@ export const mongoNoteRepository: NoteRepository = {
         };
       })
       .filter((rel): rel is NoteRelationToEmbedded => rel !== null);
-    return { ...note, relationsTo };
+    return { ...note, files: noteFiles.map(toNoteFileResponse), relationsTo };
   },
 
   async create(data) {
@@ -372,6 +440,7 @@ export const mongoNoteRepository: NoteRepository = {
       color: data.color ?? "#ffffff",
       isPinned: data.isPinned ?? false,
       isArchived: data.isArchived ?? false,
+      isFavorite: data.isFavorite ?? false,
       notebookId: resolvedNotebookId,
       createdAt: now,
       updatedAt: now,
@@ -397,6 +466,7 @@ export const mongoNoteRepository: NoteRepository = {
     if (data.color !== undefined) setFields.color = data.color;
     if (data.isPinned !== undefined) setFields.isPinned = data.isPinned;
     if (data.isArchived !== undefined) setFields.isArchived = data.isArchived;
+    if (data.isFavorite !== undefined) setFields.isFavorite = data.isFavorite;
     if (data.notebookId !== undefined) setFields.notebookId = data.notebookId ?? null;
 
 
@@ -499,6 +569,8 @@ export const mongoNoteRepository: NoteRepository = {
   async delete(id) {
     const db = await getMongoDb();
     const collection = db.collection<NoteDocument>(noteCollectionName);
+    const noteFileCollection = db.collection<NoteFileDocument>(noteFileCollectionName);
+    await noteFileCollection.deleteMany({ noteId: id });
     const result = await collection.deleteOne({ $or: [{ id }, { _id: id }] });
     return result.deletedCount > 0;
   },
@@ -640,6 +712,7 @@ export const mongoNoteRepository: NoteRepository = {
       description: data.description ?? null,
       color: data.color ?? "#10b981",
       parentId: data.parentId ?? null,
+      themeId: data.themeId ?? null,
       notebookId: resolvedNotebookId,
       createdAt: now,
       updatedAt: now,
@@ -660,6 +733,7 @@ export const mongoNoteRepository: NoteRepository = {
         ...(data.description !== undefined && { description: data.description }),
         ...(data.color !== undefined && { color: data.color }),
         ...(data.parentId !== undefined && { parentId: data.parentId }),
+        ...(data.themeId !== undefined && { themeId: data.themeId }),
       },
     };
 
@@ -789,12 +863,146 @@ export const mongoNoteRepository: NoteRepository = {
     const noteCollection = db.collection<NoteDocument>(noteCollectionName);
     const tagCollection = db.collection<TagDocument>(tagCollectionName);
     const categoryCollection = db.collection<CategoryDocument>(categoryCollectionName);
+    const themeCollection = db.collection<ThemeDocument>(themeCollectionName);
 
     await noteCollection.deleteMany({ notebookId: id });
     await tagCollection.deleteMany({ notebookId: id });
     await categoryCollection.deleteMany({ notebookId: id });
+    await themeCollection.deleteMany({ notebookId: id });
 
     const result = await collection.deleteOne({ $or: [{ id }, { _id: id }] });
+    return result.deletedCount > 0;
+  },
+
+  async getAllThemes(notebookId?: string | null): Promise<ThemeRecord[]> {
+    const db = await getMongoDb();
+    const collection = db.collection<ThemeDocument>(themeCollectionName);
+    const resolvedNotebookId =
+      notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
+    const docs = await collection
+      .find({ notebookId: resolvedNotebookId })
+      .sort({ name: 1 })
+      .toArray();
+    return docs.map(toThemeResponse);
+  },
+
+  async getThemeById(id: string): Promise<ThemeRecord | null> {
+    const db = await getMongoDb();
+    const collection = db.collection<ThemeDocument>(themeCollectionName);
+    const doc = await collection.findOne({ $or: [{ id }, { _id: id }] });
+    return doc ? toThemeResponse(doc) : null;
+  },
+
+  async createTheme(data: ThemeCreateInput): Promise<ThemeRecord> {
+    const db = await getMongoDb();
+    const collection = db.collection<ThemeDocument>(themeCollectionName);
+    const resolvedNotebookId =
+      data.notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
+    const id = randomUUID();
+    const now = new Date();
+    const doc: ThemeDocument = {
+      _id: id,
+      id,
+      name: data.name,
+      notebookId: resolvedNotebookId,
+      textColor: data.textColor ?? "#e2e8f0",
+      backgroundColor: data.backgroundColor ?? "#0f172a",
+      markdownHeadingColor: data.markdownHeadingColor ?? "#f8fafc",
+      markdownLinkColor: data.markdownLinkColor ?? "#38bdf8",
+      markdownCodeBackground: data.markdownCodeBackground ?? "#0b1220",
+      markdownCodeText: data.markdownCodeText ?? "#e2e8f0",
+      relatedNoteBorderWidth: data.relatedNoteBorderWidth ?? 1,
+      relatedNoteBorderColor: data.relatedNoteBorderColor ?? "#34d399",
+      relatedNoteBackgroundColor:
+        data.relatedNoteBackgroundColor ?? "#0f3a2f",
+      relatedNoteTextColor: data.relatedNoteTextColor ?? "#ecfdf5",
+      createdAt: now,
+      updatedAt: now,
+    };
+    await collection.insertOne(doc);
+    return toThemeResponse(doc as WithId<ThemeDocument>);
+  },
+
+  async updateTheme(id: string, data: ThemeUpdateInput): Promise<ThemeRecord | null> {
+    const db = await getMongoDb();
+    const collection = db.collection<ThemeDocument>(themeCollectionName);
+    const updateDoc: UpdateFilter<ThemeDocument> = {
+      $set: {
+        updatedAt: new Date(),
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.notebookId !== undefined && { notebookId: data.notebookId }),
+        ...(data.textColor !== undefined && { textColor: data.textColor }),
+        ...(data.backgroundColor !== undefined && { backgroundColor: data.backgroundColor }),
+        ...(data.markdownHeadingColor !== undefined && { markdownHeadingColor: data.markdownHeadingColor }),
+        ...(data.markdownLinkColor !== undefined && { markdownLinkColor: data.markdownLinkColor }),
+        ...(data.markdownCodeBackground !== undefined && { markdownCodeBackground: data.markdownCodeBackground }),
+        ...(data.markdownCodeText !== undefined && { markdownCodeText: data.markdownCodeText }),
+        ...(data.relatedNoteBorderWidth !== undefined && { relatedNoteBorderWidth: data.relatedNoteBorderWidth }),
+        ...(data.relatedNoteBorderColor !== undefined && { relatedNoteBorderColor: data.relatedNoteBorderColor }),
+        ...(data.relatedNoteBackgroundColor !== undefined && { relatedNoteBackgroundColor: data.relatedNoteBackgroundColor }),
+        ...(data.relatedNoteTextColor !== undefined && { relatedNoteTextColor: data.relatedNoteTextColor }),
+      },
+    };
+    const result = await collection.findOneAndUpdate(
+      { $or: [{ id }, { _id: id }] },
+      updateDoc,
+      { returnDocument: "after" }
+    );
+    if (!result) return null;
+    return toThemeResponse(result);
+  },
+
+  async deleteTheme(id: string): Promise<boolean> {
+    const db = await getMongoDb();
+    const collection = db.collection<ThemeDocument>(themeCollectionName);
+    const result = await collection.deleteOne({ $or: [{ id }, { _id: id }] });
+    return result.deletedCount > 0;
+  },
+
+  async createNoteFile(_data: NoteFileCreateInput): Promise<NoteFileRecord> {
+    const db = await getMongoDb();
+    const collection = db.collection<NoteFileDocument>(noteFileCollectionName);
+    const id = randomUUID();
+    const now = new Date();
+    await collection.deleteMany({
+      noteId: _data.noteId,
+      slotIndex: _data.slotIndex,
+    });
+    const doc: NoteFileDocument = {
+      _id: id,
+      id,
+      noteId: _data.noteId,
+      slotIndex: _data.slotIndex,
+      filename: _data.filename,
+      filepath: _data.filepath,
+      mimetype: _data.mimetype,
+      size: _data.size,
+      width: _data.width ?? null,
+      height: _data.height ?? null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await collection.insertOne(doc);
+    return toNoteFileResponse(doc as WithId<NoteFileDocument>);
+  },
+
+  async getNoteFiles(_noteId: string): Promise<NoteFileRecord[]> {
+    const db = await getMongoDb();
+    const collection = db.collection<NoteFileDocument>(noteFileCollectionName);
+    const docs = await collection
+      .find({ noteId: _noteId })
+      .sort({ slotIndex: 1 })
+      .toArray();
+    return docs.map(toNoteFileResponse);
+  },
+
+  async deleteNoteFile(_noteId: string, _slotIndex: number): Promise<boolean> {
+    const db = await getMongoDb();
+    const collection = db.collection<NoteFileDocument>(noteFileCollectionName);
+    const result = await collection.deleteOne({
+      noteId: _noteId,
+      slotIndex: _slotIndex,
+    });
     return result.deletedCount > 0;
   },
 };

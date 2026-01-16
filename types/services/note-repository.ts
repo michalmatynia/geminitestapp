@@ -13,6 +13,11 @@ import type {
   NotebookRecord,
   NotebookCreateInput,
   NotebookUpdateInput,
+  NoteFileRecord,
+  NoteFileCreateInput,
+  ThemeRecord,
+  ThemeCreateInput,
+  ThemeUpdateInput,
 } from "@/types/notes";
 
 export type NoteRepository = {
@@ -45,4 +50,16 @@ export type NoteRepository = {
   updateNotebook(id: string, data: NotebookUpdateInput): Promise<NotebookRecord | null>;
   deleteNotebook(id: string): Promise<boolean>;
   getOrCreateDefaultNotebook(): Promise<NotebookRecord>;
+
+  // Themes
+  getAllThemes(notebookId?: string | null): Promise<ThemeRecord[]>;
+  getThemeById(id: string): Promise<ThemeRecord | null>;
+  createTheme(data: ThemeCreateInput): Promise<ThemeRecord>;
+  updateTheme(id: string, data: ThemeUpdateInput): Promise<ThemeRecord | null>;
+  deleteTheme(id: string): Promise<boolean>;
+
+  // Note Files
+  createNoteFile(data: NoteFileCreateInput): Promise<NoteFileRecord>;
+  getNoteFiles(noteId: string): Promise<NoteFileRecord[]>;
+  deleteNoteFile(noteId: string, slotIndex: number): Promise<boolean>;
 };

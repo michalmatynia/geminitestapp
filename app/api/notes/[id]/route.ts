@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { noteService } from "@/lib/services/noteService/index";
+import { deleteNoteFile } from "@/lib/utils/fileUploader";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { noteUpdateSchema } from "@/lib/validations/notes";
 import type { NoteWithRelations, RelatedNote } from "@/types/notes";
@@ -144,6 +145,17 @@ export async function DELETE(
 ) {
   const { id } = await params;
   try {
+    try {
+      const files = await noteService.getNoteFiles(id);
+      await Promise.all(
+        files.map((file) => deleteNoteFile(id, file.slotIndex, file.filepath))
+      );
+    } catch (error) {
+      console.error("[notes][DELETE] Failed to clean up note files", {
+        noteId: id,
+        error,
+      });
+    }
     await noteService.delete(id);
     return NextResponse.json({ success: true });
   } catch (error) {

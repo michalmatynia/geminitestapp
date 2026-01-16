@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Pin, Archive, ChevronRight, X } from "lucide-react";
-import type { NoteWithRelations, TagRecord, CategoryWithChildren } from "@/types/notes";
+import { Plus, Pin, Archive, ChevronRight, ChevronLeft, Star, X } from "lucide-react";
+import type { NoteWithRelations, TagRecord, CategoryWithChildren, ThemeRecord } from "@/types/notes";
 import { Button } from "@/components/ui/button";
 import ModalShell from "@/components/ui/modal-shell";
 import { FolderTree } from "./components/FolderTree";
@@ -14,17 +14,25 @@ import { NotesFilters } from "./components/NotesFilters";
 import { NoteCard } from "./components/NoteCard";
 import { buildBreadcrumbPath, getCategoryIdsWithDescendants, renderMarkdownToHtml } from "./utils";
 
+type UndoAction =
+  | { type: "moveNote"; noteId: string; fromFolderId: string | null; toFolderId: string | null }
+  | { type: "moveFolder"; folderId: string; fromParentId: string | null; toParentId: string | null }
+  | { type: "renameFolder"; folderId: string; fromName: string; toName: string }
+  | { type: "renameNote"; noteId: string; fromTitle: string; toTitle: string };
+
 export default function NotesPage() {
   const { isMenuCollapsed } = useAdminLayout();
   const { settings, updateSettings } = useNoteSettings();
   const { toast } = useToast();
   const [notes, setNotes] = useState<NoteWithRelations[]>([]);
   const [tags, setTags] = useState<TagRecord[]>([]);
+  const [themes, setThemes] = useState<ThemeRecord[]>([]);
   const [folderTree, setFolderTree] = useState<CategoryWithChildren[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPinned, setFilterPinned] = useState<boolean | undefined>(undefined);
   const [filterArchived, setFilterArchived] = useState<boolean | undefined>(undefined);
+  const [filterFavorite, setFilterFavorite] = useState<boolean | undefined>(undefined);
   const [selectedNote, setSelectedNote] = useState<NoteWithRelations | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -38,6 +46,8 @@ export default function NotesPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(24);
   const [isFolderTreeCollapsed, setIsFolderTreeCollapsed] = useState(false);
+  const [undoStack, setUndoStack] = useState<UndoAction[]>([]);
+  const notesRef = React.useRef(notes);
 
   // Use settings from context (including selectedFolderId)
   const {
@@ -54,13 +64,13 @@ export default function NotesPage() {
   } = settings;
 
   // Helper to update selectedFolderId in settings
-  const setSelectedFolderId = (id: string | null) => {
+  const setSelectedFolderId = React.useCallback((id: string | null) => {
     updateSettings({ selectedFolderId: id });
-  };
+  }, [updateSettings]);
 
-  const setSelectedNotebookId = (id: string | null) => {
+  const setSelectedNotebookId = React.useCallback((id: string | null) => {
     updateSettings({ selectedNotebookId: id });
-  };
+  }, [updateSettings]);
 
   const notesInScope = React.useMemo(() => {
     if (!selectedFolderId) return notes;
@@ -154,6 +164,65 @@ export default function NotesPage() {
     folderTreeRef.current = folderTree;
   }, [folderTree]);
 
+  React.useEffect(() => {
+    notesRef.current = notes;
+  }, [notes]);
+
+  const findFolderById = React.useCallback(
+    (foldersToScan: CategoryWithChildren[], id: string): CategoryWithChildren | null => {
+      for (const node of foldersToScan) {
+        if (node.id === id) return node;
+        const found = findFolderById(node.children, id);
+        if (found) return found;
+      }
+      return null;
+    },
+    []
+  );
+
+  const findFolderParentId = React.useCallback(
+    (foldersToScan: CategoryWithChildren[], id: string, parentId: string | null = null): string | null => {
+      for (const node of foldersToScan) {
+        if (node.id === id) return parentId;
+        const found = findFolderParentId(node.children, id, node.id);
+        if (found !== null) return found;
+      }
+      return null;
+    },
+    []
+  );
+
+  const themeMap = React.useMemo(
+    () => new Map(themes.map((theme) => [theme.id, theme])),
+    [themes]
+  );
+
+  const getThemeForFolderId = React.useCallback(
+    (folderId: string | null | undefined) => {
+      if (!folderId) return null;
+      const folder = findFolderById(folderTreeRef.current, folderId);
+      if (!folder?.themeId) return null;
+      return themeMap.get(folder.themeId) ?? null;
+    },
+    [findFolderById, themeMap]
+  );
+
+  const selectedFolderTheme = React.useMemo(
+    () => getThemeForFolderId(selectedFolderId),
+    [getThemeForFolderId, selectedFolderId]
+  );
+
+  const selectedFolderThemeId = React.useMemo(() => {
+    if (!selectedFolderId) return "";
+    const folder = findFolderById(folderTree, selectedFolderId);
+    return folder?.themeId ?? "";
+  }, [selectedFolderId, folderTree, findFolderById]);
+
+  const selectedNoteTheme = React.useMemo(() => {
+    const folderId = selectedNote?.categories?.[0]?.categoryId;
+    return getThemeForFolderId(folderId);
+  }, [selectedNote?.categories, getThemeForFolderId]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
@@ -176,6 +245,7 @@ export default function NotesPage() {
       }
       if (filterPinned !== undefined) params.append("isPinned", String(filterPinned));
       if (filterArchived !== undefined) params.append("isArchived", String(filterArchived));
+      if (filterFavorite !== undefined) params.append("isFavorite", String(filterFavorite));
       if (filterTagIds.length > 0) params.append("tagIds", filterTagIds.join(","));
 
       if (selectedFolderId) {
@@ -196,7 +266,7 @@ export default function NotesPage() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearchQuery, searchScope, filterPinned, filterArchived, selectedFolderId, filterTagIds, selectedNotebookId]);
+  }, [debouncedSearchQuery, searchScope, filterPinned, filterArchived, filterFavorite, selectedFolderId, filterTagIds, selectedNotebookId]);
 
   const fetchTags = React.useCallback(async () => {
     try {
@@ -210,10 +280,23 @@ export default function NotesPage() {
     }
   }, [selectedNotebookId]);
 
+  const fetchThemes = React.useCallback(async () => {
+    try {
+      if (!selectedNotebookId) return;
+      const params = new URLSearchParams({ notebookId: selectedNotebookId });
+      const response = await fetch(`/api/notes/themes?${params.toString()}`, { cache: "no-store" });
+      const data = (await response.json()) as ThemeRecord[];
+      setThemes(data);
+    } catch (error) {
+      console.error("Failed to fetch themes:", error);
+    }
+  }, [selectedNotebookId]);
+
   useEffect(() => {
     void fetchTags();
     void fetchFolderTree();
-  }, [fetchTags, fetchFolderTree]);
+    void fetchThemes();
+  }, [fetchTags, fetchFolderTree, fetchThemes]);
 
   useEffect(() => {
     void fetchNotes();
@@ -246,6 +329,7 @@ export default function NotesPage() {
     setSelectedNote(null);
     setIsEditing(false);
     setFilterTagIds([]);
+    setFilterFavorite(undefined);
     setPage(1);
     setNotes([]);
     setTags([]);
@@ -266,7 +350,10 @@ export default function NotesPage() {
 
   const previewStyle = React.useMemo(() => {
     const fallback = "#1f2937";
-    const color = selectedNote?.color || fallback;
+    const color =
+      selectedNote?.color && selectedNote.color !== "#ffffff"
+        ? selectedNote.color
+        : selectedNoteTheme?.backgroundColor || selectedNote?.color || fallback;
     const hex = color.replace("#", "");
     if (!/^[0-9a-fA-F]{6}$/.test(hex)) {
       return { backgroundColor: color };
@@ -281,19 +368,25 @@ export default function NotesPage() {
       borderColor,
       boxShadow: luminance > 0.78 ? "0 0 0 1px rgba(15, 23, 42, 0.12)" : undefined,
     };
-  }, [selectedNote?.color]);
+  }, [selectedNote?.color, selectedNoteTheme?.backgroundColor]);
 
   const previewTextColor = React.useMemo(() => {
     const fallback = "#1f2937";
-    const color = selectedNote?.color || fallback;
-    return getReadableTextColor(color);
-  }, [selectedNote?.color]);
+    const background =
+      selectedNote?.color && selectedNote.color !== "#ffffff"
+        ? selectedNote.color
+        : selectedNoteTheme?.backgroundColor || selectedNote?.color || fallback;
+    if (selectedNoteTheme?.textColor && selectedNote?.color !== "#ffffff") {
+      return getReadableTextColor(background);
+    }
+    return selectedNoteTheme?.textColor ?? getReadableTextColor(background);
+  }, [selectedNote?.color, selectedNoteTheme?.backgroundColor, selectedNoteTheme?.textColor]);
 
   const previewTypographyStyle = React.useMemo(
     () => ({
       color: previewTextColor,
       ["--tw-prose-body" as never]: previewTextColor,
-      ["--tw-prose-headings" as never]: previewTextColor,
+      ["--tw-prose-headings" as never]: selectedNoteTheme?.markdownHeadingColor ?? previewTextColor,
       ["--tw-prose-lead" as never]: previewTextColor,
       ["--tw-prose-bold" as never]: previewTextColor,
       ["--tw-prose-counters" as never]: previewTextColor,
@@ -301,11 +394,42 @@ export default function NotesPage() {
       ["--tw-prose-quotes" as never]: previewTextColor,
       ["--tw-prose-quote-borders" as never]: "rgba(148, 163, 184, 0.35)",
       ["--tw-prose-hr" as never]: "rgba(148, 163, 184, 0.35)",
+      ["--note-link-color" as never]:
+        selectedNoteTheme?.markdownLinkColor ?? "#38bdf8",
+      ["--note-code-bg" as never]:
+        selectedNoteTheme?.markdownCodeBackground ?? "#0f172a",
+      ["--note-code-text" as never]:
+        selectedNoteTheme?.markdownCodeText ?? "#e2e8f0",
+      ["--note-inline-code-bg" as never]:
+        selectedNoteTheme?.markdownCodeBackground ?? "rgba(15, 23, 42, 0.12)",
     }),
-    [previewTextColor]
+    [
+      previewTextColor,
+      selectedNoteTheme?.markdownHeadingColor,
+      selectedNoteTheme?.markdownLinkColor,
+      selectedNoteTheme?.markdownCodeBackground,
+      selectedNoteTheme?.markdownCodeText,
+    ]
   );
 
-  const handleCreateFolder = async (parentId?: string | null) => {
+  const relatedPreviewStyle = React.useMemo(
+    () => ({
+      borderWidth: `${selectedNoteTheme?.relatedNoteBorderWidth ?? 1}px`,
+      borderColor:
+        selectedNoteTheme?.relatedNoteBorderColor ?? "rgba(15, 23, 42, 0.2)",
+      backgroundColor:
+        selectedNoteTheme?.relatedNoteBackgroundColor ?? "rgba(15, 23, 42, 0.05)",
+      color: selectedNoteTheme?.relatedNoteTextColor ?? "#f8fafc",
+    }),
+    [
+      selectedNoteTheme?.relatedNoteBorderWidth,
+      selectedNoteTheme?.relatedNoteBorderColor,
+      selectedNoteTheme?.relatedNoteBackgroundColor,
+      selectedNoteTheme?.relatedNoteTextColor,
+    ]
+  );
+
+  const handleCreateFolder = React.useCallback(async (parentId?: string | null) => {
     const folderName = prompt("Enter folder name:");
     if (!folderName) return;
 
@@ -322,14 +446,18 @@ export default function NotesPage() {
       });
 
       if (response.ok) {
+        const created = (await response.json()) as { id?: string };
         await fetchFolderTree();
+        if (created?.id) {
+          setSelectedFolderId(created.id);
+        }
       }
     } catch (error) {
       console.error("Failed to create folder:", error);
     }
-  };
+  }, [selectedNotebookId, fetchFolderTree]);
 
-  const handleDeleteFolder = async (folderId: string) => {
+  const handleDeleteFolder = React.useCallback(async (folderId: string) => {
     if (!confirm("Delete this folder and all its contents (subfolders, notes, and attachments)? This action cannot be undone.")) return;
 
     try {
@@ -354,9 +482,11 @@ export default function NotesPage() {
     } catch (error) {
       console.error("Failed to delete folder:", error);
     }
-  };
+  }, [fetchFolderTree, fetchNotes, selectedFolderId, selectedNote, setSelectedFolderId]);
 
-  const handleRenameFolder = async (folderId: string, newName: string) => {
+  const handleRenameFolder = React.useCallback(async (folderId: string, newName: string) => {
+    const currentFolder = findFolderById(folderTreeRef.current, folderId);
+    const previousName = currentFolder?.name ?? "";
     try {
       const response = await fetch(`/api/notes/categories/${folderId}`, {
         method: "PATCH",
@@ -365,20 +495,45 @@ export default function NotesPage() {
       });
 
       if (response.ok) {
+        if (previousName && previousName !== newName) {
+          setUndoStack((prev) => [
+            { type: "renameFolder", folderId, fromName: previousName, toName: newName },
+            ...prev,
+          ]);
+        }
         await fetchFolderTree();
       }
     } catch (error) {
       console.error("Failed to rename folder:", error);
     }
-  };
+  }, [fetchFolderTree, findFolderById]);
 
-  const handleCreateNoteInFolder = (folderId: string) => {
+  const handleUpdateFolderTheme = React.useCallback(
+    async (themeId: string | null) => {
+      if (!selectedFolderId) return;
+      try {
+        const response = await fetch(`/api/notes/categories/${selectedFolderId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ themeId }),
+        });
+        if (response.ok) {
+          await fetchFolderTree();
+        }
+      } catch (error) {
+        console.error("Failed to update folder theme:", error);
+      }
+    },
+    [selectedFolderId, fetchFolderTree]
+  );
+
+  const handleCreateNoteInFolder = React.useCallback((folderId: string) => {
     setSelectedFolderId(folderId);
     setIsCreating(true);
     setSelectedNote(null);
-  };
+  }, [setSelectedFolderId]);
 
-  const handleDuplicateNote = async (noteId: string) => {
+  const handleDuplicateNote = React.useCallback(async (noteId: string) => {
     try {
       // First, fetch the note to duplicate
       const response = await fetch(`/api/notes/${noteId}`, { cache: "no-store" });
@@ -391,7 +546,7 @@ export default function NotesPage() {
       let newTitle = `${baseTitle} (1)`;
 
       // Check existing notes to find the next available number
-      const existingNotes = notes.filter((n) =>
+      const existingNotes = notesRef.current.filter((n) =>
         n.title.startsWith(baseTitle) && n.title !== note.title
       );
       if (existingNotes.length > 0) {
@@ -415,6 +570,7 @@ export default function NotesPage() {
           color: note.color,
           isPinned: note.isPinned,
           isArchived: note.isArchived,
+          isFavorite: note.isFavorite,
           tagIds: note.tags.map((t) => t.tagId),
           categoryIds: note.categories.map((c) => c.categoryId),
           notebookId: note.notebookId ?? selectedNotebookId ?? null,
@@ -428,9 +584,9 @@ export default function NotesPage() {
     } catch (error) {
       console.error("Failed to duplicate note:", error);
     }
-  };
+  }, [selectedNotebookId, fetchNotes, fetchFolderTree]);
 
-  const handleDeleteNoteFromTree = async (noteId: string) => {
+  const handleDeleteNoteFromTree = React.useCallback(async (noteId: string) => {
     if (!confirm("Are you sure you want to delete this note?")) return;
 
     try {
@@ -445,9 +601,11 @@ export default function NotesPage() {
     } catch (error) {
       console.error("Failed to delete note:", error);
     }
-  };
+  }, [fetchNotes, fetchFolderTree, selectedNote]);
 
-  const handleRenameNote = async (noteId: string, newTitle: string) => {
+  const handleRenameNote = React.useCallback(async (noteId: string, newTitle: string) => {
+    const currentNote = notesRef.current.find((note) => note.id === noteId);
+    const previousTitle = currentNote?.title ?? "";
     try {
       const response = await fetch(`/api/notes/${noteId}`, {
         method: "PATCH",
@@ -456,6 +614,12 @@ export default function NotesPage() {
       });
 
       if (response.ok) {
+        if (previousTitle && previousTitle !== newTitle) {
+          setUndoStack((prev) => [
+            { type: "renameNote", noteId, fromTitle: previousTitle, toTitle: newTitle },
+            ...prev,
+          ]);
+        }
         await fetchNotes();
         await fetchFolderTree();
         // Update selected note if it's the one being renamed
@@ -467,7 +631,7 @@ export default function NotesPage() {
     } catch (error) {
       console.error("Failed to rename note:", error);
     }
-  };
+  }, [fetchNotes, fetchFolderTree, selectedNote]);
 
   const handleOpenCreateModal = () => {
     setIsCreating(true);
@@ -484,19 +648,53 @@ export default function NotesPage() {
     void fetchFolderTree();
   };
 
-  const handleSelectNote = (note: NoteWithRelations) => {
+  const handleSelectNote = React.useCallback((note: NoteWithRelations) => {
     setSelectedNote(note);
     setIsEditing(false);
-  };
+  }, []);
 
-  const handleFilterByTag = (tagId: string) => {
+  const handleSelectFolderFromCard = React.useCallback(
+    (folderId: string | null) => {
+      setSelectedFolderId(folderId);
+      setSelectedNote(null);
+      setIsEditing(false);
+    },
+    [setSelectedFolderId]
+  );
+
+  const handleSelectFolderFromTree = React.useCallback(
+    (folderId: string | null) => {
+      setSelectedFolderId(folderId);
+      setSelectedNote(null);
+      setIsEditing(false);
+    },
+    [setSelectedFolderId]
+  );
+
+  const handleCollapseFolderTree = React.useCallback(() => {
+    setIsFolderTreeCollapsed(true);
+  }, []);
+
+  const handleExpandFolderTree = React.useCallback(() => {
+    setIsFolderTreeCollapsed(false);
+  }, []);
+
+  const handleDragStart = React.useCallback((noteId: string) => {
+    setDraggedNoteId(noteId);
+  }, []);
+
+  const handleDragEnd = React.useCallback(() => {
+    setDraggedNoteId(null);
+  }, []);
+
+  const handleFilterByTag = React.useCallback((tagId: string) => {
     setSelectedFolderId(null);
     setFilterTagIds([tagId]);
     setSearchQuery("");
     setSelectedNote(null);
     setIsEditing(false);
     setHighlightTagId(tagId);
-  };
+  }, [setSelectedFolderId]);
 
   useEffect(() => {
     if (!highlightTagId) return;
@@ -506,7 +704,7 @@ export default function NotesPage() {
     return () => clearTimeout(timer);
   }, [highlightTagId]);
 
-  const handleSelectNoteFromTree = async (noteId: string) => {
+  const handleSelectNoteFromTree = React.useCallback(async (noteId: string) => {
     try {
       const response = await fetch(`/api/notes/${noteId}`, { cache: "no-store" });
       if (response.ok) {
@@ -517,7 +715,7 @@ export default function NotesPage() {
     } catch (error) {
       console.error("Failed to fetch note:", error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!selectedNote) {
@@ -569,7 +767,7 @@ export default function NotesPage() {
     };
   }, [selectedNote]);
 
-  const handleUpdateSuccess = () => {
+  const handleUpdateSuccess = React.useCallback(() => {
     setIsEditing(false);
     void fetchNotes();
     void fetchFolderTree();
@@ -577,9 +775,42 @@ export default function NotesPage() {
     if (selectedNote) {
       void handleSelectNoteFromTree(selectedNote.id);
     }
-  };
+  }, [fetchNotes, fetchFolderTree, selectedNote, handleSelectNoteFromTree]);
 
-  const handleUnlinkFromPreview = async (relatedId: string) => {
+  const handleToggleFavoritesFilter = React.useCallback(() => {
+    setFilterFavorite((prev) => (prev ? undefined : true));
+    setSelectedFolderId(null);
+    setSelectedNote(null);
+    setIsEditing(false);
+  }, [setSelectedFolderId]);
+
+  const handleToggleFavorite = React.useCallback(async (note: NoteWithRelations, nextValue?: boolean) => {
+    const nextFavorite = nextValue ?? !note.isFavorite;
+    try {
+      const response = await fetch(`/api/notes/${note.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isFavorite: nextFavorite }),
+      });
+      if (!response.ok) {
+        toast("Failed to update favorite", { variant: "error" });
+        return;
+      }
+      setNotes((prev) =>
+        prev.map((item) =>
+          item.id === note.id ? { ...item, isFavorite: nextFavorite } : item
+        )
+      );
+      setSelectedNote((prev) =>
+        prev && prev.id === note.id ? { ...prev, isFavorite: nextFavorite } : prev
+      );
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+      toast("Failed to update favorite", { variant: "error" });
+    }
+  }, [toast]);
+
+  const handleUnlinkFromPreview = React.useCallback(async (relatedId: string) => {
     if (!selectedNote) return;
     const relationIds =
       selectedNote.relations?.map((rel) => rel.id) ||
@@ -607,9 +838,11 @@ export default function NotesPage() {
       console.error("Failed to unlink note:", error);
       toast("Failed to unlink note", { variant: "error" });
     }
-  };
+  }, [selectedNote, fetchNotes, handleSelectNoteFromTree, toast]);
 
-  const handleMoveNoteToFolder = async (noteId: string, folderId: string | null) => {
+  const handleMoveNoteToFolder = React.useCallback(async (noteId: string, folderId: string | null) => {
+    const currentNote = notesRef.current.find((note) => note.id === noteId);
+    const previousFolderId = currentNote?.categories?.[0]?.categoryId ?? null;
     try {
       const response = await fetch(`/api/notes/${noteId}`, {
         method: "PATCH",
@@ -620,6 +853,12 @@ export default function NotesPage() {
       });
 
       if (response.ok) {
+        if (previousFolderId !== folderId) {
+          setUndoStack((prev) => [
+            { type: "moveNote", noteId, fromFolderId: previousFolderId, toFolderId: folderId },
+            ...prev,
+          ]);
+        }
         // Fetch folder tree first, then notes will use the updated tree via ref
         await fetchFolderTree();
         await fetchNotes();
@@ -627,9 +866,9 @@ export default function NotesPage() {
     } catch (error) {
       console.error("Failed to move note:", error);
     }
-  };
+  }, [fetchFolderTree, fetchNotes]);
 
-  const handleRelateNotes = async (sourceNoteId: string, targetNoteId: string) => {
+  const handleRelateNotes = React.useCallback(async (sourceNoteId: string, targetNoteId: string) => {
     if (!sourceNoteId || !targetNoteId) return;
     if (sourceNoteId === targetNoteId) return;
     try {
@@ -693,9 +932,10 @@ export default function NotesPage() {
       console.error("Failed to relate notes:", error);
       toast("Failed to link notes", { variant: "error" });
     }
-  };
+  }, [fetchFolderTree, fetchNotes, selectedNote, handleSelectNoteFromTree, toast]);
 
-  const handleMoveFolderToFolder = async (folderId: string, targetParentId: string | null) => {
+  const handleMoveFolderToFolder = React.useCallback(async (folderId: string, targetParentId: string | null) => {
+    const previousParentId = findFolderParentId(folderTreeRef.current, folderId);
     try {
       const response = await fetch(`/api/notes/categories/${folderId}`, {
         method: "PATCH",
@@ -706,13 +946,86 @@ export default function NotesPage() {
       });
 
       if (response.ok) {
+        if (previousParentId !== targetParentId) {
+          setUndoStack((prev) => [
+            { type: "moveFolder", folderId, fromParentId: previousParentId, toParentId: targetParentId },
+            ...prev,
+          ]);
+        }
         await fetchFolderTree();
         await fetchNotes();
       }
     } catch (error) {
       console.error("Failed to move folder:", error);
     }
-  };
+  }, [fetchFolderTree, fetchNotes, findFolderParentId]);
+
+  const formatUndoLabel = React.useCallback((action: UndoAction) => {
+    if (action.type === "moveNote") return "Moved note";
+    if (action.type === "moveFolder") return "Moved folder";
+    if (action.type === "renameFolder") return `Renamed folder to "${action.toName}"`;
+    return `Renamed note to "${action.toTitle}"`;
+  }, []);
+
+  const applyUndoAction = React.useCallback(async (action: UndoAction) => {
+    if (action.type === "moveNote") {
+      await fetch(`/api/notes/${action.noteId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          categoryIds: action.fromFolderId ? [action.fromFolderId] : [],
+        }),
+      });
+      return;
+    }
+    if (action.type === "moveFolder") {
+      await fetch(`/api/notes/categories/${action.folderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ parentId: action.fromParentId ?? null }),
+      });
+      return;
+    }
+    if (action.type === "renameFolder") {
+      await fetch(`/api/notes/categories/${action.folderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: action.fromName }),
+      });
+      return;
+    }
+    await fetch(`/api/notes/${action.noteId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: action.fromTitle }),
+    });
+  }, []);
+
+  const handleUndoFolderTree = React.useCallback(async (count = 1) => {
+    const actionsToUndo = undoStack.slice(0, count);
+    if (actionsToUndo.length === 0) return;
+    setUndoStack((prev) => prev.slice(count));
+    try {
+      for (const action of actionsToUndo) {
+        await applyUndoAction(action);
+      }
+      await fetchFolderTree();
+      await fetchNotes();
+    } catch (error) {
+      console.error("Failed to undo folder tree action:", error);
+      toast("Failed to undo", { variant: "error" });
+    }
+  }, [undoStack, applyUndoAction, fetchFolderTree, fetchNotes, toast]);
+
+  const handleUndoAtIndex = React.useCallback((index: number) => {
+    const count = Math.max(1, index + 1);
+    void handleUndoFolderTree(count);
+  }, [handleUndoFolderTree]);
+
+  const undoHistory = React.useMemo(
+    () => undoStack.map((action) => ({ label: formatUndoLabel(action) })),
+    [undoStack, formatUndoLabel]
+  );
 
   return (
     <div className="w-full">
@@ -731,11 +1044,7 @@ export default function NotesPage() {
             <FolderTree
               folders={folderTree}
               selectedFolderId={selectedFolderId}
-              onSelectFolder={(id) => {
-                setSelectedFolderId(id);
-                setSelectedNote(null);
-                setIsEditing(false);
-              }}
+              onSelectFolder={handleSelectFolderFromTree}
               onCreateFolder={handleCreateFolder}
               onCreateNote={handleCreateNoteInFolder}
               onDeleteFolder={handleDeleteFolder}
@@ -747,11 +1056,17 @@ export default function NotesPage() {
               onRelateNotes={handleRelateNotes}
               selectedNoteId={selectedNote?.id}
               onDropNote={handleMoveNoteToFolder}
-              onDropFolder={handleMoveFolderToFolder}
-              draggedNoteId={draggedNoteId}
-              setDraggedNoteId={setDraggedNoteId}
-              onToggleCollapse={() => setIsFolderTreeCollapsed(true)}
-            />
+            onDropFolder={handleMoveFolderToFolder}
+            draggedNoteId={draggedNoteId}
+            setDraggedNoteId={setDraggedNoteId}
+            onToggleCollapse={handleCollapseFolderTree}
+            isFavoritesActive={filterFavorite === true}
+            onToggleFavorites={handleToggleFavoritesFilter}
+            canUndo={undoStack.length > 0}
+            onUndo={() => handleUndoFolderTree(1)}
+            undoHistory={undoHistory}
+            onUndoAtIndex={handleUndoAtIndex}
+          />
           </div>
         )}
 
@@ -761,6 +1076,16 @@ export default function NotesPage() {
             <div className="flex h-full flex-col">
               {/* Breadcrumb for selected note */}
               <div className="mb-4 flex items-center gap-2 text-sm text-gray-400">
+                {isFolderTreeCollapsed && (
+                  <Button
+                    onClick={handleExpandFolderTree}
+                    variant="outline"
+                    className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+                  >
+                    <ChevronLeft className="-scale-x-100" size={16} />
+                    <span className="ml-2">Show Folders</span>
+                  </Button>
+                )}
                 {buildBreadcrumbPath(
                   selectedNote.categories[0]?.categoryId || null,
                   selectedNote.title,
@@ -776,7 +1101,7 @@ export default function NotesPage() {
                           setSelectedNote(null);
                           setIsEditing(false);
                         }}
-                        className="hover:text-blue-400 transition"
+                        className="cursor-pointer hover:text-blue-400 transition"
                       >
                         {crumb.name}
                       </button>
@@ -789,15 +1114,6 @@ export default function NotesPage() {
               </div>
 
               <div className="mb-4 flex items-center gap-4">
-                {isFolderTreeCollapsed && (
-                  <Button
-                    onClick={() => setIsFolderTreeCollapsed(false)}
-                    variant="outline"
-                    className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
-                  >
-                    Show Folders
-                  </Button>
-                )}
                 <Button
                   onClick={() => {
                     if (isEditing) {
@@ -811,6 +1127,19 @@ export default function NotesPage() {
                 >
                   Back
                 </Button>
+                <button
+                  type="button"
+                  onClick={() => handleToggleFavorite(selectedNote)}
+                  className="flex items-center gap-2 rounded border border-gray-700 px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white"
+                >
+                  <Star
+                    size={16}
+                    className={selectedNote.isFavorite ? "fill-yellow-400 text-yellow-500" : ""}
+                  />
+                  <span className="text-sm">
+                    {selectedNote.isFavorite ? "Favorited" : "Favorite"}
+                  </span>
+                </button>
                 {!isEditing ? (
                   <Button
                     onClick={() => setIsEditing(true)}
@@ -873,6 +1202,7 @@ export default function NotesPage() {
                     notebookId={selectedNotebookId}
                     onSuccess={handleUpdateSuccess}
                     onTagCreated={fetchTags}
+                    folderTheme={selectedNoteTheme}
                     onSelectRelatedNote={(noteId) => {
                       void handleSelectNoteFromTree(noteId);
                     }}
@@ -896,6 +1226,36 @@ export default function NotesPage() {
                     style={previewTypographyStyle}
                     dangerouslySetInnerHTML={{
                       __html: renderMarkdownToHtml(selectedNote.content),
+                    }}
+                    onMouseOver={(e) => {
+                      const target = e.target as HTMLElement;
+                      const wrapper = target.closest("[data-code]") as HTMLElement | null;
+                      const button = wrapper?.querySelector("[data-copy-code]") as HTMLElement | null;
+                      if (button) button.style.opacity = "1";
+                    }}
+                    onMouseOut={(e) => {
+                      const target = e.target as HTMLElement;
+                      const wrapper = target.closest("[data-code]") as HTMLElement | null;
+                      const button = wrapper?.querySelector("[data-copy-code]") as HTMLElement | null;
+                      if (button) button.style.opacity = "0";
+                    }}
+                    onClick={(e) => {
+                      const target = e.target as HTMLElement;
+                      const copyButton = target.closest("[data-copy-code]") as HTMLButtonElement | null;
+                      if (!copyButton) return;
+                      const wrapper = copyButton.closest("[data-code]") as HTMLElement | null;
+                      const encoded = wrapper?.getAttribute("data-code");
+                      if (!encoded) return;
+                      const originalLabel = copyButton.textContent;
+                      navigator.clipboard
+                        .writeText(decodeURIComponent(encoded))
+                        .then(() => {
+                          copyButton.textContent = "Copied";
+                          window.setTimeout(() => {
+                            copyButton.textContent = originalLabel ?? "Copy";
+                          }, 1500);
+                        })
+                        .catch(() => toast("Failed to copy code"));
                     }}
                   />
                   {((selectedNote.relations?.length ?? 0) > 0 ||
@@ -928,7 +1288,8 @@ export default function NotesPage() {
                               return (
                                 <div
                                   key={related.id}
-                                  className="relative w-40 cursor-pointer rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-left text-xs text-emerald-100 hover:border-emerald-400/60"
+                                  className="relative w-40 cursor-pointer rounded-md border px-3 py-2 text-left text-xs transition"
+                                  style={relatedPreviewStyle}
                                   role="button"
                                   tabIndex={0}
                                   onClick={() => void handleSelectNoteFromTree(related.id)}
@@ -942,7 +1303,7 @@ export default function NotesPage() {
                                   <div className="truncate font-semibold">
                                     {relatedNote?.title ?? related.title}
                                   </div>
-                                  <div className="line-clamp-2 text-[11px] text-emerald-200/80">
+                                  <div className="line-clamp-2 text-[11px] opacity-80">
                                     {relatedNote?.content ?? "No content"}
                                   </div>
                                   <button
@@ -951,7 +1312,7 @@ export default function NotesPage() {
                                       event.stopPropagation();
                                       void handleUnlinkFromPreview(related.id);
                                     }}
-                                    className="absolute right-2 top-2 text-emerald-100/70 hover:text-white"
+                                    className="absolute right-2 top-2 opacity-70 hover:opacity-100"
                                     aria-label="Unlink related note"
                                   >
                                     <X size={12} />
@@ -975,11 +1336,12 @@ export default function NotesPage() {
               <div className="mb-4 flex items-center gap-3">
                 {isFolderTreeCollapsed && (
                   <Button
-                    onClick={() => setIsFolderTreeCollapsed(false)}
+                    onClick={handleExpandFolderTree}
                     variant="outline"
                     className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
                   >
-                    Show Folders
+                    <ChevronLeft className="-scale-x-100" size={16} />
+                    <span className="ml-2">Show Folders</span>
                   </Button>
                 )}
                 <Button
@@ -994,6 +1356,24 @@ export default function NotesPage() {
                     ? buildBreadcrumbPath(selectedFolderId, null, folderTree).slice(-1)[0]?.name
                     : "Notes"}
                 </h1>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Theme</span>
+                  <select
+                    value={selectedFolderThemeId}
+                    onChange={(e) =>
+                      void handleUpdateFolderTheme(e.target.value || null)
+                    }
+                    disabled={!selectedFolderId}
+                    className="rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-300 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <option value="">Default</option>
+                    {themes.map((theme) => (
+                      <option key={theme.id} value={theme.id}>
+                        {theme.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="ml-auto flex items-center gap-2">
                   <span className="text-xs text-gray-500">Page</span>
                   <button
@@ -1114,23 +1494,17 @@ export default function NotesPage() {
                       <NoteCard
                         key={note.id}
                         note={note}
+                        theme={getThemeForFolderId(note.categories[0]?.categoryId)}
                         folderTree={folderTree}
                         showTimestamps={showTimestamps}
                         showBreadcrumbs={showBreadcrumbs}
                         showRelatedNotes={showRelatedNotes}
                         enableDrag={!isFolderTreeCollapsed}
                         onSelectNote={handleSelectNote}
-                        onSelectFolder={(folderId) => {
-                          setSelectedFolderId(folderId);
-                          setSelectedNote(null);
-                          setIsEditing(false);
-                        }}
-                        onDragStart={(noteId) => {
-                          setDraggedNoteId(noteId);
-                        }}
-                        onDragEnd={() => {
-                          setDraggedNoteId(null);
-                        }}
+                        onSelectFolder={handleSelectFolderFromCard}
+                        onToggleFavorite={handleToggleFavorite}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
                         buildBreadcrumbPath={buildBreadcrumbPath}
                       />
                     ))}
@@ -1179,6 +1553,7 @@ export default function NotesPage() {
                 notebookId={selectedNotebookId}
                 onSuccess={handleCreateSuccess}
                 onTagCreated={fetchTags}
+                folderTheme={selectedFolderTheme}
                 onSelectRelatedNote={(noteId) => {
                   setIsCreating(false);
                   void handleSelectNoteFromTree(noteId);

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
-import type { CategoryWithChildren, NoteWithRelations, TagRecord } from "@/types/notes";
+import { X, Upload, FileIcon, Trash2, Link2 } from "lucide-react";
+import type { CategoryWithChildren, NoteWithRelations, TagRecord, NoteFileRecord, ThemeRecord } from "@/types/notes";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { renderMarkdownToHtml } from "../utils";
@@ -17,6 +17,7 @@ export function NoteForm({
   onSelectRelatedNote,
   onTagClick,
   notebookId,
+  folderTheme,
 }: {
   note?: NoteWithRelations | null;
   folderTree: CategoryWithChildren[];
@@ -27,12 +28,14 @@ export function NoteForm({
   onSelectRelatedNote: (noteId: string) => void;
   onTagClick?: (tagId: string) => void;
   notebookId?: string | null;
+  folderTheme?: ThemeRecord | null;
 }) {
   const [title, setTitle] = useState(note?.title || "");
   const [content, setContent] = useState(note?.content || "");
   const [color, setColor] = useState(note?.color || "#ffffff");
   const [isPinned, setIsPinned] = useState(note?.isPinned || false);
   const [isArchived, setIsArchived] = useState(note?.isArchived || false);
+  const [isFavorite, setIsFavorite] = useState(note?.isFavorite || false);
   const [selectedFolderId, setSelectedFolderId] = useState<string>(
     note?.categories[0]?.categoryId || defaultFolderId || ""
   );
@@ -73,7 +76,18 @@ export function NoteForm({
   const editorSplitRef = useRef<HTMLDivElement>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [noteFiles, setNoteFiles] = useState<NoteFileRecord[]>(note?.files || []);
+  const [uploadingSlots, setUploadingSlots] = useState<Set<number>>(new Set());
+  const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [isPasting, setIsPasting] = useState(false);
   const { toast } = useToast();
+
+  const MAX_SLOTS = 10;
+
+  useEffect(() => {
+    setColor(note?.color || "#ffffff");
+  }, [note?.id, note?.color]);
 
   useEffect(() => {
     if (!showPreview) return;
@@ -115,12 +129,16 @@ export function NoteForm({
     return luminance > 0.7 ? "#0f172a" : "#f8fafc";
   };
 
-  const contentBackground = color || "#ffffff";
-  const contentTextColor = getReadableTextColor(contentBackground);
+  const contentBackground =
+    color === "#ffffff" ? folderTheme?.backgroundColor ?? color : color || "#ffffff";
+  const contentTextColor =
+    color === "#ffffff" && folderTheme?.textColor
+      ? folderTheme.textColor
+      : getReadableTextColor(contentBackground);
   const previewTypographyStyle: React.CSSProperties = {
     color: contentTextColor,
     ["--tw-prose-body" as never]: contentTextColor,
-    ["--tw-prose-headings" as never]: contentTextColor,
+    ["--tw-prose-headings" as never]: folderTheme?.markdownHeadingColor ?? contentTextColor,
     ["--tw-prose-lead" as never]: contentTextColor,
     ["--tw-prose-bold" as never]: contentTextColor,
     ["--tw-prose-counters" as never]: contentTextColor,
@@ -128,6 +146,21 @@ export function NoteForm({
     ["--tw-prose-quotes" as never]: contentTextColor,
     ["--tw-prose-quote-borders" as never]: "rgba(148, 163, 184, 0.35)",
     ["--tw-prose-hr" as never]: "rgba(148, 163, 184, 0.35)",
+    ["--note-link-color" as never]:
+      folderTheme?.markdownLinkColor ?? "#38bdf8",
+    ["--note-code-bg" as never]:
+      folderTheme?.markdownCodeBackground ?? "#0f172a",
+    ["--note-code-text" as never]:
+      folderTheme?.markdownCodeText ?? "#e2e8f0",
+    ["--note-inline-code-bg" as never]:
+      folderTheme?.markdownCodeBackground ?? "rgba(15, 23, 42, 0.12)",
+  };
+  const relatedNoteStyle: React.CSSProperties = {
+    borderWidth: `${folderTheme?.relatedNoteBorderWidth ?? 1}px`,
+    borderColor: folderTheme?.relatedNoteBorderColor ?? "rgba(15, 23, 42, 0.2)",
+    backgroundColor:
+      folderTheme?.relatedNoteBackgroundColor ?? "rgba(15, 23, 42, 0.05)",
+    color: folderTheme?.relatedNoteTextColor ?? "#f8fafc",
   };
 
   const flattenFolderTree = (
@@ -332,6 +365,228 @@ export function NoteForm({
     setSelectedTagIds(selectedTagIds.filter((id) => id !== tagId));
   };
 
+  const handleFileUpload = async (slotIndex: number, file: File) => {
+    if (!note?.id) {
+      toast("Please save the note first before uploading files");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast("File size exceeds 10MB limit");
+      return;
+    }
+
+    setUploadingSlots((prev) => new Set(prev).add(slotIndex));
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("slotIndex", slotIndex.toString());
+
+      const response = await fetch(`/api/notes/${note.id}/files`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        const newFile = (await response.json()) as NoteFileRecord;
+        setNoteFiles((prev) => [...prev.filter((f) => f.slotIndex !== slotIndex), newFile].sort((a, b) => a.slotIndex - b.slotIndex));
+        toast("File uploaded successfully");
+      } else {
+        const error = await response.json();
+        toast(error.error || "Failed to upload file");
+      }
+    } catch (error) {
+      console.error("Failed to upload file:", error);
+      toast("Failed to upload file");
+    } finally {
+      setUploadingSlots((prev) => {
+        const next = new Set(prev);
+        next.delete(slotIndex);
+        return next;
+      });
+    }
+  };
+
+  const handleFileDelete = async (slotIndex: number) => {
+    if (!note?.id) return;
+
+    try {
+      const response = await fetch(`/api/notes/${note.id}/files/${slotIndex}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setNoteFiles((prev) => prev.filter((f) => f.slotIndex !== slotIndex));
+        toast("File deleted successfully");
+      } else {
+        toast("Failed to delete file");
+      }
+    } catch (error) {
+      console.error("Failed to delete file:", error);
+      toast("Failed to delete file");
+    }
+  };
+
+  const handleFileDrop = (slotIndex: number, e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      void handleFileUpload(slotIndex, file);
+    }
+  };
+
+  const handleMultiFileUpload = async (files: FileList | File[]) => {
+    const queue = Array.from(files);
+    for (const file of queue) {
+      const nextSlot = getNextAvailableSlot();
+      if (nextSlot === null) {
+        toast("All file slots are full. Delete a file to upload more.");
+        return;
+      }
+      await handleFileUpload(nextSlot, file);
+    }
+  };
+
+  const isImageFile = (mimetype: string) => mimetype.startsWith("image/");
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const insertFileReference = (file: NoteFileRecord) => {
+    const textarea = contentRef.current;
+    if (!textarea) return;
+
+    const isImage = isImageFile(file.mimetype);
+    const altText = file.filename.replace(/^slot-\d+-\d+-/, "");
+    const reference = isImage
+      ? `![${altText}](${file.filepath})`
+      : `[${altText}](${file.filepath})`;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const nextValue = content.slice(0, start) + reference + content.slice(end);
+    setContent(nextValue);
+
+    requestAnimationFrame(() => {
+      const cursor = start + reference.length;
+      textarea.focus();
+      textarea.setSelectionRange(cursor, cursor);
+    });
+
+    toast(isImage ? "Image reference inserted" : "File link inserted");
+  };
+
+  const getNextAvailableSlot = (): number | null => {
+    const usedSlots = new Set(noteFiles.map((f) => f.slotIndex));
+    for (let i = 0; i < MAX_SLOTS; i++) {
+      if (!usedSlots.has(i)) return i;
+    }
+    return null;
+  };
+
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const uploadPastedImage = async (file: File) => {
+      if (!note?.id) {
+        toast("Please save the note first before pasting images");
+        return;
+      }
+
+      const nextSlot = getNextAvailableSlot();
+      if (nextSlot === null) {
+        toast("All file slots are full. Delete a file to paste a new image.");
+        return;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        toast("Image size exceeds 10MB limit");
+        return;
+      }
+
+      setIsPasting(true);
+      setUploadingSlots((prev) => new Set(prev).add(nextSlot));
+
+      const textarea = contentRef.current;
+      const cursorPosition = textarea?.selectionStart ?? content.length;
+
+      try {
+        const formData = new FormData();
+        const timestamp = Date.now();
+        const extension = file.type.split("/")[1] || "png";
+        const renamedFile = new File([file], `pasted-image-${timestamp}.${extension}`, {
+          type: file.type,
+        });
+        formData.append("file", renamedFile);
+        formData.append("slotIndex", nextSlot.toString());
+
+        const response = await fetch(`/api/notes/${note.id}/files`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const newFile = (await response.json()) as NoteFileRecord;
+          setNoteFiles((prev) =>
+            [...prev.filter((f) => f.slotIndex !== nextSlot), newFile].sort(
+              (a, b) => a.slotIndex - b.slotIndex
+            )
+          );
+
+          const altText = renamedFile.name;
+          const reference = `![${altText}](${newFile.filepath})`;
+          const nextValue =
+            content.slice(0, cursorPosition) + reference + content.slice(cursorPosition);
+          setContent(nextValue);
+
+          toast("Image pasted and uploaded");
+        } else {
+          const error = await response.json();
+          toast(error.error || "Failed to upload pasted image");
+        }
+      } catch (error) {
+        console.error("Failed to upload pasted image:", error);
+        toast("Failed to upload pasted image");
+      } finally {
+        setIsPasting(false);
+        setUploadingSlots((prev) => {
+          const next = new Set(prev);
+          next.delete(nextSlot);
+          return next;
+        });
+      }
+    };
+
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (!file) return;
+        await uploadPastedImage(file);
+        return;
+      }
+    }
+
+    const pastedFiles = e.clipboardData?.files;
+    if (pastedFiles && pastedFiles.length > 0) {
+      const file = pastedFiles[0];
+      if (file && file.type.startsWith("image/")) {
+        e.preventDefault();
+        await uploadPastedImage(file);
+      }
+    }
+  };
+
+  useEffect(() => {
+    setNoteFiles(note?.files || []);
+  }, [note?.files]);
+
   useEffect(() => {
     if (!note) {
       setSelectedRelatedNotes([]);
@@ -482,6 +737,7 @@ export function NoteForm({
           color,
           isPinned,
           isArchived,
+          isFavorite,
           tagIds: selectedTagIds,
           relatedNoteIds: selectedRelatedNotes.map((rel) => rel.id),
           categoryIds: selectedFolderId ? [selectedFolderId] : [],
@@ -501,6 +757,7 @@ export function NoteForm({
   };
 
   return (
+    <>
     <form
       id={note ? "note-edit-form" : undefined}
       onSubmit={handleSubmit}
@@ -643,6 +900,31 @@ export function NoteForm({
           >
             Table
           </button>
+          {noteFiles.length > 0 && (
+            <div className="relative">
+              <select
+                value=""
+                onChange={(e) => {
+                  const slotIndex = parseInt(e.target.value, 10);
+                  const file = noteFiles.find((f) => f.slotIndex === slotIndex);
+                  if (file) {
+                    insertFileReference(file);
+                  }
+                  e.target.value = "";
+                }}
+                className="rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+                title="Insert file reference"
+              >
+                <option value="">Insert File</option>
+                {noteFiles.map((file) => (
+                  <option key={file.slotIndex} value={file.slotIndex}>
+                    Slot {file.slotIndex + 1}: {file.filename.replace(/^slot-\d+-\d+-/, "").slice(0, 15)}
+                    {file.filename.replace(/^slot-\d+-\d+-/, "").length > 15 ? "..." : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="ml-2 flex items-center gap-2 border-l border-gray-700 pl-2">
             <label className="text-xs text-gray-400">Font</label>
             <select
@@ -690,16 +972,27 @@ export function NoteForm({
             className={showPreview ? "flex-shrink-0" : "flex-1"}
             style={showPreview && editorWidth ? { width: editorWidth } : undefined}
           >
-            <textarea
-              ref={contentRef}
-              placeholder="Enter note content"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={12}
-              className="w-full rounded-lg border border-gray-700 px-4 py-2"
-              style={{ backgroundColor: contentBackground, color: contentTextColor }}
-              required
-            />
+            <div className="relative">
+              <textarea
+                ref={contentRef}
+                placeholder="Enter note content (paste images directly!)"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                onPaste={handlePaste}
+                rows={12}
+                className="w-full rounded-lg border border-gray-700 px-4 py-2"
+                style={{ backgroundColor: contentBackground, color: contentTextColor }}
+                required
+              />
+              {isPasting && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
+                  <div className="flex items-center gap-2 text-white">
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-400 border-t-white" />
+                    <span className="text-sm">Uploading image...</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           {showPreview && (
             <>
@@ -724,9 +1017,45 @@ export function NoteForm({
                   Preview
                 </div>
                 <div
-                  className="prose max-w-none"
+                  className="prose max-w-none [&_img]:cursor-pointer [&_img]:transition-opacity [&_img]:hover:opacity-80"
                   style={previewTypographyStyle}
                   dangerouslySetInnerHTML={{ __html: renderMarkdownToHtml(content) }}
+                  onMouseOver={(e) => {
+                    const target = e.target as HTMLElement;
+                    const wrapper = target.closest("[data-code]") as HTMLElement | null;
+                    const button = wrapper?.querySelector("[data-copy-code]") as HTMLElement | null;
+                    if (button) button.style.opacity = "1";
+                  }}
+                  onMouseOut={(e) => {
+                    const target = e.target as HTMLElement;
+                    const wrapper = target.closest("[data-code]") as HTMLElement | null;
+                    const button = wrapper?.querySelector("[data-copy-code]") as HTMLElement | null;
+                    if (button) button.style.opacity = "0";
+                  }}
+                  onClick={(e) => {
+                    const target = e.target as HTMLElement;
+                    const copyButton = target.closest("[data-copy-code]") as HTMLButtonElement | null;
+                    if (copyButton) {
+                      const wrapper = copyButton.closest("[data-code]") as HTMLElement | null;
+                      const encoded = wrapper?.getAttribute("data-code");
+                      if (!encoded) return;
+                      const originalLabel = copyButton.textContent;
+                      navigator.clipboard
+                        .writeText(decodeURIComponent(encoded))
+                        .then(() => {
+                          copyButton.textContent = "Copied";
+                          window.setTimeout(() => {
+                            copyButton.textContent = originalLabel ?? "Copy";
+                          }, 1500);
+                        })
+                        .catch(() => toast("Failed to copy code"));
+                      return;
+                    }
+                    if (target.tagName === "IMG") {
+                      const imgSrc = (target as HTMLImageElement).src;
+                      setLightboxImage(imgSrc);
+                    }
+                  }}
                 />
               </div>
             </>
@@ -829,7 +1158,8 @@ export function NoteForm({
           {selectedRelatedNotes.map((related) => (
             <div
               key={related.id}
-              className="relative flex min-w-[180px] max-w-[240px] cursor-pointer flex-col gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 p-2 text-left transition hover:border-emerald-400/60"
+              className="relative flex min-w-[180px] max-w-[240px] cursor-pointer flex-col gap-1 rounded-md border p-2 text-left transition"
+              style={relatedNoteStyle}
               role="button"
               tabIndex={0}
               onClick={() => onSelectRelatedNote(related.id)}
@@ -840,10 +1170,10 @@ export function NoteForm({
                 }
               }}
             >
-              <div className="text-xs font-semibold text-emerald-100 truncate">
+              <div className="text-xs font-semibold truncate">
                 {related.title}
               </div>
-              <div className="text-[11px] text-emerald-200/80 leading-snug max-h-8 overflow-hidden">
+              <div className="text-[11px] leading-snug max-h-8 overflow-hidden opacity-80">
                 {related.content ? related.content : "No content"}
               </div>
               <button
@@ -854,7 +1184,7 @@ export function NoteForm({
                     prev.filter((item) => item.id !== related.id)
                   );
                 }}
-                className="absolute right-1 top-1 text-emerald-100/70 hover:text-white"
+                className="absolute right-1 top-1 opacity-70 hover:opacity-100"
                 aria-label="Remove related note"
               >
                 <X size={12} />
@@ -942,6 +1272,119 @@ export function NoteForm({
         </div>
       </div>
 
+      {note?.id && (
+        <div className="space-y-2">
+          <label className="mb-2 block text-sm font-medium text-white">
+            Attachments ({noteFiles.length}/{MAX_SLOTS} slots used)
+          </label>
+          <div className="flex flex-wrap gap-3">
+            {(() => {
+              const nextSlot = getNextAvailableSlot();
+              const isUploading = nextSlot !== null && uploadingSlots.has(nextSlot);
+              return (
+                <div
+                  className="relative h-20 w-20 rounded-md border border-gray-700 bg-gray-800"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    if (nextSlot === null) return;
+                    handleFileDrop(nextSlot, e);
+                  }}
+                >
+                  {isUploading ? (
+                    <div className="flex h-full items-center justify-center">
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-600 border-t-blue-500" />
+                    </div>
+                  ) : nextSlot === null ? (
+                    <div className="flex h-full items-center justify-center text-[10px] text-gray-500">
+                      Full
+                    </div>
+                  ) : (
+                    <label className="flex h-full cursor-pointer flex-col items-center justify-center text-gray-500 hover:bg-gray-700/50 hover:text-gray-400 transition-colors">
+                      <Upload size={14} />
+                      <span className="mt-1 text-[10px]">Upload</span>
+                      <span className="mt-0.5 text-[10px] text-gray-400">
+                        {MAX_SLOTS - noteFiles.length} left
+                      </span>
+                      <input
+                        ref={(el) => {
+                          fileInputRefs.current[nextSlot] = el;
+                        }}
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          const files = e.target.files;
+                          if (files && files.length > 0) {
+                            void handleMultiFileUpload(files);
+                          }
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
+              );
+            })()}
+
+            {noteFiles.map((file) => (
+              <div
+                key={file.slotIndex}
+                className="relative h-20 w-24 rounded-md border border-gray-700 bg-gray-800/70"
+              >
+                <div className="group relative h-full">
+                  {isImageFile(file.mimetype) ? (
+                    <img
+                      src={file.filepath}
+                      alt={file.filename}
+                      className="h-full w-full rounded-md object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full flex-col items-center justify-center p-2">
+                      <FileIcon className="h-6 w-6 text-gray-400" />
+                      <span className="mt-1 text-[10px] text-gray-400 truncate w-full text-center">
+                        {file.filename.length > 12
+                          ? file.filename.slice(0, 10) + "..."
+                          : file.filename}
+                      </span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-md bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
+                    <button
+                      type="button"
+                      onClick={() => insertFileReference(file)}
+                      className="rounded-full bg-blue-600 p-1.5 text-white hover:bg-blue-700"
+                      title="Insert into content"
+                    >
+                      <Link2 size={12} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleFileDelete(file.slotIndex)}
+                      className="rounded-full bg-red-600 p-1.5 text-white hover:bg-red-700"
+                      title="Delete file"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 rounded-b-md bg-black/70 px-1 py-0.5 text-[9px] text-gray-300 truncate">
+                    {formatFileSize(file.size)}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-500">
+            Drag and drop files or click to upload. Max 10MB per file.
+          </p>
+        </div>
+      )}
+
+      {!note?.id && (
+        <div className="rounded-lg border border-dashed border-gray-600 bg-gray-800/50 p-4 text-center text-sm text-gray-400">
+          Save the note first to enable file attachments (10 slots available)
+        </div>
+      )}
+
       <div>
         <label className="mb-2 block text-sm font-medium text-white">Folder</label>
         <select
@@ -952,7 +1395,7 @@ export function NoteForm({
           <option value="">No Folder</option>
           {flatFolders.map((folder) => (
             <option key={folder.id} value={folder.id}>
-              {"\u00A0\u00A0".repeat(folder.level)}
+              {Array.from({ length: folder.level }).map(() => "- ").join("")}
               {folder.name}
             </option>
           ))}
@@ -961,12 +1404,22 @@ export function NoteForm({
 
       <div>
         <label className="mb-2 block text-sm font-medium text-white">Color</label>
-        <input
-          type="color"
-          value={color}
-          onChange={(e) => setColor(e.target.value)}
-          className="h-10 w-full cursor-pointer rounded-lg border border-gray-700 bg-gray-800"
-        />
+        <div className="flex items-center gap-2">
+          <input
+            type="color"
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+            className="h-10 w-full cursor-pointer rounded-lg border border-gray-700 bg-gray-800"
+          />
+          <button
+            type="button"
+            onClick={() => setColor("#ffffff")}
+            className="whitespace-nowrap rounded-lg border border-gray-700 px-3 py-2 text-xs text-gray-200 hover:bg-gray-800"
+            title="Use folder theme background"
+          >
+            Use Folder Theme
+          </button>
+        </div>
       </div>
 
       <div className="flex gap-4">
@@ -988,7 +1441,39 @@ export function NoteForm({
           />
           <span className="text-sm">Archived</span>
         </label>
+        <label className="flex items-center gap-2 text-white">
+          <input
+            type="checkbox"
+            checked={isFavorite}
+            onChange={(e) => setIsFavorite(e.target.checked)}
+            className="rounded"
+          />
+          <span className="text-sm">Favorite</span>
+        </label>
       </div>
+
     </form>
+
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button
+            type="button"
+            className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
+            onClick={() => setLightboxImage(null)}
+          >
+            <X size={24} />
+          </button>
+          <img
+            src={lightboxImage}
+            alt="Lightbox preview"
+            className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+    </>
   );
 }

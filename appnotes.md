@@ -4,19 +4,11 @@ npx tsc
 npx eslint
 add proper debugging on visual studio code
 
+In Edit Note, move the "show preview" button to the left
 
-
-I want a folder tree undo button (for dragging and dropping files and folders, renaming events and note deletes.)
-
-The folder tree state (which folders are collapse or not, should be in note settings, I should also have the option to uncollapse everythihng under the currently selected folder)
+Assign color pallets (background and text), (to folder for example), instead of notes it should have folder name and theming options
 
 I want markd down elements to be slightly differnet color, Maybe introduce that in theming
-
-I would like my note taking app to handle image files as well. 
-
-ALL NOTES | FAVOURITES
-
-File handling (10 file slots benath, the first one being the thumbnail)
 
 Apply GPT Notes
 
@@ -26,22 +18,10 @@ I can't preview MongoDB Dumps
 
 # Note Taking App
 
-
-## Theming
-
-Assign color pallets (background and text), (to folder for example), instead of notes it should have folder name and theming options
-
-Note Filters, By Theme
-
-I need a Theme List
-
 ## Note List
-After MongoDB database restore, I can no longer see the folder structure in dropdown in Create / Edit note, folder structure is absent, well I need hyphens
-
-thumbnail, name
-
-Note parameters, that I can add cusomized, that I can use later on with AI to Identify and extra categorize my notes 
-
+The state of the folder tree (which folders are collapsed or uncollapsed), should be kept in the database for retention
+The sam goes for folder tree viewability, whether it's collapsed or uncollapsed should be kept in the database.
+Note parameters, that I can add cusomized, that I can use later on with AI to Identify and extra categorize my notes.
 
 ## Note App Chatbot connection
 
@@ -61,7 +41,6 @@ Note history
 
 At some point there should be note import and also the notes should be downloadable as markdown
 
-WYSIWYG as an option....maaaaybe
 ---
 
 

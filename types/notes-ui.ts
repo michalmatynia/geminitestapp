@@ -20,6 +20,12 @@ export interface FolderTreeProps {
   draggedNoteId: string | null;
   setDraggedNoteId: (noteId: string | null) => void;
   onToggleCollapse?: () => void;
+  isFavoritesActive?: boolean;
+  onToggleFavorites?: () => void;
+  canUndo?: boolean;
+  onUndo?: () => void;
+  undoHistory?: Array<{ label: string }>;
+  onUndoAtIndex?: (index: number) => void;
 }
 
 export interface FolderNodeProps {
@@ -51,6 +57,8 @@ export interface FolderNodeProps {
   renamingNoteId: string | null;
   onStartNoteRename: (noteId: string) => void;
   onCancelNoteRename: () => void;
+  expandedFolderIds: Set<string>;
+  onToggleExpand: (folderId: string) => void;
 }
 
 export interface NoteItemProps {

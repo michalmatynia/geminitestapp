@@ -1,12 +1,12 @@
 "use client";
 
 import React from "react";
-import { ChevronRight, Pin } from "lucide-react";
-import type { CategoryWithChildren, NoteWithRelations } from "@/types/notes";
+import { ChevronRight, Pin, Star } from "lucide-react";
+import type { CategoryWithChildren, NoteWithRelations, ThemeRecord } from "@/types/notes";
 import { BreadcrumbScroller } from "./BreadcrumbScroller";
 import { darkenColor, renderMarkdownToHtml } from "../utils";
 
-export function NoteCard({
+function NoteCardBase({
   note,
   folderTree,
   showTimestamps,
@@ -15,9 +15,11 @@ export function NoteCard({
   enableDrag = true,
   onSelectNote,
   onSelectFolder,
+  onToggleFavorite,
   onDragStart,
   onDragEnd,
   buildBreadcrumbPath,
+  theme,
 }: {
   note: NoteWithRelations;
   folderTree: CategoryWithChildren[];
@@ -27,6 +29,7 @@ export function NoteCard({
   enableDrag?: boolean;
   onSelectNote: (note: NoteWithRelations) => void;
   onSelectFolder: (folderId: string | null) => void;
+  onToggleFavorite: (note: NoteWithRelations) => void;
   onDragStart: (noteId: string) => void;
   onDragEnd: () => void;
   buildBreadcrumbPath: (
@@ -34,7 +37,38 @@ export function NoteCard({
     noteTitle: string | null,
     categories: CategoryWithChildren[]
   ) => Array<{ id: string | null; name: string; isNote?: boolean }>;
+  theme?: ThemeRecord | null;
 }) {
+  const contentHtml = React.useMemo(
+    () => renderMarkdownToHtml(note.content),
+    [note.content]
+  );
+  const backgroundColor =
+    note.color && note.color !== "#ffffff"
+      ? note.color
+      : theme?.backgroundColor || note.color || "#ffffff";
+  const getReadableTextColor = (hexColor: string) => {
+    const normalized = hexColor.replace("#", "");
+    if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
+      return "#111827";
+    }
+    const r = parseInt(normalized.slice(0, 2), 16);
+    const g = parseInt(normalized.slice(2, 4), 16);
+    const b = parseInt(normalized.slice(4, 6), 16);
+    const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    return luminance > 0.7 ? "#111827" : "#f8fafc";
+  };
+  const textColor =
+    note.color && note.color !== "#ffffff"
+      ? getReadableTextColor(backgroundColor)
+      : theme?.textColor ?? getReadableTextColor(backgroundColor);
+  const relatedNoteStyle = {
+    borderWidth: `${theme?.relatedNoteBorderWidth ?? 1}px`,
+    borderColor: theme?.relatedNoteBorderColor ?? "rgba(15, 23, 42, 0.2)",
+    backgroundColor: theme?.relatedNoteBackgroundColor ?? "rgba(15, 23, 42, 0.05)",
+    color: theme?.relatedNoteTextColor ?? "#f8fafc",
+  } as const;
+
   return (
     <div
       key={note.id}
@@ -61,20 +95,49 @@ export function NoteCard({
           : undefined
       }
       onClick={() => onSelectNote(note)}
-      style={{ backgroundColor: note.color || "#ffffff" }}
+      style={{
+        backgroundColor,
+        color: textColor,
+        ["--tw-prose-body" as never]: textColor,
+        ["--tw-prose-headings" as never]:
+          theme?.markdownHeadingColor ?? textColor,
+        ["--note-link-color" as never]: theme?.markdownLinkColor ?? "#38bdf8",
+        ["--note-code-bg" as never]: theme?.markdownCodeBackground ?? "#0f172a",
+        ["--note-code-text" as never]: theme?.markdownCodeText ?? "#e2e8f0",
+        ["--note-inline-code-bg" as never]:
+          theme?.markdownCodeBackground ?? "rgba(15, 23, 42, 0.12)",
+      }}
       className={`rounded-lg border border-gray-700 p-4 shadow-sm transition ${
         enableDrag
           ? "cursor-grab active:cursor-grabbing hover:shadow-md"
           : "cursor-pointer hover:shadow-md hover:brightness-90"
       }`}
     >
-      <div className="mb-2 flex items-start justify-between">
-        <h3 className="font-semibold text-gray-900">{note.title}</h3>
-        {note.isPinned && <Pin size={16} className="text-blue-600" />}
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <h3 className="font-semibold">{note.title}</h3>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleFavorite(note);
+            }}
+            className="text-gray-500 hover:text-yellow-500"
+            aria-label={note.isFavorite ? "Unfavorite note" : "Favorite note"}
+            title={note.isFavorite ? "Remove favorite" : "Add favorite"}
+          >
+            <Star
+              size={16}
+              className={note.isFavorite ? "fill-yellow-400 text-yellow-500" : ""}
+            />
+          </button>
+          {note.isPinned && <Pin size={16} className="text-blue-600" />}
+        </div>
       </div>
       <div
-        className="mb-3 max-h-36 overflow-hidden text-sm text-gray-700 prose prose-sm"
-        dangerouslySetInnerHTML={{ __html: renderMarkdownToHtml(note.content) }}
+        className="mb-3 max-h-36 overflow-hidden text-sm prose prose-sm"
+        dangerouslySetInnerHTML={{ __html: contentHtml }}
       />
       <div className="flex flex-wrap gap-2">
         {note.tags.map((nt) => (
@@ -95,7 +158,7 @@ export function NoteCard({
       )}
       {showBreadcrumbs && (
         <div className={showTimestamps ? "mt-3" : "mt-2"}>
-          <BreadcrumbScroller backgroundColor={darkenColor(note.color || "#ffffff", 20)}>
+          <BreadcrumbScroller backgroundColor={darkenColor(backgroundColor, 20)}>
             {buildBreadcrumbPath(
               note.categories[0]?.categoryId || null,
               null,
@@ -145,10 +208,11 @@ export function NoteCard({
                 .map((related) => (
                   <div
                     key={related.id}
-                    className="w-24 cursor-pointer rounded-md border border-gray-700 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-200"
+                    className="w-24 cursor-pointer rounded-md px-2 py-1 text-[10px]"
+                    style={relatedNoteStyle}
                   >
                     <div className="truncate font-semibold">{related.title}</div>
-                    <div className="line-clamp-2 text-gray-400">No content</div>
+                    <div className="line-clamp-2 text-[9px] opacity-80">No content</div>
                   </div>
                 ))}
             </div>
@@ -157,3 +221,6 @@ export function NoteCard({
     </div>
   );
 }
+
+export const NoteCard = React.memo(NoteCardBase);
+NoteCard.displayName = "NoteCard";

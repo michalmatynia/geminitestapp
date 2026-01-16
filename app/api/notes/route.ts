@@ -53,6 +53,10 @@ export async function GET(req: Request) {
     filters.isArchived = searchParams.get("isArchived") === "true";
   }
 
+  if (searchParams.has("isFavorite")) {
+    filters.isFavorite = searchParams.get("isFavorite") === "true";
+  }
+
   if (searchParams.has("tagIds")) {
     filters.tagIds = searchParams.get("tagIds")!.split(",");
   }

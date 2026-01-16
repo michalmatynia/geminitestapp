@@ -114,6 +114,12 @@ export default function Menu() {
           Tags
         </Link>
         <Link
+          href="/admin/notes/themes"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Themes
+        </Link>
+        <Link
           href="/admin/notes/settings"
           className="block hover:bg-gray-700 p-2 rounded"
         >

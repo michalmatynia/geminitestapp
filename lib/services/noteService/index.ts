@@ -24,14 +24,16 @@ async function getNoteService(): Promise<NoteRepository> {
   return _noteService;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const callService = <K extends keyof NoteRepository>(
   key: K,
   ...args: Parameters<NoteRepository[K]>
 ): ReturnType<NoteRepository[K]> => {
   return getNoteService().then((service) => {
-    const fn = service[key] as (...input: Parameters<NoteRepository[K]>) => ReturnType<NoteRepository[K]>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fn = service[key] as any;
     return fn(...args);
-  });
+  }) as ReturnType<NoteRepository[K]>;
 };
 
 export const noteService: NoteRepository = {
@@ -57,4 +59,12 @@ export const noteService: NoteRepository = {
   updateNotebook: (...args) => callService("updateNotebook", ...args),
   deleteNotebook: (...args) => callService("deleteNotebook", ...args),
   getOrCreateDefaultNotebook: (...args) => callService("getOrCreateDefaultNotebook", ...args),
+  getAllThemes: (...args) => callService("getAllThemes", ...args),
+  getThemeById: (...args) => callService("getThemeById", ...args),
+  createTheme: (...args) => callService("createTheme", ...args),
+  updateTheme: (...args) => callService("updateTheme", ...args),
+  deleteTheme: (...args) => callService("deleteTheme", ...args),
+  createNoteFile: (...args) => callService("createNoteFile", ...args),
+  getNoteFiles: (...args) => callService("getNoteFiles", ...args),
+  deleteNoteFile: (...args) => callService("deleteNoteFile", ...args),
 };

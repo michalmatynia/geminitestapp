@@ -1,6 +1,6 @@
 
 import { prismaNoteRepository } from "./lib/services/noteService/note-repository/prisma-note-repository";
-import { prisma } from "@/lib/prisma"; // Adjust import if needed
+import prisma from "@/lib/prisma"; // Adjust import if needed
 
 async function main() {
   console.log("Starting debug script...");

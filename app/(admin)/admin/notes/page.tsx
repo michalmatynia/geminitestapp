@@ -394,7 +394,6 @@ export default function NotesPage() {
 
       if (response.ok) {
         await fetchFolderTree();
-        await fetchCategories();
         if (selectedFolderId === folderId) {
           setSelectedFolderId(null);
         }
@@ -597,6 +596,10 @@ export default function NotesPage() {
                   <div className="prose prose-invert max-w-none whitespace-pre-wrap text-gray-300">
                     {selectedNote.content}
                   </div>
+                  <div className="mt-8 pt-4 border-t border-gray-800 flex gap-6 text-sm text-gray-500">
+                    <span>Created: {new Date(selectedNote.createdAt).toLocaleString()}</span>
+                    <span>Modified: {new Date(selectedNote.updatedAt).toLocaleString()}</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -620,7 +623,13 @@ export default function NotesPage() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                     <input
                       type="text"
-                      placeholder="Search notes..."
+                      placeholder={
+                        selectedFolderId
+                          ? `Search in ${
+                              buildBreadcrumbPath(selectedFolderId, null, folderTree).pop()?.name || "Folder"
+                            }...`
+                          : "Search in All Notes..."
+                      }
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 pl-10 pr-4 text-white placeholder-gray-400"
@@ -751,6 +760,10 @@ export default function NotesPage() {
                             {nt.tag.name}
                           </span>
                         ))}
+                      </div>
+                      <div className="mt-3 flex flex-col gap-0.5 text-[10px] text-gray-500">
+                        <span>Created: {new Date(note.createdAt).toLocaleString()}</span>
+                        <span>Modified: {new Date(note.updatedAt).toLocaleString()}</span>
                       </div>
                     </div>
                   ))}

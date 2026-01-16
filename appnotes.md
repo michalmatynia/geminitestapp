@@ -5,9 +5,18 @@ npx eslint
 add proper debugging on visual studio code
 
 # Note Taking App
-I should 
+
+Czcionki i Bold Italics
+
 
 ## Note List
+
+Make code AI Valide code snippets
+
+Prompted search, I can search by means of
+
+Assign color pallets (background and text), (to folder for example), instead of notes it should have folder name and theming options
+
 Connect notifications, for example when the note is updated or created.
 
 Notes should show creation date and last modified date. 
@@ -17,13 +26,13 @@ Note Filters
 see the list of notes , created time, thumbnail, name
 Note tags
 Note parameters, that I can add cusomized, that I can use later on with AI to Identify and extra categorize my notes 
-Each note needs a bread crumb
+
 File handling (10 file slots benath, the first one being the thumbnail)
+
+## Note App Chatbot connection
 
 have AI to format my notes, validate the truth in my notes, Search the web to validate my notes, give me note suggestions (that I can Accept or Refuse), extend/refactor my notes, 
 
-
-Chatbot connection
 
 The folder tree state (which folders are collapse or not, should be in note settings, I should also have the option to uncollapse everythihng under the currently selected folder)
 

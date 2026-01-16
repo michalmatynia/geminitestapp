@@ -33,7 +33,7 @@ describe("Databases API", () => {
     it("should create a backup of the database", async () => {
       jest.spyOn(fs, "writeFile").mockResolvedValue(undefined);
 
-      const res = await POST_BACKUP();
+      const res = await POST_BACKUP(new Request("http://localhost/api/databases/backup", { method: "POST" }));
       expect(res.status).toEqual(200);
       expect(execFile).toHaveBeenCalledTimes(1);
     });

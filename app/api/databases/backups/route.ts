@@ -3,10 +3,22 @@ import { promises as fs } from "fs";
 import { NextResponse } from "next/server";
 import { DatabaseInfo } from "@/components/database-columns";
 
-import { backupsDir, ensureBackupsDir } from "../_utils";
+import {
+  backupsDir as pgBackupsDir,
+  ensureBackupsDir as ensurePgBackupsDir,
+} from "../_utils";
+import {
+  backupsDir as mongoBackupsDir,
+  ensureBackupsDir as ensureMongoBackupsDir,
+} from "../_utils-mongo";
 
-async function getBackups(): Promise<DatabaseInfo[]> {
-  await ensureBackupsDir();
+async function getBackups(type: "postgresql" | "mongodb"): Promise<DatabaseInfo[]> {
+  const backupsDir = type === "mongodb" ? mongoBackupsDir : pgBackupsDir;
+  const ensureDir =
+    type === "mongodb" ? ensureMongoBackupsDir : ensurePgBackupsDir;
+  const extension = type === "mongodb" ? ".archive" : ".dump";
+
+  await ensureDir();
   const logPath = path.join(backupsDir, "restore-log.json");
 
   let logData: Record<string, string> = {};
@@ -18,7 +30,7 @@ async function getBackups(): Promise<DatabaseInfo[]> {
   }
 
   const files = await fs.readdir(backupsDir);
-  const backupFiles = files.filter((file) => file.endsWith(".dump"));
+  const backupFiles = files.filter((file) => file.endsWith(extension));
 
   const backups = await Promise.all(
     backupFiles.map(async (file) => {
@@ -41,9 +53,12 @@ async function getBackups(): Promise<DatabaseInfo[]> {
   return backups;
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const backups = await getBackups();
+    const { searchParams } = new URL(req.url);
+    const type = (searchParams.get("type") as "postgresql" | "mongodb") || "postgresql";
+
+    const backups = await getBackups(type);
     return NextResponse.json(backups);
   } catch (error) {
     console.error("Failed to list backups:", error);

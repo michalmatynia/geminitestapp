@@ -221,7 +221,7 @@ export async function POST(req: Request) {
     }
 
     stage = "pg_restore";
-    const logPath = path.join(backupsDir, `${backupName}.restore.log`);
+    const logPath = path.join(pgBackupsDir, `${backupName}.restore.log`);
     const command = getPgRestoreCommand();
 
     const args = [
@@ -241,7 +241,7 @@ export async function POST(req: Request) {
     let stderr = "";
 
     try {
-      const result = await execFileAsync(command, args);
+      const result = await pgExecFileAsync(command, args);
       stdout = result.stdout;
       stderr = result.stderr;
     } catch (error) {
@@ -278,7 +278,7 @@ export async function POST(req: Request) {
     await fs.writeFile(logPath, logContent);
 
     stage = "log";
-    const restoreLogPath = path.join(backupsDir, "restore-log.json");
+    const restoreLogPath = path.join(pgBackupsDir, "restore-log.json");
     let logData: Record<string, { date: string; logFile: string }> = {};
 
     try {
@@ -302,6 +302,7 @@ export async function POST(req: Request) {
       message: "Backup restored",
       log: logContent,
     });
+  }
   } catch (error) {
     console.error("[databases][restore] Failed to restore backup", {
       errorId,

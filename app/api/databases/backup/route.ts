@@ -68,7 +68,7 @@ export async function POST(req: Request) {
         stdout = cause?.stdout || "";
         stderr = cause?.stderr || "";
 
-        const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
+        const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}\n\nerror:\n${message}`;
         await fs.writeFile(logPath, logContent);
 
         const details = stderr.trim();
@@ -126,7 +126,7 @@ export async function POST(req: Request) {
         stdout = cause?.stdout || "";
         stderr = cause?.stderr || "";
 
-        const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
+        const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}\n\nerror:\n${message}`;
         await fs.writeFile(logPath, logContent);
 
         const details = stderr.trim();

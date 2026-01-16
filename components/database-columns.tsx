@@ -39,68 +39,6 @@ const renderSortableHeader = <TData, TValue>(
   );
 };
 
-async function handleRestore(
-  backupName: string,
-  truncateBeforeRestore: boolean,
-  onRestore: (log: string) => void
-) {
-  if (
-    window.confirm(
-      `Restore backup ${backupName}? This restores data only and preserves the current schema.`
-    )
-  ) {
-    if (
-      truncateBeforeRestore &&
-      !window.confirm(
-        "Truncate is enabled. This will delete all existing data before restoring. Continue?"
-      )
-    ) {
-      return;
-    }
-    try {
-      const res = await fetch("/api/databases/restore", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ backupName, truncateBeforeRestore }),
-      });
-
-      const payload = (await res.json()) as {
-        message?: string;
-        error?: string;
-        errorId?: string;
-        stage?: string;
-        backupName?: string;
-        log?: string;
-      };
-
-      const log = payload.log ?? "No log available.";
-
-      if (res.ok) {
-        onRestore(
-          `${payload.message ?? "Backup restored successfully."}\n\n---LOG---\n${log}`
-        );
-      } else {
-        const meta = [
-          payload.errorId ? `Error ID: ${payload.errorId}` : null,
-          payload.stage ? `Stage: ${payload.stage}` : null,
-          payload.backupName ? `Backup: ${payload.backupName}` : null,
-        ]
-          .filter(Boolean)
-          .join("\n");
-
-        onRestore(
-          `${payload.error ?? "Failed to restore backup."}${
-            meta ? `\n\n${meta}` : ""
-          }\n\n---LOG---\n${log}`
-        );
-      }
-    } catch (error) {
-      console.error("Error restoring backup:", error);
-      onRestore(`An error occurred during restoration.\n\n${String(error)}`);
-    }
-  }
-}
-
 async function handleDelete(
   backupName: string,
   onDelete: () => void,
@@ -128,11 +66,11 @@ async function handleDelete(
 }
 
 export const getDatabaseColumns = (options?: {
-  truncateBeforeRestore?: boolean;
   onPreview?: (backupName: string) => void;
-  onRestore?: (log: string) => void;
+  onRestoreRequest?: (backup: DatabaseInfo) => void;
   onDelete?: () => void;
   notify?: Notify;
+  dbType?: "postgresql" | "mongodb";
 }): ColumnDef<DatabaseInfo>[] => [
   {
     accessorKey: "name",
@@ -183,13 +121,7 @@ export const getDatabaseColumns = (options?: {
 
           <Button
             onClick={() => {
-              if (options?.onRestore) {
-                void handleRestore(
-                  backup.name,
-                  Boolean(options?.truncateBeforeRestore),
-                  options.onRestore
-                );
-              }
+              options?.onRestoreRequest?.(backup);
             }}
           >
             Restore

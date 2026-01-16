@@ -38,14 +38,60 @@ const LogModal = ({
   </div>
 );
 
+const RestoreModal = ({
+  backupName,
+  onClose,
+  onConfirm,
+}: {
+  backupName: string;
+  onClose: () => void;
+  onConfirm: (truncate: boolean) => void;
+}) => {
+  const [truncate, setTruncate] = useState(true);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="rounded-lg bg-gray-900 p-6 shadow-lg w-full max-w-md">
+        <h2 className="text-xl font-bold mb-4">Restore Database</h2>
+        <p className="mb-4 text-gray-300">
+          Are you sure you want to restore backup <strong>{backupName}</strong>?
+        </p>
+        <label className="flex items-center gap-2 mb-6 cursor-pointer">
+          <input
+            type="checkbox"
+            className="size-4 accent-emerald-500"
+            checked={truncate}
+            onChange={(e) => setTruncate(e.target.checked)}
+          />
+          <span className="text-sm text-gray-300">
+            Truncate (delete) existing data before restore
+          </span>
+        </label>
+        <div className="flex justify-end gap-3">
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => onConfirm(truncate)}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            Restore
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function DatabasesPage() {
   const [activeTab, setActiveTab] = useState<DatabaseType>("postgresql");
   const [data, setData] = useState<DatabaseInfo[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [truncateBeforeRestore, setTruncateBeforeRestore] = useState(false);
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [logModalContent, setLogModalContent] = useState("");
+  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+  const [selectedBackupForRestore, setSelectedBackupForRestore] = useState<string | null>(null);
   const { toast } = useToast();
 
   const openLogModal = (content: string) => {
@@ -62,6 +108,61 @@ export default function DatabasesPage() {
   useEffect(() => {
     void getBackups(activeTab).then(setData);
   }, [refreshTrigger, activeTab]);
+
+  const handleRestoreRequest = (backup: DatabaseInfo) => {
+    setSelectedBackupForRestore(backup.name);
+    setIsRestoreModalOpen(true);
+  };
+
+  const handleRestoreConfirm = async (truncate: boolean) => {
+    const backupName = selectedBackupForRestore;
+    setIsRestoreModalOpen(false);
+    setSelectedBackupForRestore(null);
+
+    if (!backupName) return;
+
+    try {
+      const res = await fetch("/api/databases/restore?type=" + activeTab, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ backupName, truncateBeforeRestore: truncate }),
+      });
+
+      const payload = (await res.json()) as {
+        message?: string;
+        error?: string;
+        errorId?: string;
+        stage?: string;
+        backupName?: string;
+        log?: string;
+      };
+
+      const log = payload.log ?? "No log available.";
+
+      if (res.ok) {
+        openLogModal(
+          `${payload.message ?? "Backup restored successfully."}\n\n---LOG---\n${log}`
+        );
+      } else {
+        const meta = [
+          payload.errorId ? `Error ID: ${payload.errorId}` : null,
+          payload.stage ? `Stage: ${payload.stage}` : null,
+          payload.backupName ? `Backup: ${payload.backupName}` : null,
+        ]
+          .filter(Boolean)
+          .join("\n");
+
+        openLogModal(
+          `${payload.error ?? "Failed to restore backup."}${
+            meta ? `\n\n${meta}` : ""
+          }\n\n---LOG---\n${log}`
+        );
+      }
+    } catch (error) {
+      console.error("Error restoring backup:", error);
+      openLogModal(`An error occurred during restoration.\n\n${String(error)}`);
+    }
+  };
 
   const handleBackup = async () => {
     try {
@@ -149,6 +250,17 @@ export default function DatabasesPage() {
         <LogModal content={logModalContent} onClose={closeLogModal} />
       )}
 
+      {isRestoreModalOpen && selectedBackupForRestore && (
+        <RestoreModal
+          backupName={selectedBackupForRestore}
+          onClose={() => {
+            setIsRestoreModalOpen(false);
+            setSelectedBackupForRestore(null);
+          }}
+          onConfirm={handleRestoreConfirm}
+        />
+      )}
+
       {/* Tabs */}
       <div className="mb-6 border-b border-gray-700">
         <div className="flex gap-4">
@@ -185,17 +297,6 @@ export default function DatabasesPage() {
       <div className="flex flex-col gap-3 mb-6 md:flex-row md:items-center md:justify-between">
         <h1 className="text-3xl font-bold">Databases - {activeTab === "postgresql" ? "PostgreSQL" : "MongoDB"}</h1>
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-sm text-gray-600">
-            <input
-              type="checkbox"
-              className="size-4 accent-emerald-500"
-              checked={truncateBeforeRestore}
-              onChange={(event) =>
-                setTruncateBeforeRestore(event.target.checked)
-              }
-            />
-            Truncate data before restore
-          </label>
           <Button
             onClick={() => {
               void handleBackup();
@@ -216,12 +317,11 @@ export default function DatabasesPage() {
           />
         </div>
       </div>
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
+      <div className="rounded-lg bg-gray-900 p-6 shadow-lg">
         <DataTable
           columns={getDatabaseColumns({
-            truncateBeforeRestore,
             onPreview: handlePreview,
-            onRestore: (log: string) => openLogModal(log),
+            onRestoreRequest: handleRestoreRequest,
             onDelete: () => setRefreshTrigger((prev) => prev + 1),
             notify: (message, variant) =>
               toast(message, { variant: variant ?? "info" }),

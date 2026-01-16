@@ -1,0 +1,26 @@
+command:
+mongorestore --uri mongodb+srv://mmatynia:mlokos16@cluster0.zv9e9.azure.mongodb.net/ --db app --archive=/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768523923367.archive --gzip --drop
+
+stdout:
+
+
+stderr:
+2026-01-16T01:39:22.512+0100	The --db and --collection flags are deprecated for this use-case; please use --nsInclude instead, i.e. with --nsInclude=${DATABASE}.${COLLECTION}
+2026-01-16T01:39:22.541+0100	preparing collections to restore from
+2026-01-16T01:39:22.559+0100	reading metadata for app.settings from archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768523923367.archive'
+2026-01-16T01:39:22.564+0100	reading metadata for app.notes from archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768523923367.archive'
+2026-01-16T01:39:22.564+0100	reading metadata for app.categories from archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768523923367.archive'
+2026-01-16T01:39:22.564+0100	reading metadata for app.products from archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768523923367.archive'
+2026-01-16T01:39:22.711+0100	restoring app.settings from archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768523923367.archive'
+2026-01-16T01:39:22.771+0100	finished restoring app.settings (1 document, 0 failures)
+2026-01-16T01:39:22.865+0100	restoring app.notes from archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768523923367.archive'
+2026-01-16T01:39:22.922+0100	finished restoring app.notes (2 documents, 0 failures)
+2026-01-16T01:39:23.028+0100	restoring app.categories from archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768523923367.archive'
+2026-01-16T01:39:23.090+0100	finished restoring app.categories (3 documents, 0 failures)
+2026-01-16T01:39:23.186+0100	restoring app.products from archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768523923367.archive'
+2026-01-16T01:39:23.293+0100	finished restoring app.products (40 documents, 0 failures)
+2026-01-16T01:39:23.294+0100	no indexes to restore for collection app.notes
+2026-01-16T01:39:23.294+0100	no indexes to restore for collection app.products
+2026-01-16T01:39:23.294+0100	no indexes to restore for collection app.settings
+2026-01-16T01:39:23.294+0100	no indexes to restore for collection app.categories
+2026-01-16T01:39:23.295+0100	46 document(s) restored successfully. 0 document(s) failed to restore.

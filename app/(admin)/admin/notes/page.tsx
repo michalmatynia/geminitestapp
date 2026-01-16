@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Plus, Search, Pin, Archive, ChevronRight, FileText, Heading } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Plus, Search, Pin, Archive, ChevronRight, FileText, Heading, X } from "lucide-react";
 import type { NoteWithRelations, TagRecord, CategoryWithChildren } from "@/types/notes";
 import { Button } from "@/components/ui/button";
 import ModalShell from "@/components/ui/modal-shell";
@@ -12,14 +12,18 @@ function NoteForm({
   note,
   folderTree,
   defaultFolderId,
+  availableTags,
   onClose,
   onSuccess,
+  onTagCreated,
 }: {
   note?: NoteWithRelations | null;
   folderTree: CategoryWithChildren[];
   defaultFolderId?: string | null;
+  availableTags: TagRecord[];
   onClose: () => void;
   onSuccess: () => void;
+  onTagCreated: () => void;
 }) {
   const [title, setTitle] = useState(note?.title || "");
   const [content, setContent] = useState(note?.content || "");
@@ -29,6 +33,13 @@ function NoteForm({
   const [selectedFolderId, setSelectedFolderId] = useState<string>(
     note?.categories[0]?.categoryId || defaultFolderId || ""
   );
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
+    note?.tags.map((t) => t.tagId) || []
+  );
+  const [tagInput, setTagInput] = useState("");
+  const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
+  const tagInputRef = useRef<HTMLInputElement>(null);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -45,6 +56,59 @@ function NoteForm({
   };
 
   const flatFolders = flattenFolderTree(folderTree);
+
+  const filteredTags = availableTags.filter(
+    (tag) =>
+      tag.name.toLowerCase().includes(tagInput.toLowerCase()) &&
+      !selectedTagIds.includes(tag.id)
+  );
+
+  const handleAddTag = (tag: TagRecord) => {
+    setSelectedTagIds([...selectedTagIds, tag.id]);
+    setTagInput("");
+    setIsTagDropdownOpen(false);
+  };
+
+  const handleCreateTag = async () => {
+    if (!tagInput.trim()) return;
+    
+    // Check if tag already exists (case-insensitive)
+    const existingTag = availableTags.find(
+      (t) => t.name.toLowerCase() === tagInput.trim().toLowerCase()
+    );
+
+    if (existingTag) {
+      if (!selectedTagIds.includes(existingTag.id)) {
+        handleAddTag(existingTag);
+      } else {
+        setTagInput("");
+        setIsTagDropdownOpen(false);
+      }
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/notes/tags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: tagInput.trim() }),
+      });
+
+      if (response.ok) {
+        const newTag = await response.json();
+        onTagCreated(); // Refresh tags in parent
+        setSelectedTagIds((prev) => [...prev, newTag.id]);
+        setTagInput("");
+        setIsTagDropdownOpen(false);
+      }
+    } catch (error) {
+      console.error("Failed to create tag:", error);
+    }
+  };
+
+  const handleRemoveTag = (tagId: string) => {
+    setSelectedTagIds(selectedTagIds.filter((id) => id !== tagId));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +128,7 @@ function NoteForm({
           color,
           isPinned,
           isArchived,
-          tagIds: [],
+          tagIds: selectedTagIds,
           categoryIds: selectedFolderId ? [selectedFolderId] : [],
         }),
       });
@@ -113,13 +177,95 @@ function NoteForm({
             Delete
           </Button>
         )}
-        <Button
-          type="button"
-          onClick={onClose}
-          className="bg-gray-700 text-white hover:bg-gray-600"
-        >
-          Cancel
-        </Button>
+        {note && (
+          <Button
+            type="button"
+            onClick={onClose}
+            className="bg-gray-700 text-white hover:bg-gray-600"
+          >
+            Cancel
+          </Button>
+        )}
+      </div>
+
+      {/* Tags Section */}
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-2">
+          {selectedTagIds.map((tagId) => {
+            const tag = availableTags.find((t) => t.id === tagId);
+            if (!tag) return null;
+            return (
+              <span
+                key={tag.id}
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-200 border border-blue-500/30"
+              >
+                {tag.name}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveTag(tag.id)}
+                  className="hover:text-white"
+                >
+                  <X size={12} />
+                </button>
+              </span>
+            );
+          })}
+        </div>
+        <div className="relative">
+          <div className="flex gap-2">
+            <input
+              ref={tagInputRef}
+              type="text"
+              placeholder={selectedTagIds.length === 0 ? "Tags" : "Add tag..."}
+              value={tagInput}
+              onChange={(e) => {
+                setTagInput(e.target.value);
+                setIsTagDropdownOpen(true);
+              }}
+              onFocus={() => setIsTagDropdownOpen(true)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  if (tagInput.trim()) {
+                    void handleCreateTag();
+                  }
+                }
+              }}
+              className="flex-1 rounded-none border-x-0 border-t border-b border-gray-700 bg-transparent px-0 py-2 text-white text-sm focus:outline-none focus:border-gray-500 placeholder:text-gray-500"
+            />
+          </div>
+          
+          {isTagDropdownOpen && (tagInput || filteredTags.length > 0) && (
+            <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-700 bg-gray-800 shadow-lg">
+              <ul className="max-h-60 overflow-auto py-1 text-sm text-gray-300">
+                {filteredTags.map((tag) => (
+                  <li
+                    key={tag.id}
+                    onClick={() => handleAddTag(tag)}
+                    className="cursor-pointer px-4 py-2 hover:bg-gray-700 hover:text-white"
+                  >
+                    {tag.name}
+                  </li>
+                ))}
+                {tagInput && !filteredTags.find(t => t.name.toLowerCase() === tagInput.toLowerCase()) && (
+                  <li
+                    onClick={() => void handleCreateTag()}
+                    className="cursor-pointer px-4 py-2 text-blue-400 hover:bg-gray-700"
+                  >
+                    Create "{tagInput}"
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
+          {/* Overlay to close dropdown when clicking outside */}
+          {isTagDropdownOpen && (
+            <div
+              className="fixed inset-0 z-0"
+              onClick={() => setIsTagDropdownOpen(false)}
+            />
+          )}
+        </div>
       </div>
 
       <div>
@@ -296,6 +442,7 @@ export default function NotesPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [creatingFolderParentId, setCreatingFolderParentId] = useState<string | null | undefined>(undefined);
   const [searchScope, setSearchScope] = useState<"both" | "title" | "content">("both");
+  const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
 
   const fetchFolderTree = React.useCallback(async () => {
     try {
@@ -323,6 +470,7 @@ export default function NotesPage() {
       }
       if (filterPinned !== undefined) params.append("isPinned", String(filterPinned));
       if (filterArchived !== undefined) params.append("isArchived", String(filterArchived));
+      if (filterTagIds.length > 0) params.append("tagIds", filterTagIds.join(","));
 
       if (selectedFolderId) {
         const descendantIds = getCategoryIdsWithDescendants(selectedFolderId, folderTreeRef.current);
@@ -341,7 +489,7 @@ export default function NotesPage() {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, searchScope, filterPinned, filterArchived, selectedFolderId]);
+  }, [searchQuery, searchScope, filterPinned, filterArchived, selectedFolderId, filterTagIds]);
 
   const fetchTags = React.useCallback(async () => {
     try {
@@ -583,8 +731,11 @@ export default function NotesPage() {
                   <NoteForm
                     note={selectedNote}
                     folderTree={folderTree}
+                    defaultFolderId={selectedFolderId}
+                    availableTags={tags}
                     onClose={() => setIsEditing(false)}
                     onSuccess={handleUpdateSuccess}
+                    onTagCreated={fetchTags}
                   />
                 </div>
               ) : (
@@ -613,7 +764,11 @@ export default function NotesPage() {
                 >
                   <Plus className="size-5" />
                 </Button>
-                <h1 className="text-3xl font-bold text-white">Notes</h1>
+                <h1 className="text-3xl font-bold text-white">
+                  {selectedFolderId
+                    ? buildBreadcrumbPath(selectedFolderId, null, folderTree).slice(-1)[0]?.name
+                    : "Notes"}
+                </h1>
               </div>
 
               {/* Filters */}
@@ -635,6 +790,50 @@ export default function NotesPage() {
                       className="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 pl-10 pr-4 text-white placeholder-gray-400"
                     />
                   </div>
+                  
+                  {/* Tag Filter */}
+                  <div className="mt-2 flex gap-2 items-center">
+                    <div className="relative">
+                      <select
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val && !filterTagIds.includes(val)) {
+                            setFilterTagIds([...filterTagIds, val]);
+                          }
+                          e.target.value = "";
+                        }}
+                        className="rounded-lg border border-gray-700 bg-gray-800 px-3 py-1 text-xs text-white"
+                      >
+                        <option value="">Filter by Tag...</option>
+                        {tags
+                          .filter((t) => !filterTagIds.includes(t.id))
+                          .map((tag) => (
+                            <option key={tag.id} value={tag.id}>
+                              {tag.name}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                    {filterTagIds.map((tagId) => {
+                      const tag = tags.find((t) => t.id === tagId);
+                      if (!tag) return null;
+                      return (
+                        <span
+                          key={tag.id}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-200 border border-blue-500/30"
+                        >
+                          {tag.name}
+                          <button
+                            onClick={() => setFilterTagIds(filterTagIds.filter((id) => id !== tag.id))}
+                            className="hover:text-white"
+                          >
+                            <X size={12} />
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+
                   {/* Search Scope Toggle */}
                   <div className="mt-2 flex gap-2">
                     <button
@@ -784,8 +983,10 @@ export default function NotesPage() {
               <NoteForm
                 folderTree={folderTree}
                 defaultFolderId={selectedFolderId}
+                availableTags={tags}
                 onClose={handleCloseCreateModal}
                 onSuccess={handleCreateSuccess}
+                onTagCreated={fetchTags}
               />
             </ModalShell>
           </div>

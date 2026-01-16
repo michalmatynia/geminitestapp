@@ -12,14 +12,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
-import {
-  useNoteSettings,
-  DEFAULT_NOTE_SETTINGS,
-  type NoteSettings,
-} from "@/lib/context/NoteSettingsContext";
+import { useNoteSettings, DEFAULT_NOTE_SETTINGS } from "@/lib/context/NoteSettingsContext";
+import type { NoteSettings } from "@/types/notes-settings";
 
 const sortByOptions = [
   { value: "created", label: "Created Date" },
+  { value: "updated", label: "Modified Date" },
   { value: "name", label: "Name" },
 ] as const;
 
@@ -52,8 +50,12 @@ export default function NoteSettingsPage() {
     settings.sortOrder === DEFAULT_NOTE_SETTINGS.sortOrder &&
     settings.showTimestamps === DEFAULT_NOTE_SETTINGS.showTimestamps &&
     settings.showBreadcrumbs === DEFAULT_NOTE_SETTINGS.showBreadcrumbs &&
+    settings.showRelatedNotes === DEFAULT_NOTE_SETTINGS.showRelatedNotes &&
     settings.searchScope === DEFAULT_NOTE_SETTINGS.searchScope &&
-    settings.selectedFolderId === DEFAULT_NOTE_SETTINGS.selectedFolderId;
+    settings.selectedFolderId === DEFAULT_NOTE_SETTINGS.selectedFolderId &&
+    settings.selectedNotebookId === DEFAULT_NOTE_SETTINGS.selectedNotebookId &&
+    settings.viewMode === DEFAULT_NOTE_SETTINGS.viewMode &&
+    settings.gridDensity === DEFAULT_NOTE_SETTINGS.gridDensity;
 
   return (
     <div className="container mx-auto py-10">

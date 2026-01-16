@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { noteService } from "@/lib/services/noteService/index";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { tagUpdateSchema } from "@/lib/validations/notes";
 
 /**
  * PATCH /api/notes/tags/[id]
@@ -12,8 +14,14 @@ export async function PATCH(
 ) {
   const { id } = await params;
   try {
-    const body = await req.json();
-    const tag = await noteService.updateTag(id, body);
+    const parsed = await parseJsonBody(req, tagUpdateSchema, {
+      logPrefix: "tags:PATCH",
+      allowEmpty: true,
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const tag = await noteService.updateTag(id, parsed.data);
     return NextResponse.json(tag);
   } catch (error) {
     const errorId = randomUUID();

@@ -1,14 +1,21 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { noteService } from "@/lib/services/noteService/index";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { tagCreateSchema } from "@/lib/validations/notes";
 
 /**
  * GET /api/notes/tags
  * Fetches all tags.
  */
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const tags = await noteService.getAllTags();
+    const { searchParams } = new URL(req.url);
+    const notebookIdParam = searchParams.get("notebookId");
+    const notebook = notebookIdParam
+      ? { id: notebookIdParam }
+      : await noteService.getOrCreateDefaultNotebook();
+    const tags = await noteService.getAllTags(notebook.id);
     return NextResponse.json(tags);
   } catch (error) {
     const errorId = randomUUID();
@@ -26,16 +33,19 @@ export async function GET() {
  */
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-
-    if (!body.name) {
-      return NextResponse.json(
-        { error: "Tag name is required" },
-        { status: 400 }
-      );
+    const parsed = await parseJsonBody(req, tagCreateSchema, {
+      logPrefix: "tags:POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
     }
 
-    const tag = await noteService.createTag(body);
+    const resolvedNotebookId =
+      parsed.data.notebookId ?? (await noteService.getOrCreateDefaultNotebook()).id;
+    const tag = await noteService.createTag({
+      ...parsed.data,
+      notebookId: resolvedNotebookId,
+    });
     return NextResponse.json(tag, { status: 201 });
   } catch (error: unknown) {
     const errorId = randomUUID();

@@ -102,6 +102,18 @@ export default function Menu() {
           Note List
         </Link>
         <Link
+          href="/admin/notes/notebooks"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Notebooks
+        </Link>
+        <Link
+          href="/admin/notes/tags"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Tags
+        </Link>
+        <Link
           href="/admin/notes/settings"
           className="block hover:bg-gray-700 p-2 rounded"
         >

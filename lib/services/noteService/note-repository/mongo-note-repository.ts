@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import type { Filter, WithId } from "mongodb";
+import type { Filter, WithId, UpdateFilter } from "mongodb";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import type {
   NoteWithRelations as NoteRecord,
@@ -7,6 +7,9 @@ import type {
   TagRecord,
   CategoryRecord,
   CategoryWithChildren,
+  NotebookRecord,
+  NotebookCreateInput,
+  NotebookUpdateInput,
 } from "@/types/notes";
 import type { NoteRepository } from "@/types/services/note-repository";
 
@@ -55,10 +58,12 @@ type NoteDocument = Omit<NoteRecord, "tags" | "categories" | "relationsFrom" | "
 
 type TagDocument = TagRecord & { _id: string };
 type CategoryDocument = CategoryRecord & { _id: string };
+type NotebookDocument = NotebookRecord & { _id: string };
 
 const noteCollectionName = "notes";
 const tagCollectionName = "tags";
 const categoryCollectionName = "categories";
+const notebookCollectionName = "notebooks";
 
 const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => ({
   id: doc.id ?? doc._id,
@@ -67,6 +72,7 @@ const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => ({
   color: doc.color ?? null,
   isPinned: doc.isPinned ?? false,
   isArchived: doc.isArchived ?? false,
+  notebookId: doc.notebookId ?? null,
   createdAt: doc.createdAt ?? new Date(),
   updatedAt: doc.updatedAt ?? new Date(),
   tags: Array.isArray(doc.tags) ? doc.tags : [],
@@ -79,6 +85,7 @@ const toTagResponse = (doc: WithId<TagDocument>): TagRecord => ({
   id: doc.id ?? doc._id,
   name: doc.name,
   color: doc.color ?? null,
+  notebookId: doc.notebookId ?? null,
   createdAt: doc.createdAt ?? new Date(),
   updatedAt: doc.updatedAt ?? new Date(),
 });
@@ -89,6 +96,15 @@ const toCategoryResponse = (doc: WithId<CategoryDocument>): CategoryRecord => ({
   description: doc.description ?? null,
   color: doc.color ?? null,
   parentId: doc.parentId ?? null,
+  notebookId: doc.notebookId ?? null,
+  createdAt: doc.createdAt ?? new Date(),
+  updatedAt: doc.updatedAt ?? new Date(),
+});
+
+const toNotebookResponse = (doc: WithId<NotebookDocument>): NotebookRecord => ({
+  id: doc.id ?? doc._id,
+  name: doc.name,
+  color: doc.color ?? null,
   createdAt: doc.createdAt ?? new Date(),
   updatedAt: doc.updatedAt ?? new Date(),
 });
@@ -124,8 +140,39 @@ const buildTree = (
   return rootCategories;
 };
 
+const buildIncomingRelationsMap = (
+  notes: NoteRecord[]
+): Map<string, NoteRelationToEmbedded[]> => {
+  const incoming = new Map<string, NoteRelationToEmbedded[]>();
+
+  notes.forEach((note) => {
+    note.relationsFrom?.forEach((rel) => {
+      const targetId = rel.targetNote?.id ?? rel.targetNoteId;
+      if (!targetId) return;
+      const relation: NoteRelationToEmbedded = {
+        sourceNoteId: note.id,
+        targetNoteId: targetId,
+        assignedAt: rel.assignedAt ?? new Date(),
+        sourceNote: {
+          id: note.id,
+          title: note.title,
+          color: note.color ?? null,
+        },
+      };
+      const existing = incoming.get(targetId) ?? [];
+      existing.push(relation);
+      incoming.set(targetId, existing);
+    });
+  });
+
+  return incoming;
+};
+
 const buildSearchFilter = (filters: NoteFilters = {}): Filter<NoteDocument> => {
   const filter: Filter<NoteDocument> = {};
+  if (filters.notebookId) {
+    filter.notebookId = filters.notebookId;
+  }
 
   if (filters.search) {
     const regex = { $regex: filters.search, $options: "i" };
@@ -160,20 +207,95 @@ const buildSearchFilter = (filters: NoteFilters = {}): Filter<NoteDocument> => {
 };
 
 export const mongoNoteRepository: NoteRepository = {
+  async getOrCreateDefaultNotebook(): Promise<NotebookRecord> {
+    const db = await getMongoDb();
+    const collection = db.collection<NotebookDocument>(notebookCollectionName);
+    const existing = await collection.find({}).sort({ createdAt: 1 }).limit(1).toArray();
+    const notebook = existing[0]
+      ? toNotebookResponse(existing[0] as WithId<NotebookDocument>)
+      : toNotebookResponse(
+          (await (async () => {
+            const id = randomUUID();
+            const now = new Date();
+            const doc: NotebookDocument = {
+              _id: id,
+              id,
+              name: "Default",
+              color: "#3b82f6",
+              createdAt: now,
+              updatedAt: now,
+            };
+            await collection.insertOne(doc);
+            return doc as WithId<NotebookDocument>;
+          })())
+        );
+
+    const noteCollection = db.collection<NoteDocument>(noteCollectionName);
+    const tagCollection = db.collection<TagDocument>(tagCollectionName);
+    const categoryCollection = db.collection<CategoryDocument>(categoryCollectionName);
+    await noteCollection.updateMany(
+      { $or: [{ notebookId: { $exists: false } }, { notebookId: null }] },
+      { $set: { notebookId: notebook.id } }
+    );
+    await tagCollection.updateMany(
+      { $or: [{ notebookId: { $exists: false } }, { notebookId: null }] },
+      { $set: { notebookId: notebook.id } }
+    );
+    await categoryCollection.updateMany(
+      { $or: [{ notebookId: { $exists: false } }, { notebookId: null }] },
+      { $set: { notebookId: notebook.id } }
+    );
+
+    return notebook;
+  },
+
   // Note CRUD operations
   async getAll(filters = {}) {
     const db = await getMongoDb();
+    const resolvedNotebookId =
+      filters.notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
+    const effectiveFilters = { ...filters, notebookId: resolvedNotebookId };
     const collection = db.collection<NoteDocument>(noteCollectionName);
-    const searchFilter = buildSearchFilter(filters);
+    const searchFilter = buildSearchFilter(effectiveFilters);
     const docs = await collection.find(searchFilter).sort({ updatedAt: -1 }).toArray();
-    return docs.map(toNoteResponse);
+    const notes = docs.map(toNoteResponse);
+    const incomingMap = buildIncomingRelationsMap(notes);
+    return notes.map((note) => ({
+      ...note,
+      relationsTo: incomingMap.get(note.id) ?? [],
+    }));
   },
 
   async getById(id) {
     const db = await getMongoDb();
     const collection = db.collection<NoteDocument>(noteCollectionName);
     const doc = await collection.findOne({ $or: [{ id }, { _id: id }] });
-    return doc ? toNoteResponse(doc) : null;
+    if (!doc) return null;
+    const note = toNoteResponse(doc);
+    const incomingDocs = await collection
+      .find({ "relationsFrom.targetNoteId": note.id })
+      .toArray();
+    const relationsTo: NoteRelationToEmbedded[] = incomingDocs
+      .map((incoming) => {
+        const relation = incoming.relationsFrom?.find(
+          (rel) =>
+            rel.targetNoteId === note.id || rel.targetNote?.id === note.id
+        );
+        if (!relation) return null;
+        const sourceId = incoming.id ?? incoming._id;
+        return {
+          sourceNoteId: sourceId,
+          targetNoteId: note.id,
+          assignedAt: relation.assignedAt ?? new Date(),
+          sourceNote: {
+            id: sourceId,
+            title: incoming.title,
+            color: incoming.color ?? null,
+          },
+        };
+      })
+      .filter((rel): rel is NoteRelationToEmbedded => rel !== null);
+    return { ...note, relationsTo };
   },
 
   async create(data) {
@@ -182,13 +304,18 @@ export const mongoNoteRepository: NoteRepository = {
 
     const id = randomUUID();
     const now = new Date();
+    const resolvedNotebookId =
+      data.notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
 
     // Fetch tags if provided
     let tags: NoteTagEmbedded[] = [];
     if (data.tagIds && data.tagIds.length > 0) {
       const tagCollection = db.collection<TagDocument>(tagCollectionName);
       const tagDocs = await tagCollection
-        .find({ $or: data.tagIds.map((tagId) => ({ $or: [{ id: tagId }, { _id: tagId }] })) })
+        .find({
+          $or: data.tagIds.map((tagId) => ({ $or: [{ id: tagId }, { _id: tagId }] })),
+          notebookId: resolvedNotebookId,
+        })
         .toArray();
       tags = tagDocs.map((tag) => ({
         noteId: id,
@@ -203,7 +330,10 @@ export const mongoNoteRepository: NoteRepository = {
     if (data.categoryIds && data.categoryIds.length > 0) {
       const categoryCollection = db.collection<CategoryDocument>(categoryCollectionName);
       const categoryDocs = await categoryCollection
-        .find({ $or: data.categoryIds.map((catId) => ({ $or: [{ id: catId }, { _id: catId }] })) })
+        .find({
+          $or: data.categoryIds.map((catId) => ({ $or: [{ id: catId }, { _id: catId }] })),
+          notebookId: resolvedNotebookId,
+        })
         .toArray();
       categories = categoryDocs.map((cat) => ({
         noteId: id,
@@ -217,7 +347,10 @@ export const mongoNoteRepository: NoteRepository = {
     let relationsFrom: NoteRelationFromEmbedded[] = [];
     if (data.relatedNoteIds && data.relatedNoteIds.length > 0) {
       const relatedNoteDocs = await collection
-        .find({ $or: data.relatedNoteIds.map((noteId) => ({ $or: [{ id: noteId }, { _id: noteId }] })) })
+        .find({
+          $or: data.relatedNoteIds.map((noteId) => ({ $or: [{ id: noteId }, { _id: noteId }] })),
+          notebookId: resolvedNotebookId,
+        })
         .toArray();
       relationsFrom = relatedNoteDocs.map((note) => ({
         sourceNoteId: id,
@@ -239,6 +372,7 @@ export const mongoNoteRepository: NoteRepository = {
       color: data.color ?? "#ffffff",
       isPinned: data.isPinned ?? false,
       isArchived: data.isArchived ?? false,
+      notebookId: resolvedNotebookId,
       createdAt: now,
       updatedAt: now,
       tags,
@@ -247,7 +381,7 @@ export const mongoNoteRepository: NoteRepository = {
       relationsTo: [],
     };
 
-    await collection.insertOne(doc as any);
+    await collection.insertOne(doc);
     return toNoteResponse(doc as WithId<NoteDocument>);
   },
 
@@ -255,28 +389,31 @@ export const mongoNoteRepository: NoteRepository = {
     const db = await getMongoDb();
     const collection = db.collection<NoteDocument>(noteCollectionName);
 
-    const updateDoc: any = {
-      $set: {
-        updatedAt: new Date(),
-        ...(data.title !== undefined && { title: data.title }),
-        ...(data.content !== undefined && { content: data.content }),
-        ...(data.color !== undefined && { color: data.color }),
-        ...(data.isPinned !== undefined && { isPinned: data.isPinned }),
-        ...(data.isArchived !== undefined && { isArchived: data.isArchived }),
-      },
+    const setFields: Partial<NoteDocument> = {
+      updatedAt: new Date(),
     };
+    if (data.title !== undefined) setFields.title = data.title;
+    if (data.content !== undefined) setFields.content = data.content;
+    if (data.color !== undefined) setFields.color = data.color;
+    if (data.isPinned !== undefined) setFields.isPinned = data.isPinned;
+    if (data.isArchived !== undefined) setFields.isArchived = data.isArchived;
+    if (data.notebookId !== undefined) setFields.notebookId = data.notebookId ?? null;
+
 
     // Handle tags update
     if (data.tagIds !== undefined) {
       let tags: NoteTagEmbedded[] = [];
       if (data.tagIds.length > 0) {
         const now = new Date();
+        const resolvedNotebookId =
+          data.notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
         const tagCollection = db.collection<TagDocument>(tagCollectionName);
         const tagDocs = await tagCollection
           .find({
             $or: data.tagIds.map((tagId) => ({
               $or: [{ id: tagId }, { _id: tagId }],
             })),
+            notebookId: resolvedNotebookId,
           })
           .toArray();
         tags = tagDocs.map((tag) => ({
@@ -286,7 +423,7 @@ export const mongoNoteRepository: NoteRepository = {
           tag: toTagResponse(tag),
         }));
       }
-      updateDoc.$set.tags = tags;
+      setFields.tags = tags;
     }
 
     // Handle categories update
@@ -294,6 +431,8 @@ export const mongoNoteRepository: NoteRepository = {
       let categories: NoteCategoryEmbedded[] = [];
       if (data.categoryIds.length > 0) {
         const now = new Date();
+        const resolvedNotebookId =
+          data.notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
         const categoryCollection = db.collection<CategoryDocument>(
           categoryCollectionName
         );
@@ -302,6 +441,7 @@ export const mongoNoteRepository: NoteRepository = {
             $or: data.categoryIds.map((catId) => ({
               $or: [{ id: catId }, { _id: catId }],
             })),
+            notebookId: resolvedNotebookId,
           })
           .toArray();
         categories = categoryDocs.map((cat) => ({
@@ -311,7 +451,7 @@ export const mongoNoteRepository: NoteRepository = {
           category: toCategoryResponse(cat),
         }));
       }
-      updateDoc.$set.categories = categories;
+      setFields.categories = categories;
     }
 
     // Handle related notes update
@@ -319,11 +459,14 @@ export const mongoNoteRepository: NoteRepository = {
       let relationsFrom: NoteRelationFromEmbedded[] = [];
       if (data.relatedNoteIds.length > 0) {
         const now = new Date();
+        const resolvedNotebookId =
+          data.notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
         const relatedNoteDocs = await collection
           .find({
             $or: data.relatedNoteIds.map((noteId) => ({
               $or: [{ id: noteId }, { _id: noteId }],
             })),
+            notebookId: resolvedNotebookId,
           })
           .toArray();
         relationsFrom = relatedNoteDocs.map((note) => ({
@@ -337,9 +480,12 @@ export const mongoNoteRepository: NoteRepository = {
           },
         }));
       }
-      updateDoc.$set.relationsFrom = relationsFrom;
+      setFields.relationsFrom = relationsFrom;
     }
 
+    const updateDoc: UpdateFilter<NoteDocument> = {
+      $set: setFields,
+    };
     const result = await collection.findOneAndUpdate(
       { $or: [{ id }, { _id: id }] },
       updateDoc,
@@ -358,10 +504,15 @@ export const mongoNoteRepository: NoteRepository = {
   },
 
   // Tag operations
-  async getAllTags() {
+  async getAllTags(notebookId?: string | null) {
     const db = await getMongoDb();
     const collection = db.collection<TagDocument>(tagCollectionName);
-    const docs = await collection.find({}).sort({ name: 1 }).toArray();
+    const resolvedNotebookId =
+      notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
+    const docs = await collection
+      .find({ notebookId: resolvedNotebookId })
+      .sort({ name: 1 })
+      .toArray();
     return docs.map(toTagResponse);
   },
 
@@ -378,17 +529,20 @@ export const mongoNoteRepository: NoteRepository = {
 
     const id = randomUUID();
     const now = new Date();
+    const resolvedNotebookId =
+      data.notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
 
     const doc: TagDocument = {
       _id: id,
       id,
       name: data.name,
       color: data.color ?? "#3b82f6",
+      notebookId: resolvedNotebookId,
       createdAt: now,
       updatedAt: now,
     };
 
-    await collection.insertOne(doc as any);
+    await collection.insertOne(doc);
     return toTagResponse(doc as WithId<TagDocument>);
   },
 
@@ -396,7 +550,7 @@ export const mongoNoteRepository: NoteRepository = {
     const db = await getMongoDb();
     const collection = db.collection<TagDocument>(tagCollectionName);
 
-    const updateDoc: any = {
+    const updateDoc: UpdateFilter<TagDocument> = {
       $set: {
         updatedAt: new Date(),
         ...(data.name !== undefined && { name: data.name }),
@@ -421,19 +575,24 @@ export const mongoNoteRepository: NoteRepository = {
 
     // Remove tag from all notes
     const noteCollection = db.collection<NoteDocument>(noteCollectionName);
-    await noteCollection.updateMany(
-      { "tags.tagId": id },
-      { $pull: { tags: { tagId: id } } as any }
-    );
+    const pullTags: UpdateFilter<NoteDocument> = {
+      $pull: { tags: { tagId: id } },
+    };
+    await noteCollection.updateMany({ "tags.tagId": id }, pullTags);
     
     return result.deletedCount > 0;
   },
 
   // Category operations
-  async getAllCategories() {
+  async getAllCategories(notebookId?: string | null) {
     const db = await getMongoDb();
     const collection = db.collection<CategoryDocument>(categoryCollectionName);
-    const docs = await collection.find({}).sort({ name: 1 }).toArray();
+    const resolvedNotebookId =
+      notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
+    const docs = await collection
+      .find({ notebookId: resolvedNotebookId })
+      .sort({ name: 1 })
+      .toArray();
     return docs.map(toCategoryResponse);
   },
 
@@ -444,16 +603,21 @@ export const mongoNoteRepository: NoteRepository = {
     return doc ? toCategoryResponse(doc) : null;
   },
 
-  async getCategoryTree() {
+  async getCategoryTree(notebookId?: string | null) {
     const db = await getMongoDb();
     const collection = db.collection<CategoryDocument>(categoryCollectionName);
-    const docs = await collection.find({}).sort({ name: 1 }).toArray();
+    const resolvedNotebookId =
+      notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
+    const docs = await collection
+      .find({ notebookId: resolvedNotebookId })
+      .sort({ name: 1 })
+      .toArray();
     const categories = docs.map(toCategoryResponse);
 
     // Fetch all notes that have categories to populate the tree
     const noteCollection = db.collection<NoteDocument>(noteCollectionName);
     const noteDocs = await noteCollection
-      .find({ "categories.0": { $exists: true } })
+      .find({ "categories.0": { $exists: true }, notebookId: resolvedNotebookId })
       .toArray();
     const notes = noteDocs.map(toNoteResponse);
 
@@ -466,6 +630,8 @@ export const mongoNoteRepository: NoteRepository = {
 
     const id = randomUUID();
     const now = new Date();
+    const resolvedNotebookId =
+      data.notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
 
     const doc: CategoryDocument = {
       _id: id,
@@ -474,11 +640,12 @@ export const mongoNoteRepository: NoteRepository = {
       description: data.description ?? null,
       color: data.color ?? "#10b981",
       parentId: data.parentId ?? null,
+      notebookId: resolvedNotebookId,
       createdAt: now,
       updatedAt: now,
     };
 
-    await collection.insertOne(doc as any);
+    await collection.insertOne(doc);
     return toCategoryResponse(doc as WithId<CategoryDocument>);
   },
 
@@ -486,7 +653,7 @@ export const mongoNoteRepository: NoteRepository = {
     const db = await getMongoDb();
     const collection = db.collection<CategoryDocument>(categoryCollectionName);
 
-    const updateDoc: any = {
+    const updateDoc: UpdateFilter<CategoryDocument> = {
       $set: {
         updatedAt: new Date(),
         ...(data.name !== undefined && { name: data.name }),
@@ -553,12 +720,81 @@ export const mongoNoteRepository: NoteRepository = {
       await collection.deleteOne({ $or: [{ id }, { _id: id }] });
 
       // Remove category from all notes
+      const pullCategories: UpdateFilter<NoteDocument> = {
+        $pull: { categories: { categoryId: id } },
+      };
       await noteCollection.updateMany(
         { "categories.categoryId": id },
-        { $pull: { categories: { categoryId: id } } as any }
+        pullCategories
       );
     }
 
     return true;
+  },
+
+  async getAllNotebooks(): Promise<NotebookRecord[]> {
+    const db = await getMongoDb();
+    const collection = db.collection<NotebookDocument>(notebookCollectionName);
+    await mongoNoteRepository.getOrCreateDefaultNotebook();
+    const docs = await collection.find({}).sort({ createdAt: 1 }).toArray();
+    return docs.map(toNotebookResponse);
+  },
+
+  async getNotebookById(id: string): Promise<NotebookRecord | null> {
+    const db = await getMongoDb();
+    const collection = db.collection<NotebookDocument>(notebookCollectionName);
+    const doc = await collection.findOne({ $or: [{ id }, { _id: id }] });
+    return doc ? toNotebookResponse(doc) : null;
+  },
+
+  async createNotebook(data: NotebookCreateInput): Promise<NotebookRecord> {
+    const db = await getMongoDb();
+    const collection = db.collection<NotebookDocument>(notebookCollectionName);
+    const id = randomUUID();
+    const now = new Date();
+    const doc: NotebookDocument = {
+      _id: id,
+      id,
+      name: data.name,
+      color: data.color ?? "#3b82f6",
+      createdAt: now,
+      updatedAt: now,
+    };
+    await collection.insertOne(doc);
+    return toNotebookResponse(doc as WithId<NotebookDocument>);
+  },
+
+  async updateNotebook(id: string, data: NotebookUpdateInput): Promise<NotebookRecord | null> {
+    const db = await getMongoDb();
+    const collection = db.collection<NotebookDocument>(notebookCollectionName);
+    const updateDoc: UpdateFilter<NotebookDocument> = {
+      $set: {
+        updatedAt: new Date(),
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.color !== undefined && { color: data.color }),
+      },
+    };
+    const result = await collection.findOneAndUpdate(
+      { $or: [{ id }, { _id: id }] },
+      updateDoc,
+      { returnDocument: "after" }
+    );
+    if (!result) return null;
+    return toNotebookResponse(result);
+  },
+
+  async deleteNotebook(id: string): Promise<boolean> {
+    const db = await getMongoDb();
+    const collection = db.collection<NotebookDocument>(notebookCollectionName);
+    const noteCollection = db.collection<NoteDocument>(noteCollectionName);
+    const tagCollection = db.collection<TagDocument>(tagCollectionName);
+    const categoryCollection = db.collection<CategoryDocument>(categoryCollectionName);
+
+    await noteCollection.deleteMany({ notebookId: id });
+    await tagCollection.deleteMany({ notebookId: id });
+    await categoryCollection.deleteMany({ notebookId: id });
+
+    const result = await collection.deleteOne({ $or: [{ id }, { _id: id }] });
+    return result.deletedCount > 0;
   },
 };

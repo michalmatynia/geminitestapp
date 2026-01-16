@@ -473,6 +473,8 @@ model Note {
   color       String?   @default("#ffffff")
   isPinned    Boolean   @default(false)
   isArchived  Boolean   @default(false)
+  notebookId  String?
+  notebook    Notebook? @relation(fields: [notebookId], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   tags        NoteTag[]
@@ -483,24 +485,43 @@ model Note {
 
 model Tag {
   id        String    @id @default(cuid())
-  name      String    @unique
+  name      String
   color     String?   @default("#3b82f6")
+  notebookId String?
+  notebook  Notebook? @relation(fields: [notebookId], references: [id], onDelete: Cascade)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   notes     NoteTag[]
+
+  @@unique([notebookId, name])
 }
 
 model Category {
   id          String         @id @default(cuid())
-  name        String         @unique
+  name        String
   description String?
   color       String?        @default("#10b981")
   parentId    String?
   parent      Category?      @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children    Category[]     @relation("CategoryHierarchy")
+  notebookId  String?
+  notebook    Notebook?      @relation(fields: [notebookId], references: [id], onDelete: Cascade)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   notes       NoteCategory[]
+
+  @@unique([notebookId, name])
+}
+
+model Notebook {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  color     String?   @default("#3b82f6")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  notes     Note[]
+  tags      Tag[]
+  categories Category[]
 }
 
 model NoteTag {

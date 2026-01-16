@@ -24,16 +24,37 @@ async function getNoteService(): Promise<NoteRepository> {
   return _noteService;
 }
 
-export const noteService: NoteRepository = new Proxy({} as NoteRepository, {
-  get(target, prop) {
-    return async (...args: any[]) => {
-      const service = await getNoteService();
-      const value = service[prop as keyof NoteRepository];
-      if (typeof value === 'function') {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return (value as (...args: any[]) => Promise<any>).apply(service, args);
-      }
-      return value;
-    };
-  }
-});
+const callService = <K extends keyof NoteRepository>(
+  key: K,
+  ...args: Parameters<NoteRepository[K]>
+): ReturnType<NoteRepository[K]> => {
+  return getNoteService().then((service) => {
+    const fn = service[key] as (...input: Parameters<NoteRepository[K]>) => ReturnType<NoteRepository[K]>;
+    return fn(...args);
+  });
+};
+
+export const noteService: NoteRepository = {
+  getAll: (...args) => callService("getAll", ...args),
+  getById: (...args) => callService("getById", ...args),
+  create: (...args) => callService("create", ...args),
+  update: (...args) => callService("update", ...args),
+  delete: (...args) => callService("delete", ...args),
+  getAllTags: (...args) => callService("getAllTags", ...args),
+  getTagById: (...args) => callService("getTagById", ...args),
+  createTag: (...args) => callService("createTag", ...args),
+  updateTag: (...args) => callService("updateTag", ...args),
+  deleteTag: (...args) => callService("deleteTag", ...args),
+  getAllCategories: (...args) => callService("getAllCategories", ...args),
+  getCategoryById: (...args) => callService("getCategoryById", ...args),
+  getCategoryTree: (...args) => callService("getCategoryTree", ...args),
+  createCategory: (...args) => callService("createCategory", ...args),
+  updateCategory: (...args) => callService("updateCategory", ...args),
+  deleteCategory: (...args) => callService("deleteCategory", ...args),
+  getAllNotebooks: (...args) => callService("getAllNotebooks", ...args),
+  getNotebookById: (...args) => callService("getNotebookById", ...args),
+  createNotebook: (...args) => callService("createNotebook", ...args),
+  updateNotebook: (...args) => callService("updateNotebook", ...args),
+  deleteNotebook: (...args) => callService("deleteNotebook", ...args),
+  getOrCreateDefaultNotebook: (...args) => callService("getOrCreateDefaultNotebook", ...args),
+};

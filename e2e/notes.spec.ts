@@ -1,9 +1,56 @@
 import { test, expect } from "@playwright/test";
+import type {
+  NoteRelationWithSource,
+  NoteRelationWithTarget,
+} from "@/types/notes";
 
 test.describe("Notes page", () => {
   test("lists, filters, and creates notes", async ({ page }) => {
     const now = new Date().toISOString();
-    const tags = [
+    type TagFixture = {
+      id: string;
+      name: string;
+      color: string;
+      createdAt: string;
+      updatedAt: string;
+    };
+
+    type CategoryFixture = {
+      id: string;
+      name: string;
+      description: string | null;
+      color: string | null;
+      parentId: string | null;
+      createdAt: string;
+      updatedAt: string;
+    };
+
+    type NoteFixture = {
+      id: string;
+      title: string;
+      content: string;
+      color: string;
+      isPinned: boolean;
+      isArchived: boolean;
+      createdAt: string;
+      updatedAt: string;
+      tags: Array<{
+        noteId: string;
+        tagId: string;
+        assignedAt: string;
+        tag: TagFixture;
+      }>;
+      categories: Array<{
+        noteId: string;
+        categoryId: string;
+        assignedAt: string;
+        category: CategoryFixture;
+      }>;
+      relationsFrom: NoteRelationWithTarget[];
+      relationsTo: NoteRelationWithSource[];
+    };
+
+    const tags: TagFixture[] = [
       {
         id: "tag-1",
         name: "Work",
@@ -12,7 +59,7 @@ test.describe("Notes page", () => {
         updatedAt: now,
       },
     ];
-    const categories = [
+    const categories: CategoryFixture[] = [
       {
         id: "cat-1",
         name: "Projects",
@@ -23,7 +70,7 @@ test.describe("Notes page", () => {
         updatedAt: now,
       },
     ];
-    const notes: Array<any> = [
+    const notes: NoteFixture[] = [
       {
         id: "note-1",
         title: "Alpha",
@@ -68,13 +115,23 @@ test.describe("Notes page", () => {
       },
     ];
 
+    const notebooks = [
+      {
+        id: "notebook-1",
+        name: "Default",
+        color: "#3b82f6",
+        createdAt: now,
+        updatedAt: now,
+      },
+    ];
+
     const buildTree = () =>
       categories.map((category) => ({
         ...category,
         children: [],
         notes: notes
           .filter((note) =>
-            note.categories.some((cat: any) => cat.categoryId === category.id)
+            note.categories.some((cat) => cat.categoryId === category.id)
           )
           .map((note) => ({
             id: note.id,
@@ -112,6 +169,14 @@ test.describe("Notes page", () => {
       });
     });
 
+    await page.route("**/api/notes/notebooks", async (route) => {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(notebooks),
+      });
+    });
+
     await page.route("**/api/notes/categories/tree", async (route) => {
       return route.fulfill({
         status: 200,
@@ -125,7 +190,17 @@ test.describe("Notes page", () => {
       const url = new URL(request.url());
 
       if (request.method() === "POST") {
-        const body = JSON.parse(request.postData() || "{}");
+        const body = JSON.parse(request.postData() || "{}") as {
+          title?: string;
+          content?: string;
+          color?: string;
+          isPinned?: boolean;
+          isArchived?: boolean;
+          tagIds?: string[];
+          categoryIds?: string[];
+        };
+        const tagIds = Array.isArray(body.tagIds) ? body.tagIds : [];
+        const categoryIds = Array.isArray(body.categoryIds) ? body.categoryIds : [];
         const newNote = {
           id: `note-${notes.length + 1}`,
           title: body.title,
@@ -135,13 +210,13 @@ test.describe("Notes page", () => {
           isArchived: body.isArchived ?? false,
           createdAt: now,
           updatedAt: now,
-          tags: (body.tagIds || []).map((tagId: string) => ({
+          tags: tagIds.map((tagId) => ({
             noteId: "temp",
             tagId,
             assignedAt: now,
             tag: tags.find((tag) => tag.id === tagId) ?? tags[0],
           })),
-          categories: (body.categoryIds || []).map((categoryId: string) => ({
+          categories: categoryIds.map((categoryId) => ({
             noteId: "temp",
             categoryId,
             assignedAt: now,

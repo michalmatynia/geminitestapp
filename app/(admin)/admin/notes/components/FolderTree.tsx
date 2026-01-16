@@ -3,68 +3,9 @@
 import React, { useState } from "react";
 import { Folder, FolderOpen, ChevronRight, ChevronDown, Plus, Trash2, Edit2, FileText, FilePlus, FolderPlus, Copy } from "lucide-react";
 import type { CategoryWithChildren } from "@/types/notes";
-import type { Note } from "@prisma/client";
+import type { FolderTreeProps, FolderNodeProps, NoteItemProps } from "@/types/notes-ui";
 import { Button } from "@/components/ui/button";
-
-interface FolderTreeProps {
-  folders: CategoryWithChildren[];
-  selectedFolderId: string | null;
-  onSelectFolder: (folderId: string | null) => void;
-  onCreateFolder: (parentId?: string | null) => void;
-  onCreateNote: (folderId: string) => void;
-  onDeleteFolder: (folderId: string) => void;
-  onRenameFolder: (folderId: string, newName: string) => void;
-  onSelectNote: (noteId: string) => void;
-  onDuplicateNote: (noteId: string) => void;
-  onDeleteNote: (noteId: string) => void;
-  onRenameNote: (noteId: string, newTitle: string) => void;
-  selectedNoteId?: string;
-  onDropNote: (noteId: string, folderId: string | null) => void;
-  onDropFolder: (folderId: string, targetParentId: string | null) => void;
-}
-
-interface FolderNodeProps {
-  folder: CategoryWithChildren;
-  level: number;
-  selectedFolderId: string | null;
-  onSelect: (folderId: string) => void;
-  onCreateSubfolder: (parentId: string) => void;
-  onCreateNote: (folderId: string) => void;
-  onDelete: (folderId: string) => void;
-  onRename: (folderId: string, newName: string) => void;
-  onSelectNote: (noteId: string) => void;
-  onDuplicateNote: (noteId: string) => void;
-  onDeleteNote: (noteId: string) => void;
-  onRenameNote: (noteId: string, newTitle: string) => void;
-  selectedNoteId?: string;
-  onDropNote: (noteId: string, folderId: string | null) => void;
-  onDropFolder: (folderId: string, targetParentId: string | null) => void;
-  draggedFolderId: string | null;
-  onDragStart: (folderId: string) => void;
-  onDragEnd: () => void;
-  allFolders: CategoryWithChildren[];
-  renamingFolderId: string | null;
-  onStartRename: (folderId: string) => void;
-  onCancelRename: () => void;
-  renamingNoteId: string | null;
-  onStartNoteRename: (noteId: string) => void;
-  onCancelNoteRename: () => void;
-}
-
-interface NoteItemProps {
-  note: Note;
-  level: number;
-  isSelected: boolean;
-  isRenaming: boolean;
-  folderId: string;
-  onSelectNote: (noteId: string) => void;
-  onCreateNote: (folderId: string) => void;
-  onDuplicateNote: (noteId: string) => void;
-  onDeleteNote: (noteId: string) => void;
-  onRenameNote: (noteId: string, newTitle: string) => void;
-  onStartRename: (noteId: string) => void;
-  onCancelRename: () => void;
-}
+import { useToast } from "@/components/ui/toast";
 
 function NoteItem({
   note,
@@ -79,9 +20,20 @@ function NoteItem({
   onRenameNote,
   onStartRename,
   onCancelRename,
+  onRelateNotes,
+  draggedNoteId,
+  setDraggedNoteId,
 }: NoteItemProps) {
+  const { toast } = useToast();
   const [renameValue, setRenameValue] = useState(note.title);
   const renameInputRef = React.useRef<HTMLInputElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const getDraggedNoteId = (event: React.DragEvent) =>
+    event.dataTransfer.getData("noteId") ||
+    event.dataTransfer.getData("text/plain") ||
+    draggedNoteId ||
+    "";
 
   // Focus input when entering rename mode
   React.useEffect(() => {
@@ -113,6 +65,35 @@ function NoteItem({
   return (
     <div
       draggable={!isRenaming}
+      data-note-id={note.id}
+      onDragOver={(e) => {
+        const types = Array.from(e.dataTransfer.types);
+        const isNoteDrag =
+          types.includes("noteId") ||
+          types.includes("text/plain") ||
+          Boolean(draggedNoteId);
+        if (!isNoteDrag) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = "move";
+        setIsDragOver(true);
+      }}
+      onDragLeave={() => {
+        setIsDragOver(false);
+      }}
+      onDrop={(e) => {
+        const noteId = getDraggedNoteId(e);
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragOver(false);
+        if (!noteId || noteId === note.id) {
+          if (noteId === note.id) {
+            toast("Can't link a note to itself", { variant: "info" });
+          }
+          return;
+        }
+        onRelateNotes(noteId, note.id);
+      }}
       onDragStart={(e) => {
         if (isRenaming) {
           e.preventDefault();
@@ -120,13 +101,16 @@ function NoteItem({
         }
         e.stopPropagation();
         e.dataTransfer.setData("noteId", note.id);
-        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", note.id);
+        e.dataTransfer.effectAllowed = "linkMove";
         const target = e.currentTarget as HTMLElement;
         target.style.opacity = "0.5";
+        setDraggedNoteId(note.id);
       }}
       onDragEnd={(e) => {
         const target = e.currentTarget as HTMLElement;
         target.style.opacity = "1";
+        setDraggedNoteId(null);
       }}
       onClick={(e) => {
         e.stopPropagation();
@@ -137,6 +121,8 @@ function NoteItem({
       className={`group flex items-center gap-2 rounded px-2 py-1.5 cursor-grab active:cursor-grabbing transition ${
         isSelected
           ? "bg-blue-600 text-white"
+          : isDragOver
+          ? "bg-emerald-600 text-white"
           : "text-gray-300 hover:bg-gray-800 hover:text-white"
       }`}
       style={{ paddingLeft: `${(level + 1) * 16 + 28}px` }}
@@ -155,6 +141,11 @@ function NoteItem({
         />
       ) : (
         <span className="text-sm truncate flex-1">{note.title}</span>
+      )}
+      {isDragOver && (
+        <span className="ml-auto rounded bg-emerald-500/20 px-2 py-0.5 text-[10px] text-emerald-100">
+          Drop to link
+        </span>
       )}
       {!isRenaming && (
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
@@ -220,7 +211,10 @@ function FolderNode({
   selectedNoteId,
   onDropNote,
   onDropFolder,
+  onRelateNotes,
   draggedFolderId,
+  draggedNoteId,
+  setDraggedNoteId,
   onDragStart: onDragStartProp,
   onDragEnd: onDragEndProp,
   allFolders,
@@ -231,6 +225,7 @@ function FolderNode({
   onStartNoteRename,
   onCancelNoteRename,
 }: FolderNodeProps) {
+  const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(true);
   const [isDragOver, setIsDragOver] = useState(false);
   const [renameValue, setRenameValue] = useState(folder.name);
@@ -299,7 +294,28 @@ function FolderNode({
   })();
 
   return (
-    <div>
+    <div
+      onDragOver={(e) => {
+        if (!draggedNoteId) return;
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragOver(true);
+      }}
+      onDragLeave={() => {
+        setIsDragOver(false);
+      }}
+      onDrop={(e) => {
+        if (!draggedNoteId) return;
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragOver(false);
+        if (draggedNoteId === folder.id) {
+          toast("Can't link a note to itself", { variant: "info" });
+          return;
+        }
+        onRelateNotes(draggedNoteId, folder.id);
+      }}
+    >
       <div
         draggable
         onDragStart={(e) => {
@@ -339,13 +355,27 @@ function FolderNode({
           e.stopPropagation();
           setIsDragOver(false);
 
-          const noteId = e.dataTransfer.getData("noteId");
+          const noteId =
+            e.dataTransfer.getData("noteId") ||
+            e.dataTransfer.getData("text/plain") ||
+            draggedNoteId ||
+            "";
           const folderId = e.dataTransfer.getData("folderId");
 
           if (noteId) {
+            if (noteId === folder.id) {
+              toast("Can't link a note to itself", { variant: "info" });
+              return;
+            }
             onDropNote(noteId, folder.id);
-          } else if (folderId && canDropHere) {
+          } else if (folderId) {
+            if (!canDropHere) {
+              toast("Can't move a folder into itself", { variant: "info" });
+              return;
+            }
             onDropFolder(folderId, folder.id);
+          } else {
+            toast("Nothing to drop here", { variant: "info" });
           }
         }}
       >
@@ -455,6 +485,9 @@ function FolderNode({
                 onRenameNote={onRenameNote}
                 onStartRename={onStartNoteRename}
                 onCancelRename={onCancelNoteRename}
+                onRelateNotes={onRelateNotes}
+                draggedNoteId={draggedNoteId}
+                setDraggedNoteId={setDraggedNoteId}
               />
             );
           })}
@@ -476,7 +509,10 @@ function FolderNode({
               selectedNoteId={selectedNoteId}
               onDropNote={onDropNote}
               onDropFolder={onDropFolder}
+              onRelateNotes={onRelateNotes}
               draggedFolderId={draggedFolderId}
+              draggedNoteId={draggedNoteId}
+              setDraggedNoteId={setDraggedNoteId}
               onDragStart={onDragStartProp}
               onDragEnd={onDragEndProp}
               allFolders={allFolders}
@@ -506,17 +542,66 @@ export function FolderTree({
   onDuplicateNote,
   onDeleteNote,
   onRenameNote,
+  onRelateNotes,
   selectedNoteId,
   onDropNote,
   onDropFolder,
+  draggedNoteId,
+  setDraggedNoteId,
 }: FolderTreeProps) {
+  const { toast } = useToast();
   const [isAllNotesDragOver, setIsAllNotesDragOver] = useState(false);
   const [draggedFolderId, setDraggedFolderId] = useState<string | null>(null);
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
   const [renamingNoteId, setRenamingNoteId] = useState<string | null>(null);
 
   return (
-    <div className="flex h-full flex-col bg-gray-900 border-r border-gray-800">
+    <div
+      className="flex h-full flex-col bg-gray-900 border-r border-gray-800"
+      onDragEnterCapture={(e) => {
+        if (!draggedNoteId) return;
+        e.preventDefault();
+      }}
+      onDragOverCapture={(e) => {
+        if (!draggedNoteId) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+      }}
+      onDropCapture={(e) => {
+        if (!draggedNoteId) return;
+        e.preventDefault();
+        const target = (e.target as HTMLElement).closest("[data-note-id]");
+        const targetId = target?.getAttribute("data-note-id");
+        if (!targetId) {
+          toast("Nothing to drop here", { variant: "info" });
+          return;
+        }
+        if (targetId === draggedNoteId) {
+          toast("Can't link a note to itself", { variant: "info" });
+          return;
+        }
+        onRelateNotes(draggedNoteId, targetId);
+      }}
+      onDragOver={(e) => {
+        if (!draggedNoteId) return;
+        e.preventDefault();
+      }}
+      onDrop={(e) => {
+        if (!draggedNoteId) return;
+        e.preventDefault();
+        const target = (e.target as HTMLElement).closest("[data-note-id]");
+        const targetId = target?.getAttribute("data-note-id");
+        if (!targetId) {
+          toast("Nothing to drop here", { variant: "info" });
+          return;
+        }
+        if (targetId === draggedNoteId) {
+          toast("Can't link a note to itself", { variant: "info" });
+          return;
+        }
+        onRelateNotes(draggedNoteId, targetId);
+      }}
+    >
       <div className="p-4 border-b border-gray-800">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-white">Folders</h2>
@@ -540,12 +625,18 @@ export function FolderTree({
           onDrop={(e) => {
             e.preventDefault();
             setIsAllNotesDragOver(false);
-            const noteId = e.dataTransfer.getData("noteId");
+            const noteId =
+              e.dataTransfer.getData("noteId") ||
+              e.dataTransfer.getData("text/plain") ||
+              draggedNoteId ||
+              "";
             const folderId = e.dataTransfer.getData("folderId");
             if (noteId) {
               onDropNote(noteId, null);
             } else if (folderId) {
               onDropFolder(folderId, null);
+            } else {
+              toast("Nothing to drop here", { variant: "info" });
             }
           }}
           className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition ${
@@ -586,7 +677,10 @@ export function FolderTree({
                 selectedNoteId={selectedNoteId}
                 onDropNote={onDropNote}
                 onDropFolder={onDropFolder}
+                onRelateNotes={onRelateNotes}
                 draggedFolderId={draggedFolderId}
+                draggedNoteId={draggedNoteId}
+                setDraggedNoteId={setDraggedNoteId}
                 onDragStart={setDraggedFolderId}
                 onDragEnd={() => setDraggedFolderId(null)}
                 allFolders={folders}

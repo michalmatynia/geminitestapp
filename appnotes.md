@@ -4,29 +4,15 @@ npx tsc
 npx eslint
 add proper debugging on visual studio code
 
+NOTEBOOKS
 
-In the Note taking app in Note list where Note cards are presented, In the Note Card the scroller overlaps the breadcrumb when used, the breadcrumb field should be slightly higher, so that when vertical scroller is used, it doesn't cover the content of the breadcrumb box.
-
-In the Note Taking app Edit note and Create Note , Move Tags to the underneath Content Field
-Relate notes to one another on drag relate
-
-In the Note Taking app Notes flicker when the Search field is updated
-
-When I'm in folder and filter by Tag, it should only filter the results by Tag in That specific folder that I am currently ni
-
-Add options for note the way Notes are presented in the Note List view. Add Grid placement with different granulation options (4 notes per row, 8 notes per row.), as well as a list view
-
-
+note background in the preview should be the same color as the selected note background
 
 ALL NOTES | FAVOURITES
 
-Note Pagination
-
-state of note taking app is not recorded, when I change the page, 
+File handling (10 file slots benath, the first one being the thumbnail)
 
 Apply GPT Notes
-
-Notebooks
 
 # Database Restore not working
 
@@ -34,26 +20,23 @@ I can't preview MongoDB Dumps
 
 # Note Taking App
 
-Czcionki i Bold Italics
+Czcionki i Bold Italics, auto formatting options
 
+## Theming
+
+Assign color pallets (background and text), (to folder for example), instead of notes it should have folder name and theming options
+
+Note Filters, By Theme
+
+I need a Theme List
 
 ## Note List
 After MongoDB database restore, I can no longer see the folder structure in dropdown in Create / Edit note, folder structure is absent, well I need hyphens
 
-Folder View, name of the folder
-
-I need tag list
-I need a Theme List
-
-Assign color pallets (background and text), (to folder for example), instead of notes it should have folder name and theming options
-
-Note Filters, By Theme By Tag
-
 thumbnail, name
-Note tags
+
 Note parameters, that I can add cusomized, that I can use later on with AI to Identify and extra categorize my notes 
 
-File handling (10 file slots benath, the first one being the thumbnail)
 
 ## Note App Chatbot connection
 
@@ -73,7 +56,6 @@ Note history
 
 At some point there should be note import and also the notes should be downloadable as markdown
 
-NOTEBOOKS
 
 ---
 
@@ -95,8 +77,6 @@ Add MongoDB connections to Application Settings in General
 # Address Redundancy
 
 # Product
-# UI
-Add shadcn
 
 # Integrations
 Integration with Base
@@ -104,19 +84,6 @@ Integration with Base
 # Set Global Settings
 * Move Product Database Choice there
 * Choose Global Database as well as individual database for different aspects of the page.
-
-# Page refactor
-Get rid of bloated code files by segmenting then
-Make them more modular
-Make the whole Application more Type safe
-Move Types into Types Folder
-
-# Increase Debugging
-For each section add tests
-Add Error Boundaries - should I add them ? or only during debugging
-Increase Type Safety
-Try Catch Blocks
-
 
 # Develop components
 Enhance Components

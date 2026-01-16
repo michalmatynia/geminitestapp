@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { noteService } from "@/lib/services/noteService";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { categoryUpdateSchema } from "@/lib/validations/notes";
 
 /**
  * PATCH /api/notes/categories/[id]
@@ -12,8 +14,14 @@ export async function PATCH(
 ) {
   const params = await props.params;
   try {
-    const body = await req.json();
-    const category = await noteService.updateCategory(params.id, body);
+    const parsed = await parseJsonBody(req, categoryUpdateSchema, {
+      logPrefix: "categories:PATCH",
+      allowEmpty: true,
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const category = await noteService.updateCategory(params.id, parsed.data);
     return NextResponse.json(category);
   } catch (error: unknown) {
     const errorId = randomUUID();

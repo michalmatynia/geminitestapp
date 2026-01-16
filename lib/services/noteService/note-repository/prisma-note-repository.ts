@@ -1,12 +1,57 @@
+import type { Prisma } from "@prisma/client";
 import type { NoteRepository } from "@/types/services/note-repository";
-import type { NoteFilters, NoteWithRelations, NoteCreateInput, NoteUpdateInput, TagRecord, CategoryRecord, CategoryWithChildren, CategoryCreateInput, CategoryUpdateInput, TagCreateInput, TagUpdateInput } from "@/types/notes";
+import type {
+  NoteFilters,
+  NoteWithRelations,
+  NoteCreateInput,
+  NoteUpdateInput,
+  TagRecord,
+  CategoryRecord,
+  CategoryWithChildren,
+  CategoryCreateInput,
+  CategoryUpdateInput,
+  TagCreateInput,
+  TagUpdateInput,
+  NotebookRecord,
+  NotebookCreateInput,
+  NotebookUpdateInput,
+} from "@/types/notes";
 import prisma from "@/lib/prisma";
 
 export const prismaNoteRepository: NoteRepository = {
-  async getAll(filters: NoteFilters): Promise<NoteWithRelations[]> {
-    const { search, searchScope = "both", isPinned, isArchived, tagIds, categoryIds } = filters;
+  async getOrCreateDefaultNotebook(): Promise<NotebookRecord> {
+    const existing = await prisma.notebook.findFirst({
+      orderBy: { createdAt: "asc" },
+    });
+    const notebook = existing
+      ? existing
+      : await prisma.notebook.create({
+          data: { name: "Default", color: "#3b82f6" },
+        });
 
-    const where: any = {};
+    await prisma.note.updateMany({
+      where: { notebookId: null },
+      data: { notebookId: notebook.id },
+    });
+    await prisma.tag.updateMany({
+      where: { notebookId: null },
+      data: { notebookId: notebook.id },
+    });
+    await prisma.category.updateMany({
+      where: { notebookId: null },
+      data: { notebookId: notebook.id },
+    });
+
+    return notebook;
+  },
+
+  async getAll(filters: NoteFilters): Promise<NoteWithRelations[]> {
+    const { search, searchScope = "both", isPinned, isArchived, tagIds, categoryIds, notebookId } = filters;
+
+    const where: Prisma.NoteWhereInput = {};
+    const resolvedNotebookId =
+      notebookId ?? (await prismaNoteRepository.getOrCreateDefaultNotebook()).id;
+    where.notebookId = resolvedNotebookId;
 
     if (search) {
       if (searchScope === "both") {
@@ -73,11 +118,14 @@ export const prismaNoteRepository: NoteRepository = {
   },
 
   async create(data: NoteCreateInput): Promise<NoteWithRelations> {
-    const { tagIds, categoryIds, relatedNoteIds, ...rest } = data;
+    const { tagIds, categoryIds, relatedNoteIds, notebookId, ...rest } = data;
+    const resolvedNotebookId =
+      notebookId ?? (await prismaNoteRepository.getOrCreateDefaultNotebook()).id;
 
     return prisma.note.create({
       data: {
         ...rest,
+        notebook: { connect: { id: resolvedNotebookId } },
         tags: {
           create: tagIds?.map((tagId) => ({ tag: { connect: { id: tagId } } })),
         },
@@ -110,9 +158,12 @@ export const prismaNoteRepository: NoteRepository = {
   },
 
   async update(id: string, data: NoteUpdateInput): Promise<NoteWithRelations | null> {
-    const { tagIds, categoryIds, relatedNoteIds, ...rest } = data;
+    const { tagIds, categoryIds, relatedNoteIds, notebookId, ...rest } = data;
 
-    const updateData: any = { ...rest };
+    const updateData: Prisma.NoteUpdateInput = { ...rest };
+    if (notebookId !== undefined) {
+      updateData.notebook = { connect: { id: notebookId } };
+    }
 
     if (tagIds !== undefined) {
       updateData.tags = {
@@ -138,8 +189,6 @@ export const prismaNoteRepository: NoteRepository = {
         })),
       };
     }
-
-    console.log("[PrismaNoteRepository][update] updateData:", JSON.stringify(updateData, null, 2)); // Debug log
 
     try {
       return await prisma.note.update({
@@ -174,8 +223,13 @@ export const prismaNoteRepository: NoteRepository = {
     }
   },
 
-  async getAllTags(): Promise<TagRecord[]> {
-    return prisma.tag.findMany({ orderBy: { name: "asc" } });
+  async getAllTags(notebookId?: string | null): Promise<TagRecord[]> {
+    const resolvedNotebookId =
+      notebookId ?? (await prismaNoteRepository.getOrCreateDefaultNotebook()).id;
+    return prisma.tag.findMany({
+      where: { notebookId: resolvedNotebookId },
+      orderBy: { name: "asc" },
+    });
   },
 
   async getTagById(id: string): Promise<TagRecord | null> {
@@ -183,7 +237,15 @@ export const prismaNoteRepository: NoteRepository = {
   },
 
   async createTag(data: TagCreateInput): Promise<TagRecord> {
-    return prisma.tag.create({ data });
+    const resolvedNotebookId =
+      data.notebookId ?? (await prismaNoteRepository.getOrCreateDefaultNotebook()).id;
+    return prisma.tag.create({
+      data: {
+        name: data.name,
+        color: data.color,
+        notebook: { connect: { id: resolvedNotebookId } },
+      },
+    });
   },
 
   async updateTag(id: string, data: TagUpdateInput): Promise<TagRecord | null> {
@@ -203,16 +265,24 @@ export const prismaNoteRepository: NoteRepository = {
     }
   },
 
-  async getAllCategories(): Promise<CategoryRecord[]> {
-    return prisma.category.findMany({ orderBy: { name: "asc" } });
+  async getAllCategories(notebookId?: string | null): Promise<CategoryRecord[]> {
+    const resolvedNotebookId =
+      notebookId ?? (await prismaNoteRepository.getOrCreateDefaultNotebook()).id;
+    return prisma.category.findMany({
+      where: { notebookId: resolvedNotebookId },
+      orderBy: { name: "asc" },
+    });
   },
 
   async getCategoryById(id: string): Promise<CategoryRecord | null> {
     return prisma.category.findUnique({ where: { id } });
   },
 
-  async getCategoryTree(): Promise<CategoryWithChildren[]> {
+  async getCategoryTree(notebookId?: string | null): Promise<CategoryWithChildren[]> {
+    const resolvedNotebookId =
+      notebookId ?? (await prismaNoteRepository.getOrCreateDefaultNotebook()).id;
     const categories = await prisma.category.findMany({
+      where: { notebookId: resolvedNotebookId },
       orderBy: { name: "asc" },
       include: {
         notes: {
@@ -242,7 +312,17 @@ export const prismaNoteRepository: NoteRepository = {
   },
 
   async createCategory(data: CategoryCreateInput): Promise<CategoryRecord> {
-    return prisma.category.create({ data });
+    const resolvedNotebookId =
+      data.notebookId ?? (await prismaNoteRepository.getOrCreateDefaultNotebook()).id;
+    return prisma.category.create({
+      data: {
+        name: data.name,
+        description: data.description,
+        color: data.color,
+        parentId: data.parentId,
+        notebook: { connect: { id: resolvedNotebookId } },
+      },
+    });
   },
 
   async updateCategory(id: string, data: CategoryUpdateInput): Promise<CategoryRecord | null> {
@@ -307,6 +387,41 @@ export const prismaNoteRepository: NoteRepository = {
       return true;
     } catch (error) {
       console.error("[PrismaNoteRepository][deleteCategory] Error:", error);
+      return false;
+    }
+  },
+
+  async getAllNotebooks(): Promise<NotebookRecord[]> {
+    await prismaNoteRepository.getOrCreateDefaultNotebook();
+    return prisma.notebook.findMany({ orderBy: { createdAt: "asc" } });
+  },
+
+  async getNotebookById(id: string): Promise<NotebookRecord | null> {
+    return prisma.notebook.findUnique({ where: { id } });
+  },
+
+  async createNotebook(data: NotebookCreateInput): Promise<NotebookRecord> {
+    return prisma.notebook.create({
+      data: {
+        name: data.name,
+        color: data.color ?? "#3b82f6",
+      },
+    });
+  },
+
+  async updateNotebook(id: string, data: NotebookUpdateInput): Promise<NotebookRecord | null> {
+    try {
+      return await prisma.notebook.update({ where: { id }, data });
+    } catch {
+      return null;
+    }
+  },
+
+  async deleteNotebook(id: string): Promise<boolean> {
+    try {
+      await prisma.notebook.delete({ where: { id } });
+      return true;
+    } catch {
       return false;
     }
   },

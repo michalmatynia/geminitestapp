@@ -1,31 +1,24 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
-
-export interface NoteSettings {
-  // Sorting
-  sortBy: "created" | "name";
-  sortOrder: "asc" | "desc";
-  // Visibility
-  showTimestamps: boolean;
-  showBreadcrumbs: boolean;
-  // Search
-  searchScope: "both" | "title" | "content";
-  // Navigation state
-  selectedFolderId: string | null;
-}
+import type { NoteSettings } from "@/types/notes-settings";
 
 export const DEFAULT_NOTE_SETTINGS: NoteSettings = {
   sortBy: "created",
   sortOrder: "desc",
   showTimestamps: true,
   showBreadcrumbs: true,
+  showRelatedNotes: true,
   searchScope: "both",
   selectedFolderId: null,
+  selectedNotebookId: null,
+  viewMode: "grid",
+  gridDensity: 4,
 };
 
 const STORAGE_KEY = "noteSettings";
 const DB_SETTING_KEY = "noteSettings:selectedFolderId";
+const DB_NOTEBOOK_KEY = "noteSettings:selectedNotebookId";
 
 interface NoteSettingsContextType {
   settings: NoteSettings;
@@ -53,6 +46,21 @@ async function saveSelectedFolderToDb(folderId: string | null): Promise<void> {
   }
 }
 
+async function saveSelectedNotebookToDb(notebookId: string | null): Promise<void> {
+  try {
+    await fetch("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        key: DB_NOTEBOOK_KEY,
+        value: notebookId ?? "",
+      }),
+    });
+  } catch (error) {
+    console.error("Failed to save selectedNotebookId to database:", error);
+  }
+}
+
 // Helper to load selectedFolderId from database
 async function loadSelectedFolderFromDb(): Promise<string | null> {
   try {
@@ -72,10 +80,29 @@ async function loadSelectedFolderFromDb(): Promise<string | null> {
   }
 }
 
+async function loadSelectedNotebookFromDb(): Promise<string | null> {
+  try {
+    const response = await fetch("/api/settings");
+    if (!response.ok) return null;
+
+    const settings = await response.json() as Array<{ key: string; value: string }>;
+    const setting = settings.find((s) => s.key === DB_NOTEBOOK_KEY);
+
+    if (setting && setting.value) {
+      return setting.value;
+    }
+    return null;
+  } catch (error) {
+    console.error("Failed to load selectedNotebookId from database:", error);
+    return null;
+  }
+}
+
 export function NoteSettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<NoteSettings>(DEFAULT_NOTE_SETTINGS);
   const [isInitialized, setIsInitialized] = useState(false);
   const previousFolderIdRef = useRef<string | null>(null);
+  const previousNotebookIdRef = useRef<string | null>(null);
 
   // Load settings from localStorage first (fast), then from database (authoritative)
   useEffect(() => {
@@ -89,6 +116,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
           const parsed = JSON.parse(stored) as Partial<NoteSettings>;
           setSettings((prev) => ({ ...prev, ...parsed }));
           previousFolderIdRef.current = parsed.selectedFolderId ?? null;
+          previousNotebookIdRef.current = parsed.selectedNotebookId ?? null;
         }
       } catch (error) {
         console.error("Failed to load note settings from localStorage:", error);
@@ -113,6 +141,23 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
       }
 
       setIsInitialized(true);
+
+      // Load selectedNotebookId from database
+      const dbNotebookId = await loadSelectedNotebookFromDb();
+      if (dbNotebookId !== null) {
+        setSettings((prev) => ({ ...prev, selectedNotebookId: dbNotebookId }));
+        previousNotebookIdRef.current = dbNotebookId;
+        try {
+          const stored = window.localStorage.getItem(STORAGE_KEY);
+          const current = stored ? JSON.parse(stored) : {};
+          window.localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({ ...current, selectedNotebookId: dbNotebookId })
+          );
+        } catch (error) {
+          console.error("Failed to update localStorage cache:", error);
+        }
+      }
     };
 
     void loadSettings();
@@ -140,6 +185,14 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
     }
   }, [settings.selectedFolderId, isInitialized]);
 
+  useEffect(() => {
+    if (!isInitialized) return;
+    if (settings.selectedNotebookId !== previousNotebookIdRef.current) {
+      previousNotebookIdRef.current = settings.selectedNotebookId;
+      void saveSelectedNotebookToDb(settings.selectedNotebookId);
+    }
+  }, [settings.selectedNotebookId, isInitialized]);
+
   const updateSettings = (updates: Partial<NoteSettings>) => {
     setSettings((prev) => ({ ...prev, ...updates }));
   };
@@ -148,6 +201,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
     setSettings(DEFAULT_NOTE_SETTINGS);
     // Also clear the database value
     void saveSelectedFolderToDb(null);
+    void saveSelectedNotebookToDb(null);
   };
 
   return (

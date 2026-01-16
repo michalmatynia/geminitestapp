@@ -9,10 +9,11 @@ import AdminNotesPage from "@/app/(admin)/admin/notes/page";
 import { AdminLayoutProvider } from "@/lib/context/AdminLayoutContext";
 import { NoteSettingsProvider } from "@/lib/context/NoteSettingsContext";
 import { ToastProvider } from "@/components/ui/toast";
+import type { CategoryRecord, NoteWithRelations, TagRecord } from "@/types/notes";
 
 const now = new Date().toISOString();
 
-const baseTags = [
+const baseTags: TagRecord[] = [
   {
     id: "tag-1",
     name: "Work",
@@ -22,7 +23,7 @@ const baseTags = [
   },
 ];
 
-const baseCategories = [
+const baseCategories: CategoryRecord[] = [
   {
     id: "cat-1",
     name: "Projects",
@@ -34,7 +35,17 @@ const baseCategories = [
   },
 ];
 
-const makeNote = (overrides: Partial<Record<string, unknown>> = {}) => ({
+const baseNotebooks = [
+  {
+    id: "notebook-1",
+    name: "Default",
+    color: "#3b82f6",
+    createdAt: now,
+    updatedAt: now,
+  },
+];
+
+const makeNote = (overrides: Partial<NoteWithRelations> = {}): NoteWithRelations => ({
   id: "note-1",
   title: "Alpha",
   content: "First note",
@@ -80,6 +91,7 @@ describe("Notes page UI", () => {
     const notes = [makeNote(), makeNote({ id: "note-2", title: "Beta" })];
     const tags = [...baseTags];
     const categories = [...baseCategories];
+    const notebooks = [...baseNotebooks];
 
     if (!global.crypto || !("randomUUID" in global.crypto)) {
       Object.defineProperty(global, "crypto", {
@@ -87,8 +99,13 @@ describe("Notes page UI", () => {
       });
     }
 
-    jest.spyOn(global, "fetch").mockImplementation(async (input, init) => {
-      const url = typeof input === "string" ? input : input.url;
+    jest.spyOn(global, "fetch").mockImplementation((input, init) => {
+      const url =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+          ? input.href
+          : input.url;
       const method = init?.method ?? "GET";
       const parsed = new URL(url, "http://localhost");
 
@@ -101,6 +118,10 @@ describe("Notes page UI", () => {
 
       if (parsed.pathname === "/api/notes/tags") {
         return new Response(JSON.stringify(tags), { status: 200 });
+      }
+
+      if (parsed.pathname === "/api/notes/notebooks") {
+        return new Response(JSON.stringify(notebooks), { status: 200 });
       }
 
       if (parsed.pathname === "/api/notes/categories/tree") {
@@ -126,14 +147,23 @@ describe("Notes page UI", () => {
       }
 
       if (parsed.pathname === "/api/notes" && method === "POST") {
-        const body = JSON.parse(init?.body as string);
+        const body = JSON.parse(init?.body as string) as {
+          title?: string;
+          content?: string;
+          isPinned?: boolean;
+          isArchived?: boolean;
+          tagIds?: string[];
+          categoryIds?: string[];
+        };
+        const tagIds = Array.isArray(body.tagIds) ? body.tagIds : [];
+        const categoryIds = Array.isArray(body.categoryIds) ? body.categoryIds : [];
         const newNote = makeNote({
           id: `note-${notes.length + 1}`,
           title: body.title,
           content: body.content,
           isPinned: body.isPinned,
           isArchived: body.isArchived,
-          tags: (body.tagIds || []).map((tagId: string) => {
+          tags: tagIds.map((tagId) => {
             const tag = tags.find((t) => t.id === tagId) ?? tags[0];
             return {
               noteId: "temp",
@@ -142,7 +172,7 @@ describe("Notes page UI", () => {
               tag,
             };
           }),
-          categories: (body.categoryIds || []).map((categoryId: string) => {
+          categories: categoryIds.map((categoryId) => {
             const category =
               categories.find((c) => c.id === categoryId) ?? categories[0];
             return {

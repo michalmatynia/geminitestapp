@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { Plus, Search, Pin, Archive, ChevronRight, ChevronLeft, FileText, Heading, X, ArrowUp, ArrowDown, Eye, EyeOff } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Plus, Pin, Archive, ChevronRight, X } from "lucide-react";
 import type { NoteWithRelations, TagRecord, CategoryWithChildren } from "@/types/notes";
 import { Button } from "@/components/ui/button";
 import ModalShell from "@/components/ui/modal-shell";
@@ -9,866 +9,15 @@ import { FolderTree } from "./components/FolderTree";
 import { useToast } from "@/components/ui/toast";
 import { useAdminLayout } from "@/lib/context/AdminLayoutContext";
 import { useNoteSettings } from "@/lib/context/NoteSettingsContext";
-
-function NoteForm({
-  note,
-  folderTree,
-  defaultFolderId,
-  availableTags,
-  onSuccess,
-  onTagCreated,
-  onSelectRelatedNote,
-}: {
-  note?: NoteWithRelations | null;
-  folderTree: CategoryWithChildren[];
-  defaultFolderId?: string | null;
-  availableTags: TagRecord[];
-  onSuccess: () => void;
-  onTagCreated: () => void;
-  onSelectRelatedNote: (noteId: string) => void;
-}) {
-  const [title, setTitle] = useState(note?.title || "");
-  const [content, setContent] = useState(note?.content || "");
-  const [color, setColor] = useState(note?.color || "#ffffff");
-  const [isPinned, setIsPinned] = useState(note?.isPinned || false);
-  const [isArchived, setIsArchived] = useState(note?.isArchived || false);
-  const [selectedFolderId, setSelectedFolderId] = useState<string>(
-    note?.categories[0]?.categoryId || defaultFolderId || ""
-  );
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
-    note?.tags.map((t) => t.tagId) || []
-  );
-  const [selectedRelatedNotes, setSelectedRelatedNotes] = useState<
-    Array<{ id: string; title: string; color: string | null; content: string }>
-  >(
-    note?.relationsFrom?.map((rel) => ({
-      id: rel.targetNote.id,
-      title: rel.targetNote.title,
-      color: rel.targetNote.color ?? null,
-      content: "",
-    })) || []
-  );
-  const [incomingRelatedNotes, setIncomingRelatedNotes] = useState<
-    Array<{ id: string; title: string; color: string | null; content: string }>
-  >(
-    note?.relationsTo?.map((rel) => ({
-      id: rel.sourceNote.id,
-      title: rel.sourceNote.title,
-      color: rel.sourceNote.color ?? null,
-      content: "",
-    })) || []
-  );
-  const [relatedNoteQuery, setRelatedNoteQuery] = useState("");
-  const [isRelatedDropdownOpen, setIsRelatedDropdownOpen] = useState(false);
-  const [relatedNoteResults, setRelatedNoteResults] = useState<NoteWithRelations[]>([]);
-  const [isRelatedLoading, setIsRelatedLoading] = useState(false);
-  const relatedSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [tagInput, setTagInput] = useState("");
-  const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
-  const tagInputRef = useRef<HTMLInputElement>(null);
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
-
-  // Flatten the folder tree with hierarchy markers
-  const flattenFolderTree = (folders: CategoryWithChildren[], level = 0): Array<{ id: string; name: string; level: number }> => {
-    const result: Array<{ id: string; name: string; level: number }> = [];
-    for (const folder of folders) {
-      result.push({ id: folder.id, name: folder.name, level });
-      if (folder.children.length > 0) {
-        result.push(...flattenFolderTree(folder.children, level + 1));
-      }
-    }
-    return result;
-  };
-
-  const flatFolders = flattenFolderTree(folderTree);
-
-  const filteredTags = availableTags.filter(
-    (tag) =>
-      tag.name.toLowerCase().includes(tagInput.toLowerCase()) &&
-      !selectedTagIds.includes(tag.id)
-  );
-
-  const handleAddTag = (tag: TagRecord) => {
-    setSelectedTagIds([...selectedTagIds, tag.id]);
-    setTagInput("");
-    setIsTagDropdownOpen(false);
-  };
-
-  const handleCreateTag = async () => {
-    if (!tagInput.trim()) return;
-    
-    // Check if tag already exists (case-insensitive)
-    const existingTag = availableTags.find(
-      (t) => t.name.toLowerCase() === tagInput.trim().toLowerCase()
-    );
-
-    if (existingTag) {
-      if (!selectedTagIds.includes(existingTag.id)) {
-        handleAddTag(existingTag);
-      } else {
-        setTagInput("");
-        setIsTagDropdownOpen(false);
-      }
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/notes/tags", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: tagInput.trim() }),
-      });
-
-      if (response.ok) {
-        const newTag = await response.json();
-        onTagCreated(); // Refresh tags in parent
-        setSelectedTagIds((prev) => [...prev, newTag.id]);
-        setTagInput("");
-        setIsTagDropdownOpen(false);
-      }
-    } catch (error) {
-      console.error("Failed to create tag:", error);
-    }
-  };
-
-  const handleRemoveTag = (tagId: string) => {
-    setSelectedTagIds(selectedTagIds.filter((id) => id !== tagId));
-  };
-
-  useEffect(() => {
-    let isActive = true;
-    if (!note) {
-      setSelectedRelatedNotes([]);
-      setIncomingRelatedNotes([]);
-      setRelatedNoteQuery("");
-      setIsRelatedDropdownOpen(false);
-      setRelatedNoteResults([]);
-      return;
-    }
-    const initialRelated =
-      note.relationsFrom?.map((rel) => ({
-        id: rel.targetNote.id,
-        title: rel.targetNote.title,
-        color: rel.targetNote.color ?? null,
-        content: "",
-      })) || [];
-    const initialIncoming =
-      note.relationsTo?.map((rel) => ({
-        id: rel.sourceNote.id,
-        title: rel.sourceNote.title,
-        color: rel.sourceNote.color ?? null,
-        content: "",
-      })) || [];
-    setSelectedRelatedNotes(initialRelated);
-    setIncomingRelatedNotes(initialIncoming);
-    setRelatedNoteQuery("");
-    setIsRelatedDropdownOpen(false);
-    setRelatedNoteResults([]);
-
-    const hydrateRelatedNotes = async () => {
-      const relatedIds = [...initialRelated, ...initialIncoming].map(
-        (rel) => rel.id
-      );
-      if (relatedIds.length === 0) return;
-      try {
-        const details = await Promise.all(
-          relatedIds.map(async (relId) => {
-            try {
-              const response = await fetch(`/api/notes/${relId}`, {
-                cache: "no-store",
-              });
-              if (!response.ok) return null;
-              return (await response.json()) as NoteWithRelations;
-            } catch {
-              return null;
-            }
-          })
-        );
-        if (!isActive) return;
-        setSelectedRelatedNotes((prev) =>
-          prev.map((item) => {
-            const found = details.find((detail) => detail?.id === item.id);
-            if (!found) return item;
-            return {
-              ...item,
-              content: found.content ?? "",
-              title: found.title ?? item.title,
-              color: found.color ?? item.color ?? null,
-            };
-          })
-        );
-        setIncomingRelatedNotes((prev) =>
-          prev.map((item) => {
-            const found = details.find((detail) => detail?.id === item.id);
-            if (!found) return item;
-            return {
-              ...item,
-              content: found.content ?? "",
-              title: found.title ?? item.title,
-              color: found.color ?? item.color ?? null,
-            };
-          })
-        );
-      } catch (error) {
-        console.error("Failed to load related note details:", error);
-      }
-    };
-
-    void hydrateRelatedNotes();
-    return () => {
-      isActive = false;
-    };
-  }, [note]);
-
-  useEffect(() => {
-    if (!relatedNoteQuery) {
-      setRelatedNoteResults([]);
-      setIsRelatedLoading(false);
-      if (relatedSearchTimerRef.current) {
-        clearTimeout(relatedSearchTimerRef.current);
-        relatedSearchTimerRef.current = null;
-      }
-      return;
-    }
-
-    if (relatedSearchTimerRef.current) {
-      clearTimeout(relatedSearchTimerRef.current);
-    }
-
-    const timer = setTimeout(() => {
-      let isActive = true;
-      const fetchResults = async () => {
-        setIsRelatedLoading(true);
-        try {
-          const params = new URLSearchParams({
-            search: relatedNoteQuery,
-            searchScope: "title",
-          });
-          const response = await fetch(`/api/notes?${params.toString()}`, {
-            cache: "no-store",
-          });
-          if (!response.ok) return;
-          const data = (await response.json()) as NoteWithRelations[];
-          if (isActive) {
-            setRelatedNoteResults(data);
-          }
-        } catch (error) {
-          console.error("Failed to search related notes:", error);
-        } finally {
-          if (isActive) {
-            setIsRelatedLoading(false);
-          }
-        }
-      };
-
-      void fetchResults();
-      return () => {
-        isActive = false;
-      };
-    }, 250);
-
-    relatedSearchTimerRef.current = timer;
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [relatedNoteQuery]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title || !content) return;
-
-    setIsSubmitting(true);
-    try {
-      const url = note ? `/api/notes/${note.id}` : "/api/notes";
-      const method = note ? "PATCH" : "POST";
-      const previousRelatedIds =
-        note?.relationsFrom?.map((rel) => rel.targetNote.id) || [];
-
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          content,
-          color,
-          isPinned,
-          isArchived,
-          tagIds: selectedTagIds,
-          relatedNoteIds: selectedRelatedNotes.map((rel) => rel.id),
-          categoryIds: selectedFolderId ? [selectedFolderId] : [],
-        }),
-      });
-
-      if (response.ok) {
-        const savedNote = (await response.json()) as NoteWithRelations;
-        const currentNoteId = savedNote.id;
-        const nextRelatedIds = selectedRelatedNotes.map((rel) => rel.id);
-
-        const addedRelations = nextRelatedIds.filter(
-          (id) => !previousRelatedIds.includes(id) && id !== currentNoteId
-        );
-        const removedRelations = previousRelatedIds.filter(
-          (id) => !nextRelatedIds.includes(id) && id !== currentNoteId
-        );
-
-        const updatePeerRelations = async (
-          peerNoteId: string,
-          shouldAdd: boolean
-        ) => {
-          try {
-            const peerResponse = await fetch(`/api/notes/${peerNoteId}`, {
-              cache: "no-store",
-            });
-            if (!peerResponse.ok) return;
-            const peerNote = (await peerResponse.json()) as NoteWithRelations;
-            const peerRelatedIds =
-              peerNote.relationsFrom?.map((rel) => rel.targetNote.id) || [];
-            const nextPeerIds = shouldAdd
-              ? Array.from(new Set([...peerRelatedIds, currentNoteId]))
-              : peerRelatedIds.filter((id) => id !== currentNoteId);
-
-            await fetch(`/api/notes/${peerNoteId}`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ relatedNoteIds: nextPeerIds }),
-            });
-          } catch (error) {
-            console.error("Failed to sync related note:", error);
-          }
-        };
-
-        await Promise.all([
-          ...addedRelations.map((id) => updatePeerRelations(id, true)),
-          ...removedRelations.map((id) => updatePeerRelations(id, false)),
-        ]);
-
-        toast(note ? "Note updated successfully" : "Note created successfully");
-        onSuccess();
-      }
-    } catch (error) {
-      console.error("Failed to save note:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleRemoveIncomingRelation = async (sourceNoteId: string) => {
-    if (!note) return;
-    try {
-      const response = await fetch(`/api/notes/${sourceNoteId}`, {
-        cache: "no-store",
-      });
-      if (!response.ok) return;
-      const sourceNote = (await response.json()) as NoteWithRelations;
-      const relatedNoteIds =
-        sourceNote.relationsFrom?.map((rel) => rel.targetNote.id) || [];
-      const nextRelatedIds = relatedNoteIds.filter((id) => id !== note.id);
-      const updateResponse = await fetch(`/api/notes/${sourceNoteId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ relatedNoteIds: nextRelatedIds }),
-      });
-      if (!updateResponse.ok) return;
-      setIncomingRelatedNotes((prev) =>
-        prev.filter((item) => item.id !== sourceNoteId)
-      );
-    } catch (error) {
-      console.error("Failed to remove incoming relation:", error);
-    }
-  };
-
-  return (
-    <form id={note ? "note-edit-form" : undefined} onSubmit={handleSubmit} className="space-y-4">
-      {/* Action Buttons at Top - Only show for Create mode, Edit mode buttons are in the header */}
-      {!note && (
-        <div className="flex gap-2 pb-4 border-b border-gray-700">
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
-          >
-            {isSubmitting ? "Saving..." : "Create"}
-          </Button>
-        </div>
-      )}
-
-      <div>
-        <label className="mb-2 block text-sm font-medium text-white">Title</label>
-        <input
-          type="text"
-          placeholder="Enter note title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="mb-2 block text-sm font-medium text-white">Content</label>
-        <textarea
-          placeholder="Enter note content"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={12}
-          className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white"
-          required
-        />
-      </div>
-
-      {/* Tags Section */}
-      <div className="space-y-2">
-        <div className="flex flex-wrap gap-2">
-          {selectedTagIds.map((tagId) => {
-            const tag = availableTags.find((t) => t.id === tagId);
-            if (!tag) return null;
-            return (
-              <span
-                key={tag.id}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-200 border border-blue-500/30"
-              >
-                {tag.name}
-                <button
-                  type="button"
-                  onClick={() => handleRemoveTag(tag.id)}
-                  className="hover:text-white"
-                >
-                  <X size={12} />
-                </button>
-              </span>
-            );
-          })}
-        </div>
-        <div className="relative">
-          <div className="flex gap-2">
-            <input
-              ref={tagInputRef}
-              type="text"
-              placeholder={selectedTagIds.length === 0 ? "Tags" : "Add tag..."}
-              value={tagInput}
-              onChange={(e) => {
-                setTagInput(e.target.value);
-                setIsTagDropdownOpen(true);
-              }}
-              onFocus={() => setIsTagDropdownOpen(true)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  if (tagInput.trim()) {
-                    void handleCreateTag();
-                  }
-                }
-              }}
-              className="flex-1 rounded-none border-x-0 border-t border-b border-gray-700 bg-transparent px-0 py-2 text-white text-sm focus:outline-none focus:border-gray-500 placeholder:text-gray-500"
-            />
-          </div>
-
-          {isTagDropdownOpen && (tagInput || filteredTags.length > 0) && (
-            <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-700 bg-gray-800 shadow-lg">
-              <ul className="max-h-60 overflow-auto py-1 text-sm text-gray-300">
-                {filteredTags.map((tag) => (
-                  <li
-                    key={tag.id}
-                    onClick={() => handleAddTag(tag)}
-                    className="cursor-pointer px-4 py-2 hover:bg-gray-700 hover:text-white"
-                  >
-                    {tag.name}
-                  </li>
-                ))}
-                {tagInput && !filteredTags.find((t) => t.name.toLowerCase() === tagInput.toLowerCase()) && (
-                  <li
-                    onClick={() => void handleCreateTag()}
-                    className="cursor-pointer px-4 py-2 text-blue-400 hover:bg-gray-700"
-                  >
-                    Create "{tagInput}"
-                  </li>
-                )}
-              </ul>
-            </div>
-          )}
-          {/* Overlay to close dropdown when clicking outside */}
-          {isTagDropdownOpen && (
-            <div
-              className="fixed inset-0 z-0"
-              onClick={() => setIsTagDropdownOpen(false)}
-            />
-          )}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <label className="mb-2 block text-sm font-medium text-white">
-          Related Notes
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {[
-            ...selectedRelatedNotes,
-            ...incomingRelatedNotes.filter(
-              (incoming) =>
-                !selectedRelatedNotes.some((outgoing) => outgoing.id === incoming.id)
-            ),
-          ].map((related) => {
-            const isIncoming = incomingRelatedNotes.some(
-              (incoming) => incoming.id === related.id
-            );
-            return (
-              <div
-                key={related.id}
-                className="relative flex min-w-[180px] max-w-[240px] cursor-pointer flex-col gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 p-2 text-left transition hover:border-emerald-400/60"
-                role="button"
-                tabIndex={0}
-                onClick={() => onSelectRelatedNote(related.id)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    onSelectRelatedNote(related.id);
-                  }
-                }}
-              >
-                <div className="text-xs font-semibold text-emerald-100 truncate">
-                  {related.title}
-                </div>
-                <div className="text-[11px] text-emerald-200/80 leading-snug max-h-8 overflow-hidden">
-                  {related.content ? related.content : "No content"}
-                </div>
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    if (isIncoming && !selectedRelatedNotes.some((item) => item.id === related.id)) {
-                      void handleRemoveIncomingRelation(related.id);
-                      return;
-                    }
-                    setSelectedRelatedNotes((prev) =>
-                      prev.filter((item) => item.id !== related.id)
-                    );
-                  }}
-                  className="absolute right-1 top-1 text-emerald-100/70 hover:text-white"
-                  aria-label="Remove related note"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-        <div className="relative">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Search notes to relate..."
-              value={relatedNoteQuery}
-              onChange={(e) => {
-                setRelatedNoteQuery(e.target.value);
-                setIsRelatedDropdownOpen(true);
-              }}
-              onFocus={() => setIsRelatedDropdownOpen(true)}
-              className="flex-1 rounded-none border-x-0 border-t border-b border-gray-700 bg-transparent px-0 py-2 text-white text-sm focus:outline-none focus:border-gray-500 placeholder:text-gray-500"
-            />
-          </div>
-
-          {isRelatedDropdownOpen && relatedNoteQuery && (
-            <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-700 bg-gray-800 shadow-lg">
-              <ul className="max-h-60 overflow-auto py-1 text-sm text-gray-300">
-                {isRelatedLoading && (
-                  <li className="px-4 py-2 text-gray-500">Searching...</li>
-                )}
-                {relatedNoteResults
-                  .filter((candidate) =>
-                    note?.id ? candidate.id !== note.id : true
-                  )
-                  .filter(
-                    (candidate) =>
-                      candidate.title
-                        .toLowerCase()
-                        .includes(relatedNoteQuery.toLowerCase()) &&
-                      !selectedRelatedNotes.some(
-                        (selected) => selected.id === candidate.id
-                      )
-                  )
-                  .map((candidate) => (
-                    <li
-                      key={candidate.id}
-                      onClick={() => {
-                        setSelectedRelatedNotes((prev) => [
-                          ...prev,
-                          {
-                            id: candidate.id,
-                            title: candidate.title,
-                            color: candidate.color ?? null,
-                            content: candidate.content ?? "",
-                          },
-                        ]);
-                        setRelatedNoteQuery("");
-                        setIsRelatedDropdownOpen(false);
-                      }}
-                      className="cursor-pointer px-4 py-2 hover:bg-gray-700 hover:text-white"
-                    >
-                      {candidate.title}
-                    </li>
-                  ))}
-                {!isRelatedLoading &&
-                  relatedNoteResults.filter(
-                    (candidate) =>
-                      (note?.id ? candidate.id !== note.id : true) &&
-                      candidate.title
-                        .toLowerCase()
-                        .includes(relatedNoteQuery.toLowerCase()) &&
-                      !selectedRelatedNotes.some(
-                        (selected) => selected.id === candidate.id
-                      )
-                  ).length === 0 && (
-                    <li className="px-4 py-2 text-gray-500">No matches</li>
-                  )}
-              </ul>
-            </div>
-          )}
-          {isRelatedDropdownOpen && (
-            <div
-              className="fixed inset-0 z-0"
-              onClick={() => setIsRelatedDropdownOpen(false)}
-            />
-          )}
-        </div>
-      </div>
-
-
-      <div>
-        <label className="mb-2 block text-sm font-medium text-white">Folder</label>
-        <select
-          value={selectedFolderId}
-          onChange={(e) => setSelectedFolderId(e.target.value)}
-          className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white"
-        >
-          <option value="">No Folder</option>
-          {flatFolders.map((folder) => (
-            <option key={folder.id} value={folder.id}>
-              {"\u00A0\u00A0".repeat(folder.level)}{folder.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label className="mb-2 block text-sm font-medium text-white">Color</label>
-        <input
-          type="color"
-          value={color}
-          onChange={(e) => setColor(e.target.value)}
-          className="h-10 w-full cursor-pointer rounded-lg border border-gray-700 bg-gray-800"
-        />
-      </div>
-
-      <div className="flex gap-4">
-        <label className="flex items-center gap-2 text-white">
-          <input
-            type="checkbox"
-            checked={isPinned}
-            onChange={(e) => setIsPinned(e.target.checked)}
-            className="rounded"
-          />
-          <span className="text-sm">Pinned</span>
-        </label>
-        <label className="flex items-center gap-2 text-white">
-          <input
-            type="checkbox"
-            checked={isArchived}
-            onChange={(e) => setIsArchived(e.target.checked)}
-            className="rounded"
-          />
-          <span className="text-sm">Archived</span>
-        </label>
-      </div>
-    </form>
-  );
-}
-
-function BreadcrumbScroller({
-  backgroundColor,
-  children,
-}: {
-  backgroundColor: string;
-  children: React.ReactNode;
-}) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  const updateScrollState = React.useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const maxScrollLeft = el.scrollWidth - el.clientWidth;
-    setCanScrollLeft(el.scrollLeft > 0);
-    setCanScrollRight(el.scrollLeft < maxScrollLeft - 1);
-  }, []);
-
-  React.useEffect(() => {
-    updateScrollState();
-    const el = scrollRef.current;
-    if (!el) return;
-    const handleScroll = () => updateScrollState();
-    el.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", handleScroll);
-    return () => {
-      el.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
-    };
-  }, [updateScrollState]);
-
-  const handleScroll = (direction: "left" | "right") => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const offset = direction === "left" ? -140 : 140;
-    el.scrollBy({ left: offset, behavior: "smooth" });
-  };
-
-  return (
-    <div
-      className="relative -mx-4 -mb-4 rounded-b-lg"
-      style={{ backgroundColor }}
-    >
-      {canScrollLeft && (
-        <button
-          type="button"
-          aria-label="Scroll breadcrumb left"
-          onClick={() => handleScroll("left")}
-          className="absolute left-1 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/20 p-1 text-gray-700 hover:bg-black/30"
-        >
-          <ChevronLeft size={12} />
-        </button>
-      )}
-      {canScrollRight && (
-        <button
-          type="button"
-          aria-label="Scroll breadcrumb right"
-          onClick={() => handleScroll("right")}
-          className="absolute right-1 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/20 p-1 text-gray-700 hover:bg-black/30"
-        >
-          <ChevronRight size={12} />
-        </button>
-      )}
-      <div
-        ref={scrollRef}
-        className="flex items-center gap-1 overflow-x-auto px-5 py-2 pb-3 text-[10px] text-gray-700 scrollbar-hidden"
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
-const getCategoryIdsWithDescendants = (
-  targetId: string,
-  categories: CategoryWithChildren[]
-): string[] => {
-  // Helper to recursively collect all descendant IDs
-  const collectAllDescendantIds = (node: CategoryWithChildren): string[] => {
-    const ids = [node.id];
-    if (node.children && node.children.length > 0) {
-      for (const child of node.children) {
-        ids.push(...collectAllDescendantIds(child));
-      }
-    }
-    return ids;
-  };
-
-  // Find the target category in the tree
-  const findCategory = (cats: CategoryWithChildren[]): CategoryWithChildren | null => {
-    for (const cat of cats) {
-      if (cat.id === targetId) {
-        return cat;
-      }
-      if (cat.children && cat.children.length > 0) {
-        const found = findCategory(cat.children);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-
-  const targetCategory = findCategory(categories);
-  if (!targetCategory) {
-    return [];
-  }
-
-  return collectAllDescendantIds(targetCategory);
-};
-
-// Helper to darken a hex color by a percentage
-const darkenColor = (hex: string, percent: number): string => {
-  // Remove # if present
-  const cleanHex = hex.replace("#", "");
-
-  // Parse RGB values
-  const r = parseInt(cleanHex.substring(0, 2), 16);
-  const g = parseInt(cleanHex.substring(2, 4), 16);
-  const b = parseInt(cleanHex.substring(4, 6), 16);
-
-  // Darken each component
-  const darkenAmount = 1 - percent / 100;
-  const newR = Math.round(r * darkenAmount);
-  const newG = Math.round(g * darkenAmount);
-  const newB = Math.round(b * darkenAmount);
-
-  // Convert back to hex
-  return `#${newR.toString(16).padStart(2, "0")}${newG.toString(16).padStart(2, "0")}${newB.toString(16).padStart(2, "0")}`;
-};
-
-// Helper to build breadcrumb path from root to current folder/note
-const buildBreadcrumbPath = (
-  folderId: string | null,
-  noteTitle: string | null,
-  folderTree: CategoryWithChildren[]
-): Array<{ id: string | null; name: string; isNote: boolean }> => {
-  const path: Array<{ id: string | null; name: string; isNote: boolean }> = [
-    { id: null, name: "All Notes", isNote: false },
-  ];
-
-  if (!folderId) {
-    if (noteTitle) {
-      path.push({ id: null, name: noteTitle, isNote: true });
-    }
-    return path;
-  }
-
-  // Find the folder and build path to root
-  const findPath = (
-    categories: CategoryWithChildren[],
-    targetId: string,
-    currentPath: Array<{ id: string; name: string }>
-  ): Array<{ id: string; name: string }> | null => {
-    for (const cat of categories) {
-      if (cat.id === targetId) {
-        return [...currentPath, { id: cat.id, name: cat.name }];
-      }
-      if (cat.children.length > 0) {
-        const found = findPath(cat.children, targetId, [...currentPath, { id: cat.id, name: cat.name }]);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-
-  const folderPath = findPath(folderTree, folderId, []);
-  if (folderPath) {
-    folderPath.forEach((folder) => {
-      path.push({ id: folder.id, name: folder.name, isNote: false });
-    });
-  }
-
-  if (noteTitle) {
-    path.push({ id: null, name: noteTitle, isNote: true });
-  }
-
-  return path;
-};
+import { NoteForm } from "./components/NoteForm";
+import { NotesFilters } from "./components/NotesFilters";
+import { NoteCard } from "./components/NoteCard";
+import { buildBreadcrumbPath, getCategoryIdsWithDescendants, renderMarkdownToHtml } from "./utils";
 
 export default function NotesPage() {
   const { isMenuCollapsed } = useAdminLayout();
   const { settings, updateSettings } = useNoteSettings();
+  const { toast } = useToast();
   const [notes, setNotes] = useState<NoteWithRelations[]>([]);
   const [tags, setTags] = useState<TagRecord[]>([]);
   const [folderTree, setFolderTree] = useState<CategoryWithChildren[]>([]);
@@ -881,37 +30,122 @@ export default function NotesPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [creatingFolderParentId, setCreatingFolderParentId] = useState<string | null | undefined>(undefined);
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
+  const [draggedNoteId, setDraggedNoteId] = useState<string | null>(null);
+  const [relatedPreviewNotes, setRelatedPreviewNotes] = useState<Record<string, NoteWithRelations>>({});
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+  const hasLoadedNotesRef = React.useRef(false);
+  const [highlightTagId, setHighlightTagId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(24);
 
   // Use settings from context (including selectedFolderId)
-  const { sortBy, sortOrder, showTimestamps, showBreadcrumbs, searchScope, selectedFolderId } = settings;
+  const {
+    sortBy,
+    sortOrder,
+    showTimestamps,
+    showBreadcrumbs,
+    showRelatedNotes,
+    searchScope,
+    selectedFolderId,
+    selectedNotebookId,
+    viewMode,
+    gridDensity,
+  } = settings;
 
   // Helper to update selectedFolderId in settings
   const setSelectedFolderId = (id: string | null) => {
     updateSettings({ selectedFolderId: id });
   };
 
+  const setSelectedNotebookId = (id: string | null) => {
+    updateSettings({ selectedNotebookId: id });
+  };
+
+  const notesInScope = React.useMemo(() => {
+    if (!selectedFolderId) return notes;
+    const descendantIds = getCategoryIdsWithDescendants(selectedFolderId, folderTree);
+    const categoryIds =
+      descendantIds.length > 0 ? descendantIds : [selectedFolderId];
+    const categoryIdSet = new Set(categoryIds);
+    return notes.filter((note) =>
+      note.categories.some((category) => categoryIdSet.has(category.categoryId))
+    );
+  }, [notes, selectedFolderId, folderTree]);
+
   // Sort notes based on current sort settings
   const sortedNotes = React.useMemo(() => {
-    const sorted = [...notes].sort((a, b) => {
+    const sorted = [...notesInScope].sort((a, b) => {
       if (sortBy === "name") {
         return a.title.localeCompare(b.title);
-      } else {
-        // Sort by created date
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       }
+      if (sortBy === "updated") {
+        return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+      }
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
     });
     return sortOrder === "desc" ? sorted.reverse() : sorted;
-  }, [notes, sortBy, sortOrder]);
+  }, [notesInScope, sortBy, sortOrder]);
+
+  const totalPages = React.useMemo(() => {
+    return Math.max(1, Math.ceil(sortedNotes.length / pageSize));
+  }, [sortedNotes.length, pageSize]);
+
+  const pagedNotes = React.useMemo(() => {
+    const clampedPage = Math.min(page, totalPages);
+    const start = (clampedPage - 1) * pageSize;
+    return sortedNotes.slice(start, start + pageSize);
+  }, [sortedNotes, page, pageSize, totalPages]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [
+    debouncedSearchQuery,
+    filterPinned,
+    filterArchived,
+    filterTagIds,
+    selectedFolderId,
+    sortBy,
+    sortOrder,
+    selectedNotebookId,
+  ]);
+
+  const noteLayoutClassName = React.useMemo(() => {
+    if (viewMode === "list") {
+      return "grid grid-cols-1 gap-3";
+    }
+    if (gridDensity === 8) {
+      return "grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8";
+    }
+    return "grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
+  }, [viewMode, gridDensity]);
+
+  const availableTagsInScope = React.useMemo(() => {
+    const tagMap = new Map<string, TagRecord>();
+    notesInScope.forEach((note) => {
+      note.tags.forEach((noteTag) => {
+        tagMap.set(noteTag.tagId, noteTag.tag);
+      });
+    });
+    return Array.from(tagMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [notesInScope]);
 
   const fetchFolderTree = React.useCallback(async () => {
     try {
-      const response = await fetch("/api/notes/categories/tree", { cache: "no-store" });
-      const data = await response.json();
+      if (!selectedNotebookId) return;
+      const params = new URLSearchParams({ notebookId: selectedNotebookId });
+      const response = await fetch(`/api/notes/categories/tree?${params.toString()}`, { cache: "no-store" });
+      const data = (await response.json()) as CategoryWithChildren[];
       setFolderTree(data);
     } catch (error) {
       console.error("Failed to fetch folder tree:", error);
     }
-  }, []);
+  }, [selectedNotebookId]);
 
 
   const folderTreeRef = React.useRef(folderTree);
@@ -919,12 +153,24 @@ export default function NotesPage() {
     folderTreeRef.current = folderTree;
   }, [folderTree]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const fetchNotes = React.useCallback(async () => {
-    setLoading(true);
     try {
+      if (!selectedNotebookId) {
+        setLoading(false);
+        return;
+      }
+      setLoading(!hasLoadedNotesRef.current);
       const params = new URLSearchParams();
-      if (searchQuery) {
-        params.append("search", searchQuery);
+      params.append("notebookId", selectedNotebookId);
+      if (debouncedSearchQuery) {
+        params.append("search", debouncedSearchQuery);
         params.append("searchScope", searchScope);
       }
       if (filterPinned !== undefined) params.append("isPinned", String(filterPinned));
@@ -941,24 +187,27 @@ export default function NotesPage() {
       }
 
       const response = await fetch(`/api/notes?${params}`, { cache: "no-store" });
-      const data = await response.json();
+      const data = (await response.json()) as NoteWithRelations[];
       setNotes(data);
+      hasLoadedNotesRef.current = true;
     } catch (error) {
       console.error("Failed to fetch notes:", error);
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, searchScope, filterPinned, filterArchived, selectedFolderId, filterTagIds]);
+  }, [debouncedSearchQuery, searchScope, filterPinned, filterArchived, selectedFolderId, filterTagIds, selectedNotebookId]);
 
   const fetchTags = React.useCallback(async () => {
     try {
-      const response = await fetch("/api/notes/tags", { cache: "no-store" });
-      const data = await response.json();
+      if (!selectedNotebookId) return;
+      const params = new URLSearchParams({ notebookId: selectedNotebookId });
+      const response = await fetch(`/api/notes/tags?${params.toString()}`, { cache: "no-store" });
+      const data = (await response.json()) as TagRecord[];
       setTags(data);
     } catch (error) {
       console.error("Failed to fetch tags:", error);
     }
-  }, []);
+  }, [selectedNotebookId]);
 
   useEffect(() => {
     void fetchTags();
@@ -969,17 +218,71 @@ export default function NotesPage() {
     void fetchNotes();
   }, [fetchNotes]);
 
+  useEffect(() => {
+    if (selectedNotebookId) return;
+    let isActive = true;
+    const loadNotebooks = async () => {
+      try {
+        const response = await fetch("/api/notes/notebooks", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = (await response.json()) as Array<{ id: string }>;
+        const firstId = data[0]?.id;
+        if (isActive && firstId) {
+          setSelectedNotebookId(firstId);
+        }
+      } catch (error) {
+        console.error("Failed to load notebooks:", error);
+      }
+    };
+    void loadNotebooks();
+    return () => {
+      isActive = false;
+    };
+  }, [selectedNotebookId]);
+
+  useEffect(() => {
+    setSelectedFolderId(null);
+    setSelectedNote(null);
+    setIsEditing(false);
+    setFilterTagIds([]);
+    setPage(1);
+    setNotes([]);
+    setTags([]);
+    setFolderTree([]);
+  }, [selectedNotebookId]);
+
+  const previewStyle = React.useMemo(() => {
+    const fallback = "#1f2937";
+    const color = selectedNote?.color || fallback;
+    const hex = color.replace("#", "");
+    if (!/^[0-9a-fA-F]{6}$/.test(hex)) {
+      return { backgroundColor: color };
+    }
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    const borderColor = luminance > 0.78 ? "rgba(15, 23, 42, 0.35)" : "rgba(148, 163, 184, 0.2)";
+    return {
+      backgroundColor: color,
+      borderColor,
+      boxShadow: luminance > 0.78 ? "0 0 0 1px rgba(15, 23, 42, 0.12)" : undefined,
+    };
+  }, [selectedNote?.color]);
+
   const handleCreateFolder = async (parentId?: string | null) => {
     const folderName = prompt("Enter folder name:");
     if (!folderName) return;
 
     try {
+      if (!selectedNotebookId) return;
       const response = await fetch("/api/notes/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: folderName,
           parentId: parentId ?? null,
+          notebookId: selectedNotebookId,
         }),
       });
 
@@ -1079,6 +382,7 @@ export default function NotesPage() {
           isArchived: note.isArchived,
           tagIds: note.tags.map((t) => t.tagId),
           categoryIds: note.categories.map((c) => c.categoryId),
+          notebookId: note.notebookId ?? selectedNotebookId ?? null,
         }),
       });
 
@@ -1121,7 +425,7 @@ export default function NotesPage() {
         await fetchFolderTree();
         // Update selected note if it's the one being renamed
         if (selectedNote?.id === noteId) {
-          const updatedNote = await response.json();
+          const updatedNote = (await response.json()) as NoteWithRelations;
           setSelectedNote(updatedNote);
         }
       }
@@ -1150,11 +454,28 @@ export default function NotesPage() {
     setIsEditing(false);
   };
 
+  const handleFilterByTag = (tagId: string) => {
+    setSelectedFolderId(null);
+    setFilterTagIds([tagId]);
+    setSearchQuery("");
+    setSelectedNote(null);
+    setIsEditing(false);
+    setHighlightTagId(tagId);
+  };
+
+  useEffect(() => {
+    if (!highlightTagId) return;
+    const timer = setTimeout(() => {
+      setHighlightTagId(null);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [highlightTagId]);
+
   const handleSelectNoteFromTree = async (noteId: string) => {
     try {
       const response = await fetch(`/api/notes/${noteId}`, { cache: "no-store" });
       if (response.ok) {
-        const note = await response.json();
+        const note = (await response.json()) as NoteWithRelations;
         setSelectedNote(note);
         setIsEditing(false);
       }
@@ -1163,6 +484,56 @@ export default function NotesPage() {
     }
   };
 
+  useEffect(() => {
+    if (!selectedNote) {
+      setRelatedPreviewNotes({});
+      return;
+    }
+    const relationIds =
+      selectedNote.relations?.map((rel) => rel.id) ||
+      [
+        ...(selectedNote.relationsFrom ?? []).map((rel) => rel.targetNote.id),
+        ...(selectedNote.relationsTo ?? []).map((rel) => rel.sourceNote.id),
+      ].filter(
+        (id, index, array) => array.findIndex((entry) => entry === id) === index
+      );
+
+    if (!relationIds || relationIds.length === 0) {
+      setRelatedPreviewNotes({});
+      return;
+    }
+
+    let isActive = true;
+    const fetchRelated = async () => {
+      try {
+        const notes = await Promise.all(
+          relationIds.map(async (id) => {
+            try {
+              const res = await fetch(`/api/notes/${id}`, { cache: "no-store" });
+              if (!res.ok) return null;
+              return (await res.json()) as NoteWithRelations;
+            } catch {
+              return null;
+            }
+          })
+        );
+        if (!isActive) return;
+        const nextMap: Record<string, NoteWithRelations> = {};
+        notes.filter(Boolean).forEach((note) => {
+          if (note) nextMap[note.id] = note;
+        });
+        setRelatedPreviewNotes(nextMap);
+      } catch (error) {
+        console.error("Failed to load related notes:", error);
+      }
+    };
+
+    void fetchRelated();
+    return () => {
+      isActive = false;
+    };
+  }, [selectedNote]);
+
   const handleUpdateSuccess = () => {
     setIsEditing(false);
     void fetchNotes();
@@ -1170,6 +541,36 @@ export default function NotesPage() {
     // Refresh selected note to show updated content
     if (selectedNote) {
       void handleSelectNoteFromTree(selectedNote.id);
+    }
+  };
+
+  const handleUnlinkFromPreview = async (relatedId: string) => {
+    if (!selectedNote) return;
+    const relationIds =
+      selectedNote.relations?.map((rel) => rel.id) ||
+      [
+        ...(selectedNote.relationsFrom ?? []).map((rel) => rel.targetNote.id),
+        ...(selectedNote.relationsTo ?? []).map((rel) => rel.sourceNote.id),
+      ].filter(
+        (id, index, array) => array.findIndex((entry) => entry === id) === index
+      );
+    const nextIds = relationIds.filter((id) => id !== relatedId);
+    try {
+      const response = await fetch(`/api/notes/${selectedNote.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ relatedNoteIds: nextIds }),
+      });
+      if (!response.ok) {
+        toast("Failed to unlink note", { variant: "error" });
+        return;
+      }
+      toast("Note unlinked");
+      await fetchNotes();
+      void handleSelectNoteFromTree(selectedNote.id);
+    } catch (error) {
+      console.error("Failed to unlink note:", error);
+      toast("Failed to unlink note", { variant: "error" });
     }
   };
 
@@ -1190,6 +591,72 @@ export default function NotesPage() {
       }
     } catch (error) {
       console.error("Failed to move note:", error);
+    }
+  };
+
+  const handleRelateNotes = async (sourceNoteId: string, targetNoteId: string) => {
+    if (!sourceNoteId || !targetNoteId) return;
+    if (sourceNoteId === targetNoteId) return;
+    try {
+      const [sourceRes, targetRes] = await Promise.all([
+        fetch(`/api/notes/${sourceNoteId}`, { cache: "no-store" }),
+        fetch(`/api/notes/${targetNoteId}`, { cache: "no-store" }),
+      ]);
+      if (!sourceRes.ok || !targetRes.ok) {
+        toast("Failed to link notes", { variant: "error" });
+        return;
+      }
+      const [sourceNote, targetNote] = (await Promise.all([
+        sourceRes.json(),
+        targetRes.json(),
+      ])) as [NoteWithRelations, NoteWithRelations];
+
+      const sourceRelatedIds =
+        sourceNote.relationsFrom?.map((rel) => rel.targetNote.id) || [];
+      const alreadyLinked =
+        sourceRelatedIds.includes(targetNoteId);
+      if (alreadyLinked) {
+        toast("Notes are already linked", { variant: "info" });
+        return;
+      }
+
+      const nextSourceIds = Array.from(
+        new Set([...sourceRelatedIds, targetNoteId])
+      );
+
+      const targetRelatedIds =
+        targetNote.relationsFrom?.map((rel) => rel.targetNote.id) || [];
+      const nextTargetIds = Array.from(
+        new Set([...targetRelatedIds, sourceNoteId])
+      );
+
+      const [sourcePatch, targetPatch] = await Promise.all([
+        fetch(`/api/notes/${sourceNoteId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ relatedNoteIds: nextSourceIds }),
+        }),
+        fetch(`/api/notes/${targetNoteId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ relatedNoteIds: nextTargetIds }),
+        }),
+      ]);
+
+      if (!sourcePatch.ok || !targetPatch.ok) {
+        toast("Failed to link notes", { variant: "error" });
+        return;
+      }
+
+      await fetchFolderTree();
+      await fetchNotes();
+      if (selectedNote?.id) {
+        void handleSelectNoteFromTree(selectedNote.id);
+      }
+      toast("Notes linked");
+    } catch (error) {
+      console.error("Failed to relate notes:", error);
+      toast("Failed to link notes", { variant: "error" });
     }
   };
 
@@ -1233,9 +700,12 @@ export default function NotesPage() {
             onDuplicateNote={handleDuplicateNote}
             onDeleteNote={handleDeleteNoteFromTree}
             onRenameNote={handleRenameNote}
+            onRelateNotes={handleRelateNotes}
             selectedNoteId={selectedNote?.id}
             onDropNote={handleMoveNoteToFolder}
             onDropFolder={handleMoveFolderToFolder}
+            draggedNoteId={draggedNoteId}
+            setDraggedNoteId={setDraggedNoteId}
           />
         </div>
 
@@ -1345,53 +815,89 @@ export default function NotesPage() {
                     folderTree={folderTree}
                     defaultFolderId={selectedFolderId}
                     availableTags={tags}
+                    notebookId={selectedNotebookId}
                     onSuccess={handleUpdateSuccess}
                     onTagCreated={fetchTags}
                     onSelectRelatedNote={(noteId) => {
                       void handleSelectNoteFromTree(noteId);
                     }}
+                    onTagClick={handleFilterByTag}
                   />
                 </div>
               ) : (
                 <div
                   className="flex-1 overflow-y-auto rounded-lg border border-gray-800 bg-gray-900 p-6 cursor-text"
                   onDoubleClick={() => setIsEditing(true)}
+                  style={previewStyle}
                 >
                   <h1 className="mb-4 text-3xl font-bold text-white">{selectedNote.title}</h1>
-                  <div className="prose prose-invert max-w-none whitespace-pre-wrap text-gray-300">
-                    {selectedNote.content}
-                  </div>
-                  {(selectedNote.relationsFrom?.length || selectedNote.relationsTo?.length) && (
+                  <div
+                    className="prose max-w-none text-gray-300"
+                    dangerouslySetInnerHTML={{
+                      __html: renderMarkdownToHtml(selectedNote.content),
+                    }}
+                  />
+                  {((selectedNote.relations?.length ?? 0) > 0 ||
+                    selectedNote.relationsFrom?.length ||
+                    selectedNote.relationsTo?.length) && (
                     <div className="mt-6 space-y-4">
                       <div className="space-y-2">
                         <div className="text-xs uppercase tracking-wide text-gray-400">
                           Related Notes
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          {[
+                          {(selectedNote.relations ?? [
                             ...(selectedNote.relationsFrom ?? []).map((relation) => ({
                               id: relation.targetNote.id,
                               title: relation.targetNote.title,
+                              color: relation.targetNote.color ?? null,
                             })),
                             ...(selectedNote.relationsTo ?? []).map((relation) => ({
                               id: relation.sourceNote.id,
                               title: relation.sourceNote.title,
+                              color: relation.sourceNote.color ?? null,
                             })),
-                          ]
+                          ])
                             .filter(
                               (noteItem, index, array) =>
                                 array.findIndex((item) => item.id === noteItem.id) === index
                             )
-                            .map((related) => (
-                              <button
-                                key={related.id}
-                                type="button"
-                                onClick={() => void handleSelectNoteFromTree(related.id)}
-                                className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-left text-xs text-emerald-100 hover:border-emerald-400/60"
-                              >
-                                {related.title}
-                              </button>
-                            ))}
+                            .map((related) => {
+                              const relatedNote = relatedPreviewNotes[related.id];
+                              return (
+                                <div
+                                  key={related.id}
+                                  className="relative w-40 cursor-pointer rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-left text-xs text-emerald-100 hover:border-emerald-400/60"
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={() => void handleSelectNoteFromTree(related.id)}
+                                  onKeyDown={(event) => {
+                                    if (event.key === "Enter" || event.key === " ") {
+                                      event.preventDefault();
+                                      void handleSelectNoteFromTree(related.id);
+                                    }
+                                  }}
+                                >
+                                  <div className="truncate font-semibold">
+                                    {relatedNote?.title ?? related.title}
+                                  </div>
+                                  <div className="line-clamp-2 text-[11px] text-emerald-200/80">
+                                    {relatedNote?.content ?? "No content"}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      void handleUnlinkFromPreview(related.id);
+                                    }}
+                                    className="absolute right-2 top-2 text-emerald-100/70 hover:text-white"
+                                    aria-label="Unlink related note"
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                </div>
+                              );
+                            })}
                         </div>
                       </div>
                     </div>
@@ -1418,172 +924,67 @@ export default function NotesPage() {
                     ? buildBreadcrumbPath(selectedFolderId, null, folderTree).slice(-1)[0]?.name
                     : "Notes"}
                 </h1>
+                <div className="ml-auto flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Page</span>
+                  <button
+                    type="button"
+                    onClick={() => setPage(Math.max(1, page - 1))}
+                    disabled={page <= 1}
+                    className="rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition disabled:opacity-50"
+                  >
+                    Prev
+                  </button>
+                  <span className="text-xs text-gray-300">
+                    {page} / {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPage(Math.min(totalPages, page + 1))}
+                    disabled={page >= totalPages}
+                    className="rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setPage(1);
+                    }}
+                    className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-300 border border-gray-700"
+                    aria-label="Notes per page"
+                  >
+                    {[12, 24, 48].map((size) => (
+                      <option key={size} value={size}>
+                        {size} / page
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               {/* Filters */}
               <div className="mb-4 flex gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                    <input
-                      type="text"
-                      placeholder={
-                        selectedFolderId
-                          ? `Search in ${
-                              buildBreadcrumbPath(selectedFolderId, null, folderTree).pop()?.name || "Folder"
-                            }...`
-                          : "Search in All Notes..."
-                      }
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 pl-10 pr-4 text-white placeholder-gray-400"
-                    />
-                  </div>
-                  
-                  {/* Tag Filter */}
-                  <div className="mt-2 flex gap-2 items-center">
-                    <div className="relative">
-                      <select
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val && !filterTagIds.includes(val)) {
-                            setFilterTagIds([...filterTagIds, val]);
-                          }
-                          e.target.value = "";
-                        }}
-                        className="rounded-lg border border-gray-700 bg-gray-800 px-3 py-1 text-xs text-white"
-                      >
-                        <option value="">Filter by Tag...</option>
-                        {tags
-                          .filter((t) => !filterTagIds.includes(t.id))
-                          .map((tag) => (
-                            <option key={tag.id} value={tag.id}>
-                              {tag.name}
-                            </option>
-                          ))}
-                      </select>
-                    </div>
-                    {filterTagIds.map((tagId) => {
-                      const tag = tags.find((t) => t.id === tagId);
-                      if (!tag) return null;
-                      return (
-                        <span
-                          key={tag.id}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-200 border border-blue-500/30"
-                        >
-                          {tag.name}
-                          <button
-                            onClick={() => setFilterTagIds(filterTagIds.filter((id) => id !== tag.id))}
-                            className="hover:text-white"
-                          >
-                            <X size={12} />
-                          </button>
-                        </span>
-                      );
-                    })}
-                  </div>
-
-                  {/* Search Scope Toggle */}
-                  <div className="mt-2 flex gap-2">
-                    <button
-                      onClick={() => updateSettings({ searchScope: "both" })}
-                      className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
-                        searchScope === "both"
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-                      }`}
-                      title="Search in title and content"
-                    >
-                      <FileText size={14} />
-                      <Heading size={14} />
-                    </button>
-                    <button
-                      onClick={() => updateSettings({ searchScope: "title" })}
-                      className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
-                        searchScope === "title"
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-                      }`}
-                      title="Search in title only"
-                    >
-                      <Heading size={14} />
-                    </button>
-                    <button
-                      onClick={() => updateSettings({ searchScope: "content" })}
-                      className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
-                        searchScope === "content"
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-                      }`}
-                      title="Search in content only"
-                    >
-                      <FileText size={14} />
-                    </button>
-
-                    {/* Sort Controls */}
-                    <div className="ml-auto flex items-center gap-1">
-                      <span className="text-xs text-gray-500 mr-1">Sort:</span>
-                      <button
-                        onClick={() => updateSettings({ sortBy: "created" })}
-                        className={`rounded px-2 py-1 text-xs transition ${
-                          sortBy === "created"
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-                        }`}
-                        title="Sort by created date"
-                      >
-                        Date
-                      </button>
-                      <button
-                        onClick={() => updateSettings({ sortBy: "name" })}
-                        className={`rounded px-2 py-1 text-xs transition ${
-                          sortBy === "name"
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-                        }`}
-                        title="Sort by name"
-                      >
-                        Name
-                      </button>
-                      <button
-                        onClick={() => updateSettings({ sortOrder: sortOrder === "asc" ? "desc" : "asc" })}
-                        className="rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition"
-                        title={sortOrder === "asc" ? "Ascending (click to change)" : "Descending (click to change)"}
-                      >
-                        {sortOrder === "asc" ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
-                      </button>
-                    </div>
-
-                    {/* Visibility Controls */}
-                    <div className="flex items-center gap-2 ml-2 pl-2 border-l border-gray-700">
-                      <span className="text-xs text-gray-500">Show:</span>
-                      <button
-                        onClick={() => updateSettings({ showTimestamps: !showTimestamps })}
-                        className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
-                          showTimestamps
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-                        }`}
-                        title={showTimestamps ? "Hide timestamps" : "Show timestamps"}
-                      >
-                        {showTimestamps ? <Eye size={12} /> : <EyeOff size={12} />}
-                        <span>Dates</span>
-                      </button>
-                      <button
-                        onClick={() => updateSettings({ showBreadcrumbs: !showBreadcrumbs })}
-                        className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
-                          showBreadcrumbs
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-                        }`}
-                        title={showBreadcrumbs ? "Hide breadcrumbs" : "Show breadcrumbs"}
-                      >
-                        {showBreadcrumbs ? <Eye size={12} /> : <EyeOff size={12} />}
-                        <span>Path</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <NotesFilters
+                  selectedFolderId={selectedFolderId}
+                  folderTree={folderTree}
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  tags={availableTagsInScope}
+                  filterTagIds={filterTagIds}
+                  setFilterTagIds={setFilterTagIds}
+                  searchScope={searchScope}
+                  updateSettings={updateSettings}
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                  showTimestamps={showTimestamps}
+                  showBreadcrumbs={showBreadcrumbs}
+                  showRelatedNotes={showRelatedNotes}
+                  viewMode={viewMode}
+                  gridDensity={gridDensity}
+                  highlightTagId={highlightTagId}
+                  buildBreadcrumbPath={buildBreadcrumbPath}
+                />
                 <Button
                   onClick={() => setFilterPinned(filterPinned === true ? undefined : true)}
                   className={`rounded-lg border px-4 py-2 ${
@@ -1637,80 +1038,53 @@ export default function NotesPage() {
                   No notes found. Create your first note!
                 </div>
               ) : (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {sortedNotes.map((note) => (
-                    <div
+                <div className={noteLayoutClassName}>
+                  {pagedNotes.map((note) => (
+                    <NoteCard
                       key={note.id}
-                      draggable
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData("noteId", note.id);
-                        e.dataTransfer.effectAllowed = "move";
-                        const target = e.currentTarget as HTMLElement;
-                        target.style.opacity = "0.5";
+                      note={note}
+                      folderTree={folderTree}
+                      showTimestamps={showTimestamps}
+                      showBreadcrumbs={showBreadcrumbs}
+                      showRelatedNotes={showRelatedNotes}
+                      onSelectNote={handleSelectNote}
+                      onSelectFolder={(folderId) => {
+                        setSelectedFolderId(folderId);
+                        setSelectedNote(null);
+                        setIsEditing(false);
                       }}
-                      onDragEnd={(e) => {
-                        const target = e.currentTarget as HTMLElement;
-                        target.style.opacity = "1";
+                      onDragStart={(noteId) => {
+                        setDraggedNoteId(noteId);
                       }}
-                      onClick={() => handleSelectNote(note)}
-                      style={{ backgroundColor: note.color || "#ffffff" }}
-                      className="cursor-grab active:cursor-grabbing rounded-lg border border-gray-700 p-4 shadow-sm transition hover:shadow-md"
-                    >
-                      <div className="mb-2 flex items-start justify-between">
-                        <h3 className="font-semibold text-gray-900">{note.title}</h3>
-                        {note.isPinned && <Pin size={16} className="text-blue-600" />}
-                      </div>
-                      <p className="mb-3 line-clamp-3 text-sm text-gray-700">{note.content}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {note.tags.map((nt) => (
-                          <span
-                            key={nt.tagId}
-                            style={{ backgroundColor: nt.tag.color || "#3b82f6" }}
-                            className="rounded-full px-2 py-1 text-xs text-white"
-                          >
-                            {nt.tag.name}
-                          </span>
-                        ))}
-                      </div>
-                      {showTimestamps && (
-                        <div className="mt-3 flex flex-col gap-0.5 text-[10px] text-gray-500">
-                          <span>Created: {new Date(note.createdAt).toLocaleString()}</span>
-                          <span>Modified: {new Date(note.updatedAt).toLocaleString()}</span>
-                        </div>
-                      )}
-                      {/* Breadcrumbs */}
-                      {showBreadcrumbs && (
-                        <div className={showTimestamps ? "mt-3" : "mt-2"}>
-                          <BreadcrumbScroller
-                            backgroundColor={darkenColor(note.color || "#ffffff", 20)}
-                          >
-                            {buildBreadcrumbPath(
-                              note.categories[0]?.categoryId || null,
-                              null,
-                              folderTree
-                            ).map((crumb, index, array) => (
-                              <React.Fragment key={index}>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedFolderId(crumb.id);
-                                    setSelectedNote(null);
-                                    setIsEditing(false);
-                                  }}
-                                  className="hover:underline whitespace-nowrap"
-                                >
-                                  {crumb.name}
-                                </button>
-                                {index < array.length - 1 && (
-                                  <ChevronRight size={10} className="flex-shrink-0" />
-                                )}
-                              </React.Fragment>
-                            ))}
-                          </BreadcrumbScroller>
-                        </div>
-                      )}
-                    </div>
+                      onDragEnd={() => {
+                        setDraggedNoteId(null);
+                      }}
+                      buildBreadcrumbPath={buildBreadcrumbPath}
+                    />
                   ))}
+                </div>
+              )}
+              {sortedNotes.length > pageSize && (
+                <div className="mt-6 flex items-center justify-center gap-3 text-sm text-gray-300">
+                  <button
+                    type="button"
+                    onClick={() => setPage(Math.max(1, page - 1))}
+                    disabled={page <= 1}
+                    className="rounded border border-gray-700 px-3 py-1.5 text-gray-300 hover:bg-gray-800 disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  <span>
+                    Page {page} of {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPage(Math.min(totalPages, page + 1))}
+                    disabled={page >= totalPages}
+                    className="rounded border border-gray-700 px-3 py-1.5 text-gray-300 hover:bg-gray-800 disabled:opacity-50"
+                  >
+                    Next
+                  </button>
                 </div>
               )}
             </>
@@ -1729,6 +1103,7 @@ export default function NotesPage() {
                 folderTree={folderTree}
                 defaultFolderId={selectedFolderId}
                 availableTags={tags}
+                notebookId={selectedNotebookId}
                 onSuccess={handleCreateSuccess}
                 onTagCreated={fetchTags}
                 onSelectRelatedNote={(noteId) => {

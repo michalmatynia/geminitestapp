@@ -4,6 +4,31 @@ npx tsc
 npx eslint
 add proper debugging on visual studio code
 
+Notes flicker when the Search field is updated
+
+When I'm in folder and filter by Tag, it should only filter the results by Tag in That specific folder that I am currently ni
+
+In folder tree, plus sign should create a note, a little folder should create a folder
+
+Note visibility, Grid placement, Sorting by date
+
+make the note app left hand side panel slighly wider
+
+EDIT note, I don't need duplicate borders at the top, tag borders arenough, tags should appear underneath
+
+Relate notes to one another on drag relate
+
+When I create a new Note, it should be created in the folder
+
+Search by folder breadcrumb
+clickable Breadcrumbs should be underneath timestamps (with options to hide the,timestamps too)
+
+bread crumbs should appear in a field 20% darker
+ALL NOTES | FAVOURITES
+
+UPDATE DELETE Buttons should be moved even higher
+Title above the Tags
+
 # Database Restore not working
 
 I can't preview MongoDB Dumps
@@ -14,8 +39,7 @@ Czcionki i Bold Italics
 
 
 ## Note List
-After MongoDB database restore, I can no longer see
-Create note, folder structure is absent
+After MongoDB database restore, I can no longer see the folder structure in dropdown in Create / Edit note, folder structure is absent, well I need hyphens
 
 Folder View, name of the folder
 
@@ -33,6 +57,8 @@ Note parameters, that I can add cusomized, that I can use later on with AI to Id
 File handling (10 file slots benath, the first one being the thumbnail)
 
 ## Note App Chatbot connection
+
+Infer text from image and write a snippet
 
 have AI to format my notes, validate the truth in my notes, Search the web to validate my notes, give me note suggestions (that I can Accept or Refuse), extend/refactor my notes, 
 

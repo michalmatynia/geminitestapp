@@ -43,20 +43,27 @@ export async function PATCH(
 /**
  * DELETE /api/notes/categories/[id]
  * Deletes a category.
+ *
+ * Query params:
+ * - recursive=true: Delete all subfolders and notes within the category
  */
 export async function DELETE(
   req: Request,
   props: { params: Promise<{ id: string }> }
 ) {
   const params = await props.params;
+  const { searchParams } = new URL(req.url);
+  const recursive = searchParams.get("recursive") === "true";
+
   try {
-    await noteService.deleteCategory(params.id);
+    await noteService.deleteCategory(params.id, recursive);
     return NextResponse.json({ success: true });
   } catch (error) {
     const errorId = randomUUID();
     console.error("[categories][DELETE] Failed to delete category", {
       errorId,
       categoryId: params.id,
+      recursive,
       error,
     });
     return NextResponse.json(

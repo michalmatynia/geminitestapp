@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/button";
 import ModalShell from "@/components/ui/modal-shell";
 import { FolderTree } from "./components/FolderTree";
 import { useToast } from "@/components/ui/toast";
+import { useAdminLayout } from "@/lib/context/AdminLayoutContext";
 
 function NoteForm({
   note,
   folderTree,
   defaultFolderId,
   availableTags,
-  onClose,
   onSuccess,
   onTagCreated,
 }: {
@@ -21,7 +21,6 @@ function NoteForm({
   folderTree: CategoryWithChildren[];
   defaultFolderId?: string | null;
   availableTags: TagRecord[];
-  onClose: () => void;
   onSuccess: () => void;
   onTagCreated: () => void;
 }) {
@@ -144,49 +143,20 @@ function NoteForm({
     }
   };
 
-  const handleDelete = async () => {
-    if (!note || !confirm("Are you sure you want to delete this note?")) return;
-
-    try {
-      const response = await fetch(`/api/notes/${note.id}`, { method: "DELETE" });
-      if (response.ok) {
-        onSuccess();
-      }
-    } catch (error) {
-      console.error("Failed to delete note:", error);
-    }
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Action Buttons at Top */}
-      <div className="flex gap-2 pb-4 border-b border-gray-700">
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
-        >
-          {isSubmitting ? "Saving..." : note ? "Update" : "Create"}
-        </Button>
-        {note && (
+    <form id={note ? "note-edit-form" : undefined} onSubmit={handleSubmit} className="space-y-4">
+      {/* Action Buttons at Top - Only show for Create mode, Edit mode buttons are in the header */}
+      {!note && (
+        <div className="flex gap-2 pb-4 border-b border-gray-700">
           <Button
-            type="button"
-            onClick={handleDelete}
-            className="bg-red-600 text-white hover:bg-red-700"
+            type="submit"
+            disabled={isSubmitting}
+            className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
           >
-            Delete
+            {isSubmitting ? "Saving..." : "Create"}
           </Button>
-        )}
-        {note && (
-          <Button
-            type="button"
-            onClick={onClose}
-            className="bg-gray-700 text-white hover:bg-gray-600"
-          >
-            Cancel
-          </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Tags Section */}
       <div className="space-y-2">
@@ -379,6 +349,26 @@ const getCategoryIdsWithDescendants = (
   return collectAllDescendantIds(targetCategory);
 };
 
+// Helper to darken a hex color by a percentage
+const darkenColor = (hex: string, percent: number): string => {
+  // Remove # if present
+  const cleanHex = hex.replace("#", "");
+
+  // Parse RGB values
+  const r = parseInt(cleanHex.substring(0, 2), 16);
+  const g = parseInt(cleanHex.substring(2, 4), 16);
+  const b = parseInt(cleanHex.substring(4, 6), 16);
+
+  // Darken each component
+  const darkenAmount = 1 - percent / 100;
+  const newR = Math.round(r * darkenAmount);
+  const newG = Math.round(g * darkenAmount);
+  const newB = Math.round(b * darkenAmount);
+
+  // Convert back to hex
+  return `#${newR.toString(16).padStart(2, "0")}${newG.toString(16).padStart(2, "0")}${newB.toString(16).padStart(2, "0")}`;
+};
+
 // Helper to build breadcrumb path from root to current folder/note
 const buildBreadcrumbPath = (
   folderId: string | null,
@@ -429,6 +419,7 @@ const buildBreadcrumbPath = (
 };
 
 export default function NotesPage() {
+  const { isMenuCollapsed } = useAdminLayout();
   const [notes, setNotes] = useState<NoteWithRelations[]>([]);
   const [tags, setTags] = useState<TagRecord[]>([]);
   const [folderTree, setFolderTree] = useState<CategoryWithChildren[]>([]);
@@ -533,17 +524,25 @@ export default function NotesPage() {
   };
 
   const handleDeleteFolder = async (folderId: string) => {
-    if (!confirm("Delete this folder? Subfolders will be moved up one level.")) return;
+    if (!confirm("Delete this folder and all its contents (subfolders, notes, and attachments)? This action cannot be undone.")) return;
 
     try {
-      const response = await fetch(`/api/notes/categories/${folderId}`, {
+      const response = await fetch(`/api/notes/categories/${folderId}?recursive=true`, {
         method: "DELETE",
       });
 
       if (response.ok) {
         await fetchFolderTree();
+        await fetchNotes();
         if (selectedFolderId === folderId) {
           setSelectedFolderId(null);
+        }
+        if (selectedNote) {
+          // Check if the selected note was in the deleted folder
+          const noteCategory = selectedNote.categories[0]?.categoryId;
+          if (noteCategory === folderId) {
+            setSelectedNote(null);
+          }
         }
       }
     } catch (error) {
@@ -551,10 +550,7 @@ export default function NotesPage() {
     }
   };
 
-  const handleRenameFolder = async (folderId: string) => {
-    const newName = prompt("Enter new folder name:");
-    if (!newName) return;
-
+  const handleRenameFolder = async (folderId: string, newName: string) => {
     try {
       const response = await fetch(`/api/notes/categories/${folderId}`, {
         method: "PATCH",
@@ -567,6 +563,102 @@ export default function NotesPage() {
       }
     } catch (error) {
       console.error("Failed to rename folder:", error);
+    }
+  };
+
+  const handleCreateNoteInFolder = (folderId: string) => {
+    setSelectedFolderId(folderId);
+    setIsCreating(true);
+    setSelectedNote(null);
+  };
+
+  const handleDuplicateNote = async (noteId: string) => {
+    try {
+      // First, fetch the note to duplicate
+      const response = await fetch(`/api/notes/${noteId}`, { cache: "no-store" });
+      if (!response.ok) return;
+
+      const note: NoteWithRelations = await response.json();
+
+      // Generate a new title with a number suffix
+      const baseTitle = note.title.replace(/\s*\(\d+\)$/, ""); // Remove existing number suffix
+      let newTitle = `${baseTitle} (1)`;
+
+      // Check existing notes to find the next available number
+      const existingNotes = notes.filter((n) =>
+        n.title.startsWith(baseTitle) && n.title !== note.title
+      );
+      if (existingNotes.length > 0) {
+        const numbers = existingNotes
+          .map((n) => {
+            const match = n.title.match(/\((\d+)\)$/);
+            return match ? parseInt(match[1], 10) : 0;
+          })
+          .filter((n) => n > 0);
+        const maxNumber = Math.max(0, ...numbers);
+        newTitle = `${baseTitle} (${maxNumber + 1})`;
+      }
+
+      // Create the duplicate note
+      const createResponse = await fetch("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: newTitle,
+          content: note.content,
+          color: note.color,
+          isPinned: note.isPinned,
+          isArchived: note.isArchived,
+          tagIds: note.tags.map((t) => t.tagId),
+          categoryIds: note.categories.map((c) => c.categoryId),
+        }),
+      });
+
+      if (createResponse.ok) {
+        await fetchNotes();
+        await fetchFolderTree();
+      }
+    } catch (error) {
+      console.error("Failed to duplicate note:", error);
+    }
+  };
+
+  const handleDeleteNoteFromTree = async (noteId: string) => {
+    if (!confirm("Are you sure you want to delete this note?")) return;
+
+    try {
+      const response = await fetch(`/api/notes/${noteId}`, { method: "DELETE" });
+      if (response.ok) {
+        await fetchNotes();
+        await fetchFolderTree();
+        if (selectedNote?.id === noteId) {
+          setSelectedNote(null);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to delete note:", error);
+    }
+  };
+
+  const handleRenameNote = async (noteId: string, newTitle: string) => {
+    try {
+      const response = await fetch(`/api/notes/${noteId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: newTitle }),
+      });
+
+      if (response.ok) {
+        await fetchNotes();
+        await fetchFolderTree();
+        // Update selected note if it's the one being renamed
+        if (selectedNote?.id === noteId) {
+          const updatedNote = await response.json();
+          setSelectedNote(updatedNote);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to rename note:", error);
     }
   };
 
@@ -654,9 +746,9 @@ export default function NotesPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-[calc(100vh-120px)]">
+      <div className={`grid grid-cols-1 gap-6 h-[calc(100vh-120px)] ${isMenuCollapsed ? "lg:grid-cols-3" : "lg:grid-cols-4"}`}>
         {/* Folder Tree Sidebar */}
-        <div className="hidden lg:block overflow-hidden rounded-lg border border-gray-800 bg-gray-950">
+        <div className="hidden lg:block lg:col-span-1 overflow-hidden rounded-lg border border-gray-800 bg-gray-950">
           <FolderTree
             folders={folderTree}
             selectedFolderId={selectedFolderId}
@@ -666,9 +758,13 @@ export default function NotesPage() {
               setIsEditing(false);
             }}
             onCreateFolder={handleCreateFolder}
+            onCreateNote={handleCreateNoteInFolder}
             onDeleteFolder={handleDeleteFolder}
             onRenameFolder={handleRenameFolder}
             onSelectNote={handleSelectNoteFromTree}
+            onDuplicateNote={handleDuplicateNote}
+            onDeleteNote={handleDeleteNoteFromTree}
+            onRenameNote={handleRenameNote}
             selectedNoteId={selectedNote?.id}
             onDropNote={handleMoveNoteToFolder}
             onDropFolder={handleMoveFolderToFolder}
@@ -676,27 +772,9 @@ export default function NotesPage() {
         </div>
 
         {/* Main Content Area */}
-        <div className="lg:col-span-4 rounded-lg bg-gray-950 p-6 shadow-lg overflow-hidden flex flex-col">
+        <div className={`rounded-lg bg-gray-950 p-6 shadow-lg overflow-hidden flex flex-col ${isMenuCollapsed ? "lg:col-span-2" : "lg:col-span-3"}`}>
           {selectedNote ? (
             <div className="flex h-full flex-col">
-              <div className="mb-4 flex items-center gap-4">
-                <Button
-                  onClick={() => setSelectedNote(null)}
-                  variant="outline"
-                  className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
-                >
-                  Back to List
-                </Button>
-                {!isEditing && (
-                  <Button
-                    onClick={() => setIsEditing(true)}
-                    className="bg-blue-600 text-white hover:bg-blue-700"
-                  >
-                    Edit
-                  </Button>
-                )}
-              </div>
-
               {/* Breadcrumb for selected note */}
               <div className="mb-4 flex items-center gap-2 text-sm text-gray-400">
                 {buildBreadcrumbPath(
@@ -726,6 +804,72 @@ export default function NotesPage() {
                 ))}
               </div>
 
+              <div className="mb-4 flex items-center gap-4">
+                <Button
+                  onClick={() => {
+                    if (isEditing) {
+                      setIsEditing(false);
+                    } else {
+                      setSelectedNote(null);
+                    }
+                  }}
+                  variant="outline"
+                  className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+                >
+                  Back
+                </Button>
+                {!isEditing ? (
+                  <Button
+                    onClick={() => setIsEditing(true)}
+                    className="bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    Edit
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      type="button"
+                      form="note-edit-form"
+                      onClick={() => {
+                        const form = document.getElementById("note-edit-form") as HTMLFormElement;
+                        form?.requestSubmit();
+                      }}
+                      className="bg-blue-600 text-white hover:bg-blue-700"
+                    >
+                      Update
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => setIsEditing(false)}
+                      variant="outline"
+                      className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={async () => {
+                        if (!confirm("Are you sure you want to delete this note?")) return;
+                        try {
+                          const response = await fetch(`/api/notes/${selectedNote.id}`, { method: "DELETE" });
+                          if (response.ok) {
+                            setSelectedNote(null);
+                            setIsEditing(false);
+                            await fetchNotes();
+                            await fetchFolderTree();
+                          }
+                        } catch (error) {
+                          console.error("Failed to delete note:", error);
+                        }
+                      }}
+                      className="bg-red-600 text-white hover:bg-red-700"
+                    >
+                      Delete
+                    </Button>
+                  </>
+                )}
+              </div>
+
               {isEditing ? (
                 <div className="flex-1 overflow-y-auto">
                   <NoteForm
@@ -733,7 +877,6 @@ export default function NotesPage() {
                     folderTree={folderTree}
                     defaultFolderId={selectedFolderId}
                     availableTags={tags}
-                    onClose={() => setIsEditing(false)}
                     onSuccess={handleUpdateSuccess}
                     onTagCreated={fetchTags}
                   />
@@ -964,6 +1107,34 @@ export default function NotesPage() {
                         <span>Created: {new Date(note.createdAt).toLocaleString()}</span>
                         <span>Modified: {new Date(note.updatedAt).toLocaleString()}</span>
                       </div>
+                      {/* Breadcrumbs */}
+                      <div
+                        className="mt-3 -mx-4 -mb-4 px-3 py-2 rounded-b-lg flex items-center gap-1 text-[10px] text-gray-700 overflow-x-auto"
+                        style={{ backgroundColor: darkenColor(note.color || "#ffffff", 20) }}
+                      >
+                        {buildBreadcrumbPath(
+                          note.categories[0]?.categoryId || null,
+                          null,
+                          folderTree
+                        ).map((crumb, index, array) => (
+                          <React.Fragment key={index}>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedFolderId(crumb.id);
+                                setSelectedNote(null);
+                                setIsEditing(false);
+                              }}
+                              className="hover:underline whitespace-nowrap"
+                            >
+                              {crumb.name}
+                            </button>
+                            {index < array.length - 1 && (
+                              <ChevronRight size={10} className="flex-shrink-0" />
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -984,7 +1155,6 @@ export default function NotesPage() {
                 folderTree={folderTree}
                 defaultFolderId={selectedFolderId}
                 availableTags={tags}
-                onClose={handleCloseCreateModal}
                 onSuccess={handleCreateSuccess}
                 onTagCreated={fetchTags}
               />

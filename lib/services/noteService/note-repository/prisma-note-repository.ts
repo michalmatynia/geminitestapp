@@ -199,11 +199,60 @@ export const prismaNoteRepository: NoteRepository = {
     }
   },
 
-  async deleteCategory(id: string): Promise<boolean> {
+  async deleteCategory(id: string, recursive?: boolean): Promise<boolean> {
     try {
-      await prisma.category.delete({ where: { id } });
+      if (recursive) {
+        // Recursively collect all descendant category IDs
+        const collectDescendantIds = async (categoryId: string): Promise<string[]> => {
+          const children = await prisma.category.findMany({
+            where: { parentId: categoryId },
+            select: { id: true },
+          });
+
+          const ids = [categoryId];
+          for (const child of children) {
+            const descendantIds = await collectDescendantIds(child.id);
+            ids.push(...descendantIds);
+          }
+          return ids;
+        };
+
+        const categoryIds = await collectDescendantIds(id);
+
+        // Delete all notes in these categories (and their junction records)
+        // First, get all note IDs in these categories
+        const notesInCategories = await prisma.noteCategory.findMany({
+          where: { categoryId: { in: categoryIds } },
+          select: { noteId: true },
+        });
+        const noteIds = Array.from(new Set(notesInCategories.map((nc) => nc.noteId)));
+
+        // Delete note-tag relations for these notes
+        await prisma.noteTag.deleteMany({
+          where: { noteId: { in: noteIds } },
+        });
+
+        // Delete note-category relations for these notes
+        await prisma.noteCategory.deleteMany({
+          where: { noteId: { in: noteIds } },
+        });
+
+        // Delete the notes themselves
+        await prisma.note.deleteMany({
+          where: { id: { in: noteIds } },
+        });
+
+        // Delete all categories (children first due to foreign key constraints)
+        // Since we're deleting from leaves up, reverse the array
+        for (const catId of categoryIds.reverse()) {
+          await prisma.category.delete({ where: { id: catId } });
+        }
+      } else {
+        await prisma.category.delete({ where: { id } });
+      }
       return true;
-    } catch {
+    } catch (error) {
+      console.error("[PrismaNoteRepository][deleteCategory] Error:", error);
       return false;
     }
   },

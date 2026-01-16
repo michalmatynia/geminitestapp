@@ -21,5 +21,5 @@ export type NoteRepository = {
   getCategoryTree(): Promise<CategoryWithChildren[]>;
   createCategory(data: CategoryCreateInput): Promise<CategoryRecord>;
   updateCategory(id: string, data: CategoryUpdateInput): Promise<CategoryRecord | null>;
-  deleteCategory(id: string): Promise<boolean>;
+  deleteCategory(id: string, recursive?: boolean): Promise<boolean>;
 };

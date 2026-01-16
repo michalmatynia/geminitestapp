@@ -436,30 +436,59 @@ export const mongoNoteRepository: NoteRepository = {
     return toCategoryResponse(result);
   },
 
-  async deleteCategory(id) {
+  async deleteCategory(id, recursive) {
     const db = await getMongoDb();
     const collection = db.collection<CategoryDocument>(categoryCollectionName);
+    const noteCollection = db.collection<NoteDocument>(noteCollectionName);
 
     // Get the category to find its parent
     const category = await collection.findOne({ $or: [{ id }, { _id: id }] });
     if (!category) return false;
 
-    // Move children to parent (or null if deleting root folder)
-    await collection.updateMany(
-      { parentId: id },
-      { $set: { parentId: category.parentId } }
-    );
+    if (recursive) {
+      // Recursively collect all descendant category IDs
+      const collectDescendantIds = async (categoryId: string): Promise<string[]> => {
+        const children = await collection
+          .find({ parentId: categoryId })
+          .toArray();
 
-    // Delete the category
-    const result = await collection.deleteOne({ $or: [{ id }, { _id: id }] });
+        const ids = [categoryId];
+        for (const child of children) {
+          const childId = child.id ?? child._id;
+          const descendantIds = await collectDescendantIds(childId);
+          ids.push(...descendantIds);
+        }
+        return ids;
+      };
 
-    // Remove category from all notes
-    const noteCollection = db.collection<NoteDocument>(noteCollectionName);
-    await noteCollection.updateMany(
-      { "categories.categoryId": id },
-      { $pull: { categories: { categoryId: id } } as any }
-    );
+      const categoryIds = await collectDescendantIds(id);
 
-    return result.deletedCount > 0;
+      // Delete all notes that belong to any of these categories
+      await noteCollection.deleteMany({
+        "categories.categoryId": { $in: categoryIds },
+      });
+
+      // Delete all categories (in reverse order to handle children first)
+      for (const catId of categoryIds.reverse()) {
+        await collection.deleteOne({ $or: [{ id: catId }, { _id: catId }] });
+      }
+    } else {
+      // Move children to parent (or null if deleting root folder)
+      await collection.updateMany(
+        { parentId: id },
+        { $set: { parentId: category.parentId } }
+      );
+
+      // Delete the category
+      await collection.deleteOne({ $or: [{ id }, { _id: id }] });
+
+      // Remove category from all notes
+      await noteCollection.updateMany(
+        { "categories.categoryId": id },
+        { $pull: { categories: { categoryId: id } } as any }
+      );
+    }
+
+    return true;
   },
 };

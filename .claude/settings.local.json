@@ -6,7 +6,11 @@
       "Bash(\"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/app/\\(admin\\)/admin/chatbot/page.tsx.tmp\")",
       "Bash(npm run lint)",
       "Bash(curl:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(cd:*)",
+      "Bash(cd /Users/michalmatynia/Desktop/NPM/2026/Gemini\\\\ new\\\\ Pull/geminitestapp && npm run build:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)"
     ]
   }
 }

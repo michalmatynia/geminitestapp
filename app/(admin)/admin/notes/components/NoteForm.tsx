@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import type { CategoryWithChildren, NoteWithRelations, TagRecord } from "@/types/notes";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { renderMarkdownToHtml } from "../utils";
 
 export function NoteForm({
   note,
@@ -66,9 +67,68 @@ export function NoteForm({
   const tagInputRef = useRef<HTMLInputElement>(null);
   const [textColor, setTextColor] = useState("#ffffff");
   const [fontFamily, setFontFamily] = useState("inherit");
+  const [showPreview, setShowPreview] = useState(false);
+  const [editorWidth, setEditorWidth] = useState<number | null>(null);
+  const [isDraggingSplitter, setIsDraggingSplitter] = useState(false);
+  const editorSplitRef = useRef<HTMLDivElement>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!showPreview) return;
+    const container = editorSplitRef.current;
+    if (!container) return;
+    setEditorWidth((prev) => prev ?? Math.round(container.getBoundingClientRect().width / 2));
+  }, [showPreview]);
+
+  useEffect(() => {
+    if (!isDraggingSplitter) return;
+    const handlePointerMove = (event: PointerEvent) => {
+      const container = editorSplitRef.current;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const minWidth = 260;
+      const maxWidth = rect.width - 260;
+      const nextWidth = Math.min(maxWidth, Math.max(minWidth, event.clientX - rect.left));
+      setEditorWidth(nextWidth);
+    };
+    const handlePointerUp = () => {
+      setIsDraggingSplitter(false);
+    };
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [isDraggingSplitter]);
+
+  const getReadableTextColor = (hex: string) => {
+    const normalized = hex.replace("#", "");
+    if (normalized.length !== 6) return "#f8fafc";
+    const num = parseInt(normalized, 16);
+    const r = (num >> 16) & 0xff;
+    const g = (num >> 8) & 0xff;
+    const b = num & 0xff;
+    const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    return luminance > 0.7 ? "#0f172a" : "#f8fafc";
+  };
+
+  const contentBackground = color || "#ffffff";
+  const contentTextColor = getReadableTextColor(contentBackground);
+  const previewTypographyStyle: React.CSSProperties = {
+    color: contentTextColor,
+    ["--tw-prose-body" as never]: contentTextColor,
+    ["--tw-prose-headings" as never]: contentTextColor,
+    ["--tw-prose-lead" as never]: contentTextColor,
+    ["--tw-prose-bold" as never]: contentTextColor,
+    ["--tw-prose-counters" as never]: contentTextColor,
+    ["--tw-prose-bullets" as never]: contentTextColor,
+    ["--tw-prose-quotes" as never]: contentTextColor,
+    ["--tw-prose-quote-borders" as never]: "rgba(148, 163, 184, 0.35)",
+    ["--tw-prose-hr" as never]: "rgba(148, 163, 184, 0.35)",
+  };
 
   const flattenFolderTree = (
     folders: CategoryWithChildren[],
@@ -99,6 +159,41 @@ export function NoteForm({
       const cursor = start + prefix.length + selected.length + suffix.length;
       textarea.focus();
       textarea.setSelectionRange(cursor, cursor);
+    });
+  };
+
+  const insertAtCursor = (value: string) => {
+    const textarea = contentRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const nextValue = content.slice(0, start) + value + content.slice(end);
+    setContent(nextValue);
+    requestAnimationFrame(() => {
+      const cursor = start + value.length;
+      textarea.focus();
+      textarea.setSelectionRange(cursor, cursor);
+    });
+  };
+
+  const applyLinePrefix = (prefix: string) => {
+    const textarea = contentRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const blockStart = content.lastIndexOf("\n", start - 1) + 1;
+    const blockEndIndex = content.indexOf("\n", end);
+    const blockEnd = blockEndIndex === -1 ? content.length : blockEndIndex;
+    const block = content.slice(blockStart, blockEnd);
+    const updated = block
+      .split(/\r?\n/)
+      .map((line) => (line.trim().length ? `${prefix}${line}` : line))
+      .join("\n");
+    const nextValue = content.slice(0, blockStart) + updated + content.slice(blockEnd);
+    setContent(nextValue);
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(blockStart, blockStart + updated.length);
     });
   };
 
@@ -152,6 +247,27 @@ export function NoteForm({
     const updated = block
       .split(/\r?\n/)
       .map((line) => (line.trim().startsWith("- ") ? line : `- ${line}`))
+      .join("\n");
+    const nextValue = content.slice(0, blockStart) + updated + content.slice(blockEnd);
+    setContent(nextValue);
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(blockStart, blockStart + updated.length);
+    });
+  };
+
+  const applyChecklist = () => {
+    const textarea = contentRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const blockStart = content.lastIndexOf("\n", start - 1) + 1;
+    const blockEndIndex = content.indexOf("\n", end);
+    const blockEnd = blockEndIndex === -1 ? content.length : blockEndIndex;
+    const block = content.slice(blockStart, blockEnd);
+    const updated = block
+      .split(/\r?\n/)
+      .map((line) => (line.trim().startsWith("- [") ? line : `- [ ] ${line}`))
       .join("\n");
     const nextValue = content.slice(0, blockStart) + updated + content.slice(blockEnd);
     setContent(nextValue);
@@ -437,11 +553,95 @@ export function NoteForm({
           </button>
           <button
             type="button"
+            onClick={() => applyWrap("`", "`", "code")}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Inline code"
+          >
+            Code
+          </button>
+          <button
+            type="button"
             onClick={applyBulletList}
             className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
             title="Bullet list"
           >
             Bullet
+          </button>
+          <button
+            type="button"
+            onClick={applyChecklist}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Checklist"
+          >
+            Checklist
+          </button>
+          <button
+            type="button"
+            onClick={() => applyLinePrefix("# ")}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Heading"
+          >
+            H1
+          </button>
+          <button
+            type="button"
+            onClick={() => applyLinePrefix("## ")}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Heading 2"
+          >
+            H2
+          </button>
+          <button
+            type="button"
+            onClick={() => applyLinePrefix("### ")}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Heading 3"
+          >
+            H3
+          </button>
+          <button
+            type="button"
+            onClick={() => applyLinePrefix("> ")}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Blockquote"
+          >
+            Quote
+          </button>
+          <button
+            type="button"
+            onClick={() => insertAtCursor("\n---\n")}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Horizontal rule"
+          >
+            HR
+          </button>
+          <button
+            type="button"
+            onClick={() => insertAtCursor("\n```text\ncode\n```\n")}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Code block"
+          >
+            Code Block
+          </button>
+          <button
+            type="button"
+            onClick={() => insertAtCursor("[link text](https://example.com)")}
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Link"
+          >
+            Link
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              insertAtCursor(
+                "\n| Header | Header |\n| --- | --- |\n| Cell | Cell |\n"
+              )
+            }
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Table"
+          >
+            Table
           </button>
           <div className="ml-2 flex items-center gap-2 border-l border-gray-700 pl-2">
             <label className="text-xs text-gray-400">Font</label>
@@ -473,16 +673,65 @@ export function NoteForm({
           >
             Apply
           </button>
+          <button
+            type="button"
+            onClick={() => setShowPreview((prev) => !prev)}
+            className="rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Toggle preview"
+          >
+            {showPreview ? "Hide Preview" : "Show Preview"}
+          </button>
         </div>
-        <textarea
-          ref={contentRef}
-          placeholder="Enter note content"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={12}
-          className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white"
-          required
-        />
+        <div
+          ref={editorSplitRef}
+          className={`flex ${showPreview ? "gap-0" : ""}`}
+        >
+          <div
+            className={showPreview ? "flex-shrink-0" : "flex-1"}
+            style={showPreview && editorWidth ? { width: editorWidth } : undefined}
+          >
+            <textarea
+              ref={contentRef}
+              placeholder="Enter note content"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={12}
+              className="w-full rounded-lg border border-gray-700 px-4 py-2"
+              style={{ backgroundColor: contentBackground, color: contentTextColor }}
+              required
+            />
+          </div>
+          {showPreview && (
+            <>
+              <div
+                className="mx-3 flex w-3 cursor-col-resize items-stretch"
+                onPointerDown={(event) => {
+                  event.preventDefault();
+                  setIsDraggingSplitter(true);
+                }}
+              >
+                <div className="relative w-full rounded bg-gray-800/80 ring-1 ring-gray-600/70 hover:bg-gray-700">
+                  <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                    <span className="h-6 w-px bg-gray-500/80" />
+                  </span>
+                </div>
+              </div>
+              <div
+                className="flex-1 rounded-lg border border-gray-700 px-4 py-3"
+                style={{ backgroundColor: contentBackground, color: contentTextColor }}
+              >
+                <div className="mb-2 text-xs uppercase tracking-wide text-gray-400">
+                  Preview
+                </div>
+                <div
+                  className="prose max-w-none"
+                  style={previewTypographyStyle}
+                  dangerouslySetInnerHTML={{ __html: renderMarkdownToHtml(content) }}
+                />
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="space-y-2">

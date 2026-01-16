@@ -4,9 +4,15 @@ npx tsc
 npx eslint
 add proper debugging on visual studio code
 
-NOTEBOOKS
 
-note background in the preview should be the same color as the selected note background
+
+I want a folder tree undo button (for dragging and dropping files and folders, renaming events and note deletes.)
+
+The folder tree state (which folders are collapse or not, should be in note settings, I should also have the option to uncollapse everythihng under the currently selected folder)
+
+I want markd down elements to be slightly differnet color, Maybe introduce that in theming
+
+I would like my note taking app to handle image files as well. 
 
 ALL NOTES | FAVOURITES
 
@@ -20,7 +26,6 @@ I can't preview MongoDB Dumps
 
 # Note Taking App
 
-Czcionki i Bold Italics, auto formatting options
 
 ## Theming
 
@@ -50,13 +55,13 @@ Prompted search, I can search by means of
 
 ---
 
-The folder tree state (which folders are collapse or not, should be in note settings, I should also have the option to uncollapse everythihng under the currently selected folder)
+
 
 Note history
 
 At some point there should be note import and also the notes should be downloadable as markdown
 
-
+WYSIWYG as an option....maaaaybe
 ---
 
 

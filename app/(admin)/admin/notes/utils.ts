@@ -114,26 +114,159 @@ const restoreSpans = (value: string, tokens: string[]) => {
 const renderInlineMarkdown = (value: string) => {
   const { withTokens, tokens } = preserveSpans(value);
   const escaped = escapeHtml(withTokens);
-  const withStrong = escaped.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  const withCode = escaped.replace(
+    /`([^`]+)`/g,
+    '<code style="background-color: rgba(15, 23, 42, 0.12); padding: 0.1rem 0.25rem; border-radius: 0.25rem; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \\"Liberation Mono\\", \\"Courier New\\", monospace; font-size: 0.85em;">$1</code>'
+  );
+  const withLinks = withCode.replace(
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    '<a href="$2" class="underline text-blue-300 hover:text-blue-200" target="_blank" rel="noreferrer">$1</a>'
+  );
+  const withStrong = withLinks.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   const withEm = withStrong.replace(/\*(.+?)\*/g, "<em>$1</em>");
   return restoreSpans(withEm, tokens);
+};
+
+const highlightCode = (value: string) => {
+  let escaped = escapeHtml(value);
+  escaped = escaped.replace(
+    /\b(\d+(\.\d+)?)\b/g,
+    '<span style="color: #fbbf24;">$1</span>'
+  );
+  escaped = escaped.replace(
+    /\b(const|let|var|function|return|if|else|for|while|switch|case|break|continue|try|catch|finally|class|new|import|from|export|default|async|await|type|interface|extends)\b/g,
+    '<span style="color: #38bdf8;">$1</span>'
+  );
+  return escaped;
 };
 
 export const renderMarkdownToHtml = (value: string): string => {
   const lines = value.split(/\r?\n/);
   let html = "";
   let inList = false;
+  let inCodeBlock = false;
+  let inTable = false;
+  let tableHeaderCells: string[] = [];
+  let tableRows: string[][] = [];
 
-  lines.forEach((line) => {
+  const flushTable = () => {
+    if (!inTable) return;
+    const header = tableHeaderCells
+      .map((cell) => `<th>${renderInlineMarkdown(cell.trim())}</th>`)
+      .join("");
+    const body = tableRows
+      .map(
+        (row) =>
+          `<tr>${row
+            .map((cell) => `<td>${renderInlineMarkdown(cell.trim())}</td>`)
+            .join("")}</tr>`
+      )
+      .join("");
+    html += `<table><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table>`;
+    inTable = false;
+    tableHeaderCells = [];
+    tableRows = [];
+  };
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (line.trim().startsWith("```")) {
+      flushTable();
+      if (inList) {
+        html += "</ul>";
+        inList = false;
+      }
+      inCodeBlock = !inCodeBlock;
+      if (inCodeBlock) {
+        html += '<pre style="background-color: #0f172a; color: #e2e8f0; padding: 0.75rem; border-radius: 0.5rem; overflow-x: auto;"><code style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \\"Liberation Mono\\", \\"Courier New\\", monospace; font-size: 0.85em;">';
+      } else {
+        html += "</code></pre>";
+      }
+      continue;
+    }
+
+    if (inCodeBlock) {
+      html += `${highlightCode(line)}\n`;
+      continue;
+    }
+
     const trimmed = line.trim();
+    const headingMatch = /^(#{1,3})\s+(.+)$/.exec(trimmed);
+    if (headingMatch) {
+      flushTable();
+      if (inList) {
+        html += "</ul>";
+        inList = false;
+      }
+      const level = headingMatch[1].length;
+      html += `<h${level}>${renderInlineMarkdown(headingMatch[2])}</h${level}>`;
+      continue;
+    }
+
+    if (/^---+$/.test(trimmed)) {
+      flushTable();
+      if (inList) {
+        html += "</ul>";
+        inList = false;
+      }
+      html += "<hr />";
+      continue;
+    }
+
+    if (trimmed.startsWith(">")) {
+      flushTable();
+      if (inList) {
+        html += "</ul>";
+        inList = false;
+      }
+      const quoteText = trimmed.replace(/^>\s?/, "");
+      html += `<blockquote>${renderInlineMarkdown(quoteText)}</blockquote>`;
+      continue;
+    }
+
+    if (/\|/.test(trimmed)) {
+      const nextLine = lines[index + 1] ?? "";
+      const isSeparatorLine = /^\s*\|?\s*-[-\s|]*\|?\s*$/.test(trimmed);
+      const isSeparatorNext = /^\s*\|?\s*-[-\s|]*\|?\s*$/.test(nextLine.trim());
+      if (inTable && isSeparatorLine) {
+        continue;
+      }
+      if (!inTable && isSeparatorNext) {
+        flushTable();
+        if (inList) {
+          html += "</ul>";
+          inList = false;
+        }
+        inTable = true;
+        tableHeaderCells = trimmed
+          .split("|")
+          .filter((cell) => cell.trim().length > 0);
+        continue;
+      }
+      if (inTable) {
+        const cells = trimmed
+          .split("|")
+          .filter((cell) => cell.trim().length > 0);
+        tableRows.push(cells);
+        continue;
+      }
+    }
+
     const listMatch = /^[-*]\s+(.+)$/.exec(trimmed);
     if (listMatch) {
+      flushTable();
       if (!inList) {
         html += "<ul>";
         inList = true;
       }
-      html += `<li>${renderInlineMarkdown(listMatch[1])}</li>`;
-      return;
+      const taskMatch = /^\[(\s|x|X)\]\s+(.+)$/.exec(listMatch[1]);
+      if (taskMatch) {
+        const checked = taskMatch[1].toLowerCase() === "x";
+        html += `<li><input type="checkbox" disabled ${checked ? "checked" : ""} /> ${renderInlineMarkdown(taskMatch[2])}</li>`;
+      } else {
+        html += `<li>${renderInlineMarkdown(listMatch[1])}</li>`;
+      }
+      continue;
     }
 
     if (inList) {
@@ -141,16 +274,26 @@ export const renderMarkdownToHtml = (value: string): string => {
       inList = false;
     }
 
+    if (inTable) {
+      flushTable();
+    }
+
     if (!trimmed) {
       html += "<br />";
-      return;
+      continue;
     }
 
     html += `<p>${renderInlineMarkdown(line)}</p>`;
-  });
+  }
 
   if (inList) {
     html += "</ul>";
+  }
+  if (inTable) {
+    flushTable();
+  }
+  if (inCodeBlock) {
+    html += "</code></pre>";
   }
 
   return html;

@@ -4,7 +4,7 @@ import React from "react";
 import { ChevronRight, Pin } from "lucide-react";
 import type { CategoryWithChildren, NoteWithRelations } from "@/types/notes";
 import { BreadcrumbScroller } from "./BreadcrumbScroller";
-import { darkenColor } from "../utils";
+import { darkenColor, renderMarkdownToHtml } from "../utils";
 
 export function NoteCard({
   note,
@@ -12,6 +12,7 @@ export function NoteCard({
   showTimestamps,
   showBreadcrumbs,
   showRelatedNotes,
+  enableDrag = true,
   onSelectNote,
   onSelectFolder,
   onDragStart,
@@ -23,6 +24,7 @@ export function NoteCard({
   showTimestamps: boolean;
   showBreadcrumbs: boolean;
   showRelatedNotes: boolean;
+  enableDrag?: boolean;
   onSelectNote: (note: NoteWithRelations) => void;
   onSelectFolder: (folderId: string | null) => void;
   onDragStart: (noteId: string) => void;
@@ -36,29 +38,44 @@ export function NoteCard({
   return (
     <div
       key={note.id}
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.setData("noteId", note.id);
-        e.dataTransfer.setData("text/plain", note.id);
-        e.dataTransfer.effectAllowed = "linkMove";
-        const target = e.currentTarget as HTMLElement;
-        target.style.opacity = "0.5";
-        onDragStart(note.id);
-      }}
-      onDragEnd={(e) => {
-        const target = e.currentTarget as HTMLElement;
-        target.style.opacity = "1";
-        onDragEnd();
-      }}
+      draggable={enableDrag}
+      onDragStart={
+        enableDrag
+          ? (e) => {
+              e.dataTransfer.setData("noteId", note.id);
+              e.dataTransfer.setData("text/plain", note.id);
+              e.dataTransfer.effectAllowed = "linkMove";
+              const target = e.currentTarget as HTMLElement;
+              target.style.opacity = "0.5";
+              onDragStart(note.id);
+            }
+          : undefined
+      }
+      onDragEnd={
+        enableDrag
+          ? (e) => {
+              const target = e.currentTarget as HTMLElement;
+              target.style.opacity = "1";
+              onDragEnd();
+            }
+          : undefined
+      }
       onClick={() => onSelectNote(note)}
       style={{ backgroundColor: note.color || "#ffffff" }}
-      className="cursor-grab active:cursor-grabbing rounded-lg border border-gray-700 p-4 shadow-sm transition hover:shadow-md"
+      className={`rounded-lg border border-gray-700 p-4 shadow-sm transition ${
+        enableDrag
+          ? "cursor-grab active:cursor-grabbing hover:shadow-md"
+          : "cursor-pointer hover:shadow-md hover:brightness-90"
+      }`}
     >
       <div className="mb-2 flex items-start justify-between">
         <h3 className="font-semibold text-gray-900">{note.title}</h3>
         {note.isPinned && <Pin size={16} className="text-blue-600" />}
       </div>
-      <p className="mb-3 line-clamp-3 text-sm text-gray-700">{note.content}</p>
+      <div
+        className="mb-3 max-h-36 overflow-hidden text-sm text-gray-700 prose prose-sm"
+        dangerouslySetInnerHTML={{ __html: renderMarkdownToHtml(note.content) }}
+      />
       <div className="flex flex-wrap gap-2">
         {note.tags.map((nt) => (
           <span

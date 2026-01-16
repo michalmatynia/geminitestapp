@@ -37,6 +37,7 @@ export default function NotesPage() {
   const [highlightTagId, setHighlightTagId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(24);
+  const [isFolderTreeCollapsed, setIsFolderTreeCollapsed] = useState(false);
 
   // Use settings from context (including selectedFolderId)
   const {
@@ -251,6 +252,18 @@ export default function NotesPage() {
     setFolderTree([]);
   }, [selectedNotebookId]);
 
+  const getReadableTextColor = (hexColor: string) => {
+    const normalized = hexColor.replace("#", "");
+    if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
+      return "#f8fafc";
+    }
+    const r = parseInt(normalized.slice(0, 2), 16);
+    const g = parseInt(normalized.slice(2, 4), 16);
+    const b = parseInt(normalized.slice(4, 6), 16);
+    const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    return luminance > 0.7 ? "#0f172a" : "#f8fafc";
+  };
+
   const previewStyle = React.useMemo(() => {
     const fallback = "#1f2937";
     const color = selectedNote?.color || fallback;
@@ -269,6 +282,28 @@ export default function NotesPage() {
       boxShadow: luminance > 0.78 ? "0 0 0 1px rgba(15, 23, 42, 0.12)" : undefined,
     };
   }, [selectedNote?.color]);
+
+  const previewTextColor = React.useMemo(() => {
+    const fallback = "#1f2937";
+    const color = selectedNote?.color || fallback;
+    return getReadableTextColor(color);
+  }, [selectedNote?.color]);
+
+  const previewTypographyStyle = React.useMemo(
+    () => ({
+      color: previewTextColor,
+      ["--tw-prose-body" as never]: previewTextColor,
+      ["--tw-prose-headings" as never]: previewTextColor,
+      ["--tw-prose-lead" as never]: previewTextColor,
+      ["--tw-prose-bold" as never]: previewTextColor,
+      ["--tw-prose-counters" as never]: previewTextColor,
+      ["--tw-prose-bullets" as never]: previewTextColor,
+      ["--tw-prose-quotes" as never]: previewTextColor,
+      ["--tw-prose-quote-borders" as never]: "rgba(148, 163, 184, 0.35)",
+      ["--tw-prose-hr" as never]: "rgba(148, 163, 184, 0.35)",
+    }),
+    [previewTextColor]
+  );
 
   const handleCreateFolder = async (parentId?: string | null) => {
     const folderName = prompt("Enter folder name:");
@@ -680,37 +715,48 @@ export default function NotesPage() {
   };
 
   return (
-    <div className="container mx-auto py-10">
-      <div className={`grid grid-cols-1 gap-6 h-[calc(100vh-120px)] ${isMenuCollapsed ? "lg:grid-cols-3" : "lg:grid-cols-4"}`}>
+    <div className="w-full">
+      <div
+        className={`grid h-[calc(100vh-120px)] w-full grid-cols-1 gap-6 ${
+          isFolderTreeCollapsed
+            ? ""
+            : isMenuCollapsed
+              ? "lg:grid-cols-[360px_minmax(0,1fr)]"
+              : "lg:grid-cols-[420px_minmax(0,1fr)]"
+        }`}
+      >
         {/* Folder Tree Sidebar */}
-        <div className="hidden lg:block lg:col-span-1 overflow-hidden rounded-lg border border-gray-800 bg-gray-950">
-          <FolderTree
-            folders={folderTree}
-            selectedFolderId={selectedFolderId}
-            onSelectFolder={(id) => {
-              setSelectedFolderId(id);
-              setSelectedNote(null);
-              setIsEditing(false);
-            }}
-            onCreateFolder={handleCreateFolder}
-            onCreateNote={handleCreateNoteInFolder}
-            onDeleteFolder={handleDeleteFolder}
-            onRenameFolder={handleRenameFolder}
-            onSelectNote={handleSelectNoteFromTree}
-            onDuplicateNote={handleDuplicateNote}
-            onDeleteNote={handleDeleteNoteFromTree}
-            onRenameNote={handleRenameNote}
-            onRelateNotes={handleRelateNotes}
-            selectedNoteId={selectedNote?.id}
-            onDropNote={handleMoveNoteToFolder}
-            onDropFolder={handleMoveFolderToFolder}
-            draggedNoteId={draggedNoteId}
-            setDraggedNoteId={setDraggedNoteId}
-          />
-        </div>
+        {!isFolderTreeCollapsed && (
+          <div className="hidden overflow-hidden rounded-lg border border-gray-800 bg-gray-950 lg:block">
+            <FolderTree
+              folders={folderTree}
+              selectedFolderId={selectedFolderId}
+              onSelectFolder={(id) => {
+                setSelectedFolderId(id);
+                setSelectedNote(null);
+                setIsEditing(false);
+              }}
+              onCreateFolder={handleCreateFolder}
+              onCreateNote={handleCreateNoteInFolder}
+              onDeleteFolder={handleDeleteFolder}
+              onRenameFolder={handleRenameFolder}
+              onSelectNote={handleSelectNoteFromTree}
+              onDuplicateNote={handleDuplicateNote}
+              onDeleteNote={handleDeleteNoteFromTree}
+              onRenameNote={handleRenameNote}
+              onRelateNotes={handleRelateNotes}
+              selectedNoteId={selectedNote?.id}
+              onDropNote={handleMoveNoteToFolder}
+              onDropFolder={handleMoveFolderToFolder}
+              draggedNoteId={draggedNoteId}
+              setDraggedNoteId={setDraggedNoteId}
+              onToggleCollapse={() => setIsFolderTreeCollapsed(true)}
+            />
+          </div>
+        )}
 
         {/* Main Content Area */}
-        <div className={`rounded-lg bg-gray-950 p-6 shadow-lg overflow-hidden flex flex-col ${isMenuCollapsed ? "lg:col-span-2" : "lg:col-span-3"}`}>
+        <div className="flex min-h-0 flex-col overflow-hidden rounded-lg bg-gray-950 p-6 shadow-lg">
           {selectedNote ? (
             <div className="flex h-full flex-col">
               {/* Breadcrumb for selected note */}
@@ -743,6 +789,15 @@ export default function NotesPage() {
               </div>
 
               <div className="mb-4 flex items-center gap-4">
+                {isFolderTreeCollapsed && (
+                  <Button
+                    onClick={() => setIsFolderTreeCollapsed(false)}
+                    variant="outline"
+                    className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+                  >
+                    Show Folders
+                  </Button>
+                )}
                 <Button
                   onClick={() => {
                     if (isEditing) {
@@ -830,9 +885,15 @@ export default function NotesPage() {
                   onDoubleClick={() => setIsEditing(true)}
                   style={previewStyle}
                 >
-                  <h1 className="mb-4 text-3xl font-bold text-white">{selectedNote.title}</h1>
+                  <h1
+                    className="mb-4 text-3xl font-bold"
+                    style={{ color: previewTextColor }}
+                  >
+                    {selectedNote.title}
+                  </h1>
                   <div
-                    className="prose max-w-none text-gray-300"
+                    className="prose max-w-none"
+                    style={previewTypographyStyle}
                     dangerouslySetInnerHTML={{
                       __html: renderMarkdownToHtml(selectedNote.content),
                     }}
@@ -912,6 +973,15 @@ export default function NotesPage() {
           ) : (
             <>
               <div className="mb-4 flex items-center gap-3">
+                {isFolderTreeCollapsed && (
+                  <Button
+                    onClick={() => setIsFolderTreeCollapsed(false)}
+                    variant="outline"
+                    className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+                  >
+                    Show Folders
+                  </Button>
+                )}
                 <Button
                   onClick={handleOpenCreateModal}
                   className="size-11 rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90"
@@ -1007,86 +1077,89 @@ export default function NotesPage() {
                 </Button>
               </div>
 
-              {/* Breadcrumb */}
-              {selectedFolderId && (
-                <div className="mb-6 flex items-center gap-2 text-sm text-gray-400">
-                  {buildBreadcrumbPath(selectedFolderId, null, folderTree).map((crumb, index, array) => (
-                    <React.Fragment key={index}>
-                      <button
-                        onClick={() => {
-                          setSelectedFolderId(crumb.id);
+              <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pr-1">
+                {/* Breadcrumb */}
+                {selectedFolderId && (
+                  <div className="mb-6 flex items-center gap-2 text-sm text-gray-400">
+                    {buildBreadcrumbPath(selectedFolderId, null, folderTree).map((crumb, index, array) => (
+                      <React.Fragment key={index}>
+                        <button
+                          onClick={() => {
+                            setSelectedFolderId(crumb.id);
+                            setSelectedNote(null);
+                            setIsEditing(false);
+                          }}
+                          className="hover:text-blue-400 transition"
+                        >
+                          {crumb.name}
+                        </button>
+                        {index < array.length - 1 && (
+                          <ChevronRight size={16} className="text-gray-600" />
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                )}
+
+                {/* Notes Grid */}
+                {loading ? (
+                  <div className="text-center text-gray-400">Loading...</div>
+                ) : sortedNotes.length === 0 ? (
+                  <div className="rounded-lg border border-dashed border-gray-700 p-12 text-center text-gray-400">
+                    No notes found. Create your first note!
+                  </div>
+                ) : (
+                  <div className={noteLayoutClassName}>
+                    {pagedNotes.map((note) => (
+                      <NoteCard
+                        key={note.id}
+                        note={note}
+                        folderTree={folderTree}
+                        showTimestamps={showTimestamps}
+                        showBreadcrumbs={showBreadcrumbs}
+                        showRelatedNotes={showRelatedNotes}
+                        enableDrag={!isFolderTreeCollapsed}
+                        onSelectNote={handleSelectNote}
+                        onSelectFolder={(folderId) => {
+                          setSelectedFolderId(folderId);
                           setSelectedNote(null);
                           setIsEditing(false);
                         }}
-                        className="hover:text-blue-400 transition"
-                      >
-                        {crumb.name}
-                      </button>
-                      {index < array.length - 1 && (
-                        <ChevronRight size={16} className="text-gray-600" />
-                      )}
-                    </React.Fragment>
-                  ))}
-                </div>
-              )}
-
-              {/* Notes Grid */}
-              {loading ? (
-                <div className="text-center text-gray-400">Loading...</div>
-              ) : sortedNotes.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-gray-700 p-12 text-center text-gray-400">
-                  No notes found. Create your first note!
-                </div>
-              ) : (
-                <div className={noteLayoutClassName}>
-                  {pagedNotes.map((note) => (
-                    <NoteCard
-                      key={note.id}
-                      note={note}
-                      folderTree={folderTree}
-                      showTimestamps={showTimestamps}
-                      showBreadcrumbs={showBreadcrumbs}
-                      showRelatedNotes={showRelatedNotes}
-                      onSelectNote={handleSelectNote}
-                      onSelectFolder={(folderId) => {
-                        setSelectedFolderId(folderId);
-                        setSelectedNote(null);
-                        setIsEditing(false);
-                      }}
-                      onDragStart={(noteId) => {
-                        setDraggedNoteId(noteId);
-                      }}
-                      onDragEnd={() => {
-                        setDraggedNoteId(null);
-                      }}
-                      buildBreadcrumbPath={buildBreadcrumbPath}
-                    />
-                  ))}
-                </div>
-              )}
-              {sortedNotes.length > pageSize && (
-                <div className="mt-6 flex items-center justify-center gap-3 text-sm text-gray-300">
-                  <button
-                    type="button"
-                    onClick={() => setPage(Math.max(1, page - 1))}
-                    disabled={page <= 1}
-                    className="rounded border border-gray-700 px-3 py-1.5 text-gray-300 hover:bg-gray-800 disabled:opacity-50"
-                  >
-                    Previous
-                  </button>
-                  <span>
-                    Page {page} of {totalPages}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setPage(Math.min(totalPages, page + 1))}
-                    disabled={page >= totalPages}
-                    className="rounded border border-gray-700 px-3 py-1.5 text-gray-300 hover:bg-gray-800 disabled:opacity-50"
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
+                        onDragStart={(noteId) => {
+                          setDraggedNoteId(noteId);
+                        }}
+                        onDragEnd={() => {
+                          setDraggedNoteId(null);
+                        }}
+                        buildBreadcrumbPath={buildBreadcrumbPath}
+                      />
+                    ))}
+                  </div>
+                )}
+                {sortedNotes.length > pageSize && (
+                  <div className="mt-6 flex items-center justify-center gap-3 text-sm text-gray-300">
+                    <button
+                      type="button"
+                      onClick={() => setPage(Math.max(1, page - 1))}
+                      disabled={page <= 1}
+                      className="rounded border border-gray-700 px-3 py-1.5 text-gray-300 hover:bg-gray-800 disabled:opacity-50"
+                    >
+                      Previous
+                    </button>
+                    <span>
+                      Page {page} of {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setPage(Math.min(totalPages, page + 1))}
+                      disabled={page >= totalPages}
+                      className="rounded border border-gray-700 px-3 py-1.5 text-gray-300 hover:bg-gray-800 disabled:opacity-50"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>

@@ -19,6 +19,7 @@ export interface FolderTreeProps {
   onDropFolder: (folderId: string, targetParentId: string | null) => void;
   draggedNoteId: string | null;
   setDraggedNoteId: (noteId: string | null) => void;
+  onToggleCollapse?: () => void;
 }
 
 export interface FolderNodeProps {

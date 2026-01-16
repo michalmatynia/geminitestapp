@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Folder, FolderOpen, ChevronRight, ChevronDown, Plus, Trash2, Edit2, FileText, FilePlus, FolderPlus, Copy } from "lucide-react";
+import { Folder, FolderOpen, ChevronRight, ChevronDown, Plus, Trash2, Edit2, FileText, FilePlus, FolderPlus, Copy, ChevronLeft } from "lucide-react";
 import type { CategoryWithChildren } from "@/types/notes";
 import type { FolderTreeProps, FolderNodeProps, NoteItemProps } from "@/types/notes-ui";
 import { Button } from "@/components/ui/button";
@@ -548,6 +548,7 @@ export function FolderTree({
   onDropFolder,
   draggedNoteId,
   setDraggedNoteId,
+  onToggleCollapse,
 }: FolderTreeProps) {
   const { toast } = useToast();
   const [isAllNotesDragOver, setIsAllNotesDragOver] = useState(false);
@@ -605,13 +606,26 @@ export function FolderTree({
       <div className="p-4 border-b border-gray-800">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-white">Folders</h2>
-          <Button
-            onClick={() => onCreateFolder(null)}
-            size="sm"
-            className="h-7 w-7 p-0 bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="size-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => onCreateFolder(null)}
+              size="sm"
+              className="h-7 w-7 p-0 bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="size-4" />
+            </Button>
+            {onToggleCollapse && (
+              <Button
+                onClick={onToggleCollapse}
+                size="sm"
+                variant="outline"
+                className="h-7 w-7 p-0 border-gray-700 text-gray-300 hover:bg-gray-800"
+                aria-label="Collapse folder tree"
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+            )}
+          </div>
         </div>
         <button
           onClick={() => onSelectFolder(null)}

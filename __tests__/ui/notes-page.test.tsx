@@ -11,13 +11,14 @@ import { NoteSettingsProvider } from "@/lib/context/NoteSettingsContext";
 import { ToastProvider } from "@/components/ui/toast";
 import type { CategoryRecord, NoteWithRelations, TagRecord } from "@/types/notes";
 
-const now = new Date().toISOString();
+const now = new Date();
 
 const baseTags: TagRecord[] = [
   {
     id: "tag-1",
     name: "Work",
     color: "#3b82f6",
+    notebookId: null,
     createdAt: now,
     updatedAt: now,
   },
@@ -30,6 +31,8 @@ const baseCategories: CategoryRecord[] = [
     description: null,
     color: "#10b981",
     parentId: null,
+    notebookId: null,
+    themeId: null,
     createdAt: now,
     updatedAt: now,
   },
@@ -52,6 +55,8 @@ const makeNote = (overrides: Partial<NoteWithRelations> = {}): NoteWithRelations
   color: "#ffffff",
   isPinned: true,
   isArchived: false,
+  isFavorite: false,
+  notebookId: null,
   createdAt: now,
   updatedAt: now,
   tags: [
@@ -111,17 +116,17 @@ describe("Notes page UI", () => {
 
       if (parsed.pathname === "/api/settings") {
         if (method === "GET") {
-          return new Response(JSON.stringify([]), { status: 200 });
+          return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }));
         }
-        return new Response(JSON.stringify({ ok: true }), { status: 200 });
+        return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
       }
 
       if (parsed.pathname === "/api/notes/tags") {
-        return new Response(JSON.stringify(tags), { status: 200 });
+        return Promise.resolve(new Response(JSON.stringify(tags), { status: 200 }));
       }
 
       if (parsed.pathname === "/api/notes/notebooks") {
-        return new Response(JSON.stringify(notebooks), { status: 200 });
+        return Promise.resolve(new Response(JSON.stringify(notebooks), { status: 200 }));
       }
 
       if (parsed.pathname === "/api/notes/categories/tree") {
@@ -143,7 +148,7 @@ describe("Notes page UI", () => {
               updatedAt: note.updatedAt,
             })),
         }));
-        return new Response(JSON.stringify(tree), { status: 200 });
+        return Promise.resolve(new Response(JSON.stringify(tree), { status: 200 }));
       }
 
       if (parsed.pathname === "/api/notes" && method === "POST") {
@@ -159,8 +164,8 @@ describe("Notes page UI", () => {
         const categoryIds = Array.isArray(body.categoryIds) ? body.categoryIds : [];
         const newNote = makeNote({
           id: `note-${notes.length + 1}`,
-          title: body.title,
-          content: body.content,
+          title: body.title || "Untitled",
+          content: body.content || "",
           isPinned: body.isPinned,
           isArchived: body.isArchived,
           tags: tagIds.map((tagId) => {
@@ -184,7 +189,7 @@ describe("Notes page UI", () => {
           }),
         });
         notes.push(newNote);
-        return new Response(JSON.stringify(newNote), { status: 201 });
+        return Promise.resolve(new Response(JSON.stringify(newNote), { status: 201 }));
       }
 
       if (parsed.pathname === "/api/notes") {
@@ -230,10 +235,10 @@ describe("Notes page UI", () => {
             note.categories.some((cat) => categoryIds.includes(cat.categoryId))
           );
         }
-        return new Response(JSON.stringify(filtered), { status: 200 });
+        return Promise.resolve(new Response(JSON.stringify(filtered), { status: 200 }));
       }
 
-      return new Response("Not found", { status: 404 });
+      return Promise.resolve(new Response("Not found", { status: 404 }));
     });
   });
 

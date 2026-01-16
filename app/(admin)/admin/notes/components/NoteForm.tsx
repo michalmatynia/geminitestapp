@@ -5,7 +5,22 @@ import { X, Upload, FileIcon, Trash2, Link2 } from "lucide-react";
 import type { CategoryWithChildren, NoteWithRelations, TagRecord, NoteFileRecord, ThemeRecord } from "@/types/notes";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
-import { renderMarkdownToHtml } from "../utils";
+import { renderMarkdownToHtml, autoformatMarkdown } from "../utils";
+import { useNoteSettings } from "@/lib/context/NoteSettingsContext";
+
+// Hardcoded dark mode fallback theme - consistent with page styling
+const FALLBACK_THEME = {
+  textColor: "#e5e7eb",                // gray-200
+  backgroundColor: "#111827",          // gray-900
+  markdownHeadingColor: "#ffffff",     // white
+  markdownLinkColor: "#60a5fa",        // blue-400
+  markdownCodeBackground: "#1f2937",   // gray-800
+  markdownCodeText: "#e5e7eb",         // gray-200
+  relatedNoteBorderWidth: 1,
+  relatedNoteBorderColor: "#374151",   // gray-700
+  relatedNoteBackgroundColor: "#1f2937", // gray-800
+  relatedNoteTextColor: "#e5e7eb",     // gray-200
+};
 
 export function NoteForm({
   note,
@@ -32,7 +47,7 @@ export function NoteForm({
 }) {
   const [title, setTitle] = useState(note?.title || "");
   const [content, setContent] = useState(note?.content || "");
-  const [color, setColor] = useState(note?.color || "#ffffff");
+  const [color, setColor] = useState(note?.color?.toLowerCase().trim() || "#ffffff");
   const [isPinned, setIsPinned] = useState(note?.isPinned || false);
   const [isArchived, setIsArchived] = useState(note?.isArchived || false);
   const [isFavorite, setIsFavorite] = useState(note?.isFavorite || false);
@@ -82,11 +97,12 @@ export function NoteForm({
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [isPasting, setIsPasting] = useState(false);
   const { toast } = useToast();
+  const { settings } = useNoteSettings();
 
   const MAX_SLOTS = 10;
 
   useEffect(() => {
-    setColor(note?.color || "#ffffff");
+    setColor(note?.color?.toLowerCase().trim() || "#ffffff");
   }, [note?.id, note?.color]);
 
   useEffect(() => {
@@ -129,16 +145,19 @@ export function NoteForm({
     return luminance > 0.7 ? "#0f172a" : "#f8fafc";
   };
 
-  const contentBackground =
-    color === "#ffffff" ? folderTheme?.backgroundColor ?? color : color || "#ffffff";
-  const contentTextColor =
-    color === "#ffffff" && folderTheme?.textColor
-      ? folderTheme.textColor
-      : getReadableTextColor(contentBackground);
+  // Use provided theme or fall back to dark mode theme
+  const effectiveTheme = folderTheme ?? FALLBACK_THEME;
+  const hasCustomColor = color !== "#ffffff";
+  const contentBackground = hasCustomColor
+    ? color
+    : effectiveTheme.backgroundColor;
+  const contentTextColor = hasCustomColor
+    ? getReadableTextColor(contentBackground)
+    : effectiveTheme.textColor;
   const previewTypographyStyle: React.CSSProperties = {
     color: contentTextColor,
     ["--tw-prose-body" as never]: contentTextColor,
-    ["--tw-prose-headings" as never]: folderTheme?.markdownHeadingColor ?? contentTextColor,
+    ["--tw-prose-headings" as never]: effectiveTheme.markdownHeadingColor ?? contentTextColor,
     ["--tw-prose-lead" as never]: contentTextColor,
     ["--tw-prose-bold" as never]: contentTextColor,
     ["--tw-prose-counters" as never]: contentTextColor,
@@ -146,21 +165,16 @@ export function NoteForm({
     ["--tw-prose-quotes" as never]: contentTextColor,
     ["--tw-prose-quote-borders" as never]: "rgba(148, 163, 184, 0.35)",
     ["--tw-prose-hr" as never]: "rgba(148, 163, 184, 0.35)",
-    ["--note-link-color" as never]:
-      folderTheme?.markdownLinkColor ?? "#38bdf8",
-    ["--note-code-bg" as never]:
-      folderTheme?.markdownCodeBackground ?? "#0f172a",
-    ["--note-code-text" as never]:
-      folderTheme?.markdownCodeText ?? "#e2e8f0",
-    ["--note-inline-code-bg" as never]:
-      folderTheme?.markdownCodeBackground ?? "rgba(15, 23, 42, 0.12)",
+    ["--note-link-color" as never]: effectiveTheme.markdownLinkColor,
+    ["--note-code-bg" as never]: effectiveTheme.markdownCodeBackground,
+    ["--note-code-text" as never]: effectiveTheme.markdownCodeText,
+    ["--note-inline-code-bg" as never]: effectiveTheme.markdownCodeBackground,
   };
   const relatedNoteStyle: React.CSSProperties = {
-    borderWidth: `${folderTheme?.relatedNoteBorderWidth ?? 1}px`,
-    borderColor: folderTheme?.relatedNoteBorderColor ?? "rgba(15, 23, 42, 0.2)",
-    backgroundColor:
-      folderTheme?.relatedNoteBackgroundColor ?? "rgba(15, 23, 42, 0.05)",
-    color: folderTheme?.relatedNoteTextColor ?? "#f8fafc",
+    borderWidth: `${effectiveTheme.relatedNoteBorderWidth ?? 1}px`,
+    borderColor: effectiveTheme.relatedNoteBorderColor,
+    backgroundColor: effectiveTheme.relatedNoteBackgroundColor,
+    color: effectiveTheme.relatedNoteTextColor,
   };
 
   const flattenFolderTree = (
@@ -579,6 +593,33 @@ export function NoteForm({
       if (file && file.type.startsWith("image/")) {
         e.preventDefault();
         await uploadPastedImage(file);
+        return;
+      }
+    }
+
+    // Handle text autoformatting if enabled
+    if (settings.autoformatOnPaste) {
+      const pastedText = e.clipboardData?.getData("text/plain");
+      if (pastedText) {
+        e.preventDefault();
+        const formattedText = autoformatMarkdown(pastedText);
+        const textarea = contentRef.current;
+        const selectionStart = textarea?.selectionStart ?? content.length;
+        const selectionEnd = textarea?.selectionEnd ?? content.length;
+        const newContent =
+          content.slice(0, selectionStart) +
+          formattedText +
+          content.slice(selectionEnd);
+        setContent(newContent);
+        // Set cursor position after the inserted text
+        setTimeout(() => {
+          if (textarea) {
+            const newPosition = selectionStart + formattedText.length;
+            textarea.selectionStart = newPosition;
+            textarea.selectionEnd = newPosition;
+            textarea.focus();
+          }
+        }, 0);
       }
     }
   };
@@ -734,7 +775,7 @@ export function NoteForm({
         body: JSON.stringify({
           title,
           content,
-          color,
+          color: color.toLowerCase().trim(),
           isPinned,
           isArchived,
           isFavorite,

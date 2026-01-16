@@ -6,6 +6,20 @@ import type { CategoryWithChildren, NoteWithRelations, ThemeRecord } from "@/typ
 import { BreadcrumbScroller } from "./BreadcrumbScroller";
 import { darkenColor, renderMarkdownToHtml } from "../utils";
 
+// Hardcoded dark mode fallback theme - consistent with page styling
+const FALLBACK_THEME: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt" | "name" | "notebookId"> = {
+  textColor: "#e5e7eb",                // gray-200
+  backgroundColor: "#111827",          // gray-900
+  markdownHeadingColor: "#ffffff",     // white
+  markdownLinkColor: "#60a5fa",        // blue-400
+  markdownCodeBackground: "#1f2937",   // gray-800
+  markdownCodeText: "#e5e7eb",         // gray-200
+  relatedNoteBorderWidth: 1,
+  relatedNoteBorderColor: "#374151",   // gray-700
+  relatedNoteBackgroundColor: "#1f2937", // gray-800
+  relatedNoteTextColor: "#e5e7eb",     // gray-200
+};
+
 function NoteCardBase({
   note,
   folderTree,
@@ -39,14 +53,19 @@ function NoteCardBase({
   ) => Array<{ id: string | null; name: string; isNote?: boolean }>;
   theme?: ThemeRecord | null;
 }) {
+  // Use provided theme or fall back to dark mode theme
+  const effectiveTheme = theme ?? FALLBACK_THEME;
+
   const contentHtml = React.useMemo(
     () => renderMarkdownToHtml(note.content),
     [note.content]
   );
-  const backgroundColor =
-    note.color && note.color !== "#ffffff"
-      ? note.color
-      : theme?.backgroundColor || note.color || "#ffffff";
+  const normalizedColor = note.color?.toLowerCase().trim();
+  // Only use note's custom color if it's not white (default)
+  const hasCustomColor = normalizedColor && normalizedColor !== "#ffffff";
+  const backgroundColor = hasCustomColor
+    ? normalizedColor
+    : effectiveTheme.backgroundColor;
   const getReadableTextColor = (hexColor: string) => {
     const normalized = hexColor.replace("#", "");
     if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
@@ -58,15 +77,14 @@ function NoteCardBase({
     const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
     return luminance > 0.7 ? "#111827" : "#f8fafc";
   };
-  const textColor =
-    note.color && note.color !== "#ffffff"
-      ? getReadableTextColor(backgroundColor)
-      : theme?.textColor ?? getReadableTextColor(backgroundColor);
+  const textColor = hasCustomColor
+    ? getReadableTextColor(backgroundColor)
+    : effectiveTheme.textColor;
   const relatedNoteStyle = {
-    borderWidth: `${theme?.relatedNoteBorderWidth ?? 1}px`,
-    borderColor: theme?.relatedNoteBorderColor ?? "rgba(15, 23, 42, 0.2)",
-    backgroundColor: theme?.relatedNoteBackgroundColor ?? "rgba(15, 23, 42, 0.05)",
-    color: theme?.relatedNoteTextColor ?? "#f8fafc",
+    borderWidth: `${effectiveTheme.relatedNoteBorderWidth ?? 1}px`,
+    borderColor: effectiveTheme.relatedNoteBorderColor,
+    backgroundColor: effectiveTheme.relatedNoteBackgroundColor,
+    color: effectiveTheme.relatedNoteTextColor,
   } as const;
 
   return (

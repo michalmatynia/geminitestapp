@@ -24,7 +24,9 @@ describe("Notes Tags API", () => {
       data: [{ name: "Beta" }, { name: "Alpha" }],
     });
 
-    const res = await GET_TAGS();
+    const res = await GET_TAGS(
+      new Request("http://localhost/api/notes/tags")
+    );
     const tags = await res.json();
 
     expect(res.status).toBe(200);

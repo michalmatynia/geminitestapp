@@ -4,25 +4,9 @@ npx tsc
 npx eslint
 add proper debugging on visual studio code
 
-In Edit Note, move the "show preview" button to the left
-
-Assign color pallets (background and text), (to folder for example), instead of notes it should have folder name and theming options
-
-I want markd down elements to be slightly differnet color, Maybe introduce that in theming
+If you use Prisma, run npx prisma migrate dev and npx prisma generate to apply the
 
 Apply GPT Notes
-
-# Database Restore not working
-
-I can't preview MongoDB Dumps
-
-# Note Taking App
-
-## Note List
-The state of the folder tree (which folders are collapsed or uncollapsed), should be kept in the database for retention
-The sam goes for folder tree viewability, whether it's collapsed or uncollapsed should be kept in the database.
-Note parameters, that I can add cusomized, that I can use later on with AI to Identify and extra categorize my notes.
-
 ## Note App Chatbot connection
 
 Infer text from image and write a snippet
@@ -33,16 +17,22 @@ Make code AI Valide code snippets
 
 Prompted search, I can search by means of
 
----
+# Database Restore not working
 
+I can't preview MongoDB Dumps
 
+# Note Taking App START
 
-Note history
+## Note List
+The state of the folder tree (which folders are collapsed or uncollapsed), should be kept in the database for retention
+The same goes for folder tree whether it's in a collapsed or expanded state at the moment, it should be kept in the database.
+LATER Note parameters, that I can add cusomized, that I can use later on with AI to Identify and extra categorize my notes.
+
+## Note history
 
 At some point there should be note import and also the notes should be downloadable as markdown
 
----
-
+# Note Taking App END
 
 base.com with email: you@example.com password: YourPassword
 remove  Agent job panel from the chatbox window, it duplicates what is already shown

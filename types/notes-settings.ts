@@ -9,4 +9,5 @@ export interface NoteSettings {
   selectedNotebookId: string | null;
   viewMode: "grid" | "list";
   gridDensity: 4 | 8;
+  autoformatOnPaste: boolean;
 }

@@ -42,7 +42,9 @@ describe("Notes Categories API", () => {
       data: [{ name: "Work" }, { name: "Home" }],
     });
 
-    const res = await GET_CATEGORIES();
+    const res = await GET_CATEGORIES(
+      new Request("http://localhost/api/notes/categories")
+    );
     const categories = await res.json();
 
     expect(res.status).toBe(200);
@@ -95,7 +97,9 @@ describe("Notes Categories API", () => {
     const child = await createCategory("Child", root.id);
     await createNote("Child Note", child.id);
 
-    const res = await GET_TREE();
+    const res = await GET_TREE(
+      new Request("http://localhost/api/notes/categories/tree")
+    );
     const tree = await res.json();
 
     expect(res.status).toBe(200);

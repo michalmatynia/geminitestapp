@@ -53,6 +53,7 @@ export const notebookCreateSchema = z
   .object({
     name: z.string().min(1),
     color: z.string().nullable().optional(),
+    defaultThemeId: z.string().nullable().optional(),
   })
   .strict();
 

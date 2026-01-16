@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Plus, Pin, Archive, ChevronRight, ChevronLeft, Star, X } from "lucide-react";
-import type { NoteWithRelations, TagRecord, CategoryWithChildren, ThemeRecord } from "@/types/notes";
+import type { NoteWithRelations, TagRecord, CategoryWithChildren, ThemeRecord, NotebookRecord } from "@/types/notes";
 import { Button } from "@/components/ui/button";
 import ModalShell from "@/components/ui/modal-shell";
 import { FolderTree } from "./components/FolderTree";
@@ -27,6 +27,7 @@ export default function NotesPage() {
   const [notes, setNotes] = useState<NoteWithRelations[]>([]);
   const [tags, setTags] = useState<TagRecord[]>([]);
   const [themes, setThemes] = useState<ThemeRecord[]>([]);
+  const [notebook, setNotebook] = useState<NotebookRecord | null>(null);
   const [folderTree, setFolderTree] = useState<CategoryWithChildren[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -197,14 +198,20 @@ export default function NotesPage() {
     [themes]
   );
 
+  const defaultTheme = React.useMemo(() => {
+    if (!notebook?.defaultThemeId) return null;
+    return themeMap.get(String(notebook.defaultThemeId)) ?? null;
+  }, [notebook?.defaultThemeId, themeMap]);
+
   const getThemeForFolderId = React.useCallback(
     (folderId: string | null | undefined) => {
       if (!folderId) return null;
-      const folder = findFolderById(folderTreeRef.current, folderId);
-      if (!folder?.themeId) return null;
-      return themeMap.get(folder.themeId) ?? null;
+      const folder = findFolderById(folderTree, folderId);
+      const themeId = folder?.themeId ? String(folder.themeId) : null;
+      if (!themeId) return null;
+      return themeMap.get(themeId) ?? null;
     },
-    [findFolderById, themeMap]
+    [findFolderById, folderTree, themeMap]
   );
 
   const selectedFolderTheme = React.useMemo(
@@ -213,15 +220,38 @@ export default function NotesPage() {
   );
 
   const selectedFolderThemeId = React.useMemo(() => {
-    if (!selectedFolderId) return "";
-    const folder = findFolderById(folderTree, selectedFolderId);
-    return folder?.themeId ?? "";
-  }, [selectedFolderId, folderTree, findFolderById]);
+    if (selectedFolderId) {
+      const folder = findFolderById(folderTree, selectedFolderId);
+      return folder?.themeId ? String(folder.themeId) : "";
+    }
+    // When no folder selected, show notebook's default theme
+    return notebook?.defaultThemeId ? String(notebook.defaultThemeId) : "";
+  }, [selectedFolderId, folderTree, findFolderById, notebook?.defaultThemeId]);
 
-  const selectedNoteTheme = React.useMemo(() => {
-    const folderId = selectedNote?.categories?.[0]?.categoryId;
-    return getThemeForFolderId(folderId);
-  }, [selectedNote?.categories, getThemeForFolderId]);
+  const getThemeForNote = React.useCallback(
+    (note: NoteWithRelations | null | undefined) => {
+      if (!note) return null;
+      // 1. Check selected folder's theme
+      if (selectedFolderId) {
+        const selectedTheme = getThemeForFolderId(selectedFolderId);
+        if (selectedTheme) return selectedTheme;
+      }
+      // 2. Check note's category themes
+      const categoryIds = note.categories?.map((category) => category.categoryId) ?? [];
+      for (const categoryId of categoryIds) {
+        const theme = getThemeForFolderId(categoryId);
+        if (theme) return theme;
+      }
+      // 3. Fall back to notebook's default theme
+      return defaultTheme;
+    },
+    [getThemeForFolderId, selectedFolderId, defaultTheme]
+  );
+
+  const selectedNoteTheme = React.useMemo(
+    () => getThemeForNote(selectedNote),
+    [getThemeForNote, selectedNote]
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -292,11 +322,28 @@ export default function NotesPage() {
     }
   }, [selectedNotebookId]);
 
+  const fetchNotebook = React.useCallback(async () => {
+    if (!selectedNotebookId) {
+      setNotebook(null);
+      return;
+    }
+    try {
+      const response = await fetch("/api/notes/notebooks", { cache: "no-store" });
+      if (!response.ok) return;
+      const data = (await response.json()) as NotebookRecord[];
+      const found = data.find((n) => n.id === selectedNotebookId);
+      setNotebook(found ?? null);
+    } catch (error) {
+      console.error("Failed to fetch notebook:", error);
+    }
+  }, [selectedNotebookId]);
+
   useEffect(() => {
     void fetchTags();
     void fetchFolderTree();
     void fetchThemes();
-  }, [fetchTags, fetchFolderTree, fetchThemes]);
+    void fetchNotebook();
+  }, [fetchTags, fetchFolderTree, fetchThemes, fetchNotebook]);
 
   useEffect(() => {
     void fetchNotes();
@@ -350,10 +397,12 @@ export default function NotesPage() {
 
   const previewStyle = React.useMemo(() => {
     const fallback = "#1f2937";
+    const normalizedColor = selectedNote?.color?.toLowerCase().trim();
+    const isDefaultColor = !normalizedColor || normalizedColor === "#ffffff";
     const color =
-      selectedNote?.color && selectedNote.color !== "#ffffff"
-        ? selectedNote.color
-        : selectedNoteTheme?.backgroundColor || selectedNote?.color || fallback;
+      !isDefaultColor
+        ? normalizedColor ?? selectedNote?.color ?? fallback
+        : selectedNoteTheme?.backgroundColor || normalizedColor || selectedNote?.color || fallback;
     const hex = color.replace("#", "");
     if (!/^[0-9a-fA-F]{6}$/.test(hex)) {
       return { backgroundColor: color };
@@ -372,11 +421,13 @@ export default function NotesPage() {
 
   const previewTextColor = React.useMemo(() => {
     const fallback = "#1f2937";
+    const normalizedColor = selectedNote?.color?.toLowerCase().trim();
+    const isDefaultColor = !normalizedColor || normalizedColor === "#ffffff";
     const background =
-      selectedNote?.color && selectedNote.color !== "#ffffff"
-        ? selectedNote.color
-        : selectedNoteTheme?.backgroundColor || selectedNote?.color || fallback;
-    if (selectedNoteTheme?.textColor && selectedNote?.color !== "#ffffff") {
+      !isDefaultColor
+        ? normalizedColor ?? selectedNote?.color ?? fallback
+        : selectedNoteTheme?.backgroundColor || normalizedColor || selectedNote?.color || fallback;
+    if (selectedNoteTheme?.textColor && !isDefaultColor) {
       return getReadableTextColor(background);
     }
     return selectedNoteTheme?.textColor ?? getReadableTextColor(background);
@@ -525,6 +576,37 @@ export default function NotesPage() {
       }
     },
     [selectedFolderId, fetchFolderTree]
+  );
+
+  const handleUpdateNotebookDefaultTheme = React.useCallback(
+    async (themeId: string | null) => {
+      if (!selectedNotebookId) return;
+      try {
+        const response = await fetch(`/api/notes/notebooks/${selectedNotebookId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ defaultThemeId: themeId }),
+        });
+        if (response.ok) {
+          const updated = (await response.json()) as NotebookRecord;
+          setNotebook(updated);
+        }
+      } catch (error) {
+        console.error("Failed to update notebook default theme:", error);
+      }
+    },
+    [selectedNotebookId]
+  );
+
+  const handleThemeChange = React.useCallback(
+    async (themeId: string | null) => {
+      if (selectedFolderId) {
+        await handleUpdateFolderTheme(themeId);
+      } else {
+        await handleUpdateNotebookDefaultTheme(themeId);
+      }
+    },
+    [selectedFolderId, handleUpdateFolderTheme, handleUpdateNotebookDefaultTheme]
   );
 
   const handleCreateNoteInFolder = React.useCallback((folderId: string) => {
@@ -1361,10 +1443,9 @@ export default function NotesPage() {
                   <select
                     value={selectedFolderThemeId}
                     onChange={(e) =>
-                      void handleUpdateFolderTheme(e.target.value || null)
+                      void handleThemeChange(e.target.value || null)
                     }
-                    disabled={!selectedFolderId}
-                    className="rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-300 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-300"
                   >
                     <option value="">Default</option>
                     {themes.map((theme) => (
@@ -1494,7 +1575,7 @@ export default function NotesPage() {
                       <NoteCard
                         key={note.id}
                         note={note}
-                        theme={getThemeForFolderId(note.categories[0]?.categoryId)}
+                        theme={getThemeForNote(note)}
                         folderTree={folderTree}
                         showTimestamps={showTimestamps}
                         showBreadcrumbs={showBreadcrumbs}

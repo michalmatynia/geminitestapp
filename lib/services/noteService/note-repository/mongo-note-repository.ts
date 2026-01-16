@@ -116,6 +116,7 @@ const toNotebookResponse = (doc: WithId<NotebookDocument>): NotebookRecord => ({
   id: doc.id ?? doc._id,
   name: doc.name,
   color: doc.color ?? null,
+  defaultThemeId: doc.defaultThemeId ?? null,
   createdAt: doc.createdAt ?? new Date(),
   updatedAt: doc.updatedAt ?? new Date(),
 });
@@ -269,6 +270,7 @@ export const mongoNoteRepository: NoteRepository = {
               id,
               name: "Default",
               color: "#3b82f6",
+              defaultThemeId: null,
               createdAt: now,
               updatedAt: now,
             };
@@ -831,6 +833,7 @@ export const mongoNoteRepository: NoteRepository = {
       id,
       name: data.name,
       color: data.color ?? "#3b82f6",
+      defaultThemeId: data.defaultThemeId ?? null,
       createdAt: now,
       updatedAt: now,
     };
@@ -846,6 +849,7 @@ export const mongoNoteRepository: NoteRepository = {
         updatedAt: new Date(),
         ...(data.name !== undefined && { name: data.name }),
         ...(data.color !== undefined && { color: data.color }),
+        ...(data.defaultThemeId !== undefined && { defaultThemeId: data.defaultThemeId }),
       },
     };
     const result = await collection.findOneAndUpdate(
@@ -905,17 +909,17 @@ export const mongoNoteRepository: NoteRepository = {
       id,
       name: data.name,
       notebookId: resolvedNotebookId,
-      textColor: data.textColor ?? "#e2e8f0",
-      backgroundColor: data.backgroundColor ?? "#0f172a",
-      markdownHeadingColor: data.markdownHeadingColor ?? "#f8fafc",
-      markdownLinkColor: data.markdownLinkColor ?? "#38bdf8",
-      markdownCodeBackground: data.markdownCodeBackground ?? "#0b1220",
-      markdownCodeText: data.markdownCodeText ?? "#e2e8f0",
+      textColor: data.textColor ?? "#e5e7eb",
+      backgroundColor: data.backgroundColor ?? "#111827",
+      markdownHeadingColor: data.markdownHeadingColor ?? "#ffffff",
+      markdownLinkColor: data.markdownLinkColor ?? "#60a5fa",
+      markdownCodeBackground: data.markdownCodeBackground ?? "#1f2937",
+      markdownCodeText: data.markdownCodeText ?? "#e5e7eb",
       relatedNoteBorderWidth: data.relatedNoteBorderWidth ?? 1,
-      relatedNoteBorderColor: data.relatedNoteBorderColor ?? "#34d399",
+      relatedNoteBorderColor: data.relatedNoteBorderColor ?? "#374151",
       relatedNoteBackgroundColor:
-        data.relatedNoteBackgroundColor ?? "#0f3a2f",
-      relatedNoteTextColor: data.relatedNoteTextColor ?? "#ecfdf5",
+        data.relatedNoteBackgroundColor ?? "#1f2937",
+      relatedNoteTextColor: data.relatedNoteTextColor ?? "#e5e7eb",
       createdAt: now,
       updatedAt: now,
     };

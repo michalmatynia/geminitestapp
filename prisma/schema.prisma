@@ -508,18 +508,20 @@ model Theme {
   name                      String
   notebookId                String?
   notebook                  Notebook? @relation(fields: [notebookId], references: [id], onDelete: Cascade)
-  textColor                 String   @default("#e2e8f0")
-  backgroundColor           String   @default("#0f172a")
-  markdownHeadingColor      String   @default("#f8fafc")
-  markdownLinkColor         String   @default("#38bdf8")
-  markdownCodeBackground    String   @default("#0b1220")
-  markdownCodeText          String   @default("#e2e8f0")
+  textColor                 String   @default("#e5e7eb")
+  backgroundColor           String   @default("#111827")
+  markdownHeadingColor      String   @default("#ffffff")
+  markdownLinkColor         String   @default("#60a5fa")
+  markdownCodeBackground    String   @default("#1f2937")
+  markdownCodeText          String   @default("#e5e7eb")
   relatedNoteBorderWidth    Int      @default(1)
-  relatedNoteBorderColor    String   @default("#34d399")
-  relatedNoteBackgroundColor String  @default("#0f3a2f")
-  relatedNoteTextColor      String   @default("#ecfdf5")
+  relatedNoteBorderColor    String   @default("#374151")
+  relatedNoteBackgroundColor String  @default("#1f2937")
+  relatedNoteTextColor      String   @default("#e5e7eb")
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
+  categories                Category[]
+  notebooksAsDefault        Notebook[] @relation("DefaultTheme")
 
   @@unique([notebookId, name])
 }
@@ -557,14 +559,17 @@ model Category {
 }
 
 model Notebook {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  color     String?   @default("#3b82f6")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  notes     Note[]
-  tags      Tag[]
-  categories Category[]
+  id             String    @id @default(cuid())
+  name           String    @unique
+  color          String?   @default("#3b82f6")
+  defaultThemeId String?
+  defaultTheme   Theme?    @relation("DefaultTheme", fields: [defaultThemeId], references: [id], onDelete: SetNull)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  notes          Note[]
+  tags           Tag[]
+  categories     Category[]
+  themes         Theme[]
 }
 
 model NoteTag {

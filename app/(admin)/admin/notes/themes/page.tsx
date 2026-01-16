@@ -10,16 +10,16 @@ import type { ThemeRecord } from "@/types/notes";
 const defaultTheme: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> = {
   name: "",
   notebookId: null,
-  textColor: "#e2e8f0",
-  backgroundColor: "#0f172a",
-  markdownHeadingColor: "#f8fafc",
-  markdownLinkColor: "#38bdf8",
-  markdownCodeBackground: "#0b1220",
-  markdownCodeText: "#e2e8f0",
+  textColor: "#e5e7eb",           // gray-200 - matches page text
+  backgroundColor: "#111827",      // gray-900 - matches card backgrounds
+  markdownHeadingColor: "#ffffff", // white - matches headings
+  markdownLinkColor: "#60a5fa",    // blue-400 - visible links
+  markdownCodeBackground: "#1f2937", // gray-800 - matches input backgrounds
+  markdownCodeText: "#e5e7eb",     // gray-200 - matches page text
   relatedNoteBorderWidth: 1,
-  relatedNoteBorderColor: "#34d399",
-  relatedNoteBackgroundColor: "#0f3a2f",
-  relatedNoteTextColor: "#ecfdf5",
+  relatedNoteBorderColor: "#374151", // gray-700 - matches borders
+  relatedNoteBackgroundColor: "#1f2937", // gray-800
+  relatedNoteTextColor: "#e5e7eb", // gray-200
 };
 
 export default function NoteThemesPage() {
@@ -373,7 +373,7 @@ export default function NoteThemesPage() {
                     className="rounded-lg border border-gray-800 bg-gray-900/60 p-4"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
+                      <div className="flex items-center gap-2">
                         <div className="text-sm font-semibold text-white">{theme.name}</div>
                         <div className="text-xs text-gray-500">
                           Updated {new Date(theme.updatedAt).toLocaleString()}

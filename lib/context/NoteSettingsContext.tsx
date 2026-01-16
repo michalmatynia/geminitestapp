@@ -14,11 +14,13 @@ export const DEFAULT_NOTE_SETTINGS: NoteSettings = {
   selectedNotebookId: null,
   viewMode: "grid",
   gridDensity: 4,
+  autoformatOnPaste: false,
 };
 
 const STORAGE_KEY = "noteSettings";
 const DB_SETTING_KEY = "noteSettings:selectedFolderId";
 const DB_NOTEBOOK_KEY = "noteSettings:selectedNotebookId";
+const DB_AUTOFORMAT_KEY = "noteSettings:autoformatOnPaste";
 
 interface NoteSettingsContextType {
   settings: NoteSettings;
@@ -98,11 +100,45 @@ async function loadSelectedNotebookFromDb(): Promise<string | null> {
   }
 }
 
+async function saveAutoformatToDb(enabled: boolean): Promise<void> {
+  try {
+    await fetch("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        key: DB_AUTOFORMAT_KEY,
+        value: enabled ? "true" : "false",
+      }),
+    });
+  } catch (error) {
+    console.error("Failed to save autoformatOnPaste to database:", error);
+  }
+}
+
+async function loadAutoformatFromDb(): Promise<boolean | null> {
+  try {
+    const response = await fetch("/api/settings");
+    if (!response.ok) return null;
+
+    const settings = await response.json() as Array<{ key: string; value: string }>;
+    const setting = settings.find((s) => s.key === DB_AUTOFORMAT_KEY);
+
+    if (setting && setting.value) {
+      return setting.value === "true";
+    }
+    return null;
+  } catch (error) {
+    console.error("Failed to load autoformatOnPaste from database:", error);
+    return null;
+  }
+}
+
 export function NoteSettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<NoteSettings>(DEFAULT_NOTE_SETTINGS);
   const [isInitialized, setIsInitialized] = useState(false);
   const previousFolderIdRef = useRef<string | null>(null);
   const previousNotebookIdRef = useRef<string | null>(null);
+  const previousAutoformatRef = useRef<boolean>(false);
 
   // Load settings from localStorage first (fast), then from database (authoritative)
   useEffect(() => {
@@ -158,6 +194,23 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
           console.error("Failed to update localStorage cache:", error);
         }
       }
+
+      // Load autoformatOnPaste from database
+      const dbAutoformat = await loadAutoformatFromDb();
+      if (dbAutoformat !== null) {
+        setSettings((prev) => ({ ...prev, autoformatOnPaste: dbAutoformat }));
+        previousAutoformatRef.current = dbAutoformat;
+        try {
+          const stored = window.localStorage.getItem(STORAGE_KEY);
+          const current = stored ? JSON.parse(stored) : {};
+          window.localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({ ...current, autoformatOnPaste: dbAutoformat })
+          );
+        } catch (error) {
+          console.error("Failed to update localStorage cache:", error);
+        }
+      }
     };
 
     void loadSettings();
@@ -193,15 +246,25 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
     }
   }, [settings.selectedNotebookId, isInitialized]);
 
+  // Save autoformatOnPaste to database when it changes
+  useEffect(() => {
+    if (!isInitialized) return;
+    if (settings.autoformatOnPaste !== previousAutoformatRef.current) {
+      previousAutoformatRef.current = settings.autoformatOnPaste;
+      void saveAutoformatToDb(settings.autoformatOnPaste);
+    }
+  }, [settings.autoformatOnPaste, isInitialized]);
+
   const updateSettings = (updates: Partial<NoteSettings>) => {
     setSettings((prev) => ({ ...prev, ...updates }));
   };
 
   const resetToDefaults = () => {
     setSettings(DEFAULT_NOTE_SETTINGS);
-    // Also clear the database value
+    // Also clear the database values
     void saveSelectedFolderToDb(null);
     void saveSelectedNotebookToDb(null);
+    void saveAutoformatToDb(false);
   };
 
   return (

@@ -203,8 +203,8 @@ test.describe("Notes page", () => {
         const categoryIds = Array.isArray(body.categoryIds) ? body.categoryIds : [];
         const newNote = {
           id: `note-${notes.length + 1}`,
-          title: body.title,
-          content: body.content,
+          title: body.title || "Untitled",
+          content: body.content || "",
           color: body.color ?? "#ffffff",
           isPinned: body.isPinned ?? false,
           isArchived: body.isArchived ?? false,

@@ -4,6 +4,7 @@ export type NotebookRecord = {
   id: string;
   name: string;
   color: string | null;
+  defaultThemeId: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -57,6 +58,7 @@ export type NoteWithRelations = Note & {
 export type CategoryWithChildren = Category & {
   children: CategoryWithChildren[];
   notes: Note[];
+  themeId?: string | null;
 };
 
 export type NoteCreateInput = {
@@ -77,11 +79,13 @@ export type NoteUpdateInput = Partial<NoteCreateInput>;
 export type NotebookCreateInput = {
   name: string;
   color?: string | null;
+  defaultThemeId?: string | null;
 };
 
 export type NotebookUpdateInput = {
   name?: string;
   color?: string | null;
+  defaultThemeId?: string | null;
 };
 
 export type ThemeCreateInput = {

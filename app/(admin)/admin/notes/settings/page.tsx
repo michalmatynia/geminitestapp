@@ -55,7 +55,8 @@ export default function NoteSettingsPage() {
     settings.selectedFolderId === DEFAULT_NOTE_SETTINGS.selectedFolderId &&
     settings.selectedNotebookId === DEFAULT_NOTE_SETTINGS.selectedNotebookId &&
     settings.viewMode === DEFAULT_NOTE_SETTINGS.viewMode &&
-    settings.gridDensity === DEFAULT_NOTE_SETTINGS.gridDensity;
+    settings.gridDensity === DEFAULT_NOTE_SETTINGS.gridDensity &&
+    settings.autoformatOnPaste === DEFAULT_NOTE_SETTINGS.autoformatOnPaste;
 
   return (
     <div className="container mx-auto py-10">
@@ -218,6 +219,37 @@ export default function NoteSettingsPage() {
           </div>
         </div>
 
+        {/* Editor Settings */}
+        <div className="rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
+          <h2 className="mb-4 text-lg font-semibold text-white">Editor</h2>
+          <div className="space-y-4">
+            <label className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={settings.autoformatOnPaste}
+                  onChange={(e) =>
+                    updateSettings({ autoformatOnPaste: e.target.checked })
+                  }
+                  className="h-4 w-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-200">
+                    Autoformat on Paste
+                  </span>
+                  <p className="text-xs text-gray-500">
+                    Automatically format pasted markdown content (trim spaces,
+                    normalize blank lines, convert URLs to links, normalize list markers)
+                  </p>
+                </div>
+              </div>
+              {!isDefault("autoformatOnPaste") && (
+                <span className="text-xs text-blue-400">Modified</span>
+              )}
+            </label>
+          </div>
+        </div>
+
         {/* Navigation State */}
         <div className="rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
           <h2 className="mb-4 text-lg font-semibold text-white">Navigation</h2>
@@ -288,6 +320,10 @@ export default function NoteSettingsPage() {
             <span>Selected Folder:</span>
             <span className="text-gray-300">
               {settings.selectedFolderId ? "Saved" : "All Notes (default)"}
+            </span>
+            <span>Autoformat on Paste:</span>
+            <span className="text-gray-300">
+              {settings.autoformatOnPaste ? "Enabled" : "Disabled"}
             </span>
           </div>
         </div>

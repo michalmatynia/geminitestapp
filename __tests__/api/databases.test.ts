@@ -73,7 +73,9 @@ describe("Databases API", () => {
         mtime: new Date(),
       } as any);
 
-      const res = await GET_BACKUPS();
+      const res = await GET_BACKUPS(
+        new Request("http://localhost/api/databases/backups?type=postgresql")
+      );
       const backups = await res.json();
       expect(res.status).toEqual(200);
       expect(backups.length).toEqual(1);

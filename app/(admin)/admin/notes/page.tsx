@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Plus, Search, Pin, Archive, ChevronRight, FileText, Heading, X } from "lucide-react";
+import { Plus, Search, Pin, Archive, ChevronRight, ChevronLeft, FileText, Heading, X, ArrowUp, ArrowDown, Eye, EyeOff } from "lucide-react";
 import type { NoteWithRelations, TagRecord, CategoryWithChildren } from "@/types/notes";
 import { Button } from "@/components/ui/button";
 import ModalShell from "@/components/ui/modal-shell";
 import { FolderTree } from "./components/FolderTree";
 import { useToast } from "@/components/ui/toast";
 import { useAdminLayout } from "@/lib/context/AdminLayoutContext";
+import { useNoteSettings } from "@/lib/context/NoteSettingsContext";
 
 function NoteForm({
   note,
@@ -16,6 +17,7 @@ function NoteForm({
   availableTags,
   onSuccess,
   onTagCreated,
+  onSelectRelatedNote,
 }: {
   note?: NoteWithRelations | null;
   folderTree: CategoryWithChildren[];
@@ -23,6 +25,7 @@ function NoteForm({
   availableTags: TagRecord[];
   onSuccess: () => void;
   onTagCreated: () => void;
+  onSelectRelatedNote: (noteId: string) => void;
 }) {
   const [title, setTitle] = useState(note?.title || "");
   const [content, setContent] = useState(note?.content || "");
@@ -35,6 +38,31 @@ function NoteForm({
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
     note?.tags.map((t) => t.tagId) || []
   );
+  const [selectedRelatedNotes, setSelectedRelatedNotes] = useState<
+    Array<{ id: string; title: string; color: string | null; content: string }>
+  >(
+    note?.relationsFrom?.map((rel) => ({
+      id: rel.targetNote.id,
+      title: rel.targetNote.title,
+      color: rel.targetNote.color ?? null,
+      content: "",
+    })) || []
+  );
+  const [incomingRelatedNotes, setIncomingRelatedNotes] = useState<
+    Array<{ id: string; title: string; color: string | null; content: string }>
+  >(
+    note?.relationsTo?.map((rel) => ({
+      id: rel.sourceNote.id,
+      title: rel.sourceNote.title,
+      color: rel.sourceNote.color ?? null,
+      content: "",
+    })) || []
+  );
+  const [relatedNoteQuery, setRelatedNoteQuery] = useState("");
+  const [isRelatedDropdownOpen, setIsRelatedDropdownOpen] = useState(false);
+  const [relatedNoteResults, setRelatedNoteResults] = useState<NoteWithRelations[]>([]);
+  const [isRelatedLoading, setIsRelatedLoading] = useState(false);
+  const relatedSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [tagInput, setTagInput] = useState("");
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
   const tagInputRef = useRef<HTMLInputElement>(null);
@@ -109,6 +137,145 @@ function NoteForm({
     setSelectedTagIds(selectedTagIds.filter((id) => id !== tagId));
   };
 
+  useEffect(() => {
+    let isActive = true;
+    if (!note) {
+      setSelectedRelatedNotes([]);
+      setIncomingRelatedNotes([]);
+      setRelatedNoteQuery("");
+      setIsRelatedDropdownOpen(false);
+      setRelatedNoteResults([]);
+      return;
+    }
+    const initialRelated =
+      note.relationsFrom?.map((rel) => ({
+        id: rel.targetNote.id,
+        title: rel.targetNote.title,
+        color: rel.targetNote.color ?? null,
+        content: "",
+      })) || [];
+    const initialIncoming =
+      note.relationsTo?.map((rel) => ({
+        id: rel.sourceNote.id,
+        title: rel.sourceNote.title,
+        color: rel.sourceNote.color ?? null,
+        content: "",
+      })) || [];
+    setSelectedRelatedNotes(initialRelated);
+    setIncomingRelatedNotes(initialIncoming);
+    setRelatedNoteQuery("");
+    setIsRelatedDropdownOpen(false);
+    setRelatedNoteResults([]);
+
+    const hydrateRelatedNotes = async () => {
+      const relatedIds = [...initialRelated, ...initialIncoming].map(
+        (rel) => rel.id
+      );
+      if (relatedIds.length === 0) return;
+      try {
+        const details = await Promise.all(
+          relatedIds.map(async (relId) => {
+            try {
+              const response = await fetch(`/api/notes/${relId}`, {
+                cache: "no-store",
+              });
+              if (!response.ok) return null;
+              return (await response.json()) as NoteWithRelations;
+            } catch {
+              return null;
+            }
+          })
+        );
+        if (!isActive) return;
+        setSelectedRelatedNotes((prev) =>
+          prev.map((item) => {
+            const found = details.find((detail) => detail?.id === item.id);
+            if (!found) return item;
+            return {
+              ...item,
+              content: found.content ?? "",
+              title: found.title ?? item.title,
+              color: found.color ?? item.color ?? null,
+            };
+          })
+        );
+        setIncomingRelatedNotes((prev) =>
+          prev.map((item) => {
+            const found = details.find((detail) => detail?.id === item.id);
+            if (!found) return item;
+            return {
+              ...item,
+              content: found.content ?? "",
+              title: found.title ?? item.title,
+              color: found.color ?? item.color ?? null,
+            };
+          })
+        );
+      } catch (error) {
+        console.error("Failed to load related note details:", error);
+      }
+    };
+
+    void hydrateRelatedNotes();
+    return () => {
+      isActive = false;
+    };
+  }, [note]);
+
+  useEffect(() => {
+    if (!relatedNoteQuery) {
+      setRelatedNoteResults([]);
+      setIsRelatedLoading(false);
+      if (relatedSearchTimerRef.current) {
+        clearTimeout(relatedSearchTimerRef.current);
+        relatedSearchTimerRef.current = null;
+      }
+      return;
+    }
+
+    if (relatedSearchTimerRef.current) {
+      clearTimeout(relatedSearchTimerRef.current);
+    }
+
+    const timer = setTimeout(() => {
+      let isActive = true;
+      const fetchResults = async () => {
+        setIsRelatedLoading(true);
+        try {
+          const params = new URLSearchParams({
+            search: relatedNoteQuery,
+            searchScope: "title",
+          });
+          const response = await fetch(`/api/notes?${params.toString()}`, {
+            cache: "no-store",
+          });
+          if (!response.ok) return;
+          const data = (await response.json()) as NoteWithRelations[];
+          if (isActive) {
+            setRelatedNoteResults(data);
+          }
+        } catch (error) {
+          console.error("Failed to search related notes:", error);
+        } finally {
+          if (isActive) {
+            setIsRelatedLoading(false);
+          }
+        }
+      };
+
+      void fetchResults();
+      return () => {
+        isActive = false;
+      };
+    }, 250);
+
+    relatedSearchTimerRef.current = timer;
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [relatedNoteQuery]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !content) return;
@@ -117,6 +284,8 @@ function NoteForm({
     try {
       const url = note ? `/api/notes/${note.id}` : "/api/notes";
       const method = note ? "PATCH" : "POST";
+      const previousRelatedIds =
+        note?.relationsFrom?.map((rel) => rel.targetNote.id) || [];
 
       const response = await fetch(url, {
         method,
@@ -128,11 +297,54 @@ function NoteForm({
           isPinned,
           isArchived,
           tagIds: selectedTagIds,
+          relatedNoteIds: selectedRelatedNotes.map((rel) => rel.id),
           categoryIds: selectedFolderId ? [selectedFolderId] : [],
         }),
       });
 
       if (response.ok) {
+        const savedNote = (await response.json()) as NoteWithRelations;
+        const currentNoteId = savedNote.id;
+        const nextRelatedIds = selectedRelatedNotes.map((rel) => rel.id);
+
+        const addedRelations = nextRelatedIds.filter(
+          (id) => !previousRelatedIds.includes(id) && id !== currentNoteId
+        );
+        const removedRelations = previousRelatedIds.filter(
+          (id) => !nextRelatedIds.includes(id) && id !== currentNoteId
+        );
+
+        const updatePeerRelations = async (
+          peerNoteId: string,
+          shouldAdd: boolean
+        ) => {
+          try {
+            const peerResponse = await fetch(`/api/notes/${peerNoteId}`, {
+              cache: "no-store",
+            });
+            if (!peerResponse.ok) return;
+            const peerNote = (await peerResponse.json()) as NoteWithRelations;
+            const peerRelatedIds =
+              peerNote.relationsFrom?.map((rel) => rel.targetNote.id) || [];
+            const nextPeerIds = shouldAdd
+              ? Array.from(new Set([...peerRelatedIds, currentNoteId]))
+              : peerRelatedIds.filter((id) => id !== currentNoteId);
+
+            await fetch(`/api/notes/${peerNoteId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ relatedNoteIds: nextPeerIds }),
+            });
+          } catch (error) {
+            console.error("Failed to sync related note:", error);
+          }
+        };
+
+        await Promise.all([
+          ...addedRelations.map((id) => updatePeerRelations(id, true)),
+          ...removedRelations.map((id) => updatePeerRelations(id, false)),
+        ]);
+
         toast(note ? "Note updated successfully" : "Note created successfully");
         onSuccess();
       }
@@ -140,6 +352,31 @@ function NoteForm({
       console.error("Failed to save note:", error);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleRemoveIncomingRelation = async (sourceNoteId: string) => {
+    if (!note) return;
+    try {
+      const response = await fetch(`/api/notes/${sourceNoteId}`, {
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+      const sourceNote = (await response.json()) as NoteWithRelations;
+      const relatedNoteIds =
+        sourceNote.relationsFrom?.map((rel) => rel.targetNote.id) || [];
+      const nextRelatedIds = relatedNoteIds.filter((id) => id !== note.id);
+      const updateResponse = await fetch(`/api/notes/${sourceNoteId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ relatedNoteIds: nextRelatedIds }),
+      });
+      if (!updateResponse.ok) return;
+      setIncomingRelatedNotes((prev) =>
+        prev.filter((item) => item.id !== sourceNoteId)
+      );
+    } catch (error) {
+      console.error("Failed to remove incoming relation:", error);
     }
   };
 
@@ -157,6 +394,30 @@ function NoteForm({
           </Button>
         </div>
       )}
+
+      <div>
+        <label className="mb-2 block text-sm font-medium text-white">Title</label>
+        <input
+          type="text"
+          placeholder="Enter note title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-medium text-white">Content</label>
+        <textarea
+          placeholder="Enter note content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          rows={12}
+          className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white"
+          required
+        />
+      </div>
 
       {/* Tags Section */}
       <div className="space-y-2">
@@ -204,7 +465,7 @@ function NoteForm({
               className="flex-1 rounded-none border-x-0 border-t border-b border-gray-700 bg-transparent px-0 py-2 text-white text-sm focus:outline-none focus:border-gray-500 placeholder:text-gray-500"
             />
           </div>
-          
+
           {isTagDropdownOpen && (tagInput || filteredTags.length > 0) && (
             <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-700 bg-gray-800 shadow-lg">
               <ul className="max-h-60 overflow-auto py-1 text-sm text-gray-300">
@@ -217,7 +478,7 @@ function NoteForm({
                     {tag.name}
                   </li>
                 ))}
-                {tagInput && !filteredTags.find(t => t.name.toLowerCase() === tagInput.toLowerCase()) && (
+                {tagInput && !filteredTags.find((t) => t.name.toLowerCase() === tagInput.toLowerCase()) && (
                   <li
                     onClick={() => void handleCreateTag()}
                     className="cursor-pointer px-4 py-2 text-blue-400 hover:bg-gray-700"
@@ -238,29 +499,142 @@ function NoteForm({
         </div>
       </div>
 
-      <div>
-        <label className="mb-2 block text-sm font-medium text-white">Title</label>
-        <input
-          type="text"
-          placeholder="Enter note title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white"
-          required
-        />
+      <div className="space-y-2">
+        <label className="mb-2 block text-sm font-medium text-white">
+          Related Notes
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {[
+            ...selectedRelatedNotes,
+            ...incomingRelatedNotes.filter(
+              (incoming) =>
+                !selectedRelatedNotes.some((outgoing) => outgoing.id === incoming.id)
+            ),
+          ].map((related) => {
+            const isIncoming = incomingRelatedNotes.some(
+              (incoming) => incoming.id === related.id
+            );
+            return (
+              <div
+                key={related.id}
+                className="relative flex min-w-[180px] max-w-[240px] cursor-pointer flex-col gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 p-2 text-left transition hover:border-emerald-400/60"
+                role="button"
+                tabIndex={0}
+                onClick={() => onSelectRelatedNote(related.id)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onSelectRelatedNote(related.id);
+                  }
+                }}
+              >
+                <div className="text-xs font-semibold text-emerald-100 truncate">
+                  {related.title}
+                </div>
+                <div className="text-[11px] text-emerald-200/80 leading-snug max-h-8 overflow-hidden">
+                  {related.content ? related.content : "No content"}
+                </div>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    if (isIncoming && !selectedRelatedNotes.some((item) => item.id === related.id)) {
+                      void handleRemoveIncomingRelation(related.id);
+                      return;
+                    }
+                    setSelectedRelatedNotes((prev) =>
+                      prev.filter((item) => item.id !== related.id)
+                    );
+                  }}
+                  className="absolute right-1 top-1 text-emerald-100/70 hover:text-white"
+                  aria-label="Remove related note"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+        <div className="relative">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Search notes to relate..."
+              value={relatedNoteQuery}
+              onChange={(e) => {
+                setRelatedNoteQuery(e.target.value);
+                setIsRelatedDropdownOpen(true);
+              }}
+              onFocus={() => setIsRelatedDropdownOpen(true)}
+              className="flex-1 rounded-none border-x-0 border-t border-b border-gray-700 bg-transparent px-0 py-2 text-white text-sm focus:outline-none focus:border-gray-500 placeholder:text-gray-500"
+            />
+          </div>
+
+          {isRelatedDropdownOpen && relatedNoteQuery && (
+            <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-700 bg-gray-800 shadow-lg">
+              <ul className="max-h-60 overflow-auto py-1 text-sm text-gray-300">
+                {isRelatedLoading && (
+                  <li className="px-4 py-2 text-gray-500">Searching...</li>
+                )}
+                {relatedNoteResults
+                  .filter((candidate) =>
+                    note?.id ? candidate.id !== note.id : true
+                  )
+                  .filter(
+                    (candidate) =>
+                      candidate.title
+                        .toLowerCase()
+                        .includes(relatedNoteQuery.toLowerCase()) &&
+                      !selectedRelatedNotes.some(
+                        (selected) => selected.id === candidate.id
+                      )
+                  )
+                  .map((candidate) => (
+                    <li
+                      key={candidate.id}
+                      onClick={() => {
+                        setSelectedRelatedNotes((prev) => [
+                          ...prev,
+                          {
+                            id: candidate.id,
+                            title: candidate.title,
+                            color: candidate.color ?? null,
+                            content: candidate.content ?? "",
+                          },
+                        ]);
+                        setRelatedNoteQuery("");
+                        setIsRelatedDropdownOpen(false);
+                      }}
+                      className="cursor-pointer px-4 py-2 hover:bg-gray-700 hover:text-white"
+                    >
+                      {candidate.title}
+                    </li>
+                  ))}
+                {!isRelatedLoading &&
+                  relatedNoteResults.filter(
+                    (candidate) =>
+                      (note?.id ? candidate.id !== note.id : true) &&
+                      candidate.title
+                        .toLowerCase()
+                        .includes(relatedNoteQuery.toLowerCase()) &&
+                      !selectedRelatedNotes.some(
+                        (selected) => selected.id === candidate.id
+                      )
+                  ).length === 0 && (
+                    <li className="px-4 py-2 text-gray-500">No matches</li>
+                  )}
+              </ul>
+            </div>
+          )}
+          {isRelatedDropdownOpen && (
+            <div
+              className="fixed inset-0 z-0"
+              onClick={() => setIsRelatedDropdownOpen(false)}
+            />
+          )}
+        </div>
       </div>
 
-      <div>
-        <label className="mb-2 block text-sm font-medium text-white">Content</label>
-        <textarea
-          placeholder="Enter note content"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={12}
-          className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white"
-          required
-        />
-      </div>
 
       <div>
         <label className="mb-2 block text-sm font-medium text-white">Folder</label>
@@ -309,6 +683,80 @@ function NoteForm({
         </label>
       </div>
     </form>
+  );
+}
+
+function BreadcrumbScroller({
+  backgroundColor,
+  children,
+}: {
+  backgroundColor: string;
+  children: React.ReactNode;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollState = React.useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const maxScrollLeft = el.scrollWidth - el.clientWidth;
+    setCanScrollLeft(el.scrollLeft > 0);
+    setCanScrollRight(el.scrollLeft < maxScrollLeft - 1);
+  }, []);
+
+  React.useEffect(() => {
+    updateScrollState();
+    const el = scrollRef.current;
+    if (!el) return;
+    const handleScroll = () => updateScrollState();
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll);
+    return () => {
+      el.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, [updateScrollState]);
+
+  const handleScroll = (direction: "left" | "right") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const offset = direction === "left" ? -140 : 140;
+    el.scrollBy({ left: offset, behavior: "smooth" });
+  };
+
+  return (
+    <div
+      className="relative -mx-4 -mb-4 rounded-b-lg"
+      style={{ backgroundColor }}
+    >
+      {canScrollLeft && (
+        <button
+          type="button"
+          aria-label="Scroll breadcrumb left"
+          onClick={() => handleScroll("left")}
+          className="absolute left-1 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/20 p-1 text-gray-700 hover:bg-black/30"
+        >
+          <ChevronLeft size={12} />
+        </button>
+      )}
+      {canScrollRight && (
+        <button
+          type="button"
+          aria-label="Scroll breadcrumb right"
+          onClick={() => handleScroll("right")}
+          className="absolute right-1 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/20 p-1 text-gray-700 hover:bg-black/30"
+        >
+          <ChevronRight size={12} />
+        </button>
+      )}
+      <div
+        ref={scrollRef}
+        className="flex items-center gap-1 overflow-x-auto px-5 py-2 pb-3 text-[10px] text-gray-700 scrollbar-hidden"
+      >
+        {children}
+      </div>
+    </div>
   );
 }
 
@@ -420,6 +868,7 @@ const buildBreadcrumbPath = (
 
 export default function NotesPage() {
   const { isMenuCollapsed } = useAdminLayout();
+  const { settings, updateSettings } = useNoteSettings();
   const [notes, setNotes] = useState<NoteWithRelations[]>([]);
   const [tags, setTags] = useState<TagRecord[]>([]);
   const [folderTree, setFolderTree] = useState<CategoryWithChildren[]>([]);
@@ -427,13 +876,32 @@ export default function NotesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPinned, setFilterPinned] = useState<boolean | undefined>(undefined);
   const [filterArchived, setFilterArchived] = useState<boolean | undefined>(undefined);
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedNote, setSelectedNote] = useState<NoteWithRelations | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [creatingFolderParentId, setCreatingFolderParentId] = useState<string | null | undefined>(undefined);
-  const [searchScope, setSearchScope] = useState<"both" | "title" | "content">("both");
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
+
+  // Use settings from context (including selectedFolderId)
+  const { sortBy, sortOrder, showTimestamps, showBreadcrumbs, searchScope, selectedFolderId } = settings;
+
+  // Helper to update selectedFolderId in settings
+  const setSelectedFolderId = (id: string | null) => {
+    updateSettings({ selectedFolderId: id });
+  };
+
+  // Sort notes based on current sort settings
+  const sortedNotes = React.useMemo(() => {
+    const sorted = [...notes].sort((a, b) => {
+      if (sortBy === "name") {
+        return a.title.localeCompare(b.title);
+      } else {
+        // Sort by created date
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      }
+    });
+    return sortOrder === "desc" ? sorted.reverse() : sorted;
+  }, [notes, sortBy, sortOrder]);
 
   const fetchFolderTree = React.useCallback(async () => {
     try {
@@ -879,6 +1347,9 @@ export default function NotesPage() {
                     availableTags={tags}
                     onSuccess={handleUpdateSuccess}
                     onTagCreated={fetchTags}
+                    onSelectRelatedNote={(noteId) => {
+                      void handleSelectNoteFromTree(noteId);
+                    }}
                   />
                 </div>
               ) : (
@@ -890,6 +1361,41 @@ export default function NotesPage() {
                   <div className="prose prose-invert max-w-none whitespace-pre-wrap text-gray-300">
                     {selectedNote.content}
                   </div>
+                  {(selectedNote.relationsFrom?.length || selectedNote.relationsTo?.length) && (
+                    <div className="mt-6 space-y-4">
+                      <div className="space-y-2">
+                        <div className="text-xs uppercase tracking-wide text-gray-400">
+                          Related Notes
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            ...(selectedNote.relationsFrom ?? []).map((relation) => ({
+                              id: relation.targetNote.id,
+                              title: relation.targetNote.title,
+                            })),
+                            ...(selectedNote.relationsTo ?? []).map((relation) => ({
+                              id: relation.sourceNote.id,
+                              title: relation.sourceNote.title,
+                            })),
+                          ]
+                            .filter(
+                              (noteItem, index, array) =>
+                                array.findIndex((item) => item.id === noteItem.id) === index
+                            )
+                            .map((related) => (
+                              <button
+                                key={related.id}
+                                type="button"
+                                onClick={() => void handleSelectNoteFromTree(related.id)}
+                                className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-left text-xs text-emerald-100 hover:border-emerald-400/60"
+                              >
+                                {related.title}
+                              </button>
+                            ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <div className="mt-8 pt-4 border-t border-gray-800 flex gap-6 text-sm text-gray-500">
                     <span>Created: {new Date(selectedNote.createdAt).toLocaleString()}</span>
                     <span>Modified: {new Date(selectedNote.updatedAt).toLocaleString()}</span>
@@ -980,7 +1486,7 @@ export default function NotesPage() {
                   {/* Search Scope Toggle */}
                   <div className="mt-2 flex gap-2">
                     <button
-                      onClick={() => setSearchScope("both")}
+                      onClick={() => updateSettings({ searchScope: "both" })}
                       className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
                         searchScope === "both"
                           ? "bg-blue-600 text-white"
@@ -992,7 +1498,7 @@ export default function NotesPage() {
                       <Heading size={14} />
                     </button>
                     <button
-                      onClick={() => setSearchScope("title")}
+                      onClick={() => updateSettings({ searchScope: "title" })}
                       className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
                         searchScope === "title"
                           ? "bg-blue-600 text-white"
@@ -1003,7 +1509,7 @@ export default function NotesPage() {
                       <Heading size={14} />
                     </button>
                     <button
-                      onClick={() => setSearchScope("content")}
+                      onClick={() => updateSettings({ searchScope: "content" })}
                       className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
                         searchScope === "content"
                           ? "bg-blue-600 text-white"
@@ -1013,6 +1519,69 @@ export default function NotesPage() {
                     >
                       <FileText size={14} />
                     </button>
+
+                    {/* Sort Controls */}
+                    <div className="ml-auto flex items-center gap-1">
+                      <span className="text-xs text-gray-500 mr-1">Sort:</span>
+                      <button
+                        onClick={() => updateSettings({ sortBy: "created" })}
+                        className={`rounded px-2 py-1 text-xs transition ${
+                          sortBy === "created"
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                        }`}
+                        title="Sort by created date"
+                      >
+                        Date
+                      </button>
+                      <button
+                        onClick={() => updateSettings({ sortBy: "name" })}
+                        className={`rounded px-2 py-1 text-xs transition ${
+                          sortBy === "name"
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                        }`}
+                        title="Sort by name"
+                      >
+                        Name
+                      </button>
+                      <button
+                        onClick={() => updateSettings({ sortOrder: sortOrder === "asc" ? "desc" : "asc" })}
+                        className="rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition"
+                        title={sortOrder === "asc" ? "Ascending (click to change)" : "Descending (click to change)"}
+                      >
+                        {sortOrder === "asc" ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
+                      </button>
+                    </div>
+
+                    {/* Visibility Controls */}
+                    <div className="flex items-center gap-2 ml-2 pl-2 border-l border-gray-700">
+                      <span className="text-xs text-gray-500">Show:</span>
+                      <button
+                        onClick={() => updateSettings({ showTimestamps: !showTimestamps })}
+                        className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
+                          showTimestamps
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                        }`}
+                        title={showTimestamps ? "Hide timestamps" : "Show timestamps"}
+                      >
+                        {showTimestamps ? <Eye size={12} /> : <EyeOff size={12} />}
+                        <span>Dates</span>
+                      </button>
+                      <button
+                        onClick={() => updateSettings({ showBreadcrumbs: !showBreadcrumbs })}
+                        className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
+                          showBreadcrumbs
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                        }`}
+                        title={showBreadcrumbs ? "Hide breadcrumbs" : "Show breadcrumbs"}
+                      >
+                        {showBreadcrumbs ? <Eye size={12} /> : <EyeOff size={12} />}
+                        <span>Path</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <Button
@@ -1063,13 +1632,13 @@ export default function NotesPage() {
               {/* Notes Grid */}
               {loading ? (
                 <div className="text-center text-gray-400">Loading...</div>
-              ) : notes.length === 0 ? (
+              ) : sortedNotes.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-gray-700 p-12 text-center text-gray-400">
                   No notes found. Create your first note!
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {notes.map((note) => (
+                  {sortedNotes.map((note) => (
                     <div
                       key={note.id}
                       draggable
@@ -1103,38 +1672,43 @@ export default function NotesPage() {
                           </span>
                         ))}
                       </div>
-                      <div className="mt-3 flex flex-col gap-0.5 text-[10px] text-gray-500">
-                        <span>Created: {new Date(note.createdAt).toLocaleString()}</span>
-                        <span>Modified: {new Date(note.updatedAt).toLocaleString()}</span>
-                      </div>
+                      {showTimestamps && (
+                        <div className="mt-3 flex flex-col gap-0.5 text-[10px] text-gray-500">
+                          <span>Created: {new Date(note.createdAt).toLocaleString()}</span>
+                          <span>Modified: {new Date(note.updatedAt).toLocaleString()}</span>
+                        </div>
+                      )}
                       {/* Breadcrumbs */}
-                      <div
-                        className="mt-3 -mx-4 -mb-4 px-3 py-2 rounded-b-lg flex items-center gap-1 text-[10px] text-gray-700 overflow-x-auto"
-                        style={{ backgroundColor: darkenColor(note.color || "#ffffff", 20) }}
-                      >
-                        {buildBreadcrumbPath(
-                          note.categories[0]?.categoryId || null,
-                          null,
-                          folderTree
-                        ).map((crumb, index, array) => (
-                          <React.Fragment key={index}>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedFolderId(crumb.id);
-                                setSelectedNote(null);
-                                setIsEditing(false);
-                              }}
-                              className="hover:underline whitespace-nowrap"
-                            >
-                              {crumb.name}
-                            </button>
-                            {index < array.length - 1 && (
-                              <ChevronRight size={10} className="flex-shrink-0" />
-                            )}
-                          </React.Fragment>
-                        ))}
-                      </div>
+                      {showBreadcrumbs && (
+                        <div className={showTimestamps ? "mt-3" : "mt-2"}>
+                          <BreadcrumbScroller
+                            backgroundColor={darkenColor(note.color || "#ffffff", 20)}
+                          >
+                            {buildBreadcrumbPath(
+                              note.categories[0]?.categoryId || null,
+                              null,
+                              folderTree
+                            ).map((crumb, index, array) => (
+                              <React.Fragment key={index}>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedFolderId(crumb.id);
+                                    setSelectedNote(null);
+                                    setIsEditing(false);
+                                  }}
+                                  className="hover:underline whitespace-nowrap"
+                                >
+                                  {crumb.name}
+                                </button>
+                                {index < array.length - 1 && (
+                                  <ChevronRight size={10} className="flex-shrink-0" />
+                                )}
+                              </React.Fragment>
+                            ))}
+                          </BreadcrumbScroller>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1157,6 +1731,10 @@ export default function NotesPage() {
                 availableTags={tags}
                 onSuccess={handleCreateSuccess}
                 onTagCreated={fetchTags}
+                onSelectRelatedNote={(noteId) => {
+                  setIsCreating(false);
+                  void handleSelectNoteFromTree(noteId);
+                }}
               />
             </ModalShell>
           </div>

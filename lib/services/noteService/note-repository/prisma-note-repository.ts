@@ -37,6 +37,16 @@ export const prismaNoteRepository: NoteRepository = {
       include: {
         tags: { include: { tag: true } },
         categories: { include: { category: true } },
+        relationsFrom: {
+          include: {
+            targetNote: { select: { id: true, title: true, color: true } },
+          },
+        },
+        relationsTo: {
+          include: {
+            sourceNote: { select: { id: true, title: true, color: true } },
+          },
+        },
       },
       orderBy: { updatedAt: "desc" },
     });
@@ -48,12 +58,22 @@ export const prismaNoteRepository: NoteRepository = {
       include: {
         tags: { include: { tag: true } },
         categories: { include: { category: true } },
+        relationsFrom: {
+          include: {
+            targetNote: { select: { id: true, title: true, color: true } },
+          },
+        },
+        relationsTo: {
+          include: {
+            sourceNote: { select: { id: true, title: true, color: true } },
+          },
+        },
       },
     });
   },
 
   async create(data: NoteCreateInput): Promise<NoteWithRelations> {
-    const { tagIds, categoryIds, ...rest } = data;
+    const { tagIds, categoryIds, relatedNoteIds, ...rest } = data;
 
     return prisma.note.create({
       data: {
@@ -66,16 +86,31 @@ export const prismaNoteRepository: NoteRepository = {
             category: { connect: { id: categoryId } },
           })),
         },
+        relationsFrom: {
+          create: relatedNoteIds?.map((targetNoteId) => ({
+            targetNote: { connect: { id: targetNoteId } },
+          })),
+        },
       },
       include: {
         tags: { include: { tag: true } },
         categories: { include: { category: true } },
+        relationsFrom: {
+          include: {
+            targetNote: { select: { id: true, title: true, color: true } },
+          },
+        },
+        relationsTo: {
+          include: {
+            sourceNote: { select: { id: true, title: true, color: true } },
+          },
+        },
       },
     });
   },
 
   async update(id: string, data: NoteUpdateInput): Promise<NoteWithRelations | null> {
-    const { tagIds, categoryIds, ...rest } = data;
+    const { tagIds, categoryIds, relatedNoteIds, ...rest } = data;
 
     const updateData: any = { ...rest };
 
@@ -95,6 +130,15 @@ export const prismaNoteRepository: NoteRepository = {
       };
     }
 
+    if (relatedNoteIds !== undefined) {
+      updateData.relationsFrom = {
+        deleteMany: {},
+        create: relatedNoteIds.map((targetNoteId) => ({
+          targetNote: { connect: { id: targetNoteId } },
+        })),
+      };
+    }
+
     console.log("[PrismaNoteRepository][update] updateData:", JSON.stringify(updateData, null, 2)); // Debug log
 
     try {
@@ -104,6 +148,16 @@ export const prismaNoteRepository: NoteRepository = {
         include: {
           tags: { include: { tag: true } },
           categories: { include: { category: true } },
+          relationsFrom: {
+            include: {
+              targetNote: { select: { id: true, title: true, color: true } },
+            },
+          },
+          relationsTo: {
+            include: {
+              sourceNote: { select: { id: true, title: true, color: true } },
+            },
+          },
         },
       });
     } catch {

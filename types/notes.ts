@@ -1,11 +1,28 @@
-import type { Note, Tag, Category, NoteTag, NoteCategory } from "@prisma/client";
+import type { Note, Tag, Category, NoteTag, NoteCategory, NoteRelation } from "@prisma/client";
 
 export type TagRecord = Tag;
 export type CategoryRecord = Category;
 
+// Simple note type for related notes (without nested relations to avoid circular references)
+export type RelatedNote = {
+  id: string;
+  title: string;
+  color: string | null;
+};
+
+export type NoteRelationWithTarget = NoteRelation & {
+  targetNote: RelatedNote;
+};
+
+export type NoteRelationWithSource = NoteRelation & {
+  sourceNote: RelatedNote;
+};
+
 export type NoteWithRelations = Note & {
   tags: (NoteTag & { tag: Tag })[];
   categories: (NoteCategory & { category: Category })[];
+  relationsFrom?: NoteRelationWithTarget[];
+  relationsTo?: NoteRelationWithSource[];
 };
 
 export type CategoryWithChildren = Category & {
@@ -21,6 +38,7 @@ export type NoteCreateInput = {
   isArchived?: boolean;
   tagIds?: string[];
   categoryIds?: string[];
+  relatedNoteIds?: string[];
 };
 
 export type NoteUpdateInput = Partial<NoteCreateInput>;

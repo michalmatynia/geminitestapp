@@ -4,30 +4,29 @@ npx tsc
 npx eslint
 add proper debugging on visual studio code
 
-Notes flicker when the Search field is updated
+
+In the Note taking app in Note list where Note cards are presented, In the Note Card the scroller overlaps the breadcrumb when used, the breadcrumb field should be slightly higher, so that when vertical scroller is used, it doesn't cover the content of the breadcrumb box.
+
+In the Note Taking app Edit note and Create Note , Move Tags to the underneath Content Field
+Relate notes to one another on drag relate
+
+In the Note Taking app Notes flicker when the Search field is updated
 
 When I'm in folder and filter by Tag, it should only filter the results by Tag in That specific folder that I am currently ni
 
-In folder tree, plus sign should create a note, a little folder should create a folder
+Add options for note the way Notes are presented in the Note List view. Add Grid placement with different granulation options (4 notes per row, 8 notes per row.), as well as a list view
 
-Note visibility, Grid placement, Sorting by date
 
-make the note app left hand side panel slighly wider
 
-EDIT note, I don't need duplicate borders at the top, tag borders arenough, tags should appear underneath
-
-Relate notes to one another on drag relate
-
-When I create a new Note, it should be created in the folder
-
-Search by folder breadcrumb
-clickable Breadcrumbs should be underneath timestamps (with options to hide the,timestamps too)
-
-bread crumbs should appear in a field 20% darker
 ALL NOTES | FAVOURITES
 
-UPDATE DELETE Buttons should be moved even higher
-Title above the Tags
+Note Pagination
+
+state of note taking app is not recorded, when I change the page, 
+
+Apply GPT Notes
+
+Notebooks
 
 # Database Restore not working
 

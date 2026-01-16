@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronLeftIcon } from "lucide-react";
 import dynamic from "next/dynamic";
 import { AdminLayoutProvider, useAdminLayout } from "@/lib/context/AdminLayoutContext";
+import { NoteSettingsProvider } from "@/lib/context/NoteSettingsContext";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
@@ -64,7 +65,9 @@ export default function AdminLayout({
 }) {
   return (
     <AdminLayoutProvider>
-      <AdminLayoutContent>{children}</AdminLayoutContent>
+      <NoteSettingsProvider>
+        <AdminLayoutContent>{children}</AdminLayoutContent>
+      </NoteSettingsProvider>
     </AdminLayoutProvider>
   );
 }

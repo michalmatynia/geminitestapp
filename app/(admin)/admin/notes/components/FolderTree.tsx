@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import { Folder, FolderOpen, ChevronRight, ChevronDown, Plus, Trash2, Edit2, FileText, FilePlus, FolderPlus, Copy } from "lucide-react";
-import type { CategoryWithChildren, NoteWithRelations } from "@/types/notes";
+import type { CategoryWithChildren } from "@/types/notes";
+import type { Note } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 
 interface FolderTreeProps {
@@ -51,7 +52,7 @@ interface FolderNodeProps {
 }
 
 interface NoteItemProps {
-  note: NoteWithRelations;
+  note: Note;
   level: number;
   isSelected: boolean;
   isRenaming: boolean;

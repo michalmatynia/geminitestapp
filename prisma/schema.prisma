@@ -477,6 +477,8 @@ model Note {
   updatedAt   DateTime  @updatedAt
   tags        NoteTag[]
   categories  NoteCategory[]
+  relationsFrom NoteRelation[] @relation("NoteRelationsFrom")
+  relationsTo   NoteRelation[] @relation("NoteRelationsTo")
 }
 
 model Tag {
@@ -521,4 +523,15 @@ model NoteCategory {
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@id([noteId, categoryId])
+}
+
+model NoteRelation {
+  sourceNoteId String
+  targetNoteId String
+  assignedAt   DateTime @default(now())
+
+  sourceNote   Note @relation("NoteRelationsFrom", fields: [sourceNoteId], references: [id], onDelete: Cascade)
+  targetNote   Note @relation("NoteRelationsTo", fields: [targetNoteId], references: [id], onDelete: Cascade)
+
+  @@id([sourceNoteId, targetNoteId])
 }

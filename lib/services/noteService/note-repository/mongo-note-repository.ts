@@ -25,10 +25,32 @@ type NoteCategoryEmbedded = {
   category: CategoryRecord;
 };
 
-type NoteDocument = Omit<NoteRecord, "tags" | "categories"> & {
+type RelatedNoteEmbedded = {
+  id: string;
+  title: string;
+  color: string | null;
+};
+
+type NoteRelationFromEmbedded = {
+  sourceNoteId: string;
+  targetNoteId: string;
+  assignedAt: Date;
+  targetNote: RelatedNoteEmbedded;
+};
+
+type NoteRelationToEmbedded = {
+  sourceNoteId: string;
+  targetNoteId: string;
+  assignedAt: Date;
+  sourceNote: RelatedNoteEmbedded;
+};
+
+type NoteDocument = Omit<NoteRecord, "tags" | "categories" | "relationsFrom" | "relationsTo"> & {
   _id: string;
   tags: NoteTagEmbedded[];
   categories: NoteCategoryEmbedded[];
+  relationsFrom?: NoteRelationFromEmbedded[];
+  relationsTo?: NoteRelationToEmbedded[];
 };
 
 type TagDocument = TagRecord & { _id: string };
@@ -49,6 +71,8 @@ const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => ({
   updatedAt: doc.updatedAt ?? new Date(),
   tags: Array.isArray(doc.tags) ? doc.tags : [],
   categories: Array.isArray(doc.categories) ? doc.categories : [],
+  relationsFrom: Array.isArray(doc.relationsFrom) ? doc.relationsFrom : [],
+  relationsTo: Array.isArray(doc.relationsTo) ? doc.relationsTo : [],
 });
 
 const toTagResponse = (doc: WithId<TagDocument>): TagRecord => ({
@@ -189,6 +213,24 @@ export const mongoNoteRepository: NoteRepository = {
       }));
     }
 
+    // Fetch related notes if provided
+    let relationsFrom: NoteRelationFromEmbedded[] = [];
+    if (data.relatedNoteIds && data.relatedNoteIds.length > 0) {
+      const relatedNoteDocs = await collection
+        .find({ $or: data.relatedNoteIds.map((noteId) => ({ $or: [{ id: noteId }, { _id: noteId }] })) })
+        .toArray();
+      relationsFrom = relatedNoteDocs.map((note) => ({
+        sourceNoteId: id,
+        targetNoteId: note.id ?? note._id,
+        assignedAt: now,
+        targetNote: {
+          id: note.id ?? note._id,
+          title: note.title,
+          color: note.color ?? null,
+        },
+      }));
+    }
+
     const doc: NoteDocument = {
       _id: id,
       id,
@@ -201,6 +243,8 @@ export const mongoNoteRepository: NoteRepository = {
       updatedAt: now,
       tags,
       categories,
+      relationsFrom,
+      relationsTo: [],
     };
 
     await collection.insertOne(doc as any);
@@ -268,6 +312,32 @@ export const mongoNoteRepository: NoteRepository = {
         }));
       }
       updateDoc.$set.categories = categories;
+    }
+
+    // Handle related notes update
+    if (data.relatedNoteIds !== undefined) {
+      let relationsFrom: NoteRelationFromEmbedded[] = [];
+      if (data.relatedNoteIds.length > 0) {
+        const now = new Date();
+        const relatedNoteDocs = await collection
+          .find({
+            $or: data.relatedNoteIds.map((noteId) => ({
+              $or: [{ id: noteId }, { _id: noteId }],
+            })),
+          })
+          .toArray();
+        relationsFrom = relatedNoteDocs.map((note) => ({
+          sourceNoteId: id,
+          targetNoteId: note.id ?? note._id,
+          assignedAt: now,
+          targetNote: {
+            id: note.id ?? note._id,
+            title: note.title,
+            color: note.color ?? null,
+          },
+        }));
+      }
+      updateDoc.$set.relationsFrom = relationsFrom;
     }
 
     const result = await collection.findOneAndUpdate(

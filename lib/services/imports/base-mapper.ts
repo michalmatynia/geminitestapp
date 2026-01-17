@@ -112,7 +112,143 @@ export function extractBaseImageUrls(record: BaseProductRecord): string[] {
   return Array.from(new Set(urls));
 }
 
-export function mapBaseProduct(record: BaseProductRecord): ProductCreateData {
+type TemplateMapping = {
+  sourceKey: string;
+  targetField: string;
+};
+
+const NUMBER_FIELDS = new Set([
+  "price",
+  "stock",
+  "sizeLength",
+  "sizeWidth",
+  "weight",
+  "length",
+]);
+
+const toStringValue = (value: unknown): string | null => {
+  if (Array.isArray(value)) {
+    const parts = value
+      .map((entry) => toTrimmedString(entry))
+      .filter((entry): entry is string => Boolean(entry));
+    return parts.length ? parts.join(", ") : null;
+  }
+  if (value && typeof value === "object") {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return null;
+    }
+  }
+  return toTrimmedString(value);
+};
+
+const toIntValue = (value: unknown): number | null => {
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const parsed = toInt(entry);
+      if (parsed !== null) return parsed;
+    }
+    return null;
+  }
+  return toInt(value);
+};
+
+const getByPath = (record: BaseProductRecord, path: string[]): unknown => {
+  let current: unknown = record;
+  for (const key of path) {
+    if (!current || typeof current !== "object") return null;
+    current = (current as Record<string, unknown>)[key];
+  }
+  return current;
+};
+
+const findParameterValue = (
+  params: unknown,
+  sourceKey: string
+): unknown => {
+  if (!params) return null;
+  if (Array.isArray(params)) {
+    for (const entry of params) {
+      if (!entry || typeof entry !== "object") continue;
+      const record = entry as Record<string, unknown>;
+      const name = toTrimmedString(record.name ?? record.parameter ?? record.code);
+      const id = toTrimmedString(
+        record.id ?? record.parameter_id ?? record.param_id
+      );
+      if (name === sourceKey || id === sourceKey) {
+        return (
+          record.value ??
+          record.values ??
+          record.value_id ??
+          record.label ??
+          record.text
+        );
+      }
+    }
+    return null;
+  }
+  if (typeof params === "object") {
+    const record = params as Record<string, unknown>;
+    if (sourceKey in record) return record[sourceKey];
+  }
+  return null;
+};
+
+const resolveTemplateValue = (
+  record: BaseProductRecord,
+  sourceKey: string
+): unknown => {
+  if (!sourceKey) return null;
+  if (sourceKey.includes(".")) {
+    const path = sourceKey.split(".").map((part) => part.trim());
+    const value = getByPath(record, path);
+    if (value !== null && value !== undefined) return value;
+  }
+  if (sourceKey in record) {
+    return record[sourceKey];
+  }
+  const parameters =
+    record.parameters ?? record.params ?? record.attributes ?? null;
+  const parameterValue = findParameterValue(parameters, sourceKey);
+  if (parameterValue !== null && parameterValue !== undefined) {
+    return parameterValue;
+  }
+  const features = record.features ?? record.feature ?? null;
+  return findParameterValue(features, sourceKey);
+};
+
+const applyTemplateMappings = (
+  record: BaseProductRecord,
+  mapped: ProductCreateData,
+  mappings: TemplateMapping[]
+) => {
+  for (const mapping of mappings) {
+    const sourceKey = mapping.sourceKey.trim();
+    const targetField = mapping.targetField.trim();
+    if (!sourceKey || !targetField) continue;
+    const rawValue = resolveTemplateValue(record, sourceKey);
+    if (rawValue === null || rawValue === undefined) continue;
+    if (NUMBER_FIELDS.has(targetField)) {
+      const parsed = toIntValue(rawValue);
+      if (parsed === null) continue;
+      (mapped as Record<string, unknown>)[targetField] = parsed;
+      continue;
+    }
+    const stringValue = toStringValue(rawValue);
+    if (!stringValue) continue;
+    if (targetField === "sku") {
+      mapped.sku = stringValue;
+      continue;
+    }
+    (mapped as Record<string, unknown>)[targetField] = stringValue;
+  }
+};
+
+export function mapBaseProduct(
+  record: BaseProductRecord,
+  mappings: TemplateMapping[] = []
+): ProductCreateData {
   // Extend this mapper as new Base.com fields are needed.
   const baseProductId = pickString(record, [
     "base_product_id",
@@ -148,7 +284,7 @@ export function mapBaseProduct(record: BaseProductRecord): ProductCreateData {
   const sizeWidth = pickInt(record, ["sizeWidth", "width_cm"]);
   const length = pickInt(record, ["length"]);
 
-  return {
+  const mapped: ProductCreateData = {
     sku: sku ?? undefined,
     baseProductId: baseProductId ?? null,
     defaultPriceGroupId: null,
@@ -168,4 +304,10 @@ export function mapBaseProduct(record: BaseProductRecord): ProductCreateData {
     weight: weight ?? null,
     length: length ?? null,
   };
+
+  if (mappings.length > 0) {
+    applyTemplateMappings(record, mapped, mappings);
+  }
+
+  return mapped;
 }

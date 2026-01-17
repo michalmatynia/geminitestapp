@@ -35,6 +35,7 @@ export type Catalog = {
   description: string | null;
   isDefault: boolean;
   createdAt: string;
+  updatedAt: string;
   languageIds: string[];
   defaultLanguageId?: string | null;
   defaultPriceGroupId?: string | null;

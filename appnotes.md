@@ -7,16 +7,26 @@ add proper debugging on visual studio code
 # IN PROGRESS
 
 
+
+Base Imports need to have an Import Templates TAB where I can create different Import Templates that can map product parameters into individual Product fields, Templates can be import export or both ways
+
+Product import should be crosschecked against what I currently have in the database. 
+
+Mark template as default
+# AUTH START
+
+
+
+# AUTH END
+
+
+Multi APP manager
+Top right extendable menu
+that shows Active tools
+
 # PRODUCT LIST START
 
-
-
-Product list and currency, 
-
-Produc and Price Groop
-
-In Product List view, add a Currency dropdown, near langauge dropdown.  The currency dropdown is a default currency of the default price group attached to catalog, which can later be switched to other currencies attached to a price group attached to a catalog.
-
+## COURT CASE RESOLVER -> Notes WYSIWYG, select notebook
 
 ## Filters
 Add one button called Filter option that will hide show all available search fields and filter fields

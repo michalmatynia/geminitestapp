@@ -6,6 +6,9 @@ import fs from "fs/promises";
 import { getCatalogRepository } from "@/lib/services/catalog-repository";
 import { getImageFileRepository } from "@/lib/services/image-file-repository";
 import { getProductRepository } from "@/lib/services/product-repository";
+import { getImportTemplate } from "@/lib/services/import-template-repository";
+import { getIntegrationRepository } from "@/lib/services/integration-repository";
+import { decryptSecret } from "@/lib/utils/encryption";
 import {
   fetchBaseInventories,
   fetchBaseProducts,
@@ -16,9 +19,11 @@ import { productCreateSchema } from "@/lib/validations/product";
 export const runtime = "nodejs";
 
 const requestSchema = z.object({
-  token: z.string().trim().min(1),
+  token: z.string().trim().min(1).optional(),
   action: z.enum(["inventories", "import"]),
   inventoryId: z.string().trim().min(1).optional(),
+  catalogId: z.string().trim().min(1).optional(),
+  templateId: z.string().trim().min(1).optional(),
   limit: z.coerce.number().int().positive().optional(),
   imageMode: z.enum(["links", "download"]).optional(),
 });
@@ -27,9 +32,38 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const data = requestSchema.parse(body);
+    let token = data.token;
+
+    if (!token) {
+      const integrationRepo = await getIntegrationRepository();
+      const integrations = await integrationRepo.listIntegrations();
+      const baseIntegration = integrations.find((i) => i.slug === "baselinker");
+
+      if (baseIntegration) {
+        const connections = await integrationRepo.listConnections(
+          baseIntegration.id
+        );
+        // Use the first connection with a token
+        const connection = connections.find((c) => c.baseApiToken);
+        if (connection?.baseApiToken) {
+          try {
+            token = decryptSecret(connection.baseApiToken);
+          } catch {
+            // Ignore decryption errors, will fail later if token is still missing
+          }
+        }
+      }
+    }
+
+    if (!token) {
+      return NextResponse.json(
+        { error: "Base.com API token is required (or connect integration)." },
+        { status: 400 }
+      );
+    }
 
     if (data.action === "inventories") {
-      const inventories = await fetchBaseInventories(data.token);
+      const inventories = await fetchBaseInventories(token);
       return NextResponse.json({ inventories });
     }
 
@@ -41,26 +75,42 @@ export async function POST(req: Request) {
     }
 
     const [products, catalogRepository, productRepository, imageRepository] = await Promise.all([
-      fetchBaseProducts(data.token, data.inventoryId, data.limit),
+      fetchBaseProducts(token, data.inventoryId, data.limit),
       getCatalogRepository(),
       getProductRepository(),
       getImageFileRepository(),
     ]);
 
-    const catalogs = await catalogRepository.listCatalogs();
-    const defaultCatalog = catalogs.find((catalog) => catalog.isDefault);
-    if (!defaultCatalog) {
+    const template = data.templateId
+      ? await getImportTemplate(data.templateId)
+      : null;
+    if (data.templateId && !template) {
       return NextResponse.json(
-        { error: "Default catalog is required before importing products." },
+        { error: "Import template not found." },
         { status: 400 }
       );
     }
 
-    const defaultPriceGroup = await prisma.priceGroup.findFirst({
-      where: { isDefault: true },
-      select: { id: true },
-    });
-    if (!defaultPriceGroup) {
+    const catalogs = await catalogRepository.listCatalogs();
+    const defaultCatalog = catalogs.find((catalog) => catalog.isDefault);
+    const targetCatalog = data.catalogId
+      ? catalogs.find((catalog) => catalog.id === data.catalogId)
+      : defaultCatalog;
+    if (!targetCatalog) {
+      return NextResponse.json(
+        { error: "Selected catalog not found." },
+        { status: 400 }
+      );
+    }
+
+    const defaultPriceGroupId = targetCatalog.defaultPriceGroupId;
+    const defaultPriceGroup = defaultPriceGroupId
+      ? { id: defaultPriceGroupId }
+      : await prisma.priceGroup.findFirst({
+          where: { isDefault: true },
+          select: { id: true },
+        });
+    if (!defaultPriceGroup?.id) {
       return NextResponse.json(
         { error: "Default price group is required before importing products." },
         { status: 400 }
@@ -124,7 +174,7 @@ export async function POST(req: Request) {
 
     for (const raw of products) {
       try {
-        const mapped = mapBaseProduct(raw);
+        const mapped = mapBaseProduct(raw, template?.mappings ?? []);
         const payload = productCreateSchema.parse({
           ...mapped,
           defaultPriceGroupId: defaultPriceGroup.id,
@@ -134,7 +184,7 @@ export async function POST(req: Request) {
           throw new Error("Failed to create product.");
         }
         await productRepository.replaceProductCatalogs(created.id, [
-          defaultCatalog.id,
+          targetCatalog.id,
         ]);
 
         const imageUrls = extractBaseImageUrls(raw).slice(0, maxImages);
@@ -175,7 +225,7 @@ export async function POST(req: Request) {
       } catch (error: unknown) {
         if (isSkuConflict(error)) {
           try {
-            const mapped = mapBaseProduct(raw);
+            const mapped = mapBaseProduct(raw, template?.mappings ?? []);
             const fallbackSku = mapped.baseProductId
               ? `BASE-${mapped.baseProductId}`
               : undefined;
@@ -186,7 +236,7 @@ export async function POST(req: Request) {
             });
             const created = await productRepository.createProduct(payload);
             await productRepository.replaceProductCatalogs(created.id, [
-              defaultCatalog.id,
+              targetCatalog.id,
             ]);
 
             const imageUrls = extractBaseImageUrls(raw).slice(0, maxImages);

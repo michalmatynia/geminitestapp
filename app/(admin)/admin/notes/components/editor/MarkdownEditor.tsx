@@ -142,14 +142,14 @@ export function MarkdownEditor({
                 if (!(target instanceof HTMLElement)) return;
                 const wrapper = target.closest("[data-code]");
                 const button = wrapper?.querySelector("[data-copy-code]");
-                if (button) button.style.opacity = "1";
+                if (button instanceof HTMLElement) button.style.opacity = "1";
               }}
               onMouseOut={(e) => {
                 const target = e.target;
                 if (!(target instanceof HTMLElement)) return;
                 const wrapper = target.closest("[data-code]");
                 const button = wrapper?.querySelector("[data-copy-code]");
-                if (button) button.style.opacity = "0";
+                if (button instanceof HTMLElement) button.style.opacity = "0";
               }}
               onClick={(e) => {
                 const target = e.target;
@@ -171,7 +171,7 @@ export function MarkdownEditor({
                     .catch(() => toast("Failed to copy code"));
                   return;
                 }
-                if (target.tagName === "IMG") {
+                if (target instanceof HTMLImageElement && target.tagName === "IMG") {
                   const imgSrc = target.src;
                   setLightboxImage(imgSrc);
                 }

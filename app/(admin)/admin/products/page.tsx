@@ -13,6 +13,7 @@ import { useProductData } from "./hooks/useProductData";
 import { useProductOperations } from "./hooks/useProductOperations";
 import { useCatalogSync } from "./hooks/useCatalogSync";
 import { ProductModals } from "./components/ProductModals";
+import { ProductWithImages } from "@/types";
 
 function AdminPageInner() {
   const searchParams = useSearchParams();

@@ -21,8 +21,26 @@ describe("ProductListHeader Component", () => {
     catalogFilter: "all",
     setCatalogFilter: jest.fn(),
     catalogs: [
-      { id: "cat-1", name: "Catalog 1", description: null },
-      { id: "cat-2", name: "Catalog 2", description: null },
+      {
+        id: "cat-1",
+        name: "Catalog 1",
+        description: null,
+        isDefault: false,
+        createdAt: "2024-01-01T00:00:00.000Z",
+        updatedAt: "2024-01-01T00:00:00.000Z",
+        languageIds: ["en"],
+        priceGroupIds: ["pg-1"],
+      },
+      {
+        id: "cat-2",
+        name: "Catalog 2",
+        description: null,
+        isDefault: false,
+        createdAt: "2024-01-01T00:00:00.000Z",
+        updatedAt: "2024-01-01T00:00:00.000Z",
+        languageIds: ["en"],
+        priceGroupIds: ["pg-1"],
+      },
     ],
   };
 

@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Catalog } from "./ProductTableFooter";
+import type { Catalog } from "@/types/products";
 
 interface ProductListHeaderProps {
   onOpenCreateModal: () => Promise<void>;

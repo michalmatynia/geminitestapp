@@ -205,13 +205,24 @@ export default function Menu() {
         <UploadIcon className="mr-2" />
         {!isMenuCollapsed && "Import"}
       </Link>
-      <Link
+      <CollapsibleMenu
+        title="Integrations"
+        icon={<PlugIcon />}
         href="/admin/integrations"
-        className="flex items-center hover:bg-gray-700 p-2 rounded"
       >
-        <PlugIcon className="mr-2" />
-        {!isMenuCollapsed && "Integrations"}
-      </Link>
+        <Link
+          href="/admin/integrations"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Overview
+        </Link>
+        <Link
+          href="/admin/integrations/settings"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Settings
+        </Link>
+      </CollapsibleMenu>
       <CollapsibleMenu title="Chatbot" icon={<MessageCircleIcon />} href="/admin/chatbot">
         <Link
           href="/admin/chatbot/sessions"

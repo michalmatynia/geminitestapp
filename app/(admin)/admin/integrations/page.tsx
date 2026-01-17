@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PlusIcon, SettingsIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/toast";
@@ -17,6 +18,10 @@ type IntegrationConnection = {
   integrationId: string;
   name: string;
   username: string;
+  hasAllegroAccessToken?: boolean;
+  allegroTokenUpdatedAt?: string | null;
+  allegroExpiresAt?: string | null;
+  allegroScope?: string | null;
   hasPlaywrightStorageState?: boolean;
   playwrightStorageStateUpdatedAt?: string | null;
   playwrightHeadless?: boolean;
@@ -111,8 +116,15 @@ const defaultPlaywrightSettings = {
   deviceName: "Desktop Chrome",
 };
 
+const integrationDefinitions = [
+  { name: "Tradera", slug: "tradera" },
+  { name: "Allegro", slug: "allegro" },
+] as const;
+
 export default function IntegrationsPage() {
   const { toast } = useToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [activeIntegration, setActiveIntegration] =
     useState<Integration | null>(null);
@@ -182,6 +194,41 @@ export default function IntegrationsPage() {
   );
 
   const activeConnection = connections[0] || null;
+  const integrationSlug = activeIntegration?.slug ?? "";
+  const isTradera = integrationSlug === "tradera";
+  const isAllegro = integrationSlug === "allegro";
+  const showPlaywright = isTradera;
+  const allegroConnected = Boolean(activeConnection?.hasAllegroAccessToken);
+  const allegroExpiresAt = activeConnection?.allegroExpiresAt
+    ? new Date(activeConnection.allegroExpiresAt).toLocaleString()
+    : "—";
+  const connectionNamePlaceholder = isAllegro
+    ? "Integration name (e.g. Allegro Main)"
+    : "Integration name (e.g. John's Tradera)";
+  const usernameLabel = isAllegro ? "Allegro client ID" : "Tradera username";
+  const usernamePlaceholder = isAllegro
+    ? "Allegro client ID"
+    : "Tradera username";
+  const passwordLabel = isAllegro
+    ? "Allegro client secret"
+    : "Tradera password";
+  const usernameRequiredLabel = isAllegro ? "client ID" : "username";
+  const passwordRequiredLabel = isAllegro ? "Client secret" : "Password";
+
+  useEffect(() => {
+    const status = searchParams.get("allegro");
+    if (!status) return;
+    if (status === "connected") {
+      toast("Allegro connected.", { variant: "success" });
+    } else {
+      const reason = searchParams.get("reason");
+      const message = reason
+        ? `Allegro authorization failed: ${reason}`
+        : "Allegro authorization failed.";
+      toast(message, { variant: "error" });
+    }
+    router.replace("/admin/integrations");
+  }, [router, searchParams, toast]);
 
   useEffect(() => {
     if (!showPlaywrightSaved) return;
@@ -200,11 +247,8 @@ export default function IntegrationsPage() {
     void fetchIntegrations();
   }, []);
 
-  const integrationNames = integrations.map((integration) => integration.name);
-  const traderaIntegration = useMemo(
-    () => integrations.find((integration) => integration.slug === "tradera"),
-    [integrations]
-  );
+  const integrationSlugs = integrations.map((integration) => integration.slug);
+  const hasIntegrations = integrations.length > 0;
 
   const refreshConnections = async (integrationId: string) => {
     const res = await fetch(`/api/integrations/${integrationId}/connections`);
@@ -280,16 +324,21 @@ export default function IntegrationsPage() {
     }
   }, [connections, editingConnectionId]);
 
-  const ensureTradera = async () => {
-    if (traderaIntegration) return traderaIntegration;
+  const ensureIntegration = async (definition: (typeof integrationDefinitions)[number]) => {
+    const existing = integrations.find(
+      (integration) => integration.slug === definition.slug
+    );
+    if (existing) return existing;
     const res = await fetch("/api/integrations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: "Tradera", slug: "tradera" }),
+      body: JSON.stringify({ name: definition.name, slug: definition.slug }),
     });
     if (!res.ok) {
       const error = (await res.json()) as { error?: string };
-      toast(error.error || "Failed to add Tradera.", { variant: "error" });
+      toast(error.error || `Failed to add ${definition.name}.`, {
+        variant: "error",
+      });
       return null;
     }
     const created = (await res.json()) as Integration;
@@ -297,8 +346,10 @@ export default function IntegrationsPage() {
     return created;
   };
 
-  const handleTraderaClick = async () => {
-    const integration = await ensureTradera();
+  const handleIntegrationClick = async (
+    definition: (typeof integrationDefinitions)[number]
+  ) => {
+    const integration = await ensureIntegration(definition);
     if (!integration) return;
     setActiveIntegration(integration);
     await refreshConnections(integration.id);
@@ -308,11 +359,13 @@ export default function IntegrationsPage() {
   const handleSaveConnection = async () => {
     if (!activeIntegration) return;
     if (!connectionForm.name.trim() || !connectionForm.username.trim()) {
-      toast("Connection name and username are required.", { variant: "error" });
+      toast(`Connection name and ${usernameRequiredLabel} are required.`, {
+        variant: "error",
+      });
       return;
     }
     if (!editingConnectionId && !connectionForm.password.trim()) {
-      toast("Password is required.", { variant: "error" });
+      toast(`${passwordRequiredLabel} is required.`, { variant: "error" });
       return;
     }
     const payload = {
@@ -339,6 +392,31 @@ export default function IntegrationsPage() {
     }
     setConnectionForm({ name: "", username: "", password: "" });
     setEditingConnectionId(null);
+    await refreshConnections(activeIntegration.id);
+  };
+
+  const handleAllegroAuthorize = () => {
+    if (!activeIntegration || !activeConnection) {
+      toast("Create an Allegro connection first.", { variant: "error" });
+      return;
+    }
+    window.location.href = `/api/integrations/${activeIntegration.id}/connections/${activeConnection.id}/allegro/authorize`;
+  };
+
+  const handleAllegroDisconnect = async () => {
+    if (!activeIntegration || !activeConnection) return;
+    const res = await fetch(
+      `/api/integrations/${activeIntegration.id}/connections/${activeConnection.id}/allegro/disconnect`,
+      { method: "POST" }
+    );
+    if (!res.ok) {
+      const error = (await res.json()) as { error?: string };
+      toast(error.error || "Failed to disconnect Allegro.", {
+        variant: "error",
+      });
+      return;
+    }
+    toast("Allegro disconnected.", { variant: "success" });
     await refreshConnections(activeIntegration.id);
   };
 
@@ -619,12 +697,14 @@ export default function IntegrationsPage() {
                 <p className="mt-2 text-xl font-semibold">Stardb Hub</p>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3">
-                {integrationNames.includes("Tradera") && (
+                {integrationSlugs.includes("tradera") && (
                   <div className="flex items-center gap-2 rounded-full border border-sky-400/50 bg-sky-500/10 px-3 py-1.5 text-xs text-sky-200">
                     Tradera
                     <button
                       type="button"
-                      onClick={handleTraderaClick}
+                      onClick={() =>
+                        handleIntegrationClick(integrationDefinitions[0])
+                      }
                       className="rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20"
                       aria-label="Manage Tradera settings"
                     >
@@ -632,7 +712,22 @@ export default function IntegrationsPage() {
                     </button>
                   </div>
                 )}
-                {!integrationNames.includes("Tradera") && (
+                {integrationSlugs.includes("allegro") && (
+                  <div className="flex items-center gap-2 rounded-full border border-amber-400/50 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-200">
+                    Allegro
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleIntegrationClick(integrationDefinitions[1])
+                      }
+                      className="rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20"
+                      aria-label="Manage Allegro settings"
+                    >
+                      <SettingsIcon className="size-3.5" />
+                    </button>
+                  </div>
+                )}
+                {!hasIntegrations && (
                   <div className="text-xs text-gray-500">
                     No integrations added yet.
                   </div>
@@ -680,12 +775,16 @@ export default function IntegrationsPage() {
             </div>
 
             <Tabs defaultValue="connections">
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList
+                className={`grid w-full ${showPlaywright ? "grid-cols-5" : "grid-cols-4"}`}
+              >
                 <TabsTrigger value="connections">Connections</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
                 <TabsTrigger value="price-sync">Price Sync</TabsTrigger>
                 <TabsTrigger value="inventory-sync">Inventory Sync</TabsTrigger>
-                <TabsTrigger value="playwright">Playwright</TabsTrigger>
+                {showPlaywright && (
+                  <TabsTrigger value="playwright">Playwright</TabsTrigger>
+                )}
               </TabsList>
 
               <TabsContent value="connections" className="mt-4 space-y-6">
@@ -703,7 +802,7 @@ export default function IntegrationsPage() {
                         </label>
                         <input
                           className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white"
-                          placeholder="Integration name (e.g. John's Tradera)"
+                          placeholder={connectionNamePlaceholder}
                           value={connectionForm.name}
                           onChange={(event) =>
                             setConnectionForm((prev) => ({
@@ -715,11 +814,11 @@ export default function IntegrationsPage() {
                       </div>
                       <div>
                         <label className="text-xs text-gray-400">
-                          Tradera username
+                          {usernameLabel}
                         </label>
                         <input
                           className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white"
-                          placeholder="Tradera username"
+                          placeholder={usernamePlaceholder}
                           value={connectionForm.username}
                           onChange={(event) =>
                             setConnectionForm((prev) => ({
@@ -731,15 +830,19 @@ export default function IntegrationsPage() {
                       </div>
                       <div>
                         <label className="text-xs text-gray-400">
-                          Tradera password
+                          {passwordLabel}
                         </label>
                         <input
                           className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white"
                           type="password"
                           placeholder={
                             editingConnectionId
-                              ? "New password (leave blank to keep)"
-                              : "Tradera password"
+                              ? isAllegro
+                                ? "New client secret (leave blank to keep)"
+                                : "New password (leave blank to keep)"
+                              : isAllegro
+                                ? "Allegro client secret"
+                                : "Tradera password"
                           }
                           value={connectionForm.password}
                           onChange={(event) =>
@@ -786,13 +889,15 @@ export default function IntegrationsPage() {
                               </p>
                             </div>
                             <div className="flex items-center gap-3">
-                              <button
-                                className="text-xs text-sky-300 hover:text-sky-200"
-                                type="button"
-                                onClick={() => handleTestConnection(connection)}
-                              >
-                                Test
-                              </button>
+                              {showPlaywright && (
+                                <button
+                                  className="text-xs text-sky-300 hover:text-sky-200"
+                                  type="button"
+                                  onClick={() => handleTestConnection(connection)}
+                                >
+                                  Test
+                                </button>
+                              )}
                               <button
                                 className="text-xs text-red-400 hover:text-red-300"
                                 type="button"
@@ -807,67 +912,128 @@ export default function IntegrationsPage() {
                         ))}
                       </div>
                     )}
-
-                    <div className="mt-4 rounded-md border border-gray-800 bg-gray-950/60 p-3">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs font-semibold text-gray-300">
-                          Playwright live update
-                        </p>
-                        <span className="text-xs text-gray-500">
-                          {isTesting ? "Running..." : "Idle"}
-                        </span>
-                      </div>
-
-                      {testLog.length === 0 ? (
-                        <p className="mt-2 text-xs text-gray-500">
-                          Run a connection test to see live updates.
-                        </p>
-                      ) : (
-                        <div className="mt-2 max-h-40 space-y-2 overflow-y-auto text-xs text-gray-400">
-                          {testLog.map((entry, index) => (
-                            <div
-                              key={`${entry.step}-${index}`}
-                              className="flex items-center justify-between gap-3"
-                            >
-                              <p>{entry.step}</p>
-                              {entry.status !== "pending" && (
-                                <button
-                                  type="button"
-                                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                                    entry.status === "ok"
-                                      ? "bg-emerald-500/20 text-emerald-200"
-                                      : "bg-red-500/20 text-red-200"
-                                  }`}
-                                  onClick={() => {
-                                    const detail =
-                                      entry.detail ||
-                                      (entry.status === "failed"
-                                        ? lastTestError || ""
-                                        : "");
-                                    setSelectedStep({
-                                      step: entry.step,
-                                      status:
-                                        entry.status === "ok" ? "ok" : "failed",
-                                      timestamp: entry.timestamp,
-                                      detail,
-                                    });
-                                    setShowTestLogModal(true);
-                                  }}
-                                >
-                                  {entry.status === "ok" ? "OK" : "FAILED"}
-                                </button>
-                              )}
-                            </div>
-                          ))}
+                    {showPlaywright && (
+                      <div className="mt-4 rounded-md border border-gray-800 bg-gray-950/60 p-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-semibold text-gray-300">
+                            Playwright live update
+                          </p>
+                          <span className="text-xs text-gray-500">
+                            {isTesting ? "Running..." : "Idle"}
+                          </span>
                         </div>
-                      )}
-                    </div>
+
+                        {testLog.length === 0 ? (
+                          <p className="mt-2 text-xs text-gray-500">
+                            Run a connection test to see live updates.
+                          </p>
+                        ) : (
+                          <div className="mt-2 max-h-40 space-y-2 overflow-y-auto text-xs text-gray-400">
+                            {testLog.map((entry, index) => (
+                              <div
+                                key={`${entry.step}-${index}`}
+                                className="flex items-center justify-between gap-3"
+                              >
+                                <p>{entry.step}</p>
+                                {entry.status !== "pending" && (
+                                  <button
+                                    type="button"
+                                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                      entry.status === "ok"
+                                        ? "bg-emerald-500/20 text-emerald-200"
+                                        : "bg-red-500/20 text-red-200"
+                                    }`}
+                                    onClick={() => {
+                                      const detail =
+                                        entry.detail ||
+                                        (entry.status === "failed"
+                                          ? lastTestError || ""
+                                          : "");
+                                      setSelectedStep({
+                                        step: entry.step,
+                                        status:
+                                          entry.status === "ok"
+                                            ? "ok"
+                                            : "failed",
+                                        timestamp: entry.timestamp,
+                                        detail,
+                                      });
+                                      setShowTestLogModal(true);
+                                    }}
+                                  >
+                                    {entry.status === "ok" ? "OK" : "FAILED"}
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </TabsContent>
 
               <TabsContent value="settings" className="mt-4">
-                <div className="min-h-[220px]" />
+                {isAllegro ? (
+                  <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900/60 p-4 text-sm text-gray-200">
+                    <div>
+                      <h3 className="text-sm font-semibold text-white">
+                        Allegro OAuth
+                      </h3>
+                      <p className="mt-1 text-xs text-gray-400">
+                        Provide your Allegro client ID and client secret in the
+                        connection fields, then authorize access.
+                      </p>
+                    </div>
+                    {!activeConnection ? (
+                      <div className="rounded-md border border-dashed border-gray-800 p-4 text-xs text-gray-400">
+                        Add a connection first to enable Allegro authorization.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300">
+                          <div className="flex items-center justify-between">
+                            <span>Authorization status</span>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                allegroConnected
+                                  ? "bg-emerald-500/20 text-emerald-200"
+                                  : "bg-amber-500/20 text-amber-200"
+                              }`}
+                            >
+                              {allegroConnected ? "Connected" : "Not connected"}
+                            </span>
+                          </div>
+                          <p className="mt-2">
+                            <span className="text-gray-400">Expires:</span>{" "}
+                            {allegroExpiresAt}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={handleAllegroAuthorize}
+                            className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
+                          >
+                            {allegroConnected ? "Reauthorize" : "Connect Allegro"}
+                          </button>
+                          {allegroConnected && (
+                            <button
+                              type="button"
+                              onClick={handleAllegroDisconnect}
+                              className="rounded-md border border-gray-700 px-3 py-2 text-sm text-gray-200 hover:border-gray-500"
+                            >
+                              Disconnect
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="min-h-[220px]" />
+                )}
               </TabsContent>
               <TabsContent value="price-sync" className="mt-4">
                 <div className="min-h-[220px]" />
@@ -876,8 +1042,9 @@ export default function IntegrationsPage() {
                 <div className="min-h-[220px]" />
               </TabsContent>
 
-              <TabsContent value="playwright" className="mt-4">
-                <div className="max-h-[70vh] overflow-y-auto rounded-lg border border-gray-800 bg-gray-900/60 p-4">
+              {showPlaywright && (
+                <TabsContent value="playwright" className="mt-4">
+                  <div className="max-h-[70vh] overflow-y-auto rounded-lg border border-gray-800 bg-gray-900/60 p-4">
                   <h3 className="text-sm font-semibold text-white">
                     Playwright settings
                   </h3>
@@ -1319,7 +1486,8 @@ export default function IntegrationsPage() {
                     </div>
                   </div>
                 </div>
-              </TabsContent>
+                </TabsContent>
+              )}
             </Tabs>
           </div>
         </div>

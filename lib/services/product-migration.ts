@@ -48,6 +48,9 @@ type ProductDocument = {
   sku: string | null;
   baseProductId?: string | null;
   defaultPriceGroupId?: string | null;
+  ean?: string | null;
+  gtin?: string | null;
+  asin?: string | null;
   name_en: string | null;
   name_pl: string | null;
   name_de: string | null;
@@ -86,6 +89,9 @@ type ProductInput = {
   sku: string | null;
   baseProductId?: string | null;
   defaultPriceGroupId?: string | null;
+  ean?: string | null;
+  gtin?: string | null;
+  asin?: string | null;
   name_en: string | null;
   name_pl: string | null;
   name_de: string | null;
@@ -148,6 +154,9 @@ const buildProductDocument = (product: ProductInput): ProductDocument => ({
   sku: product.sku ?? null,
   baseProductId: product.baseProductId ?? null,
   defaultPriceGroupId: product.defaultPriceGroupId ?? null,
+  ean: product.ean ?? null,
+  gtin: product.gtin ?? null,
+  asin: product.asin ?? null,
   name_en: product.name_en ?? null,
   name_pl: product.name_pl ?? null,
   name_de: product.name_de ?? null,
@@ -378,6 +387,9 @@ export async function migrateProductBatch({
           sku: doc.sku ?? undefined,
           baseProductId: doc.baseProductId ?? undefined,
           defaultPriceGroupId: doc.defaultPriceGroupId ?? undefined,
+          ean: doc.ean ?? undefined,
+          gtin: doc.gtin ?? undefined,
+          asin: doc.asin ?? undefined,
           name_en: doc.name_en ?? undefined,
           name_pl: doc.name_pl ?? undefined,
           name_de: doc.name_de ?? undefined,
@@ -401,6 +413,9 @@ export async function migrateProductBatch({
           sku: doc.sku ?? undefined,
           baseProductId: doc.baseProductId ?? undefined,
           defaultPriceGroupId: doc.defaultPriceGroupId ?? undefined,
+          ean: doc.ean ?? undefined,
+          gtin: doc.gtin ?? undefined,
+          asin: doc.asin ?? undefined,
           name_en: doc.name_en ?? undefined,
           name_pl: doc.name_pl ?? undefined,
           name_de: doc.name_de ?? undefined,

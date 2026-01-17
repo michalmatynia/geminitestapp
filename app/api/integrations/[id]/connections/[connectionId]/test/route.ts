@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { decryptSecret, encryptSecret } from "@/lib/utils/encryption";
 import { chromium, devices } from "playwright";
 import { randomUUID } from "crypto";
@@ -70,14 +70,27 @@ export async function POST(
     integrationId = id;
     integrationConnectionId = connectionId;
     pushStep("Loading connection", "pending", "Fetching stored credentials");
-    const connection = await prisma.integrationConnection.findFirst({
-      where: { id: connectionId, integrationId: id },
-    });
+    const repo = await getIntegrationRepository();
+    const connection = await repo.getConnectionByIdAndIntegration(connectionId, id);
 
     if (!connection) {
       return fail("Loading connection", "Connection not found", 404);
     }
     pushStep("Loading connection", "ok", "Connection loaded");
+
+    const integration = await repo.getIntegrationById(id);
+
+    if (!integration) {
+      return fail("Loading integration", "Integration not found", 404);
+    }
+
+    if (integration.slug !== "tradera") {
+      return fail(
+        "Connection test",
+        `${integration.name} connection tests are not configured yet.`,
+        400
+      );
+    }
 
     // Decrypt to ensure credentials are readable with the configured key.
     pushStep(
@@ -872,12 +885,9 @@ export async function POST(
       );
       try {
         const storageState = await page.context().storageState();
-        await prisma.integrationConnection.update({
-          where: { id: connection.id },
-          data: {
-            playwrightStorageState: encryptSecret(JSON.stringify(storageState)),
-            playwrightStorageStateUpdatedAt: new Date(),
-          },
+        await repo.updateConnection(connection.id, {
+          playwrightStorageState: encryptSecret(JSON.stringify(storageState)),
+          playwrightStorageStateUpdatedAt: new Date(),
         });
         pushStep("Saving session", "ok", "Session stored for reuse");
       } catch (error) {

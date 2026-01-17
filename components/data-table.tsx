@@ -30,6 +30,8 @@ interface DataTableProps<TData> {
   productNameKey?: "name_en" | "name_pl" | "name_de";
   onProductNameClick?: (row: TData) => void;
   onProductEditClick?: (row: TData) => void;
+  onIntegrationsClick?: (row: TData) => void;
+  integrationBadgeIds?: Set<string>;
   getRowId?: (row: TData) => string | number;
   footer?: (table: ReactTable<TData>) => React.ReactNode;
 }
@@ -40,6 +42,8 @@ declare module "@tanstack/react-table" {
     productNameKey?: "name_en" | "name_pl" | "name_de";
     onProductNameClick?: (row: TData) => void;
     onProductEditClick?: (row: TData) => void;
+    onIntegrationsClick?: (row: TData) => void;
+    integrationBadgeIds?: Set<string>;
   }
 }
 
@@ -52,6 +56,8 @@ export function DataTable<TData>({
   productNameKey,
   onProductNameClick,
   onProductEditClick,
+  onIntegrationsClick,
+  integrationBadgeIds,
   getRowId,
   footer,
 }: DataTableProps<TData>) {
@@ -100,6 +106,8 @@ export function DataTable<TData>({
       ...(productNameKey ? { productNameKey } : {}),
       ...(onProductNameClick ? { onProductNameClick } : {}),
       ...(onProductEditClick ? { onProductEditClick } : {}),
+      ...(onIntegrationsClick ? { onIntegrationsClick } : {}),
+      ...(integrationBadgeIds ? { integrationBadgeIds } : {}),
     },
   });
 

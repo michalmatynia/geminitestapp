@@ -4,56 +4,7 @@ import { Button } from "@/components/ui/button";
 import { NotesFilters } from "./NotesFilters";
 import { NoteCard } from "./NoteCard";
 import { buildBreadcrumbPath } from "../utils";
-import type { NoteWithRelations, CategoryWithChildren, ThemeRecord, TagRecord } from "@/types/notes";
-import type { NoteSettings } from "@/types/notes-settings";
-
-interface NoteListViewProps {
-  loading: boolean;
-  sortedNotes: NoteWithRelations[];
-  pagedNotes: NoteWithRelations[];
-  page: number;
-  totalPages: number;
-  setPage: (page: number) => void;
-  pageSize: number;
-  setPageSize: (size: number) => void;
-  selectedFolderId: string | null;
-  folderTree: CategoryWithChildren[];
-  isFolderTreeCollapsed: boolean;
-  onExpandFolderTree: () => void;
-  onCreateNote: () => void;
-  selectedFolderThemeId: string;
-  themes: ThemeRecord[];
-  onThemeChange: (id: string | null) => void;
-  availableTagsInScope: TagRecord[];
-  filterTagIds: string[];
-  setFilterTagIds: (ids: string[]) => void;
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  searchScope: "both" | "title" | "content";
-  updateSettings: (settings: Partial<NoteSettings>) => void;
-  sortBy: NoteSettings["sortBy"];
-  sortOrder: NoteSettings["sortOrder"];
-  showTimestamps: boolean;
-  showBreadcrumbs: boolean;
-  showRelatedNotes: boolean;
-  viewMode: NoteSettings["viewMode"];
-  gridDensity: NoteSettings["gridDensity"];
-  highlightTagId: string | null;
-  filterPinned: boolean | undefined;
-  setFilterPinned: (val: boolean | undefined) => void;
-  filterArchived: boolean | undefined;
-  setFilterArchived: (val: boolean | undefined) => void;
-  noteLayoutClassName: string;
-  getThemeForNote: (note: NoteWithRelations) => ThemeRecord | null;
-  onSelectNote: (note: NoteWithRelations) => void;
-  onSelectFolderFromCard: (id: string | null) => void;
-  onToggleFavorite: (note: NoteWithRelations) => void;
-  onDragStart: (id: string) => void;
-  onDragEnd: () => void;
-  setSelectedFolderId: (id: string | null) => void;
-  setSelectedNote: (note: NoteWithRelations | null) => void;
-  setIsEditing: (val: boolean) => void;
-}
+import type { NoteListViewProps } from "@/types/notes-ui";
 
 export function NoteListView({
   loading,

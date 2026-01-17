@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
+import { getIntegrationRepository } from "@/lib/services/integration-repository";
 
 const integrationSchema = z.object({
   name: z.string().trim().min(1),
@@ -14,9 +14,8 @@ const integrationSchema = z.object({
  */
 export async function GET() {
   try {
-    const integrations = await prisma.integration.findMany({
-      orderBy: { createdAt: "desc" },
-    });
+    const repo = await getIntegrationRepository();
+    const integrations = await repo.listIntegrations();
     return NextResponse.json(integrations);
   } catch (error) {
     const errorId = randomUUID();
@@ -52,14 +51,8 @@ export async function POST(req: Request) {
       );
     }
     const data = integrationSchema.parse(body);
-    if (!("integration" in prisma)) {
-      throw new Error("Prisma client is out of date. Run prisma generate.");
-    }
-    const integration = await prisma.integration.upsert({
-      where: { slug: data.slug },
-      update: { name: data.name },
-      create: data,
-    });
+    const repo = await getIntegrationRepository();
+    const integration = await repo.upsertIntegration(data);
     return NextResponse.json(integration);
   } catch (error: unknown) {
     const errorId = randomUUID();

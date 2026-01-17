@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import prisma from "@/lib/prisma";
+import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { decryptSecret } from "@/lib/utils/encryption";
 
 /**
@@ -17,9 +17,8 @@ export async function GET(
     const { id } = await params;
     connectionId = id;
 
-    const connection = await prisma.integrationConnection.findFirst({
-      where: { id: connectionId },
-    });
+    const repo = await getIntegrationRepository();
+    const connection = await repo.getConnectionById(connectionId);
 
     if (!connection) {
       return NextResponse.json(

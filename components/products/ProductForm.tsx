@@ -129,6 +129,36 @@ export default function ProductForm({
             )}
           </div>
 
+          <div className="mb-4 grid gap-4 md:grid-cols-3">
+            <div>
+              <Label htmlFor="ean">EAN</Label>
+              <Input id="ean" {...register("ean")} />
+            </div>
+            <div>
+              <Label htmlFor="gtin">GTIN</Label>
+              <Input id="gtin" {...register("gtin")} />
+            </div>
+            <div>
+              <Label htmlFor="asin">ASIN</Label>
+              <Input id="asin" {...register("asin")} />
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <Label htmlFor="baseProductId">Base ID</Label>
+            <Input
+              id="baseProductId"
+              {...register("baseProductId")}
+              disabled
+              className="bg-muted cursor-not-allowed"
+              placeholder="Imported from Base.com"
+              aria-readonly="true"
+            />
+            <p className="text-muted-foreground text-xs mt-1">
+              This ID is imported from Base.com and cannot be edited.
+            </p>
+          </div>
+
           <Tabs defaultValue="english-name" className="mb-4">
             <TabsList>
               {filteredLanguages.some((language) => language.code === "EN") && (

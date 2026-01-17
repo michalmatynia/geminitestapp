@@ -1,10 +1,5 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
-import type { NoteSettings } from "@/types/notes-settings";
-
-interface UseNoteFiltersProps {
-  settings: NoteSettings;
-  updateSettings: (settings: Partial<NoteSettings>) => void;
-}
+import { useState, useEffect, useCallback } from "react";
+import type { UseNoteFiltersProps } from "@/types/notes-hooks";
 
 export function useNoteFilters({ settings, updateSettings }: UseNoteFiltersProps) {
   const [searchQuery, setSearchQuery] = useState("");

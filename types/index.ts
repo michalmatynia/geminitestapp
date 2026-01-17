@@ -31,6 +31,9 @@ export type ProductRecord = {
   sku: string | null;
   baseProductId: string | null;
   defaultPriceGroupId: string | null;
+  ean: string | null;
+  gtin: string | null;
+  asin: string | null;
   name_en: string | null;
   name_pl: string | null;
   name_de: string | null;
@@ -72,3 +75,43 @@ export type ProductWithImages = ProductRecord & {
 
 // This is the Zod schema for the product form data.
 export type ProductFormData = z.infer<typeof productCreateSchema>;
+
+// Integration types for product listings
+export type IntegrationRecord = {
+  id: string;
+  name: string;
+  slug: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type IntegrationConnectionBasic = {
+  id: string;
+  name: string;
+  integrationId: string;
+};
+
+export type IntegrationWithConnections = IntegrationRecord & {
+  connections: IntegrationConnectionBasic[];
+};
+
+export type ProductListingRecord = {
+  id: string;
+  productId: string;
+  integrationId: string;
+  connectionId: string;
+  externalListingId: string | null;
+  status: string;
+  listedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  integration: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  connection: {
+    id: string;
+    name: string;
+  };
+};

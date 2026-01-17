@@ -4,29 +4,8 @@ import { Button } from "@/components/ui/button";
 import { NoteForm } from "./NoteForm";
 import { buildBreadcrumbPath, renderMarkdownToHtml } from "../utils";
 import type { NoteWithRelations, CategoryWithChildren, TagRecord, ThemeRecord } from "@/types/notes";
+import type { NoteDetailViewProps } from "@/types/notes-ui";
 import { useToast } from "@/components/ui/toast";
-
-interface NoteDetailViewProps {
-  selectedNote: NoteWithRelations;
-  folderTree: CategoryWithChildren[];
-  selectedFolderId: string | null;
-  isFolderTreeCollapsed: boolean;
-  onExpandFolderTree: () => void;
-  setSelectedFolderId: (id: string | null) => void;
-  setSelectedNote: (note: NoteWithRelations | null) => void;
-  isEditing: boolean;
-  setIsEditing: (val: boolean) => void;
-  onToggleFavorite: (note: NoteWithRelations) => void;
-  onDeleteNote: () => Promise<void>;
-  tags: TagRecord[];
-  selectedNotebookId: string | null;
-  onUpdateSuccess: () => void;
-  fetchTags: () => void;
-  selectedNoteTheme: ThemeRecord | null;
-  onSelectRelatedNote: (noteId: string) => void;
-  onFilterByTag: (tagId: string) => void;
-  onUnlinkRelatedNote: (relatedId: string) => Promise<void>;
-}
 
 export function NoteDetailView({
   selectedNote,

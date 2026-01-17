@@ -2,7 +2,8 @@
 
 import React from "react";
 import { ChevronRight, Pin, Star } from "lucide-react";
-import type { CategoryWithChildren, NoteWithRelations, ThemeRecord } from "@/types/notes";
+import type { NoteWithRelations, ThemeRecord } from "@/types/notes";
+import type { NoteCardProps } from "@/types/notes-ui";
 import { BreadcrumbScroller } from "./BreadcrumbScroller";
 import { darkenColor, renderMarkdownToHtml } from "../utils";
 
@@ -34,25 +35,7 @@ function NoteCardBase({
   onDragEnd,
   buildBreadcrumbPath,
   theme,
-}: {
-  note: NoteWithRelations;
-  folderTree: CategoryWithChildren[];
-  showTimestamps: boolean;
-  showBreadcrumbs: boolean;
-  showRelatedNotes: boolean;
-  enableDrag?: boolean;
-  onSelectNote: (note: NoteWithRelations) => void;
-  onSelectFolder: (folderId: string | null) => void;
-  onToggleFavorite: (note: NoteWithRelations) => void;
-  onDragStart: (noteId: string) => void;
-  onDragEnd: () => void;
-  buildBreadcrumbPath: (
-    categoryId: string | null,
-    noteTitle: string | null,
-    categories: CategoryWithChildren[]
-  ) => Array<{ id: string | null; name: string; isNote?: boolean }>;
-  theme?: ThemeRecord | null;
-}) {
+}: NoteCardProps) {
   // Use provided theme or fall back to dark mode theme
   const effectiveTheme = theme ?? FALLBACK_THEME;
 

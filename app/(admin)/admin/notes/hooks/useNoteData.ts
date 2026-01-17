@@ -1,18 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { NoteWithRelations, TagRecord, CategoryWithChildren, ThemeRecord, NotebookRecord } from "@/types/notes";
+import type { UseNoteDataProps } from "@/types/notes-hooks";
 import { getCategoryIdsWithDescendants } from "../utils";
-
-interface UseNoteDataProps {
-  selectedNotebookId: string | null;
-  selectedFolderId: string | null;
-  searchQuery: string;
-  searchScope: "both" | "title" | "content";
-  filterPinned?: boolean;
-  filterArchived?: boolean;
-  filterFavorite?: boolean;
-  filterTagIds: string[];
-  setSelectedNotebookId: (id: string | null) => void;
-}
 
 export function useNoteData({
   selectedNotebookId,

@@ -101,6 +101,9 @@ const toProductRecord = (product: {
   sku: string | null;
   baseProductId: string | null;
   defaultPriceGroupId: string | null;
+  ean: string | null;
+  gtin: string | null;
+  asin: string | null;
   name_en: string | null;
   name_pl: string | null;
   name_de: string | null;
@@ -123,6 +126,9 @@ const toProductRecord = (product: {
   sku: product.sku ?? null,
   baseProductId: product.baseProductId ?? null,
   defaultPriceGroupId: product.defaultPriceGroupId ?? null,
+  ean: product.ean ?? null,
+  gtin: product.gtin ?? null,
+  asin: product.asin ?? null,
   name_en: product.name_en ?? null,
   name_pl: product.name_pl ?? null,
   name_de: product.name_de ?? null,
@@ -252,6 +258,9 @@ export const prismaProductRepository: ProductRepository = {
         weight: product.weight,
         length: product.length,
         defaultPriceGroupId: product.defaultPriceGroupId ?? null,
+        ean: product.ean ?? null,
+        gtin: product.gtin ?? null,
+        asin: product.asin ?? null,
         sku,
       },
     });

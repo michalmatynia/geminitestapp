@@ -12,6 +12,9 @@ const optionalSku = z.preprocess(
 const productBaseSchema = z.object({
   baseProductId: z.string().nullish(),
   defaultPriceGroupId: z.string().nullish(),
+  ean: z.string().nullish(),
+  gtin: z.string().nullish(),
+  asin: z.string().nullish(),
   name_en: z.string().nullish(),
   name_pl: z.string().nullish(),
   name_de: z.string().nullish(),

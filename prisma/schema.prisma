@@ -7,31 +7,35 @@ generator client {
 }
 
 model Product {
-  id           String    @id @default(cuid())
-  sku          String?   @unique
-  baseProductId String?
+  id                  String                      @id @default(cuid())
+  sku                 String?                     @unique
+  baseProductId       String?
   defaultPriceGroupId String?
-  name_en      String?
-  name_pl      String?
-  name_de      String?
-  description_en String?
-  description_pl String?
-  description_de String?
-  supplierName String?
-  supplierLink String?
-  priceComment String?
-  stock        Int?
-  price        Int?
-  sizeLength   Int?
-  sizeWidth    Int?
-  weight       Int?
-  length       Int?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  images       ProductImage[]
-  catalogs     ProductCatalog[]
-  categories   ProductCategoryAssignment[]
-  defaultPriceGroup PriceGroup? @relation(fields: [defaultPriceGroupId], references: [id])
+  ean                 String?
+  gtin                String?
+  asin                String?
+  name_en             String?
+  name_pl             String?
+  name_de             String?
+  description_en      String?
+  description_pl      String?
+  description_de      String?
+  supplierName        String?
+  supplierLink        String?
+  priceComment        String?
+  stock               Int?
+  price               Int?
+  sizeLength          Int?
+  sizeWidth           Int?
+  weight              Int?
+  length              Int?
+  createdAt           DateTime                    @default(now())
+  updatedAt           DateTime                    @updatedAt
+  images              ProductImage[]
+  catalogs            ProductCatalog[]
+  categories          ProductCategoryAssignment[]
+  listings            ProductListing[]
+  defaultPriceGroup   PriceGroup?                 @relation(fields: [defaultPriceGroupId], references: [id])
 }
 
 model Setting {
@@ -50,18 +54,17 @@ model ChatbotSettings {
   updatedAt DateTime @updatedAt
 }
 
-
 model ImageFile {
-  id          String        @id @default(cuid())
-  filename    String
-  filepath    String
-  mimetype    String
-  size        Int
-  width       Int?
-  height      Int?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  products    ProductImage[] // Relation to the join table
+  id        String         @id @default(cuid())
+  filename  String
+  filepath  String
+  mimetype  String
+  size      Int
+  width     Int?
+  height    Int?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  products  ProductImage[] // Relation to the join table
 }
 
 enum CurrencyCode {
@@ -113,13 +116,13 @@ model Currency {
 }
 
 model Country {
-  id        String   @id @default(cuid())
+  id        String      @id @default(cuid())
   code      CountryCode @unique
   name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
-  languages LanguageCountry[]
+  languages  LanguageCountry[]
   currencies CountryCurrency[]
 }
 
@@ -131,71 +134,98 @@ model Integration {
   updatedAt DateTime @updatedAt
 
   connections IntegrationConnection[]
+  listings    ProductListing[]
 }
 
 model IntegrationConnection {
-  id            String      @id @default(cuid())
-  integrationId String      @unique
-  name          String
-  username      String
-  password      String
-  playwrightStorageState String?
+  id                              String    @id @default(cuid())
+  integrationId                   String    @unique
+  name                            String
+  username                        String
+  password                        String
+  playwrightStorageState          String?
   playwrightStorageStateUpdatedAt DateTime?
-  playwrightHeadless Boolean @default(true)
-  playwrightSlowMo Int @default(50)
-  playwrightTimeout Int @default(15000)
-  playwrightNavigationTimeout Int @default(30000)
-  playwrightHumanizeMouse Boolean @default(false)
-  playwrightMouseJitter Int @default(6)
-  playwrightClickDelayMin Int @default(30)
-  playwrightClickDelayMax Int @default(120)
-  playwrightInputDelayMin Int @default(20)
-  playwrightInputDelayMax Int @default(120)
-  playwrightActionDelayMin Int @default(200)
-  playwrightActionDelayMax Int @default(900)
-  playwrightProxyEnabled Boolean @default(false)
-  playwrightProxyServer String?
-  playwrightProxyUsername String?
-  playwrightProxyPassword String?
-  playwrightEmulateDevice Boolean @default(false)
-  playwrightDeviceName String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  playwrightHeadless              Boolean   @default(true)
+  playwrightSlowMo                Int       @default(50)
+  playwrightTimeout               Int       @default(15000)
+  playwrightNavigationTimeout     Int       @default(30000)
+  playwrightHumanizeMouse         Boolean   @default(false)
+  playwrightMouseJitter           Int       @default(6)
+  playwrightClickDelayMin         Int       @default(30)
+  playwrightClickDelayMax         Int       @default(120)
+  playwrightInputDelayMin         Int       @default(20)
+  playwrightInputDelayMax         Int       @default(120)
+  playwrightActionDelayMin        Int       @default(200)
+  playwrightActionDelayMax        Int       @default(900)
+  playwrightProxyEnabled          Boolean   @default(false)
+  playwrightProxyServer           String?
+  playwrightProxyUsername         String?
+  playwrightProxyPassword         String?
+  playwrightEmulateDevice         Boolean   @default(false)
+  playwrightDeviceName            String?
+  allegroAccessToken              String?
+  allegroRefreshToken             String?
+  allegroTokenType                String?
+  allegroScope                    String?
+  allegroExpiresAt                DateTime?
+  allegroTokenUpdatedAt           DateTime?
+  createdAt                       DateTime  @default(now())
+  updatedAt                       DateTime  @updatedAt
 
-  integration   Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  integration Integration      @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  listings    ProductListing[]
+}
+
+model ProductListing {
+  id                String    @id @default(cuid())
+  productId         String
+  integrationId     String
+  connectionId      String
+  externalListingId String?
+  status            String    @default("pending")
+  listedAt          DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  product     Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  integration Integration           @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  connection  IntegrationConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, connectionId])
 }
 
 model Language {
-  id        String   @id @default(cuid())
-  code      String   @unique
-  name      String
+  id         String   @id @default(cuid())
+  code       String   @unique
+  name       String
   nativeName String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  catalogs  CatalogLanguage[]
-  defaultForCatalogs Catalog[] @relation("CatalogDefaultLanguage")
-  countries LanguageCountry[]
+  catalogs           CatalogLanguage[]
+  defaultForCatalogs Catalog[]         @relation("CatalogDefaultLanguage")
+  countries          LanguageCountry[]
 }
 
 model PriceGroup {
-  id               String      @id @default(cuid())
-  groupId          String      @unique
-  isDefault        Boolean     @default(false)
-  name             String
-  description      String?
-  currencyId       String
-  type             String
-  basePriceField   String
-  sourceGroupId    String?
-  priceMultiplier  Float       @default(1)
-  addToPrice       Int         @default(0)
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  id              String   @id @default(cuid())
+  groupId         String   @unique
+  isDefault       Boolean  @default(false)
+  name            String
+  description     String?
+  currencyId      String
+  type            String
+  basePriceField  String
+  sourceGroupId   String?
+  priceMultiplier Float    @default(1)
+  addToPrice      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  currency         Currency    @relation(fields: [currencyId], references: [id])
-  sourceGroup      PriceGroup? @relation("PriceGroupDependency", fields: [sourceGroupId], references: [id])
-  dependentGroups  PriceGroup[] @relation("PriceGroupDependency")
+  currency        Currency     @relation(fields: [currencyId], references: [id])
+  sourceGroup     PriceGroup?  @relation("PriceGroupDependency", fields: [sourceGroupId], references: [id])
+  dependentGroups PriceGroup[] @relation("PriceGroupDependency")
+  products        Product[]
 }
 
 model ProductImage {
@@ -203,64 +233,64 @@ model ProductImage {
   imageFileId String
   assignedAt  DateTime @default(now())
 
-  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  imageFile   ImageFile @relation(fields: [imageFileId], references: [id], onDelete: Cascade)
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  imageFile ImageFile @relation(fields: [imageFileId], references: [id], onDelete: Cascade)
 
   @@id([productId, imageFileId])
 }
 
 model Catalog {
-  id          String          @id @default(cuid())
-  name        String
-  description String?
-  isDefault   Boolean         @default(false)
+  id                String            @id @default(cuid())
+  name              String
+  description       String?
+  isDefault         Boolean           @default(false)
   defaultLanguageId String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  products    ProductCatalog[]
-  languages   CatalogLanguage[]
-  categories  ProductCategory[]
-  defaultLanguage Language? @relation("CatalogDefaultLanguage", fields: [defaultLanguageId], references: [id])
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  products          ProductCatalog[]
+  languages         CatalogLanguage[]
+  categories        ProductCategory[]
+  defaultLanguage   Language?         @relation("CatalogDefaultLanguage", fields: [defaultLanguageId], references: [id])
 }
 
 model ProductCatalog {
-  productId   String
-  catalogId   String
-  assignedAt  DateTime @default(now())
+  productId  String
+  catalogId  String
+  assignedAt DateTime @default(now())
 
-  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  catalog     Catalog @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  catalog Catalog @relation(fields: [catalogId], references: [id], onDelete: Cascade)
 
   @@id([productId, catalogId])
 }
 
 model ChatbotAgentRun {
-  id        String          @id @default(cuid())
-  prompt    String
-  model     String?
-  tools     String[]        @default([])
-  searchProvider String?
-  agentBrowser String?
-  runHeadless Boolean @default(true)
-  status    AgentRunStatus  @default(queued)
-  logLines  String[]        @default([])
-  requiresHumanIntervention Boolean @default(false)
-  errorMessage String?
-  memoryKey String?
-  recordingPath String?
-  planState Json?
-  activeStepId String?
-  checkpointedAt DateTime?
-  startedAt DateTime?
-  finishedAt DateTime?
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  id                        String         @id @default(cuid())
+  prompt                    String
+  model                     String?
+  tools                     String[]       @default([])
+  searchProvider            String?
+  agentBrowser              String?
+  runHeadless               Boolean        @default(true)
+  status                    AgentRunStatus @default(queued)
+  logLines                  String[]       @default([])
+  requiresHumanIntervention Boolean        @default(false)
+  errorMessage              String?
+  memoryKey                 String?
+  recordingPath             String?
+  planState                 Json?
+  activeStepId              String?
+  checkpointedAt            DateTime?
+  startedAt                 DateTime?
+  finishedAt                DateTime?
+  createdAt                 DateTime       @default(now())
+  updatedAt                 DateTime       @updatedAt
 
-  memoryItems AgentMemoryItem[]
-  longTermMemory AgentLongTermMemory[]
-  auditLogs   AgentAuditLog[]
+  memoryItems      AgentMemoryItem[]
+  longTermMemory   AgentLongTermMemory[]
+  auditLogs        AgentAuditLog[]
   browserSnapshots AgentBrowserSnapshot[]
-  browserLogs AgentBrowserLog[]
+  browserLogs      AgentBrowserLog[]
 }
 
 model AgentMemoryItem {
@@ -271,24 +301,24 @@ model AgentMemoryItem {
   metadata  Json?
   createdAt DateTime         @default(now())
 
-  run       ChatbotAgentRun? @relation(fields: [runId], references: [id], onDelete: Cascade)
+  run ChatbotAgentRun? @relation(fields: [runId], references: [id], onDelete: Cascade)
 }
 
 model AgentLongTermMemory {
-  id        String           @id @default(cuid())
-  memoryKey String
-  runId     String?
-  scope     AgentMemoryScope @default(longterm)
-  content   String
-  summary   String?
-  tags      String[]         @default([])
-  metadata  Json?
-  importance Int?
+  id             String           @id @default(cuid())
+  memoryKey      String
+  runId          String?
+  scope          AgentMemoryScope @default(longterm)
+  content        String
+  summary        String?
+  tags           String[]         @default([])
+  metadata       Json?
+  importance     Int?
   lastAccessedAt DateTime?
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
-  run       ChatbotAgentRun? @relation(fields: [runId], references: [id], onDelete: SetNull)
+  run ChatbotAgentRun? @relation(fields: [runId], references: [id], onDelete: SetNull)
 
   @@index([memoryKey])
   @@index([runId])
@@ -303,26 +333,26 @@ model AgentAuditLog {
   metadata  Json?
   createdAt DateTime        @default(now())
 
-  run       ChatbotAgentRun? @relation(fields: [runId], references: [id], onDelete: Cascade)
+  run ChatbotAgentRun? @relation(fields: [runId], references: [id], onDelete: Cascade)
 }
 
 model AgentBrowserSnapshot {
-  id              String   @id @default(cuid())
-  runId           String
-  url             String
-  title           String?
-  domHtml         String
-  domText         String
-  screenshotData  String?
-  screenshotPath  String?
-  stepId          String?
-  mouseX          Int?
-  mouseY          Int?
-  viewportWidth   Int?
-  viewportHeight  Int?
-  createdAt       DateTime @default(now())
+  id             String   @id @default(cuid())
+  runId          String
+  url            String
+  title          String?
+  domHtml        String
+  domText        String
+  screenshotData String?
+  screenshotPath String?
+  stepId         String?
+  mouseX         Int?
+  mouseY         Int?
+  viewportWidth  Int?
+  viewportHeight Int?
+  createdAt      DateTime @default(now())
 
-  run             ChatbotAgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  run ChatbotAgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
 }
 
 model AgentBrowserLog {
@@ -334,27 +364,27 @@ model AgentBrowserLog {
   metadata  Json?
   createdAt DateTime @default(now())
 
-  run       ChatbotAgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  run ChatbotAgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
 }
 
 model ChatbotSession {
-  id        String           @id @default(cuid())
+  id        String   @id @default(cuid())
   title     String?
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  messages  ChatbotMessage[]
-  jobs      ChatbotJob[]
+  messages ChatbotMessage[]
+  jobs     ChatbotJob[]
 }
 
 model ChatbotMessage {
-  id         String          @id @default(cuid())
-  sessionId  String
-  role       String
-  content    String
-  createdAt  DateTime        @default(now())
+  id        String   @id @default(cuid())
+  sessionId String
+  role      String
+  content   String
+  createdAt DateTime @default(now())
 
-  session    ChatbotSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  session ChatbotSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
 
 enum ChatbotJobStatus {
@@ -366,18 +396,18 @@ enum ChatbotJobStatus {
 }
 
 model ChatbotJob {
-  id           String            @id @default(cuid())
+  id           String           @id @default(cuid())
   sessionId    String
-  status       ChatbotJobStatus  @default(pending)
+  status       ChatbotJobStatus @default(pending)
   model        String?
   payload      Json
   resultText   String?
   errorMessage String?
-  createdAt    DateTime          @default(now())
+  createdAt    DateTime         @default(now())
   startedAt    DateTime?
   finishedAt   DateTime?
 
-  session      ChatbotSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  session ChatbotSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
 
 model CatalogLanguage {
@@ -385,8 +415,8 @@ model CatalogLanguage {
   languageId String
   assignedAt DateTime @default(now())
 
-  catalog    Catalog  @relation(fields: [catalogId], references: [id], onDelete: Cascade)
-  language   Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  catalog  Catalog  @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+  language Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
 
   @@id([catalogId, languageId])
 }
@@ -396,8 +426,8 @@ model LanguageCountry {
   countryId  String
   assignedAt DateTime @default(now())
 
-  language   Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
-  country    Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  language Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  country  Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
 
   @@id([languageId, countryId])
 }
@@ -407,45 +437,45 @@ model CountryCurrency {
   currencyId String
   assignedAt DateTime @default(now())
 
-  country    Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
-  currency   Currency @relation(fields: [currencyId], references: [id], onDelete: Cascade)
+  country  Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  currency Currency @relation(fields: [currencyId], references: [id], onDelete: Cascade)
 
   @@id([countryId, currencyId])
 }
 
 model Slug {
-  id        String   @id @default(cuid())
-  slug      String   @unique
-  isDefault Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String     @id @default(cuid())
+  slug      String     @unique
+  isDefault Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   pages     PageSlug[]
 }
 
 model Page {
-  id          String          @id @default(cuid())
-  name        String
-  slugs       PageSlug[]
-  components  PageComponent[]
-  blocks      PageBlock[]
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  id         String          @id @default(cuid())
+  name       String
+  slugs      PageSlug[]
+  components PageComponent[]
+  blocks     PageBlock[]
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
 }
 
 model PageSlug {
-  pageId    String
-  slugId    String
+  pageId     String
+  slugId     String
   assignedAt DateTime @default(now())
 
-  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  slug      Slug     @relation(fields: [slugId], references: [id], onDelete: Cascade)
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  slug Slug @relation(fields: [slugId], references: [id], onDelete: Cascade)
 
   @@id([pageId, slugId])
 }
 
 model PageComponent {
   id        String   @id @default(cuid())
-  type      String   // e.g., 'hero', 'text', 'image'
+  type      String // e.g., 'hero', 'text', 'image'
   order     Int
   content   Json
   pageId    String
@@ -455,94 +485,94 @@ model PageComponent {
 }
 
 model Block {
-  id        String   @id @default(cuid())
-  name      String   @unique
+  id        String      @id @default(cuid())
+  name      String      @unique
   content   Json
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
   pages     PageBlock[]
 }
 
 model PageBlock {
-  pageId    String
-  blockId   String
+  pageId     String
+  blockId    String
   assignedAt DateTime @default(now())
 
-  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  block     Block    @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  page  Page  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  block Block @relation(fields: [blockId], references: [id], onDelete: Cascade)
 
   @@id([pageId, blockId])
 }
 
 model Note {
-  id          String    @id @default(cuid())
-  title       String
-  content     String
-  color       String?   @default("#ffffff")
-  isPinned    Boolean   @default(false)
-  isArchived  Boolean   @default(false)
-  isFavorite  Boolean   @default(false)
-  notebookId  String?
-  notebook    Notebook? @relation(fields: [notebookId], references: [id], onDelete: Cascade)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  tags        NoteTag[]
-  categories  NoteCategory[]
+  id            String         @id @default(cuid())
+  title         String
+  content       String
+  color         String?        @default("#ffffff")
+  isPinned      Boolean        @default(false)
+  isArchived    Boolean        @default(false)
+  isFavorite    Boolean        @default(false)
+  notebookId    String?
+  notebook      Notebook?      @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  tags          NoteTag[]
+  categories    NoteCategory[]
   relationsFrom NoteRelation[] @relation("NoteRelationsFrom")
   relationsTo   NoteRelation[] @relation("NoteRelationsTo")
-  files       NoteFile[]
+  files         NoteFile[]
 }
 
 model NoteFile {
-  id          String   @id @default(cuid())
-  noteId      String
-  slotIndex   Int
-  filename    String
-  filepath    String
-  mimetype    String
-  size        Int
-  width       Int?
-  height      Int?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  noteId    String
+  slotIndex Int
+  filename  String
+  filepath  String
+  mimetype  String
+  size      Int
+  width     Int?
+  height    Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  note        Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
 
   @@unique([noteId, slotIndex])
 }
 
 model Theme {
-  id                        String   @id @default(cuid())
-  name                      String
-  notebookId                String?
-  notebook                  Notebook? @relation(fields: [notebookId], references: [id], onDelete: Cascade)
-  textColor                 String   @default("#e5e7eb")
-  backgroundColor           String   @default("#111827")
-  markdownHeadingColor      String   @default("#ffffff")
-  markdownLinkColor         String   @default("#60a5fa")
-  markdownCodeBackground    String   @default("#1f2937")
-  markdownCodeText          String   @default("#e5e7eb")
-  relatedNoteBorderWidth    Int      @default(1)
-  relatedNoteBorderColor    String   @default("#374151")
-  relatedNoteBackgroundColor String  @default("#1f2937")
-  relatedNoteTextColor      String   @default("#e5e7eb")
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
-  categories                Category[]
-  notebooksAsDefault        Notebook[] @relation("DefaultTheme")
+  id                         String     @id @default(cuid())
+  name                       String
+  notebookId                 String?
+  notebook                   Notebook?  @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+  textColor                  String     @default("#e5e7eb")
+  backgroundColor            String     @default("#111827")
+  markdownHeadingColor       String     @default("#ffffff")
+  markdownLinkColor          String     @default("#60a5fa")
+  markdownCodeBackground     String     @default("#1f2937")
+  markdownCodeText           String     @default("#e5e7eb")
+  relatedNoteBorderWidth     Int        @default(1)
+  relatedNoteBorderColor     String     @default("#374151")
+  relatedNoteBackgroundColor String     @default("#1f2937")
+  relatedNoteTextColor       String     @default("#e5e7eb")
+  createdAt                  DateTime   @default(now())
+  updatedAt                  DateTime   @updatedAt
+  categories                 Category[]
+  notebooksAsDefault         Notebook[] @relation("DefaultTheme")
 
   @@unique([notebookId, name])
 }
 
 model Tag {
-  id        String    @id @default(cuid())
-  name      String
-  color     String?   @default("#3b82f6")
+  id         String    @id @default(cuid())
+  name       String
+  color      String?   @default("#3b82f6")
   notebookId String?
-  notebook  Notebook? @relation(fields: [notebookId], references: [id], onDelete: Cascade)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  notes     NoteTag[]
+  notebook   Notebook? @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  notes      NoteTag[]
 
   @@unique([notebookId, name])
 }
@@ -567,13 +597,13 @@ model Category {
 }
 
 model Notebook {
-  id             String    @id @default(cuid())
-  name           String    @unique
-  color          String?   @default("#3b82f6")
+  id             String     @id @default(cuid())
+  name           String     @unique
+  color          String?    @default("#3b82f6")
   defaultThemeId String?
-  defaultTheme   Theme?    @relation("DefaultTheme", fields: [defaultThemeId], references: [id], onDelete: SetNull)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  defaultTheme   Theme?     @relation("DefaultTheme", fields: [defaultThemeId], references: [id], onDelete: SetNull)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
   notes          Note[]
   tags           Tag[]
   categories     Category[]
@@ -585,8 +615,8 @@ model NoteTag {
   tagId      String
   assignedAt DateTime @default(now())
 
-  note       Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
-  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([noteId, tagId])
 }
@@ -596,8 +626,8 @@ model NoteCategory {
   categoryId String
   assignedAt DateTime @default(now())
 
-  note       Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  note     Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@id([noteId, categoryId])
 }
@@ -607,36 +637,36 @@ model NoteRelation {
   targetNoteId String
   assignedAt   DateTime @default(now())
 
-  sourceNote   Note @relation("NoteRelationsFrom", fields: [sourceNoteId], references: [id], onDelete: Cascade)
-  targetNote   Note @relation("NoteRelationsTo", fields: [targetNoteId], references: [id], onDelete: Cascade)
+  sourceNote Note @relation("NoteRelationsFrom", fields: [sourceNoteId], references: [id], onDelete: Cascade)
+  targetNote Note @relation("NoteRelationsTo", fields: [targetNoteId], references: [id], onDelete: Cascade)
 
   @@id([sourceNoteId, targetNoteId])
 }
 
 model ProductCategory {
-  id          String            @id @default(cuid())
+  id          String                      @id @default(cuid())
   name        String
   description String?
-  color       String?           @default("#10b981")
+  color       String?                     @default("#10b981")
   parentId    String?
   catalogId   String
-  parent      ProductCategory?  @relation("ProductCategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children    ProductCategory[] @relation("ProductCategoryHierarchy")
-  catalog     Catalog           @relation(fields: [catalogId], references: [id], onDelete: Cascade)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  parent      ProductCategory?            @relation("ProductCategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    ProductCategory[]           @relation("ProductCategoryHierarchy")
+  catalog     Catalog                     @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+  createdAt   DateTime                    @default(now())
+  updatedAt   DateTime                    @updatedAt
   products    ProductCategoryAssignment[]
 
   @@unique([catalogId, parentId, name])
 }
 
 model ProductCategoryAssignment {
-  productId   String
-  categoryId  String
-  assignedAt  DateTime @default(now())
+  productId  String
+  categoryId String
+  assignedAt DateTime @default(now())
 
-  product     Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  category    ProductCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  product  Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category ProductCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@id([productId, categoryId])
 }

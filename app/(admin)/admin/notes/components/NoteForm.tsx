@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { X, Upload, FileIcon, Trash2, Link2 } from "lucide-react";
 import type { CategoryWithChildren, NoteWithRelations, TagRecord, NoteFileRecord, ThemeRecord } from "@/types/notes";
+import type { NoteFormProps } from "@/types/notes-ui";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { renderMarkdownToHtml, autoformatMarkdown } from "../utils";
@@ -33,18 +34,7 @@ export function NoteForm({
   onTagClick,
   notebookId,
   folderTheme,
-}: {
-  note?: NoteWithRelations | null;
-  folderTree: CategoryWithChildren[];
-  defaultFolderId?: string | null;
-  availableTags: TagRecord[];
-  onSuccess: () => void;
-  onTagCreated: () => void;
-  onSelectRelatedNote: (noteId: string) => void;
-  onTagClick?: (tagId: string) => void;
-  notebookId?: string | null;
-  folderTheme?: ThemeRecord | null;
-}) {
+}: NoteFormProps) {
   const [title, setTitle] = useState(note?.title || "");
   const [content, setContent] = useState(note?.content || "");
   const [color, setColor] = useState(note?.color?.toLowerCase().trim() || "#ffffff");

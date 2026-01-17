@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
+import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { encryptSecret } from "@/lib/utils/encryption";
 
 const connectionSchema = z.object({
@@ -63,73 +63,71 @@ export async function PUT(
 
     const data = connectionSchema.parse(body);
 
-    const connection = await prisma.integrationConnection.update({
-      where: { id: connectionId },
-      data: {
-        name: data.name,
-        username: data.username,
-        ...(data.password ? { password: encryptSecret(data.password) } : {}),
+    const repo = await getIntegrationRepository();
+    const connection = await repo.updateConnection(connectionId, {
+      name: data.name,
+      username: data.username,
+      ...(data.password ? { password: encryptSecret(data.password) } : {}),
 
-        ...(typeof data.playwrightHeadless === "boolean"
-          ? { playwrightHeadless: data.playwrightHeadless }
-          : {}),
-        ...(typeof data.playwrightSlowMo === "number"
-          ? { playwrightSlowMo: data.playwrightSlowMo }
-          : {}),
-        ...(typeof data.playwrightTimeout === "number"
-          ? { playwrightTimeout: data.playwrightTimeout }
-          : {}),
-        ...(typeof data.playwrightNavigationTimeout === "number"
-          ? { playwrightNavigationTimeout: data.playwrightNavigationTimeout }
-          : {}),
-        ...(typeof data.playwrightHumanizeMouse === "boolean"
-          ? { playwrightHumanizeMouse: data.playwrightHumanizeMouse }
-          : {}),
-        ...(typeof data.playwrightMouseJitter === "number"
-          ? { playwrightMouseJitter: data.playwrightMouseJitter }
-          : {}),
-        ...(typeof data.playwrightClickDelayMin === "number"
-          ? { playwrightClickDelayMin: data.playwrightClickDelayMin }
-          : {}),
-        ...(typeof data.playwrightClickDelayMax === "number"
-          ? { playwrightClickDelayMax: data.playwrightClickDelayMax }
-          : {}),
-        ...(typeof data.playwrightInputDelayMin === "number"
-          ? { playwrightInputDelayMin: data.playwrightInputDelayMin }
-          : {}),
-        ...(typeof data.playwrightInputDelayMax === "number"
-          ? { playwrightInputDelayMax: data.playwrightInputDelayMax }
-          : {}),
-        ...(typeof data.playwrightActionDelayMin === "number"
-          ? { playwrightActionDelayMin: data.playwrightActionDelayMin }
-          : {}),
-        ...(typeof data.playwrightActionDelayMax === "number"
-          ? { playwrightActionDelayMax: data.playwrightActionDelayMax }
-          : {}),
-        ...(typeof data.playwrightProxyEnabled === "boolean"
-          ? { playwrightProxyEnabled: data.playwrightProxyEnabled }
-          : {}),
-        ...(typeof data.playwrightProxyServer === "string"
-          ? { playwrightProxyServer: data.playwrightProxyServer }
-          : {}),
-        ...(typeof data.playwrightProxyUsername === "string"
-          ? { playwrightProxyUsername: data.playwrightProxyUsername }
-          : {}),
-        ...(typeof data.playwrightProxyPassword === "string" &&
-        data.playwrightProxyPassword.trim()
-          ? {
-              playwrightProxyPassword: encryptSecret(
-                data.playwrightProxyPassword.trim()
-              ),
-            }
-          : {}),
-        ...(typeof data.playwrightEmulateDevice === "boolean"
-          ? { playwrightEmulateDevice: data.playwrightEmulateDevice }
-          : {}),
-        ...(typeof data.playwrightDeviceName === "string"
-          ? { playwrightDeviceName: data.playwrightDeviceName }
-          : {}),
-      },
+      ...(typeof data.playwrightHeadless === "boolean"
+        ? { playwrightHeadless: data.playwrightHeadless }
+        : {}),
+      ...(typeof data.playwrightSlowMo === "number"
+        ? { playwrightSlowMo: data.playwrightSlowMo }
+        : {}),
+      ...(typeof data.playwrightTimeout === "number"
+        ? { playwrightTimeout: data.playwrightTimeout }
+        : {}),
+      ...(typeof data.playwrightNavigationTimeout === "number"
+        ? { playwrightNavigationTimeout: data.playwrightNavigationTimeout }
+        : {}),
+      ...(typeof data.playwrightHumanizeMouse === "boolean"
+        ? { playwrightHumanizeMouse: data.playwrightHumanizeMouse }
+        : {}),
+      ...(typeof data.playwrightMouseJitter === "number"
+        ? { playwrightMouseJitter: data.playwrightMouseJitter }
+        : {}),
+      ...(typeof data.playwrightClickDelayMin === "number"
+        ? { playwrightClickDelayMin: data.playwrightClickDelayMin }
+        : {}),
+      ...(typeof data.playwrightClickDelayMax === "number"
+        ? { playwrightClickDelayMax: data.playwrightClickDelayMax }
+        : {}),
+      ...(typeof data.playwrightInputDelayMin === "number"
+        ? { playwrightInputDelayMin: data.playwrightInputDelayMin }
+        : {}),
+      ...(typeof data.playwrightInputDelayMax === "number"
+        ? { playwrightInputDelayMax: data.playwrightInputDelayMax }
+        : {}),
+      ...(typeof data.playwrightActionDelayMin === "number"
+        ? { playwrightActionDelayMin: data.playwrightActionDelayMin }
+        : {}),
+      ...(typeof data.playwrightActionDelayMax === "number"
+        ? { playwrightActionDelayMax: data.playwrightActionDelayMax }
+        : {}),
+      ...(typeof data.playwrightProxyEnabled === "boolean"
+        ? { playwrightProxyEnabled: data.playwrightProxyEnabled }
+        : {}),
+      ...(typeof data.playwrightProxyServer === "string"
+        ? { playwrightProxyServer: data.playwrightProxyServer }
+        : {}),
+      ...(typeof data.playwrightProxyUsername === "string"
+        ? { playwrightProxyUsername: data.playwrightProxyUsername }
+        : {}),
+      ...(typeof data.playwrightProxyPassword === "string" &&
+      data.playwrightProxyPassword.trim()
+        ? {
+            playwrightProxyPassword: encryptSecret(
+              data.playwrightProxyPassword.trim()
+            ),
+          }
+        : {}),
+      ...(typeof data.playwrightEmulateDevice === "boolean"
+        ? { playwrightEmulateDevice: data.playwrightEmulateDevice }
+        : {}),
+      ...(typeof data.playwrightDeviceName === "string"
+        ? { playwrightDeviceName: data.playwrightDeviceName }
+        : {}),
     });
 
     return NextResponse.json({
@@ -139,6 +137,10 @@ export async function PUT(
       username: connection.username,
       createdAt: connection.createdAt,
       updatedAt: connection.updatedAt,
+      hasAllegroAccessToken: Boolean(connection.allegroAccessToken),
+      allegroTokenUpdatedAt: connection.allegroTokenUpdatedAt,
+      allegroExpiresAt: connection.allegroExpiresAt,
+      allegroScope: connection.allegroScope,
       playwrightHeadless: connection.playwrightHeadless,
       playwrightSlowMo: connection.playwrightSlowMo,
       playwrightTimeout: connection.playwrightTimeout,
@@ -219,7 +221,8 @@ export async function DELETE(
     const { id } = await params;
     connectionId = id;
 
-    await prisma.integrationConnection.delete({ where: { id: connectionId } });
+    const repo = await getIntegrationRepository();
+    await repo.deleteConnection(connectionId);
     return new Response(null, { status: 204 });
   } catch (error: unknown) {
     const errorId = randomUUID();

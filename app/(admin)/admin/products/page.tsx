@@ -28,6 +28,8 @@ import DebugPanel from "@/components/DebugPanel";
 import { useSearchParams } from "next/navigation";
 import { useToast } from "@/components/ui/toast";
 import ModalShell from "@/components/ui/modal-shell";
+import ProductListingsModal from "@/components/products/ProductListingsModal";
+import ListProductModal from "@/components/products/ListProductModal";
 
 type Catalog = {
   id: string;
@@ -315,6 +317,14 @@ function AdminPageInner() {
   const { toast } = useToast();
   const catalogFilterInitialized = useRef(false);
 
+  // Integration listings modal state
+  const [integrationsProduct, setIntegrationsProduct] =
+    useState<ProductWithImages | null>(null);
+  const [showListProductModal, setShowListProductModal] = useState(false);
+  const [integrationBadgeIds, setIntegrationBadgeIds] = useState<Set<string>>(
+    () => new Set()
+  );
+
   // Pagination state
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(24);
@@ -322,6 +332,25 @@ function AdminPageInner() {
   useEffect(() => {
     setIsDebugOpen(searchParams.get("debug") === "true");
   }, [searchParams]);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadListingBadges = async () => {
+      try {
+        const res = await fetch("/api/products/listings");
+        if (!res.ok) return;
+        const ids = (await res.json()) as string[];
+        if (!mounted) return;
+        setIntegrationBadgeIds(new Set(ids));
+      } catch (error) {
+        logger.warn("Failed to load listing badges", error);
+      }
+    };
+    void loadListingBadges();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     const stored = window.localStorage.getItem("productListNameLocale");
@@ -413,6 +442,40 @@ function AdminPageInner() {
     }
     setEditingProduct(null);
     setRefreshTrigger((prev) => prev + 1);
+  };
+
+  const handleOpenIntegrationsModal = (product: ProductWithImages) => {
+    setIntegrationsProduct(product);
+  };
+
+  const handleCloseIntegrationsModal = () => {
+    setIntegrationsProduct(null);
+    setShowListProductModal(false);
+  };
+
+  const handleOpenListProductModal = () => {
+    setShowListProductModal(true);
+  };
+
+  const handleCloseListProductModal = () => {
+    setShowListProductModal(false);
+  };
+
+  const handleListProductSuccess = () => {
+    if (integrationsProduct?.id) {
+      setIntegrationBadgeIds((prev) => {
+        const next = new Set(prev);
+        next.add(integrationsProduct.id);
+        return next;
+      });
+    }
+    setShowListProductModal(false);
+    // Refresh listings by closing and reopening the modal
+    const currentProduct = integrationsProduct;
+    setIntegrationsProduct(null);
+    setTimeout(() => {
+      setIntegrationsProduct(currentProduct);
+    }, 100);
   };
 
   const handleOpenCreateModal = async () => {
@@ -698,6 +761,8 @@ function AdminPageInner() {
           productNameKey={nameLocale}
           onProductNameClick={handleOpenEditModal}
           onProductEditClick={handleOpenEditModal}
+          onIntegrationsClick={handleOpenIntegrationsModal}
+          integrationBadgeIds={integrationBadgeIds}
           getRowId={(row) => row.id}
           footer={(table) => (
             <DataTableFooter
@@ -738,6 +803,34 @@ function AdminPageInner() {
             >
               <EditProductModalContent onClose={handleCloseEditModal} />
             </ProductFormProvider>
+          </div>
+        </div>
+      )}
+      {integrationsProduct && !showListProductModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          onClick={handleCloseIntegrationsModal}
+        >
+          <div onClick={(event) => event.stopPropagation()}>
+            <ProductListingsModal
+              product={integrationsProduct}
+              onClose={handleCloseIntegrationsModal}
+              onListProduct={handleOpenListProductModal}
+            />
+          </div>
+        </div>
+      )}
+      {integrationsProduct && showListProductModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          onClick={handleCloseListProductModal}
+        >
+          <div onClick={(event) => event.stopPropagation()}>
+            <ListProductModal
+              product={integrationsProduct}
+              onClose={handleCloseListProductModal}
+              onSuccess={handleListProductSuccess}
+            />
           </div>
         </div>
       )}

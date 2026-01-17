@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { PRODUCT_DB_PROVIDER_SETTING_KEY } from "@/lib/services/product-provider";
+import { INTEGRATION_DB_PROVIDER_SETTING_KEY } from "@/lib/services/integration-provider";
 
 const shouldLog = () => process.env.DEBUG_SETTINGS === "true";
 
@@ -17,7 +18,10 @@ type SettingDocument = {
 };
 
 const SETTINGS_COLLECTION = "settings";
-const productSettingKeys = new Set([PRODUCT_DB_PROVIDER_SETTING_KEY]);
+const productSettingKeys = new Set([
+  PRODUCT_DB_PROVIDER_SETTING_KEY,
+  INTEGRATION_DB_PROVIDER_SETTING_KEY,
+]);
 
 const canUsePrismaSettings = () =>
   Boolean(process.env.DATABASE_URL) && "setting" in prisma;

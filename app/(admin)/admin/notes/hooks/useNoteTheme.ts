@@ -1,17 +1,7 @@
 import { useMemo, useCallback } from "react";
-import type { NoteWithRelations, ThemeRecord, NotebookRecord, CategoryWithChildren } from "@/types/notes";
+import type { NoteWithRelations, NotebookRecord } from "@/types/notes";
+import type { UseNoteThemeProps } from "@/types/notes-hooks";
 import { findFolderById } from "../utils";
-
-interface UseNoteThemeProps {
-  themes: ThemeRecord[];
-  notebook: NotebookRecord | null;
-  folderTree: CategoryWithChildren[];
-  selectedFolderId: string | null;
-  selectedNotebookId: string | null;
-  selectedNote: NoteWithRelations | null;
-  fetchFolderTree: () => Promise<void>;
-  setNotebook: (notebook: NotebookRecord) => void;
-}
 
 export function useNoteTheme({
   themes,

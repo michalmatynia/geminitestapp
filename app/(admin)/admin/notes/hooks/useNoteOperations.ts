@@ -1,25 +1,7 @@
-import { useCallback, MutableRefObject } from "react";
-import type { NoteWithRelations, CategoryWithChildren } from "@/types/notes";
+import { useCallback } from "react";
+import type { NoteWithRelations } from "@/types/notes";
+import type { UndoAction, UseNoteOperationsProps } from "@/types/notes-hooks";
 import { findFolderParentId, findFolderById } from "../utils";
-
-export type UndoAction =
-  | { type: "moveNote"; noteId: string; fromFolderId: string | null; toFolderId: string | null }
-  | { type: "moveFolder"; folderId: string; fromParentId: string | null; toParentId: string | null }
-  | { type: "renameFolder"; folderId: string; fromName: string; toName: string }
-  | { type: "renameNote"; noteId: string; fromTitle: string; toTitle: string };
-
-interface UseNoteOperationsProps {
-  selectedNotebookId: string | null;
-  notesRef: MutableRefObject<NoteWithRelations[]>;
-  folderTreeRef: MutableRefObject<CategoryWithChildren[]>;
-  fetchNotes: () => Promise<void>;
-  fetchFolderTree: () => Promise<void>;
-  setUndoStack: React.Dispatch<React.SetStateAction<UndoAction[]>>;
-  toast: (message: string, options?: { variant?: "success" | "error" | "info"; duration?: number }) => void;
-  setSelectedFolderId: (id: string | null) => void;
-  setSelectedNote: (note: NoteWithRelations | null) => void;
-  selectedNote: NoteWithRelations | null;
-}
 
 export function useNoteOperations({
   selectedNotebookId,
@@ -56,11 +38,15 @@ export function useNoteOperations({
         if (created?.id) {
           setSelectedFolderId(created.id);
         }
+        toast("Folder created successfully");
+      } else {
+        toast("Failed to create folder", { variant: "error" });
       }
     } catch (error) {
       console.error("Failed to create folder:", error);
+      toast("An unexpected error occurred while creating the folder", { variant: "error" });
     }
-  }, [selectedNotebookId, fetchFolderTree, setSelectedFolderId]);
+  }, [selectedNotebookId, fetchFolderTree, setSelectedFolderId, toast]);
 
   const handleDeleteFolder = useCallback(async (folderId: string) => {
     if (!confirm("Delete this folder and all its contents (subfolders, notes, and attachments)? This action cannot be undone.")) return;
@@ -73,15 +59,19 @@ export function useNoteOperations({
       if (response.ok) {
         await fetchFolderTree();
         await fetchNotes();
+        toast("Folder deleted successfully");
         // Since we don't have access to current selectedFolderId in state directly here (only via setter),
         // we might rely on the parent component to handle clearing selection if needed,
         // or pass current selection as prop.
         // For now, assuming caller handles side-effects if needed or we re-fetch.
+      } else {
+        toast("Failed to delete folder", { variant: "error" });
       }
     } catch (error) {
       console.error("Failed to delete folder:", error);
+      toast("An unexpected error occurred while deleting the folder", { variant: "error" });
     }
-  }, [fetchFolderTree, fetchNotes]);
+  }, [fetchFolderTree, fetchNotes, toast]);
 
   const handleRenameFolder = useCallback(async (folderId: string, newName: string) => {
     const currentFolder = findFolderById(folderTreeRef.current, folderId);
@@ -101,16 +91,23 @@ export function useNoteOperations({
           ]);
         }
         await fetchFolderTree();
+        toast("Folder renamed successfully");
+      } else {
+        toast("Failed to rename folder", { variant: "error" });
       }
     } catch (error) {
       console.error("Failed to rename folder:", error);
+      toast("An unexpected error occurred while renaming the folder", { variant: "error" });
     }
-  }, [fetchFolderTree, folderTreeRef, setUndoStack]);
+  }, [fetchFolderTree, folderTreeRef, setUndoStack, toast]);
 
   const handleDuplicateNote = useCallback(async (noteId: string) => {
     try {
       const response = await fetch(`/api/notes/${noteId}`, { cache: "no-store" });
-      if (!response.ok) return;
+      if (!response.ok) {
+        toast("Failed to fetch note details for duplication", { variant: "error" });
+        return;
+      }
 
       const note: NoteWithRelations = await response.json();
 
@@ -150,11 +147,15 @@ export function useNoteOperations({
       if (createResponse.ok) {
         await fetchNotes();
         await fetchFolderTree();
+        toast("Note duplicated successfully");
+      } else {
+        toast("Failed to create duplicated note", { variant: "error" });
       }
     } catch (error) {
       console.error("Failed to duplicate note:", error);
+      toast("An unexpected error occurred while duplicating the note", { variant: "error" });
     }
-  }, [selectedNotebookId, fetchNotes, fetchFolderTree, notesRef]);
+  }, [selectedNotebookId, fetchNotes, fetchFolderTree, notesRef, toast]);
 
   const handleDeleteNoteFromTree = useCallback(async (noteId: string) => {
     if (!confirm("Are you sure you want to delete this note?")) return;
@@ -167,11 +168,15 @@ export function useNoteOperations({
         if (selectedNote?.id === noteId) {
           setSelectedNote(null);
         }
+        toast("Note deleted successfully");
+      } else {
+        toast("Failed to delete note", { variant: "error" });
       }
     } catch (error) {
       console.error("Failed to delete note:", error);
+      toast("An unexpected error occurred while deleting the note", { variant: "error" });
     }
-  }, [fetchNotes, fetchFolderTree, selectedNote, setSelectedNote]);
+  }, [fetchNotes, fetchFolderTree, selectedNote, setSelectedNote, toast]);
 
   const handleRenameNote = useCallback(async (noteId: string, newTitle: string) => {
     const currentNote = notesRef.current.find((note) => note.id === noteId);
@@ -196,11 +201,15 @@ export function useNoteOperations({
           const updatedNote = (await response.json()) as NoteWithRelations;
           setSelectedNote(updatedNote);
         }
+        toast("Note renamed successfully");
+      } else {
+        toast("Failed to rename note", { variant: "error" });
       }
     } catch (error) {
       console.error("Failed to rename note:", error);
+      toast("An unexpected error occurred while renaming the note", { variant: "error" });
     }
-  }, [fetchNotes, fetchFolderTree, selectedNote, setSelectedNote, notesRef, setUndoStack]);
+  }, [fetchNotes, fetchFolderTree, selectedNote, setSelectedNote, notesRef, setUndoStack, toast]);
 
   const handleMoveNoteToFolder = useCallback(async (noteId: string, folderId: string | null) => {
     const currentNote = notesRef.current.find((note) => note.id === noteId);
@@ -223,11 +232,15 @@ export function useNoteOperations({
         }
         await fetchFolderTree();
         await fetchNotes();
+        toast("Note moved successfully");
+      } else {
+        toast("Failed to move note", { variant: "error" });
       }
     } catch (error) {
       console.error("Failed to move note:", error);
+      toast("An unexpected error occurred while moving the note", { variant: "error" });
     }
-  }, [fetchFolderTree, fetchNotes, notesRef, setUndoStack]);
+  }, [fetchFolderTree, fetchNotes, notesRef, setUndoStack, toast]);
 
   const handleMoveFolderToFolder = useCallback(async (folderId: string, targetParentId: string | null) => {
     const previousParentId = findFolderParentId(folderTreeRef.current, folderId);
@@ -249,11 +262,15 @@ export function useNoteOperations({
         }
         await fetchFolderTree();
         await fetchNotes();
+        toast("Folder moved successfully");
+      } else {
+        toast("Failed to move folder", { variant: "error" });
       }
     } catch (error) {
       console.error("Failed to move folder:", error);
+      toast("An unexpected error occurred while moving the folder", { variant: "error" });
     }
-  }, [fetchFolderTree, fetchNotes, findFolderParentId, folderTreeRef, setUndoStack]);
+  }, [fetchFolderTree, fetchNotes, findFolderParentId, folderTreeRef, setUndoStack, toast]);
 
   const handleRelateNotes = useCallback(async (sourceNoteId: string, targetNoteId: string) => {
     if (!sourceNoteId || !targetNoteId) return;

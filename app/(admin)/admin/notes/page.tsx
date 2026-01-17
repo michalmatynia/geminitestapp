@@ -10,9 +10,10 @@ import { NoteDetailView } from "./components/NoteDetailView";
 import { CreateNoteModal } from "./components/CreateNoteModal";
 import { useNoteData } from "./hooks/useNoteData";
 import { useNoteFilters } from "./hooks/useNoteFilters";
-import { useNoteOperations, UndoAction } from "./hooks/useNoteOperations";
+import { useNoteOperations } from "./hooks/useNoteOperations";
 import { useNoteTheme } from "./hooks/useNoteTheme";
 import type { NoteWithRelations } from "@/types/notes";
+import type { UndoAction } from "@/types/notes-hooks";
 
 export default function NotesPage() {
   const { isMenuCollapsed } = useAdminLayout();

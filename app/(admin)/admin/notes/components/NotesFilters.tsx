@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Search, FileText, Heading, X, ArrowUp, ArrowDown, Eye, EyeOff, LayoutGrid, List, ChevronDown, Check } from "lucide-react";
-import type { CategoryWithChildren, TagRecord } from "@/types/notes";
+import type { NotesFiltersProps } from "@/types/notes-ui";
 
 export function NotesFilters({
   selectedFolderId,
@@ -23,39 +23,7 @@ export function NotesFilters({
   gridDensity,
   highlightTagId,
   buildBreadcrumbPath,
-}: {
-  selectedFolderId: string | null;
-  folderTree: CategoryWithChildren[];
-  searchQuery: string;
-  setSearchQuery: (value: string) => void;
-  tags: TagRecord[];
-  filterTagIds: string[];
-  setFilterTagIds: (value: string[]) => void;
-  searchScope: "both" | "title" | "content";
-  updateSettings: (updates: {
-    sortBy?: "created" | "updated" | "name";
-    sortOrder?: "asc" | "desc";
-    showTimestamps?: boolean;
-    showBreadcrumbs?: boolean;
-    showRelatedNotes?: boolean;
-    searchScope?: "both" | "title" | "content";
-    viewMode?: "grid" | "list";
-    gridDensity?: 4 | 8;
-  }) => void;
-  sortBy: "created" | "updated" | "name";
-  sortOrder: "asc" | "desc";
-  showTimestamps: boolean;
-  showBreadcrumbs: boolean;
-  showRelatedNotes: boolean;
-  viewMode: "grid" | "list";
-  gridDensity: 4 | 8;
-  highlightTagId?: string | null;
-  buildBreadcrumbPath: (
-    categoryId: string | null,
-    noteTitle: string | null,
-    categories: CategoryWithChildren[]
-  ) => Array<{ id: string | null; name: string; isNote?: boolean }>;
-}) {
+}: NotesFiltersProps) {
   const [isLayoutOpen, setIsLayoutOpen] = React.useState(false);
   const layoutLabel =
     viewMode === "list" ? "List" : gridDensity === 8 ? "Grid 8" : "Grid 4";

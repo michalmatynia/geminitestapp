@@ -17,55 +17,19 @@ import type {
   ThemeUpdateInput,
 } from "@/types/notes";
 import type { NoteRepository } from "@/types/services/note-repository";
-
-// Helper types for documents in MongoDB
-type NoteTagEmbedded = {
-  noteId: string;
-  tagId: string;
-  assignedAt: Date;
-  tag: TagRecord;
-};
-
-type NoteCategoryEmbedded = {
-  noteId: string;
-  categoryId: string;
-  assignedAt: Date;
-  category: CategoryRecord;
-};
-
-type RelatedNoteEmbedded = {
-  id: string;
-  title: string;
-  color: string | null;
-};
-
-type NoteRelationFromEmbedded = {
-  sourceNoteId: string;
-  targetNoteId: string;
-  assignedAt: Date;
-  targetNote: RelatedNoteEmbedded;
-};
-
-type NoteRelationToEmbedded = {
-  sourceNoteId: string;
-  targetNoteId: string;
-  assignedAt: Date;
-  sourceNote: RelatedNoteEmbedded;
-};
-
-type NoteDocument = Omit<NoteRecord, "tags" | "categories" | "relationsFrom" | "relationsTo"> & {
-  _id: string;
-  tags: NoteTagEmbedded[];
-  categories: NoteCategoryEmbedded[];
-  relationsFrom?: NoteRelationFromEmbedded[];
-  relationsTo?: NoteRelationToEmbedded[];
-};
-
-type TagDocument = TagRecord & { _id: string };
-type CategoryDocument = CategoryRecord & { _id: string };
-type NotebookDocument = NotebookRecord & { _id: string };
-type NoteFileDocument = NoteFileRecord & { _id: string };
-type ThemeDocument = ThemeRecord & { _id: string };
+import type {
+  NoteTagEmbedded,
+  NoteCategoryEmbedded,
+  RelatedNoteEmbedded,
+  NoteRelationFromEmbedded,
+  NoteRelationToEmbedded,
+  NoteDocument,
+  TagDocument,
+  CategoryDocument,
+  NotebookDocument,
+  NoteFileDocument,
+  ThemeDocument,
+} from "@/types/services/mongo-note-types";
 
 const noteCollectionName = "notes";
 const tagCollectionName = "tags";

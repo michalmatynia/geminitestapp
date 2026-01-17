@@ -1,20 +1,7 @@
 import React from "react";
 import ModalShell from "@/components/ui/modal-shell";
 import { NoteForm } from "./NoteForm";
-import type { CategoryWithChildren, TagRecord, ThemeRecord } from "@/types/notes";
-
-interface CreateNoteModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  folderTree: CategoryWithChildren[];
-  selectedFolderId: string | null;
-  tags: TagRecord[];
-  selectedNotebookId: string | null;
-  onSuccess: () => void;
-  onTagCreated: () => void;
-  folderTheme: ThemeRecord | null;
-  onSelectRelatedNote: (noteId: string) => void;
-}
+import type { CreateNoteModalProps } from "@/types/notes-ui";
 
 export function CreateNoteModal({
   isOpen,

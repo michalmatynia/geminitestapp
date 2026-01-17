@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef, Row } from "@tanstack/react-table";
-import { ArrowUpDown, MoreVertical } from "lucide-react";
+import { ArrowUpDown, MoreVertical, PlusCircle, Store } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -264,6 +264,47 @@ export const columns: ColumnDef<ProductWithImages>[] = [
         <ArrowUpDown className="ml-2 size-4" />
       </Button>
     ),
+  },
+
+  {
+    id: "integrations",
+    header: "",
+    cell: ({ row, table }) => {
+      const product = row.original;
+      const meta = table.options.meta as
+        | {
+            onIntegrationsClick?: (p: ProductWithImages) => void;
+            integrationBadgeIds?: Set<string>;
+          }
+        | undefined;
+
+      const handleClick = meta?.onIntegrationsClick;
+      if (!handleClick) return null;
+      const showMarketplaceBadge =
+        meta?.integrationBadgeIds?.has(product.id) ?? false;
+
+      return (
+        <div className="inline-flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => handleClick(product)}
+            className="inline-flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-gray-800 hover:text-emerald-400"
+            aria-label="View integrations"
+          >
+            <PlusCircle className="size-5" />
+          </button>
+          {showMarketplaceBadge && (
+            <span
+              className="inline-flex items-center text-emerald-300"
+              title="Listed on marketplace"
+              aria-label="Listed on marketplace"
+            >
+              <Store className="size-3.5" />
+            </span>
+          )}
+        </div>
+      );
+    },
   },
 
   {

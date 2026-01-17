@@ -68,6 +68,7 @@ type ProductDocument = {
   sizeWidth: number | null;
   weight: number | null;
   length: number | null;
+  imageLinks?: string[] | null;
   createdAt: Date;
   updatedAt: Date;
   images: Array<{
@@ -109,6 +110,7 @@ type ProductInput = {
   sizeWidth: number | null;
   weight: number | null;
   length: number | null;
+  imageLinks?: string[] | null;
   createdAt: Date;
   updatedAt: Date;
   images: Array<{
@@ -178,6 +180,7 @@ const buildProductDocument = (product: ProductInput): ProductDocument => ({
   sizeWidth: product.sizeWidth ?? null,
   weight: product.weight ?? null,
   length: product.length ?? null,
+  imageLinks: Array.isArray(product.imageLinks) ? product.imageLinks : [],
   createdAt: product.createdAt,
   updatedAt: product.updatedAt,
   images: product.images.map((image) => ({
@@ -411,6 +414,7 @@ export async function migrateProductBatch({
           sizeWidth: doc.sizeWidth ?? undefined,
           weight: doc.weight ?? undefined,
           length: doc.length ?? undefined,
+          imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
           createdAt: doc.createdAt ?? new Date(),
           updatedAt: doc.updatedAt ?? new Date(),
         },
@@ -437,6 +441,7 @@ export async function migrateProductBatch({
           sizeWidth: doc.sizeWidth ?? undefined,
           weight: doc.weight ?? undefined,
           length: doc.length ?? undefined,
+          imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
           createdAt: doc.createdAt ?? new Date(),
           updatedAt: doc.updatedAt ?? new Date(),
         },

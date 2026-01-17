@@ -60,6 +60,7 @@ interface ProductFormContextType {
   setValue: UseFormSetValue<ProductFormData>;
   getValues: UseFormGetValues<ProductFormData>;
   imageSlots: (ProductImageSlot | null)[];
+  imageLinks: string[];
   uploading: boolean;
   uploadError: string | null;
   uploadSuccess: boolean;
@@ -71,6 +72,7 @@ interface ProductFormContextType {
   handleMultiImageChange: (files: File[]) => void;
   handleMultiFileSelect: (files: ImageFileSelection[]) => void;
   swapImageSlots: (fromIndex: number, toIndex: number) => void;
+  setImageLinkAt: (index: number, value: string) => void;
   catalogs: CatalogRecord[];
   catalogsLoading: boolean;
   catalogsError: string | null;
@@ -162,9 +164,22 @@ export function ProductFormProvider({
   const [imageSlots, setImageSlots] = useState<(ProductImageSlot | null)[]>(
     Array(TOTAL_IMAGE_SLOTS).fill(null)
   );
+  const [imageLinks, setImageLinks] = useState<string[]>(
+    Array(TOTAL_IMAGE_SLOTS).fill("")
+  );
 
   // Ref to keep track of object URLs for cleanup
   const objectUrlsRef = useRef<string[]>([]);
+
+  const normalizeImageLinks = useCallback((links?: string[] | null) => {
+    const next = Array(TOTAL_IMAGE_SLOTS).fill("");
+    if (Array.isArray(links)) {
+      links.slice(0, TOTAL_IMAGE_SLOTS).forEach((link, index) => {
+        next[index] = typeof link === "string" ? link : "";
+      });
+    }
+    return next;
+  }, []);
 
   useEffect(() => {
     // Populate image slots with existing product images
@@ -187,6 +202,11 @@ export function ProductFormProvider({
       });
     }
   }, [product]);
+
+  useEffect(() => {
+    if (!product) return;
+    setImageLinks(normalizeImageLinks(product.imageLinks));
+  }, [product, normalizeImageLinks]);
 
   useEffect(() => {
     if (!product?.catalogs) return;
@@ -384,6 +404,15 @@ export function ProductFormProvider({
     });
   }, [product]);
 
+  const setImageLinkAt = useCallback((index: number, value: string) => {
+    setImageLinks((prev) => {
+      const next = [...prev];
+      if (index < 0 || index >= next.length) return prev;
+      next[index] = value;
+      return next;
+    });
+  }, []);
+
   const handleMultiImageChange = useCallback((files: File[]) => {
     setImageSlots(prevSlots => {
       const newSlots = [...prevSlots];
@@ -472,6 +501,8 @@ export function ProductFormProvider({
         formData.append(key, String(value));
       }
     });
+    const normalizedLinks = imageLinks.map((link) => link.trim());
+    formData.append("imageLinks", JSON.stringify(normalizedLinks));
 
     // Process image slots
     imageSlots.forEach(slot => {
@@ -530,6 +561,7 @@ export function ProductFormProvider({
           });
         return newSlots;
       });
+      setImageLinks(normalizeImageLinks(savedProduct.imageLinks));
       setUploadSuccess(true);
       if (successTimerRef.current) {
         clearTimeout(successTimerRef.current);
@@ -567,6 +599,7 @@ export function ProductFormProvider({
           setValue,
           getValues,
           imageSlots,
+          imageLinks,
           uploading,
           uploadError,
           uploadSuccess,
@@ -578,6 +611,7 @@ export function ProductFormProvider({
           handleMultiImageChange,
           handleMultiFileSelect,
           swapImageSlots,
+          setImageLinkAt,
           catalogs,
           catalogsLoading,
           catalogsError,

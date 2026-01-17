@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { useProductFormContext } from "@/lib/context/ProductFormContext";
 import { PlusIcon, XIcon, GripVertical } from "lucide-react";
 
@@ -18,6 +19,8 @@ type DebugInfo = {
 export default function ProductImageManager() {
   const {
     imageSlots,
+    imageLinks,
+    setImageLinkAt,
     handleSlotImageChange,
     handleSlotDisconnectImage,
     setShowFileManager,
@@ -30,6 +33,9 @@ export default function ProductImageManager() {
 
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [showDebug, setShowDebug] = useState(false);
+  const [slotViewModes, setSlotViewModes] = useState<Array<"upload" | "link">>(
+    Array(imageSlots.length).fill("upload")
+  );
 
   // Drag and drop state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -158,6 +164,29 @@ export default function ProductImageManager() {
     setDraggedIndex(null);
   };
 
+  useEffect(() => {
+    setSlotViewModes((prev) => {
+      const next = Array(imageSlots.length).fill("upload") as Array<
+        "upload" | "link"
+      >;
+      for (let i = 0; i < imageSlots.length; i += 1) {
+        const hasUpload = Boolean(imageSlots[i]);
+        const hasLink = Boolean(imageLinks[i]?.trim());
+        const current = prev[i];
+        if (hasUpload && hasLink) {
+          next[i] = current ?? "upload";
+          continue;
+        }
+        if (hasLink && !hasUpload) {
+          next[i] = "link";
+          continue;
+        }
+        next[i] = "upload";
+      }
+      return next;
+    });
+  }, [imageSlots, imageLinks]);
+
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
@@ -200,95 +229,144 @@ export default function ProductImageManager() {
         {imageSlots.map((slot, index) => {
           const isDragging = draggedIndex === index;
           const isDragOver = dragOverIndex === index;
-          const hasImage = slot !== null;
+          const hasUpload = slot !== null;
+          const linkValue = imageLinks[index] ?? "";
+          const hasLink = Boolean(linkValue.trim());
+          const prefersLink = slotViewModes[index] === "link";
+          const showLink = (prefersLink && hasLink) || (!hasUpload && hasLink);
+          const displayUrl = showLink ? linkValue : slot?.previewUrl;
 
           return (
-            <div
-              key={index}
-              draggable={hasImage}
-              onDragStart={(e) => handleDragStart(e, index)}
-              onDragEnd={handleDragEnd}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, index)}
-              className={`
-                relative flex h-24 w-24 items-center justify-center rounded-md border bg-gray-800 transition-all
-                ${hasImage ? "cursor-grab active:cursor-grabbing" : ""}
-                ${isDragging ? "opacity-50" : ""}
-                ${isDragOver ? "border-emerald-500 border-2 bg-emerald-500/10" : "border-gray-700"}
-              `}
-            >
-              {slot ? (
-                <>
-                  {/* Drag handle indicator */}
-                  <div className="absolute left-0 top-0 z-10 flex h-6 w-6 items-center justify-center rounded-br-md bg-gray-900/80 text-gray-400">
-                    <GripVertical className="h-3 w-3" />
-                  </div>
-                  <Image
-                    src={slot.previewUrl}
-                    alt={`Product Image ${index + 1}`}
-                    width={128}
-                    height={128}
-                    className="rounded-md object-cover pointer-events-none"
-                    onError={() =>
-                      pushDebug({
-                        action: "image-load",
-                        message: "Failed to load preview",
-                        slotIndex: index,
-                      })
-                    }
+            <div key={index} className="flex flex-col items-center gap-1">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <span
+                    className={`h-2 w-2 rounded-full border ${
+                      hasUpload
+                        ? "border-emerald-400 bg-emerald-400"
+                        : "border-gray-500 bg-transparent"
+                    }`}
+                    title="Uploaded image"
                   />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute right-0 top-0 h-6 w-6 rounded-full"
-                    onClick={() => {
-                      try {
-                        handleSlotDisconnectImage(index);
-                      } catch (error) {
-                        pushDebug({
-                          action: "remove-image",
-                          message:
-                            error instanceof Error
-                              ? error.message
-                              : "Failed to remove image",
-                          slotIndex: index,
-                        });
-                      }
-                    }}
-                    aria-label={`Remove image ${index + 1}`}
-                  >
-                    <XIcon className="h-4 w-4" />
-                  </Button>
-                  {/* Position indicator */}
-                  <div className="absolute bottom-0 left-0 rounded-tr-md bg-gray-900/80 px-1.5 py-0.5 text-[10px] text-gray-400">
-                    {index + 1}
-                  </div>
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center text-gray-500">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => triggerFileInput(index)}
-                    aria-label={`Upload image to slot ${index + 1}`}
-                  >
-                    <PlusIcon className="h-6 w-6" />
-                  </Button>
-                  <span className="text-xs">Upload</span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="text-xs"
-                    onClick={() => triggerFileManager(index)}
-                    aria-label={`Choose existing image for slot ${index + 1}`}
-                  >
-                    Choose Existing
-                  </Button>
+                  <span
+                    className={`h-2 w-2 rounded-full border ${
+                      hasLink
+                        ? "border-sky-400 bg-sky-400"
+                        : "border-gray-500 bg-transparent"
+                    }`}
+                    title="Image link"
+                  />
                 </div>
-              )}
+                <Switch
+                  checked={prefersLink && hasLink}
+                  onCheckedChange={(checked) => {
+                    setSlotViewModes((prev) => {
+                      const next = [...prev];
+                      next[index] = checked ? "link" : "upload";
+                      return next;
+                    });
+                  }}
+                  disabled={!hasLink}
+                  aria-label={`Toggle image source for slot ${index + 1}`}
+                  className="h-5 w-9 data-[state=checked]:bg-sky-500"
+                />
+              </div>
+              <div
+                draggable={hasUpload}
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragEnd={handleDragEnd}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, index)}
+                className={`
+                  relative flex h-24 w-24 items-center justify-center rounded-md border bg-gray-800 transition-all
+                  ${hasUpload ? "cursor-grab active:cursor-grabbing" : ""}
+                  ${isDragging ? "opacity-50" : ""}
+                  ${isDragOver ? "border-emerald-500 border-2 bg-emerald-500/10" : "border-gray-700"}
+                `}
+              >
+                {displayUrl ? (
+                  <>
+                    {hasUpload ? (
+                      <div className="absolute left-0 top-0 z-10 flex h-6 w-6 items-center justify-center rounded-br-md bg-gray-900/80 text-gray-400">
+                        <GripVertical className="h-3 w-3" />
+                      </div>
+                    ) : null}
+                    <Image
+                      src={displayUrl}
+                      alt={`Product Image ${index + 1}`}
+                      width={128}
+                      height={128}
+                      className="rounded-md object-cover pointer-events-none"
+                      onError={() =>
+                        pushDebug({
+                          action: "image-load",
+                          message: "Failed to load preview",
+                          slotIndex: index,
+                        })
+                      }
+                    />
+                    {hasUpload ? (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute right-0 top-0 h-6 w-6 rounded-full"
+                        onClick={() => {
+                          try {
+                            handleSlotDisconnectImage(index);
+                          } catch (error) {
+                            pushDebug({
+                              action: "remove-image",
+                              message:
+                                error instanceof Error
+                                  ? error.message
+                                  : "Failed to remove image",
+                              slotIndex: index,
+                            });
+                          }
+                        }}
+                        aria-label={`Remove image ${index + 1}`}
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </Button>
+                    ) : null}
+                    <div className="absolute bottom-0 left-0 rounded-tr-md bg-gray-900/80 px-1.5 py-0.5 text-[10px] text-gray-400">
+                      {index + 1}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-gray-500">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => triggerFileInput(index)}
+                      aria-label={`Upload image to slot ${index + 1}`}
+                    >
+                      <PlusIcon className="h-6 w-6" />
+                    </Button>
+                    <span className="text-xs">Upload</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="text-xs"
+                      onClick={() => triggerFileManager(index)}
+                      aria-label={`Choose existing image for slot ${index + 1}`}
+                    >
+                      Choose Existing
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <Input
+                type="url"
+                value={linkValue}
+                onChange={(event) => setImageLinkAt(index, event.target.value)}
+                placeholder="Image link"
+                className="h-7 w-24 px-2 text-[10px]"
+                aria-label={`Image link for slot ${index + 1}`}
+              />
             </div>
           );
         })}

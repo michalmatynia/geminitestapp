@@ -27,25 +27,30 @@ const readMongoProductProviderSetting = async (): Promise<string | null> => {
 };
 
 export const getProductDataProvider = async (): Promise<ProductDbProvider> => {
-  if (process.env.PRODUCT_DB_PROVIDER) {
-    return normalizeProvider(process.env.PRODUCT_DB_PROVIDER);
-  }
   const mongoSetting = await readMongoProductProviderSetting();
   if (mongoSetting) {
     return normalizeProvider(mongoSetting);
   }
   const hasPrisma = Boolean(process.env.DATABASE_URL);
   const hasMongo = Boolean(process.env.MONGODB_URI);
+  if (hasPrisma) {
+    try {
+      const setting = await prisma.setting.findUnique({
+        where: { key: PRODUCT_DB_PROVIDER_SETTING_KEY },
+        select: { value: true },
+      });
+      if (setting?.value) {
+        return normalizeProvider(setting.value);
+      }
+    } catch {
+      // Ignore Prisma lookup errors and fall through to env/defaults.
+    }
+  }
+  if (process.env.PRODUCT_DB_PROVIDER) {
+    return normalizeProvider(process.env.PRODUCT_DB_PROVIDER);
+  }
   if (!hasPrisma) {
     return hasMongo ? "mongodb" : "prisma";
   }
-  try {
-    const setting = await prisma.setting.findUnique({
-      where: { key: PRODUCT_DB_PROVIDER_SETTING_KEY },
-      select: { value: true },
-    });
-    return normalizeProvider(setting?.value ?? null);
-  } catch {
-    return "prisma";
-  }
+  return "prisma";
 };

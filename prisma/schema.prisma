@@ -29,6 +29,7 @@ model Product {
   sizeWidth           Int?
   weight              Int?
   length              Int?
+  imageLinks          String[]                    @default([])
   createdAt           DateTime                    @default(now())
   updatedAt           DateTime                    @updatedAt
   images              ProductImage[]

@@ -9,6 +9,25 @@ const optionalSku = z.preprocess(
   z.string().trim().min(1, { message: "SKU is required" })
 );
 
+const imageLinksSchema = z.preprocess((value) => {
+  if (value === null || value === undefined) return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      return trimmed
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+    }
+  }
+  return [];
+}, z.array(z.string().trim()));
+
 const productBaseSchema = z.object({
   baseProductId: z.string().nullish(),
   defaultPriceGroupId: z.string().nullish(),
@@ -30,6 +49,7 @@ const productBaseSchema = z.object({
   sizeWidth: z.coerce.number().int().nullish(),
   weight: z.coerce.number().int().nullish(),
   length: z.coerce.number().int().nullish(),
+  imageLinks: imageLinksSchema.optional(),
 });
 
 export const productCreateSchema = productBaseSchema.extend({

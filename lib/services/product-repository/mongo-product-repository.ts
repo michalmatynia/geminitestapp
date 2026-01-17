@@ -42,6 +42,7 @@ const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => (
   sizeWidth: doc.sizeWidth ?? null,
   weight: doc.weight ?? null,
   length: doc.length ?? null,
+  imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
   createdAt: doc.createdAt ?? new Date(),
   updatedAt: doc.updatedAt ?? new Date(),
   images: Array.isArray(doc.images) ? doc.images : [],
@@ -71,6 +72,7 @@ const toProductBase = (doc: ProductDocument): ProductRecord => ({
   sizeWidth: doc.sizeWidth ?? null,
   weight: doc.weight ?? null,
   length: doc.length ?? null,
+  imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
   createdAt: doc.createdAt ?? new Date(),
   updatedAt: doc.updatedAt ?? new Date(),
 });
@@ -194,6 +196,7 @@ export const mongoProductRepository: ProductRepository = {
       sizeWidth: typeof data.sizeWidth === "number" ? data.sizeWidth : null,
       weight: typeof data.weight === "number" ? data.weight : null,
       length: typeof data.length === "number" ? data.length : null,
+      imageLinks: Array.isArray(data.imageLinks) ? data.imageLinks : [],
       createdAt: now,
       updatedAt: now,
       images: [],
@@ -250,6 +253,13 @@ export const mongoProductRepository: ProductRepository = {
         : null),
       ...(data.weight !== undefined ? { weight: data.weight ?? null } : null),
       ...(data.length !== undefined ? { length: data.length ?? null } : null),
+      ...(data.imageLinks !== undefined
+        ? {
+            imageLinks: Array.isArray(data.imageLinks)
+              ? data.imageLinks
+              : [],
+          }
+        : null),
     };
     const result = await db
       .collection<ProductDocument>(productCollectionName)
@@ -317,6 +327,7 @@ export const mongoProductRepository: ProductRepository = {
       sizeWidth: existing.sizeWidth ?? null,
       weight: existing.weight ?? null,
       length: existing.length ?? null,
+      imageLinks: Array.isArray(existing.imageLinks) ? existing.imageLinks : [],
       createdAt: now,
       updatedAt: now,
       images: [],

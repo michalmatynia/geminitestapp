@@ -4,26 +4,12 @@ npx tsc
 npx eslint
 add proper debugging on visual studio code
 
+Create Note doesn't look like the Edit 
 # IN PROGRESS
-
-when I save the import template, my chosen parameter mappings are not being saved.
-
-I don't need save ID in the Import Template 
-
-save import settings
-
-Product import should be crosschecked against what I currently have in the database. So when I load the import list, I should have the option if I only want to see unique product IDs or All of them 
-
-Mark template as default
-
-My produc shouldn have a flip switch, flipping it will enable whether the imaege is viewed from the link or whether an uploded image should be use, obove each product slot there should be two small circles positioned side by side indicating whether a slot has uploaded image, or whether it has an image link
 
 # AUTH START
 
-
-
 # AUTH END
-
 
 Multi APP manager
 Top right extendable menu
@@ -31,7 +17,7 @@ that shows Active tools
 
 # PRODUCT LIST START
 
-## COURT CASE RESOLVER -> Notes WYSIWYG, select notebook
+## COURT CASE RESOLVER -> Notes WYSIWYG, select notebook, Build context by dragging documents into context container and filling in the fillers. I should also be able to prompt out the fillers between them. The contexts should be a mind map. Come up with plan of action and choose different paths.
 
 ## Filters
 Add one button called Filter option that will hide show all available search fields and filter fields
@@ -42,7 +28,6 @@ In each product row, between a checkmark and an image I need a star that will ma
 ## Parameters
 PARAMETERS Additional fields
 
-
 Filtering
 Tradera Listing, vinted listing
 
@@ -52,7 +37,6 @@ Crosslister
 Vinted flagger
 depop
 shpock
-
 
 ## Product List END
 

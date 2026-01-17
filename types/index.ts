@@ -51,6 +51,7 @@ export type ProductRecord = {
   sizeWidth: number | null;
   weight: number | null;
   length: number | null;
+  imageLinks: string[];
   createdAt: Date;
   updatedAt: Date;
 };

@@ -125,6 +125,7 @@ const toProductRecord = (product: {
   sizeWidth: number | null;
   weight: number | null;
   length: number | null;
+  imageLinks: string[];
   createdAt: Date;
   updatedAt: Date;
 }): ProductRecord => ({
@@ -150,6 +151,7 @@ const toProductRecord = (product: {
   sizeWidth: product.sizeWidth ?? null,
   weight: product.weight ?? null,
   length: product.length ?? null,
+  imageLinks: Array.isArray(product.imageLinks) ? product.imageLinks : [],
   createdAt: product.createdAt,
   updatedAt: product.updatedAt,
 });
@@ -275,6 +277,7 @@ export const prismaProductRepository: ProductRepository = {
         sizeWidth: product.sizeWidth,
         weight: product.weight,
         length: product.length,
+        imageLinks: Array.isArray(product.imageLinks) ? product.imageLinks : [],
         defaultPriceGroupId: product.defaultPriceGroupId ?? null,
         ean: product.ean ?? null,
         gtin: product.gtin ?? null,

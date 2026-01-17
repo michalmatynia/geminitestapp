@@ -11,6 +11,7 @@ import {
   PlugIcon,
   MessageCircleIcon,
   StickyNoteIcon,
+  ShieldIcon,
 } from "lucide-react";
 import CollapsibleMenu from "@/components/CollapsibleMenu";
 import { useAdminLayout } from "@/lib/context/AdminLayoutContext";
@@ -202,6 +203,38 @@ export default function Menu() {
           className="block hover:bg-gray-700 p-2 rounded"
         >
           AI
+        </Link>
+      </CollapsibleMenu>
+      <CollapsibleMenu title="Auth" icon={<ShieldIcon />} href="/admin/auth">
+        <Link
+          href="/admin/auth/dashboard"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Dashboard
+        </Link>
+        <Link
+          href="/admin/auth/users"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Users
+        </Link>
+        <Link
+          href="/admin/auth/permissions"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Permissions
+        </Link>
+        <Link
+          href="/admin/auth/settings"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Settings
+        </Link>
+        <Link
+          href="/admin/auth/user-pages"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          User Pages
         </Link>
       </CollapsibleMenu>
       <Link

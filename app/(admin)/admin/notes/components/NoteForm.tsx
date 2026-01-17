@@ -527,6 +527,32 @@ export function NoteForm({
       }
     };
 
+    const pastedText = e.clipboardData?.getData("text/plain");
+    if (pastedText) {
+      if (settings.autoformatOnPaste) {
+        e.preventDefault();
+        const formattedText = autoformatMarkdown(pastedText);
+        const textarea = contentRef.current;
+        const selectionStart = textarea?.selectionStart ?? content.length;
+        const selectionEnd = textarea?.selectionEnd ?? content.length;
+        const newContent =
+          content.slice(0, selectionStart) +
+          formattedText +
+          content.slice(selectionEnd);
+        setContent(newContent);
+        // Set cursor position after the inserted text
+        setTimeout(() => {
+          if (textarea) {
+            const newPosition = selectionStart + formattedText.length;
+            textarea.selectionStart = newPosition;
+            textarea.selectionEnd = newPosition;
+            textarea.focus();
+          }
+        }, 0);
+      }
+      return;
+    }
+
     const items = e.clipboardData?.items;
     if (!items) return;
 
@@ -548,32 +574,6 @@ export function NoteForm({
         e.preventDefault();
         await uploadPastedImage(file);
         return;
-      }
-    }
-
-    // Handle text autoformatting if enabled
-    if (settings.autoformatOnPaste) {
-      const pastedText = e.clipboardData?.getData("text/plain");
-      if (pastedText) {
-        e.preventDefault();
-        const formattedText = autoformatMarkdown(pastedText);
-        const textarea = contentRef.current;
-        const selectionStart = textarea?.selectionStart ?? content.length;
-        const selectionEnd = textarea?.selectionEnd ?? content.length;
-        const newContent =
-          content.slice(0, selectionStart) +
-          formattedText +
-          content.slice(selectionEnd);
-        setContent(newContent);
-        // Set cursor position after the inserted text
-        setTimeout(() => {
-          if (textarea) {
-            const newPosition = selectionStart + formattedText.length;
-            textarea.selectionStart = newPosition;
-            textarea.selectionEnd = newPosition;
-            textarea.focus();
-          }
-        }, 0);
       }
     }
   };

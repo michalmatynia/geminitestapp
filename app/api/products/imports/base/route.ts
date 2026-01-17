@@ -186,19 +186,31 @@ export async function POST(req: Request) {
     }
 
     const defaultPriceGroupId = targetCatalog.defaultPriceGroupId;
+    const provider = await getProductDataProvider();
     const defaultPriceGroup = defaultPriceGroupId
       ? { id: defaultPriceGroupId }
-      : await prisma.priceGroup.findFirst({
-          where: { isDefault: true },
-          select: { id: true },
-        });
-    if (!defaultPriceGroup?.id) {
+      : provider === "mongodb"
+        ? (() => {
+            const mongoDefault = getMongoDb()
+              .then((mongo) =>
+                mongo
+                  .collection<{ id: string }>("price_groups")
+                  .findOne({ isDefault: true }, { projection: { id: 1 } })
+              )
+              .catch(() => null);
+            return mongoDefault;
+          })()
+        : prisma.priceGroup.findFirst({
+            where: { isDefault: true },
+            select: { id: true },
+          });
+    const resolvedDefault = await defaultPriceGroup;
+    if (!resolvedDefault?.id) {
       return NextResponse.json(
         { error: "Default price group is required before importing products." },
         { status: 400 }
       );
     }
-
     let imported = 0;
     let failed = 0;
     const errors: string[] = [];
@@ -257,9 +269,11 @@ export async function POST(req: Request) {
     for (const raw of products) {
       try {
         const mapped = mapBaseProduct(raw, template?.mappings ?? []);
+        const imageUrls = extractBaseImageUrls(raw).slice(0, maxImages);
         const payload = productCreateSchema.parse({
           ...mapped,
-          defaultPriceGroupId: defaultPriceGroup.id,
+          defaultPriceGroupId: resolvedDefault.id,
+          imageLinks: imageUrls,
         });
         const created = await productRepository.createProduct(payload);
         if (!created && payload.sku) {
@@ -269,7 +283,6 @@ export async function POST(req: Request) {
           targetCatalog.id,
         ]);
 
-        const imageUrls = extractBaseImageUrls(raw).slice(0, maxImages);
         if (imageUrls.length > 0) {
           const imageFileIds: string[] = [];
           for (let i = 0; i < imageUrls.length; i += 1) {
@@ -308,20 +321,21 @@ export async function POST(req: Request) {
         if (isSkuConflict(error)) {
           try {
             const mapped = mapBaseProduct(raw, template?.mappings ?? []);
+            const imageUrls = extractBaseImageUrls(raw).slice(0, maxImages);
             const fallbackSku = mapped.baseProductId
               ? `BASE-${mapped.baseProductId}`
               : undefined;
             const payload = productCreateSchema.parse({
               ...mapped,
               sku: fallbackSku,
-              defaultPriceGroupId: defaultPriceGroup.id,
+              defaultPriceGroupId: resolvedDefault.id,
+              imageLinks: imageUrls,
             });
             const created = await productRepository.createProduct(payload);
             await productRepository.replaceProductCatalogs(created.id, [
               targetCatalog.id,
             ]);
 
-            const imageUrls = extractBaseImageUrls(raw).slice(0, maxImages);
             if (imageUrls.length > 0) {
               const imageFileIds: string[] = [];
               for (let i = 0; i < imageUrls.length; i += 1) {

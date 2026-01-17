@@ -1,11 +1,58 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
+import { getProductDataProvider } from "@/lib/services/product-provider";
+import { getMongoDb } from "@/lib/db/mongo-client";
 
 const countrySchema = z.object({
   code: z.enum(["PL", "DE", "GB", "US", "SE"]),
   name: z.string().trim().min(1),
   currencyIds: z.array(z.string()).optional(),
+});
+
+type CurrencyDoc = {
+  id: string;
+  code: string;
+  name: string;
+  symbol?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type CountryDoc = {
+  id: string;
+  code: string;
+  name: string;
+  currencyIds?: string[];
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+const CURRENCIES_COLLECTION = "currencies";
+const COUNTRIES_COLLECTION = "countries";
+
+const normalizeCountryResponse = (
+  country: CountryDoc,
+  currencyMap: Map<string, CurrencyDoc>
+) => ({
+  id: country.id,
+  code: country.code,
+  name: country.name,
+  currencies: (country.currencyIds ?? [])
+    .map((currencyId) => {
+      const currency = currencyMap.get(currencyId);
+      if (!currency) return null;
+      return {
+        currencyId,
+        currency: {
+          id: currency.id,
+          code: currency.code,
+          name: currency.name,
+          symbol: currency.symbol ?? null,
+        },
+      };
+    })
+    .filter(Boolean),
 });
 
 /**
@@ -21,6 +68,77 @@ export async function PUT(
     const body = await req.json();
     const data = countrySchema.parse(body);
     const { currencyIds, ...countryData } = data;
+
+    const provider = await getProductDataProvider();
+    if (provider === "mongodb") {
+      if (!process.env.MONGODB_URI) {
+        return NextResponse.json(
+          { error: "MongoDB is not configured." },
+          { status: 500 }
+        );
+      }
+      const db = await getMongoDb();
+      const countries = db.collection<CountryDoc>(COUNTRIES_COLLECTION);
+      const existing = await countries.findOne({ id });
+      if (!existing) {
+        return NextResponse.json(
+          { error: "Country not found." },
+          { status: 404 }
+        );
+      }
+      if (countryData.code !== id) {
+        const collision = await countries.findOne({ id: countryData.code });
+        if (collision) {
+          return NextResponse.json(
+            { error: "Country code already exists." },
+            { status: 400 }
+          );
+        }
+      }
+      let nextCurrencyIds = existing.currencyIds ?? [];
+      let currencyDocs: CurrencyDoc[] = [];
+      if (currencyIds) {
+        const requestedCurrencyIds = Array.from(new Set(currencyIds));
+        currencyDocs = requestedCurrencyIds.length
+          ? await db
+              .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
+              .find({ id: { $in: requestedCurrencyIds } })
+              .toArray()
+          : [];
+        const validCurrencyIds = new Set(
+          currencyDocs.map((currency) => currency.id)
+        );
+        nextCurrencyIds = requestedCurrencyIds.filter((currencyId) =>
+          validCurrencyIds.has(currencyId)
+        );
+      } else if (nextCurrencyIds.length) {
+        currencyDocs = await db
+          .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
+          .find({ id: { $in: nextCurrencyIds } })
+          .toArray();
+      }
+      const now = new Date();
+      const updated = await countries.findOneAndUpdate(
+        { id },
+        {
+          $set: {
+            id: countryData.code,
+            code: countryData.code,
+            name: countryData.name,
+            ...(currencyIds ? { currencyIds: nextCurrencyIds } : {}),
+            updatedAt: now,
+          },
+        },
+        { returnDocument: "after" }
+      );
+      const currencyMap = new Map(
+        currencyDocs.map((currency) => [currency.id, currency])
+      );
+      return NextResponse.json(
+        updated?.value ? normalizeCountryResponse(updated.value, currencyMap) : null
+      );
+    }
+
     const country = await prisma.$transaction(async (tx) => {
       const updated = await tx.country.update({
         where: { id },
@@ -77,6 +195,20 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+
+    const provider = await getProductDataProvider();
+    if (provider === "mongodb") {
+      if (!process.env.MONGODB_URI) {
+        return NextResponse.json(
+          { error: "MongoDB is not configured." },
+          { status: 500 }
+        );
+      }
+      const db = await getMongoDb();
+      await db.collection(COUNTRIES_COLLECTION).deleteOne({ id });
+      return new Response(null, { status: 204 });
+    }
+
     await prisma.country.delete({ where: { id } });
     return new Response(null, { status: 204 });
   } catch (error: unknown) {

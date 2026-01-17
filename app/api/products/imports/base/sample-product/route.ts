@@ -12,7 +12,7 @@ import {
 } from "@/lib/services/import-template-repository";
 
 const requestSchema = z.object({
-  inventoryId: z.string().trim().min(1),
+  inventoryId: z.string().trim().optional().nullable(),
   productId: z.string().trim().min(1).optional(),
   saveOnly: z.boolean().optional(),
 });
@@ -86,15 +86,27 @@ export async function POST(req: Request) {
     const body = await req.json();
     const data = requestSchema.parse(body);
 
+    const inventoryId = data.inventoryId?.trim() ?? "";
     if (data.saveOnly) {
-      await setImportSampleInventoryId(data.inventoryId);
+      if (inventoryId) {
+        await setImportSampleInventoryId(inventoryId);
+      } else {
+        await setImportSampleInventoryId("");
+      }
       if (data.productId) {
         await setImportSampleProductId(data.productId);
       }
       return NextResponse.json({
         productId: data.productId ?? null,
-        inventoryId: data.inventoryId,
+        inventoryId: inventoryId || null,
       });
+    }
+
+    if (!inventoryId) {
+      return NextResponse.json(
+        { error: "Inventory ID is required.", errorId },
+        { status: 400 }
+      );
     }
 
     let productId = data.productId;
@@ -120,7 +132,7 @@ export async function POST(req: Request) {
       }
       const token = decryptSecret(connection.baseApiToken);
       const payload = await callBaseApi(token, "getInventoryProductsList", {
-        inventory_id: data.inventoryId,
+        inventory_id: inventoryId,
         limit: 1,
       });
       productId = extractFirstProductId(payload) ?? undefined;
@@ -133,8 +145,8 @@ export async function POST(req: Request) {
     }
 
     await setImportSampleProductId(productId);
-    await setImportSampleInventoryId(data.inventoryId);
-    return NextResponse.json({ productId, inventoryId: data.inventoryId });
+    await setImportSampleInventoryId(inventoryId);
+    return NextResponse.json({ productId, inventoryId });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[base-import-sample][POST] Failed to save sample product", {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -95,6 +95,10 @@ export default function ProductImportsPage() {
   const [templateId, setTemplateId] = useState("");
   const [templatePreferenceLoaded, setTemplatePreferenceLoaded] =
     useState(false);
+  const [activeTemplatePreferenceLoaded, setActiveTemplatePreferenceLoaded] =
+    useState(false);
+  const [activeTemplatePreferenceId, setActiveTemplatePreferenceId] =
+    useState<string | null>(null);
 
   const [activeTemplateId, setActiveTemplateId] = useState("");
   const [templateName, setTemplateName] = useState("");
@@ -111,6 +115,8 @@ export default function ProductImportsPage() {
   const [loadingParameters, setLoadingParameters] = useState(false);
   const [parameterProductId, setParameterProductId] = useState("");
   const [openKeyIndex, setOpenKeyIndex] = useState<number | null>(null);
+  const lastParameterProductIdRef = useRef<string | null>(null);
+  const [parameterCacheReady, setParameterCacheReady] = useState(false);
 
   const [checkingIntegration, setCheckingIntegration] = useState(true);
   const [isBaseConnected, setIsBaseConnected] = useState(false);
@@ -180,6 +186,19 @@ export default function ProductImportsPage() {
     void loadTemplates();
   }, []);
 
+  const handleSelectTemplate = useCallback((id: string) => {
+    const template = templates.find((item) => item.id === id);
+    if (!template) return;
+    setActiveTemplateId(template.id);
+    setTemplateName(template.name);
+    setTemplateDescription(template.description ?? "");
+    setTemplateMappings(
+      template.mappings.length > 0
+        ? template.mappings
+        : [{ sourceKey: "", targetField: "" }]
+    );
+  }, [templates]);
+
   useEffect(() => {
     const loadTemplatePreference = async () => {
       try {
@@ -199,6 +218,22 @@ export default function ProductImportsPage() {
   }, []);
 
   useEffect(() => {
+    const loadActiveTemplatePreference = async () => {
+      try {
+        const res = await fetch("/api/products/imports/base/active-template");
+        const payload = (await res.json()) as { templateId?: string | null };
+        if (!res.ok) return;
+        setActiveTemplatePreferenceId(payload.templateId ?? null);
+      } catch (error) {
+        console.error("Failed to load active template preference", error);
+      } finally {
+        setActiveTemplatePreferenceLoaded(true);
+      }
+    };
+    void loadActiveTemplatePreference();
+  }, []);
+
+  useEffect(() => {
     if (!templatePreferenceLoaded) return;
     const saveTemplatePreference = async () => {
       try {
@@ -215,6 +250,24 @@ export default function ProductImportsPage() {
     };
     void saveTemplatePreference();
   }, [templateId, templatePreferenceLoaded]);
+
+  useEffect(() => {
+    if (!activeTemplatePreferenceLoaded) return;
+    const saveActiveTemplatePreference = async () => {
+      try {
+        await fetch("/api/products/imports/base/active-template", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            templateId: activeTemplateId || null,
+          }),
+        });
+      } catch (error) {
+        console.error("Failed to save active template preference", error);
+      }
+    };
+    void saveActiveTemplatePreference();
+  }, [activeTemplateId, activeTemplatePreferenceLoaded]);
 
   useEffect(() => {
     if (!templatePreferenceLoaded) return;
@@ -240,6 +293,26 @@ export default function ProductImportsPage() {
     templateId,
     activeTemplateId,
     templates,
+    handleSelectTemplate,
+  ]);
+
+  useEffect(() => {
+    if (!activeTemplatePreferenceLoaded) return;
+    if (loadingTemplates) return;
+    if (activeTemplateId) return;
+    if (!activeTemplatePreferenceId) return;
+    const preferred = templates.find(
+      (template) => template.id === activeTemplatePreferenceId
+    );
+    if (!preferred) return;
+    handleSelectTemplate(preferred.id);
+  }, [
+    activeTemplatePreferenceLoaded,
+    activeTemplatePreferenceId,
+    loadingTemplates,
+    activeTemplateId,
+    templates,
+    handleSelectTemplate,
   ]);
 
   useEffect(() => {
@@ -265,6 +338,68 @@ export default function ProductImportsPage() {
   }, []);
 
   useEffect(() => {
+    const loadParameterCache = async () => {
+      try {
+        const res = await fetch("/api/products/imports/base/parameters");
+        const payload = (await res.json()) as {
+          keys?: string[];
+          values?: Record<string, string>;
+          productId?: string | null;
+        };
+        if (!res.ok) return;
+        if (payload.productId) {
+          lastParameterProductIdRef.current = payload.productId;
+        }
+        if (payload.keys && payload.values) {
+          setParameterKeys(payload.keys);
+          setParameterValues(payload.values);
+        }
+      } catch (error) {
+        console.error("Failed to load cached parameters", error);
+      } finally {
+        setParameterCacheReady(true);
+      }
+    };
+    void loadParameterCache();
+  }, []);
+
+  useEffect(() => {
+    if (!parameterCacheReady) return;
+    if (lastParameterProductIdRef.current === null) {
+      lastParameterProductIdRef.current = parameterProductId;
+      return;
+    }
+    if (lastParameterProductIdRef.current === parameterProductId) return;
+    lastParameterProductIdRef.current = parameterProductId;
+    if (parameterKeys.length === 0 && Object.keys(parameterValues).length === 0) {
+      return;
+    }
+    setParameterKeys([]);
+    setParameterValues({});
+    const clearCache = async () => {
+      try {
+        await fetch("/api/products/imports/base/parameters", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            inventoryId: "",
+            productId: "",
+            clearOnly: true,
+          }),
+        });
+      } catch (error) {
+        console.error("Failed to clear cached parameters", error);
+      }
+    };
+    void clearCache();
+  }, [
+    parameterProductId,
+    parameterKeys.length,
+    parameterValues,
+    parameterCacheReady,
+  ]);
+
+  useEffect(() => {
     if (!inventoryId) return;
     const savePreference = async () => {
       try {
@@ -283,19 +418,6 @@ export default function ProductImportsPage() {
     };
     void savePreference();
   }, [inventoryId, parameterProductId]);
-
-  const handleSelectTemplate = (id: string) => {
-    const template = templates.find((item) => item.id === id);
-    if (!template) return;
-    setActiveTemplateId(template.id);
-    setTemplateName(template.name);
-    setTemplateDescription(template.description ?? "");
-    setTemplateMappings(
-      template.mappings.length > 0
-        ? template.mappings
-        : [{ sourceKey: "", targetField: "" }]
-    );
-  };
 
   const handleNewTemplate = () => {
     setActiveTemplateId("");
@@ -368,6 +490,25 @@ export default function ProductImportsPage() {
   };
 
   const handleLoadParameters = async () => {
+    if (parameterKeys.length > 0) {
+      setParameterKeys([]);
+      setParameterValues({});
+      try {
+        await fetch("/api/products/imports/base/parameters", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            inventoryId: "",
+            productId: "",
+            clearOnly: true,
+          }),
+        });
+        toast("Parameters cleared.", { variant: "success" });
+      } catch (error) {
+        toast("Failed to clear parameters.", { variant: "error" });
+      }
+      return;
+    }
     if (!inventoryId) {
       toast("Select an inventory first.", { variant: "error" });
       return;
@@ -406,6 +547,34 @@ export default function ProductImportsPage() {
       toast("Failed to load parameters.", { variant: "error" });
     } finally {
       setLoadingParameters(false);
+    }
+  };
+
+  const handleClearInventory = async () => {
+    setInventoryId("");
+    setParameterKeys([]);
+    setParameterValues({});
+    try {
+      await fetch("/api/products/imports/base/sample-product", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          inventoryId: "",
+          saveOnly: true,
+        }),
+      });
+      await fetch("/api/products/imports/base/parameters", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          inventoryId: "",
+          productId: "",
+          clearOnly: true,
+        }),
+      });
+      toast("Inventory cleared.", { variant: "success" });
+    } catch (error) {
+      toast("Failed to clear inventory.", { variant: "error" });
     }
   };
 
@@ -695,10 +864,11 @@ export default function ProductImportsPage() {
             </div>
 
             <div className="mt-4 space-y-4">
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-end gap-3">
                 <Button
                   onClick={handleLoadInventories}
                   disabled={loadingInventories}
+                  className="mt-6"
                 >
                   {loadingInventories ? "Loading..." : "Load inventories"}
                 </Button>
@@ -721,6 +891,15 @@ export default function ProductImportsPage() {
                     )}
                   </select>
                 </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleClearInventory}
+                  disabled={!inventoryId}
+                  className="mt-6"
+                >
+                  Clear inventory
+                </Button>
                 <div className="w-40">
                   <label className="text-xs text-gray-400">Limit</label>
                   <select
@@ -910,13 +1089,59 @@ export default function ProductImportsPage() {
         <TabsContent value="templates" className="mt-6 space-y-6">
           <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-semibold text-white">
-                  Import templates
-                </h2>
-                <p className="mt-1 text-sm text-gray-400">
-                  Map Base.com product parameters into product fields.
-                </p>
+              <div className="grid w-fit gap-2">
+                <div className="col-span-2">
+                  <label className="text-xs text-gray-400">
+                    Sample product ID
+                  </label>
+                  <Input
+                    className="mt-2 w-full"
+                    value={parameterProductId}
+                    onChange={(event) =>
+                      setParameterProductId(event.target.value)
+                    }
+                    placeholder="Base product ID to fetch parameters"
+                  />
+                </div>
+                <div className="flex flex-col items-center">
+                  <Button
+                    type="button"
+                    onClick={handleLoadParameters}
+                    disabled={loadingParameters}
+                  >
+                    {loadingParameters
+                      ? "Loading..."
+                      : parameterKeys.length > 0
+                        ? "Unload parameters"
+                        : "Load parameters"}
+                  </Button>
+                  <div className="mt-2 flex items-center gap-1 text-xs text-gray-400">
+                    <span
+                      className={`h-2 w-2 rounded-full ${
+                        parameterKeys.length > 0
+                          ? "bg-emerald-400"
+                          : "bg-gray-600"
+                      }`}
+                    />
+                    <span>
+                      {parameterKeys.length > 0 ? "Loaded" : "Not loaded"}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-center">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleUseExampleProduct}
+                    disabled={loadingParameters}
+                  >
+                    Use example
+                  </Button>
+                  <div className="mt-2 flex items-center gap-1 text-xs text-gray-400 opacity-0">
+                    <span className="h-2 w-2 rounded-full bg-gray-600" />
+                    <span>Not loaded</span>
+                  </div>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -938,37 +1163,6 @@ export default function ProductImportsPage() {
                   disabled={!activeTemplateId || deletingTemplate}
                 >
                   {deletingTemplate ? "Deleting..." : "Delete"}
-                </Button>
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto_auto]">
-              <div>
-                <label className="text-xs text-gray-400">
-                  Sample product ID
-                </label>
-                <Input
-                  className="mt-2"
-                  value={parameterProductId}
-                  onChange={(event) => setParameterProductId(event.target.value)}
-                  placeholder="Base product ID to fetch parameters"
-                />
-              </div>
-              <div className="flex items-end gap-2">
-                <Button
-                  type="button"
-                  onClick={handleLoadParameters}
-                  disabled={loadingParameters}
-                >
-                  {loadingParameters ? "Loading..." : "Load parameters"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleUseExampleProduct}
-                  disabled={loadingParameters}
-                >
-                  Use example
                 </Button>
               </div>
             </div>

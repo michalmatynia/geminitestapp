@@ -7,6 +7,7 @@ import type { TagRecord, NoteWithRelations } from "@/types/notes";
 interface NoteMetadataProps {
   title: string;
   setTitle: (title: string) => void;
+  showTitle?: boolean;
   selectedFolderId: string;
   setSelectedFolderId: (id: string) => void;
   flatFolders: Array<{ id: string; name: string; level: number }>;
@@ -45,6 +46,7 @@ interface NoteMetadataProps {
 export function NoteMetadata({
   title,
   setTitle,
+  showTitle = true,
   selectedFolderId,
   setSelectedFolderId,
   flatFolders,
@@ -90,17 +92,21 @@ export function NoteMetadata({
 
   return (
     <div className="space-y-4">
-      <div>
-        <label className="mb-2 block text-sm font-medium text-white">Title</label>
-        <input
-          type="text"
-          placeholder="Enter note title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white"
-          required
-        />
-      </div>
+      {showTitle ? (
+        <div>
+          <label className="mb-2 block text-sm font-medium text-white">
+            Title
+          </label>
+          <input
+            type="text"
+            placeholder="Enter note title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white"
+            required
+          />
+        </div>
+      ) : null}
 
       <div>
         <label className="mb-2 block text-sm font-medium text-white">Folder</label>

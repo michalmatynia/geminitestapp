@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { PRODUCT_DB_PROVIDER_SETTING_KEY } from "@/lib/services/product-provider";
 import { INTEGRATION_DB_PROVIDER_SETTING_KEY } from "@/lib/services/integration-provider";
+import { AUTH_DB_PROVIDER_SETTING_KEY } from "@/lib/services/auth-provider";
 
 const shouldLog = () => process.env.DEBUG_SETTINGS === "true";
 
@@ -21,6 +22,7 @@ const SETTINGS_COLLECTION = "settings";
 const productSettingKeys = new Set([
   PRODUCT_DB_PROVIDER_SETTING_KEY,
   INTEGRATION_DB_PROVIDER_SETTING_KEY,
+  AUTH_DB_PROVIDER_SETTING_KEY,
 ]);
 
 const canUsePrismaSettings = () =>

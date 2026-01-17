@@ -6,6 +6,9 @@ import {
   listImportTemplates,
 } from "@/lib/services/import-template-repository";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const mappingSchema = z.object({
   sourceKey: z.string().trim().min(1),
   targetField: z.string().trim().min(1),

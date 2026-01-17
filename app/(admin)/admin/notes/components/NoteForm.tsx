@@ -770,44 +770,6 @@ export function NoteForm({
         </div>
       )}
 
-      <NoteMetadata
-        title={title}
-        setTitle={setTitle}
-        selectedFolderId={selectedFolderId}
-        setSelectedFolderId={setSelectedFolderId}
-        flatFolders={flatFolders}
-        color={color}
-        setColor={setColor}
-        isPinned={isPinned}
-        setIsPinned={setIsPinned}
-        isArchived={isArchived}
-        setIsArchived={setIsArchived}
-        isFavorite={isFavorite}
-        setIsFavorite={setIsFavorite}
-        selectedTagIds={selectedTagIds}
-        availableTags={availableTags}
-        tagInput={tagInput}
-        setTagInput={setTagInput}
-        isTagDropdownOpen={isTagDropdownOpen}
-        setIsTagDropdownOpen={setIsTagDropdownOpen}
-        filteredTags={filteredTags}
-        onAddTag={handleAddTag}
-        onCreateTag={handleCreateTag}
-        onRemoveTag={handleRemoveTag}
-        onTagClick={onTagClick}
-        selectedRelatedNotes={selectedRelatedNotes}
-        setSelectedRelatedNotes={setSelectedRelatedNotes}
-        relatedNoteQuery={relatedNoteQuery}
-        setRelatedNoteQuery={setRelatedNoteQuery}
-        isRelatedDropdownOpen={isRelatedDropdownOpen}
-        setIsRelatedDropdownOpen={setIsRelatedDropdownOpen}
-        relatedNoteResults={relatedNoteResults}
-        isRelatedLoading={isRelatedLoading}
-        onSelectRelatedNote={onSelectRelatedNote}
-        effectiveTheme={effectiveTheme}
-        noteId={note?.id}
-      />
-
       <div>
         <label className="mb-2 block text-sm font-medium text-white">
           Content
@@ -861,6 +823,44 @@ export function NoteForm({
         isImageFile={isImageFile}
       />
 
+      <NoteMetadata
+        title={title}
+        setTitle={setTitle}
+        showTitle
+        selectedFolderId={selectedFolderId}
+        setSelectedFolderId={setSelectedFolderId}
+        flatFolders={flatFolders}
+        color={color}
+        setColor={setColor}
+        isPinned={isPinned}
+        setIsPinned={setIsPinned}
+        isArchived={isArchived}
+        setIsArchived={setIsArchived}
+        isFavorite={isFavorite}
+        setIsFavorite={setIsFavorite}
+        selectedTagIds={selectedTagIds}
+        availableTags={availableTags}
+        tagInput={tagInput}
+        setTagInput={setTagInput}
+        isTagDropdownOpen={isTagDropdownOpen}
+        setIsTagDropdownOpen={setIsTagDropdownOpen}
+        filteredTags={filteredTags}
+        onAddTag={handleAddTag}
+        onCreateTag={handleCreateTag}
+        onRemoveTag={handleRemoveTag}
+        onTagClick={onTagClick}
+        selectedRelatedNotes={selectedRelatedNotes}
+        setSelectedRelatedNotes={setSelectedRelatedNotes}
+        relatedNoteQuery={relatedNoteQuery}
+        setRelatedNoteQuery={setRelatedNoteQuery}
+        isRelatedDropdownOpen={isRelatedDropdownOpen}
+        setIsRelatedDropdownOpen={setIsRelatedDropdownOpen}
+        relatedNoteResults={relatedNoteResults}
+        isRelatedLoading={isRelatedLoading}
+        onSelectRelatedNote={onSelectRelatedNote}
+        effectiveTheme={effectiveTheme}
+        noteId={note?.id}
+      />
     </form>
 
       {lightboxImage && (

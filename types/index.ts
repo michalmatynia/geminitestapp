@@ -20,6 +20,7 @@ export type CatalogRecord = {
   name: string;
   description: string | null;
   isDefault: boolean;
+  defaultLanguageId?: string | null;
   createdAt: Date;
   updatedAt: Date;
   languageIds: string[];
@@ -28,6 +29,8 @@ export type CatalogRecord = {
 export type ProductRecord = {
   id: string;
   sku: string | null;
+  baseProductId: string | null;
+  defaultPriceGroupId: string | null;
   name_en: string | null;
   name_pl: string | null;
   name_de: string | null;

@@ -81,6 +81,7 @@ const toCatalogRecord = (catalog: {
   name: string;
   description: string | null;
   isDefault: boolean;
+  defaultLanguageId: string | null;
   createdAt: Date;
   updatedAt: Date;
   languages?: { languageId: string }[];
@@ -89,6 +90,7 @@ const toCatalogRecord = (catalog: {
   name: catalog.name,
   description: catalog.description ?? null,
   isDefault: catalog.isDefault,
+  defaultLanguageId: catalog.defaultLanguageId ?? null,
   createdAt: catalog.createdAt,
   updatedAt: catalog.updatedAt,
   languageIds: catalog.languages?.map((entry) => entry.languageId) ?? [],
@@ -97,6 +99,8 @@ const toCatalogRecord = (catalog: {
 const toProductRecord = (product: {
   id: string;
   sku: string | null;
+  baseProductId: string | null;
+  defaultPriceGroupId: string | null;
   name_en: string | null;
   name_pl: string | null;
   name_de: string | null;
@@ -117,6 +121,8 @@ const toProductRecord = (product: {
 }): ProductRecord => ({
   id: product.id,
   sku: product.sku ?? null,
+  baseProductId: product.baseProductId ?? null,
+  defaultPriceGroupId: product.defaultPriceGroupId ?? null,
   name_en: product.name_en ?? null,
   name_pl: product.name_pl ?? null,
   name_de: product.name_de ?? null,
@@ -245,6 +251,7 @@ export const prismaProductRepository: ProductRepository = {
         sizeWidth: product.sizeWidth,
         weight: product.weight,
         length: product.length,
+        defaultPriceGroupId: product.defaultPriceGroupId ?? null,
         sku,
       },
     });

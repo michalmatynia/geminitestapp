@@ -2,6 +2,7 @@ import React, { ReactNode } from "react";
 import { ProductDbProvider } from "@/types/products";
 
 export const settingSections = [
+  "Categories",
   "Price Groups",
   "Catalogs",
   "Data Source",

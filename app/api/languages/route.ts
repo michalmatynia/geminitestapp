@@ -2,13 +2,8 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
-
-const defaultLanguages = [
-  { code: "EN", name: "English", nativeName: "English" },
-  { code: "PL", name: "Polish", nativeName: "Polski" },
-  { code: "DE", name: "German", nativeName: "Deutsch" },
-  { code: "SV", name: "Swedish", nativeName: "Svenska" },
-];
+import { ensureInternationalizationDefaults } from "@/lib/seedInternationalization";
+import { fallbackLanguages } from "@/lib/internationalizationFallback";
 
 const languageCreateSchema = z.object({
   code: z.string().trim().min(1),
@@ -22,10 +17,12 @@ const languageCreateSchema = z.object({
  * Fetches available languages (seeds defaults if empty).
  */
 export async function GET() {
+  if (!process.env.DATABASE_URL) {
+    return NextResponse.json(fallbackLanguages);
+  }
   try {
-    await prisma.language.createMany({
-      data: defaultLanguages,
-      skipDuplicates: true,
+    await prisma.$transaction(async (tx) => {
+      await ensureInternationalizationDefaults(tx);
     });
     const languages = await prisma.language.findMany({
       orderBy: { code: "asc" },
@@ -41,10 +38,7 @@ export async function GET() {
   } catch (error) {
     const errorId = randomUUID();
     console.error("[languages][GET] Failed to fetch languages", { errorId, error });
-    return NextResponse.json(
-      { error: "Failed to fetch languages", errorId },
-      { status: 500 }
-    );
+    return NextResponse.json(fallbackLanguages);
   }
 }
 

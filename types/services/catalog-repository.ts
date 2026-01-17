@@ -7,6 +7,7 @@ export type CatalogCreateInput = {
   description?: string | null;
   isDefault?: boolean;
   languageIds?: string[];
+  defaultLanguageId?: string | null;
 };
 
 export type CatalogUpdateInput = {
@@ -14,6 +15,7 @@ export type CatalogUpdateInput = {
   description?: string | null;
   isDefault?: boolean;
   languageIds?: string[];
+  defaultLanguageId?: string | null;
 };
 
 export type CatalogRepository = {

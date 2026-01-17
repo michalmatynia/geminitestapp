@@ -4,40 +4,20 @@ npx tsc
 npx eslint
 add proper debugging on visual studio code
 
+# IN PROGRESS
+## Catalogs
+
+
+Add price group button should be on the left
+Connect Product app to MongoDb
 
 # PRODUCT LIST START
 
 We are in PRODUCT now
 
-In product settings, Internationalization is gone, I can no longer see COuntries Languages and currencies, add Poland Germany United Kingdom and Sweden to Internationalization
-
 ## Product List
-Pagination in Product List should reflect the pagination in notes App, same placement same component
-
-## Catalogs
-Catalogs are categories to which products belong. There should be a default catalog
-
-When I create the product, a notification should pop-up that the product has been created
-
-Catalogs 
--default catalog, the first created catalog is always default one
---In Edit Catalog
-Available languages in Tag box (Required to have at least one)
-Default Language (required field) choose from available languages
-Available price groups(Required to have at least one)
-Default Price group (required field) choose from available languages
 
 ## Categories
-Categories
-Add Category
----> Category Name
----> Category Catalog
-Parent Category---->
-Category listing cateogries are grouped by catalogs to which they belong
-categories are draggable into hierarchies
-Each category can only belong to one catalog
-
-
 TAGS PARAMETERS Additional fields
 
 
@@ -65,7 +45,7 @@ Vinted flagger
 depop
 shpock
 
-
+# Email Connect
 Connect email to add orders from email like tradera
 
 

@@ -22,6 +22,8 @@ const productCollectionName = "products";
 const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => ({
   id: doc.id ?? doc._id,
   sku: doc.sku ?? null,
+  baseProductId: doc.baseProductId ?? null,
+  defaultPriceGroupId: doc.defaultPriceGroupId ?? null,
   name_en: doc.name_en ?? null,
   name_pl: doc.name_pl ?? null,
   name_de: doc.name_de ?? null,
@@ -46,6 +48,8 @@ const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => (
 const toProductBase = (doc: ProductDocument): ProductRecord => ({
   id: doc.id ?? doc._id,
   sku: doc.sku ?? null,
+  baseProductId: doc.baseProductId ?? null,
+  defaultPriceGroupId: doc.defaultPriceGroupId ?? null,
   name_en: doc.name_en ?? null,
   name_pl: doc.name_pl ?? null,
   name_de: doc.name_de ?? null,
@@ -134,6 +138,12 @@ export const mongoProductRepository: ProductRepository = {
       _id: id,
       id,
       sku: typeof data.sku === "string" ? data.sku : null,
+      baseProductId:
+        typeof data.baseProductId === "string" ? data.baseProductId : null,
+      defaultPriceGroupId:
+        typeof data.defaultPriceGroupId === "string"
+          ? data.defaultPriceGroupId
+          : null,
       name_en: typeof data.name_en === "string" ? data.name_en : null,
       name_pl: typeof data.name_pl === "string" ? data.name_pl : null,
       name_de: typeof data.name_de === "string" ? data.name_de : null,
@@ -171,6 +181,12 @@ export const mongoProductRepository: ProductRepository = {
     const updateDoc: Partial<ProductDocument> = {
       updatedAt: new Date(),
       ...(data.sku !== undefined ? { sku: data.sku ?? null } : null),
+      ...(data.baseProductId !== undefined
+        ? { baseProductId: data.baseProductId ?? null }
+        : null),
+      ...(data.defaultPriceGroupId !== undefined
+        ? { defaultPriceGroupId: data.defaultPriceGroupId ?? null }
+        : null),
       ...(data.name_en !== undefined ? { name_en: data.name_en ?? null } : null),
       ...(data.name_pl !== undefined ? { name_pl: data.name_pl ?? null } : null),
       ...(data.name_de !== undefined ? { name_de: data.name_de ?? null } : null),
@@ -249,6 +265,8 @@ export const mongoProductRepository: ProductRepository = {
       _id: duplicatedId,
       id: duplicatedId,
       sku,
+      baseProductId: null,
+      defaultPriceGroupId: existing.defaultPriceGroupId ?? null,
       name_en: existing.name_en ?? null,
       name_pl: existing.name_pl ?? null,
       name_de: existing.name_de ?? null,

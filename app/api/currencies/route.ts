@@ -3,6 +3,8 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
+import { defaultCurrencies } from "@/lib/internationalizationDefaults";
+import { fallbackCurrencies } from "@/lib/internationalizationFallback";
 
 export const runtime = "nodejs";
 
@@ -12,26 +14,14 @@ const currencySchema = z.object({
   symbol: z.string().trim().min(1).optional(),
 });
 
-// Derive the exact Prisma enum-backed type for `Currency.code`
-type CurrencyCode = Prisma.CurrencyCreateManyInput["code"];
-
-const defaultCurrencies: Array<{
-  code: CurrencyCode;
-  name: string;
-  symbol: string;
-}> = [
-  { code: "USD", name: "US Dollar", symbol: "$" },
-  { code: "EUR", name: "Euro", symbol: "€" },
-  { code: "PLN", name: "Polish Zloty", symbol: "zł" },
-  { code: "GBP", name: "British Pound", symbol: "£" },
-  { code: "SEK", name: "Swedish Krona", symbol: "kr" },
-];
-
 /**
  * GET /api/currencies
  * Fetches all currencies (and ensures defaults exist).
  */
 export async function GET() {
+  if (!process.env.DATABASE_URL) {
+    return NextResponse.json(fallbackCurrencies);
+  }
   try {
     await prisma.currency.createMany({
       data: defaultCurrencies,
@@ -49,10 +39,7 @@ export async function GET() {
       errorId,
       error,
     });
-    return NextResponse.json(
-      { error: "Failed to fetch currencies", errorId },
-      { status: 500 }
-    );
+    return NextResponse.json(fallbackCurrencies);
   }
 }
 

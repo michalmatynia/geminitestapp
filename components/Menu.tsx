@@ -89,6 +89,12 @@ export default function Menu() {
         >
           Settings
         </Link>
+        <Link
+          href="/admin/products/imports"
+          className="block w-full text-left hover:bg-gray-700 p-2 rounded"
+        >
+          Imports
+        </Link>
       </CollapsibleMenu>
       <CollapsibleMenu
         title="Notes"

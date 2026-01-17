@@ -14,7 +14,9 @@
       "Bash(npx tsc:*)",
       "Bash(cd /Users/michalmatynia/Desktop/NPM/2026/Gemini\\\\ new\\\\ Pull/geminitestapp:*)",
       "Bash(cd /Users/michalmatynia/Desktop/NPM/2026/Gemini\\\\ new\\\\ Pull/geminitestapp && npx prisma db push:*)",
-      "Bash(cd /Users/michalmatynia/Desktop/NPM/2026/Gemini\\\\ new\\\\ Pull/geminitestapp && npx prisma generate:*)"
+      "Bash(cd /Users/michalmatynia/Desktop/NPM/2026/Gemini\\\\ new\\\\ Pull/geminitestapp && npx prisma generate:*)",
+      "Bash(cat:*)",
+      "Bash(npx prisma migrate dev:*)"
     ]
   }
 }

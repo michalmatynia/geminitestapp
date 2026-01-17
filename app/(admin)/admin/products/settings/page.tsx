@@ -23,17 +23,24 @@ import {
   ProductDbProvider,
   ProductMigrationDirection,
   Language,
+  ProductCategoryWithChildren,
 } from "@/types/products";
 import { PriceGroupsSettings } from "./components/PriceGroupsSettings";
 import { DataSourceSettings } from "./components/DataSourceSettings";
 import { CatalogsSettings } from "./components/CatalogsSettings";
+import { CategoriesSettings } from "./components/CategoriesSettings";
 import { InternationalizationSettings } from "./components/InternationalizationSettings";
 
 export default function ProductSettingsPage() {
   const [activeSection, setActiveSection] =
-    useState<(typeof settingSections)[number]>("Price Groups");
+    useState<(typeof settingSections)[number]>("Categories");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [priceGroups, setPriceGroups] = useState<PriceGroup[]>([]);
+  const [productCategories, setProductCategories] = useState<ProductCategoryWithChildren[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [selectedCategoryCatalogId, setSelectedCategoryCatalogId] = useState<string | null>(null);
+  const [defaultGroupId, setDefaultGroupId] = useState("");
+  const [defaultGroupSaving, setDefaultGroupSaving] = useState(false);
   const [currencyOptions, setCurrencyOptions] = useState<CurrencyOption[]>([]);
   const [countries, setCountries] = useState<CountryOption[]>([]);
   const [loadingGroups, setLoadingGroups] = useState(true);
@@ -76,6 +83,7 @@ export default function ProductSettingsPage() {
     description: "",
     isDefault: false,
   });
+  const [defaultLanguageId, setDefaultLanguageId] = useState("");
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [catalogSaving, setCatalogSaving] = useState(false);
   const [showCatalogModal, setShowCatalogModal] = useState(false);
@@ -294,6 +302,8 @@ export default function ProductSettingsPage() {
           addToPrice: group.addToPrice,
         }))
       );
+      const defaultGroup = data.find((group) => group.isDefault);
+      setDefaultGroupId(defaultGroup?.id ?? "");
     } catch (error) {
       console.error(error);
     } finally {
@@ -354,6 +364,26 @@ export default function ProductSettingsPage() {
     }
   }, []);
 
+  const refreshCategories = useCallback(async (catalogId: string | null) => {
+    if (!catalogId) {
+      setProductCategories([]);
+      return;
+    }
+    try {
+      setLoadingCategories(true);
+      const res = await fetch(`/api/products/categories/tree?catalogId=${catalogId}`);
+      if (!res.ok) {
+        throw new Error("Failed to fetch product categories.");
+      }
+      const data = (await res.json()) as ProductCategoryWithChildren[];
+      setProductCategories(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingCategories(false);
+    }
+  }, []);
+
   const refreshLanguages = useCallback(async () => {
     try {
       setLanguagesLoading(true);
@@ -402,6 +432,21 @@ export default function ProductSettingsPage() {
       setFormState((prev) => ({ ...prev, currencyId: plnCurrency.id }));
     }
   }, [currencyOptions, formState.currencyId]);
+
+  // Auto-select default catalog for categories when catalogs load
+  useEffect(() => {
+    if (catalogs.length > 0 && !selectedCategoryCatalogId) {
+      const defaultCatalog = catalogs.find((c) => c.isDefault);
+      const catalogToSelect = defaultCatalog || catalogs[0];
+      setSelectedCategoryCatalogId(catalogToSelect.id);
+      void refreshCategories(catalogToSelect.id);
+    }
+  }, [catalogs, selectedCategoryCatalogId, refreshCategories]);
+
+  const handleCategoryCatalogChange = useCallback((catalogId: string) => {
+    setSelectedCategoryCatalogId(catalogId);
+    void refreshCategories(catalogId);
+  }, [refreshCategories]);
 
   const selectedCurrency = useMemo(
     () => currencyOptions.find((option) => option.id === formState.currencyId),
@@ -499,6 +544,10 @@ export default function ProductSettingsPage() {
   };
 
   const handleDeleteGroup = async (group: PriceGroup) => {
+    if (priceGroups.length <= 1) {
+      toast("At least one price group is required.", { variant: "error" });
+      return;
+    }
     const confirmed = window.confirm(`Delete price group "${group.name}"?`);
     if (!confirmed) return;
     const res = await fetch(`/api/price-groups/${group.id}`, {
@@ -512,6 +561,45 @@ export default function ProductSettingsPage() {
       return;
     }
     await refreshPriceGroups();
+  };
+
+  const handleSetDefaultGroup = async (groupId: string) => {
+    setDefaultGroupId(groupId);
+    const group = priceGroups.find((entry) => entry.id === groupId);
+    if (!group) {
+      toast("Select a valid price group.", { variant: "error" });
+      return;
+    }
+    setDefaultGroupSaving(true);
+    try {
+      const res = await fetch(`/api/price-groups/${group.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          groupId: group.groupId,
+          isDefault: true,
+          name: group.name,
+          description: group.description,
+          currencyId: group.currencyId,
+          type: group.groupType,
+          basePriceField: group.basePriceField,
+          sourceGroupId: group.sourceGroupId ?? "",
+          priceMultiplier: group.priceMultiplier,
+          addToPrice: group.addToPrice,
+        }),
+      });
+      if (!res.ok) {
+        const error = (await res.json()) as { error?: string };
+        toast(error.error || "Failed to set default price group.", {
+          variant: "error",
+        });
+        return;
+      }
+      await refreshPriceGroups();
+      toast("Default price group updated.", { variant: "success" });
+    } finally {
+      setDefaultGroupSaving(false);
+    }
   };
 
   const handleOpenCurrencyModal = (currency?: CurrencyOption) => {
@@ -656,8 +744,11 @@ export default function ProductSettingsPage() {
         description: catalog.description ?? "",
         isDefault: catalog.isDefault,
       });
-      setSelectedLanguageIds(
-        catalog.languageIds ?? []
+      const nextLanguageIds = catalog.languageIds ?? [];
+      setSelectedLanguageIds(nextLanguageIds);
+      setDefaultLanguageId(
+        catalog.defaultLanguageId ??
+          (nextLanguageIds.length > 0 ? nextLanguageIds[0] : "")
       );
     } else {
       setEditingCatalogId(null);
@@ -667,6 +758,7 @@ export default function ProductSettingsPage() {
         isDefault: catalogs.length === 0,
       });
       setSelectedLanguageIds([]);
+      setDefaultLanguageId("");
     }
     setCatalogError(null);
     setCatalogLanguageQuery("");
@@ -714,6 +806,16 @@ export default function ProductSettingsPage() {
         toast("Catalog name is required.", { variant: "error" });
         return;
       }
+      if (selectedLanguageIds.length === 0) {
+        toast("Select at least one language.", { variant: "error" });
+        return;
+      }
+      if (!defaultLanguageId || !selectedLanguageIds.includes(defaultLanguageId)) {
+        toast("Select a default language from the available languages.", {
+          variant: "error",
+        });
+        return;
+      }
       setCatalogSaving(true);
       try {
         const endpoint = editingCatalogId
@@ -726,6 +828,7 @@ export default function ProductSettingsPage() {
             name,
             description,
             languageIds: selectedLanguageIds,
+            defaultLanguageId,
             isDefault: catalogForm.isDefault,
           }),
         });
@@ -745,6 +848,7 @@ export default function ProductSettingsPage() {
         setEditingCatalogId(null);
         setCatalogForm({ name: "", description: "", isDefault: false });
         setSelectedLanguageIds([]);
+        setDefaultLanguageId("");
         refreshCatalogs().catch((error) => {
           console.error("Failed to refresh catalogs:", error);
           toast("Catalog saved, but refresh failed.", { variant: "error" });
@@ -757,11 +861,15 @@ export default function ProductSettingsPage() {
   };
 
   const toggleLanguage = (languageId: string) => {
-    setSelectedLanguageIds((prev) =>
-      prev.includes(languageId)
+    setSelectedLanguageIds((prev) => {
+      const next = prev.includes(languageId)
         ? prev.filter((id) => id !== languageId)
-        : [...prev, languageId]
-    );
+        : [...prev, languageId];
+      if (!next.includes(defaultLanguageId)) {
+        setDefaultLanguageId(next[0] ?? "");
+      }
+      return next;
+    });
   };
 
   const languageNameMap = useMemo(
@@ -909,10 +1017,23 @@ export default function ProductSettingsPage() {
             </div>
           </aside>
           <section className="rounded-md border border-gray-800 bg-gray-900 p-6">
+            {activeSection === "Categories" && (
+              <CategoriesSettings
+                loading={loadingCategories}
+                categories={productCategories}
+                catalogs={catalogs}
+                selectedCatalogId={selectedCategoryCatalogId}
+                onCatalogChange={handleCategoryCatalogChange}
+                onRefresh={() => refreshCategories(selectedCategoryCatalogId)}
+              />
+            )}
             {activeSection === "Price Groups" && (
               <PriceGroupsSettings
                 loadingGroups={loadingGroups}
                 priceGroups={priceGroups}
+                defaultGroupId={defaultGroupId}
+                onDefaultGroupChange={handleSetDefaultGroup}
+                defaultGroupSaving={defaultGroupSaving}
                 handleOpenCreate={handleOpenCreate}
                 handleEditGroup={handleEditGroup}
                 handleDeleteGroup={handleDeleteGroup}
@@ -1124,6 +1245,29 @@ export default function ProductSettingsPage() {
                             </button>
                           ))
                         )}
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs text-gray-400">
+                          Default language
+                        </label>
+                        <select
+                          className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-white"
+                          value={defaultLanguageId}
+                          onChange={(event) =>
+                            setDefaultLanguageId(event.target.value)
+                          }
+                          disabled={selectedLanguages.length === 0}
+                        >
+                          <option value="">Select a default language</option>
+                          {selectedLanguages.map((language) => (
+                            <option key={language.id} value={language.id}>
+                              {language.name} ({language.code})
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-[11px] text-gray-500">
+                          Required. Choose from the available languages.
+                        </p>
                       </div>
                     </div>
                   )}

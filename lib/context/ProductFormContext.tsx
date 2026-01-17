@@ -33,6 +33,7 @@ import {
   productCreateSchema,
   productUpdateSchema,
 } from "@/lib/validations/product";
+import { useToast } from "@/components/ui/toast";
 
 export type ProductFormData = z.infer<typeof productCreateSchema>;
 
@@ -151,6 +152,7 @@ export function ProductFormProvider({
   const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // State for managing all 15 image slots
   const [imageSlots, setImageSlots] = useState<(ProductImageSlot | null)[]>(
@@ -518,6 +520,9 @@ export function ProductFormProvider({
         setUploadSuccess(false);
       }, 3000);
 
+      toast(product ? "Product updated." : "Product created.", {
+        variant: "success",
+      });
       onSuccess?.();
       router.refresh();
       if (!product) {

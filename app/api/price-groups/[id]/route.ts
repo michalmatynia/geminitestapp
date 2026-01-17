@@ -91,6 +91,13 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    const total = await prisma.priceGroup.count();
+    if (total <= 1) {
+      return NextResponse.json(
+        { error: "At least one price group is required." },
+        { status: 400 }
+      );
+    }
     await prisma.priceGroup.delete({ where: { id } });
     return new Response(null, { status: 204 });
   } catch (error: unknown) {

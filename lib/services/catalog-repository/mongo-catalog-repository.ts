@@ -14,6 +14,7 @@ type CatalogDocument = {
   name: string;
   description: string | null;
   isDefault: boolean;
+  defaultLanguageId?: string | null;
   createdAt: Date;
   updatedAt: Date;
   languageIds: string[];
@@ -26,6 +27,7 @@ const toRecord = (doc: WithId<CatalogDocument>): CatalogRecord => ({
   name: doc.name,
   description: doc.description ?? null,
   isDefault: doc.isDefault,
+  defaultLanguageId: doc.defaultLanguageId ?? null,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
   languageIds: Array.isArray(doc.languageIds) ? doc.languageIds : [],
@@ -65,6 +67,7 @@ export const mongoCatalogRepository: CatalogRepository = {
       name: input.name,
       description: input.description ?? null,
       isDefault: Boolean(input.isDefault),
+      defaultLanguageId: input.defaultLanguageId ?? null,
       createdAt: now,
       updatedAt: now,
       languageIds: input.languageIds ?? [],
@@ -86,6 +89,9 @@ export const mongoCatalogRepository: CatalogRepository = {
         ? { description: input.description ?? null }
         : null),
       ...(input.isDefault !== undefined ? { isDefault: input.isDefault } : null),
+      ...(input.defaultLanguageId !== undefined
+        ? { defaultLanguageId: input.defaultLanguageId ?? null }
+        : null),
       ...(input.languageIds !== undefined
         ? { languageIds: input.languageIds }
         : null),

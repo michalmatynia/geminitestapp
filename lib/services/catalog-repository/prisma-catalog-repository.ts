@@ -11,6 +11,7 @@ const toRecord = (catalog: {
   name: string;
   description: string | null;
   isDefault: boolean;
+  defaultLanguageId: string | null;
   createdAt: Date;
   updatedAt: Date;
   languages?: { languageId: string }[];
@@ -19,6 +20,7 @@ const toRecord = (catalog: {
   name: catalog.name,
   description: catalog.description ?? null,
   isDefault: catalog.isDefault,
+  defaultLanguageId: catalog.defaultLanguageId ?? null,
   createdAt: catalog.createdAt,
   updatedAt: catalog.updatedAt,
   languageIds: catalog.languages?.map((entry) => entry.languageId) ?? [],
@@ -50,6 +52,7 @@ export const prismaCatalogRepository: CatalogRepository = {
         name: input.name,
         description: input.description ?? null,
         isDefault: Boolean(input.isDefault),
+        defaultLanguageId: input.defaultLanguageId ?? null,
       },
     });
     if (input.languageIds?.length) {
@@ -86,6 +89,7 @@ export const prismaCatalogRepository: CatalogRepository = {
         name: input.name,
         description: input.description ?? undefined,
         isDefault: input.isDefault ?? undefined,
+        defaultLanguageId: input.defaultLanguageId ?? undefined,
       },
     });
     if (input.languageIds) {

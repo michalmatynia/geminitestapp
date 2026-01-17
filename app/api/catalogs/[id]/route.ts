@@ -7,6 +7,7 @@ const catalogUpdateSchema = z.object({
   name: z.string().trim().min(1).optional(),
   description: z.string().trim().optional().nullable(),
   languageIds: z.array(z.string().trim().min(1)).optional(),
+  defaultLanguageId: z.string().trim().min(1).optional(),
   isDefault: z.boolean().optional(),
 });
 
@@ -46,12 +47,25 @@ export async function PUT(
       );
     }
     const data = catalogUpdateSchema.parse(body);
+    if (!data.languageIds || data.languageIds.length === 0) {
+      return NextResponse.json(
+        { error: "Select at least one language." },
+        { status: 400 }
+      );
+    }
+    if (!data.defaultLanguageId || !data.languageIds.includes(data.defaultLanguageId)) {
+      return NextResponse.json(
+        { error: "Default language must be one of the selected languages." },
+        { status: 400 }
+      );
+    }
     const catalogRepository = await getCatalogRepository();
     const catalog = await catalogRepository.updateCatalog(id, {
       name: data.name,
       description: data.description ?? undefined,
       isDefault: data.isDefault,
       languageIds: data.languageIds,
+      defaultLanguageId: data.defaultLanguageId ?? null,
     });
     if (!catalog) {
       return NextResponse.json(

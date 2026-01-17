@@ -31,6 +31,7 @@ type CatalogInput = {
   name: string;
   description: string | null;
   isDefault: boolean;
+  defaultLanguageId?: string | null;
   createdAt: Date;
   updatedAt: Date;
   languageIds?: string[] | null;
@@ -45,6 +46,8 @@ type ProductDocument = {
   _id: string;
   id: string;
   sku: string | null;
+  baseProductId?: string | null;
+  defaultPriceGroupId?: string | null;
   name_en: string | null;
   name_pl: string | null;
   name_de: string | null;
@@ -81,6 +84,8 @@ const PRODUCT_COLLECTION = "products";
 type ProductInput = {
   id: string;
   sku: string | null;
+  baseProductId?: string | null;
+  defaultPriceGroupId?: string | null;
   name_en: string | null;
   name_pl: string | null;
   name_de: string | null;
@@ -129,6 +134,7 @@ const toCatalogDocument = (catalog: CatalogInput): CatalogDocument => ({
   name: catalog.name,
   description: catalog.description ?? null,
   isDefault: catalog.isDefault,
+  defaultLanguageId: catalog.defaultLanguageId ?? null,
   createdAt: catalog.createdAt,
   updatedAt: catalog.updatedAt,
   languageIds: Array.isArray(catalog.languageIds)
@@ -140,6 +146,8 @@ const buildProductDocument = (product: ProductInput): ProductDocument => ({
   _id: product.id,
   id: product.id,
   sku: product.sku ?? null,
+  baseProductId: product.baseProductId ?? null,
+  defaultPriceGroupId: product.defaultPriceGroupId ?? null,
   name_en: product.name_en ?? null,
   name_pl: product.name_pl ?? null,
   name_de: product.name_de ?? null,
@@ -282,12 +290,14 @@ export async function migrateProductBatch({
           name: catalog.name,
           description: catalog.description ?? null,
           isDefault: catalog.isDefault ?? false,
+          defaultLanguageId: catalog.defaultLanguageId ?? null,
         },
         create: {
           id,
           name: catalog.name,
           description: catalog.description ?? null,
           isDefault: catalog.isDefault ?? false,
+          defaultLanguageId: catalog.defaultLanguageId ?? null,
         },
       });
       const languageIds: string[] = [];
@@ -323,6 +333,20 @@ export async function migrateProductBatch({
             skipDuplicates: true,
           });
         }
+        const nextDefaultLanguageId =
+          catalog.defaultLanguageId &&
+          filteredLanguageIds.includes(catalog.defaultLanguageId)
+            ? catalog.defaultLanguageId
+            : filteredLanguageIds[0] ?? null;
+        await prisma.catalog.update({
+          where: { id },
+          data: { defaultLanguageId: nextDefaultLanguageId },
+        });
+      } else {
+        await prisma.catalog.update({
+          where: { id },
+          data: { defaultLanguageId: null },
+        });
       }
     }
   }
@@ -352,6 +376,8 @@ export async function migrateProductBatch({
         where: { id: doc.id ?? doc._id },
         update: {
           sku: doc.sku ?? undefined,
+          baseProductId: doc.baseProductId ?? undefined,
+          defaultPriceGroupId: doc.defaultPriceGroupId ?? undefined,
           name_en: doc.name_en ?? undefined,
           name_pl: doc.name_pl ?? undefined,
           name_de: doc.name_de ?? undefined,
@@ -373,6 +399,8 @@ export async function migrateProductBatch({
         create: {
           id: doc.id ?? doc._id,
           sku: doc.sku ?? undefined,
+          baseProductId: doc.baseProductId ?? undefined,
+          defaultPriceGroupId: doc.defaultPriceGroupId ?? undefined,
           name_en: doc.name_en ?? undefined,
           name_pl: doc.name_pl ?? undefined,
           name_de: doc.name_de ?? undefined,

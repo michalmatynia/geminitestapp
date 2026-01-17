@@ -7,6 +7,7 @@ const catalogSchema = z.object({
   name: z.string().trim().min(1),
   description: z.string().trim().optional(),
   languageIds: z.array(z.string().trim().min(1)).optional(),
+  defaultLanguageId: z.string().trim().min(1).optional(),
   isDefault: z.boolean().optional(),
 });
 
@@ -50,6 +51,18 @@ export async function POST(req: Request) {
       );
     }
     const data = catalogSchema.parse(body);
+    if (!data.languageIds || data.languageIds.length === 0) {
+      return NextResponse.json(
+        { error: "Select at least one language." },
+        { status: 400 }
+      );
+    }
+    if (!data.defaultLanguageId || !data.languageIds.includes(data.defaultLanguageId)) {
+      return NextResponse.json(
+        { error: "Default language must be one of the selected languages." },
+        { status: 400 }
+      );
+    }
     const catalogRepository = await getCatalogRepository();
     const existingCatalogs = await catalogRepository.listCatalogs();
     const shouldBeDefault =
@@ -59,6 +72,7 @@ export async function POST(req: Request) {
       description: data.description ?? null,
       isDefault: shouldBeDefault,
       languageIds: data.languageIds ?? [],
+      defaultLanguageId: data.defaultLanguageId ?? null,
     });
     return NextResponse.json(catalog);
   } catch (error: unknown) {

@@ -9,6 +9,8 @@ generator client {
 model Product {
   id           String    @id @default(cuid())
   sku          String?   @unique
+  baseProductId String?
+  defaultPriceGroupId String?
   name_en      String?
   name_pl      String?
   name_de      String?
@@ -28,6 +30,8 @@ model Product {
   updatedAt    DateTime  @updatedAt
   images       ProductImage[]
   catalogs     ProductCatalog[]
+  categories   ProductCategoryAssignment[]
+  defaultPriceGroup PriceGroup? @relation(fields: [defaultPriceGroupId], references: [id])
 }
 
 model Setting {
@@ -170,6 +174,7 @@ model Language {
   updatedAt DateTime @updatedAt
 
   catalogs  CatalogLanguage[]
+  defaultForCatalogs Catalog[] @relation("CatalogDefaultLanguage")
   countries LanguageCountry[]
 }
 
@@ -209,10 +214,13 @@ model Catalog {
   name        String
   description String?
   isDefault   Boolean         @default(false)
+  defaultLanguageId String?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   products    ProductCatalog[]
   languages   CatalogLanguage[]
+  categories  ProductCategory[]
+  defaultLanguage Language? @relation("CatalogDefaultLanguage", fields: [defaultLanguageId], references: [id])
 }
 
 model ProductCatalog {
@@ -603,4 +611,32 @@ model NoteRelation {
   targetNote   Note @relation("NoteRelationsTo", fields: [targetNoteId], references: [id], onDelete: Cascade)
 
   @@id([sourceNoteId, targetNoteId])
+}
+
+model ProductCategory {
+  id          String            @id @default(cuid())
+  name        String
+  description String?
+  color       String?           @default("#10b981")
+  parentId    String?
+  catalogId   String
+  parent      ProductCategory?  @relation("ProductCategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    ProductCategory[] @relation("ProductCategoryHierarchy")
+  catalog     Catalog           @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  products    ProductCategoryAssignment[]
+
+  @@unique([catalogId, parentId, name])
+}
+
+model ProductCategoryAssignment {
+  productId   String
+  categoryId  String
+  assignedAt  DateTime @default(now())
+
+  product     Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category    ProductCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, categoryId])
 }

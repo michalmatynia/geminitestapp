@@ -22,7 +22,7 @@ import {
   ProductFormProvider,
   useProductFormContext,
 } from "@/lib/context/ProductFormContext";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { logger } from "@/lib/logger";
 import DebugPanel from "@/components/DebugPanel";
 import { useSearchParams } from "next/navigation";
@@ -315,6 +315,10 @@ function AdminPageInner() {
   const { toast } = useToast();
   const catalogFilterInitialized = useRef(false);
 
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(24);
+
   useEffect(() => {
     setIsDebugOpen(searchParams.get("debug") === "true");
   }, [searchParams]);
@@ -368,6 +372,22 @@ function AdminPageInner() {
     );
   }, [catalogFilter, data]);
 
+  // Pagination calculations
+  const totalPages = useMemo(() => {
+    return Math.max(1, Math.ceil(filteredCatalogData.length / pageSize));
+  }, [filteredCatalogData.length, pageSize]);
+
+  const pagedData = useMemo(() => {
+    const clampedPage = Math.min(page, totalPages);
+    const start = (clampedPage - 1) * pageSize;
+    return filteredCatalogData.slice(start, start + pageSize);
+  }, [filteredCatalogData, page, pageSize, totalPages]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [search, sku, minPrice, maxPrice, startDate, endDate, catalogFilter]);
+
   const handleCloseCreateModal = () => {
     setIsCreateOpen(false);
     setInitialSku("");
@@ -376,7 +396,6 @@ function AdminPageInner() {
   const handleCreateSuccess = () => {
     setIsCreateOpen(false);
     setInitialSku("");
-    toast("Product created", { variant: "success" });
     setRefreshTrigger((prev) => prev + 1);
   };
 
@@ -533,6 +552,44 @@ function AdminPageInner() {
             <h1 className="text-3xl font-bold text-white">Products</h1>
           </div>
           <div className="flex items-center gap-3">
+            {/* Pagination controls - matching Notes App */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">Page</span>
+              <button
+                type="button"
+                onClick={() => setPage(Math.max(1, page - 1))}
+                disabled={page <= 1}
+                className="rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition disabled:opacity-50"
+              >
+                Prev
+              </button>
+              <span className="text-xs text-gray-300">
+                {page} / {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage(Math.min(totalPages, page + 1))}
+                disabled={page >= totalPages}
+                className="rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition disabled:opacity-50"
+              >
+                Next
+              </button>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-300 border border-gray-700"
+                aria-label="Products per page"
+              >
+                {[12, 24, 48].map((size) => (
+                  <option key={size} value={size}>
+                    {size} / page
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="w-44">
               <Select
                 value={nameLocale}

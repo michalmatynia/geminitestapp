@@ -25,7 +25,9 @@ const buildRelations = (note: NoteWithRelations): RelatedNote[] => {
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
-  const filters: NoteFilters = {};
+  const filters: NoteFilters = {
+    truncateContent: true,
+  };
   const notebookIdParam = searchParams.get("notebookId");
   if (notebookIdParam) {
     filters.notebookId = notebookIdParam;

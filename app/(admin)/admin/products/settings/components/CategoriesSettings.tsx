@@ -2,13 +2,10 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
-  Folder,
-  FolderOpen,
   ChevronRight,
   ChevronDown,
   Plus,
   Trash2,
-  Edit2,
   FolderPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -155,15 +152,10 @@ function CategoryNode({
         )}
 
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          {isExpanded || !hasChildren ? (
-            <FolderOpen className="size-4 flex-shrink-0" style={{ color: category.color || "#10b981" }} />
-          ) : (
-            <Folder className="size-4 flex-shrink-0" style={{ color: category.color || "#10b981" }} />
-          )}
           <span className="text-sm truncate">{category.name}</span>
         </div>
 
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+        <div className="flex items-center gap-1">
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -179,10 +171,10 @@ function CategoryNode({
               e.stopPropagation();
               onEdit(category);
             }}
-            className="p-1 hover:bg-gray-700 rounded"
+            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700"
             title="Edit category"
           >
-            <Edit2 className="size-3" />
+            Edit
           </button>
           <button
             onClick={(e) => {
@@ -236,13 +228,17 @@ export function CategoriesSettings({
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] =
     useState<ProductCategoryWithChildren | null>(null);
-  const [parentIdForNew, setParentIdForNew] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     color: "#10b981",
+    parentId: null as string | null,
+    catalogId: "",
   });
   const [saving, setSaving] = useState(false);
+  const [modalCatalogId, setModalCatalogId] = useState<string | null>(null);
+  const [modalCategories, setModalCategories] = useState<ProductCategoryWithChildren[]>([]);
+  const [modalLoadingCategories, setModalLoadingCategories] = useState(false);
 
   // Reset expanded state when catalog changes
   useEffect(() => {
@@ -284,19 +280,27 @@ export function CategoriesSettings({
       return;
     }
     setEditingCategory(null);
-    setParentIdForNew(parentId);
-    setFormData({ name: "", description: "", color: "#10b981" });
+    setFormData({
+      name: "",
+      description: "",
+      color: "#10b981",
+      parentId,
+      catalogId: selectedCatalogId,
+    });
+    setModalCatalogId(selectedCatalogId);
     setShowModal(true);
   };
 
   const handleOpenEditModal = (category: ProductCategoryWithChildren) => {
     setEditingCategory(category);
-    setParentIdForNew(null);
     setFormData({
       name: category.name,
       description: category.description || "",
       color: category.color || "#10b981",
+      parentId: category.parentId ?? null,
+      catalogId: category.catalogId,
     });
+    setModalCatalogId(category.catalogId);
     setShowModal(true);
   };
 
@@ -333,7 +337,8 @@ export function CategoriesSettings({
       return;
     }
 
-    if (!selectedCatalogId && !editingCategory) {
+    const targetCatalogId = formData.catalogId || selectedCatalogId;
+    if (!targetCatalogId && !editingCategory) {
       toast("Please select a catalog first", { variant: "error" });
       return;
     }
@@ -349,13 +354,15 @@ export function CategoriesSettings({
             name: formData.name.trim(),
             description: formData.description.trim() || null,
             color: formData.color,
+            parentId: formData.parentId ?? null,
+            catalogId: targetCatalogId,
           }
         : {
             name: formData.name.trim(),
             description: formData.description.trim() || null,
             color: formData.color,
-            parentId: parentIdForNew,
-            catalogId: selectedCatalogId,
+            parentId: formData.parentId ?? null,
+            catalogId: targetCatalogId,
           };
 
       const res = await fetch(endpoint, {
@@ -414,11 +421,113 @@ export function CategoriesSettings({
     e.preventDefault();
     const catId = e.dataTransfer.getData("categoryId") || draggedId;
     if (catId) {
-      handleDrop(catId, null);
+      void handleDrop(catId, null);
     }
   };
 
   const selectedCatalog = catalogs.find((c) => c.id === selectedCatalogId);
+  const modalCatalog = catalogs.find((c) => c.id === modalCatalogId);
+
+  const findCategory = useCallback(
+    (
+      cats: ProductCategoryWithChildren[],
+      id: string
+    ): ProductCategoryWithChildren | null => {
+      for (const cat of cats) {
+        if (cat.id === id) return cat;
+        const found: ProductCategoryWithChildren | null = findCategory(
+          cat.children,
+          id
+        );
+        if (found) return found;
+      }
+      return null;
+    },
+    []
+  );
+
+  const collectDescendantIds = useCallback((cat: ProductCategoryWithChildren) => {
+    const ids: string[] = [];
+    for (const child of cat.children) {
+      ids.push(child.id, ...collectDescendantIds(child));
+    }
+    return ids;
+  }, []);
+
+  const categoryOptions = useMemo(() => {
+    const flatten = (
+      cats: ProductCategoryWithChildren[],
+      level = 0
+    ): { id: string; name: string; level: number }[] => {
+      const items: { id: string; name: string; level: number }[] = [];
+      for (const cat of cats) {
+        items.push({ id: cat.id, name: cat.name, level });
+        if (cat.children.length) {
+          items.push(...flatten(cat.children, level + 1));
+        }
+      }
+      return items;
+    };
+    return flatten(modalCategories);
+  }, [modalCategories]);
+
+  const excludedParentIds = useMemo(() => {
+    if (!editingCategory) return new Set<string>();
+    if (modalCatalogId && editingCategory.catalogId !== modalCatalogId) {
+      return new Set<string>();
+    }
+    const current = findCategory(modalCategories, editingCategory.id);
+    if (!current) return new Set<string>();
+    return new Set([editingCategory.id, ...collectDescendantIds(current)]);
+  }, [editingCategory, modalCatalogId, modalCategories, findCategory, collectDescendantIds]);
+
+  const parentOptions = useMemo(
+    () => categoryOptions.filter((opt) => !excludedParentIds.has(opt.id)),
+    [categoryOptions, excludedParentIds]
+  );
+
+  const loadModalCategories = useCallback(
+    async (catalogId: string) => {
+      setModalLoadingCategories(true);
+      try {
+        const res = await fetch(
+          `/api/products/categories/tree?catalogId=${catalogId}`
+        );
+        if (!res.ok) {
+          const error = (await res.json()) as { error?: string };
+          throw new Error(error.error || "Failed to load categories.");
+        }
+        const data = (await res.json()) as ProductCategoryWithChildren[];
+        setModalCategories(data);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to load categories.";
+        toast(message, { variant: "error" });
+        setModalCategories([]);
+      } finally {
+        setModalLoadingCategories(false);
+      }
+    },
+    [toast]
+  );
+
+  useEffect(() => {
+    if (!showModal || !modalCatalogId) return;
+    if (modalCatalogId === selectedCatalogId) {
+      setModalCategories(categories);
+      return;
+    }
+    void loadModalCategories(modalCatalogId);
+  }, [showModal, modalCatalogId, selectedCatalogId, categories, loadModalCategories]);
+
+  useEffect(() => {
+    if (!showModal) return;
+    if (!formData.parentId) return;
+    const stillValid = parentOptions.some((opt) => opt.id === formData.parentId);
+    if (!stillValid) {
+      setFormData((prev) => ({ ...prev, parentId: null }));
+    }
+  }, [showModal, parentOptions, formData.parentId]);
 
   return (
     <div className="space-y-5">
@@ -498,7 +607,6 @@ export function CategoriesSettings({
                     handleRootDrop(e);
                   }}
                 >
-                  <Folder className="size-4" />
                   <span>Drop here to move to root level</span>
                 </div>
 
@@ -581,6 +689,65 @@ export function CategoriesSettings({
                   }
                   placeholder="Optional description"
                 />
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-400">Catalog</label>
+                <select
+                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                  value={formData.catalogId}
+                  onChange={(e) => {
+                    const nextCatalogId = e.target.value;
+                    setFormData((prev) => ({
+                      ...prev,
+                      catalogId: nextCatalogId,
+                      parentId:
+                        prev.catalogId !== nextCatalogId ? null : prev.parentId,
+                    }));
+                    setModalCatalogId(nextCatalogId);
+                  }}
+                >
+                  {catalogs.map((catalog) => (
+                    <option key={catalog.id} value={catalog.id}>
+                      {catalog.name}
+                      {catalog.isDefault ? " (Default)" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-400">Parent Category</label>
+                <select
+                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                  value={formData.parentId ?? ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      parentId: e.target.value ? e.target.value : null,
+                    }))
+                  }
+                  disabled={modalLoadingCategories}
+                >
+                  <option value="">No parent (root)</option>
+                  {parentOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {"|-- ".repeat(option.level)}
+                      {option.name}
+                    </option>
+                  ))}
+                </select>
+                {modalLoadingCategories && (
+                  <p className="mt-1 text-xs text-gray-500">Loading categories...</p>
+                )}
+                {!modalLoadingCategories &&
+                  modalCatalogId &&
+                  parentOptions.length === 0 && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      No categories available in{" "}
+                      {modalCatalog?.name ?? "this catalog"}.
+                    </p>
+                  )}
               </div>
 
               <div>

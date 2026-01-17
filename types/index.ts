@@ -21,6 +21,8 @@ export type CatalogRecord = {
   description: string | null;
   isDefault: boolean;
   defaultLanguageId?: string | null;
+  defaultPriceGroupId?: string | null;
+  priceGroupIds: string[];
   createdAt: Date;
   updatedAt: Date;
   languageIds: string[];

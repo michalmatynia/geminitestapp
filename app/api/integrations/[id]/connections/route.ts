@@ -43,6 +43,11 @@ export async function GET(
       allegroTokenUpdatedAt: connection.allegroTokenUpdatedAt,
       allegroExpiresAt: connection.allegroExpiresAt,
       allegroScope: connection.allegroScope,
+      allegroUseSandbox: connection.allegroUseSandbox ?? false,
+
+      hasBaseApiToken: Boolean(connection.baseApiToken),
+      baseTokenUpdatedAt: connection.baseTokenUpdatedAt,
+      baseLastInventoryId: connection.baseLastInventoryId,
 
       playwrightHeadless: connection.playwrightHeadless,
       playwrightSlowMo: connection.playwrightSlowMo,
@@ -143,6 +148,10 @@ export async function POST(
       updatedAt: created.updatedAt,
       hasPlaywrightStorageState: Boolean(created.playwrightStorageState),
       playwrightStorageStateUpdatedAt: created.playwrightStorageStateUpdatedAt,
+      hasBaseApiToken: Boolean(created.baseApiToken),
+      baseTokenUpdatedAt: created.baseTokenUpdatedAt,
+      baseLastInventoryId: created.baseLastInventoryId,
+      allegroUseSandbox: created.allegroUseSandbox ?? false,
       playwrightHeadless: created.playwrightHeadless,
       playwrightSlowMo: created.playwrightSlowMo,
       playwrightTimeout: created.playwrightTimeout,

@@ -1,8 +1,5 @@
 import type { Prisma } from "@prisma/client";
 import {
-  CountryCode,
-  CurrencyCode,
-  LanguageCode,
   countryMappings,
   defaultCountries,
   defaultCurrencies,
@@ -33,15 +30,15 @@ export async function ensureInternationalizationDefaults(
     tx.language.findMany({ select: { id: true, code: true } }),
   ]);
 
-  const countryByCode = new Map<CountryCode, string>(
+  const countryByCode = new Map<string, string>(
     countries.map((country) => [country.code, country.id])
   );
 
-  const currencyByCode = new Map<CurrencyCode, string>(
+  const currencyByCode = new Map<string, string>(
     currencies.map((currency) => [currency.code, currency.id])
   );
 
-  const languageByCode = new Map<LanguageCode, string>(
+  const languageByCode = new Map<string, string>(
     languages.map((language) => [language.code, language.id])
   );
 

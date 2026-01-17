@@ -15,9 +15,11 @@ type CatalogDocument = {
   description: string | null;
   isDefault: boolean;
   defaultLanguageId?: string | null;
+  defaultPriceGroupId?: string | null;
   createdAt: Date;
   updatedAt: Date;
   languageIds: string[];
+  priceGroupIds?: string[];
 };
 
 const CATALOG_COLLECTION = "catalogs";
@@ -28,9 +30,11 @@ const toRecord = (doc: WithId<CatalogDocument>): CatalogRecord => ({
   description: doc.description ?? null,
   isDefault: doc.isDefault,
   defaultLanguageId: doc.defaultLanguageId ?? null,
+  defaultPriceGroupId: doc.defaultPriceGroupId ?? null,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
   languageIds: Array.isArray(doc.languageIds) ? doc.languageIds : [],
+  priceGroupIds: Array.isArray(doc.priceGroupIds) ? doc.priceGroupIds : [],
 });
 
 export const mongoCatalogRepository: CatalogRepository = {
@@ -68,9 +72,11 @@ export const mongoCatalogRepository: CatalogRepository = {
       description: input.description ?? null,
       isDefault: Boolean(input.isDefault),
       defaultLanguageId: input.defaultLanguageId ?? null,
+      defaultPriceGroupId: input.defaultPriceGroupId ?? null,
       createdAt: now,
       updatedAt: now,
       languageIds: input.languageIds ?? [],
+      priceGroupIds: input.priceGroupIds ?? [],
     };
     await db.collection<CatalogDocument>(CATALOG_COLLECTION).insertOne(doc);
     return toRecord(doc as WithId<CatalogDocument>);
@@ -92,8 +98,14 @@ export const mongoCatalogRepository: CatalogRepository = {
       ...(input.defaultLanguageId !== undefined
         ? { defaultLanguageId: input.defaultLanguageId ?? null }
         : null),
+      ...(input.defaultPriceGroupId !== undefined
+        ? { defaultPriceGroupId: input.defaultPriceGroupId ?? null }
+        : null),
       ...(input.languageIds !== undefined
         ? { languageIds: input.languageIds }
+        : null),
+      ...(input.priceGroupIds !== undefined
+        ? { priceGroupIds: input.priceGroupIds }
         : null),
       updatedAt: new Date(),
     };

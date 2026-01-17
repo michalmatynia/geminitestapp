@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import type { Prisma } from "@prisma/client";
 import type { WithId } from "mongodb";
 import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
@@ -44,6 +45,10 @@ export type IntegrationConnectionRecord = {
   allegroScope?: string | null;
   allegroExpiresAt?: Date | null;
   allegroTokenUpdatedAt?: Date | null;
+  allegroUseSandbox?: boolean | null;
+  baseApiToken?: string | null;
+  baseTokenUpdatedAt?: Date | null;
+  baseLastInventoryId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -88,6 +93,7 @@ const CONNECTION_DEFAULTS = {
   playwrightProxyPassword: null,
   playwrightEmulateDevice: false,
   playwrightDeviceName: "Desktop Chrome",
+  allegroUseSandbox: false,
 } as const;
 
 const INTEGRATIONS_COLLECTION = "integrations";
@@ -133,6 +139,10 @@ type IntegrationConnectionDocument = {
   allegroScope?: string | null;
   allegroExpiresAt?: Date | null;
   allegroTokenUpdatedAt?: Date | null;
+  allegroUseSandbox?: boolean | null;
+  baseApiToken?: string | null;
+  baseTokenUpdatedAt?: Date | null;
+  baseLastInventoryId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -194,6 +204,10 @@ const toConnectionRecord = (
   allegroScope: doc.allegroScope ?? null,
   allegroExpiresAt: doc.allegroExpiresAt ?? null,
   allegroTokenUpdatedAt: doc.allegroTokenUpdatedAt ?? null,
+  allegroUseSandbox: doc.allegroUseSandbox ?? false,
+  baseApiToken: doc.baseApiToken ?? null,
+  baseTokenUpdatedAt: doc.baseTokenUpdatedAt ?? null,
+  baseLastInventoryId: doc.baseLastInventoryId ?? null,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
 });
@@ -241,9 +255,16 @@ const prismaRepository: IntegrationRepository = {
     });
   },
   updateConnection: async (id, input) => {
+    const {
+      id: _ignoredId,
+      integrationId: _ignoredIntegrationId,
+      createdAt: _ignoredCreatedAt,
+      updatedAt: _ignoredUpdatedAt,
+      ...rest
+    } = input;
     return prisma.integrationConnection.update({
       where: { id },
-      data: input,
+      data: rest as Prisma.IntegrationConnectionUpdateInput,
     });
   },
   deleteConnection: async (id) => {
@@ -357,13 +378,16 @@ const mongoRepository: IntegrationRepository = {
       ...rest,
       updatedAt: now,
     };
-    const result = await db
+    await db
       .collection<IntegrationConnectionDocument>(CONNECTIONS_COLLECTION)
-      .findOneAndUpdate({ _id: id }, { $set: update }, { returnDocument: "after" });
-    if (!result.value) {
+      .updateOne({ _id: id }, { $set: update });
+    const updated = await db
+      .collection<IntegrationConnectionDocument>(CONNECTIONS_COLLECTION)
+      .findOne({ _id: id });
+    if (!updated) {
       throw new Error("Connection not found");
     }
-    return toConnectionRecord(result.value);
+    return toConnectionRecord(updated);
   },
   deleteConnection: async (id) => {
     const db = await getMongoDb();

@@ -4,6 +4,7 @@ import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { getProductDataProvider } from "@/lib/services/product-provider";
+import { getMongoDb } from "@/lib/db/mongo-client";
 
 const productCategoryCreateSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -32,7 +33,34 @@ export async function GET(req: Request) {
     }
 
     const provider = await getProductDataProvider();
-    if (!process.env.DATABASE_URL || provider !== "prisma") {
+
+    if (provider === "mongodb") {
+      if (!process.env.MONGODB_URI) {
+        return NextResponse.json(
+          { error: "MongoDB is not configured." },
+          { status: 500 }
+        );
+      }
+      const db = await getMongoDb();
+      const categories = await db
+        .collection("product_categories")
+        .find({ catalogId })
+        .sort({ name: 1 })
+        .toArray();
+      const normalized = categories.map((cat) => {
+        const { _id, ...rest } = cat as unknown as {
+          _id?: { toString?: () => string };
+        } & Record<string, unknown>;
+        const fallbackId = _id?.toString ? _id.toString() : undefined;
+        return {
+          ...rest,
+          id: (rest as { id?: string }).id ?? fallbackId,
+        };
+      });
+      return NextResponse.json(normalized);
+    }
+
+    if (!process.env.DATABASE_URL) {
       return NextResponse.json([]);
     }
 
@@ -58,12 +86,6 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const provider = await getProductDataProvider();
-    if (!process.env.DATABASE_URL || provider !== "prisma") {
-      return NextResponse.json(
-        { error: "Product categories require the Postgres product store." },
-        { status: 400 }
-      );
-    }
     const parsed = await parseJsonBody(req, productCategoryCreateSchema, {
       logPrefix: "product-categories:POST",
     });
@@ -72,6 +94,47 @@ export async function POST(req: Request) {
     }
 
     const { name, description, color, parentId, catalogId } = parsed.data;
+
+    if (provider === "mongodb") {
+      if (!process.env.MONGODB_URI) {
+        return NextResponse.json(
+          { error: "MongoDB is not configured." },
+          { status: 500 }
+        );
+      }
+      const db = await getMongoDb();
+      const existing = await db.collection("product_categories").findOne({
+        name,
+        parentId: parentId ?? null,
+        catalogId,
+      });
+      if (existing) {
+        return NextResponse.json(
+          { error: "A category with this name already exists at this level" },
+          { status: 400 }
+        );
+      }
+      const now = new Date();
+      const category = {
+        id: randomUUID(),
+        name,
+        description: description ?? null,
+        color: color ?? "#10b981",
+        parentId: parentId ?? null,
+        catalogId,
+        createdAt: now,
+        updatedAt: now,
+      };
+      await db.collection("product_categories").insertOne(category);
+      return NextResponse.json(category, { status: 201 });
+    }
+
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json(
+        { error: "Product categories require the Postgres product store." },
+        { status: 400 }
+      );
+    }
 
     // Check for duplicate name under the same parent within the same catalog
     const existing = await prisma.productCategory.findFirst({

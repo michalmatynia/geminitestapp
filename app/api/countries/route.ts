@@ -4,6 +4,7 @@ import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { ensureInternationalizationDefaults } from "@/lib/seedInternationalization";
 import { fallbackCountries } from "@/lib/internationalizationFallback";
+import type { CountryCode } from "@prisma/client";
 
 export const runtime = "nodejs";
 

@@ -59,6 +59,16 @@ async function getProducts(filters: ProductFilters) {
 }
 
 /**
+ * Counts the total number of products based on filters.
+ * @param filters - The filter criteria.
+ * @returns The total count.
+ */
+async function countProducts(filters: ProductFilters) {
+  const productRepository = await resolveProductRepository();
+  return productRepository.countProducts(filters);
+}
+
+/**
  * Retrieves a single product by its ID.
  * @param id - The ID of the product to retrieve.
  * @returns The product, or null if not found.
@@ -201,28 +211,33 @@ async function unlinkImageFromProduct(productId: string, imageFileId: string) {
     const imageFile = await imageFileRepository.getImageFileById(imageFileId);
 
     if (imageFile) {
-      try {
-        await fs.unlink(getDiskPathFromPublicPath(imageFile.filepath));
-      } catch (error: unknown) {
-        if (error instanceof Error && (error as NodeJS.ErrnoException).code !== "ENOENT") {
-          throw error;
+      const isExternal = /^https?:\/\//i.test(imageFile.filepath);
+      if (!isExternal) {
+        try {
+          await fs.unlink(getDiskPathFromPublicPath(imageFile.filepath));
+        } catch (error: unknown) {
+          if (error instanceof Error && (error as NodeJS.ErrnoException).code !== "ENOENT") {
+            throw error;
+          }
         }
       }
 
       await imageFileRepository.deleteImageFile(imageFileId);
 
-      const folderDiskPath = path.dirname(
-        getDiskPathFromPublicPath(imageFile.filepath)
-      );
-      if (folderDiskPath.startsWith(path.join(process.cwd(), "public", "uploads", "products"))) {
-        try {
-          const folderContents = await fs.readdir(folderDiskPath);
-          if (folderContents.length === 0) {
-            await fs.rmdir(folderDiskPath);
-          }
-        } catch (error: unknown) {
-          if (error instanceof Error && (error as NodeJS.ErrnoException).code !== "ENOENT") {
-            throw error;
+      if (!isExternal) {
+        const folderDiskPath = path.dirname(
+          getDiskPathFromPublicPath(imageFile.filepath)
+        );
+        if (folderDiskPath.startsWith(path.join(process.cwd(), "public", "uploads", "products"))) {
+          try {
+            const folderContents = await fs.readdir(folderDiskPath);
+            if (folderContents.length === 0) {
+              await fs.rmdir(folderDiskPath);
+            }
+          } catch (error: unknown) {
+            if (error instanceof Error && (error as NodeJS.ErrnoException).code !== "ENOENT") {
+              throw error;
+            }
           }
         }
       }
@@ -330,6 +345,7 @@ async function moveLinkedTempImagesToSku(productId: string, sku: string) {
 
 export const productService = {
   getProducts,
+  countProducts,
   getProductById,
   createProduct,
   updateProduct,

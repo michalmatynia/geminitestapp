@@ -10,7 +10,7 @@ import {
   useReactTable,
   Table as ReactTable,
 } from "@tanstack/react-table";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, memo } from "react";
 
 import {
   Table,
@@ -32,6 +32,7 @@ interface DataTableProps<TData> {
   onProductEditClick?: (row: TData) => void;
   onIntegrationsClick?: (row: TData) => void;
   integrationBadgeIds?: Set<string>;
+  integrationBadgeStatuses?: Map<string, string>;
   getRowId?: (row: TData) => string | number;
   footer?: (table: ReactTable<TData>) => React.ReactNode;
 }
@@ -44,10 +45,11 @@ declare module "@tanstack/react-table" {
     onProductEditClick?: (row: TData) => void;
     onIntegrationsClick?: (row: TData) => void;
     integrationBadgeIds?: Set<string>;
+    integrationBadgeStatuses?: Map<string, string>;
   }
 }
 
-export function DataTable<TData>({
+export const DataTable = memo(function DataTable<TData>({
   columns,
   data,
   initialSorting,
@@ -58,6 +60,7 @@ export function DataTable<TData>({
   onProductEditClick,
   onIntegrationsClick,
   integrationBadgeIds,
+  integrationBadgeStatuses,
   getRowId,
   footer,
 }: DataTableProps<TData>) {
@@ -108,6 +111,7 @@ export function DataTable<TData>({
       ...(onProductEditClick ? { onProductEditClick } : {}),
       ...(onIntegrationsClick ? { onIntegrationsClick } : {}),
       ...(integrationBadgeIds ? { integrationBadgeIds } : {}),
+      ...(integrationBadgeStatuses ? { integrationBadgeStatuses } : {}),
     },
   });
 
@@ -163,4 +167,4 @@ export function DataTable<TData>({
       {footer && footer(table)}
     </div>
   );
-}
+}) as <TData>(props: DataTableProps<TData>) => React.JSX.Element;

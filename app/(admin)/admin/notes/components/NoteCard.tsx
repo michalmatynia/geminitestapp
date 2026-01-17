@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { ChevronRight, Pin, Star } from "lucide-react";
 import type { NoteWithRelations, ThemeRecord } from "@/types/notes";
 import type { NoteCardProps } from "@/types/notes-ui";
@@ -69,6 +70,9 @@ function NoteCardBase({
     backgroundColor: effectiveTheme.relatedNoteBackgroundColor,
     color: effectiveTheme.relatedNoteTextColor,
   } as const;
+  const thumbnailFile = note.files?.find(
+    (file) => file.mimetype?.startsWith("image/") && file.filepath
+  );
 
   return (
     <div
@@ -136,6 +140,18 @@ function NoteCardBase({
           {note.isPinned && <Pin size={16} className="text-blue-600" />}
         </div>
       </div>
+      {thumbnailFile && (
+        <div className="mb-3 overflow-hidden rounded-md border border-gray-700">
+          <Image
+            src={thumbnailFile.filepath}
+            alt={thumbnailFile.filename}
+            width={320}
+            height={180}
+            className="h-28 w-full object-cover"
+            sizes="(min-width: 1024px) 240px, 100vw"
+          />
+        </div>
+      )}
       <div
         className="mb-3 max-h-36 overflow-hidden text-sm prose prose-sm"
         dangerouslySetInnerHTML={{ __html: contentHtml }}
@@ -185,8 +201,8 @@ function NoteCardBase({
       )}
       {showRelatedNotes &&
         ((note.relations?.length ?? 0) > 0 ||
-          note.relationsFrom?.length ||
-          note.relationsTo?.length) && (
+          (note.relationsFrom?.length ?? 0) > 0 ||
+          (note.relationsTo?.length ?? 0) > 0) && (
           <div className="mt-2">
             <div className="flex flex-wrap gap-2">
               {(note.relations ?? [

@@ -37,6 +37,8 @@ export type Catalog = {
   createdAt: string;
   languageIds: string[];
   defaultLanguageId?: string | null;
+  defaultPriceGroupId?: string | null;
+  priceGroupIds: string[];
 };
 
 export type ProductDbProvider = "prisma" | "mongodb";
@@ -63,4 +65,13 @@ export type ProductCategory = {
 
 export type ProductCategoryWithChildren = ProductCategory & {
   children: ProductCategoryWithChildren[];
+};
+
+export type ProductTag = {
+  id: string;
+  name: string;
+  color: string | null;
+  catalogId: string;
+  createdAt: Date;
+  updatedAt: Date;
 };

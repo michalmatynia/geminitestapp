@@ -8,6 +8,8 @@ const catalogUpdateSchema = z.object({
   description: z.string().trim().optional().nullable(),
   languageIds: z.array(z.string().trim().min(1)).optional(),
   defaultLanguageId: z.string().trim().min(1).optional(),
+  priceGroupIds: z.array(z.string().trim().min(1)).optional(),
+  defaultPriceGroupId: z.string().trim().min(1).optional(),
   isDefault: z.boolean().optional(),
 });
 
@@ -59,6 +61,21 @@ export async function PUT(
         { status: 400 }
       );
     }
+    if (!data.priceGroupIds || data.priceGroupIds.length === 0) {
+      return NextResponse.json(
+        { error: "Select at least one price group." },
+        { status: 400 }
+      );
+    }
+    if (
+      !data.defaultPriceGroupId ||
+      !data.priceGroupIds.includes(data.defaultPriceGroupId)
+    ) {
+      return NextResponse.json(
+        { error: "Default price group must be one of the selected price groups." },
+        { status: 400 }
+      );
+    }
     const catalogRepository = await getCatalogRepository();
     const catalog = await catalogRepository.updateCatalog(id, {
       name: data.name,
@@ -66,6 +83,8 @@ export async function PUT(
       isDefault: data.isDefault,
       languageIds: data.languageIds,
       defaultLanguageId: data.defaultLanguageId ?? null,
+      priceGroupIds: data.priceGroupIds,
+      defaultPriceGroupId: data.defaultPriceGroupId ?? null,
     });
     if (!catalog) {
       return NextResponse.json(

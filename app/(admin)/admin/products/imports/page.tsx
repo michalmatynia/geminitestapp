@@ -24,6 +24,7 @@ export default function ProductImportsPage() {
   const [inventories, setInventories] = useState<InventoryOption[]>([]);
   const [inventoryId, setInventoryId] = useState("");
   const [limit, setLimit] = useState("");
+  const [imageMode, setImageMode] = useState<"links" | "download">("links");
   const [loadingInventories, setLoadingInventories] = useState(false);
   const [importing, setImporting] = useState(false);
   const [lastResult, setLastResult] = useState<ImportResponse | null>(null);
@@ -85,6 +86,7 @@ export default function ProductImportsPage() {
           action: "import",
           inventoryId,
           limit: parsedLimit,
+          imageMode,
         }),
       });
       const payload = (await res.json()) as ImportResponse & {
@@ -179,6 +181,28 @@ export default function ProductImportsPage() {
                   placeholder="All"
                   className="mt-2"
                 />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="text-xs text-gray-400">Images</label>
+                <select
+                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                  value={imageMode}
+                  onChange={(event) =>
+                    setImageMode(
+                      event.target.value === "download" ? "download" : "links"
+                    )
+                  }
+                >
+                  <option value="links">Import image links</option>
+                  <option value="download">Download product images</option>
+                </select>
+                <p className="mt-2 text-xs text-gray-500">
+                  Image links keep Base.com URLs. Download stores images in your
+                  uploads folder.
+                </p>
               </div>
             </div>
 

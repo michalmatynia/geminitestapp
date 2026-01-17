@@ -82,6 +82,8 @@ const toCatalogRecord = (catalog: {
   description: string | null;
   isDefault: boolean;
   defaultLanguageId: string | null;
+  defaultPriceGroupId: string | null;
+  priceGroupIds: string[];
   createdAt: Date;
   updatedAt: Date;
   languages?: { languageId: string }[];
@@ -91,9 +93,13 @@ const toCatalogRecord = (catalog: {
   description: catalog.description ?? null,
   isDefault: catalog.isDefault,
   defaultLanguageId: catalog.defaultLanguageId ?? null,
+  defaultPriceGroupId: catalog.defaultPriceGroupId ?? null,
   createdAt: catalog.createdAt,
   updatedAt: catalog.updatedAt,
   languageIds: catalog.languages?.map((entry) => entry.languageId) ?? [],
+  priceGroupIds: Array.isArray(catalog.priceGroupIds)
+    ? catalog.priceGroupIds
+    : [],
 });
 
 const toProductRecord = (product: {
@@ -151,6 +157,11 @@ const toProductRecord = (product: {
 export const prismaProductRepository: ProductRepository = {
   async getProducts(filters) {
     const where = buildProductWhere(filters);
+    const page = filters.page ? parseInt(filters.page, 10) : undefined;
+    const pageSize = filters.pageSize ? parseInt(filters.pageSize, 10) : undefined;
+    const skip = page && pageSize ? (page - 1) * pageSize : undefined;
+    const take = pageSize;
+
     const products = await prisma.product.findMany({
       where,
       include: {
@@ -160,6 +171,8 @@ export const prismaProductRepository: ProductRepository = {
         },
       },
       orderBy: { createdAt: "desc" },
+      skip,
+      take,
     });
     return products.map((product) => ({
       ...toProductRecord(product),
@@ -176,6 +189,11 @@ export const prismaProductRepository: ProductRepository = {
         catalog: toCatalogRecord(entry.catalog),
       })),
     }));
+  },
+
+  async countProducts(filters) {
+    const where = buildProductWhere(filters);
+    return prisma.product.count({ where });
   },
 
   async getProductById(id) {

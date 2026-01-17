@@ -84,6 +84,18 @@ export async function POST(
       return fail("Loading integration", "Integration not found", 404);
     }
 
+    if (integration.slug === "baselinker") {
+      // Redirect to Base-specific test endpoint
+      const baseTestUrl = `/api/integrations/${id}/connections/${connectionId}/base/test`;
+      return NextResponse.json(
+        {
+          error: `Please use the Base.com-specific test endpoint: POST ${baseTestUrl}`,
+          redirectUrl: baseTestUrl,
+        },
+        { status: 400 }
+      );
+    }
+
     if (integration.slug !== "tradera") {
       return fail(
         "Connection test",
@@ -134,28 +146,28 @@ export async function POST(
       }
     }
 
-    const headless = connection.playwrightHeadless;
-    const slowMo = connection.playwrightSlowMo;
-    const defaultTimeout = connection.playwrightTimeout;
-    const navigationTimeout = connection.playwrightNavigationTimeout;
-    const humanizeMouse = connection.playwrightHumanizeMouse;
-    const mouseJitter = Math.max(0, connection.playwrightMouseJitter);
-    const clickDelayMin = Math.max(0, connection.playwrightClickDelayMin);
+    const headless = connection.playwrightHeadless ?? true;
+    const slowMo = connection.playwrightSlowMo ?? 0;
+    const defaultTimeout = connection.playwrightTimeout ?? 15000;
+    const navigationTimeout = connection.playwrightNavigationTimeout ?? 30000;
+    const humanizeMouse = connection.playwrightHumanizeMouse ?? false;
+    const mouseJitter = Math.max(0, connection.playwrightMouseJitter ?? 0);
+    const clickDelayMin = Math.max(0, connection.playwrightClickDelayMin ?? 0);
     const clickDelayMax = Math.max(
       clickDelayMin,
-      connection.playwrightClickDelayMax
+      connection.playwrightClickDelayMax ?? clickDelayMin
     );
-    const inputDelayMin = Math.max(0, connection.playwrightInputDelayMin);
+    const inputDelayMin = Math.max(0, connection.playwrightInputDelayMin ?? 0);
     const inputDelayMax = Math.max(
       inputDelayMin,
-      connection.playwrightInputDelayMax
+      connection.playwrightInputDelayMax ?? inputDelayMin
     );
-    const actionDelayMin = Math.max(0, connection.playwrightActionDelayMin);
+    const actionDelayMin = Math.max(0, connection.playwrightActionDelayMin ?? 0);
     const actionDelayMax = Math.max(
       actionDelayMin,
-      connection.playwrightActionDelayMax
+      connection.playwrightActionDelayMax ?? actionDelayMin
     );
-    const proxyEnabled = connection.playwrightProxyEnabled;
+    const proxyEnabled = connection.playwrightProxyEnabled ?? false;
     const proxyServer = connection.playwrightProxyServer?.trim() ?? "";
     const proxyUsername = connection.playwrightProxyUsername?.trim() ?? "";
     let proxyPassword = "";
@@ -172,7 +184,7 @@ export async function POST(
         );
       }
     }
-    const emulateDevice = connection.playwrightEmulateDevice;
+    const emulateDevice = connection.playwrightEmulateDevice ?? false;
     const deviceName = connection.playwrightDeviceName ?? "";
 
     if (proxyEnabled && !proxyServer) {

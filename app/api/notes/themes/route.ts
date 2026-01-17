@@ -46,7 +46,7 @@ export async function POST(req: Request) {
       ...parsed.data,
       notebookId: resolvedNotebookId,
     });
-    return NextResponse.json(theme as ThemeRecord, { status: 201 });
+    return NextResponse.json(theme, { status: 201 });
   } catch (error) {
     const errorId = randomUUID();
     console.error("[themes][POST] Failed to create theme", { errorId, error });

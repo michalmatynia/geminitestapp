@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { decryptSecret, encryptSecret } from "@/lib/utils/encryption";
 
-const TOKEN_URL =
+const PROD_TOKEN_URL =
   process.env.ALLEGRO_TOKEN_URL ?? "https://allegro.pl/auth/oauth/token";
+const SANDBOX_TOKEN_URL =
+  process.env.ALLEGRO_SANDBOX_TOKEN_URL ??
+  "https://allegro.pl.allegrosandbox.pl/auth/oauth/token";
 
 type AllegroTokenResponse = {
-  access_token: string;
+  access_token?: string;
   refresh_token?: string;
   token_type?: string;
   expires_in?: number;
@@ -79,7 +82,10 @@ export async function GET(
     const clientSecret = decryptSecret(connection.password);
     const redirectUri = `${requestUrl.origin}/api/integrations/${id}/connections/${connId}/allegro/callback`;
 
-    const tokenRes = await fetch(TOKEN_URL, {
+    const tokenUrl = connection.allegroUseSandbox
+      ? SANDBOX_TOKEN_URL
+      : PROD_TOKEN_URL;
+    const tokenRes = await fetch(tokenUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",

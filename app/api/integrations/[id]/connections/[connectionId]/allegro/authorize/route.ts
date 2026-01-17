@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 
-const AUTH_URL =
+const PROD_AUTH_URL =
   process.env.ALLEGRO_AUTH_URL ?? "https://allegro.pl/auth/oauth/authorize";
+const SANDBOX_AUTH_URL =
+  process.env.ALLEGRO_SANDBOX_AUTH_URL ??
+  "https://allegro.pl.allegrosandbox.pl/auth/oauth/authorize";
 
 export async function GET(
   req: NextRequest,
@@ -47,7 +50,8 @@ export async function GET(
     const callbackUrl = new URL(req.url);
     const redirectUri = `${callbackUrl.origin}/api/integrations/${id}/connections/${connId}/allegro/callback`;
 
-    const url = new URL(AUTH_URL);
+    const authUrl = connection.allegroUseSandbox ? SANDBOX_AUTH_URL : PROD_AUTH_URL;
+    const url = new URL(authUrl);
     url.searchParams.set("response_type", "code");
     url.searchParams.set("client_id", connection.username);
     url.searchParams.set("redirect_uri", redirectUri);

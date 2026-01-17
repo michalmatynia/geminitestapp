@@ -169,6 +169,10 @@ model IntegrationConnection {
   allegroScope                    String?
   allegroExpiresAt                DateTime?
   allegroTokenUpdatedAt           DateTime?
+  allegroUseSandbox               Boolean   @default(false)
+  baseApiToken                    String?
+  baseTokenUpdatedAt              DateTime?
+  baseLastInventoryId             String?
   createdAt                       DateTime  @default(now())
   updatedAt                       DateTime  @updatedAt
 
@@ -245,11 +249,14 @@ model Catalog {
   description       String?
   isDefault         Boolean           @default(false)
   defaultLanguageId String?
+  defaultPriceGroupId String?
+  priceGroupIds     String[]          @default([])
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   products          ProductCatalog[]
   languages         CatalogLanguage[]
   categories        ProductCategory[]
+  tags              ProductTag[]
   defaultLanguage   Language?         @relation("CatalogDefaultLanguage", fields: [defaultLanguageId], references: [id])
 }
 
@@ -669,4 +676,17 @@ model ProductCategoryAssignment {
   category ProductCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@id([productId, categoryId])
+}
+
+model ProductTag {
+  id        String   @id @default(cuid())
+  name      String
+  color     String?
+  catalogId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  catalog Catalog @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+
+  @@unique([catalogId, name])
 }

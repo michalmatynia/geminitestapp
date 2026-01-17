@@ -31,25 +31,21 @@ export function NoteDetailView({
   const { toast } = useToast();
   const [relatedPreviewNotes, setRelatedPreviewNotes] = useState<Record<string, NoteWithRelations>>({});
 
-  useEffect(() => {
-    if (!selectedNote) {
-      setRelatedPreviewNotes({});
-      return;
-    }
-    const relationIds =
+  const relationIds = useMemo(() => {
+    if (!selectedNote) return [];
+    const directRelations =
       selectedNote.relations?.map((rel) => rel.id) ||
       [
         ...(selectedNote.relationsFrom ?? []).map((rel) => rel.targetNote.id),
         ...(selectedNote.relationsTo ?? []).map((rel) => rel.sourceNote.id),
-      ].filter(
-        (id, index, array) => array.findIndex((entry) => entry === id) === index
-      );
+      ];
+    return directRelations.filter(
+      (id, index, array) => array.findIndex((entry) => entry === id) === index
+    );
+  }, [selectedNote]);
 
-    if (!relationIds || relationIds.length === 0) {
-      setRelatedPreviewNotes({});
-      return;
-    }
-
+  useEffect(() => {
+    if (!selectedNote || relationIds.length === 0) return;
     let isActive = true;
     const fetchRelated = async () => {
       try {
@@ -79,7 +75,7 @@ export function NoteDetailView({
     return () => {
       isActive = false;
     };
-  }, [selectedNote]);
+  }, [selectedNote, relationIds]);
 
   const getReadableTextColor = (hexColor: string) => {
     const normalized = hexColor.replace("#", "");
@@ -111,7 +107,7 @@ export function NoteDetailView({
 
   const effectivePreviewTheme = selectedNoteTheme ?? fallbackTheme;
 
-  const previewStyle = useMemo(() => {
+  const previewStyle = (() => {
     const normalizedColor = selectedNote?.color?.toLowerCase().trim();
     const isDefaultColor = !normalizedColor || normalizedColor === "#ffffff";
     const color =
@@ -135,9 +131,9 @@ export function NoteDetailView({
       borderColor,
       boxShadow: luminance > 0.78 ? "0 0 0 1px rgba(15, 23, 42, 0.12)" : undefined,
     };
-  }, [selectedNote?.color, selectedNoteTheme?.backgroundColor, effectivePreviewTheme.backgroundColor]);
+  })();
 
-  const previewTextColor = useMemo(() => {
+  const previewTextColor = (() => {
     const normalizedColor = selectedNote?.color?.toLowerCase().trim();
     const isDefaultColor = !normalizedColor || normalizedColor === "#ffffff";
     const background =
@@ -151,7 +147,7 @@ export function NoteDetailView({
       return getReadableTextColor(background);
     }
     return effectivePreviewTheme.textColor ?? getReadableTextColor(background);
-  }, [selectedNote?.color, effectivePreviewTheme]);
+  })();
 
   const previewTypographyStyle = useMemo(
     () => ({
@@ -337,22 +333,25 @@ export function NoteDetailView({
               __html: renderMarkdownToHtml(selectedNote.content),
             }}
             onMouseOver={(e) => {
-              const target = e.target as HTMLElement;
-              const wrapper = target.closest("[data-code]") as HTMLElement | null;
-              const button = wrapper?.querySelector("[data-copy-code]") as HTMLElement | null;
+              const target = e.target;
+              if (!(target instanceof HTMLElement)) return;
+              const wrapper = target.closest("[data-code]");
+              const button = wrapper?.querySelector("[data-copy-code]");
               if (button) button.style.opacity = "1";
             }}
             onMouseOut={(e) => {
-              const target = e.target as HTMLElement;
-              const wrapper = target.closest("[data-code]") as HTMLElement | null;
-              const button = wrapper?.querySelector("[data-copy-code]") as HTMLElement | null;
+              const target = e.target;
+              if (!(target instanceof HTMLElement)) return;
+              const wrapper = target.closest("[data-code]");
+              const button = wrapper?.querySelector("[data-copy-code]");
               if (button) button.style.opacity = "0";
             }}
             onClick={(e) => {
-              const target = e.target as HTMLElement;
-              const copyButton = target.closest("[data-copy-code]") as HTMLButtonElement | null;
-              if (!copyButton) return;
-              const wrapper = copyButton.closest("[data-code]") as HTMLElement | null;
+              const target = e.target;
+              if (!(target instanceof HTMLElement)) return;
+              const copyButton = target.closest("[data-copy-code]");
+              if (!(copyButton instanceof HTMLButtonElement)) return;
+              const wrapper = copyButton.closest("[data-code]");
               const encoded = wrapper?.getAttribute("data-code");
               if (!encoded) return;
               const originalLabel = copyButton.textContent;
@@ -419,7 +418,7 @@ export function NoteDetailView({
                             type="button"
                             onClick={(event) => {
                               event.stopPropagation();
-                              onUnlinkRelatedNote(related.id);
+                              void onUnlinkRelatedNote(related.id);
                             }}
                             className="absolute right-2 top-2 opacity-70 hover:opacity-100"
                             aria-label="Unlink related note"

@@ -3,6 +3,7 @@ import { ProductDbProvider } from "@/types/products";
 
 export const settingSections = [
   "Categories",
+  "Tags",
   "Price Groups",
   "Catalogs",
   "Data Source",

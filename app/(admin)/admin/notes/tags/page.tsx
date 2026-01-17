@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
@@ -22,7 +22,7 @@ export default function NoteTagsPage() {
   const [editingColor, setEditingColor] = useState("#3b82f6");
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const fetchTags = async () => {
+  const fetchTags = useCallback(async () => {
     setLoading(true);
     try {
       if (!selectedNotebookId) {
@@ -43,11 +43,11 @@ export default function NoteTagsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedNotebookId, toast]);
 
   useEffect(() => {
     void fetchTags();
-  }, [selectedNotebookId]);
+  }, [fetchTags]);
 
   useEffect(() => {
     if (selectedNotebookId) return;

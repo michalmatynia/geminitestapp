@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useProductFormContext } from "@/lib/context/ProductFormContext";
-import { PlusIcon, XIcon } from "lucide-react";
+import { PlusIcon, XIcon, GripVertical } from "lucide-react";
 
 type DebugInfo = {
   action: string;
@@ -21,6 +21,7 @@ export default function ProductImageManager() {
     handleSlotImageChange,
     handleSlotDisconnectImage,
     setShowFileManager,
+    swapImageSlots,
     uploadError,
   } = useProductFormContext();
 
@@ -29,6 +30,10 @@ export default function ProductImageManager() {
 
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [showDebug, setShowDebug] = useState(false);
+
+  // Drag and drop state
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const pushDebug = (info: Omit<DebugInfo, "timestamp">) => {
     setDebugInfo({
@@ -103,10 +108,63 @@ export default function ProductImageManager() {
     setShowFileManager(true);
   };
 
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    const slot = imageSlots[index];
+    if (!slot) return; // Don't allow dragging empty slots
+
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(index));
+
+    // Add visual feedback
+    const target = e.currentTarget;
+    requestAnimationFrame(() => {
+      target.style.opacity = "0.5";
+    });
+  };
+
+  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    target.style.opacity = "1";
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, toIndex: number) => {
+    e.preventDefault();
+    setDragOverIndex(null);
+
+    const fromIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+    if (isNaN(fromIndex)) return;
+
+    if (fromIndex !== toIndex) {
+      swapImageSlots(fromIndex, toIndex);
+    }
+
+    setDraggedIndex(null);
+  };
+
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-xs text-gray-400">Image slots</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400">Image slots</span>
+          <span className="text-xs text-gray-500">(drag to reorder)</span>
+        </div>
         <Button
           type="button"
           variant="ghost"
@@ -139,76 +197,101 @@ export default function ProductImageManager() {
       )}
 
       <div className="grid grid-cols-5 gap-2">
-        {imageSlots.map((slot, index) => (
-          <div
-            key={index}
-            className="relative flex h-24 w-24 items-center justify-center rounded-md border border-gray-700 bg-gray-800"
-          >
-            {slot ? (
-              <>
-                <Image
-                  src={slot.previewUrl}
-                  alt={`Product Image ${index + 1}`}
-                  width={128}
-                  height={128}
-                  className="rounded-md object-cover"
-                  onError={() =>
-                    pushDebug({
-                      action: "image-load",
-                      message: "Failed to load preview",
-                      slotIndex: index,
-                    })
-                  }
-                />
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="icon"
-                  className="absolute right-0 top-0 h-6 w-6 rounded-full"
-                  onClick={() => {
-                    try {
-                      handleSlotDisconnectImage(index);
-                    } catch (error) {
+        {imageSlots.map((slot, index) => {
+          const isDragging = draggedIndex === index;
+          const isDragOver = dragOverIndex === index;
+          const hasImage = slot !== null;
+
+          return (
+            <div
+              key={index}
+              draggable={hasImage}
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragEnd={handleDragEnd}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, index)}
+              className={`
+                relative flex h-24 w-24 items-center justify-center rounded-md border bg-gray-800 transition-all
+                ${hasImage ? "cursor-grab active:cursor-grabbing" : ""}
+                ${isDragging ? "opacity-50" : ""}
+                ${isDragOver ? "border-emerald-500 border-2 bg-emerald-500/10" : "border-gray-700"}
+              `}
+            >
+              {slot ? (
+                <>
+                  {/* Drag handle indicator */}
+                  <div className="absolute left-0 top-0 z-10 flex h-6 w-6 items-center justify-center rounded-br-md bg-gray-900/80 text-gray-400">
+                    <GripVertical className="h-3 w-3" />
+                  </div>
+                  <Image
+                    src={slot.previewUrl}
+                    alt={`Product Image ${index + 1}`}
+                    width={128}
+                    height={128}
+                    className="rounded-md object-cover pointer-events-none"
+                    onError={() =>
                       pushDebug({
-                        action: "remove-image",
-                        message:
-                          error instanceof Error
-                            ? error.message
-                            : "Failed to remove image",
+                        action: "image-load",
+                        message: "Failed to load preview",
                         slotIndex: index,
-                      });
+                      })
                     }
-                  }}
-                  aria-label={`Remove image ${index + 1}`}
-                >
-                  <XIcon className="h-4 w-4" />
-                </Button>
-              </>
-            ) : (
-              <div className="flex flex-col items-center justify-center text-gray-500">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => triggerFileInput(index)}
-                  aria-label={`Upload image to slot ${index + 1}`}
-                >
-                  <PlusIcon className="h-6 w-6" />
-                </Button>
-                <span className="text-xs">Upload</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="text-xs"
-                  onClick={() => triggerFileManager(index)}
-                  aria-label={`Choose existing image for slot ${index + 1}`}
-                >
-                  Choose Existing
-                </Button>
-              </div>
-            )}
-          </div>
-        ))}
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute right-0 top-0 h-6 w-6 rounded-full"
+                    onClick={() => {
+                      try {
+                        handleSlotDisconnectImage(index);
+                      } catch (error) {
+                        pushDebug({
+                          action: "remove-image",
+                          message:
+                            error instanceof Error
+                              ? error.message
+                              : "Failed to remove image",
+                          slotIndex: index,
+                        });
+                      }
+                    }}
+                    aria-label={`Remove image ${index + 1}`}
+                  >
+                    <XIcon className="h-4 w-4" />
+                  </Button>
+                  {/* Position indicator */}
+                  <div className="absolute bottom-0 left-0 rounded-tr-md bg-gray-900/80 px-1.5 py-0.5 text-[10px] text-gray-400">
+                    {index + 1}
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center text-gray-500">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => triggerFileInput(index)}
+                    aria-label={`Upload image to slot ${index + 1}`}
+                  >
+                    <PlusIcon className="h-6 w-6" />
+                  </Button>
+                  <span className="text-xs">Upload</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="text-xs"
+                    onClick={() => triggerFileManager(index)}
+                    aria-label={`Choose existing image for slot ${index + 1}`}
+                  >
+                    Choose Existing
+                  </Button>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <Input

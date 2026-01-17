@@ -224,7 +224,7 @@ export const mongoNoteRepository: NoteRepository = {
     const collection = db.collection<NotebookDocument>(notebookCollectionName);
     const existing = await collection.find({}).sort({ createdAt: 1 }).limit(1).toArray();
     const notebook = existing[0]
-      ? toNotebookResponse(existing[0] as WithId<NotebookDocument>)
+      ? toNotebookResponse(existing[0])
       : toNotebookResponse(
           (await (async () => {
             const id = randomUUID();
@@ -288,11 +288,21 @@ export const mongoNoteRepository: NoteRepository = {
       filesByNoteId.set(record.noteId, list);
     });
     const incomingMap = buildIncomingRelationsMap(notes);
-    return notes.map((note) => ({
+    
+    const result = notes.map((note) => ({
       ...note,
       files: filesByNoteId.get(note.id) ?? [],
       relationsTo: incomingMap.get(note.id) ?? [],
     }));
+
+    if (filters.truncateContent) {
+      return result.map((note) => ({
+        ...note,
+        content: note.content.length > 300 ? note.content.slice(0, 300) + "..." : note.content,
+      }));
+    }
+
+    return result;
   },
 
   async getById(id) {

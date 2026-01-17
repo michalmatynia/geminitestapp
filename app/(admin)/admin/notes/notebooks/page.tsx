@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
@@ -22,7 +22,7 @@ export default function NotebooksPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [menuNotebookId, setMenuNotebookId] = useState<string | null>(null);
 
-  const fetchNotebooks = async () => {
+  const fetchNotebooks = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch("/api/notes/notebooks", { cache: "no-store" });
@@ -41,11 +41,11 @@ export default function NotebooksPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedNotebookId, toast, updateSettings]);
 
   useEffect(() => {
     void fetchNotebooks();
-  }, []);
+  }, [fetchNotebooks]);
 
   useEffect(() => {
     if (!selectedNotebookId && notebooks.length > 0) {

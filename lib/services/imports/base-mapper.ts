@@ -61,6 +61,57 @@ const pickNestedInt = (record: BaseProductRecord, paths: string[][]) => {
   return null;
 };
 
+const isUrl = (value: string) => /^https?:\/\//i.test(value);
+
+const collectUrls = (value: unknown, urls: string[]) => {
+  if (!value) return;
+  if (typeof value === "string") {
+    if (isUrl(value)) urls.push(value);
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((entry) => collectUrls(entry, urls));
+    return;
+  }
+  if (typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    const candidates = [
+      record.url,
+      record.href,
+      record.src,
+      record.image,
+      record.imageUrl,
+      record.image_url,
+      record.link,
+      record.photo,
+      record.thumbnail,
+    ];
+    candidates.forEach((candidate) => collectUrls(candidate, urls));
+    Object.values(record).forEach((candidate) => collectUrls(candidate, urls));
+  }
+};
+
+export function extractBaseImageUrls(record: BaseProductRecord): string[] {
+  const urls: string[] = [];
+  const keys = [
+    "images",
+    "image",
+    "image_url",
+    "imageUrl",
+    "images_url",
+    "images_urls",
+    "photos",
+    "photo",
+    "gallery",
+    "pictures",
+    "main_image",
+    "mainImage",
+  ];
+  keys.forEach((key) => collectUrls(record[key], urls));
+  collectUrls(record, urls);
+  return Array.from(new Set(urls));
+}
+
 export function mapBaseProduct(record: BaseProductRecord): ProductCreateData {
   // Extend this mapper as new Base.com fields are needed.
   const baseProductId = pickString(record, [

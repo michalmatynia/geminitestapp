@@ -5,45 +5,46 @@ npx eslint
 add proper debugging on visual studio code
 
 # IN PROGRESS
-## Catalogs
 
-
-Add price group button should be on the left
-Connect Product app to MongoDb
 
 # PRODUCT LIST START
 
-We are in PRODUCT now
 
-## Product List
 
-## Categories
-TAGS PARAMETERS Additional fields
+Product list and currency, 
+
+Produc and Price Groop
+
+In Product List view, add a Currency dropdown, near langauge dropdown.  The currency dropdown is a default currency of the default price group attached to catalog, which can later be switched to other currencies attached to a price group attached to a catalog.
+
+
+## Filters
+Add one button called Filter option that will hide show all available search fields and filter fields
+When I click on that button, add another button below called Advanced filters, which reaveals a new panel over the basic filters, in this Panel I should be able to set up filtering conditions for more advanced searches.
+
+In each product row, between a checkmark and an image I need a star that will mark the product as favourite, but upon clicking it, it will give me seven different color stars each being its own variant of favourite. Search by different star colors filter should be added to a basic filter section.
+
+## Parameters
+PARAMETERS Additional fields
 
 
 Filtering
 Tradera Listing, vinted listing
 
-add red star
-
-Check the Uploaded File Handling policies
-
-The images should be import from Base.com links
-
-
 Also the stock should be present
-
-I should have teh possibility to drag Images around to change their order
-
-
-Data Importer and data mapper
-
-Connection to Base.com
 
 Crosslister
 Vinted flagger
 depop
 shpock
+
+
+## Product List END
+
+# NOTE APP
+
+My image thumbnail preview disappeared from my Note List view. my Notes card no longer show a minature thumbnail of the addded image file. If the thumbnail is a file that is not an image, don't add it at all.
+
 
 # Email Connect
 Connect email to add orders from email like tradera

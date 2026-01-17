@@ -92,7 +92,7 @@ export const prismaNoteRepository: NoteRepository = {
       where.categories = { some: { categoryId: { in: categoryIds } } };
     }
 
-    return prisma.note.findMany({
+    const notes = await prisma.note.findMany({
       where,
       include: {
         tags: { include: { tag: true } },
@@ -111,6 +111,15 @@ export const prismaNoteRepository: NoteRepository = {
       },
       orderBy: { updatedAt: "desc" },
     });
+
+    if (filters.truncateContent) {
+      return notes.map((note) => ({
+        ...note,
+        content: note.content.length > 300 ? note.content.slice(0, 300) + "..." : note.content,
+      }));
+    }
+
+    return notes;
   },
 
   async getById(id: string): Promise<NoteWithRelations | null> {

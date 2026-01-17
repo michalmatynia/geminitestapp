@@ -24,14 +24,18 @@ import {
   ProductMigrationDirection,
   Language,
   ProductCategoryWithChildren,
+  ProductTag,
 } from "@/types/products";
 import { PriceGroupsSettings } from "./components/PriceGroupsSettings";
 import { DataSourceSettings } from "./components/DataSourceSettings";
 import { CatalogsSettings } from "./components/CatalogsSettings";
 import { CategoriesSettings } from "./components/CategoriesSettings";
+import { TagsSettings } from "./components/TagsSettings";
 import { InternationalizationSettings } from "./components/InternationalizationSettings";
 
 export default function ProductSettingsPage() {
+  const generateGroupId = () =>
+    `PG-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
   const [activeSection, setActiveSection] =
     useState<(typeof settingSections)[number]>("Categories");
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -39,6 +43,9 @@ export default function ProductSettingsPage() {
   const [productCategories, setProductCategories] = useState<ProductCategoryWithChildren[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [selectedCategoryCatalogId, setSelectedCategoryCatalogId] = useState<string | null>(null);
+  const [productTags, setProductTags] = useState<ProductTag[]>([]);
+  const [loadingTags, setLoadingTags] = useState(false);
+  const [selectedTagCatalogId, setSelectedTagCatalogId] = useState<string | null>(null);
   const [defaultGroupId, setDefaultGroupId] = useState("");
   const [defaultGroupSaving, setDefaultGroupSaving] = useState(false);
   const [currencyOptions, setCurrencyOptions] = useState<CurrencyOption[]>([]);
@@ -83,6 +90,9 @@ export default function ProductSettingsPage() {
     description: "",
     isDefault: false,
   });
+  const [catalogPriceGroupIds, setCatalogPriceGroupIds] = useState<string[]>([]);
+  const [catalogDefaultPriceGroupId, setCatalogDefaultPriceGroupId] =
+    useState("");
   const [defaultLanguageId, setDefaultLanguageId] = useState("");
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [catalogSaving, setCatalogSaving] = useState(false);
@@ -355,6 +365,8 @@ export default function ProductSettingsPage() {
         data.map((catalog) => ({
           ...catalog,
           description: catalog.description ?? "",
+          priceGroupIds: catalog.priceGroupIds ?? [],
+          defaultPriceGroupId: catalog.defaultPriceGroupId ?? null,
         }))
       );
     } catch (error) {
@@ -381,6 +393,26 @@ export default function ProductSettingsPage() {
       console.error(error);
     } finally {
       setLoadingCategories(false);
+    }
+  }, []);
+
+  const refreshTags = useCallback(async (catalogId: string | null) => {
+    if (!catalogId) {
+      setProductTags([]);
+      return;
+    }
+    try {
+      setLoadingTags(true);
+      const res = await fetch(`/api/products/tags?catalogId=${catalogId}`);
+      if (!res.ok) {
+        throw new Error("Failed to fetch product tags.");
+      }
+      const data = (await res.json()) as ProductTag[];
+      setProductTags(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingTags(false);
     }
   }, []);
 
@@ -443,10 +475,25 @@ export default function ProductSettingsPage() {
     }
   }, [catalogs, selectedCategoryCatalogId, refreshCategories]);
 
+  // Auto-select default catalog for tags when catalogs load
+  useEffect(() => {
+    if (catalogs.length > 0 && !selectedTagCatalogId) {
+      const defaultCatalog = catalogs.find((c) => c.isDefault);
+      const catalogToSelect = defaultCatalog || catalogs[0];
+      setSelectedTagCatalogId(catalogToSelect.id);
+      void refreshTags(catalogToSelect.id);
+    }
+  }, [catalogs, selectedTagCatalogId, refreshTags]);
+
   const handleCategoryCatalogChange = useCallback((catalogId: string) => {
     setSelectedCategoryCatalogId(catalogId);
     void refreshCategories(catalogId);
   }, [refreshCategories]);
+
+  const handleTagCatalogChange = useCallback((catalogId: string) => {
+    setSelectedTagCatalogId(catalogId);
+    void refreshTags(catalogId);
+  }, [refreshTags]);
 
   const selectedCurrency = useMemo(
     () => currencyOptions.find((option) => option.id === formState.currencyId),
@@ -456,7 +503,7 @@ export default function ProductSettingsPage() {
   const handleOpenCreate = () => {
     setFormState({
       isDefault: false,
-      groupId: "",
+      groupId: generateGroupId(),
       name: "",
       description: "",
       currencyId: selectedCurrency?.id || "",
@@ -505,25 +552,29 @@ export default function ProductSettingsPage() {
       priceMultiplier: formState.priceMultiplier,
       addToPrice: formState.addToPrice,
     };
-
-    const res = await fetch(
-      editingGroupId
-        ? `/api/price-groups/${editingGroupId}`
-        : "/api/price-groups",
-      {
-        method: editingGroupId ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+    try {
+      const res = await fetch(
+        editingGroupId
+          ? `/api/price-groups/${editingGroupId}`
+          : "/api/price-groups",
+        {
+          method: editingGroupId ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (!res.ok) {
+        const error = (await res.json()) as { error?: string };
+        toast(error.error || "Failed to save price group.", { variant: "error" });
+        return;
       }
-    );
-    if (!res.ok) {
-      const error = (await res.json()) as { error?: string };
-      toast(error.error || "Failed to save price group.", { variant: "error" });
-      return;
+      await refreshPriceGroups();
+      setShowCreateModal(false);
+      setEditingGroupId(null);
+    } catch (error) {
+      console.error("Failed to save price group:", error);
+      toast("Failed to save price group.", { variant: "error" });
     }
-    await refreshPriceGroups();
-    setShowCreateModal(false);
-    setEditingGroupId(null);
   };
 
   const handleEditGroup = (group: PriceGroup) => {
@@ -550,17 +601,22 @@ export default function ProductSettingsPage() {
     }
     const confirmed = window.confirm(`Delete price group "${group.name}"?`);
     if (!confirmed) return;
-    const res = await fetch(`/api/price-groups/${group.id}`, {
-      method: "DELETE",
-    });
-    if (!res.ok) {
-      const error = (await res.json()) as { error?: string };
-      toast(error.error || "Failed to delete price group.", {
-        variant: "error",
+    try {
+      const res = await fetch(`/api/price-groups/${group.id}`, {
+        method: "DELETE",
       });
-      return;
+      if (!res.ok) {
+        const error = (await res.json()) as { error?: string };
+        toast(error.error || "Failed to delete price group.", {
+          variant: "error",
+        });
+        return;
+      }
+      await refreshPriceGroups();
+    } catch (error) {
+      console.error("Failed to delete price group:", error);
+      toast("Failed to delete price group.", { variant: "error" });
     }
-    await refreshPriceGroups();
   };
 
   const handleSetDefaultGroup = async (groupId: string) => {
@@ -597,6 +653,9 @@ export default function ProductSettingsPage() {
       }
       await refreshPriceGroups();
       toast("Default price group updated.", { variant: "success" });
+    } catch (error) {
+      console.error("Failed to set default price group:", error);
+      toast("Failed to set default price group.", { variant: "error" });
     } finally {
       setDefaultGroupSaving(false);
     }
@@ -622,42 +681,52 @@ export default function ProductSettingsPage() {
       toast("Currency code and name are required.", { variant: "error" });
       return;
     }
-    const res = await fetch(
-      editingCurrencyId
-        ? `/api/currencies/${editingCurrencyId}`
-        : "/api/currencies",
-      {
-        method: editingCurrencyId ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          code: currencyForm.code.trim().toUpperCase(),
-          name: currencyForm.name.trim(),
-          symbol: currencyForm.symbol.trim() || undefined,
-        }),
+    try {
+      const res = await fetch(
+        editingCurrencyId
+          ? `/api/currencies/${editingCurrencyId}`
+          : "/api/currencies",
+        {
+          method: editingCurrencyId ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            code: currencyForm.code.trim().toUpperCase(),
+            name: currencyForm.name.trim(),
+            symbol: currencyForm.symbol.trim() || undefined,
+          }),
+        }
+      );
+      if (!res.ok) {
+        const error = (await res.json()) as { error?: string };
+        toast(error.error || "Failed to save currency.", { variant: "error" });
+        return;
       }
-    );
-    if (!res.ok) {
-      const error = (await res.json()) as { error?: string };
-      toast(error.error || "Failed to save currency.", { variant: "error" });
-      return;
+      await refreshCurrencies();
+      setShowCurrencyModal(false);
+      setEditingCurrencyId(null);
+    } catch (error) {
+      console.error("Failed to save currency:", error);
+      toast("Failed to save currency.", { variant: "error" });
     }
-    await refreshCurrencies();
-    setShowCurrencyModal(false);
-    setEditingCurrencyId(null);
   };
 
   const handleDeleteCurrency = async (currency: CurrencyOption) => {
     const confirmed = window.confirm(`Delete currency "${currency.code}"?`);
     if (!confirmed) return;
-    const res = await fetch(`/api/currencies/${currency.id}`, {
-      method: "DELETE",
-    });
-    if (!res.ok) {
-      const error = (await res.json()) as { error?: string };
-      toast(error.error || "Failed to delete currency.", { variant: "error" });
-      return;
+    try {
+      const res = await fetch(`/api/currencies/${currency.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const error = (await res.json()) as { error?: string };
+        toast(error.error || "Failed to delete currency.", { variant: "error" });
+        return;
+      }
+      await refreshCurrencies();
+    } catch (error) {
+      console.error("Failed to delete currency:", error);
+      toast("Failed to delete currency.", { variant: "error" });
     }
-    await refreshCurrencies();
   };
 
   const handleOpenCountryModal = (country?: CountryOption) => {
@@ -681,42 +750,52 @@ export default function ProductSettingsPage() {
       toast("Country code and name are required.", { variant: "error" });
       return;
     }
-    const res = await fetch(
-      editingCountryId
-        ? `/api/countries/${editingCountryId}`
-        : "/api/countries",
-      {
-        method: editingCountryId ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          code: countryForm.code.trim().toUpperCase(),
-          name: countryForm.name.trim(),
-          currencyIds: selectedCurrencyIds,
-        }),
+    try {
+      const res = await fetch(
+        editingCountryId
+          ? `/api/countries/${editingCountryId}`
+          : "/api/countries",
+        {
+          method: editingCountryId ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            code: countryForm.code.trim().toUpperCase(),
+            name: countryForm.name.trim(),
+            currencyIds: selectedCurrencyIds,
+          }),
+        }
+      );
+      if (!res.ok) {
+        const error = (await res.json()) as { error?: string };
+        toast(error.error || "Failed to save country.", { variant: "error" });
+        return;
       }
-    );
-    if (!res.ok) {
-      const error = (await res.json()) as { error?: string };
-      toast(error.error || "Failed to save country.", { variant: "error" });
-      return;
+      await refreshCountries();
+      setShowCountryModal(false);
+      setEditingCountryId(null);
+    } catch (error) {
+      console.error("Failed to save country:", error);
+      toast("Failed to save country.", { variant: "error" });
     }
-    await refreshCountries();
-    setShowCountryModal(false);
-    setEditingCountryId(null);
   };
 
   const handleDeleteCountry = async (country: CountryOption) => {
     const confirmed = window.confirm(`Delete country "${country.name}"?`);
     if (!confirmed) return;
-    const res = await fetch(`/api/countries/${country.id}`, {
-      method: "DELETE",
-    });
-    if (!res.ok) {
-      const error = (await res.json()) as { error?: string };
-      toast(error.error || "Failed to delete country.", { variant: "error" });
-      return;
+    try {
+      const res = await fetch(`/api/countries/${country.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const error = (await res.json()) as { error?: string };
+        toast(error.error || "Failed to delete country.", { variant: "error" });
+        return;
+      }
+      await refreshCountries();
+    } catch (error) {
+      console.error("Failed to delete country:", error);
+      toast("Failed to delete country.", { variant: "error" });
     }
-    await refreshCountries();
   };
 
   const toggleCountryCurrency = (currencyId: string) => {
@@ -750,6 +829,19 @@ export default function ProductSettingsPage() {
         catalog.defaultLanguageId ??
           (nextLanguageIds.length > 0 ? nextLanguageIds[0] : "")
       );
+      const nextPriceGroupIds =
+        catalog.priceGroupIds?.length && catalog.priceGroupIds.length > 0
+          ? catalog.priceGroupIds
+          : defaultGroupId
+            ? [defaultGroupId]
+            : [];
+      setCatalogPriceGroupIds(nextPriceGroupIds);
+      setCatalogDefaultPriceGroupId(
+        catalog.defaultPriceGroupId ??
+          nextPriceGroupIds[0] ??
+          defaultGroupId ??
+          ""
+      );
     } else {
       setEditingCatalogId(null);
       setCatalogForm({
@@ -759,6 +851,8 @@ export default function ProductSettingsPage() {
       });
       setSelectedLanguageIds([]);
       setDefaultLanguageId("");
+      setCatalogPriceGroupIds(defaultGroupId ? [defaultGroupId] : []);
+      setCatalogDefaultPriceGroupId(defaultGroupId ?? "");
     }
     setCatalogError(null);
     setCatalogLanguageQuery("");
@@ -774,22 +868,27 @@ export default function ProductSettingsPage() {
         return;
       }
 
-      const res = await fetch(`/api/catalogs/${catalog.id}`, {
-        method: "DELETE",
-      });
+      try {
+        const res = await fetch(`/api/catalogs/${catalog.id}`, {
+          method: "DELETE",
+        });
 
-      if (!res.ok) {
-        const error = (await res.json()) as {
-          error?: string;
-          errorId?: string;
-        };
-        const message = error.error || "Failed to delete catalog.";
-        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-        toast(`${message}${suffix}`, { variant: "error" });
-        return;
+        if (!res.ok) {
+          const error = (await res.json()) as {
+            error?: string;
+            errorId?: string;
+          };
+          const message = error.error || "Failed to delete catalog.";
+          const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+          toast(`${message}${suffix}`, { variant: "error" });
+          return;
+        }
+
+        await refreshCatalogs();
+      } catch (error) {
+        console.error("Failed to delete catalog:", error);
+        toast("Failed to delete catalog.", { variant: "error" });
       }
-
-      await refreshCatalogs();
     };
 
     void deleteCatalog();
@@ -816,6 +915,19 @@ export default function ProductSettingsPage() {
         });
         return;
       }
+      if (catalogPriceGroupIds.length === 0) {
+        toast("Select at least one price group.", { variant: "error" });
+        return;
+      }
+      if (
+        !catalogDefaultPriceGroupId ||
+        !catalogPriceGroupIds.includes(catalogDefaultPriceGroupId)
+      ) {
+        toast("Select a default price group from the available price groups.", {
+          variant: "error",
+        });
+        return;
+      }
       setCatalogSaving(true);
       try {
         const endpoint = editingCatalogId
@@ -829,6 +941,8 @@ export default function ProductSettingsPage() {
             description,
             languageIds: selectedLanguageIds,
             defaultLanguageId,
+            priceGroupIds: catalogPriceGroupIds,
+            defaultPriceGroupId: catalogDefaultPriceGroupId,
             isDefault: catalogForm.isDefault,
           }),
         });
@@ -849,10 +963,15 @@ export default function ProductSettingsPage() {
         setCatalogForm({ name: "", description: "", isDefault: false });
         setSelectedLanguageIds([]);
         setDefaultLanguageId("");
+        setCatalogPriceGroupIds([]);
+        setCatalogDefaultPriceGroupId("");
         refreshCatalogs().catch((error) => {
           console.error("Failed to refresh catalogs:", error);
           toast("Catalog saved, but refresh failed.", { variant: "error" });
         });
+      } catch (error) {
+        console.error("Failed to save catalog:", error);
+        setCatalogError("Failed to save catalog.");
       } finally {
         setCatalogSaving(false);
       }
@@ -867,6 +986,18 @@ export default function ProductSettingsPage() {
         : [...prev, languageId];
       if (!next.includes(defaultLanguageId)) {
         setDefaultLanguageId(next[0] ?? "");
+      }
+      return next;
+    });
+  };
+
+  const toggleCatalogPriceGroup = (groupId: string) => {
+    setCatalogPriceGroupIds((prev) => {
+      const next = prev.includes(groupId)
+        ? prev.filter((id) => id !== groupId)
+        : [...prev, groupId];
+      if (!next.includes(catalogDefaultPriceGroupId)) {
+        setCatalogDefaultPriceGroupId(next[0] ?? "");
       }
       return next;
     });
@@ -939,30 +1070,35 @@ export default function ProductSettingsPage() {
         nativeName: languageForm.nativeName.trim() || undefined,
         countryIds: selectedCountryIds,
       };
-      const res = await fetch(
-        editingLanguageId
-          ? `/api/languages/${editingLanguageId}`
-          : "/api/languages",
-        {
-          method: editingLanguageId ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+      try {
+        const res = await fetch(
+          editingLanguageId
+            ? `/api/languages/${editingLanguageId}`
+            : "/api/languages",
+          {
+            method: editingLanguageId ? "PUT" : "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }
+        );
+        if (!res.ok) {
+          const error = (await res.json()) as {
+            error?: string;
+            errorId?: string;
+          };
+          const message = error.error || "Failed to save language.";
+          const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+          toast(`${message}${suffix}`, { variant: "error" });
+          return;
         }
-      );
-      if (!res.ok) {
-        const error = (await res.json()) as {
-          error?: string;
-          errorId?: string;
-        };
-        const message = error.error || "Failed to save language.";
-        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-        toast(`${message}${suffix}`, { variant: "error" });
-        return;
+        setShowLanguageModal(false);
+        setEditingLanguageId(null);
+        setSelectedCountryIds([]);
+        await refreshLanguages();
+      } catch (error) {
+        console.error("Failed to save language:", error);
+        toast("Failed to save language.", { variant: "error" });
       }
-      setShowLanguageModal(false);
-      setEditingLanguageId(null);
-      setSelectedCountryIds([]);
-      await refreshLanguages();
     };
     void saveLanguage();
   };
@@ -971,24 +1107,29 @@ export default function ProductSettingsPage() {
     const confirmed = window.confirm(`Delete language "${language.name}"?`);
     if (!confirmed) return;
     const removeLanguage = async () => {
-      const res = await fetch(`/api/languages/${language.id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const error = (await res.json()) as {
-          error?: string;
-          errorId?: string;
-        };
-        const message = error.error || "Failed to delete language.";
-        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-        toast(`${message}${suffix}`, { variant: "error" });
-        return;
-      }
-      await refreshLanguages();
-      if (editingLanguageId === language.id) {
-        setShowLanguageModal(false);
-        setEditingLanguageId(null);
-        setSelectedCountryIds([]);
+      try {
+        const res = await fetch(`/api/languages/${language.id}`, {
+          method: "DELETE",
+        });
+        if (!res.ok) {
+          const error = (await res.json()) as {
+            error?: string;
+            errorId?: string;
+          };
+          const message = error.error || "Failed to delete language.";
+          const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+          toast(`${message}${suffix}`, { variant: "error" });
+          return;
+        }
+        await refreshLanguages();
+        if (editingLanguageId === language.id) {
+          setShowLanguageModal(false);
+          setEditingLanguageId(null);
+          setSelectedCountryIds([]);
+        }
+      } catch (error) {
+        console.error("Failed to delete language:", error);
+        toast("Failed to delete language.", { variant: "error" });
       }
     };
     void removeLanguage();
@@ -1025,6 +1166,16 @@ export default function ProductSettingsPage() {
                 selectedCatalogId={selectedCategoryCatalogId}
                 onCatalogChange={handleCategoryCatalogChange}
                 onRefresh={() => refreshCategories(selectedCategoryCatalogId)}
+              />
+            )}
+            {activeSection === "Tags" && (
+              <TagsSettings
+                loading={loadingTags}
+                tags={productTags}
+                catalogs={catalogs}
+                selectedCatalogId={selectedTagCatalogId}
+                onCatalogChange={handleTagCatalogChange}
+                onRefresh={() => refreshTags(selectedTagCatalogId)}
               />
             )}
             {activeSection === "Price Groups" && (
@@ -1273,6 +1424,105 @@ export default function ProductSettingsPage() {
                   )}
                 </div>
               </div>
+              <div>
+                <div className="rounded-md border border-gray-800 bg-gray-950/70 p-3">
+                  <label className="text-xs text-gray-400">Price groups</label>
+                  {loadingGroups ? (
+                    <p className="mt-2 text-xs text-gray-500">
+                      Loading price groups...
+                    </p>
+                  ) : priceGroups.length === 0 ? (
+                    <p className="mt-2 text-xs text-gray-500">
+                      Add a price group to continue.
+                    </p>
+                  ) : (
+                    <div className="mt-2 space-y-3">
+                      <div className="flex flex-wrap gap-2">
+                        {catalogPriceGroupIds.length === 0 ? (
+                          <span className="text-[11px] text-gray-500">
+                            No price groups selected.
+                          </span>
+                        ) : (
+                          catalogPriceGroupIds.map((groupId) => {
+                            const group = priceGroups.find(
+                              (entry) => entry.id === groupId
+                            );
+                            return (
+                              <button
+                                key={groupId}
+                                type="button"
+                                className="inline-flex items-center gap-1 rounded-full border border-gray-700 bg-gray-900 px-3 py-1 text-xs text-gray-200 hover:border-gray-500"
+                                onClick={() => toggleCatalogPriceGroup(groupId)}
+                              >
+                                {group?.name ?? groupId}
+                                {group?.currencyCode ? (
+                                  <span className="text-gray-500">
+                                    ({group.currencyCode})
+                                  </span>
+                                ) : null}
+                                <span className="text-gray-500">×</span>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                      <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-xs text-gray-200">
+                        {priceGroups.map((group) => {
+                          const isSelected = catalogPriceGroupIds.includes(
+                            group.id
+                          );
+                          return (
+                            <button
+                              key={group.id}
+                              type="button"
+                              className="flex w-full items-center justify-between rounded-md px-2 py-1 text-left hover:bg-gray-800"
+                              onClick={() => toggleCatalogPriceGroup(group.id)}
+                            >
+                              <span>
+                                {group.name}
+                                <span className="ml-1 text-gray-500">
+                                  ({group.currencyCode})
+                                </span>
+                              </span>
+                              <span className="text-gray-500">
+                                {isSelected ? "Remove" : "Add"}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs text-gray-400">
+                          Default price group
+                        </label>
+                        <select
+                          className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-white"
+                          value={catalogDefaultPriceGroupId}
+                          onChange={(event) =>
+                            setCatalogDefaultPriceGroupId(event.target.value)
+                          }
+                          disabled={catalogPriceGroupIds.length === 0}
+                        >
+                          <option value="">Select a default price group</option>
+                          {catalogPriceGroupIds.map((groupId) => {
+                            const group = priceGroups.find(
+                              (entry) => entry.id === groupId
+                            );
+                            return (
+                              <option key={groupId} value={groupId}>
+                                {group?.name ?? groupId}
+                              </option>
+                            );
+                          })}
+                        </select>
+                        <p className="text-[11px] text-gray-500">
+                          Required. Choose from the available price groups.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
               <div className="flex items-center justify-end gap-3">
                 <button
                   className="rounded-md border border-gray-800 px-3 py-2 text-sm text-gray-300 hover:bg-gray-900"
@@ -1429,19 +1679,7 @@ export default function ProductSettingsPage() {
                 />
                 Set as default group
               </label>
-              <div>
-                <label className="text-sm text-gray-300">Price Group ID</label>
-                <input
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
-                  value={formState.groupId}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      groupId: event.target.value.toUpperCase(),
-                    }))
-                  }
-                />
-              </div>
+              <input type="hidden" value={formState.groupId} />
               <div>
                 <label className="text-sm text-gray-300">Name</label>
                 <input
@@ -1525,77 +1763,64 @@ export default function ProductSettingsPage() {
                 </div>
               </div>
               {formState.groupType === "dependent" && (
-                <div>
-                  <label className="text-sm text-gray-300">
-                    Source Price Group
-                  </label>
-                  <select
-                    className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
-                    value={formState.sourceGroupId}
-                    onChange={(event) =>
-                      setFormState((prev) => ({
-                        ...prev,
-                        sourceGroupId: event.target.value,
-                      }))
-                    }
-                  >
-                    <option value="">Select a source group</option>
-                    {priceGroups.map((group) => (
-                      <option key={group.id} value={group.id}>
-                        {group.name} ({group.groupId})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <>
+                  <div>
+                    <label className="text-sm text-gray-300">
+                      Source Price Group
+                    </label>
+                    <select
+                      className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
+                      value={formState.sourceGroupId}
+                      onChange={(event) =>
+                        setFormState((prev) => ({
+                          ...prev,
+                          sourceGroupId: event.target.value,
+                        }))
+                      }
+                    >
+                      <option value="">Select a source group</option>
+                      {priceGroups.map((group) => (
+                        <option key={group.id} value={group.id}>
+                          {group.name} ({group.groupId})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="text-sm text-gray-300">
+                        Price Multiplier
+                      </label>
+                      <input
+                        className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
+                        type="number"
+                        step="0.01"
+                        value={formState.priceMultiplier}
+                        onChange={(event) =>
+                          setFormState((prev) => ({
+                            ...prev,
+                            priceMultiplier: Number(event.target.value),
+                          }))
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-300">Add To Price</label>
+                      <input
+                        className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
+                        type="number"
+                        value={formState.addToPrice}
+                        onChange={(event) =>
+                          setFormState((prev) => ({
+                            ...prev,
+                            addToPrice: Number(event.target.value),
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+                </>
               )}
-              <div>
-                <label className="text-sm text-gray-300">
-                  Base Price Field
-                </label>
-                <input
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
-                  value={formState.basePriceField}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      basePriceField: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="text-sm text-gray-300">
-                    Price Multiplier
-                  </label>
-                  <input
-                    className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
-                    type="number"
-                    step="0.01"
-                    value={formState.priceMultiplier}
-                    onChange={(event) =>
-                      setFormState((prev) => ({
-                        ...prev,
-                        priceMultiplier: Number(event.target.value),
-                      }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-gray-300">Add To Price</label>
-                  <input
-                    className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
-                    type="number"
-                    value={formState.addToPrice}
-                    onChange={(event) =>
-                      setFormState((prev) => ({
-                        ...prev,
-                        addToPrice: Number(event.target.value),
-                      }))
-                    }
-                  />
-                </div>
-              </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button

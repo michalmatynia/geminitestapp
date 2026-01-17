@@ -70,6 +70,7 @@ interface ProductFormContextType {
   handleSlotDisconnectImage: (index: number) => void;
   handleMultiImageChange: (files: File[]) => void;
   handleMultiFileSelect: (files: ImageFileSelection[]) => void;
+  swapImageSlots: (fromIndex: number, toIndex: number) => void;
   catalogs: CatalogRecord[];
   catalogsLoading: boolean;
   catalogsError: string | null;
@@ -422,6 +423,20 @@ export function ProductFormProvider({
     setShowFileManager(false); // Close file manager after selection
   }, []);
 
+  const swapImageSlots = useCallback((fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    if (fromIndex < 0 || fromIndex >= TOTAL_IMAGE_SLOTS) return;
+    if (toIndex < 0 || toIndex >= TOTAL_IMAGE_SLOTS) return;
+
+    setImageSlots(prevSlots => {
+      const newSlots = [...prevSlots];
+      const temp = newSlots[fromIndex];
+      newSlots[fromIndex] = newSlots[toIndex];
+      newSlots[toIndex] = temp;
+      return newSlots;
+    });
+  }, []);
+
   const toggleCatalog = useCallback((catalogId: string) => {
     setSelectedCatalogIds((prev) =>
       prev.includes(catalogId)
@@ -562,6 +577,7 @@ export function ProductFormProvider({
           handleSlotDisconnectImage,
           handleMultiImageChange,
           handleMultiFileSelect,
+          swapImageSlots,
           catalogs,
           catalogsLoading,
           catalogsError,

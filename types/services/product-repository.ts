@@ -11,6 +11,8 @@ export type ProductFilters = {
   maxPrice?: string;
   startDate?: string;
   endDate?: string;
+  page?: string;
+  pageSize?: string;
 };
 
 export type CreateProductInput = ProductCreateData;
@@ -18,6 +20,7 @@ export type UpdateProductInput = ProductUpdateData;
 
 export type ProductRepository = {
   getProducts(filters: ProductFilters): Promise<ProductWithImages[]>;
+  countProducts(filters: ProductFilters): Promise<number>;
   getProductById(id: string): Promise<ProductWithImages | null>;
   createProduct(data: CreateProductInput): Promise<ProductRecord>;
   updateProduct(

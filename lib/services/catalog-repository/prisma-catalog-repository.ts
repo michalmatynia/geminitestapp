@@ -12,6 +12,8 @@ const toRecord = (catalog: {
   description: string | null;
   isDefault: boolean;
   defaultLanguageId: string | null;
+  defaultPriceGroupId: string | null;
+  priceGroupIds: string[];
   createdAt: Date;
   updatedAt: Date;
   languages?: { languageId: string }[];
@@ -21,9 +23,13 @@ const toRecord = (catalog: {
   description: catalog.description ?? null,
   isDefault: catalog.isDefault,
   defaultLanguageId: catalog.defaultLanguageId ?? null,
+  defaultPriceGroupId: catalog.defaultPriceGroupId ?? null,
   createdAt: catalog.createdAt,
   updatedAt: catalog.updatedAt,
   languageIds: catalog.languages?.map((entry) => entry.languageId) ?? [],
+  priceGroupIds: Array.isArray(catalog.priceGroupIds)
+    ? catalog.priceGroupIds
+    : [],
 });
 
 export const prismaCatalogRepository: CatalogRepository = {
@@ -53,6 +59,8 @@ export const prismaCatalogRepository: CatalogRepository = {
         description: input.description ?? null,
         isDefault: Boolean(input.isDefault),
         defaultLanguageId: input.defaultLanguageId ?? null,
+        defaultPriceGroupId: input.defaultPriceGroupId ?? null,
+        priceGroupIds: input.priceGroupIds ?? [],
       },
     });
     if (input.languageIds?.length) {
@@ -90,6 +98,8 @@ export const prismaCatalogRepository: CatalogRepository = {
         description: input.description ?? undefined,
         isDefault: input.isDefault ?? undefined,
         defaultLanguageId: input.defaultLanguageId ?? undefined,
+        defaultPriceGroupId: input.defaultPriceGroupId ?? undefined,
+        priceGroupIds: input.priceGroupIds ?? undefined,
       },
     });
     if (input.languageIds) {

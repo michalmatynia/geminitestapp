@@ -8,6 +8,8 @@ export type CatalogCreateInput = {
   isDefault?: boolean;
   languageIds?: string[];
   defaultLanguageId?: string | null;
+  priceGroupIds?: string[];
+  defaultPriceGroupId?: string | null;
 };
 
 export type CatalogUpdateInput = {
@@ -16,6 +18,8 @@ export type CatalogUpdateInput = {
   isDefault?: boolean;
   languageIds?: string[];
   defaultLanguageId?: string | null;
+  priceGroupIds?: string[];
+  defaultPriceGroupId?: string | null;
 };
 
 export type CatalogRepository = {

@@ -275,6 +275,7 @@ export const columns: ColumnDef<ProductWithImages>[] = [
         | {
             onIntegrationsClick?: (p: ProductWithImages) => void;
             integrationBadgeIds?: Set<string>;
+            integrationBadgeStatuses?: Map<string, string>;
           }
         | undefined;
 
@@ -282,6 +283,14 @@ export const columns: ColumnDef<ProductWithImages>[] = [
       if (!handleClick) return null;
       const showMarketplaceBadge =
         meta?.integrationBadgeIds?.has(product.id) ?? false;
+      const status = meta?.integrationBadgeStatuses?.get(product.id) ?? "pending";
+      const statusClasses: Record<string, string> = {
+        active: "text-emerald-300",
+        pending: "text-yellow-300",
+        failed: "text-red-300",
+        removed: "text-gray-400",
+      };
+      const badgeClass = statusClasses[status] ?? "text-gray-300";
 
       return (
         <div className="inline-flex items-center gap-1">
@@ -295,9 +304,9 @@ export const columns: ColumnDef<ProductWithImages>[] = [
           </button>
           {showMarketplaceBadge && (
             <span
-              className="inline-flex items-center text-emerald-300"
-              title="Listed on marketplace"
-              aria-label="Listed on marketplace"
+              className={`inline-flex items-center ${badgeClass}`}
+              title={`Marketplace status: ${status}`}
+              aria-label={`Marketplace status: ${status}`}
             >
               <Store className="size-3.5" />
             </span>

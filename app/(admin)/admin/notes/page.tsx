@@ -145,7 +145,7 @@ export default function NotesPage() {
       });
     });
     return Array.from(tagMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [notesInScope, tags]);
+  }, [notesInScope]);
 
   // Handlers
   const handleSelectNoteFromTree = useCallback(async (noteId: string) => {
@@ -205,54 +205,24 @@ export default function NotesPage() {
   const handleUnlinkRelatedNote = useCallback(async (relatedId: string) => {
     if (!selectedNote) return;
     try {
-      // Logic from original component
-      const [sourceRes, targetRes] = await Promise.all([
-        fetch(`/api/notes/${selectedNote.id}`, { cache: "no-store" }),
-        fetch(`/api/notes/${relatedId}`, { cache: "no-store" }),
-      ]);
-      if (!sourceRes.ok || !targetRes.ok) {
-        toast("Failed to unlink note", { variant: "error" });
-        return;
-      }
-      const [sourceNote, targetNote] = (await Promise.all([
-        sourceRes.json(),
-        targetRes.json(),
-      ])) as [NoteWithRelations, NoteWithRelations];
-
       const sourceRelations =
-        sourceNote.relations?.map((rel) => rel.id) ||
+        selectedNote.relations?.map((rel) => rel.id) ||
         [
-          ...(sourceNote.relationsFrom ?? []).map((rel) => rel.targetNote.id),
-          ...(sourceNote.relationsTo ?? []).map((rel) => rel.sourceNote.id),
-        ].filter(
-          (id, index, array) => array.findIndex((entry) => entry === id) === index
-        );
-      const targetRelations =
-        targetNote.relations?.map((rel) => rel.id) ||
-        [
-          ...(targetNote.relationsFrom ?? []).map((rel) => rel.targetNote.id),
-          ...(targetNote.relationsTo ?? []).map((rel) => rel.sourceNote.id),
+          ...(selectedNote.relationsFrom ?? []).map((rel) => rel.targetNote.id),
+          ...(selectedNote.relationsTo ?? []).map((rel) => rel.sourceNote.id),
         ].filter(
           (id, index, array) => array.findIndex((entry) => entry === id) === index
         );
 
       const nextSourceIds = sourceRelations.filter((id) => id !== relatedId);
-      const nextTargetIds = targetRelations.filter((id) => id !== selectedNote.id);
 
-      const [sourcePatch, targetPatch] = await Promise.all([
-        fetch(`/api/notes/${selectedNote.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ relatedNoteIds: nextSourceIds }),
-        }),
-        fetch(`/api/notes/${relatedId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ relatedNoteIds: nextTargetIds }),
-        }),
-      ]);
+      const response = await fetch(`/api/notes/${selectedNote.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ relatedNoteIds: nextSourceIds }),
+      });
 
-      if (!sourcePatch.ok || !targetPatch.ok) {
+      if (!response.ok) {
         toast("Failed to unlink note", { variant: "error" });
         return;
       }

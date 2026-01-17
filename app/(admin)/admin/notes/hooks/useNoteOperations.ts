@@ -270,7 +270,7 @@ export function useNoteOperations({
       console.error("Failed to move folder:", error);
       toast("An unexpected error occurred while moving the folder", { variant: "error" });
     }
-  }, [fetchFolderTree, fetchNotes, findFolderParentId, folderTreeRef, setUndoStack, toast]);
+  }, [fetchFolderTree, fetchNotes, folderTreeRef, setUndoStack, toast]);
 
   const handleRelateNotes = useCallback(async (sourceNoteId: string, targetNoteId: string) => {
     if (!sourceNoteId || !targetNoteId) return;

@@ -24,14 +24,14 @@ async function getNoteService(): Promise<NoteRepository> {
   return _noteService;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const callService = <K extends keyof NoteRepository>(
   key: K,
   ...args: Parameters<NoteRepository[K]>
 ): ReturnType<NoteRepository[K]> => {
   return getNoteService().then((service) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fn = service[key] as any;
+    const fn = service[key] as (
+      ...args: Parameters<NoteRepository[K]>
+    ) => ReturnType<NoteRepository[K]>;
     return fn(...args);
   }) as ReturnType<NoteRepository[K]>;
 };

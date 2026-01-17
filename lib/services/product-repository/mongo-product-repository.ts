@@ -120,12 +120,32 @@ const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => 
 export const mongoProductRepository: ProductRepository = {
   async getProducts(filters: ProductFilters) {
     const db = await getMongoDb();
-    const docs = await db
+    const page = filters.page ? parseInt(filters.page, 10) : undefined;
+    const pageSize = filters.pageSize ? parseInt(filters.pageSize, 10) : undefined;
+    const skip = page && pageSize ? (page - 1) * pageSize : undefined;
+    const limit = pageSize;
+
+    let cursor = db
       .collection<ProductDocument>(productCollectionName)
       .find(buildSearchFilter(filters))
-      .sort({ createdAt: -1 })
-      .toArray();
+      .sort({ createdAt: -1 });
+
+    if (skip !== undefined) {
+      cursor = cursor.skip(skip);
+    }
+    if (limit !== undefined) {
+      cursor = cursor.limit(limit);
+    }
+
+    const docs = await cursor.toArray();
     return docs.map(toProductResponse);
+  },
+
+  async countProducts(filters: ProductFilters) {
+    const db = await getMongoDb();
+    return db
+      .collection<ProductDocument>(productCollectionName)
+      .countDocuments(buildSearchFilter(filters));
   },
 
   async getProductById(id: string) {

@@ -106,7 +106,6 @@ export function PriceGroupsSettings({
           onChange={(event) => onDefaultGroupChange(event.target.value)}
           disabled={priceGroups.length === 0 || defaultGroupSaving}
         >
-          <option value="">Select a default price group</option>
           {priceGroups.map((group) => (
             <option key={group.id} value={group.id}>
               {group.name} ({group.groupId})

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
@@ -34,7 +34,7 @@ export default function NoteThemesPage() {
   const [editingForm, setEditingForm] = useState(defaultTheme);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const fetchThemes = async () => {
+  const fetchThemes = useCallback(async () => {
     setLoading(true);
     try {
       if (!selectedNotebookId) {
@@ -57,11 +57,11 @@ export default function NoteThemesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedNotebookId, toast]);
 
   useEffect(() => {
     void fetchThemes();
-  }, [selectedNotebookId]);
+  }, [fetchThemes]);
 
   useEffect(() => {
     if (selectedNotebookId) return;

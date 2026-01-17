@@ -107,6 +107,7 @@ export default function ListProductModal({
       title={`List Product - ${productName}`}
       onClose={onClose}
       size="md"
+      showClose={false}
       footer={
         <>
           <Button

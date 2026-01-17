@@ -26,6 +26,7 @@ const connectionSchema = z.object({
   playwrightProxyPassword: z.string().optional(),
   playwrightEmulateDevice: z.boolean().optional(),
   playwrightDeviceName: z.string().optional(),
+  allegroUseSandbox: z.boolean().optional(),
 });
 
 /**
@@ -128,6 +129,9 @@ export async function PUT(
       ...(typeof data.playwrightDeviceName === "string"
         ? { playwrightDeviceName: data.playwrightDeviceName }
         : {}),
+      ...(typeof data.allegroUseSandbox === "boolean"
+        ? { allegroUseSandbox: data.allegroUseSandbox }
+        : {}),
     });
 
     return NextResponse.json({
@@ -141,6 +145,7 @@ export async function PUT(
       allegroTokenUpdatedAt: connection.allegroTokenUpdatedAt,
       allegroExpiresAt: connection.allegroExpiresAt,
       allegroScope: connection.allegroScope,
+      allegroUseSandbox: connection.allegroUseSandbox ?? false,
       playwrightHeadless: connection.playwrightHeadless,
       playwrightSlowMo: connection.playwrightSlowMo,
       playwrightTimeout: connection.playwrightTimeout,

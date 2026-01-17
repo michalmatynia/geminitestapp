@@ -19,10 +19,9 @@ export function useNoteTheme({
     [themes]
   );
 
-  const defaultTheme = useMemo(() => {
-    if (!notebook?.defaultThemeId) return null;
-    return themeMap.get(String(notebook.defaultThemeId)) ?? null;
-  }, [notebook?.defaultThemeId, themeMap]);
+  const defaultTheme = notebook?.defaultThemeId
+    ? themeMap.get(String(notebook.defaultThemeId)) ?? null
+    : null;
 
   const getThemeForFolderId = useCallback(
     (folderId: string | null | undefined) => {
@@ -40,13 +39,14 @@ export function useNoteTheme({
     [getThemeForFolderId, selectedFolderId]
   );
 
-  const selectedFolderThemeId = useMemo(() => {
-    if (selectedFolderId) {
-      const folder = findFolderById(folderTree, selectedFolderId);
-      return folder?.themeId ? String(folder.themeId) : "";
-    }
-    return notebook?.defaultThemeId ? String(notebook.defaultThemeId) : "";
-  }, [selectedFolderId, folderTree, notebook?.defaultThemeId]);
+  const selectedFolderThemeId = selectedFolderId
+    ? (() => {
+        const folder = findFolderById(folderTree, selectedFolderId);
+        return folder?.themeId ? String(folder.themeId) : "";
+      })()
+    : notebook?.defaultThemeId
+      ? String(notebook.defaultThemeId)
+      : "";
 
   const getThemeForNote = useCallback(
     (note: NoteWithRelations | null | undefined) => {

@@ -95,6 +95,12 @@ export default function Menu() {
         >
           Imports
         </Link>
+        <Link
+          href="/admin/products/marketplaces"
+          className="block w-full text-left hover:bg-gray-700 p-2 rounded"
+        >
+          Marketplaces
+        </Link>
       </CollapsibleMenu>
       <CollapsibleMenu
         title="Notes"

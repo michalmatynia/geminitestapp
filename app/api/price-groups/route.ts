@@ -32,12 +32,44 @@ const priceGroupSchema = z
  */
 export async function GET() {
   try {
+    await prisma.$transaction(async (tx) => {
+      const plnCurrency = await tx.currency.findUnique({
+        where: { code: "PLN" },
+      });
+      if (!plnCurrency) return;
+
+      const existingPln = await tx.priceGroup.findUnique({
+        where: { groupId: "PLN" },
+      });
+
+      if (!existingPln) {
+        const existingDefault = await tx.priceGroup.findFirst({
+          where: { isDefault: true },
+          select: { id: true },
+        });
+        await tx.priceGroup.create({
+          data: {
+            groupId: "PLN",
+            isDefault: !existingDefault,
+            name: "PLN",
+            description: null,
+            currencyId: plnCurrency.id,
+            type: "standard",
+            basePriceField: "price",
+            sourceGroupId: null,
+            priceMultiplier: 1,
+            addToPrice: 0,
+          },
+        });
+      }
+    });
+
     const groups = await prisma.priceGroup.findMany({
       include: {
         currency: true,
         sourceGroup: true,
       },
-      orderBy: [{ isDefault: "desc" }, { name: "asc" }],
+      orderBy: [{ name: "asc" }],
     });
     return NextResponse.json(groups);
   } catch (_error) {

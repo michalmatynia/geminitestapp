@@ -133,6 +133,7 @@ export type NoteFilters = {
   tagIds?: string[];
   categoryIds?: string[];
   notebookId?: string | null;
+  truncateContent?: boolean;
 };
 
 export type NoteFileRecord = {

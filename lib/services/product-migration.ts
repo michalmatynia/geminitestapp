@@ -32,6 +32,8 @@ type CatalogInput = {
   description: string | null;
   isDefault: boolean;
   defaultLanguageId?: string | null;
+  defaultPriceGroupId?: string | null;
+  priceGroupIds?: string[] | null;
   createdAt: Date;
   updatedAt: Date;
   languageIds?: string[] | null;
@@ -141,11 +143,15 @@ const toCatalogDocument = (catalog: CatalogInput): CatalogDocument => ({
   description: catalog.description ?? null,
   isDefault: catalog.isDefault,
   defaultLanguageId: catalog.defaultLanguageId ?? null,
+  defaultPriceGroupId: catalog.defaultPriceGroupId ?? null,
   createdAt: catalog.createdAt,
   updatedAt: catalog.updatedAt,
   languageIds: Array.isArray(catalog.languageIds)
     ? catalog.languageIds
     : catalog.languages?.map((entry) => entry.languageId) ?? [],
+  priceGroupIds: Array.isArray(catalog.priceGroupIds)
+    ? catalog.priceGroupIds
+    : [],
 });
 
 const buildProductDocument = (product: ProductInput): ProductDocument => ({

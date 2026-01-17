@@ -40,7 +40,7 @@ export type ProductListingRepository = {
   createListing: (input: CreateProductListingInput) => Promise<ProductListingWithDetails>;
   deleteListing: (id: string) => Promise<void>;
   listingExists: (productId: string, connectionId: string) => Promise<boolean>;
-  listAllListings: () => Promise<Array<Pick<ProductListingRecord, "productId">>>;
+  listAllListings: () => Promise<Array<Pick<ProductListingRecord, "productId" | "status">>>;
 };
 
 const LISTINGS_COLLECTION = "product_listings";
@@ -123,7 +123,7 @@ const prismaRepository: ProductListingRepository = {
 
   listAllListings: async () => {
     return prisma.productListing.findMany({
-      select: { productId: true },
+      select: { productId: true, status: true },
     });
   },
 };
@@ -140,8 +140,18 @@ const mongoRepository: ProductListingRepository = {
       .toArray();
 
     // Get integrations and connections for enrichment
-    const integrationIds = [...new Set(listings.map((l) => l.integrationId))];
-    const connectionIds = [...new Set(listings.map((l) => l.connectionId))];
+    const integrationIds = listings.reduce<string[]>((acc, listing) => {
+      if (!acc.includes(listing.integrationId)) {
+        acc.push(listing.integrationId);
+      }
+      return acc;
+    }, []);
+    const connectionIds = listings.reduce<string[]>((acc, listing) => {
+      if (!acc.includes(listing.connectionId)) {
+        acc.push(listing.connectionId);
+      }
+      return acc;
+    }, []);
 
     const integrations = await db
       .collection<{ _id: string; name: string; slug: string }>("integrations")
@@ -241,9 +251,11 @@ const mongoRepository: ProductListingRepository = {
     const db = await getMongoDb();
     return db
       .collection<ProductListingDocument>(LISTINGS_COLLECTION)
-      .find({}, { projection: { productId: 1 } })
+      .find({}, { projection: { productId: 1, status: 1 } })
       .toArray()
-      .then((docs) => docs.map((doc) => ({ productId: doc.productId })));
+      .then((docs) =>
+        docs.map((doc) => ({ productId: doc.productId, status: doc.status }))
+      );
   },
 };
 

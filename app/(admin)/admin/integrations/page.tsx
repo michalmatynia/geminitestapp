@@ -22,6 +22,10 @@ type IntegrationConnection = {
   allegroTokenUpdatedAt?: string | null;
   allegroExpiresAt?: string | null;
   allegroScope?: string | null;
+  allegroUseSandbox?: boolean;
+  hasBaseApiToken?: boolean;
+  baseTokenUpdatedAt?: string | null;
+  baseLastInventoryId?: string | null;
   hasPlaywrightStorageState?: boolean;
   playwrightStorageStateUpdatedAt?: string | null;
   playwrightHeadless?: boolean;
@@ -60,6 +64,7 @@ type TestConnectionResponse = {
   integrationId?: string | null;
   connectionId?: string | null;
   steps?: unknown;
+  profile?: unknown;
 };
 
 const coerceStatus = (value: unknown): TestStatus => {
@@ -119,6 +124,7 @@ const defaultPlaywrightSettings = {
 const integrationDefinitions = [
   { name: "Tradera", slug: "tradera" },
   { name: "Allegro", slug: "allegro" },
+  { name: "Baselinker", slug: "baselinker" },
 ] as const;
 
 export default function IntegrationsPage() {
@@ -174,6 +180,25 @@ export default function IntegrationsPage() {
   const [sessionUpdatedAt, setSessionUpdatedAt] = useState<string | null>(null);
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(false);
+  const [savingAllegroSandbox, setSavingAllegroSandbox] = useState(false);
+  const [baseApiMethod, setBaseApiMethod] = useState("getInventories");
+  const [baseApiParams, setBaseApiParams] = useState("{}");
+  const [baseApiResponse, setBaseApiResponse] = useState<{
+    data: unknown;
+  } | null>(null);
+  const [baseApiError, setBaseApiError] = useState<string | null>(null);
+  const [baseApiLoading, setBaseApiLoading] = useState(false);
+  const [allegroApiMethod, setAllegroApiMethod] = useState("GET");
+  const [allegroApiPath, setAllegroApiPath] = useState("/sale/categories");
+  const [allegroApiBody, setAllegroApiBody] = useState("{}");
+  const [allegroApiResponse, setAllegroApiResponse] = useState<{
+    status: number;
+    statusText: string;
+    data: unknown;
+    refreshed?: boolean;
+  } | null>(null);
+  const [allegroApiError, setAllegroApiError] = useState<string | null>(null);
+  const [allegroApiLoading, setAllegroApiLoading] = useState(false);
 
   const [selectedStep, setSelectedStep] = useState<
     (TestLogEntry & { status: Exclude<TestStatus, "pending"> }) | null
@@ -197,23 +222,59 @@ export default function IntegrationsPage() {
   const integrationSlug = activeIntegration?.slug ?? "";
   const isTradera = integrationSlug === "tradera";
   const isAllegro = integrationSlug === "allegro";
+  const isBaselinker = integrationSlug === "baselinker";
   const showPlaywright = isTradera;
+  const showAllegroConsole = isAllegro;
+  const showBaseConsole = isBaselinker;
   const allegroConnected = Boolean(activeConnection?.hasAllegroAccessToken);
+  const baselinkerConnected = Boolean(activeConnection?.hasBaseApiToken);
   const allegroExpiresAt = activeConnection?.allegroExpiresAt
     ? new Date(activeConnection.allegroExpiresAt).toLocaleString()
     : "—";
   const connectionNamePlaceholder = isAllegro
     ? "Integration name (e.g. Allegro Main)"
-    : "Integration name (e.g. John's Tradera)";
-  const usernameLabel = isAllegro ? "Allegro client ID" : "Tradera username";
+    : isBaselinker
+      ? "Integration name (e.g. Main Baselinker)"
+      : "Integration name (e.g. John's Tradera)";
+  const usernameLabel = isAllegro
+    ? "Allegro client ID"
+    : isBaselinker
+      ? "Account name (optional)"
+      : "Tradera username";
   const usernamePlaceholder = isAllegro
     ? "Allegro client ID"
-    : "Tradera username";
+    : isBaselinker
+      ? "Account name (for reference)"
+      : "Tradera username";
   const passwordLabel = isAllegro
     ? "Allegro client secret"
-    : "Tradera password";
-  const usernameRequiredLabel = isAllegro ? "client ID" : "username";
-  const passwordRequiredLabel = isAllegro ? "Client secret" : "Password";
+    : isBaselinker
+      ? "Baselinker API token"
+      : "Tradera password";
+  const usernameRequiredLabel = isAllegro ? "client ID" : isBaselinker ? "account name" : "username";
+  const passwordRequiredLabel = isAllegro ? "Client secret" : isBaselinker ? "API token" : "Password";
+  const baseTokenUpdatedAt = activeConnection?.baseTokenUpdatedAt
+    ? new Date(activeConnection.baseTokenUpdatedAt).toLocaleString()
+    : "—";
+
+  const allegroApiPresets = [
+    { label: "Categories", method: "GET", path: "/sale/categories" },
+    { label: "Offers", method: "GET", path: "/sale/offers?limit=10" },
+    { label: "Offer Events", method: "GET", path: "/sale/offer-events?limit=10" },
+    { label: "Checkout Forms", method: "GET", path: "/order/checkout-forms?limit=10" },
+    { label: "Shipping Rates", method: "GET", path: "/sale/shipping-rates" },
+    { label: "Return Policies", method: "GET", path: "/after-sales-service-returns" },
+    { label: "Implied Warranties", method: "GET", path: "/after-sales-service-conditions" },
+  ] as const;
+
+  const baseApiPresets = [
+    { label: "Inventories", method: "getInventories", params: {} },
+    { label: "Products List", method: "getProductsList", params: { limit: 10 } },
+    { label: "Inventory Products", method: "getInventoryProductsList", params: { inventory_id: 0 } },
+    { label: "Orders", method: "getOrders", params: { get_unconfirmed_orders: 1, limit: 10 } },
+    { label: "Order Statuses", method: "getOrderStatusList", params: {} },
+    { label: "Orders Log", method: "getOrdersLog", params: { limit: 10 } },
+  ] as const;
 
   useEffect(() => {
     const status = searchParams.get("allegro");
@@ -230,6 +291,67 @@ export default function IntegrationsPage() {
     router.replace("/admin/integrations");
   }, [router, searchParams, toast]);
 
+  const handleAllegroApiRequest = async () => {
+    if (!activeIntegration || !activeConnection) {
+      toast("Select an integration connection first.", { variant: "error" });
+      return;
+    }
+    const path = allegroApiPath.trim();
+    if (!path.startsWith("/")) {
+      toast("Allegro API path must start with /", { variant: "error" });
+      return;
+    }
+    let body: unknown = undefined;
+    if (allegroApiMethod !== "GET" && allegroApiBody.trim()) {
+      try {
+        body = JSON.parse(allegroApiBody);
+      } catch {
+        toast("Request body must be valid JSON.", { variant: "error" });
+        return;
+      }
+    }
+    setAllegroApiLoading(true);
+    setAllegroApiError(null);
+    setAllegroApiResponse(null);
+    try {
+      const res = await fetch(
+        `/api/integrations/${activeIntegration.id}/connections/${activeConnection.id}/allegro/request`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            method: allegroApiMethod,
+            path,
+            body,
+          }),
+        }
+      );
+      const payload = (await res.json()) as {
+        error?: string;
+        status?: number;
+        statusText?: string;
+        data?: unknown;
+        refreshed?: boolean;
+      };
+      if (!res.ok) {
+        setAllegroApiError(payload.error || "Request failed.");
+        return;
+      }
+      setAllegroApiResponse({
+        status: payload.status ?? res.status,
+        statusText: payload.statusText ?? "",
+        data: payload.data,
+        refreshed: payload.refreshed,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to send request.";
+      setAllegroApiError(message);
+    } finally {
+      setAllegroApiLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!showPlaywrightSaved) return;
     const timeout = setTimeout(() => setShowPlaywrightSaved(false), 2500);
@@ -238,23 +360,45 @@ export default function IntegrationsPage() {
 
   useEffect(() => {
     const fetchIntegrations = async () => {
-      const res = await fetch("/api/integrations");
-      if (!res.ok) return;
-      const data = (await res.json()) as Integration[];
-      setIntegrations(data);
+      try {
+        const res = await fetch("/api/integrations");
+        if (!res.ok) {
+          const error = (await res.json()) as { error?: string; errorId?: string };
+          const message = error.error || "Failed to load integrations.";
+          const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+          toast(`${message}${suffix}`, { variant: "error" });
+          return;
+        }
+        const data = (await res.json()) as Integration[];
+        setIntegrations(data);
+      } catch (error) {
+        console.error("Failed to load integrations:", error);
+        toast("Failed to load integrations.", { variant: "error" });
+      }
     };
 
     void fetchIntegrations();
-  }, []);
+  }, [toast]);
 
   const integrationSlugs = integrations.map((integration) => integration.slug);
   const hasIntegrations = integrations.length > 0;
 
   const refreshConnections = async (integrationId: string) => {
-    const res = await fetch(`/api/integrations/${integrationId}/connections`);
-    if (!res.ok) return;
-    const data = (await res.json()) as IntegrationConnection[];
-    setConnections(data);
+    try {
+      const res = await fetch(`/api/integrations/${integrationId}/connections`);
+      if (!res.ok) {
+        const error = (await res.json()) as { error?: string; errorId?: string };
+        const message = error.error || "Failed to load connections.";
+        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+        toast(`${message}${suffix}`, { variant: "error" });
+        return;
+      }
+      const data = (await res.json()) as IntegrationConnection[];
+      setConnections(data);
+    } catch (error) {
+      console.error("Failed to load connections:", error);
+      toast("Failed to load connections.", { variant: "error" });
+    }
   };
 
   useEffect(() => {
@@ -329,21 +473,27 @@ export default function IntegrationsPage() {
       (integration) => integration.slug === definition.slug
     );
     if (existing) return existing;
-    const res = await fetch("/api/integrations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: definition.name, slug: definition.slug }),
-    });
-    if (!res.ok) {
-      const error = (await res.json()) as { error?: string };
-      toast(error.error || `Failed to add ${definition.name}.`, {
-        variant: "error",
+    try {
+      const res = await fetch("/api/integrations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: definition.name, slug: definition.slug }),
       });
+      if (!res.ok) {
+        const error = (await res.json()) as { error?: string; errorId?: string };
+        const message = error.error || `Failed to add ${definition.name}.`;
+        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+        toast(`${message}${suffix}`, { variant: "error" });
+        return null;
+      }
+      const created = (await res.json()) as Integration;
+      setIntegrations((prev) => [created, ...prev]);
+      return created;
+    } catch (error) {
+      console.error(`Failed to add integration ${definition.slug}:`, error);
+      toast(`Failed to add ${definition.name}.`, { variant: "error" });
       return null;
     }
-    const created = (await res.json()) as Integration;
-    setIntegrations((prev) => [created, ...prev]);
-    return created;
   };
 
   const handleIntegrationClick = async (
@@ -375,24 +525,31 @@ export default function IntegrationsPage() {
         ? { password: connectionForm.password.trim() }
         : {}),
     };
-    const res = await fetch(
-      editingConnectionId
-        ? `/api/integrations/connections/${editingConnectionId}`
-        : `/api/integrations/${activeIntegration.id}/connections`,
-      {
-        method: editingConnectionId ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+    try {
+      const res = await fetch(
+        editingConnectionId
+          ? `/api/integrations/connections/${editingConnectionId}`
+          : `/api/integrations/${activeIntegration.id}/connections`,
+        {
+          method: editingConnectionId ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (!res.ok) {
+        const error = (await res.json()) as { error?: string; errorId?: string };
+        const message = error.error || "Failed to save connection.";
+        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+        toast(`${message}${suffix}`, { variant: "error" });
+        return;
       }
-    );
-    if (!res.ok) {
-      const error = (await res.json()) as { error?: string };
-      toast(error.error || "Failed to save connection.", { variant: "error" });
-      return;
+      setConnectionForm({ name: "", username: "", password: "" });
+      setEditingConnectionId(null);
+      await refreshConnections(activeIntegration.id);
+    } catch (error) {
+      console.error("Failed to save connection:", error);
+      toast("Failed to save connection.", { variant: "error" });
     }
-    setConnectionForm({ name: "", username: "", password: "" });
-    setEditingConnectionId(null);
-    await refreshConnections(activeIntegration.id);
   };
 
   const handleAllegroAuthorize = () => {
@@ -405,40 +562,246 @@ export default function IntegrationsPage() {
 
   const handleAllegroDisconnect = async () => {
     if (!activeIntegration || !activeConnection) return;
-    const res = await fetch(
-      `/api/integrations/${activeIntegration.id}/connections/${activeConnection.id}/allegro/disconnect`,
-      { method: "POST" }
-    );
-    if (!res.ok) {
-      const error = (await res.json()) as { error?: string };
-      toast(error.error || "Failed to disconnect Allegro.", {
-        variant: "error",
-      });
-      return;
+    try {
+      const res = await fetch(
+        `/api/integrations/${activeIntegration.id}/connections/${activeConnection.id}/allegro/disconnect`,
+        { method: "POST" }
+      );
+      if (!res.ok) {
+        const error = (await res.json()) as { error?: string; errorId?: string };
+        const message = error.error || "Failed to disconnect Allegro.";
+        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+        toast(`${message}${suffix}`, { variant: "error" });
+        return;
+      }
+      toast("Allegro disconnected.", { variant: "success" });
+      await refreshConnections(activeIntegration.id);
+    } catch (error) {
+      console.error("Failed to disconnect Allegro:", error);
+      toast("Failed to disconnect Allegro.", { variant: "error" });
     }
-    toast("Allegro disconnected.", { variant: "success" });
-    await refreshConnections(activeIntegration.id);
   };
 
   const handleDeleteConnection = async (connection: IntegrationConnection) => {
     const confirmed = window.confirm(`Delete connection "${connection.name}"?`);
     if (!confirmed) return;
-    const res = await fetch(`/api/integrations/connections/${connection.id}`, {
-      method: "DELETE",
-    });
-    if (!res.ok) {
-      const error = (await res.json()) as { error?: string };
-      toast(error.error || "Failed to delete connection.", {
-        variant: "error",
+    try {
+      const res = await fetch(`/api/integrations/connections/${connection.id}`, {
+        method: "DELETE",
       });
-      return;
+      if (!res.ok) {
+        const error = (await res.json()) as { error?: string; errorId?: string };
+        const message = error.error || "Failed to delete connection.";
+        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
+        toast(`${message}${suffix}`, { variant: "error" });
+        return;
+      }
+      if (activeIntegration) {
+        await refreshConnections(activeIntegration.id);
+      }
+      if (editingConnectionId === connection.id) {
+        setEditingConnectionId(null);
+        setConnectionForm({ name: "", username: "", password: "" });
+      }
+    } catch (error) {
+      console.error("Failed to delete connection:", error);
+      toast("Failed to delete connection.", { variant: "error" });
     }
-    if (activeIntegration) {
+  };
+
+  const handleBaselinkerTest = async (connection: IntegrationConnection) => {
+    if (!activeIntegration) return;
+    setIsTesting(true);
+    setTestLog([]);
+    setSelectedStep(null);
+    setShowTestLogModal(false);
+    setShowTestErrorModal(false);
+    setTestError(null);
+    setTestErrorMeta(null);
+    setLastTestError(null);
+    setShowTestSuccessModal(false);
+    setTestSuccessMessage(null);
+
+    const requestUrl = `/api/integrations/${activeIntegration.id}/connections/${connection.id}/base/test`;
+    const startedAt = performance.now();
+
+    try {
+      const res = await fetch(requestUrl, { method: "POST" });
+      const contentType = res.headers.get("content-type") || "";
+
+      let payload: TestConnectionResponse & { inventoryCount?: number };
+      if (contentType.includes("application/json")) {
+        payload = (await res.json()) as TestConnectionResponse & { inventoryCount?: number };
+      } else {
+        payload = { error: await res.text() };
+      }
+
+      const normalizedSteps = normalizeSteps(payload.steps);
+
+      if (!res.ok) {
+        const failedStepDetail =
+          normalizedSteps.find((step) => step.status === "failed")?.detail ||
+          "";
+
+        const errorBody =
+          payload.error || failedStepDetail || "No response body";
+        const statusLabel = `${res.status} ${res.statusText}`.trim();
+        const durationMs = Math.round(performance.now() - startedAt);
+
+        const errorMessage = `Baselinker test failed.\nStatus: ${statusLabel}\nURL: ${requestUrl}\nDuration: ${durationMs}ms\n\nResponse:\n${errorBody}`;
+
+        const steps: TestLogEntry[] = normalizedSteps.length
+          ? normalizedSteps.map((step) =>
+              step.status === "failed" && !step.detail
+                ? { ...step, detail: errorMessage }
+                : step
+            )
+          : [
+              {
+                step: "Connection test failed",
+                status: "failed",
+                timestamp: new Date().toISOString(),
+                detail: errorMessage,
+              },
+            ];
+
+        setTestLog(steps);
+        setTestError(errorMessage);
+        setTestErrorMeta({
+          errorId: payload.errorId,
+          integrationId: payload.integrationId,
+          connectionId: payload.connectionId,
+        });
+        setLastTestError(errorMessage);
+        setShowTestErrorModal(true);
+        return;
+      }
+
+      if (normalizedSteps.length) {
+        setTestLog(normalizedSteps);
+      }
+
+      const durationMs = Math.round(performance.now() - startedAt);
+      const inventoryInfo = payload.inventoryCount !== undefined
+        ? `\nInventories found: ${payload.inventoryCount}`
+        : "";
+      setTestSuccessMessage(
+        `Baselinker connection test succeeded.\nURL: ${requestUrl}\nDuration: ${durationMs}ms${inventoryInfo}`
+      );
+      setShowTestSuccessModal(true);
+      setTestErrorMeta(null);
       await refreshConnections(activeIntegration.id);
+    } catch (error) {
+      const durationMs = Math.round(performance.now() - startedAt);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      const errorMessage = `Baselinker test failed.\nURL: ${requestUrl}\nDuration: ${durationMs}ms\nError: ${message}`;
+      setTestError(errorMessage);
+      setTestErrorMeta(null);
+      setLastTestError(errorMessage);
+      setShowTestErrorModal(true);
+    } finally {
+      setIsTesting(false);
     }
-    if (editingConnectionId === connection.id) {
-      setEditingConnectionId(null);
-      setConnectionForm({ name: "", username: "", password: "" });
+  };
+
+  const handleAllegroTest = async (connection: IntegrationConnection) => {
+    if (!activeIntegration) return;
+    setIsTesting(true);
+    setTestLog([]);
+    setSelectedStep(null);
+    setShowTestLogModal(false);
+    setShowTestErrorModal(false);
+    setTestError(null);
+    setTestErrorMeta(null);
+    setLastTestError(null);
+    setShowTestSuccessModal(false);
+    setTestSuccessMessage(null);
+
+    const requestUrl = `/api/integrations/${activeIntegration.id}/connections/${connection.id}/allegro/test`;
+    const startedAt = performance.now();
+
+    try {
+      const res = await fetch(requestUrl, { method: "POST" });
+      const contentType = res.headers.get("content-type") || "";
+
+      let payload: TestConnectionResponse;
+      if (contentType.includes("application/json")) {
+        payload = (await res.json()) as TestConnectionResponse;
+      } else {
+        payload = { error: await res.text() };
+      }
+
+      const normalizedSteps = normalizeSteps(payload.steps);
+
+      if (!res.ok) {
+        const failedStepDetail =
+          normalizedSteps.find((step) => step.status === "failed")?.detail ||
+          "";
+        const errorBody =
+          payload.error || failedStepDetail || "No response body";
+        const statusLabel = `${res.status} ${res.statusText}`.trim();
+        const durationMs = Math.round(performance.now() - startedAt);
+
+        const errorMessage = `Allegro connection test failed.\nStatus: ${statusLabel}\nURL: ${requestUrl}\nDuration: ${durationMs}ms\n\nResponse:\n${errorBody}`;
+
+        const steps: TestLogEntry[] = normalizedSteps.length
+          ? normalizedSteps.map((step) =>
+              step.status === "failed" && !step.detail
+                ? { ...step, detail: errorMessage }
+                : step
+            )
+          : [
+              {
+                step: "Allegro connection test failed",
+                status: "failed",
+                timestamp: new Date().toISOString(),
+                detail: errorMessage,
+              },
+            ];
+
+        setTestLog(steps);
+        setTestError(errorMessage);
+        setTestErrorMeta({
+          errorId: payload.errorId,
+          integrationId: payload.integrationId,
+          connectionId: payload.connectionId,
+        });
+        setLastTestError(errorMessage);
+        setShowTestErrorModal(true);
+        return;
+      }
+
+      if (normalizedSteps.length) {
+        setTestLog(normalizedSteps);
+      }
+
+      const durationMs = Math.round(performance.now() - startedAt);
+      let profileSummary = "";
+      if (payload.profile && typeof payload.profile === "object") {
+        const profile = payload.profile as Record<string, unknown>;
+        const login = typeof profile.login === "string" ? profile.login : "";
+        const name = typeof profile.name === "string" ? profile.name : "";
+        const identifier = name || login;
+        if (identifier) {
+          profileSummary = `\nAccount: ${identifier}`;
+        }
+      }
+      setTestSuccessMessage(
+        `Allegro connection test succeeded.\nURL: ${requestUrl}\nDuration: ${durationMs}ms${profileSummary}`
+      );
+      setShowTestSuccessModal(true);
+      setTestErrorMeta(null);
+      await refreshConnections(activeIntegration.id);
+    } catch (error) {
+      const durationMs = Math.round(performance.now() - startedAt);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      const errorMessage = `Allegro connection test failed.\nURL: ${requestUrl}\nDuration: ${durationMs}ms\nError: ${message}`;
+      setTestError(errorMessage);
+      setTestErrorMeta(null);
+      setLastTestError(errorMessage);
+      setShowTestErrorModal(true);
+    } finally {
+      setIsTesting(false);
     }
   };
 
@@ -659,6 +1022,135 @@ export default function IntegrationsPage() {
     setShowPlaywrightSaved(true);
   };
 
+  const handleAllegroSandboxToggle = async (value: boolean) => {
+    if (!activeConnection) return;
+    if (savingAllegroSandbox) return;
+    setSavingAllegroSandbox(true);
+    try {
+      const res = await fetch(
+        `/api/integrations/connections/${activeConnection.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: activeConnection.name,
+            username: activeConnection.username,
+            allegroUseSandbox: value,
+          }),
+        }
+      );
+      const payload = (await res.json()) as IntegrationConnection & {
+        error?: string;
+      };
+      if (!res.ok) {
+        toast(payload.error || "Failed to update Allegro sandbox setting.", {
+          variant: "error",
+        });
+        return;
+      }
+      setConnections((prev) =>
+        prev.map((item) =>
+          item.id === payload.id ? { ...item, ...payload } : item
+        )
+      );
+      toast("Allegro sandbox setting updated.", { variant: "success" });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      toast(message, { variant: "error" });
+    } finally {
+      setSavingAllegroSandbox(false);
+    }
+  };
+
+  const handleAllegroSandboxConnect = async () => {
+    if (!activeIntegration || !activeConnection) {
+      toast("Create an Allegro connection first.", { variant: "error" });
+      return;
+    }
+    if (savingAllegroSandbox) return;
+    setSavingAllegroSandbox(true);
+    try {
+      const res = await fetch(
+        `/api/integrations/connections/${activeConnection.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: activeConnection.name,
+            username: activeConnection.username,
+            allegroUseSandbox: true,
+          }),
+        }
+      );
+      const payload = (await res.json()) as IntegrationConnection & {
+        error?: string;
+      };
+      if (!res.ok) {
+        toast(payload.error || "Failed to enable Allegro sandbox.", {
+          variant: "error",
+        });
+        return;
+      }
+      setConnections((prev) =>
+        prev.map((item) =>
+          item.id === payload.id ? { ...item, ...payload } : item
+        )
+      );
+      window.location.href = `/api/integrations/${activeIntegration.id}/connections/${activeConnection.id}/allegro/authorize`;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      toast(message, { variant: "error" });
+    } finally {
+      setSavingAllegroSandbox(false);
+    }
+  };
+
+  const handleBaseApiRequest = async () => {
+    if (!activeIntegration || !activeConnection) {
+      toast("Create a Base.com connection first.", { variant: "error" });
+      return;
+    }
+    const method = baseApiMethod.trim();
+    if (!method) {
+      toast("Base API method is required.", { variant: "error" });
+      return;
+    }
+    let params: unknown = {};
+    if (baseApiParams.trim()) {
+      try {
+        params = JSON.parse(baseApiParams);
+      } catch {
+        toast("Parameters must be valid JSON.", { variant: "error" });
+        return;
+      }
+    }
+    setBaseApiLoading(true);
+    setBaseApiError(null);
+    setBaseApiResponse(null);
+    try {
+      const res = await fetch(
+        `/api/integrations/${activeIntegration.id}/connections/${activeConnection.id}/base/request`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ method, parameters: params }),
+        }
+      );
+      const payload = (await res.json()) as { error?: string; data?: unknown };
+      if (!res.ok) {
+        setBaseApiError(payload.error || "Request failed.");
+        return;
+      }
+      setBaseApiResponse({ data: payload.data });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to send request.";
+      setBaseApiError(message);
+    } finally {
+      setBaseApiLoading(false);
+    }
+  };
+
   return (
     <div className="container mx-auto py-10">
       {showPlaywrightSaved && (
@@ -672,7 +1164,7 @@ export default function IntegrationsPage() {
           <div>
             <h1 className="text-3xl font-bold text-white">Integrations</h1>
             <p className="mt-1 text-sm text-gray-400">
-              Visualize and manage marketplace connections.
+              Visualize and manage marketplace and platform connections.
             </p>
           </div>
           <Link
@@ -687,6 +1179,7 @@ export default function IntegrationsPage() {
         <div className="relative overflow-hidden rounded-xl border border-gray-800 bg-gray-900/60 p-6">
           <div className="absolute -left-20 -top-20 size-64 rounded-full bg-emerald-500/10 blur-3xl" />
           <div className="absolute -bottom-24 right-10 size-72 rounded-full bg-sky-500/10 blur-3xl" />
+          <div className="absolute -right-16 top-20 size-48 rounded-full bg-purple-500/10 blur-3xl" />
 
           <div className="relative mx-auto flex min-h-[420px] max-w-5xl items-center justify-center">
             <div className="relative z-10 flex flex-col items-center gap-6">
@@ -699,6 +1192,9 @@ export default function IntegrationsPage() {
               <div className="flex flex-wrap items-center justify-center gap-3">
                 {integrationSlugs.includes("tradera") && (
                   <div className="flex items-center gap-2 rounded-full border border-sky-400/50 bg-sky-500/10 px-3 py-1.5 text-xs text-sky-200">
+                    <span className="rounded bg-orange-500/30 px-1 py-0.5 text-[9px] uppercase tracking-wider text-orange-100">
+                      Browser
+                    </span>
                     Tradera
                     <button
                       type="button"
@@ -714,6 +1210,9 @@ export default function IntegrationsPage() {
                 )}
                 {integrationSlugs.includes("allegro") && (
                   <div className="flex items-center gap-2 rounded-full border border-amber-400/50 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-200">
+                    <span className="rounded bg-blue-500/30 px-1 py-0.5 text-[9px] uppercase tracking-wider text-blue-100">
+                      API
+                    </span>
                     Allegro
                     <button
                       type="button"
@@ -722,6 +1221,24 @@ export default function IntegrationsPage() {
                       }
                       className="rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20"
                       aria-label="Manage Allegro settings"
+                    >
+                      <SettingsIcon className="size-3.5" />
+                    </button>
+                  </div>
+                )}
+                {integrationSlugs.includes("baselinker") && (
+                  <div className="flex items-center gap-2 rounded-full border border-purple-400/50 bg-purple-500/10 px-3 py-1.5 text-xs text-purple-200">
+                    <span className="rounded bg-purple-500/30 px-1 py-0.5 text-[9px] uppercase tracking-wider text-purple-100">
+                      Platform
+                    </span>
+                    Baselinker
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleIntegrationClick(integrationDefinitions[2])
+                      }
+                      className="rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20"
+                      aria-label="Manage Baselinker settings"
                     >
                       <SettingsIcon className="size-3.5" />
                     </button>
@@ -760,9 +1277,28 @@ export default function IntegrationsPage() {
               <div>
                 <h2 className="text-2xl font-semibold text-white">
                   {activeIntegration.name} Integration
+                  {isTradera && (
+                    <span className="ml-2 rounded bg-orange-500/30 px-1.5 py-0.5 text-xs font-normal uppercase tracking-wider text-orange-200">
+                      Browser
+                    </span>
+                  )}
+                  {isAllegro && (
+                    <span className="ml-2 rounded bg-blue-500/30 px-1.5 py-0.5 text-xs font-normal uppercase tracking-wider text-blue-200">
+                      API
+                    </span>
+                  )}
+                  {isBaselinker && (
+                    <span className="ml-2 rounded bg-purple-500/30 px-1.5 py-0.5 text-xs font-normal uppercase tracking-wider text-purple-200">
+                      Platform
+                    </span>
+                  )}
                 </h2>
                 <p className="text-sm text-gray-400">
-                  Manage connections and marketplace settings.
+                  {isBaselinker
+                    ? "Manage connections and warehouse sync settings."
+                    : isTradera
+                      ? "Manage connections via browser automation (Playwright)."
+                      : "Manage connections and marketplace API settings."}
                 </p>
               </div>
               <button
@@ -776,10 +1312,20 @@ export default function IntegrationsPage() {
 
             <Tabs defaultValue="connections">
               <TabsList
-                className={`grid w-full ${showPlaywright ? "grid-cols-5" : "grid-cols-4"}`}
+                className={`grid w-full ${
+                  showPlaywright || showAllegroConsole || showBaseConsole
+                    ? "grid-cols-5"
+                    : "grid-cols-4"
+                }`}
               >
                 <TabsTrigger value="connections">Connections</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
+                {showAllegroConsole && (
+                  <TabsTrigger value="allegro-api">Allegro API</TabsTrigger>
+                )}
+                {showBaseConsole && (
+                  <TabsTrigger value="base-api">Base API</TabsTrigger>
+                )}
                 <TabsTrigger value="price-sync">Price Sync</TabsTrigger>
                 <TabsTrigger value="inventory-sync">Inventory Sync</TabsTrigger>
                 {showPlaywright && (
@@ -898,6 +1444,26 @@ export default function IntegrationsPage() {
                                   Test
                                 </button>
                               )}
+                              {isBaselinker && (
+                                <button
+                                  className="text-xs text-purple-300 hover:text-purple-200"
+                                  type="button"
+                                  onClick={() => handleBaselinkerTest(connection)}
+                                  disabled={isTesting}
+                                >
+                                  {isTesting ? "Testing..." : "Test"}
+                                </button>
+                              )}
+                              {isAllegro && (
+                                <button
+                                  className="text-xs text-amber-300 hover:text-amber-200"
+                                  type="button"
+                                  onClick={() => handleAllegroTest(connection)}
+                                  disabled={isTesting}
+                                >
+                                  {isTesting ? "Testing..." : "Test"}
+                                </button>
+                              )}
                               <button
                                 className="text-xs text-red-400 hover:text-red-300"
                                 type="button"
@@ -986,6 +1552,25 @@ export default function IntegrationsPage() {
                         connection fields, then authorize access.
                       </p>
                     </div>
+                    <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300">
+                      <label className="flex items-center justify-between gap-3">
+                        <span>
+                          Use Allegro sandbox
+                          <span className="ml-2 text-[11px] text-gray-500">
+                            Switches API + OAuth to sandbox endpoints.
+                          </span>
+                        </span>
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 accent-emerald-400"
+                          checked={Boolean(activeConnection?.allegroUseSandbox)}
+                          onChange={(event) =>
+                            handleAllegroSandboxToggle(event.target.checked)
+                          }
+                          disabled={!activeConnection || savingAllegroSandbox}
+                        />
+                      </label>
+                    </div>
                     {!activeConnection ? (
                       <div className="rounded-md border border-dashed border-gray-800 p-4 text-xs text-gray-400">
                         Add a connection first to enable Allegro authorization.
@@ -1018,6 +1603,21 @@ export default function IntegrationsPage() {
                           >
                             {allegroConnected ? "Reauthorize" : "Connect Allegro"}
                           </button>
+                          <button
+                            type="button"
+                            onClick={handleAllegroSandboxConnect}
+                            className="rounded-md border border-amber-500/50 px-3 py-2 text-sm font-semibold text-amber-200 hover:border-amber-400"
+                            disabled={savingAllegroSandbox}
+                          >
+                            {savingAllegroSandbox
+                              ? "Preparing..."
+                              : "Test Sandbox Connection"}
+                          </button>
+                          <span className="rounded-full border border-gray-700 bg-gray-950/60 px-2 py-1 text-[10px] font-semibold text-gray-300">
+                            {activeConnection?.allegroUseSandbox
+                              ? "Sandbox"
+                              : "Production"}
+                          </span>
                           {allegroConnected && (
                             <button
                               type="button"
@@ -1031,10 +1631,268 @@ export default function IntegrationsPage() {
                       </div>
                     )}
                   </div>
+                ) : isBaselinker ? (
+                  <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900/60 p-4 text-sm text-gray-200">
+                    <div>
+                      <h3 className="text-sm font-semibold text-white">
+                        Baselinker API
+                      </h3>
+                      <p className="mt-1 text-xs text-gray-400">
+                        Enter your Baselinker API token in the connection fields,
+                        then test the connection to verify it works.
+                      </p>
+                    </div>
+                    {!activeConnection ? (
+                      <div className="rounded-md border border-dashed border-gray-800 p-4 text-xs text-gray-400">
+                        Add a connection first to enable Baselinker API access.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300">
+                          <div className="flex items-center justify-between">
+                            <span>Connection status</span>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                baselinkerConnected
+                                  ? "bg-emerald-500/20 text-emerald-200"
+                                  : "bg-amber-500/20 text-amber-200"
+                              }`}
+                            >
+                              {baselinkerConnected ? "Connected" : "Not tested"}
+                            </span>
+                          </div>
+                          <p className="mt-2">
+                            <span className="text-gray-400">Last verified:</span>{" "}
+                            {baseTokenUpdatedAt}
+                          </p>
+                          {activeConnection.baseLastInventoryId && (
+                            <p className="mt-1">
+                              <span className="text-gray-400">Last inventory:</span>{" "}
+                              {activeConnection.baseLastInventoryId}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => handleBaselinkerTest(activeConnection)}
+                            disabled={isTesting}
+                            className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:opacity-50"
+                          >
+                            {isTesting ? "Testing..." : baselinkerConnected ? "Re-test Connection" : "Test Connection"}
+                          </button>
+                        </div>
+                        <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-400">
+                          <p>
+                            To get your API token, log in to{" "}
+                            <a
+                              href="https://baselinker.com"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-purple-300 hover:text-purple-200"
+                            >
+                              Baselinker
+                            </a>
+                            {" "}→ My Account → API.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <div className="min-h-[220px]" />
                 )}
               </TabsContent>
+
+              {showBaseConsole && (
+                <TabsContent value="base-api" className="mt-4">
+                  <div className="rounded-lg border border-gray-800 bg-gray-900/60 p-4">
+                    <div className="mb-3">
+                      <h3 className="text-sm font-semibold text-white">
+                        Base.com API Console
+                      </h3>
+                      <p className="text-xs text-gray-400">
+                        Send Base.com API requests using the active connection token.
+                      </p>
+                    </div>
+                    <div className="mb-3 flex flex-wrap gap-2">
+                      {baseApiPresets.map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          className="rounded-full border border-gray-700 px-3 py-1 text-[11px] text-gray-300 hover:border-gray-500"
+                          onClick={() => {
+                            setBaseApiMethod(preset.method);
+                            setBaseApiParams(JSON.stringify(preset.params, null, 2));
+                          }}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-400">Method</label>
+                      <input
+                        className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white"
+                        placeholder="getInventories"
+                        value={baseApiMethod}
+                        onChange={(event) => setBaseApiMethod(event.target.value)}
+                      />
+                    </div>
+                    <div className="mt-3">
+                      <label className="text-xs text-gray-400">Parameters (JSON)</label>
+                      <textarea
+                        className="mt-2 h-32 w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-xs text-white"
+                        value={baseApiParams}
+                        onChange={(event) => setBaseApiParams(event.target.value)}
+                      />
+                    </div>
+                    <div className="mt-3 flex items-center gap-3">
+                      <button
+                        className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-70"
+                        type="button"
+                        disabled={baseApiLoading}
+                        onClick={handleBaseApiRequest}
+                      >
+                        {baseApiLoading ? "Sending..." : "Send request"}
+                      </button>
+                      <span className="text-xs text-gray-500">
+                        Endpoint: https://api.baselinker.com/connector.php
+                      </span>
+                    </div>
+                    {baseApiError && (
+                      <div className="mt-3 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+                        {baseApiError}
+                      </div>
+                    )}
+                    {baseApiResponse && (
+                      <div className="mt-3 rounded-md border border-gray-800 bg-gray-950 p-3">
+                        <pre className="max-h-80 overflow-auto whitespace-pre-wrap text-xs text-gray-200">
+                          {JSON.stringify(baseApiResponse.data, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              )}
+              {showAllegroConsole && (
+                <TabsContent value="allegro-api" className="mt-4">
+                  <div className="rounded-lg border border-gray-800 bg-gray-900/60 p-4">
+                    <div className="mb-3">
+                      <h3 className="text-sm font-semibold text-white">
+                        Allegro API Console
+                      </h3>
+                      <p className="text-xs text-gray-400">
+                        Send requests using the active Allegro connection token.
+                      </p>
+                    </div>
+                    <div className="mb-3 flex flex-wrap gap-2">
+                      {allegroApiPresets.map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          className="rounded-full border border-gray-700 px-3 py-1 text-[11px] text-gray-300 hover:border-gray-500"
+                          onClick={() => {
+                            setAllegroApiMethod(preset.method);
+                            setAllegroApiPath(preset.path);
+                            setAllegroApiBody("{}");
+                          }}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                    {!allegroConnected && (
+                      <div className="mb-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                        Connect Allegro to enable API requests.
+                      </div>
+                    )}
+                    <div className="grid gap-3 md:grid-cols-[120px_1fr]">
+                      <div>
+                        <label className="text-xs text-gray-400">Method</label>
+                        <select
+                          className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white"
+                          value={allegroApiMethod}
+                          onChange={(event) =>
+                            setAllegroApiMethod(event.target.value)
+                          }
+                        >
+                          {["GET", "POST", "PUT", "PATCH", "DELETE"].map(
+                            (method) => (
+                              <option key={method} value={method}>
+                                {method}
+                              </option>
+                            )
+                          )}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-400">
+                          Endpoint path
+                        </label>
+                        <input
+                          className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white"
+                          placeholder="/sale/categories"
+                          value={allegroApiPath}
+                          onChange={(event) =>
+                            setAllegroApiPath(event.target.value)
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <label className="text-xs text-gray-400">JSON body</label>
+                      <textarea
+                        className="mt-2 h-32 w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-xs text-white"
+                        value={allegroApiBody}
+                        onChange={(event) =>
+                          setAllegroApiBody(event.target.value)
+                        }
+                      />
+                    </div>
+                    <div className="mt-3 flex items-center gap-3">
+                      <button
+                        className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-70"
+                        type="button"
+                        disabled={allegroApiLoading || !allegroConnected}
+                        onClick={handleAllegroApiRequest}
+                      >
+                        {allegroApiLoading ? "Sending..." : "Send request"}
+                      </button>
+                      <span className="text-xs text-gray-500">
+                        Base URL:{" "}
+                        {activeConnection?.allegroUseSandbox
+                          ? "https://api.allegro.pl.allegrosandbox.pl"
+                          : "https://api.allegro.pl"}
+                      </span>
+                    </div>
+                    {allegroApiError && (
+                      <div className="mt-3 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+                        {allegroApiError}
+                      </div>
+                    )}
+                    {allegroApiResponse && (
+                      <div className="mt-3 rounded-md border border-gray-800 bg-gray-950 p-3">
+                        <div className="text-xs text-gray-400">
+                          Status:{" "}
+                          <span className="text-gray-200">
+                            {allegroApiResponse.status}{" "}
+                            {allegroApiResponse.statusText}
+                          </span>
+                          {allegroApiResponse.refreshed ? (
+                            <span className="ml-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-200">
+                              Token refreshed
+                            </span>
+                          ) : null}
+                        </div>
+                        <pre className="mt-2 max-h-80 overflow-auto whitespace-pre-wrap text-xs text-gray-200">
+                          {JSON.stringify(allegroApiResponse.data, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              )}
               <TabsContent value="price-sync" className="mt-4">
                 <div className="min-h-[220px]" />
               </TabsContent>

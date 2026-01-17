@@ -30,7 +30,7 @@ const disableTypeCheckedForConfigFiles = compat
 const eslintConfig = [
   ...nextCoreWebVitals,
   {
-    ignores: ["lib/generated/prisma/**"],
+    ignores: ["lib/generated/prisma/**", "scripts/backfill-note-colors.mjs"],
   },
   ...compat.extends(
     "plugin:@typescript-eslint/recommended-type-checked",

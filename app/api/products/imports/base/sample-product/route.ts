@@ -5,13 +5,16 @@ import { getIntegrationRepository } from "@/lib/services/integration-repository"
 import { decryptSecret } from "@/lib/utils/encryption";
 import { callBaseApi } from "@/lib/services/imports/base-client";
 import {
+  getImportSampleInventoryId,
   getImportSampleProductId,
+  setImportSampleInventoryId,
   setImportSampleProductId,
 } from "@/lib/services/import-template-repository";
 
 const requestSchema = z.object({
   inventoryId: z.string().trim().min(1),
   productId: z.string().trim().min(1).optional(),
+  saveOnly: z.boolean().optional(),
 });
 
 const toStringId = (value: unknown): string | null => {
@@ -62,7 +65,8 @@ const extractFirstProductId = (payload: unknown): string | null => {
 export async function GET() {
   try {
     const productId = await getImportSampleProductId();
-    return NextResponse.json({ productId });
+    const inventoryId = await getImportSampleInventoryId();
+    return NextResponse.json({ productId, inventoryId });
   } catch (error) {
     const errorId = randomUUID();
     console.error("[base-import-sample][GET] Failed to fetch sample product", {
@@ -81,6 +85,17 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const data = requestSchema.parse(body);
+
+    if (data.saveOnly) {
+      await setImportSampleInventoryId(data.inventoryId);
+      if (data.productId) {
+        await setImportSampleProductId(data.productId);
+      }
+      return NextResponse.json({
+        productId: data.productId ?? null,
+        inventoryId: data.inventoryId,
+      });
+    }
 
     let productId = data.productId;
     if (!productId) {
@@ -118,7 +133,8 @@ export async function POST(req: Request) {
     }
 
     await setImportSampleProductId(productId);
-    return NextResponse.json({ productId });
+    await setImportSampleInventoryId(data.inventoryId);
+    return NextResponse.json({ productId, inventoryId: data.inventoryId });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[base-import-sample][POST] Failed to save sample product", {

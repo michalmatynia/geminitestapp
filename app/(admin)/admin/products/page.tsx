@@ -109,14 +109,14 @@ function AdminPageInner() {
     setCatalogFilter(filter);
   }, [setCatalogFilter]);
 
-  const handleCloseCreate = useCallback(() => setIsCreateOpen(false), []);
-  const handleCloseEdit = useCallback(() => setEditingProduct(null), []);
+  const handleCloseCreate = useCallback(() => setIsCreateOpen(false), [setIsCreateOpen]);
+  const handleCloseEdit = useCallback(() => setEditingProduct(null), [setEditingProduct]);
   const handleCloseIntegrations = useCallback(() => {
     setIntegrationsProduct(null);
     setShowListProductModal(false);
-  }, []);
-  const handleOpenListProduct = useCallback(() => setShowListProductModal(true), []);
-  const handleCloseListProduct = useCallback(() => setShowListProductModal(false), []);
+  }, [setIntegrationsProduct, setShowListProductModal]);
+  const handleOpenListProduct = useCallback(() => setShowListProductModal(true), [setShowListProductModal]);
+  const handleCloseListProduct = useCallback(() => setShowListProductModal(false), [setShowListProductModal]);
 
   useEffect(() => {
     setIsDebugOpen(searchParams.get("debug") === "true");

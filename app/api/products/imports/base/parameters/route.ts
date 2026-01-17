@@ -10,11 +10,11 @@ const requestSchema = z.object({
   productId: z.string().trim().min(1),
 });
 
-const extractProductRecord = (payload: unknown, productId: string) => {
+const extractProductRecord = (payload: unknown, productId: string): Record<string, unknown> | null => {
   const products = (payload as { products?: unknown })?.products;
   if (Array.isArray(products)) {
     return (
-      products.find((entry) => {
+      (products.find((entry) => {
         if (!entry || typeof entry !== "object") return false;
         const record = entry as Record<string, unknown>;
         return (
@@ -22,15 +22,15 @@ const extractProductRecord = (payload: unknown, productId: string) => {
           record.id === productId ||
           record.base_product_id === productId
         );
-      }) ?? products[0]
+      }) as Record<string, unknown> | undefined) ?? (products[0] as Record<string, unknown> | undefined) ?? null
     );
   }
   if (products && typeof products === "object") {
     const recordMap = products as Record<string, unknown>;
     return (
-      recordMap[productId] ??
+      (recordMap[productId] ??
       recordMap[Number(productId) as unknown as keyof typeof recordMap] ??
-      Object.values(recordMap)[0]
+      Object.values(recordMap)[0]) as Record<string, unknown> | null
     );
   }
   return null;
@@ -69,6 +69,49 @@ const collectPrefixedKeys = (
     keys.add(nextPrefix);
     collectPrefixedKeys(entry, nextPrefix, keys, depth + 1, maxDepth);
   });
+};
+
+const resolveValueByPath = (
+  record: Record<string, unknown>,
+  path: string
+): unknown => {
+  if (!path) return null;
+  const parts = path.split(".");
+  let current: unknown = record;
+  for (const part of parts) {
+    if (!current || typeof current !== "object") return null;
+    current = (current as Record<string, unknown>)[part];
+  }
+  return current;
+};
+
+const toPreviewValue = (value: unknown): string | null => {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string") {
+    return value.length > 120 ? `${value.slice(0, 117)}...` : value;
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  if (Array.isArray(value)) {
+    const joined = value
+      .slice(0, 4)
+      .map((entry) => toPreviewValue(entry))
+      .filter(Boolean)
+      .join(", ");
+    return joined ? (value.length > 4 ? `${joined}, ...` : joined) : null;
+  }
+  if (typeof value === "object") {
+    try {
+      const stringified = JSON.stringify(value);
+      return stringified.length > 160
+        ? `${stringified.slice(0, 157)}...`
+        : stringified;
+    } catch {
+      return null;
+    }
+  }
+  return null;
 };
 
 const collectParameterKeys = (product: Record<string, unknown>) => {
@@ -131,7 +174,60 @@ const collectParameterKeys = (product: Record<string, unknown>) => {
   if (product.locations) {
     collectPrefixedKeys(product.locations, "locations", keys, 0, 1);
   }
-  return Array.from(keys).sort((a, b) => a.localeCompare(b));
+  const sortedKeys = Array.from(keys).sort((a, b) => a.localeCompare(b));
+  const values: Record<string, string> = {};
+  for (const key of sortedKeys) {
+    const directValue =
+      product[key] ??
+      resolveValueByPath(product, key);
+    const fallbackBuckets = [
+      product.parameters,
+      product.params,
+      product.attributes,
+      product.features,
+      product.text_fields,
+      (product.text_fields as Record<string, unknown> | undefined)?.features,
+      (product.text_fields as Record<string, unknown> | undefined)?.["features|en"],
+    ];
+    let resolved = directValue;
+    if (resolved === undefined) {
+      for (const bucket of fallbackBuckets) {
+        if (!bucket) continue;
+        if (Array.isArray(bucket)) {
+          for (const entry of bucket) {
+            if (!entry || typeof entry !== "object") continue;
+            const record = entry as Record<string, unknown>;
+            const name =
+              record.name ??
+              record.parameter ??
+              record.code ??
+              record.label ??
+              record.title;
+            const id =
+              record.id ??
+              record.parameter_id ??
+              record.param_id ??
+              record.attribute_id;
+            if (name === key || id === key) {
+              resolved =
+                record.value ??
+                record.values ??
+                record.value_id ??
+                record.label ??
+                record.text;
+              break;
+            }
+          }
+        } else if (typeof bucket === "object" && key in bucket) {
+          resolved = (bucket as Record<string, unknown>)[key];
+        }
+        if (resolved !== undefined) break;
+      }
+    }
+    const preview = toPreviewValue(resolved);
+    if (preview) values[key] = preview;
+  }
+  return { keys: sortedKeys, values };
 };
 
 export async function POST(req: Request) {
@@ -171,8 +267,10 @@ export async function POST(req: Request) {
         { status: 404 }
       );
     }
-    const keys = collectParameterKeys(product as Record<string, unknown>);
-    return NextResponse.json({ keys });
+    const { keys, values } = collectParameterKeys(
+      product
+    );
+    return NextResponse.json({ keys, values });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[base-import-parameters] Failed to load keys", {

@@ -48,7 +48,8 @@ export function useProductData({ refreshTrigger }: UseProductDataProps) {
 
   // Reset page when filters change
   useEffect(() => {
-    setPage(1);
+    const t = setTimeout(() => setPage(1), 0);
+    return () => clearTimeout(t);
   }, [debouncedSearch, debouncedSku, minPrice, maxPrice, startDate, endDate, catalogFilter]);
 
   // Load products
@@ -64,9 +65,8 @@ export function useProductData({ refreshTrigger }: UseProductDataProps) {
       pageSize
     };
     let cancelled = false;
-    setLoadError(null);
-    
     const loadProducts = async () => {
+      setLoadError(null);
       try {
         const [products, productCount] = await Promise.all([
           getProducts(filters),

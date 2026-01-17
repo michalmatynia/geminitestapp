@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,6 +25,13 @@ type ImportResponse = {
   failed: number;
   total: number;
   errors?: string[];
+};
+
+type ImportListItem = {
+  baseProductId: string;
+  name: string;
+  sku: string | null;
+  exists: boolean;
 };
 
 type TemplateMapping = {
@@ -74,9 +82,19 @@ export default function ProductImportsPage() {
   const [loadingCatalogs, setLoadingCatalogs] = useState(false);
   const [importing, setImporting] = useState(false);
   const [lastResult, setLastResult] = useState<ImportResponse | null>(null);
+  const [importList, setImportList] = useState<ImportListItem[]>([]);
+  const [importListStats, setImportListStats] = useState<{
+    total: number;
+    filtered: number;
+    existing: number;
+  } | null>(null);
+  const [loadingImportList, setLoadingImportList] = useState(false);
+  const [uniqueOnly, setUniqueOnly] = useState(true);
   const [templates, setTemplates] = useState<ImportTemplate[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [templateId, setTemplateId] = useState("");
+  const [templatePreferenceLoaded, setTemplatePreferenceLoaded] =
+    useState(false);
 
   const [activeTemplateId, setActiveTemplateId] = useState("");
   const [templateName, setTemplateName] = useState("");
@@ -87,6 +105,9 @@ export default function ProductImportsPage() {
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [deletingTemplate, setDeletingTemplate] = useState(false);
   const [parameterKeys, setParameterKeys] = useState<string[]>([]);
+  const [parameterValues, setParameterValues] = useState<Record<string, string>>(
+    {}
+  );
   const [loadingParameters, setLoadingParameters] = useState(false);
   const [parameterProductId, setParameterProductId] = useState("");
   const [openKeyIndex, setOpenKeyIndex] = useState<number | null>(null);
@@ -160,13 +181,81 @@ export default function ProductImportsPage() {
   }, []);
 
   useEffect(() => {
+    const loadTemplatePreference = async () => {
+      try {
+        const res = await fetch("/api/products/imports/base/last-template");
+        const payload = (await res.json()) as { templateId?: string | null };
+        if (!res.ok) return;
+        if (payload.templateId) {
+          setTemplateId(payload.templateId);
+        }
+      } catch (error) {
+        console.error("Failed to load import template preference", error);
+      } finally {
+        setTemplatePreferenceLoaded(true);
+      }
+    };
+    void loadTemplatePreference();
+  }, []);
+
+  useEffect(() => {
+    if (!templatePreferenceLoaded) return;
+    const saveTemplatePreference = async () => {
+      try {
+        await fetch("/api/products/imports/base/last-template", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            templateId: templateId || null,
+          }),
+        });
+      } catch (error) {
+        console.error("Failed to save import template preference", error);
+      }
+    };
+    void saveTemplatePreference();
+  }, [templateId, templatePreferenceLoaded]);
+
+  useEffect(() => {
+    if (!templatePreferenceLoaded) return;
+    if (loadingTemplates) return;
+    if (!templateId) return;
+    const exists = templates.some((template) => template.id === templateId);
+    if (!exists) {
+      setTemplateId("");
+    }
+  }, [templateId, templates, loadingTemplates, templatePreferenceLoaded]);
+
+  useEffect(() => {
+    if (!templatePreferenceLoaded) return;
+    if (loadingTemplates) return;
+    if (!templateId) return;
+    if (activeTemplateId) return;
+    const preferred = templates.find((template) => template.id === templateId);
+    if (!preferred) return;
+    handleSelectTemplate(preferred.id);
+  }, [
+    templatePreferenceLoaded,
+    loadingTemplates,
+    templateId,
+    activeTemplateId,
+    templates,
+  ]);
+
+  useEffect(() => {
     const loadSampleProduct = async () => {
       try {
         const res = await fetch("/api/products/imports/base/sample-product");
-        const payload = (await res.json()) as { productId?: string | null };
+        const payload = (await res.json()) as {
+          productId?: string | null;
+          inventoryId?: string | null;
+        };
         if (!res.ok) return;
         if (payload.productId) {
           setParameterProductId(payload.productId);
+        }
+        if (payload.inventoryId) {
+          setInventoryId(payload.inventoryId);
         }
       } catch (error) {
         console.error("Failed to load sample product ID", error);
@@ -174,6 +263,26 @@ export default function ProductImportsPage() {
     };
     void loadSampleProduct();
   }, []);
+
+  useEffect(() => {
+    if (!inventoryId) return;
+    const savePreference = async () => {
+      try {
+        await fetch("/api/products/imports/base/sample-product", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            inventoryId,
+            productId: parameterProductId.trim() || undefined,
+            saveOnly: true,
+          }),
+        });
+      } catch (error) {
+        console.error("Failed to save sample inventory", error);
+      }
+    };
+    void savePreference();
+  }, [inventoryId, parameterProductId]);
 
   const handleSelectTemplate = (id: string) => {
     const template = templates.find((item) => item.id === id);
@@ -234,6 +343,22 @@ export default function ProductImportsPage() {
         return [...next, payload];
       });
       setActiveTemplateId(payload.id);
+      setTemplateMappings(
+        payload.mappings.length > 0
+          ? payload.mappings
+          : [{ sourceKey: "", targetField: "" }]
+      );
+      setTemplateName(payload.name);
+      setTemplateDescription(payload.description ?? "");
+      try {
+        const refreshRes = await fetch("/api/products/import-templates");
+        if (refreshRes.ok) {
+          const refreshed = (await refreshRes.json()) as ImportTemplate[];
+          setTemplates(refreshed);
+        }
+      } catch (error) {
+        console.error("Failed to refresh import templates", error);
+      }
       toast("Template saved.", { variant: "success" });
     } catch (error) {
       toast("Failed to save template.", { variant: "error" });
@@ -261,7 +386,11 @@ export default function ProductImportsPage() {
           productId: parameterProductId.trim(),
         }),
       });
-      const payload = (await res.json()) as { keys?: string[]; error?: string };
+      const payload = (await res.json()) as {
+        keys?: string[];
+        values?: Record<string, string>;
+        error?: string;
+      };
       if (!res.ok) {
         toast(payload.error || "Failed to load parameters.", {
           variant: "error",
@@ -269,46 +398,12 @@ export default function ProductImportsPage() {
         return;
       }
       setParameterKeys(payload.keys ?? []);
+      setParameterValues(payload.values ?? {});
       toast(`Loaded ${payload.keys?.length ?? 0} keys.`, {
         variant: "success",
       });
     } catch (error) {
       toast("Failed to load parameters.", { variant: "error" });
-    } finally {
-      setLoadingParameters(false);
-    }
-  };
-
-  const handleSaveSampleProduct = async () => {
-    if (!inventoryId) {
-      toast("Select an inventory first.", { variant: "error" });
-      return;
-    }
-    if (!parameterProductId.trim()) {
-      toast("Enter a product ID to save.", { variant: "error" });
-      return;
-    }
-    setLoadingParameters(true);
-    try {
-      const res = await fetch("/api/products/imports/base/sample-product", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          inventoryId,
-          productId: parameterProductId.trim(),
-        }),
-      });
-      const payload = (await res.json()) as { productId?: string; error?: string };
-      if (!res.ok) {
-        toast(payload.error || "Failed to save sample product.", {
-          variant: "error",
-        });
-        return;
-      }
-      setParameterProductId(payload.productId ?? parameterProductId.trim());
-      toast("Sample product saved.", { variant: "success" });
-    } catch (error) {
-      toast("Failed to save sample product.", { variant: "error" });
     } finally {
       setLoadingParameters(false);
     }
@@ -478,6 +573,56 @@ export default function ProductImportsPage() {
       toast("Import failed.", { variant: "error" });
     } finally {
       setImporting(false);
+    }
+  };
+
+  const handleLoadImportList = async () => {
+    if (!inventoryId) {
+      toast("Select an inventory before loading the list.", {
+        variant: "error",
+      });
+      return;
+    }
+    const parsedLimit = limit === "all" ? undefined : Number(limit);
+    setLoadingImportList(true);
+    try {
+      const res = await fetch("/api/products/imports/base", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "list",
+          inventoryId,
+          limit: parsedLimit,
+          uniqueOnly,
+        }),
+      });
+      const payload = (await res.json()) as {
+        products?: ImportListItem[];
+        total?: number;
+        filtered?: number;
+        existing?: number;
+        error?: string;
+      };
+      if (!res.ok) {
+        toast(payload.error || "Failed to load import list.", {
+          variant: "error",
+        });
+        return;
+      }
+      setImportList(payload.products ?? []);
+      setImportListStats(
+        payload.total !== undefined
+          ? {
+              total: payload.total ?? 0,
+              filtered: payload.filtered ?? 0,
+              existing: payload.existing ?? 0,
+            }
+          : null
+      );
+    } catch (error) {
+      toast("Failed to load import list.", { variant: "error" });
+    } finally {
+      setLoadingImportList(false);
     }
   };
 
@@ -666,6 +811,78 @@ export default function ProductImportsPage() {
             </div>
           </div>
 
+          <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-white">
+                  Import list preview
+                </h3>
+                <p className="mt-1 text-xs text-gray-400">
+                  Compare Base products with existing records by Base ID.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  className="rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-white"
+                  value={uniqueOnly ? "unique" : "all"}
+                  onChange={(event) =>
+                    setUniqueOnly(event.target.value === "unique")
+                  }
+                >
+                  <option value="unique">Unique only</option>
+                  <option value="all">All products</option>
+                </select>
+                <Button
+                  onClick={handleLoadImportList}
+                  disabled={loadingImportList}
+                >
+                  {loadingImportList ? "Loading..." : "Load import list"}
+                </Button>
+              </div>
+            </div>
+
+            {importListStats ? (
+              <div className="mt-3 text-xs text-gray-400">
+                Total: {importListStats.total} · Existing:{" "}
+                {importListStats.existing} · Showing: {importListStats.filtered}
+              </div>
+            ) : null}
+
+            {importList.length > 0 ? (
+              <div className="mt-3 max-h-72 overflow-auto rounded-md border border-gray-800 bg-gray-950/70">
+                <div className="grid grid-cols-[140px_1fr_120px_80px] gap-2 border-b border-gray-800 px-3 py-2 text-[11px] uppercase tracking-wide text-gray-500">
+                  <span>Base ID</span>
+                  <span>Name</span>
+                  <span>SKU</span>
+                  <span>Status</span>
+                </div>
+                {importList.map((item) => (
+                  <div
+                    key={item.baseProductId}
+                    className="grid grid-cols-[140px_1fr_120px_80px] gap-2 border-b border-gray-900/70 px-3 py-2 text-xs text-gray-300 last:border-b-0"
+                  >
+                    <span className="truncate text-gray-200">
+                      {item.baseProductId}
+                    </span>
+                    <span className="truncate">{item.name}</span>
+                    <span className="truncate">{item.sku ?? "—"}</span>
+                    <span
+                      className={
+                        item.exists ? "text-amber-300" : "text-emerald-300"
+                      }
+                    >
+                      {item.exists ? "Exists" : "New"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 text-xs text-gray-500">
+                No items loaded yet.
+              </p>
+            )}
+          </div>
+
           {lastResult ? (
             <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
               <h3 className="text-sm font-semibold text-white">
@@ -744,14 +961,6 @@ export default function ProductImportsPage() {
                   disabled={loadingParameters}
                 >
                   {loadingParameters ? "Loading..." : "Load parameters"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleSaveSampleProduct}
-                  disabled={loadingParameters}
-                >
-                  Save ID
                 </Button>
                 <Button
                   type="button"
@@ -878,29 +1087,39 @@ export default function ProductImportsPage() {
                             </div>
                           )}
                         </div>
-                        <select
-                          className="rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
-                          value={mapping.targetField}
-                          onChange={(event) =>
-                            updateMapping(index, {
-                              targetField: event.target.value,
-                            })
-                          }
-                        >
-                          <option value="">Select product field</option>
-                          {PRODUCT_FIELDS.map((field) => (
-                            <option key={field.value} value={field.value}>
-                              {field.label}
-                            </option>
-                          ))}
-                        </select>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() => removeMappingRow(index)}
-                        >
-                          Remove
-                        </Button>
+                        <div className="rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-gray-500">
+                          {mapping.sourceKey && parameterValues[mapping.sourceKey]
+                            ? parameterValues[mapping.sourceKey]
+                            : "—"}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <select
+                            className="flex-1 rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                            value={mapping.targetField}
+                            onChange={(event) =>
+                              updateMapping(index, {
+                                targetField: event.target.value,
+                              })
+                            }
+                          >
+                            <option value="">Select product field</option>
+                            {PRODUCT_FIELDS.map((field) => (
+                              <option key={field.value} value={field.value}>
+                                {field.label}
+                              </option>
+                            ))}
+                          </select>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeMappingRow(index)}
+                            aria-label="Remove mapping"
+                            className="text-gray-400 hover:text-white"
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>

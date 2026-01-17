@@ -6,13 +6,18 @@ add proper debugging on visual studio code
 
 # IN PROGRESS
 
+when I save the import template, my chosen parameter mappings are not being saved.
 
+I don't need save ID in the Import Template 
 
-Base Imports need to have an Import Templates TAB where I can create different Import Templates that can map product parameters into individual Product fields, Templates can be import export or both ways
+save import settings
 
-Product import should be crosschecked against what I currently have in the database. 
+Product import should be crosschecked against what I currently have in the database. So when I load the import list, I should have the option if I only want to see unique product IDs or All of them 
 
 Mark template as default
+
+My produc shouldn have a flip switch, flipping it will enable whether the imaege is viewed from the link or whether an uploded image should be use, obove each product slot there should be two small circles positioned side by side indicating whether a slot has uploaded image, or whether it has an image link
+
 # AUTH START
 
 

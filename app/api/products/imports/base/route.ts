@@ -13,6 +13,8 @@ import {
   fetchBaseInventories,
   fetchBaseProducts,
 } from "@/lib/services/imports/base-client";
+import { getProductDataProvider } from "@/lib/services/product-provider";
+import { getMongoDb } from "@/lib/db/mongo-client";
 import { extractBaseImageUrls, mapBaseProduct } from "@/lib/services/imports/base-mapper";
 import { productCreateSchema } from "@/lib/validations/product";
 
@@ -20,12 +22,13 @@ export const runtime = "nodejs";
 
 const requestSchema = z.object({
   token: z.string().trim().min(1).optional(),
-  action: z.enum(["inventories", "import"]),
+  action: z.enum(["inventories", "import", "list"]),
   inventoryId: z.string().trim().min(1).optional(),
   catalogId: z.string().trim().min(1).optional(),
   templateId: z.string().trim().min(1).optional(),
   limit: z.coerce.number().int().positive().optional(),
   imageMode: z.enum(["links", "download"]).optional(),
+  uniqueOnly: z.boolean().optional(),
 });
 
 export async function POST(req: Request) {
@@ -72,6 +75,85 @@ export async function POST(req: Request) {
         { error: "Inventory ID is required." },
         { status: 400 }
       );
+    }
+
+    if (data.action === "list") {
+      const products = await fetchBaseProducts(
+        token,
+        data.inventoryId,
+        data.limit
+      );
+      const provider = await getProductDataProvider();
+      let existingIds = new Set<string>();
+      if (provider === "mongodb") {
+        const mongo = await getMongoDb();
+        const docs = await mongo
+          .collection<{ baseProductId?: string | null }>("products")
+          .find({ baseProductId: { $exists: true, $ne: null } })
+          .project({ baseProductId: 1 })
+          .toArray();
+        existingIds = new Set(
+          docs
+            .map((doc) => (typeof doc.baseProductId === "string" ? doc.baseProductId : null))
+            .filter(Boolean) as string[]
+        );
+      } else {
+        const rows = await prisma.product.findMany({
+          where: { baseProductId: { not: null } },
+          select: { baseProductId: true },
+        });
+        existingIds = new Set(
+          rows
+            .map((row) =>
+              typeof row.baseProductId === "string" ? row.baseProductId : null
+            )
+            .filter(Boolean) as string[]
+        );
+      }
+
+      const toStringId = (value: unknown): string | null => {
+        if (typeof value === "string" && value.trim()) return value.trim();
+        if (typeof value === "number" && Number.isFinite(value)) {
+          return String(value);
+        }
+        return null;
+      };
+
+      const list = products
+        .map((record) => {
+          const baseProductId =
+            toStringId(record.base_product_id) ??
+            toStringId(record.product_id) ??
+            toStringId(record.id);
+          const name =
+            (typeof record.name === "string" && record.name.trim()) ||
+            (typeof record.name_en === "string" && record.name_en.trim()) ||
+            (typeof record.title === "string" && record.title.trim()) ||
+            baseProductId ||
+            "Unnamed";
+          const sku =
+            (typeof record.sku === "string" && record.sku.trim()) ||
+            (typeof record.code === "string" && record.code.trim()) ||
+            null;
+          return {
+            baseProductId: baseProductId ?? null,
+            name,
+            sku,
+            exists: baseProductId ? existingIds.has(baseProductId) : false,
+          };
+        })
+        .filter((item) => item.baseProductId);
+
+      const filtered = data.uniqueOnly
+        ? list.filter((item) => !item.exists)
+        : list;
+
+      return NextResponse.json({
+        products: filtered,
+        total: list.length,
+        filtered: filtered.length,
+        existing: list.filter((item) => item.exists).length,
+      });
     }
 
     const [products, catalogRepository, productRepository, imageRepository] = await Promise.all([

@@ -19,6 +19,8 @@ export type ImportTemplate = {
 
 const SETTINGS_KEY = "base_import_templates";
 const SAMPLE_PRODUCT_KEY = "base_import_sample_product_id";
+const SAMPLE_INVENTORY_KEY = "base_import_sample_inventory_id";
+const LAST_TEMPLATE_KEY = "base_import_last_template_id";
 
 const parseTemplates = (value: string | null): ImportTemplate[] => {
   if (!value) return [];
@@ -67,12 +69,48 @@ const readSampleProductValue = async (): Promise<string | null> => {
   return setting?.value ?? null;
 };
 
+const readSampleInventoryValue = async (): Promise<string | null> => {
+  const provider = await getProductDataProvider();
+  if (provider === "mongodb") {
+    const mongo = await getMongoDb();
+    const doc = await mongo
+      .collection<{ _id: string; key?: string; value?: string }>("settings")
+      .findOne({
+        $or: [{ _id: SAMPLE_INVENTORY_KEY }, { key: SAMPLE_INVENTORY_KEY }],
+      });
+    return typeof doc?.value === "string" ? doc.value : null;
+  }
+  const setting = await prisma.setting.findUnique({
+    where: { key: SAMPLE_INVENTORY_KEY },
+    select: { value: true },
+  });
+  return setting?.value ?? null;
+};
+
+const readLastTemplateValue = async (): Promise<string | null> => {
+  const provider = await getProductDataProvider();
+  if (provider === "mongodb") {
+    const mongo = await getMongoDb();
+    const doc = await mongo
+      .collection<{ _id: string; key?: string; value?: string }>("settings")
+      .findOne({
+        $or: [{ _id: LAST_TEMPLATE_KEY }, { key: LAST_TEMPLATE_KEY }],
+      });
+    return typeof doc?.value === "string" ? doc.value : null;
+  }
+  const setting = await prisma.setting.findUnique({
+    where: { key: LAST_TEMPLATE_KEY },
+    select: { value: true },
+  });
+  return setting?.value ?? null;
+};
+
 const writeTemplatesValue = async (value: string) => {
   const provider = await getProductDataProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     await mongo.collection("settings").updateOne(
-      { _id: SETTINGS_KEY } as any,
+      { $or: [{ _id: SETTINGS_KEY }, { key: SETTINGS_KEY }] } as any,
       {
         $set: {
           value,
@@ -97,7 +135,7 @@ const writeSampleProductValue = async (value: string) => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     await mongo.collection("settings").updateOne(
-      { _id: SAMPLE_PRODUCT_KEY } as any,
+      { $or: [{ _id: SAMPLE_PRODUCT_KEY }, { key: SAMPLE_PRODUCT_KEY }] } as any,
       {
         $set: {
           value,
@@ -117,6 +155,55 @@ const writeSampleProductValue = async (value: string) => {
   });
 };
 
+const writeSampleInventoryValue = async (value: string) => {
+  const provider = await getProductDataProvider();
+  if (provider === "mongodb") {
+    const mongo = await getMongoDb();
+    await mongo.collection("settings").updateOne(
+      { $or: [{ _id: SAMPLE_INVENTORY_KEY }, { key: SAMPLE_INVENTORY_KEY }] } as any,
+      {
+        $set: {
+          value,
+          key: SAMPLE_INVENTORY_KEY,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
+      },
+      { upsert: true }
+    );
+    return;
+  }
+  await prisma.setting.upsert({
+    where: { key: SAMPLE_INVENTORY_KEY },
+    update: { value },
+    create: { key: SAMPLE_INVENTORY_KEY, value },
+  });
+};
+
+const writeLastTemplateValue = async (value: string) => {
+  const provider = await getProductDataProvider();
+  if (provider === "mongodb") {
+    const mongo = await getMongoDb();
+    await mongo.collection("settings").updateOne(
+      { $or: [{ _id: LAST_TEMPLATE_KEY }, { key: LAST_TEMPLATE_KEY }] } as any,
+      {
+        $set: {
+          value,
+          key: LAST_TEMPLATE_KEY,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
+      },
+      { upsert: true }
+    );
+    return;
+  }
+  await prisma.setting.upsert({
+    where: { key: LAST_TEMPLATE_KEY },
+    update: { value },
+    create: { key: LAST_TEMPLATE_KEY, value },
+  });
+};
 export const listImportTemplates = async (): Promise<ImportTemplate[]> => {
   const raw = await readTemplatesValue();
   return parseTemplates(raw);
@@ -128,6 +215,23 @@ export const getImportSampleProductId = async (): Promise<string | null> => {
 
 export const setImportSampleProductId = async (value: string) => {
   await writeSampleProductValue(value);
+};
+
+export const getImportSampleInventoryId = async (): Promise<string | null> => {
+  return readSampleInventoryValue();
+};
+
+export const setImportSampleInventoryId = async (value: string) => {
+  await writeSampleInventoryValue(value);
+};
+
+export const getImportLastTemplateId = async (): Promise<string | null> => {
+  const value = await readLastTemplateValue();
+  return value ? value : null;
+};
+
+export const setImportLastTemplateId = async (value: string | null) => {
+  await writeLastTemplateValue(value?.trim() ? value.trim() : "");
 };
 
 export const getImportTemplate = async (

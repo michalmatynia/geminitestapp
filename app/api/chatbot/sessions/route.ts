@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { chatbotSessionRepository } from "@/lib/services/chatbot-session-repository";
-import type { ChatSession } from "@/app/(admin)/admin/chatbot/types";
+import type { ChatSession } from "@/types/chatbot";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 

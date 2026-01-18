@@ -32,6 +32,10 @@ type ImportListItem = {
   name: string;
   sku: string | null;
   exists: boolean;
+  description?: string;
+  price?: number;
+  stock?: number;
+  image?: string | null;
 };
 
 type TemplateMapping = {
@@ -67,6 +71,16 @@ const PRODUCT_FIELDS = [
   { value: "sizeWidth", label: "Size Width" },
   { value: "weight", label: "Weight" },
   { value: "length", label: "Length" },
+  { value: "image_1", label: "Image Link 1" },
+  { value: "image_2", label: "Image Link 2" },
+  { value: "image_3", label: "Image Link 3" },
+  { value: "image_4", label: "Image Link 4" },
+  { value: "image_5", label: "Image Link 5" },
+  { value: "image_6", label: "Image Link 6" },
+  { value: "image_7", label: "Image Link 7" },
+  { value: "image_8", label: "Image Link 8" },
+  { value: "image_9", label: "Image Link 9" },
+  { value: "image_10", label: "Image Link 10" },
 ] as const;
 
 export default function ProductImportsPage() {
@@ -431,12 +445,23 @@ export default function ProductImportsPage() {
       toast("Template name is required.", { variant: "error" });
       return;
     }
+
+    const incompleteMappings = templateMappings.some(
+      (m) => (m.sourceKey.trim() && !m.targetField.trim()) || (!m.sourceKey.trim() && m.targetField.trim())
+    );
+
+    if (incompleteMappings) {
+      toast("Please complete all mapping rows or remove empty ones.", { variant: "error" });
+      return;
+    }
+
     const cleanedMappings = templateMappings
       .map((mapping) => ({
         sourceKey: mapping.sourceKey.trim(),
         targetField: mapping.targetField.trim(),
       }))
       .filter((mapping) => mapping.sourceKey && mapping.targetField);
+    
     setSavingTemplate(true);
     try {
       const res = await fetch(
@@ -725,6 +750,7 @@ export default function ProductImportsPage() {
           templateId: templateId || undefined,
           limit: parsedLimit,
           imageMode,
+          uniqueOnly,
         }),
       });
       const payload = (await res.json()) as ImportResponse & {
@@ -907,6 +933,8 @@ export default function ProductImportsPage() {
                     value={limit}
                     onChange={(event) => setLimit(event.target.value)}
                   >
+                    <option value="1">1</option>
+                    <option value="5">5</option>
                     <option value="10">10</option>
                     <option value="50">50</option>
                     <option value="100">100</option>
@@ -1028,27 +1056,56 @@ export default function ProductImportsPage() {
             ) : null}
 
             {importList.length > 0 ? (
-              <div className="mt-3 max-h-72 overflow-auto rounded-md border border-gray-800 bg-gray-950/70">
-                <div className="grid grid-cols-[140px_1fr_120px_80px] gap-2 border-b border-gray-800 px-3 py-2 text-[11px] uppercase tracking-wide text-gray-500">
+              <div className="mt-3 max-h-96 overflow-auto rounded-md border border-gray-800 bg-gray-950/70">
+                <div className="grid grid-cols-[50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-gray-800 px-3 py-2 text-[11px] uppercase tracking-wide text-gray-500 sticky top-0 bg-gray-950 z-10">
+                  <span>Img</span>
                   <span>Base ID</span>
-                  <span>Name</span>
+                  <span>Product</span>
                   <span>SKU</span>
+                  <span>Price</span>
+                  <span>Qty</span>
                   <span>Status</span>
                 </div>
                 {importList.map((item) => (
                   <div
                     key={item.baseProductId}
-                    className="grid grid-cols-[140px_1fr_120px_80px] gap-2 border-b border-gray-900/70 px-3 py-2 text-xs text-gray-300 last:border-b-0"
+                    className="grid grid-cols-[50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-gray-900/70 px-3 py-2 text-xs text-gray-300 last:border-b-0 items-center hover:bg-gray-900/40 transition-colors"
                   >
-                    <span className="truncate text-gray-200">
+                    <div className="h-10 w-10 overflow-hidden rounded bg-gray-900">
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[10px] text-gray-600">
+                          No img
+                        </div>
+                      )}
+                    </div>
+                    <span className="truncate text-gray-400 font-mono text-[11px]">
                       {item.baseProductId}
                     </span>
-                    <span className="truncate">{item.name}</span>
-                    <span className="truncate">{item.sku ?? "—"}</span>
+                    <div className="min-w-0">
+                      <div className="truncate font-medium text-gray-200">
+                        {item.name}
+                      </div>
+                      {item.description && (
+                        <div className="truncate text-[11px] text-gray-500">
+                          {item.description}
+                        </div>
+                      )}
+                    </div>
+                    <span className="truncate font-mono text-[11px] text-gray-400">
+                      {item.sku ?? "—"}
+                    </span>
+                    <span className="truncate">{item.price ?? 0}</span>
+                    <span className="truncate">{item.stock ?? 0}</span>
                     <span
-                      className={
-                        item.exists ? "text-amber-300" : "text-emerald-300"
-                      }
+                      className={`text-[11px] font-medium ${
+                        item.exists ? "text-amber-400" : "text-emerald-400"
+                      }`}
                     >
                       {item.exists ? "Exists" : "New"}
                     </span>
@@ -1234,7 +1291,7 @@ export default function ProductImportsPage() {
                   <div className="mt-2 space-y-2">
                     {templateMappings.map((mapping, index) => (
                       <div
-                        key={`${mapping.sourceKey}-${index}`}
+                        key={index}
                         className="grid gap-2 md:grid-cols-[1fr_1fr_auto]"
                       >
                         <div className="relative">

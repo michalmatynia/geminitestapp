@@ -14,6 +14,8 @@ import type { Catalog } from "@/types/products";
 
 interface ProductListHeaderProps {
   onOpenCreateModal: () => Promise<void>;
+  onDeleteSelected?: () => Promise<void>;
+  selectedCount?: number;
   page: number;
   totalPages: number;
   setPage: (page: number) => void;
@@ -31,6 +33,8 @@ interface ProductListHeaderProps {
 
 export const ProductListHeader = memo(function ProductListHeader({
   onOpenCreateModal,
+  onDeleteSelected,
+  selectedCount = 0,
   page,
   totalPages,
   setPage,
@@ -57,6 +61,17 @@ export const ProductListHeader = memo(function ProductListHeader({
         >
           <PlusIcon className="size-5" />
         </Button>
+        {selectedCount > 0 && onDeleteSelected && (
+          <Button
+            onClick={() => {
+              void onDeleteSelected();
+            }}
+            variant="destructive"
+            className="rounded-full px-4"
+          >
+            Delete Selected ({selectedCount})
+          </Button>
+        )}
         <h1 className="text-3xl font-bold text-white">Products</h1>
       </div>
       <div className="flex items-center gap-3">

@@ -4,25 +4,26 @@ npx tsc
 npx eslint
 add proper debugging on visual studio code
 
+
 # IN PROGRESS
-Mapping Parameters in Product Imports - Import templates are not being saved. 
 
-Text color is not being appliead to text in Notes
+Note App
+In Note Edit / Create, clicking Link tag doesn't add Link into markdown and doesn't change the text into link
 
-"I have this error "## Error Type
-Console Error
+---
 
-## Error Message
-Failed to fetch price groups.
+BAse imports are duplicate
+
+Move the pagination in Product List under Min Price Max Price Fields 
+
+When I change the catalog to unassigned it still shows Products listed which are part of the catalog
 
 
-    at ProductSettingsPage.useCallback[refreshPriceGroups] (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/_0789ff39._.js:4012:27)
+## Filters
+Add one button called Filter option that will hide show all available search fields and filter fields
+When I click on that button, add another button below called Advanced filters, which reaveals a new panel over the basic filters, in this Panel I should be able to set up filtering conditions for more advanced searches.
 
-Next.js version: 16.1.2 (Turbopack)
-" 
-
-Also I need to stabilise auth, bring back log in by  changing-- >return true; // Redirect to login /// This one change to false in authConfig
-Continue developing Auth and also the other senior notes.
+In each product row, between a checkmark and an image I need a star that will mark the product as favourite, but upon clicking it, it will give me seven different color stars each being its own variant of favourite. Search by different star colors filter should be added to a basic filter section.
 
 
 
@@ -30,20 +31,21 @@ Continue developing Auth and also the other senior notes.
 
 # AUTH END
 
+# Notes App
+#
 Multi APP manager
 Top right extendable menu
 that shows Active tools
 
+
+# PRODUCT IMPORT FROM BASE
+
+We need to handle of import of downloadable image file from Base, preferably, If we could download them and instantly attach them into product image slots
 # PRODUCT LIST START
 
 ## COURT CASE RESOLVER -> 
 Notes WYSIWYG, select notebook, Build context by dragging documents into context container and filling in the fillers. I should also be able to prompt out the fillers between them. The contexts should be a mind map. Come up with plan of action and choose different paths.
 
-## Filters
-Add one button called Filter option that will hide show all available search fields and filter fields
-When I click on that button, add another button below called Advanced filters, which reaveals a new panel over the basic filters, in this Panel I should be able to set up filtering conditions for more advanced searches.
-
-In each product row, between a checkmark and an image I need a star that will mark the product as favourite, but upon clicking it, it will give me seven different color stars each being its own variant of favourite. Search by different star colors filter should be added to a basic filter section.
 
 ## Parameters
 PARAMETERS Additional fields

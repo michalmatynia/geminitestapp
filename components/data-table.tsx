@@ -9,6 +9,8 @@ import {
   SortingState,
   useReactTable,
   Table as ReactTable,
+  RowSelectionState,
+  OnChangeFn,
 } from "@tanstack/react-table";
 import React, { useEffect, useState, memo } from "react";
 
@@ -35,6 +37,8 @@ interface DataTableProps<TData> {
   integrationBadgeStatuses?: Map<string, string>;
   getRowId?: (row: TData) => string | number;
   footer?: (table: ReactTable<TData>) => React.ReactNode;
+  rowSelection?: RowSelectionState;
+  onRowSelectionChange?: OnChangeFn<RowSelectionState>;
 }
 
 declare module "@tanstack/react-table" {
@@ -63,9 +67,14 @@ export const DataTable = memo(function DataTable<TData>({
   integrationBadgeStatuses,
   getRowId,
   footer,
+  rowSelection: controlledRowSelection,
+  onRowSelectionChange: controlledOnRowSelectionChange,
 }: DataTableProps<TData>) {
-  const [rowSelection, setRowSelection] = useState({});
+  const [internalRowSelection, setInternalRowSelection] = useState<RowSelectionState>({});
   const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
+
+  const rowSelection = controlledRowSelection ?? internalRowSelection;
+  const onRowSelectionChange = controlledOnRowSelectionChange ?? setInternalRowSelection;
 
   useEffect(() => {
     if (!sortingStorageKey) return;
@@ -95,8 +104,9 @@ export const DataTable = memo(function DataTable<TData>({
   const table = useReactTable<TData>({
     data,
     columns,
+    getRowId: getRowId as any, // Cast to fix slight type mismatch with TanStack optional
     getCoreRowModel: getCoreRowModel(),
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: onRowSelectionChange,
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     onSortingChange: setSorting,

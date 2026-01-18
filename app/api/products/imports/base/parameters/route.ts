@@ -121,6 +121,13 @@ const toPreviewValue = (value: unknown): string | null => {
 
 const collectParameterKeys = (product: Record<string, unknown>) => {
   const keys = new Set<string>();
+  // Explicitly add common identifiers
+  keys.add("product_id");
+  keys.add("inventory_id");
+  keys.add("id");
+  keys.add("ean");
+  keys.add("sku");
+  
   const parameterBuckets = [
     product.parameters,
     product.params,
@@ -289,21 +296,44 @@ export async function POST(req: Request) {
         { status: 404 }
       );
     }
+    
+    // Inject inventory_id if missing, so it can be mapped
+    if (data.inventoryId && !product["inventory_id"]) {
+      product["inventory_id"] = data.inventoryId;
+    }
+
+    // Inject product ID variants if missing
+    if (data.productId) {
+      if (!product["product_id"]) {
+         product["product_id"] = data.productId;
+      }
+      if (!product["id"]) {
+          product["id"] = data.productId;
+      }
+    }
+
     const { keys, values } = collectParameterKeys(
       product
     );
-    await setImportParameterCache({
-      inventoryId: data.inventoryId,
-      productId: data.productId,
-      keys,
-      values,
-    });
+
+    try {
+      await setImportParameterCache({
+        inventoryId: data.inventoryId,
+        productId: data.productId,
+        keys,
+        values,
+      });
+    } catch (cacheError) {
+      console.error("Failed to cache parameters", cacheError);
+    }
+
     return NextResponse.json({ keys, values });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[base-import-parameters] Failed to load keys", {
+    console.error("[debug-error] Failed to load keys", {
       errorId,
       message,
+      stack: error instanceof Error ? error.stack : undefined
     });
     return NextResponse.json(
       { error: message, errorId },

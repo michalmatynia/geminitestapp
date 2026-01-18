@@ -178,10 +178,16 @@ export const columns: ColumnDef<ProductWithImages>[] = [
     header: "Image",
     cell: ({ row }) => {
       const product = row.original;
-      const imageUrl =
-        product.images && product.images.length > 0
-          ? product.images[0]?.imageFile?.filepath
-          : undefined;
+      
+      const firstFileImage = product.images?.find(
+        (img) => img.imageFile?.filepath
+      )?.imageFile.filepath;
+
+      const firstLinkImage = product.imageLinks?.find(
+        (link) => link && link.trim().length > 0
+      );
+
+      const imageUrl = firstFileImage || firstLinkImage;
 
       return imageUrl ? (
         <Image

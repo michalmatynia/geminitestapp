@@ -195,59 +195,73 @@ export async function fetchBaseInventories(token: string) {
   return [];
 }
 
+export async function fetchBaseProductIds(token: string, inventoryId: string) {
+  const candidates = [
+    {
+      method: "getInventoryProductsList",
+      paramKey: "inventory_id",
+    },
+    {
+      method: "getProductsList",
+      paramKey: "storage_id",
+    },
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      const payload = await callBaseApi(token, candidate.method, {
+        [candidate.paramKey]: inventoryId,
+      });
+      const ids = extractProductIds(payload);
+      if (ids.length > 0) return ids;
+    } catch {
+      // Continue to next candidate
+    }
+  }
+  return [];
+}
+
+export async function fetchBaseProductDetails(
+  token: string,
+  inventoryId: string,
+  productIds: string[]
+) {
+  const candidates = [
+    {
+      method: "getInventoryProductsData",
+      paramKey: "inventory_id",
+    },
+    {
+      method: "getProductsData",
+      paramKey: "storage_id",
+    },
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      const payload = await callBaseApi(token, candidate.method, {
+        [candidate.paramKey]: inventoryId,
+        products: productIds,
+      });
+      const products = extractProducts(payload);
+      if (products.length > 0) return products;
+    } catch {
+      // Continue
+    }
+  }
+  return [];
+}
+
 export async function fetchBaseProducts(
   token: string,
   inventoryId: string,
   limit?: number
 ) {
-  const candidates = [
-    {
-      listMethod: "getInventoryProductsList",
-      dataMethod: "getInventoryProductsData",
-      paramKey: "inventory_id",
-    },
-    {
-      listMethod: "getProductsList",
-      dataMethod: "getProductsData",
-      paramKey: "storage_id",
-    },
-  ];
+  const ids = await fetchBaseProductIds(token, inventoryId);
+  const targetIds =
+    typeof limit === "number" && limit > 0 ? ids.slice(0, limit) : ids;
+  
+  if (targetIds.length === 0) return [];
 
-  let lastError: Error | null = null;
-
-  for (const candidate of candidates) {
-    try {
-      const listPayload = await callBaseApi(token, candidate.listMethod, {
-        [candidate.paramKey]: inventoryId,
-      });
-      let products = extractProducts(listPayload);
-      const hasDetails =
-        products.length > 0 &&
-        products.some((product) => hasProductDetails(product));
-
-      if (!hasDetails) {
-        const productIds = extractProductIds(listPayload);
-        if (productIds.length > 0) {
-          const dataPayload = await callBaseApi(token, candidate.dataMethod, {
-            [candidate.paramKey]: inventoryId,
-            products: productIds,
-          });
-          products = extractProducts(dataPayload);
-        }
-      }
-
-      if (typeof limit === "number" && limit > 0) {
-        return products.slice(0, limit);
-      }
-      return products;
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error("Base API error.");
-    }
-  }
-
-  if (lastError) {
-    throw lastError;
-  }
-
-  return [];
+  return fetchBaseProductDetails(token, inventoryId, targetIds);
 }

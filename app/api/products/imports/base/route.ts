@@ -12,6 +12,8 @@ import { decryptSecret } from "@/lib/utils/encryption";
 import {
   fetchBaseInventories,
   fetchBaseProducts,
+  fetchBaseProductIds,
+  fetchBaseProductDetails,
 } from "@/lib/services/imports/base-client";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
@@ -78,11 +80,8 @@ export async function POST(req: Request) {
     }
 
     if (data.action === "list") {
-      const products = await fetchBaseProducts(
-        token,
-        data.inventoryId,
-        data.limit
-      );
+      const allBaseIds = await fetchBaseProductIds(token, data.inventoryId);
+      
       const provider = await getProductDataProvider();
       let existingIds = new Set<string>();
       if (provider === "mongodb") {
@@ -111,6 +110,34 @@ export async function POST(req: Request) {
         );
       }
 
+      const listItems = allBaseIds.map((id) => ({
+        id,
+        exists: existingIds.has(id),
+      }));
+
+      const filteredItems = data.uniqueOnly
+        ? listItems.filter((item) => !item.exists)
+        : listItems;
+
+      const pagedItems = data.limit
+        ? filteredItems.slice(0, data.limit)
+        : filteredItems;
+
+      if (pagedItems.length === 0) {
+        return NextResponse.json({
+          products: [],
+          total: listItems.length,
+          filtered: filteredItems.length,
+          existing: listItems.filter((i) => i.exists).length,
+        });
+      }
+
+      const products = await fetchBaseProductDetails(
+        token,
+        data.inventoryId,
+        pagedItems.map((i) => i.id)
+      );
+
       const toStringId = (value: unknown): string | null => {
         if (typeof value === "string" && value.trim()) return value.trim();
         if (typeof value === "number" && Number.isFinite(value)) {
@@ -119,40 +146,47 @@ export async function POST(req: Request) {
         return null;
       };
 
-      const list = products
+      const mappedList = products
         .map((record) => {
+          const mapped = mapBaseProduct(record);
+          const images = extractBaseImageUrls(record);
           const baseProductId =
+            mapped.baseProductId ??
             toStringId(record.base_product_id) ??
             toStringId(record.product_id) ??
             toStringId(record.id);
+          
+          // Prioritize EN, then PL, then DE, then raw name
           const name =
-            (typeof record.name === "string" && record.name.trim()) ||
-            (typeof record.name_en === "string" && record.name_en.trim()) ||
-            (typeof record.title === "string" && record.title.trim()) ||
-            baseProductId ||
-            "Unnamed";
-          const sku =
-            (typeof record.sku === "string" && record.sku.trim()) ||
-            (typeof record.code === "string" && record.code.trim()) ||
-            null;
+            mapped.name_en ??
+            mapped.name_pl ??
+            mapped.name_de ??
+            (typeof record.name === "string" ? record.name : "Unnamed");
+
+          const description = 
+            mapped.description_en ?? 
+            mapped.description_pl ?? 
+            mapped.description_de ?? 
+            "";
+
           return {
             baseProductId: baseProductId ?? null,
             name,
-            sku,
+            sku: mapped.sku ?? null,
             exists: baseProductId ? existingIds.has(baseProductId) : false,
+            description: description.slice(0, 100),
+            price: mapped.price ?? 0,
+            stock: mapped.stock ?? 0,
+            image: images[0] ?? null,
           };
         })
         .filter((item) => item.baseProductId);
 
-      const filtered = data.uniqueOnly
-        ? list.filter((item) => !item.exists)
-        : list;
-
       return NextResponse.json({
-        products: filtered,
-        total: list.length,
-        filtered: filtered.length,
-        existing: list.filter((item) => item.exists).length,
+        products: mappedList,
+        total: listItems.length,
+        filtered: filteredItems.length,
+        existing: listItems.filter((item) => item.exists).length,
       });
     }
 
@@ -162,6 +196,54 @@ export async function POST(req: Request) {
       getProductRepository(),
       getImageFileRepository(),
     ]);
+
+    let productsToImport = products;
+
+    if (data.uniqueOnly) {
+        const provider = await getProductDataProvider();
+        let existingIds = new Set<string>();
+        if (provider === "mongodb") {
+          const mongo = await getMongoDb();
+          const docs = await mongo
+            .collection<{ baseProductId?: string | null }>("products")
+            .find({ baseProductId: { $exists: true, $ne: null } })
+            .project({ baseProductId: 1 })
+            .toArray();
+          existingIds = new Set(
+            docs
+              .map((doc) => (typeof doc.baseProductId === "string" ? doc.baseProductId : null))
+              .filter(Boolean) as string[]
+          );
+        } else {
+          const rows = await prisma.product.findMany({
+            where: { baseProductId: { not: null } },
+            select: { baseProductId: true },
+          });
+          existingIds = new Set(
+            rows
+              .map((row) =>
+                typeof row.baseProductId === "string" ? row.baseProductId : null
+              )
+              .filter(Boolean) as string[]
+          );
+        }
+
+        const toStringId = (value: unknown): string | null => {
+            if (typeof value === "string" && value.trim()) return value.trim();
+            if (typeof value === "number" && Number.isFinite(value)) {
+              return String(value);
+            }
+            return null;
+        };
+
+        productsToImport = products.filter((record) => {
+            const baseProductId =
+                toStringId(record.base_product_id) ??
+                toStringId(record.product_id) ??
+                toStringId(record.id);
+            return baseProductId ? !existingIds.has(baseProductId) : true;
+        });
+    }
 
     const template = data.templateId
       ? await getImportTemplate(data.templateId)
@@ -266,10 +348,11 @@ export async function POST(req: Request) {
       });
     };
 
-    for (const raw of products) {
+    for (const raw of productsToImport) {
       try {
         const mapped = mapBaseProduct(raw, template?.mappings ?? []);
-        const imageUrls = extractBaseImageUrls(raw).slice(0, maxImages);
+        // mapped.imageLinks already contains base images + mapped overrides
+        const imageUrls = (mapped.imageLinks ?? []).slice(0, maxImages);
         const payload = productCreateSchema.parse({
           ...mapped,
           defaultPriceGroupId: resolvedDefault.id,
@@ -321,7 +404,7 @@ export async function POST(req: Request) {
         if (isSkuConflict(error)) {
           try {
             const mapped = mapBaseProduct(raw, template?.mappings ?? []);
-            const imageUrls = extractBaseImageUrls(raw).slice(0, maxImages);
+            const imageUrls = (mapped.imageLinks ?? []).slice(0, maxImages);
             const fallbackSku = mapped.baseProductId
               ? `BASE-${mapped.baseProductId}`
               : undefined;
@@ -392,7 +475,7 @@ export async function POST(req: Request) {
       imported,
       failed,
       errors,
-      total: products.length,
+      total: productsToImport.length,
     });
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {

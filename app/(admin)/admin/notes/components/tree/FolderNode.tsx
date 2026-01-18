@@ -286,30 +286,6 @@ export const FolderNode = React.memo(function FolderNode({
 
       {isExpanded && (
         <div>
-          {sortedNotes.map((note) => {
-            const isNoteSelected = selectedNoteId === note.id;
-            const isNoteRenaming = renamingNoteId === note.id;
-            return (
-              <NoteItem
-                key={note.id}
-                note={note}
-                level={level}
-                isSelected={isNoteSelected}
-                isRenaming={isNoteRenaming}
-                folderId={folder.id}
-                onSelectNote={onSelectNote}
-                onCreateNote={onCreateNote}
-                onDuplicateNote={onDuplicateNote}
-                onDeleteNote={onDeleteNote}
-                onRenameNote={onRenameNote}
-                onStartRename={onStartNoteRename}
-                onCancelRename={onCancelNoteRename}
-                onRelateNotes={onRelateNotes}
-                draggedNoteId={draggedNoteId}
-                setDraggedNoteId={setDraggedNoteId}
-              />
-            );
-          })}
           {folder.children.map((child) => (
             <FolderNode
               key={child.id}
@@ -345,6 +321,30 @@ export const FolderNode = React.memo(function FolderNode({
               onToggleExpand={onToggleExpand}
             />
           ))}
+          {sortedNotes.map((note) => {
+            const isNoteSelected = selectedNoteId === note.id;
+            const isNoteRenaming = renamingNoteId === note.id;
+            return (
+              <NoteItem
+                key={note.id}
+                note={note}
+                level={level}
+                isSelected={isNoteSelected}
+                isRenaming={isNoteRenaming}
+                folderId={folder.id}
+                onSelectNote={onSelectNote}
+                onCreateNote={onCreateNote}
+                onDuplicateNote={onDuplicateNote}
+                onDeleteNote={onDeleteNote}
+                onRenameNote={onRenameNote}
+                onStartRename={onStartNoteRename}
+                onCancelRename={onCancelNoteRename}
+                onRelateNotes={onRelateNotes}
+                draggedNoteId={draggedNoteId}
+                setDraggedNoteId={setDraggedNoteId}
+              />
+            );
+          })}
         </div>
       )}
     </div>

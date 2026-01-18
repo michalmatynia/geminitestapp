@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Undo, Redo } from "lucide-react";
 import type { NoteFileRecord } from "@/types/notes";
 
 interface MarkdownToolbarProps {
@@ -18,6 +19,10 @@ interface MarkdownToolbarProps {
   onApplyChecklist: () => void;
   onApplySpanStyle: (color: string, font: string) => void;
   onInsertFileReference: (file: NoteFileRecord) => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
 }
 
 export function MarkdownToolbar({
@@ -35,9 +40,45 @@ export function MarkdownToolbar({
   onApplyChecklist,
   onApplySpanStyle,
   onInsertFileReference,
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
 }: MarkdownToolbarProps) {
   return (
     <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-gray-700 bg-gray-900 px-3 py-2">
+      <button
+        type="button"
+        onClick={() => setShowPreview(!showPreview)}
+        className="rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+        title="Toggle preview"
+      >
+        {showPreview ? "Hide Preview" : "Show Preview"}
+      </button>
+      <div className="h-6 w-px bg-gray-700 mx-1" />
+      {onUndo && (
+        <button
+          type="button"
+          onClick={onUndo}
+          disabled={!canUndo}
+          className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Undo"
+        >
+          <Undo className="size-3.5" />
+        </button>
+      )}
+      {onRedo && (
+        <button
+          type="button"
+          onClick={onRedo}
+          disabled={!canRedo}
+          className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Redo"
+        >
+          <Redo className="size-3.5" />
+        </button>
+      )}
+      <div className="h-6 w-px bg-gray-700 mx-1" />
       <button
         type="button"
         onClick={() => onApplyWrap("**", "**", "bold text")}
@@ -128,7 +169,7 @@ export function MarkdownToolbar({
       </button>
       <button
         type="button"
-        onClick={() => onInsertAtCursor("[link text](https://example.com)")}
+        onClick={() => onApplyWrap("[", "](https://example.com)", "link text")}
         className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
         title="Link"
       >
@@ -199,14 +240,6 @@ export function MarkdownToolbar({
         title="Apply font and color"
       >
         Apply
-      </button>
-      <button
-        type="button"
-        onClick={() => setShowPreview(!showPreview)}
-        className="rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-        title="Toggle preview"
-      >
-        {showPreview ? "Hide Preview" : "Show Preview"}
       </button>
     </div>
   );

@@ -222,8 +222,8 @@ const renderInlineMarkdown = (value: string) => {
   );
 
   const withLinks = withImages.replace(
-    /\`\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" style="color: var(--note-link-color, #38bdf8); text-decoration: underline;" target="_blank" rel="noreferrer">$1</a>'
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    '<a href="$2" style="color: var(--note-link-color, #38bdf8); text-decoration: underline; cursor: pointer;" target="_blank" rel="noreferrer">$1</a>'
   );
 
   const withStrong = withLinks.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
@@ -250,7 +250,8 @@ const highlightCode = (value: string) => {
 };
 
 export const renderMarkdownToHtml = (value: string): string => {
-  const lines = value.split(/\r?\n/);
+  const { withTokens, tokens } = preserveSpans(value);
+  const lines = withTokens.split(/\r?\n/);
 
   let html = "";
 
@@ -491,7 +492,7 @@ export const renderMarkdownToHtml = (value: string): string => {
     html += `<div data-code="${encoded}" style="position: relative; margin: 0.75rem 0;"><button type="button" data-copy-code="true" style="position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(148, 163, 184, 0.15); border: 1px solid rgba(148, 163, 184, 0.35); color: var(--note-code-text, #e2e8f0); font-size: 0.7rem; padding: 0.2rem 0.45rem; border-radius: 0.4rem; cursor: pointer; opacity: 0; transition: opacity 0.15s ease;">Copy</button><pre style="background-color: var(--note-code-bg, #0f172a); color: var(--note-code-text, #e2e8f0); padding: 0.75rem; border-radius: 0.5rem; overflow-x: auto;"><code style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace; font-size: 0.85em;">${highlighted}</code></pre></div>`;
   }
 
-  return html;
+  return restoreSpans(html, tokens);
 };
 
 export const findFolderById = (

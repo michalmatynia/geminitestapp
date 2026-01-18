@@ -8,6 +8,7 @@ import type { NoteFormProps } from "@/types/notes-ui";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { autoformatMarkdown } from "../utils";
+import { useUndo } from "../hooks/useUndo";
 import { useNoteSettings } from "@/lib/context/NoteSettingsContext";
 import { MarkdownToolbar } from "./editor/MarkdownToolbar";
 import { FileAttachments } from "./editor/FileAttachments";
@@ -41,7 +42,23 @@ export function NoteForm({
   folderTheme,
 }: NoteFormProps) {
   const [title, setTitle] = useState(note?.title || "");
-  const [content, setContent] = useState(note?.content || "");
+  const {
+    state: content,
+    setState: setContent,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    resetHistory,
+  } = useUndo(note?.content || "");
+
+  useEffect(() => {
+    if (note?.id) {
+      setTitle(note.title);
+      resetHistory(note.content);
+    }
+  }, [note?.id, note?.title, note?.content, resetHistory]);
+
   const [color, setColor] = useState(note?.color?.toLowerCase().trim() || "#ffffff");
   const [isPinned, setIsPinned] = useState(note?.isPinned || false);
   const [isArchived, setIsArchived] = useState(note?.isArchived || false);
@@ -211,7 +228,7 @@ export function NoteForm({
     if (!textarea) return;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    const selected = content.slice(start, end) || "styled text";
+    const selected = content.slice(start, end);
     const styleParts: string[] = [];
     if (colorValue) {
       styleParts.push(`color: ${colorValue}`);
@@ -220,12 +237,16 @@ export function NoteForm({
       styleParts.push(`font-family: ${fontValue}`);
     }
     const styleAttribute = styleParts.length > 0 ? ` style=\"${styleParts.join("; ")}\"` : "";
-    const wrapped = `<span${styleAttribute}>${selected}</span>`;
+    const openingTag = `<span${styleAttribute}>`;
+    const closingTag = "</span>";
+    const wrapped = `${openingTag}${selected}${closingTag}`;
     const nextValue =
       content.slice(0, start) + wrapped + content.slice(end);
     setContent(nextValue);
     requestAnimationFrame(() => {
-      const cursor = start + wrapped.length;
+      const cursor = selected.length > 0 
+        ? start + wrapped.length 
+        : start + openingTag.length;
       textarea.focus();
       textarea.setSelectionRange(cursor, cursor);
     });
@@ -772,9 +793,27 @@ export function NoteForm({
 
       <div>
         <label className="mb-2 block text-sm font-medium text-white">
+          Title
+        </label>
+        <input
+          type="text"
+          placeholder="Enter note title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white text-lg font-semibold placeholder:text-gray-500 focus:border-blue-500 focus:outline-none"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-medium text-white">
           Content
         </label>
         <MarkdownToolbar
+          onUndo={undo}
+          onRedo={redo}
+          canUndo={canUndo}
+          canRedo={canRedo}
           noteFiles={noteFiles}
           textColor={textColor}
           setTextColor={setTextColor}
@@ -826,7 +865,7 @@ export function NoteForm({
       <NoteMetadata
         title={title}
         setTitle={setTitle}
-        showTitle
+        showTitle={false}
         selectedFolderId={selectedFolderId}
         setSelectedFolderId={setSelectedFolderId}
         flatFolders={flatFolders}

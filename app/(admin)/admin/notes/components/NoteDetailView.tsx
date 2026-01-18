@@ -367,8 +367,8 @@ export function NoteDetailView({
             }}
           />
           {((selectedNote.relations?.length ?? 0) > 0 ||
-            selectedNote.relationsFrom?.length ||
-            selectedNote.relationsTo?.length) && (
+            (selectedNote.relationsFrom?.length ?? 0) > 0 ||
+            (selectedNote.relationsTo?.length ?? 0) > 0) && (
             <div className="mt-6 space-y-4">
               <div className="space-y-2">
                 <div className="text-xs uppercase tracking-wide text-gray-400">

@@ -6,7 +6,6 @@ import { columns } from "@/components/columns";
 import DebugPanel from "@/components/DebugPanel";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ProductTableFooter } from "@/components/products/ProductTableFooter";
 import { ProductListHeader } from "@/components/products/ProductListHeader";
 import { ProductFilters } from "@/components/products/ProductFilters";
 import { useProductData } from "./hooks/useProductData";
@@ -14,11 +13,16 @@ import { useProductOperations } from "./hooks/useProductOperations";
 import { useCatalogSync } from "./hooks/useCatalogSync";
 import { ProductModals } from "./components/ProductModals";
 import { ProductWithImages } from "@/types";
+import { useToast } from "@/components/ui/toast";
+import { logger } from "@/lib/logger";
+import type { RowSelectionState } from "@tanstack/react-table";
 
 function AdminPageInner() {
   const searchParams = useSearchParams();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
+  const { toast } = useToast();
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const {
     data,
@@ -118,6 +122,40 @@ function AdminPageInner() {
   const handleOpenListProduct = useCallback(() => setShowListProductModal(true), [setShowListProductModal]);
   const handleCloseListProduct = useCallback(() => setShowListProductModal(false), [setShowListProductModal]);
 
+  const handleMassDelete = async () => {
+    logger.log("Mass delete initiated.");
+    const selectedProductIds = Object.keys(rowSelection).filter(
+      (id) => rowSelection[id]
+    );
+
+    if (selectedProductIds.length === 0) return;
+
+    if (
+      window.confirm(
+        `Are you sure you want to delete ${selectedProductIds.length} selected products?`
+      )
+    ) {
+      try {
+        const deletePromises = selectedProductIds.map((id) =>
+          fetch(`/api/products/${id}`, { method: "DELETE" })
+        );
+        const results = await Promise.all(deletePromises);
+        const failedDeletions = results.filter((res) => !res.ok);
+
+        if (failedDeletions.length > 0) {
+          setActionError("Some products could not be deleted.");
+        } else {
+          toast("Selected products deleted successfully.", { variant: "success" });
+        }
+        setRowSelection({});
+        setRefreshTrigger((prev) => prev + 1);
+      } catch (error) {
+        logger.error("Error during mass deletion:", error);
+        setActionError("An error occurred during deletion.");
+      }
+    }
+  };
+
   useEffect(() => {
     setIsDebugOpen(searchParams.get("debug") === "true");
   }, [searchParams]);
@@ -144,20 +182,14 @@ function AdminPageInner() {
     }
   }, [data, lastEditedId]);
 
-  const tableFooter = useCallback((table: any) => (
-    <ProductTableFooter
-      table={table}
-      setRefreshTrigger={setRefreshTrigger}
-      setActionError={handleSetActionError}
-    />
-  ), [handleSetActionError, setRefreshTrigger]);
-
   return (
     <div className="container mx-auto py-10">
       {isDebugOpen && <DebugPanel />}
       <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
         <ProductListHeader
           onOpenCreateModal={handleOpenCreateModal}
+          onDeleteSelected={handleMassDelete}
+          selectedCount={Object.keys(rowSelection).filter((k) => rowSelection[k]).length}
           page={page}
           totalPages={totalPages}
           setPage={handleSetPage}
@@ -213,7 +245,8 @@ function AdminPageInner() {
           integrationBadgeIds={integrationBadgeIds}
           integrationBadgeStatuses={integrationBadgeStatuses}
           getRowId={(row) => row.id}
-          footer={tableFooter}
+          rowSelection={rowSelection}
+          onRowSelectionChange={setRowSelection}
         />
       </div>
 

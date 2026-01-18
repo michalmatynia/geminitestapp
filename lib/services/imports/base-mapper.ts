@@ -61,6 +61,31 @@ const pickNestedInt = (record: BaseProductRecord, paths: string[][]) => {
   return null;
 };
 
+const pickNestedString = (record: BaseProductRecord, paths: string[][]) => {
+  for (const path of paths) {
+    const value = toTrimmedString(pickNested(record, path));
+    if (value) return value;
+  }
+  return null;
+};
+
+const pickFirstIntFromObject = (record: BaseProductRecord, key: string) => {
+  const obj = record[key];
+  if (!obj || typeof obj !== "object") return null;
+  const values = Object.values(obj as object);
+  for (const v of values) {
+    if (typeof v === "number") return toInt(v);
+    if (typeof v === "string") return toInt(v);
+    if (typeof v === "object" && v) {
+      const p = toInt(
+        (v as any).price ?? (v as any).price_brutto ?? (v as any).price_gross
+      );
+      if (p !== null) return p;
+    }
+  }
+  return null;
+};
+
 const isUrl = (value: string) => /^https?:\/\//i.test(value);
 
 const collectUrls = (value: unknown, urls: string[]) => {
@@ -241,7 +266,24 @@ const applyTemplateMappings = (
       mapped.sku = stringValue;
       continue;
     }
+    if (targetField.startsWith("image_")) {
+      const index = parseInt(targetField.replace("image_", ""), 10) - 1;
+      if (!Number.isNaN(index) && index >= 0) {
+        if (!mapped.imageLinks) mapped.imageLinks = [];
+        // Ensure array is long enough by filling with empty strings if needed, 
+        // though typically we just want to set the value. 
+        // If we want to strictly order, we might need a sparse array or fill.
+        // For now, let's just assign.
+        mapped.imageLinks[index] = stringValue;
+      }
+      continue;
+    }
     (mapped as Record<string, unknown>)[targetField] = stringValue;
+  }
+  
+  // Clean up any empty slots if we created a sparse array
+  if (mapped.imageLinks) {
+    mapped.imageLinks = mapped.imageLinks.filter(Boolean);
   }
 };
 
@@ -256,15 +298,31 @@ export function mapBaseProduct(
     "id",
   ]);
 
-  const nameEn = pickString(record, ["name_en", "name", "title"]);
+  const nameEn =
+    pickString(record, ["name_en", "name", "title"]) ??
+    pickNestedString(record, [
+      ["text_fields", "name"],
+      ["text_fields", "name_en"],
+      ["text_fields", "name|en"],
+      ["text_fields", "title"],
+    ]);
+
   const namePl = pickString(record, ["name_pl"]);
   const nameDe = pickString(record, ["name_de"]);
 
-  const descriptionEn = pickString(record, [
-    "description_en",
-    "description",
-    "description_long",
-  ]);
+  const descriptionEn =
+    pickString(record, [
+      "description_en",
+      "description",
+      "description_long",
+    ]) ??
+    pickNestedString(record, [
+      ["text_fields", "description"],
+      ["text_fields", "description_en"],
+      ["text_fields", "description|en"],
+      ["text_fields", "description_long"],
+    ]);
+
   const descriptionPl = pickString(record, ["description_pl"]);
   const descriptionDe = pickString(record, ["description_de"]);
 
@@ -275,9 +333,12 @@ export function mapBaseProduct(
     pickNestedInt(record, [
       ["prices", "0", "price"],
       ["prices", "0", "price_brutto"],
-    ]);
+    ]) ??
+    pickFirstIntFromObject(record, "prices");
 
-  const stock = pickInt(record, ["stock", "quantity", "qty", "available"]);
+  const stock =
+    pickInt(record, ["stock", "quantity", "qty", "available"]) ??
+    pickFirstIntFromObject(record, "stock");
 
   const weight = pickInt(record, ["weight"]);
   const sizeLength = pickInt(record, ["sizeLength", "length_cm"]);
@@ -303,6 +364,7 @@ export function mapBaseProduct(
     sizeWidth: sizeWidth ?? null,
     weight: weight ?? null,
     length: length ?? null,
+    imageLinks: extractBaseImageUrls(record),
   };
 
   if (mappings.length > 0) {

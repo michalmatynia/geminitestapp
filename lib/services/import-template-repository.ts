@@ -1,10 +1,14 @@
 import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
+import { getProductDataProvider } from "@/lib/services/product-provider";
+
 type ImportTemplateProvider = "mongodb" | "prisma";
 
 const getImportTemplateProvider = async (): Promise<ImportTemplateProvider> => {
-  return process.env.MONGODB_URI ? "mongodb" : "prisma";
+  const provider = await getProductDataProvider();
+  console.log(`[ImportTemplateRepository] Provider: ${provider}`);
+  return provider;
 };
 
 export type ImportTemplateMapping = {
@@ -32,9 +36,13 @@ const parseTemplates = (value: string | null): ImportTemplate[] => {
   if (!value) return [];
   try {
     const parsed = JSON.parse(value);
-    if (!Array.isArray(parsed)) return [];
+    if (!Array.isArray(parsed)) {
+      console.warn("[ImportTemplateRepository] Parsed value is not an array:", parsed);
+      return [];
+    }
     return parsed.filter(Boolean) as ImportTemplate[];
-  } catch {
+  } catch (error) {
+    console.error("[ImportTemplateRepository] Failed to parse templates:", error);
     return [];
   }
 };
@@ -48,12 +56,15 @@ const readTemplatesValue = async (): Promise<string | null> => {
       .findOne({
         $or: [{ _id: SETTINGS_KEY }, { key: SETTINGS_KEY }],
       } as any);
-    return typeof doc?.value === "string" ? doc.value : null;
+    const val = typeof doc?.value === "string" ? doc.value : null;
+    console.log(`[ImportTemplateRepository] Read templates (Mongo):`, val ? `${val.length} chars` : "null");
+    return val;
   }
   const setting = await prisma.setting.findUnique({
     where: { key: SETTINGS_KEY },
     select: { value: true },
   });
+  console.log(`[ImportTemplateRepository] Read templates (Prisma):`, setting?.value ? `${setting.value.length} chars` : "null");
   return setting?.value ?? null;
 };
 
@@ -149,6 +160,7 @@ const readParameterCacheValue = async (): Promise<string | null> => {
 
 const writeTemplatesValue = async (value: string) => {
   const provider = await getImportTemplateProvider();
+  console.log(`[ImportTemplateRepository] Writing templates... Length: ${value.length}`);
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     await mongo.collection("settings").updateMany(
@@ -170,6 +182,7 @@ const writeTemplatesValue = async (value: string) => {
     update: { value },
     create: { key: SETTINGS_KEY, value },
   });
+  console.log(`[ImportTemplateRepository] Wrote templates (Prisma).`);
 };
 
 const writeSampleProductValue = async (value: string) => {

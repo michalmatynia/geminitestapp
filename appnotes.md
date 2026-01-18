@@ -4,8 +4,27 @@ npx tsc
 npx eslint
 add proper debugging on visual studio code
 
-Create Note doesn't look like the Edit 
 # IN PROGRESS
+Mapping Parameters in Product Imports - Import templates are not being saved. 
+
+Text color is not being appliead to text in Notes
+
+"I have this error "## Error Type
+Console Error
+
+## Error Message
+Failed to fetch price groups.
+
+
+    at ProductSettingsPage.useCallback[refreshPriceGroups] (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/_0789ff39._.js:4012:27)
+
+Next.js version: 16.1.2 (Turbopack)
+" 
+
+Also I need to stabilise auth, bring back log in by  changing-- >return true; // Redirect to login /// This one change to false in authConfig
+Continue developing Auth and also the other senior notes.
+
+
 
 # AUTH START
 
@@ -17,7 +36,8 @@ that shows Active tools
 
 # PRODUCT LIST START
 
-## COURT CASE RESOLVER -> Notes WYSIWYG, select notebook, Build context by dragging documents into context container and filling in the fillers. I should also be able to prompt out the fillers between them. The contexts should be a mind map. Come up with plan of action and choose different paths.
+## COURT CASE RESOLVER -> 
+Notes WYSIWYG, select notebook, Build context by dragging documents into context container and filling in the fillers. I should also be able to prompt out the fillers between them. The contexts should be a mind map. Come up with plan of action and choose different paths.
 
 ## Filters
 Add one button called Filter option that will hide show all available search fields and filter fields
@@ -87,7 +107,6 @@ Move image/catalog operations behind a data-access abstraction so Mongo can full
 
 # Database work
 Set the cloud database mongoDB backup to local mongoDB setUP
-Add Prisma and MongoDB Tabs for Database Management
 Add MongoDB connections to Chatbot and agentic flow
 Add MongoDB connections to CMS
 Add MongoDB connections to Application Settings in General

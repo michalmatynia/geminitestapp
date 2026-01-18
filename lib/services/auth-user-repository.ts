@@ -25,14 +25,21 @@ export const findAuthUserByEmail = async (
 ): Promise<AuthUserRecord | null> => {
   const normalized = normalizeEmail(email);
   const provider = await getAuthDataProvider();
+  console.log(`[AUTH-REPO] Finding user ${normalized} using ${provider}`);
 
   if (provider === "mongodb") {
-    if (!process.env.MONGODB_URI) return null;
+    if (!process.env.MONGODB_URI) {
+      console.log("[AUTH-REPO] MONGODB_URI missing");
+      return null;
+    }
     const db = await getMongoDb();
     const user = await db
       .collection<MongoUserDoc>("users")
       .findOne({ email: normalized });
-    if (!user || !user.email) return null;
+    if (!user || !user.email) {
+      console.log("[AUTH-REPO] MongoDB user not found");
+      return null;
+    }
     return {
       id: user._id.toString(),
       email: user.email,
@@ -42,7 +49,10 @@ export const findAuthUserByEmail = async (
     };
   }
 
-  if (!process.env.DATABASE_URL) return null;
+  if (!process.env.DATABASE_URL) {
+    console.log("[AUTH-REPO] DATABASE_URL missing");
+    return null;
+  }
   const user = await prisma.user.findUnique({
     where: { email: normalized },
     select: {
@@ -53,7 +63,10 @@ export const findAuthUserByEmail = async (
       image: true,
     },
   });
-  if (!user || !user.email) return null;
+  if (!user || !user.email) {
+    console.log("[AUTH-REPO] Prisma user not found");
+    return null;
+  }
   return {
     id: user.id,
     email: user.email,

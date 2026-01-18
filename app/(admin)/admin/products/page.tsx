@@ -1,14 +1,13 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { DataTable } from "@/components/data-table";
 import { columns } from "@/components/columns";
 import DebugPanel from "@/components/DebugPanel";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ProductListHeader } from "@/components/products/ProductListHeader";
 import { ProductFilters } from "@/components/products/ProductFilters";
-import { ProductSelectionBar } from "@/components/products/ProductSelectionBar";
 import { useProductData } from "./hooks/useProductData";
 import { useProductOperations } from "./hooks/useProductOperations";
 import { useCatalogSync } from "./hooks/useCatalogSync";
@@ -17,6 +16,22 @@ import { ProductWithImages } from "@/types";
 import { useToast } from "@/components/ui/toast";
 import { logger } from "@/lib/logger";
 import type { RowSelectionState } from "@tanstack/react-table";
+
+const ProductListHeader = dynamic(
+  () =>
+    import("@/components/products/ProductListHeader").then(
+      (mod) => mod.ProductListHeader
+    ),
+  { ssr: false }
+);
+
+const ProductSelectionBar = dynamic(
+  () =>
+    import("@/components/products/ProductSelectionBar").then(
+      (mod) => mod.ProductSelectionBar
+    ),
+  { ssr: false }
+);
 
 function AdminPageInner() {
   const searchParams = useSearchParams();

@@ -21,6 +21,7 @@ const resolveImageFileRepository = async () => getImageFileRepository();
  * @returns A list of products.
  */
 async function getProducts(filters: ProductFilters) {
+  console.log("[productService] getProducts filters:", filters);
   const productRepository = await resolveProductRepository();
   const products = await productRepository.getProducts(filters);
 

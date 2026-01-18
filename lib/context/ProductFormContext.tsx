@@ -28,6 +28,7 @@ import type {
   CatalogRecord,
   ImageFileSelection,
   ProductWithImages,
+  PriceGroup,
 } from "@/types";
 import {
   productCreateSchema,
@@ -79,6 +80,7 @@ interface ProductFormContextType {
   selectedCatalogIds: string[];
   toggleCatalog: (catalogId: string) => void;
   filteredLanguages: Language[];
+  filteredPriceGroups: PriceGroup[];
   generationError: string | null;
   setGenerationError: (error: string | null) => void;
 }
@@ -157,6 +159,7 @@ export function ProductFormProvider({
   const [catalogsError, setCatalogsError] = useState<string | null>(null);
   const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
+  const [priceGroups, setPriceGroups] = useState<PriceGroup[]>([]);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -268,6 +271,26 @@ export function ProductFormProvider({
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    const loadPriceGroups = async () => {
+      try {
+        const res = await fetch("/api/price-groups");
+        if (!res.ok) return;
+        const data = (await res.json()) as PriceGroup[];
+        if (!cancelled) {
+          setPriceGroups(data);
+        }
+      } catch (error) {
+        console.error("Failed to load price groups:", error);
+      }
+    };
+    void loadPriceGroups();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const filteredLanguages = useMemo(() => {
     if (selectedCatalogIds.length === 0) return languages;
     const allowedLanguageIds = new Set(
@@ -280,6 +303,37 @@ export function ProductFormProvider({
     }
     return languages.filter((language) => allowedLanguageIds.has(language.id));
   }, [languages, catalogs, selectedCatalogIds]);
+
+  const filteredPriceGroups = useMemo(() => {
+    if (selectedCatalogIds.length === 0) return priceGroups;
+    const allowedGroupIds = new Set<string>();
+    const orderedGroups: PriceGroup[] = [];
+
+    // First, add the default price group if available
+    const defaultGroup = priceGroups.find((pg) => pg.isDefault);
+    if (defaultGroup) {
+      orderedGroups.push(defaultGroup);
+      allowedGroupIds.add(defaultGroup.id);
+    }
+
+    // Then add groups from selected catalogs in order
+    selectedCatalogIds.forEach((catalogId) => {
+      const catalog = catalogs.find((c) => c.id === catalogId);
+      if (catalog?.priceGroupIds) {
+        catalog.priceGroupIds.forEach((pgId) => {
+          if (!allowedGroupIds.has(pgId)) {
+            const pg = priceGroups.find((p) => p.id === pgId);
+            if (pg) {
+              orderedGroups.push(pg);
+              allowedGroupIds.add(pgId);
+            }
+          }
+        });
+      }
+    });
+
+    return orderedGroups.length > 0 ? orderedGroups : priceGroups;
+  }, [priceGroups, catalogs, selectedCatalogIds]);
 
   // Effect to clean up object URLs when component unmounts or imageSlots change
   useEffect(() => {
@@ -618,6 +672,7 @@ export function ProductFormProvider({
           selectedCatalogIds,
           toggleCatalog,
           filteredLanguages,
+          filteredPriceGroups,
           generationError,
           setGenerationError,
         }}

@@ -10,6 +10,7 @@ export async function getProducts(filters: {
   endDate?: string;
   page?: number;
   pageSize?: number;
+  catalogId?: string;
 }): Promise<ProductWithImages[]> {
   const query = new URLSearchParams();
   if (filters.search) query.append("search", filters.search);
@@ -20,6 +21,7 @@ export async function getProducts(filters: {
   if (filters.endDate) query.append("endDate", filters.endDate);
   if (filters.page) query.append("page", String(filters.page));
   if (filters.pageSize) query.append("pageSize", String(filters.pageSize));
+  if (filters.catalogId) query.append("catalogId", filters.catalogId);
 
   const res = await fetch(`/api/products?${query.toString()}`);
   if (!res.ok) {
@@ -47,6 +49,7 @@ export async function countProducts(filters: {
   maxPrice?: number;
   startDate?: string;
   endDate?: string;
+  catalogId?: string;
 }): Promise<number> {
   const query = new URLSearchParams();
   if (filters.search) query.append("search", filters.search);
@@ -55,6 +58,7 @@ export async function countProducts(filters: {
   if (filters.maxPrice) query.append("maxPrice", String(filters.maxPrice));
   if (filters.startDate) query.append("startDate", filters.startDate);
   if (filters.endDate) query.append("endDate", filters.endDate);
+  if (filters.catalogId) query.append("catalogId", filters.catalogId);
 
   const res = await fetch(`/api/products/count?${query.toString()}`);
   if (!res.ok) {

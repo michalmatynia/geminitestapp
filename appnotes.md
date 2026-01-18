@@ -9,16 +9,34 @@ add proper debugging on visual studio code
 
 ---
 
+* In my Edit / Create Product Page, Move the Content field with Tabas into General Tab underneath the Name Field
+
+* When I open Edit / Create Product Page, I don't see the Name Field immediately, it appears only upon clicking on Tabs
+
+* In Product Create / Edit Page, move Name field with Tabs to the top, make SKU Required field and make the field a bit shorter and Align in with Ean and GTIN and ASIN Field which should now be one field, and there is a dropdown button to the left, where you can select whether you are currently editing EAN, GTIN or ASIN*
+
+* In my Product Edit / Create Window, the Product Base Id should be put into a separate TAB called Import Information, it should not be presented in General Tab
+
+Add additional  information to Import Information, like when was the product imported as well as all the values that it was imported with.
+
+In Product List, When I change the Catalog to Unassigned, I can still see the products assigned to a different Catalog
+
+* The same goes for price groups, but I would like the Default price group to be the first one listed in Product Edit / Create window
+
+I need to have the categories field in the Product Create / Edit Panel. I Need to have the Tags field in the Product Create / Edit Panel.
+
+In Product List, hovering over an image should give me a slightly bigger image preview.
+
 I load the import list in the Limit of 10, yet when I see the Import list preview is says Total: 1000 · Existing: 0 · Showing: 1000
 
 Move the pagination in Product List under Min Price Max Price Fields 
 
+The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
 
-* Underneath the navigation panel in Product list, I need another panel. The first button is checked products settings, It will dropdown with the following options On this Page: "Check All" "Uncheck All" On All Pages "Check All" "Uncheck All"
+I also have [auth][warn][debug-enabled] Read more: https://warnings.authjs.dev
 
-
-* When I change the catalog to unassigned it still shows Products listed which are part of the catalog
-
+In Create / Edit Product Panel , in Images the slots show two dots above a light up, whereas the other dot should only lit up if there is an image file in the slot. Also Flipping the switch that toggles between Image Thumnail from Link and Image Thumbnail from actual Image file doesn't work.
+ 
 
 ## Filters
 Add one button called Filter option that will hide show all available search fields and filter fields

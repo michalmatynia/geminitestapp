@@ -1,5 +1,12 @@
 import React from "react";
+import { MoreVertical } from "lucide-react";
 import { Catalog } from "@/types/products";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type CatalogsSettingsProps = {
   loadingCatalogs: boolean;
@@ -70,18 +77,27 @@ export function CatalogsSettings({
                   ) : null}
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    className="text-xs text-gray-400 hover:text-white"
-                    onClick={() => handleEditCatalog(catalog)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="text-xs text-red-400 hover:text-red-300"
-                    onClick={() => handleDeleteCatalog(catalog)}
-                  >
-                    Delete
-                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-1 hover:bg-gray-800 rounded-full text-gray-400 hover:text-white">
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => handleEditCatalog(catalog)}
+                        className="cursor-pointer"
+                      >
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-red-400 focus:text-red-400 cursor-pointer"
+                        onClick={() => handleDeleteCatalog(catalog)}
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             ))}

@@ -65,6 +65,7 @@ export function useProductData({ refreshTrigger }: UseProductDataProps) {
       pageSize,
       catalogId: catalogFilter === "all" ? undefined : catalogFilter,
     };
+    console.log("[useProductData] Loading products with filters:", filters);
     let cancelled = false;
     const loadProducts = async () => {
       setLoadError(null);

@@ -10,6 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useProductFormContext } from "@/lib/context/ProductFormContext";
 import { ProductFormData } from "@/types";
 import { logger } from "@/lib/logger";
@@ -45,6 +52,7 @@ export default function ProductForm({
     selectedCatalogIds,
     toggleCatalog,
     filteredLanguages,
+    filteredPriceGroups,
     generationError,
     setGenerationError,
   } = useProductFormContext();
@@ -53,12 +61,18 @@ export default function ProductForm({
     useFormContext<ProductFormData>();
   const searchParams = useSearchParams();
   const [isDebugOpen, setIsDebugOpen] = useState(false);
-  const nameEn = watch("name_en");
-  const namePl = watch("name_pl");
-  const nameDe = watch("name_de");
-  const descriptionEn = watch("description_en");
-  const descriptionPl = watch("description_pl");
-  const descriptionDe = watch("description_de");
+  const allValues = watch(); // Watch all values to safely access them in loops without violating hook rules
+  
+  const [identifierType, setIdentifierType] = useState<"ean" | "gtin" | "asin">("ean");
+
+  useEffect(() => {
+    const vals = getValues();
+    if (vals.asin) {
+      setIdentifierType("asin");
+    } else if (vals.gtin) {
+      setIdentifierType("gtin");
+    }
+  }, [getValues]);
 
   useEffect(() => {
     setIsDebugOpen(searchParams.get("debug") === "true");
@@ -106,144 +120,161 @@ export default function ProductForm({
     <form onSubmit={handleSubmit}>
       {isDebugOpen && <DebugPanel />}
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="other">Other</TabsTrigger>
           <TabsTrigger value="images">Images</TabsTrigger>
+          <TabsTrigger value="import-info">Import Info</TabsTrigger>
         </TabsList>
         <TabsContent value="general" className="mt-4">
-          <div className="mb-4">
-            <Label htmlFor="sku">
-              SKU{skuRequired ? " *" : ""}
-            </Label>
-            <Input
-              id="sku"
-              {...register("sku")}
-              aria-invalid={errors.sku ? "true" : "false"}
-              aria-required={skuRequired ? "true" : "false"}
-            />
-            {errors.sku && (
-              <p className="text-red-500 text-sm mt-1" role="alert">
-                {errors.sku.message}
-              </p>
-            )}
-          </div>
-
-          <div className="mb-4 grid gap-4 md:grid-cols-3">
-            <div>
-              <Label htmlFor="ean">EAN</Label>
-              <Input id="ean" {...register("ean")} />
-            </div>
-            <div>
-              <Label htmlFor="gtin">GTIN</Label>
-              <Input id="gtin" {...register("gtin")} />
-            </div>
-            <div>
-              <Label htmlFor="asin">ASIN</Label>
-              <Input id="asin" {...register("asin")} />
-            </div>
-          </div>
-
-          <div className="mb-4">
-            <Label htmlFor="baseProductId">Base ID</Label>
-            <Input
-              id="baseProductId"
-              {...register("baseProductId")}
-              disabled
-              className="bg-muted cursor-not-allowed"
-              placeholder="Imported from Base.com"
-              aria-readonly="true"
-            />
-            <p className="text-muted-foreground text-xs mt-1">
-              This ID is imported from Base.com and cannot be edited.
-            </p>
-          </div>
-
-          <Tabs defaultValue="english-name" className="mb-4">
+          <Tabs defaultValue={filteredLanguages[0] ? `${filteredLanguages[0].name.toLowerCase()}-name` : "english-name"} className="mb-4">
             <TabsList>
-              {filteredLanguages.some((language) => language.code === "EN") && (
-                <TabsTrigger
-                  value="english-name"
-                  className={cn(
-                    !nameEn?.trim()
-                      ? "text-muted-foreground/90 data-[state=active]:text-muted-foreground/90"
-                      : "text-foreground data-[state=inactive]:text-foreground font-medium"
-                  )}
-                >
-                  English Name
-                </TabsTrigger>
-              )}
-              {filteredLanguages.some((language) => language.code === "PL") && (
-                <TabsTrigger
-                  value="polish-name"
-                  className={cn(
-                    !namePl?.trim()
-                      ? "text-muted-foreground/90 data-[state=active]:text-muted-foreground/90"
-                      : "text-foreground data-[state=inactive]:text-foreground font-medium"
-                  )}
-                >
-                  Polish Name
-                </TabsTrigger>
-              )}
-              {filteredLanguages.some((language) => language.code === "DE") && (
-                <TabsTrigger
-                  value="german-name"
-                  className={cn(
-                    !nameDe?.trim()
-                      ? "text-muted-foreground/90 data-[state=active]:text-muted-foreground/90"
-                      : "text-foreground data-[state=inactive]:text-foreground font-medium"
-                  )}
-                >
-                  German Name
-                </TabsTrigger>
-              )}
+              {filteredLanguages.map((language) => {
+                const fieldName = `name_${language.code.toLowerCase()}` as "name_en" | "name_pl" | "name_de";
+                const fieldValue = allValues[fieldName];
+                return (
+                  <TabsTrigger
+                    key={language.code}
+                    value={`${language.name.toLowerCase()}-name`}
+                    className={cn(
+                      !fieldValue?.trim()
+                        ? "text-muted-foreground/90 data-[state=active]:text-muted-foreground/90"
+                        : "text-foreground data-[state=inactive]:text-foreground font-medium"
+                    )}
+                  >
+                    {language.name} Name
+                  </TabsTrigger>
+                );
+              })}
             </TabsList>
-            {filteredLanguages.some((language) => language.code === "EN") && (
-              <TabsContent value="english-name">
-              <Label htmlFor="name_en">English Name</Label>
-              <Input
-                id="name_en"
-                {...register("name_en")}
-                aria-invalid={errors.name_en ? "true" : "false"}
-              />
-              {errors.name_en && (
-                <p className="text-red-500 text-sm mt-1" role="alert">
-                  {errors.name_en.message}
-                </p>
-              )}
-              </TabsContent>
-            )}
-            {filteredLanguages.some((language) => language.code === "PL") && (
-              <TabsContent value="polish-name">
-              <Label htmlFor="name_pl">Polish Name</Label>
-              <Input
-                id="name_pl"
-                {...register("name_pl")}
-                aria-invalid={errors.name_pl ? "true" : "false"}
-              />
-              {errors.name_pl && (
-                <p className="text-red-500 text-sm mt-1" role="alert">
-                  {errors.name_pl.message}
-                </p>
-              )}
-              </TabsContent>
-            )}
-            {filteredLanguages.some((language) => language.code === "DE") && (
-              <TabsContent value="german-name">
-              <Label htmlFor="name_de">German Name</Label>
-              <Input
-                id="name_de"
-                {...register("name_de")}
-                aria-invalid={errors.name_de ? "true" : "false"}
-              />
-              {errors.name_de && (
-                <p className="text-red-500 text-sm mt-1" role="alert">
-                  {errors.name_de.message}
-                </p>
-              )}
-              </TabsContent>
-            )}
+            {filteredLanguages.map((language) => {
+              const fieldName = `name_${language.code.toLowerCase()}` as "name_en" | "name_pl" | "name_de";
+              return (
+                <TabsContent key={language.code} value={`${language.name.toLowerCase()}-name`}>
+                  <Label htmlFor={fieldName}>{language.name} Name</Label>
+                  <Input
+                    id={fieldName}
+                    {...register(fieldName)}
+                    aria-invalid={errors[fieldName] ? "true" : "false"}
+                  />
+                  {errors[fieldName] && (
+                    <p className="text-red-500 text-sm mt-1" role="alert">
+                      {errors[fieldName]?.message}
+                    </p>
+                  )}
+                </TabsContent>
+              );
+            })}
           </Tabs>
+
+          <Tabs defaultValue={filteredLanguages[0] ? `${filteredLanguages[0].name.toLowerCase()}-description` : "english-description"} className="mb-4">
+            <TabsList>
+              {filteredLanguages.map((language) => {
+                const fieldName = `description_${language.code.toLowerCase()}` as "description_en" | "description_pl" | "description_de";
+                const fieldValue = allValues[fieldName];
+                return (
+                  <TabsTrigger
+                    key={language.code}
+                    value={`${language.name.toLowerCase()}-description`}
+                    className={cn(
+                      !fieldValue?.trim()
+                        ? "text-muted-foreground/90 data-[state=active]:text-muted-foreground/90"
+                        : "text-foreground data-[state=inactive]:text-foreground font-medium"
+                    )}
+                  >
+                    {language.name} Description
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+            {filteredLanguages.map((language) => {
+              const fieldName = `description_${language.code.toLowerCase()}` as "description_en" | "description_pl" | "description_de";
+              return (
+                <TabsContent key={language.code} value={`${language.name.toLowerCase()}-description`}>
+                  <Label htmlFor={fieldName}>{language.name} Description</Label>
+                  <Textarea
+                    id={fieldName}
+                    {...register(fieldName)}
+                    aria-invalid={errors[fieldName] ? "true" : "false"}
+                  />
+                  {errors[fieldName] && (
+                    <p className="text-red-500 text-sm mt-1" role="alert">
+                      {errors[fieldName]?.message}
+                    </p>
+                  )}
+                  {language.code === "EN" && (
+                    <>
+                      {generationError && (
+                        <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                          {generationError}
+                          <Button
+                            onClick={() => setGenerationError(null)}
+                            className="ml-4 bg-transparent text-red-200 hover:bg-red-500/20"
+                          >
+                            Dismiss
+                          </Button>
+                        </div>
+                      )}
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          void handleGenerateDescription();
+                        }}
+                        disabled={generating}
+                        className="mt-2"
+                        aria-label="Generate product description"
+                        aria-disabled={generating}
+                      >
+                        {generating ? "Generating..." : "Generate Description"}
+                      </Button>
+                    </>
+                  )}
+                </TabsContent>
+              );
+            })}
+          </Tabs>
+
+          <div className="mb-4 flex flex-col gap-4 md:flex-row">
+            <div className="w-full md:w-1/3">
+              <Label htmlFor="sku">SKU *</Label>
+              <Input
+                id="sku"
+                {...register("sku")}
+                aria-invalid={errors.sku ? "true" : "false"}
+                aria-required="true"
+              />
+              {errors.sku && (
+                <p className="text-red-500 text-sm mt-1" role="alert">
+                  {errors.sku.message}
+                </p>
+              )}
+            </div>
+            <div className="flex-1">
+              <Label>Product Identifier</Label>
+              <div className="flex gap-2">
+                <Select
+                  value={identifierType}
+                  onValueChange={(value) =>
+                    setIdentifierType(value as "ean" | "gtin" | "asin")
+                  }
+                >
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ean">EAN</SelectItem>
+                    <SelectItem value="gtin">GTIN</SelectItem>
+                    <SelectItem value="asin">ASIN</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  id={identifierType}
+                  {...register(identifierType)}
+                  placeholder={`Enter ${identifierType.toUpperCase()}`}
+                />
+              </div>
+            </div>
+          </div>
 
           <div className="mb-4 grid grid-cols-2 gap-4 md:grid-cols-4">
             <div className="space-y-1">
@@ -327,6 +358,45 @@ export default function ProductForm({
               )}
             </div>
           </div>
+
+          <div className="mb-4">
+            <Label>Catalogs</Label>
+            {catalogsLoading ? (
+              <p className="mt-2 text-sm text-gray-400">Loading catalogs...</p>
+            ) : catalogsError ? (
+              <p className="mt-2 text-sm text-red-400">{catalogsError}</p>
+            ) : catalogs.length === 0 ? (
+              <p className="mt-2 text-sm text-gray-400">
+                No catalogs yet. Create one in Product Settings.
+              </p>
+            ) : (
+              <div className="mt-2 space-y-2 rounded-md border border-gray-800 bg-gray-950/40 p-3">
+                {catalogs.map((catalog) => (
+                  <label
+                    key={catalog.id}
+                    className="flex items-start gap-2 text-sm text-gray-200"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedCatalogIds.includes(catalog.id)}
+                      onChange={() => toggleCatalog(catalog.id)}
+                      className="mt-0.5 accent-primary"
+                    />
+                    <span>
+                      <span className="font-medium text-white">
+                        {catalog.name}
+                      </span>
+                      {catalog.description ? (
+                        <span className="block text-xs text-gray-400">
+                          {catalog.description}
+                        </span>
+                      ) : null}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
         </TabsContent>
         <TabsContent value="other" className="mt-4">
           <div className="mb-4">
@@ -343,114 +413,25 @@ export default function ProductForm({
               </p>
             )}
           </div>
-          <Tabs defaultValue="english-description" className="mb-4">
-            <TabsList>
-              {filteredLanguages.some((language) => language.code === "EN") && (
-                <TabsTrigger
-                  value="english-description"
-                  className={cn(
-                    !descriptionEn?.trim()
-                      ? "text-muted-foreground/90 data-[state=active]:text-muted-foreground/90"
-                      : "text-foreground data-[state=inactive]:text-foreground font-medium"
-                  )}
-                >
-                  English Description
-                </TabsTrigger>
-              )}
-              {filteredLanguages.some((language) => language.code === "PL") && (
-                <TabsTrigger
-                  value="polish-description"
-                  className={cn(
-                    !descriptionPl?.trim()
-                      ? "text-muted-foreground/90 data-[state=active]:text-muted-foreground/90"
-                      : "text-foreground data-[state=inactive]:text-foreground font-medium"
-                  )}
-                >
-                  Polish Description
-                </TabsTrigger>
-              )}
-              {filteredLanguages.some((language) => language.code === "DE") && (
-                <TabsTrigger
-                  value="german-description"
-                  className={cn(
-                    !descriptionDe?.trim()
-                      ? "text-muted-foreground/90 data-[state=active]:text-muted-foreground/90"
-                      : "text-foreground data-[state=inactive]:text-foreground font-medium"
-                  )}
-                >
-                  German Description
-                </TabsTrigger>
-              )}
-            </TabsList>
-            {filteredLanguages.some((language) => language.code === "EN") && (
-              <TabsContent value="english-description">
-              <Label htmlFor="description_en">English Description</Label>
-              <Textarea
-                id="description_en"
-                {...register("description_en")}
-                aria-invalid={errors.description_en ? "true" : "false"}
-              />
-              {errors.description_en && (
-                <p className="text-red-500 text-sm mt-1" role="alert">
-                  {errors.description_en.message}
-                </p>
-              )}
-              {generationError && (
-                <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                  {generationError}
-                  <Button
-                    onClick={() => setGenerationError(null)}
-                    className="ml-4 bg-transparent text-red-200 hover:bg-red-500/20"
-                  >
-                    Dismiss
-                  </Button>
-                </div>
-              )}
-              <Button
-                type="button"
-                onClick={() => {
-                  void handleGenerateDescription();
-                }}
-                disabled={generating}
-                className="mt-2"
-                aria-label="Generate product description"
-                aria-disabled={generating}
-              >
-                {generating ? "Generating..." : "Generate Description"}
-              </Button>
-              </TabsContent>
-            )}
-            {filteredLanguages.some((language) => language.code === "PL") && (
-              <TabsContent value="polish-description">
-              <Label htmlFor="description_pl">Polish Description</Label>
-              <Textarea
-                id="description_pl"
-                {...register("description_pl")}
-                aria-invalid={errors.description_pl ? "true" : "false"}
-              />
-              {errors.description_pl && (
-                <p className="text-red-500 text-sm mt-1" role="alert">
-                  {errors.description_pl.message}
-                </p>
-              )}
-              </TabsContent>
-            )}
-            {filteredLanguages.some((language) => language.code === "DE") && (
-              <TabsContent value="german-description">
-              <Label htmlFor="description_de">German Description</Label>
-              <Textarea
-                id="description_de"
-                {...register("description_de")}
-                aria-invalid={errors.description_de ? "true" : "false"}
-              />
-              {errors.description_de && (
-                <p className="text-red-500 text-sm mt-1" role="alert">
-                  {errors.description_de.message}
-                </p>
-              )}
-              </TabsContent>
-            )}
-          </Tabs>
+          <div className="mb-4">
+            <Label htmlFor="defaultPriceGroupId">Price Group</Label>
+            <Select
+              onValueChange={(value) => setValue("defaultPriceGroupId", value)}
+              defaultValue={getValues("defaultPriceGroupId") || ""}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select price group" />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredPriceGroups.map((group) => (
+                  <SelectItem key={group.id} value={group.id}>
+                    {group.name} {group.isDefault ? "(Default)" : ""}{" "}
+                    ({group.currencyCode})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="mb-4">
             <Label htmlFor="supplierName">Supplier Name</Label>
             <Input
@@ -504,44 +485,6 @@ export default function ProductForm({
               </p>
             )}
           </div>
-          <div className="mb-4">
-            <Label>Catalogs</Label>
-            {catalogsLoading ? (
-              <p className="mt-2 text-sm text-gray-400">Loading catalogs...</p>
-            ) : catalogsError ? (
-              <p className="mt-2 text-sm text-red-400">{catalogsError}</p>
-            ) : catalogs.length === 0 ? (
-              <p className="mt-2 text-sm text-gray-400">
-                No catalogs yet. Create one in Product Settings.
-              </p>
-            ) : (
-              <div className="mt-2 space-y-2 rounded-md border border-gray-800 bg-gray-950/40 p-3">
-                {catalogs.map((catalog) => (
-                  <label
-                    key={catalog.id}
-                    className="flex items-start gap-2 text-sm text-gray-200"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedCatalogIds.includes(catalog.id)}
-                      onChange={() => toggleCatalog(catalog.id)}
-                      className="mt-0.5"
-                    />
-                    <span>
-                      <span className="font-medium text-white">
-                        {catalog.name}
-                      </span>
-                      {catalog.description ? (
-                        <span className="block text-xs text-gray-400">
-                          {catalog.description}
-                        </span>
-                      ) : null}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
         </TabsContent>
         <TabsContent value="images" className="mt-4">
           <div className="mb-4">
@@ -579,6 +522,22 @@ export default function ProductForm({
             />
           </div>
           <ProductImageManager />
+        </TabsContent>
+        <TabsContent value="import-info" className="mt-4">
+          <div className="mb-4">
+            <Label htmlFor="baseProductId">Base ID</Label>
+            <Input
+              id="baseProductId"
+              {...register("baseProductId")}
+              disabled
+              className="bg-muted cursor-not-allowed"
+              placeholder="Imported from Base.com"
+              aria-readonly="true"
+            />
+            <p className="text-muted-foreground text-xs mt-1">
+              This ID is imported from Base.com and cannot be edited.
+            </p>
+          </div>
         </TabsContent>
       </Tabs>
       <div className="mt-4">

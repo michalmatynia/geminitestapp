@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ProductListHeader } from "@/components/products/ProductListHeader";
 import { ProductFilters } from "@/components/products/ProductFilters";
+import { ProductSelectionBar } from "@/components/products/ProductSelectionBar";
 import { useProductData } from "./hooks/useProductData";
 import { useProductOperations } from "./hooks/useProductOperations";
 import { useCatalogSync } from "./hooks/useCatalogSync";
@@ -122,6 +123,38 @@ function AdminPageInner() {
   const handleOpenListProduct = useCallback(() => setShowListProductModal(true), [setShowListProductModal]);
   const handleCloseListProduct = useCallback(() => setShowListProductModal(false), [setShowListProductModal]);
 
+  const [loadingGlobalSelection, setLoadingGlobalSelection] = useState(false);
+
+  const handleSelectAllGlobal = async () => {
+    setLoadingGlobalSelection(true);
+    try {
+      const params = new URLSearchParams();
+      if (search) params.append("search", search);
+      if (sku) params.append("sku", sku);
+      if (minPrice !== undefined) params.append("minPrice", String(minPrice));
+      if (maxPrice !== undefined) params.append("maxPrice", String(maxPrice));
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+
+      const res = await fetch(`/api/products?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch all products");
+
+      const allProducts = (await res.json()) as ProductWithImages[];
+
+      const newSelection: RowSelectionState = {};
+      allProducts.forEach((p) => {
+        newSelection[p.id] = true;
+      });
+      setRowSelection(newSelection);
+      toast(`Selected ${allProducts.length} products.`, { variant: "success" });
+    } catch (error) {
+      console.error(error);
+      toast("Failed to select all products", { variant: "error" });
+    } finally {
+      setLoadingGlobalSelection(false);
+    }
+  };
+
   const handleMassDelete = async () => {
     logger.log("Mass delete initiated.");
     const selectedProductIds = Object.keys(rowSelection).filter(
@@ -188,8 +221,6 @@ function AdminPageInner() {
       <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
         <ProductListHeader
           onOpenCreateModal={handleOpenCreateModal}
-          onDeleteSelected={handleMassDelete}
-          selectedCount={Object.keys(rowSelection).filter((k) => rowSelection[k]).length}
           page={page}
           totalPages={totalPages}
           setPage={handleSetPage}
@@ -203,6 +234,15 @@ function AdminPageInner() {
           catalogFilter={catalogFilter}
           setCatalogFilter={handleSetCatalogFilter}
           catalogs={catalogs}
+        />
+        <ProductSelectionBar
+          data={data}
+          rowSelection={rowSelection}
+          setRowSelection={setRowSelection}
+          onSelectAllGlobal={handleSelectAllGlobal}
+          loadingGlobal={loadingGlobalSelection}
+          total={total}
+          onDeleteSelected={handleMassDelete}
         />
         {loadError && (
           <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">

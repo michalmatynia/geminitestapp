@@ -51,6 +51,14 @@ const buildProductWhere = (filters: ProductFilters) => {
     };
   }
 
+  if (filters.catalogId) {
+    if (filters.catalogId === "unassigned") {
+      where.catalogs = { none: {} };
+    } else {
+      where.catalogs = { some: { catalogId: filters.catalogId } };
+    }
+  }
+
   return where;
 };
 
@@ -227,6 +235,14 @@ export const prismaProductRepository: ProductRepository = {
         catalog: toCatalogRecord(entry.catalog),
       })),
     };
+  },
+
+  async findProductByBaseId(baseProductId: string) {
+    const product = await prisma.product.findFirst({
+      where: { baseProductId },
+    });
+    if (!product) return null;
+    return toProductRecord(product);
   },
 
   async createProduct(data: CreateProductInput) {

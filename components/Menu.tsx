@@ -102,6 +102,12 @@ export default function Menu() {
         >
           Marketplaces
         </Link>
+        <Link
+          href="/admin/integrations"
+          className="block w-full text-left hover:bg-gray-700 p-2 rounded"
+        >
+          Integrations
+        </Link>
       </CollapsibleMenu>
       <CollapsibleMenu
         title="Notes"
@@ -235,31 +241,6 @@ export default function Menu() {
           className="block hover:bg-gray-700 p-2 rounded"
         >
           User Pages
-        </Link>
-      </CollapsibleMenu>
-      <Link
-        href="/admin/import"
-        className="flex items-center hover:bg-gray-700 p-2 rounded"
-      >
-        <UploadIcon className="mr-2" />
-        {!isMenuCollapsed && "Import"}
-      </Link>
-      <CollapsibleMenu
-        title="Integrations"
-        icon={<PlugIcon />}
-        href="/admin/integrations"
-      >
-        <Link
-          href="/admin/integrations"
-          className="block hover:bg-gray-700 p-2 rounded"
-        >
-          Overview
-        </Link>
-        <Link
-          href="/admin/integrations/settings"
-          className="block hover:bg-gray-700 p-2 rounded"
-        >
-          Settings
         </Link>
       </CollapsibleMenu>
       <CollapsibleMenu title="Chatbot" icon={<MessageCircleIcon />} href="/admin/chatbot">

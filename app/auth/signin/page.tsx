@@ -85,6 +85,13 @@ export default function SignInPage() {
           >
             Continue with Google
           </button>
+          <button
+            className="w-full rounded-md border border-gray-700 px-3 py-2 text-sm font-semibold text-gray-200 hover:border-gray-500"
+            type="button"
+            onClick={() => signIn("facebook", { callbackUrl: "/admin" })}
+          >
+            Continue with Facebook
+          </button>
         </div>
         <p className="text-xs text-gray-400">
           No account?{" "}

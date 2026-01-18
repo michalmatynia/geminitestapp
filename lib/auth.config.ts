@@ -15,7 +15,7 @@ export const authConfig = {
       const isOnAdmin = nextUrl.pathname.startsWith("/admin");
       if (isOnAdmin) {
         if (isLoggedIn) return true;
-        return true; // Redirect to login /// This one change to false
+        return false; // Redirect to login
       }
       return true;
     },

@@ -7,16 +7,17 @@ add proper debugging on visual studio code
 
 # IN PROGRESS
 
-Note App
-In Note Edit / Create, clicking Link tag doesn't add Link into markdown and doesn't change the text into link
-
 ---
 
-BAse imports are duplicate
+I load the import list in the Limit of 10, yet when I see the Import list preview is says Total: 1000 · Existing: 0 · Showing: 1000
 
 Move the pagination in Product List under Min Price Max Price Fields 
 
-When I change the catalog to unassigned it still shows Products listed which are part of the catalog
+
+* Underneath the navigation panel in Product list, I need another panel. The first button is checked products settings, It will dropdown with the following options On this Page: "Check All" "Uncheck All" On All Pages "Check All" "Uncheck All"
+
+
+* When I change the catalog to unassigned it still shows Products listed which are part of the catalog
 
 
 ## Filters

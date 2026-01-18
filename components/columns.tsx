@@ -263,6 +263,16 @@ export const columns: ColumnDef<ProductWithImages>[] = [
   },
 
   {
+    accessorKey: "stock",
+    header: ({ column }) => (
+      <Button variant="ghost" onClick={() => column.toggleSorting()}>
+        Stock
+        <ArrowUpDown className="ml-2 size-4" />
+      </Button>
+    ),
+  },
+
+  {
     accessorKey: "createdAt",
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting()}>

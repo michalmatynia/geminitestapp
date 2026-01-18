@@ -7,6 +7,8 @@ import { AdminLayoutProvider, useAdminLayout } from "@/lib/context/AdminLayoutCo
 import { NoteSettingsProvider } from "@/lib/context/NoteSettingsContext";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { SessionProvider } from "next-auth/react";
+import { UserNav } from "@/components/UserNav";
 
 const Menu = dynamic(() => import("@/components/Menu"), { ssr: false });
 
@@ -54,7 +56,14 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           <Menu />
         </div>
       </aside>
-      <main className="flex-1 p-4 overflow-y-auto">{children}</main>
+      <div className="relative flex-1 flex flex-col min-w-0">
+        <header className="absolute top-0 right-0 z-10 flex h-14 items-center px-6 pointer-events-none">
+          <div className="pointer-events-auto">
+            <UserNav />
+          </div>
+        </header>
+        <main className="flex-1 p-4 overflow-y-auto">{children}</main>
+      </div>
     </div>
   );
 }
@@ -66,11 +75,13 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AdminLayoutProvider>
-      <NoteSettingsProvider>
-        <AdminLayoutContent>{children}</AdminLayoutContent>
-      </NoteSettingsProvider>
-    </AdminLayoutProvider>
+    <SessionProvider>
+      <AdminLayoutProvider>
+        <NoteSettingsProvider>
+          <AdminLayoutContent>{children}</AdminLayoutContent>
+        </NoteSettingsProvider>
+      </AdminLayoutProvider>
+    </SessionProvider>
   );
 }
 

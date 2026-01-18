@@ -351,6 +351,7 @@ export async function POST(req: Request) {
     for (const raw of productsToImport) {
       try {
         const mapped = mapBaseProduct(raw, template?.mappings ?? []);
+
         // mapped.imageLinks already contains base images + mapped overrides
         const imageUrls = (mapped.imageLinks ?? []).slice(0, maxImages);
         const payload = productCreateSchema.parse({

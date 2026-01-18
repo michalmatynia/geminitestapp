@@ -116,6 +116,14 @@ const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => 
     }
   }
 
+  if (filters.catalogId) {
+    if (filters.catalogId === "unassigned") {
+      filter.catalogs = { $size: 0 };
+    } else {
+      filter.catalogs = { $elemMatch: { catalogId: filters.catalogId } };
+    }
+  }
+
   return filter;
 };
 
@@ -156,6 +164,14 @@ export const mongoProductRepository: ProductRepository = {
       .collection<ProductDocument>(productCollectionName)
       .findOne({ $or: [{ _id: id }, { id }] });
     return doc ? toProductResponse({ ...doc, _id: doc._id }) : null;
+  },
+
+  async findProductByBaseId(baseProductId: string) {
+    const db = await getMongoDb();
+    const doc = await db
+      .collection<ProductDocument>(productCollectionName)
+      .findOne({ baseProductId });
+    return doc ? toProductBase(doc) : null;
   },
 
   async createProduct(data: CreateProductInput) {

@@ -26,6 +26,7 @@ import {
   ProductCategoryWithChildren,
   ProductTag,
 } from "@/types/products";
+import { IntegrationsSettings } from "./components/IntegrationsSettings";
 import { PriceGroupsSettings } from "./components/PriceGroupsSettings";
 import { DataSourceSettings } from "./components/DataSourceSettings";
 import { CatalogsSettings } from "./components/CatalogsSettings";
@@ -1237,6 +1238,7 @@ export default function ProductSettingsPage() {
                 handleDeleteLanguage={handleDeleteLanguage}
               />
             )}
+            {activeSection === "Integrations" && <IntegrationsSettings />}
           </section>
         </div>
       </div>

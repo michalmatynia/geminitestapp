@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AUTH_DB_PROVIDER_SETTING_KEY } from "@/lib/services/auth-provider";
+
+const AUTH_DB_PROVIDER_SETTING_KEY = "auth_db_provider";
 
 type AuthDbProvider = "prisma" | "mongodb";
 

@@ -8,6 +8,7 @@ export const settingSections = [
   "Catalogs",
   "Data Source",
   "Internationalization",
+  "Integrations",
 ] as const;
 
 export const productDbOptions: Array<{

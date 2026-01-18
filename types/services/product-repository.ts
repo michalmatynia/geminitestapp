@@ -13,6 +13,7 @@ export type ProductFilters = {
   endDate?: string;
   page?: string;
   pageSize?: string;
+  catalogId?: string;
 };
 
 export type CreateProductInput = ProductCreateData;
@@ -22,6 +23,7 @@ export type ProductRepository = {
   getProducts(filters: ProductFilters): Promise<ProductWithImages[]>;
   countProducts(filters: ProductFilters): Promise<number>;
   getProductById(id: string): Promise<ProductWithImages | null>;
+  findProductByBaseId(baseProductId: string): Promise<ProductRecord | null>;
   createProduct(data: CreateProductInput): Promise<ProductRecord>;
   updateProduct(
     id: string,

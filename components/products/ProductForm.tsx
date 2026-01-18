@@ -17,6 +17,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useProductFormContext } from "@/lib/context/ProductFormContext";
 import { ProductFormData } from "@/types";
 import { logger } from "@/lib/logger";
@@ -358,45 +364,6 @@ export default function ProductForm({
               )}
             </div>
           </div>
-
-          <div className="mb-4">
-            <Label>Catalogs</Label>
-            {catalogsLoading ? (
-              <p className="mt-2 text-sm text-gray-400">Loading catalogs...</p>
-            ) : catalogsError ? (
-              <p className="mt-2 text-sm text-red-400">{catalogsError}</p>
-            ) : catalogs.length === 0 ? (
-              <p className="mt-2 text-sm text-gray-400">
-                No catalogs yet. Create one in Product Settings.
-              </p>
-            ) : (
-              <div className="mt-2 space-y-2 rounded-md border border-gray-800 bg-gray-950/40 p-3">
-                {catalogs.map((catalog) => (
-                  <label
-                    key={catalog.id}
-                    className="flex items-start gap-2 text-sm text-gray-200"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedCatalogIds.includes(catalog.id)}
-                      onChange={() => toggleCatalog(catalog.id)}
-                      className="mt-0.5 accent-primary"
-                    />
-                    <span>
-                      <span className="font-medium text-white">
-                        {catalog.name}
-                      </span>
-                      {catalog.description ? (
-                        <span className="block text-xs text-gray-400">
-                          {catalog.description}
-                        </span>
-                      ) : null}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
         </TabsContent>
         <TabsContent value="other" className="mt-4">
           <div className="mb-4">
@@ -426,7 +393,7 @@ export default function ProductForm({
                 {filteredPriceGroups.map((group) => (
                   <SelectItem key={group.id} value={group.id}>
                     {group.name} {group.isDefault ? "(Default)" : ""}{" "}
-                    ({group.currencyCode})
+                    ({group.currency?.code ?? group.currencyCode})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -484,6 +451,37 @@ export default function ProductForm({
                 {errors.stock.message}
               </p>
             )}
+          </div>
+          <div className="mb-4">
+            <Label className="mb-2 block">Catalogs</Label>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  {selectedCatalogIds.length > 0
+                    ? `${selectedCatalogIds.length} catalog(s) selected`
+                    : "Select catalogs"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56">
+                {catalogsLoading ? (
+                  <div className="p-2 text-sm text-muted-foreground">Loading...</div>
+                ) : catalogsError ? (
+                  <div className="p-2 text-sm text-red-500">{catalogsError}</div>
+                ) : catalogs.length === 0 ? (
+                  <div className="p-2 text-sm text-muted-foreground">No catalogs found</div>
+                ) : (
+                  catalogs.map((catalog) => (
+                    <DropdownMenuCheckboxItem
+                      key={catalog.id}
+                      checked={selectedCatalogIds.includes(catalog.id)}
+                      onCheckedChange={() => toggleCatalog(catalog.id)}
+                    >
+                      {catalog.name}
+                    </DropdownMenuCheckboxItem>
+                  ))
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </TabsContent>
         <TabsContent value="images" className="mt-4">

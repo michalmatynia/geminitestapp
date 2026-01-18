@@ -8,20 +8,16 @@ add proper debugging on visual studio code
 # IN PROGRESS
 
 ---
-
-* In my Edit / Create Product Page, Move the Content field with Tabas into General Tab underneath the Name Field
-
-* When I open Edit / Create Product Page, I don't see the Name Field immediately, it appears only upon clicking on Tabs
-
-* In Product Create / Edit Page, move Name field with Tabs to the top, make SKU Required field and make the field a bit shorter and Align in with Ean and GTIN and ASIN Field which should now be one field, and there is a dropdown button to the left, where you can select whether you are currently editing EAN, GTIN or ASIN*
-
-* In my Product Edit / Create Window, the Product Base Id should be put into a separate TAB called Import Information, it should not be presented in General Tab
-
-Add additional  information to Import Information, like when was the product imported as well as all the values that it was imported with.
+In my Edit / Create Product Page, make the Catalogs Field a dropdown and move it to Other Tab
 
 In Product List, When I change the Catalog to Unassigned, I can still see the products assigned to a different Catalog
 
-* The same goes for price groups, but I would like the Default price group to be the first one listed in Product Edit / Create window
+Add additional  information to Import Information, like when was the product imported as well as all the values that it was imported with.
+
+In my Edit / Create Product Page I have a Generate description button, this button will generate a description based on an AI path. I would like to add AI Desctiption Page into my Product Settings, there I will configure how the AI descriptioin isfor each product generated. First I would like  a beginning of a signal path to be the anlysis of product images (extracted from Image links or actual image files attached to the product), I would also like to be able to choose the AI model for this task (for example a vision oriented model) then I would like the result of this analysis to travel to a second signal path, where the first analysis result as well as cues from Product Fields, like Product name, will be used to Generate a final desciption. I would also like to be able to choose my own model for that. 
+
+Prompt visible , results visible, for full control
+
 
 I need to have the categories field in the Product Create / Edit Panel. I Need to have the Tags field in the Product Create / Edit Panel.
 
@@ -36,7 +32,7 @@ The "middleware" file convention is deprecated. Please use "proxy" instead. Lear
 I also have [auth][warn][debug-enabled] Read more: https://warnings.authjs.dev
 
 In Create / Edit Product Panel , in Images the slots show two dots above a light up, whereas the other dot should only lit up if there is an image file in the slot. Also Flipping the switch that toggles between Image Thumnail from Link and Image Thumbnail from actual Image file doesn't work.
- 
+
 
 ## Filters
 Add one button called Filter option that will hide show all available search fields and filter fields

@@ -21,6 +21,7 @@ interface ProductSelectionBarProps {
   onSelectAllGlobal: () => Promise<void>;
   loadingGlobal?: boolean;
   onDeleteSelected?: () => Promise<void>;
+  total?: number;
 }
 
 export function ProductSelectionBar({

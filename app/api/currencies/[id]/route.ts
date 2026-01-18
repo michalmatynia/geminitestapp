@@ -13,6 +13,15 @@ type CurrencyDoc = {
   updatedAt: Date;
 };
 
+type CountryDoc = {
+  id: string;
+  code: string;
+  name: string;
+  currencyIds?: string[];
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 const CURRENCIES_COLLECTION = "currencies";
 const PRICE_GROUPS_COLLECTION = "price_groups";
 const COUNTRIES_COLLECTION = "countries";
@@ -65,7 +74,7 @@ export async function PUT(
         await db
           .collection(PRICE_GROUPS_COLLECTION)
           .updateMany({ currencyId: id }, { $set: { currencyId: data.code } });
-        await db.collection(COUNTRIES_COLLECTION).updateMany(
+        await db.collection<CountryDoc>(COUNTRIES_COLLECTION).updateMany(
           { currencyIds: id },
           {
             $pull: { currencyIds: id },
@@ -88,7 +97,7 @@ export async function PUT(
         },
         { returnDocument: "after" }
       );
-      return NextResponse.json(updated?.value ?? null);
+      return NextResponse.json(updated ?? null);
     }
 
     const currency = await prisma.currency.update({

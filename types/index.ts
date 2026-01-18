@@ -1,5 +1,12 @@
 import { z } from "zod";
 import { productCreateSchema } from "@/lib/validations/product";
+export { type PriceGroup, type Currency } from "@prisma/client";
+import type { PriceGroup, Currency } from "@prisma/client";
+
+export type PriceGroupWithDetails = PriceGroup & {
+  currency: Currency;
+  currencyCode?: string;
+};
 
 export type ImageFileRecord = {
   id: string;

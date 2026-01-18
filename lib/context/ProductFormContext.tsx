@@ -28,7 +28,7 @@ import type {
   CatalogRecord,
   ImageFileSelection,
   ProductWithImages,
-  PriceGroup,
+  PriceGroupWithDetails,
 } from "@/types";
 import {
   productCreateSchema,
@@ -80,7 +80,7 @@ interface ProductFormContextType {
   selectedCatalogIds: string[];
   toggleCatalog: (catalogId: string) => void;
   filteredLanguages: Language[];
-  filteredPriceGroups: PriceGroup[];
+  filteredPriceGroups: PriceGroupWithDetails[];
   generationError: string | null;
   setGenerationError: (error: string | null) => void;
 }
@@ -159,7 +159,7 @@ export function ProductFormProvider({
   const [catalogsError, setCatalogsError] = useState<string | null>(null);
   const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
-  const [priceGroups, setPriceGroups] = useState<PriceGroup[]>([]);
+  const [priceGroups, setPriceGroups] = useState<PriceGroupWithDetails[]>([]);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -277,7 +277,7 @@ export function ProductFormProvider({
       try {
         const res = await fetch("/api/price-groups");
         if (!res.ok) return;
-        const data = (await res.json()) as PriceGroup[];
+        const data = (await res.json()) as PriceGroupWithDetails[];
         if (!cancelled) {
           setPriceGroups(data);
         }
@@ -307,7 +307,7 @@ export function ProductFormProvider({
   const filteredPriceGroups = useMemo(() => {
     if (selectedCatalogIds.length === 0) return priceGroups;
     const allowedGroupIds = new Set<string>();
-    const orderedGroups: PriceGroup[] = [];
+    const orderedGroups: PriceGroupWithDetails[] = [];
 
     // First, add the default price group if available
     const defaultGroup = priceGroups.find((pg) => pg.isDefault);

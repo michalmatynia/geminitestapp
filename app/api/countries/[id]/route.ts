@@ -135,7 +135,7 @@ export async function PUT(
         currencyDocs.map((currency) => [currency.id, currency])
       );
       return NextResponse.json(
-        updated?.value ? normalizeCountryResponse(updated.value, currencyMap) : null
+        updated ? normalizeCountryResponse(updated, currencyMap) : null
       );
     }
 

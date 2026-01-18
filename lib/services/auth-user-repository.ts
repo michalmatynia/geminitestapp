@@ -11,7 +11,6 @@ type AuthUserRecord = {
 };
 
 type MongoUserDoc = {
-  _id: { toString: () => string };
   email?: string | null;
   name?: string | null;
   passwordHash?: string | null;

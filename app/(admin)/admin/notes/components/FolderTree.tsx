@@ -39,6 +39,7 @@ function FolderTreeBase({
   const [draggedFolderId, setDraggedFolderId] = useState<string | null>(null);
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
   const [renamingNoteId, setRenamingNoteId] = useState<string | null>(null);
+  const [isHistoryExpanded, setIsHistoryExpanded] = useState(true);
   const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(new Set());
 
   const collectFolderIds = useCallback((foldersToScan: CategoryWithChildren[]) => {
@@ -371,22 +372,32 @@ function FolderTreeBase({
         )}
         {undoHistory && undoHistory.length > 0 && (
           <div className="mt-3 rounded border border-gray-800 bg-gray-900/60 p-2 text-xs text-gray-300">
-            <div className="mb-2 text-[10px] uppercase tracking-wide text-gray-500">
-              History
-            </div>
-            <div className="space-y-1">
-              {undoHistory.slice(0, 10).map((entry, index) => (
-                <button
-                  key={`${entry.label}-${index}`}
-                  type="button"
-                  onClick={() => onUndoAtIndex?.(index)}
-                  className="flex w-full items-center justify-between rounded px-1.5 py-1 text-left text-gray-300 hover:bg-gray-800"
-                >
-                  <span className="truncate">{entry.label}</span>
-                  <span className="text-[10px] text-gray-500">Undo</span>
-                </button>
-              ))}
-            </div>
+            <button
+              onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
+              className="flex w-full items-center justify-between mb-2 text-[10px] uppercase tracking-wide text-gray-500 hover:text-gray-300 transition"
+            >
+              <span>History</span>
+              {isHistoryExpanded ? (
+                <ChevronDown className="size-3" />
+              ) : (
+                <ChevronRight className="size-3" />
+              )}
+            </button>
+            {isHistoryExpanded && (
+              <div className="space-y-1">
+                {undoHistory.slice(0, 10).map((entry, index) => (
+                  <button
+                    key={`${entry.label}-${index}`}
+                    type="button"
+                    onClick={() => onUndoAtIndex?.(index)}
+                    className="flex w-full items-center justify-between rounded px-1.5 py-1 text-left text-gray-300 hover:bg-gray-800"
+                  >
+                    <span className="truncate">{entry.label}</span>
+                    <span className="text-[10px] text-gray-500">Undo</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

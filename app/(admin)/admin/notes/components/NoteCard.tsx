@@ -105,12 +105,12 @@ function NoteCardBase({
         color: textColor,
         ["--tw-prose-body" as never]: textColor,
         ["--tw-prose-headings" as never]:
-          theme?.markdownHeadingColor ?? textColor,
-        ["--note-link-color" as never]: theme?.markdownLinkColor ?? "#38bdf8",
-        ["--note-code-bg" as never]: theme?.markdownCodeBackground ?? "#0f172a",
-        ["--note-code-text" as never]: theme?.markdownCodeText ?? "#e2e8f0",
+          effectiveTheme.markdownHeadingColor ?? textColor,
+        ["--note-link-color" as never]: effectiveTheme.markdownLinkColor ?? "#38bdf8",
+        ["--note-code-bg" as never]: effectiveTheme.markdownCodeBackground ?? "#0f172a",
+        ["--note-code-text" as never]: effectiveTheme.markdownCodeText ?? "#e2e8f0",
         ["--note-inline-code-bg" as never]:
-          theme?.markdownCodeBackground ?? "rgba(15, 23, 42, 0.12)",
+          effectiveTheme.markdownCodeBackground ?? "rgba(15, 23, 42, 0.12)",
       }}
       className={`rounded-lg border border-gray-700 p-4 shadow-sm transition ${
         enableDrag

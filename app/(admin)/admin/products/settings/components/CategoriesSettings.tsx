@@ -542,7 +542,7 @@ export function CategoriesSettings({
             value={selectedCatalogId || ""}
             onValueChange={onCatalogChange}
           >
-            <SelectTrigger>
+            <SelectTrigger suppressHydrationWarning>
               <SelectValue placeholder="Select a catalog..." />
             </SelectTrigger>
             <SelectContent>

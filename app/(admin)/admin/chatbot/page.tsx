@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useChatbotLogic } from "./hooks/useChatbotLogic";
 import { ChatInterface } from "./components/ChatInterface";
@@ -10,11 +11,17 @@ import { SessionSidebar } from "./components/SessionSidebar";
 
 function ChatbotPageInner() {
   const logic = useChatbotLogic();
+  const searchParams = useSearchParams();
   const [mounted, setMounted] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState("chat");
 
   React.useEffect(() => {
     setMounted(true);
-  }, []);
+    const tab = searchParams.get("tab");
+    if (tab === "settings") {
+      setActiveTab("settings");
+    }
+  }, [searchParams]);
 
   const {
     messages,
@@ -133,7 +140,11 @@ function ChatbotPageInner() {
 
         {/* Main Chat Area */}
         <div className="flex flex-col overflow-hidden rounded-lg border border-gray-800 bg-gray-950 lg:col-span-3">
-          <Tabs defaultValue="chat" className="flex h-full flex-col">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="flex h-full flex-col"
+          >
             <div className="border-b border-gray-800 bg-gray-900/50 px-4 py-2">
               <TabsList className="bg-gray-950">
                 <TabsTrigger value="chat">Chat</TabsTrigger>

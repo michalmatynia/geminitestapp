@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
 import path from "path";
 import fs from "fs/promises";
 import { getCatalogRepository } from "@/lib/services/catalog-repository";
@@ -15,8 +14,6 @@ import {
   fetchBaseProductIds,
   fetchBaseProductDetails,
 } from "@/lib/services/imports/base-client";
-import { getProductDataProvider } from "@/lib/services/product-provider";
-import { getMongoDb } from "@/lib/db/mongo-client";
 import { extractBaseImageUrls, mapBaseProduct } from "@/lib/services/imports/base-mapper";
 import { productCreateSchema } from "@/lib/validations/product";
 
@@ -82,33 +79,17 @@ export async function POST(req: Request) {
     if (data.action === "list") {
       const allBaseIds = await fetchBaseProductIds(token, data.inventoryId);
       
-      const provider = await getProductDataProvider();
-      let existingIds = new Set<string>();
-      if (provider === "mongodb") {
-        const mongo = await getMongoDb();
-        const docs = await mongo
-          .collection<{ baseProductId?: string | null }>("products")
-          .find({ baseProductId: { $exists: true, $ne: null } })
-          .project({ baseProductId: 1 })
-          .toArray();
-        existingIds = new Set(
-          docs
-            .map((doc) => (typeof doc.baseProductId === "string" ? doc.baseProductId : null))
-            .filter(Boolean) as string[]
-        );
-      } else {
-        const rows = await prisma.product.findMany({
-          where: { baseProductId: { not: null } },
-          select: { baseProductId: true },
-        });
-        existingIds = new Set(
-          rows
-            .map((row) =>
-              typeof row.baseProductId === "string" ? row.baseProductId : null
-            )
-            .filter(Boolean) as string[]
-        );
-      }
+      // Get existing products using repository to check for baseProductIds
+      const productRepository = await getProductRepository();
+      const { items: allProducts } = await productRepository.getProducts({
+        limit: 10000, // Get all products
+        offset: 0,
+      });
+      const existingIds = new Set(
+        allProducts
+          .map((product) => product.baseProductId)
+          .filter((id): id is string => typeof id === "string")
+      );
 
       const listItems = allBaseIds.map((id) => ({
         id,
@@ -200,33 +181,16 @@ export async function POST(req: Request) {
     let productsToImport = products;
 
     if (data.uniqueOnly) {
-        const provider = await getProductDataProvider();
-        let existingIds = new Set<string>();
-        if (provider === "mongodb") {
-          const mongo = await getMongoDb();
-          const docs = await mongo
-            .collection<{ baseProductId?: string | null }>("products")
-            .find({ baseProductId: { $exists: true, $ne: null } })
-            .project({ baseProductId: 1 })
-            .toArray();
-          existingIds = new Set(
-            docs
-              .map((doc) => (typeof doc.baseProductId === "string" ? doc.baseProductId : null))
-              .filter(Boolean) as string[]
-          );
-        } else {
-          const rows = await prisma.product.findMany({
-            where: { baseProductId: { not: null } },
-            select: { baseProductId: true },
-          });
-          existingIds = new Set(
-            rows
-              .map((row) =>
-                typeof row.baseProductId === "string" ? row.baseProductId : null
-              )
-              .filter(Boolean) as string[]
-          );
-        }
+        // Get existing products using repository to check for baseProductIds
+        const { items: allProducts } = await productRepository.getProducts({
+          limit: 10000, // Get all products
+          offset: 0,
+        });
+        const existingIds = new Set(
+          allProducts
+            .map((product) => product.baseProductId)
+            .filter((id): id is string => typeof id === "string")
+        );
 
         const toStringId = (value: unknown): string | null => {
             if (typeof value === "string" && value.trim()) return value.trim();

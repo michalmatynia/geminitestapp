@@ -4,30 +4,35 @@ npx tsc
 npx eslint
 add proper debugging on visual studio code
 
+In the AI Jobs include the information about which models were used for these generations
 
 # IN PROGRESS
 
----
+I Would like to add AI Jobs PAge into my Products. It will be an equivalent of Jobs page in Chatbot, which enables my page to queue all job requests to AI, so that even if I redirect the page, the jobs are still in a state where they can get resolved. Prepare a scaffolding for such system.
 
-* Move the Authentication OpenAI API key from Settings - AI to Chatbot As "AI API Settings". 
-I don't see the AI API Settings in Chatbot, it was supposed to be a place where I can do Authorization settings (Like        │
-│   entring API Keys) for cloud based AI models  
 
-* Move the Vision prompt to Settings - AI Description
+Generate description Jobs
 
-* Move Description Generation prompt to Settings - AI Description
+Title Path for auto generations, and Sending path, 
 
-Input prompt, output prompt for Product Description generation models (Input prompt is what the models should do with "Product" information, Output prompt is what the model should do with the Result)
+Product List, When I change the Catalog to Unassigned, I can still see the products assigned to a different Catalog
+
+
+AI Jobs needs to be optimized and properly connected
+* In AI Description Configuration - I should have a list of placeholders for the whole product, that I can enter in the prompt and use it in the description generation path
+
+In Regards to my Product Imports, I need to mirror this design for Base Export, to be ready to export my Products to baselinker. Change the name of Product Imports in Product Import/Export. Add a Tab to Template for Product Export. There you can choose which template to chose from Import Templates (Now Import-Export Templates) to serve for Export.
+
+* AI Description Configuration, I need Input prompt and output prompt for each segment of the path in Product Description generation models (Input prompt is what the models should do with "Product" information, Output prompt is what the model should do with the Result). In the second path segment, the model receives the result (which should be its own placeholder). and then again, I need an Input prompt but this time I can use [result] placeholder and modify the result of the previous segment of the path and inject it with the whole prompt into a second segment of the path, into another model. 
 
 In my Edit / Create Product Page, make the Catalogs Field a dropdown and move it to Other Tab
 
-In Product List, When I change the Catalog to Unassigned, I can still see the products assigned to a different Catalog
 
 Add additional  information to Import Information, like when was the product imported as well as all the values that it was imported with.
 
-* In my Edit / Create Product Page I have a Generate description button, this button will generate a description based on an AI path. I would like to add AI Desctiption Page into my Product Settings, there I will configure how the AI descriptioin isfor each product generated. First I would like  a beginning of a signal path to be the anlysis of product images (extracted from Image links or actual image files attached to the product), I would also like to be able to choose the AI model for this task (for example a vision oriented model) then I would like the result of this analysis to travel to a second signal path, where the first analysis result as well as cues from Product Fields, like Product name, will be used to Generate a final desciption. I would also like to be able to choose my own model for that. 
+In note app, If I drag the folder to the edge, it should be moved to root tree
 
-Prompt visible , results visible, for full control
+* In my Edit / Create Product Page I have a Generate description button, this button will generate a description based on an AI path. I would like to add AI Desctiption Page into my Product Settings, there I will configure how the AI descriptioin isfor each product generated. First I would like  a beginning of a signal path to be the anlysis of product images (extracted from Image links or actual image files attached to the product), I would also like to be able to choose the AI model for this task (for example a vision oriented model) then I would like the result of this analysis to travel to a second signal path, where the first analysis result as well as cues from Product Fields, like Product name, will be used to Generate a final desciption. I would also like to be able to choose my own model for that. 
 
 I need to have the categories field in the Product Create / Edit Panel. I Need to have the Tags field in the Product Create / Edit Panel.
 
@@ -50,6 +55,9 @@ When I click on that button, add another button below called Advanced filters, w
 
 In each product row, between a checkmark and an image I need a star that will mark the product as favourite, but upon clicking it, it will give me seven different color stars each being its own variant of favourite. Search by different star colors filter should be added to a basic filter section.
 
+
+LATER
+In My Product List, when I add Integration + to Base for Exports, it should sync export and price and import too maybe
 
 
 # AUTH START
@@ -88,6 +96,8 @@ shpock
 ## Product List END
 
 # NOTE APP
+
+NOTEBOOK Only for  SNippets Type
 
 My image thumbnail preview disappeared from my Note List view. my Notes card no longer show a minature thumbnail of the addded image file. If the thumbnail is a file that is not an image, don't add it at all.
 
@@ -132,6 +142,7 @@ remove  Agent job panel from the chatbox window, it duplicates what is already s
 
 Move image/catalog operations behind a data-access abstraction so Mongo can fully own product data.
 
+My agent mode was configured to use different models for different tasks, but now this option is gone I can't see it.
 # Database work
 Set the cloud database mongoDB backup to local mongoDB setUP
 Add MongoDB connections to Chatbot and agentic flow

@@ -61,6 +61,7 @@ export default function ProductForm({
     filteredPriceGroups,
     generationError,
     setGenerationError,
+    product,
   } = useProductFormContext();
   const [generating, setGenerating] = useState(false);
   const { register, getValues, setValue, watch } =
@@ -92,38 +93,70 @@ export default function ProductForm({
     setGenerating(true);
     setGenerationError(null);
     const productData = getValues();
-    // Derive imageUrls from imageSlots
     const imageUrls = imageSlots
       .filter((slot): slot is NonNullable<typeof slot> => slot !== null)
       .map((slot) => slot.previewUrl);
+
     try {
-      const res = await fetch("/api/generate-description", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ productData, imageUrls }),
-      });
-      if (!res.ok) {
-        const payload = (await res.json()) as { error?: string; errorId?: string };
-        const message = payload?.error || "Failed to generate description";
-        const errorIdSuffix = payload?.errorId ? ` (Error ID: ${payload.errorId})` : "";
-        throw new Error(`${message}${errorIdSuffix}`);
+      if (product?.id) {
+        // Use background job system
+        const enqueueRes = await fetch("/api/products/ai-jobs/enqueue", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            productId: product.id,
+            type: "description_generation",
+            payload: { productData, imageUrls }
+          }),
+        });
+
+        const enqueueData = await enqueueRes.json();
+        if (!enqueueRes.ok) throw new Error(enqueueData.error || "Failed to enqueue generation job.");
+        const jobId = enqueueData.jobId;
+
+        // Poll for completion
+        let completed = false;
+        let attempts = 0;
+        while (!completed && attempts < 30) {
+          await new Promise(r => setTimeout(r, 2000));
+          const statusRes = await fetch(`/api/products/ai-jobs/${jobId}`);
+          if (!statusRes.ok) break;
+          const { job } = await statusRes.json();
+          
+          if (job.status === "completed") {
+            const { description } = job.result;
+            setValue("description_en", description);
+            completed = true;
+          } else if (job.status === "failed") {
+            throw new Error(job.errorMessage || "Generation failed.");
+          }
+          attempts++;
+        }
+        if (!completed) throw new Error("Generation is taking longer than expected. Check the AI Jobs page.");
+      } else {
+        // Fallback for new products (synchronous)
+        const res = await fetch("/api/generate-description", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ productData, imageUrls }),
+        });
+        if (!res.ok) {
+          const payload = (await res.json()) as { error?: string; errorId?: string };
+          throw new Error(payload?.error || "Failed to generate description");
+        }
+        const { description } = (await res.json()) as { description: string };
+        setValue("description_en", description);
       }
-      const { description } = (await res.json()) as { description: string };
-      setValue("description_en", description);
     } catch (error) {
       logger.error("Failed to generate description:", error);
-      const message =
-        error instanceof Error ? error.message : "Failed to generate description.";
-      setGenerationError(message);
+      setGenerationError(error instanceof Error ? error.message : "Failed to generate description.");
     } finally {
       setGenerating(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="relative min-h-[400px] pb-10">
       {isDebugOpen && <DebugPanel />}
       <Tabs defaultValue="general" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
@@ -538,11 +571,14 @@ export default function ProductForm({
           </div>
         </TabsContent>
       </Tabs>
-      <div className="mt-4">
-        <Button type="submit" disabled={uploading} aria-disabled={uploading}>
-          {uploading ? "Saving..." : submitButtonText}
-        </Button>
-      </div>
+      {product?.id && (
+        <div className="absolute bottom-0 right-0 text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+          <span className="mr-1">ID:</span>
+          <span className="font-mono select-all cursor-text" title="Click to select">
+            {product.id}
+          </span>
+        </div>
+      )}
       {(uploadSuccess || uploadError) && (
         <div className="fixed bottom-6 right-6 z-50">
           <div

@@ -1,252 +1,161 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
+import { ChevronLeftIcon, SaveIcon } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { ChevronLeftIcon } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useToast } from "@/components/ui/toast";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/toast";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-type SettingsPayload = {
-  id?: string;
-  key: string;
-  value: string;
-};
-
-const visionModelOptions = ["gpt-4o", "gpt-4-turbo"] as const;
-const textModelOptions = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo"] as const;
-const aiSections = ["GPT"] as const;
-
-export default function AISettingsPage() {
+export default function AiApiSettingsPage() {
   const { toast } = useToast();
-  const [activeSection, setActiveSection] = useState<(typeof aiSections)[number]>(
-    "GPT"
-  );
-  
-  // Step 1: Vision
-  const [visionModel, setVisionModel] = useState<(typeof visionModelOptions)[number]>("gpt-4o");
-
-  // Step 2: Generation
-  const [generationModel, setGenerationModel] = useState<(typeof textModelOptions)[number]>("gpt-3.5-turbo");
-  const [generationPrompt, setGenerationPrompt] = useState(
-    "You are a helpful assistant that generates compelling product descriptions."
-  );
-
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        const res = await fetch("/api/settings", { cache: "no-store" });
-        if (!res.ok) {
-          throw new Error("Failed to load AI settings.");
-        }
-        const data = (await res.json()) as SettingsPayload[];
-        if (!mounted) return;
-        const settingsMap = new Map(data.map((item) => [item.key, item.value]));
-        
-        // Vision
-        const savedVisionModel = settingsMap.get("ai_vision_model");
-        if (savedVisionModel && visionModelOptions.includes(savedVisionModel as any)) {
-            setVisionModel(savedVisionModel as typeof visionModelOptions[number]);
-        }
+  const [openaiApiKey, setOpenaiApiKey] = useState("");
+  const [anthropicApiKey, setAnthropicApiKey] = useState("");
+  const [geminiApiKey, setGeminiApiKey] = useState("");
 
-        // Generation
-        const savedGenModel = settingsMap.get("openai_model"); // Keeping existing key
-        if (savedGenModel && textModelOptions.includes(savedGenModel as any)) {
-            setGenerationModel(savedGenModel as typeof textModelOptions[number]);
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const res = await fetch("/api/settings");
+        if (res.ok) {
+          const data = (await res.json()) as { key: string; value: string }[];
+          const settingsMap = new Map(data.map((item) => [item.key, item.value]));
+          
+          setOpenaiApiKey(settingsMap.get("openai_api_key") || "");
+          setAnthropicApiKey(settingsMap.get("anthropic_api_key") || "");
+          setGeminiApiKey(settingsMap.get("gemini_api_key") || "");
         }
-        setGenerationPrompt(
-          settingsMap.get("description_generation_prompt") || // Keeping existing key
-            "You are a helpful assistant that generates compelling product descriptions."
-        );
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Failed to load AI settings.";
-        toast(message, { variant: "error" });
+        console.error("Failed to load settings:", error);
+        toast("Failed to load settings", { variant: "error" });
       } finally {
-        if (mounted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
-    void load();
-    return () => {
-      mounted = false;
-    };
+    loadSettings();
   }, [toast]);
 
-  const saveSetting = async (key: string, value: string) => {
-    const res = await fetch("/api/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key, value }),
-    });
-    if (!res.ok) {
-      throw new Error("Failed to save AI settings.");
-    }
-  };
-
   const handleSave = async () => {
+    setSaving(true);
     try {
-      setSaving(true);
       await Promise.all([
-        saveSetting("ai_vision_model", visionModel),
-        saveSetting("openai_model", generationModel),
-        saveSetting("description_generation_prompt", generationPrompt),
+        fetch("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "openai_api_key", value: openaiApiKey }),
+        }),
+        fetch("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "anthropic_api_key", value: anthropicApiKey }),
+        }),
+        fetch("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "gemini_api_key", value: geminiApiKey }),
+        }),
       ]);
-      toast("AI settings saved", { variant: "success" });
+      toast("API keys saved successfully", { variant: "success" });
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to save AI settings.";
-      toast(message, { variant: "error" });
+      console.error("Failed to save settings:", error);
+      toast("Failed to save settings", { variant: "error" });
     } finally {
       setSaving(false);
     }
   };
 
+  if (loading) {
+    return (
+      <div className="container mx-auto py-10">
+        <div className="text-white">Loading settings...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-10 max-w-4xl">
       <div className="mb-6 flex items-center gap-3">
         <Button variant="ghost" size="icon" asChild>
-          <Link href="/admin/settings" aria-label="Back to settings">
+          <Link href="/admin" aria-label="Back to dashboard">
             <ChevronLeftIcon className="size-5" />
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-white">AI Settings</h1>
+          <h1 className="text-3xl font-bold text-white">AI API Settings</h1>
           <p className="text-sm text-gray-400">
-            Configure the 2-step description generation pipeline.
+            Configure your API keys for cloud-based AI models.
           </p>
         </div>
       </div>
-      <div className="grid gap-6 md:grid-cols-[240px_1fr]">
-        <aside className="rounded-md border border-gray-800 bg-gray-900 p-4">
-          <div className="flex flex-col gap-2">
-            {aiSections.map((section) => (
-              <button
-                key={section}
-                onClick={() => setActiveSection(section)}
-                className={`rounded px-3 py-2 text-left text-sm transition ${
-                  activeSection === section
-                    ? "bg-gray-800 text-white"
-                    : "text-gray-300 hover:bg-gray-800/60"
-                }`}
-              >
-                {section}
-              </button>
-            ))}
+
+      <Card className="bg-gray-950 border-gray-800">
+        <CardHeader>
+          <CardTitle className="text-white text-xl">Cloud Providers</CardTitle>
+          <CardDescription className="text-gray-400">
+            Enter your API keys for the services you want to use. These keys are stored securely and used across the application.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="openai" className="text-gray-200">OpenAI API Key</Label>
+            <Input
+              id="openai"
+              type="password"
+              placeholder="sk-..."
+              value={openaiApiKey}
+              onChange={(e) => setOpenaiApiKey(e.target.value)}
+              className="bg-gray-900 border-gray-700 text-white"
+            />
+            <p className="text-[10px] text-gray-500">Used for GPT-4o, GPT-3.5 Turbo, and DALL-E.</p>
           </div>
-        </aside>
-        <section className="rounded-md border border-gray-800 bg-gray-900 p-6">
-          {activeSection === "GPT" && (
-            <div className="space-y-8">
-              {/* Step 1: Vision */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-white">Step 1: Image Analysis (Vision)</h2>
-                    <span className="text-xs text-muted-foreground uppercase tracking-wider font-bold bg-blue-500/10 text-blue-400 px-2 py-1 rounded">Signal Path 1</span>
-                </div>
-                <p className="text-sm text-gray-400">
-                    Select a vision-capable model to analyze product images before generating the description.
-                </p>
-                <div>
-                  <Label className="mb-2 block text-sm font-medium text-gray-200">
-                    Vision Model
-                  </Label>
-                  <Select
-                    value={visionModel}
-                    onValueChange={(value) =>
-                      setVisionModel(value as typeof visionModelOptions[number])
-                    }
-                    disabled={loading || saving}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {visionModelOptions.map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
 
-              <hr className="border-gray-800" />
+          <div className="space-y-2">
+            <Label htmlFor="anthropic" className="text-gray-200">Anthropic API Key</Label>
+            <Input
+              id="anthropic"
+              type="password"
+              placeholder="sk-ant-..."
+              value={anthropicApiKey}
+              onChange={(e) => setAnthropicApiKey(e.target.value)}
+              className="bg-gray-900 border-gray-700 text-white"
+            />
+            <p className="text-[10px] text-gray-500">Used for Claude 3.5 Sonnet, Opus, and Haiku.</p>
+          </div>
 
-              {/* Step 2: Generation */}
-              <div className="space-y-4">
-                 <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-white">Step 2: Description Generation</h2>
-                    <span className="text-xs text-muted-foreground uppercase tracking-wider font-bold bg-purple-500/10 text-purple-400 px-2 py-1 rounded">Signal Path 2</span>
-                </div>
-                 <p className="text-sm text-gray-400">
-                    Generates the final description using product data and the analysis from Step 1.
-                </p>
-                <div>
-                  <Label className="mb-2 block text-sm font-medium text-gray-200">
-                    Generation Model
-                  </Label>
-                  <Select
-                    value={generationModel}
-                    onValueChange={(value) =>
-                      setGenerationModel(value as typeof textModelOptions[number])
-                    }
-                    disabled={loading || saving}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {textModelOptions.map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="mb-2 block text-sm font-medium text-gray-200">
-                    Generation Prompt
-                  </Label>
-                  <Textarea
-                    rows={6}
-                    value={generationPrompt}
-                    onChange={(event) => setGenerationPrompt(event.target.value)}
-                    disabled={loading || saving}
-                  />
-                  <p className="mt-2 text-xs text-gray-500">
-                    Use <code>[imageAnalysis]</code> to include the output from Step 1.
-                    Other placeholders: <code>[name_en]</code>, <code>[price]</code>, <code>[brand]</code>.
-                  </p>
-                </div>
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="gemini" className="text-gray-200">Gemini API Key</Label>
+            <Input
+              id="gemini"
+              type="password"
+              placeholder="AIza..."
+              value={geminiApiKey}
+              onChange={(e) => setGeminiApiKey(e.target.value)}
+              className="bg-gray-900 border-gray-700 text-white"
+            />
+            <p className="text-[10px] text-gray-500">Used for Gemini 1.5 Pro and Flash models.</p>
+          </div>
 
-              <div className="flex justify-end pt-4">
-                <Button onClick={handleSave} disabled={loading || saving}>
-                  {saving ? "Saving..." : "Save AI Settings"}
-                </Button>
-              </div>
-            </div>
-          )}
-        </section>
-      </div>
+          <div className="flex justify-end pt-4">
+            <Button 
+              onClick={handleSave} 
+              disabled={saving}
+              className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px]"
+            >
+              {saving ? "Saving..." : (
+                <>
+                  <SaveIcon className="mr-2 size-4" />
+                  Save Keys
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

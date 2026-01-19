@@ -739,3 +739,26 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
+
+
+
+enum ProductAiJobStatus {
+  pending
+  running
+  completed
+  failed
+  canceled
+}
+
+model ProductAiJob {
+  id           String             @id @default(cuid())
+  productId    String
+  status       ProductAiJobStatus @default(pending)
+  type         String             @default("description_generation")
+  payload      Json
+  result       Json?
+  errorMessage String?
+  createdAt    DateTime           @default(now())
+  startedAt    DateTime?
+  finishedAt   DateTime?
+}

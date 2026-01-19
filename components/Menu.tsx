@@ -108,6 +108,12 @@ export default function Menu() {
         >
           Integrations
         </Link>
+        <Link
+          href="/admin/products/jobs"
+          className="block w-full text-left hover:bg-gray-700 p-2 rounded"
+        >
+          AI Jobs
+        </Link>
       </CollapsibleMenu>
       <CollapsibleMenu
         title="Notes"
@@ -204,12 +210,6 @@ export default function Menu() {
         >
           Notifications
         </Link>
-        <Link
-          href="/admin/settings/ai"
-          className="block hover:bg-gray-700 p-2 rounded"
-        >
-          AI
-        </Link>
       </CollapsibleMenu>
       <CollapsibleMenu title="Auth" icon={<ShieldIcon />} href="/admin/auth">
         <Link
@@ -268,6 +268,12 @@ export default function Menu() {
           className="block hover:bg-gray-700 p-2 rounded"
         >
           Global Context
+        </Link>
+        <Link
+          href="/admin/settings/ai"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          AI API Settings
         </Link>
       </CollapsibleMenu>
     </nav>

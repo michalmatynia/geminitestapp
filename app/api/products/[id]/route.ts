@@ -3,6 +3,49 @@ import { randomUUID } from "crypto";
 import { productService } from "@/lib/services/productService";
 
 /**
+ * GET /api/products/[id]
+ * Fetches a single product by its ID.
+ */
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    if (!id) {
+      const errorId = randomUUID();
+      console.error("[products][GET] Missing product id", { errorId });
+      return NextResponse.json(
+        { error: "Product id is required", errorId },
+        { status: 400 }
+      );
+    }
+
+    const product = await productService.getProductById(id);
+    if (!product) {
+      const errorId = randomUUID();
+      console.warn("[products][GET] Product not found", { errorId, productId: id });
+      return NextResponse.json(
+        { error: "Product not found", errorId },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(product);
+  } catch (error) {
+    const errorId = randomUUID();
+    console.error("[products][GET] Failed to fetch product", {
+      errorId,
+      error,
+    });
+    return NextResponse.json(
+      { error: "Failed to fetch product", errorId },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * PUT /api/products/[id]
  * Updates an existing product.
  */

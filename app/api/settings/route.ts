@@ -23,6 +23,15 @@ const productSettingKeys = new Set([
   PRODUCT_DB_PROVIDER_SETTING_KEY,
   INTEGRATION_DB_PROVIDER_SETTING_KEY,
   AUTH_DB_PROVIDER_SETTING_KEY,
+  "ai_vision_model",
+  "ai_vision_user_prompt",
+  "ai_vision_prompt",
+  "ai_vision_output_enabled",
+  "openai_model",
+  "description_generation_user_prompt",
+  "description_generation_prompt",
+  "ai_generation_output_enabled",
+  "ai_description_test_product_id",
 ]);
 
 const canUsePrismaSettings = () =>

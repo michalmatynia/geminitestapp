@@ -83,6 +83,7 @@ interface ProductFormContextType {
   filteredPriceGroups: PriceGroupWithDetails[];
   generationError: string | null;
   setGenerationError: (error: string | null) => void;
+  product?: ProductWithImages;
 }
 
 export const ProductFormContext = createContext<ProductFormContextType | null>(
@@ -675,6 +676,7 @@ export function ProductFormProvider({
           filteredPriceGroups,
           generationError,
           setGenerationError,
+          product,
         }}
       >
         {children}

@@ -417,47 +417,42 @@ export function ProductFormProvider({
     setShowFileManager(false); // Close file manager after selection
   }, [setShowFileManager]);
 
-  const handleSlotDisconnectImage = useCallback((index: number) => {
+  const handleSlotDisconnectImage = useCallback(async (index: number) => {
+    // Optimistically update the UI
+    const slotToClear = imageSlots[index];
+    if (!slotToClear) return;
+
     setImageSlots(prevSlots => {
       const newSlots = [...prevSlots];
-      const slotToClear = newSlots[index];
-
-      if (slotToClear?.type === 'existing' && product?.id) {
-        // Attempt to disconnect from backend if it's an existing image
-        fetch(`/api/products/${product.id}/images/${slotToClear.data.id}`, {
-          method: "DELETE",
-        })
-          .then(async (res) => {
-            if (!res.ok) {
-              let payload: { error?: string; errorId?: string } | null = null;
-              try {
-                payload = (await res.json()) as {
-                  error?: string;
-                  errorId?: string;
-                };
-              } catch {
-                payload = null;
-              }
-              console.error("Failed to disconnect image from product:", {
-                error: payload?.error,
-                errorId: payload?.errorId,
-                productId: product.id,
-                imageFileId: slotToClear.data.id,
-              });
-            }
-          })
-          .catch((error) =>
-            console.error("Failed to disconnect image from product:", error)
-          );
-      } else if (slotToClear?.type === 'file') {
-        // Revoke object URL for file uploads
-        URL.revokeObjectURL(slotToClear.previewUrl);
-      }
-
       newSlots[index] = null;
       return newSlots;
     });
-  }, [product]);
+
+    if (slotToClear.type === 'existing' && product?.id) {
+      try {
+        const res = await fetch(`/api/products/${product.id}/images/${slotToClear.data.id}`, {
+          method: "DELETE",
+        });
+
+        if (!res.ok) {
+          const payload = (await res.json()) as { error?: string; errorId?: string };
+          console.error("Failed to disconnect image from product:", {
+            error: payload?.error,
+            errorId: payload?.errorId,
+            productId: product.id,
+            imageFileId: slotToClear.data.id,
+          });
+          // Note: We might want to revert the UI change here if we wanted to be strict,
+          // but for now, we just log the error as the user can try saving again or refreshing.
+        }
+      } catch (error) {
+        console.error("Failed to disconnect image from product:", error);
+      }
+    } else if (slotToClear.type === 'file') {
+      // Revoke object URL for file uploads
+      URL.revokeObjectURL(slotToClear.previewUrl);
+    }
+  }, [imageSlots, product]);
 
   const setImageLinkAt = useCallback((index: number, value: string) => {
     setImageLinks((prev) => {

@@ -37,7 +37,7 @@ export default function FileManager({
   const [previewFile, setPreviewFile] = useState<FileManagerImageFile | null>(null);
   const { toast } = useToast();
 
-  const fetchFiles = useCallback(() => {
+  const fetchFiles = useCallback(async () => {
     const query = new URLSearchParams();
     if (filenameSearch) {
       query.append("filename", filenameSearch);
@@ -45,17 +45,23 @@ export default function FileManager({
     if (productNameSearch) {
       query.append("productName", productNameSearch);
     }
-    void fetch(`/api/files?${query.toString()}`)
-      .then((res) => res.json() as Promise<FileManagerImageFile[]>)
-      .then(setFiles);
-  }, [filenameSearch, productNameSearch]);
+    try {
+      const res = await fetch(`/api/files?${query.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch files");
+      const data = (await res.json()) as FileManagerImageFile[];
+      setFiles(data);
+    } catch (error) {
+      console.error("Failed to fetch files:", error);
+      toast("Failed to load files.", { variant: "error" });
+    }
+  }, [filenameSearch, productNameSearch, toast]);
 
   // This function fetches the files from the API based on the search criteria.
   useEffect(() => {
     if (mode === 'select') {
-      fetchFiles();
+      void fetchFiles();
     } else if (mode === 'view') {
-      fetchFiles();
+      void fetchFiles();
     }
   }, [fetchFiles, mode]);
 
@@ -87,12 +93,17 @@ export default function FileManager({
   // This function sends a DELETE request to the API to delete a file.
   const handleDelete = async (fileId: string) => {
     if (confirm("Are you sure you want to delete this file?")) {
-      const res = await fetch(`/api/files/${fileId}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        fetchFiles();
-      } else {
+      try {
+        const res = await fetch(`/api/files/${fileId}`, {
+          method: "DELETE",
+        });
+        if (res.ok) {
+          void fetchFiles();
+        } else {
+          throw new Error("Failed to delete file");
+        }
+      } catch (error) {
+        console.error("Failed to delete file:", error);
         toast("Failed to delete file.", { variant: "error" });
       }
     }

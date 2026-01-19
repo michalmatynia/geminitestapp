@@ -6,11 +6,22 @@ add proper debugging on visual studio code
 
 # IN PROGRESS
 
+Add a small indicator is the product was added by the user or is the result of an import. 
+
 Translation Engine
 
-Generate description Jobs
+When my Dropdown in Product List is on a given catalog, All PRoduct creation are to be assigned to this catalog.
 
+Resorting of Images in Product Creat is not working. The thumbnail if flickering when resorting or addind a second image. The images are added on save, but their previews flicker during create
+
+I am still not seeing the Results in the AI Jobs Detail page when the job is run on a product Generate Description/
 When I run the Generate description, I don't get to see the results in the AI Jobs Detail page.
+
+Polling of Pending Jobs should stop when Jobs are completed I think
+
+Product Create, Price doesn't have a Currency Attached
+
+
 
 Title Path for auto generations, and Sending path, 
 

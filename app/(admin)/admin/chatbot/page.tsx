@@ -10,6 +10,12 @@ import { SessionSidebar } from "./components/SessionSidebar";
 
 function ChatbotPageInner() {
   const logic = useChatbotLogic();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const {
     messages,
     input,
@@ -106,6 +112,10 @@ function ChatbotPageInner() {
     e.preventDefault();
     void sendMessage();
   };
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <div className="container mx-auto h-[calc(100vh-120px)] py-6">

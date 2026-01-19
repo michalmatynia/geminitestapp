@@ -36,6 +36,7 @@ export const useChatbotLogic = () => {
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [model, setModel] = useState("");
   const [modelLoading, setModelLoading] = useState(true);
+  const [openaiApiKey, setOpenaiApiKey] = useState("");
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [useGlobalContext, setUseGlobalContext] = useState(false);
   const [useLocalContext, setUseLocalContext] = useState(false);
@@ -207,6 +208,24 @@ export const useChatbotLogic = () => {
     void fetchModels();
   }, [model, toast]);
 
+  // Load global API settings
+  useEffect(() => {
+    const loadGlobalSettings = async () => {
+      try {
+        const res = await fetch("/api/settings");
+        if (res.ok) {
+          const data = (await res.json()) as { key: string; value: string }[];
+          const settingsMap = new Map(data.map((item) => [item.key, item.value]));
+          const key = settingsMap.get("openai_api_key");
+          if (key) setOpenaiApiKey(key);
+        }
+      } catch (error) {
+        console.error("Failed to load global settings:", error);
+      }
+    };
+    void loadGlobalSettings();
+  }, []);
+
   const loadChatbotSettings = useCallback(async () => {
     try {
       const res = await fetchWithTimeout(
@@ -233,6 +252,13 @@ export const useChatbotLogic = () => {
     if (settingsSaving) return;
     setSettingsSaving(true);
     try {
+      // Save global API key
+      await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "openai_api_key", value: openaiApiKey }),
+      });
+
       const payload: ChatbotSettingsPayload = {
         model,
         webSearchEnabled,
@@ -353,6 +379,8 @@ export const useChatbotLogic = () => {
     setModel,
     modelLoading,
     setModelLoading,
+    openaiApiKey,
+    setOpenaiApiKey,
     webSearchEnabled,
     setWebSearchEnabled,
     useGlobalContext,

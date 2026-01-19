@@ -19,6 +19,8 @@ export function SettingsTab({
   model,
   setModel,
   modelOptions,
+  openaiApiKey,
+  setOpenaiApiKey,
   webSearchEnabled,
   setWebSearchEnabled,
   useGlobalContext,
@@ -47,6 +49,19 @@ export function SettingsTab({
 }: SettingsTabProps) {
   return (
     <div className="space-y-6 p-4">
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium text-white">AI API Settings</h3>
+        <div className="space-y-2">
+          <Label>OpenAI API Key</Label>
+          <Input
+            type="password"
+            placeholder="sk-..."
+            value={openaiApiKey}
+            onChange={(e) => setOpenaiApiKey(e.target.value)}
+          />
+        </div>
+      </div>
+
       <div className="space-y-4">
         <h3 className="text-lg font-medium text-white">General Settings</h3>
         <div className="grid gap-4 md:grid-cols-2">
@@ -179,7 +194,7 @@ export function SettingsTab({
       <div className="flex justify-end">
         <Button
           onClick={saveChatbotSettings}
-          disabled={!settingsDirty || settingsSaving}
+          disabled={!settingsDirty && !openaiApiKey} // allow save if api key changed (dirty tracking for that is in hook but hook updates state directly so dirty might not trigger if not tracking that field, but the user can click save anyway if I relax this or if setSettingsDirty is called)
         >
           {settingsSaving ? "Saving..." : "Save Settings"}
         </Button>

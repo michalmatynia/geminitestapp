@@ -9,6 +9,7 @@ export const settingSections = [
   "Data Source",
   "Internationalization",
   "Integrations",
+  "AI Description",
 ] as const;
 
 export const productDbOptions: Array<{

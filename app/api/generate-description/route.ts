@@ -10,6 +10,8 @@ import type { ImageFileRecord, ProductFormData } from "@/types";
 import fs from "fs/promises";
 import path from "path";
 
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
+
 const getSettingValue = async (key: string): Promise<string | null> => {
   if (!process.env.DATABASE_URL) return null;
   if (!("setting" in prisma)) return null;
@@ -24,9 +26,24 @@ const getSettingValue = async (key: string): Promise<string | null> => {
   }
 };
 
+const getClient = (modelName: string, apiKey: string | null) => {
+  if (modelName.startsWith("gpt-") || modelName.startsWith("ft:gpt-")) {
+    if (!apiKey) {
+      throw new Error("OpenAI API key is missing for GPT model.");
+    }
+    return new OpenAI({ apiKey });
+  } else {
+    // Assume Ollama or other local/open-source model
+    return new OpenAI({
+      baseURL: `${OLLAMA_BASE_URL}/v1`,
+      apiKey: "ollama", // Required by SDK but ignored by Ollama
+    });
+  }
+};
+
 /**
  * POST /api/generate-description
- * Generates a product description using the OpenAI API.
+ * Generates a product description using the OpenAI API with a configurable 2-step signal path.
  */
 export async function POST(req: NextRequest) {
   const body = (await req.json()) as {
@@ -46,52 +63,32 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const [apiKeySetting, promptSetting, modelSetting] = await Promise.all([
+    // 1. Retrieve Settings
+    const [
+      apiKeySetting,
+      visionModelSetting,
+      visionPromptSetting,
+      generationModelSetting,
+      generationPromptSetting,
+    ] = await Promise.all([
       getSettingValue("openai_api_key"),
-      getSettingValue("description_generation_prompt"),
+      getSettingValue("ai_vision_model"),
+      getSettingValue("ai_vision_prompt"),
       getSettingValue("openai_model"),
+      getSettingValue("description_generation_prompt"),
     ]);
 
     const apiKey = apiKeySetting ?? process.env.OPENAI_API_KEY ?? null;
-    const model = modelSetting?.trim() || "gpt-3.5-turbo";
-    let systemPrompt =
-      promptSetting?.trim() ||
-      "You are a helpful assistant that generates compelling product descriptions.";
 
-    const useImages = systemPrompt.includes("[images]");
-    if (useImages) {
-      systemPrompt = systemPrompt.replace("[images]", "").trim();
-    }
+    // Configuration Defaults
+    const visionModel = visionModelSetting?.trim() || "gpt-4o";
+    const visionPrompt = visionPromptSetting?.trim() || "Analyze these product images and describe their visual features, colors, materials, and key design elements.";
+    const generationModel = generationModelSetting?.trim() || "gpt-3.5-turbo";
+    let generationPrompt = generationPromptSetting?.trim() || "You are a helpful assistant that generates compelling product descriptions.";
 
-    // Replace placeholders
-    for (const key in productData) {
-      if (Object.prototype.hasOwnProperty.call(productData, key)) {
-        const value = productData[key as keyof ProductFormData];
-        if (value !== null && value !== undefined) {
-          systemPrompt = systemPrompt.replace(`[${key}]`, String(value));
-        }
-      }
-    }
-
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "OpenAI API key not configured" },
-        { status: 500 }
-      );
-    }
-
-    const openai = new OpenAI({
-      apiKey: apiKey,
-    });
-
-    const userContent: ChatCompletionContentPart[] = [
-      {
-        type: "text",
-        text: "Generate a product description based on the details provided in the system prompt.",
-      },
-    ];
-
-    if (useImages && imageUrls && imageUrls.length > 0) {
+    // 2. Prepare Images
+    let processedImages: ChatCompletionContentPart[] = [];
+    if (imageUrls && imageUrls.length > 0) {
       const imageFileRepository = await getImageFileRepository();
       const imageFiles = await imageFileRepository.listImageFiles();
       const imageFileMap = new Map(
@@ -113,25 +110,92 @@ export async function POST(req: NextRequest) {
         };
       });
 
-      const processedImages = await Promise.all(imagePromises);
-      userContent.push(...processedImages);
+      processedImages = await Promise.all(imagePromises);
     }
 
-    const messages: ChatCompletionMessageParam[] = [
+    // 3. Step 1: Vision Analysis (Signal Path 1)
+    let imageAnalysisResult = "";
+    const needsVisionAnalysis = generationPrompt.includes("[imageAnalysis]");
+
+    if (needsVisionAnalysis && processedImages.length > 0) {
+        try {
+            const visionClient = getClient(visionModel, apiKey);
+            const visionMessages: ChatCompletionMessageParam[] = [
+                {
+                    role: "system",
+                    content: visionPrompt
+                },
+                {
+                    role: "user",
+                    content: [
+                        { type: "text", text: "Here are the product images:" },
+                        ...processedImages
+                    ]
+                }
+            ];
+
+            const visionCompletion = await visionClient.chat.completions.create({
+                model: visionModel,
+                messages: visionMessages,
+                max_tokens: 500,
+            });
+
+            imageAnalysisResult = visionCompletion.choices[0].message.content?.trim() || "";
+        } catch (visionError) {
+            console.error("Vision Analysis Failed:", visionError);
+            imageAnalysisResult = "(Image analysis failed)";
+        }
+    }
+
+    // 4. Step 2: Description Generation (Signal Path 2)
+    
+    // Inject Analysis
+    generationPrompt = generationPrompt.replace("[imageAnalysis]", imageAnalysisResult);
+
+    // Handle Legacy [images] placeholder
+    const needsDirectImages = generationPrompt.includes("[images]");
+    if (needsDirectImages) {
+        generationPrompt = generationPrompt.replace("[images]", "").trim();
+    }
+
+    // Replace Product Placeholders
+    for (const key in productData) {
+      if (Object.prototype.hasOwnProperty.call(productData, key)) {
+        const value = productData[key as keyof ProductFormData];
+        if (value !== null && value !== undefined) {
+          generationPrompt = generationPrompt.replace(`[${key}]`, String(value));
+        }
+      }
+    }
+
+    // Prepare Messages for Generation
+    const generationUserContent: ChatCompletionContentPart[] = [
+        {
+            type: "text",
+            text: "Generate the product description."
+        }
+    ];
+
+    if (needsDirectImages && processedImages.length > 0) {
+        generationUserContent.push(...processedImages);
+    }
+
+    const generationMessages: ChatCompletionMessageParam[] = [
       {
         role: "system",
-        content: systemPrompt,
+        content: generationPrompt,
       },
       {
         role: "user",
-        content: userContent,
+        content: generationUserContent,
       },
     ];
 
-    const completion = await openai.chat.completions.create({
-      model: model,
-      messages: messages,
-      max_tokens: 500,
+    const generationClient = getClient(generationModel, apiKey);
+    const completion = await generationClient.chat.completions.create({
+      model: generationModel,
+      messages: generationMessages,
+      max_tokens: 1000,
     });
 
     const description = completion.choices[0].message.content?.trim();
@@ -145,8 +209,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ description });
   } catch (error) {
+    console.error("Generate Description Error:", error);
+    const message = error instanceof Error ? error.message : "Failed to generate description";
     return NextResponse.json(
-      { error: "Failed to generate description" },
+      { error: message },
       { status: 500 }
     );
   }

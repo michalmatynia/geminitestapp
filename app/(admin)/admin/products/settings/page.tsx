@@ -33,6 +33,7 @@ import { CatalogsSettings } from "./components/CatalogsSettings";
 import { CategoriesSettings } from "./components/CategoriesSettings";
 import { TagsSettings } from "./components/TagsSettings";
 import { InternationalizationSettings } from "./components/InternationalizationSettings";
+import { AiDescriptionSettings } from "./components/AiDescriptionSettings";
 
 export default function ProductSettingsPage() {
   const generateGroupId = () =>
@@ -1239,6 +1240,7 @@ export default function ProductSettingsPage() {
               />
             )}
             {activeSection === "Integrations" && <IntegrationsSettings />}
+            {activeSection === "AI Description" && <AiDescriptionSettings />}
           </section>
         </div>
       </div>

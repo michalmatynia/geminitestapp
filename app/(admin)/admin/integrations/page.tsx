@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -16,7 +16,7 @@ import { normalizeSteps } from "./utils";
 import { IntegrationList } from "./components/IntegrationList";
 import { IntegrationModal } from "./components/IntegrationModal";
 
-export default function IntegrationsPage() {
+function IntegrationsContent() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1106,5 +1106,13 @@ export default function IntegrationsPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function IntegrationsPage() {
+  return (
+    <Suspense fallback={<div>Loading integrations...</div>}>
+      <IntegrationsContent />
+    </Suspense>
   );
 }

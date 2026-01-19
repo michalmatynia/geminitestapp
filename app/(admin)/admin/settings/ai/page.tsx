@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
+import { Label } from "@/components/ui/label";
 
 type SettingsPayload = {
   id?: string;
@@ -22,7 +23,8 @@ type SettingsPayload = {
   value: string;
 };
 
-const modelOptions = ["gpt-3.5-turbo", "gpt-4o"] as const;
+const visionModelOptions = ["gpt-4o", "gpt-4-turbo"] as const;
+const textModelOptions = ["gpt-3.5-turbo", "gpt-4o", "gpt-4-turbo"] as const;
 const aiSections = ["GPT"] as const;
 
 export default function AISettingsPage() {
@@ -30,11 +32,16 @@ export default function AISettingsPage() {
   const [activeSection, setActiveSection] = useState<(typeof aiSections)[number]>(
     "GPT"
   );
-  const [apiKey, setApiKey] = useState("");
-  const [model, setModel] = useState<(typeof modelOptions)[number]>("gpt-3.5-turbo");
-  const [prompt, setPrompt] = useState(
+  
+  // Step 1: Vision
+  const [visionModel, setVisionModel] = useState<(typeof visionModelOptions)[number]>("gpt-4o");
+
+  // Step 2: Generation
+  const [generationModel, setGenerationModel] = useState<(typeof textModelOptions)[number]>("gpt-3.5-turbo");
+  const [generationPrompt, setGenerationPrompt] = useState(
     "You are a helpful assistant that generates compelling product descriptions."
   );
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -49,13 +56,20 @@ export default function AISettingsPage() {
         const data = (await res.json()) as SettingsPayload[];
         if (!mounted) return;
         const settingsMap = new Map(data.map((item) => [item.key, item.value]));
-        setApiKey(settingsMap.get("openai_api_key") || "");
-        setModel(
-          (settingsMap.get("openai_model") as typeof modelOptions[number]) ||
-            "gpt-3.5-turbo"
-        );
-        setPrompt(
-          settingsMap.get("description_generation_prompt") ||
+        
+        // Vision
+        const savedVisionModel = settingsMap.get("ai_vision_model");
+        if (savedVisionModel && visionModelOptions.includes(savedVisionModel as any)) {
+            setVisionModel(savedVisionModel as typeof visionModelOptions[number]);
+        }
+
+        // Generation
+        const savedGenModel = settingsMap.get("openai_model"); // Keeping existing key
+        if (savedGenModel && textModelOptions.includes(savedGenModel as any)) {
+            setGenerationModel(savedGenModel as typeof textModelOptions[number]);
+        }
+        setGenerationPrompt(
+          settingsMap.get("description_generation_prompt") || // Keeping existing key
             "You are a helpful assistant that generates compelling product descriptions."
         );
       } catch (error) {
@@ -89,9 +103,9 @@ export default function AISettingsPage() {
     try {
       setSaving(true);
       await Promise.all([
-        saveSetting("openai_api_key", apiKey),
-        saveSetting("openai_model", model),
-        saveSetting("description_generation_prompt", prompt),
+        saveSetting("ai_vision_model", visionModel),
+        saveSetting("openai_model", generationModel),
+        saveSetting("description_generation_prompt", generationPrompt),
       ]);
       toast("AI settings saved", { variant: "success" });
     } catch (error) {
@@ -114,7 +128,7 @@ export default function AISettingsPage() {
         <div>
           <h1 className="text-3xl font-bold text-white">AI Settings</h1>
           <p className="text-sm text-gray-400">
-            Configure GPT credentials and prompt behavior.
+            Configure the 2-step description generation pipeline.
           </p>
         </div>
       </div>
@@ -138,60 +152,95 @@ export default function AISettingsPage() {
         </aside>
         <section className="rounded-md border border-gray-800 bg-gray-900 p-6">
           {activeSection === "GPT" && (
-            <div className="space-y-4">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-200">
-                  OpenAI API key
-                </label>
-                <Input
-                  type="password"
-                  placeholder="sk-..."
-                  value={apiKey}
-                  onChange={(event) => setApiKey(event.target.value)}
-                  disabled={loading || saving}
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-200">
-                  Default model
-                </label>
-                <Select
-                  value={model}
-                  onValueChange={(value) =>
-                    setModel(value as typeof modelOptions[number])
-                  }
-                  disabled={loading || saving}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {modelOptions.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-200">
-                  Description prompt
-                </label>
-                <Textarea
-                  rows={6}
-                  value={prompt}
-                  onChange={(event) => setPrompt(event.target.value)}
-                  disabled={loading || saving}
-                />
-                <p className="mt-2 text-xs text-gray-500">
-                  Use placeholders like [name_en] or [price] and include [images]
-                  to attach product images.
+            <div className="space-y-8">
+              {/* Step 1: Vision */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-white">Step 1: Image Analysis (Vision)</h2>
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider font-bold bg-blue-500/10 text-blue-400 px-2 py-1 rounded">Signal Path 1</span>
+                </div>
+                <p className="text-sm text-gray-400">
+                    Select a vision-capable model to analyze product images before generating the description.
                 </p>
+                <div>
+                  <Label className="mb-2 block text-sm font-medium text-gray-200">
+                    Vision Model
+                  </Label>
+                  <Select
+                    value={visionModel}
+                    onValueChange={(value) =>
+                      setVisionModel(value as typeof visionModelOptions[number])
+                    }
+                    disabled={loading || saving}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {visionModelOptions.map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="flex justify-end">
+
+              <hr className="border-gray-800" />
+
+              {/* Step 2: Generation */}
+              <div className="space-y-4">
+                 <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-white">Step 2: Description Generation</h2>
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider font-bold bg-purple-500/10 text-purple-400 px-2 py-1 rounded">Signal Path 2</span>
+                </div>
+                 <p className="text-sm text-gray-400">
+                    Generates the final description using product data and the analysis from Step 1.
+                </p>
+                <div>
+                  <Label className="mb-2 block text-sm font-medium text-gray-200">
+                    Generation Model
+                  </Label>
+                  <Select
+                    value={generationModel}
+                    onValueChange={(value) =>
+                      setGenerationModel(value as typeof textModelOptions[number])
+                    }
+                    disabled={loading || saving}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {textModelOptions.map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="mb-2 block text-sm font-medium text-gray-200">
+                    Generation Prompt
+                  </Label>
+                  <Textarea
+                    rows={6}
+                    value={generationPrompt}
+                    onChange={(event) => setGenerationPrompt(event.target.value)}
+                    disabled={loading || saving}
+                  />
+                  <p className="mt-2 text-xs text-gray-500">
+                    Use <code>[imageAnalysis]</code> to include the output from Step 1.
+                    Other placeholders: <code>[name_en]</code>, <code>[price]</code>, <code>[brand]</code>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-4">
                 <Button onClick={handleSave} disabled={loading || saving}>
-                  {saving ? "Saving..." : "Save GPT settings"}
+                  {saving ? "Saving..." : "Save AI Settings"}
                 </Button>
               </div>
             </div>

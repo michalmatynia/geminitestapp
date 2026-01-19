@@ -23,9 +23,9 @@ function getUploadTarget({
   sku,
   noteId,
 }: {
-  category?: "products" | "notes";
-  sku?: string | null;
-  noteId?: string | null;
+  category?: "products" | "notes" | undefined;
+  sku?: string | null | undefined;
+  noteId?: string | null | undefined;
 }) {
   if (category === "products") {
     const folderName = sku ? sanitizeSku(sku) : tempFolderName;
@@ -45,7 +45,7 @@ function getUploadTarget({
 
 export async function uploadFile(
   file: File,
-  options?: { category?: "products" | "notes"; sku?: string | null; noteId?: string | null }
+  options?: { category?: "products" | "notes" | undefined; sku?: string | null | undefined; noteId?: string | null | undefined }
 ) {
   const fileBuffer = Buffer.from(await file.arrayBuffer());
   const filename = `${Date.now()}-${path.basename(file.name)}`;

@@ -8,12 +8,25 @@ import type {
   UpdateProductInput,
 } from "@/types/services/product-repository";
 
+// Helper to remove undefined keys for exactOptionalPropertyTypes compliance
+function removeUndefined<T extends object>(obj: T): T {
+  const newObj = { ...obj };
+  Object.keys(newObj).forEach((key) => {
+    if (newObj[key as keyof T] === undefined) {
+      delete newObj[key as keyof T];
+    }
+  });
+  return newObj;
+}
+
 const buildProductWhere = (filters: ProductFilters) => {
-  const where: Prisma.ProductWhereInput = {
-    sku: {
+  const where: Prisma.ProductWhereInput = {};
+
+  if (filters.sku) {
+    where.sku = {
       contains: filters.sku,
-    },
-  };
+    };
+  }
 
   if (filters.search) {
     where.OR = [
@@ -26,16 +39,16 @@ const buildProductWhere = (filters: ProductFilters) => {
     ];
   }
 
-  if (filters.minPrice) {
+  if (filters.minPrice !== undefined) {
     where.price = {
       ...(where.price as Prisma.IntFilter),
-      gte: parseInt(filters.minPrice, 10),
+      gte: typeof filters.minPrice === 'string' ? parseInt(filters.minPrice, 10) : filters.minPrice,
     };
   }
-  if (filters.maxPrice) {
+  if (filters.maxPrice !== undefined) {
     where.price = {
       ...(where.price as Prisma.IntFilter),
-      lte: parseInt(filters.maxPrice, 10),
+      lte: typeof filters.maxPrice === 'string' ? parseInt(filters.maxPrice, 10) : filters.maxPrice,
     };
   }
   if (filters.startDate) {
@@ -167,12 +180,10 @@ const toProductRecord = (product: {
 export const prismaProductRepository: ProductRepository = {
   async getProducts(filters) {
     const where = buildProductWhere(filters);
-    const page = filters.page ? parseInt(filters.page, 10) : undefined;
-    const pageSize = filters.pageSize ? parseInt(filters.pageSize, 10) : undefined;
-    const skip = page && pageSize ? (page - 1) * pageSize : undefined;
-    const take = pageSize;
-
-    const products = await prisma.product.findMany({
+    const page = filters.page ? (typeof filters.page === 'string' ? parseInt(filters.page, 10) : filters.page) : undefined;
+    const pageSize = filters.pageSize ? (typeof filters.pageSize === 'string' ? parseInt(filters.pageSize, 10) : filters.pageSize) : undefined;
+    
+    const findManyArgs: Prisma.ProductFindManyArgs = {
       where,
       include: {
         images: { include: { imageFile: true } },
@@ -181,9 +192,26 @@ export const prismaProductRepository: ProductRepository = {
         },
       },
       orderBy: { createdAt: "desc" },
-      skip,
-      take,
-    });
+    };
+
+    if (page && pageSize) {
+      findManyArgs.skip = (page - 1) * pageSize;
+      findManyArgs.take = pageSize;
+    } else if (pageSize) {
+      findManyArgs.take = pageSize;
+    }
+
+    type ProductWithRelations = Prisma.ProductGetPayload<{
+      include: {
+        images: { include: { imageFile: true } };
+        catalogs: {
+          include: { catalog: { include: { languages: { select: { languageId: true } } } } };
+        };
+      };
+    }>;
+
+    const products = (await prisma.product.findMany(findManyArgs)) as ProductWithRelations[];
+    
     return products.map((product) => ({
       ...toProductRecord(product),
       images: product.images.map((image) => ({
@@ -246,14 +274,16 @@ export const prismaProductRepository: ProductRepository = {
   },
 
   async createProduct(data: CreateProductInput) {
-    const product = await prisma.product.create({ data });
+    const cleanData = removeUndefined(data) as Prisma.ProductCreateInput;
+    const product = await prisma.product.create({ data: cleanData });
     return toProductRecord(product);
   },
 
   async updateProduct(id: string, data: UpdateProductInput) {
     const productExists = await prisma.product.findUnique({ where: { id } });
     if (!productExists) return null;
-    const product = await prisma.product.update({ where: { id }, data });
+    const cleanData = removeUndefined(data) as Prisma.ProductUpdateInput;
+    const product = await prisma.product.update({ where: { id }, data: cleanData });
     return toProductRecord(product);
   },
 

@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import MissingImagePlaceholder from "./MissingImagePlaceholder";
+import MissingImagePlaceholder from "@/components/ui/missing-image-placeholder";
 
 interface ProductCardProps {
   product: ProductWithImages;

@@ -6,6 +6,7 @@ import {
   getImportTemplate,
   updateImportTemplate,
 } from "@/lib/services/import-template-repository";
+import { removeUndefined } from "@/lib/utils";
 
 const mappingSchema = z.object({
   sourceKey: z.string().trim().min(1),
@@ -53,11 +54,11 @@ export async function PUT(
     const { id } = await params;
     const body = await req.json();
     const data = templateSchema.parse(body);
-    const template = await updateImportTemplate(id, {
+    const template = await updateImportTemplate(id, removeUndefined({
       name: data.name,
-      description: data.description ?? null,
+      description: data.description,
       mappings: data.mappings,
-    });
+    }));
     if (!template) {
       return NextResponse.json(
         { error: "Template not found." },

@@ -26,7 +26,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
   const filters: NoteFilters = {
-    truncateContent: true,
+    truncateContent: searchParams.get("truncateContent") === "true",
   };
   const notebookIdParam = searchParams.get("notebookId");
   if (notebookIdParam) {

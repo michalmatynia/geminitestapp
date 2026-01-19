@@ -2,14 +2,9 @@ import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import { chatbotSessionRepository } from "@/lib/services/chatbot-session-repository";
+import type { ChatMessage } from "@/types/chatbot";
 
 export const runtime = "nodejs";
-
-type ChatMessage = {
-  role: "user" | "assistant";
-  content: string;
-  images?: string[];
-};
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL;
@@ -221,10 +216,12 @@ export async function POST(req: Request) {
           })
         );
 
-        messages[targetIndex] = {
-          ...messages[targetIndex],
-          images: base64Images,
-        };
+        if (messages[targetIndex]) {
+          messages[targetIndex] = {
+            ...messages[targetIndex],
+            images: base64Images,
+          };
+        }
       }
 
       // Mention non-image attachments in the most recent user message
@@ -238,12 +235,14 @@ export async function POST(req: Request) {
             : messages.length - 1 - lastUserIndex;
 
         const fileList = otherFiles.map((file) => file.name).join(", ");
-        const existing = messages[targetIndex].content?.trim() || "";
+        const existing = messages[targetIndex]?.content?.trim() || "";
 
-        messages[targetIndex] = {
-          ...messages[targetIndex],
-          content: `${existing}\n\nAttached files: ${fileList}`.trim(),
-        };
+        if (messages[targetIndex]) {
+          messages[targetIndex] = {
+            ...messages[targetIndex],
+            content: `${existing}\n\nAttached files: ${fileList}`.trim(),
+          };
+        }
       }
     } else {
       const body = (await req.json()) as {
@@ -368,23 +367,25 @@ export async function POST(req: Request) {
         // Get the last user message
         const lastUserMessage = messages[messages.length - 1];
 
-        // Add user message to session
-        await chatbotSessionRepository.addMessage(sessionId, {
-          role: lastUserMessage.role,
-          content: lastUserMessage.content,
-          images: lastUserMessage.images,
-          timestamp: new Date(),
-        });
+        if (lastUserMessage) {
+          // Add user message to session
+          await chatbotSessionRepository.addMessage(sessionId, {
+            role: lastUserMessage.role,
+            content: lastUserMessage.content,
+            images: lastUserMessage.images,
+            timestamp: new Date(),
+          });
 
-        // Add assistant response to session
-        await chatbotSessionRepository.addMessage(sessionId, {
-          role: "assistant",
-          content: responseMessage,
-          timestamp: new Date(),
-        });
+          // Add assistant response to session
+          await chatbotSessionRepository.addMessage(sessionId, {
+            role: "assistant",
+            content: responseMessage,
+            timestamp: new Date(),
+          });
 
-        if (DEBUG_CHATBOT) {
-          console.info("[chatbot][chat] Saved to session", { sessionId });
+          if (DEBUG_CHATBOT) {
+            console.info("[chatbot][chat] Saved to session", { sessionId });
+          }
         }
       } catch (error) {
         console.error("[chatbot][chat] Failed to save to session", {

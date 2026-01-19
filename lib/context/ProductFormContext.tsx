@@ -29,30 +29,16 @@ import type {
   ImageFileSelection,
   ProductWithImages,
   PriceGroupWithDetails,
+  ProductFormData,
 } from "@/types";
+import {
+  ProductImageSlot,
+} from "@/types/products-ui";
 import {
   productCreateSchema,
   productUpdateSchema,
 } from "@/lib/validations/product";
 import { useToast } from "@/components/ui/toast";
-
-export type ProductFormData = z.infer<typeof productCreateSchema>;
-
-// Represents a single image slot, which can be empty, a new File, or an existing ImageFile
-type ProductImageSlot =
-  | {
-      type: "file"; // A new File object
-      data: File;
-      previewUrl: string;
-      originalIndex?: number; // Optional: original index if moved
-    }
-  | {
-      type: "existing"; // An existing ImageFile from the DB
-      data: ImageFileSelection;
-      previewUrl: string; // The filepath of the existing image
-      originalIndex?: number; // Optional: original index if moved
-    }
-  | null; // Empty slot
 
 interface ProductFormContextType {
   register: UseFormRegister<ProductFormData>;

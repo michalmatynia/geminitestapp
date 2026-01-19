@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { noteService } from "@/lib/services/noteService/index";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { notebookCreateSchema } from "@/lib/validations/notes";
+import { removeUndefined } from "@/lib/utils";
 
 /**
  * GET /api/notes/notebooks
@@ -34,7 +35,7 @@ export async function POST(req: Request) {
     if (!parsed.ok) {
       return parsed.response;
     }
-    const notebook = await noteService.createNotebook(parsed.data);
+    const notebook = await noteService.createNotebook(removeUndefined(parsed.data));
     return NextResponse.json(notebook, { status: 201 });
   } catch (error: unknown) {
     const errorId = randomUUID();

@@ -2,33 +2,27 @@
 
 import { XIcon } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 
-interface ImageFile {
-  id: string;
+export interface FilePreviewData {
   filename: string;
   filepath: string;
   mimetype: string;
   size: number;
-  width: number | null;
-  height: number | null;
-  products: {
-    product: {
-      id: string;
-      name: string;
-    };
-  }[];
+  width: number;
+  height: number;
 }
 
-interface ImagePreviewModalProps {
-  file: ImageFile;
+interface FilePreviewModalProps {
+  file: FilePreviewData;
   onClose: () => void;
+  children?: React.ReactNode;
 }
 
-export default function ImagePreviewModal({
+export default function FilePreviewModal({
   file,
   onClose,
-}: ImagePreviewModalProps) {
+  children,
+}: FilePreviewModalProps) {
   return (
     <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50">
       <div className="bg-gray-900 rounded-lg shadow-lg p-8 max-w-3xl w-full relative">
@@ -46,9 +40,8 @@ export default function ImagePreviewModal({
               <Image
                 src={file.filepath}
                 alt={file.filename}
-                layout="fill"
-                objectFit="contain"
-                className="rounded"
+                fill
+                className="rounded object-contain"
               />
             </div>
           </div>
@@ -65,18 +58,7 @@ export default function ImagePreviewModal({
                 <strong>Dimensions:</strong> {file.width} x {file.height}
               </p>
             </div>
-            <h3 className="text-xl font-bold mt-8 mb-4">Linked Products</h3>
-            <div className="flex flex-wrap gap-2">
-              {file.products.map(({ product }) => (
-                <Link
-                  key={product.id}
-                  href={`/admin/products/${product.id}/edit`}
-                  className="bg-gray-700 text-white px-3 py-1 rounded-full text-sm hover:bg-gray-600"
-                >
-                  {product.name}
-                </Link>
-              ))}
-            </div>
+            {children}
           </div>
         </div>
       </div>

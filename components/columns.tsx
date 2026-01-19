@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/toast";
-import MissingImagePlaceholder from "@/components/products/MissingImagePlaceholder";
+import MissingImagePlaceholder from "@/components/ui/missing-image-placeholder";
 import type { ProductWithImages } from "@/types";
 
 // Keep the exported name `Product` in case other files import it from here.

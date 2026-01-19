@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import { getCatalogRepository } from "@/lib/services/catalog-repository";
+import { removeUndefined } from "@/lib/utils";
 
 const catalogUpdateSchema = z.object({
   name: z.string().trim().min(1).optional(),
@@ -77,15 +78,15 @@ export async function PUT(
       );
     }
     const catalogRepository = await getCatalogRepository();
-    const catalog = await catalogRepository.updateCatalog(id, {
+    const catalog = await catalogRepository.updateCatalog(id, removeUndefined({
       name: data.name,
-      description: data.description ?? undefined,
+      description: data.description,
       isDefault: data.isDefault,
       languageIds: data.languageIds,
-      defaultLanguageId: data.defaultLanguageId ?? null,
+      defaultLanguageId: data.defaultLanguageId,
       priceGroupIds: data.priceGroupIds,
-      defaultPriceGroupId: data.defaultPriceGroupId ?? null,
-    });
+      defaultPriceGroupId: data.defaultPriceGroupId,
+    }));
     if (!catalog) {
       return NextResponse.json(
         { error: "Catalog not found", errorId: randomUUID() },

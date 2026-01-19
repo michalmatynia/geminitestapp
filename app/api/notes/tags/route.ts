@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { noteService } from "@/lib/services/noteService/index";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { tagCreateSchema } from "@/lib/validations/notes";
+import { removeUndefined } from "@/lib/utils";
 
 /**
  * GET /api/notes/tags
@@ -42,10 +43,10 @@ export async function POST(req: Request) {
 
     const resolvedNotebookId =
       parsed.data.notebookId ?? (await noteService.getOrCreateDefaultNotebook()).id;
-    const tag = await noteService.createTag({
+    const tag = await noteService.createTag(removeUndefined({
       ...parsed.data,
       notebookId: resolvedNotebookId,
-    });
+    }));
     return NextResponse.json(tag, { status: 201 });
   } catch (error: unknown) {
     const errorId = randomUUID();

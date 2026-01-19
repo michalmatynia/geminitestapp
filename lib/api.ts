@@ -2,21 +2,21 @@ import { ProductWithImages } from "@/types";
 
 // This function fetches a list of products from the API.
 export async function getProducts(filters: {
-  search?: string;
-  sku?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  startDate?: string;
-  endDate?: string;
-  page?: number;
-  pageSize?: number;
-  catalogId?: string;
+  search?: string | undefined;
+  sku?: string | undefined;
+  minPrice?: number | undefined;
+  maxPrice?: number | undefined;
+  startDate?: string | undefined;
+  endDate?: string | undefined;
+  page?: number | undefined;
+  pageSize?: number | undefined;
+  catalogId?: string | undefined;
 }): Promise<ProductWithImages[]> {
   const query = new URLSearchParams();
   if (filters.search) query.append("search", filters.search);
   if (filters.sku) query.append("sku", filters.sku);
-  if (filters.minPrice) query.append("minPrice", String(filters.minPrice));
-  if (filters.maxPrice) query.append("maxPrice", String(filters.maxPrice));
+  if (filters.minPrice !== undefined) query.append("minPrice", String(filters.minPrice));
+  if (filters.maxPrice !== undefined) query.append("maxPrice", String(filters.maxPrice));
   if (filters.startDate) query.append("startDate", filters.startDate);
   if (filters.endDate) query.append("endDate", filters.endDate);
   if (filters.page) query.append("page", String(filters.page));
@@ -36,26 +36,26 @@ export async function getProducts(filters: {
     const error = new Error(
       errorId ? `${message} (Error ID: ${errorId})` : message
     );
-    (error as { errorId?: string }).errorId = errorId;
+    (error as { errorId?: string | undefined }).errorId = errorId;
     throw error;
   }
   return res.json() as Promise<ProductWithImages[]>;
 }
 
 export async function countProducts(filters: {
-  search?: string;
-  sku?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  startDate?: string;
-  endDate?: string;
-  catalogId?: string;
+  search?: string | undefined;
+  sku?: string | undefined;
+  minPrice?: number | undefined;
+  maxPrice?: number | undefined;
+  startDate?: string | undefined;
+  endDate?: string | undefined;
+  catalogId?: string | undefined;
 }): Promise<number> {
   const query = new URLSearchParams();
   if (filters.search) query.append("search", filters.search);
   if (filters.sku) query.append("sku", filters.sku);
-  if (filters.minPrice) query.append("minPrice", String(filters.minPrice));
-  if (filters.maxPrice) query.append("maxPrice", String(filters.maxPrice));
+  if (filters.minPrice !== undefined) query.append("minPrice", String(filters.minPrice));
+  if (filters.maxPrice !== undefined) query.append("maxPrice", String(filters.maxPrice));
   if (filters.startDate) query.append("startDate", filters.startDate);
   if (filters.endDate) query.append("endDate", filters.endDate);
   if (filters.catalogId) query.append("catalogId", filters.catalogId);

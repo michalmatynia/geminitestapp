@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
+import { removeUndefined } from "@/lib/utils";
 
 const languageUpdateSchema = z.object({
   code: z.string().trim().min(1).optional(),
@@ -50,11 +51,11 @@ export async function PUT(
       if (data.code || data.name || data.nativeName !== undefined) {
         await tx.language.update({
           where: { id },
-          data: {
+          data: removeUndefined({
             code: data.code ? data.code.toUpperCase() : undefined,
             name: data.name,
             nativeName: data.nativeName,
-          },
+          }),
         });
       }
 

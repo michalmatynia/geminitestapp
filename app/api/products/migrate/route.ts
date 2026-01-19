@@ -7,6 +7,7 @@ import {
   type MigrationDirection,
 } from "@/lib/services/product-migration";
 import { parseJsonBody } from "@/lib/api/parse-json";
+import { removeUndefined } from "@/lib/utils";
 
 const migrationDirectionSchema = z.enum(["prisma-to-mongo", "mongo-to-prisma"]);
 
@@ -53,15 +54,12 @@ export async function POST(req: NextRequest) {
     if (!parsed.ok) {
       return parsed.response;
     }
-    const result = await migrateProductBatch({
+    const result = await migrateProductBatch(removeUndefined({
       direction: parsed.data.direction,
       dryRun: Boolean(parsed.data.dryRun),
       cursor: parsed.data.cursor ?? null,
-      batchSize:
-        typeof parsed.data.batchSize === "number"
-          ? parsed.data.batchSize
-          : undefined,
-    });
+      batchSize: parsed.data.batchSize,
+    }));
     return NextResponse.json({ result });
   } catch (error) {
     console.error("[products][migration] Failed", { errorId, error });

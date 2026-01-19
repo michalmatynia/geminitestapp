@@ -4,6 +4,7 @@ import { noteService } from "@/lib/services/noteService/index";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { themeCreateSchema } from "@/lib/validations/notes";
 import type { ThemeRecord } from "@/types/notes";
+import { removeUndefined } from "@/lib/utils";
 
 /**
  * GET /api/notes/themes
@@ -42,10 +43,10 @@ export async function POST(req: Request) {
     }
     const resolvedNotebookId =
       parsed.data.notebookId ?? (await noteService.getOrCreateDefaultNotebook()).id;
-    const theme = await noteService.createTheme({
+    const theme = await noteService.createTheme(removeUndefined({
       ...parsed.data,
       notebookId: resolvedNotebookId,
-    });
+    }));
     return NextResponse.json(theme, { status: 201 });
   } catch (error) {
     const errorId = randomUUID();

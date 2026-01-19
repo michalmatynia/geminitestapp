@@ -3,6 +3,7 @@ import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
+import { removeUndefined } from "@/lib/utils";
 
 type CurrencyDoc = {
   id: string;
@@ -102,7 +103,7 @@ export async function PUT(
 
     const currency = await prisma.currency.update({
       where: { id },
-      data,
+      data: removeUndefined(data),
     });
     return NextResponse.json(currency);
   } catch (error: unknown) {

@@ -1,6 +1,6 @@
 import { productService } from "@/lib/services/productService";
 import Image from "next/image";
-import MissingImagePlaceholder from "@/components/products/MissingImagePlaceholder";
+import MissingImagePlaceholder from "@/components/ui/missing-image-placeholder";
 
 export default async function ProductPage({
   params,

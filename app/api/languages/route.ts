@@ -4,6 +4,7 @@ import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { ensureInternationalizationDefaults } from "@/lib/seedInternationalization";
 import { fallbackLanguages } from "@/lib/internationalizationFallback";
+import { removeUndefined } from "@/lib/utils";
 
 const languageCreateSchema = z.object({
   code: z.string().trim().min(1),
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
     );
 
     const language = await prisma.language.create({
-      data: {
+      data: removeUndefined({
         code,
         name: data.name,
         nativeName: data.nativeName,
@@ -75,7 +76,7 @@ export async function POST(req: Request) {
               },
             }
           : undefined,
-      },
+      }),
       include: {
         countries: {
           include: {

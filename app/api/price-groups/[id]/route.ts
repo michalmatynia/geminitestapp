@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { fallbackCurrencies } from "@/lib/internationalizationFallback";
+import { removeUndefined } from "@/lib/utils";
 
 const priceGroupSchema = z
   .object({
@@ -184,7 +185,7 @@ export async function PUT(
       }
       return await tx.priceGroup.update({
         where: { id },
-        data: {
+        data: removeUndefined({
           groupId: data.groupId,
           isDefault: data.isDefault ?? false,
           name: data.name,
@@ -195,7 +196,7 @@ export async function PUT(
           sourceGroupId: data.sourceGroupId,
           priceMultiplier: data.priceMultiplier,
           addToPrice: data.addToPrice,
-        },
+        }),
       });
     });
 

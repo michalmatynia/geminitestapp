@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { noteService } from "@/lib/services/noteService/index";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { categoryCreateSchema } from "@/lib/validations/notes";
+import { removeUndefined } from "@/lib/utils";
 
 /**
  * GET /api/notes/categories
@@ -45,10 +46,10 @@ export async function POST(req: Request) {
 
     const resolvedNotebookId =
       parsed.data.notebookId ?? (await noteService.getOrCreateDefaultNotebook()).id;
-    const category = await noteService.createCategory({
+    const category = await noteService.createCategory(removeUndefined({
       ...parsed.data,
       notebookId: resolvedNotebookId,
-    });
+    }));
     return NextResponse.json(category, { status: 201 });
   } catch (error: unknown) {
     const errorId = randomUUID();

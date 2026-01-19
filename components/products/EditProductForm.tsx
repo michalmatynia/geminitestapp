@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import FileManager from "@/components/products/FileManager";
+import FileManager from "@/components/files/FileManager";
 import ProductForm from "@/components/products/ProductForm";
 import { Button } from "@/components/ui/button";
 import {

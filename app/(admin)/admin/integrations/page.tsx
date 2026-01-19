@@ -40,9 +40,9 @@ function IntegrationsContent() {
   const [showTestErrorModal, setShowTestErrorModal] = useState(false);
   const [testError, setTestError] = useState<string | null>(null);
   const [testErrorMeta, setTestErrorMeta] = useState<{ 
-    errorId?: string;
-    integrationId?: string | null;
-    connectionId?: string | null;
+    errorId?: string | undefined;
+    integrationId?: string | null | undefined;
+    connectionId?: string | null | undefined;
   } | null>(null);
   const [lastTestError, setLastTestError] = useState<string | null>(null);
   const [showTestSuccessModal, setShowTestSuccessModal] = useState(false);
@@ -84,7 +84,7 @@ function IntegrationsContent() {
     status: number;
     statusText: string;
     data: unknown;
-    refreshed?: boolean;
+    refreshed?: boolean | undefined;
   } | null>(null);
   const [allegroApiError, setAllegroApiError] = useState<string | null>(null);
   const [allegroApiLoading, setAllegroApiLoading] = useState(false);
@@ -174,6 +174,8 @@ function IntegrationsContent() {
     }
     if (!editingConnectionId) {
       const connection = connections[0];
+      if (!connection) return; // Guard against undefined connection
+      
       setEditingConnectionId(connection.id);
       setConnectionForm({
         name: connection.name,

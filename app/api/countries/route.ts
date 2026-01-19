@@ -12,6 +12,7 @@ import {
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import type { CountryCode } from "@prisma/client";
+import { removeUndefined } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
@@ -248,7 +249,7 @@ export async function POST(req: Request) {
     }
 
     const country = await prisma.country.create({
-      data: {
+      data: removeUndefined({
         // countryData.code is a zod enum union; Prisma code is an enum too (compatible)
         ...(countryData as unknown as { code: CountryCode; name: string }),
         currencies: currencyIds?.length
@@ -258,7 +259,7 @@ export async function POST(req: Request) {
               },
             }
           : undefined,
-      },
+      }),
       include: {
         currencies: {
           include: { currency: true },

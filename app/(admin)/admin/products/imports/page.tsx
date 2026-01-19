@@ -719,7 +719,7 @@ export default function ProductImportsPage() {
       }
       setInventories(payload.inventories ?? []);
       if (payload.inventories?.length) {
-        setInventoryId(payload.inventories[0].id);
+        setInventoryId(payload.inventories[0]?.id ?? "");
       }
     } catch (error) {
       toast("Failed to load inventories.", { variant: "error" });

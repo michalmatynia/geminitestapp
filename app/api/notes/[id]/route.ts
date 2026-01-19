@@ -5,6 +5,7 @@ import { deleteNoteFile } from "@/lib/utils/fileUploader";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { noteUpdateSchema } from "@/lib/validations/notes";
 import type { NoteWithRelations, RelatedNote } from "@/types/notes";
+import { removeUndefined } from "@/lib/utils";
 
 const buildRelations = (note: NoteWithRelations): RelatedNote[] => {
   const relations = [
@@ -69,7 +70,7 @@ export async function PATCH(
     }
     const body = parsed.data;
     const previousNote = await noteService.getById(id);
-    const note = await noteService.update(id, body);
+    const note = await noteService.update(id, removeUndefined(body));
 
     if (Array.isArray(body.relatedNoteIds) && previousNote) {
       const previousRelatedIds =

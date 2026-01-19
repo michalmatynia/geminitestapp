@@ -6,13 +6,17 @@ add proper debugging on visual studio code
 
 # IN PROGRESS
 
-Add a small indicator is the product was added by the user or is the result of an import. 
+Add a small indicator whether the product was added by the user or is the result of an import. 
+
+* When A note is created and longer text is added to the note, only a short version is saved, but when I Edit the note and paste a longer text, the whole text is save. Make the note save longer text every time.
+
+Note App, when a link between notes is created, I don't see the related note immediately, I have to refresh.
 
 Translation Engine
 
-When my Dropdown in Product List is on a given catalog, All PRoduct creation are to be assigned to this catalog.
+When my Dropdown in Product List is set to a given catalog, All PRoduct creations are to be assigned to this catalog.
 
-Resorting of Images in Product Creat is not working. The thumbnail if flickering when resorting or addind a second image. The images are added on save, but their previews flicker during create
+Resorting of Images in Product Create is not working. The thumbnail if flickering when resorting or addind a second image. The images are added on save, but their previews flicker during create
 
 I am still not seeing the Results in the AI Jobs Detail page when the job is run on a product Generate Description/
 When I run the Generate description, I don't get to see the results in the AI Jobs Detail page.

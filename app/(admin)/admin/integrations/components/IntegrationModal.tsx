@@ -48,9 +48,9 @@ type IntegrationModalProps = {
   showTestErrorModal: boolean;
   testError: string | null;
   testErrorMeta: {
-    errorId?: string;
-    integrationId?: string | null;
-    connectionId?: string | null;
+    errorId?: string | undefined;
+    integrationId?: string | null | undefined;
+    connectionId?: string | null | undefined;
   } | null;
   onCloseTestErrorModal: () => void;
 
@@ -117,7 +117,7 @@ type IntegrationModalProps = {
     status: number;
     statusText: string;
     data: unknown;
-    refreshed?: boolean;
+    refreshed?: boolean | undefined;
   } | null;
   onAllegroApiRequest: () => void;
 };

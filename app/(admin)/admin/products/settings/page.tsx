@@ -472,8 +472,10 @@ export default function ProductSettingsPage() {
     if (catalogs.length > 0 && !selectedCategoryCatalogId) {
       const defaultCatalog = catalogs.find((c) => c.isDefault);
       const catalogToSelect = defaultCatalog || catalogs[0];
-      setSelectedCategoryCatalogId(catalogToSelect.id);
-      void refreshCategories(catalogToSelect.id);
+      if (catalogToSelect) {
+        setSelectedCategoryCatalogId(catalogToSelect.id);
+        void refreshCategories(catalogToSelect.id);
+      }
     }
   }, [catalogs, selectedCategoryCatalogId, refreshCategories]);
 
@@ -482,8 +484,10 @@ export default function ProductSettingsPage() {
     if (catalogs.length > 0 && !selectedTagCatalogId) {
       const defaultCatalog = catalogs.find((c) => c.isDefault);
       const catalogToSelect = defaultCatalog || catalogs[0];
-      setSelectedTagCatalogId(catalogToSelect.id);
-      void refreshTags(catalogToSelect.id);
+      if (catalogToSelect) {
+        setSelectedTagCatalogId(catalogToSelect.id);
+        void refreshTags(catalogToSelect.id);
+      }
     }
   }, [catalogs, selectedTagCatalogId, refreshTags]);
 
@@ -740,7 +744,9 @@ export default function ProductSettingsPage() {
       );
     } else {
       const defaultCountry = countryCodeOptions[0];
-      setCountryForm({ code: defaultCountry.code, name: defaultCountry.name });
+      if (defaultCountry) {
+        setCountryForm({ code: defaultCountry.code, name: defaultCountry.name });
+      }
       setEditingCountryId(null);
       setSelectedCurrencyIds([]);
     }
@@ -829,7 +835,7 @@ export default function ProductSettingsPage() {
       setSelectedLanguageIds(nextLanguageIds);
       setDefaultLanguageId(
         catalog.defaultLanguageId ??
-          (nextLanguageIds.length > 0 ? nextLanguageIds[0] : "")
+          (nextLanguageIds.length > 0 ? (nextLanguageIds[0] ?? "") : "")
       );
       const nextPriceGroupIds =
         catalog.priceGroupIds?.length && catalog.priceGroupIds.length > 0

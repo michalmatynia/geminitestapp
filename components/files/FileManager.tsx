@@ -3,20 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
-import type { ImageFileRecord, ImageFileSelection } from "@/types";
+import type { ImageFileSelection } from "@/types";
+import type { ExpandedImageFile } from "@/types/products-ui";
 
-import ImagePreviewModal from "./ImagePreviewModal";
+import FilePreviewModal from "@/components/ui/file-preview-modal";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
-
-type FileManagerImageFile = ImageFileRecord & {
-  products: {
-    product: {
-      id: string;
-      name: string;
-    };
-  }[];
-};
 
 interface FileManagerProps {
   onSelectFile?: (files: ImageFileSelection[]) => void;
@@ -30,11 +22,11 @@ export default function FileManager({
   onSelectFile,
   mode = "select",
 }: FileManagerProps) {
-  const [files, setFiles] = useState<FileManagerImageFile[]>([]);
+  const [files, setFiles] = useState<ExpandedImageFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<ImageFileSelection[]>([]);
   const [filenameSearch, setFilenameSearch] = useState("");
   const [productNameSearch, setProductNameSearch] = useState("");
-  const [previewFile, setPreviewFile] = useState<FileManagerImageFile | null>(null);
+  const [previewFile, setPreviewFile] = useState<ExpandedImageFile | null>(null);
   const { toast } = useToast();
 
   const fetchFiles = useCallback(async () => {
@@ -48,7 +40,7 @@ export default function FileManager({
     try {
       const res = await fetch(`/api/files?${query.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch files");
-      const data = (await res.json()) as FileManagerImageFile[];
+      const data = (await res.json()) as ExpandedImageFile[];
       setFiles(data);
     } catch (error) {
       console.error("Failed to fetch files:", error);
@@ -65,7 +57,7 @@ export default function FileManager({
     }
   }, [fetchFiles, mode]);
 
-  const handleClick = (file: FileManagerImageFile) => {
+  const handleClick = (file: ExpandedImageFile) => {
     if (mode === "select") {
       handleToggleSelect({ id: file.id, filepath: file.filepath });
     } else {
@@ -191,10 +183,23 @@ export default function FileManager({
         ))}
       </div>
       {previewFile && (
-        <ImagePreviewModal
+        <FilePreviewModal
           file={previewFile}
           onClose={() => setPreviewFile(null)}
-        />
+        >
+          <h3 className="text-xl font-bold mt-8 mb-4">Linked Products</h3>
+          <div className="flex flex-wrap gap-2">
+            {previewFile.products.map(({ product }) => (
+              <Link
+                key={product.id}
+                href={`/admin/products/${product.id}/edit`}
+                className="bg-gray-700 text-white px-3 py-1 rounded-full text-sm hover:bg-gray-600"
+              >
+                {product.name}
+              </Link>
+            ))}
+          </div>
+        </FilePreviewModal>
       )}
     </div>
   );

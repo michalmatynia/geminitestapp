@@ -323,12 +323,26 @@ export function useNoteOperations({
 
       await fetchFolderTree();
       await fetchNotes();
+
+      // Refresh the selected note if it was involved in the linking
+      if (selectedNote && (selectedNote.id === sourceNoteId || selectedNote.id === targetNoteId)) {
+        try {
+          const refreshRes = await fetch(`/api/notes/${selectedNote.id}`, { cache: "no-store" });
+          if (refreshRes.ok) {
+            const refreshedNote = (await refreshRes.json()) as NoteWithRelations;
+            setSelectedNote(refreshedNote);
+          }
+        } catch (error) {
+          console.error("Failed to refresh selected note:", error);
+        }
+      }
+
       toast("Notes linked");
     } catch (error) {
       console.error("Failed to relate notes:", error);
       toast("Failed to link notes", { variant: "error" });
     }
-  }, [fetchFolderTree, fetchNotes, toast]);
+  }, [fetchFolderTree, fetchNotes, selectedNote, setSelectedNote, toast]);
 
   return {
     handleCreateFolder,

@@ -1,5 +1,7 @@
 import type { NextAuthConfig } from "next-auth";
 
+const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+
 // Basic config that is edge-compatible
 export const authConfig = {
   providers: [], // Providers will be added in the main auth.ts or passed here
@@ -7,7 +9,7 @@ export const authConfig = {
     signIn: "/auth/signin",
   },
   trustHost: true,
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  ...(secret ? { secret } : {}),
   session: { strategy: "jwt" },
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {

@@ -14,9 +14,9 @@ export async function POST(req: NextRequest) {
 
     // Get all product IDs using repository
     const productRepository = await getProductRepository();
-    const { items: products } = await productRepository.getProducts({
-      limit: 10000, // Large limit to get all products
-      offset: 0,
+    const products = await productRepository.getProducts({
+      pageSize: "10000", // Large limit to get all products
+      page: "1",
     });
 
     if (products.length === 0) {

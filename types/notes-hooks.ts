@@ -42,9 +42,9 @@ export interface UseNoteDataProps {
   selectedFolderId: string | null;
   searchQuery: string;
   searchScope: "both" | "title" | "content";
-  filterPinned?: boolean;
-  filterArchived?: boolean;
-  filterFavorite?: boolean;
+  filterPinned?: boolean | undefined;
+  filterArchived?: boolean | undefined;
+  filterFavorite?: boolean | undefined;
   filterTagIds: string[];
   setSelectedNotebookId: (id: string | null) => void;
 }

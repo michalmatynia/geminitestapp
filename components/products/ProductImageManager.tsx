@@ -7,14 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useProductFormContext } from "@/lib/context/ProductFormContext";
 import { PlusIcon, XIcon, GripVertical } from "lucide-react";
-
-type DebugInfo = {
-  action: string;
-  message: string;
-  slotIndex?: number;
-  filename?: string;
-  timestamp: string;
-};
+import { DebugInfo } from "@/types/products-ui";
 
 export default function ProductImageManager() {
   const {

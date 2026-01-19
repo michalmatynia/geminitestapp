@@ -3,7 +3,7 @@
 import React from "react";
 import ModalShell from "@/components/ui/modal-shell";
 import { Button } from "@/components/ui/button";
-import FileManager from "@/components/products/FileManager";
+import FileManager from "@/components/files/FileManager";
 import ProductForm from "@/components/products/ProductForm";
 import ProductListingsModal from "@/components/products/ProductListingsModal";
 import ListProductModal from "@/components/products/ListProductModal";
@@ -104,7 +104,7 @@ function EditProductModalContent({ onClose }: { onClose: () => void }) {
 }
 
 export function ProductModals({
-  isCreateOpen,
+  isCreateOpen: isCreateOpen,
   initialSku,
   onCloseCreate,
   onCreateSuccess,

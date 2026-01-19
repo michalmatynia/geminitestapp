@@ -223,6 +223,11 @@ export async function generateProductDescription(params: {
     descriptionInitial,
     descriptionFinal,
     description: descriptionFinal || descriptionInitial,
-    analysis: analysisFinal || analysisInitial
+    analysis: analysisFinal || analysisInitial,
+    // Include model information for job tracking
+    visionModel,
+    generationModel,
+    visionOutputEnabled: isVisionOutputEnabled,
+    generationOutputEnabled: isGenerationOutputEnabled
   };
 }

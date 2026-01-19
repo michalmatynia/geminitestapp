@@ -248,6 +248,37 @@ export default function ProductAiJobsPage() {
                   </div>
                 </div>
 
+                {/* Model Information */}
+                {selectedJob.result && (selectedJob.result.visionModel || selectedJob.result.generationModel) && (
+                  <div className="rounded-md bg-gray-900/50 border border-gray-800 p-4">
+                    <div className="text-gray-400 font-bold text-xs uppercase mb-3">AI Models Used</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {selectedJob.result.visionModel && (
+                        <div>
+                          <div className="text-blue-400 text-[10px] font-bold uppercase mb-1">Vision Model (Path 1)</div>
+                          <div className="text-white font-mono text-sm">{selectedJob.result.visionModel}</div>
+                          {selectedJob.result.visionOutputEnabled !== undefined && (
+                            <div className="text-gray-500 text-[10px] mt-1">
+                              Refinement: {selectedJob.result.visionOutputEnabled ? "Enabled" : "Disabled"}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {selectedJob.result.generationModel && (
+                        <div>
+                          <div className="text-purple-400 text-[10px] font-bold uppercase mb-1">Generation Model (Path 2)</div>
+                          <div className="text-white font-mono text-sm">{selectedJob.result.generationModel}</div>
+                          {selectedJob.result.generationOutputEnabled !== undefined && (
+                            <div className="text-gray-500 text-[10px] mt-1">
+                              Refinement: {selectedJob.result.generationOutputEnabled ? "Enabled" : "Disabled"}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {selectedJob.errorMessage && (
                   <div className="rounded-md border border-red-900/50 bg-red-950/20 p-4">
                     <div className="text-red-400 font-bold text-[10px] uppercase mb-1">Error Message</div>

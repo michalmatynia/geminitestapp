@@ -4,22 +4,19 @@ npx tsc
 npx eslint
 add proper debugging on visual studio code
 
-In the AI Jobs include the information about which models were used for these generations
-
 # IN PROGRESS
 
-I Would like to add AI Jobs PAge into my Products. It will be an equivalent of Jobs page in Chatbot, which enables my page to queue all job requests to AI, so that even if I redirect the page, the jobs are still in a state where they can get resolved. Prepare a scaffolding for such system.
-
+Translation Engine
 
 Generate description Jobs
+
+When I run the Generate description, I don't get to see the results in the AI Jobs Detail page.
 
 Title Path for auto generations, and Sending path, 
 
 Product List, When I change the Catalog to Unassigned, I can still see the products assigned to a different Catalog
 
 
-AI Jobs needs to be optimized and properly connected
-* In AI Description Configuration - I should have a list of placeholders for the whole product, that I can enter in the prompt and use it in the description generation path
 
 In Regards to my Product Imports, I need to mirror this design for Base Export, to be ready to export my Products to baselinker. Change the name of Product Imports in Product Import/Export. Add a Tab to Template for Product Export. There you can choose which template to chose from Import Templates (Now Import-Export Templates) to serve for Export.
 

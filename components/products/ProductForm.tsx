@@ -86,7 +86,9 @@ export default function ProductForm({
   }, [searchParams]);
 
   /**
-   * Calls the API to generate a product description based on the current form data.
+   * Calls the API to generate a product description using AI Description Configuration settings.
+   * For existing products, uses the background job system with the configured signal path.
+   * For new products, uses synchronous generation.
    */
   const handleGenerateDescription = async () => {
     logger.log("Generating description...");
@@ -99,14 +101,15 @@ export default function ProductForm({
 
     try {
       if (product?.id) {
-        // Use background job system
+        // Use background job system with AI Description Configuration settings
+        // The worker will fetch fresh product data and use configured AI models/prompts
         const enqueueRes = await fetch("/api/products/ai-jobs/enqueue", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             productId: product.id,
             type: "description_generation",
-            payload: { productData, imageUrls }
+            payload: {} // Worker fetches fresh data and respects AI Description Configuration
           }),
         });
 
@@ -122,7 +125,7 @@ export default function ProductForm({
           const statusRes = await fetch(`/api/products/ai-jobs/${jobId}`);
           if (!statusRes.ok) break;
           const { job } = await statusRes.json();
-          
+
           if (job.status === "completed") {
             const { description } = job.result;
             setValue("description_en", description);
@@ -134,7 +137,7 @@ export default function ProductForm({
         }
         if (!completed) throw new Error("Generation is taking longer than expected. Check the AI Jobs page.");
       } else {
-        // Fallback for new products (synchronous)
+        // Fallback for new products (synchronous) - uses AI Description Configuration
         const res = await fetch("/api/generate-description", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -13,6 +13,17 @@ import { Label } from "@/components/ui/label";
 import ModalShell from "@/components/ui/modal-shell";
 import { IntegrationWithConnections, ProductWithImages } from "@/types";
 
+type Template = {
+  id: string;
+  name: string;
+  description?: string | null;
+};
+
+type BaseInventory = {
+  id: string;
+  name: string;
+};
+
 type ListProductModalProps = {
   product: ProductWithImages;
   onClose: () => void;
@@ -31,12 +42,21 @@ export default function ListProductModal({
   const [selectedConnectionId, setSelectedConnectionId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Base.com specific fields
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+  const [inventories, setInventories] = useState<BaseInventory[]>([]);
+  const [selectedInventoryId, setSelectedInventoryId] = useState<string>("");
+  const [loadingInventories, setLoadingInventories] = useState(false);
+
   const productName =
     product.name_en || product.name_pl || product.name_de || "Unnamed Product";
 
   const selectedIntegration = integrations.find(
     (i) => i.id === selectedIntegrationId
   );
+
+  const isBaseComIntegration = selectedIntegration?.slug === "base-com";
 
   useEffect(() => {
     const fetchIntegrations = async () => {
@@ -61,10 +81,62 @@ export default function ListProductModal({
     void fetchIntegrations();
   }, []);
 
+  // Load templates for Base.com
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        const res = await fetch("/api/products/import-templates");
+        if (!res.ok) return;
+        const data = (await res.json()) as Template[];
+        setTemplates(data);
+      } catch {
+        // Silently fail - templates are optional
+      }
+    };
+
+    void fetchTemplates();
+  }, []);
+
   // Reset connection when integration changes
   useEffect(() => {
     setSelectedConnectionId("");
+    setInventories([]);
+    setSelectedInventoryId("");
   }, [selectedIntegrationId]);
+
+  // Load Base.com inventories when connection is selected
+  useEffect(() => {
+    const loadInventories = async () => {
+      if (!isBaseComIntegration || !selectedConnectionId) {
+        setInventories([]);
+        return;
+      }
+
+      try {
+        setLoadingInventories(true);
+        const res = await fetch("/api/products/imports/base", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "inventories",
+            connectionId: selectedConnectionId,
+          }),
+        });
+
+        if (!res.ok) throw new Error("Failed to load inventories");
+
+        const data = (await res.json()) as { inventories: BaseInventory[] };
+        setInventories(data.inventories || []);
+      } catch (err) {
+        console.error("Failed to load inventories:", err);
+        setError("Failed to load Base.com inventories");
+      } finally {
+        setLoadingInventories(false);
+      }
+    };
+
+    void loadInventories();
+  }, [isBaseComIntegration, selectedConnectionId]);
 
   const handleSubmit = async () => {
     if (!selectedIntegrationId || !selectedConnectionId) {
@@ -72,27 +144,53 @@ export default function ListProductModal({
       return;
     }
 
+    if (isBaseComIntegration && !selectedInventoryId) {
+      setError("Please select a Base.com inventory");
+      return;
+    }
+
     try {
       setSubmitting(true);
       setError(null);
 
-      const res = await fetch(`/api/products/${product.id}/listings`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          integrationId: selectedIntegrationId,
-          connectionId: selectedConnectionId,
-        }),
-      });
+      // For Base.com, use export endpoint
+      if (isBaseComIntegration) {
+        const res = await fetch(`/api/products/${product.id}/export-to-base`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            connectionId: selectedConnectionId,
+            inventoryId: selectedInventoryId,
+            templateId: selectedTemplateId || undefined,
+          }),
+        });
 
-      if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        throw new Error(data.error || "Failed to create listing");
+        if (!res.ok) {
+          const data = (await res.json()) as { error?: string };
+          throw new Error(data.error || "Failed to export product to Base.com");
+        }
+
+        onSuccess();
+      } else {
+        // For other integrations, use regular listing endpoint
+        const res = await fetch(`/api/products/${product.id}/listings`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            integrationId: selectedIntegrationId,
+            connectionId: selectedConnectionId,
+          }),
+        });
+
+        if (!res.ok) {
+          const data = (await res.json()) as { error?: string };
+          throw new Error(data.error || "Failed to create listing");
+        }
+
+        onSuccess();
       }
-
-      onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create listing");
+      setError(err instanceof Error ? err.message : "Failed to list product");
     } finally {
       setSubmitting(false);
     }
@@ -120,10 +218,19 @@ export default function ListProductModal({
           <Button
             onClick={() => void handleSubmit()}
             disabled={
-              submitting || !selectedIntegrationId || !selectedConnectionId
+              submitting ||
+              !selectedIntegrationId ||
+              !selectedConnectionId ||
+              (isBaseComIntegration && !selectedInventoryId)
             }
           >
-            {submitting ? "Listing..." : "List Product"}
+            {submitting
+              ? isBaseComIntegration
+                ? "Exporting..."
+                : "Listing..."
+              : isBaseComIntegration
+              ? "Export to Base.com"
+              : "List Product"}
           </Button>
         </>
       }
@@ -190,6 +297,60 @@ export default function ListProductModal({
                   {selectedIntegration.name}.
                 </p>
               </div>
+            )}
+
+            {isBaseComIntegration && selectedConnectionId && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="inventory">
+                    Base.com Inventory {loadingInventories && "(Loading...)"}
+                  </Label>
+                  <Select
+                    value={selectedInventoryId}
+                    onValueChange={setSelectedInventoryId}
+                    disabled={loadingInventories || inventories.length === 0}
+                  >
+                    <SelectTrigger id="inventory">
+                      <SelectValue placeholder="Select inventory..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {inventories.map((inventory) => (
+                        <SelectItem key={inventory.id} value={inventory.id}>
+                          {inventory.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {inventories.length === 0 && !loadingInventories && (
+                    <p className="text-xs text-red-400">
+                      No inventories found. Please check your Base.com account.
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="template">Template (Optional)</Label>
+                  <Select
+                    value={selectedTemplateId}
+                    onValueChange={setSelectedTemplateId}
+                  >
+                    <SelectTrigger id="template">
+                      <SelectValue placeholder="No template (use defaults)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">No template</SelectItem>
+                      {templates.map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {template.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500">
+                    Templates define how product fields map to Base.com fields.
+                  </p>
+                </div>
+              </>
             )}
           </>
         )}

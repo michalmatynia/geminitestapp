@@ -11,6 +11,7 @@ import { ProductFilters } from "@/components/products/ProductFilters";
 import { useProductData } from "./hooks/useProductData";
 import { useProductOperations } from "./hooks/useProductOperations";
 import { useCatalogSync } from "./hooks/useCatalogSync";
+import { useUserPreferences } from "./hooks/useUserPreferences";
 import { ProductModals } from "./components/ProductModals";
 import { ProductWithImages } from "@/types";
 import { useToast } from "@/components/ui/toast";
@@ -39,6 +40,16 @@ function AdminPageInner() {
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const { toast } = useToast();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+
+  // Load user preferences
+  const {
+    preferences,
+    loading: preferencesLoading,
+    setNameLocale: updateNameLocale,
+    setCatalogFilter: updateCatalogFilter,
+    setCurrencyCode: updateCurrencyCode,
+    setPageSize: updatePageSize,
+  } = useUserPreferences();
 
   const {
     data,
@@ -93,9 +104,16 @@ function AdminPageInner() {
     handleListProductSuccess,
   } = useProductOperations(setRefreshTrigger);
 
-  const [nameLocale, setNameLocale] = useState<
-    "name_en" | "name_pl" | "name_de"
-  >("name_en");
+  // Initialize state from preferences
+  useEffect(() => {
+    if (!preferencesLoading) {
+      setCatalogFilter(preferences.catalogFilter);
+      setPageSize(preferences.pageSize);
+      if (preferences.currencyCode) {
+        setCurrencyCode(preferences.currencyCode);
+      }
+    }
+  }, [preferencesLoading, preferences, setCatalogFilter, setPageSize, setCurrencyCode]);
 
   const handleOpenEditModal = useCallback((product: ProductWithImages) => {
     setEditingProduct(product);
@@ -115,19 +133,22 @@ function AdminPageInner() {
 
   const handleSetPageSize = useCallback((size: number) => {
     setPageSize(size);
-  }, [setPageSize]);
+    updatePageSize(size);
+  }, [setPageSize, updatePageSize]);
 
   const handleSetNameLocale = useCallback((locale: "name_en" | "name_pl" | "name_de") => {
-    setNameLocale(locale);
-  }, [setNameLocale]);
+    updateNameLocale(locale);
+  }, [updateNameLocale]);
 
   const handleSetCurrencyCode = useCallback((code: string) => {
     setCurrencyCode(code);
-  }, [setCurrencyCode]);
+    updateCurrencyCode(code);
+  }, [setCurrencyCode, updateCurrencyCode]);
 
   const handleSetCatalogFilter = useCallback((filter: string) => {
     setCatalogFilter(filter);
-  }, [setCatalogFilter]);
+    updateCatalogFilter(filter);
+  }, [setCatalogFilter, updateCatalogFilter]);
 
   const handleCloseCreate = useCallback(() => setIsCreateOpen(false), [setIsCreateOpen]);
   const handleCloseEdit = useCallback(() => setEditingProduct(null), [setEditingProduct]);
@@ -210,17 +231,6 @@ function AdminPageInner() {
   }, [searchParams]);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem("productListNameLocale");
-    if (stored === "name_en" || stored === "name_pl" || stored === "name_de") {
-      setNameLocale(stored);
-    }
-  }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem("productListNameLocale", nameLocale);
-  }, [nameLocale]);
-
-  useEffect(() => {
     if (!lastEditedId) return;
     if (data.length === 0) return;
     const target = document.querySelector(`[data-row-id="${lastEditedId}"]`);
@@ -242,7 +252,7 @@ function AdminPageInner() {
           setPage={handleSetPage}
           pageSize={pageSize}
           setPageSize={handleSetPageSize}
-          nameLocale={nameLocale}
+          nameLocale={preferences.nameLocale}
           setNameLocale={handleSetNameLocale}
           currencyCode={currencyCode}
           setCurrencyCode={handleSetCurrencyCode}
@@ -294,7 +304,7 @@ function AdminPageInner() {
           columns={columns}
           data={data}
           setRefreshTrigger={setRefreshTrigger}
-          productNameKey={nameLocale}
+          productNameKey={preferences.nameLocale}
           onProductNameClick={handleOpenEditModal}
           onProductEditClick={handleOpenEditModal}
           onIntegrationsClick={handleOpenIntegrationsModal}

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/toast";
 import MissingImagePlaceholder from "@/components/ui/missing-image-placeholder";
+import { EditableCell } from "@/components/products/EditableCell";
 import type { ProductWithImages } from "@/types";
 
 // Keep the exported name `Product` in case other files import it from here.
@@ -260,6 +261,28 @@ export const columns: ColumnDef<ProductWithImages>[] = [
         <ArrowUpDown className="ml-2 size-4" />
       </Button>
     ),
+    cell: ({ row, table }) => {
+      const product = row.original;
+      const meta = table.options.meta as
+        | {
+            setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
+          }
+        | undefined;
+
+      const setRefreshTrigger = meta?.setRefreshTrigger;
+      if (!setRefreshTrigger) {
+        return <div>{product.price !== null ? product.price.toFixed(2) : "-"}</div>;
+      }
+
+      return (
+        <EditableCell
+          value={product.price}
+          productId={product.id}
+          field="price"
+          onUpdate={() => setRefreshTrigger((prev) => prev + 1)}
+        />
+      );
+    },
   },
 
   {
@@ -270,6 +293,28 @@ export const columns: ColumnDef<ProductWithImages>[] = [
         <ArrowUpDown className="ml-2 size-4" />
       </Button>
     ),
+    cell: ({ row, table }) => {
+      const product = row.original;
+      const meta = table.options.meta as
+        | {
+            setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
+          }
+        | undefined;
+
+      const setRefreshTrigger = meta?.setRefreshTrigger;
+      if (!setRefreshTrigger) {
+        return <div>{product.stock !== null ? product.stock : "-"}</div>;
+      }
+
+      return (
+        <EditableCell
+          value={product.stock}
+          productId={product.id}
+          field="stock"
+          onUpdate={() => setRefreshTrigger((prev) => prev + 1)}
+        />
+      );
+    },
   },
 
   {

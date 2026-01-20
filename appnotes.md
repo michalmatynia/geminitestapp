@@ -1,11 +1,18 @@
 add proper debugging on visual studio code
+
+Notebook App, when I create a new notebook, I should have the option to choose whether I want the notebook to be WYSIWYG or Markdown
+
 # IN PROGRESS
 
 when importing from Base.com, consider also duplicate SKUs
 
-Product Update - shoud Save the current state of the product, but not close the modal window, the modal window can be closed be clicking outside it
+* Resorting of Image slots with Images in Product Create / Edit panel is not working. The thumbnail is flickering when resorting or adding a second image. The images are added on save, but their previews flicker during create
 
--Product default price group is the default Catalog price group, I don't need to make that selection for every single product, it's automatic.
+* In Create / Edit Product Panel , in Images the slots show two dots above a light up, whereas the other dot should only lit up if there is an image file in the slot. Also Flipping the switch that toggles between Image Thumbnail from Link and Image Thumbnail from actual Image file doesn't work.
+
+* Product Update - shoud Save the current state of the product, but should not not close the modal window, the modal window can be closed be clicking outside of it or by clicking Close.
+
+* -Product default price group is the default Catalog price group, I don't need to make that selection for every single product, it's automatic.
 -default price group still asks me to select from dropdown
 
 Polling for AI jobs never stops
@@ -16,25 +23,23 @@ Polling for AI jobs never stops
 
 * Add a subPage to Product Settings called AI Translation (underneath Product Description). In this page, you should be able to choose one translation AI model which will carry out Product Description and Product Title translations into langauges that are part of the catalog to which the product belongs (If the product doesn't belong to any catalog, translate to all language visible in Product Edit / Create panel). Add a button in Product Edit / Create to translate When the translation request is sent, create an AI Job (mirroring the one that is created when Product Descriptions are requested). When a job is completed (be it for translations or description generations) provide a notification
 
-Price and stock should be editable in Product list by double clicking
+* Price and stock should be editable in Product list by double clicking
 
-Resorting of Image slots with Images in Product Create / Edit panel is not working. The thumbnail is flickering when resorting or adding a second image. The images are added on save, but their previews flicker during create
+
 
 Check that ->In my Edit / Create Product Page, make the Catalogs Field a dropdown and move it to Other Tab
 
-In Create / Edit Product Panel , in Images the slots show two dots above a light up, whereas the other dot should only lit up if there is an image file in the slot. Also Flipping the switch that toggles between Image Thumbnail from Link and Image Thumbnail from actual Image file doesn't work.
 
 
-Product list should remember my choices in terms of navigation, catalog choice and record them in the database, when I leave the page, the settings stay the same. Also incorporate the current state of settings in Products - Preferences Page (which has a mirror layout of the settings page, but relate more to the technical aspects of the Product section as a whole)
+
+* Product list should remember my choices in terms of navigation, catalog choice and record them in the database, when I leave the page, the settings stay the same. Also incorporate the current state of settings in Products - Preferences Page (which has a mirror layout of the settings page, but relate more to the technical aspects of the Product section as a whole)
 
 
-Add a small indicator whether the product was added by the user or is the result of an import. 
+In Product List, Add a small indicator (maybe an icon underneath SKU) whether the product was added by the user or is the result of an import. 
 
 * When A note is created and longer text is added to the note, only a short version is saved, but when I Edit the note and paste a longer text, the whole text is save. Make the note save longer text every time.
 
 * Note App, when a link between notes is created, I don't see the related note immediately, I have to refresh.
-
-Translation Engine
 
 * When my Dropdown in Product List is set to a given catalog, All PRoduct creations are to be assigned to this catalog.
 
@@ -45,6 +50,7 @@ When I run the Generate description, I don't get to see the results in the AI Jo
 
 * Polling when no jobs created
 
+I load the import list in the Limit of 10, yet when I see the Import list preview is says Total: 1000 · Existing: 0 · Showing: 1000
 
 
 
@@ -53,7 +59,7 @@ Title Path for auto generations, and Sending path,
 
 
 
-In Regards to my Product Imports, I need to mirror this design for Base Export, to be ready to export my Products to baselinker. Change the name of Product Imports in Product Import/Export. Add a Tab to Template for Product Export. There you can choose which template to chose from Import Templates (Now Import-Export Templates) to serve for Export.
+* In Regards to my Product Imports, I need to mirror this design for Base Export, to be ready to export my Products to baselinker. Change the name of Product Imports in Product Import/Export. Add a Tab to Template for Product Export. There you can choose which template to chose from Import Templates (Now Import-Export Templates) to serve for Export.
 
 
 
@@ -67,7 +73,6 @@ In note app, If I drag the folder to the edge, it should be moved to root tree
 
 In Product List, hovering over an image should give me a slightly bigger image preview.
 
-I load the import list in the Limit of 10, yet when I see the Import list preview is says Total: 1000 · Existing: 0 · Showing: 1000
 
 Move the pagination in Product List under Min Price Max Price Fields 
 

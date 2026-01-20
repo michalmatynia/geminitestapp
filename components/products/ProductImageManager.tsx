@@ -30,6 +30,12 @@ export default function ProductImageManager() {
     Array(imageSlots.length).fill("upload")
   );
 
+  // Create stable keys for each slot to prevent React reconciliation issues
+  // These keys stay with the slot content, not the position
+  const slotKeysRef = useRef<string[]>(
+    Array.from({ length: imageSlots.length }, (_, i) => `slot-${i}-${Date.now()}`)
+  );
+
   // Drag and drop state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -152,6 +158,27 @@ export default function ProductImageManager() {
 
     if (fromIndex !== toIndex) {
       swapImageSlots(fromIndex, toIndex);
+
+      // Also swap the stable keys so they follow the content
+      const keys = slotKeysRef.current;
+      const tempKey = keys[fromIndex];
+      const toKey = keys[toIndex];
+      if (tempKey !== undefined && toKey !== undefined) {
+        keys[fromIndex] = toKey;
+        keys[toIndex] = tempKey;
+      }
+
+      // Swap the view modes to follow the content
+      setSlotViewModes((prev) => {
+        const next = [...prev];
+        const tempMode = next[fromIndex];
+        const toMode = next[toIndex];
+        if (tempMode !== undefined && toMode !== undefined) {
+          next[fromIndex] = toMode;
+          next[toIndex] = tempMode;
+        }
+        return next;
+      });
     }
 
     setDraggedIndex(null);
@@ -230,7 +257,7 @@ export default function ProductImageManager() {
           const displayUrl = showLink ? linkValue : slot?.previewUrl;
 
           return (
-            <div key={index} className="flex flex-col items-center gap-1">
+            <div key={slotKeysRef.current[index]} className="flex flex-col items-center gap-1">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
                   <span
@@ -251,7 +278,7 @@ export default function ProductImageManager() {
                   />
                 </div>
                 <Switch
-                  checked={prefersLink && hasLink}
+                  checked={prefersLink}
                   onCheckedChange={(checked) => {
                     setSlotViewModes((prev) => {
                       const next = [...prev];
@@ -259,7 +286,7 @@ export default function ProductImageManager() {
                       return next;
                     });
                   }}
-                  disabled={!hasLink}
+                  disabled={!hasLink || !hasUpload}
                   aria-label={`Toggle image source for slot ${index + 1}`}
                   className="h-5 w-9 data-[state=checked]:bg-sky-500"
                 />

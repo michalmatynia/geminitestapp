@@ -43,7 +43,7 @@ type TemplateMapping = {
   targetField: string;
 };
 
-type ImportTemplate = {
+type Template = {
   id: string;
   name: string;
   description?: string | null;
@@ -104,7 +104,7 @@ export default function ProductImportsPage() {
   } | null>(null);
   const [loadingImportList, setLoadingImportList] = useState(false);
   const [uniqueOnly, setUniqueOnly] = useState(true);
-  const [templates, setTemplates] = useState<ImportTemplate[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [templateId, setTemplateId] = useState("");
   const [templatePreferenceLoaded, setTemplatePreferenceLoaded] =
@@ -188,11 +188,11 @@ export default function ProductImportsPage() {
       setLoadingTemplates(true);
       try {
         const res = await fetch("/api/products/import-templates");
-        const payload = (await res.json()) as ImportTemplate[];
+        const payload = (await res.json()) as Template[];
         if (!res.ok) return;
         setTemplates(payload);
       } catch (error) {
-        console.error("Failed to load import templates", error);
+        console.error("Failed to load templates", error);
       } finally {
         setLoadingTemplates(false);
       }
@@ -478,7 +478,7 @@ export default function ProductImportsPage() {
           }),
         }
       );
-      const payload = (await res.json()) as ImportTemplate & { error?: string };
+      const payload = (await res.json()) as Template & { error?: string };
       if (!res.ok) {
         toast(payload.error || "Failed to save template.", {
           variant: "error",
@@ -500,11 +500,11 @@ export default function ProductImportsPage() {
       try {
         const refreshRes = await fetch("/api/products/import-templates");
         if (refreshRes.ok) {
-          const refreshed = (await refreshRes.json()) as ImportTemplate[];
+          const refreshed = (await refreshRes.json()) as Template[];
           setTemplates(refreshed);
         }
       } catch (error) {
-        console.error("Failed to refresh import templates", error);
+        console.error("Failed to refresh templates", error);
       }
       toast("Template saved.", { variant: "success" });
     } catch (error) {
@@ -832,7 +832,7 @@ export default function ProductImportsPage() {
   if (!isBaseConnected) {
     return (
       <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-        <h1 className="mb-4 text-3xl font-bold text-white">Product Imports</h1>
+        <h1 className="mb-4 text-3xl font-bold text-white">Product Import/Export</h1>
         <div className="rounded-md border border-yellow-900/50 bg-yellow-900/20 p-4">
           <h2 className="text-lg font-semibold text-yellow-200">
             Base.com Integration Required
@@ -854,10 +854,10 @@ export default function ProductImportsPage() {
     <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">Product Imports</h1>
+          <h1 className="text-3xl font-bold text-white">Product Import/Export</h1>
           <p className="mt-1 text-sm text-gray-400">
-            Import products from Base.com and assign them to your selected
-            catalog and price group.
+            Import products from Base.com or export your products to Base.com
+            using templates for field mapping.
           </p>
         </div>
         <Link
@@ -871,7 +871,8 @@ export default function ProductImportsPage() {
       <Tabs defaultValue="imports">
         <TabsList className="border border-gray-800 bg-gray-900/70">
           <TabsTrigger value="imports">Imports</TabsTrigger>
-          <TabsTrigger value="templates">Import Templates</TabsTrigger>
+          <TabsTrigger value="exports">Exports</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
         </TabsList>
 
         <TabsContent value="imports" className="mt-6 space-y-6">
@@ -1141,6 +1142,128 @@ export default function ProductImportsPage() {
               ) : null}
             </div>
           ) : null}
+        </TabsContent>
+
+        <TabsContent value="exports" className="mt-6 space-y-6">
+          <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-white">
+                  Base.com Export Settings
+                </h2>
+                <p className="mt-1 text-sm text-gray-400">
+                  Configure default export settings for Base.com product listings
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="flex h-2 w-2 rounded-full bg-green-500"></span>
+                <span className="text-xs text-green-400">Connected</span>
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs text-gray-400">
+                    Default Inventory
+                  </label>
+                  <select
+                    className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                    value={inventoryId}
+                    onChange={(event) => setInventoryId(event.target.value)}
+                    disabled={inventories.length === 0}
+                  >
+                    {inventories.length === 0 ? (
+                      <option value="">No inventories loaded</option>
+                    ) : (
+                      <>
+                        <option value="">Select default inventory...</option>
+                        {inventories.map((inv) => (
+                          <option key={inv.id} value={inv.id}>
+                            {inv.name}
+                          </option>
+                        ))}
+                      </>
+                    )}
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Default inventory for product exports
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-xs text-gray-400">
+                    Default Export Template
+                  </label>
+                  <select
+                    className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                    value={activeTemplateId}
+                    onChange={(event) => {
+                      setActiveTemplateId(event.target.value);
+                    }}
+                  >
+                    <option value="">No template (use defaults)</option>
+                    {templates.map((tpl) => (
+                      <option key={tpl.id} value={tpl.id}>
+                        {tpl.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Template for field mapping on export
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-md border border-blue-900/50 bg-blue-900/20 p-4">
+                <h3 className="text-sm font-semibold text-blue-200">
+                  Export Guidelines
+                </h3>
+                <ul className="mt-2 space-y-1 text-xs text-blue-300/70">
+                  <li>• Exports use templates to map internal product fields to Base.com API parameters</li>
+                  <li>• Without a template, default field mappings are used (SKU, Name, Price, Stock, etc.)</li>
+                  <li>• Templates created in the Templates tab work for both import and export</li>
+                  <li>• Export to Base.com from Product List → Integrations → List Products → Select Base.com</li>
+                  <li>• Track export jobs in the <Link href="/admin/products/listing-jobs" className="text-blue-400 underline">Listing Jobs</Link> page</li>
+                </ul>
+              </div>
+
+              <div className="rounded-md border border-gray-800 bg-gray-950 p-4">
+                <h3 className="text-sm font-semibold text-white mb-3">
+                  Quick Actions
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    onClick={handleLoadInventories}
+                    disabled={loadingInventories}
+                    variant="outline"
+                    size="sm"
+                    className="border-gray-700"
+                  >
+                    {loadingInventories ? "Loading..." : "Load Inventories"}
+                  </Button>
+                  <Link href="/admin/products/listing-jobs">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-gray-700"
+                    >
+                      View Listing Jobs
+                    </Button>
+                  </Link>
+                  <Link href="/admin/products">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-gray-700"
+                    >
+                      Go to Products
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="templates" className="mt-6 space-y-6">

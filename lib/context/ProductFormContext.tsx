@@ -650,6 +650,15 @@ export function ProductFormProvider({
       newSlots[toIndex] = temp;
       return newSlots;
     });
+
+    // Also swap the corresponding image links to keep them in sync
+    setImageLinks(prevLinks => {
+      const newLinks = [...prevLinks];
+      const temp = newLinks[fromIndex];
+      newLinks[fromIndex] = newLinks[toIndex];
+      newLinks[toIndex] = temp;
+      return newLinks;
+    });
   }, []);
 
   const toggleCatalog = useCallback((catalogId: string) => {
@@ -781,10 +790,14 @@ export function ProductFormProvider({
       toast(product ? "Product updated." : "Product created.", {
         variant: "success",
       });
-      onSuccess?.();
-      router.refresh();
+
+      // Only close modal for Create mode, not Edit mode
       if (!product) {
+        onSuccess?.();
         router.push("/admin/products");
+      } else {
+        // For Edit mode, just refresh to show updated data
+        router.refresh();
       }
     } catch (error: unknown) {
       if (error instanceof Error) {

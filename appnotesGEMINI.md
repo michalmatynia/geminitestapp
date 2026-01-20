@@ -9,3 +9,4 @@ npx eslint
 add tests
 check Product section optimization opportunities and avoidance of unnecessary re-renders.
 
+run npx tsc and resolve typescript issues one by one

@@ -1,16 +1,18 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useMemo } from "react";
-import { Folder, Plus, ChevronRight, ChevronDown, ChevronLeft, Star } from "lucide-react";
+import { Folder, Plus, ChevronRight, ChevronDown, ChevronLeft, Star, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import type { CategoryWithChildren } from "@/types/notes";
 import type { FolderTreeProps } from "@/types/notes-ui";
 import { FolderNode } from "./tree/FolderNode";
+import { parseMultipleFolders, countMultipleFolders } from "@/lib/utils/folderImporter";
 
 function FolderTreeBase({
   folders,
   selectedFolderId,
+  selectedNotebookId,
   onSelectFolder,
   onCreateFolder,
   onCreateNote,
@@ -33,6 +35,7 @@ function FolderTreeBase({
   onUndo,
   undoHistory,
   onUndoAtIndex,
+  onRefreshFolders,
 }: FolderTreeProps) {
   const { toast } = useToast();
   const [isAllNotesDragOver, setIsAllNotesDragOver] = useState(false);
@@ -41,6 +44,9 @@ function FolderTreeBase({
   const [renamingNoteId, setRenamingNoteId] = useState<string | null>(null);
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(true);
   const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(new Set());
+  const [isDropzoneActive, setIsDropzoneActive] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [showDropzone, setShowDropzone] = useState(false);
 
   const collectFolderIds = useCallback((foldersToScan: CategoryWithChildren[]) => {
     const ids: string[] = [];
@@ -159,6 +165,83 @@ function FolderTreeBase({
     return targetIds.every((id) => expandedFolderIds.has(id));
   }, [selectedFolderId, folders, collectFolderIds, findFolderById, expandedFolderIds]);
 
+  const handleFolderImport = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDropzoneActive(false);
+
+    if (!selectedNotebookId) {
+      toast("Please select a notebook first", { variant: "error" });
+      return;
+    }
+
+    setIsImporting(true);
+
+    try {
+      const structures = await parseMultipleFolders(e.dataTransfer.items);
+
+      if (!structures || structures.length === 0) {
+        toast("No valid folder structure found", { variant: "error" });
+        setIsImporting(false);
+        return;
+      }
+
+      const counts = countMultipleFolders(structures);
+
+      const folderNames = structures.map(s => s.name).join(", ");
+      const displayName = structures.length === 1
+        ? `folder "${structures[0].name}"`
+        : `${structures.length} folders (${folderNames})`;
+
+      const confirmed = confirm(
+        `Import ${displayName} with ${counts.folders} total folders and ${counts.notes} notes?`
+      );
+
+      if (!confirmed) {
+        setIsImporting(false);
+        return;
+      }
+
+      const response = await fetch("/api/notes/import-folder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          notebookId: selectedNotebookId,
+          parentFolderId: null,
+          structures,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        toast(`Successfully imported ${counts.folders} folders and ${counts.notes} notes`);
+
+        if (onRefreshFolders) {
+          await onRefreshFolders();
+        }
+      } else {
+        const error = await response.json();
+        toast(error.error || "Failed to import folder structure", { variant: "error" });
+      }
+    } catch (error) {
+      console.error("Failed to import folder:", error);
+      toast("An unexpected error occurred while importing", { variant: "error" });
+    } finally {
+      setIsImporting(false);
+    }
+  }, [selectedNotebookId, toast, onRefreshFolders]);
+
+  const handleDropzoneDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDropzoneActive(true);
+  }, []);
+
+  const handleDropzoneDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDropzoneActive(false);
+  }, []);
+
   const folderNodes = useMemo(
     () =>
       folders.map((folder) => (
@@ -275,6 +358,17 @@ function FolderTreeBase({
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-white">Folders</h2>
           <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setShowDropzone(!showDropzone)}
+              size="sm"
+              variant="outline"
+              className={`h-7 w-7 p-0 border-gray-700 hover:bg-gray-800 ${
+                showDropzone ? "bg-blue-600/20 text-blue-400" : "text-gray-300"
+              }`}
+              aria-label={showDropzone ? "Hide dropzone" : "Show dropzone"}
+            >
+              <Upload className="size-4" />
+            </Button>
             <Button
               onClick={() => onCreateFolder(null)}
               size="sm"
@@ -401,6 +495,35 @@ function FolderTreeBase({
           </div>
         )}
       </div>
+
+      {showDropzone && (
+        <div
+          className={`mx-4 mt-2 mb-3 border-2 border-dashed rounded-lg transition-all ${
+            isDropzoneActive
+              ? "border-blue-500 bg-blue-500/10"
+              : "border-gray-700 bg-gray-800/30"
+          } ${isImporting ? "opacity-50 pointer-events-none" : ""}`}
+          onDragOver={handleDropzoneDragOver}
+          onDragLeave={handleDropzoneDragLeave}
+          onDrop={handleFolderImport}
+        >
+          <div className="p-4 text-center">
+            <Upload
+              className={`mx-auto mb-2 size-6 ${
+                isDropzoneActive ? "text-blue-400" : "text-gray-500"
+              }`}
+            />
+            <p className="text-xs text-gray-400">
+              {isImporting
+                ? "Importing folder structure..."
+                : "Drop folder(s) here to import"}
+            </p>
+            <p className="text-[10px] text-gray-600 mt-1">
+              Supports multiple folders · Markdown files (.md) will be converted to notes
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-2">
         {folders.length === 0 ? (

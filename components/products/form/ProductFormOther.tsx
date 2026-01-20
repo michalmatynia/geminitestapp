@@ -48,8 +48,7 @@ export default function ProductFormOther() {
   // Check if price group is auto-assigned from catalog (for new products only)
   const isNewProduct = !product;
   const selectedCatalog = catalogs.find((c) => selectedCatalogIds.includes(c.id));
-  const isPriceGroupAutoAssigned = !!(isNewProduct && selectedCatalog?.defaultPriceGroupId &&
-    selectedDefaultPriceGroupId === selectedCatalog.defaultPriceGroupId);
+  const isPriceGroupAutoAssigned = !!(isNewProduct && selectedCatalog?.defaultPriceGroupId);
 
   // Calculate prices for all price groups
   const priceGroupPrices = filteredPriceGroups.map((group) => {

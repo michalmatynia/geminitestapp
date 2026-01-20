@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { productService } from "@/lib/services/productService";
+import { z } from "zod";
 
 /**
  * GET /api/products/[id]
@@ -104,6 +105,87 @@ export async function PUT(
       );
     }
     console.error("[products][PUT] Unknown error", { errorId, error });
+    return NextResponse.json(
+      { error: "An unknown error occurred", errorId },
+      { status: 400 }
+    );
+  }
+}
+
+const patchProductSchema = z.object({
+  price: z.number().min(0).optional(),
+  stock: z.number().int().min(0).optional(),
+});
+
+/**
+ * PATCH /api/products/[id]
+ * Partially updates a product (for quick field edits like price/stock).
+ */
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  let productId = "";
+  try {
+    const { id } = await params;
+    productId = id;
+    if (!id) {
+      const errorId = randomUUID();
+      console.error("[products][PATCH] Missing product id", { errorId });
+      return NextResponse.json(
+        { error: "Product id is required", errorId },
+        { status: 400 }
+      );
+    }
+
+    const body = await req.json();
+    const data = patchProductSchema.parse(body);
+
+    // Use productService to update specific fields
+    const updateData = new FormData();
+    if (data.price !== undefined) {
+      updateData.append("price", String(data.price));
+    }
+    if (data.stock !== undefined) {
+      updateData.append("stock", String(data.stock));
+    }
+
+    const product = await productService.updateProduct(id, updateData);
+    if (!product) {
+      const errorId = randomUUID();
+      console.warn("[products][PATCH] Product not found", { errorId, productId: id });
+      return NextResponse.json(
+        { error: "Product not found", errorId },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(product);
+  } catch (error: unknown) {
+    const errorId = randomUUID();
+    if (error instanceof z.ZodError) {
+      console.error("[products][PATCH] Validation error", {
+        errorId,
+        productId,
+        errors: error.issues,
+      });
+      return NextResponse.json(
+        { error: "Invalid request data", details: error.issues, errorId },
+        { status: 400 }
+      );
+    }
+    if (error instanceof Error) {
+      console.error("[products][PATCH] Failed to update product", {
+        errorId,
+        productId,
+        message: error.message,
+      });
+      return NextResponse.json(
+        { error: error.message, errorId },
+        { status: 400 }
+      );
+    }
+    console.error("[products][PATCH] Unknown error", { errorId, error });
     return NextResponse.json(
       { error: "An unknown error occurred", errorId },
       { status: 400 }

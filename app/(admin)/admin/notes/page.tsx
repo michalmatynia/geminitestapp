@@ -337,6 +337,7 @@ export default function NotesPage() {
             <FolderTree
               folders={folderTree}
               selectedFolderId={settings.selectedFolderId}
+              selectedNotebookId={settings.selectedNotebookId}
               onSelectFolder={(id) => {
                 setSelectedFolderId(id);
                 setSelectedNote(null);
@@ -367,6 +368,7 @@ export default function NotesPage() {
               onUndo={() => handleUndoFolderTree(1)}
               undoHistory={undoHistory}
               onUndoAtIndex={handleUndoAtIndex}
+              onRefreshFolders={fetchFolderTree}
             />
           </div>
         )}

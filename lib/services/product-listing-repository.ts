@@ -32,12 +32,14 @@ export type CreateProductListingInput = {
   productId: string;
   integrationId: string;
   connectionId: string;
+  externalListingId?: string | null;
 };
 
 export type ProductListingRepository = {
   getListingsByProductId: (productId: string) => Promise<ProductListingWithDetails[]>;
   getListingById: (id: string) => Promise<ProductListingRecord | null>;
   createListing: (input: CreateProductListingInput) => Promise<ProductListingWithDetails>;
+  updateListingExternalId: (id: string, externalListingId: string) => Promise<void>;
   deleteListing: (id: string) => Promise<void>;
   listingExists: (productId: string, connectionId: string) => Promise<boolean>;
   listAllListings: () => Promise<Array<Pick<ProductListingRecord, "productId" | "status">>>;
@@ -96,6 +98,7 @@ const prismaRepository: ProductListingRepository = {
         productId: input.productId,
         integrationId: input.integrationId,
         connectionId: input.connectionId,
+        externalListingId: input.externalListingId || null,
         status: "pending",
       },
       include: {
@@ -108,6 +111,13 @@ const prismaRepository: ProductListingRepository = {
       },
     });
     return listing;
+  },
+
+  updateListingExternalId: async (id, externalListingId) => {
+    await prisma.productListing.update({
+      where: { id },
+      data: { externalListingId },
+    });
   },
 
   deleteListing: async (id) => {
@@ -202,7 +212,7 @@ const mongoRepository: ProductListingRepository = {
       productId: input.productId,
       integrationId: input.integrationId,
       connectionId: input.connectionId,
-      externalListingId: null,
+      externalListingId: input.externalListingId || null,
       status: "pending",
       listedAt: null,
       createdAt: now,
@@ -232,6 +242,13 @@ const mongoRepository: ProductListingRepository = {
         name: connection?.name || "Unknown",
       },
     };
+  },
+
+  updateListingExternalId: async (id, externalListingId) => {
+    const db = await getMongoDb();
+    await db
+      .collection<ProductListingDocument>(LISTINGS_COLLECTION)
+      .updateOne({ _id: id }, { $set: { externalListingId, updatedAt: new Date() } });
   },
 
   deleteListing: async (id) => {

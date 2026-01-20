@@ -11,19 +11,23 @@ const getImportTemplateProvider = async (): Promise<ImportTemplateProvider> => {
   return provider;
 };
 
-export type ImportTemplateMapping = {
+export type TemplateMapping = {
   sourceKey: string;
   targetField: string;
 };
 
-export type ImportTemplate = {
+export type Template = {
   id: string;
   name: string;
   description?: string | null;
-  mappings: ImportTemplateMapping[];
+  mappings: TemplateMapping[];
   createdAt: string;
   updatedAt: string;
 };
+
+// Legacy aliases for backwards compatibility
+export type ImportTemplateMapping = TemplateMapping;
+export type ImportTemplate = Template;
 
 const SETTINGS_KEY = "base_import_templates";
 const SAMPLE_PRODUCT_KEY = "base_import_sample_product_id";
@@ -32,7 +36,7 @@ const LAST_TEMPLATE_KEY = "base_import_last_template_id";
 const ACTIVE_TEMPLATE_KEY = "base_import_active_template_id";
 const PARAMETER_CACHE_KEY = "base_import_parameter_cache";
 
-const parseTemplates = (value: string | null): ImportTemplate[] => {
+const parseTemplates = (value: string | null): Template[] => {
   if (!value) return [];
   try {
     const parsed = JSON.parse(value);
@@ -40,7 +44,7 @@ const parseTemplates = (value: string | null): ImportTemplate[] => {
       console.warn("[ImportTemplateRepository] Parsed value is not an array:", parsed);
       return [];
     }
-    return parsed.filter(Boolean) as ImportTemplate[];
+    return parsed.filter(Boolean) as Template[];
   } catch (error) {
     console.error("[ImportTemplateRepository] Failed to parse templates:", error);
     return [];
@@ -309,7 +313,7 @@ const writeParameterCacheValue = async (value: string) => {
     create: { key: PARAMETER_CACHE_KEY, value },
   });
 };
-export const listImportTemplates = async (): Promise<ImportTemplate[]> => {
+export const listImportTemplates = async (): Promise<Template[]> => {
   const raw = await readTemplatesValue();
   return parseTemplates(raw);
 };
@@ -396,11 +400,11 @@ export const getImportTemplate = async (
 export const createImportTemplate = async (input: {
   name: string;
   description?: string | null;
-  mappings?: ImportTemplateMapping[];
+  mappings?: TemplateMapping[];
 }): Promise<ImportTemplate> => {
   const templates = await listImportTemplates();
   const now = new Date().toISOString();
-  const template: ImportTemplate = {
+  const template: Template = {
     id: randomUUID(),
     name: input.name,
     description: input.description ?? null,
@@ -418,19 +422,21 @@ export const updateImportTemplate = async (
   input: Partial<{
     name: string | undefined;
     description: string | null | undefined;
-    mappings: ImportTemplateMapping[] | undefined;
+    mappings: TemplateMapping[] | undefined;
   }>
 ): Promise<ImportTemplate | null> => {
   const templates = await listImportTemplates();
   const index = templates.findIndex((template) => template.id === id);
   if (index === -1) return null;
   const existing = templates[index]!;
-  const updated: ImportTemplate = {
-    ...existing,
-    ...input,
+  const updated = {
+    id: existing.id,
+    name: input.name ?? existing.name,
+    description: input.description !== undefined ? input.description : existing.description,
     mappings: input.mappings ?? existing.mappings,
+    createdAt: existing.createdAt,
     updatedAt: new Date().toISOString(),
-  };
+  } as Template;
   templates[index] = updated;
   await writeTemplatesValue(JSON.stringify(templates));
   return updated;
@@ -443,3 +449,10 @@ export const deleteImportTemplate = async (id: string): Promise<boolean> => {
   await writeTemplatesValue(JSON.stringify(next));
   return true;
 };
+
+// Modern aliases without "Import" prefix (for dual-purpose import/export templates)
+export const listTemplates = listImportTemplates;
+export const getTemplate = getImportTemplate;
+export const createTemplate = createImportTemplate;
+export const updateTemplate = updateImportTemplate;
+export const deleteTemplate = deleteImportTemplate;

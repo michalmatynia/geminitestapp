@@ -713,8 +713,24 @@ model User {
   image         String?
   passwordHash  String?
 
-  accounts Account[]
-  sessions Session[]
+  accounts    Account[]
+  sessions    Session[]
+  preferences UserPreferences?
+}
+
+model UserPreferences {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Product list preferences
+  productListNameLocale   String?  // "name_en", "name_pl", "name_de"
+  productListCatalogFilter String? // catalog ID or "all"
+  productListCurrencyCode  String? // currency code
+  productListPageSize      Int?    // page size
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Account {

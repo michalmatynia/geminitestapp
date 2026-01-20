@@ -10,6 +10,7 @@ import type { NoteSettings } from "@/types/notes-settings";
 export interface FolderTreeProps {
   folders: CategoryWithChildren[];
   selectedFolderId: string | null;
+  selectedNotebookId?: string | null | undefined;
   onSelectFolder: (folderId: string | null) => void;
   onCreateFolder: (parentId?: string | null) => void;
   onCreateNote: (folderId: string) => void;
@@ -32,6 +33,7 @@ export interface FolderTreeProps {
   onUndo?: (() => void) | undefined;
   undoHistory?: Array<{ label: string }> | undefined;
   onUndoAtIndex?: ((index: number) => void) | undefined;
+  onRefreshFolders?: (() => Promise<void>) | undefined;
 }
 
 export interface FolderNodeProps {

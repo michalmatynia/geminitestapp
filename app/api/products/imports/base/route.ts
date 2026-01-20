@@ -33,6 +33,7 @@ const requestSchema = z.object({
   imageMode: z.enum(["links", "download"]).optional(),
   uniqueOnly: z.boolean().optional(),
   allowDuplicateSku: z.boolean().optional(), // Allow importing products with duplicate SKUs
+  selectedIds: z.array(z.string().trim().min(1)).optional(),
 });
 
 export async function POST(req: Request) {
@@ -199,12 +200,22 @@ export async function POST(req: Request) {
       });
     }
 
-    const [products, catalogRepository, productRepository, imageRepository] = await Promise.all([
-      fetchBaseProducts(token, data.inventoryId, data.limit),
-      getCatalogRepository(),
-      getProductRepository(),
-      getImageFileRepository(),
-    ]);
+    const selectedIds = (data.selectedIds ?? [])
+      .map((id) => id.trim())
+      .filter(Boolean);
+    const normalizedSelectedIds = Array.from(new Set(selectedIds));
+    const idsToFetch = data.limit
+      ? normalizedSelectedIds.slice(0, data.limit)
+      : normalizedSelectedIds;
+    const [products, catalogRepository, productRepository, imageRepository] =
+      await Promise.all([
+        idsToFetch.length > 0
+          ? fetchBaseProductDetails(token, data.inventoryId, idsToFetch)
+          : fetchBaseProducts(token, data.inventoryId, data.limit),
+        getCatalogRepository(),
+        getProductRepository(),
+        getImageFileRepository(),
+      ]);
 
     let productsToImport = products;
     let existingSkus: Set<string> | null = null;

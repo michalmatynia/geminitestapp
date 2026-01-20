@@ -188,8 +188,10 @@ model ProductListing {
   integrationId     String
   connectionId      String
   externalListingId String?
+  inventoryId       String?
   status            String    @default("pending")
   listedAt          DateTime?
+  exportHistory     Json?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -422,6 +424,7 @@ model ChatbotJob {
 model CatalogLanguage {
   catalogId  String
   languageId String
+  position   Int      @default(0)
   assignedAt DateTime @default(now())
 
   catalog  Catalog  @relation(fields: [catalogId], references: [id], onDelete: Cascade)

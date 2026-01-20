@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
-import { removeUndefined } from "@/lib/utils";
+import { getProductDataProvider } from "@/lib/services/product-provider";
+import { getMongoDb } from "@/lib/db/mongo-client";
+
+export const runtime = "nodejs";
 
 const languageUpdateSchema = z.object({
   code: z.string().trim().min(1).optional(),
@@ -10,6 +13,27 @@ const languageUpdateSchema = z.object({
   nativeName: z.string().trim().min(1).optional(),
   countryIds: z.array(z.string().trim().min(1)).optional(),
 });
+
+type LanguageCountryDoc = {
+  countryId: string;
+  country: {
+    id: string;
+    code: string;
+    name: string;
+  };
+};
+
+type LanguageDoc = {
+  id: string;
+  code: string;
+  name: string;
+  nativeName?: string | null;
+  countries: LanguageCountryDoc[];
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+const LANGUAGES_COLLECTION = "languages";
 
 /**
  * PUT /api/languages/[id]
@@ -47,6 +71,75 @@ export async function PUT(
       );
     }
     const data = languageUpdateSchema.parse(body);
+
+    const provider = await getProductDataProvider();
+    if (provider === "mongodb") {
+      if (!process.env.MONGODB_URI) {
+        return NextResponse.json(
+          { error: "MongoDB is not configured." },
+          { status: 500 }
+        );
+      }
+      const mongo = await getMongoDb();
+      const existingLang = await mongo
+        .collection<LanguageDoc>(LANGUAGES_COLLECTION)
+        .findOne({ id });
+
+      if (!existingLang) {
+        return NextResponse.json(
+          { error: "Language not found." },
+          { status: 404 }
+        );
+      }
+
+      const updateFields: Partial<LanguageDoc> = {
+        updatedAt: new Date(),
+      };
+
+      if (data.code) {
+        updateFields.code = data.code.toUpperCase();
+      }
+      if (data.name) {
+        updateFields.name = data.name;
+      }
+      if (data.nativeName !== undefined) {
+        updateFields.nativeName = data.nativeName;
+      }
+
+      if (data.countryIds) {
+        const uniqueIds = Array.from(new Set(data.countryIds));
+        const countries: LanguageCountryDoc[] = [];
+
+        if (uniqueIds.length > 0) {
+          const countriesCollection = mongo.collection("countries");
+          for (const countryId of uniqueIds) {
+            const country = await countriesCollection.findOne({ id: countryId });
+            if (country) {
+              countries.push({
+                countryId: country.id,
+                country: {
+                  id: country.id,
+                  code: country.code,
+                  name: country.name,
+                },
+              });
+            }
+          }
+        }
+        updateFields.countries = countries;
+      }
+
+      await mongo
+        .collection<LanguageDoc>(LANGUAGES_COLLECTION)
+        .updateOne({ id }, { $set: updateFields });
+
+      const updated = await mongo
+        .collection<LanguageDoc>(LANGUAGES_COLLECTION)
+        .findOne({ id });
+
+      return NextResponse.json(updated);
+    }
+
     const language = await prisma.$transaction(async (tx) => {
       if (data.code || data.name || data.nativeName !== undefined) {
         await tx.language.update({
@@ -143,6 +236,37 @@ export async function DELETE(
         { error: "Language id is required", errorId },
         { status: 400 }
       );
+    }
+
+    const provider = await getProductDataProvider();
+    if (provider === "mongodb") {
+      if (!process.env.MONGODB_URI) {
+        return NextResponse.json(
+          { error: "MongoDB is not configured." },
+          { status: 500 }
+        );
+      }
+      const mongo = await getMongoDb();
+
+      // Remove language from any catalogs that reference it
+      await mongo.collection("catalogs").updateMany(
+        { languageIds: id },
+        { $pull: { languageIds: id } as any }
+      );
+
+      // Delete the language
+      const result = await mongo
+        .collection<LanguageDoc>(LANGUAGES_COLLECTION)
+        .deleteOne({ id });
+
+      if (result.deletedCount === 0) {
+        return NextResponse.json(
+          { error: "Language not found.", errorId },
+          { status: 404 }
+        );
+      }
+
+      return new Response(null, { status: 204 });
     }
 
     await prisma.$transaction(async (tx) => {

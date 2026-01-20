@@ -16,7 +16,7 @@ const toRecord = (catalog: {
   priceGroupIds: string[];
   createdAt: Date;
   updatedAt: Date;
-  languages?: { languageId: string }[];
+  languages?: { languageId: string; position: number }[];
 }): CatalogRecord => ({
   id: catalog.id,
   name: catalog.name,
@@ -26,7 +26,10 @@ const toRecord = (catalog: {
   defaultPriceGroupId: catalog.defaultPriceGroupId ?? null,
   createdAt: catalog.createdAt,
   updatedAt: catalog.updatedAt,
-  languageIds: catalog.languages?.map((entry) => entry.languageId) ?? [],
+  // Sort by position to ensure correct ordering
+  languageIds: catalog.languages
+    ?.sort((a, b) => a.position - b.position)
+    .map((entry) => entry.languageId) ?? [],
   priceGroupIds: Array.isArray(catalog.priceGroupIds)
     ? catalog.priceGroupIds
     : [],
@@ -35,7 +38,12 @@ const toRecord = (catalog: {
 export const prismaCatalogRepository: CatalogRepository = {
   async listCatalogs() {
     const catalogs = await prisma.catalog.findMany({
-      include: { languages: { select: { languageId: true } } },
+      include: {
+        languages: {
+          select: { languageId: true, position: true },
+          orderBy: { position: "asc" },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
     return catalogs.map(toRecord);
@@ -44,7 +52,12 @@ export const prismaCatalogRepository: CatalogRepository = {
   async getCatalogById(id: string) {
     const catalog = await prisma.catalog.findUnique({
       where: { id },
-      include: { languages: { select: { languageId: true } } },
+      include: {
+        languages: {
+          select: { languageId: true, position: true },
+          orderBy: { position: "asc" },
+        },
+      },
     });
     return catalog ? toRecord(catalog) : null;
   },
@@ -72,9 +85,10 @@ export const prismaCatalogRepository: CatalogRepository = {
       const languageIds = input.languageIds.filter((id) => validIds.has(id));
       if (languageIds.length > 0) {
         await prisma.catalogLanguage.createMany({
-          data: languageIds.map((languageId) => ({
+          data: languageIds.map((languageId, index) => ({
             catalogId: catalog.id,
             languageId,
+            position: index,
           })),
           skipDuplicates: true,
         });
@@ -82,7 +96,12 @@ export const prismaCatalogRepository: CatalogRepository = {
     }
     const created = await prisma.catalog.findUnique({
       where: { id: catalog.id },
-      include: { languages: { select: { languageId: true } } },
+      include: {
+        languages: {
+          select: { languageId: true, position: true },
+          orderBy: { position: "asc" },
+        },
+      },
     });
     return toRecord(created ?? catalog);
   },
@@ -120,9 +139,10 @@ export const prismaCatalogRepository: CatalogRepository = {
       await prisma.catalogLanguage.deleteMany({ where: { catalogId: id } });
       if (languageIds.length > 0) {
         await prisma.catalogLanguage.createMany({
-          data: languageIds.map((languageId) => ({
+          data: languageIds.map((languageId, index) => ({
             catalogId: id,
             languageId,
+            position: index,
           })),
           skipDuplicates: true,
         });
@@ -130,7 +150,12 @@ export const prismaCatalogRepository: CatalogRepository = {
     }
     const updated = await prisma.catalog.findUnique({
       where: { id },
-      include: { languages: { select: { languageId: true } } },
+      include: {
+        languages: {
+          select: { languageId: true, position: true },
+          orderBy: { position: "asc" },
+        },
+      },
     });
     return updated ? toRecord(updated) : null;
   },
@@ -143,7 +168,12 @@ export const prismaCatalogRepository: CatalogRepository = {
     if (ids.length === 0) return [];
     const catalogs = await prisma.catalog.findMany({
       where: { id: { in: ids } },
-      include: { languages: { select: { languageId: true } } },
+      include: {
+        languages: {
+          select: { languageId: true, position: true },
+          orderBy: { position: "asc" },
+        },
+      },
     });
     return catalogs.map(toRecord);
   },

@@ -178,7 +178,8 @@ export default function ProductListingJobsPanel({
       (listing) =>
         listing.status === "completed" ||
         listing.status === "success" ||
-        listing.status === "listed"
+        listing.status === "listed" ||
+        listing.status === "active"
     )
   );
 

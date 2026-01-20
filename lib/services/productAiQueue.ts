@@ -4,6 +4,96 @@ import { generateProductDescription } from "./aiDescriptionService";
 import { translateProduct } from "./aiTranslationService";
 import type { ProductFormData } from "@/types";
 import { getProductRepository } from "@/lib/services/product-repository";
+import { defaultLanguages } from "@/lib/internationalizationDefaults";
+import { getMongoDb } from "@/lib/db/mongo-client";
+import { ObjectId } from "mongodb";
+import { getProductDataProvider } from "@/lib/services/product-provider";
+
+type LanguageRecord = {
+  id: string;
+  code: string;
+  name: string;
+};
+
+const normalizeLanguageDoc = (doc: Record<string, unknown>): LanguageRecord | null => {
+  const rawId = doc.id ?? doc._id;
+  const rawCode = doc.code ?? doc.languageCode ?? doc.isoCode;
+  const rawName = doc.name ?? doc.languageName;
+  const id = typeof rawId === "string" ? rawId : rawId ? String(rawId) : "";
+  const code = typeof rawCode === "string" ? rawCode.trim() : rawCode ? String(rawCode) : "";
+  const name = typeof rawName === "string" ? rawName.trim() : rawName ? String(rawName) : "";
+  if (!id || !code || !name) return null;
+  return { id, code, name };
+};
+
+const normalizeIdValue = (value: unknown): string => {
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return value ? String(value) : "";
+};
+
+const fetchLanguagesByIds = async (ids: string[]): Promise<LanguageRecord[]> => {
+  const normalizedIds = ids.map((id) => normalizeIdValue(id)).filter(Boolean);
+  if (!normalizedIds.length) return [];
+  const provider = await getProductDataProvider();
+  if (provider === "mongodb") {
+    const mongo = await getMongoDb();
+    const objectIds = normalizedIds
+      .filter((id) => ObjectId.isValid(id))
+      .map((id) => new ObjectId(id));
+    const docs = await mongo
+      .collection<Record<string, unknown>>("languages")
+      .find({
+        $or: [
+          ...(objectIds.length ? [{ _id: { $in: objectIds } }] : []),
+          { id: { $in: normalizedIds } },
+          { code: { $in: normalizedIds } },
+        ],
+      })
+      .toArray();
+    return docs.map(normalizeLanguageDoc).filter(Boolean) as LanguageRecord[];
+  }
+  const languages = await prisma.language.findMany({
+    where: { id: { in: normalizedIds } },
+  });
+  return languages.map((lang) => ({
+    id: lang.id,
+    code: lang.code,
+    name: lang.name,
+  }));
+};
+
+const fetchAllLanguages = async (): Promise<LanguageRecord[]> => {
+  const provider = await getProductDataProvider();
+  if (provider === "mongodb") {
+    const mongo = await getMongoDb();
+    const docs = await mongo
+      .collection<Record<string, unknown>>("languages")
+      .find({})
+      .toArray();
+    return docs.map(normalizeLanguageDoc).filter(Boolean) as LanguageRecord[];
+  }
+  const languages = await prisma.language.findMany();
+  return languages.map((lang) => ({
+    id: lang.id,
+    code: lang.code,
+    name: lang.name,
+  }));
+};
+
+const resolveFallbackLanguages = async (): Promise<string[]> => {
+  const allLanguages = await fetchAllLanguages();
+  console.log(`[processTranslation] Found ${allLanguages.length} available languages`);
+  const filtered = allLanguages.filter((lang) => lang.code.toUpperCase() !== "EN");
+  if (filtered.length > 0) {
+    return filtered.map((lang) => lang.name);
+  }
+  const defaults = defaultLanguages
+    .filter((lang) => lang.code !== "EN")
+    .map((lang) => lang.name);
+  console.log(`[processTranslation] Using default languages fallback:`, defaults);
+  return defaults;
+};
 
 let intervalId: NodeJS.Timeout | null = null;
 let isProcessing = false;
@@ -181,15 +271,13 @@ async function processTranslation(job: any) {
           console.log(`[processTranslation] Found ${catalog.languageIds.length} language IDs in catalog`);
 
           // Fetch language details for these IDs
-          const languages = await prisma.language.findMany({
-            where: { id: { in: catalog.languageIds } }
-          });
+          const languages = await fetchLanguagesByIds(catalog.languageIds);
 
           console.log(`[processTranslation] Fetched ${languages.length} languages from database`);
 
           languages.forEach((lang) => {
             console.log(`[processTranslation] Checking language: ${lang.name} (${lang.code})`);
-            if (lang.code !== "EN") {
+            if (lang.code.toUpperCase() !== "EN") {
               languageSet.add(lang.name);
               console.log(`[processTranslation] Added ${lang.name} to target languages`);
             } else {
@@ -259,11 +347,12 @@ async function processTranslation(job: any) {
   } else {
     // No catalogs - translate to all available languages except English
     console.log(`[processTranslation] No catalogs assigned, getting all languages`);
-    const allLanguages = await prisma.language.findMany({
-      where: { code: { not: "EN" } }
-    });
-    console.log(`[processTranslation] Found ${allLanguages.length} available languages`);
-    targetLanguages = allLanguages.map((l) => l.name);
+    targetLanguages = await resolveFallbackLanguages();
+  }
+
+  if (targetLanguages.length === 0) {
+    console.log(`[processTranslation] No catalog languages resolved, falling back to defaults`);
+    targetLanguages = await resolveFallbackLanguages();
   }
 
   if (targetLanguages.length === 0) {

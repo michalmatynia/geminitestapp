@@ -77,19 +77,22 @@ export function CatalogsSettings({
                   </p>
                   {catalog.languageIds && catalog.languageIds.length > 0 ? (
                     <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-300">
-                      {catalog.languageIds.map((languageId, index) => (
-                        <span
-                          key={languageId}
-                          className={`rounded-full border px-2 py-0.5 ${
-                            catalog.defaultLanguageId === languageId
-                              ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                              : "border-gray-700 bg-gray-900"
-                          }`}
-                        >
-                          {index + 1}. {getLanguageDisplay(languageId)}
-                          {catalog.defaultLanguageId === languageId && " (Default)"}
-                        </span>
-                      ))}
+                      {Array.from(new Set(catalog.languageIds)).map(
+                        (languageId, index) => (
+                          <span
+                            key={languageId}
+                            className={`rounded-full border px-2 py-0.5 ${
+                              catalog.defaultLanguageId === languageId
+                                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+                                : "border-gray-700 bg-gray-900"
+                            }`}
+                          >
+                            {index + 1}. {getLanguageDisplay(languageId)}
+                            {catalog.defaultLanguageId === languageId &&
+                              " (Default)"}
+                          </span>
+                        )
+                      )}
                     </div>
                   ) : null}
                 </div>

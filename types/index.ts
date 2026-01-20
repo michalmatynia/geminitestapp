@@ -107,16 +107,28 @@ export type IntegrationWithConnections = IntegrationRecord & {
   connections: IntegrationConnectionBasic[];
 };
 
+export type ProductListingExportEvent = {
+  exportedAt: Date | string;
+  status?: string | null;
+  inventoryId?: string | null;
+  templateId?: string | null;
+  warehouseId?: string | null;
+  externalListingId?: string | null;
+  fields?: string[] | null;
+};
+
 export type ProductListingRecord = {
   id: string;
   productId: string;
   integrationId: string;
   connectionId: string;
   externalListingId: string | null;
+  inventoryId?: string | null;
   status: string;
   listedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  exportHistory?: ProductListingExportEvent[] | null;
   integration: {
     id: string;
     name: string;

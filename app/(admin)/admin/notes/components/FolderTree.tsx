@@ -101,12 +101,15 @@ function FolderTreeBase({
     []
   );
 
+  // Track if initial expansion has happened to avoid re-expanding on folder tree refresh
+  const hasInitiallyExpandedRef = React.useRef(false);
+
   useEffect(() => {
     if (folders.length === 0) return;
-    setExpandedFolderIds((prev) => {
-      if (prev.size > 0) return prev;
-      return new Set(collectFolderIds(folders));
-    });
+    if (hasInitiallyExpandedRef.current) return; // Don't re-expand after initial load
+
+    setExpandedFolderIds(new Set(collectFolderIds(folders)));
+    hasInitiallyExpandedRef.current = true;
   }, [folders, collectFolderIds]);
 
   const handleFolderDragStart = useCallback((folderId: string) => {

@@ -33,6 +33,7 @@ interface ProductModalsProps {
   // Export settings (opened via Store icon)
   exportSettingsProduct?: ProductWithImages | null;
   onCloseExportSettings?: () => void;
+  onListingsUpdated?: () => void;
   // Header integration selection (from + button dropdown)
   selectedHeaderIntegration?: { integrationId: string; connectionId: string } | null;
   onCloseHeaderIntegration?: () => void;
@@ -131,6 +132,7 @@ export function ProductModals({
   listProductPreset,
   exportSettingsProduct,
   onCloseExportSettings,
+  onListingsUpdated,
   selectedHeaderIntegration,
   onCloseHeaderIntegration,
   onHeaderIntegrationSuccess,
@@ -200,6 +202,7 @@ export function ProductModals({
               product={integrationsProduct}
               onClose={onCloseIntegrations}
               onStartListing={onStartListing}
+              onListingsUpdated={onListingsUpdated}
             />
           </div>
         </div>
@@ -244,6 +247,7 @@ export function ProductModals({
               product={exportSettingsProduct}
               onClose={onCloseExportSettings}
               filterIntegrationSlug="baselinker"
+              onListingsUpdated={onListingsUpdated}
             />
           </div>
         </div>

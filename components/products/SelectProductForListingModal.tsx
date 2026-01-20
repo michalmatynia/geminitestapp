@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -51,8 +51,11 @@ export default function SelectProductForListingModal({
   const [preferredTemplateId, setPreferredTemplateId] = useState<string | null>(null);
   const [inventories, setInventories] = useState<BaseInventory[]>([]);
   const [selectedInventoryId, setSelectedInventoryId] = useState<string>("");
+  const [preferredInventoryId, setPreferredInventoryId] = useState<string | null>(null);
   const [loadingInventories, setLoadingInventories] = useState(false);
   const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
+  const previousConnectionId = useRef<string>("");
+  const previousIntegrationId = useRef<string>("");
 
   const isBaseComIntegration = ["baselinker", "base-com"].includes(
     integration?.slug ?? ""
@@ -127,6 +130,21 @@ export default function SelectProductForListingModal({
     void loadPreferredTemplate();
   }, []);
 
+  useEffect(() => {
+    const loadPreferredInventory = async () => {
+      try {
+        const res = await fetch("/api/products/imports/base/sample-product");
+        if (!res.ok) return;
+        const payload = (await res.json()) as { inventoryId?: string | null };
+        setPreferredInventoryId(payload.inventoryId ?? null);
+      } catch {
+        // Ignore inventory preference errors
+      }
+    };
+
+    void loadPreferredInventory();
+  }, []);
+
   // Load Base.com inventories when it's a Base.com integration
   useEffect(() => {
     const loadInventories = async () => {
@@ -162,11 +180,52 @@ export default function SelectProductForListingModal({
   }, [isBaseComIntegration, connectionId]);
 
   useEffect(() => {
+    if (
+      previousIntegrationId.current &&
+      integrationId &&
+      integrationId !== previousIntegrationId.current
+    ) {
+      setInventories([]);
+      setSelectedInventoryId("");
+    }
+    previousIntegrationId.current = integrationId;
+  }, [integrationId]);
+
+  useEffect(() => {
+    if (
+      previousConnectionId.current &&
+      connectionId &&
+      connectionId !== previousConnectionId.current
+    ) {
+      setSelectedInventoryId("");
+    }
+    previousConnectionId.current = connectionId;
+  }, [connectionId]);
+
+  useEffect(() => {
     if (!isBaseComIntegration) return;
     if (!preferredTemplateId) return;
     if (selectedTemplateId !== "none") return;
     setSelectedTemplateId(preferredTemplateId);
   }, [isBaseComIntegration, preferredTemplateId, selectedTemplateId]);
+
+  useEffect(() => {
+    if (!isBaseComIntegration) return;
+    if (selectedInventoryId) return;
+    if (!inventories.length) return;
+    if (loadingInventories) return;
+    if (preferredInventoryId && inventories.some((inv) => inv.id === preferredInventoryId)) {
+      setSelectedInventoryId(preferredInventoryId);
+      return;
+    }
+    setSelectedInventoryId(inventories[0]?.id ?? "");
+  }, [
+    isBaseComIntegration,
+    inventories,
+    preferredInventoryId,
+    selectedInventoryId,
+    loadingInventories,
+  ]);
 
   const handleSubmit = async () => {
     if (!selectedProductId) {

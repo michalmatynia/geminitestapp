@@ -17,6 +17,7 @@ import { useToast } from "@/components/ui/toast";
 import MissingImagePlaceholder from "@/components/ui/missing-image-placeholder";
 import { EditableCell } from "@/components/products/EditableCell";
 import type { ProductWithImages } from "@/types";
+import type { PriceGroupForCalculation } from "@/components/data-table";
 
 // Keep the exported name `Product` in case other files import it from here.
 export type Product = ProductWithImages;
@@ -25,6 +26,66 @@ type ProductNameKey = "name_en" | "name_pl" | "name_de";
 
 // ✅ Use the real toast function type from your hook (no more variant mismatch)
 type ToastFn = ReturnType<typeof useToast>["toast"];
+
+/**
+ * Calculates the price for a product in the specified currency.
+ * Uses price group relationships to convert between currencies.
+ */
+function calculatePriceForCurrency(
+  basePrice: number | null,
+  defaultPriceGroupId: string | null,
+  targetCurrencyCode: string,
+  priceGroups: PriceGroupForCalculation[]
+): { price: number | null; currencyCode: string } {
+  if (basePrice === null || !priceGroups.length) {
+    return { price: null, currencyCode: targetCurrencyCode };
+  }
+
+  // Find the product's default price group (the currency of the stored price)
+  const defaultGroup = defaultPriceGroupId
+    ? priceGroups.find((g) => g.id === defaultPriceGroupId)
+    : priceGroups.find((g) => (g as any).isDefault);
+
+  if (!defaultGroup) {
+    // No default group found, return base price with target currency
+    return { price: basePrice, currencyCode: targetCurrencyCode };
+  }
+
+  const baseCurrencyCode = defaultGroup.currency.code;
+
+  // If the target currency matches the base currency, return the base price
+  if (baseCurrencyCode === targetCurrencyCode) {
+    return { price: basePrice, currencyCode: targetCurrencyCode };
+  }
+
+  // Find a price group for the target currency
+  const targetGroup = priceGroups.find((g) => g.currency.code === targetCurrencyCode);
+
+  if (!targetGroup) {
+    // No price group for target currency, return base price with its original currency
+    return { price: basePrice, currencyCode: baseCurrencyCode };
+  }
+
+  // If target group is dependent and its source is the default group, calculate the price
+  if (targetGroup.type === "dependent" && targetGroup.sourceGroupId === defaultGroup.id) {
+    const calculatedPrice = basePrice * targetGroup.priceMultiplier + targetGroup.addToPrice;
+    return { price: calculatedPrice, currencyCode: targetCurrencyCode };
+  }
+
+  // If target group is standard (not dependent), we can't calculate
+  // Check if there's a dependent group from target that sources from default
+  const dependentFromDefault = priceGroups.find(
+    (g) => g.currency.code === targetCurrencyCode && g.sourceGroupId === defaultGroup.id
+  );
+
+  if (dependentFromDefault) {
+    const calculatedPrice = basePrice * dependentFromDefault.priceMultiplier + dependentFromDefault.addToPrice;
+    return { price: calculatedPrice, currencyCode: targetCurrencyCode };
+  }
+
+  // Can't convert - return base price with original currency
+  return { price: basePrice, currencyCode: baseCurrencyCode };
+}
 
 interface ColumnActionsProps {
   row: Row<ProductWithImages>;
@@ -255,32 +316,70 @@ export const columns: ColumnDef<ProductWithImages>[] = [
 
   {
     accessorKey: "price",
-    header: ({ column }) => (
-      <Button variant="ghost" onClick={() => column.toggleSorting()}>
-        Price
-        <ArrowUpDown className="ml-2 size-4" />
-      </Button>
-    ),
+    header: ({ column, table }) => {
+      const meta = table.options.meta as
+        | { currencyCode?: string }
+        | undefined;
+      const currencyCode = meta?.currencyCode || "";
+
+      return (
+        <Button variant="ghost" onClick={() => column.toggleSorting()}>
+          Price {currencyCode && <span className="ml-1 text-xs text-muted-foreground">({currencyCode})</span>}
+          <ArrowUpDown className="ml-2 size-4" />
+        </Button>
+      );
+    },
     cell: ({ row, table }) => {
       const product = row.original;
       const meta = table.options.meta as
         | {
             setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
+            currencyCode?: string;
+            priceGroups?: PriceGroupForCalculation[];
           }
         | undefined;
 
       const setRefreshTrigger = meta?.setRefreshTrigger;
+      const currencyCode = meta?.currencyCode || "";
+      const priceGroups = meta?.priceGroups || [];
+
+      // Calculate price for the selected currency
+      const { price: displayPrice, currencyCode: actualCurrency } = calculatePriceForCurrency(
+        product.price,
+        product.defaultPriceGroupId,
+        currencyCode,
+        priceGroups
+      );
+
+      // Show currency indicator if different from selected
+      const showCurrencyIndicator = actualCurrency && actualCurrency !== currencyCode;
+
       if (!setRefreshTrigger) {
-        return <div>{product.price !== null ? product.price.toFixed(2) : "-"}</div>;
+        return (
+          <div className="flex items-center gap-1">
+            <span>{displayPrice !== null ? displayPrice.toFixed(2) : "-"}</span>
+            {showCurrencyIndicator && (
+              <span className="text-xs text-muted-foreground">({actualCurrency})</span>
+            )}
+          </div>
+        );
       }
 
+      // For editable cells, we still show the base price but with currency context
       return (
-        <EditableCell
-          value={product.price}
-          productId={product.id}
-          field="price"
-          onUpdate={() => setRefreshTrigger((prev) => prev + 1)}
-        />
+        <div className="flex items-center gap-1">
+          <EditableCell
+            value={product.price}
+            productId={product.id}
+            field="price"
+            onUpdate={() => setRefreshTrigger((prev) => prev + 1)}
+          />
+          {showCurrencyIndicator && displayPrice !== product.price && (
+            <span className="text-xs text-muted-foreground" title={`Converted: ${displayPrice?.toFixed(2)} ${actualCurrency}`}>
+              →{displayPrice?.toFixed(2)}
+            </span>
+          )}
+        </div>
       );
     },
   },

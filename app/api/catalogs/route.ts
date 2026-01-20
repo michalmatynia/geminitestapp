@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import { getCatalogRepository } from "@/lib/services/catalog-repository";
+import { getProductDataProvider } from "@/lib/services/product-provider";
+import { getMongoDb } from "@/lib/db/mongo-client";
+import prisma from "@/lib/prisma";
 
 const catalogSchema = z.object({
   name: z.string().trim().min(1),
@@ -20,7 +23,102 @@ const catalogSchema = z.object({
 export async function GET() {
   try {
     const catalogRepository = await getCatalogRepository();
-    const catalogs = await catalogRepository.listCatalogs();
+    let catalogs = await catalogRepository.listCatalogs();
+    const provider = await getProductDataProvider();
+
+    if (provider === "mongodb" && catalogs.length > 0) {
+      try {
+        const mongo = await getMongoDb();
+        const mongoLanguages = await mongo
+          .collection<{ id: string; code: string }>("languages")
+          .find({}, { projection: { id: 1, code: 1 } })
+          .toArray();
+        const languageCodeById = new Map<string, string>();
+        mongoLanguages.forEach((language) => {
+          if (language.id) languageCodeById.set(language.id, language.code);
+          if (language.code) languageCodeById.set(language.code, language.code);
+        });
+
+        const missingIds = new Set<string>();
+        catalogs.forEach((catalog) => {
+          (catalog.languageIds ?? []).forEach((languageId) => {
+            if (!languageCodeById.has(languageId)) {
+              missingIds.add(languageId);
+            }
+          });
+          if (
+            catalog.defaultLanguageId &&
+            !languageCodeById.has(catalog.defaultLanguageId)
+          ) {
+            missingIds.add(catalog.defaultLanguageId);
+          }
+        });
+
+        if (missingIds.size > 0 && process.env.DATABASE_URL) {
+          const legacyIds = Array.from(missingIds);
+          try {
+            const legacyLanguages = await prisma.language.findMany({
+              where: { id: { in: legacyIds } },
+              select: { id: true, code: true },
+            });
+            legacyLanguages.forEach((language) => {
+              languageCodeById.set(language.id, language.code);
+            });
+          } catch (error) {
+            console.warn(
+              "[catalogs][GET] Failed to load legacy languages from Prisma",
+              error
+            );
+          }
+        }
+
+        const collection = mongo.collection("catalogs");
+        catalogs = await Promise.all(
+          catalogs.map(async (catalog) => {
+            const nextLanguageIds =
+              catalog.languageIds?.map(
+                (languageId) => languageCodeById.get(languageId) ?? languageId
+              ) ?? [];
+            const nextDefaultLanguageId = catalog.defaultLanguageId
+              ? languageCodeById.get(catalog.defaultLanguageId) ??
+                catalog.defaultLanguageId
+              : null;
+
+            const languageIdsChanged =
+              nextLanguageIds.length !== (catalog.languageIds?.length ?? 0) ||
+              nextLanguageIds.some(
+                (languageId, index) => languageId !== catalog.languageIds?.[index]
+              );
+            const defaultChanged =
+              nextDefaultLanguageId !== catalog.defaultLanguageId;
+
+            if (languageIdsChanged || defaultChanged) {
+              await collection.updateOne(
+                { $or: [{ _id: catalog.id }, { id: catalog.id }] },
+                {
+                  $set: {
+                    languageIds: nextLanguageIds,
+                    defaultLanguageId: nextDefaultLanguageId,
+                    updatedAt: new Date(),
+                  },
+                }
+              );
+            }
+
+            return {
+              ...catalog,
+              languageIds: nextLanguageIds,
+              defaultLanguageId: nextDefaultLanguageId,
+            };
+          })
+        );
+      } catch (error) {
+        console.warn(
+          "[catalogs][GET] Failed to normalize catalog language IDs",
+          error
+        );
+      }
+    }
     return NextResponse.json(catalogs);
   } catch (error) {
     const errorId = randomUUID();

@@ -205,6 +205,17 @@ export async function callBaseApi(
   return payload;
 }
 
+export async function deleteBaseProduct(
+  token: string,
+  inventoryId: string,
+  productId: string
+) {
+  return callBaseApi(token, "deleteInventoryProduct", {
+    inventory_id: inventoryId,
+    product_id: productId,
+  });
+}
+
 export async function fetchBaseInventories(token: string) {
   const methods = ["getInventories", "getInventory", "getInventoryList"];
   let lastError: Error | null = null;

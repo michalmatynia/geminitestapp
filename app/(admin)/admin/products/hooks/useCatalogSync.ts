@@ -3,14 +3,16 @@
 import { useState, useEffect, useRef } from "react";
 import { logger } from "@/lib/logger";
 import type { Catalog } from "@/types/products";
+import type { PriceGroupWithDetails } from "@/types";
 
 export function useCatalogSync(catalogFilter: string) {
   const [catalogs, setCatalogs] = useState<Catalog[]>([]);
   const [catalogsLoading, setCatalogsLoading] = useState(true);
   const [catalogsError, setCatalogsError] = useState<string | null>(null);
-  
+
   const [currencyCode, setCurrencyCode] = useState<string>("");
   const [currencyOptions, setCurrencyOptions] = useState<string[]>([]);
+  const [priceGroups, setPriceGroups] = useState<PriceGroupWithDetails[]>([]);
   const [currencyPriceGroups, setCurrencyPriceGroups] = useState<
     Array<{ id: string; isDefault: boolean; currency?: { code?: string } | null }>
   >([]);
@@ -60,8 +62,9 @@ export function useCatalogSync(catalogFilter: string) {
       try {
         const res = await fetch("/api/price-groups");
         if (!res.ok) return;
-        const data = await res.json();
+        const data = await res.json() as PriceGroupWithDetails[];
         if (!mounted) return;
+        setPriceGroups(data);
         setCurrencyPriceGroups(data);
       } catch (error) {
         logger.error("Failed to load price groups:", error);
@@ -109,6 +112,7 @@ export function useCatalogSync(catalogFilter: string) {
     currencyCode,
     setCurrencyCode,
     currencyOptions,
+    priceGroups,
     catalogFilterInitialized,
   };
 }

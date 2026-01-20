@@ -7,7 +7,7 @@ import {
   getExportWarehouseId,
   listImportTemplates,
 } from "@/lib/services/import-template-repository";
-import { exportProductToBase } from "@/lib/services/exports/base-exporter";
+import { buildBaseProductData, exportProductToBase } from "@/lib/services/exports/base-exporter";
 import { checkBaseSkuExists } from "@/lib/services/imports/base-client";
 import { decryptSecret } from "@/lib/utils/encryption";
 
@@ -142,6 +142,41 @@ export async function POST(
       }
     }
 
+    const listingRepo = await getProductListingRepository();
+    const integrations = await integrationRepo.listIntegrations();
+    const baseIntegration = integrations.find((i) =>
+      ["baselinker", "base-com"].includes(i.slug)
+    );
+    let listingId: string | null = null;
+    if (baseIntegration) {
+      const exists = await listingRepo.listingExists(productId, data.connectionId);
+      if (!exists) {
+        const newListing = await listingRepo.createListing({
+          productId,
+          integrationId: baseIntegration.id,
+          connectionId: data.connectionId,
+          externalListingId: null,
+          inventoryId: data.inventoryId,
+        });
+        listingId = newListing.id;
+      } else {
+        const listings = await listingRepo.getListingsByProductId(productId);
+        const existingListing = listings.find(
+          (l) => l.connectionId === data.connectionId
+        );
+        if (existingListing) {
+          listingId = existingListing.id;
+          await listingRepo.updateListingStatus(existingListing.id, "pending");
+          if (existingListing.inventoryId !== data.inventoryId) {
+            await listingRepo.updateListingInventoryId(
+              existingListing.id,
+              data.inventoryId
+            );
+          }
+        }
+      }
+    }
+
     // Export to Base.com
     console.log("[export-to-base] Calling Base.com API", {
       productId,
@@ -151,6 +186,23 @@ export async function POST(
 
     const warehouseId = await getExportWarehouseId();
 
+    const exportData = buildBaseProductData(product, mappings, warehouseId) as Record<string, unknown> & {
+      text_fields?: Record<string, unknown>;
+      prices?: Record<string, unknown>;
+      stock?: Record<string, unknown>;
+    };
+    const exportFields = Object.keys(exportData).flatMap((key) => {
+      if (key === "text_fields" && exportData.text_fields && typeof exportData.text_fields === "object") {
+        return Object.keys(exportData.text_fields as Record<string, unknown>).map((field) => `text_fields.${field}`);
+      }
+      if (key === "prices" && exportData.prices && typeof exportData.prices === "object") {
+        return Object.keys(exportData.prices as Record<string, unknown>).map((field) => `prices.${field}`);
+      }
+      if (key === "stock" && exportData.stock && typeof exportData.stock === "object") {
+        return Object.keys(exportData.stock as Record<string, unknown>).map((field) => `stock.${field}`);
+      }
+      return [key];
+    });
     const result = await exportProductToBase(
       token,
       data.inventoryId,
@@ -164,6 +216,18 @@ export async function POST(
         productId,
         error: result.error,
       });
+      if (listingId) {
+        await listingRepo.updateListingStatus(listingId, "failed");
+        await listingRepo.appendExportHistory(listingId, {
+          exportedAt: new Date(),
+          status: "failed",
+          inventoryId: data.inventoryId,
+          templateId: data.templateId ?? null,
+          warehouseId,
+          externalListingId: result.productId || null,
+          fields: exportFields,
+        });
+      }
       return NextResponse.json(
         { error: result.error || "Failed to export product" },
         { status: 500 }
@@ -175,45 +239,20 @@ export async function POST(
       externalProductId: result.productId,
     });
 
-    // Create listing record
-    const listingRepo = await getProductListingRepository();
-
-    // Find Base.com integration
-    const integrations = await integrationRepo.listIntegrations();
-    const baseIntegration = integrations.find((i) =>
-      ["baselinker", "base-com"].includes(i.slug)
-    );
-
-    if (baseIntegration) {
-      // Check if listing already exists
-      const exists = await listingRepo.listingExists(productId, data.connectionId);
-
-      if (!exists) {
-        const newListing = await listingRepo.createListing({
-          productId,
-          integrationId: baseIntegration.id,
-          connectionId: data.connectionId,
-          externalListingId: result.productId || null,
-        });
-        // Update status to active since export was successful
-        await listingRepo.updateListingStatus(newListing.id, "active");
-      } else {
-        // Update existing listing with external ID and status
-        const listings = await listingRepo.getListingsByProductId(productId);
-        const existingListing = listings.find(
-          (l) => l.connectionId === data.connectionId
-        );
-        if (existingListing) {
-          if (result.productId) {
-            await listingRepo.updateListingExternalId(
-              existingListing.id,
-              result.productId
-            );
-          }
-          // Update status to active since export was successful
-          await listingRepo.updateListingStatus(existingListing.id, "active");
-        }
+    if (listingId) {
+      if (result.productId) {
+        await listingRepo.updateListingExternalId(listingId, result.productId);
       }
+      await listingRepo.updateListingStatus(listingId, "active");
+      await listingRepo.appendExportHistory(listingId, {
+        exportedAt: new Date(),
+        status: "success",
+        inventoryId: data.inventoryId,
+        templateId: data.templateId ?? null,
+        warehouseId,
+        externalListingId: result.productId || null,
+        fields: exportFields,
+      });
     }
 
     return NextResponse.json({

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import ModalShell from "@/components/ui/modal-shell";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -11,13 +12,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { IntegrationWithConnections, ProductListingRecord, ProductWithImages } from "@/types";
-import { Trash2 } from "lucide-react";
+import { Trash2, ArrowRight, ArrowLeft, ArrowLeftRight, Check, X } from "lucide-react";
 
 type ProductListingsModalProps = {
   product: ProductWithImages;
   onClose: () => void;
   onStartListing?: (integrationId: string, connectionId: string) => void;
   filterIntegrationSlug?: string | null;
+  onListingsUpdated?: () => void;
 };
 
 const statusColors: Record<string, string> = {
@@ -32,11 +34,15 @@ export default function ProductListingsModal({
   onClose,
   onStartListing,
   filterIntegrationSlug,
+  onListingsUpdated,
 }: ProductListingsModalProps) {
   const [listings, setListings] = useState<ProductListingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deletingFromBase, setDeletingFromBase] = useState<string | null>(null);
+  const [purgingListing, setPurgingListing] = useState<string | null>(null);
+  const [inventoryOverrides, setInventoryOverrides] = useState<Record<string, string>>({});
+  const [savingInventoryId, setSavingInventoryId] = useState<string | null>(null);
   const [integrations, setIntegrations] = useState<IntegrationWithConnections[]>([]);
   const [loadingIntegrations, setLoadingIntegrations] = useState(false);
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>("");
@@ -95,23 +101,297 @@ export default function ProductListingsModal({
       ? "Base.com"
       : filterIntegrationSlug ?? "integration";
 
-  const handleDelete = async (listingId: string) => {
-    if (!window.confirm("Remove this listing?")) return;
+  const formatTimestamp = (value: string | Date | null | undefined) => {
+    if (!value) return "—";
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return "—";
+    return date.toLocaleString();
+  };
+
+  const formatListValue = (value: string | null | undefined) =>
+    value ? value : "—";
+
+  const getExportFieldsLabel = () => {
+    const fields: string[] = [];
+    if (product.sku) fields.push("SKU");
+    if (product.ean) fields.push("EAN");
+    if (product.weight !== null && product.weight !== undefined) fields.push("Weight");
+    if (product.name_en) fields.push("Name");
+    if (product.description_en) fields.push("Description");
+    if (product.price !== null && product.price !== undefined) fields.push("Price");
+    if (product.stock !== null && product.stock !== undefined) fields.push("Stock");
+    return fields.length > 0 ? fields.join(", ") : "No exportable fields detected";
+  };
+
+  // Sync direction types
+  type SyncDirection = "to_base" | "from_base" | "bidirectional" | "none";
+
+  // Define sync configuration for each field
+  const getSyncFields = () => {
+    return [
+      {
+        name: "SKU",
+        value: product.sku || "—",
+        hasValue: !!product.sku,
+        syncDirection: "to_base" as SyncDirection,
+        description: "Product identifier",
+      },
+      {
+        name: "Name",
+        value: product.name_en || "—",
+        hasValue: !!product.name_en,
+        syncDirection: "to_base" as SyncDirection,
+        description: "Product name (English)",
+      },
+      {
+        name: "Description",
+        value: product.description_en ? `${product.description_en.slice(0, 50)}...` : "—",
+        hasValue: !!product.description_en,
+        syncDirection: "to_base" as SyncDirection,
+        description: "Product description (English)",
+      },
+      {
+        name: "Price",
+        value: product.price !== null && product.price !== undefined ? `${product.price.toFixed(2)}` : "—",
+        hasValue: product.price !== null && product.price !== undefined,
+        syncDirection: "to_base" as SyncDirection,
+        description: "Base price",
+      },
+      {
+        name: "Stock",
+        value: product.stock !== null && product.stock !== undefined ? `${product.stock}` : "—",
+        hasValue: product.stock !== null && product.stock !== undefined,
+        syncDirection: "to_base" as SyncDirection,
+        description: "Inventory quantity",
+      },
+      {
+        name: "EAN",
+        value: product.ean || "—",
+        hasValue: !!product.ean,
+        syncDirection: "to_base" as SyncDirection,
+        description: "Barcode / EAN",
+      },
+      {
+        name: "Weight",
+        value: product.weight !== null && product.weight !== undefined ? `${product.weight}g` : "—",
+        hasValue: product.weight !== null && product.weight !== undefined,
+        syncDirection: "to_base" as SyncDirection,
+        description: "Product weight",
+      },
+    ];
+  };
+
+  const getSyncDirectionIcon = (direction: SyncDirection) => {
+    switch (direction) {
+      case "to_base":
+        return <ArrowRight className="size-3 text-blue-400" />;
+      case "from_base":
+        return <ArrowLeft className="size-3 text-purple-400" />;
+      case "bidirectional":
+        return <ArrowLeftRight className="size-3 text-emerald-400" />;
+      default:
+        return <X className="size-3 text-gray-500" />;
+    }
+  };
+
+  const getSyncDirectionLabel = (direction: SyncDirection) => {
+    switch (direction) {
+      case "to_base":
+        return "To Base.com";
+      case "from_base":
+        return "From Base.com";
+      case "bidirectional":
+        return "Both ways";
+      default:
+        return "Not synced";
+    }
+  };
+
+  const SyncConfigurationPanel = () => {
+    const syncFields = getSyncFields();
+    const activeFields = syncFields.filter((f) => f.hasValue);
+
+    return (
+      <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3">
+        <div className="mb-3 flex items-center justify-between">
+          <h4 className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            Sync Configuration
+          </h4>
+          <div className="flex items-center gap-1 text-[10px] text-gray-500">
+            <ArrowRight className="size-2.5" />
+            <span>To Base.com only</span>
+          </div>
+        </div>
+
+        <div className="mb-3 rounded border border-blue-500/20 bg-blue-500/5 px-2 py-1.5">
+          <div className="flex items-center gap-2 text-xs text-blue-300">
+            <ArrowRight className="size-3" />
+            <span>
+              Currently configured for <strong>one-way export</strong> (Product → Base.com)
+            </span>
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          {syncFields.map((field) => (
+            <div
+              key={field.name}
+              className={`flex items-center justify-between rounded px-2 py-1.5 text-xs ${
+                field.hasValue
+                  ? "bg-gray-900/50"
+                  : "bg-gray-900/20 opacity-50"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {field.hasValue ? (
+                  <Check className="size-3 text-emerald-400" />
+                ) : (
+                  <X className="size-3 text-gray-600" />
+                )}
+                <span className={field.hasValue ? "text-gray-200" : "text-gray-500"}>
+                  {field.name}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="max-w-[120px] truncate text-gray-400" title={field.value}>
+                  {field.value}
+                </span>
+                <div className="flex items-center gap-1" title={getSyncDirectionLabel(field.syncDirection)}>
+                  {getSyncDirectionIcon(field.hasValue ? field.syncDirection : "none")}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-3 border-t border-gray-800 pt-2">
+          <div className="flex items-center justify-between text-[10px] text-gray-500">
+            <span>{activeFields.length} of {syncFields.length} fields will be synced</span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <ArrowRight className="size-2.5 text-blue-400" />
+                <span>To Base</span>
+              </div>
+              <div className="flex items-center gap-1 opacity-40">
+                <ArrowLeft className="size-2.5 text-purple-400" />
+                <span>From Base</span>
+              </div>
+              <div className="flex items-center gap-1 opacity-40">
+                <ArrowLeftRight className="size-2.5 text-emerald-400" />
+                <span>Both</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const handleDeleteFromBase = async (listingId: string) => {
+    const listing = listings.find((item) => item.id === listingId);
+    if (!listing) return;
+    if (!window.confirm("Delete this product from Base.com? This cannot be undone.")) {
+      return;
+    }
 
     try {
-      setDeleting(listingId);
+      setDeletingFromBase(listingId);
+      const inventoryId = (inventoryOverrides[listingId] || listing.inventoryId || "").trim();
+      if (!inventoryId) {
+        setError("Inventory ID is required to delete from Base.com.");
+        return;
+      }
+      const body = inventoryId ? { inventoryId } : {};
       const res = await fetch(
-        `/api/products/${product.id}/listings/${listingId}`,
+        `/api/products/${product.id}/listings/${listingId}/delete-from-base`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }
+      );
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.error || "Failed to delete from Base.com");
+      }
+      setListings((prev) =>
+        prev.map((item) =>
+          item.id === listingId
+            ? { ...item, status: "removed", updatedAt: new Date() }
+            : item
+        )
+      );
+      onListingsUpdated?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete from Base.com");
+    } finally {
+      setDeletingFromBase(null);
+    }
+  };
+
+  const handlePurgeListing = async (listingId: string) => {
+    const listing = listings.find((item) => item.id === listingId);
+    if (!listing) return;
+    if (!window.confirm("Remove this integration connection and its history?")) {
+      return;
+    }
+
+    try {
+      setPurgingListing(listingId);
+      const res = await fetch(
+        `/api/products/${product.id}/listings/${listingId}/purge`,
         { method: "DELETE" }
       );
       if (!res.ok) {
-        throw new Error("Failed to remove listing");
+        throw new Error("Failed to remove listing history");
       }
-      setListings((prev) => prev.filter((l) => l.id !== listingId));
+      setListings((prev) => prev.filter((item) => item.id !== listingId));
+      onListingsUpdated?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to remove listing");
+      setError(err instanceof Error ? err.message : "Failed to remove listing history");
     } finally {
-      setDeleting(null);
+      setPurgingListing(null);
+    }
+  };
+
+  const handleSaveInventoryId = async (listingId: string) => {
+    const value = (inventoryOverrides[listingId] ?? "").trim();
+    if (!value) {
+      setError("Inventory ID is required.");
+      return;
+    }
+
+    try {
+      setSavingInventoryId(listingId);
+      const res = await fetch(
+        `/api/products/${product.id}/listings/${listingId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ inventoryId: value }),
+        }
+      );
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.error || "Failed to save inventory ID");
+      }
+      setListings((prev) =>
+        prev.map((item) =>
+          item.id === listingId
+            ? { ...item, inventoryId: value, updatedAt: new Date() }
+            : item
+        )
+      );
+      setInventoryOverrides((prev) => {
+        const next = { ...prev };
+        delete next[listingId];
+        return next;
+      });
+      onListingsUpdated?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save inventory ID");
+    } finally {
+      setSavingInventoryId(null);
     }
   };
 
@@ -131,13 +411,14 @@ export default function ProductListingsModal({
         ) : filteredListings.length === 0 ? (
           <div className="rounded-md border border-gray-700 bg-gray-900/50 px-4 py-8 text-center">
             {filterIntegrationSlug ? (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="text-sm text-gray-300">
                   {statusTargetLabel} status
                 </div>
                 <div className="rounded-md border border-gray-800 bg-gray-950/60 px-3 py-2 text-xs text-gray-400">
                   Not connected.
                 </div>
+                {filterIntegrationSlug === "baselinker" && <SyncConfigurationPanel />}
               </div>
             ) : (
               <div className="space-y-4">
@@ -231,12 +512,13 @@ export default function ProductListingsModal({
             )}
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {filterIntegrationSlug && (
               <div className="rounded-md border border-gray-800 bg-gray-950/60 px-3 py-2 text-xs text-gray-300">
                 {statusTargetLabel} status: {filteredListings[0]?.status ?? "Unknown"}
               </div>
             )}
+            {filterIntegrationSlug === "baselinker" && <SyncConfigurationPanel />}
             {filteredListings.map((listing) => (
               <div
                 key={listing.id}
@@ -261,16 +543,110 @@ export default function ProductListingsModal({
                       External ID: {listing.externalListingId}
                     </p>
                   )}
+                  {listing.inventoryId && (
+                    <p className="text-xs text-gray-500">
+                      Inventory ID: {listing.inventoryId}
+                    </p>
+                  )}
+                  <div className="mt-2 space-y-1 text-xs text-gray-500">
+                    <p>Last export: {formatTimestamp(listing.listedAt)}</p>
+                    <p>Created: {formatTimestamp(listing.createdAt)}</p>
+                    <p>Updated: {formatTimestamp(listing.updatedAt)}</p>
+                    {["baselinker", "base-com"].includes(listing.integration.slug) && (
+                      <p>Exported fields: {getExportFieldsLabel()}</p>
+                    )}
+                  </div>
+                  {listing.exportHistory && listing.exportHistory.length > 0 ? (
+                    <div className="mt-3 rounded border border-gray-800 bg-gray-950/50 p-2">
+                      <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                        Export history
+                      </p>
+                      <div className="mt-2 space-y-2 text-xs text-gray-400">
+                        {listing.exportHistory.slice(0, 5).map((event, index) => (
+                          <div key={`${listing.id}-export-${index}`} className="grid gap-1">
+                            <div className="flex items-center justify-between text-gray-300">
+                              <span>{formatTimestamp(event.exportedAt)}</span>
+                              <span className="uppercase text-[10px] text-gray-500">
+                                {event.status ?? "success"}
+                              </span>
+                            </div>
+                            <div className="grid gap-1">
+                              <span>Inventory: {formatListValue(event.inventoryId)}</span>
+                              <span>Template: {formatListValue(event.templateId)}</span>
+                              <span>Warehouse: {formatListValue(event.warehouseId)}</span>
+                              {event.externalListingId && (
+                                <span>External ID: {event.externalListingId}</span>
+                              )}
+                              {event.fields && event.fields.length > 0 ? (
+                                <span>Fields: {event.fields.join(", ")}</span>
+                              ) : (
+                                <span>Fields: —</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-xs text-gray-600">No export history recorded.</p>
+                  )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => void handleDelete(listing.id)}
-                  disabled={deleting === listing.id}
-                  className="ml-4 rounded p-2 text-gray-400 hover:bg-gray-800 hover:text-red-400 disabled:opacity-50"
-                  aria-label="Remove listing"
-                >
-                  <Trash2 className="size-4" />
-                </button>
+                <div className="ml-4 flex flex-col gap-2">
+                  {["baselinker", "base-com"].includes(listing.integration.slug) && (
+                    <>
+                      {!listing.inventoryId && (
+                        <div className="space-y-1 text-xs text-gray-400">
+                          <label htmlFor={`inventory-${listing.id}`}>
+                            Inventory ID
+                          </label>
+                          <Input
+                            id={`inventory-${listing.id}`}
+                            value={inventoryOverrides[listing.id] ?? ""}
+                            onChange={(e) =>
+                              setInventoryOverrides((prev) => ({
+                                ...prev,
+                                [listing.id]: e.target.value,
+                              }))
+                            }
+                            placeholder="Enter inventory ID"
+                            className="h-7 border-gray-700 bg-gray-950/60 text-gray-200"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => void handleSaveInventoryId(listing.id)}
+                            disabled={savingInventoryId === listing.id}
+                            className="h-7 border-gray-700 text-gray-200 hover:bg-gray-800"
+                          >
+                            Save inventory ID
+                          </Button>
+                        </div>
+                      )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void handleDeleteFromBase(listing.id)}
+                        disabled={deletingFromBase === listing.id}
+                        className="border-red-500/40 text-red-300 hover:bg-red-500/10"
+                      >
+                        Delete from Base.com
+                      </Button>
+                    </>
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => void handlePurgeListing(listing.id)}
+                    disabled={purgingListing === listing.id}
+                    className="text-gray-400 hover:bg-gray-800 hover:text-red-400"
+                  >
+                    <Trash2 className="mr-1 size-3" />
+                    Remove history
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
+import { GripVertical, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -87,7 +87,28 @@ const PRODUCT_FIELDS = [
   { value: "image_8", label: "Image Link 8" },
   { value: "image_9", label: "Image Link 9" },
   { value: "image_10", label: "Image Link 10" },
+  { value: "image_slot_1", label: "Image Slot 1" },
+  { value: "image_slot_2", label: "Image Slot 2" },
+  { value: "image_slot_3", label: "Image Slot 3" },
+  { value: "image_slot_4", label: "Image Slot 4" },
+  { value: "image_slot_5", label: "Image Slot 5" },
+  { value: "image_slot_6", label: "Image Slot 6" },
+  { value: "image_slot_7", label: "Image Slot 7" },
+  { value: "image_slot_8", label: "Image Slot 8" },
+  { value: "image_slot_9", label: "Image Slot 9" },
+  { value: "image_slot_10", label: "Image Slot 10" },
+  { value: "image_slot_11", label: "Image Slot 11" },
+  { value: "image_slot_12", label: "Image Slot 12" },
+  { value: "image_slot_13", label: "Image Slot 13" },
+  { value: "image_slot_14", label: "Image Slot 14" },
+  { value: "image_slot_15", label: "Image Slot 15" },
+  { value: "image_all", label: "Image Slots (All, legacy key)" },
+  { value: "image_slots_all", label: "Image Slots (All)" },
+  { value: "image_links_all", label: "Image Links (All)" },
+  { value: "images_all", label: "Images (All: slots + links)" },
 ] as const;
+
+const IMAGE_SLOT_KEYS = Array.from({ length: 15 }, (_, index) => `image_slot_${index + 1}`);
 
 export default function ProductImportsPage() {
   const { toast } = useToast();
@@ -114,6 +135,10 @@ export default function ProductImportsPage() {
     skuDuplicates?: number;
   } | null>(null);
   const [loadingImportList, setLoadingImportList] = useState(false);
+  const [importSearch, setImportSearch] = useState("");
+  const [selectedImportIds, setSelectedImportIds] = useState<Set<string>>(
+    () => new Set()
+  );
   const [uniqueOnly, setUniqueOnly] = useState(true);
   const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -142,6 +167,12 @@ export default function ProductImportsPage() {
   const [loadingParameters, setLoadingParameters] = useState(false);
   const [parameterProductId, setParameterProductId] = useState("");
   const [openKeyIndex, setOpenKeyIndex] = useState<number | null>(null);
+  const [draggedMappingIndex, setDraggedMappingIndex] = useState<number | null>(
+    null
+  );
+  const [dragOverMappingIndex, setDragOverMappingIndex] = useState<number | null>(
+    null
+  );
   const lastParameterProductIdRef = useRef<string | null>(null);
   const lastWarehouseInventoryIdRef = useRef<string | null>(null);
   const [parameterCacheReady, setParameterCacheReady] = useState(false);
@@ -739,10 +770,87 @@ export default function ProductImportsPage() {
     );
   };
 
+  const moveMappingRow = (fromIndex: number, toIndex: number) => {
+    setTemplateMappings((prev) => {
+      if (toIndex < 0 || toIndex >= prev.length) return prev;
+      if (fromIndex < 0 || fromIndex >= prev.length) return prev;
+      if (fromIndex === toIndex) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next;
+    });
+    setOpenKeyIndex(null);
+  };
+
+  const handleMappingDragStart = (
+    event: React.DragEvent<HTMLButtonElement>,
+    index: number
+  ) => {
+    event.dataTransfer.setData("mappingIndex", String(index));
+    event.dataTransfer.setData("text/plain", String(index));
+    event.dataTransfer.effectAllowed = "move";
+    setDraggedMappingIndex(index);
+    setOpenKeyIndex(null);
+    const target = event.currentTarget as HTMLElement;
+    target.style.opacity = "0.5";
+  };
+
+  const handleMappingDragEnd = (event: React.DragEvent<HTMLButtonElement>) => {
+    const target = event.currentTarget as HTMLElement;
+    target.style.opacity = "1";
+    setDraggedMappingIndex(null);
+    setDragOverMappingIndex(null);
+  };
+
+  const handleMappingDragOver = (
+    event: React.DragEvent<HTMLDivElement>,
+    index: number
+  ) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    if (draggedMappingIndex === null || draggedMappingIndex === index) {
+      setDragOverMappingIndex(null);
+      return;
+    }
+    setDragOverMappingIndex(index);
+  };
+
+  const handleMappingDragLeave = () => {
+    setDragOverMappingIndex(null);
+  };
+
+  const handleMappingDrop = (
+    event: React.DragEvent<HTMLDivElement>,
+    index: number
+  ) => {
+    event.preventDefault();
+    const rawIndex =
+      event.dataTransfer.getData("mappingIndex") ||
+      event.dataTransfer.getData("text/plain");
+    const fromIndex = Number.parseInt(rawIndex, 10);
+    const resolvedIndex = Number.isNaN(fromIndex)
+      ? draggedMappingIndex
+      : fromIndex;
+    if (resolvedIndex === null) return;
+    moveMappingRow(resolvedIndex, index);
+    setDraggedMappingIndex(null);
+    setDragOverMappingIndex(null);
+  };
+
+  const ALL_IMAGE_KEYS = [
+    ...IMAGE_SLOT_KEYS,
+    "image_all",
+    "image_slots_all",
+    "image_links_all",
+    "images_all",
+  ];
+
   const filterKeys = (query: string) => {
-    if (!query) return parameterKeys;
+    const combined = Array.from(new Set([...parameterKeys, ...ALL_IMAGE_KEYS]));
+    if (!query) return combined;
     const lowered = query.toLowerCase();
-    return parameterKeys.filter((key) => key.toLowerCase().includes(lowered));
+    return combined.filter((key) => key.toLowerCase().includes(lowered));
   };
 
   const handleLoadInventories = async () => {
@@ -872,7 +980,13 @@ export default function ProductImportsPage() {
       toast("Select a catalog before importing.", { variant: "error" });
       return;
     }
+    if (importList.length > 0 && selectedImportIds.size === 0) {
+      toast("Select at least one product to import.", { variant: "error" });
+      return;
+    }
     const parsedLimit = limit === "all" ? undefined : Number(limit);
+    const selectedIds =
+      importList.length > 0 ? Array.from(selectedImportIds) : [];
     setImporting(true);
     try {
       const res = await fetch("/api/products/imports/base", {
@@ -887,6 +1001,7 @@ export default function ProductImportsPage() {
           imageMode,
           uniqueOnly,
           allowDuplicateSku,
+          selectedIds: selectedIds.length > 0 ? selectedIds : undefined,
         }),
       });
       const payload = (await res.json()) as ImportResponse & {
@@ -944,6 +1059,13 @@ export default function ProductImportsPage() {
         return;
       }
       setImportList(payload.products ?? []);
+      setSelectedImportIds(
+        new Set(
+          (payload.products ?? [])
+            .map((item) => item.baseProductId)
+            .filter((id): id is string => Boolean(id))
+        )
+      );
       setImportListStats(
         payload.total !== undefined
           ? {
@@ -960,6 +1082,28 @@ export default function ProductImportsPage() {
       setLoadingImportList(false);
     }
   };
+
+  const normalizedImportQuery = importSearch.trim().toLowerCase();
+  const filteredImportList = normalizedImportQuery
+    ? importList.filter((item) => {
+        const fields = [
+          item.baseProductId,
+          item.name,
+          item.sku ?? "",
+          item.description ?? "",
+        ];
+        return fields.some((field) =>
+          field.toLowerCase().includes(normalizedImportQuery)
+        );
+      })
+    : importList;
+  const selectedImportCount = selectedImportIds.size;
+  const allVisibleSelected =
+    filteredImportList.length > 0 &&
+    filteredImportList.every((item) => selectedImportIds.has(item.baseProductId));
+  const isSomeVisibleSelected =
+    filteredImportList.some((item) => selectedImportIds.has(item.baseProductId)) &&
+    !allVisibleSelected;
 
   if (checkingIntegration) {
     return (
@@ -1188,6 +1332,12 @@ export default function ProductImportsPage() {
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
+                <Input
+                  value={importSearch}
+                  onChange={(event) => setImportSearch(event.target.value)}
+                  placeholder="Search products..."
+                  className="h-8 w-48 border-gray-800 bg-gray-900 text-xs text-white placeholder:text-gray-500"
+                />
                 <select
                   className="rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-white"
                   value={uniqueOnly ? "unique" : "all"}
@@ -1211,15 +1361,47 @@ export default function ProductImportsPage() {
               <div className="mt-3 text-xs text-gray-400">
                 Total: {importListStats.total} · Existing:{" "}
                 {importListStats.existing} · Showing: {importListStats.filtered}
+                {" "}· Visible: {filteredImportList.length} · Selected:{" "}
+                {selectedImportCount}
                 {importListStats.skuDuplicates ? (
                   <span className="text-yellow-400"> · SKU duplicates: {importListStats.skuDuplicates}</span>
                 ) : null}
               </div>
             ) : null}
 
-            {importList.length > 0 ? (
+            {filteredImportList.length > 0 ? (
               <div className="mt-3 max-h-96 overflow-auto rounded-md border border-gray-800 bg-gray-950/70">
-                <div className="grid grid-cols-[50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-gray-800 px-3 py-2 text-[11px] uppercase tracking-wide text-gray-500 sticky top-0 bg-gray-950 z-10">
+                <div className="grid grid-cols-[28px_50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-gray-800 px-3 py-2 text-[11px] uppercase tracking-wide text-gray-500 sticky top-0 bg-gray-950 z-10">
+                  <span className="flex items-center">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all visible products"
+                      checked={allVisibleSelected}
+                      onChange={(event) => {
+                        if (event.target.checked) {
+                          setSelectedImportIds((prev) => {
+                            const next = new Set(prev);
+                            filteredImportList.forEach((item) => {
+                              if (item.baseProductId) next.add(item.baseProductId);
+                            });
+                            return next;
+                          });
+                        } else {
+                          setSelectedImportIds((prev) => {
+                            const next = new Set(prev);
+                            filteredImportList.forEach((item) => {
+                              if (item.baseProductId) next.delete(item.baseProductId);
+                            });
+                            return next;
+                          });
+                        }
+                      }}
+                      ref={(element) => {
+                        if (element) element.indeterminate = isSomeVisibleSelected;
+                      }}
+                      className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
+                    />
+                  </span>
                   <span>Img</span>
                   <span>Base ID</span>
                   <span>Product</span>
@@ -1228,11 +1410,33 @@ export default function ProductImportsPage() {
                   <span>Qty</span>
                   <span>Status</span>
                 </div>
-                {importList.map((item) => (
+                {filteredImportList.map((item) => (
                   <div
                     key={item.baseProductId}
-                    className="grid grid-cols-[50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-gray-900/70 px-3 py-2 text-xs text-gray-300 last:border-b-0 items-center hover:bg-gray-900/40 transition-colors"
+                    className={`grid grid-cols-[28px_50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-gray-900/70 px-3 py-2 text-xs text-gray-300 last:border-b-0 items-center transition-colors ${
+                      selectedImportIds.has(item.baseProductId)
+                        ? "bg-emerald-500/5"
+                        : "hover:bg-gray-900/40"
+                    }`}
                   >
+                    <input
+                      type="checkbox"
+                      checked={selectedImportIds.has(item.baseProductId)}
+                      onChange={(event) => {
+                        const checked = event.target.checked;
+                        setSelectedImportIds((prev) => {
+                          const next = new Set(prev);
+                          if (checked) {
+                            next.add(item.baseProductId);
+                          } else {
+                            next.delete(item.baseProductId);
+                          }
+                          return next;
+                        });
+                      }}
+                      className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
+                      aria-label={`Select ${item.name}`}
+                    />
                     <div className="h-10 w-10 overflow-hidden rounded bg-gray-900">
                       {item.image ? (
                         <img
@@ -1277,7 +1481,9 @@ export default function ProductImportsPage() {
               </div>
             ) : (
               <p className="mt-3 text-xs text-gray-500">
-                No items loaded yet.
+                {importList.length > 0
+                  ? "No matches for this search."
+                  : "No items loaded yet."}
               </p>
             )}
           </div>
@@ -1621,8 +1827,35 @@ export default function ProductImportsPage() {
                     {templateMappings.map((mapping, index) => (
                       <div
                         key={index}
-                        className="grid gap-2 md:grid-cols-[1fr_1fr_auto]"
+                        onDragOver={(event) => handleMappingDragOver(event, index)}
+                        onDragLeave={handleMappingDragLeave}
+                        onDrop={(event) => handleMappingDrop(event, index)}
+                        className={`grid gap-2 rounded-md transition md:grid-cols-[auto_1fr_1fr_auto] ${
+                          dragOverMappingIndex === index
+                            ? "bg-emerald-500/10 ring-1 ring-emerald-500/60"
+                            : ""
+                        }`}
                       >
+                        <div className="flex items-center">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            draggable
+                            onDragStart={(event) =>
+                              handleMappingDragStart(event, index)
+                            }
+                            onDragEnd={handleMappingDragEnd}
+                            aria-label="Drag mapping to reorder"
+                            className={`text-gray-400 hover:text-white ${
+                              draggedMappingIndex === index
+                                ? "cursor-grabbing"
+                                : "cursor-grab"
+                            }`}
+                          >
+                            <GripVertical className="size-4" />
+                          </Button>
+                        </div>
                         <div className="relative">
                           <Input
                             value={mapping.sourceKey}
@@ -1641,11 +1874,9 @@ export default function ProductImportsPage() {
                             }}
                             placeholder="Base parameter key (e.g. material)"
                           />
-                          {openKeyIndex === index && parameterKeys.length > 0 && (
+                          {openKeyIndex === index && (
                             <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-gray-800 bg-gray-950 shadow-lg">
-                              {filterKeys(mapping.sourceKey)
-                                .slice(0, 60)
-                                .map((key) => (
+                              {filterKeys(mapping.sourceKey).map((key) => (
                                   <button
                                     key={key}
                                     type="button"

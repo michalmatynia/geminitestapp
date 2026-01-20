@@ -23,6 +23,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+export type PriceGroupForCalculation = {
+  id: string;
+  currencyId: string;
+  type: string;
+  sourceGroupId: string | null;
+  priceMultiplier: number;
+  addToPrice: number;
+  currency: { code: string };
+};
+
 interface DataTableProps<TData> {
   columns: ColumnDef<TData>[];
   data: TData[];
@@ -30,6 +40,8 @@ interface DataTableProps<TData> {
   sortingStorageKey?: string;
   setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
   productNameKey?: "name_en" | "name_pl" | "name_de";
+  currencyCode?: string;
+  priceGroups?: PriceGroupForCalculation[];
   onProductNameClick?: (row: TData) => void;
   onProductEditClick?: (row: TData) => void;
   onIntegrationsClick?: (row: TData) => void;
@@ -46,6 +58,8 @@ declare module "@tanstack/react-table" {
   interface TableMeta<TData> {
     setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
     productNameKey?: "name_en" | "name_pl" | "name_de";
+    currencyCode?: string;
+    priceGroups?: PriceGroupForCalculation[];
     onProductNameClick?: (row: TData) => void;
     onProductEditClick?: (row: TData) => void;
     onIntegrationsClick?: (row: TData) => void;
@@ -62,6 +76,8 @@ export const DataTable = memo(function DataTable<TData>({
   sortingStorageKey,
   setRefreshTrigger,
   productNameKey,
+  currencyCode,
+  priceGroups,
   onProductNameClick,
   onProductEditClick,
   onIntegrationsClick,
@@ -120,6 +136,8 @@ export const DataTable = memo(function DataTable<TData>({
     meta: {
       ...(setRefreshTrigger ? { setRefreshTrigger } : {}),
       ...(productNameKey ? { productNameKey } : {}),
+      ...(currencyCode ? { currencyCode } : {}),
+      ...(priceGroups ? { priceGroups } : {}),
       ...(onProductNameClick ? { onProductNameClick } : {}),
       ...(onProductEditClick ? { onProductEditClick } : {}),
       ...(onIntegrationsClick ? { onIntegrationsClick } : {}),

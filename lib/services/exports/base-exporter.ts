@@ -38,6 +38,42 @@ const toNumberValue = (value: unknown): number | null => {
   return null;
 };
 
+const getImageSlotUrl = (
+  product: ProductWithImages,
+  index: number,
+  mode: "slot" | "file" | "link"
+) => {
+  if (index < 0) return null;
+  if (mode !== "link") {
+    const imageFile = product.images?.[index]?.imageFile?.filepath;
+    if (imageFile) return imageFile;
+  }
+  const link = product.imageLinks?.[index];
+  if (link && typeof link === "string" && link.trim()) return link.trim();
+  return null;
+};
+
+const getImageList = (
+  product: ProductWithImages,
+  mode: "slot" | "file" | "link"
+) => {
+  if (mode === "link") {
+    return (product.imageLinks ?? [])
+      .map((link) => (typeof link === "string" ? link.trim() : ""))
+      .filter(Boolean);
+  }
+  const slots = (product.images ?? [])
+    .map((entry) => entry.imageFile?.filepath?.trim() ?? "")
+    .filter(Boolean);
+  return slots;
+};
+
+const getAllImageUrls = (product: ProductWithImages) => {
+  const slots = getImageList(product, "slot");
+  const links = getImageList(product, "link");
+  return Array.from(new Set([...slots, ...links]));
+};
+
 /**
  * Get value from product using a dot-notation path or direct field access
  */
@@ -46,6 +82,35 @@ const getProductValue = (
   sourceKey: string
 ): unknown => {
   if (!sourceKey) return null;
+
+  const normalized = sourceKey.trim().toLowerCase();
+  const slotMatch = normalized.match(/^image_(slot|file|link)_(\d+)$/);
+  if (slotMatch) {
+    const index = Number.parseInt(slotMatch[2] ?? "", 10) - 1;
+    if (Number.isNaN(index)) return null;
+    const mode = slotMatch[1] as "slot" | "file" | "link";
+    return getImageSlotUrl(product, index, mode);
+  }
+  const imageMatch = normalized.match(/^image_(\d+)$/);
+  if (imageMatch) {
+    const index = Number.parseInt(imageMatch[1] ?? "", 10) - 1;
+    if (Number.isNaN(index)) return null;
+    return getImageSlotUrl(product, index, "slot");
+  }
+  if (
+    normalized === "image_all" ||
+    normalized === "image_slots" ||
+    normalized === "image_files" ||
+    normalized === "image_slots_all"
+  ) {
+    return getImageList(product, "slot");
+  }
+  if (normalized === "image_links" || normalized === "image_links_all") {
+    return getImageList(product, "link");
+  }
+  if (normalized === "images_all") {
+    return getAllImageUrls(product);
+  }
 
   // Handle dot notation for nested access
   if (sourceKey.includes(".")) {
@@ -79,6 +144,27 @@ function applyExportTemplateMappings(
 
     const rawValue = getProductValue(product, sourceKey);
     if (rawValue === null || rawValue === undefined) continue;
+
+    if (Array.isArray(rawValue)) {
+      const imageTargets = new Set([
+        "images",
+        "image",
+        "image_urls",
+        "images_url",
+        "images_urls",
+        "images_link_all",
+        "image_links_all",
+      ]);
+      if (imageTargets.has(targetField)) {
+        const urls = rawValue
+          .map((entry) => (typeof entry === "string" ? entry.trim() : ""))
+          .filter(Boolean);
+        if (urls.length > 0) {
+          result[targetField] = urls;
+        }
+        continue;
+      }
+    }
 
     // Try to convert to string first
     const stringValue = toStringValue(rawValue);

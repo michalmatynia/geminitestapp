@@ -116,6 +116,85 @@ const collectUrls = (value: unknown, urls: string[]) => {
   }
 };
 
+const extractImageUrlsFromValue = (value: unknown) => {
+  const urls: string[] = [];
+  collectUrls(value, urls);
+  return Array.from(new Set(urls));
+};
+
+const IMAGE_SLOT_KEYS = [
+  "images",
+  "image",
+  "photos",
+  "photo",
+  "gallery",
+  "pictures",
+  "main_image",
+  "mainImage",
+];
+
+const IMAGE_LINK_KEYS = [
+  "image_links",
+  "images_links",
+  "image_link",
+  "images_link",
+  "image_url",
+  "imageUrl",
+  "image_urls",
+  "images_url",
+  "images_urls",
+  "imageUrls",
+  "image_links_all",
+  "images_link_all",
+  "links",
+  "link",
+];
+
+const extractImageUrlsFromRecordKeys = (
+  record: BaseProductRecord,
+  keys: string[]
+) => {
+  const urls: string[] = [];
+  keys.forEach((key) => collectUrls(record[key], urls));
+  return Array.from(new Set(urls));
+};
+
+const getImageUrlsForSlots = (record: BaseProductRecord) => {
+  const urls = extractImageUrlsFromRecordKeys(record, IMAGE_SLOT_KEYS);
+  return urls.length > 0 ? urls : extractBaseImageUrls(record);
+};
+
+const getImageUrlsForLinks = (record: BaseProductRecord) => {
+  const urls = extractImageUrlsFromRecordKeys(record, IMAGE_LINK_KEYS);
+  return urls.length > 0 ? urls : extractBaseImageUrls(record);
+};
+
+const getImageUrlsForAll = (record: BaseProductRecord) => {
+  const urls = [...getImageUrlsForSlots(record), ...getImageUrlsForLinks(record)];
+  return Array.from(new Set(urls));
+};
+
+const resolveImageTargetIndex = (targetField: string) => {
+  const normalized = targetField.toLowerCase();
+  if (normalized.startsWith("image_slot_")) {
+    const index = parseInt(normalized.replace("image_slot_", ""), 10);
+    return Number.isNaN(index) ? null : index - 1;
+  }
+  if (normalized.startsWith("image_file_")) {
+    const index = parseInt(normalized.replace("image_file_", ""), 10);
+    return Number.isNaN(index) ? null : index - 1;
+  }
+  if (normalized.startsWith("image_link_")) {
+    const index = parseInt(normalized.replace("image_link_", ""), 10);
+    return Number.isNaN(index) ? null : index - 1;
+  }
+  if (normalized.startsWith("image_")) {
+    const index = parseInt(normalized.replace("image_", ""), 10);
+    return Number.isNaN(index) ? null : index - 1;
+  }
+  return null;
+};
+
 export function extractBaseImageUrls(record: BaseProductRecord): string[] {
   const urls: string[] = [];
   const keys = [
@@ -225,6 +304,39 @@ const resolveTemplateValue = (
   sourceKey: string
 ): unknown => {
   if (!sourceKey) return null;
+  const normalized = sourceKey.trim().toLowerCase();
+  if (normalized === "image_slots_all") {
+    return getImageUrlsForSlots(record);
+  }
+  if (normalized === "image_all") {
+    return getImageUrlsForSlots(record);
+  }
+  if (normalized === "images_link_all" || normalized === "image_links_all") {
+    return getImageUrlsForLinks(record);
+  }
+  if (normalized === "images_all") {
+    return getImageUrlsForAll(record);
+  }
+  if (normalized.startsWith("image_slot_")) {
+    const index = parseInt(normalized.replace("image_slot_", ""), 10);
+    if (Number.isNaN(index)) return null;
+    return getImageUrlsForSlots(record)[index - 1] ?? null;
+  }
+  if (normalized.startsWith("image_file_")) {
+    const index = parseInt(normalized.replace("image_file_", ""), 10);
+    if (Number.isNaN(index)) return null;
+    return getImageUrlsForSlots(record)[index - 1] ?? null;
+  }
+  if (normalized.startsWith("image_link_")) {
+    const index = parseInt(normalized.replace("image_link_", ""), 10);
+    if (Number.isNaN(index)) return null;
+    return getImageUrlsForLinks(record)[index - 1] ?? null;
+  }
+  if (normalized.startsWith("image_")) {
+    const index = parseInt(normalized.replace("image_", ""), 10);
+    if (Number.isNaN(index)) return null;
+    return getImageUrlsForAll(record)[index - 1] ?? null;
+  }
   if (sourceKey.includes(".")) {
     const path = sourceKey.split(".").map((part) => part.trim());
     const value = getByPath(record, path);
@@ -266,15 +378,24 @@ const applyTemplateMappings = (
       mapped.sku = stringValue;
       continue;
     }
-    if (targetField.startsWith("image_")) {
-      const index = parseInt(targetField.replace("image_", ""), 10) - 1;
-      if (!Number.isNaN(index) && index >= 0) {
-        if (!mapped.imageLinks) mapped.imageLinks = [];
-        // Ensure array is long enough by filling with empty strings if needed, 
-        // though typically we just want to set the value. 
-        // If we want to strictly order, we might need a sparse array or fill.
-        // For now, let's just assign.
-        mapped.imageLinks[index] = stringValue;
+    const imageIndex = resolveImageTargetIndex(targetField);
+    if (imageIndex !== null && imageIndex >= 0) {
+      if (!mapped.imageLinks) mapped.imageLinks = [];
+      mapped.imageLinks[imageIndex] = stringValue;
+      continue;
+    }
+    if (
+      targetField === "image_all" ||
+      targetField === "image_links" ||
+      targetField === "image_links_all" ||
+      targetField === "image_files" ||
+      targetField === "image_slots" ||
+      targetField === "image_slots_all" ||
+      targetField === "images_all"
+    ) {
+      const urls = extractImageUrlsFromValue(rawValue);
+      if (urls.length > 0) {
+        mapped.imageLinks = urls;
       }
       continue;
     }

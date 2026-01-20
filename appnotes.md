@@ -1,13 +1,28 @@
 
-
-Clicking Export should create an Export job, so that I can continue working with the page, while the export is being done.
-
-Product List, when I click on the house which is green *synced)
+Translations not working
 
 
+
+* Note App, When I move the note to folder, do not uncollapse the folder. 
+
+* Clicking Export should create an Export job, so that I can continue working with the page, while the export is being done.
+
+* Import table should have a search field and should have checkmarks so that I can select which products are to be imported
+
+* Mapping parameters resorting
+
+ * Product List, when I click on the house which is green synced, I should have the option to remove the product from base.com, but since the connection was already established once, the house should change color to greyish. Also, there should be more information provided by clicking the house, such as when were the exports made, what information was exported, etc.
+
+* CLicking the little greenhouse should also show what is being synchronized with base.com , name, stock, price, description and what type of synchronization is is (is it from base.com only, is it from my product to base.com only or is it both ways, if one is attribute, for example stock, changes, the others need to change too )
 Add individual syncing options to teh green hose
 
-Notebook App, when I create a new notebook, I should have the option to choose whether I want the notebook to be WYSIWYG or Markdown
+* Notebook App, when I create a new notebook, I should have the option to choose whether I want the notebook to be WYSIWYG or Markdown. Employ the USe of WYSIWYG in Notes.
+
+* Product List, each row should have Price indication based on which currency is currently selected in PRoduct List view.
+
+
+* Product Catalog should adhere to the order in which the languages are added, If I add English, then Polish then German, this is the order in which they should be presented. Also, I should be able to reorder languages When in Product Catalog Edit Page.
+
 
 * I have a problem with Languages in Product Edit Create. The Catalog Mentios has two languages attached, or so it seems, because in Product Settings it looks it has four id pills, but when I open Product modal, it has four langauges.
 
@@ -16,22 +31,18 @@ Notebook App, when I create a new notebook, I should have the option to choose w
 * Product Create Panel Closes by itself
 
 * Product Edit / Create modal is closing by itself randomly when I try to enter Title
-CLicking the little greenhouse should also show what is being synchronized with base.com , name, stock, price, description
 
 * When I Create Product after adding images, the screen filckers
 
 
-Product Catalog should adhere to the order in which the languages are added, If I add English, then Polish then German, this is the order in which they should be presented. Also, I should be able to reorder languages When in Product Catalog Edit Page.
 
 
-Also, my Product list Filter choices are not retained when changing between pages, they were supposed to be kept in Mongo DB and be persistent.
+* my Product list Filter choices are not retained (for example catalog) when I change between pages, they were supposed to be kept in Mongo DB and be persistent.
 
 
 add proper debugging on visual studio code
 
-In Product Catalog, drag and drop is used for sorting languages. Can you reuse drag and drop from Note App, not to duplicate libraries
-
-
+* In Product Catalog, drag and drop is used for sorting languages. Can you reuse drag and drop from Note App, not to duplicate libraries
 
 In Products List - Clicking house I should see the status of the export job (if house yellow) and sync options if it's green
 
@@ -44,7 +55,6 @@ In Products List - Clicking house I should see the status of the export job (if 
 * The Export of of Products is not going through
 I cannot stop or cancel the export when it is in Pending. 
 
-When I move the note to folder, do not uncollapse the folder. 
 
 * when importing / exporting products to / from Base.com, consider also duplicate SKUs, usually they have to be unique (make optional if I want to import / export with duplicate SKUs)
 
@@ -56,11 +66,7 @@ When I move the note to folder, do not uncollapse the folder.
 
 * Product List, changing catalog still not retained
 
-
-
 # IN PROGRESS
-
-* Product List, Price column header should have an indication of which currency it is in (most porbably a default currency for the catalog) 
 
 * Product list should remember my choices in terms of navigation, catalog choice and record them in the database, when I leave the page, the settings stay the same. Also incorporate the current state of settings in Products - Preferences Page (which has a mirror layout of the settings page, but relate more to the technical aspects of the Product section as a whole)
 
@@ -69,7 +75,7 @@ When I move the note to folder, do not uncollapse the folder.
 -default price group still asks me to select from dropdown
 * When a product is a added to a Catalog, its default Price Group is the one set in the Catalog. I should not need to make this additional when I create the product. Other non default pricegroups should also be visible in product Edit / Create panel. If the price group is dependent on a default price group, both the calculated price and the price group should be visible in product Edit / Create panel.*
 
-Check that ->In my Edit / Create Product Page, make the Catalogs Field a dropdown and move it to Other Tab
+* Check that ->In my Edit / Create Product Page, make the Catalogs Field a dropdown, not a checkbox, and move it to Other Tab
 
 
 In Product List, Add a small indicator (maybe an icon underneath SKU) whether the product was added by the user or is the result of an import. 

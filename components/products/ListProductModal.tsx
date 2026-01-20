@@ -54,8 +54,10 @@ export default function ListProductModal({
   const [preferredTemplateId, setPreferredTemplateId] = useState<string | null>(null);
   const [inventories, setInventories] = useState<BaseInventory[]>([]);
   const [selectedInventoryId, setSelectedInventoryId] = useState<string>("");
+  const [preferredInventoryId, setPreferredInventoryId] = useState<string | null>(null);
   const [loadingInventories, setLoadingInventories] = useState(false);
   const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
+  const previousConnectionId = useRef<string>("");
 
   const productName =
     product.name_en || product.name_pl || product.name_de || "Unnamed Product";
@@ -128,6 +130,21 @@ export default function ListProductModal({
     void loadPreferredTemplate();
   }, []);
 
+  useEffect(() => {
+    const loadPreferredInventory = async () => {
+      try {
+        const res = await fetch("/api/products/imports/base/sample-product");
+        if (!res.ok) return;
+        const payload = (await res.json()) as { inventoryId?: string | null };
+        setPreferredInventoryId(payload.inventoryId ?? null);
+      } catch {
+        // Ignore inventory preference errors
+      }
+    };
+
+    void loadPreferredInventory();
+  }, []);
+
   // Reset connection when user changes the integration selection.
   useEffect(() => {
     if (
@@ -141,6 +158,17 @@ export default function ListProductModal({
     }
     previousIntegrationId.current = selectedIntegrationId;
   }, [selectedIntegrationId]);
+
+  useEffect(() => {
+    if (
+      previousConnectionId.current &&
+      selectedConnectionId &&
+      selectedConnectionId !== previousConnectionId.current
+    ) {
+      setSelectedInventoryId("");
+    }
+    previousConnectionId.current = selectedConnectionId;
+  }, [selectedConnectionId]);
 
   useEffect(() => {
     if (
@@ -199,6 +227,24 @@ export default function ListProductModal({
     if (selectedTemplateId !== "none") return;
     setSelectedTemplateId(preferredTemplateId);
   }, [isBaseComIntegration, preferredTemplateId, selectedTemplateId]);
+
+  useEffect(() => {
+    if (!isBaseComIntegration) return;
+    if (selectedInventoryId) return;
+    if (!inventories.length) return;
+    if (loadingInventories) return;
+    if (preferredInventoryId && inventories.some((inv) => inv.id === preferredInventoryId)) {
+      setSelectedInventoryId(preferredInventoryId);
+      return;
+    }
+    setSelectedInventoryId(inventories[0]?.id ?? "");
+  }, [
+    isBaseComIntegration,
+    inventories,
+    preferredInventoryId,
+    selectedInventoryId,
+    loadingInventories,
+  ]);
 
   const handleSubmit = async () => {
     if (!selectedIntegrationId || !selectedConnectionId) {

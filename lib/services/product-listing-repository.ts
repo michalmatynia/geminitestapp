@@ -10,10 +10,22 @@ export type ProductListingRecord = {
   integrationId: string;
   connectionId: string;
   externalListingId: string | null;
+  inventoryId?: string | null;
   status: string;
   listedAt: Date | null;
+  exportHistory?: ProductListingExportEvent[] | null;
   createdAt: Date;
   updatedAt: Date;
+};
+
+export type ProductListingExportEvent = {
+  exportedAt: Date;
+  status?: string | null;
+  inventoryId?: string | null;
+  templateId?: string | null;
+  warehouseId?: string | null;
+  externalListingId?: string | null;
+  fields?: string[] | null;
 };
 
 export type ProductListingWithDetails = ProductListingRecord & {
@@ -33,6 +45,7 @@ export type CreateProductListingInput = {
   integrationId: string;
   connectionId: string;
   externalListingId?: string | null;
+  inventoryId?: string | null;
 };
 
 export type ProductListingRepository = {
@@ -41,6 +54,8 @@ export type ProductListingRepository = {
   createListing: (input: CreateProductListingInput) => Promise<ProductListingWithDetails>;
   updateListingExternalId: (id: string, externalListingId: string) => Promise<void>;
   updateListingStatus: (id: string, status: string) => Promise<void>;
+  updateListingInventoryId: (id: string, inventoryId: string | null) => Promise<void>;
+  appendExportHistory: (id: string, event: ProductListingExportEvent) => Promise<void>;
   deleteListing: (id: string) => Promise<void>;
   listingExists: (productId: string, connectionId: string) => Promise<boolean>;
   listAllListings: () => Promise<Array<Pick<ProductListingRecord, "productId" | "status">>>;
@@ -54,8 +69,10 @@ type ProductListingDocument = {
   integrationId: string;
   connectionId: string;
   externalListingId: string | null;
+  inventoryId?: string | null;
   status: string;
   listedAt: Date | null;
+  exportHistory?: ProductListingExportEvent[] | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -66,8 +83,10 @@ const toListingRecord = (doc: ProductListingDocument): ProductListingRecord => (
   integrationId: doc.integrationId,
   connectionId: doc.connectionId,
   externalListingId: doc.externalListingId,
+  inventoryId: doc.inventoryId ?? null,
   status: doc.status,
   listedAt: doc.listedAt,
+  exportHistory: doc.exportHistory ?? null,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
 });
@@ -100,6 +119,7 @@ const prismaRepository: ProductListingRepository = {
         integrationId: input.integrationId,
         connectionId: input.connectionId,
         externalListingId: input.externalListingId || null,
+        inventoryId: input.inventoryId || null,
         status: "pending",
       },
       include: {
@@ -125,6 +145,27 @@ const prismaRepository: ProductListingRepository = {
     await prisma.productListing.update({
       where: { id },
       data: { status, listedAt: status === "active" ? new Date() : undefined },
+    });
+  },
+
+  updateListingInventoryId: async (id, inventoryId) => {
+    await prisma.productListing.update({
+      where: { id },
+      data: { inventoryId },
+    });
+  },
+
+  appendExportHistory: async (id, event) => {
+    const listing = await prisma.productListing.findUnique({
+      where: { id },
+      select: { exportHistory: true },
+    });
+    const current = Array.isArray(listing?.exportHistory)
+      ? listing?.exportHistory
+      : [];
+    await prisma.productListing.update({
+      where: { id },
+      data: { exportHistory: [...current, event] as any },
     });
   },
 
@@ -221,8 +262,10 @@ const mongoRepository: ProductListingRepository = {
       integrationId: input.integrationId,
       connectionId: input.connectionId,
       externalListingId: input.externalListingId || null,
+      inventoryId: input.inventoryId || null,
       status: "pending",
       listedAt: null,
+      exportHistory: [],
       createdAt: now,
       updatedAt: now,
     };
@@ -268,6 +311,29 @@ const mongoRepository: ProductListingRepository = {
     await db
       .collection<ProductListingDocument>(LISTINGS_COLLECTION)
       .updateOne({ _id: id }, { $set: updateData });
+  },
+
+  updateListingInventoryId: async (id, inventoryId) => {
+    const db = await getMongoDb();
+    await db
+      .collection<ProductListingDocument>(LISTINGS_COLLECTION)
+      .updateOne(
+        { _id: id },
+        { $set: { inventoryId, updatedAt: new Date() } }
+      );
+  },
+
+  appendExportHistory: async (id, event) => {
+    const db = await getMongoDb();
+    await db
+      .collection<ProductListingDocument>(LISTINGS_COLLECTION)
+      .updateOne(
+        { _id: id },
+        {
+          $push: { exportHistory: event },
+          $set: { updatedAt: new Date() },
+        }
+      );
   },
 
   deleteListing: async (id) => {

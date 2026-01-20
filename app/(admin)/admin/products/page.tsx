@@ -91,6 +91,7 @@ function AdminPageInner() {
     currencyCode,
     setCurrencyCode,
     currencyOptions,
+    priceGroups,
   } = useCatalogSync(catalogFilter);
 
   const {
@@ -112,6 +113,7 @@ function AdminPageInner() {
     integrationBadgeStatuses,
     exportSettingsProduct,
     setExportSettingsProduct,
+    refreshListingBadges,
     handleOpenCreateModal,
     handleCreateSuccess,
     handleEditSuccess,
@@ -358,6 +360,8 @@ function AdminPageInner() {
           data={data}
           setRefreshTrigger={setRefreshTrigger}
           productNameKey={preferences.nameLocale}
+          currencyCode={currencyCode}
+          priceGroups={priceGroups}
           onProductNameClick={handleOpenEditModal}
           onProductEditClick={handleOpenEditModal}
           onIntegrationsClick={handleOpenIntegrationsModal}
@@ -388,6 +392,7 @@ function AdminPageInner() {
         listProductPreset={listProductPreset}
         exportSettingsProduct={exportSettingsProduct}
         onCloseExportSettings={() => setExportSettingsProduct(null)}
+        onListingsUpdated={refreshListingBadges}
         selectedHeaderIntegration={selectedHeaderIntegration}
         onCloseHeaderIntegration={handleCloseHeaderIntegrationModal}
         onHeaderIntegrationSuccess={handleHeaderIntegrationSuccess}

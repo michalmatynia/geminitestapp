@@ -67,14 +67,14 @@ export type AgentPlanSettings = {
 };
 
 export type AgentPlanPreferences = {
-  ignoreRobotsTxt?: boolean;
-  requireHumanApproval?: boolean;
-  memoryValidationModel?: string;
-  plannerModel?: string;
-  selfCheckModel?: string;
-  loopGuardModel?: string;
-  approvalGateModel?: string;
-  memorySummarizationModel?: string;
+  ignoreRobotsTxt?: boolean | undefined;
+  requireHumanApproval?: boolean | undefined;
+  memoryValidationModel?: string | undefined;
+  plannerModel?: string | undefined;
+  selfCheckModel?: string | undefined;
+  loopGuardModel?: string | undefined;
+  approvalGateModel?: string | undefined;
+  memorySummarizationModel?: string | undefined;
 };
 
 export type AgentCheckpoint = {

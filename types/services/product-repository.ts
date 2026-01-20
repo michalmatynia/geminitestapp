@@ -36,6 +36,14 @@ export type ProductRepository = {
     productId: string,
     catalogIds: string[]
   ): Promise<void>;
+  replaceProductCategories(
+    productId: string,
+    categoryIds: string[]
+  ): Promise<void>;
+  replaceProductTags(
+    productId: string,
+    tagIds: string[]
+  ): Promise<void>;
   removeProductImage(productId: string, imageFileId: string): Promise<void>;
   countProductsByImageFileId(imageFileId: string): Promise<number>;
 };

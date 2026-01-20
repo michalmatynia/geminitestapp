@@ -40,6 +40,26 @@ import {
 } from "@/lib/validations/product";
 import { useToast } from "@/components/ui/toast";
 
+interface ProductCategory {
+  id: string;
+  name: string;
+  description: string | null;
+  color: string | null;
+  parentId: string | null;
+  catalogId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ProductTag {
+  id: string;
+  name: string;
+  color: string | null;
+  catalogId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface ProductFormContextType {
   register: UseFormRegister<ProductFormData>;
   handleSubmit: (e?: BaseSyntheticEvent) => Promise<void>;
@@ -65,6 +85,14 @@ interface ProductFormContextType {
   catalogsError: string | null;
   selectedCatalogIds: string[];
   toggleCatalog: (catalogId: string) => void;
+  categories: ProductCategory[];
+  categoriesLoading: boolean;
+  selectedCategoryIds: string[];
+  toggleCategory: (categoryId: string) => void;
+  tags: ProductTag[];
+  tagsLoading: boolean;
+  selectedTagIds: string[];
+  toggleTag: (tagId: string) => void;
   filteredLanguages: Language[];
   filteredPriceGroups: PriceGroupWithDetails[];
   generationError: string | null;
@@ -96,12 +124,14 @@ export function ProductFormProvider({
   onSuccess,
   requireSku,
   initialSku,
+  initialCatalogId,
 }: {
   children: React.ReactNode;
-  product?: ProductWithImages;
-  onSuccess?: () => void;
-  requireSku?: boolean;
-  initialSku?: string;
+  product?: ProductWithImages | undefined;
+  onSuccess?: (() => void) | undefined;
+  requireSku?: boolean | undefined;
+  initialSku?: string | undefined;
+  initialCatalogId?: string | undefined;
 }) {
   const formSchema = product || requireSku ? productUpdateSchema : productCreateSchema;
   const methods = useForm<ProductFormData>({
@@ -145,6 +175,12 @@ export function ProductFormProvider({
   const [catalogsLoading, setCatalogsLoading] = useState(true);
   const [catalogsError, setCatalogsError] = useState<string | null>(null);
   const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [tags, setTags] = useState<ProductTag[]>([]);
+  const [tagsLoading, setTagsLoading] = useState(false);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
   const [priceGroups, setPriceGroups] = useState<PriceGroupWithDetails[]>([]);
   const [generationError, setGenerationError] = useState<string | null>(null);
@@ -202,6 +238,120 @@ export function ProductFormProvider({
     if (!product?.catalogs) return;
     setSelectedCatalogIds(product.catalogs.map((entry) => entry.catalogId));
   }, [product]);
+
+  // Initialize catalog selection for new products
+  useEffect(() => {
+    if (product) return; // Only for new products
+    if (!initialCatalogId) return;
+    if (initialCatalogId === "unassigned") return; // Don't auto-assign if "unassigned" is selected
+    setSelectedCatalogIds([initialCatalogId]);
+  }, [product, initialCatalogId]);
+
+  // Auto-set defaultPriceGroupId when catalog is selected for new products
+  useEffect(() => {
+    if (product) return; // Only for new products
+    if (selectedCatalogIds.length === 0) return;
+
+    // Get the first selected catalog's default price group
+    const firstCatalog = catalogs.find((c) => selectedCatalogIds.includes(c.id));
+    if (firstCatalog?.defaultPriceGroupId) {
+      const currentDefaultPriceGroupId = getValues("defaultPriceGroupId");
+      // Only set if not already set
+      if (!currentDefaultPriceGroupId) {
+        setValue("defaultPriceGroupId", firstCatalog.defaultPriceGroupId);
+      }
+    }
+  }, [product, selectedCatalogIds, catalogs, getValues, setValue]);
+
+  // Initialize category selection from existing product
+  useEffect(() => {
+    if (!product?.categories) return;
+    setSelectedCategoryIds(product.categories.map((entry) => entry.categoryId));
+  }, [product]);
+
+  // Initialize tag selection from existing product
+  useEffect(() => {
+    if (!product?.tags) return;
+    setSelectedTagIds(product.tags.map((entry) => entry.tagId));
+  }, [product]);
+
+  // Load categories when catalogs are selected
+  useEffect(() => {
+    if (selectedCatalogIds.length === 0) {
+      setCategories([]);
+      return;
+    }
+
+    let cancelled = false;
+    const loadCategories = async () => {
+      setCategoriesLoading(true);
+      try {
+        // Load categories from all selected catalogs
+        const categoryPromises = selectedCatalogIds.map((catalogId) =>
+          fetch(`/api/products/categories?catalogId=${catalogId}`).then((res) => res.json())
+        );
+        const categoryArrays = await Promise.all(categoryPromises);
+        const allCategories = categoryArrays.flat() as ProductCategory[];
+
+        if (!cancelled) {
+          setCategories(allCategories);
+        }
+      } catch (error) {
+        console.error("Failed to load categories:", error);
+        if (!cancelled) {
+          setCategories([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setCategoriesLoading(false);
+        }
+      }
+    };
+
+    void loadCategories();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCatalogIds]);
+
+  // Load tags when catalogs are selected
+  useEffect(() => {
+    if (selectedCatalogIds.length === 0) {
+      setTags([]);
+      return;
+    }
+
+    let cancelled = false;
+    const loadTags = async () => {
+      setTagsLoading(true);
+      try {
+        // Load tags from all selected catalogs
+        const tagPromises = selectedCatalogIds.map((catalogId) =>
+          fetch(`/api/products/tags?catalogId=${catalogId}`).then((res) => res.json())
+        );
+        const tagArrays = await Promise.all(tagPromises);
+        const allTags = tagArrays.flat() as ProductTag[];
+
+        if (!cancelled) {
+          setTags(allTags);
+        }
+      } catch (error) {
+        console.error("Failed to load tags:", error);
+        if (!cancelled) {
+          setTags([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setTagsLoading(false);
+        }
+      }
+    };
+
+    void loadTags();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCatalogIds]);
 
   useEffect(() => {
     let cancelled = false;
@@ -510,6 +660,22 @@ export function ProductFormProvider({
     );
   }, []);
 
+  const toggleCategory = useCallback((categoryId: string) => {
+    setSelectedCategoryIds((prev) =>
+      prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  }, []);
+
+  const toggleTag = useCallback((tagId: string) => {
+    setSelectedTagIds((prev) =>
+      prev.includes(tagId)
+        ? prev.filter((id) => id !== tagId)
+        : [...prev, tagId]
+    );
+  }, []);
+
   const onSubmit = async (data: ProductFormData) => {
     const skuValue = typeof data.sku === "string" ? data.sku.trim() : "";
     const hasTempImages = imageSlots.some((slot) => {
@@ -550,6 +716,12 @@ export function ProductFormProvider({
     });
     selectedCatalogIds.forEach((catalogId) => {
       formData.append("catalogIds", catalogId);
+    });
+    selectedCategoryIds.forEach((categoryId) => {
+      formData.append("categoryIds", categoryId);
+    });
+    selectedTagIds.forEach((tagId) => {
+      formData.append("tagIds", tagId);
     });
 
     try {
@@ -653,6 +825,14 @@ export function ProductFormProvider({
           catalogsError,
           selectedCatalogIds,
           toggleCatalog,
+          categories,
+          categoriesLoading,
+          selectedCategoryIds,
+          toggleCategory,
+          tags,
+          tagsLoading,
+          selectedTagIds,
+          toggleTag,
           filteredLanguages,
           filteredPriceGroups,
           generationError,

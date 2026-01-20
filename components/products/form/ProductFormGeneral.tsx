@@ -18,6 +18,7 @@ import {
 import { logger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { ProductFormData } from "@/types";
+import { useToast } from "@/components/ui/toast";
 
 export default function ProductFormGeneral() {
   const {
@@ -30,8 +31,10 @@ export default function ProductFormGeneral() {
   } = useProductFormContext();
 
   const { register, getValues, setValue, watch } = useFormContext<ProductFormData>();
-  
+  const { toast } = useToast();
+
   const [generating, setGenerating] = useState(false);
+  const [translating, setTranslating] = useState(false);
   const [identifierType, setIdentifierType] = useState<"ean" | "gtin" | "asin">("ean");
   const allValues = watch();
 
@@ -105,6 +108,46 @@ export default function ProductFormGeneral() {
       setGenerationError(error instanceof Error ? error.message : "Failed to generate description.");
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleTranslate = async () => {
+    logger.log("Translating product...");
+    setTranslating(true);
+
+    try {
+      if (!product?.id) {
+        throw new Error("Product must be saved before translating.");
+      }
+
+      const enqueueRes = await fetch("/api/products/ai-jobs/enqueue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: product.id,
+          type: "translation",
+          payload: {}
+        }),
+      });
+
+      const enqueueData = await enqueueRes.json();
+      if (!enqueueRes.ok) throw new Error(enqueueData.error || "Failed to enqueue translation job.");
+
+      logger.log(`Translation job ${enqueueData.jobId} created successfully.`);
+
+      // Show success message - user can check Jobs page for progress
+      toast("Translation job created successfully. Check the AI Jobs page for progress.", {
+        variant: "success"
+      });
+
+    } catch (error) {
+      logger.error("Failed to translate:", error);
+      toast(
+        error instanceof Error ? error.message : "Failed to create translation job.",
+        { variant: "error" }
+      );
+    } finally {
+      setTranslating(false);
     }
   };
 
@@ -198,18 +241,32 @@ export default function ProductFormGeneral() {
                       </Button>
                     </div>
                   )}
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      void handleGenerateDescription();
-                    }}
-                    disabled={generating}
-                    className="mt-2"
-                    aria-label="Generate product description"
-                    aria-disabled={generating}
-                  >
-                    {generating ? "Generating..." : "Generate Description"}
-                  </Button>
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        void handleGenerateDescription();
+                      }}
+                      disabled={generating}
+                      aria-label="Generate product description"
+                      aria-disabled={generating}
+                    >
+                      {generating ? "Generating..." : "Generate Description"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        void handleTranslate();
+                      }}
+                      disabled={translating || !product?.id}
+                      aria-label="Translate product names and descriptions"
+                      aria-disabled={translating || !product?.id}
+                      title={!product?.id ? "Save product before translating" : "Translate to other languages"}
+                    >
+                      {translating ? "Translating..." : "Translate"}
+                    </Button>
+                  </div>
                 </>
               )}
             </TabsContent>

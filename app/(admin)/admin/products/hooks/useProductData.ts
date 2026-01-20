@@ -91,7 +91,7 @@ export function useProductData({ refreshTrigger }: UseProductDataProps) {
     return () => {
       cancelled = true;
     };
-  }, [debouncedSearch, debouncedSku, minPrice, maxPrice, startDate, endDate, page, pageSize, refreshTrigger]);
+  }, [debouncedSearch, debouncedSku, minPrice, maxPrice, startDate, endDate, page, pageSize, catalogFilter, refreshTrigger]);
 
   const totalPages = useMemo(() => {
     return Math.max(1, Math.ceil(total / pageSize));

@@ -97,6 +97,8 @@ async function createProduct(formData: FormData) {
     const images = formData.getAll("images") as File[];
     const imageFileIds = formData.getAll("imageFileIds") as string[];
     const catalogIds = normalizeCatalogIds(formData.getAll("catalogIds"));
+    const categoryIds = normalizeCategoryIds(formData.getAll("categoryIds"));
+    const tagIds = normalizeTagIds(formData.getAll("tagIds"));
     await linkImagesToProduct(
       product.id,
       images,
@@ -104,6 +106,8 @@ async function createProduct(formData: FormData) {
       validatedData.sku
     );
     await updateProductCatalogs(product.id, catalogIds);
+    await updateProductCategories(product.id, categoryIds);
+    await updateProductTags(product.id, tagIds);
 
     return await getProductById(product.id);
   } catch (error) {
@@ -135,11 +139,15 @@ async function updateProduct(id: string, formData: FormData) {
     const images = formData.getAll("images") as File[];
     const imageFileIds = formData.getAll("imageFileIds") as string[];
     const catalogIds = normalizeCatalogIds(formData.getAll("catalogIds"));
+    const categoryIds = normalizeCategoryIds(formData.getAll("categoryIds"));
+    const tagIds = normalizeTagIds(formData.getAll("tagIds"));
     await linkImagesToProduct(id, images, imageFileIds, validatedData.sku);
     if (validatedData.sku) {
       await moveLinkedTempImagesToSku(id, validatedData.sku);
     }
     await updateProductCatalogs(id, catalogIds);
+    await updateProductCategories(id, categoryIds);
+    await updateProductTags(id, tagIds);
 
     return await getProductById(updatedProduct.id);
   } catch (error) {
@@ -293,9 +301,31 @@ function normalizeCatalogIds(entries: FormDataEntryValue[]) {
     .filter((entry) => entry.length > 0);
 }
 
+function normalizeCategoryIds(entries: FormDataEntryValue[]) {
+  return entries
+    .map((entry) => (typeof entry === "string" ? entry.trim() : ""))
+    .filter((entry) => entry.length > 0);
+}
+
+function normalizeTagIds(entries: FormDataEntryValue[]) {
+  return entries
+    .map((entry) => (typeof entry === "string" ? entry.trim() : ""))
+    .filter((entry) => entry.length > 0);
+}
+
 async function updateProductCatalogs(productId: string, catalogIds: string[]) {
   const productRepository = await resolveProductRepository();
   await productRepository.replaceProductCatalogs(productId, catalogIds);
+}
+
+async function updateProductCategories(productId: string, categoryIds: string[]) {
+  const productRepository = await resolveProductRepository();
+  await productRepository.replaceProductCategories(productId, categoryIds);
+}
+
+async function updateProductTags(productId: string, tagIds: string[]) {
+  const productRepository = await resolveProductRepository();
+  await productRepository.replaceProductTags(productId, tagIds);
 }
 
 async function moveTempImageFilesToSku(imageFileIds: string[], sku: string) {

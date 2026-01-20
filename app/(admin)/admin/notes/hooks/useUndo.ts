@@ -48,14 +48,14 @@ export function useUndo<T>(initialState: T, limit: number = 50): UseUndoResult<T
   const undo = useCallback(() => {
     if (index > 0) {
       setIndex((prev) => prev - 1);
-      setInnerState(history[index - 1]);
+      setInnerState(history[index - 1]!);
     }
   }, [history, index]);
 
   const redo = useCallback(() => {
     if (index < history.length - 1) {
       setIndex((prev) => prev + 1);
-      setInnerState(history[index + 1]);
+      setInnerState(history[index + 1]!);
     }
   }, [history, index]);
 

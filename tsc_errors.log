@@ -1,0 +1,603 @@
+__tests__/ui/notes-page.test.tsx(165,34): error TS2379: Argument of type '{ id: string; title: string; content: string; isPinned: boolean | undefined; isArchived: boolean | undefined; tags: { noteId: string; tagId: string; assignedAt: Date; tag: TagRecord; }[]; categories: { ...; }[]; }' is not assignable to parameter of type 'Partial<NoteWithRelations>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'isPinned' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+app/(admin)/admin/databases/preview/page.tsx(99,24): error TS2345: Argument of type '{ errorId: string | undefined; stage: string | undefined; backupName: string | undefined; mode: string | undefined; }' is not assignable to parameter of type 'SetStateAction<{ errorId?: string; stage?: string; backupName?: string; mode?: string; } | null>'.
+  Type '{ errorId: string | undefined; stage: string | undefined; backupName: string | undefined; mode: string | undefined; }' is not assignable to type '{ errorId?: string; stage?: string; backupName?: string; mode?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'errorId' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+app/(admin)/admin/integrations/components/IntegrationModal.tsx(367,17): error TS2322: Type '{ status: number; statusText: string; data: unknown; refreshed?: boolean | undefined; } | null' is not assignable to type '{ status: number; statusText: string; data: unknown; refreshed?: boolean; } | null'.
+  Type '{ status: number; statusText: string; data: unknown; refreshed?: boolean | undefined; }' is not assignable to type '{ status: number; statusText: string; data: unknown; refreshed?: boolean; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'refreshed' are incompatible.
+      Type 'boolean | undefined' is not assignable to type 'boolean'.
+        Type 'undefined' is not assignable to type 'boolean'.
+app/(admin)/admin/integrations/components/IntegrationModal.tsx(400,11): error TS2322: Type '{ errorId?: string | undefined; integrationId?: string | null | undefined; connectionId?: string | null | undefined; } | null' is not assignable to type '{ errorId?: string; integrationId?: string | null; connectionId?: string | null; } | null'.
+  Type '{ errorId?: string | undefined; integrationId?: string | null | undefined; connectionId?: string | null | undefined; }' is not assignable to type '{ errorId?: string; integrationId?: string | null; connectionId?: string | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'errorId' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+app/(frontend)/products/[id]/page.tsx(22,9): error TS2532: Object is possibly 'undefined'.
+app/api/cms/slugs/[id]/route.ts(91,7): error TS2375: Type '{ slug: string; isDefault: boolean | undefined; }' is not assignable to type '(Without<SlugUpdateInput, SlugUncheckedUpdateInput> & SlugUncheckedUpdateInput) | (Without<...> & SlugUpdateInput)' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ slug: string; isDefault: boolean | undefined; }' is not assignable to type 'Without<SlugUncheckedUpdateInput, SlugUpdateInput> & SlugUpdateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Type '{ slug: string; isDefault: boolean | undefined; }' is not assignable to type 'SlugUpdateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'isDefault' are incompatible.
+        Type 'boolean | undefined' is not assignable to type 'boolean | BoolFieldUpdateOperationsInput'.
+          Type 'undefined' is not assignable to type 'boolean | BoolFieldUpdateOperationsInput'.
+app/api/databases/preview/route.ts(120,22): error TS2532: Object is possibly 'undefined'.
+app/api/databases/preview/route.ts(129,24): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/api/integrations/[id]/connections/[connectionId]/base/test/route.ts(157,34): error TS2532: Object is possibly 'undefined'.
+app/api/integrations/[id]/connections/[connectionId]/base/test/route.ts(162,42): error TS2532: Object is possibly 'undefined'.
+app/api/integrations/[id]/connections/[connectionId]/base/test/route.ts(162,66): error TS2532: Object is possibly 'undefined'.
+app/api/integrations/[id]/connections/[connectionId]/test/route.ts(222,39): error TS2379: Argument of type '{ headless: boolean; slowMo: number; proxy: { password?: string; username?: string; server: string; } | undefined; }' is not assignable to parameter of type 'LaunchOptions' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'proxy' are incompatible.
+    Type '{ password?: string; username?: string; server: string; } | undefined' is not assignable to type '{ server: string; bypass?: string; username?: string; password?: string; }'.
+      Type 'undefined' is not assignable to type '{ server: string; bypass?: string; username?: string; password?: string; }'.
+app/api/notes/[id]/route.ts(73,47): error TS2379: Argument of type '{ title?: string | undefined; content?: string | undefined; color?: string | null | undefined; isPinned?: boolean | undefined; isArchived?: boolean | undefined; isFavorite?: boolean | undefined; tagIds?: string[] | undefined; categoryIds?: string[] | undefined; relatedNoteIds?: string[] | undefined; notebookId?: str...' is not assignable to parameter of type 'Partial<NoteCreateInput>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'title' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+app/api/notes/categories/[id]/route.ts(25,66): error TS2379: Argument of type '{ name?: string | undefined; description?: string | null | undefined; color?: string | null | undefined; parentId?: string | null | undefined; notebookId?: string | null | undefined; themeId?: string | ... 1 more ... | undefined; }' is not assignable to parameter of type 'Partial<CategoryCreateInput>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'name' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+app/api/notes/tags/[id]/route.ts(25,49): error TS2379: Argument of type '{ name?: string | undefined; color?: string | null | undefined; notebookId?: string | null | undefined; }' is not assignable to parameter of type 'Partial<TagCreateInput>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'name' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+app/api/notes/themes/[id]/route.ts(49,55): error TS2379: Argument of type '{ name?: string | undefined; notebookId?: string | null | undefined; textColor?: string | undefined; backgroundColor?: string | undefined; markdownHeadingColor?: string | undefined; ... 6 more ...; relatedNoteTextColor?: string | undefined; }' is not assignable to parameter of type 'Partial<ThemeCreateInput>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'name' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+components/products/ProductSelectionBar.tsx(93,14): error TS2375: Type '{ children: string; onClick: () => undefined; className: string; disabled: boolean | undefined; }' is not assignable to type 'Omit<DropdownMenuItemProps & RefAttributes<HTMLDivElement>, "ref">' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'disabled' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+components/products/ProductTableFooter.tsx(54,36): error TS2532: Object is possibly 'undefined'.
+components/ui/dropdown-menu.tsx(99,4): error TS2375: Type '{ children: (Element | ReactNode)[]; id?: string | undefined; key?: Key | null | undefined; color?: string | undefined; content?: string | undefined; title?: string | undefined; ... 279 more ...; checked: CheckedState | undefined; }' is not assignable to type 'DropdownMenuCheckboxItemProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'checked' are incompatible.
+    Type 'CheckedState | undefined' is not assignable to type 'CheckedState'.
+      Type 'undefined' is not assignable to type 'CheckedState'.
+debug-script.ts(29,47): error TS2532: Object is possibly 'undefined'.
+e2e/notes.spec.ts(88,13): error TS2322: Type 'TagFixture | undefined' is not assignable to type 'TagFixture'.
+  Type 'undefined' is not assignable to type 'TagFixture'.
+e2e/notes.spec.ts(96,13): error TS2322: Type 'CategoryFixture | undefined' is not assignable to type 'CategoryFixture'.
+  Type 'undefined' is not assignable to type 'CategoryFixture'.
+e2e/notes.spec.ts(230,20): error TS2345: Argument of type '{ id: string; title: string; content: string; color: string; isPinned: boolean; isArchived: boolean; createdAt: string; updatedAt: string; tags: { noteId: string; tagId: string; assignedAt: string; tag: TagFixture | undefined; }[]; categories: { ...; }[]; relationsFrom: never[]; relationsTo: never[]; }' is not assignable to parameter of type 'NoteFixture'.
+  Types of property 'tags' are incompatible.
+    Type '{ noteId: string; tagId: string; assignedAt: string; tag: TagFixture | undefined; }[]' is not assignable to type '{ noteId: string; tagId: string; assignedAt: string; tag: TagFixture; }[]'.
+      Type '{ noteId: string; tagId: string; assignedAt: string; tag: TagFixture | undefined; }' is not assignable to type '{ noteId: string; tagId: string; assignedAt: string; tag: TagFixture; }'.
+        Types of property 'tag' are incompatible.
+          Type 'TagFixture | undefined' is not assignable to type 'TagFixture'.
+            Type 'undefined' is not assignable to type 'TagFixture'.
+lib/agent/core/engine.ts(275,13): error TS2375: Type '{ extractionType: string | undefined; extractedCount: number | undefined; items: string[] | undefined; }' is not assignable to type '{ extractionType?: string; extractedCount?: number; items?: string[]; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'extractionType' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+lib/agent/execution/finalize.ts(89,69): error TS2379: Argument of type '{ prompt: string; model: string; memory: string[]; steps: PlanStep[]; verification: { verdict?: "pass" | "partial" | "fail"; evidence?: string[]; missing?: string[]; followUp?: string; } | null; taskType: "web_task" | ... 2 more ... | undefined; lastError: string | null; browserContext: { ...; } | null; runId: strin...' is not assignable to parameter of type '{ prompt: string; model: string; memory: string[]; steps: PlanStep[]; verification?: { verdict?: string; evidence?: string[]; missing?: string[]; } | null; taskType?: string | null; lastError?: string | null; browserContext?: { ...; } | null; runId?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'taskType' are incompatible.
+    Type '"web_task" | "extract_info" | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/execution/loop-guard.ts(222,13): error TS2345: Argument of type '{ expectedObservation: string | undefined; successCriteria: string | undefined; phase: string | undefined; priority: number | undefined; dependsOn: string[] | number[] | undefined; title?: string; tool?: string; goalId?: string | null; subgoalId?: string | null; }[]' is not assignable to parameter of type '{ title?: string; tool?: string; expectedObservation?: string; successCriteria?: string; phase?: string; priority?: number; dependsOn?: string[] | number[]; goalId?: string | null; subgoalId?: string | null; }[]'.
+  Type '{ expectedObservation: string | undefined; successCriteria: string | undefined; phase: string | undefined; priority: number | undefined; dependsOn: string[] | number[] | undefined; title?: string; tool?: string; goalId?: string | null; subgoalId?: string | null; }' is not assignable to type '{ title?: string; tool?: string; expectedObservation?: string; successCriteria?: string; phase?: string; priority?: number; dependsOn?: string[] | number[]; goalId?: string | null; subgoalId?: string | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'expectedObservation' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+lib/agent/execution/loop-guard.ts(259,7): error TS2375: Type '{ critique: { assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null; ... 6 more ...; successSignals: string[] | undefined; }' is not assignable to type 'PlannerMeta' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'critique' are incompatible.
+    Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null' is not assignable to type 'PlannerCritique | null'.
+      Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; }' is not assignable to type 'PlannerCritique' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+        Types of property 'assumptions' are incompatible.
+          Type 'string[] | undefined' is not assignable to type 'string[]'.
+            Type 'undefined' is not assignable to type 'string[]'.
+lib/agent/execution/step-runner.ts(211,9): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(219,71): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(220,48): error TS2345: Argument of type 'PlanStep | undefined' is not assignable to parameter of type 'PlanStep'.
+  Type 'undefined' is not assignable to type 'PlanStep'.
+lib/agent/execution/step-runner.ts(225,11): error TS2322: Type 'PlanStep | undefined' is not assignable to type 'PlanStep'.
+  Type 'undefined' is not assignable to type 'PlanStep'.
+lib/agent/execution/step-runner.ts(237,21): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(238,24): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(250,33): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(252,33): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(258,25): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(261,27): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(278,17): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(279,20): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(295,23): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(297,19): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(302,21): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(307,21): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(317,9): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(319,21): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(326,40): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(361,27): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(377,50): error TS2345: Argument of type 'PlanStep | undefined' is not assignable to parameter of type 'PlanStep'.
+  Type 'undefined' is not assignable to type 'PlanStep'.
+lib/agent/execution/step-runner.ts(388,15): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(389,18): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(413,17): error TS2375: Type '{ prompt: string; browser: string; runId: string; runHeadless: boolean | undefined; stepId: string; stepLabel: string; }' is not assignable to type '{ prompt?: string; browser?: string; runId?: string; runHeadless?: boolean; stepId?: string; stepLabel?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'runHeadless' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+lib/agent/execution/step-runner.ts(421,27): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(422,30): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(431,23): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(432,26): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(469,19): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(505,11): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(515,64): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(520,14): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(522,13): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(599,19): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(600,25): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(636,19): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(637,22): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(664,19): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(665,25): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(688,23): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(689,33): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(718,17): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(719,20): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(720,34): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(721,30): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(727,73): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(737,27): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(742,21): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(743,27): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(752,25): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(753,28): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(762,31): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(807,21): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(808,27): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(830,25): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(831,28): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(890,21): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(891,27): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(901,25): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(902,28): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(970,19): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(971,25): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(1036,21): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(1037,27): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(1135,19): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(1136,25): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(1191,19): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(1192,25): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(1194,37): error TS2345: Argument of type '{ critique: { assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null; ... 6 more ...; successSignals: string[] | undefined; } | undefined' is not assignable to parameter of type 'PlannerMeta | null | undefined'.
+  Type '{ critique: { assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null; ... 6 more ...; successSignals: string[] | undefined; }' is not assignable to type 'PlannerMeta' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'critique' are incompatible.
+      Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null' is not assignable to type 'PlannerCritique | null'.
+        Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; }' is not assignable to type 'PlannerCritique' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+          Types of property 'assumptions' are incompatible.
+            Type 'string[] | undefined' is not assignable to type 'string[]'.
+              Type 'undefined' is not assignable to type 'string[]'.
+lib/agent/execution/step-runner.ts(1216,9): error TS2322: Type 'PlanStep | undefined' is not assignable to type 'PlanStep'.
+  Type 'undefined' is not assignable to type 'PlanStep'.
+lib/agent/execution/step-runner.ts(1233,17): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(1234,20): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(1275,19): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(1276,25): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(1329,19): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(1330,25): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(1340,23): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(1341,26): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(1407,19): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/execution/step-runner.ts(1408,25): error TS18048: 'step' is possibly 'undefined'.
+lib/agent/memory/context.ts(26,43): error TS2379: Argument of type '{ memoryKey: string; runId: string; content: string; summary: string; tags: string[]; metadata: { problem: string; countermeasure: string; }; importance: number; model: string | null | undefined; summaryModel: string | ... 1 more ... | undefined; prompt: string | ... 1 more ... | undefined; }' is not assignable to parameter of type '{ memoryKey: string; runId?: string | null; content: string; summary?: string | null; summaryModel?: string | null; tags?: string[]; metadata?: Record<string, unknown>; importance?: number | null; model?: string | null; prompt?: string | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'summaryModel' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/memory/index.ts(43,7): error TS2375: Type '{ runId: string | null; scope: MemoryScope; content: string; metadata: Prisma.InputJsonValue | undefined; }' is not assignable to type '(Without<AgentMemoryItemCreateInput, AgentMemoryItemUncheckedCreateInput> & AgentMemoryItemUncheckedCreateInput) | (Without<...> & AgentMemoryItemCreateInput)' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ runId: string | null; scope: MemoryScope; content: string; metadata: Prisma.InputJsonValue | undefined; }' is not assignable to type 'Without<AgentMemoryItemCreateInput, AgentMemoryItemUncheckedCreateInput> & AgentMemoryItemUncheckedCreateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Type '{ runId: string | null; scope: MemoryScope; content: string; metadata: Prisma.InputJsonValue | undefined; }' is not assignable to type 'AgentMemoryItemUncheckedCreateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'metadata' are incompatible.
+        Type 'InputJsonValue | undefined' is not assignable to type 'InputJsonValue | NullableJsonNullValueInput'.
+          Type 'undefined' is not assignable to type 'InputJsonValue | NullableJsonNullValueInput'.
+lib/agent/memory/index.ts(108,7): error TS2375: Type '{ memoryKey: string; runId: string | null; content: string; summary: string | null; tags: string[]; metadata: Prisma.InputJsonValue | undefined; importance: number | null; lastAccessedAt: Date; }' is not assignable to type '(Without<AgentLongTermMemoryCreateInput, AgentLongTermMemoryUncheckedCreateInput> & AgentLongTermMemoryUncheckedCreateInput) | (Without<...> & AgentLongTermMemoryCreateInput)' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ memoryKey: string; runId: string | null; content: string; summary: string | null; tags: string[]; metadata: Prisma.InputJsonValue | undefined; importance: number | null; lastAccessedAt: Date; }' is not assignable to type 'Without<AgentLongTermMemoryCreateInput, AgentLongTermMemoryUncheckedCreateInput> & AgentLongTermMemoryUncheckedCreateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Type '{ memoryKey: string; runId: string | null; content: string; summary: string | null; tags: string[]; metadata: Prisma.InputJsonValue | undefined; importance: number | null; lastAccessedAt: Date; }' is not assignable to type 'AgentLongTermMemoryUncheckedCreateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'metadata' are incompatible.
+        Type 'InputJsonValue | undefined' is not assignable to type 'InputJsonValue | NullableJsonNullValueInput'.
+          Type 'undefined' is not assignable to type 'InputJsonValue | NullableJsonNullValueInput'.
+lib/agent/memory/index.ts(256,56): error TS2379: Argument of type '{ model: string | null | undefined; prompt: string | null | undefined; content: string; summary: string | null; metadata: Record<string, unknown> | undefined; }' is not assignable to parameter of type '{ model?: string | null; prompt?: string | null; content: string; summary?: string | null; metadata?: Record<string, unknown>; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'model' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/memory/index.ts(266,47): error TS2379: Argument of type '{ memoryKey: string; runId: string | null; content: string; summary: string | null; tags: string[]; metadata: Record<string, unknown> | undefined; importance: number | null; }' is not assignable to parameter of type '{ memoryKey: string; runId?: string | null; content: string; summary?: string | null; tags?: string[]; metadata?: Record<string, unknown>; importance?: number | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'metadata' are incompatible.
+    Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown>'.
+      Type 'undefined' is not assignable to type 'Record<string, unknown>'.
+lib/agent/planning/llm.ts(237,9): error TS2375: Type '{ critique: { assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null; ... 6 more ...; successSignals: string[] | undefined; }' is not assignable to type 'PlannerMeta' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'critique' are incompatible.
+    Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null' is not assignable to type 'PlannerCritique | null'.
+      Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; }' is not assignable to type 'PlannerCritique' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+        Types of property 'assumptions' are incompatible.
+          Type 'string[] | undefined' is not assignable to type 'string[]'.
+            Type 'undefined' is not assignable to type 'string[]'.
+lib/agent/planning/llm.ts(250,9): error TS2375: Type '{ critique: { assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null; ... 6 more ...; successSignals: string[] | undefined; }' is not assignable to type 'PlannerMeta' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'critique' are incompatible.
+    Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null' is not assignable to type 'PlannerCritique | null'.
+      Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; }' is not assignable to type 'PlannerCritique' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+        Types of property 'assumptions' are incompatible.
+          Type 'string[] | undefined' is not assignable to type 'string[]'.
+            Type 'undefined' is not assignable to type 'string[]'.
+lib/agent/planning/llm.ts(262,7): error TS2345: Argument of type '{ expectedObservation: string | undefined; successCriteria: string | undefined; phase: string | undefined; priority: number | undefined; dependsOn: string[] | number[] | undefined; title?: string; tool?: string; goalId?: string | null; subgoalId?: string | null; }[]' is not assignable to parameter of type '{ title?: string; tool?: string; expectedObservation?: string; successCriteria?: string; phase?: string; priority?: number; dependsOn?: string[] | number[]; goalId?: string | null; subgoalId?: string | null; }[]'.
+  Type '{ expectedObservation: string | undefined; successCriteria: string | undefined; phase: string | undefined; priority: number | undefined; dependsOn: string[] | number[] | undefined; title?: string; tool?: string; goalId?: string | null; subgoalId?: string | null; }' is not assignable to type '{ title?: string; tool?: string; expectedObservation?: string; successCriteria?: string; phase?: string; priority?: number; dependsOn?: string[] | number[]; goalId?: string | null; subgoalId?: string | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'expectedObservation' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+lib/agent/planning/llm.ts(272,7): error TS2375: Type '{ critique: { assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null; ... 6 more ...; successSignals: string[] | undefined; }' is not assignable to type 'PlannerMeta' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'critique' are incompatible.
+    Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null' is not assignable to type 'PlannerCritique | null'.
+      Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; }' is not assignable to type 'PlannerCritique' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+        Types of property 'assumptions' are incompatible.
+          Type 'string[] | undefined' is not assignable to type 'string[]'.
+            Type 'undefined' is not assignable to type 'string[]'.
+lib/agent/planning/llm.ts(280,57): error TS2379: Argument of type '{ prompt: string; model: string; memory: string[]; currentPlan: PlanStep[]; candidateSteps: PlanStep[]; runId: string | undefined; maxSteps: number; }' is not assignable to parameter of type '{ prompt: string; model: string; memory: string[]; currentPlan: PlanStep[]; candidateSteps: PlanStep[]; runId?: string; maxSteps: number; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'runId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+lib/agent/planning/llm.ts(299,9): error TS2375: Type '{ critique: { assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null; ... 6 more ...; successSignals: string[] | undefined; }' is not assignable to type 'PlannerMeta' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'critique' are incompatible.
+    Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null' is not assignable to type 'PlannerCritique | null'.
+      Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; }' is not assignable to type 'PlannerCritique' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+        Types of property 'assumptions' are incompatible.
+          Type 'string[] | undefined' is not assignable to type 'string[]'.
+            Type 'undefined' is not assignable to type 'string[]'.
+lib/agent/planning/llm.ts(317,9): error TS2375: Type '{ critique: { assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null; ... 6 more ...; successSignals: string[] | undefined; }' is not assignable to type 'PlannerMeta' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'critique' are incompatible.
+    Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null' is not assignable to type 'PlannerCritique | null'.
+      Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; }' is not assignable to type 'PlannerCritique' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+        Types of property 'assumptions' are incompatible.
+          Type 'string[] | undefined' is not assignable to type 'string[]'.
+            Type 'undefined' is not assignable to type 'string[]'.
+lib/agent/planning/llm.ts(354,7): error TS2375: Type '{ critique: { assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null; ... 6 more ...; successSignals: string[] | undefined; }' is not assignable to type 'PlannerMeta' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'critique' are incompatible.
+    Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null' is not assignable to type 'PlannerCritique | null'.
+      Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; }' is not assignable to type 'PlannerCritique' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+        Types of property 'assumptions' are incompatible.
+          Type 'string[] | undefined' is not assignable to type 'string[]'.
+            Type 'undefined' is not assignable to type 'string[]'.
+lib/agent/planning/llm.ts(369,5): error TS2375: Type '{ steps: { id: `${string}-${string}-${string}-${string}-${string}`; title: string; status: "pending"; tool: "playwright"; expectedObservation: null; successCriteria: null; phase: "act"; priority: null; dependsOn: null; attempts: number; maxAttempts: number; }[]; decision: AgentDecision; source: "heuristic"; meta: un...' is not assignable to type '{ steps: PlanStep[]; decision: AgentDecision; source: "llm" | "heuristic"; branchSteps?: PlanStep[]; meta?: PlannerMeta; hierarchy?: { goals: { ...; }[]; } | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'meta' are incompatible.
+    Type 'undefined' is not assignable to type 'PlannerMeta'.
+lib/agent/planning/llm.ts(504,11): error TS2345: Argument of type '{ expectedObservation: string | undefined; successCriteria: string | undefined; phase: string | undefined; priority: number | undefined; dependsOn: string[] | number[] | undefined; title?: string; tool?: string; goalId?: string | null; subgoalId?: string | null; }[]' is not assignable to parameter of type '{ title?: string; tool?: string; expectedObservation?: string; successCriteria?: string; phase?: string; priority?: number; dependsOn?: string[] | number[]; goalId?: string | null; subgoalId?: string | null; }[]'.
+  Type '{ expectedObservation: string | undefined; successCriteria: string | undefined; phase: string | undefined; priority: number | undefined; dependsOn: string[] | number[] | undefined; title?: string; tool?: string; goalId?: string | null; subgoalId?: string | null; }' is not assignable to type '{ title?: string; tool?: string; expectedObservation?: string; successCriteria?: string; phase?: string; priority?: number; dependsOn?: string[] | number[]; goalId?: string | null; subgoalId?: string | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'expectedObservation' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+lib/agent/planning/llm.ts(524,7): error TS2375: Type '{ shouldReplan: false; reason: string | undefined; steps: never[]; }' is not assignable to type '{ shouldReplan: boolean; reason?: string; steps: PlanStep[]; hierarchy?: PlanHierarchy | null; meta?: PlannerMeta | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'reason' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+lib/agent/planning/llm.ts(531,7): error TS2375: Type '{ critique: { assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null; ... 6 more ...; successSignals: string[] | undefined; }' is not assignable to type 'PlannerMeta' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'critique' are incompatible.
+    Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null' is not assignable to type 'PlannerCritique | null'.
+      Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; }' is not assignable to type 'PlannerCritique' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+        Types of property 'assumptions' are incompatible.
+          Type 'string[] | undefined' is not assignable to type 'string[]'.
+            Type 'undefined' is not assignable to type 'string[]'.
+lib/agent/planning/llm.ts(715,13): error TS2345: Argument of type '{ expectedObservation: string | undefined; successCriteria: string | undefined; phase: string | undefined; priority: number | undefined; dependsOn: string[] | number[] | undefined; title?: string; tool?: string; goalId?: string | null; subgoalId?: string | null; }[]' is not assignable to parameter of type '{ title?: string; tool?: string; expectedObservation?: string; successCriteria?: string; phase?: string; priority?: number; dependsOn?: string[] | number[]; goalId?: string | null; subgoalId?: string | null; }[]'.
+  Type '{ expectedObservation: string | undefined; successCriteria: string | undefined; phase: string | undefined; priority: number | undefined; dependsOn: string[] | number[] | undefined; title?: string; tool?: string; goalId?: string | null; subgoalId?: string | null; }' is not assignable to type '{ title?: string; tool?: string; expectedObservation?: string; successCriteria?: string; phase?: string; priority?: number; dependsOn?: string[] | number[]; goalId?: string | null; subgoalId?: string | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'expectedObservation' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+lib/agent/planning/llm.ts(754,7): error TS2375: Type '{ critique: { assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null; ... 6 more ...; successSignals: string[] | undefined; }' is not assignable to type 'PlannerMeta' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'critique' are incompatible.
+    Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null' is not assignable to type 'PlannerCritique | null'.
+      Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; }' is not assignable to type 'PlannerCritique' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+        Types of property 'assumptions' are incompatible.
+          Type 'string[] | undefined' is not assignable to type 'string[]'.
+            Type 'undefined' is not assignable to type 'string[]'.
+lib/agent/planning/llm.ts(891,11): error TS2345: Argument of type '{ expectedObservation: string | undefined; successCriteria: string | undefined; phase: string | undefined; priority: number | undefined; dependsOn: string[] | number[] | undefined; title?: string; tool?: string; goalId?: string | null; subgoalId?: string | null; }[]' is not assignable to parameter of type '{ title?: string; tool?: string; expectedObservation?: string; successCriteria?: string; phase?: string; priority?: number; dependsOn?: string[] | number[]; goalId?: string | null; subgoalId?: string | null; }[]'.
+  Type '{ expectedObservation: string | undefined; successCriteria: string | undefined; phase: string | undefined; priority: number | undefined; dependsOn: string[] | number[] | undefined; title?: string; tool?: string; goalId?: string | null; subgoalId?: string | null; }' is not assignable to type '{ title?: string; tool?: string; expectedObservation?: string; successCriteria?: string; phase?: string; priority?: number; dependsOn?: string[] | number[]; goalId?: string | null; subgoalId?: string | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'expectedObservation' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+lib/agent/planning/llm.ts(911,7): error TS2375: Type '{ shouldReplan: false; reason: string | undefined; steps: never[]; }' is not assignable to type '{ shouldReplan: boolean; reason?: string; steps: PlanStep[]; hierarchy?: PlanHierarchy | null; meta?: PlannerMeta | null; summary?: string | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'reason' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+lib/agent/planning/llm.ts(919,7): error TS2375: Type '{ critique: { assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null; ... 6 more ...; successSignals: string[] | undefined; }' is not assignable to type 'PlannerMeta' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'critique' are incompatible.
+    Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null' is not assignable to type 'PlannerCritique | null'.
+      Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; }' is not assignable to type 'PlannerCritique' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+        Types of property 'assumptions' are incompatible.
+          Type 'string[] | undefined' is not assignable to type 'string[]'.
+            Type 'undefined' is not assignable to type 'string[]'.
+lib/agent/planning/llm.ts(1037,11): error TS2345: Argument of type '{ expectedObservation: string | undefined; successCriteria: string | undefined; phase: string | undefined; priority: number | undefined; dependsOn: string[] | number[] | undefined; title?: string; tool?: string; goalId?: string | null; subgoalId?: string | null; }[]' is not assignable to parameter of type '{ title?: string; tool?: string; expectedObservation?: string; successCriteria?: string; phase?: string; priority?: number; dependsOn?: string[] | number[]; goalId?: string | null; subgoalId?: string | null; }[]'.
+  Type '{ expectedObservation: string | undefined; successCriteria: string | undefined; phase: string | undefined; priority: number | undefined; dependsOn: string[] | number[] | undefined; title?: string; tool?: string; goalId?: string | null; subgoalId?: string | null; }' is not assignable to type '{ title?: string; tool?: string; expectedObservation?: string; successCriteria?: string; phase?: string; priority?: number; dependsOn?: string[] | number[]; goalId?: string | null; subgoalId?: string | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'expectedObservation' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+lib/agent/planning/llm.ts(1486,7): error TS2345: Argument of type '{ expectedObservation: string | undefined; successCriteria: string | undefined; phase: string | undefined; priority: number | undefined; dependsOn: string[] | number[] | undefined; title?: string; tool?: string; goalId?: string | null; subgoalId?: string | null; }[]' is not assignable to parameter of type '{ title?: string; tool?: string; expectedObservation?: string; successCriteria?: string; phase?: string; priority?: number; dependsOn?: string[] | number[]; goalId?: string | null; subgoalId?: string | null; }[]'.
+  Type '{ expectedObservation: string | undefined; successCriteria: string | undefined; phase: string | undefined; priority: number | undefined; dependsOn: string[] | number[] | undefined; title?: string; tool?: string; goalId?: string | null; subgoalId?: string | null; }' is not assignable to type '{ title?: string; tool?: string; expectedObservation?: string; successCriteria?: string; phase?: string; priority?: number; dependsOn?: string[] | number[]; goalId?: string | null; subgoalId?: string | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'expectedObservation' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+lib/agent/planning/llm.ts(1594,7): error TS2345: Argument of type '{ expectedObservation: string | undefined; successCriteria: string | undefined; phase: string | undefined; priority: number | undefined; dependsOn: string[] | number[] | undefined; title?: string; tool?: string; goalId?: string | null; subgoalId?: string | null; }[]' is not assignable to parameter of type '{ title?: string; tool?: string; expectedObservation?: string; successCriteria?: string; phase?: string; priority?: number; dependsOn?: string[] | number[]; goalId?: string | null; subgoalId?: string | null; }[]'.
+  Type '{ expectedObservation: string | undefined; successCriteria: string | undefined; phase: string | undefined; priority: number | undefined; dependsOn: string[] | number[] | undefined; title?: string; tool?: string; goalId?: string | null; subgoalId?: string | null; }' is not assignable to type '{ title?: string; tool?: string; expectedObservation?: string; successCriteria?: string; phase?: string; priority?: number; dependsOn?: string[] | number[]; goalId?: string | null; subgoalId?: string | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'expectedObservation' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+lib/agent/planning/llm.ts(1701,7): error TS2345: Argument of type '{ expectedObservation: string | undefined; successCriteria: string | undefined; phase: string | undefined; priority: number | undefined; dependsOn: string[] | number[] | undefined; title?: string; tool?: string; goalId?: string | null; subgoalId?: string | null; }[]' is not assignable to parameter of type '{ title?: string; tool?: string; expectedObservation?: string; successCriteria?: string; phase?: string; priority?: number; dependsOn?: string[] | number[]; goalId?: string | null; subgoalId?: string | null; }[]'.
+  Type '{ expectedObservation: string | undefined; successCriteria: string | undefined; phase: string | undefined; priority: number | undefined; dependsOn: string[] | number[] | undefined; title?: string; tool?: string; goalId?: string | null; subgoalId?: string | null; }' is not assignable to type '{ title?: string; tool?: string; expectedObservation?: string; successCriteria?: string; phase?: string; priority?: number; dependsOn?: string[] | number[]; goalId?: string | null; subgoalId?: string | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'expectedObservation' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+lib/agent/planning/llm.ts(1938,11): error TS2345: Argument of type '{ expectedObservation: string | undefined; successCriteria: string | undefined; phase: string | undefined; priority: number | undefined; dependsOn: string[] | number[] | undefined; title?: string; tool?: string; goalId?: string | null; subgoalId?: string | null; }[]' is not assignable to parameter of type '{ title?: string; tool?: string; expectedObservation?: string; successCriteria?: string; phase?: string; priority?: number; dependsOn?: string[] | number[]; goalId?: string | null; subgoalId?: string | null; }[]'.
+  Type '{ expectedObservation: string | undefined; successCriteria: string | undefined; phase: string | undefined; priority: number | undefined; dependsOn: string[] | number[] | undefined; title?: string; tool?: string; goalId?: string | null; subgoalId?: string | null; }' is not assignable to type '{ title?: string; tool?: string; expectedObservation?: string; successCriteria?: string; phase?: string; priority?: number; dependsOn?: string[] | number[]; goalId?: string | null; subgoalId?: string | null; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'expectedObservation' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+lib/agent/planning/utils.ts(41,17): error TS18048: 'raw' is possibly 'undefined'.
+lib/agent/planning/utils.ts(44,40): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+lib/agent/planning/utils.ts(80,5): error TS2322: Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; } | null' is not assignable to type 'PlannerCritique | null'.
+  Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; }' is not assignable to type 'PlannerCritique' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'assumptions' are incompatible.
+      Type 'string[] | undefined' is not assignable to type 'string[]'.
+        Type 'undefined' is not assignable to type 'string[]'.
+lib/agent/planning/utils.ts(113,5): error TS1360: Type '{ assumptions: string[] | undefined; risks: string[] | undefined; unknowns: string[] | undefined; safetyChecks: string[] | undefined; questions: string[] | undefined; }' does not satisfy the expected type 'PlannerCritique'.
+  Types of property 'assumptions' are incompatible.
+    Type 'string[] | undefined' is not assignable to type 'string[]'.
+      Type 'undefined' is not assignable to type 'string[]'.
+lib/agent/planning/utils.ts(128,26): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+lib/agent/planning/utils.ts(129,19): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+lib/agent/tools/index.ts(198,13): error TS2379: Argument of type '{ model: string; runId: string; log: undefined; }' is not assignable to parameter of type 'LLMContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'log' are incompatible.
+    Type 'undefined' is not assignable to type '(level: string, message: string, metadata?: Record<string, unknown> | undefined) => Promise<void>'.
+lib/agent/tools/index.ts(267,7): error TS2322: Type 'Page | undefined' is not assignable to type 'Page | null'.
+  Type 'undefined' is not assignable to type 'Page | null'.
+lib/agent/tools/index.ts(268,13): error TS18047: 'page' is possibly 'null'.
+lib/agent/tools/index.ts(269,7): error TS18047: 'page' is possibly 'null'.
+lib/agent/tools/index.ts(270,7): error TS18047: 'page' is possibly 'null'.
+lib/agent/tools/index.ts(271,7): error TS18047: 'page' is possibly 'null'.
+lib/agent/tools/index.ts(272,7): error TS18047: 'page' is possibly 'null'.
+lib/agent/tools/index.ts(336,11): error TS2379: Argument of type '{ model: string; runId: string; log: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; activeStepId: string | undefined; stepLabel: string | undefined; }' is not assignable to parameter of type 'LLMContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'activeStepId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(364,47): error TS2379: Argument of type '{ model: string; runId: string; log: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; activeStepId: string | undefined; stepLabel: string | undefined; }' is not assignable to parameter of type 'LLMContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'activeStepId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(421,58): error TS2379: Argument of type '{ model: string; runId: string; log: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; activeStepId: string | undefined; stepLabel: string | undefined; }' is not assignable to parameter of type 'LLMContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'activeStepId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(437,70): error TS2379: Argument of type '{ model: string; runId: string; log: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; activeStepId: string | undefined; stepLabel: string | undefined; }' is not assignable to parameter of type 'LLMContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'activeStepId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(450,27): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(480,54): error TS2379: Argument of type '{ model: string; runId: string; log: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; activeStepId: string | undefined; stepLabel: string | undefined; }' is not assignable to parameter of type 'LLMContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'activeStepId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(496,68): error TS2379: Argument of type '{ model: string; runId: string; log: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; activeStepId: string | undefined; stepLabel: string | undefined; }' is not assignable to parameter of type 'LLMContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'activeStepId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(509,23): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(580,11): error TS2379: Argument of type '{ model: string; runId: string; log: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; activeStepId: string | undefined; stepLabel: string | undefined; }' is not assignable to parameter of type 'LLMContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'activeStepId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(636,13): error TS2379: Argument of type '{ model: string; runId: string; log: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; activeStepId: string | undefined; stepLabel: string | undefined; }' is not assignable to parameter of type 'LLMContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'activeStepId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(663,17): error TS2379: Argument of type '{ model: string; runId: string; log: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; activeStepId: string | undefined; stepLabel: string | undefined; }' is not assignable to parameter of type 'LLMContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'activeStepId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(719,21): error TS2379: Argument of type '{ model: string; runId: string; log: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; activeStepId: string | undefined; stepLabel: string | undefined; }' is not assignable to parameter of type 'LLMContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'activeStepId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(745,18): error TS2379: Argument of type '{ model: string; runId: string; log: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; activeStepId: string | undefined; stepLabel: string | undefined; }' is not assignable to parameter of type 'LLMContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'activeStepId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(808,22): error TS2379: Argument of type '{ model: string; runId: string; log: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; activeStepId: string | undefined; stepLabel: string | undefined; }' is not assignable to parameter of type 'LLMContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'activeStepId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(979,17): error TS2379: Argument of type '{ model: string; runId: string; log: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; activeStepId: string | undefined; stepLabel: string | undefined; }' is not assignable to parameter of type 'LLMContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'activeStepId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(1056,17): error TS2379: Argument of type '{ model: string; runId: string; log: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; activeStepId: string | undefined; stepLabel: string | undefined; }' is not assignable to parameter of type 'LLMContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'activeStepId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(1145,13): error TS2379: Argument of type '{ model: string; runId: string; log: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; activeStepId: string | undefined; stepLabel: string | undefined; }' is not assignable to parameter of type 'LLMContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'activeStepId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(1195,18): error TS2379: Argument of type '{ model: string; runId: string; log: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; activeStepId: string | undefined; stepLabel: string | undefined; }' is not assignable to parameter of type 'LLMContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'activeStepId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(1222,13): error TS2379: Argument of type '{ model: string; runId: string; log: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; activeStepId: string | undefined; stepLabel: string | undefined; }' is not assignable to parameter of type 'LLMContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'activeStepId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(1339,17): error TS2379: Argument of type '{ model: string; runId: string; log: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; activeStepId: string | undefined; stepLabel: string | undefined; }' is not assignable to parameter of type 'LLMContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'activeStepId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(1436,22): error TS2379: Argument of type '{ model: string; runId: string; log: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>; activeStepId: string | undefined; stepLabel: string | undefined; }' is not assignable to parameter of type 'LLMContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'activeStepId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/index.ts(1763,7): error TS2375: Type '{ url: string; snapshotId: string | undefined; logCount: number; }' is not assignable to type 'ToolOutput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'snapshotId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/agent/tools/search/index.ts(24,19): error TS2532: Object is possibly 'undefined'.
+lib/agent/tools/search/index.ts(25,17): error TS18048: 'rawUrl' is possibly 'undefined'.
+lib/agent/tools/search/index.ts(27,11): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+lib/agent/tools/search/index.ts(27,19): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string | URL'.
+  Type 'undefined' is not assignable to type 'string | URL'.
+lib/auth.ts(21,9): error TS2322: Type '(credentials: Partial<Record<"password" | "email", unknown>>) => Promise<{ id: string; email: string; name: string | null | undefined; image: string | null | undefined; } | null>' is not assignable to type '(credentials: Partial<Record<"password" | "email", unknown>>, request: Request) => Awaitable<User | null>'.
+  Type 'Promise<{ id: string; email: string; name: string | null | undefined; image: string | null | undefined; } | null>' is not assignable to type 'Awaitable<User | null>'.
+    Type 'Promise<{ id: string; email: string; name: string | null | undefined; image: string | null | undefined; } | null>' is not assignable to type 'PromiseLike<User | null>'.
+      Types of property 'then' are incompatible.
+        Type '<TResult1 = { id: string; email: string; name: string | null | undefined; image: string | null | undefined; } | null, TResult2 = never>(onfulfilled?: ((value: { id: string; email: string; name: string | null | undefined; image: string | ... 1 more ... | undefined; } | null) => TResult1 | PromiseLike<...>) | null | u...' is not assignable to type '<TResult1 = User | null, TResult2 = never>(onfulfilled?: ((value: User | null) => TResult1 | PromiseLike<TResult1>) | null | undefined, onrejected?: ((reason: any) => TResult2 | PromiseLike<...>) | null | undefined) => PromiseLike<...>'.
+          Types of parameters 'onfulfilled' and 'onfulfilled' are incompatible.
+            Types of parameters 'value' and 'value' are incompatible.
+              Type '{ id: string; email: string; name: string | null | undefined; image: string | null | undefined; } | null' is not assignable to type 'User | null'.
+                Type '{ id: string; email: string; name: string | null | undefined; image: string | null | undefined; }' is not assignable to type 'User' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+                  Types of property 'name' are incompatible.
+                    Type 'string | null | undefined' is not assignable to type 'string | null'.
+                      Type 'undefined' is not assignable to type 'string | null'.
+lib/auth.ts(91,61): error TS2345: Argument of type '() => Promise<{ adapter: Adapter | undefined; providers: Provider[]; debug: true; session: { strategy: "jwt"; }; callbacks: { authorized({ auth, request: { nextUrl } }: { request: NextRequest; auth: Session | null; }): boolean; }; secret?: string; pages: { ...; }; trustHost: true; }>' is not assignable to parameter of type 'NextAuthConfig | ((request: NextRequest | undefined) => Awaitable<NextAuthConfig>)'.
+  Type '() => Promise<{ adapter: Adapter | undefined; providers: Provider[]; debug: true; session: { strategy: "jwt"; }; callbacks: { authorized({ auth, request: { nextUrl } }: { request: NextRequest; auth: Session | null; }): boolean; }; secret?: string; pages: { ...; }; trustHost: true; }>' is not assignable to type '(request: NextRequest | undefined) => Awaitable<NextAuthConfig>'.
+    Type 'Promise<{ adapter: Adapter | undefined; providers: Provider[]; debug: true; session: { strategy: "jwt"; }; callbacks: { authorized({ auth, request: { nextUrl } }: { request: NextRequest; auth: Session | null; }): boolean; }; secret?: string; pages: { ...; }; trustHost: true; }>' is not assignable to type 'Awaitable<NextAuthConfig>'.
+      Type 'Promise<{ adapter: Adapter | undefined; providers: Provider[]; debug: true; session: { strategy: "jwt"; }; callbacks: { authorized({ auth, request: { nextUrl } }: { request: NextRequest; auth: Session | null; }): boolean; }; secret?: string; pages: { ...; }; trustHost: true; }>' is not assignable to type 'PromiseLike<NextAuthConfig>'.
+        Types of property 'then' are incompatible.
+          Type '<TResult1 = { adapter: Adapter | undefined; providers: Provider[]; debug: true; session: { strategy: "jwt"; }; callbacks: { authorized({ auth, request: { nextUrl } }: { request: NextRequest; auth: Session | null; }): boolean; }; secret?: string; pages: { ...; }; trustHost: true; }, TResult2 = never>(onfulfilled?: ((...' is not assignable to type '<TResult1 = NextAuthConfig, TResult2 = never>(onfulfilled?: ((value: NextAuthConfig) => TResult1 | PromiseLike<TResult1>) | null | undefined, onrejected?: ((reason: any) => TResult2 | PromiseLike<...>) | ... 1 more ... | undefined) => PromiseLike<...>'.
+            Types of parameters 'onfulfilled' and 'onfulfilled' are incompatible.
+              Types of parameters 'value' and 'value' are incompatible.
+                Type '{ adapter: Adapter | undefined; providers: Provider[]; debug: true; session: { strategy: "jwt"; }; callbacks: { authorized({ auth, request: { nextUrl } }: { request: NextRequest; auth: Session | null; }): boolean; }; secret?: string; pages: { ...; }; trustHost: true; }' is not assignable to type 'NextAuthConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+                  Types of property 'adapter' are incompatible.
+                    Type 'Adapter | undefined' is not assignable to type 'Adapter'.
+                      Type 'undefined' is not assignable to type 'Adapter'.
+lib/context/ProductFormContext.tsx(268,19): error TS2339: Property 'categories' does not exist on type 'ProductWithImages'.
+lib/context/ProductFormContext.tsx(269,36): error TS2339: Property 'categories' does not exist on type 'ProductWithImages'.
+lib/context/ProductFormContext.tsx(269,52): error TS7006: Parameter 'entry' implicitly has an 'any' type.
+lib/context/ProductFormContext.tsx(274,19): error TS2339: Property 'tags' does not exist on type 'ProductWithImages'.
+lib/context/ProductFormContext.tsx(275,31): error TS2339: Property 'tags' does not exist on type 'ProductWithImages'.
+lib/context/ProductFormContext.tsx(275,41): error TS7006: Parameter 'entry' implicitly has an 'any' type.
+lib/context/ProductFormContext.tsx(611,13): error TS2322: Type 'File | undefined' is not assignable to type 'File'.
+  Type 'undefined' is not assignable to type 'File'.
+lib/context/ProductFormContext.tsx(612,45): error TS2345: Argument of type 'File | undefined' is not assignable to parameter of type 'Blob | MediaSource'.
+  Type 'undefined' is not assignable to type 'Blob | MediaSource'.
+lib/context/ProductFormContext.tsx(630,13): error TS2322: Type 'ImageFileSelection | undefined' is not assignable to type 'ImageFileSelection'.
+  Type 'undefined' is not assignable to type 'ImageFileSelection'.
+lib/context/ProductFormContext.tsx(631,25): error TS18048: 'file' is possibly 'undefined'.
+lib/context/ProductFormContext.tsx(649,7): error TS2322: Type 'ProductImageSlot | undefined' is not assignable to type 'ProductImageSlot'.
+  Type 'undefined' is not assignable to type 'ProductImageSlot'.
+lib/context/ProductFormContext.tsx(650,7): error TS2322: Type 'ProductImageSlot | undefined' is not assignable to type 'ProductImageSlot'.
+  Type 'undefined' is not assignable to type 'ProductImageSlot'.
+lib/context/ProductFormContext.tsx(803,9): error TS2375: Type '{ register: UseFormRegister<{ baseProductId?: string | null | undefined; defaultPriceGroupId?: string | null | undefined; ean?: string | null | undefined; gtin?: string | null | undefined; asin?: string | null | undefined; ... 16 more ...; sku?: string | undefined; }>; ... 35 more ...; product: ProductWithImages | u...' is not assignable to type 'ProductFormContextType' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'product' are incompatible.
+    Type 'ProductWithImages | undefined' is not assignable to type 'ProductWithImages'.
+      Type 'undefined' is not assignable to type 'ProductWithImages'.
+        Type 'undefined' is not assignable to type 'ProductRecord'.
+lib/services/aiDescriptionService.ts(28,64): error TS2769: No overload matches this call.
+  Overload 1 of 6, '(filter: Filter<Document>): Promise<WithId<Document> | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+  Overload 2 of 6, '(filter: Filter<Document>): Promise<Document | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+  Overload 3 of 6, '(filter: Filter<Document>, options?: (Omit<FindOneOptions, "timeoutMode"> & Abortable) | undefined): Promise<Document | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+lib/services/aiDescriptionService.ts(151,5): error TS2322: Type '({ type: "image_url"; image_url: { url: string; }; } | null)[]' is not assignable to type 'ChatCompletionContentPart[]'.
+  Type '{ type: "image_url"; image_url: { url: string; }; } | null' is not assignable to type 'ChatCompletionContentPart'.
+    Type 'null' is not assignable to type 'ChatCompletionContentPart'.
+lib/services/aiDescriptionService.ts(151,79): error TS2677: A type predicate's type must be assignable to its parameter's type.
+  Type 'ChatCompletionContentPart' is not assignable to type '{ type: "image_url"; image_url: { url: string; }; } | null'.
+    Property 'image_url' is missing in type 'ChatCompletionContentPartText' but required in type '{ type: "image_url"; image_url: { url: string; }; }'.
+lib/services/aiDescriptionService.ts(170,21): error TS2532: Object is possibly 'undefined'.
+lib/services/aiDescriptionService.ts(184,21): error TS2532: Object is possibly 'undefined'.
+lib/services/aiDescriptionService.ts(203,24): error TS2532: Object is possibly 'undefined'.
+lib/services/aiDescriptionService.ts(217,24): error TS2532: Object is possibly 'undefined'.
+lib/services/catalog-repository/prisma-catalog-repository.ts(96,7): error TS2375: Type '{ name: string | undefined; description: string | undefined; isDefault: boolean | undefined; defaultLanguageId: string | undefined; defaultPriceGroupId: string | undefined; priceGroupIds: string[] | undefined; }' is not assignable to type '(Without<CatalogUpdateInput, CatalogUncheckedUpdateInput> & CatalogUncheckedUpdateInput) | (Without<...> & CatalogUpdateInput)' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ name: string | undefined; description: string | undefined; isDefault: boolean | undefined; defaultLanguageId: string | undefined; defaultPriceGroupId: string | undefined; priceGroupIds: string[] | undefined; }' is not assignable to type 'Without<CatalogUncheckedUpdateInput, CatalogUpdateInput> & CatalogUpdateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Type '{ name: string | undefined; description: string | undefined; isDefault: boolean | undefined; defaultLanguageId: string | undefined; defaultPriceGroupId: string | undefined; priceGroupIds: string[] | undefined; }' is not assignable to type 'Without<CatalogUncheckedUpdateInput, CatalogUpdateInput>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'defaultLanguageId' are incompatible.
+        Type 'string | undefined' is not assignable to type 'never'.
+          Type 'undefined' is not assignable to type 'never'.
+lib/services/image-file-repository/prisma-image-file-repository.ts(53,51): error TS2379: Argument of type '{ where: { filename: { contains: string; mode: "insensitive"; }; } | undefined; }' is not assignable to parameter of type '{ select?: ImageFileSelect<DefaultArgs> | null; omit?: ImageFileOmit<DefaultArgs> | null; include?: ImageFileInclude<DefaultArgs> | null; ... 5 more ...; distinct?: ImageFileScalarFieldEnum | ImageFileScalarFieldEnum[]; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'where' are incompatible.
+    Type '{ filename: { contains: string; mode: "insensitive"; }; } | undefined' is not assignable to type 'ImageFileWhereInput'.
+      Type 'undefined' is not assignable to type 'ImageFileWhereInput'.
+lib/services/import-template-repository.ts(428,9): error TS2375: Type '{ mappings: ImportTemplateMapping[]; updatedAt: string; name: string | undefined; description?: string | null; id: string; createdAt: string; }' is not assignable to type 'ImportTemplate' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'name' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+lib/services/noteService/note-repository/mongo-note-repository.ts(133,9): error TS2532: Object is possibly 'undefined'.
+lib/services/noteService/note-repository/mongo-note-repository.ts(142,7): error TS2532: Object is possibly 'undefined'.
+lib/services/noteService/note-repository/mongo-note-repository.ts(142,47): error TS2345: Argument of type 'CategoryWithChildren | undefined' is not assignable to parameter of type 'CategoryWithChildren'.
+  Type 'undefined' is not assignable to type 'CategoryWithChildren'.
+    Type 'undefined' is not assignable to type '{ name: string; id: string; color: string | null; notebookId: string | null; createdAt: Date; updatedAt: Date; description: string | null; parentId: string | null; themeId: string | null; }'.
+lib/services/noteService/note-repository/mongo-note-repository.ts(144,27): error TS2345: Argument of type 'CategoryWithChildren | undefined' is not assignable to parameter of type 'CategoryWithChildren'.
+  Type 'undefined' is not assignable to type 'CategoryWithChildren'.
+    Type 'undefined' is not assignable to type '{ name: string; id: string; color: string | null; notebookId: string | null; createdAt: Date; updatedAt: Date; description: string | null; parentId: string | null; themeId: string | null; }'.
+lib/services/noteService/note-repository/prisma-note-repository.ts(161,11): error TS2375: Type '{ notebook: { connect: { id: string; }; }; title: string; content: string; color?: string | null | undefined; isPinned?: boolean | undefined; isArchived?: boolean | undefined; isFavorite?: boolean | undefined; }' is not assignable to type 'NoteCreateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'color' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/services/noteService/note-repository/prisma-note-repository.ts(211,11): error TS2375: Type '{ title?: string; content?: string; color?: string | null | undefined; isPinned?: boolean | undefined; isArchived?: boolean | undefined; isFavorite?: boolean | undefined; }' is not assignable to type 'NoteUpdateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'color' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | NullableStringFieldUpdateOperationsInput | null'.
+      Type 'undefined' is not assignable to type 'string | NullableStringFieldUpdateOperationsInput | null'.
+lib/services/noteService/note-repository/prisma-note-repository.ts(299,7): error TS2375: Type '{ name: string; color: string | null | undefined; notebook: { connect: { id: string; }; }; }' is not assignable to type '(Without<TagCreateInput, TagUncheckedCreateInput> & TagUncheckedCreateInput) | (Without<TagUncheckedCreateInput, TagCreateInput> & TagCreateInput)' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ name: string; color: string | null | undefined; notebook: { connect: { id: string; }; }; }' is not assignable to type 'Without<TagUncheckedCreateInput, TagCreateInput> & TagCreateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Type '{ name: string; color: string | null | undefined; notebook: { connect: { id: string; }; }; }' is not assignable to type 'TagCreateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'color' are incompatible.
+        Type 'string | null | undefined' is not assignable to type 'string | null'.
+          Type 'undefined' is not assignable to type 'string | null'.
+lib/services/noteService/note-repository/prisma-note-repository.ts(306,55): error TS2375: Type 'Partial<TagCreateInput>' is not assignable to type '(Without<TagUpdateInput, TagUncheckedUpdateInput> & TagUncheckedUpdateInput) | (Without<TagUncheckedUpdateInput, TagUpdateInput> & TagUpdateInput)' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type 'Partial<TagCreateInput>' is not assignable to type 'Without<TagUncheckedUpdateInput, TagUpdateInput> & TagUpdateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Type 'Partial<TagCreateInput>' is not assignable to type 'Without<TagUncheckedUpdateInput, TagUpdateInput>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'notebookId' are incompatible.
+        Type 'string | null | undefined' is not assignable to type 'never'.
+          Type 'undefined' is not assignable to type 'never'.
+lib/services/noteService/note-repository/prisma-note-repository.ts(385,13): error TS2375: Type 'Partial<CategoryCreateInput>' is not assignable to type 'CategoryUpdateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'description' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | NullableStringFieldUpdateOperationsInput | null'.
+      Type 'undefined' is not assignable to type 'string | NullableStringFieldUpdateOperationsInput | null'.
+lib/services/noteService/note-repository/prisma-note-repository.ts(475,60): error TS2375: Type 'NotebookUpdateInput' is not assignable to type '(Without<NotebookUpdateInput, NotebookUncheckedUpdateInput> & NotebookUncheckedUpdateInput) | (Without<...> & NotebookUpdateInput)' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type 'NotebookUpdateInput' is not assignable to type 'Without<NotebookUncheckedUpdateInput, NotebookUpdateInput> & NotebookUpdateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Type 'NotebookUpdateInput' is not assignable to type 'Without<NotebookUncheckedUpdateInput, NotebookUpdateInput>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'defaultThemeId' are incompatible.
+        Type 'string | null | undefined' is not assignable to type 'never'.
+          Type 'undefined' is not assignable to type 'never'.
+lib/services/noteService/note-repository/prisma-note-repository.ts(546,9): error TS2375: Type '{ name: string | undefined; notebookId: string | null | undefined; textColor: string | undefined; backgroundColor: string | undefined; markdownHeadingColor: string | undefined; ... 6 more ...; relatedNoteTextColor: string | undefined; }' is not assignable to type '(Without<ThemeUpdateInput, ThemeUncheckedUpdateInput> & ThemeUncheckedUpdateInput) | (Without<...> & ThemeUpdateInput)' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ name: string | undefined; notebookId: string | null | undefined; textColor: string | undefined; backgroundColor: string | undefined; markdownHeadingColor: string | undefined; ... 6 more ...; relatedNoteTextColor: string | undefined; }' is not assignable to type 'Without<ThemeUncheckedUpdateInput, ThemeUpdateInput> & ThemeUpdateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Type '{ name: string | undefined; notebookId: string | null | undefined; textColor: string | undefined; backgroundColor: string | undefined; markdownHeadingColor: string | undefined; ... 6 more ...; relatedNoteTextColor: string | undefined; }' is not assignable to type 'Without<ThemeUncheckedUpdateInput, ThemeUpdateInput>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'notebookId' are incompatible.
+        Type 'string | null | undefined' is not assignable to type 'never'.
+          Type 'undefined' is not assignable to type 'never'.
+lib/services/noteService/note-repository/prisma-note-repository.ts(574,7): error TS2375: Type '{ noteId: string; slotIndex: number; filename: string; filepath: string; mimetype: string; size: number; width: number | null | undefined; height: number | null | undefined; }' is not assignable to type '(Without<NoteFileCreateInput, NoteFileUncheckedCreateInput> & NoteFileUncheckedCreateInput) | (Without<...> & NoteFileCreateInput)' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ noteId: string; slotIndex: number; filename: string; filepath: string; mimetype: string; size: number; width: number | null | undefined; height: number | null | undefined; }' is not assignable to type 'Without<NoteFileCreateInput, NoteFileUncheckedCreateInput> & NoteFileUncheckedCreateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Type '{ noteId: string; slotIndex: number; filename: string; filepath: string; mimetype: string; size: number; width: number | null | undefined; height: number | null | undefined; }' is not assignable to type 'NoteFileUncheckedCreateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'width' are incompatible.
+        Type 'number | null | undefined' is not assignable to type 'number | null'.
+          Type 'undefined' is not assignable to type 'number | null'.
+lib/services/product-migration.ts(221,52): error TS2379: Argument of type '{ where: { id: { gt: string; }; } | undefined; orderBy: { id: "asc"; }; take: number; include: { images: { include: { imageFile: true; }; }; catalogs: { include: { catalog: { include: { languages: { select: { languageId: true; }; }; }; }; }; }; }; }' is not assignable to parameter of type '{ select?: ProductSelect<DefaultArgs> | null; omit?: ProductOmit<DefaultArgs> | null; include?: ProductInclude<DefaultArgs> | null; ... 5 more ...; distinct?: ProductScalarFieldEnum | ProductScalarFieldEnum[]; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'where' are incompatible.
+    Type '{ id: { gt: string; }; } | undefined' is not assignable to type 'ProductWhereInput'.
+      Type 'undefined' is not assignable to type 'ProductWhereInput'.
+lib/services/product-migration.ts(234,31): error TS2345: Argument of type '(product: ProductInput) => ProductDocument' is not assignable to parameter of type '(value: { id: string; createdAt: Date; updatedAt: Date; length: number | null; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; ... 16 more ...; imageLinks: string[]; }, index: number, array: { ...; }[]) => ProductDocument'.
+  Types of parameters 'product' and 'value' are incompatible.
+    Type '{ id: string; createdAt: Date; updatedAt: Date; length: number | null; sku: string | null; baseProductId: string | null; defaultPriceGroupId: string | null; ean: string | null; ... 16 more ...; imageLinks: string[]; }' is missing the following properties from type 'ProductInput': images, catalogs
+lib/services/product-migration.ts(395,9): error TS2375: Type '{ sku: string | undefined; baseProductId: string | undefined; defaultPriceGroupId: string | undefined; ean: string | undefined; gtin: string | undefined; asin: string | undefined; ... 17 more ...; updatedAt: Date; }' is not assignable to type '(Without<ProductUpdateInput, ProductUncheckedUpdateInput> & ProductUncheckedUpdateInput) | (Without<...> & ProductUpdateInput)' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ sku: string | undefined; baseProductId: string | undefined; defaultPriceGroupId: string | undefined; ean: string | undefined; gtin: string | undefined; asin: string | undefined; ... 17 more ...; updatedAt: Date; }' is not assignable to type 'Without<ProductUncheckedUpdateInput, ProductUpdateInput> & ProductUpdateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Type '{ sku: string | undefined; baseProductId: string | undefined; defaultPriceGroupId: string | undefined; ean: string | undefined; gtin: string | undefined; asin: string | undefined; ... 17 more ...; updatedAt: Date; }' is not assignable to type 'Without<ProductUncheckedUpdateInput, ProductUpdateInput>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'defaultPriceGroupId' are incompatible.
+        Type 'string | undefined' is not assignable to type 'never'.
+          Type 'undefined' is not assignable to type 'never'.
+lib/services/product-migration.ts(421,9): error TS2375: Type '{ id: string; sku: string | undefined; baseProductId: string | undefined; defaultPriceGroupId: string | undefined; ean: string | undefined; gtin: string | undefined; asin: string | undefined; ... 17 more ...; updatedAt: Date; }' is not assignable to type '(Without<ProductCreateInput, ProductUncheckedCreateInput> & ProductUncheckedCreateInput) | (Without<...> & ProductCreateInput)' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ id: string; sku: string | undefined; baseProductId: string | undefined; defaultPriceGroupId: string | undefined; ean: string | undefined; gtin: string | undefined; asin: string | undefined; ... 17 more ...; updatedAt: Date; }' is not assignable to type 'Without<ProductUncheckedCreateInput, ProductCreateInput> & ProductCreateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Type '{ id: string; sku: string | undefined; baseProductId: string | undefined; defaultPriceGroupId: string | undefined; ean: string | undefined; gtin: string | undefined; asin: string | undefined; ... 17 more ...; updatedAt: Date; }' is not assignable to type 'Without<ProductUncheckedCreateInput, ProductCreateInput>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'defaultPriceGroupId' are incompatible.
+        Type 'string | undefined' is not assignable to type 'never'.
+          Type 'undefined' is not assignable to type 'never'.
+lib/services/product-repository/mongo-product-repository.ts(440,20): error TS2352: Conversion of type 'WithId<Document>' to type '{ id: string; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Property 'id' is missing in type 'WithId<Document>' but required in type '{ id: string; }'.
+lib/services/product-repository/mongo-product-repository.ts(470,15): error TS2352: Conversion of type 'WithId<Document>' to type '{ id: string; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Property 'id' is missing in type 'WithId<Document>' but required in type '{ id: string; }'.
+lib/services/product-repository/prisma-product-repository.ts(394,18): error TS2551: Property 'productTagAssignment' does not exist on type 'PrismaClient<{ adapter: PrismaPg; }, never, DefaultArgs>'. Did you mean 'productCategoryAssignment'?
+lib/services/product-repository/prisma-product-repository.ts(404,18): error TS2551: Property 'productTagAssignment' does not exist on type 'PrismaClient<{ adapter: PrismaPg; }, never, DefaultArgs>'. Did you mean 'productCategoryAssignment'?
+lib/services/productAiService.ts(125,57): error TS2322: Type 'string' is not assignable to type 'Condition<ObjectId> | undefined'.

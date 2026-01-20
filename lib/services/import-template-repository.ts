@@ -416,18 +416,19 @@ export const createImportTemplate = async (input: {
 export const updateImportTemplate = async (
   id: string,
   input: Partial<{
-    name: string;
-    description: string | null;
-    mappings: ImportTemplateMapping[];
+    name: string | undefined;
+    description: string | null | undefined;
+    mappings: ImportTemplateMapping[] | undefined;
   }>
 ): Promise<ImportTemplate | null> => {
   const templates = await listImportTemplates();
   const index = templates.findIndex((template) => template.id === id);
   if (index === -1) return null;
+  const existing = templates[index]!;
   const updated: ImportTemplate = {
-    ...templates[index],
+    ...existing,
     ...input,
-    mappings: input.mappings ?? templates[index].mappings,
+    mappings: input.mappings ?? existing.mappings,
     updatedAt: new Date().toISOString(),
   };
   templates[index] = updated;

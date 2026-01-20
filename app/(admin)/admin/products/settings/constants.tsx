@@ -10,6 +10,7 @@ export const settingSections = [
   "Internationalization",
   "Integrations",
   "AI Description",
+  "AI Translation",
 ] as const;
 
 export const productDbOptions: Array<{

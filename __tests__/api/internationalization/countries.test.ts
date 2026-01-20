@@ -47,7 +47,7 @@ describe("Countries API", () => {
       }
       expect(pl.name).toBe("Poland");
       expect(pl.currencies.length).toBeGreaterThan(0);
-      expect(pl.currencies[0].currency.code).toBe("PLN");
+      expect(pl.currencies[0]!.currency.code).toBe("PLN");
     });
 
     it("should return existing countries without duplicating on subsequent calls", async () => {

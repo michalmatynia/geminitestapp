@@ -65,7 +65,7 @@ describe("Admin Products List UI", () => {
 
     const user = userEvent.setup();
     const actionButtons = screen.getAllByLabelText("Open row actions");
-    await user.click(actionButtons[0]);
+    await user.click(actionButtons[0]!);
 
     expect(await screen.findByText("Edit")).toBeInTheDocument();
     expect(screen.getByText("Duplicate")).toBeInTheDocument();

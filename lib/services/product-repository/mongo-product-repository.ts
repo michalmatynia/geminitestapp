@@ -418,6 +418,66 @@ export const mongoProductRepository: ProductRepository = {
       );
   },
 
+  async replaceProductCategories(productId: string, categoryIds: string[]) {
+    const db = await getMongoDb();
+    if (categoryIds.length === 0) {
+      await db
+        .collection<ProductDocument>(productCollectionName)
+        .updateOne(
+          { $or: [{ _id: productId }, { id: productId }] },
+          { $set: { categories: [], updatedAt: new Date() } }
+        );
+      return;
+    }
+    const uniqueIds = Array.from(new Set(categoryIds));
+    const categories = await db
+      .collection("product_categories")
+      .find({ id: { $in: uniqueIds } })
+      .toArray();
+    const now = new Date();
+    const categoryEntries = categories.map((category) => ({
+      productId,
+      categoryId: (category as { id: string }).id,
+      assignedAt: now,
+    }));
+    await db
+      .collection<ProductDocument>(productCollectionName)
+      .updateOne(
+        { $or: [{ _id: productId }, { id: productId }] },
+        { $set: { categories: categoryEntries, updatedAt: new Date() } }
+      );
+  },
+
+  async replaceProductTags(productId: string, tagIds: string[]) {
+    const db = await getMongoDb();
+    if (tagIds.length === 0) {
+      await db
+        .collection<ProductDocument>(productCollectionName)
+        .updateOne(
+          { $or: [{ _id: productId }, { id: productId }] },
+          { $set: { tags: [], updatedAt: new Date() } }
+        );
+      return;
+    }
+    const uniqueIds = Array.from(new Set(tagIds));
+    const tags = await db
+      .collection("product_tags")
+      .find({ id: { $in: uniqueIds } })
+      .toArray();
+    const now = new Date();
+    const tagEntries = tags.map((tag) => ({
+      productId,
+      tagId: (tag as { id: string }).id,
+      assignedAt: now,
+    }));
+    await db
+      .collection<ProductDocument>(productCollectionName)
+      .updateOne(
+        { $or: [{ _id: productId }, { id: productId }] },
+        { $set: { tags: tagEntries, updatedAt: new Date() } }
+      );
+  },
+
   async removeProductImage(productId: string, imageFileId: string) {
     const db = await getMongoDb();
     await db

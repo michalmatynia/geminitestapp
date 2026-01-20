@@ -429,7 +429,7 @@ export const getLatestAdaptiveTrigger = (audits: AgentAuditLog[]) => {
     const latestTime = Date.parse(latest.createdAt);
     const currentTime = Date.parse(current.createdAt);
     return currentTime > latestTime ? current : latest;
-  }, candidates[0]);
+  }, candidates[0]!);
 };
 
 export const getLatestAuditByType = (
@@ -437,7 +437,7 @@ export const getLatestAuditByType = (
   type: string
 ): AgentAuditLog | null => {
   const filtered = audits.filter((audit) => audit.metadata?.type === type);
-  return filtered.length ? filtered[filtered.length - 1] : null;
+  return filtered.length ? filtered[filtered.length - 1]! : null;
 };
 
 export const isAbortError = (error: unknown) =>

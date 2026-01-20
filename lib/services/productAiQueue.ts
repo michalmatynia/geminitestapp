@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { ProductAiJobStatus } from "@prisma/client";
 import { generateProductDescription } from "./aiDescriptionService";
+import { translateProduct } from "./aiTranslationService";
 import type { ProductFormData } from "@/types";
 import { getProductRepository } from "@/lib/services/product-repository";
 
@@ -122,6 +123,180 @@ async function processDescriptionGeneration(job: any) {
   return result;
 }
 
+async function processTranslation(job: any) {
+  const { productId } = job;
+
+  console.log(`[processTranslation] Starting for productId: ${productId}`);
+
+  // Fetch product data
+  const productRepository = await getProductRepository();
+  const product = await productRepository.getProductById(productId);
+
+  if (!product) {
+    console.error(`[processTranslation] Product not found for ID: "${productId}"`);
+    throw new Error("Product not found");
+  }
+
+  console.log(`[processTranslation] Found product: ${product.name_en}`);
+
+  // Determine source and target languages
+  const sourceLanguage = "English"; // Always translate from English
+  const sourceName = product.name_en || "";
+  const sourceDescription = product.description_en || "";
+
+  if (!sourceName && !sourceDescription) {
+    throw new Error("Product has no English name or description to translate from");
+  }
+
+  // Determine target languages based on product's catalogs
+  let targetLanguages: string[] = [];
+
+  console.log(`[processTranslation] Product has ${product.catalogs?.length || 0} catalog assignments`);
+  console.log(`[processTranslation] Product catalogs:`, JSON.stringify(product.catalogs, null, 2));
+
+  if (product.catalogs && product.catalogs.length > 0) {
+    // Check if catalog data is already embedded (MongoDB format)
+    const firstCatalog = product.catalogs[0] as any;
+    const hasEmbeddedCatalog = firstCatalog?.catalog && typeof firstCatalog.catalog === 'object';
+
+    if (hasEmbeddedCatalog) {
+      // MongoDB format: catalog data is already embedded with languageIds array
+      console.log(`[processTranslation] Using embedded catalog data (MongoDB format)`);
+
+      const languageSet = new Set<string>();
+
+      for (const catalogAssignment of product.catalogs) {
+        const catalog = (catalogAssignment as any).catalog;
+        console.log(`[processTranslation] Processing catalog "${catalog.name}" (${catalog.id})`);
+
+        if (catalog.languageIds && Array.isArray(catalog.languageIds)) {
+          console.log(`[processTranslation] Found ${catalog.languageIds.length} language IDs in catalog`);
+
+          // Fetch language details for these IDs
+          const languages = await prisma.language.findMany({
+            where: { id: { in: catalog.languageIds } }
+          });
+
+          console.log(`[processTranslation] Fetched ${languages.length} languages from database`);
+
+          languages.forEach((lang) => {
+            console.log(`[processTranslation] Checking language: ${lang.name} (${lang.code})`);
+            if (lang.code !== "EN") {
+              languageSet.add(lang.name);
+              console.log(`[processTranslation] Added ${lang.name} to target languages`);
+            } else {
+              console.log(`[processTranslation] Skipped English (source language)`);
+            }
+          });
+        }
+      }
+
+      targetLanguages = Array.from(languageSet);
+      console.log(`[processTranslation] Final target languages:`, targetLanguages);
+    } else {
+      // Prisma/PostgreSQL format: need to fetch catalog data
+      console.log(`[processTranslation] Fetching catalog data from database (Prisma format)`);
+
+      let catalogIds: string[] = [];
+      if (Array.isArray(product.catalogs)) {
+        catalogIds = product.catalogs.map((c: any) => {
+          return c.catalogId || c.id || c;
+        }).filter(Boolean);
+      }
+
+      console.log(`[processTranslation] Looking up catalog IDs:`, catalogIds);
+
+      if (catalogIds.length === 0) {
+        console.log(`[processTranslation] No valid catalog IDs found`);
+        throw new Error("Product has catalog assignments but no valid catalog IDs found");
+      }
+
+      const catalogs = await prisma.catalog.findMany({
+        where: { id: { in: catalogIds } },
+        include: {
+          languages: {
+            include: {
+              language: true
+            }
+          }
+        }
+      });
+
+      console.log(`[processTranslation] Found ${catalogs.length} catalogs from IDs: ${catalogIds.join(", ")}`);
+
+      if (catalogs.length === 0) {
+        console.log(`[processTranslation] WARNING: Catalogs not found in database for IDs: ${catalogIds.join(", ")}`);
+      }
+
+      catalogs.forEach(catalog => {
+        console.log(`[processTranslation] Catalog "${catalog.name}" (${catalog.id}) has ${catalog.languages.length} languages:`,
+          catalog.languages.map(cl => `${cl.language.name} (${cl.language.code})`).join(", "));
+      });
+
+      const languageSet = new Set<string>();
+      catalogs.forEach((catalog) => {
+        catalog.languages.forEach((cl) => {
+          console.log(`[processTranslation] Checking language: ${cl.language.name} (${cl.language.code})`);
+          if (cl.language.code !== "EN") {
+            languageSet.add(cl.language.name);
+            console.log(`[processTranslation] Added ${cl.language.name} to target languages`);
+          } else {
+            console.log(`[processTranslation] Skipped English (source language)`);
+          }
+        });
+      });
+      targetLanguages = Array.from(languageSet);
+      console.log(`[processTranslation] Final target languages:`, targetLanguages);
+    }
+  } else {
+    // No catalogs - translate to all available languages except English
+    console.log(`[processTranslation] No catalogs assigned, getting all languages`);
+    const allLanguages = await prisma.language.findMany({
+      where: { code: { not: "EN" } }
+    });
+    console.log(`[processTranslation] Found ${allLanguages.length} available languages`);
+    targetLanguages = allLanguages.map((l) => l.name);
+  }
+
+  if (targetLanguages.length === 0) {
+    console.log(`[processTranslation] No target languages found for product ${productId}`);
+    throw new Error("No target languages to translate to. Either assign the product to a catalog with languages, or add languages to the Product Settings.");
+  }
+
+  console.log(`[processTranslation] Translating to: ${targetLanguages.join(", ")}`);
+
+  // Perform translation
+  const result = await translateProduct({
+    productId,
+    sourceLanguage,
+    targetLanguages,
+    productName: sourceName,
+    productDescription: sourceDescription,
+  });
+
+  // Update product with translations
+  const updateData: any = {};
+
+  for (const [lang, translation] of Object.entries(result.translations)) {
+    const langCode = lang.toLowerCase();
+    if (langCode === "polish" || langCode.includes("pol")) {
+      updateData.name_pl = translation.name;
+      updateData.description_pl = translation.description;
+    } else if (langCode === "german" || langCode.includes("german") || langCode === "de") {
+      updateData.name_de = translation.name;
+      updateData.description_de = translation.description;
+    }
+    // Add more language mappings as needed
+  }
+
+  if (Object.keys(updateData).length > 0) {
+    await productRepository.updateProduct(productId, updateData);
+    console.log(`[processTranslation] Product updated with translations:`, Object.keys(updateData));
+  }
+
+  return result;
+}
+
 const pollQueue = async () => {
   if (isProcessing) {
     console.log("[productAiQueue] Already processing a job, skipping poll");
@@ -141,7 +316,7 @@ const pollQueue = async () => {
       return;
     }
 
-    console.log(`[productAiQueue] Found job ${nextJob.id}, processing...`);
+    console.log(`[productAiQueue] Found job ${nextJob.id} of type "${nextJob.type}", processing...`);
 
     await prisma.productAiJob.update({
       where: { id: nextJob.id },
@@ -154,6 +329,10 @@ const pollQueue = async () => {
         console.log(`[productAiQueue] Processing description generation for job ${nextJob.id}`);
         result = await processDescriptionGeneration(nextJob);
         console.log(`[productAiQueue] Description generation completed for job ${nextJob.id}`);
+      } else if (nextJob.type === "translation") {
+        console.log(`[productAiQueue] Processing translation for job ${nextJob.id}`);
+        result = await processTranslation(nextJob);
+        console.log(`[productAiQueue] Translation completed for job ${nextJob.id}`);
       } else {
         throw new Error(`Unknown job type: ${nextJob.type}`);
       }
@@ -205,7 +384,10 @@ export const startProductAiJobQueue = () => {
   // Initialize lastPollTime
   lastPollTime = Date.now();
 
-  console.log("[productAiQueue] Queue worker started");
+  console.log("[productAiQueue] ====================================");
+  console.log("[productAiQueue] Queue worker started successfully");
+  console.log("[productAiQueue] Polling every 3 seconds for pending jobs");
+  console.log("[productAiQueue] ====================================");
 
   // Immediately trigger first poll
   void pollQueue();
@@ -219,4 +401,67 @@ export const getQueueStatus = () => {
     lastPollTime,
     timeSinceLastPoll: Date.now() - lastPollTime,
   };
+};
+
+// Export function to process a single job by ID (for serverless environments)
+export const processSingleJob = async (jobId: string) => {
+  console.log(`[processSingleJob] Processing job ${jobId}`);
+
+  const job = await prisma.productAiJob.findUnique({
+    where: { id: jobId },
+  });
+
+  if (!job) {
+    console.error(`[processSingleJob] Job ${jobId} not found`);
+    throw new Error("Job not found");
+  }
+
+  if (job.status !== "pending") {
+    console.log(`[processSingleJob] Job ${jobId} is not pending (status: ${job.status}), skipping`);
+    return;
+  }
+
+  console.log(`[processSingleJob] Found job ${job.id} of type "${job.type}", processing...`);
+
+  await prisma.productAiJob.update({
+    where: { id: job.id },
+    data: { status: "running", startedAt: new Date() },
+  });
+
+  try {
+    let result = null;
+    if (job.type === "description_generation") {
+      console.log(`[processSingleJob] Processing description generation for job ${job.id}`);
+      result = await processDescriptionGeneration(job);
+      console.log(`[processSingleJob] Description generation completed for job ${job.id}`);
+    } else if (job.type === "translation") {
+      console.log(`[processSingleJob] Processing translation for job ${job.id}`);
+      result = await processTranslation(job);
+      console.log(`[processSingleJob] Translation completed for job ${job.id}`);
+    } else {
+      throw new Error(`Unknown job type: ${job.type}`);
+    }
+
+    await prisma.productAiJob.update({
+      where: { id: job.id },
+      data: {
+        status: "completed",
+        finishedAt: new Date(),
+        result: result as any,
+      },
+    });
+    console.log(`[processSingleJob] Job ${job.id} marked as completed`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Job failed.";
+    console.error(`[processSingleJob] Job ${job.id} failed:`, message);
+    await prisma.productAiJob.update({
+      where: { id: job.id },
+      data: {
+        status: "failed",
+        finishedAt: new Date(),
+        errorMessage: message,
+      },
+    });
+    throw error;
+  }
 };

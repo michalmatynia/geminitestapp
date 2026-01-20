@@ -212,9 +212,9 @@ export async function migrateProductBatch({
   batchSize = 50,
 }: {
   direction: MigrationDirection;
-  dryRun?: boolean;
-  cursor?: string | null;
-  batchSize?: number;
+  dryRun?: boolean | undefined;
+  cursor?: string | null | undefined;
+  batchSize?: number | undefined;
 }): Promise<MigrationBatchResult> {
   if (direction === "prisma-to-mongo") {
     const mongo = await getMongoDb();

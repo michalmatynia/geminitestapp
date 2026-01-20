@@ -579,7 +579,7 @@ export function NoteForm({
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      if (item.type.startsWith("image/")) {
+      if (item && item.type.startsWith("image/")) {
         e.preventDefault();
         const file = item.getAsFile();
         if (!file) return;

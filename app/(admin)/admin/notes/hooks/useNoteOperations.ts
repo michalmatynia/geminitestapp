@@ -121,7 +121,7 @@ export function useNoteOperations({
         const numbers = existingNotes
           .map((n) => {
             const match = n.title.match(/\((\d+)\)$/);
-            return match ? parseInt(match[1], 10) : 0;
+            return match ? parseInt(match[1]!, 10) : 0;
           })
           .filter((n) => n > 0);
         const maxNumber = Math.max(0, ...numbers);

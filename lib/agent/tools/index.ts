@@ -1648,9 +1648,9 @@ export async function runAgentBrowserControl({
 }: {
   runId: string;
   action: AgentControlAction;
-  url?: string;
-  stepId?: string;
-  stepLabel?: string;
+  url?: string | undefined;
+  stepId?: string | undefined;
+  stepLabel?: string | undefined;
 }): Promise<AgentToolResult> {
     const debugEnabled = process.env.DEBUG_CHATBOT === "true";
   if (!("agentBrowserLog" in prisma) || !("agentBrowserSnapshot" in prisma)) {

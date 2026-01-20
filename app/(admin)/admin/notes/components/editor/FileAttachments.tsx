@@ -6,7 +6,7 @@ import { Upload, FileIcon, Link2, Trash2 } from "lucide-react";
 import type { NoteFileRecord } from "@/types/notes";
 
 interface FileAttachmentsProps {
-  noteId?: string;
+  noteId?: string | undefined;
   noteFiles: NoteFileRecord[];
   maxSlots: number;
   uploadingSlots: Set<number>;

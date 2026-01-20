@@ -35,6 +35,7 @@ model Product {
   images              ProductImage[]
   catalogs            ProductCatalog[]
   categories          ProductCategoryAssignment[]
+  tags                ProductTagAssignment[]
   listings            ProductListing[]
   defaultPriceGroup   PriceGroup?                 @relation(fields: [defaultPriceGroupId], references: [id])
 }
@@ -680,16 +681,28 @@ model ProductCategoryAssignment {
 }
 
 model ProductTag {
-  id        String   @id @default(cuid())
+  id        String                 @id @default(cuid())
   name      String
   color     String?
   catalogId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+  products  ProductTagAssignment[]
 
   catalog Catalog @relation(fields: [catalogId], references: [id], onDelete: Cascade)
 
   @@unique([catalogId, name])
+}
+
+model ProductTagAssignment {
+  productId  String
+  tagId      String
+  assignedAt DateTime @default(now())
+
+  product Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  tag     ProductTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([productId, tagId])
 }
 
 model User {

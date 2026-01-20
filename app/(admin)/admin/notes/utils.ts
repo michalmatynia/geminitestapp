@@ -299,7 +299,7 @@ export const renderMarkdownToHtml = (value: string): string => {
   };
 
   for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index];
+    const line = lines[index]!;
 
     if (line.trim().startsWith("```")) {
       flushTable();
@@ -350,9 +350,9 @@ export const renderMarkdownToHtml = (value: string): string => {
         inList = false;
       }
 
-      const level = headingMatch[1].length;
+      const level = headingMatch[1]!.length;
 
-      html += `<h${level}>${renderInlineMarkdown(headingMatch[2])}</h${level}>`;
+      html += `<h${level}>${renderInlineMarkdown(headingMatch[2]!)}</h${level}>`;
 
       continue;
     }
@@ -442,14 +442,14 @@ export const renderMarkdownToHtml = (value: string): string => {
         inList = true;
       }
 
-      const taskMatch = /^\((\s|x|X)\)\s+(.+)$/.exec(listMatch[1]);
+      const taskMatch = /^\((\s|x|X)\)\s+(.+)$/.exec(listMatch[1]!);
 
       if (taskMatch) {
-        const checked = taskMatch[1].toLowerCase() === "x";
+        const checked = taskMatch[1]!.toLowerCase() === "x";
 
-        html += `<li><input type="checkbox" disabled ${checked ? "checked" : ""} /> ${renderInlineMarkdown(taskMatch[2])}</li>`;
+        html += `<li><input type="checkbox" disabled ${checked ? "checked" : ""} /> ${renderInlineMarkdown(taskMatch[2]!)}</li>`;
       } else {
-        html += `<li>${renderInlineMarkdown(listMatch[1])}</li>`;
+        html += `<li>${renderInlineMarkdown(listMatch[1]!)}</li>`;
       }
 
       continue;

@@ -249,17 +249,17 @@ export async function POST(req: Request) {
     }
 
     const country = await prisma.country.create({
-      data: removeUndefined({
+      data: {
         // countryData.code is a zod enum union; Prisma code is an enum too (compatible)
         ...(countryData as unknown as { code: CountryCode; name: string }),
-        currencies: currencyIds?.length
-          ? {
-              createMany: {
-                data: currencyIds.map((currencyId) => ({ currencyId })),
-              },
-            }
-          : undefined,
-      }),
+        ...(currencyIds?.length ? {
+          currencies: {
+            createMany: {
+              data: currencyIds.map((currencyId) => ({ currencyId })),
+            },
+          },
+        } : {}),
+      },
       include: {
         currencies: {
           include: { currency: true },

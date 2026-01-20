@@ -50,13 +50,23 @@ export default function ProductAiJobsPage() {
 
   useEffect(() => {
     void loadJobs();
+  }, [loadJobs]);
+
+  useEffect(() => {
     // Only poll if there are pending or running jobs
     const hasPendingJobs = jobs.some(job => job.status === "pending" || job.status === "running");
-    if (!hasPendingJobs) return;
+    if (!hasPendingJobs) {
+      console.log("[jobs page] No pending/running jobs, stopping poll");
+      return;
+    }
 
+    console.log("[jobs page] Starting poll for pending/running jobs");
     const interval = setInterval(() => void loadJobs(), 5000);
-    return () => clearInterval(interval);
-  }, [loadJobs, jobs]);
+    return () => {
+      console.log("[jobs page] Cleaning up poll interval");
+      clearInterval(interval);
+    };
+  }, [jobs, loadJobs]);
 
   const cancelJob = async (jobId: string) => {
     setActionId(jobId);

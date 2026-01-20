@@ -330,7 +330,7 @@ describe("Products API", () => {
         where: { productId: product.id },
       });
       expect(productImages.length).toEqual(1);
-      expect(productImages[0].imageFileId).toEqual(imageFile.id);
+      expect(productImages[0]!.imageFileId).toEqual(imageFile.id);
     });
 
     it("should successfully update localized name and description fields", async () => {

@@ -103,7 +103,11 @@ export async function PUT(
 
     const currency = await prisma.currency.update({
       where: { id },
-      data: removeUndefined(data),
+      data: {
+        code: data.code,
+        name: data.name,
+        ...(data.symbol !== undefined && { symbol: data.symbol }),
+      },
     });
     return NextResponse.json(currency);
   } catch (error: unknown) {

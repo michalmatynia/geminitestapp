@@ -188,7 +188,15 @@ export const prismaProductRepository: ProductRepository = {
       include: {
         images: { include: { imageFile: true } },
         catalogs: {
-          include: { catalog: { include: { languages: { select: { languageId: true } } } } },
+          include: {
+            catalog: {
+              include: {
+                languages: {
+                  include: { language: true }
+                }
+              }
+            }
+          },
         },
       },
       orderBy: { createdAt: "desc" },
@@ -243,7 +251,15 @@ export const prismaProductRepository: ProductRepository = {
           orderBy: { assignedAt: "desc" },
         },
         catalogs: {
-          include: { catalog: { include: { languages: { select: { languageId: true } } } } },
+          include: {
+            catalog: {
+              include: {
+                languages: {
+                  include: { language: true }
+                }
+              }
+            }
+          },
         },
       },
     });
@@ -355,6 +371,38 @@ export const prismaProductRepository: ProductRepository = {
     if (validIds.length === 0) return;
     await prisma.productCatalog.createMany({
       data: validIds.map((catalogId) => ({ productId, catalogId })),
+    });
+  },
+
+  async replaceProductCategories(productId: string, categoryIds: string[]) {
+    await prisma.productCategoryAssignment.deleteMany({ where: { productId } });
+    if (categoryIds.length === 0) return;
+    const uniqueIds = Array.from(new Set(categoryIds));
+    const existing = await prisma.productCategory.findMany({
+      where: { id: { in: uniqueIds } },
+      select: { id: true },
+    });
+    const existingIds = new Set(existing.map((entry) => entry.id));
+    const validIds = uniqueIds.filter((id) => existingIds.has(id));
+    if (validIds.length === 0) return;
+    await prisma.productCategoryAssignment.createMany({
+      data: validIds.map((categoryId) => ({ productId, categoryId })),
+    });
+  },
+
+  async replaceProductTags(productId: string, tagIds: string[]) {
+    await prisma.productTagAssignment.deleteMany({ where: { productId } });
+    if (tagIds.length === 0) return;
+    const uniqueIds = Array.from(new Set(tagIds));
+    const existing = await prisma.productTag.findMany({
+      where: { id: { in: uniqueIds } },
+      select: { id: true },
+    });
+    const existingIds = new Set(existing.map((entry) => entry.id));
+    const validIds = uniqueIds.filter((id) => existingIds.has(id));
+    if (validIds.length === 0) return;
+    await prisma.productTagAssignment.createMany({
+      data: validIds.map((tagId) => ({ productId, tagId })),
     });
   },
 

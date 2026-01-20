@@ -49,7 +49,7 @@ export default function NotebooksPage() {
 
   useEffect(() => {
     if (!selectedNotebookId && notebooks.length > 0) {
-      updateSettings({ selectedNotebookId: notebooks[0].id });
+      updateSettings({ selectedNotebookId: notebooks[0]!.id });
     }
   }, [selectedNotebookId, notebooks, updateSettings]);
 

@@ -150,6 +150,7 @@ function AdminPageInner() {
       if (maxPrice !== undefined) params.append("maxPrice", String(maxPrice));
       if (startDate) params.append("startDate", startDate);
       if (endDate) params.append("endDate", endDate);
+      if (catalogFilter && catalogFilter !== "all") params.append("catalogId", catalogFilter);
 
       const res = await fetch(`/api/products?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch all products");
@@ -305,9 +306,10 @@ function AdminPageInner() {
         />
       </div>
 
-      <ProductModals 
+      <ProductModals
         isCreateOpen={isCreateOpen}
         initialSku={initialSku}
+        initialCatalogId={catalogFilter !== "all" ? catalogFilter : undefined}
         onCloseCreate={handleCloseCreate}
         onCreateSuccess={handleCreateSuccess}
         editingProduct={editingProduct}

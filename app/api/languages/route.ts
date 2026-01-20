@@ -65,18 +65,18 @@ export async function POST(req: Request) {
     );
 
     const language = await prisma.language.create({
-      data: removeUndefined({
+      data: {
         code,
         name: data.name,
-        nativeName: data.nativeName,
-        countries: validIds.length
-          ? {
-              createMany: {
-                data: validIds.map((countryId) => ({ countryId })),
-              },
-            }
-          : undefined,
-      }),
+        ...(data.nativeName !== undefined && { nativeName: data.nativeName }),
+        ...(validIds.length ? {
+          countries: {
+            createMany: {
+              data: validIds.map((countryId) => ({ countryId })),
+            },
+          },
+        } : {}),
+      },
       include: {
         countries: {
           include: {

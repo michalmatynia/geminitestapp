@@ -56,9 +56,9 @@ function getClient(modelName: string, apiKey: string | null) {
 
 export async function generateProductDescription(params: {
   productData: ProductFormData;
-  imageUrls?: string[];
-  visionOutputEnabled?: boolean;
-  generationOutputEnabled?: boolean;
+  imageUrls?: string[] | undefined;
+  visionOutputEnabled?: boolean | undefined;
+  generationOutputEnabled?: boolean | undefined;
 }) {
   const { productData, imageUrls = [], visionOutputEnabled, generationOutputEnabled } = params;
 

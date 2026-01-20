@@ -3,7 +3,7 @@ import { ProductAiJobStatus } from "@prisma/client";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { productService } from "./productService";
 
-export type ProductAiJobType = "description_generation";
+export type ProductAiJobType = "description_generation" | "translation";
 
 const JOBS_COLLECTION = "product_ai_jobs";
 

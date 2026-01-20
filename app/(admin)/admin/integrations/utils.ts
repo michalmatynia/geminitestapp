@@ -28,7 +28,7 @@ export const normalizeSteps = (value: unknown): TestLogEntry[] => {
         typeof s?.timestamp === "string"
           ? s.timestamp
           : new Date().toISOString(),
-      detail: typeof s?.detail === "string" ? s.detail : undefined,
+      ...(typeof s?.detail === "string" && { detail: s.detail }),
     };
   });
 };

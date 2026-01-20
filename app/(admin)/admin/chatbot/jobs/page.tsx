@@ -283,7 +283,7 @@ export default function ChatbotJobsPage() {
         status: run.status,
         model: run.model,
         prompt: run.prompt,
-        errorMessage: run.errorMessage,
+        errorMessage: run.errorMessage ?? null,
         requiresHumanIntervention: run.requiresHumanIntervention,
         snapshotCount: run._count.browserSnapshots,
         logCount: run._count.browserLogs,

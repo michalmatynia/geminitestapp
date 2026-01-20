@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import path from "path";
 import fs from "fs/promises";
+import prisma from "@/lib/prisma";
+import { getMongoDb } from "@/lib/db/mongo-client";
+import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getCatalogRepository } from "@/lib/services/catalog-repository";
 import { getImageFileRepository } from "@/lib/services/image-file-repository";
 import { getProductRepository } from "@/lib/services/product-repository";
@@ -81,13 +84,13 @@ export async function POST(req: Request) {
       
       // Get existing products using repository to check for baseProductIds
       const productRepository = await getProductRepository();
-      const { items: allProducts } = await productRepository.getProducts({
-        limit: 10000, // Get all products
-        offset: 0,
+      const allProducts = await productRepository.getProducts({
+        pageSize: "10000", // Get all products
+        page: "0",
       });
       const existingIds = new Set(
         allProducts
-          .map((product) => product.baseProductId)
+          .map((product: any) => product.baseProductId)
           .filter((id): id is string => typeof id === "string")
       );
 
@@ -181,14 +184,14 @@ export async function POST(req: Request) {
     let productsToImport = products;
 
     if (data.uniqueOnly) {
-        // Get existing products using repository to check for baseProductIds
-        const { items: allProducts } = await productRepository.getProducts({
-          limit: 10000, // Get all products
-          offset: 0,
+        // Check for duplicates
+        const allProducts = await productRepository.getProducts({
+          pageSize: "10000",
+          page: "0",
         });
         const existingIds = new Set(
           allProducts
-            .map((product) => product.baseProductId)
+            .map((product: any) => product.baseProductId)
             .filter((id): id is string => typeof id === "string")
         );
 
@@ -335,6 +338,7 @@ export async function POST(req: Request) {
           const imageFileIds: string[] = [];
           for (let i = 0; i < imageUrls.length; i += 1) {
             const url = imageUrls[i];
+            if (!url) continue;
             try {
               if (imageMode === "download") {
                 const file = await downloadImage(url, payload.sku ?? created.id, i + 1);
@@ -388,6 +392,7 @@ export async function POST(req: Request) {
               const imageFileIds: string[] = [];
               for (let i = 0; i < imageUrls.length; i += 1) {
                 const url = imageUrls[i];
+                if (!url) continue;
                 try {
                   if (imageMode === "download") {
                     const file = await downloadImage(

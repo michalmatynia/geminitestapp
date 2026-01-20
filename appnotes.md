@@ -1,52 +1,69 @@
-Application notes
-
-npx tsc
-npx eslint
 add proper debugging on visual studio code
-
 # IN PROGRESS
+
+when importing from Base.com, consider also duplicate SKUs
+
+Product Update - shoud Save the current state of the product, but not close the modal window, the modal window can be closed be clicking outside it
+
+-Product default price group is the default Catalog price group, I don't need to make that selection for every single product, it's automatic.
+-default price group still asks me to select from dropdown
+
+Polling for AI jobs never stops
+
+* When a product is a added to a Catalog, its default Price Group is the one set in the Catalog. I should not need to make this additional when I create the product. Other non default pricegroups should also be visible in product Edit / Create panel. If the price group is dependent on a default price group, both the calculated price and the price group should be visible in product Edit / Create panel.*
+
+* I need to have the categories field in the Product Create / Edit Panel. I Need to have the Tags field in the Product Create / Edit Panel.
+
+* Add a subPage to Product Settings called AI Translation (underneath Product Description). In this page, you should be able to choose one translation AI model which will carry out Product Description and Product Title translations into langauges that are part of the catalog to which the product belongs (If the product doesn't belong to any catalog, translate to all language visible in Product Edit / Create panel). Add a button in Product Edit / Create to translate When the translation request is sent, create an AI Job (mirroring the one that is created when Product Descriptions are requested). When a job is completed (be it for translations or description generations) provide a notification
+
+Price and stock should be editable in Product list by double clicking
+
+Resorting of Image slots with Images in Product Create / Edit panel is not working. The thumbnail is flickering when resorting or adding a second image. The images are added on save, but their previews flicker during create
+
+Check that ->In my Edit / Create Product Page, make the Catalogs Field a dropdown and move it to Other Tab
+
+In Create / Edit Product Panel , in Images the slots show two dots above a light up, whereas the other dot should only lit up if there is an image file in the slot. Also Flipping the switch that toggles between Image Thumbnail from Link and Image Thumbnail from actual Image file doesn't work.
+
+
+Product list should remember my choices in terms of navigation, catalog choice and record them in the database, when I leave the page, the settings stay the same. Also incorporate the current state of settings in Products - Preferences Page (which has a mirror layout of the settings page, but relate more to the technical aspects of the Product section as a whole)
+
 
 Add a small indicator whether the product was added by the user or is the result of an import. 
 
 * When A note is created and longer text is added to the note, only a short version is saved, but when I Edit the note and paste a longer text, the whole text is save. Make the note save longer text every time.
 
-Note App, when a link between notes is created, I don't see the related note immediately, I have to refresh.
+* Note App, when a link between notes is created, I don't see the related note immediately, I have to refresh.
 
 Translation Engine
 
-When my Dropdown in Product List is set to a given catalog, All PRoduct creations are to be assigned to this catalog.
+* When my Dropdown in Product List is set to a given catalog, All PRoduct creations are to be assigned to this catalog.
 
-Resorting of Images in Product Create is not working. The thumbnail if flickering when resorting or addind a second image. The images are added on save, but their previews flicker during create
+
 
 I am still not seeing the Results in the AI Jobs Detail page when the job is run on a product Generate Description/
 When I run the Generate description, I don't get to see the results in the AI Jobs Detail page.
 
-Polling of Pending Jobs should stop when Jobs are completed I think
+* Polling when no jobs created
 
-Product Create, Price doesn't have a Currency Attached
 
 
 
 Title Path for auto generations, and Sending path, 
 
-Product List, When I change the Catalog to Unassigned, I can still see the products assigned to a different Catalog
 
 
 
 In Regards to my Product Imports, I need to mirror this design for Base Export, to be ready to export my Products to baselinker. Change the name of Product Imports in Product Import/Export. Add a Tab to Template for Product Export. There you can choose which template to chose from Import Templates (Now Import-Export Templates) to serve for Export.
 
-* AI Description Configuration, I need Input prompt and output prompt for each segment of the path in Product Description generation models (Input prompt is what the models should do with "Product" information, Output prompt is what the model should do with the Result). In the second path segment, the model receives the result (which should be its own placeholder). and then again, I need an Input prompt but this time I can use [result] placeholder and modify the result of the previous segment of the path and inject it with the whole prompt into a second segment of the path, into another model. 
 
-In my Edit / Create Product Page, make the Catalogs Field a dropdown and move it to Other Tab
 
 
 Add additional  information to Import Information, like when was the product imported as well as all the values that it was imported with.
 
 In note app, If I drag the folder to the edge, it should be moved to root tree
 
-* In my Edit / Create Product Page I have a Generate description button, this button will generate a description based on an AI path. I would like to add AI Desctiption Page into my Product Settings, there I will configure how the AI descriptioin isfor each product generated. First I would like  a beginning of a signal path to be the anlysis of product images (extracted from Image links or actual image files attached to the product), I would also like to be able to choose the AI model for this task (for example a vision oriented model) then I would like the result of this analysis to travel to a second signal path, where the first analysis result as well as cues from Product Fields, like Product name, will be used to Generate a final desciption. I would also like to be able to choose my own model for that. 
 
-I need to have the categories field in the Product Create / Edit Panel. I Need to have the Tags field in the Product Create / Edit Panel.
+
 
 In Product List, hovering over an image should give me a slightly bigger image preview.
 
@@ -58,7 +75,7 @@ The "middleware" file convention is deprecated. Please use "proxy" instead. Lear
 
 I also have [auth][warn][debug-enabled] Read more: https://warnings.authjs.dev
 
-In Create / Edit Product Panel , in Images the slots show two dots above a light up, whereas the other dot should only lit up if there is an image file in the slot. Also Flipping the switch that toggles between Image Thumnail from Link and Image Thumbnail from actual Image file doesn't work.
+
 
 
 ## Filters

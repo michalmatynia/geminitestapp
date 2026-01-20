@@ -1,8 +1,8 @@
 export interface ChatMessage {
   role: "user" | "assistant" | "system";
   content: string;
-  images?: string[];
-  timestamp?: Date;
+  images?: string[] | undefined;
+  timestamp?: Date | undefined;
 }
 
 export interface ChatSession {
@@ -12,20 +12,20 @@ export interface ChatSession {
   createdAt: Date;
   updatedAt: Date;
   settings?: {
-    model?: string;
-    webSearchEnabled?: boolean;
-    useGlobalContext?: boolean;
-    useLocalContext?: boolean;
-  };
+    model?: string | undefined;
+    webSearchEnabled?: boolean | undefined;
+    useGlobalContext?: boolean | undefined;
+    useLocalContext?: boolean | undefined;
+  } | undefined;
 }
 
 export interface CreateSessionInput {
   title: string;
-  settings?: ChatSession["settings"];
+  settings?: ChatSession["settings"] | undefined;
 }
 
 export interface UpdateSessionInput {
-  title?: string;
-  messages?: ChatMessage[];
-  settings?: ChatSession["settings"];
+  title?: string | undefined;
+  messages?: ChatMessage[] | undefined;
+  settings?: ChatSession["settings"] | undefined;
 }

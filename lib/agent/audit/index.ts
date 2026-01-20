@@ -51,7 +51,7 @@ export async function logAgentAudit(
         runId,
         level,
         message,
-        metadata: prismaMetadata,
+        ...(prismaMetadata !== undefined && { metadata: prismaMetadata }),
       },
     });
   } catch (error) {

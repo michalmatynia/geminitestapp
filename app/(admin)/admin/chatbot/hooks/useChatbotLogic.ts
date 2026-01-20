@@ -191,7 +191,7 @@ export const useChatbotLogic = () => {
 
           // Set first model as default if no model is set
           if (models.length > 0 && !model) {
-            setModel(models[0]);
+            setModel(models[0]!);
           }
         } else {
           throw new Error("Failed to fetch Ollama models");

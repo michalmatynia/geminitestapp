@@ -288,7 +288,7 @@ export async function POST(req: Request) {
         });
       }
       return await tx.priceGroup.create({
-        data: removeUndefined({
+        data: {
           groupId: data.groupId,
           isDefault: data.isDefault ?? false,
           name: data.name,
@@ -296,10 +296,10 @@ export async function POST(req: Request) {
           currencyId: data.currencyId,
           type: data.type,
           basePriceField: data.basePriceField,
-          sourceGroupId: data.sourceGroupId,
+          ...(data.sourceGroupId !== undefined && { sourceGroupId: data.sourceGroupId }),
           priceMultiplier: data.priceMultiplier,
           addToPrice: data.addToPrice,
-        }),
+        },
       });
     });
 

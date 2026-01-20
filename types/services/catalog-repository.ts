@@ -4,22 +4,22 @@ export type { CatalogRecord };
 
 export type CatalogCreateInput = {
   name: string;
-  description?: string | null;
-  isDefault?: boolean;
-  languageIds?: string[];
-  defaultLanguageId?: string | null;
-  priceGroupIds?: string[];
-  defaultPriceGroupId?: string | null;
+  description?: string | null | undefined;
+  isDefault?: boolean | undefined;
+  languageIds?: string[] | undefined;
+  defaultLanguageId?: string | null | undefined;
+  priceGroupIds?: string[] | undefined;
+  defaultPriceGroupId?: string | null | undefined;
 };
 
 export type CatalogUpdateInput = {
-  name?: string;
-  description?: string | null;
-  isDefault?: boolean;
-  languageIds?: string[];
-  defaultLanguageId?: string | null;
-  priceGroupIds?: string[];
-  defaultPriceGroupId?: string | null;
+  name?: string | undefined;
+  description?: string | null | undefined;
+  isDefault?: boolean | undefined;
+  languageIds?: string[] | undefined;
+  defaultLanguageId?: string | null | undefined;
+  priceGroupIds?: string[] | undefined;
+  defaultPriceGroupId?: string | null | undefined;
 };
 
 export type CatalogRepository = {

@@ -64,7 +64,7 @@ const makeNote = (overrides: Partial<NoteWithRelations> = {}): NoteWithRelations
       noteId: "note-1",
       tagId: "tag-1",
       assignedAt: now,
-      tag: baseTags[0],
+      tag: baseTags[0]!,
     },
   ],
   categories: [
@@ -72,7 +72,7 @@ const makeNote = (overrides: Partial<NoteWithRelations> = {}): NoteWithRelations
       noteId: "note-1",
       categoryId: "cat-1",
       assignedAt: now,
-      category: baseCategories[0],
+      category: baseCategories[0]!,
     },
   ],
   relationsFrom: [],
@@ -169,7 +169,7 @@ describe("Notes page UI", () => {
           isPinned: body.isPinned,
           isArchived: body.isArchived,
           tags: tagIds.map((tagId) => {
-            const tag = tags.find((t) => t.id === tagId) ?? tags[0];
+            const tag = tags.find((t) => t.id === tagId) ?? tags[0]!;
             return {
               noteId: "temp",
               tagId,
@@ -179,7 +179,7 @@ describe("Notes page UI", () => {
           }),
           categories: categoryIds.map((categoryId) => {
             const category =
-              categories.find((c) => c.id === categoryId) ?? categories[0];
+              categories.find((c) => c.id === categoryId) ?? categories[0]!;
             return {
               noteId: "temp",
               categoryId,

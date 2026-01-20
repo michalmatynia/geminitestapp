@@ -28,7 +28,7 @@ type ToastFn = ReturnType<typeof useToast>["toast"];
 interface ColumnActionsProps {
   row: Row<ProductWithImages>;
   setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;
-  onProductEditClick?: (row: ProductWithImages) => void;
+  onProductEditClick?: ((row: ProductWithImages) => void) | undefined;
 }
 
 // Sends a DELETE request to delete a product and triggers refresh on success.

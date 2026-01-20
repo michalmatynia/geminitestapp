@@ -1,6 +1,7 @@
 "use client";
 
 import { Dispatch, SetStateAction } from "react";
+import { removeUndefined } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Integration,
@@ -363,7 +364,7 @@ export function IntegrationModal({
                 setBody={setAllegroApiBody}
                 loading={allegroApiLoading}
                 error={allegroApiError}
-                response={allegroApiResponse}
+                response={allegroApiResponse ? removeUndefined(allegroApiResponse) : null}
                 onRequest={onAllegroApiRequest}
                 isConnected={Boolean(activeConnection?.hasAllegroAccessToken)}
               />
@@ -396,7 +397,7 @@ export function IntegrationModal({
       {showTestErrorModal && testError && (
         <TestErrorModal
           testError={testError}
-          testErrorMeta={testErrorMeta}
+          testErrorMeta={testErrorMeta ? removeUndefined(testErrorMeta) : null}
           onClose={onCloseTestErrorModal}
         />
       )}

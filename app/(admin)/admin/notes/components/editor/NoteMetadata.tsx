@@ -29,7 +29,7 @@ interface NoteMetadataProps {
   onAddTag: (tag: TagRecord) => void;
   onCreateTag: () => Promise<void>;
   onRemoveTag: (tagId: string) => void;
-  onTagClick?: (tagId: string) => void;
+  onTagClick?: ((tagId: string) => void) | undefined;
   selectedRelatedNotes: Array<{ id: string; title: string; color: string | null; content: string }>;
   setSelectedRelatedNotes: React.Dispatch<React.SetStateAction<Array<{ id: string; title: string; color: string | null; content: string }>>>;
   relatedNoteQuery: string;
@@ -40,7 +40,7 @@ interface NoteMetadataProps {
   isRelatedLoading: boolean;
   onSelectRelatedNote: (noteId: string) => void;
   effectiveTheme: any; // Using any for simplicity as theme object structure is complex and derived in parent
-  noteId?: string;
+  noteId?: string | undefined;
 }
 
 export function NoteMetadata({

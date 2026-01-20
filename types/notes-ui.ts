@@ -20,18 +20,18 @@ export interface FolderTreeProps {
   onDeleteNote: (noteId: string) => void;
   onRenameNote: (noteId: string, newTitle: string) => void;
   onRelateNotes: (sourceNoteId: string, targetNoteId: string) => void;
-  selectedNoteId?: string;
+  selectedNoteId?: string | undefined;
   onDropNote: (noteId: string, folderId: string | null) => void;
   onDropFolder: (folderId: string, targetParentId: string | null) => void;
   draggedNoteId: string | null;
   setDraggedNoteId: (noteId: string | null) => void;
-  onToggleCollapse?: () => void;
-  isFavoritesActive?: boolean;
-  onToggleFavorites?: () => void;
-  canUndo?: boolean;
-  onUndo?: () => void;
-  undoHistory?: Array<{ label: string }>;
-  onUndoAtIndex?: (index: number) => void;
+  onToggleCollapse?: (() => void) | undefined;
+  isFavoritesActive?: boolean | undefined;
+  onToggleFavorites?: (() => void) | undefined;
+  canUndo?: boolean | undefined;
+  onUndo?: (() => void) | undefined;
+  undoHistory?: Array<{ label: string }> | undefined;
+  onUndoAtIndex?: ((index: number) => void) | undefined;
 }
 
 export interface FolderNodeProps {
@@ -48,7 +48,7 @@ export interface FolderNodeProps {
   onDeleteNote: (noteId: string) => void;
   onRenameNote: (noteId: string, newTitle: string) => void;
   onRelateNotes: (sourceNoteId: string, targetNoteId: string) => void;
-  selectedNoteId?: string;
+  selectedNoteId?: string | undefined;
   onDropNote: (noteId: string, folderId: string | null) => void;
   onDropFolder: (folderId: string, targetParentId: string | null) => void;
   draggedFolderId: string | null;

@@ -8,8 +8,8 @@ export interface FilePreviewData {
   filepath: string;
   mimetype: string;
   size: number;
-  width: number;
-  height: number;
+  width: number | null;
+  height: number | null;
 }
 
 interface FilePreviewModalProps {

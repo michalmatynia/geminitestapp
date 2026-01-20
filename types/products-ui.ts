@@ -5,13 +5,13 @@ export type ProductImageSlot =
       type: "file"; // A new File object
       data: File;
       previewUrl: string;
-      originalIndex?: number; // Optional: original index if moved
+      originalIndex?: number | undefined; // Optional: original index if moved
     }
   | {
       type: "existing"; // An existing ImageFile from the DB
       data: ImageFileSelection;
       previewUrl: string; // The filepath of the existing image
-      originalIndex?: number; // Optional: original index if moved
+      originalIndex?: number | undefined; // Optional: original index if moved
     }
   | null; // Empty slot
 
@@ -27,7 +27,7 @@ export type ExpandedImageFile = ImageFileRecord & {
 export type DebugInfo = {
   action: string;
   message: string;
-  slotIndex?: number;
-  filename?: string;
+  slotIndex?: number | undefined;
+  filename?: string | undefined;
   timestamp: string;
 };

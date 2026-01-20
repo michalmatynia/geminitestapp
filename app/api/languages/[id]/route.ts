@@ -51,11 +51,11 @@ export async function PUT(
       if (data.code || data.name || data.nativeName !== undefined) {
         await tx.language.update({
           where: { id },
-          data: removeUndefined({
-            code: data.code ? data.code.toUpperCase() : undefined,
-            name: data.name,
-            nativeName: data.nativeName,
-          }),
+          data: {
+            ...(data.code && { code: data.code.toUpperCase() }),
+            ...(data.name && { name: data.name }),
+            ...(data.nativeName !== undefined && { nativeName: data.nativeName }),
+          },
         });
       }
 

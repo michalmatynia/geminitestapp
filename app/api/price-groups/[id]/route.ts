@@ -185,7 +185,7 @@ export async function PUT(
       }
       return await tx.priceGroup.update({
         where: { id },
-        data: removeUndefined({
+        data: {
           groupId: data.groupId,
           isDefault: data.isDefault ?? false,
           name: data.name,
@@ -193,10 +193,10 @@ export async function PUT(
           currencyId: data.currencyId,
           type: data.type,
           basePriceField: data.basePriceField,
-          sourceGroupId: data.sourceGroupId,
+          ...(data.sourceGroupId !== undefined && { sourceGroupId: data.sourceGroupId }),
           priceMultiplier: data.priceMultiplier,
           addToPrice: data.addToPrice,
-        }),
+        },
       });
     });
 

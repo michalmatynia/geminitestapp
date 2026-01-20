@@ -180,10 +180,11 @@ function ChatbotContextPageInner() {
       id: modalDraft.id,
       title: modalDraft.title,
       content: modalDraft.content,
-      tags: modalDraft.tags,
-      source: modalDraft.source,
       createdAt: modalDraft.createdAt,
     };
+    if (modalDraft.tags) nextItem.tags = modalDraft.tags;
+    if (modalDraft.source) nextItem.source = modalDraft.source;
+
     setContexts((prev) => {
       const exists = prev.some((item) => item.id === modalDraft.id);
       if (exists) {

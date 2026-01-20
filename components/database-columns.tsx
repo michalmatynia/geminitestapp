@@ -10,7 +10,7 @@ export type DatabaseInfo = {
   createdAt: string;
   lastModified: string;
   lastModifiedAt: string;
-  lastRestored?: string;
+  lastRestored?: string | undefined;
 };
 
 type Notify = (message: string, variant?: "success" | "error" | "info") => void;

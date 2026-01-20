@@ -226,8 +226,8 @@ export async function POST(
           proxyEnabled && proxyServer
             ? {
                 server: proxyServer,
-                username: proxyUsername || undefined,
-                password: proxyPassword || undefined,
+                ...(proxyUsername && { username: proxyUsername }),
+                ...(proxyPassword && { password: proxyPassword }),
               }
             : undefined,
       });

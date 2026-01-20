@@ -189,7 +189,7 @@ function FolderTreeBase({
 
       const folderNames = structures.map(s => s.name).join(", ");
       const displayName = structures.length === 1
-        ? `folder "${structures[0].name}"`
+        ? `folder "${structures[0]!.name}"`
         : `${structures.length} folders (${folderNames})`;
 
       const confirmed = confirm(

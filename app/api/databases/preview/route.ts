@@ -117,9 +117,10 @@ export async function POST(req: Request) {
         if (!type) continue;
         const parts = line.split(` ${type} `);
         if (parts.length < 2) continue;
-        const rest = parts[1].trim().split(/\s+/);
+        const rest = parts[1]!.trim().split(/\s+/);
         if (rest.length < 2) continue;
         const [schema, name] = rest;
+        if (!name) continue;
         const entry = `${schema}.${name}`;
         if (!groups.has(type)) {
           groups.set(type, new Set());

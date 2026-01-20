@@ -81,6 +81,8 @@ export type ProductCatalogRecord = {
 export type ProductWithImages = ProductRecord & {
   images: ProductImageRecord[];
   catalogs: ProductCatalogRecord[];
+  categories?: { categoryId: string }[];
+  tags?: { tagId: string }[];
 };
 
 // This is the Zod schema for the product form data.

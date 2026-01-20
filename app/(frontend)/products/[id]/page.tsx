@@ -19,7 +19,7 @@ export default async function ProductPage({
 
   const imageUrl =
     product.images && product.images.length > 0
-      ? product.images[0].imageFile.filepath
+      ? product.images[0]!.imageFile.filepath
       : null;
 
   const priceLabel =

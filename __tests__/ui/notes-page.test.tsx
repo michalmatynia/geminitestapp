@@ -166,8 +166,8 @@ describe("Notes page UI", () => {
           id: `note-${notes.length + 1}`,
           title: body.title || "Untitled",
           content: body.content || "",
-          isPinned: body.isPinned,
-          isArchived: body.isArchived,
+          isPinned: body.isPinned ?? false,
+          isArchived: body.isArchived ?? false,
           tags: tagIds.map((tagId) => {
             const tag = tags.find((t) => t.id === tagId) ?? tags[0]!;
             return {

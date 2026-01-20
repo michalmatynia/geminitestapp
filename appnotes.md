@@ -1,16 +1,26 @@
 add proper debugging on visual studio code
 
+## Error Type
+Console Error
+
+## Error Message
+Failed to load preferences
+
+
+    at useUserPreferences.useEffect.loadPreferences (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/_6a57f4be._.js:2800:35)
+
+Next.js version: 16.1.2 (Turbopack)
+
+Product List, changing catalog still not retained
+
 Notebook App, when I create a new notebook, I should have the option to choose whether I want the notebook to be WYSIWYG or Markdown
 
 # IN PROGRESS
 
 when importing from Base.com, consider also duplicate SKUs
 
-* Resorting of Image slots with Images in Product Create / Edit panel is not working. The thumbnail is flickering when resorting or adding a second image. The images are added on save, but their previews flicker during create
 
-* In Create / Edit Product Panel , in Images the slots show two dots above a light up, whereas the other dot should only lit up if there is an image file in the slot. Also Flipping the switch that toggles between Image Thumbnail from Link and Image Thumbnail from actual Image file doesn't work.
-
-* Product Update - shoud Save the current state of the product, but should not not close the modal window, the modal window can be closed be clicking outside of it or by clicking Close.
+Product List, Price column header should have an indication of which currenct it is in (most porbably a default currency for the catalog) 
 
 * -Product default price group is the default Catalog price group, I don't need to make that selection for every single product, it's automatic.
 -default price group still asks me to select from dropdown
@@ -19,7 +29,7 @@ Polling for AI jobs never stops
 
 * When a product is a added to a Catalog, its default Price Group is the one set in the Catalog. I should not need to make this additional when I create the product. Other non default pricegroups should also be visible in product Edit / Create panel. If the price group is dependent on a default price group, both the calculated price and the price group should be visible in product Edit / Create panel.*
 
-* I need to have the categories field in the Product Create / Edit Panel. I Need to have the Tags field in the Product Create / Edit Panel.
+
 
 * Add a subPage to Product Settings called AI Translation (underneath Product Description). In this page, you should be able to choose one translation AI model which will carry out Product Description and Product Title translations into langauges that are part of the catalog to which the product belongs (If the product doesn't belong to any catalog, translate to all language visible in Product Edit / Create panel). Add a button in Product Edit / Create to translate When the translation request is sent, create an AI Job (mirroring the one that is created when Product Descriptions are requested). When a job is completed (be it for translations or description generations) provide a notification
 
@@ -132,6 +142,10 @@ shpock
 # NOTE APP
 
 NOTEBOOK Only for  SNippets Type
+
+Moving folders between notebooks
+
+when I create a note, you don't need to uncollapse folders
 
 My image thumbnail preview disappeared from my Note List view. my Notes card no longer show a minature thumbnail of the addded image file. If the thumbnail is a file that is not an image, don't add it at all.
 

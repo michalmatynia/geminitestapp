@@ -429,18 +429,34 @@ export function ProductFormProvider({
   }, []);
 
   const filteredLanguages = useMemo(() => {
+    // If no catalogs selected, show all languages
     if (selectedCatalogIds.length === 0) return languages;
+
+    // If catalogs are still loading, wait - don't filter yet
+    // Return all languages as temporary state to avoid UI issues with empty tabs
+    if (catalogsLoading || catalogs.length === 0) return languages;
+
+    // Get language IDs from selected catalogs
+    const selectedCatalogs = catalogs.filter((catalog) => selectedCatalogIds.includes(catalog.id));
+
+    // If selected catalogs aren't found in loaded catalogs, show all languages
+    // This can happen briefly during hydration or if catalog was deleted
+    if (selectedCatalogs.length === 0) {
+      return languages;
+    }
+
     const allowedLanguageIds = new Set(
-      catalogs
-        .filter((catalog) => selectedCatalogIds.includes(catalog.id))
-        .flatMap((catalog) => catalog.languageIds ?? [])
+      selectedCatalogs.flatMap((catalog) => catalog.languageIds ?? [])
     );
+
+    // If catalogs have no languages configured, show all languages
     if (allowedLanguageIds.size === 0) {
       return languages;
     }
+
     const filtered = languages.filter((language) => allowedLanguageIds.has(language.id));
     return filtered.length > 0 ? filtered : languages;
-  }, [languages, catalogs, selectedCatalogIds]);
+  }, [languages, catalogs, selectedCatalogIds, catalogsLoading]);
 
   const filteredPriceGroups = useMemo(() => {
     if (selectedCatalogIds.length === 0) return priceGroups;
@@ -765,32 +781,6 @@ export function ProductFormProvider({
       }
 
       const savedProduct = (await response.json()) as ProductWithImages;
-      setImageSlots(() => {
-        const newSlots: ProductImageSlot[] = Array.from(
-          { length: TOTAL_IMAGE_SLOTS },
-          () => null
-        );
-        savedProduct.images
-          .slice(0, TOTAL_IMAGE_SLOTS)
-          .forEach((pImg, index) => {
-            if (pImg.imageFile) {
-              newSlots[index] = {
-                type: "existing",
-                data: pImg.imageFile,
-                previewUrl: pImg.imageFile.filepath,
-              };
-            }
-          });
-        return newSlots;
-      });
-      setImageLinks(normalizeImageLinks(savedProduct.imageLinks));
-      setUploadSuccess(true);
-      if (successTimerRef.current) {
-        clearTimeout(successTimerRef.current);
-      }
-      successTimerRef.current = setTimeout(() => {
-        setUploadSuccess(false);
-      }, 3000);
 
       toast(product ? "Product updated." : "Product created.", {
         variant: "success",
@@ -798,10 +788,39 @@ export function ProductFormProvider({
 
       // Only close modal for Create mode, not Edit mode
       if (!product) {
+        // For Create mode, close modal immediately without updating image state
+        // This prevents the flickering caused by image slots re-rendering before modal closes
         onSuccess?.();
         router.push("/admin/products");
       } else {
-        // For Edit mode, just refresh to show updated data
+        // For Edit mode, update image slots to reflect saved state
+        setImageSlots(() => {
+          const newSlots: ProductImageSlot[] = Array.from(
+            { length: TOTAL_IMAGE_SLOTS },
+            () => null
+          );
+          savedProduct.images
+            .slice(0, TOTAL_IMAGE_SLOTS)
+            .forEach((pImg, index) => {
+              if (pImg.imageFile) {
+                newSlots[index] = {
+                  type: "existing",
+                  data: pImg.imageFile,
+                  previewUrl: pImg.imageFile.filepath,
+                };
+              }
+            });
+          return newSlots;
+        });
+        setImageLinks(normalizeImageLinks(savedProduct.imageLinks));
+        setUploadSuccess(true);
+        if (successTimerRef.current) {
+          clearTimeout(successTimerRef.current);
+        }
+        successTimerRef.current = setTimeout(() => {
+          setUploadSuccess(false);
+        }, 3000);
+        // Refresh to show updated data
         router.refresh();
       }
     } catch (error: unknown) {

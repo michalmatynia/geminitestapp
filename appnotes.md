@@ -1,13 +1,41 @@
+
+
+Clicking Export should create an Export job, so that I can continue working with the page, while the export is being done.
+
+Product List, when I click on the house which is green *synced)
+
+
+Add individual syncing options to teh green hose
+
+Notebook App, when I create a new notebook, I should have the option to choose whether I want the notebook to be WYSIWYG or Markdown
+
+* I have a problem with Languages in Product Edit Create. The Catalog Mentios has two languages attached, or so it seems, because in Product Settings it looks it has four id pills, but when I open Product modal, it has four langauges.
+
+* The Note Themes should also offer the option to preselect all the belonging notes to either Wysiwyg or markdown.
+
+* Product Create Panel Closes by itself
+
+* Product Edit / Create modal is closing by itself randomly when I try to enter Title
+CLicking the little greenhouse should also show what is being synchronized with base.com , name, stock, price, description
+
+* When I Create Product after adding images, the screen filckers
+
+
+Product Catalog should adhere to the order in which the languages are added, If I add English, then Polish then German, this is the order in which they should be presented. Also, I should be able to reorder languages When in Product Catalog Edit Page.
+
+
+Also, my Product list Filter choices are not retained when changing between pages, they were supposed to be kept in Mongo DB and be persistent.
+
+
 add proper debugging on visual studio code
 
+In Product Catalog, drag and drop is used for sorting languages. Can you reuse drag and drop from Note App, not to duplicate libraries
 
-Can't edit product
 
-Is Product list wired to MongoDB ?
 
-In Products List - Clicking house I should see the status of the export job (if house yellow) and sync optins if it's green
+In Products List - Clicking house I should see the status of the export job (if house yellow) and sync options if it's green
 
-Move Export Jobs into AI Jobs, by create a separate Tab one for Import and one for Export Jobs.
+* Move Export / Import Jobs into AI Jobs, but create a separate Tabs one for Import and one for Export Jobs.
 
 * I need an option to import one specific product only (found by SKU or Base product id)
 
@@ -28,7 +56,7 @@ When I move the note to folder, do not uncollapse the folder.
 
 * Product List, changing catalog still not retained
 
-Notebook App, when I create a new notebook, I should have the option to choose whether I want the notebook to be WYSIWYG or Markdown
+
 
 # IN PROGRESS
 
@@ -79,6 +107,7 @@ The "middleware" file convention is deprecated. Please use "proxy" instead. Lear
 
 I also have [auth][warn][debug-enabled] Read more: https://warnings.authjs.dev
 
+ I want all of my product data to by hybrid. Database
 
 
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserPreferences, updateUserPreferences } from "@/lib/services/user-preferences-repository";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 
 // For now, we'll use a hardcoded user ID
 // In a real app, this would come from the session
@@ -22,6 +23,16 @@ export async function GET() {
     const preferences = await getUserPreferences(DEFAULT_USER_ID);
     return NextResponse.json(preferences);
   } catch (error) {
+    // If foreign key constraint fails (no user exists), return defaults
+    const isPrismaFKError = error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003";
+    if (isPrismaFKError) {
+      return NextResponse.json({
+        productListNameLocale: "name_en",
+        productListCatalogFilter: "all",
+        productListCurrencyCode: null,
+        productListPageSize: 50,
+      });
+    }
     console.error("[user/preferences][GET] Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch preferences" },

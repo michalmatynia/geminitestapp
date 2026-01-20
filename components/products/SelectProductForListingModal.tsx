@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -9,9 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import ModalShell from "@/components/ui/modal-shell";
-import { IntegrationWithConnections, ProductWithImages } from "@/types";
+import type { ProductWithImages, IntegrationWithConnections } from "@/types";
 
 type Template = {
   id: string;
@@ -24,29 +24,26 @@ type BaseInventory = {
   name: string;
 };
 
-type ListProductModalProps = {
-  product: ProductWithImages;
+type SelectProductForListingModalProps = {
+  integrationId: string;
+  connectionId: string;
   onClose: () => void;
   onSuccess: () => void;
-  initialIntegrationId?: string | null;
-  initialConnectionId?: string | null;
 };
 
-export default function ListProductModal({
-  product,
+export default function SelectProductForListingModal({
+  integrationId,
+  connectionId,
   onClose,
   onSuccess,
-  initialIntegrationId,
-  initialConnectionId,
-}: ListProductModalProps) {
-  const [integrations, setIntegrations] = useState<IntegrationWithConnections[]>([]);
+}: SelectProductForListingModalProps) {
+  const [products, setProducts] = useState<ProductWithImages[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>("");
-  const [selectedConnectionId, setSelectedConnectionId] = useState<string>("");
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
-  const [appliedInitialSelection, setAppliedInitialSelection] = useState(false);
-  const previousIntegrationId = useRef<string>("");
+  const [integration, setIntegration] = useState<IntegrationWithConnections | null>(null);
+  const [connectionName, setConnectionName] = useState<string>("");
 
   // Base.com specific fields
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -57,45 +54,48 @@ export default function ListProductModal({
   const [loadingInventories, setLoadingInventories] = useState(false);
   const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
 
-  const productName =
-    product.name_en || product.name_pl || product.name_de || "Unnamed Product";
-
-  const selectedIntegration = integrations.find(
-    (i) => i.id === selectedIntegrationId
-  );
-
   const isBaseComIntegration = ["baselinker", "base-com"].includes(
-    selectedIntegration?.slug ?? ""
+    integration?.slug ?? ""
   );
+  const selectedProduct = products.find((p) => p.id === selectedProductId);
 
+  // Load products
   useEffect(() => {
-    const fetchIntegrations = async () => {
+    const fetchProducts = async () => {
       try {
         setLoading(true);
-        setError(null);
-        const res = await fetch("/api/integrations/with-connections");
-        if (!res.ok) {
-          throw new Error("Failed to fetch integrations");
-        }
-        const data = (await res.json()) as IntegrationWithConnections[];
-        setIntegrations(data);
+        const res = await fetch("/api/products");
+        if (!res.ok) throw new Error("Failed to fetch products");
+        const data = (await res.json()) as ProductWithImages[];
+        setProducts(data);
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to load integrations"
-        );
+        setError(err instanceof Error ? err.message : "Failed to load products");
       } finally {
         setLoading(false);
       }
     };
-
-    void fetchIntegrations();
+    void fetchProducts();
   }, []);
 
+  // Load integration details
   useEffect(() => {
-    if (initialIntegrationId && !appliedInitialSelection) {
-      setSelectedIntegrationId(initialIntegrationId);
-    }
-  }, [initialIntegrationId, appliedInitialSelection]);
+    const fetchIntegration = async () => {
+      try {
+        const res = await fetch("/api/integrations/with-connections");
+        if (!res.ok) throw new Error("Failed to fetch integration");
+        const data = (await res.json()) as IntegrationWithConnections[];
+        const found = data.find((i) => i.id === integrationId);
+        if (found) {
+          setIntegration(found);
+          const conn = found.connections.find((c) => c.id === connectionId);
+          if (conn) setConnectionName(conn.name);
+        }
+      } catch {
+        // Silently fail
+      }
+    };
+    void fetchIntegration();
+  }, [integrationId, connectionId]);
 
   // Load templates for Base.com
   useEffect(() => {
@@ -109,7 +109,6 @@ export default function ListProductModal({
         // Silently fail - templates are optional
       }
     };
-
     void fetchTemplates();
   }, []);
 
@@ -128,41 +127,10 @@ export default function ListProductModal({
     void loadPreferredTemplate();
   }, []);
 
-  // Reset connection when user changes the integration selection.
-  useEffect(() => {
-    if (
-      previousIntegrationId.current &&
-      selectedIntegrationId &&
-      selectedIntegrationId !== previousIntegrationId.current
-    ) {
-      setSelectedConnectionId("");
-      setInventories([]);
-      setSelectedInventoryId("");
-    }
-    previousIntegrationId.current = selectedIntegrationId;
-  }, [selectedIntegrationId]);
-
-  useEffect(() => {
-    if (
-      initialConnectionId &&
-      initialIntegrationId &&
-      selectedIntegrationId === initialIntegrationId &&
-      !appliedInitialSelection
-    ) {
-      setSelectedConnectionId(initialConnectionId);
-      setAppliedInitialSelection(true);
-    }
-  }, [
-    initialConnectionId,
-    initialIntegrationId,
-    selectedIntegrationId,
-    appliedInitialSelection,
-  ]);
-
-  // Load Base.com inventories when connection is selected
+  // Load Base.com inventories when it's a Base.com integration
   useEffect(() => {
     const loadInventories = async () => {
-      if (!isBaseComIntegration || !selectedConnectionId) {
+      if (!isBaseComIntegration || !connectionId) {
         setInventories([]);
         return;
       }
@@ -174,7 +142,7 @@ export default function ListProductModal({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             action: "inventories",
-            connectionId: selectedConnectionId,
+            connectionId,
           }),
         });
 
@@ -191,7 +159,7 @@ export default function ListProductModal({
     };
 
     void loadInventories();
-  }, [isBaseComIntegration, selectedConnectionId]);
+  }, [isBaseComIntegration, connectionId]);
 
   useEffect(() => {
     if (!isBaseComIntegration) return;
@@ -201,8 +169,8 @@ export default function ListProductModal({
   }, [isBaseComIntegration, preferredTemplateId, selectedTemplateId]);
 
   const handleSubmit = async () => {
-    if (!selectedIntegrationId || !selectedConnectionId) {
-      setError("Please select both a marketplace and an account");
+    if (!selectedProductId) {
+      setError("Please select a product");
       return;
     }
 
@@ -215,13 +183,12 @@ export default function ListProductModal({
       setSubmitting(true);
       setError(null);
 
-      // For Base.com, use export endpoint
       if (isBaseComIntegration) {
-        const res = await fetch(`/api/products/${product.id}/export-to-base`, {
+        const res = await fetch(`/api/products/${selectedProductId}/export-to-base`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            connectionId: selectedConnectionId,
+            connectionId,
             inventoryId: selectedInventoryId,
             templateId: selectedTemplateId !== "none" ? selectedTemplateId : undefined,
             allowDuplicateSku,
@@ -238,13 +205,12 @@ export default function ListProductModal({
 
         onSuccess();
       } else {
-        // For other integrations, use regular listing endpoint
-        const res = await fetch(`/api/products/${product.id}/listings`, {
+        const res = await fetch(`/api/products/${selectedProductId}/listings`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            integrationId: selectedIntegrationId,
-            connectionId: selectedConnectionId,
+            integrationId,
+            connectionId,
           }),
         });
 
@@ -262,13 +228,13 @@ export default function ListProductModal({
     }
   };
 
-  const integrationsWithConnections = integrations.filter(
-    (i) => i.connections.length > 0
-  );
+  const getProductDisplayName = (product: ProductWithImages) => {
+    return product.name_en || product.name_pl || product.name_de || product.sku;
+  };
 
   return (
     <ModalShell
-      title={`List Product - ${productName}`}
+      title={`List Product to ${integration?.name || "Marketplace"}`}
       onClose={onClose}
       size="md"
       showClose={false}
@@ -285,8 +251,7 @@ export default function ListProductModal({
             onClick={() => void handleSubmit()}
             disabled={
               submitting ||
-              !selectedIntegrationId ||
-              !selectedConnectionId ||
+              !selectedProductId ||
               (isBaseComIntegration && !selectedInventoryId)
             }
           >
@@ -308,68 +273,41 @@ export default function ListProductModal({
           </div>
         )}
 
+        <div className="rounded-md border border-gray-700 bg-gray-900/50 px-4 py-3">
+          <p className="text-sm text-gray-300">
+            <span className="text-gray-500">Integration:</span>{" "}
+            <span className="font-medium">{integration?.name || "Loading..."}</span>
+          </p>
+          <p className="text-sm text-gray-300">
+            <span className="text-gray-500">Account:</span>{" "}
+            <span className="font-medium">{connectionName || "Loading..."}</span>
+          </p>
+        </div>
+
         {loading ? (
-          <p className="text-sm text-gray-400">Loading integrations...</p>
-        ) : integrationsWithConnections.length === 0 ? (
-          <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-6 text-center">
-            <p className="text-sm text-yellow-200">
-              No integrations with configured accounts found.
-            </p>
-            <p className="mt-2 text-xs text-yellow-300/70">
-              Please set up an integration with at least one account first.
-            </p>
-          </div>
+          <p className="text-sm text-gray-400">Loading products...</p>
         ) : (
           <>
             <div className="space-y-2">
-              <Label htmlFor="integration">Marketplace / Integration</Label>
+              <Label htmlFor="product">Select Product</Label>
               <Select
-                value={selectedIntegrationId}
-                onValueChange={setSelectedIntegrationId}
+                value={selectedProductId}
+                onValueChange={setSelectedProductId}
               >
-                <SelectTrigger id="integration">
-                  <SelectValue placeholder="Select a marketplace..." />
+                <SelectTrigger id="product">
+                  <SelectValue placeholder="Select a product..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {integrationsWithConnections
-                    .filter((integration) => integration.id)
-                    .map((integration) => (
-                      <SelectItem key={integration.id} value={integration.id}>
-                        {integration.name}
-                      </SelectItem>
-                    ))}
+                  {products.map((product) => (
+                    <SelectItem key={product.id} value={product.id}>
+                      {getProductDisplayName(product)} ({product.sku})
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {selectedIntegration && (
-              <div className="space-y-2">
-                <Label htmlFor="connection">Account</Label>
-                <Select
-                  value={selectedConnectionId}
-                  onValueChange={setSelectedConnectionId}
-                >
-                  <SelectTrigger id="connection">
-                    <SelectValue placeholder="Select an account..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {selectedIntegration.connections
-                      .filter((connection) => connection.id)
-                      .map((connection) => (
-                        <SelectItem key={connection.id} value={connection.id}>
-                          {connection.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-gray-500">
-                  Choose which account to use for listing this product on{" "}
-                  {selectedIntegration.name}.
-                </p>
-              </div>
-            )}
-
-            {isBaseComIntegration && selectedConnectionId && (
+            {isBaseComIntegration && (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="inventory">

@@ -109,17 +109,6 @@ function FolderTreeBase({
     });
   }, [folders, collectFolderIds]);
 
-  useEffect(() => {
-    if (!selectedFolderId) return;
-    const pathIds = findFolderPathIds(folders, selectedFolderId);
-    if (pathIds.length === 0) return;
-    setExpandedFolderIds((prev) => {
-      const next = new Set(prev);
-      pathIds.forEach((id) => next.add(id));
-      return next;
-    });
-  }, [selectedFolderId, folders, findFolderPathIds]);
-
   const handleFolderDragStart = useCallback((folderId: string) => {
     setDraggedFolderId(folderId);
   }, []);

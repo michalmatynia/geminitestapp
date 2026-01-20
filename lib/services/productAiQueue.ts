@@ -20,6 +20,14 @@ function isQueueHealthy(): boolean {
   return timeSinceLastPoll < 10000;
 }
 
+const stopProductAiJobQueue = (reason?: string) => {
+  if (!intervalId) return;
+  clearInterval(intervalId);
+  intervalId = null;
+  const suffix = reason ? `: ${reason}` : "";
+  console.log(`[productAiQueue] Queue worker stopped${suffix}`);
+};
+
 async function processDescriptionGeneration(job: any) {
   const { productId, payload } = job;
 
@@ -313,6 +321,7 @@ const pollQueue = async () => {
 
     if (!nextJob) {
       console.log("[productAiQueue] No pending jobs found");
+      stopProductAiJobQueue("no pending jobs");
       return;
     }
 
@@ -357,6 +366,14 @@ const pollQueue = async () => {
           errorMessage: message,
         },
       });
+    }
+
+    const remainingJob = await prisma.productAiJob.findFirst({
+      where: { status: "pending" },
+      select: { id: true },
+    });
+    if (!remainingJob) {
+      stopProductAiJobQueue("queue drained");
     }
   } finally {
     isProcessing = false;

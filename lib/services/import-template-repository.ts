@@ -35,6 +35,7 @@ const SAMPLE_INVENTORY_KEY = "base_import_sample_inventory_id";
 const LAST_TEMPLATE_KEY = "base_import_last_template_id";
 const ACTIVE_TEMPLATE_KEY = "base_import_active_template_id";
 const PARAMETER_CACHE_KEY = "base_import_parameter_cache";
+const EXPORT_WAREHOUSE_KEY = "base_export_warehouse_id";
 
 const parseTemplates = (value: string | null): Template[] => {
   if (!value) return [];
@@ -162,6 +163,24 @@ const readParameterCacheValue = async (): Promise<string | null> => {
   return setting?.value ?? null;
 };
 
+const readExportWarehouseValue = async (): Promise<string | null> => {
+  const provider = await getImportTemplateProvider();
+  if (provider === "mongodb") {
+    const mongo = await getMongoDb();
+    const doc = await mongo
+      .collection<{ _id: string; key?: string; value?: string }>("settings")
+      .findOne({
+        $or: [{ _id: EXPORT_WAREHOUSE_KEY }, { key: EXPORT_WAREHOUSE_KEY }],
+      });
+    return typeof doc?.value === "string" ? doc.value : null;
+  }
+  const setting = await prisma.setting.findUnique({
+    where: { key: EXPORT_WAREHOUSE_KEY },
+    select: { value: true },
+  });
+  return setting?.value ?? null;
+};
+
 const writeTemplatesValue = async (value: string) => {
   const provider = await getImportTemplateProvider();
   console.log(`[ImportTemplateRepository] Writing templates... Length: ${value.length}`);
@@ -236,6 +255,31 @@ const writeSampleInventoryValue = async (value: string) => {
     where: { key: SAMPLE_INVENTORY_KEY },
     update: { value },
     create: { key: SAMPLE_INVENTORY_KEY, value },
+  });
+};
+
+const writeExportWarehouseValue = async (value: string) => {
+  const provider = await getImportTemplateProvider();
+  if (provider === "mongodb") {
+    const mongo = await getMongoDb();
+    await mongo.collection("settings").updateOne(
+      { $or: [{ _id: EXPORT_WAREHOUSE_KEY }, { key: EXPORT_WAREHOUSE_KEY }] } as any,
+      {
+        $set: {
+          value,
+          key: EXPORT_WAREHOUSE_KEY,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
+      },
+      { upsert: true }
+    );
+    return;
+  }
+  await prisma.setting.upsert({
+    where: { key: EXPORT_WAREHOUSE_KEY },
+    update: { value },
+    create: { key: EXPORT_WAREHOUSE_KEY, value },
   });
 };
 
@@ -350,6 +394,15 @@ export const getImportActiveTemplateId = async (): Promise<string | null> => {
 
 export const setImportActiveTemplateId = async (value: string | null) => {
   await writeActiveTemplateValue(value?.trim() ? value.trim() : "");
+};
+
+export const getExportWarehouseId = async (): Promise<string | null> => {
+  const value = await readExportWarehouseValue();
+  return value ? value : null;
+};
+
+export const setExportWarehouseId = async (value: string | null) => {
+  await writeExportWarehouseValue(value?.trim() ? value.trim() : "");
 };
 
 export type ImportParameterCache = {

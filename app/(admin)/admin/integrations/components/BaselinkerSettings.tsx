@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { IntegrationConnection } from "../types";
 
 type BaselinkerSettingsProps = {
@@ -17,6 +18,59 @@ export function BaselinkerSettings({
   const baseTokenUpdatedAt = activeConnection?.baseTokenUpdatedAt
     ? new Date(activeConnection.baseTokenUpdatedAt).toLocaleString()
     : "—";
+  const [syncIntervalMinutes, setSyncIntervalMinutes] = useState("10");
+  const [loadingSyncInterval, setLoadingSyncInterval] = useState(true);
+  const [savingSyncInterval, setSavingSyncInterval] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadSyncInterval = async () => {
+      try {
+        setLoadingSyncInterval(true);
+        const res = await fetch("/api/settings");
+        if (!res.ok) return;
+        const settings = (await res.json()) as Array<{ key: string; value: string }>;
+        const found = settings.find((setting) => setting.key === "base_sync_poll_interval_minutes");
+        if (found?.value) {
+          setSyncIntervalMinutes(found.value);
+        }
+      } catch {
+        // Ignore load errors
+      } finally {
+        setLoadingSyncInterval(false);
+      }
+    };
+    void loadSyncInterval();
+  }, []);
+
+  const handleSaveSyncInterval = async () => {
+    const parsed = Number(syncIntervalMinutes);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      setSyncMessage("Enter a valid number of minutes.");
+      return;
+    }
+    setSavingSyncInterval(true);
+    setSyncMessage(null);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          key: "base_sync_poll_interval_minutes",
+          value: String(parsed),
+        }),
+      });
+      if (!res.ok) {
+        setSyncMessage("Failed to save sync interval.");
+        return;
+      }
+      setSyncMessage("Sync interval saved.");
+    } catch {
+      setSyncMessage("Failed to save sync interval.");
+    } finally {
+      setSavingSyncInterval(false);
+    }
+  };
 
   return (
     <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900/60 p-4 text-sm text-gray-200">
@@ -55,6 +109,39 @@ export function BaselinkerSettings({
                 <span className="text-gray-400">Last inventory:</span>{" "}
                 {activeConnection.baseLastInventoryId}
               </p>
+            )}
+          </div>
+          <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300">
+            <div className="flex items-center justify-between">
+              <span>Listing sync interval</span>
+              {loadingSyncInterval ? (
+                <span className="text-[10px] text-gray-500">Loading...</span>
+              ) : (
+                <span className="text-[10px] text-gray-500">Minutes</span>
+              )}
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <input
+                type="number"
+                min="1"
+                value={syncIntervalMinutes}
+                onChange={(event) => setSyncIntervalMinutes(event.target.value)}
+                className="w-32 rounded-md border border-gray-800 bg-gray-900 px-2 py-1 text-xs text-white"
+              />
+              <button
+                type="button"
+                onClick={handleSaveSyncInterval}
+                disabled={savingSyncInterval}
+                className="rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 hover:bg-gray-200 disabled:opacity-50"
+              >
+                {savingSyncInterval ? "Saving..." : "Save"}
+              </button>
+            </div>
+            <p className="mt-2 text-[10px] text-gray-400">
+              Controls how often Base.com is checked for listing status updates.
+            </p>
+            {syncMessage && (
+              <p className="mt-2 text-[10px] text-gray-400">{syncMessage}</p>
             )}
           </div>
           <div className="flex flex-wrap items-center gap-3">

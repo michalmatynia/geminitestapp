@@ -34,6 +34,11 @@ const ProductSelectionBar = dynamic(
   { ssr: false }
 );
 
+const SelectIntegrationModal = dynamic(
+  () => import("@/components/products/SelectIntegrationModal"),
+  { ssr: false }
+);
+
 function AdminPageInner() {
   const searchParams = useSearchParams();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -101,6 +106,8 @@ function AdminPageInner() {
     setIntegrationsProduct,
     showListProductModal,
     setShowListProductModal,
+    listProductPreset,
+    setListProductPreset,
     integrationBadgeIds,
     integrationBadgeStatuses,
     exportSettingsProduct,
@@ -108,8 +115,7 @@ function AdminPageInner() {
     handleOpenCreateModal,
     handleCreateSuccess,
     handleEditSuccess,
-    handleListProductSuccess,
-    handleExportSettingsSuccess,
+    handleListProductSuccess: baseHandleListProductSuccess,
   } = useProductOperations(setRefreshTrigger);
 
   // Initialize currency code from preferences (catalog filter and page size are handled by useProductData)
@@ -164,8 +170,47 @@ function AdminPageInner() {
     setIntegrationsProduct(null);
     setShowListProductModal(false);
   }, [setIntegrationsProduct, setShowListProductModal]);
-  const handleOpenListProduct = useCallback(() => setShowListProductModal(true), [setShowListProductModal]);
-  const handleCloseListProduct = useCallback(() => setShowListProductModal(false), [setShowListProductModal]);
+  const handleCloseListProduct = useCallback(() => {
+    setShowListProductModal(false);
+    setListProductPreset(null);
+  }, [setShowListProductModal, setListProductPreset]);
+
+  const handleListProductSuccess = useCallback(() => {
+    setListProductPreset(null);
+    baseHandleListProductSuccess();
+  }, [setListProductPreset, baseHandleListProductSuccess]);
+
+  const handleStartListing = useCallback((integrationId: string, connectionId: string) => {
+    setListProductPreset({ integrationId, connectionId });
+    setShowListProductModal(true);
+  }, [setListProductPreset, setShowListProductModal]);
+
+  // State for integration selection modal (opened by + button)
+  const [showIntegrationModal, setShowIntegrationModal] = useState(false);
+  const [selectedHeaderIntegration, setSelectedHeaderIntegration] = useState<{integrationId: string; connectionId: string} | null>(null);
+
+  const handleOpenIntegrationModal = useCallback(() => {
+    setShowIntegrationModal(true);
+  }, []);
+
+  const handleCloseIntegrationModal = useCallback(() => {
+    setShowIntegrationModal(false);
+  }, []);
+
+  const handleSelectIntegrationFromModal = useCallback((integrationId: string, connectionId: string) => {
+    setShowIntegrationModal(false);
+    setSelectedHeaderIntegration({ integrationId, connectionId });
+  }, []);
+
+  const handleCloseHeaderIntegrationModal = useCallback(() => {
+    setSelectedHeaderIntegration(null);
+  }, []);
+
+  const handleHeaderIntegrationSuccess = useCallback(() => {
+    setSelectedHeaderIntegration(null);
+    setRefreshTrigger((prev) => prev + 1);
+    toast("Product listed successfully.", { variant: "success" });
+  }, [toast]);
 
   const [loadingGlobalSelection, setLoadingGlobalSelection] = useState(false);
 
@@ -254,7 +299,7 @@ function AdminPageInner() {
       {isDebugOpen && <DebugPanel />}
       <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
         <ProductListHeader
-          onOpenCreateModal={handleOpenCreateModal}
+          onOpenIntegrationModal={handleOpenIntegrationModal}
           page={page}
           totalPages={totalPages}
           setPage={handleSetPage}
@@ -336,14 +381,24 @@ function AdminPageInner() {
         onEditSuccess={handleEditSuccess}
         integrationsProduct={integrationsProduct}
         onCloseIntegrations={handleCloseIntegrations}
+        onStartListing={handleStartListing}
         showListProductModal={showListProductModal}
-        onOpenListProduct={handleOpenListProduct}
         onCloseListProduct={handleCloseListProduct}
         onListProductSuccess={handleListProductSuccess}
+        listProductPreset={listProductPreset}
         exportSettingsProduct={exportSettingsProduct}
         onCloseExportSettings={() => setExportSettingsProduct(null)}
-        onExportSettingsSuccess={handleExportSettingsSuccess}
+        selectedHeaderIntegration={selectedHeaderIntegration}
+        onCloseHeaderIntegration={handleCloseHeaderIntegrationModal}
+        onHeaderIntegrationSuccess={handleHeaderIntegrationSuccess}
       />
+
+      {showIntegrationModal && (
+        <SelectIntegrationModal
+          onClose={handleCloseIntegrationModal}
+          onSelect={handleSelectIntegrationFromModal}
+        />
+      )}
     </div>
   );
 }

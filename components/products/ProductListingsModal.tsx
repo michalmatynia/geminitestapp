@@ -1,15 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import ModalShell from "@/components/ui/modal-shell";
-import { ProductListingRecord, ProductWithImages } from "@/types";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { IntegrationWithConnections, ProductListingRecord, ProductWithImages } from "@/types";
 import { Trash2 } from "lucide-react";
 
 type ProductListingsModalProps = {
   product: ProductWithImages;
   onClose: () => void;
-  onListProduct: () => void;
+  onStartListing?: (integrationId: string, connectionId: string) => void;
+  filterIntegrationSlug?: string | null;
 };
 
 const statusColors: Record<string, string> = {
@@ -22,12 +30,17 @@ const statusColors: Record<string, string> = {
 export default function ProductListingsModal({
   product,
   onClose,
-  onListProduct,
+  onStartListing,
+  filterIntegrationSlug,
 }: ProductListingsModalProps) {
   const [listings, setListings] = useState<ProductListingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [integrations, setIntegrations] = useState<IntegrationWithConnections[]>([]);
+  const [loadingIntegrations, setLoadingIntegrations] = useState(false);
+  const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>("");
+  const [selectedConnectionId, setSelectedConnectionId] = useState<string>("");
 
   const productName =
     product.name_en || product.name_pl || product.name_de || "Unnamed Product";
@@ -52,6 +65,35 @@ export default function ProductListingsModal({
 
     void fetchListings();
   }, [product.id]);
+
+  useEffect(() => {
+    const fetchIntegrations = async () => {
+      try {
+        setLoadingIntegrations(true);
+        const res = await fetch("/api/integrations/with-connections");
+        if (!res.ok) throw new Error("Failed to fetch integrations");
+        const data = (await res.json()) as IntegrationWithConnections[];
+        setIntegrations(data.filter((integration) => integration.connections.length > 0));
+      } catch (err) {
+        console.error("Failed to load integrations:", err);
+      } finally {
+        setLoadingIntegrations(false);
+      }
+    };
+
+    void fetchIntegrations();
+  }, []);
+
+  const selectedIntegration = integrations.find(
+    (integration) => integration.id === selectedIntegrationId
+  );
+  const filteredListings = filterIntegrationSlug
+    ? listings.filter((listing) => listing.integration.slug === filterIntegrationSlug)
+    : listings;
+  const statusTargetLabel =
+    filterIntegrationSlug === "baselinker"
+      ? "Base.com"
+      : filterIntegrationSlug ?? "integration";
 
   const handleDelete = async (listingId: string) => {
     if (!window.confirm("Remove this listing?")) return;
@@ -78,11 +120,6 @@ export default function ProductListingsModal({
       title={`Integrations - ${productName}`}
       onClose={onClose}
       size="md"
-      footer={
-        <Button onClick={onListProduct}>
-          List Product
-        </Button>
-      }
     >
       <div className="space-y-4">
         {loading ? (
@@ -91,18 +128,116 @@ export default function ProductListingsModal({
           <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
             {error}
           </div>
-        ) : listings.length === 0 ? (
+        ) : filteredListings.length === 0 ? (
           <div className="rounded-md border border-gray-700 bg-gray-900/50 px-4 py-8 text-center">
-            <p className="text-sm text-gray-400">
-              This product is not listed on any marketplace yet.
-            </p>
-            <p className="mt-2 text-xs text-gray-500">
-              Click &quot;List Product&quot; to add it to a marketplace.
-            </p>
+            {filterIntegrationSlug ? (
+              <div className="space-y-2">
+                <div className="text-sm text-gray-300">
+                  {statusTargetLabel} status
+                </div>
+                <div className="rounded-md border border-gray-800 bg-gray-950/60 px-3 py-2 text-xs text-gray-400">
+                  Not connected.
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {loadingIntegrations ? (
+                  <p className="text-sm text-gray-400">Loading integrations...</p>
+                ) : integrations.length === 0 ? (
+                  <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200">
+                    No connected integrations.{" "}
+                    <a href="/admin/integrations" className="underline hover:text-yellow-100">
+                      Set up an integration
+                    </a>
+                    .
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-left">
+                      <label className="mb-2 block text-xs font-medium text-gray-300">
+                        Integration
+                      </label>
+                      <Select
+                        value={selectedIntegrationId}
+                        onValueChange={(value) => {
+                          setSelectedIntegrationId(value);
+                          setSelectedConnectionId("");
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select an integration..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {integrations
+                            .filter((integration) => integration.id)
+                            .map((integration) => (
+                              <SelectItem key={integration.id} value={integration.id}>
+                                {integration.name}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {selectedIntegration && selectedIntegration.connections.length > 0 && (
+                      <div className="text-left">
+                        <label className="mb-2 block text-xs font-medium text-gray-300">
+                          Account / Connection
+                        </label>
+                        <Select
+                          value={selectedConnectionId}
+                          onValueChange={setSelectedConnectionId}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select an account..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {selectedIntegration.connections
+                              .filter((connection) => connection.id)
+                              .map((connection) => (
+                                <SelectItem key={connection.id} value={connection.id}>
+                                  {connection.name}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    <div className="flex justify-center">
+                      <Button
+                        onClick={() => {
+                          if (onStartListing && selectedIntegrationId && selectedConnectionId) {
+                            onStartListing(selectedIntegrationId, selectedConnectionId);
+                          }
+                        }}
+                        disabled={!selectedIntegrationId || !selectedConnectionId || !onStartListing}
+                      >
+                        List Product
+                      </Button>
+                    </div>
+                  </>
+                )}
+
+                <div className="border-t border-gray-800 pt-3">
+                  <p className="text-sm text-gray-400">
+                    This product is not listed on any marketplace yet.
+                  </p>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Use the + button in the header to list products on a marketplace.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-2">
-            {listings.map((listing) => (
+            {filterIntegrationSlug && (
+              <div className="rounded-md border border-gray-800 bg-gray-950/60 px-3 py-2 text-xs text-gray-300">
+                {statusTargetLabel} status: {filteredListings[0]?.status ?? "Unknown"}
+              </div>
+            )}
+            {filteredListings.map((listing) => (
               <div
                 key={listing.id}
                 className="flex items-center justify-between rounded-md border border-gray-700 bg-gray-900/50 px-4 py-3"

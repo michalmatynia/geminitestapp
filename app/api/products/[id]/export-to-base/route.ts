@@ -3,9 +3,13 @@ import { z } from "zod";
 import { getProductRepository } from "@/lib/services/product-repository";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { getProductListingRepository } from "@/lib/services/product-listing-repository";
-import { listImportTemplates } from "@/lib/services/import-template-repository";
+import {
+  getExportWarehouseId,
+  listImportTemplates,
+} from "@/lib/services/import-template-repository";
 import { exportProductToBase } from "@/lib/services/exports/base-exporter";
 import { checkBaseSkuExists } from "@/lib/services/imports/base-client";
+import { decryptSecret } from "@/lib/utils/encryption";
 
 const exportSchema = z.object({
   connectionId: z.string().min(1),
@@ -69,11 +73,29 @@ export async function POST(
     console.log("[export-to-base] Connection loaded", {
       connectionId: data.connectionId,
       connectionName: connection.name,
-      hasToken: Boolean(connection.baseApiToken),
+      hasToken: Boolean(connection.baseApiToken || connection.password),
     });
 
     // Get Base.com token from connection
-    const token = connection.baseApiToken;
+    let token: string | null = null;
+    try {
+      if (connection.baseApiToken) {
+        token = decryptSecret(connection.baseApiToken);
+      } else if (connection.password) {
+        token = decryptSecret(connection.password);
+      }
+    } catch (error) {
+      console.error("[export-to-base] Failed to decrypt Base.com token", {
+        connectionId: data.connectionId,
+        connectionName: connection.name,
+        error,
+      });
+      return NextResponse.json(
+        { error: "Failed to decrypt Base.com API token. Please re-save the connection token." },
+        { status: 400 }
+      );
+    }
+
     if (!token) {
       console.error("[export-to-base] No API token configured", {
         connectionId: data.connectionId,
@@ -127,11 +149,14 @@ export async function POST(
       mappingsCount: mappings.length,
     });
 
+    const warehouseId = await getExportWarehouseId();
+
     const result = await exportProductToBase(
       token,
       data.inventoryId,
       product,
-      mappings
+      mappings,
+      warehouseId
     );
 
     if (!result.success) {
@@ -155,7 +180,9 @@ export async function POST(
 
     // Find Base.com integration
     const integrations = await integrationRepo.listIntegrations();
-    const baseIntegration = integrations.find((i) => i.slug === "base-com");
+    const baseIntegration = integrations.find((i) =>
+      ["baselinker", "base-com"].includes(i.slug)
+    );
 
     if (baseIntegration) {
       // Check if listing already exists

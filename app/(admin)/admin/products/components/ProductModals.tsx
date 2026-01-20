@@ -7,6 +7,7 @@ import FileManager from "@/components/files/FileManager";
 import ProductForm from "@/components/products/ProductForm";
 import ProductListingsModal from "@/components/products/ProductListingsModal";
 import ListProductModal from "@/components/products/ListProductModal";
+import SelectProductForListingModal from "@/components/products/SelectProductForListingModal";
 import {
   ProductFormProvider,
   useProductFormContext,
@@ -24,14 +25,18 @@ interface ProductModalsProps {
   onEditSuccess: () => void;
   integrationsProduct: ProductWithImages | null;
   onCloseIntegrations: () => void;
+  onStartListing: (integrationId: string, connectionId: string) => void;
   showListProductModal: boolean;
-  onOpenListProduct: () => void;
   onCloseListProduct: () => void;
   onListProductSuccess: () => void;
+  listProductPreset: { integrationId: string; connectionId: string } | null;
   // Export settings (opened via Store icon)
   exportSettingsProduct?: ProductWithImages | null;
   onCloseExportSettings?: () => void;
-  onExportSettingsSuccess?: () => void;
+  // Header integration selection (from + button dropdown)
+  selectedHeaderIntegration?: { integrationId: string; connectionId: string } | null;
+  onCloseHeaderIntegration?: () => void;
+  onHeaderIntegrationSuccess?: () => void;
 }
 
 function CreateProductModalContent({ onClose }: { onClose: () => void }) {
@@ -119,13 +124,16 @@ export function ProductModals({
   onEditSuccess,
   integrationsProduct,
   onCloseIntegrations,
+  onStartListing,
   showListProductModal,
-  onOpenListProduct,
   onCloseListProduct,
   onListProductSuccess,
+  listProductPreset,
   exportSettingsProduct,
   onCloseExportSettings,
-  onExportSettingsSuccess,
+  selectedHeaderIntegration,
+  onCloseHeaderIntegration,
+  onHeaderIntegrationSuccess,
 }: ProductModalsProps) {
   return (
     <>
@@ -133,8 +141,15 @@ export function ProductModals({
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
           onClick={onCloseCreate}
+          onMouseDown={(e) => {
+            // Only allow close if clicking directly on backdrop
+            if (e.target !== e.currentTarget) e.stopPropagation();
+          }}
         >
-          <div onClick={(e) => e.stopPropagation()}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <ProductFormProvider
               onSuccess={onCreateSuccess}
               initialSku={initialSku}
@@ -150,8 +165,15 @@ export function ProductModals({
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
           onClick={onCloseEdit}
+          onMouseDown={(e) => {
+            // Only allow close if clicking directly on backdrop
+            if (e.target !== e.currentTarget) e.stopPropagation();
+          }}
         >
-          <div onClick={(e) => e.stopPropagation()}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <ProductFormProvider
               product={editingProduct}
               onSuccess={onEditSuccess}
@@ -166,12 +188,18 @@ export function ProductModals({
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
           onClick={onCloseIntegrations}
+          onMouseDown={(e) => {
+            if (e.target !== e.currentTarget) e.stopPropagation();
+          }}
         >
-          <div onClick={(e) => e.stopPropagation()}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <ProductListingsModal
               product={integrationsProduct}
               onClose={onCloseIntegrations}
-              onListProduct={onOpenListProduct}
+              onStartListing={onStartListing}
             />
           </div>
         </div>
@@ -181,27 +209,63 @@ export function ProductModals({
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
           onClick={onCloseListProduct}
+          onMouseDown={(e) => {
+            if (e.target !== e.currentTarget) e.stopPropagation();
+          }}
         >
-          <div onClick={(e) => e.stopPropagation()}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <ListProductModal
               product={integrationsProduct}
               onClose={onCloseListProduct}
               onSuccess={onListProductSuccess}
+              initialIntegrationId={listProductPreset?.integrationId ?? null}
+              initialConnectionId={listProductPreset?.connectionId ?? null}
             />
           </div>
         </div>
       )}
 
-      {exportSettingsProduct && onCloseExportSettings && onExportSettingsSuccess && (
+      {exportSettingsProduct && onCloseExportSettings && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
           onClick={onCloseExportSettings}
+          onMouseDown={(e) => {
+            if (e.target !== e.currentTarget) e.stopPropagation();
+          }}
         >
-          <div onClick={(e) => e.stopPropagation()}>
-            <ListProductModal
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <ProductListingsModal
               product={exportSettingsProduct}
               onClose={onCloseExportSettings}
-              onSuccess={onExportSettingsSuccess}
+              filterIntegrationSlug="baselinker"
+            />
+          </div>
+        </div>
+      )}
+
+      {selectedHeaderIntegration && onCloseHeaderIntegration && onHeaderIntegrationSuccess && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          onClick={onCloseHeaderIntegration}
+          onMouseDown={(e) => {
+            if (e.target !== e.currentTarget) e.stopPropagation();
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <SelectProductForListingModal
+              integrationId={selectedHeaderIntegration.integrationId}
+              connectionId={selectedHeaderIntegration.connectionId}
+              onClose={onCloseHeaderIntegration}
+              onSuccess={onHeaderIntegrationSuccess}
             />
           </div>
         </div>

@@ -42,14 +42,15 @@ const renderSortableHeader = <TData, TValue>(
 async function handleDelete(
   backupName: string,
   onDelete: () => void,
-  notify?: Notify
+  notify?: Notify,
+  dbType?: "postgresql" | "mongodb"
 ) {
   if (window.confirm(`Delete backup ${backupName}? This cannot be undone.`)) {
     try {
       const res = await fetch("/api/databases/delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ backupName }),
+        body: JSON.stringify({ backupName, type: dbType }),
       });
 
       if (res.ok) {
@@ -134,7 +135,8 @@ export const getDatabaseColumns = (options?: {
                 void handleDelete(
                   backup.name,
                   options.onDelete,
-                  options.notify
+                  options.notify,
+                  options.dbType
                 );
               }
             }}

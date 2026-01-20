@@ -8,9 +8,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+type Language = {
+  id: string;
+  code: string;
+  name: string;
+};
+
 type CatalogsSettingsProps = {
   loadingCatalogs: boolean;
   catalogs: Catalog[];
+  languages: Language[];
   handleOpenCatalogModal: () => void;
   handleEditCatalog: (catalog: Catalog) => void;
   handleDeleteCatalog: (catalog: Catalog) => void;
@@ -19,10 +26,15 @@ type CatalogsSettingsProps = {
 export function CatalogsSettings({
   loadingCatalogs,
   catalogs,
+  languages,
   handleOpenCatalogModal,
   handleEditCatalog,
   handleDeleteCatalog,
 }: CatalogsSettingsProps) {
+  const getLanguageDisplay = (languageId: string) => {
+    const language = languages.find((l) => l.id === languageId);
+    return language ? `${language.name} (${language.code})` : languageId;
+  };
   return (
     <div className="space-y-5">
       <div className="flex justify-start">
@@ -65,12 +77,17 @@ export function CatalogsSettings({
                   </p>
                   {catalog.languageIds && catalog.languageIds.length > 0 ? (
                     <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-300">
-                      {catalog.languageIds.map((languageId) => (
+                      {catalog.languageIds.map((languageId, index) => (
                         <span
                           key={languageId}
-                          className="rounded-full border border-gray-700 bg-gray-900 px-2 py-0.5"
+                          className={`rounded-full border px-2 py-0.5 ${
+                            catalog.defaultLanguageId === languageId
+                              ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+                              : "border-gray-700 bg-gray-900"
+                          }`}
                         >
-                          {languageId}
+                          {index + 1}. {getLanguageDisplay(languageId)}
+                          {catalog.defaultLanguageId === languageId && " (Default)"}
                         </span>
                       ))}
                     </div>

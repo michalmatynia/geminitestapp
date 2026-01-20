@@ -150,6 +150,21 @@ async function main() {
       skipDuplicates: true,
     });
   }
+
+  // Seed integrations
+  const integrations = [
+    { name: "Tradera", slug: "tradera" },
+    { name: "Allegro", slug: "allegro" },
+    { name: "Baselinker", slug: "baselinker" },
+  ];
+
+  for (const integration of integrations) {
+    await prisma.integration.upsert({
+      where: { slug: integration.slug },
+      update: { name: integration.name },
+      create: integration,
+    });
+  }
 }
 
 main()

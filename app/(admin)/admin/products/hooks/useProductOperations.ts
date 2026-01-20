@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { logger } from "@/lib/logger";
 import { useToast } from "@/components/ui/toast";
 import type { ProductWithImages } from "@/types";
@@ -18,6 +18,7 @@ export function useProductOperations(setRefreshTrigger: React.Dispatch<React.Set
   // Integrations state
   const [integrationsProduct, setIntegrationsProduct] = useState<ProductWithImages | null>(null);
   const [showListProductModal, setShowListProductModal] = useState(false);
+  const [listProductPreset, setListProductPreset] = useState<{ integrationId: string; connectionId: string } | null>(null);
   const [integrationBadgeIds, setIntegrationBadgeIds] = useState<Set<string>>(() => new Set());
   const [integrationBadgeStatuses, setIntegrationBadgeStatuses] = useState<Map<string, string>>(() => new Map());
 
@@ -25,24 +26,25 @@ export function useProductOperations(setRefreshTrigger: React.Dispatch<React.Set
   const [exportSettingsProduct, setExportSettingsProduct] = useState<ProductWithImages | null>(null);
 
   // Load listing badges
+  const refreshListingBadges = useCallback(async () => {
+    try {
+      const res = await fetch("/api/products/listings");
+      if (!res.ok) return;
+      const payload = (await res.json()) as Record<string, string>;
+      const entries = Object.entries(payload || {});
+      setIntegrationBadgeStatuses(new Map(entries));
+      setIntegrationBadgeIds(new Set(entries.map(([productId]) => productId)));
+    } catch (error) {
+      logger.warn("Failed to load listing badges", error);
+    }
+  }, []);
+
   useEffect(() => {
-    let mounted = true;
     const loadListingBadges = async () => {
-      try {
-        const res = await fetch("/api/products/listings");
-        if (!res.ok) return;
-        const payload = (await res.json()) as Record<string, string>;
-        if (!mounted) return;
-        const entries = Object.entries(payload || {});
-        setIntegrationBadgeStatuses(new Map(entries));
-        setIntegrationBadgeIds(new Set(entries.map(([productId]) => productId)));
-      } catch (error) {
-        logger.warn("Failed to load listing badges", error);
-      }
+      await refreshListingBadges();
     };
     void loadListingBadges();
-    return () => { mounted = false; };
-  }, []);
+  }, [refreshListingBadges]);
 
   const handleOpenCreateModal = async () => {
     const skuInput = window.prompt("Enter a new unique SKU:");
@@ -103,15 +105,7 @@ export function useProductOperations(setRefreshTrigger: React.Dispatch<React.Set
     const currentProduct = integrationsProduct;
     setIntegrationsProduct(null);
     setTimeout(() => { setIntegrationsProduct(currentProduct); }, 100);
-  };
-
-  // Handle export settings success (when opened via Store icon)
-  const handleExportSettingsSuccess = () => {
-    if (exportSettingsProduct?.id) {
-      setIntegrationBadgeIds((prev) => new Set(prev).add(exportSettingsProduct.id));
-      setIntegrationBadgeStatuses((prev) => new Map(prev).set(exportSettingsProduct.id, "pending"));
-    }
-    setExportSettingsProduct(null);
+    void refreshListingBadges();
   };
 
   return {
@@ -127,14 +121,16 @@ export function useProductOperations(setRefreshTrigger: React.Dispatch<React.Set
     setIntegrationsProduct,
     showListProductModal,
     setShowListProductModal,
+    listProductPreset,
+    setListProductPreset,
     integrationBadgeIds,
     integrationBadgeStatuses,
     exportSettingsProduct,
     setExportSettingsProduct,
+    refreshListingBadges,
     handleOpenCreateModal,
     handleCreateSuccess,
     handleEditSuccess,
     handleListProductSuccess,
-    handleExportSettingsSuccess,
   };
 }

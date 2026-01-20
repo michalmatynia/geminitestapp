@@ -10,6 +10,11 @@ export type BaseInventory = {
   name: string;
 };
 
+export type BaseWarehouse = {
+  id: string;
+  name: string;
+};
+
 export type BaseProductRecord = Record<string, unknown>;
 
 const DEFAULT_BASE_API_URL = "https://api.baselinker.com/connector.php";
@@ -62,6 +67,31 @@ const extractInventoryList = (payload: BaseApiResponse): BaseInventory[] => {
       return { id, name };
     })
     .filter(Boolean) as BaseInventory[];
+};
+
+const extractWarehouseList = (payload: BaseApiResponse): BaseWarehouse[] => {
+  const candidates = [
+    payload.warehouses,
+    payload.warehouse,
+    (payload.data as Record<string, unknown> | undefined)?.warehouses,
+  ];
+  const raw = candidates.map(toArray).find((list) => list.length > 0) ?? [];
+  return raw
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") return null;
+      const record = entry as Record<string, unknown>;
+      const id =
+        toStringId(record.warehouse_id) ??
+        toStringId(record.id) ??
+        toStringId(record.storage_id);
+      if (!id) return null;
+      const name =
+        (typeof record.name === "string" && record.name.trim()) ||
+        (typeof record.label === "string" && record.label.trim()) ||
+        id;
+      return { id, name };
+    })
+    .filter(Boolean) as BaseWarehouse[];
 };
 
 const extractProductIds = (payload: BaseApiResponse): string[] => {
@@ -184,6 +214,28 @@ export async function fetchBaseInventories(token: string) {
       const inventories = extractInventoryList(payload);
       if (inventories.length > 0) {
         return inventories;
+      }
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error("Base API error.");
+    }
+  }
+  if (lastError) {
+    throw lastError;
+  }
+  return [];
+}
+
+export async function fetchBaseWarehouses(token: string, inventoryId: string) {
+  const methods = ["getInventoryWarehouses"];
+  let lastError: Error | null = null;
+  for (const method of methods) {
+    try {
+      const payload = await callBaseApi(token, method, {
+        inventory_id: inventoryId,
+      });
+      const warehouses = extractWarehouseList(payload);
+      if (warehouses.length > 0) {
+        return warehouses;
       }
     } catch (error) {
       lastError = error instanceof Error ? error : new Error("Base API error.");

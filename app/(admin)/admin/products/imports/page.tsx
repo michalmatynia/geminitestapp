@@ -14,6 +14,11 @@ type InventoryOption = {
   name: string;
 };
 
+type WarehouseOption = {
+  id: string;
+  name: string;
+};
+
 type CatalogOption = {
   id: string;
   name: string;
@@ -88,12 +93,16 @@ export default function ProductImportsPage() {
   const { toast } = useToast();
   // Token is now handled by the backend via integration
   const [inventories, setInventories] = useState<InventoryOption[]>([]);
+  const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
   const [inventoryId, setInventoryId] = useState("");
+  const [exportWarehouseId, setExportWarehouseId] = useState("");
+  const [exportWarehouseLoaded, setExportWarehouseLoaded] = useState(false);
   const [catalogs, setCatalogs] = useState<CatalogOption[]>([]);
   const [catalogId, setCatalogId] = useState("");
   const [limit, setLimit] = useState("all");
   const [imageMode, setImageMode] = useState<"links" | "download">("links");
   const [loadingInventories, setLoadingInventories] = useState(false);
+  const [loadingWarehouses, setLoadingWarehouses] = useState(false);
   const [loadingCatalogs, setLoadingCatalogs] = useState(false);
   const [importing, setImporting] = useState(false);
   const [lastResult, setLastResult] = useState<ImportResponse | null>(null);
@@ -125,6 +134,7 @@ export default function ProductImportsPage() {
   ]);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [deletingTemplate, setDeletingTemplate] = useState(false);
+  const [savingExportSettings, setSavingExportSettings] = useState(false);
   const [parameterKeys, setParameterKeys] = useState<string[]>([]);
   const [parameterValues, setParameterValues] = useState<Record<string, string>>(
     {}
@@ -133,6 +143,7 @@ export default function ProductImportsPage() {
   const [parameterProductId, setParameterProductId] = useState("");
   const [openKeyIndex, setOpenKeyIndex] = useState<number | null>(null);
   const lastParameterProductIdRef = useRef<string | null>(null);
+  const lastWarehouseInventoryIdRef = useRef<string | null>(null);
   const [parameterCacheReady, setParameterCacheReady] = useState(false);
 
   const [checkingIntegration, setCheckingIntegration] = useState(true);
@@ -251,6 +262,24 @@ export default function ProductImportsPage() {
   }, []);
 
   useEffect(() => {
+    const loadExportWarehouse = async () => {
+      try {
+        const res = await fetch("/api/products/imports/base/export-warehouse");
+        const payload = (await res.json()) as { warehouseId?: string | null };
+        if (!res.ok) return;
+        if (payload.warehouseId) {
+          setExportWarehouseId(payload.warehouseId);
+        }
+      } catch (error) {
+        console.error("Failed to load export warehouse preference", error);
+      } finally {
+        setExportWarehouseLoaded(true);
+      }
+    };
+    void loadExportWarehouse();
+  }, []);
+
+  useEffect(() => {
     if (!templatePreferenceLoaded) return;
     const saveTemplatePreference = async () => {
       try {
@@ -285,6 +314,24 @@ export default function ProductImportsPage() {
     };
     void saveActiveTemplatePreference();
   }, [activeTemplateId, activeTemplatePreferenceLoaded]);
+
+  useEffect(() => {
+    if (!exportWarehouseLoaded) return;
+    const saveExportWarehouse = async () => {
+      try {
+        await fetch("/api/products/imports/base/export-warehouse", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            warehouseId: exportWarehouseId || null,
+          }),
+        });
+      } catch (error) {
+        console.error("Failed to save export warehouse preference", error);
+      }
+    };
+    void saveExportWarehouse();
+  }, [exportWarehouseId, exportWarehouseLoaded]);
 
   useEffect(() => {
     if (!templatePreferenceLoaded) return;
@@ -728,6 +775,91 @@ export default function ProductImportsPage() {
       toast("Failed to load inventories.", { variant: "error" });
     } finally {
       setLoadingInventories(false);
+    }
+  };
+
+  const handleLoadWarehouses = async () => {
+    if (!isBaseConnected) {
+      toast("Please connect Base integration first.", { variant: "error" });
+      return;
+    }
+    if (!inventoryId) {
+      toast("Select an inventory before loading warehouses.", { variant: "error" });
+      return;
+    }
+    setLoadingWarehouses(true);
+    try {
+      const res = await fetch("/api/products/imports/base", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "warehouses", inventoryId }),
+      });
+      const payload = (await res.json()) as {
+        warehouses?: WarehouseOption[];
+        error?: string;
+      };
+      if (!res.ok) {
+        toast(payload.error || "Failed to load warehouses.", {
+          variant: "error",
+        });
+        return;
+      }
+      setWarehouses(payload.warehouses ?? []);
+      if (payload.warehouses?.length && !exportWarehouseId) {
+        setExportWarehouseId(payload.warehouses[0]?.id ?? "");
+      }
+    } catch (error) {
+      toast("Failed to load warehouses.", { variant: "error" });
+    } finally {
+      setLoadingWarehouses(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isBaseConnected || !inventoryId) return;
+    if (lastWarehouseInventoryIdRef.current === inventoryId) return;
+    lastWarehouseInventoryIdRef.current = inventoryId;
+    void handleLoadWarehouses();
+  }, [inventoryId, isBaseConnected]);
+
+  const handleSaveExportSettings = async () => {
+    setSavingExportSettings(true);
+    try {
+      const responses = await Promise.all([
+        fetch("/api/products/imports/base/active-template", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            templateId: activeTemplateId || null,
+          }),
+        }),
+        fetch("/api/products/imports/base/export-warehouse", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            warehouseId: exportWarehouseId || null,
+          }),
+        }),
+        fetch("/api/products/imports/base/sample-product", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            inventoryId,
+            productId: parameterProductId.trim() || undefined,
+            saveOnly: true,
+          }),
+        }),
+      ]);
+      const failed = responses.find((res) => !res.ok);
+      if (failed) {
+        toast("Failed to save export settings.", { variant: "error" });
+        return;
+      }
+      toast("Export settings saved.", { variant: "success" });
+    } catch (error) {
+      toast("Failed to save export settings.", { variant: "error" });
+    } finally {
+      setSavingExportSettings(false);
     }
   };
 
@@ -1176,11 +1308,11 @@ export default function ProductImportsPage() {
 
         <TabsContent value="exports" className="mt-6 space-y-6">
           <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-white">
-                  Base.com Export Settings
-                </h2>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-white">
+                    Base.com Export Settings
+                  </h2>
                 <p className="mt-1 text-sm text-gray-400">
                   Configure default export settings for Base.com product listings
                 </p>
@@ -1191,7 +1323,7 @@ export default function ProductImportsPage() {
               </div>
             </div>
 
-            <div className="mt-6 space-y-4">
+              <div className="mt-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-gray-400">
@@ -1245,6 +1377,34 @@ export default function ProductImportsPage() {
                 </div>
               </div>
 
+              <div>
+                <label className="text-xs text-gray-400">
+                  Default Warehouse ID
+                </label>
+                <select
+                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                  value={exportWarehouseId}
+                  onChange={(event) => setExportWarehouseId(event.target.value)}
+                  disabled={warehouses.length === 0}
+                >
+                  {warehouses.length === 0 ? (
+                    <option value="">Load warehouses first</option>
+                  ) : (
+                    <>
+                      <option value="">Skip stock export</option>
+                      {warehouses.map((warehouse) => (
+                        <option key={warehouse.id} value={warehouse.id}>
+                          {warehouse.name}
+                        </option>
+                      ))}
+                    </>
+                  )}
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Used for exporting stock quantities to Base.com. Leave blank to skip stock.
+                </p>
+              </div>
+
               <div className="rounded-md border border-blue-900/50 bg-blue-900/20 p-4">
                 <h3 className="text-sm font-semibold text-blue-200">
                   Export Guidelines
@@ -1254,7 +1414,7 @@ export default function ProductImportsPage() {
                   <li>• Without a template, default field mappings are used (SKU, Name, Price, Stock, etc.)</li>
                   <li>• Templates created in the Templates tab work for both import and export</li>
                   <li>• Export to Base.com from Product List → Integrations → List Products → Select Base.com</li>
-                  <li>• Track export jobs in the <Link href="/admin/products/listing-jobs" className="text-blue-400 underline">Listing Jobs</Link> page</li>
+                  <li>• Track export jobs in the <Link href="/admin/products/jobs?tab=export" className="text-blue-400 underline">Export Jobs</Link> tab</li>
                 </ul>
               </div>
 
@@ -1272,7 +1432,23 @@ export default function ProductImportsPage() {
                   >
                     {loadingInventories ? "Loading..." : "Load Inventories"}
                   </Button>
-                  <Link href="/admin/products/listing-jobs">
+                  <Button
+                    onClick={handleLoadWarehouses}
+                    disabled={loadingWarehouses}
+                    variant="outline"
+                    size="sm"
+                    className="border-gray-700"
+                  >
+                    {loadingWarehouses ? "Loading..." : "Load Warehouses"}
+                  </Button>
+                  <Button
+                    onClick={handleSaveExportSettings}
+                    disabled={savingExportSettings}
+                    size="sm"
+                  >
+                    {savingExportSettings ? "Saving..." : "Save Export Settings"}
+                  </Button>
+                  <Link href="/admin/products/jobs?tab=export">
                     <Button
                       variant="outline"
                       size="sm"

@@ -13,6 +13,7 @@ import { getIntegrationRepository } from "@/lib/services/integration-repository"
 import { decryptSecret } from "@/lib/utils/encryption";
 import {
   fetchBaseInventories,
+  fetchBaseWarehouses,
   fetchBaseProducts,
   fetchBaseProductIds,
   fetchBaseProductDetails,
@@ -24,7 +25,7 @@ export const runtime = "nodejs";
 
 const requestSchema = z.object({
   token: z.string().trim().min(1).optional(),
-  action: z.enum(["inventories", "import", "list"]),
+  action: z.enum(["inventories", "warehouses", "import", "list"]),
   inventoryId: z.string().trim().min(1).optional(),
   catalogId: z.string().trim().min(1).optional(),
   templateId: z.string().trim().min(1).optional(),
@@ -71,6 +72,17 @@ export async function POST(req: Request) {
     if (data.action === "inventories") {
       const inventories = await fetchBaseInventories(token);
       return NextResponse.json({ inventories });
+    }
+
+    if (data.action === "warehouses") {
+      if (!data.inventoryId) {
+        return NextResponse.json(
+          { error: "Inventory ID is required." },
+          { status: 400 }
+        );
+      }
+      const warehouses = await fetchBaseWarehouses(token, data.inventoryId);
+      return NextResponse.json({ warehouses });
     }
 
     if (!data.inventoryId) {

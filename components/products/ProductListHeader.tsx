@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo } from "react";
+import { memo } from "react";
 import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +13,7 @@ import {
 import type { Catalog } from "@/types/products";
 
 interface ProductListHeaderProps {
-  onOpenCreateModal: () => Promise<void>;
+  onOpenIntegrationModal: () => void;
   page: number;
   totalPages: number;
   setPage: (page: number) => void;
@@ -30,7 +30,7 @@ interface ProductListHeaderProps {
 }
 
 export const ProductListHeader = memo(function ProductListHeader({
-  onOpenCreateModal,
+  onOpenIntegrationModal,
   page,
   totalPages,
   setPage,
@@ -49,11 +49,9 @@ export const ProductListHeader = memo(function ProductListHeader({
     <div className="mb-4 flex items-center justify-between gap-3">
       <div className="flex items-center gap-3">
         <Button
-          onClick={() => {
-            void onOpenCreateModal();
-          }}
+          onClick={onOpenIntegrationModal}
           className="size-11 rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90"
-          aria-label="Create product"
+          aria-label="Add product to marketplace"
         >
           <PlusIcon className="size-5" />
         </Button>

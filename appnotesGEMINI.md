@@ -10,3 +10,8 @@ add tests
 check Product section optimization opportunities and avoidance of unnecessary re-renders.
 
 run npx tsc and resolve typescript issues one by one
+
+npx prisma generate
+npx prisma migrate dev
+prisma migrate reset
+npx prisma db push

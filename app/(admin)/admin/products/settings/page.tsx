@@ -1000,6 +1000,35 @@ export default function ProductSettingsPage() {
     });
   };
 
+  const removeLanguage = (languageId: string) => {
+    setSelectedLanguageIds((prev) => {
+      const next = prev.filter((id) => id !== languageId);
+      if (!next.includes(defaultLanguageId)) {
+        setDefaultLanguageId(next[0] ?? "");
+      }
+      return next;
+    });
+  };
+
+  const moveLanguage = (languageId: string, direction: "up" | "down") => {
+    setSelectedLanguageIds((prev) => {
+      const index = prev.indexOf(languageId);
+      if (index === -1) return prev;
+
+      const newIndex = direction === "up" ? index - 1 : index + 1;
+      if (newIndex < 0 || newIndex >= prev.length) return prev;
+
+      const next = [...prev];
+      const temp = next[index];
+      const swapItem = next[newIndex];
+      if (temp !== undefined && swapItem !== undefined) {
+        next[index] = swapItem;
+        next[newIndex] = temp;
+      }
+      return next;
+    });
+  };
+
   const toggleCatalogPriceGroup = (groupId: string) => {
     setCatalogPriceGroupIds((prev) => {
       const next = prev.includes(groupId)
@@ -1221,6 +1250,7 @@ export default function ProductSettingsPage() {
               <CatalogsSettings
                 loadingCatalogs={loadingCatalogs}
                 catalogs={catalogs}
+                languages={languages}
                 handleOpenCatalogModal={handleOpenCatalogModal}
                 handleEditCatalog={handleOpenCatalogModal}
                 handleDeleteCatalog={handleDeleteCatalog}
@@ -1363,25 +1393,68 @@ export default function ProductSettingsPage() {
                           setCatalogLanguageQuery(event.target.value)
                         }
                       />
-                      <div className="flex flex-wrap gap-2">
+                      <div className="space-y-1">
                         {selectedLanguages.length === 0 ? (
                           <span className="text-[11px] text-gray-500">
                             No languages selected.
                           </span>
                         ) : (
-                          selectedLanguages.map((language) => (
-                            <button
+                          selectedLanguages.map((language, index) => (
+                            <div
                               key={language.id}
-                              type="button"
-                              className="inline-flex items-center gap-1 rounded-full border border-gray-700 bg-gray-900 px-3 py-1 text-xs text-gray-200 hover:border-gray-500"
-                              onClick={() => toggleLanguage(language.id)}
+                              className="flex items-center justify-between rounded-md border border-gray-700 bg-gray-900 px-3 py-1.5 text-xs text-gray-200"
                             >
-                              {language.name}
-                              <span className="text-gray-500">
-                                ({language.code})
-                              </span>
-                              <span className="text-gray-500">×</span>
-                            </button>
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-500 w-4 text-center">
+                                  {index + 1}.
+                                </span>
+                                <span>
+                                  {language.name}
+                                  <span className="ml-1 text-gray-500">
+                                    ({language.code})
+                                  </span>
+                                </span>
+                                {language.id === defaultLanguageId && (
+                                  <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] text-emerald-300">
+                                    Default
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  className="rounded p-1 text-gray-500 hover:bg-gray-800 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500"
+                                  onClick={() => moveLanguage(language.id, "up")}
+                                  disabled={index === 0}
+                                  title="Move up"
+                                >
+                                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                  </svg>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="rounded p-1 text-gray-500 hover:bg-gray-800 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500"
+                                  onClick={() => moveLanguage(language.id, "down")}
+                                  disabled={index === selectedLanguages.length - 1}
+                                  title="Move down"
+                                >
+                                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                  </svg>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="rounded p-1 text-gray-500 hover:bg-red-500/20 hover:text-red-400"
+                                  onClick={() => removeLanguage(language.id)}
+                                  title="Remove"
+                                >
+                                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
                           ))
                         )}
                       </div>

@@ -7,7 +7,7 @@ import { ProductListHeader } from "@/components/products/ProductListHeader";
 
 describe("ProductListHeader Component", () => {
   const mockProps = {
-    onOpenCreateModal: jest.fn(),
+    onOpenIntegrationModal: jest.fn(),
     page: 1,
     totalPages: 5,
     setPage: jest.fn(),
@@ -46,15 +46,15 @@ describe("ProductListHeader Component", () => {
 
   it("renders title and buttons", () => {
     render(<ProductListHeader {...mockProps} />);
-    
+
     expect(screen.getByText("Products")).toBeInTheDocument();
-    expect(screen.getByLabelText("Create product")).toBeInTheDocument();
+    expect(screen.getByLabelText("Add product to marketplace")).toBeInTheDocument();
   });
 
-  it("calls onOpenCreateModal when create button is clicked", () => {
+  it("calls onOpenIntegrationModal when + button is clicked", () => {
     render(<ProductListHeader {...mockProps} />);
-    fireEvent.click(screen.getByLabelText("Create product"));
-    expect(mockProps.onOpenCreateModal).toHaveBeenCalled();
+    fireEvent.click(screen.getByLabelText("Add product to marketplace"));
+    expect(mockProps.onOpenIntegrationModal).toHaveBeenCalled();
   });
 
   it("renders pagination info correctly", () => {
@@ -66,7 +66,7 @@ describe("ProductListHeader Component", () => {
     render(<ProductListHeader {...mockProps} page={2} />);
     fireEvent.click(screen.getByText("Prev"));
     expect(mockProps.setPage).toHaveBeenCalledWith(1);
-    
+
     fireEvent.click(screen.getByText("Next"));
     expect(mockProps.setPage).toHaveBeenCalledWith(3);
   });

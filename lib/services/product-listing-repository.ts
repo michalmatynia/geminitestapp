@@ -40,6 +40,7 @@ export type ProductListingRepository = {
   getListingById: (id: string) => Promise<ProductListingRecord | null>;
   createListing: (input: CreateProductListingInput) => Promise<ProductListingWithDetails>;
   updateListingExternalId: (id: string, externalListingId: string) => Promise<void>;
+  updateListingStatus: (id: string, status: string) => Promise<void>;
   deleteListing: (id: string) => Promise<void>;
   listingExists: (productId: string, connectionId: string) => Promise<boolean>;
   listAllListings: () => Promise<Array<Pick<ProductListingRecord, "productId" | "status">>>;
@@ -117,6 +118,13 @@ const prismaRepository: ProductListingRepository = {
     await prisma.productListing.update({
       where: { id },
       data: { externalListingId },
+    });
+  },
+
+  updateListingStatus: async (id, status) => {
+    await prisma.productListing.update({
+      where: { id },
+      data: { status, listedAt: status === "active" ? new Date() : undefined },
     });
   },
 
@@ -249,6 +257,17 @@ const mongoRepository: ProductListingRepository = {
     await db
       .collection<ProductListingDocument>(LISTINGS_COLLECTION)
       .updateOne({ _id: id }, { $set: { externalListingId, updatedAt: new Date() } });
+  },
+
+  updateListingStatus: async (id, status) => {
+    const db = await getMongoDb();
+    const updateData: Record<string, unknown> = { status, updatedAt: new Date() };
+    if (status === "active") {
+      updateData.listedAt = new Date();
+    }
+    await db
+      .collection<ProductListingDocument>(LISTINGS_COLLECTION)
+      .updateOne({ _id: id }, { $set: updateData });
   },
 
   deleteListing: async (id) => {

@@ -438,7 +438,8 @@ export function ProductFormProvider({
     if (allowedLanguageIds.size === 0) {
       return languages;
     }
-    return languages.filter((language) => allowedLanguageIds.has(language.id));
+    const filtered = languages.filter((language) => allowedLanguageIds.has(language.id));
+    return filtered.length > 0 ? filtered : languages;
   }, [languages, catalogs, selectedCatalogIds]);
 
   const filteredPriceGroups = useMemo(() => {

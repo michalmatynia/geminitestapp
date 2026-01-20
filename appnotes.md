@@ -5,15 +5,18 @@ Can't edit product
 
 Is Product list wired to MongoDB ?
 
-Clicking house I should see the status of the export job (if house yellow) and sync optins if it's green
+In Products List - Clicking house I should see the status of the export job (if house yellow) and sync optins if it's green
 
-I need an option to import a specific product only
+Move Export Jobs into AI Jobs, by create a separate Tab one for Import and one for Export Jobs.
+
+* I need an option to import one specific product only (found by SKU or Base product id)
 
 * View Listing Jobs in Product Export is not working
 
 * The Export of of Products is not going through
 I cannot stop or cancel the export when it is in Pending. 
 
+When I move the note to folder, do not uncollapse the folder. 
 
 * when importing / exporting products to / from Base.com, consider also duplicate SKUs, usually they have to be unique (make optional if I want to import / export with duplicate SKUs)
 
@@ -37,10 +40,6 @@ Notebook App, when I create a new notebook, I should have the option to choose w
 * -Product default price group is the default Catalog price group, I don't need to make that selection for every single product, it's automatic.
 -default price group still asks me to select from dropdown
 * When a product is a added to a Catalog, its default Price Group is the one set in the Catalog. I should not need to make this additional when I create the product. Other non default pricegroups should also be visible in product Edit / Create panel. If the price group is dependent on a default price group, both the calculated price and the price group should be visible in product Edit / Create panel.*
-
-
-
-
 
 Check that ->In my Edit / Create Product Page, make the Catalogs Field a dropdown and move it to Other Tab
 

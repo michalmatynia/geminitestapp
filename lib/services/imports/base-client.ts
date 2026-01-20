@@ -306,7 +306,7 @@ export async function checkBaseSkuExists(
           });
           if (match) {
             const productId = toStringId(match.product_id ?? match.id);
-            return { exists: true, productId: productId ?? undefined };
+            return productId ? { exists: true, productId } : { exists: true };
           }
         }
       } catch {
@@ -329,7 +329,7 @@ export async function checkBaseSkuExists(
       });
       if (match) {
         const productId = toStringId(match.product_id ?? match.id);
-        return { exists: true, productId: productId ?? undefined };
+        return productId ? { exists: true, productId } : { exists: true };
       }
     }
 

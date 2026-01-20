@@ -162,23 +162,29 @@ export async function POST(
       const exists = await listingRepo.listingExists(productId, data.connectionId);
 
       if (!exists) {
-        await listingRepo.createListing({
+        const newListing = await listingRepo.createListing({
           productId,
           integrationId: baseIntegration.id,
           connectionId: data.connectionId,
           externalListingId: result.productId || null,
         });
+        // Update status to active since export was successful
+        await listingRepo.updateListingStatus(newListing.id, "active");
       } else {
-        // Update existing listing with external ID
+        // Update existing listing with external ID and status
         const listings = await listingRepo.getListingsByProductId(productId);
         const existingListing = listings.find(
           (l) => l.connectionId === data.connectionId
         );
-        if (existingListing && result.productId) {
-          await listingRepo.updateListingExternalId(
-            existingListing.id,
-            result.productId
-          );
+        if (existingListing) {
+          if (result.productId) {
+            await listingRepo.updateListingExternalId(
+              existingListing.id,
+              result.productId
+            );
+          }
+          // Update status to active since export was successful
+          await listingRepo.updateListingStatus(existingListing.id, "active");
         }
       }
     }

@@ -450,7 +450,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
                               targetHostname,
                             });
                           }
-                          searchUrl = resolvedPicked || allowedResults[0]?.url ?? null;
+                          searchUrl = (resolvedPicked || allowedResults[0]?.url) ?? null;
                           if (searchUrl) {
                             await log("info", "Search escalation selected URL.", {
                               stepId: activeStepId ?? null,
@@ -509,7 +509,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
                           targetHostname,
                         });
                       }
-                      searchUrl = resolvedPicked || allowedResults[0]?.url ?? null;
+                      searchUrl = (resolvedPicked || allowedResults[0]?.url) ?? null;
                       if (searchUrl) {
                           await log("info", "Search escalation selected URL.", {
                             stepId: activeStepId ?? null,

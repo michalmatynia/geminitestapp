@@ -100,22 +100,43 @@ function applyExportTemplateMappings(
 /**
  * Build Base.com product data from internal product
  * Applies default mapping + optional template mappings
+ * Returns data in Baselinker API format
  */
 export function buildBaseProductData(
   product: ProductWithImages,
   mappings: ExportTemplateMapping[] = []
 ): BaseProductRecord {
-  // Start with default field mappings
+  // Start with default field mappings in Baselinker API format
   const baseData: BaseProductRecord = {};
 
-  // Map standard fields
+  // SKU is required
   if (product.sku) baseData.sku = product.sku;
-  if (product.name_en) baseData.name = product.name_en;
-  if (product.description_en) baseData.description = product.description_en;
-  if (product.price !== null) baseData.price_brutto = product.price;
-  if (product.stock !== null) baseData.stock = product.stock;
+
+  // EAN (optional)
   if (product.ean) baseData.ean = product.ean;
+
+  // Weight (optional)
   if (product.weight !== null) baseData.weight = product.weight;
+
+  // Text fields (name, description, etc.) go in text_fields object
+  const textFields: Record<string, string> = {};
+  if (product.name_en) textFields.name = product.name_en;
+  if (product.description_en) textFields.description = product.description_en;
+  if (Object.keys(textFields).length > 0) {
+    baseData.text_fields = textFields;
+  }
+
+  // Prices need to be in format: { "price_group_id": price_value }
+  // Using a default price group - this may need configuration
+  if (product.price !== null) {
+    baseData.prices = { "0": product.price };
+  }
+
+  // Stock needs to be in format: { "warehouse_id": quantity }
+  // Using a default warehouse - this may need configuration
+  if (product.stock !== null) {
+    baseData.stock = { "bl_0": product.stock };
+  }
 
   // Apply template mappings (these override defaults)
   if (mappings.length > 0) {
@@ -141,37 +162,37 @@ export async function exportProductToBase(
     console.log("[base-exporter] Built product data for export", {
       productId: product.id,
       sku: productData.sku,
-      hasName: Boolean(productData.name),
-      hasPrice: productData.price_brutto !== undefined,
-      hasStock: productData.stock !== undefined,
+      hasTextFields: Boolean(productData.text_fields),
+      hasPrices: Boolean(productData.prices),
+      hasStock: Boolean(productData.stock),
       fieldCount: Object.keys(productData).length,
     });
 
-    // Use Base.com API method to add product to inventory
+    // Build API parameters - inventory_id + all product fields as top-level params
+    const apiParams: Record<string, unknown> = {
+      inventory_id: inventoryId,
+      ...productData,
+    };
+
     console.log("[base-exporter] Sending to Base.com API", {
       method: "addInventoryProduct",
       inventoryId,
+      params: apiParams,
     });
 
-    const response = await callBaseApi(token, "addInventoryProduct", {
-      inventory_id: inventoryId,
-      products: [productData],
-    });
+    const response = await callBaseApi(token, "addInventoryProduct", apiParams);
 
     console.log("[base-exporter] Base.com API response", {
       status: response.status,
-      hasProducts: Boolean(response.products),
-      productCount: Array.isArray(response.products) ? response.products.length : 0,
+      productId: response.product_id,
+      response,
     });
 
     // Extract product ID from response
-    // Base.com API typically returns { status: "SUCCESS", products: [...] }
-    const products = response.products || [];
-    const createdProduct = Array.isArray(products) ? products[0] : null;
-    const productId =
-      createdProduct && typeof createdProduct === "object"
-        ? String((createdProduct as Record<string, unknown>).product_id || "")
-        : null;
+    // Baselinker API returns { status: "SUCCESS", product_id: "..." }
+    const productId = response.product_id
+      ? String(response.product_id)
+      : null;
 
     console.log("[base-exporter] Export completed", {
       success: true,

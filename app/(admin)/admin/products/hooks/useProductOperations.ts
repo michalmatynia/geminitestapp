@@ -21,6 +21,9 @@ export function useProductOperations(setRefreshTrigger: React.Dispatch<React.Set
   const [integrationBadgeIds, setIntegrationBadgeIds] = useState<Set<string>>(() => new Set());
   const [integrationBadgeStatuses, setIntegrationBadgeStatuses] = useState<Map<string, string>>(() => new Map());
 
+  // Export settings state - opens ListProductModal directly for products with existing listings
+  const [exportSettingsProduct, setExportSettingsProduct] = useState<ProductWithImages | null>(null);
+
   // Load listing badges
   useEffect(() => {
     let mounted = true;
@@ -102,6 +105,15 @@ export function useProductOperations(setRefreshTrigger: React.Dispatch<React.Set
     setTimeout(() => { setIntegrationsProduct(currentProduct); }, 100);
   };
 
+  // Handle export settings success (when opened via Store icon)
+  const handleExportSettingsSuccess = () => {
+    if (exportSettingsProduct?.id) {
+      setIntegrationBadgeIds((prev) => new Set(prev).add(exportSettingsProduct.id));
+      setIntegrationBadgeStatuses((prev) => new Map(prev).set(exportSettingsProduct.id, "pending"));
+    }
+    setExportSettingsProduct(null);
+  };
+
   return {
     isCreateOpen,
     setIsCreateOpen,
@@ -117,9 +129,12 @@ export function useProductOperations(setRefreshTrigger: React.Dispatch<React.Set
     setShowListProductModal,
     integrationBadgeIds,
     integrationBadgeStatuses,
+    exportSettingsProduct,
+    setExportSettingsProduct,
     handleOpenCreateModal,
     handleCreateSuccess,
     handleEditSuccess,
     handleListProductSuccess,
+    handleExportSettingsSuccess,
   };
 }

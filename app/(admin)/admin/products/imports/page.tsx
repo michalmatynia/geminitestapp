@@ -32,6 +32,7 @@ type ImportListItem = {
   name: string;
   sku: string | null;
   exists: boolean;
+  skuExists?: boolean; // SKU already exists in local database
   description?: string;
   price?: number;
   stock?: number;
@@ -101,9 +102,11 @@ export default function ProductImportsPage() {
     total: number;
     filtered: number;
     existing: number;
+    skuDuplicates?: number;
   } | null>(null);
   const [loadingImportList, setLoadingImportList] = useState(false);
   const [uniqueOnly, setUniqueOnly] = useState(true);
+  const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [templateId, setTemplateId] = useState("");
@@ -751,17 +754,20 @@ export default function ProductImportsPage() {
           limit: parsedLimit,
           imageMode,
           uniqueOnly,
+          allowDuplicateSku,
         }),
       });
       const payload = (await res.json()) as ImportResponse & {
         error?: string;
+        skipped?: number;
       };
       if (!res.ok) {
         toast(payload.error || "Import failed.", { variant: "error" });
         return;
       }
       setLastResult(payload);
-      toast(`Imported ${payload.imported} product(s).`, {
+      const skippedMsg = payload.skipped ? `, ${payload.skipped} skipped (duplicate SKU)` : "";
+      toast(`Imported ${payload.imported} product(s)${skippedMsg}.`, {
         variant: "success",
       });
     } catch (error) {
@@ -796,6 +802,7 @@ export default function ProductImportsPage() {
         total?: number;
         filtered?: number;
         existing?: number;
+        skuDuplicates?: number;
         error?: string;
       };
       if (!res.ok) {
@@ -811,6 +818,7 @@ export default function ProductImportsPage() {
               total: payload.total ?? 0,
               filtered: payload.filtered ?? 0,
               existing: payload.existing ?? 0,
+              skuDuplicates: payload.skuDuplicates ?? 0,
             }
           : null
       );
@@ -1005,6 +1013,24 @@ export default function ProductImportsPage() {
                     uploads folder.
                   </p>
                 </div>
+                <div>
+                  <label className="text-xs text-gray-400">SKU Handling</label>
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="allowDuplicateSku"
+                      checked={allowDuplicateSku}
+                      onChange={(e) => setAllowDuplicateSku(e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-700 bg-gray-900 text-blue-500"
+                    />
+                    <label htmlFor="allowDuplicateSku" className="text-sm text-white">
+                      Allow duplicate SKUs
+                    </label>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    When unchecked, products with existing SKUs will be skipped.
+                  </p>
+                </div>
               </div>
 
               <div className="flex items-center justify-between gap-4">
@@ -1053,6 +1079,9 @@ export default function ProductImportsPage() {
               <div className="mt-3 text-xs text-gray-400">
                 Total: {importListStats.total} · Existing:{" "}
                 {importListStats.existing} · Showing: {importListStats.filtered}
+                {importListStats.skuDuplicates ? (
+                  <span className="text-yellow-400"> · SKU duplicates: {importListStats.skuDuplicates}</span>
+                ) : null}
               </div>
             ) : null}
 
@@ -1098,17 +1127,18 @@ export default function ProductImportsPage() {
                         </div>
                       )}
                     </div>
-                    <span className="truncate font-mono text-[11px] text-gray-400">
+                    <span className={`truncate font-mono text-[11px] ${item.skuExists ? "text-yellow-400" : "text-gray-400"}`}>
                       {item.sku ?? "—"}
+                      {item.skuExists && <span className="ml-1" title="SKU already exists">⚠</span>}
                     </span>
                     <span className="truncate">{item.price ?? 0}</span>
                     <span className="truncate">{item.stock ?? 0}</span>
                     <span
                       className={`text-[11px] font-medium ${
-                        item.exists ? "text-amber-400" : "text-emerald-400"
+                        item.exists ? "text-amber-400" : item.skuExists ? "text-yellow-400" : "text-emerald-400"
                       }`}
                     >
-                      {item.exists ? "Exists" : "New"}
+                      {item.exists ? "Exists" : item.skuExists ? "SKU dup" : "New"}
                     </span>
                   </div>
                 ))}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { RefreshCw, ExternalLink, Clock, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { RefreshCw, ExternalLink, Clock, CheckCircle, XCircle, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type ListingJob = {
@@ -66,6 +66,7 @@ export default function ProductListingJobsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const fetchJobs = async () => {
     try {
@@ -91,22 +92,60 @@ export default function ProductListingJobsPage() {
     setRefreshing(false);
   };
 
+  const handleCancelListing = async (productId: string, listingId: string) => {
+    if (!window.confirm("Cancel this listing job? This will remove it from the queue.")) {
+      return;
+    }
+
+    try {
+      setDeleting(listingId);
+      const res = await fetch(`/api/products/${productId}/listings/${listingId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to cancel listing");
+      }
+
+      // Remove from local state
+      setJobs((prev) =>
+        prev
+          .map((job) => ({
+            ...job,
+            listings: job.listings.filter((l) => l.id !== listingId),
+          }))
+          .filter((job) => job.listings.length > 0)
+      );
+    } catch (err) {
+      console.error("Failed to cancel listing:", err);
+      setError(err instanceof Error ? err.message : "Failed to cancel listing");
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  // Initial fetch
   useEffect(() => {
     void fetchJobs();
+  }, []);
 
-    // Auto-refresh every 10 seconds for pending jobs
+  // Polling - only when there are pending/processing jobs
+  useEffect(() => {
+    const hasPending = jobs.some((job) =>
+      job.listings.some(
+        (listing) =>
+          listing.status === "pending" ||
+          listing.status === "processing" ||
+          listing.status === "in_progress"
+      )
+    );
+
+    if (!hasPending) {
+      return; // Don't poll if no pending jobs
+    }
+
     const interval = setInterval(() => {
-      const hasPending = jobs.some((job) =>
-        job.listings.some(
-          (listing) =>
-            listing.status === "pending" ||
-            listing.status === "processing" ||
-            listing.status === "in_progress"
-        )
-      );
-      if (hasPending) {
-        void fetchJobs();
-      }
+      void fetchJobs();
     }, 10000);
 
     return () => clearInterval(interval);
@@ -298,6 +337,17 @@ export default function ProductListingJobsPage() {
                             <span className="text-xs text-gray-500">
                               ID: {listing.externalListingId}
                             </span>
+                          )}
+                          {(listing.status === "pending" || listing.status === "failed") && (
+                            <button
+                              type="button"
+                              onClick={() => void handleCancelListing(job.productId, listing.id)}
+                              disabled={deleting === listing.id}
+                              className="rounded p-1.5 text-gray-400 hover:bg-gray-800 hover:text-red-400 disabled:opacity-50"
+                              title="Cancel listing"
+                            >
+                              <Trash2 className="size-4" />
+                            </button>
                           )}
                         </div>
                       </div>

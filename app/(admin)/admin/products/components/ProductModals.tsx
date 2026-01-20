@@ -28,6 +28,10 @@ interface ProductModalsProps {
   onOpenListProduct: () => void;
   onCloseListProduct: () => void;
   onListProductSuccess: () => void;
+  // Export settings (opened via Store icon)
+  exportSettingsProduct?: ProductWithImages | null;
+  onCloseExportSettings?: () => void;
+  onExportSettingsSuccess?: () => void;
 }
 
 function CreateProductModalContent({ onClose }: { onClose: () => void }) {
@@ -119,6 +123,9 @@ export function ProductModals({
   onOpenListProduct,
   onCloseListProduct,
   onListProductSuccess,
+  exportSettingsProduct,
+  onCloseExportSettings,
+  onExportSettingsSuccess,
 }: ProductModalsProps) {
   return (
     <>
@@ -180,6 +187,21 @@ export function ProductModals({
               product={integrationsProduct}
               onClose={onCloseListProduct}
               onSuccess={onListProductSuccess}
+            />
+          </div>
+        </div>
+      )}
+
+      {exportSettingsProduct && onCloseExportSettings && onExportSettingsSuccess && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          onClick={onCloseExportSettings}
+        >
+          <div onClick={(e) => e.stopPropagation()}>
+            <ListProductModal
+              product={exportSettingsProduct}
+              onClose={onCloseExportSettings}
+              onSuccess={onExportSettingsSuccess}
             />
           </div>
         </div>

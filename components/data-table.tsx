@@ -33,6 +33,7 @@ interface DataTableProps<TData> {
   onProductNameClick?: (row: TData) => void;
   onProductEditClick?: (row: TData) => void;
   onIntegrationsClick?: (row: TData) => void;
+  onExportSettingsClick?: (row: TData) => void;
   integrationBadgeIds?: Set<string>;
   integrationBadgeStatuses?: Map<string, string>;
   getRowId?: (row: TData) => string | number;
@@ -48,6 +49,7 @@ declare module "@tanstack/react-table" {
     onProductNameClick?: (row: TData) => void;
     onProductEditClick?: (row: TData) => void;
     onIntegrationsClick?: (row: TData) => void;
+    onExportSettingsClick?: (row: TData) => void;
     integrationBadgeIds?: Set<string>;
     integrationBadgeStatuses?: Map<string, string>;
   }
@@ -63,6 +65,7 @@ export const DataTable = memo(function DataTable<TData>({
   onProductNameClick,
   onProductEditClick,
   onIntegrationsClick,
+  onExportSettingsClick,
   integrationBadgeIds,
   integrationBadgeStatuses,
   getRowId,
@@ -120,6 +123,7 @@ export const DataTable = memo(function DataTable<TData>({
       ...(onProductNameClick ? { onProductNameClick } : {}),
       ...(onProductEditClick ? { onProductEditClick } : {}),
       ...(onIntegrationsClick ? { onIntegrationsClick } : {}),
+      ...(onExportSettingsClick ? { onExportSettingsClick } : {}),
       ...(integrationBadgeIds ? { integrationBadgeIds } : {}),
       ...(integrationBadgeStatuses ? { integrationBadgeStatuses } : {}),
     },

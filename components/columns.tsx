@@ -335,12 +335,14 @@ export const columns: ColumnDef<ProductWithImages>[] = [
       const meta = table.options.meta as
         | {
             onIntegrationsClick?: (p: ProductWithImages) => void;
+            onExportSettingsClick?: (p: ProductWithImages) => void;
             integrationBadgeIds?: Set<string>;
             integrationBadgeStatuses?: Map<string, string>;
           }
         | undefined;
 
       const handleClick = meta?.onIntegrationsClick;
+      const handleExportClick = meta?.onExportSettingsClick;
       if (!handleClick) return null;
       const showMarketplaceBadge =
         meta?.integrationBadgeIds?.has(product.id) ?? false;
@@ -364,13 +366,15 @@ export const columns: ColumnDef<ProductWithImages>[] = [
             <PlusCircle className="size-5" />
           </button>
           {showMarketplaceBadge && (
-            <span
-              className={`inline-flex items-center ${badgeClass}`}
-              title={`Marketplace status: ${status}`}
-              aria-label={`Marketplace status: ${status}`}
+            <button
+              type="button"
+              onClick={() => handleExportClick?.(product)}
+              className={`inline-flex size-6 items-center justify-center rounded-full hover:bg-gray-800 ${badgeClass}`}
+              title={`Marketplace status: ${status} - Click for export settings`}
+              aria-label={`Export settings - status: ${status}`}
             >
               <Store className="size-3.5" />
-            </span>
+            </button>
           )}
         </div>
       );

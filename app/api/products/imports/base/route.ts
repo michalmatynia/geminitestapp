@@ -31,6 +31,7 @@ const requestSchema = z.object({
   limit: z.coerce.number().int().positive().optional(),
   imageMode: z.enum(["links", "download"]).optional(),
   uniqueOnly: z.boolean().optional(),
+  allowDuplicateSku: z.boolean().optional(), // Allow importing products with duplicate SKUs
 });
 
 export async function POST(req: Request) {
@@ -81,8 +82,8 @@ export async function POST(req: Request) {
 
     if (data.action === "list") {
       const allBaseIds = await fetchBaseProductIds(token, data.inventoryId);
-      
-      // Get existing products using repository to check for baseProductIds
+
+      // Get existing products using repository to check for baseProductIds and SKUs
       const productRepository = await getProductRepository();
       const allProducts = await productRepository.getProducts({
         pageSize: "10000", // Get all products
@@ -92,6 +93,11 @@ export async function POST(req: Request) {
         allProducts
           .map((product: any) => product.baseProductId)
           .filter((id): id is string => typeof id === "string")
+      );
+      const existingSkus = new Set(
+        allProducts
+          .map((product: any) => product.sku)
+          .filter((sku): sku is string => typeof sku === "string" && sku.trim() !== "")
       );
 
       const listItems = allBaseIds.map((id) => ({
@@ -139,7 +145,7 @@ export async function POST(req: Request) {
             toStringId(record.base_product_id) ??
             toStringId(record.product_id) ??
             toStringId(record.id);
-          
+
           // Prioritize EN, then PL, then DE, then raw name
           const name =
             mapped.name_en ??
@@ -147,17 +153,21 @@ export async function POST(req: Request) {
             mapped.name_de ??
             (typeof record.name === "string" ? record.name : "Unnamed");
 
-          const description = 
-            mapped.description_en ?? 
-            mapped.description_pl ?? 
-            mapped.description_de ?? 
+          const description =
+            mapped.description_en ??
+            mapped.description_pl ??
+            mapped.description_de ??
             "";
+
+          const sku = mapped.sku ?? null;
+          const skuExists = sku ? existingSkus.has(sku) : false;
 
           return {
             baseProductId: baseProductId ?? null,
             name,
-            sku: mapped.sku ?? null,
+            sku,
             exists: baseProductId ? existingIds.has(baseProductId) : false,
+            skuExists, // New field to indicate SKU already exists
             description: description.slice(0, 100),
             price: mapped.price ?? 0,
             stock: mapped.stock ?? 0,
@@ -166,11 +176,14 @@ export async function POST(req: Request) {
         })
         .filter((item) => item.baseProductId);
 
+      const skuDuplicateCount = mappedList.filter((item) => item.skuExists).length;
+
       return NextResponse.json({
         products: mappedList,
         total: listItems.length,
         filtered: filteredItems.length,
         existing: listItems.filter((item) => item.exists).length,
+        skuDuplicates: skuDuplicateCount, // New stat
       });
     }
 
@@ -182,13 +195,17 @@ export async function POST(req: Request) {
     ]);
 
     let productsToImport = products;
+    let existingSkus: Set<string> | null = null;
+    const allowDuplicateSku = data.allowDuplicateSku ?? false;
 
-    if (data.uniqueOnly) {
-        // Check for duplicates
-        const allProducts = await productRepository.getProducts({
-          pageSize: "10000",
-          page: "0",
-        });
+    // Pre-fetch existing products for filtering
+    if (data.uniqueOnly || !allowDuplicateSku) {
+      const allProducts = await productRepository.getProducts({
+        pageSize: "10000",
+        page: "0",
+      });
+
+      if (data.uniqueOnly) {
         const existingIds = new Set(
           allProducts
             .map((product: any) => product.baseProductId)
@@ -196,20 +213,29 @@ export async function POST(req: Request) {
         );
 
         const toStringId = (value: unknown): string | null => {
-            if (typeof value === "string" && value.trim()) return value.trim();
-            if (typeof value === "number" && Number.isFinite(value)) {
-              return String(value);
-            }
-            return null;
+          if (typeof value === "string" && value.trim()) return value.trim();
+          if (typeof value === "number" && Number.isFinite(value)) {
+            return String(value);
+          }
+          return null;
         };
 
         productsToImport = products.filter((record) => {
-            const baseProductId =
-                toStringId(record.base_product_id) ??
-                toStringId(record.product_id) ??
-                toStringId(record.id);
-            return baseProductId ? !existingIds.has(baseProductId) : true;
+          const baseProductId =
+            toStringId(record.base_product_id) ??
+            toStringId(record.product_id) ??
+            toStringId(record.id);
+          return baseProductId ? !existingIds.has(baseProductId) : true;
         });
+      }
+
+      if (!allowDuplicateSku) {
+        existingSkus = new Set(
+          allProducts
+            .map((product: any) => product.sku)
+            .filter((sku): sku is string => typeof sku === "string" && sku.trim() !== "")
+        );
+      }
     }
 
     const template = data.templateId
@@ -262,6 +288,7 @@ export async function POST(req: Request) {
     }
     let imported = 0;
     let failed = 0;
+    let skipped = 0; // Skipped due to duplicate SKU
     const errors: string[] = [];
 
     const isSkuConflict = (error: unknown) => {
@@ -319,6 +346,15 @@ export async function POST(req: Request) {
       try {
         const mapped = mapBaseProduct(raw, template?.mappings ?? []);
 
+        // Check for duplicate SKU if not allowed
+        if (existingSkus && mapped.sku && existingSkus.has(mapped.sku)) {
+          skipped += 1;
+          if (errors.length < 10) {
+            errors.push(`Skipped: SKU "${mapped.sku}" already exists`);
+          }
+          continue;
+        }
+
         // mapped.imageLinks already contains base images + mapped overrides
         const imageUrls = (mapped.imageLinks ?? []).slice(0, maxImages);
         const payload = productCreateSchema.parse({
@@ -329,6 +365,11 @@ export async function POST(req: Request) {
         const created = await productRepository.createProduct(payload);
         if (!created && payload.sku) {
           throw new Error("Failed to create product.");
+        }
+
+        // Track newly added SKU to prevent duplicates within this import batch
+        if (existingSkus && payload.sku) {
+          existingSkus.add(payload.sku);
         }
         await productRepository.replaceProductCatalogs(created.id, [
           targetCatalog.id,
@@ -444,6 +485,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       imported,
       failed,
+      skipped, // Products skipped due to duplicate SKU
       errors,
       total: productsToImport.length,
     });

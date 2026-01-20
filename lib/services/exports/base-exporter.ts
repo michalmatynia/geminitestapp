@@ -138,10 +138,30 @@ export async function exportProductToBase(
   try {
     const productData = buildBaseProductData(product, mappings);
 
+    console.log("[base-exporter] Built product data for export", {
+      productId: product.id,
+      sku: productData.sku,
+      hasName: Boolean(productData.name),
+      hasPrice: productData.price_brutto !== undefined,
+      hasStock: productData.stock !== undefined,
+      fieldCount: Object.keys(productData).length,
+    });
+
     // Use Base.com API method to add product to inventory
+    console.log("[base-exporter] Sending to Base.com API", {
+      method: "addInventoryProduct",
+      inventoryId,
+    });
+
     const response = await callBaseApi(token, "addInventoryProduct", {
       inventory_id: inventoryId,
       products: [productData],
+    });
+
+    console.log("[base-exporter] Base.com API response", {
+      status: response.status,
+      hasProducts: Boolean(response.products),
+      productCount: Array.isArray(response.products) ? response.products.length : 0,
     });
 
     // Extract product ID from response
@@ -153,12 +173,21 @@ export async function exportProductToBase(
         ? String((createdProduct as Record<string, unknown>).product_id || "")
         : null;
 
+    console.log("[base-exporter] Export completed", {
+      success: true,
+      externalProductId: productId,
+    });
+
     return {
       success: true,
       ...(productId ? { productId } : {}),
     };
   } catch (error) {
-    console.error("Failed to export product to Base.com:", error);
+    console.error("[base-exporter] Export failed", {
+      productId: product.id,
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",

@@ -260,8 +260,83 @@ export async function fetchBaseProducts(
   const ids = await fetchBaseProductIds(token, inventoryId);
   const targetIds =
     typeof limit === "number" && limit > 0 ? ids.slice(0, limit) : ids;
-  
+
   if (targetIds.length === 0) return [];
 
   return fetchBaseProductDetails(token, inventoryId, targetIds);
+}
+
+/**
+ * Check if a SKU already exists in a Base.com inventory
+ * Returns the product ID if found, null otherwise
+ */
+export async function checkBaseSkuExists(
+  token: string,
+  inventoryId: string,
+  sku: string
+): Promise<{ exists: boolean; productId?: string }> {
+  try {
+    // Use getInventoryProductsData with filter parameter if available
+    // Otherwise fetch all and filter locally
+    const candidates = [
+      {
+        method: "getInventoryProductsList",
+        paramKey: "inventory_id",
+      },
+      {
+        method: "getProductsList",
+        paramKey: "storage_id",
+      },
+    ];
+
+    for (const candidate of candidates) {
+      try {
+        // Try with filter first (some API versions support this)
+        const payload = await callBaseApi(token, candidate.method, {
+          [candidate.paramKey]: inventoryId,
+          filter_sku: sku,
+        });
+        const ids = extractProductIds(payload);
+        if (ids.length > 0) {
+          // Verify by fetching details
+          const details = await fetchBaseProductDetails(token, inventoryId, ids);
+          const match = details.find((p) => {
+            const pSku = p.sku ?? p.SKU ?? p.Sku;
+            return typeof pSku === "string" && pSku.toLowerCase() === sku.toLowerCase();
+          });
+          if (match) {
+            const productId = toStringId(match.product_id ?? match.id);
+            return { exists: true, productId: productId ?? undefined };
+          }
+        }
+      } catch {
+        // Filter might not be supported, continue
+      }
+    }
+
+    // Fallback: Fetch all products and check SKU locally (expensive but reliable)
+    const allIds = await fetchBaseProductIds(token, inventoryId);
+    if (allIds.length === 0) return { exists: false };
+
+    // Fetch in batches to avoid timeout
+    const batchSize = 100;
+    for (let i = 0; i < allIds.length; i += batchSize) {
+      const batch = allIds.slice(i, i + batchSize);
+      const products = await fetchBaseProductDetails(token, inventoryId, batch);
+      const match = products.find((p) => {
+        const pSku = p.sku ?? p.SKU ?? p.Sku;
+        return typeof pSku === "string" && pSku.toLowerCase() === sku.toLowerCase();
+      });
+      if (match) {
+        const productId = toStringId(match.product_id ?? match.id);
+        return { exists: true, productId: productId ?? undefined };
+      }
+    }
+
+    return { exists: false };
+  } catch (error) {
+    console.error("[base-client] Error checking SKU existence:", error);
+    // On error, assume SKU doesn't exist to avoid blocking export
+    return { exists: false };
+  }
 }

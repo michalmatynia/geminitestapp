@@ -74,7 +74,12 @@ function AdminPageInner() {
     catalogFilter,
     setCatalogFilter,
     loadError,
-  } = useProductData({ refreshTrigger });
+  } = useProductData({
+    refreshTrigger,
+    initialCatalogFilter: preferences.catalogFilter,
+    initialPageSize: preferences.pageSize,
+    preferencesLoaded: !preferencesLoading,
+  });
 
   const {
     catalogs,
@@ -98,22 +103,21 @@ function AdminPageInner() {
     setShowListProductModal,
     integrationBadgeIds,
     integrationBadgeStatuses,
+    exportSettingsProduct,
+    setExportSettingsProduct,
     handleOpenCreateModal,
     handleCreateSuccess,
     handleEditSuccess,
     handleListProductSuccess,
+    handleExportSettingsSuccess,
   } = useProductOperations(setRefreshTrigger);
 
-  // Initialize state from preferences
+  // Initialize currency code from preferences (catalog filter and page size are handled by useProductData)
   useEffect(() => {
-    if (!preferencesLoading) {
-      setCatalogFilter(preferences.catalogFilter);
-      setPageSize(preferences.pageSize);
-      if (preferences.currencyCode) {
-        setCurrencyCode(preferences.currencyCode);
-      }
+    if (!preferencesLoading && preferences.currencyCode) {
+      setCurrencyCode(preferences.currencyCode);
     }
-  }, [preferencesLoading, preferences, setCatalogFilter, setPageSize, setCurrencyCode]);
+  }, [preferencesLoading, preferences.currencyCode, setCurrencyCode]);
 
   const handleOpenEditModal = useCallback((product: ProductWithImages) => {
     setEditingProduct(product);
@@ -122,6 +126,10 @@ function AdminPageInner() {
   const handleOpenIntegrationsModal = useCallback((product: ProductWithImages) => {
     setIntegrationsProduct(product);
   }, [setIntegrationsProduct]);
+
+  const handleOpenExportSettings = useCallback((product: ProductWithImages) => {
+    setExportSettingsProduct(product);
+  }, [setExportSettingsProduct]);
 
   const handleSetActionError = useCallback((error: string | null) => {
     setActionError(error);
@@ -308,6 +316,7 @@ function AdminPageInner() {
           onProductNameClick={handleOpenEditModal}
           onProductEditClick={handleOpenEditModal}
           onIntegrationsClick={handleOpenIntegrationsModal}
+          onExportSettingsClick={handleOpenExportSettings}
           integrationBadgeIds={integrationBadgeIds}
           integrationBadgeStatuses={integrationBadgeStatuses}
           getRowId={(row) => row.id}
@@ -331,6 +340,9 @@ function AdminPageInner() {
         onOpenListProduct={handleOpenListProduct}
         onCloseListProduct={handleCloseListProduct}
         onListProductSuccess={handleListProductSuccess}
+        exportSettingsProduct={exportSettingsProduct}
+        onCloseExportSettings={() => setExportSettingsProduct(null)}
+        onExportSettingsSuccess={handleExportSettingsSuccess}
       />
     </div>
   );

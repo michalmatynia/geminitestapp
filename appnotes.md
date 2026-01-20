@@ -1,32 +1,35 @@
 add proper debugging on visual studio code
 
-## Error Type
-Console Error
+
+Can't edit product
+
+Is Product list wired to MongoDB ?
+
+Clicking house I should see the status of the export job (if house yellow) and sync optins if it's green
+
+I need an option to import a specific product only
+
+* View Listing Jobs in Product Export is not working
+
+* The Export of of Products is not going through
+I cannot stop or cancel the export when it is in Pending. 
+
+
+* when importing / exporting products to / from Base.com, consider also duplicate SKUs, usually they have to be unique (make optional if I want to import / export with duplicate SKUs)
+
+* Polling for AI jobs never stops. When Jobs are in Completed status, stop polling
+
+* When I click on the little house Icon in Product List, I should get the Base Export and Synchronization settings.
 
 ## Error Message
-Failed to load preferences
 
-
-    at useUserPreferences.useEffect.loadPreferences (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/_6a57f4be._.js:2800:35)
-
-Next.js version: 16.1.2 (Turbopack)
-
-Errors when I run application
-
-Product List, changing catalog still not retained
+* Product List, changing catalog still not retained
 
 Notebook App, when I create a new notebook, I should have the option to choose whether I want the notebook to be WYSIWYG or Markdown
 
 # IN PROGRESS
 
-when importing from Base.com, consider also duplicate SKUs
-
-View Listing Jobs in Product Export is not working
-
-Exporting duplicate SKU might also be a problem
-Export
-
-Product List, Price column header should have an indication of which currenct it is in (most porbably a default currency for the catalog) 
+* Product List, Price column header should have an indication of which currency it is in (most porbably a default currency for the catalog) 
 
 * Product list should remember my choices in terms of navigation, catalog choice and record them in the database, when I leave the page, the settings stay the same. Also incorporate the current state of settings in Products - Preferences Page (which has a mirror layout of the settings page, but relate more to the technical aspects of the Product section as a whole)
 
@@ -37,7 +40,6 @@ Product List, Price column header should have an indication of which currenct it
 
 
 
-Polling for AI jobs never stops
 
 
 Check that ->In my Edit / Create Product Page, make the Catalogs Field a dropdown and move it to Other Tab

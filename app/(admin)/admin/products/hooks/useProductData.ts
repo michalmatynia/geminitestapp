@@ -7,12 +7,20 @@ import { logger } from "@/lib/logger";
 
 interface UseProductDataProps {
   refreshTrigger: number;
+  initialCatalogFilter?: string;
+  initialPageSize?: number;
+  preferencesLoaded?: boolean;
 }
 
-export function useProductData({ refreshTrigger }: UseProductDataProps) {
+export function useProductData({
+  refreshTrigger,
+  initialCatalogFilter = "all",
+  initialPageSize = 24,
+  preferencesLoaded = true,
+}: UseProductDataProps) {
   const [data, setData] = useState<ProductWithImages[]>([]);
   const [total, setTotal] = useState(0);
-  
+
   // Filter state
   const [search, setSearch] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
@@ -22,13 +30,27 @@ export function useProductData({ refreshTrigger }: UseProductDataProps) {
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
-  const [catalogFilter, setCatalogFilter] = useState("all");
-  
+  const [catalogFilter, setCatalogFilter] = useState(initialCatalogFilter);
+
   // Pagination state
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(24);
-  
+  const [pageSize, setPageSize] = useState(initialPageSize);
+
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Sync catalogFilter when initialCatalogFilter changes (from preferences)
+  useEffect(() => {
+    if (preferencesLoaded) {
+      setCatalogFilter(initialCatalogFilter);
+    }
+  }, [initialCatalogFilter, preferencesLoaded]);
+
+  // Sync pageSize when initialPageSize changes (from preferences)
+  useEffect(() => {
+    if (preferencesLoaded) {
+      setPageSize(initialPageSize);
+    }
+  }, [initialPageSize, preferencesLoaded]);
 
   // Debounce search
   useEffect(() => {
@@ -52,14 +74,19 @@ export function useProductData({ refreshTrigger }: UseProductDataProps) {
     return () => clearTimeout(t);
   }, [debouncedSearch, debouncedSku, minPrice, maxPrice, startDate, endDate, catalogFilter]);
 
-  // Load products
+  // Load products - wait for preferences to load first
   useEffect(() => {
-    const filters = { 
-      search: debouncedSearch, 
-      sku: debouncedSku, 
-      minPrice, 
-      maxPrice, 
-      startDate, 
+    // Don't fetch until preferences are loaded to avoid fetching with default values
+    if (!preferencesLoaded) {
+      return;
+    }
+
+    const filters = {
+      search: debouncedSearch,
+      sku: debouncedSku,
+      minPrice,
+      maxPrice,
+      startDate,
       endDate,
       page,
       pageSize,
@@ -72,26 +99,27 @@ export function useProductData({ refreshTrigger }: UseProductDataProps) {
       try {
         const [products, productCount] = await Promise.all([
           getProducts(filters),
-          countProducts(filters)
+          countProducts(filters),
         ]);
         if (!cancelled) {
           setData(products);
           setTotal(productCount);
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Failed to load products";
+        const message =
+          error instanceof Error ? error.message : "Failed to load products";
         logger.error("Failed to load products:", error);
         if (!cancelled) {
           setLoadError(message);
         }
       }
     };
-    
+
     void loadProducts();
     return () => {
       cancelled = true;
     };
-  }, [debouncedSearch, debouncedSku, minPrice, maxPrice, startDate, endDate, page, pageSize, catalogFilter, refreshTrigger]);
+  }, [debouncedSearch, debouncedSku, minPrice, maxPrice, startDate, endDate, page, pageSize, catalogFilter, refreshTrigger, preferencesLoaded]);
 
   const totalPages = useMemo(() => {
     return Math.max(1, Math.ceil(total / pageSize));

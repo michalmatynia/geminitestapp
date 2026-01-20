@@ -48,6 +48,7 @@ export default function ListProductModal({
   const [inventories, setInventories] = useState<BaseInventory[]>([]);
   const [selectedInventoryId, setSelectedInventoryId] = useState<string>("");
   const [loadingInventories, setLoadingInventories] = useState(false);
+  const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
 
   const productName =
     product.name_en || product.name_pl || product.name_de || "Unnamed Product";
@@ -162,11 +163,15 @@ export default function ListProductModal({
             connectionId: selectedConnectionId,
             inventoryId: selectedInventoryId,
             templateId: selectedTemplateId || undefined,
+            allowDuplicateSku,
           }),
         });
 
         if (!res.ok) {
-          const data = (await res.json()) as { error?: string };
+          const data = (await res.json()) as { error?: string; skuExists?: boolean };
+          if (data.skuExists) {
+            throw new Error(data.error || "SKU already exists in Base.com");
+          }
           throw new Error(data.error || "Failed to export product to Base.com");
         }
 
@@ -350,6 +355,22 @@ export default function ListProductModal({
                     Templates define how product fields map to Base.com fields.
                   </p>
                 </div>
+
+                <div className="flex items-center gap-2 pt-2">
+                  <input
+                    type="checkbox"
+                    id="allowDuplicateSku"
+                    checked={allowDuplicateSku}
+                    onChange={(e) => setAllowDuplicateSku(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-700 bg-gray-900 text-blue-500"
+                  />
+                  <label htmlFor="allowDuplicateSku" className="text-sm text-gray-300">
+                    Allow duplicate SKUs
+                  </label>
+                </div>
+                <p className="text-xs text-gray-500">
+                  When unchecked, export will fail if the SKU already exists in the Base.com inventory.
+                </p>
               </>
             )}
           </>

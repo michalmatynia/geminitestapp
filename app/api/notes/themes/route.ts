@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { noteService } from "@/lib/services/noteService/index";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { themeCreateSchema } from "@/lib/validations/notes";
-import type { ThemeRecord } from "@/types/notes";
+import type { ThemeCreateInput } from "@/types/notes";
 import { removeUndefined } from "@/lib/utils";
 
 /**
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     const theme = await noteService.createTheme(removeUndefined({
       ...parsed.data,
       notebookId: resolvedNotebookId,
-    }));
+    }) as ThemeCreateInput);
     return NextResponse.json(theme, { status: 201 });
   } catch (error) {
     const errorId = randomUUID();

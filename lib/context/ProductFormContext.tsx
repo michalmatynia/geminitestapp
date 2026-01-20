@@ -97,7 +97,7 @@ interface ProductFormContextType {
   filteredPriceGroups: PriceGroupWithDetails[];
   generationError: string | null;
   setGenerationError: (error: string | null) => void;
-  product?: ProductWithImages;
+  product?: ProductWithImages | undefined;
 }
 
 export const ProductFormContext = createContext<ProductFormContextType | null>(
@@ -600,17 +600,19 @@ export function ProductFormProvider({
   }, []);
 
   const handleMultiImageChange = useCallback((files: File[]) => {
-    setImageSlots(prevSlots => {
+    setImageSlots((prevSlots) => {
       const newSlots = [...prevSlots];
       let fileIndex = 0;
       for (let i = 0; i < TOTAL_IMAGE_SLOTS && fileIndex < files.length; i++) {
         if (newSlots[i] === null) {
           const file = files[fileIndex];
-          newSlots[i] = {
-            type: 'file',
-            data: file,
-            previewUrl: URL.createObjectURL(file),
-          };
+          if (file) {
+            newSlots[i] = {
+              type: "file",
+              data: file,
+              previewUrl: URL.createObjectURL(file),
+            };
+          }
           fileIndex++;
         }
       }
@@ -619,44 +621,46 @@ export function ProductFormProvider({
   }, []);
 
   const handleMultiFileSelect = useCallback((files: ImageFileSelection[]) => {
-    setImageSlots(prevSlots => {
+    setImageSlots((prevSlots) => {
       const newSlots = [...prevSlots];
       let fileIndex = 0;
       for (let i = 0; i < TOTAL_IMAGE_SLOTS && fileIndex < files.length; i++) {
         if (newSlots[i] === null) {
           const file = files[fileIndex];
-          newSlots[i] = {
-            type: 'existing',
-            data: file,
-            previewUrl: file.filepath,
-          };
+          if (file) {
+            newSlots[i] = {
+              type: "existing",
+              data: file,
+              previewUrl: file.filepath,
+            };
+          }
           fileIndex++;
         }
       }
       return newSlots;
     });
     setShowFileManager(false); // Close file manager after selection
-  }, []);
+  }, [setShowFileManager]);
 
   const swapImageSlots = useCallback((fromIndex: number, toIndex: number) => {
     if (fromIndex === toIndex) return;
     if (fromIndex < 0 || fromIndex >= TOTAL_IMAGE_SLOTS) return;
     if (toIndex < 0 || toIndex >= TOTAL_IMAGE_SLOTS) return;
 
-    setImageSlots(prevSlots => {
+    setImageSlots((prevSlots) => {
       const newSlots = [...prevSlots];
       const temp = newSlots[fromIndex];
-      newSlots[fromIndex] = newSlots[toIndex];
-      newSlots[toIndex] = temp;
+      newSlots[fromIndex] = newSlots[toIndex]!;
+      newSlots[toIndex] = temp!;
       return newSlots;
     });
 
     // Also swap the corresponding image links to keep them in sync
-    setImageLinks(prevLinks => {
+    setImageLinks((prevLinks) => {
       const newLinks = [...prevLinks];
       const temp = newLinks[fromIndex];
-      newLinks[fromIndex] = newLinks[toIndex];
-      newLinks[toIndex] = temp;
+      newLinks[fromIndex] = newLinks[toIndex]!;
+      newLinks[toIndex] = temp!;
       return newLinks;
     });
   }, []);

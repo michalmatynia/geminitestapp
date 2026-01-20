@@ -437,7 +437,7 @@ export const mongoProductRepository: ProductRepository = {
     const now = new Date();
     const categoryEntries = categories.map((category) => ({
       productId,
-      categoryId: (category as { id: string }).id,
+      categoryId: (category as unknown as { id: string }).id,
       assignedAt: now,
     }));
     await db
@@ -467,7 +467,7 @@ export const mongoProductRepository: ProductRepository = {
     const now = new Date();
     const tagEntries = tags.map((tag) => ({
       productId,
-      tagId: (tag as { id: string }).id,
+      tagId: (tag as unknown as { id: string }).id,
       assignedAt: now,
     }));
     await db

@@ -13,10 +13,10 @@ async function saveToMongo(job: any) {
     const mongo = await getMongoDb();
     const { id, createdAt, ...data } = job;
     await mongo.collection(JOBS_COLLECTION).updateOne(
-      { _id: id },
+      { _id: id as any },
       {
         $set: { ...data, updatedAt: new Date() },
-        $setOnInsert: { createdAt: createdAt || new Date() }
+        $setOnInsert: { createdAt: createdAt || new Date() },
       },
       { upsert: true }
     );
@@ -122,7 +122,7 @@ export async function deleteProductAiJob(jobId: string) {
   });
   if (process.env.MONGODB_URI) {
     const mongo = await getMongoDb();
-    await mongo.collection(JOBS_COLLECTION).deleteOne({ _id: jobId });
+    await mongo.collection(JOBS_COLLECTION).deleteOne({ _id: jobId as any });
   }
 }
 

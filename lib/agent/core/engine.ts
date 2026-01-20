@@ -273,11 +273,13 @@ export async function runAgentControlLoop(runId: string) {
               items?: string[];
             };
             extractionSummary = {
-              extractionType: metadata.extractionType,
-              extractedCount: metadata.extractedCount,
-              items: Array.isArray(metadata.items)
-                ? metadata.items.slice(0, 10)
-                : undefined,
+              ...(metadata.extractionType && { extractionType: metadata.extractionType }),
+              ...(typeof metadata.extractedCount === "number" && {
+                extractedCount: metadata.extractedCount,
+              }),
+              ...(Array.isArray(metadata.items) && {
+                items: metadata.items.slice(0, 10).map(String),
+              }),
             };
           }
         }

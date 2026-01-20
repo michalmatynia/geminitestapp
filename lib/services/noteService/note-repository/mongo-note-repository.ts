@@ -129,8 +129,9 @@ const buildTree = (
   // Distribute notes to their respective categories
   notes.forEach((note) => {
     note.categories.forEach((nc) => {
-      if (categoryMap[nc.categoryId]) {
-        categoryMap[nc.categoryId].notes.push(note);
+      const category = categoryMap[nc.categoryId];
+      if (category) {
+        category.notes.push(note);
       }
     });
   });
@@ -138,10 +139,18 @@ const buildTree = (
   const rootCategories: CategoryWithChildren[] = [];
 
   categories.forEach((cat) => {
-    if (cat.parentId && categoryMap[cat.parentId]) {
-      categoryMap[cat.parentId].children.push(categoryMap[cat.id]);
+    const current = categoryMap[cat.id];
+    if (!current) return;
+
+    if (cat.parentId) {
+      const parent = categoryMap[cat.parentId];
+      if (parent) {
+        parent.children.push(current);
+      } else {
+        rootCategories.push(current);
+      }
     } else {
-      rootCategories.push(categoryMap[cat.id]);
+      rootCategories.push(current);
     }
   });
 

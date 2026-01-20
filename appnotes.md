@@ -11,6 +11,8 @@ Failed to load preferences
 
 Next.js version: 16.1.2 (Turbopack)
 
+Errors when I run application
+
 Product List, changing catalog still not retained
 
 Notebook App, when I create a new notebook, I should have the option to choose whether I want the notebook to be WYSIWYG or Markdown
@@ -19,54 +21,40 @@ Notebook App, when I create a new notebook, I should have the option to choose w
 
 when importing from Base.com, consider also duplicate SKUs
 
+View Listing Jobs in Product Export is not working
+
+Exporting duplicate SKU might also be a problem
+Export
 
 Product List, Price column header should have an indication of which currenct it is in (most porbably a default currency for the catalog) 
 
+* Product list should remember my choices in terms of navigation, catalog choice and record them in the database, when I leave the page, the settings stay the same. Also incorporate the current state of settings in Products - Preferences Page (which has a mirror layout of the settings page, but relate more to the technical aspects of the Product section as a whole)
+
+
 * -Product default price group is the default Catalog price group, I don't need to make that selection for every single product, it's automatic.
 -default price group still asks me to select from dropdown
-
-Polling for AI jobs never stops
-
 * When a product is a added to a Catalog, its default Price Group is the one set in the Catalog. I should not need to make this additional when I create the product. Other non default pricegroups should also be visible in product Edit / Create panel. If the price group is dependent on a default price group, both the calculated price and the price group should be visible in product Edit / Create panel.*
 
 
 
-* Add a subPage to Product Settings called AI Translation (underneath Product Description). In this page, you should be able to choose one translation AI model which will carry out Product Description and Product Title translations into langauges that are part of the catalog to which the product belongs (If the product doesn't belong to any catalog, translate to all language visible in Product Edit / Create panel). Add a button in Product Edit / Create to translate When the translation request is sent, create an AI Job (mirroring the one that is created when Product Descriptions are requested). When a job is completed (be it for translations or description generations) provide a notification
-
-* Price and stock should be editable in Product list by double clicking
-
+Polling for AI jobs never stops
 
 
 Check that ->In my Edit / Create Product Page, make the Catalogs Field a dropdown and move it to Other Tab
 
 
-
-
-* Product list should remember my choices in terms of navigation, catalog choice and record them in the database, when I leave the page, the settings stay the same. Also incorporate the current state of settings in Products - Preferences Page (which has a mirror layout of the settings page, but relate more to the technical aspects of the Product section as a whole)
-
-
 In Product List, Add a small indicator (maybe an icon underneath SKU) whether the product was added by the user or is the result of an import. 
 
-* When A note is created and longer text is added to the note, only a short version is saved, but when I Edit the note and paste a longer text, the whole text is save. Make the note save longer text every time.
-
-* Note App, when a link between notes is created, I don't see the related note immediately, I have to refresh.
 
 * When my Dropdown in Product List is set to a given catalog, All PRoduct creations are to be assigned to this catalog.
-
-
 
 I am still not seeing the Results in the AI Jobs Detail page when the job is run on a product Generate Description/
 When I run the Generate description, I don't get to see the results in the AI Jobs Detail page.
 
-* Polling when no jobs created
 
 I load the import list in the Limit of 10, yet when I see the Import list preview is says Total: 1000 · Existing: 0 · Showing: 1000
 
-
-
 Title Path for auto generations, and Sending path, 
-
-
 
 
 * In Regards to my Product Imports, I need to mirror this design for Base Export, to be ready to export my Products to baselinker. Change the name of Product Imports in Product Import/Export. Add a Tab to Template for Product Export. There you can choose which template to chose from Import Templates (Now Import-Export Templates) to serve for Export.

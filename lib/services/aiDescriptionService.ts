@@ -25,7 +25,7 @@ export async function getSettingValue(key: string): Promise<string | null> {
   if (!value && process.env.MONGODB_URI) {
     try {
       const mongo = await getMongoDb();
-      const doc = await mongo.collection("settings").findOne({ _id: key });
+      const doc = await mongo.collection("settings").findOne({ _id: key as any });
       if (doc && typeof doc.value === "string") {
         value = doc.value;
       }
@@ -148,7 +148,7 @@ export async function generateProductDescription(params: {
         return { type: "image_url" as const, image_url: { url: `data:${mimetype};base64,${base64Image}` } };
       } catch { return null; }
     });
-    processedImages = (await Promise.all(imagePromises)).filter((img): img is ChatCompletionContentPart => img !== null);
+    processedImages = (await Promise.all(imagePromises)).filter((img): img is any => img !== null) as ChatCompletionContentPart[];
   }
 
   let analysisInitial = "";
@@ -167,7 +167,7 @@ export async function generateProductDescription(params: {
     ],
     max_tokens: 500,
   });
-  analysisInitial = visionCompletion.choices[0].message.content?.trim() || "";
+  analysisInitial = visionCompletion.choices[0]?.message.content?.trim() || "";
 
   if (isVisionOutputEnabled && visionOutputPrompt) {
     const prompt1_2 = processPrompt(visionOutputPrompt, analysisInitial, analysisInitial);
@@ -181,7 +181,7 @@ export async function generateProductDescription(params: {
       ],
       max_tokens: 500,
     });
-    analysisFinal = refineCompletion.choices[0].message.content?.trim() || "";
+    analysisFinal = refineCompletion.choices[0]?.message.content?.trim() || "";
   }
 
   const visionResultForNext = analysisFinal || analysisInitial;
@@ -200,7 +200,7 @@ export async function generateProductDescription(params: {
     ],
     max_tokens: 1000,
   });
-  descriptionInitial = genCompletion.choices[0].message.content?.trim() || "";
+  descriptionInitial = genCompletion.choices[0]?.message.content?.trim() || "";
 
   if (isGenerationOutputEnabled && generationOutputPrompt) {
     const prompt2_2 = processPrompt(generationOutputPrompt, descriptionInitial, visionResultForNext, descriptionInitial);
@@ -214,7 +214,7 @@ export async function generateProductDescription(params: {
       ],
       max_tokens: 1000,
     });
-    descriptionFinal = refineGenCompletion.choices[0].message.content?.trim() || "";
+    descriptionFinal = refineGenCompletion.choices[0]?.message.content?.trim() || "";
   }
 
   return {

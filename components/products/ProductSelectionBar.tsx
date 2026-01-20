@@ -93,7 +93,7 @@ export function ProductSelectionBar({
             <DropdownMenuItem
               onClick={() => void onSelectAllGlobal()}
               className="cursor-pointer focus:bg-gray-800 focus:text-white"
-              disabled={loadingGlobal}
+              disabled={loadingGlobal ?? false}
             >
               {loadingGlobal ? "Loading..." : "Check All"}
             </DropdownMenuItem>

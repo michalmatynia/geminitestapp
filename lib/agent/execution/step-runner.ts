@@ -208,6 +208,10 @@ export async function runPlanStepLoop(
 
   while (stepIndex < planSteps.length) {
     const step = planSteps[stepIndex];
+    if (!step) {
+      stepIndex += 1;
+      continue;
+    }
     if (step.status === "completed") {
       stepIndex += 1;
       continue;
@@ -414,10 +418,9 @@ export async function runPlanStepLoop(
                   prompt: toolPrompt,
                   browser: run.agentBrowser || "chromium",
                   runId: run.id,
-                  runHeadless:
-                    typeof run.runHeadless === "boolean"
-                      ? run.runHeadless
-                      : undefined,
+                  ...(typeof run.runHeadless === "boolean" && {
+                    runHeadless: run.runHeadless,
+                  }),
                   stepId: step.id,
                   stepLabel: step.title,
                 },

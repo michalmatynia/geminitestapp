@@ -23,16 +23,6 @@ import type {
 } from "@/types/notes";
 import prisma from "@/lib/prisma";
 
-function removeUndefined<T extends object>(obj: T): T {
-  const newObj = { ...obj };
-  Object.keys(newObj).forEach((key) => {
-    if (newObj[key as keyof T] === undefined) {
-      delete newObj[key as keyof T];
-    }
-  });
-  return newObj;
-}
-
 export const prismaNoteRepository: NoteRepository = {
   async getOrCreateDefaultNotebook(): Promise<NotebookRecord> {
     const existing = await prisma.notebook.findFirst({
@@ -154,12 +144,18 @@ export const prismaNoteRepository: NoteRepository = {
   },
 
   async create(data: NoteCreateInput): Promise<NoteWithRelations> {
-    const { tagIds, categoryIds, relatedNoteIds, notebookId, ...rest } = data;
+    const { tagIds, categoryIds, relatedNoteIds, notebookId } = data;
     const resolvedNotebookId =
-      notebookId ?? (await prismaNoteRepository.getOrCreateDefaultNotebook()).id;
+      notebookId ??
+      (await prismaNoteRepository.getOrCreateDefaultNotebook()).id;
 
     const createData: Prisma.NoteCreateInput = {
-      ...removeUndefined(rest),
+      title: data.title,
+      content: data.content,
+      ...(data.color !== undefined && { color: data.color }),
+      ...(data.isPinned !== undefined && { isPinned: data.isPinned }),
+      ...(data.isArchived !== undefined && { isArchived: data.isArchived }),
+      ...(data.isFavorite !== undefined && { isFavorite: data.isFavorite }),
       notebook: { connect: { id: resolvedNotebookId } },
     };
 
@@ -205,10 +201,20 @@ export const prismaNoteRepository: NoteRepository = {
     });
   },
 
-  async update(id: string, data: NoteUpdateInput): Promise<NoteWithRelations | null> {
-    const { tagIds, categoryIds, relatedNoteIds, notebookId, ...rest } = data;
+  async update(
+    id: string,
+    data: NoteUpdateInput
+  ): Promise<NoteWithRelations | null> {
+    const { tagIds, categoryIds, relatedNoteIds, notebookId } = data;
 
-    const updateData: Prisma.NoteUpdateInput = removeUndefined(rest);
+    const updateData: Prisma.NoteUpdateInput = {
+      ...(data.title !== undefined && { title: data.title }),
+      ...(data.content !== undefined && { content: data.content }),
+      ...(data.color !== undefined && { color: data.color }),
+      ...(data.isPinned !== undefined && { isPinned: data.isPinned }),
+      ...(data.isArchived !== undefined && { isArchived: data.isArchived }),
+      ...(data.isFavorite !== undefined && { isFavorite: data.isFavorite }),
+    };
     if (notebookId !== undefined && notebookId !== null) {
       updateData.notebook = { connect: { id: notebookId } };
     }
@@ -287,13 +293,14 @@ export const prismaNoteRepository: NoteRepository = {
 
   async createTag(data: TagCreateInput): Promise<TagRecord> {
     const resolvedNotebookId =
-      data.notebookId ?? (await prismaNoteRepository.getOrCreateDefaultNotebook()).id;
-    
-    const createData = removeUndefined({
+      data.notebookId ??
+      (await prismaNoteRepository.getOrCreateDefaultNotebook()).id;
+
+    const createData: Prisma.TagCreateInput = {
       name: data.name,
-      color: data.color,
+      ...(data.color !== undefined && { color: data.color }),
       notebook: { connect: { id: resolvedNotebookId } },
-    });
+    };
 
     return prisma.tag.create({
       data: createData,
@@ -302,7 +309,10 @@ export const prismaNoteRepository: NoteRepository = {
 
   async updateTag(id: string, data: TagUpdateInput): Promise<TagRecord | null> {
     try {
-      const updateData = removeUndefined(data);
+      const updateData: Prisma.TagUpdateInput = {
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.color !== undefined && { color: data.color }),
+      };
       return await prisma.tag.update({ where: { id }, data: updateData });
     } catch {
       return null;
@@ -380,11 +390,26 @@ export const prismaNoteRepository: NoteRepository = {
     return prisma.category.create({ data: createData });
   },
 
-  async updateCategory(id: string, data: CategoryUpdateInput): Promise<CategoryRecord | null> {
+  async updateCategory(
+    id: string,
+    data: CategoryUpdateInput
+  ): Promise<CategoryRecord | null> {
     try {
-      const updateData: Prisma.CategoryUpdateInput = removeUndefined(data);
+      const updateData: Prisma.CategoryUpdateInput = {
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.description !== undefined && {
+          description: data.description,
+        }),
+        ...(data.color !== undefined && { color: data.color }),
+        ...(data.parentId !== undefined &&
+          (data.parentId
+            ? { parent: { connect: { id: data.parentId } } }
+            : { parent: { disconnect: true } })),
+      };
       if (data.themeId !== undefined) {
-        updateData.theme = data.themeId ? { connect: { id: data.themeId } } : { disconnect: true };
+        updateData.theme = data.themeId
+          ? { connect: { id: data.themeId } }
+          : { disconnect: true };
       }
       return await prisma.category.update({ where: { id }, data: updateData });
     } catch {
@@ -460,18 +485,28 @@ export const prismaNoteRepository: NoteRepository = {
   },
 
   async createNotebook(data: NotebookCreateInput): Promise<NotebookRecord> {
-    const createData = removeUndefined({
+    const createData: Prisma.NotebookCreateInput = {
       name: data.name,
-      color: data.color ?? "#3b82f6",
-    });
+      ...(data.color !== undefined && { color: data.color }),
+    };
     return prisma.notebook.create({
       data: createData,
     });
   },
 
-  async updateNotebook(id: string, data: NotebookUpdateInput): Promise<NotebookRecord | null> {
+  async updateNotebook(
+    id: string,
+    data: NotebookUpdateInput
+  ): Promise<NotebookRecord | null> {
     try {
-      const updateData = removeUndefined(data);
+      const updateData: Prisma.NotebookUpdateInput = {
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.color !== undefined && { color: data.color }),
+        ...(data.defaultThemeId !== undefined &&
+          (data.defaultThemeId
+            ? { defaultTheme: { connect: { id: data.defaultThemeId } } }
+            : { defaultTheme: { disconnect: true } })),
+      };
       return await prisma.notebook.update({ where: { id }, data: updateData });
     } catch {
       return null;
@@ -489,7 +524,8 @@ export const prismaNoteRepository: NoteRepository = {
 
   async getAllThemes(notebookId?: string | null): Promise<ThemeRecord[]> {
     const resolvedNotebookId =
-      notebookId ?? (await prismaNoteRepository.getOrCreateDefaultNotebook()).id;
+      notebookId ??
+      (await prismaNoteRepository.getOrCreateDefaultNotebook()).id;
     return prisma.theme.findMany({
       where: { notebookId: resolvedNotebookId },
       orderBy: { name: "asc" },
@@ -502,45 +538,87 @@ export const prismaNoteRepository: NoteRepository = {
 
   async createTheme(data: ThemeCreateInput): Promise<ThemeRecord> {
     const resolvedNotebookId =
-      data.notebookId ?? (await prismaNoteRepository.getOrCreateDefaultNotebook()).id;
-    
-    const createData = removeUndefined({
+      data.notebookId ??
+      (await prismaNoteRepository.getOrCreateDefaultNotebook()).id;
+
+    const createData: Prisma.ThemeCreateInput = {
       name: data.name,
-      notebookId: resolvedNotebookId,
-      textColor: data.textColor ?? "#e2e8f0",
-      backgroundColor: data.backgroundColor ?? "#0f172a",
-      markdownHeadingColor: data.markdownHeadingColor ?? "#f8fafc",
-      markdownLinkColor: data.markdownLinkColor ?? "#38bdf8",
-      markdownCodeBackground: data.markdownCodeBackground ?? "#0b1220",
-      markdownCodeText: data.markdownCodeText ?? "#e2e8f0",
-      relatedNoteBorderWidth: data.relatedNoteBorderWidth ?? 1,
-      relatedNoteBorderColor: data.relatedNoteBorderColor ?? "#34d399",
-      relatedNoteBackgroundColor:
-        data.relatedNoteBackgroundColor ?? "#0f3a2f",
-      relatedNoteTextColor: data.relatedNoteTextColor ?? "#ecfdf5",
-    });
+      notebook: { connect: { id: resolvedNotebookId } },
+      ...(data.textColor !== undefined && { textColor: data.textColor }),
+      ...(data.backgroundColor !== undefined && {
+        backgroundColor: data.backgroundColor,
+      }),
+      ...(data.markdownHeadingColor !== undefined && {
+        markdownHeadingColor: data.markdownHeadingColor,
+      }),
+      ...(data.markdownLinkColor !== undefined && {
+        markdownLinkColor: data.markdownLinkColor,
+      }),
+      ...(data.markdownCodeBackground !== undefined && {
+        markdownCodeBackground: data.markdownCodeBackground,
+      }),
+      ...(data.markdownCodeText !== undefined && {
+        markdownCodeText: data.markdownCodeText,
+      }),
+      ...(data.relatedNoteBorderWidth !== undefined && {
+        relatedNoteBorderWidth: data.relatedNoteBorderWidth,
+      }),
+      ...(data.relatedNoteBorderColor !== undefined && {
+        relatedNoteBorderColor: data.relatedNoteBorderColor,
+      }),
+      ...(data.relatedNoteBackgroundColor !== undefined && {
+        relatedNoteBackgroundColor: data.relatedNoteBackgroundColor,
+      }),
+      ...(data.relatedNoteTextColor !== undefined && {
+        relatedNoteTextColor: data.relatedNoteTextColor,
+      }),
+    };
 
     return prisma.theme.create({
       data: createData,
     });
   },
 
-  async updateTheme(id: string, data: ThemeUpdateInput): Promise<ThemeRecord | null> {
+  async updateTheme(
+    id: string,
+    data: ThemeUpdateInput
+  ): Promise<ThemeRecord | null> {
     try {
-      const updateData = removeUndefined({
-        name: data.name,
-        notebookId: data.notebookId,
-        textColor: data.textColor,
-        backgroundColor: data.backgroundColor,
-        markdownHeadingColor: data.markdownHeadingColor,
-        markdownLinkColor: data.markdownLinkColor,
-        markdownCodeBackground: data.markdownCodeBackground,
-        markdownCodeText: data.markdownCodeText,
-        relatedNoteBorderWidth: data.relatedNoteBorderWidth,
-        relatedNoteBorderColor: data.relatedNoteBorderColor,
-        relatedNoteBackgroundColor: data.relatedNoteBackgroundColor,
-        relatedNoteTextColor: data.relatedNoteTextColor,
-      });
+      const updateData: Prisma.ThemeUpdateInput = {
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.notebookId !== undefined &&
+          (data.notebookId
+            ? { notebook: { connect: { id: data.notebookId } } }
+            : { notebook: { disconnect: true } })),
+        ...(data.textColor !== undefined && { textColor: data.textColor }),
+        ...(data.backgroundColor !== undefined && {
+          backgroundColor: data.backgroundColor,
+        }),
+        ...(data.markdownHeadingColor !== undefined && {
+          markdownHeadingColor: data.markdownHeadingColor,
+        }),
+        ...(data.markdownLinkColor !== undefined && {
+          markdownLinkColor: data.markdownLinkColor,
+        }),
+        ...(data.markdownCodeBackground !== undefined && {
+          markdownCodeBackground: data.markdownCodeBackground,
+        }),
+        ...(data.markdownCodeText !== undefined && {
+          markdownCodeText: data.markdownCodeText,
+        }),
+        ...(data.relatedNoteBorderWidth !== undefined && {
+          relatedNoteBorderWidth: data.relatedNoteBorderWidth,
+        }),
+        ...(data.relatedNoteBorderColor !== undefined && {
+          relatedNoteBorderColor: data.relatedNoteBorderColor,
+        }),
+        ...(data.relatedNoteBackgroundColor !== undefined && {
+          relatedNoteBackgroundColor: data.relatedNoteBackgroundColor,
+        }),
+        ...(data.relatedNoteTextColor !== undefined && {
+          relatedNoteTextColor: data.relatedNoteTextColor,
+        }),
+      };
       return await prisma.theme.update({
         where: { id },
         data: updateData,
@@ -560,16 +638,16 @@ export const prismaNoteRepository: NoteRepository = {
   },
 
   async createNoteFile(data: NoteFileCreateInput): Promise<NoteFileRecord> {
-    const createData = removeUndefined({
-      noteId: data.noteId,
+    const createData: Prisma.NoteFileCreateInput = {
+      note: { connect: { id: data.noteId } },
       slotIndex: data.slotIndex,
       filename: data.filename,
       filepath: data.filepath,
       mimetype: data.mimetype,
       size: data.size,
-      width: data.width,
-      height: data.height,
-    });
+      ...(data.width !== undefined && { width: data.width }),
+      ...(data.height !== undefined && { height: data.height }),
+    };
     return prisma.noteFile.create({
       data: createData,
     });

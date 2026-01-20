@@ -4,7 +4,11 @@ import { noteService } from "@/lib/services/noteService/index";
 import { deleteNoteFile } from "@/lib/utils/fileUploader";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { noteUpdateSchema } from "@/lib/validations/notes";
-import type { NoteWithRelations, RelatedNote } from "@/types/notes";
+import type {
+  NoteWithRelations,
+  RelatedNote,
+  NoteUpdateInput,
+} from "@/types/notes";
 import { removeUndefined } from "@/lib/utils";
 
 const buildRelations = (note: NoteWithRelations): RelatedNote[] => {
@@ -70,7 +74,10 @@ export async function PATCH(
     }
     const body = parsed.data;
     const previousNote = await noteService.getById(id);
-    const note = await noteService.update(id, removeUndefined(body));
+    const note = await noteService.update(
+      id,
+      removeUndefined(body) as NoteUpdateInput
+    );
 
     if (Array.isArray(body.relatedNoteIds) && previousNote) {
       const previousRelatedIds =

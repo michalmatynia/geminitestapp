@@ -4,6 +4,7 @@ import { noteService } from "@/lib/services/noteService/index";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { themeUpdateSchema } from "@/lib/validations/notes";
 import { removeUndefined } from "@/lib/utils";
+import type { ThemeUpdateInput } from "@/types/notes";
 
 /**
  * GET /api/notes/themes/[id]
@@ -46,7 +47,10 @@ export async function PATCH(
     if (!parsed.ok) {
       return parsed.response;
     }
-    const updated = await noteService.updateTheme(id, removeUndefined(parsed.data));
+    const updated = await noteService.updateTheme(
+      id,
+      removeUndefined(parsed.data) as ThemeUpdateInput
+    );
     if (!updated) {
       return NextResponse.json({ error: "Theme not found" }, { status: 404 });
     }

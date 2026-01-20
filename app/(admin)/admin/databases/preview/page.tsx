@@ -17,7 +17,6 @@ import {
   TableIcon,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { removeUndefined } from "@/lib/utils";
 
 type PreviewGroup = { type: string; objects: string[] };
 type PreviewTable = { name: string; rowEstimate: number };
@@ -96,12 +95,12 @@ function DatabasePreviewPageInner() {
         };
         if (!res.ok) {
           setError(payload.error ?? "Failed to preview backup.");
-          setErrorMeta(removeUndefined({
-            errorId: payload.errorId,
-            stage: payload.stage,
-            backupName: payload.backupName,
-            mode: payload.mode,
-          }));
+          setErrorMeta({
+            ...(payload.errorId && { errorId: payload.errorId }),
+            ...(payload.stage && { stage: payload.stage }),
+            ...(payload.backupName && { backupName: payload.backupName }),
+            ...(payload.mode && { mode: payload.mode }),
+          });
           return;
         }
         setContent(payload.content ?? "No preview output.");

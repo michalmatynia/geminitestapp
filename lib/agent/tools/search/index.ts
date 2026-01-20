@@ -21,10 +21,13 @@ export const fetchDuckDuckGoResults = async (query: string) => {
   let match: RegExpExecArray | null;
   while ((match = resultRegex.exec(html))) {
     const rawUrl = match[1];
-    const title = match[2].replace(/<[^>]+>/g, "").trim();
+    const rawTitle = match[2];
+    if (!rawUrl || !rawTitle) continue;
+    const title = rawTitle.replace(/<[^>]+>/g, "").trim();
     const url = rawUrl.includes("duckduckgo.com/l/")
       ? decodeURIComponent(
-          new URL(rawUrl).searchParams.get("uddg") ?? rawUrl
+          new URL(rawUrl, "https://duckduckgo.com").searchParams.get("uddg") ??
+            rawUrl
         )
       : rawUrl;
     if (title && url) {

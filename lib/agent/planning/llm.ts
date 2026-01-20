@@ -40,14 +40,24 @@ type PlanStepSpecInput = {
 };
 
 const normalizePlanStepSpecs = (steps: PlanStepSpecInput[]) =>
-  steps.map((step) => ({
-    ...step,
-    expectedObservation: step.expectedObservation ?? undefined,
-    successCriteria: step.successCriteria ?? undefined,
-    phase: step.phase ?? undefined,
-    priority: step.priority ?? undefined,
-    dependsOn: step.dependsOn ?? undefined,
-  }));
+  steps.map((step) => {
+    const {
+      expectedObservation,
+      successCriteria,
+      phase,
+      priority,
+      dependsOn,
+      ...rest
+    } = step;
+    return {
+      ...rest,
+      ...(expectedObservation != null && { expectedObservation }),
+      ...(successCriteria != null && { successCriteria }),
+      ...(phase != null && { phase }),
+      ...(priority != null && { priority }),
+      ...(dependsOn != null && { dependsOn }),
+    };
+  });
 
 export async function buildPlanWithLLM({
   prompt,
@@ -235,7 +245,7 @@ export async function buildPlanWithLLM({
         memory,
         steps: parsed.steps,
         meta,
-        runId,
+        ...(runId && { runId }),
       });
       if (expanded) {
         hierarchy = expanded;
@@ -248,7 +258,7 @@ export async function buildPlanWithLLM({
         memory,
         hierarchy,
         meta,
-        runId,
+        ...(runId && { runId }),
       });
       if (enriched) {
         hierarchy = enriched;
@@ -270,7 +280,7 @@ export async function buildPlanWithLLM({
       memory,
       steps,
       meta,
-      runId,
+      ...(runId && { runId }),
       maxSteps,
       maxStepAttempts,
     });
@@ -283,7 +293,7 @@ export async function buildPlanWithLLM({
       memory,
       currentPlan: steps,
       candidateSteps: steps,
-      runId,
+      ...(runId && { runId }),
       maxSteps,
     });
     if (initialGuarded.length > 0) {
@@ -297,7 +307,7 @@ export async function buildPlanWithLLM({
         steps,
         hierarchy,
         meta,
-        runId,
+        ...(runId && { runId }),
         maxSteps,
         maxStepAttempts,
       });
@@ -315,7 +325,7 @@ export async function buildPlanWithLLM({
         steps,
         hierarchy,
         meta,
-        runId,
+        ...(runId && { runId }),
         maxSteps,
         maxStepAttempts,
       });
@@ -351,13 +361,13 @@ export async function buildPlanWithLLM({
       steps: steps.length ? steps : fallbackSteps,
       decision,
       source: "llm",
-      meta,
-      hierarchy,
-      branchSteps: branchSteps.length
-        ? branchSteps
+      ...(meta && { meta }),
+      ...(hierarchy && { hierarchy }),
+      ...(branchSteps.length
+        ? { branchSteps }
         : fallbackBranchSteps.length
-          ? fallbackBranchSteps
-          : undefined,
+          ? { branchSteps: fallbackBranchSteps }
+          : {}),
     };
   } catch (error) {
     if (DEBUG_CHATBOT) {
@@ -370,7 +380,6 @@ export async function buildPlanWithLLM({
       steps: fallbackSteps,
       decision: decideNextAction(prompt, memory),
       source: "heuristic",
-      meta: undefined,
     };
   }
 }
@@ -521,11 +530,11 @@ export async function buildAdaptivePlanReview({
       }
     }
     if (shouldReplan && steps.length === 0) {
-      return { shouldReplan: false, reason: parsed.reason, steps: [] };
+      return { shouldReplan: false, ...(parsed.reason && { reason: parsed.reason }), steps: [] };
     }
     return {
       shouldReplan,
-      reason: parsed.reason,
+      ...(parsed.reason && { reason: parsed.reason }),
       steps,
       hierarchy,
       meta,
@@ -533,7 +542,7 @@ export async function buildAdaptivePlanReview({
   } catch (error) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][engine] Planner review fallback", {
-        runId,
+        ...(runId && { runId }),
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -618,14 +627,14 @@ export async function buildSelfCheckReview({
               prompt,
               memory,
               browserContext,
-              taskType,
-              lastError,
-              completedCount,
-              previousUrl,
-              lastContextUrl,
-              stagnationCount,
-              noContextCount,
-              replanCount,
+              ...(taskType && { taskType }),
+              ...(lastError && { lastError }),
+              ...(completedCount !== undefined && { completedCount }),
+              ...(previousUrl && { previousUrl }),
+              ...(lastContextUrl && { lastContextUrl }),
+              ...(stagnationCount !== undefined && { stagnationCount }),
+              ...(noContextCount !== undefined && { noContextCount }),
+              ...(replanCount !== undefined && { replanCount }),
               step: {
                 id: step.id,
                 title: step.title,
@@ -733,20 +742,19 @@ export async function buildSelfCheckReview({
     }
     return {
       action,
-      reason: parsed.reason,
-      notes: parsed.notes,
+      ...(parsed.reason && { reason: parsed.reason }),
+      ...(parsed.notes && { notes: parsed.notes }),
       questions: normalizeStringList(parsed.questions),
       evidence: normalizeStringList(parsed.evidence),
-      confidence:
-        typeof parsed.confidence === "number" ? parsed.confidence : undefined,
+      ...(typeof parsed.confidence === "number" && {
+        confidence: parsed.confidence,
+      }),
       missingInfo: normalizeStringList(parsed.missingInfo),
       blockers: normalizeStringList(parsed.blockers),
       hypotheses: normalizeStringList(parsed.hypotheses),
       verificationSteps: normalizeStringList(parsed.verificationSteps),
-      toolSwitch:
-        typeof parsed.toolSwitch === "string"
-          ? parsed.toolSwitch.trim()
-          : undefined,
+      ...(typeof parsed.toolSwitch === "string" &&
+        parsed.toolSwitch.trim() && { toolSwitch: parsed.toolSwitch.trim() }),
       abortSignals: normalizeStringList(parsed.abortSignals),
       finishSignals: normalizeStringList(parsed.finishSignals),
       steps,
@@ -756,7 +764,7 @@ export async function buildSelfCheckReview({
   } catch (error) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][engine] Self-check fallback", {
-        runId,
+        ...(runId && { runId }),
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -908,11 +916,11 @@ export async function buildResumePlanReview({
       }
     }
     if (shouldReplan && steps.length === 0) {
-      return { shouldReplan: false, reason: parsed.reason, steps: [] };
+      return { shouldReplan: false, ...(parsed.reason && { reason: parsed.reason }), steps: [] };
     }
     return {
       shouldReplan,
-      reason: parsed.reason,
+      ...(parsed.reason && { reason: parsed.reason }),
       summary: parsed.summary?.trim() || null,
       steps,
       hierarchy,
@@ -921,7 +929,7 @@ export async function buildResumePlanReview({
   } catch (error) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][engine] Resume planner fallback", {
-        runId,
+        ...(runId && { runId }),
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -1062,7 +1070,7 @@ export async function evaluatePlanWithLLM({
   } catch (error) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][engine] Plan evaluation failed", {
-        runId,
+        ...(runId && { runId }),
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -1161,7 +1169,7 @@ export async function verifyPlanWithLLM({
   } catch (error) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][engine] Plan verification failed", {
-        runId,
+        ...(runId && { runId }),
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -1262,7 +1270,7 @@ export async function buildSelfImprovementReviewWithLLM({
   } catch (error) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][engine] Self-improvement review failed", {
-        runId,
+        ...(runId && { runId }),
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -1366,7 +1374,7 @@ export async function summarizePlannerMemoryWithLLM({
   } catch (error) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][engine] Planner summary failed", {
-        runId,
+        ...(runId && { runId }),
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -1508,7 +1516,7 @@ export async function buildMidRunAdaptationWithLLM({
   } catch (error) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][engine] Mid-run adaptation failed", {
-        runId,
+        ...(runId && { runId }),
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -1613,7 +1621,7 @@ export async function dedupePlanStepsWithLLM({
   } catch (error) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][engine] Plan dedupe failed", {
-        runId,
+        ...(runId && { runId }),
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -1719,7 +1727,7 @@ export async function guardRepetitionWithLLM({
   } catch (error) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][engine] Repetition guard failed", {
-        runId,
+        ...(runId && { runId }),
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -1823,7 +1831,7 @@ export async function buildCheckpointBriefWithLLM({
   } catch (error) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][engine] Checkpoint brief failed", {
-        runId,
+        ...(runId && { runId }),
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -1948,7 +1956,7 @@ export async function optimizePlanWithLLM({
   } catch (error) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][engine] Plan optimization failed", {
-        runId,
+        ...(runId && { runId }),
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -2041,8 +2049,8 @@ export async function enrichPlanHierarchyWithLLM({
     return enriched;
   } catch (error) {
     if (DEBUG_CHATBOT) {
-      console.warn("[chatbot][agent][engine] Plan hierarchy enrichment failed", {
-        runId,
+      console.warn("[chatbot][agent][engine] Hierarchy enrichment failed", {
+        ...(runId && { runId }),
         error: error instanceof Error ? error.message : String(error),
       });
     }

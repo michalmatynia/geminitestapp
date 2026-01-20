@@ -4,6 +4,7 @@ import { noteService } from "@/lib/services/noteService/index";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { tagCreateSchema } from "@/lib/validations/notes";
 import { removeUndefined } from "@/lib/utils";
+import type { TagCreateInput } from "@/types/notes";
 
 /**
  * GET /api/notes/tags
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
     const tag = await noteService.createTag(removeUndefined({
       ...parsed.data,
       notebookId: resolvedNotebookId,
-    }));
+    }) as TagCreateInput);
     return NextResponse.json(tag, { status: 201 });
   } catch (error: unknown) {
     const errorId = randomUUID();

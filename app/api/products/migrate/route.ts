@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       dryRun: Boolean(parsed.data.dryRun),
       cursor: parsed.data.cursor ?? null,
       batchSize: parsed.data.batchSize,
-    }));
+    }) as { direction: MigrationDirection; dryRun?: boolean; cursor?: string | null; batchSize?: number });
     return NextResponse.json({ result });
   } catch (error) {
     console.error("[products][migration] Failed", { errorId, error });

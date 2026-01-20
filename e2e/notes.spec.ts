@@ -85,7 +85,7 @@ test.describe("Notes page", () => {
             noteId: "note-1",
             tagId: "tag-1",
             assignedAt: now,
-            tag: tags[0],
+            tag: tags[0]!,
           },
         ],
         categories: [
@@ -93,7 +93,7 @@ test.describe("Notes page", () => {
             noteId: "note-1",
             categoryId: "cat-1",
             assignedAt: now,
-            category: categories[0],
+            category: categories[0]!,
           },
         ],
         relationsFrom: [],
@@ -214,7 +214,7 @@ test.describe("Notes page", () => {
             noteId: "temp",
             tagId,
             assignedAt: now,
-            tag: tags.find((tag) => tag.id === tagId) ?? tags[0],
+            tag: tags.find((tag) => tag.id === tagId) ?? tags[0]!,
           })),
           categories: categoryIds.map((categoryId) => ({
             noteId: "temp",
@@ -222,7 +222,7 @@ test.describe("Notes page", () => {
             assignedAt: now,
             category:
               categories.find((category) => category.id === categoryId) ??
-              categories[0],
+              categories[0]!,
           })),
           relationsFrom: [],
           relationsTo: [],

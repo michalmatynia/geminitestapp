@@ -35,8 +35,8 @@ export async function addProblemSolutionMemory({
       ...context,
     },
     importance: 4,
-    model,
-    summaryModel,
-    prompt,
+    ...(model !== undefined && { model }),
+    ...(summaryModel !== undefined && { summaryModel }),
+    ...(prompt !== undefined && { prompt }),
   });
 }

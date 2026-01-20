@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { decryptSecret, encryptSecret } from "@/lib/utils/encryption";
-import { callBaseApi, fetchBaseInventories } from "@/lib/services/imports/base-client";
+import { fetchBaseInventories } from "@/lib/services/imports/base-client";
 import { randomUUID } from "crypto";
 
 type TestLogEntry = {
@@ -154,12 +154,12 @@ export async function POST(
         pushStep("Storing default inventory", "pending", "Setting default inventory");
         try {
           await repo.updateConnection(connection.id, {
-            baseLastInventoryId: inventories[0].id,
+            baseLastInventoryId: inventories[0]!.id,
           });
           pushStep(
             "Storing default inventory",
             "ok",
-            `Default inventory set to: ${inventories[0].name} (${inventories[0].id})`
+            `Default inventory set to: ${inventories[0]!.name} (${inventories[0]!.id})`
           );
         } catch (error) {
           const message = error instanceof Error ? error.message : "Unknown error";

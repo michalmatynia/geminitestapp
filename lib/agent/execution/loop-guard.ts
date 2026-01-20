@@ -28,14 +28,24 @@ type PlanStepSpecInput = {
 };
 
 const normalizePlanStepSpecs = (steps: PlanStepSpecInput[]) =>
-  steps.map((step) => ({
-    ...step,
-    expectedObservation: step.expectedObservation ?? undefined,
-    successCriteria: step.successCriteria ?? undefined,
-    phase: step.phase ?? undefined,
-    priority: step.priority ?? undefined,
-    dependsOn: step.dependsOn ?? undefined,
-  }));
+  steps.map((step) => {
+    const {
+      expectedObservation,
+      successCriteria,
+      phase,
+      priority,
+      dependsOn,
+      ...rest
+    } = step;
+    return {
+      ...rest,
+      ...(expectedObservation != null && { expectedObservation }),
+      ...(successCriteria != null && { successCriteria }),
+      ...(phase != null && { phase }),
+      ...(priority != null && { priority }),
+      ...(dependsOn != null && { dependsOn }),
+    };
+  });
 
 export const detectLoopPattern = (
   recent: Array<{
@@ -251,7 +261,7 @@ export async function buildLoopGuardReview({
     }
     return {
       action,
-      reason: parsed.reason,
+      ...(parsed.reason && { reason: parsed.reason }),
       questions: normalizeStringList(parsed.questions),
       evidence: normalizeStringList(parsed.evidence),
       steps,

@@ -4,6 +4,7 @@ import { noteService } from "@/lib/services/noteService";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { categoryUpdateSchema } from "@/lib/validations/notes";
 import { removeUndefined } from "@/lib/utils";
+import type { CategoryUpdateInput } from "@/types/notes";
 
 /**
  * PATCH /api/notes/categories/[id]
@@ -22,7 +23,10 @@ export async function PATCH(
     if (!parsed.ok) {
       return parsed.response;
     }
-    const category = await noteService.updateCategory(params.id, removeUndefined(parsed.data));
+    const category = await noteService.updateCategory(
+      params.id,
+      removeUndefined(parsed.data) as CategoryUpdateInput
+    );
     return NextResponse.json(category);
   } catch (error: unknown) {
     const errorId = randomUUID();

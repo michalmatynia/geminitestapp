@@ -196,16 +196,17 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
           const typedExtractionType: "product_names" | "emails" = extractionType;
           const normalized = await normalizeExtractionItemsWithLLM(
             {
-                model: resolvedModel,
-                runId,
-                log: undefined // Don't log inside log normalization to avoid recursion
+              model: resolvedModel,
+              runId,
+              log: async () => {}, // Don't log inside log normalization to avoid recursion
             },
             {
-            prompt: prompt ?? "",
-            extractionType: typedExtractionType,
-            items,
-            normalizationModel: outputNormalizationModel
-          });
+              prompt: prompt ?? "",
+              extractionType: typedExtractionType,
+              items,
+              normalizationModel: outputNormalizationModel,
+            }
+          );
           payload[key] = normalized;
         };
         await Promise.all([
@@ -264,12 +265,14 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
     }
 
     if (injectedContext && context.pages().length > 0) {
-      page = context.pages()[0];
-      await page.bringToFront().catch(() => {});
-      page.removeAllListeners("console");
-      page.removeAllListeners("pageerror");
-      page.removeAllListeners("requestfailed");
-      page.removeAllListeners("response");
+      page = context.pages()[0] ?? null;
+      if (page) {
+        await page.bringToFront().catch(() => {});
+        page.removeAllListeners("console");
+        page.removeAllListeners("pageerror");
+        page.removeAllListeners("requestfailed");
+        page.removeAllListeners("response");
+      }
     } else {
       page = await context.newPage();
     }
@@ -324,11 +327,11 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
 
     // LLM Context helper
     const llmContext = {
-        model: resolvedModel,
-        runId,
-        log,
-        activeStepId: activeStepId ?? undefined,
-        stepLabel: stepLabel ?? undefined
+      model: resolvedModel,
+      runId,
+      log,
+      ...(activeStepId && { activeStepId }),
+      ...(stepLabel && { stepLabel }),
     };
 
     try {
@@ -447,7 +450,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
                               targetHostname,
                             });
                           }
-                          searchUrl = resolvedPicked || allowedResults[0]?.url;
+                          searchUrl = resolvedPicked || allowedResults[0]?.url ?? null;
                           if (searchUrl) {
                             await log("info", "Search escalation selected URL.", {
                               stepId: activeStepId ?? null,
@@ -506,7 +509,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
                           targetHostname,
                         });
                       }
-                      searchUrl = resolvedPicked || allowedResults[0]?.url;
+                      searchUrl = resolvedPicked || allowedResults[0]?.url ?? null;
                       if (searchUrl) {
                           await log("info", "Search escalation selected URL.", {
                             stepId: activeStepId ?? null,
@@ -1762,7 +1765,7 @@ export async function runAgentBrowserControl({
       ok: true,
       output: {
         url: createdSnapshot.url,
-        snapshotId: freshSnapshot?.id,
+        snapshotId: freshSnapshot?.id ?? null,
         logCount,
       },
     };

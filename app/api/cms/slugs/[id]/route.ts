@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { parseJsonBody } from "@/lib/api/parse-json";
-import { removeUndefined } from "@/lib/utils";
 
 type Params = { id: string };
 type Ctx = { params: Promise<Params> } | { params: Params };
@@ -88,7 +87,10 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
 
     const updatedSlug = await prisma.slug.update({
       where: { id },
-      data: removeUndefined({ slug, isDefault }),
+      data: {
+        slug,
+        ...(isDefault !== undefined && { isDefault }),
+      },
     });
 
     return NextResponse.json(updatedSlug);

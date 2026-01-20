@@ -222,14 +222,15 @@ export async function POST(
       browser = await chromium.launch({
         headless,
         slowMo,
-        proxy:
-          proxyEnabled && proxyServer
-            ? {
+        ...(proxyEnabled && proxyServer
+          ? {
+              proxy: {
                 server: proxyServer,
                 ...(proxyUsername && { username: proxyUsername }),
                 ...(proxyPassword && { password: proxyPassword }),
-              }
-            : undefined,
+              },
+            }
+          : {}),
       });
 
       const deviceContextOptions: BrowserContextOptions = deviceProfile

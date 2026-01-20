@@ -94,12 +94,20 @@ export const prismaCatalogRepository: CatalogRepository = {
     const catalog = await prisma.catalog.update({
       where: { id },
       data: {
-        name: input.name,
-        description: input.description ?? undefined,
-        isDefault: input.isDefault ?? undefined,
-        defaultLanguageId: input.defaultLanguageId ?? undefined,
-        defaultPriceGroupId: input.defaultPriceGroupId ?? undefined,
-        priceGroupIds: input.priceGroupIds ?? undefined,
+        ...(input.name !== undefined && { name: input.name }),
+        ...(input.description !== undefined && {
+          description: input.description,
+        }),
+        ...(input.isDefault !== undefined && { isDefault: input.isDefault }),
+        ...(input.defaultLanguageId !== undefined && {
+          defaultLanguageId: input.defaultLanguageId,
+        }),
+        ...(input.defaultPriceGroupId !== undefined && {
+          defaultPriceGroupId: input.defaultPriceGroupId,
+        }),
+        ...(input.priceGroupIds !== undefined && {
+          priceGroupIds: input.priceGroupIds,
+        }),
       },
     });
     if (input.languageIds) {

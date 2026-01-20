@@ -38,8 +38,10 @@ export function parsePlanJson(content: string): unknown {
   if (!content) return null;
   const fencedMatch = content.match(/```json\s*([\s\S]*?)```/i);
   const raw = fencedMatch ? fencedMatch[1] : content;
+  if (!raw) return null;
   const match = raw.match(/\{[\s\S]*\}$/);
   const jsonText = match ? match[0] : raw;
+  if (!jsonText) return null;
   try {
     const parsed: unknown = JSON.parse(jsonText);
     return parsed;
@@ -77,16 +79,16 @@ export function normalizePlannerMeta(parsed: {
   const constraints = normalizeStringList(parsed.constraints);
   const successSignals = normalizeStringList(parsed.successSignals);
   return {
-    critique,
-    alternatives,
-    safetyChecks: normalizedSafetyChecks.length
-      ? normalizedSafetyChecks
-      : undefined,
-    questions: normalizedQuestions.length ? normalizedQuestions : undefined,
-    taskType,
-    summary: summary || undefined,
-    constraints: constraints.length ? constraints : undefined,
-    successSignals: successSignals.length ? successSignals : undefined,
+    ...(critique && { critique }),
+    ...(alternatives && { alternatives }),
+    ...(normalizedSafetyChecks.length > 0 && {
+      safetyChecks: normalizedSafetyChecks,
+    }),
+    ...(normalizedQuestions.length > 0 && { questions: normalizedQuestions }),
+    ...(taskType && { taskType }),
+    ...(summary && { summary }),
+    ...(constraints.length > 0 && { constraints }),
+    ...(successSignals.length > 0 && { successSignals }),
   } satisfies PlannerMeta;
 }
 
@@ -105,11 +107,11 @@ export function normalizeCritique(value?: PlannerCritique | null) {
     questions.length;
   if (!hasAny) return null;
   return {
-    assumptions: assumptions.length ? assumptions : undefined,
-    risks: risks.length ? risks : undefined,
-    unknowns: unknowns.length ? unknowns : undefined,
-    safetyChecks: safetyChecks.length ? safetyChecks : undefined,
-    questions: questions.length ? questions : undefined,
+    ...(assumptions.length > 0 && { assumptions }),
+    ...(risks.length > 0 && { risks }),
+    ...(unknowns.length > 0 && { unknowns }),
+    ...(safetyChecks.length > 0 && { safetyChecks }),
+    ...(questions.length > 0 && { questions }),
   } satisfies PlannerCritique;
 }
 
@@ -123,8 +125,7 @@ export function normalizeStringList(value: unknown) {
 
 function uniqStrings(values: string[]) {
   const result: string[] = [];
-  for (let index = 0; index < values.length; index += 1) {
-    const value = values[index];
+  for (const value of values) {
     if (!result.includes(value)) {
       result.push(value);
     }

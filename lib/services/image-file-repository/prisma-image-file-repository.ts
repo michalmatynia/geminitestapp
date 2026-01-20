@@ -51,14 +51,14 @@ export const prismaImageFileRepository: ImageFileRepository = {
   async listImageFiles(filters?: ImageFileListFilters) {
     const filename = filters?.filename?.trim();
     const files = await prisma.imageFile.findMany({
-      where: filename
-        ? {
-            filename: {
-              contains: filename,
-              mode: "insensitive",
-            },
-          }
-        : undefined,
+      ...(filename && {
+        where: {
+          filename: {
+            contains: filename,
+            mode: "insensitive",
+          },
+        },
+      }),
     });
     return files.map(toRecord);
   },

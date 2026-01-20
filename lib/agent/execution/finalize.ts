@@ -92,7 +92,7 @@ export async function finalizeAgentRun(input: FinalizeRunInput) {
     memory: memoryContext,
     steps: planSteps,
     verification,
-    taskType,
+    ...(taskType && { taskType }),
     lastError,
     browserContext: verificationContext,
     runId: run.id,

@@ -4,6 +4,7 @@ import { noteService } from "@/lib/services/noteService/index";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { tagUpdateSchema } from "@/lib/validations/notes";
 import { removeUndefined } from "@/lib/utils";
+import type { TagUpdateInput } from "@/types/notes";
 
 /**
  * PATCH /api/notes/tags/[id]
@@ -22,7 +23,10 @@ export async function PATCH(
     if (!parsed.ok) {
       return parsed.response;
     }
-    const tag = await noteService.updateTag(id, removeUndefined(parsed.data));
+    const tag = await noteService.updateTag(
+      id,
+      removeUndefined(parsed.data) as TagUpdateInput
+    );
     return NextResponse.json(tag);
   } catch (error) {
     const errorId = randomUUID();

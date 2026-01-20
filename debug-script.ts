@@ -26,7 +26,7 @@ async function main() {
   
   console.log("Updated note categories:", JSON.stringify(updatedNote?.categories, null, 2));
 
-  if (updatedNote?.categories.length === 1 && updatedNote.categories[0].categoryId === category.id) {
+  if (updatedNote?.categories.length === 1 && updatedNote.categories[0]?.categoryId === category.id) {
     console.log("SUCCESS: Category added correctly.");
   } else {
     console.log("FAILURE: Category NOT added.");

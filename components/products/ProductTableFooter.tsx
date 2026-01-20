@@ -51,11 +51,14 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
         if (failedDeletions.length > 0) {
           let errorIdSuffix = "";
           try {
-            const payload = (await failedDeletions[0].json()) as {
-              errorId?: string;
-            };
-            if (payload?.errorId) {
-              errorIdSuffix = ` (Error ID: ${payload.errorId})`;
+            const firstFailed = failedDeletions[0];
+            if (firstFailed) {
+              const payload = (await firstFailed.json()) as {
+                errorId?: string;
+              };
+              if (payload?.errorId) {
+                errorIdSuffix = ` (Error ID: ${payload.errorId})`;
+              }
             }
           } catch {
             errorIdSuffix = "";

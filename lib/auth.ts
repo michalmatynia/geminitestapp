@@ -50,8 +50,8 @@ const credentialsProvider = Credentials({
       return {
         id: user.id,
         email: user.email,
-        name: user.name,
-        image: user.image,
+        name: user.name ?? null,
+        image: user.image ?? null,
       };
     } catch (error) {
       console.error("[AUTH] Authorize error:", error);
@@ -113,9 +113,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
 
     return {
       ...authConfig,
-      adapter,
+      ...(adapter && { adapter }),
       providers: buildProviders(),
-      debug: true, 
+      debug: true,
     };
   } catch (error) {
     console.error("[AUTH] Configuration error:", error);

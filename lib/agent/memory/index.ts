@@ -44,7 +44,9 @@ export async function addAgentMemory(params: {
         runId: params.runId ?? null,
         scope: params.scope,
         content: params.content,
-        metadata: params.metadata as Prisma.InputJsonValue | undefined,
+        ...(params.metadata !== undefined && {
+          metadata: params.metadata as Prisma.InputJsonValue,
+        }),
       },
     });
   } catch (error) {
@@ -111,7 +113,9 @@ export async function addAgentLongTermMemory(params: {
         content: params.content,
         summary: params.summary ?? null,
         tags: params.tags ?? [],
-        metadata: params.metadata as Prisma.InputJsonValue | undefined,
+        ...(params.metadata !== undefined && {
+          metadata: params.metadata as Prisma.InputJsonValue,
+        }),
         importance: params.importance ?? null,
         lastAccessedAt: new Date(),
       },
@@ -254,11 +258,11 @@ export async function validateAndAddAgentLongTermMemory(params: {
     }
   }
   const validation = await validateAgentLongTermMemory({
-    model: params.model,
-    prompt: params.prompt,
+    ...(params.model !== undefined && { model: params.model }),
+    ...(params.prompt !== undefined && { prompt: params.prompt }),
     content: params.content,
-    summary,
-    metadata: params.metadata,
+    ...(summary !== undefined && { summary }),
+    ...(params.metadata !== undefined && { metadata: params.metadata }),
   });
   if (!validation.valid) {
     return { skipped: true, validation };
@@ -267,9 +271,9 @@ export async function validateAndAddAgentLongTermMemory(params: {
     memoryKey: params.memoryKey,
     runId: params.runId ?? null,
     content: params.content,
-    summary,
+    ...(summary !== undefined && { summary }),
     tags: params.tags ?? [],
-    metadata: params.metadata,
+    ...(params.metadata !== undefined && { metadata: params.metadata }),
     importance: params.importance ?? null,
   });
   return { skipped: false, validation, record };

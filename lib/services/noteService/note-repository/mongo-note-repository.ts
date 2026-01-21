@@ -159,24 +159,30 @@ const buildTree = (
 };
 
 const buildIncomingRelationsMap = (
-  notes: NoteRecord[]
+  incomingDocs: NoteDocument[],
+  targetNoteIds: Set<string>
 ): Map<string, NoteRelationToEmbedded[]> => {
   const incoming = new Map<string, NoteRelationToEmbedded[]>();
 
-  notes.forEach((note) => {
-    note.relationsFrom?.forEach((rel) => {
+  incomingDocs.forEach((incomingDoc) => {
+    const sourceId = incomingDoc.id ?? incomingDoc._id;
+    if (!incomingDoc.relationsFrom?.length) return;
+
+    incomingDoc.relationsFrom.forEach((rel) => {
       const targetId = rel.targetNote?.id ?? rel.targetNoteId;
-      if (!targetId) return;
+      if (!targetId || !targetNoteIds.has(targetId)) return;
+
       const relation: NoteRelationToEmbedded = {
-        sourceNoteId: note.id,
+        sourceNoteId: sourceId,
         targetNoteId: targetId,
         assignedAt: rel.assignedAt ?? new Date(),
         sourceNote: {
-          id: note.id,
-          title: note.title,
-          color: note.color ?? null,
+          id: sourceId,
+          title: incomingDoc.title,
+          color: incomingDoc.color ?? null,
         },
       };
+
       const existing = incoming.get(targetId) ?? [];
       existing.push(relation);
       incoming.set(targetId, existing);
@@ -283,6 +289,7 @@ export const mongoNoteRepository: NoteRepository = {
     const docs = await collection.find(searchFilter).sort({ updatedAt: -1 }).toArray();
     const notes = docs.map(toNoteResponse);
     const noteIds = notes.map((note) => note.id);
+    const noteIdSet = new Set(noteIds);
     const noteFileCollection = db.collection<NoteFileDocument>(noteFileCollectionName);
     const noteFiles = noteIds.length
       ? await noteFileCollection
@@ -297,7 +304,12 @@ export const mongoNoteRepository: NoteRepository = {
       list.push(record);
       filesByNoteId.set(record.noteId, list);
     });
-    const incomingMap = buildIncomingRelationsMap(notes);
+    const incomingDocs = noteIds.length
+      ? await collection
+          .find({ "relationsFrom.targetNoteId": { $in: noteIds } })
+          .toArray()
+      : [];
+    const incomingMap = buildIncomingRelationsMap(incomingDocs, noteIdSet);
     
     const result = notes.map((note) => ({
       ...note,
@@ -444,6 +456,11 @@ export const mongoNoteRepository: NoteRepository = {
   async update(id, data) {
     const db = await getMongoDb();
     const collection = db.collection<NoteDocument>(noteCollectionName);
+    const currentDoc = await collection.findOne({ $or: [{ id }, { _id: id }] });
+    if (!currentDoc) throw new Error("Note not found");
+    const fallbackNotebookId =
+      currentDoc.notebookId ??
+      (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
 
     const setFields: Partial<NoteDocument> = {
       updatedAt: new Date(),
@@ -463,8 +480,7 @@ export const mongoNoteRepository: NoteRepository = {
       let tags: NoteTagEmbedded[] = [];
       if (data.tagIds.length > 0) {
         const now = new Date();
-        const resolvedNotebookId =
-          data.notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
+        const resolvedNotebookId = data.notebookId ?? fallbackNotebookId;
         const tagCollection = db.collection<TagDocument>(tagCollectionName);
         const tagDocs = await tagCollection
           .find({
@@ -489,8 +505,7 @@ export const mongoNoteRepository: NoteRepository = {
       let categories: NoteCategoryEmbedded[] = [];
       if (data.categoryIds.length > 0) {
         const now = new Date();
-        const resolvedNotebookId =
-          data.notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
+        const resolvedNotebookId = data.notebookId ?? fallbackNotebookId;
         const categoryCollection = db.collection<CategoryDocument>(
           categoryCollectionName
         );
@@ -517,8 +532,7 @@ export const mongoNoteRepository: NoteRepository = {
       let relationsFrom: NoteRelationFromEmbedded[] = [];
       if (data.relatedNoteIds.length > 0) {
         const now = new Date();
-        const resolvedNotebookId =
-          data.notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
+        const resolvedNotebookId = data.notebookId ?? fallbackNotebookId;
         const relatedNoteDocs = await collection
           .find({
             $or: data.relatedNoteIds.map((noteId) => ({

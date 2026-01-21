@@ -283,7 +283,7 @@ export default function ChatbotSessionsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={selectAllMatching}
+                onClick={() => void selectAllMatching()}
                 disabled={bulkDeleting || selectingAll}
               >
                 {selectingAll ? "Selecting..." : "Select all (all pages)"}
@@ -301,7 +301,7 @@ export default function ChatbotSessionsPage() {
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={bulkDelete}
+                onClick={() => void bulkDelete()}
                 disabled={
                   selectedIds.size === 0 || bulkDeleting || selectingAll
                 }

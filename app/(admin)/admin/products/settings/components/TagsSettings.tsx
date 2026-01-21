@@ -206,7 +206,7 @@ export function TagsSettings({
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDelete(tag)}
+                        onClick={() => void handleDelete(tag)}
                         className="rounded bg-red-600/80 px-2 py-1 text-xs text-white hover:bg-red-600"
                         title="Delete tag"
                       >
@@ -317,7 +317,7 @@ export function TagsSettings({
                 <button
                   className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
                   type="button"
-                  onClick={handleSave}
+                  onClick={() => void handleSave()}
                   disabled={saving}
                 >
                   {saving ? "Saving..." : "Save"}

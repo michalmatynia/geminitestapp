@@ -1203,7 +1203,7 @@ export default function ProductSettingsPage() {
                 catalogs={catalogs}
                 selectedCatalogId={selectedCategoryCatalogId}
                 onCatalogChange={handleCategoryCatalogChange}
-                onRefresh={() => refreshCategories(selectedCategoryCatalogId)}
+                onRefresh={() => void refreshCategories(selectedCategoryCatalogId)}
               />
             )}
             {activeSection === "Tags" && (
@@ -1213,7 +1213,7 @@ export default function ProductSettingsPage() {
                 catalogs={catalogs}
                 selectedCatalogId={selectedTagCatalogId}
                 onCatalogChange={handleTagCatalogChange}
-                onRefresh={() => refreshTags(selectedTagCatalogId)}
+                onRefresh={() => void refreshTags(selectedTagCatalogId)}
               />
             )}
             {activeSection === "Price Groups" && (
@@ -1221,11 +1221,11 @@ export default function ProductSettingsPage() {
                 loadingGroups={loadingGroups}
                 priceGroups={priceGroups}
                 defaultGroupId={defaultGroupId}
-                onDefaultGroupChange={handleSetDefaultGroup}
+                onDefaultGroupChange={(val) => void handleSetDefaultGroup(val)}
                 defaultGroupSaving={defaultGroupSaving}
                 handleOpenCreate={handleOpenCreate}
                 handleEditGroup={handleEditGroup}
-                handleDeleteGroup={handleDeleteGroup}
+                handleDeleteGroup={(id) => void handleDeleteGroup(id)}
               />
             )}
             {activeSection === "Data Source" && (
@@ -1236,14 +1236,14 @@ export default function ProductSettingsPage() {
                 setProductDbDirty={setProductDbDirty}
                 productDbDirty={productDbDirty}
                 productDbSaving={productDbSaving}
-                handleSaveProductDbProvider={handleSaveProductDbProvider}
+                handleSaveProductDbProvider={() => void handleSaveProductDbProvider()}
                 migrationRunning={migrationRunning}
                 migrationProcessed={migrationProcessed}
                 migrationTotal={migrationTotal}
                 migrationDirection={migrationDirection}
                 missingImageIds={missingImageIds}
                 missingCatalogIds={missingCatalogIds}
-                runProductMigration={runProductMigration}
+                runProductMigration={(dir) => void runProductMigration(dir)}
               />
             )}
             {activeSection === "Catalogs" && (
@@ -1253,7 +1253,7 @@ export default function ProductSettingsPage() {
                 languages={languages}
                 handleOpenCatalogModal={handleOpenCatalogModal}
                 handleEditCatalog={handleOpenCatalogModal}
-                handleDeleteCatalog={handleDeleteCatalog}
+                handleDeleteCatalog={(id) => void handleDeleteCatalog(id)}
               />
             )}
             {activeSection === "Internationalization" && (
@@ -1261,19 +1261,19 @@ export default function ProductSettingsPage() {
                 loadingCurrencies={loadingCurrencies}
                 currencyOptions={currencyOptions}
                 handleOpenCurrencyModal={handleOpenCurrencyModal}
-                handleDeleteCurrency={handleDeleteCurrency}
+                handleDeleteCurrency={(id) => void handleDeleteCurrency(id)}
                 loadingCountries={loadingCountries}
                 filteredCountries={filteredCountries}
                 countrySearch={countrySearch}
                 setCountrySearch={setCountrySearch}
                 handleOpenCountryModal={handleOpenCountryModal}
-                handleDeleteCountry={handleDeleteCountry}
+                handleDeleteCountry={(id) => void handleDeleteCountry(id)}
                 languagesLoading={languagesLoading}
                 languagesError={languagesError}
                 languages={languages}
                 handleOpenNewLanguageModal={handleOpenNewLanguageModal}
                 handleOpenLanguageModal={handleOpenLanguageModal}
-                handleDeleteLanguage={handleDeleteLanguage}
+                handleDeleteLanguage={(id) => void handleDeleteLanguage(id)}
               />
             )}
             {activeSection === "Integrations" && <IntegrationsSettings />}
@@ -1918,7 +1918,7 @@ export default function ProductSettingsPage() {
               <button
                 className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
                 type="button"
-                onClick={handleSaveGroup}
+                onClick={() => void handleSaveGroup()}
               >
                 Save Price Group
               </button>
@@ -2006,7 +2006,7 @@ export default function ProductSettingsPage() {
               <button
                 className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
                 type="button"
-                onClick={handleSaveCurrency}
+                onClick={() => void handleSaveCurrency()}
               >
                 Save Currency
               </button>
@@ -2113,7 +2113,7 @@ export default function ProductSettingsPage() {
               <button
                 className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
                 type="button"
-                onClick={handleSaveCountry}
+                onClick={() => void handleSaveCountry()}
               >
                 Save Country
               </button>

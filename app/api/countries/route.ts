@@ -12,7 +12,6 @@ import {
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import type { CountryCode } from "@prisma/client";
-import { removeUndefined } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
@@ -193,7 +192,7 @@ export async function GET() {
  */
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = (await req.json()) as unknown;
     const data = countrySchema.parse(body);
 
     const { currencyIds, ...countryData } = data;

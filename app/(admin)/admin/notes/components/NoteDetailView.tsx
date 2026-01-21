@@ -31,18 +31,50 @@ export function NoteDetailView({
   const { toast } = useToast();
   const [relatedPreviewNotes, setRelatedPreviewNotes] = useState<Record<string, NoteWithRelations>>({});
 
-  const relationIds = useMemo(() => {
+  const relatedNotes = useMemo(() => {
     if (!selectedNote) return [];
-    const directRelations =
-      selectedNote.relations?.map((rel) => rel.id) ||
-      [
-        ...(selectedNote.relationsFrom ?? []).map((rel) => rel.targetNote.id),
-        ...(selectedNote.relationsTo ?? []).map((rel) => rel.sourceNote.id),
-      ];
-    return directRelations.filter(
-      (id, index, array) => array.findIndex((entry) => entry === id) === index
-    );
+    if (selectedNote.relations && selectedNote.relations.length > 0) {
+      return selectedNote.relations;
+    }
+
+    const build = (
+      id: string | undefined,
+      title: string | undefined,
+      color: string | null | undefined
+    ) => (id ? { id, title: title ?? "Untitled note", color: color ?? null } : null);
+
+    const fromRelations = (selectedNote.relationsFrom ?? [])
+      .map((relation) =>
+        build(
+          relation.targetNote?.id ?? (relation as { targetNoteId?: string }).targetNoteId,
+          relation.targetNote?.title,
+          relation.targetNote?.color
+        )
+      )
+      .filter((item): item is NonNullable<typeof item> => Boolean(item));
+
+    const toRelations = (selectedNote.relationsTo ?? [])
+      .map((relation) =>
+        build(
+          relation.sourceNote?.id ?? (relation as { sourceNoteId?: string }).sourceNoteId,
+          relation.sourceNote?.title,
+          relation.sourceNote?.color
+        )
+      )
+      .filter((item): item is NonNullable<typeof item> => Boolean(item));
+
+    return [...fromRelations, ...toRelations];
   }, [selectedNote]);
+
+  const relationIds = useMemo(
+    () =>
+      relatedNotes
+        .map((rel) => rel.id)
+        .filter(
+          (id, index, array) => array.findIndex((entry) => entry === id) === index
+        ),
+    [relatedNotes]
+  );
 
   useEffect(() => {
     if (!selectedNote || relationIds.length === 0) return;
@@ -369,27 +401,14 @@ export function NoteDetailView({
                 .catch(() => toast("Failed to copy code", { variant: "error" }));
             }}
           />
-          {((selectedNote.relations?.length ?? 0) > 0 ||
-            (selectedNote.relationsFrom?.length ?? 0) > 0 ||
-            (selectedNote.relationsTo?.length ?? 0) > 0) && (
+          {relatedNotes.length > 0 && (
             <div className="mt-6 space-y-4">
               <div className="space-y-2">
                 <div className="text-xs uppercase tracking-wide text-gray-400">
                   Related Notes
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {(selectedNote.relations ?? [
-                    ...(selectedNote.relationsFrom ?? []).map((relation) => ({
-                      id: relation.targetNote.id,
-                      title: relation.targetNote.title,
-                      color: relation.targetNote.color ?? null,
-                    })),
-                    ...(selectedNote.relationsTo ?? []).map((relation) => ({
-                      id: relation.sourceNote.id,
-                      title: relation.sourceNote.title,
-                      color: relation.sourceNote.color ?? null,
-                    })),
-                  ])
+                  {relatedNotes
                     .filter(
                       (noteItem, index, array) =>
                         array.findIndex((item) => item.id === noteItem.id) === index

@@ -132,6 +132,7 @@ export async function POST(req: Request) {
     const contentType = req.headers.get("content-type") || "";
     let messages: ChatMessage[] = [];
     let requestedModel: string | null = null;
+    let sessionId: string | null = null;
 
     if (contentType.includes("multipart/form-data")) {
       const formData = await req.formData();
@@ -155,6 +156,9 @@ export async function POST(req: Request) {
 
       const rawModel = formData.get("model");
       requestedModel = typeof rawModel === "string" ? rawModel : null;
+
+      const rawSessionId = formData.get("sessionId");
+      sessionId = typeof rawSessionId === "string" ? rawSessionId : null;
 
       const files = formData.getAll("files");
 
@@ -252,9 +256,7 @@ export async function POST(req: Request) {
       };
       messages = body.messages ?? [];
       requestedModel = body.model ?? null;
-
-      // Store sessionId for later use
-      (req as any).sessionId = body.sessionId;
+      sessionId = body.sessionId ?? null;
     }
 
     if (!Array.isArray(messages) || messages.length === 0) {
@@ -321,9 +323,7 @@ export async function POST(req: Request) {
     }
 
     // IMPORTANT: do NOT redeclare `requestStart` inside this block (TDZ issue).
-    const ollamaRequestStart = Date.now();
-
-    const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+    await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestPayload),
@@ -350,53 +350,36 @@ export async function POST(req: Request) {
       response?: string;
     };
 
-    const responseMessage =
-      data.message?.content || data.response || "No response from model.";
-
-    if (DEBUG_CHATBOT) {
-      console.info("[chatbot][chat] Ollama response", {
-        durationMs: Date.now() - ollamaRequestStart,
-        responseChars: responseMessage.length,
-      });
-    }
-
     // Save messages to session if sessionId provided
-    const sessionId = (req as any).sessionId;
     if (sessionId) {
       try {
-        // Get the last user message
-        const lastUserMessage = messages[messages.length - 1];
-
-        if (lastUserMessage) {
-          // Add user message to session
+        const userMessage = messages[messages.length - 1];
+        if (userMessage) {
           await chatbotSessionRepository.addMessage(sessionId, {
-            role: lastUserMessage.role,
-            content: lastUserMessage.content,
-            images: lastUserMessage.images,
-            timestamp: new Date(),
+            role: userMessage.role,
+            content: userMessage.content,
           });
+        }
 
-          // Add assistant response to session
+        if (data.message?.content || data.response) {
           await chatbotSessionRepository.addMessage(sessionId, {
             role: "assistant",
-            content: responseMessage,
-            timestamp: new Date(),
+            content: data.message?.content || data.response || "",
           });
+        }
 
-          if (DEBUG_CHATBOT) {
-            console.info("[chatbot][chat] Saved to session", { sessionId });
-          }
+        if (DEBUG_CHATBOT) {
+          console.info("[chatbot][chat] Saved to session", { sessionId });
         }
       } catch (error) {
-        console.error("[chatbot][chat] Failed to save to session", {
-          sessionId,
-          error,
-        });
-        // Don't fail the request if saving to session fails
+        console.error("[chatbot][chat] Failed to save session messages", error);
       }
     }
 
-    return NextResponse.json({ message: responseMessage });
+    return NextResponse.json({
+      message: data.message?.content || data.response,
+      sessionId,
+    });
   } catch (error) {
     const errorId = createErrorId();
     const message =

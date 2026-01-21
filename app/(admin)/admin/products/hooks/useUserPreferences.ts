@@ -31,11 +31,16 @@ export function useUserPreferences() {
           throw new Error("Failed to load preferences");
         }
 
-        const data = await res.json();
+        const data = (await res.json()) as {
+          productListNameLocale?: string;
+          productListCatalogFilter?: string;
+          productListCurrencyCode?: string | null;
+          productListPageSize?: number;
+        };
         setPreferences({
           nameLocale: (data.productListNameLocale || "name_en") as "name_en" | "name_pl" | "name_de",
           catalogFilter: data.productListCatalogFilter || "all",
-          currencyCode: data.productListCurrencyCode,
+          currencyCode: data.productListCurrencyCode ?? null,
           pageSize: data.productListPageSize || 50,
         });
       } catch (err) {

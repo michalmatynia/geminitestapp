@@ -75,6 +75,39 @@ function NoteCardBase({
     backgroundColor: effectiveTheme.relatedNoteBackgroundColor,
     color: effectiveTheme.relatedNoteTextColor,
   } as const;
+  const relatedNotes = (() => {
+    if (note.relations && note.relations.length > 0) {
+      return note.relations;
+    }
+
+    const build = (
+      id: string | undefined,
+      title: string | undefined,
+      color: string | null | undefined
+    ) => (id ? { id, title: title ?? "Untitled note", color: color ?? null } : null);
+
+    const fromRelations = (note.relationsFrom ?? [])
+      .map((relation) =>
+        build(
+          relation.targetNote?.id ?? (relation as { targetNoteId?: string }).targetNoteId,
+          relation.targetNote?.title,
+          relation.targetNote?.color
+        )
+      )
+      .filter((item): item is NonNullable<typeof item> => Boolean(item));
+
+    const toRelations = (note.relationsTo ?? [])
+      .map((relation) =>
+        build(
+          relation.sourceNote?.id ?? (relation as { sourceNoteId?: string }).sourceNoteId,
+          relation.sourceNote?.title,
+          relation.sourceNote?.color
+        )
+      )
+      .filter((item): item is NonNullable<typeof item> => Boolean(item));
+
+    return [...fromRelations, ...toRelations];
+  })();
   const thumbnailFile = note.files?.find(
     (file) => file.mimetype?.startsWith("image/") && file.filepath
   );
@@ -239,27 +272,11 @@ function NoteCardBase({
         </div>
       )}
       {showRelatedNotes &&
-        ((note.relations?.length ?? 0) > 0 ||
-          (note.relationsFrom?.length ?? 0) > 0 ||
-          (note.relationsTo?.length ?? 0) > 0) && (
+        relatedNotes.length > 0 && (
           <div className="mt-2">
             <div className="flex flex-wrap gap-2">
-              {(note.relations ?? [
-                ...(note.relationsFrom ?? []).map((relation) => ({
-                  id: relation.targetNote.id,
-                  title: relation.targetNote.title,
-                  color: relation.targetNote.color ?? null,
-                })),
-                ...(note.relationsTo ?? []).map((relation) => ({
-                  id: relation.sourceNote.id,
-                  title: relation.sourceNote.title,
-                  color: relation.sourceNote.color ?? null,
-                })),
-              ])
-                .filter(
-                  (item, index, array) =>
-                    array.findIndex((entry) => entry.id === item.id) === index
-                )
+              {relatedNotes
+                .filter((item, index, array) => array.findIndex((entry) => entry.id === item.id) === index)
                 .slice(0, 4)
                 .map((related) => (
                   <div

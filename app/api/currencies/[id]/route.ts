@@ -3,7 +3,6 @@ import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
-import { removeUndefined } from "@/lib/utils";
 
 type CurrencyDoc = {
   id: string;
@@ -43,7 +42,7 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const body = await req.json();
+    const body = (await req.json()) as unknown;
     const data = currencySchema.parse(body);
 
     const provider = await getProductDataProvider();

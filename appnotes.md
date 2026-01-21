@@ -1,17 +1,15 @@
 
-In Integrations Baslinker Tab, create a separate Sync Tab, Where I can set Synchronization intervals. Also, I should be able to setup which way the syning is preferred for each field. So if stock changes in Base.com, should it overwrite what is in my platform, or should it be the other way round. which specific fields are synchronised is set up on per Product basis. So remove syn Price and Sync Inventory Tabs.
 
-Category Mapping to Base.com
-Save my export settings. They need to be SAVED in the Database. 
+Default Catalog choice, In Product Catalog Choice should retained
+
+* Note Links, Notes Rellated to one another are not longer visible in Note Cards and Note Preview
+
+Opening WYSYWIG Note fails in Edit Mode
+
 
 In Product List - Operations - I need an Option to Mass Export Products to Base.com
 
-When I export my product, still Stock is not exporting. My English Name goes into 
-Polish Name is not exported at all. My English Description is inserted into Polish Description in Base.com. My Polish Description is not exported at all. I am using Export Template and its parameter mappings for Export. 
-
 In Product Edit / Create Tags Field should be searchable field
-
-Opening WYSYWIG Note fails in Edit Mode
 
 I am unable to Open my Note, if I migrate it to Wysiwyg
 
@@ -30,48 +28,28 @@ Note App, switching to Wysywig not workin/ - wait there is segmentation in place
 
 * Notebook App, when I create a new notebook, I should have the option to choose whether I want the notebook to be WYSIWYG or Markdown. Employ the USe of WYSIWYG in Notes.
 
-At some point the exported product should sync image URLs links with my website
 
 * Product Catalog should adhere to the order in which the languages are added, If I add English, then Polish then German, this is the order in which they should be presented. Also, I should be able to reorder languages When in Product Catalog Edit Page.
 
-
-* I have a problem with Languages in Product Edit Create. The Catalog Mentios has two languages attached, or so it seems, because in Product Settings it looks it has four id pills, but when I open Product modal, it has four langauges.
-
 * The Note Themes should also offer the option to preselect all the belonging notes to either Wysiwyg or markdown.
 
-* Product Create Panel Closes by itself
+When I Create Product after adding images, the screen filckers when I try to resort images
 
-* Product Edit / Create modal is closing by itself randomly when I try to enter Title
-
-* When I Create Product after adding images, the screen filckers
-
-Prefilled Product Templates
-
+Prefilled Product Templates -> Add Jewellery add Figure etc.
 
 * my Product list Filter choices are not retained (for example catalog) when I change between pages, they were supposed to be kept in Mongo DB and be persistent.
 
 
 add proper debugging on visual studio code
 
-* In Product Catalog, drag and drop is used for sorting languages. Can you reuse drag and drop from Note App, not to duplicate libraries
-
-In Products List - Clicking house I should see the status of the export job (if house yellow) and sync options if it's green
-
-* Move Export / Import Jobs into AI Jobs, but create a separate Tabs one for Import and one for Export Jobs.
-
 * I need an option to import one specific product only (found by SKU or Base product id)
 
-* View Listing Jobs in Product Export is not working
+LATER - Category Mapping to Base.com
 
-* The Export of of Products is not going through
-I cannot stop or cancel the export when it is in Pending. 
+LATER LATER - At some point the exported product should sync image URLs links with my website
 
 
-* when importing / exporting products to / from Base.com, consider also duplicate SKUs, usually they have to be unique (make optional if I want to import / export with duplicate SKUs)
-
-* Polling for AI jobs never stops. When Jobs are in Completed status, stop polling
-
-* When I click on the little house Icon in Product List, I should get the Base Export and Synchronization settings.
+LATER - In Integrations Baslinker Tab, create a separate Sync Tab, Where I can set Synchronization intervals. Also, I should be able to setup which way the syning is preferred for each field. So if stock changes in Base.com, should it overwrite what is in my platform, or should it be the other way round. which specific fields are synchronised is set up on per Product basis. So remove syn Price and Sync Inventory Tabs. - 
 
 ## Error Message
 

@@ -11,13 +11,17 @@ const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 
 export async function getSettingValue(key: string): Promise<string | null> {
   let value: string | null = null;
-  if (process.env.DATABASE_URL && "setting" in prisma) {
+  if (process.env.DATABASE_URL) {
     try {
-      const setting = await (prisma as any).setting.findUnique({
-        where: { key },
-        select: { value: true },
-      });
-      if (setting) value = setting.value;
+      // Accessing prisma.setting should be safe if DATABASE_URL is set
+      const db = prisma as any;
+      if (db.setting) {
+        const setting = await db.setting.findUnique({
+          where: { key },
+          select: { value: true },
+        }) as { value: string } | null;
+        if (setting) value = setting.value;
+      }
     } catch (err) {
       console.warn(`Prisma setting fetch failed for ${key}:`, err);
     }
@@ -25,7 +29,7 @@ export async function getSettingValue(key: string): Promise<string | null> {
   if (!value && process.env.MONGODB_URI) {
     try {
       const mongo = await getMongoDb();
-      const doc = await mongo.collection("settings").findOne({ _id: key as any });
+      const doc = await mongo.collection("settings").findOne({ _id: key }) as { value: string } | null;
       if (doc && typeof doc.value === "string") {
         value = doc.value;
       }
@@ -148,7 +152,7 @@ export async function generateProductDescription(params: {
         return { type: "image_url" as const, image_url: { url: `data:${mimetype};base64,${base64Image}` } };
       } catch { return null; }
     });
-    processedImages = (await Promise.all(imagePromises)).filter((img): img is any => img !== null) as ChatCompletionContentPart[];
+    processedImages = (await Promise.all(imagePromises)).filter((img): img is ChatCompletionContentPart => img !== null);
   }
 
   let analysisInitial = "";

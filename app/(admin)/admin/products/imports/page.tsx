@@ -1618,7 +1618,7 @@ export default function ProductImportsPage() {
             <div className="mt-4 space-y-4">
               <div className="flex flex-wrap items-end gap-3">
                 <Button
-                  onClick={handleLoadInventories}
+                  onClick={() => void handleLoadInventories()}
                   disabled={loadingInventories}
                   className="mt-6"
                 >
@@ -1646,7 +1646,7 @@ export default function ProductImportsPage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={handleClearInventory}
+                  onClick={() => void handleClearInventory()}
                   disabled={!inventoryId}
                   className="mt-6"
                 >
@@ -1755,7 +1755,7 @@ export default function ProductImportsPage() {
                   Default catalog and price group must be configured before
                   import.
                 </p>
-                <Button onClick={handleImport} disabled={importing}>
+                <Button onClick={() => void handleImport()} disabled={importing}>
                   {importing ? "Importing..." : "Import products"}
                 </Button>
               </div>
@@ -1790,7 +1790,7 @@ export default function ProductImportsPage() {
                   <option value="all">All products</option>
                 </select>
                 <Button
-                  onClick={handleLoadImportList}
+                  onClick={() => void handleLoadImportList()}
                   disabled={loadingImportList}
                 >
                   {loadingImportList ? "Loading..." : "Load import list"}

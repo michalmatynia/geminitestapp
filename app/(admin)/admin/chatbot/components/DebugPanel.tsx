@@ -3,17 +3,23 @@
 import React from "react";
 import { ChatbotDebugState } from "@/types/chatbot";
 
+interface LogEntry {
+  id: string;
+  createdAt: string | number | Date;
+  level: string;
+  message: string;
+}
+
 interface DebugPanelProps {
   debugState: ChatbotDebugState;
-  agentRunLogs: any[];
-  agentRunAudits: any[];
+  agentRunLogs: LogEntry[];
+  _agentRunAudits: any[];
 }
 
 export function DebugPanel({
   debugState,
   agentRunLogs,
-  agentRunAudits,
-}: DebugPanelProps) {
+}: Omit<DebugPanelProps, "_agentRunAudits">) {
   return (
     <div className="h-full overflow-y-auto bg-gray-950 p-4 text-xs text-gray-300">
       <h3 className="mb-2 font-semibold text-white">Debug Information</h3>

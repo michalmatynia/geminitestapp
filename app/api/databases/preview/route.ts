@@ -131,13 +131,12 @@ export async function POST(req: Request) {
         }
       }
     }
-    const tableNames = Array.from(tableSet);
 
     previewDbName = `stardb_preview_${Date.now()}`;
     const adminUrl = new URL(dbUrl);
     adminUrl.pathname = "/postgres";
     adminUrl.searchParams.delete("schema");
-    const adminClient =
+    const adminClient = 
       previewMode === "backup"
         ? new Client({ connectionString: adminUrl.toString() })
         : null;
@@ -182,7 +181,7 @@ export async function POST(req: Request) {
       previewClient = new Client({ connectionString: previewUrl.toString() });
       await previewClient.connect();
 
-      const tablesResult = await previewClient.query<{
+      const tablesResult = await previewClient.query<{ 
         tablename: string;
       }>(
         "SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename"
@@ -194,10 +193,10 @@ export async function POST(req: Request) {
       }
 
       if (tables.length > 0) {
-        const estimateRows = await previewClient.query<{
+        const estimateRows = await previewClient.query<{ 
           relname: string;
           reltuples: number;
-        }>(
+        }>( 
           `SELECT c.relname, c.reltuples::bigint AS reltuples
            FROM pg_class c
            JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -215,173 +214,14 @@ export async function POST(req: Request) {
         }));
       }
 
-      for (const table of tables) {
-        const countResult = await previewClient.query(
-          `SELECT COUNT(*)::bigint AS total FROM "${table}"`
-        );
-        const totalRows = Number(countResult.rows[0]?.total ?? 0);
-        const rowsResult = await previewClient.query(
-          `SELECT * FROM "${table}" LIMIT $1 OFFSET $2`,
-          [safePageSize, offset]
-        );
-        tableRows.push({
-          name: table,
-          rows: rowsResult.rows as Record<string, unknown>[],
-          totalRows,
-        });
-      }
+            for (const table of tables) {
 
-      if (previewMode === "current") {
-        const addGroup = (type: string, entries: string[]) => {
-          if (!groups.has(type)) {
-            groups.set(type, new Set());
-          }
-          const set = groups.get(type);
-          entries.forEach((entry) => set?.add(entry));
-        };
+              const countResult = await previewClient.query<{ total: string }>(
 
-        const tableEntries = tables.map((table) => `public.${table}`);
-        addGroup("TABLE", tableEntries);
-        addGroup("TABLE DATA", tableEntries);
+                `SELECT COUNT(*)::bigint AS total FROM "${table}"`
 
-        const viewsResult = await previewClient.query<{
-          viewname: string;
-        }>("SELECT viewname FROM pg_views WHERE schemaname = 'public'");
-        addGroup(
-          "VIEW",
-          viewsResult.rows.map((row) => `public.${row.viewname}`)
-        );
+              );
 
-        const matViewsResult = await previewClient.query<{
-          matviewname: string;
-        }>("SELECT matviewname FROM pg_matviews WHERE schemaname = 'public'");
-        addGroup(
-          "MATERIALIZED VIEW",
-          matViewsResult.rows.map((row) => `public.${row.matviewname}`)
-        );
+              const totalRows = Number(countResult.rows[0]?.total ?? 0);
 
-        const sequencesResult = await previewClient.query<{
-          sequencename: string;
-        }>(
-          "SELECT sequencename FROM pg_sequences WHERE schemaname = 'public'"
-        );
-        addGroup(
-          "SEQUENCE",
-          sequencesResult.rows.map((row) => `public.${row.sequencename}`)
-        );
-
-        const functionsResult = await previewClient.query<{
-          proname: string;
-        }>(
-          "SELECT p.proname FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public'"
-        );
-        addGroup(
-          "FUNCTION",
-          functionsResult.rows.map((row) => `public.${row.proname}`)
-        );
-
-        const typesResult = await previewClient.query<{
-          typname: string;
-        }>(
-          "SELECT t.typname FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname = 'public'"
-        );
-        addGroup(
-          "TYPE",
-          typesResult.rows.map((row) => `public.${row.typname}`)
-        );
-
-        const indexResult = await previewClient.query<{
-          indexname: string;
-        }>(
-          "SELECT indexname FROM pg_indexes WHERE schemaname = 'public'"
-        );
-        addGroup(
-          "INDEX",
-          indexResult.rows.map((row) => `public.${row.indexname}`)
-        );
-
-        const triggerResult = await previewClient.query<{
-          tgname: string;
-          relname: string;
-        }>(
-          "SELECT t.tgname, c.relname FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND NOT t.tgisinternal"
-        );
-        addGroup(
-          "TRIGGER",
-          triggerResult.rows.map(
-            (row) => `public.${row.relname}.${row.tgname}`
-          )
-        );
-
-        const constraintsResult = await previewClient.query<{
-          conname: string;
-          relname: string;
-        }>(
-          "SELECT con.conname, c.relname FROM pg_constraint con JOIN pg_class c ON c.oid = con.conrelid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public'"
-        );
-        addGroup(
-          "CONSTRAINT",
-          constraintsResult.rows.map(
-            (row) => `public.${row.relname}.${row.conname}`
-          )
-        );
-      }
-    } finally {
-      stage = "cleanup";
-      if (previewClient) {
-        await previewClient.end().catch(() => undefined);
-      }
-      if (previewMode === "backup") {
-        await adminClient
-          ?.query(
-            "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1",
-            [previewDbName]
-          )
-          .catch(() => undefined);
-        await adminClient
-          ?.query(`DROP DATABASE IF EXISTS "${previewDbName}"`)
-          .catch(() => undefined);
-        await adminClient?.end().catch(() => undefined);
-      }
-    }
-
-    const groupedObjects = Array.from(groups.entries())
-      .map(([type, set]) => ({
-        type,
-        objects: Array.from(set).sort((a, b) => a.localeCompare(b)),
-      }))
-      .sort((a, b) => a.type.localeCompare(b.type));
-
-    return NextResponse.json({
-      content: output || "No preview output.",
-      tables: tableStats,
-      tableRows,
-      groups: groupedObjects,
-      page: safePage,
-      pageSize: safePageSize,
-      mode: previewMode,
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to preview backup";
-    console.error("[databases][preview] Failed to preview", {
-      errorId,
-      stage,
-      backupName,
-      previewMode,
-      previewDbName,
-      page: safePage,
-      pageSize: safePageSize,
-      error,
-    });
-    return NextResponse.json(
-      {
-        error: message,
-        errorId,
-        stage,
-        backupName,
-        mode: previewMode,
-      },
-      { status: 500 }
-    );
-  }
-}
+      

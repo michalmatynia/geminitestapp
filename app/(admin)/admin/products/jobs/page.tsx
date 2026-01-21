@@ -11,13 +11,27 @@ import { Loader2, RefreshCcw, Trash2, XCircle, Eye } from "lucide-react";
 import ModalShell from "@/components/ui/modal-shell";
 import ProductListingJobsPanel from "@/components/products/ProductListingJobsPanel";
 
+type ProductAiJobResult = {
+  visionModel?: string;
+  generationModel?: string;
+  visionOutputEnabled?: boolean;
+  generationOutputEnabled?: boolean;
+  analysisInitial?: string;
+  analysis?: string;
+  analysisFinal?: string;
+  descriptionInitial?: string;
+  description?: string;
+  descriptionFinal?: string;
+  [key: string]: any;
+};
+
 type ProductAiJob = {
   id: string;
   productId: string;
   status: "pending" | "running" | "completed" | "failed" | "canceled";
   type: string;
   payload: any;
-  result: any;
+  result: ProductAiJobResult | null;
   errorMessage: string | null;
   createdAt: string;
   startedAt: string | null;
@@ -48,7 +62,7 @@ export default function ProductAiJobsPage() {
     try {
       const res = await fetch("/api/products/ai-jobs");
       if (!res.ok) throw new Error("Failed to load jobs.");
-      const data = await res.json();
+      const data = (await res.json()) as { jobs?: ProductAiJob[] };
       setJobs(data.jobs ?? []);
     } catch (error) {
       toast(error instanceof Error ? error.message : "Failed to load jobs.", { variant: "error" });
@@ -337,7 +351,7 @@ export default function ProductAiJobsPage() {
                   </div>
                 )}
 
-                {selectedJob.result && typeof selectedJob.result === 'object' && 'analysisInitial' in selectedJob.result ? (
+                {selectedJob.result && typeof selectedJob.result === 'object' && 'analysisInitial' in (selectedJob.result as object) ? (
                   <div className="space-y-4">
                     <div className="text-gray-400 font-bold text-xs uppercase mb-2">AI Processing Results</div>
 

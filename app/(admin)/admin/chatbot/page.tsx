@@ -133,8 +133,8 @@ function ChatbotPageInner() {
             sessions={logic.sessions}
             currentSessionId={logic.currentSessionId}
             onSelectSession={logic.selectSession}
-            onNewSession={logic.createNewSession}
-            onDeleteSession={logic.deleteSession}
+            onNewSession={() => void logic.createNewSession()}
+            onDeleteSession={(id) => void logic.deleteSession(id)}
           />
         </div>
 

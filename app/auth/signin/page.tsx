@@ -37,7 +37,7 @@ function SignInContent() {
             Sign-in failed. Please check your credentials and try again.
           </div>
         ) : null}
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-4" onSubmit={(e) => void handleSubmit(e)}>
           <div className="space-y-2">
             <label className="text-sm text-gray-300" htmlFor="email">
               Email
@@ -81,14 +81,14 @@ function SignInContent() {
           <button
             className="w-full rounded-md border border-gray-700 px-3 py-2 text-sm font-semibold text-gray-200 hover:border-gray-500"
             type="button"
-            onClick={() => signIn("google", { callbackUrl: "/admin" })}
+            onClick={() => void signIn("google", { callbackUrl: "/admin" })}
           >
             Continue with Google
           </button>
           <button
             className="w-full rounded-md border border-gray-700 px-3 py-2 text-sm font-semibold text-gray-200 hover:border-gray-500"
             type="button"
-            onClick={() => signIn("facebook", { callbackUrl: "/admin" })}
+            onClick={() => void signIn("facebook", { callbackUrl: "/admin" })}
           >
             Continue with Facebook
           </button>

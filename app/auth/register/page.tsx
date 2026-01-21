@@ -28,7 +28,7 @@ export default function RegisterPage() {
       });
 
       if (!response.ok) {
-        const payload = await response.json();
+        const payload = (await response.json()) as { error?: string };
         setError(payload?.error ?? "Failed to create account.");
         setIsSubmitting(false);
         return;
@@ -39,7 +39,7 @@ export default function RegisterPage() {
         password,
         callbackUrl: "/admin",
       });
-    } catch (err) {
+    } catch (_err) {
       setError("Failed to create account.");
       setIsSubmitting(false);
     }
@@ -59,7 +59,7 @@ export default function RegisterPage() {
             {error}
           </div>
         ) : null}
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-4" onSubmit={(e) => void handleSubmit(e)}>
           <div className="space-y-2">
             <label className="text-sm text-gray-300" htmlFor="name">
               Name (optional)

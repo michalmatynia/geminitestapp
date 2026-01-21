@@ -135,7 +135,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const errorId = randomUUID();
   try {
-    const body = await req.json();
+    const body = (await req.json()) as unknown;
     const data = languageCreateSchema.parse(body);
     const code = data.code.toUpperCase();
 

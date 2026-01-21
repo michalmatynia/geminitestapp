@@ -65,7 +65,7 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const body = await req.json();
+    const body = (await req.json()) as unknown;
     const data = countrySchema.parse(body);
     const { currencyIds, ...countryData } = data;
 

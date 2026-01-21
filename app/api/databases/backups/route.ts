@@ -25,7 +25,7 @@ async function getBackups(type: "postgresql" | "mongodb"): Promise<DatabaseInfo[
   try {
     const logFile = await fs.readFile(logPath, "utf-8");
     logData = JSON.parse(logFile) as Record<string, string>;
-  } catch (error) {
+  } catch (_error) {
     // No log yet.
   }
 

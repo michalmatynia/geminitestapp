@@ -5,7 +5,6 @@ import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { fallbackCurrencies } from "@/lib/internationalizationFallback";
-import { removeUndefined } from "@/lib/utils";
 
 const priceGroupSchema = z
   .object({
@@ -226,7 +225,7 @@ export async function GET() {
  */
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = (await req.json()) as unknown;
     const data = priceGroupSchema.parse(body);
 
     const provider = await getProductDataProvider();

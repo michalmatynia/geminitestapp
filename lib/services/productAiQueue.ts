@@ -1,5 +1,4 @@
 import prisma from "@/lib/prisma";
-import { ProductAiJobStatus } from "@prisma/client";
 import { generateProductDescription } from "./aiDescriptionService";
 import { translateProduct } from "./aiTranslationService";
 import type { ProductFormData } from "@/types";
@@ -13,6 +12,24 @@ type LanguageRecord = {
   id: string;
   code: string;
   name: string;
+};
+
+type JobPayload = {
+  isTest?: boolean;
+  productData?: any;
+  imageUrls?: string[];
+  visionOutputEnabled?: boolean;
+  generationOutputEnabled?: boolean;
+  languageIds?: string[];
+  [key: string]: any;
+};
+
+type Job = {
+  id: string;
+  productId: string;
+  type: string;
+  payload: JobPayload;
+  [key: string]: any;
 };
 
 const normalizeLanguageDoc = (doc: Record<string, unknown>): LanguageRecord | null => {
@@ -118,7 +135,7 @@ const stopProductAiJobQueue = (reason?: string) => {
   console.log(`[productAiQueue] Queue worker stopped${suffix}`);
 };
 
-async function processDescriptionGeneration(job: any) {
+async function processDescriptionGeneration(job: Job) {
   const { productId, payload } = job;
 
   console.log(`[processDescriptionGeneration] Starting for productId: ${productId}`);
@@ -133,7 +150,7 @@ async function processDescriptionGeneration(job: any) {
   // Check if product data is already in the payload (from test mode)
   if (payload.productData && payload.isTest) {
     console.log(`[processDescriptionGeneration] Using product data from payload (test mode)`);
-    const rawData = payload.productData;
+    const rawData = payload.productData as ProductFormData;
 
     // Extract only the fields we need
     productData = {
@@ -191,7 +208,7 @@ async function processDescriptionGeneration(job: any) {
       length: product.length || 0,
     };
 
-    const uploadedImages = product.images?.map((img: any) => img.imageFile?.filepath).filter(Boolean) || [];
+    const uploadedImages = (product.images as any[])?.map((img: any) => (img.imageFile?.filepath as string)).filter((p: string): p is string => Boolean(p)) || [];
     const externalImages = product.imageLinks || [];
     allImageUrls = [...externalImages, ...uploadedImages];
   }
@@ -221,7 +238,7 @@ async function processDescriptionGeneration(job: any) {
   return result;
 }
 
-async function processTranslation(job: any) {
+async function processTranslation(job: Job) {
   const { productId } = job;
 
   console.log(`[processTranslation] Starting for productId: ${productId}`);
@@ -254,7 +271,7 @@ async function processTranslation(job: any) {
 
   if (product.catalogs && product.catalogs.length > 0) {
     // Check if catalog data is already embedded (MongoDB format)
-    const firstCatalog = product.catalogs[0] as any;
+    const firstCatalog = product.catalogs[0] as unknown as { catalog?: { id: string; name: string; languageIds?: string[] } };
     const hasEmbeddedCatalog = firstCatalog?.catalog && typeof firstCatalog.catalog === 'object';
 
     if (hasEmbeddedCatalog) {
@@ -263,8 +280,8 @@ async function processTranslation(job: any) {
 
       const languageSet = new Set<string>();
 
-      for (const catalogAssignment of product.catalogs) {
-        const catalog = (catalogAssignment as any).catalog;
+      for (const catalogAssignment of (product.catalogs as unknown as { catalog: { id: string; name: string; languageIds?: string[] } }[])) {
+        const catalog = catalogAssignment.catalog;
         console.log(`[processTranslation] Processing catalog "${catalog.name}" (${catalog.id})`);
 
         if (catalog.languageIds && Array.isArray(catalog.languageIds)) {
@@ -295,8 +312,8 @@ async function processTranslation(job: any) {
 
       let catalogIds: string[] = [];
       if (Array.isArray(product.catalogs)) {
-        catalogIds = product.catalogs.map((c: any) => {
-          return c.catalogId || c.id || c;
+        catalogIds = (product.catalogs as any[]).map((c: any) => {
+          return (c.catalogId as string) || (c.id as string) || (c as string);
         }).filter(Boolean);
       }
 
@@ -372,11 +389,11 @@ async function processTranslation(job: any) {
   });
 
   // Update product with translations
-  const updateData: any = {};
+  const updateData: Record<string, string> = {};
 
   for (const [lang, translation] of Object.entries(result.translations)) {
     const langCode = lang.toLowerCase();
-    if (langCode === "polish" || langCode.includes("pol")) {
+    if (langCode === "polish" || langCode.includes("pol") || langCode === "pl") {
       updateData.name_pl = translation.name;
       updateData.description_pl = translation.description;
     } else if (langCode === "german" || langCode.includes("german") || langCode === "de") {
@@ -421,17 +438,29 @@ const pollQueue = async () => {
       data: { status: "running", startedAt: new Date() },
     });
 
-    try {
-      let result = null;
-      if (nextJob.type === "description_generation") {
-        console.log(`[productAiQueue] Processing description generation for job ${nextJob.id}`);
-        result = await processDescriptionGeneration(nextJob);
-        console.log(`[productAiQueue] Description generation completed for job ${nextJob.id}`);
-      } else if (nextJob.type === "translation") {
-        console.log(`[productAiQueue] Processing translation for job ${nextJob.id}`);
-        result = await processTranslation(nextJob);
-        console.log(`[productAiQueue] Translation completed for job ${nextJob.id}`);
-      } else {
+          try {
+
+            let result = null;
+
+            const typedJob = nextJob as unknown as Job;
+
+            if (nextJob.type === "description_generation") {
+
+              console.log(`[productAiQueue] Processing description generation for job ${typedJob.id}`);
+
+              result = await processDescriptionGeneration(typedJob);
+
+              console.log(`[productAiQueue] Description generation completed for job ${typedJob.id}`);
+
+            } else if (nextJob.type === "translation") {
+
+              console.log(`[productAiQueue] Processing translation for job ${typedJob.id}`);
+
+              result = await processTranslation(typedJob);
+
+              console.log(`[productAiQueue] Translation completed for job ${typedJob.id}`);
+
+            } else {
         throw new Error(`Unknown job type: ${nextJob.type}`);
       }
 
@@ -536,13 +565,14 @@ export const processSingleJob = async (jobId: string) => {
 
   try {
     let result = null;
+    const typedJob = job as unknown as Job;
     if (job.type === "description_generation") {
       console.log(`[processSingleJob] Processing description generation for job ${job.id}`);
-      result = await processDescriptionGeneration(job);
+      result = await processDescriptionGeneration(typedJob);
       console.log(`[processSingleJob] Description generation completed for job ${job.id}`);
     } else if (job.type === "translation") {
       console.log(`[processSingleJob] Processing translation for job ${job.id}`);
-      result = await processTranslation(job);
+      result = await processTranslation(typedJob);
       console.log(`[processSingleJob] Translation completed for job ${job.id}`);
     } else {
       throw new Error(`Unknown job type: ${job.type}`);

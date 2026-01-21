@@ -251,7 +251,7 @@ export async function DELETE(
       // Remove language from any catalogs that reference it
       await mongo.collection("catalogs").updateMany(
         { languageIds: id },
-        { $pull: { languageIds: id } as any }
+        { $pull: { languageIds: id } }
       );
 
       // Delete the language

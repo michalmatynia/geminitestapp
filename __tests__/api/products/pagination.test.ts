@@ -21,7 +21,7 @@ describe("Products API - Pagination and Count", () => {
       await createMockProduct({ name_en: "P3", sku: "SKU3" });
 
       const res = await GET_COUNT(new Request("http://localhost/api/products/count"));
-      const data = await res.json();
+      const data = (await res.json()) as { count: number };
 
       expect(res.status).toEqual(200);
       expect(data.count).toEqual(3);
@@ -32,7 +32,7 @@ describe("Products API - Pagination and Count", () => {
       await createMockProduct({ name_en: "Mouse", sku: "SKU2" });
 
       const res = await GET_COUNT(new Request("http://localhost/api/products/count?search=lap"));
-      const data = await res.json();
+      const data = (await res.json()) as { count: number };
 
       expect(res.status).toEqual(200);
       expect(data.count).toEqual(1);
@@ -46,7 +46,7 @@ describe("Products API - Pagination and Count", () => {
       }
 
       const res = await GET_LIST(new Request("http://localhost/api/products?pageSize=2"));
-      const products = await res.json();
+      const products = (await res.json()) as any[];
 
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(2);
@@ -61,10 +61,10 @@ describe("Products API - Pagination and Count", () => {
       }
 
       const res1 = await GET_LIST(new Request("http://localhost/api/products?page=1&pageSize=2"));
-      const page1 = await res1.json();
+      const page1 = (await res1.json()) as any[];
 
       const res2 = await GET_LIST(new Request("http://localhost/api/products?page=2&pageSize=2"));
-      const page2 = await res2.json();
+      const page2 = (await res2.json()) as any[];
 
       expect(page1.length).toEqual(2);
       expect(page2.length).toEqual(2);

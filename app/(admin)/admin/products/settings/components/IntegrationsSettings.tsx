@@ -92,7 +92,7 @@ export function IntegrationsSettings() {
         </div>
         <button
           type="button"
-          onClick={handleSaveIntegrationDbProvider}
+          onClick={() => void handleSaveIntegrationDbProvider()}
           disabled={
             integrationDbSaving || integrationDbLoading || !integrationDbDirty
           }

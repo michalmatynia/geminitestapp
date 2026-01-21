@@ -9,15 +9,15 @@ const optionalSku = z.preprocess(
   z.string().trim().min(1, { message: "SKU is required" })
 );
 
-const imageLinksSchema = z.preprocess((value) => {
+const imageLinksSchema = z.preprocess((value: unknown): string[] => {
   if (value === null || value === undefined) return [];
-  if (Array.isArray(value)) return value;
+  if (Array.isArray(value)) return value as string[];
   if (typeof value === "string") {
     const trimmed = value.trim();
     if (!trimmed) return [];
     try {
-      const parsed = JSON.parse(trimmed);
-      if (Array.isArray(parsed)) return parsed;
+      const parsed = JSON.parse(trimmed) as unknown;
+      if (Array.isArray(parsed)) return parsed as string[];
     } catch {
       return trimmed
         .split(",")

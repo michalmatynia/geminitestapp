@@ -122,7 +122,7 @@ export function AiTranslationSettings() {
               </Select>
               <p className="text-xs text-gray-500 mt-2">
                 This model will be used to translate product names and descriptions into
-                languages associated with the product's catalogs.
+                languages associated with the product&apos;s catalogs.
               </p>
             </div>
 

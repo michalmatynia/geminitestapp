@@ -108,7 +108,7 @@ Important:
         throw new Error(`No translation received for ${targetLang}`);
       }
 
-      const parsed = JSON.parse(content);
+      const parsed = JSON.parse(content) as { name?: string; description?: string };
       translations[targetLang.toLowerCase()] = {
         name: parsed.name || "",
         description: parsed.description || "",

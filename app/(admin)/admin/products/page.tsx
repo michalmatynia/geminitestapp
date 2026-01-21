@@ -337,11 +337,10 @@ function AdminPageInner() {
           data={data}
           rowSelection={rowSelection}
           setRowSelection={setRowSelection}
-          onSelectAllGlobal={handleSelectAllGlobal}
+          onSelectAllGlobal={() => void handleSelectAllGlobal()}
           loadingGlobal={loadingGlobalSelection}
           total={total}
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          onDeleteSelected={handleMassDelete as any}
+          onDeleteSelected={() => void handleMassDelete()}
           onAddToMarketplace={handleAddToMarketplace}
         />
         {loadError && (

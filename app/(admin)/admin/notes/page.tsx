@@ -343,32 +343,32 @@ export default function NotesPage() {
                 setSelectedNote(null);
                 setIsEditing(false);
               }}
-              onCreateFolder={operations.handleCreateFolder}
+              onCreateFolder={(parentId, name) => void operations.handleCreateFolder(parentId, name)}
               onCreateNote={(folderId) => {
                 setSelectedFolderId(folderId);
                 setIsCreating(true);
                 setSelectedNote(null);
               }}
-              onDeleteFolder={operations.handleDeleteFolder}
-              onRenameFolder={operations.handleRenameFolder}
-              onSelectNote={handleSelectNoteFromTree}
-              onDuplicateNote={operations.handleDuplicateNote}
-              onDeleteNote={operations.handleDeleteNoteFromTree}
-              onRenameNote={operations.handleRenameNote}
-              onRelateNotes={operations.handleRelateNotes}
+              onDeleteFolder={(id) => void operations.handleDeleteFolder(id)}
+              onRenameFolder={(id, name) => void operations.handleRenameFolder(id, name)}
+              onSelectNote={(id) => void handleSelectNoteFromTree(id)}
+              onDuplicateNote={(id) => void operations.handleDuplicateNote(id)}
+              onDeleteNote={(id) => void operations.handleDeleteNoteFromTree(id)}
+              onRenameNote={(id, title) => void operations.handleRenameNote(id, title)}
+              onRelateNotes={(id1, id2) => void operations.handleRelateNotes(id1, id2)}
               selectedNoteId={selectedNote?.id}
-              onDropNote={operations.handleMoveNoteToFolder}
-              onDropFolder={operations.handleMoveFolderToFolder}
+              onDropNote={(id, folderId) => void operations.handleMoveNoteToFolder(id, folderId)}
+              onDropFolder={(id, parentId) => void operations.handleMoveFolderToFolder(id, parentId)}
               draggedNoteId={draggedNoteId}
               setDraggedNoteId={setDraggedNoteId}
               onToggleCollapse={() => setIsFolderTreeCollapsed(true)}
               isFavoritesActive={filters.filterFavorite === true}
               onToggleFavorites={() => filters.handleToggleFavoritesFilter(setSelectedFolderId, setSelectedNote, setIsEditing)}
               canUndo={undoStack.length > 0}
-              onUndo={() => handleUndoFolderTree(1)}
+              onUndo={() => void handleUndoFolderTree(1)}
               undoHistory={undoHistory}
               onUndoAtIndex={handleUndoAtIndex}
-              onRefreshFolders={fetchFolderTree}
+              onRefreshFolders={() => void fetchFolderTree()}
             />
           </div>
         )}
@@ -386,16 +386,16 @@ export default function NotesPage() {
               setSelectedNote={setSelectedNote}
               isEditing={isEditing}
               setIsEditing={setIsEditing}
-              onToggleFavorite={handleToggleFavorite}
-              onDeleteNote={handleDeleteNote}
+              onToggleFavorite={(note) => void handleToggleFavorite(note)}
+              onDeleteNote={() => void handleDeleteNote()}
               tags={tags}
               selectedNotebookId={settings.selectedNotebookId}
               onUpdateSuccess={handleUpdateSuccess}
-              fetchTags={fetchTags}
+              fetchTags={() => void fetchTags()}
               selectedNoteTheme={themeLogic.selectedNoteTheme}
               onSelectRelatedNote={(id) => void handleSelectNoteFromTree(id)}
               onFilterByTag={(tagId) => filters.handleFilterByTag(tagId, setSelectedFolderId, setSelectedNote, setIsEditing)}
-              onUnlinkRelatedNote={handleUnlinkRelatedNote}
+              onUnlinkRelatedNote={(id) => void handleUnlinkRelatedNote(id)}
             />
           ) : (
             <NoteListView
@@ -417,7 +417,7 @@ export default function NotesPage() {
               }}
               selectedFolderThemeId={themeLogic.selectedFolderThemeId}
               themes={themes}
-              onThemeChange={themeLogic.handleThemeChange}
+              onThemeChange={(themeId) => void themeLogic.handleThemeChange(themeId)}
               availableTagsInScope={availableTagsInScope}
               filterTagIds={filters.filterTagIds}
               setFilterTagIds={filters.setFilterTagIds}
@@ -448,7 +448,7 @@ export default function NotesPage() {
                 setSelectedNote(null);
                 setIsEditing(false);
               }}
-              onToggleFavorite={handleToggleFavorite}
+              onToggleFavorite={(note) => void handleToggleFavorite(note)}
               onDragStart={setDraggedNoteId}
               onDragEnd={() => setDraggedNoteId(null)}
               setSelectedFolderId={setSelectedFolderId}
@@ -467,7 +467,7 @@ export default function NotesPage() {
           tags={tags}
           selectedNotebookId={settings.selectedNotebookId}
           onSuccess={handleCreateSuccess}
-          onTagCreated={fetchTags}
+          onTagCreated={() => void fetchTags()}
           folderTheme={themeLogic.selectedFolderTheme}
           onSelectRelatedNote={(id) => {
             setIsCreating(false);

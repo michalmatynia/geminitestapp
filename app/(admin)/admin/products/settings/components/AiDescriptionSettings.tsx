@@ -25,6 +25,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ProductWithImages } from "@/types";
 
 const STATIC_VISION_MODELS = [
   { id: "gpt-4o", name: "GPT-4o" },
@@ -58,6 +59,19 @@ const AVAILABLE_PLACEHOLDERS = [
   { key: "length", description: "Length" },
 ];
 
+type TestResultData = { 
+  analysisInitial?: string; 
+  analysisFinal?: string;
+  descriptionInitial?: string;
+  descriptionFinal?: string;
+};
+
+interface JobData {
+  status: "pending" | "running" | "completed" | "failed" | "canceled";
+  result?: TestResultData & { analysis?: string; description?: string };
+  errorMessage?: string;
+}
+
 export function AiDescriptionSettings() {
   const [imageAnalysisModel, setImageAnalysisModel] = useState("");
   
@@ -80,12 +94,7 @@ export function AiDescriptionSettings() {
 
   const [testProductId, setTestProductId] = useState("");
   const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<{ 
-    analysisInitial?: string; 
-    analysisFinal?: string;
-    descriptionInitial?: string;
-    descriptionFinal?: string;
-  } | null>(null);
+  const [testResult, setTestResult] = useState<TestResultData | null>(null);
   const [queuing, setQueuing] = useState(false);
 
   useEffect(() => {
@@ -94,7 +103,7 @@ export function AiDescriptionSettings() {
         const settingsRes = await fetch("/api/settings");
         let settingsMap = new Map<string, string>();
         if (settingsRes.ok) {
-          const data = await settingsRes.json() as { key: string, value: string }[];
+          const data = (await settingsRes.json()) as { key: string, value: string }[];
           settingsMap = new Map(data.map(item => [item.key, item.value]));
         }
 
@@ -113,7 +122,7 @@ export function AiDescriptionSettings() {
         const testResultJson = settingsMap.get("ai_description_last_test_result");
         if (testResultJson) {
           try {
-            const parsed = JSON.parse(testResultJson);
+            const parsed = JSON.parse(testResultJson) as TestResultData;
             setTestResult(parsed);
             console.log("Loaded previous test result from database");
           } catch (err) {
@@ -123,7 +132,7 @@ export function AiDescriptionSettings() {
 
         const chatbotRes = await fetch("/api/chatbot");
         if (chatbotRes.ok) {
-          const data = await chatbotRes.json() as { models?: string[] };
+          const data = (await chatbotRes.json()) as { models?: string[] };
           if (Array.isArray(data.models)) {
             setOllamaModels(data.models.map(name => ({ id: name, name })));
           }
@@ -148,17 +157,17 @@ export function AiDescriptionSettings() {
     setTestResult(null);
 
     try {
-      let product = null;
+      let product: ProductWithImages | null = null;
       const productRes = await fetch(`/api/products/${testProductId}`);
       
       if (productRes.ok) {
-        product = await productRes.json();
+        product = (await productRes.json()) as ProductWithImages;
       } else {
         const skuRes = await fetch(`/api/products?sku=${testProductId}`);
         if (skuRes.ok) {
-          const products = await skuRes.json();
+          const products = (await skuRes.json()) as ProductWithImages[];
           if (Array.isArray(products) && products.length > 0) {
-            product = products[0];
+            product = products[0] || null;
           }
         }
       }
@@ -168,7 +177,7 @@ export function AiDescriptionSettings() {
       }
 
       const uploadedImages = Array.isArray(product.images) 
-        ? product.images.map((img: any) => img.imageFile?.filepath).filter(Boolean) 
+        ? product.images.map((img) => img.imageFile?.filepath).filter((p): p is string => Boolean(p)) 
         : [];
       const externalImages = Array.isArray(product.imageLinks) ? product.imageLinks : [];
       const allImageUrls = [...externalImages, ...uploadedImages];
@@ -190,7 +199,7 @@ export function AiDescriptionSettings() {
         }),
       });
 
-      const enqueueData = await enqueueRes.json();
+      const enqueueData = (await enqueueRes.json()) as { error?: string; jobId: string };
       if (!enqueueRes.ok) {
         throw new Error(enqueueData.error || "Failed to enqueue test job.");
       }
@@ -203,12 +212,12 @@ export function AiDescriptionSettings() {
         await new Promise(r => setTimeout(r, 2000));
         const statusRes = await fetch(`/api/products/ai-jobs/${jobId}`);
         if (!statusRes.ok) break;
-        const { job } = await statusRes.json();
+        const { job } = (await statusRes.json()) as { job: JobData };
         
         if (job.status === "completed") {
           const data = job.result;
 
-          const newTestResult = {
+          const newTestResult: TestResultData = {
             analysisInitial: data?.analysisInitial || data?.analysis || "",
             analysisFinal: data?.analysisFinal || "",
             descriptionInitial: data?.descriptionInitial || data?.description || "",
@@ -269,7 +278,7 @@ export function AiDescriptionSettings() {
         }),
       });
       if (!res.ok) throw new Error("Failed to queue jobs.");
-      const data = await res.json();
+      const data = (await res.json()) as { count: number };
       toast(`Queued ${data.count} products for generation.`, { variant: "success" });
     } catch (error) {
       toast(error instanceof Error ? error.message : "Failed to queue jobs.", { variant: "error" });
@@ -329,7 +338,7 @@ export function AiDescriptionSettings() {
 
   const copyResult = (text?: string) => {
     if (!text) return;
-    navigator.clipboard.writeText(text);
+    void navigator.clipboard.writeText(text);
     toast("Result copied to clipboard.");
   };
 

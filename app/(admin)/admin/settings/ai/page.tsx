@@ -37,7 +37,7 @@ export default function AiApiSettingsPage() {
         setLoading(false);
       }
     };
-    loadSettings();
+    void loadSettings();
   }, [toast]);
 
   const handleSave = async () => {
@@ -142,7 +142,7 @@ export default function AiApiSettingsPage() {
 
           <div className="flex justify-end pt-4">
             <Button 
-              onClick={handleSave} 
+              onClick={() => void handleSave()} 
               disabled={saving}
               className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px]"
             >

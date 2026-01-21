@@ -116,12 +116,77 @@ export const useProductFormContext = () => {
 
 const TOTAL_IMAGE_SLOTS = 15;
 
+const FALLBACK_LANGUAGES: Language[] = [
+  {
+    id: "EN",
+    code: "EN",
+    name: "English",
+    nativeName: "English",
+    createdAt: new Date(0),
+    updatedAt: new Date(0),
+  },
+  {
+    id: "PL",
+    code: "PL",
+    name: "Polish",
+    nativeName: "Polski",
+    createdAt: new Date(0),
+    updatedAt: new Date(0),
+  },
+  {
+    id: "DE",
+    code: "DE",
+    name: "German",
+    nativeName: "Deutsch",
+    createdAt: new Date(0),
+    updatedAt: new Date(0),
+  },
+];
+
+const normalizeImageLinks = (links?: string[] | null) => {
+  const next = Array(TOTAL_IMAGE_SLOTS).fill("");
+  if (Array.isArray(links)) {
+    links.slice(0, TOTAL_IMAGE_SLOTS).forEach((link, index) => {
+      next[index] = typeof link === "string" ? link : "";
+    });
+  }
+  return next;
+};
+
+const buildImageSlotsFromProduct = (product?: ProductWithImages) => {
+  const slots: (ProductImageSlot | null)[] = Array.from(
+    { length: TOTAL_IMAGE_SLOTS },
+    () => null
+  );
+  if (!product?.images?.length) return slots;
+  product.images.slice(0, TOTAL_IMAGE_SLOTS).forEach((pImg, index) => {
+    if (pImg.imageFile) {
+      slots[index] = {
+        type: "existing",
+        data: pImg.imageFile,
+        previewUrl: pImg.imageFile.filepath,
+      };
+    }
+  });
+  return slots;
+};
+
+const getSelectedCatalogIds = (product?: ProductWithImages) =>
+  product?.catalogs?.map((entry) => entry.catalogId) ?? [];
+
+const getSelectedCategoryIds = (product?: ProductWithImages) =>
+  product?.categories?.map((entry) => entry.categoryId) ?? [];
+
+const getSelectedTagIds = (product?: ProductWithImages) =>
+  product?.tags?.map((entry) => entry.tagId) ?? [];
+
 // This context provides a centralized place for managing the state and logic of the product form.
 // It handles form data, image uploads, and communication with the API.
 export function ProductFormProvider({
   children,
   product,
   onSuccess,
+  onEditSave,
   requireSku,
   initialSku,
   initialCatalogId,
@@ -129,6 +194,7 @@ export function ProductFormProvider({
   children: React.ReactNode;
   product?: ProductWithImages | undefined;
   onSuccess?: (() => void) | undefined;
+  onEditSave?: ((saved: ProductWithImages) => void) | undefined;
   requireSku?: boolean | undefined;
   initialSku?: string | undefined;
   initialCatalogId?: string | undefined;
@@ -142,6 +208,8 @@ export function ProductFormProvider({
       name_de: product?.name_de || "",
       price: product?.price || 0,
       sku: product?.sku || initialSku || "",
+      defaultPriceGroupId: product?.defaultPriceGroupId ?? undefined,
+      baseProductId: product?.baseProductId ?? undefined,
       ean: product?.ean || "",
       gtin: product?.gtin || "",
       asin: product?.asin || "",
@@ -174,70 +242,34 @@ export function ProductFormProvider({
   const [catalogs, setCatalogs] = useState<CatalogRecord[]>([]);
   const [catalogsLoading, setCatalogsLoading] = useState(true);
   const [catalogsError, setCatalogsError] = useState<string | null>(null);
-  const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
+  const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>(
+    () => getSelectedCatalogIds(product)
+  );
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
+    () => getSelectedCategoryIds(product)
+  );
   const [tags, setTags] = useState<ProductTag[]>([]);
   const [tagsLoading, setTagsLoading] = useState(false);
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
-  const [languages, setLanguages] = useState<Language[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
+    () => getSelectedTagIds(product)
+  );
+  const [languages, setLanguages] = useState<Language[]>(FALLBACK_LANGUAGES);
   const [priceGroups, setPriceGroups] = useState<PriceGroupWithDetails[]>([]);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const { toast } = useToast();
 
   // State for managing all 15 image slots
   const [imageSlots, setImageSlots] = useState<(ProductImageSlot | null)[]>(
-    Array(TOTAL_IMAGE_SLOTS).fill(null)
+    () => buildImageSlotsFromProduct(product)
   );
   const [imageLinks, setImageLinks] = useState<string[]>(
-    Array(TOTAL_IMAGE_SLOTS).fill("")
+    () => normalizeImageLinks(product?.imageLinks)
   );
 
   // Ref to keep track of object URLs for cleanup
   const objectUrlsRef = useRef<string[]>([]);
-
-  const normalizeImageLinks = useCallback((links?: string[] | null) => {
-    const next = Array(TOTAL_IMAGE_SLOTS).fill("");
-    if (Array.isArray(links)) {
-      links.slice(0, TOTAL_IMAGE_SLOTS).forEach((link, index) => {
-        next[index] = typeof link === "string" ? link : "";
-      });
-    }
-    return next;
-  }, []);
-
-  useEffect(() => {
-    // Populate image slots with existing product images
-    if (product?.images && product.images.length > 0) {
-      setImageSlots(() => {
-        const newSlots: ProductImageSlot[] = Array.from(
-          { length: TOTAL_IMAGE_SLOTS },
-          () => null
-        );
-        product.images.slice(0, TOTAL_IMAGE_SLOTS).forEach((pImg, index) => {
-          if (pImg.imageFile) {
-            newSlots[index] = {
-              type: "existing",
-              data: pImg.imageFile,
-              previewUrl: pImg.imageFile.filepath,
-            };
-          }
-        });
-        return newSlots;
-      });
-    }
-  }, [product]);
-
-  useEffect(() => {
-    if (!product) return;
-    setImageLinks(normalizeImageLinks(product.imageLinks));
-  }, [product, normalizeImageLinks]);
-
-  useEffect(() => {
-    if (!product?.catalogs) return;
-    setSelectedCatalogIds(product.catalogs.map((entry) => entry.catalogId));
-  }, [product]);
 
   // Initialize catalog selection for new products
   useEffect(() => {
@@ -262,18 +294,6 @@ export function ProductFormProvider({
       }
     }
   }, [product, selectedCatalogIds, catalogs, getValues, setValue]);
-
-  // Initialize category selection from existing product
-  useEffect(() => {
-    if (!product?.categories) return;
-    setSelectedCategoryIds(product.categories.map((entry) => entry.categoryId));
-  }, [product]);
-
-  // Initialize tag selection from existing product
-  useEffect(() => {
-    if (!product?.tags) return;
-    setSelectedTagIds(product.tags.map((entry) => entry.tagId));
-  }, [product]);
 
   // Load categories when catalogs are selected
   useEffect(() => {
@@ -432,9 +452,8 @@ export function ProductFormProvider({
     // If no catalogs selected, show all languages
     if (selectedCatalogIds.length === 0) return languages;
 
-    // If catalogs are still loading, wait - don't filter yet
-    // Return all languages as temporary state to avoid UI issues with empty tabs
-    if (catalogsLoading || catalogs.length === 0) return languages;
+    // If catalogs are still loading, wait to avoid showing the wrong tabs
+    if (catalogsLoading || catalogs.length === 0) return [];
 
     // Get language IDs from selected catalogs
     const selectedCatalogs = catalogs.filter((catalog) => selectedCatalogIds.includes(catalog.id));
@@ -820,6 +839,7 @@ export function ProductFormProvider({
         successTimerRef.current = setTimeout(() => {
           setUploadSuccess(false);
         }, 3000);
+        onEditSave?.(savedProduct);
         // Refresh to show updated data
         router.refresh();
       }

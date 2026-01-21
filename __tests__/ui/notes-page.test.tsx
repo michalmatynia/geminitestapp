@@ -53,6 +53,7 @@ const makeNote = (overrides: Partial<NoteWithRelations> = {}): NoteWithRelations
   title: "Alpha",
   content: "First note",
   color: "#ffffff",
+  editorType: "markdown",
   isPinned: true,
   isArchived: false,
   isFavorite: false,

@@ -44,6 +44,13 @@ export default function ProductFormOther() {
 
   const basePrice = watch("price") || 0;
   const selectedDefaultPriceGroupId = watch("defaultPriceGroupId");
+  const hasCatalogs = selectedCatalogIds.length > 0;
+  const selectedCatalogLabels = catalogs
+    .filter((catalog) => selectedCatalogIds.includes(catalog.id))
+    .map((catalog) => catalog.name);
+  const selectedCatalogSummary = selectedCatalogLabels.length
+    ? selectedCatalogLabels.join(", ")
+    : "Select catalogs";
 
   // Check if price group is auto-assigned from catalog (for new products only)
   const isNewProduct = !product;
@@ -88,95 +95,104 @@ export default function ProductFormOther() {
 
   return (
     <div className="space-y-4">
-      <div className="mb-4">
-        <Label htmlFor="price">Base Price</Label>
-        <Input
-          id="price"
-          type="number"
-          step="0.01"
-          {...register("price", { valueAsNumber: true })}
-          aria-invalid={errors.price ? "true" : "false"}
-        />
-        {errors.price && (
-          <p className="text-red-500 text-sm mt-1" role="alert">
-            {errors.price.message}
-          </p>
-        )}
-      </div>
-      <div className="mb-4">
-        <Label htmlFor="defaultPriceGroupId">
-          Default Price Group
-          {isPriceGroupAutoAssigned && (
-            <span className="ml-2 text-xs text-muted-foreground">(Auto-assigned from catalog)</span>
-          )}
-        </Label>
-        <Select
-          onValueChange={(value) => setValue("defaultPriceGroupId", value)}
-          value={getValues("defaultPriceGroupId") || ""}
-          disabled={isPriceGroupAutoAssigned}
-        >
-          <SelectTrigger className={isPriceGroupAutoAssigned ? "cursor-not-allowed opacity-60" : ""}>
-            <SelectValue placeholder="Select default price group" />
-          </SelectTrigger>
-          <SelectContent>
-            {filteredPriceGroups.map((group) => (
-              <SelectItem key={group.id} value={group.id}>
-                {group.name} {group.isDefault ? "(Default)" : ""}{" "}
-                ({group.currency?.code ?? group.currencyCode})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      {selectedDefaultPriceGroupId && filteredPriceGroups.length > 0 && (
-        <div className="mb-4">
-          <Label className="mb-2 block">Price Groups Overview</Label>
-          <div className="rounded-md border">
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/50">
-                <tr>
-                  <th className="px-3 py-2 text-left font-medium">Price Group</th>
-                  <th className="px-3 py-2 text-left font-medium">Currency</th>
-                  <th className="px-3 py-2 text-right font-medium">Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                {priceGroupPrices.map((group) => (
-                  <tr key={group.id} className="border-b last:border-0">
-                    <td className="px-3 py-2">
-                      <div className="flex items-center gap-2">
-                        <span className={group.id === selectedDefaultPriceGroupId ? "font-semibold" : ""}>
-                          {group.name}
-                        </span>
-                        {group.id === selectedDefaultPriceGroupId && (
-                          <span className="text-xs text-muted-foreground">(Selected)</span>
-                        )}
-                        {group.isCalculated && group.sourceGroupName && (
-                          <span className="text-xs text-muted-foreground">
-                            (from {group.sourceGroupName} × {group.priceMultiplier})
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-3 py-2">{group.currency?.code ?? group.currencyCode}</td>
-                    <td className="px-3 py-2 text-right font-mono">
-                      {group.calculatedPrice !== null ? (
-                        <span className={group.isCalculated ? "text-blue-600" : ""}>
-                          {group.calculatedPrice.toFixed(2)}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Blue prices are calculated based on the selected default price group and multipliers.
-          </p>
+      {!hasCatalogs && (
+        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          Select a catalog to set pricing and price groups.
         </div>
+      )}
+      {hasCatalogs && (
+        <>
+          <div className="mb-4">
+            <Label htmlFor="price">Base Price</Label>
+            <Input
+              id="price"
+              type="number"
+              step="0.01"
+              {...register("price", { valueAsNumber: true })}
+              aria-invalid={errors.price ? "true" : "false"}
+            />
+            {errors.price && (
+              <p className="text-red-500 text-sm mt-1" role="alert">
+                {errors.price.message}
+              </p>
+            )}
+          </div>
+          <div className="mb-4">
+            <Label htmlFor="defaultPriceGroupId">
+              Default Price Group
+              {isPriceGroupAutoAssigned && (
+                <span className="ml-2 text-xs text-muted-foreground">(Auto-assigned from catalog)</span>
+              )}
+            </Label>
+            <Select
+              onValueChange={(value) => setValue("defaultPriceGroupId", value)}
+              value={getValues("defaultPriceGroupId") || ""}
+              disabled={isPriceGroupAutoAssigned}
+            >
+              <SelectTrigger className={isPriceGroupAutoAssigned ? "cursor-not-allowed opacity-60" : ""}>
+                <SelectValue placeholder="Select default price group" />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredPriceGroups.map((group) => (
+                  <SelectItem key={group.id} value={group.id}>
+                    {group.name} {group.isDefault ? "(Default)" : ""}{" "}
+                    ({group.currency?.code ?? group.currencyCode})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {selectedDefaultPriceGroupId && filteredPriceGroups.length > 0 && (
+            <div className="mb-4">
+              <Label className="mb-2 block">Price Groups Overview</Label>
+              <div className="rounded-md border">
+                <table className="w-full text-sm">
+                  <thead className="border-b bg-muted/50">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-medium">Price Group</th>
+                      <th className="px-3 py-2 text-left font-medium">Currency</th>
+                      <th className="px-3 py-2 text-right font-medium">Price</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {priceGroupPrices.map((group) => (
+                      <tr key={group.id} className="border-b last:border-0">
+                        <td className="px-3 py-2">
+                          <div className="flex items-center gap-2">
+                            <span className={group.id === selectedDefaultPriceGroupId ? "font-semibold" : ""}>
+                              {group.name}
+                            </span>
+                            {group.id === selectedDefaultPriceGroupId && (
+                              <span className="text-xs text-muted-foreground">(Selected)</span>
+                            )}
+                            {group.isCalculated && group.sourceGroupName && (
+                              <span className="text-xs text-muted-foreground">
+                                (from {group.sourceGroupName} × {group.priceMultiplier})
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2">{group.currency?.code ?? group.currencyCode}</td>
+                        <td className="px-3 py-2 text-right font-mono">
+                          {group.calculatedPrice !== null ? (
+                            <span className={group.isCalculated ? "text-blue-600" : ""}>
+                              {group.calculatedPrice.toFixed(2)}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Blue prices are calculated based on the selected default price group and multipliers.
+              </p>
+            </div>
+          )}
+        </>
       )}
       <div className="mb-4">
         <Label htmlFor="supplierName">Supplier Name</Label>
@@ -237,7 +253,7 @@ export default function ProductFormOther() {
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="w-full justify-between">
               {selectedCatalogIds.length > 0
-                ? `${selectedCatalogIds.length} catalog(s) selected`
+                ? selectedCatalogSummary
                 : "Select catalogs"}
             </Button>
           </DropdownMenuTrigger>

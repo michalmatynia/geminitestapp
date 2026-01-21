@@ -105,11 +105,19 @@ const prismaRepository: ProductListingRepository = {
       },
       orderBy: { createdAt: "desc" },
     });
-    return listings;
+    return listings.map((listing) => ({
+      ...listing,
+      exportHistory: listing.exportHistory as ProductListingExportEvent[] | null,
+    }));
   },
 
   getListingById: async (id) => {
-    return prisma.productListing.findUnique({ where: { id } });
+    const listing = await prisma.productListing.findUnique({ where: { id } });
+    if (!listing) return null;
+    return {
+      ...listing,
+      exportHistory: listing.exportHistory as ProductListingExportEvent[] | null,
+    };
   },
 
   createListing: async (input) => {
@@ -131,7 +139,10 @@ const prismaRepository: ProductListingRepository = {
         },
       },
     });
-    return listing;
+    return {
+      ...listing,
+      exportHistory: listing.exportHistory as ProductListingExportEvent[] | null,
+    };
   },
 
   updateListingExternalId: async (id, externalListingId) => {
@@ -142,9 +153,13 @@ const prismaRepository: ProductListingRepository = {
   },
 
   updateListingStatus: async (id, status) => {
+    const data: { status: string; listedAt?: Date } = { status };
+    if (status === "active") {
+      data.listedAt = new Date();
+    }
     await prisma.productListing.update({
       where: { id },
-      data: { status, listedAt: status === "active" ? new Date() : undefined },
+      data,
     });
   },
 

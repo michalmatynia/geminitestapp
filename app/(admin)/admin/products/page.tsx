@@ -117,6 +117,7 @@ function AdminPageInner() {
     handleOpenCreateModal,
     handleCreateSuccess,
     handleEditSuccess,
+    handleEditSave,
     handleListProductSuccess: baseHandleListProductSuccess,
   } = useProductOperations(setRefreshTrigger);
 
@@ -383,6 +384,7 @@ function AdminPageInner() {
         editingProduct={editingProduct}
         onCloseEdit={handleCloseEdit}
         onEditSuccess={handleEditSuccess}
+        onEditSave={handleEditSave}
         integrationsProduct={integrationsProduct}
         onCloseIntegrations={handleCloseIntegrations}
         onStartListing={handleStartListing}

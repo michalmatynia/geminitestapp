@@ -53,7 +53,7 @@ export default function SelectIntegrationModal({
   };
 
   return (
-    <ModalShell title="Select Marketplace / Integration" onClose={onClose} size="sm">
+    <ModalShell title="Select Marketplace / Integration" onClose={onClose} size="md">
       <div className="space-y-4">
         {loading ? (
           <p className="text-sm text-gray-400">Loading integrations...</p>

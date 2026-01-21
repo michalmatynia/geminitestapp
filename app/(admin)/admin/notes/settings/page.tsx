@@ -32,6 +32,12 @@ const searchScopeOptions = [
   { value: "content", label: "Content Only" },
 ] as const;
 
+const editorModeOptions = [
+  { value: "markdown", label: "Markdown", description: "Plain text with markdown syntax and live preview" },
+  { value: "wysiwyg", label: "WYSIWYG", description: "Rich text editor with visual formatting" },
+  { value: "code", label: "Code Snippets", description: "Optimized for code with syntax highlighting and copy button" },
+] as const;
+
 export default function NoteSettingsPage() {
   const { settings, updateSettings, resetToDefaults } = useNoteSettings();
   const { toast } = useToast();
@@ -56,7 +62,8 @@ export default function NoteSettingsPage() {
     settings.selectedNotebookId === DEFAULT_NOTE_SETTINGS.selectedNotebookId &&
     settings.viewMode === DEFAULT_NOTE_SETTINGS.viewMode &&
     settings.gridDensity === DEFAULT_NOTE_SETTINGS.gridDensity &&
-    settings.autoformatOnPaste === DEFAULT_NOTE_SETTINGS.autoformatOnPaste;
+    settings.autoformatOnPaste === DEFAULT_NOTE_SETTINGS.autoformatOnPaste &&
+    settings.editorMode === DEFAULT_NOTE_SETTINGS.editorMode;
 
   return (
     <div className="container mx-auto py-10">
@@ -223,6 +230,44 @@ export default function NoteSettingsPage() {
         <div className="rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
           <h2 className="mb-4 text-lg font-semibold text-white">Editor</h2>
           <div className="space-y-4">
+            <div>
+              <label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-200">
+                <span>Default Editor Mode</span>
+                {!isDefault("editorMode") && (
+                  <span className="text-xs text-blue-400">Modified</span>
+                )}
+              </label>
+              <div className="space-y-2">
+                {editorModeOptions.map((option) => (
+                  <label
+                    key={option.value}
+                    className={`flex items-center gap-3 rounded-md border p-3 cursor-pointer transition-colors ${
+                      settings.editorMode === option.value
+                        ? "border-blue-500 bg-blue-500/10"
+                        : "border-gray-700 hover:border-gray-600"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="editorMode"
+                      value={option.value}
+                      checked={settings.editorMode === option.value}
+                      onChange={() =>
+                        updateSettings({ editorMode: option.value as NoteSettings["editorMode"] })
+                      }
+                      className="h-4 w-4 border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"
+                    />
+                    <div>
+                      <span className="text-sm font-medium text-gray-200">
+                        {option.label}
+                      </span>
+                      <p className="text-xs text-gray-500">{option.description}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
             <label className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <input
@@ -235,7 +280,7 @@ export default function NoteSettingsPage() {
                 />
                 <div>
                   <span className="text-sm font-medium text-gray-200">
-                    Autoformat on Paste
+                    Autoformat on Paste (Markdown mode only)
                   </span>
                   <p className="text-xs text-gray-500">
                     Automatically format pasted markdown content (trim spaces,
@@ -324,6 +369,10 @@ export default function NoteSettingsPage() {
             <span>Autoformat on Paste:</span>
             <span className="text-gray-300">
               {settings.autoformatOnPaste ? "Enabled" : "Disabled"}
+            </span>
+            <span>Editor Mode:</span>
+            <span className="text-gray-300">
+              {editorModeOptions.find((o) => o.value === settings.editorMode)?.label}
             </span>
           </div>
         </div>

@@ -42,6 +42,7 @@ const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => ({
   id: doc.id ?? doc._id,
   title: doc.title,
   content: doc.content,
+  editorType: doc.editorType ?? "markdown",
   color: doc.color ?? null,
   isPinned: doc.isPinned ?? false,
   isArchived: doc.isArchived ?? false,
@@ -422,6 +423,7 @@ export const mongoNoteRepository: NoteRepository = {
       id,
       title: data.title,
       content: data.content,
+      editorType: data.editorType ?? "markdown",
       color: data.color ?? "#ffffff",
       isPinned: data.isPinned ?? false,
       isArchived: data.isArchived ?? false,
@@ -448,6 +450,7 @@ export const mongoNoteRepository: NoteRepository = {
     };
     if (data.title !== undefined) setFields.title = data.title;
     if (data.content !== undefined) setFields.content = data.content;
+    if (data.editorType !== undefined) setFields.editorType = data.editorType;
     if (data.color !== undefined) setFields.color = data.color;
     if (data.isPinned !== undefined) setFields.isPinned = data.isPinned;
     if (data.isArchived !== undefined) setFields.isArchived = data.isArchived;

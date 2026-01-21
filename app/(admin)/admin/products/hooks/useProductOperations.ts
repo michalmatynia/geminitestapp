@@ -96,15 +96,18 @@ export function useProductOperations(setRefreshTrigger: React.Dispatch<React.Set
     toast("Product updated successfully.", { variant: "success" });
   };
 
+  const handleEditSave = (savedProduct: ProductWithImages) => {
+    setLastEditedId(savedProduct.id);
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
   const handleListProductSuccess = () => {
     if (integrationsProduct?.id) {
       setIntegrationBadgeIds((prev) => new Set(prev).add(integrationsProduct.id));
       setIntegrationBadgeStatuses((prev) => new Map(prev).set(integrationsProduct.id, "pending"));
     }
     setShowListProductModal(false);
-    const currentProduct = integrationsProduct;
     setIntegrationsProduct(null);
-    setTimeout(() => { setIntegrationsProduct(currentProduct); }, 100);
     void refreshListingBadges();
   };
 
@@ -131,6 +134,7 @@ export function useProductOperations(setRefreshTrigger: React.Dispatch<React.Set
     handleOpenCreateModal,
     handleCreateSuccess,
     handleEditSuccess,
+    handleEditSave,
     handleListProductSuccess,
   };
 }

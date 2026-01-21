@@ -61,9 +61,12 @@ export type CategoryWithChildren = Category & {
   themeId?: string | null;
 };
 
+export type NoteEditorType = "markdown" | "wysiwyg" | "code";
+
 export type NoteCreateInput = {
   title: string;
   content: string;
+  editorType?: NoteEditorType | undefined;
   color?: string | null | undefined;
   isPinned?: boolean | undefined;
   isArchived?: boolean | undefined;

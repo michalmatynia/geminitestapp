@@ -10,4 +10,5 @@ export interface NoteSettings {
   viewMode: "grid" | "list";
   gridDensity: 4 | 8;
   autoformatOnPaste: boolean;
+  editorMode: "markdown" | "wysiwyg" | "code";
 }

@@ -36,6 +36,14 @@ const LAST_TEMPLATE_KEY = "base_import_last_template_id";
 const ACTIVE_TEMPLATE_KEY = "base_import_active_template_id";
 const PARAMETER_CACHE_KEY = "base_import_parameter_cache";
 const EXPORT_WAREHOUSE_KEY = "base_export_warehouse_id";
+const BASEHOST_MAPPING_KEYS = new Set(["images_basehost_all", "image_basehost_all"]);
+
+const stripBasehostMappings = (mappings: TemplateMapping[]) =>
+  mappings.filter((mapping) => {
+    const sourceKey = mapping.sourceKey?.trim().toLowerCase();
+    const targetField = mapping.targetField?.trim().toLowerCase();
+    return !BASEHOST_MAPPING_KEYS.has(sourceKey) && !BASEHOST_MAPPING_KEYS.has(targetField);
+  });
 
 const parseTemplates = (value: string | null): Template[] => {
   if (!value) return [];
@@ -45,7 +53,12 @@ const parseTemplates = (value: string | null): Template[] => {
       console.warn("[ImportTemplateRepository] Parsed value is not an array:", parsed);
       return [];
     }
-    return parsed.filter(Boolean) as Template[];
+    return parsed
+      .filter(Boolean)
+      .map((template: Template) => ({
+        ...template,
+        mappings: stripBasehostMappings(Array.isArray(template.mappings) ? template.mappings : []),
+      })) as Template[];
   } catch (error) {
     console.error("[ImportTemplateRepository] Failed to parse templates:", error);
     return [];

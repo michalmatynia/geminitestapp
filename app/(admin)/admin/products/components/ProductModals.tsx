@@ -23,6 +23,7 @@ interface ProductModalsProps {
   editingProduct: ProductWithImages | null;
   onCloseEdit: () => void;
   onEditSuccess: () => void;
+  onEditSave: (saved: ProductWithImages) => void;
   integrationsProduct: ProductWithImages | null;
   onCloseIntegrations: () => void;
   onStartListing: (integrationId: string, connectionId: string) => void;
@@ -123,6 +124,7 @@ export function ProductModals({
   editingProduct,
   onCloseEdit,
   onEditSuccess,
+  onEditSave,
   integrationsProduct,
   onCloseIntegrations,
   onStartListing,
@@ -179,6 +181,7 @@ export function ProductModals({
             <ProductFormProvider
               product={editingProduct}
               onSuccess={onEditSuccess}
+              onEditSave={onEditSave}
             >
               <EditProductModalContent onClose={onCloseEdit} />
             </ProductFormProvider>

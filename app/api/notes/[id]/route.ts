@@ -1,28 +1,10 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { noteService } from "@/lib/services/noteService/index";
-import { deleteNoteFile } from "@/lib/utils/fileUploader";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { noteUpdateSchema } from "@/lib/validations/notes";
-import type {
-  NoteWithRelations,
-  RelatedNote,
-  NoteUpdateInput,
-} from "@/types/notes";
 import { removeUndefined } from "@/lib/utils";
-
-const buildRelations = (note: NoteWithRelations): RelatedNote[] => {
-  const relations = [
-    ...(note.relationsFrom ?? []).map((rel) => rel.targetNote),
-    ...(note.relationsTo ?? []).map((rel) => rel.sourceNote),
-  ];
-  const seen = new Set<string>();
-  return relations.filter((rel) => {
-    if (!rel?.id || seen.has(rel.id)) return false;
-    seen.add(rel.id);
-    return true;
-  });
-};
+import type { NoteUpdateInput } from "@/types/notes";
 
 /**
  * GET /api/notes/[id]
@@ -40,7 +22,7 @@ export async function GET(
       return NextResponse.json({ error: "Note not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ ...note, relations: buildRelations(note) });
+    return NextResponse.json(note);
   } catch (error) {
     const errorId = randomUUID();
     console.error("[notes][GET] Failed to fetch note", {
@@ -73,51 +55,12 @@ export async function PATCH(
       return parsed.response;
     }
     const body = parsed.data;
-    const previousNote = await noteService.getById(id);
     const note = await noteService.update(
       id,
       removeUndefined(body) as NoteUpdateInput
     );
 
-    if (Array.isArray(body.relatedNoteIds) && previousNote) {
-      const previousRelatedIds =
-        previousNote.relationsFrom?.map((rel) => rel.targetNote.id) || [];
-      const nextRelatedIds = body.relatedNoteIds;
-      const addedRelations = nextRelatedIds.filter(
-        (relId) => !previousRelatedIds.includes(relId) && relId !== id
-      );
-      const removedRelations = previousRelatedIds.filter(
-        (relId) => !nextRelatedIds.includes(relId) && relId !== id
-      );
-
-      const syncRelatedNote = async (relatedId: string, shouldAdd: boolean) => {
-        try {
-          const relatedNote = await noteService.getById(relatedId);
-          if (!relatedNote) return;
-          const relatedIds =
-            relatedNote.relationsFrom?.map((rel) => rel.targetNote.id) || [];
-          const nextIds = shouldAdd
-            ? Array.from(new Set([...relatedIds, id]))
-            : relatedIds.filter((relId) => relId !== id);
-          await noteService.update(relatedId, { relatedNoteIds: nextIds });
-        } catch (syncError) {
-          console.error("[notes][PATCH] Failed to sync relation", {
-            noteId: id,
-            relatedId,
-            syncError,
-          });
-        }
-      };
-
-      await Promise.all([
-        ...addedRelations.map((relId) => syncRelatedNote(relId, true)),
-        ...removedRelations.map((relId) => syncRelatedNote(relId, false)),
-      ]);
-    }
-
-    return NextResponse.json(
-      note ? { ...note, relations: buildRelations(note) } : note
-    );
+    return NextResponse.json(note);
   } catch (error: unknown) {
     const errorId = randomUUID();
     if (error instanceof Error) {
@@ -153,17 +96,6 @@ export async function DELETE(
 ) {
   const { id } = await params;
   try {
-    try {
-      const files = await noteService.getNoteFiles(id);
-      await Promise.all(
-        files.map((file) => deleteNoteFile(id, file.slotIndex, file.filepath))
-      );
-    } catch (error) {
-      console.error("[notes][DELETE] Failed to clean up note files", {
-        noteId: id,
-        error,
-      });
-    }
     await noteService.delete(id);
     return NextResponse.json({ success: true });
   } catch (error) {

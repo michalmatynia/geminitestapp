@@ -1,0 +1,124 @@
+import prisma from "@/lib/prisma";
+import type {
+  ThemeRecord,
+  ThemeCreateInput,
+  ThemeUpdateInput,
+} from "@/types/notes";
+import { getOrCreateDefaultNotebook } from "./notebook-impl";
+
+export const getAllThemes = async (
+  notebookId?: string | null
+): Promise<ThemeRecord[]> => {
+  const resolvedNotebookId =
+    notebookId ?? (await getOrCreateDefaultNotebook()).id;
+  return prisma.theme.findMany({
+    where: { notebookId: resolvedNotebookId },
+    orderBy: { name: "asc" },
+  });
+};
+
+export const getThemeById = async (id: string): Promise<ThemeRecord | null> => {
+  return prisma.theme.findUnique({ where: { id } });
+};
+
+export const createTheme = async (
+  data: ThemeCreateInput
+): Promise<ThemeRecord> => {
+  const resolvedNotebookId =
+    data.notebookId ?? (await getOrCreateDefaultNotebook()).id;
+
+  const createData: any = {
+    name: data.name,
+    notebook: { connect: { id: resolvedNotebookId } },
+    ...(data.textColor !== undefined && { textColor: data.textColor }),
+    ...(data.backgroundColor !== undefined && {
+      backgroundColor: data.backgroundColor,
+    }),
+    ...(data.markdownHeadingColor !== undefined && {
+      markdownHeadingColor: data.markdownHeadingColor,
+    }),
+    ...(data.markdownLinkColor !== undefined && {
+      markdownLinkColor: data.markdownLinkColor,
+    }),
+    ...(data.markdownCodeBackground !== undefined && {
+      markdownCodeBackground: data.markdownCodeBackground,
+    }),
+    ...(data.markdownCodeText !== undefined && {
+      markdownCodeText: data.markdownCodeText,
+    }),
+    ...(data.relatedNoteBorderWidth !== undefined && {
+      relatedNoteBorderWidth: data.relatedNoteBorderWidth,
+    }),
+    ...(data.relatedNoteBorderColor !== undefined && {
+      relatedNoteBorderColor: data.relatedNoteBorderColor,
+    }),
+    ...(data.relatedNoteBackgroundColor !== undefined && {
+      relatedNoteBackgroundColor: data.relatedNoteBackgroundColor,
+    }),
+    ...(data.relatedNoteTextColor !== undefined && {
+      relatedNoteTextColor: data.relatedNoteTextColor,
+    }),
+  };
+
+  return prisma.theme.create({
+    data: createData,
+  });
+};
+
+export const updateTheme = async (
+  id: string,
+  data: ThemeUpdateInput
+): Promise<ThemeRecord | null> => {
+  try {
+    const updateData: any = {
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.notebookId !== undefined &&
+        (data.notebookId
+          ? { notebook: { connect: { id: data.notebookId } } }
+          : { notebook: { disconnect: true } })),
+      ...(data.textColor !== undefined && { textColor: data.textColor }),
+      ...(data.backgroundColor !== undefined && {
+        backgroundColor: data.backgroundColor,
+      }),
+      ...(data.markdownHeadingColor !== undefined && {
+        markdownHeadingColor: data.markdownHeadingColor,
+      }),
+      ...(data.markdownLinkColor !== undefined && {
+        markdownLinkColor: data.markdownLinkColor,
+      }),
+      ...(data.markdownCodeBackground !== undefined && {
+        markdownCodeBackground: data.markdownCodeBackground,
+      }),
+      ...(data.markdownCodeText !== undefined && {
+        markdownCodeText: data.markdownCodeText,
+      }),
+      ...(data.relatedNoteBorderWidth !== undefined && {
+        relatedNoteBorderWidth: data.relatedNoteBorderWidth,
+      }),
+      ...(data.relatedNoteBorderColor !== undefined && {
+        relatedNoteBorderColor: data.relatedNoteBorderColor,
+      }),
+      ...(data.relatedNoteBackgroundColor !== undefined && {
+        relatedNoteBackgroundColor: data.relatedNoteBackgroundColor,
+      }),
+      ...(data.relatedNoteTextColor !== undefined && {
+        relatedNoteTextColor: data.relatedNoteTextColor,
+      }),
+    };
+    return await prisma.theme.update({
+      where: { id },
+      data: updateData,
+    });
+  } catch {
+    return null;
+  }
+};
+
+export const deleteTheme = async (id: string): Promise<boolean> => {
+  try {
+    await prisma.theme.delete({ where: { id } });
+    return true;
+  } catch {
+    return false;
+  }
+};

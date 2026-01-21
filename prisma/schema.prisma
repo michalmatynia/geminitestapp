@@ -520,6 +520,7 @@ model Note {
   id            String         @id @default(cuid())
   title         String
   content       String
+  editorType    String         @default("markdown") // "markdown" or "wysiwyg"
   color         String?        @default("#ffffff")
   isPinned      Boolean        @default(false)
   isArchived    Boolean        @default(false)

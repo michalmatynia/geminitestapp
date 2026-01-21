@@ -14,6 +14,7 @@ import { MarkdownToolbar } from "./editor/MarkdownToolbar";
 import { FileAttachments } from "./editor/FileAttachments";
 import { NoteMetadata } from "./editor/NoteMetadata";
 import { MarkdownEditor } from "./editor/MarkdownEditor";
+import { WysiwygEditor } from "./editor/WysiwygEditor";
 
 // Hardcoded dark mode fallback theme - consistent with page styling
 const FALLBACK_THEME = {
@@ -108,12 +109,135 @@ export function NoteForm({
   const [isPasting, setIsPasting] = useState(false);
   const { toast } = useToast();
   const { settings } = useNoteSettings();
+  const [isMigrating, setIsMigrating] = useState(false);
+
+  // For existing notes, use the note's editorType; for new notes, use the setting preference
+  const noteEditorType = (note?.editorType as "markdown" | "wysiwyg" | "code") || settings.editorMode;
+  const [editorMode, setEditorMode] = useState<"markdown" | "wysiwyg" | "code">(noteEditorType);
 
   const MAX_SLOTS = 10;
 
   useEffect(() => {
     setColor(note?.color?.toLowerCase().trim() || "#ffffff");
   }, [note?.id, note?.color]);
+
+  // Sync editorMode from note's editorType when it changes (for existing notes)
+  useEffect(() => {
+    if (note?.editorType) {
+      setEditorMode(note.editorType as "markdown" | "wysiwyg" | "code");
+    } else {
+      // For new notes, use the settings preference
+      setEditorMode(settings.editorMode);
+    }
+  }, [note?.id, note?.editorType, settings.editorMode]);
+
+  // For existing notes, editor mode is locked to the note's type
+  // Users can only switch by migrating the note
+  const isEditorModeLocked = Boolean(note?.id);
+
+  const handleEditorModeChange = (mode: "markdown" | "wysiwyg" | "code") => {
+    // Only allow changing for new notes (without ID)
+    if (!note?.id) {
+      setEditorMode(mode);
+    }
+  };
+
+  // Convert markdown to HTML for migration
+  const convertMarkdownToHtml = (markdown: string): string => {
+    // Basic markdown to HTML conversion
+    // The WYSIWYG editor (TipTap) can handle basic HTML
+    let html = markdown;
+    // Headers
+    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+    // Bold and italic
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    // Inline code
+    html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+    // Lists
+    html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+    // Paragraphs
+    html = html.split('\n\n').map(p => {
+      if (!p.startsWith('<')) return `<p>${p}</p>`;
+      return p;
+    }).join('\n');
+    return html;
+  };
+
+  // Convert HTML to markdown for migration (using turndown)
+  const convertHtmlToMarkdown = async (html: string): Promise<string> => {
+    const TurndownService = (await import('turndown')).default;
+    const turndownService = new TurndownService({
+      headingStyle: 'atx',
+      codeBlockStyle: 'fenced',
+    });
+    return turndownService.turndown(html);
+  };
+
+  const handleMigrateToWysiwyg = async () => {
+    if (!note?.id) return;
+
+    setIsMigrating(true);
+    try {
+      const htmlContent = convertMarkdownToHtml(content);
+
+      const res = await fetch(`/api/notes/${note.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: htmlContent,
+          editorType: "wysiwyg",
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to migrate note");
+      }
+
+      setContent(htmlContent);
+      setEditorMode("wysiwyg");
+      toast("Note migrated to WYSIWYG format", { variant: "success" });
+      onSuccess?.();
+    } catch (error) {
+      toast("Failed to migrate note", { variant: "error" });
+    } finally {
+      setIsMigrating(false);
+    }
+  };
+
+  const handleMigrateToMarkdown = async () => {
+    if (!note?.id) return;
+
+    setIsMigrating(true);
+    try {
+      const markdownContent = await convertHtmlToMarkdown(content);
+
+      const res = await fetch(`/api/notes/${note.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: markdownContent,
+          editorType: "markdown",
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to migrate note");
+      }
+
+      setContent(markdownContent);
+      setEditorMode("markdown");
+      toast("Note migrated to Markdown format", { variant: "success" });
+      onSuccess?.();
+    } catch (error) {
+      toast("Failed to migrate note", { variant: "error" });
+    } finally {
+      setIsMigrating(false);
+    }
+  };
 
   const getReadableTextColor = (hex: string) => {
     const normalized = hex.replace("#", "");
@@ -750,6 +874,8 @@ export function NoteForm({
         body: JSON.stringify({
           title,
           content,
+          // For new notes, include the selected editor type
+          ...(note ? {} : { editorType: editorMode }),
           color: color.toLowerCase().trim(),
           isPinned,
           isArchived,
@@ -828,24 +954,40 @@ export function NoteForm({
           onApplyChecklist={applyChecklist}
           onApplySpanStyle={applySpanStyle}
           onInsertFileReference={insertFileReference}
+          editorMode={editorMode}
+          onEditorModeChange={handleEditorModeChange}
+          isEditorModeLocked={isEditorModeLocked}
+          isMigrating={isMigrating}
+          onMigrateToWysiwyg={handleMigrateToWysiwyg}
+          onMigrateToMarkdown={handleMigrateToMarkdown}
         />
-        <MarkdownEditor
-          content={content}
-          setContent={setContent}
-          showPreview={showPreview}
-          editorWidth={editorWidth}
-          setEditorWidth={setEditorWidth}
-          isDraggingSplitter={isDraggingSplitter}
-          setIsDraggingSplitter={setIsDraggingSplitter}
-          editorSplitRef={editorSplitRef}
-          contentRef={contentRef}
-          isPasting={isPasting}
-          contentBackground={contentBackground}
-          contentTextColor={contentTextColor}
-          previewTypographyStyle={previewTypographyStyle}
-          onPaste={handlePaste}
-          setLightboxImage={setLightboxImage}
-        />
+        {editorMode === "markdown" || editorMode === "code" ? (
+          <MarkdownEditor
+            content={content}
+            setContent={setContent}
+            showPreview={showPreview}
+            editorWidth={editorWidth}
+            setEditorWidth={setEditorWidth}
+            isDraggingSplitter={isDraggingSplitter}
+            setIsDraggingSplitter={setIsDraggingSplitter}
+            editorSplitRef={editorSplitRef}
+            contentRef={contentRef}
+            isPasting={isPasting}
+            contentBackground={contentBackground}
+            contentTextColor={contentTextColor}
+            previewTypographyStyle={previewTypographyStyle}
+            onPaste={handlePaste}
+            setLightboxImage={setLightboxImage}
+            isCodeMode={editorMode === "code"}
+          />
+        ) : (
+          <WysiwygEditor
+            content={content}
+            setContent={setContent}
+            contentBackground={contentBackground}
+            contentTextColor={contentTextColor}
+          />
+        )}
       </div>
 
       <FileAttachments

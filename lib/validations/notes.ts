@@ -4,6 +4,7 @@ export const noteCreateSchema = z
   .object({
     title: z.string().min(1),
     content: z.string().min(1),
+    editorType: z.enum(["markdown", "wysiwyg", "code"]).optional(),
     color: z.string().nullable().optional(),
     isPinned: z.boolean().optional(),
     isArchived: z.boolean().optional(),

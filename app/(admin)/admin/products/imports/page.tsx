@@ -778,7 +778,9 @@ export default function ProductImportsPage() {
       if (fromIndex === toIndex) return prev;
       const next = [...prev];
       const [moved] = next.splice(fromIndex, 1);
-      next.splice(toIndex, 0, moved);
+      if (moved) {
+        next.splice(toIndex, 0, moved);
+      }
       return next;
     });
     setOpenKeyIndex(null);
@@ -876,9 +878,15 @@ export default function ProductImportsPage() {
         });
         return;
       }
-      setInventories(payload.inventories ?? []);
-      if (payload.inventories?.length) {
-        setInventoryId(payload.inventories[0]?.id ?? "");
+      const nextInventories = payload.inventories ?? [];
+      setInventories(nextInventories);
+      if (nextInventories.length) {
+        const hasCurrent = inventoryId
+          ? nextInventories.some((inv) => inv.id === inventoryId)
+          : false;
+        if (!hasCurrent) {
+          setInventoryId(nextInventories[0]?.id ?? "");
+        }
       }
     } catch (error) {
       toast("Failed to load inventories.", { variant: "error" });
@@ -913,9 +921,15 @@ export default function ProductImportsPage() {
         });
         return;
       }
-      setWarehouses(payload.warehouses ?? []);
-      if (payload.warehouses?.length && !exportWarehouseId) {
-        setExportWarehouseId(payload.warehouses[0]?.id ?? "");
+      const nextWarehouses = payload.warehouses ?? [];
+      setWarehouses(nextWarehouses);
+      if (nextWarehouses.length) {
+        const hasCurrent = exportWarehouseId
+          ? nextWarehouses.some((warehouse) => warehouse.id === exportWarehouseId)
+          : false;
+        if (!hasCurrent) {
+          setExportWarehouseId(nextWarehouses[0]?.id ?? "");
+        }
       }
     } catch (error) {
       toast("Failed to load warehouses.", { variant: "error" });
@@ -1049,6 +1063,7 @@ export default function ProductImportsPage() {
         products?: ImportListItem[];
         total?: number;
         filtered?: number;
+        available?: number;
         existing?: number;
         skuDuplicates?: number;
         error?: string;

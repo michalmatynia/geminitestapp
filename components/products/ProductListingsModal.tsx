@@ -19,7 +19,7 @@ type ProductListingsModalProps = {
   onClose: () => void;
   onStartListing?: (integrationId: string, connectionId: string) => void;
   filterIntegrationSlug?: string | null;
-  onListingsUpdated?: () => void;
+  onListingsUpdated?: (() => void) | undefined;
 };
 
 const statusColors: Record<string, string> = {
@@ -218,6 +218,90 @@ export default function ProductListingsModal({
         return "Not synced";
     }
   };
+
+  const canStartListing = Boolean(onStartListing) && !filterIntegrationSlug;
+
+  const StartListingPanel = () => (
+    <div className="rounded-md border border-gray-800 bg-gray-950/60 px-4 py-4">
+      {loadingIntegrations ? (
+        <p className="text-sm text-gray-400">Loading integrations...</p>
+      ) : integrations.length === 0 ? (
+        <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200">
+          No connected integrations.{" "}
+          <a href="/admin/integrations" className="underline hover:text-yellow-100">
+            Set up an integration
+          </a>
+          .
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="text-left">
+            <label className="mb-2 block text-xs font-medium text-gray-300">
+              Integration
+            </label>
+            <Select
+              value={selectedIntegrationId}
+              onValueChange={(value) => {
+                setSelectedIntegrationId(value);
+                setSelectedConnectionId("");
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select an integration..." />
+              </SelectTrigger>
+              <SelectContent>
+                {integrations
+                  .filter((integration) => integration.id)
+                  .map((integration) => (
+                    <SelectItem key={integration.id} value={integration.id}>
+                      {integration.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {selectedIntegration && selectedIntegration.connections.length > 0 && (
+            <div className="text-left">
+              <label className="mb-2 block text-xs font-medium text-gray-300">
+                Account / Connection
+              </label>
+              <Select
+                value={selectedConnectionId}
+                onValueChange={setSelectedConnectionId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an account..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {selectedIntegration.connections
+                    .filter((connection) => connection.id)
+                    .map((connection) => (
+                      <SelectItem key={connection.id} value={connection.id}>
+                        {connection.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          <div className="flex justify-center">
+            <Button
+              onClick={() => {
+                if (onStartListing && selectedIntegrationId && selectedConnectionId) {
+                  onStartListing(selectedIntegrationId, selectedConnectionId);
+                }
+              }}
+              disabled={!selectedIntegrationId || !selectedConnectionId || !onStartListing}
+            >
+              List Product
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   const SyncConfigurationPanel = () => {
     const syncFields = getSyncFields();
@@ -451,259 +535,188 @@ export default function ProductListingsModal({
           <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
             {error}
           </div>
-        ) : filteredListings.length === 0 ? (
-          <div className="rounded-md border border-gray-700 bg-gray-900/50 px-4 py-8 text-center">
-            {filterIntegrationSlug ? (
-              <div className="space-y-3">
-                <div className="text-sm text-gray-300">
-                  {statusTargetLabel} status
-                </div>
-                <div className="rounded-md border border-gray-800 bg-gray-950/60 px-3 py-2 text-xs text-gray-400">
-                  Not connected.
-                </div>
-                {filterIntegrationSlug === "baselinker" && <SyncConfigurationPanel />}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {loadingIntegrations ? (
-                  <p className="text-sm text-gray-400">Loading integrations...</p>
-                ) : integrations.length === 0 ? (
-                  <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200">
-                    No connected integrations.{" "}
-                    <a href="/admin/integrations" className="underline hover:text-yellow-100">
-                      Set up an integration
-                    </a>
-                    .
-                  </div>
-                ) : (
-                  <>
-                    <div className="text-left">
-                      <label className="mb-2 block text-xs font-medium text-gray-300">
-                        Integration
-                      </label>
-                      <Select
-                        value={selectedIntegrationId}
-                        onValueChange={(value) => {
-                          setSelectedIntegrationId(value);
-                          setSelectedConnectionId("");
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select an integration..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {integrations
-                            .filter((integration) => integration.id)
-                            .map((integration) => (
-                              <SelectItem key={integration.id} value={integration.id}>
-                                {integration.name}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {selectedIntegration && selectedIntegration.connections.length > 0 && (
-                      <div className="text-left">
-                        <label className="mb-2 block text-xs font-medium text-gray-300">
-                          Account / Connection
-                        </label>
-                        <Select
-                          value={selectedConnectionId}
-                          onValueChange={setSelectedConnectionId}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select an account..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {selectedIntegration.connections
-                              .filter((connection) => connection.id)
-                              .map((connection) => (
-                                <SelectItem key={connection.id} value={connection.id}>
-                                  {connection.name}
-                                </SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-
-                    <div className="flex justify-center">
-                      <Button
-                        onClick={() => {
-                          if (onStartListing && selectedIntegrationId && selectedConnectionId) {
-                            onStartListing(selectedIntegrationId, selectedConnectionId);
-                          }
-                        }}
-                        disabled={!selectedIntegrationId || !selectedConnectionId || !onStartListing}
-                      >
-                        List Product
-                      </Button>
-                    </div>
-                  </>
-                )}
-
-                <div className="border-t border-gray-800 pt-3">
-                  <p className="text-sm text-gray-400">
-                    This product is not listed on any marketplace yet.
-                  </p>
-                  <p className="mt-2 text-xs text-gray-500">
-                    Use the + button in the header to list products on a marketplace.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
         ) : (
           <div className="space-y-3">
-            {filterIntegrationSlug && (
-              <div className="rounded-md border border-gray-800 bg-gray-950/60 px-3 py-2 text-xs text-gray-300">
-                {statusTargetLabel} status: {filteredListings[0]?.status ?? "Unknown"}
-              </div>
-            )}
-            {filterIntegrationSlug === "baselinker" && <SyncConfigurationPanel />}
-            {filteredListings.map((listing) => (
-              <div
-                key={listing.id}
-                className="flex items-center justify-between rounded-md border border-gray-700 bg-gray-900/50 px-4 py-3"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-white">
-                      {listing.integration.name}
-                    </span>
-                    <span
-                      className={`rounded border px-2 py-0.5 text-xs ${statusColors[listing.status] || statusColors.pending}`}
-                    >
-                      {listing.status}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-gray-400">
-                    Account: {listing.connection.name}
-                  </p>
-                  {listing.externalListingId && (
-                    <p className="text-xs text-gray-500">
-                      External ID: {listing.externalListingId}
-                    </p>
-                  )}
-                  {listing.inventoryId && (
-                    <p className="text-xs text-gray-500">
-                      Inventory ID: {listing.inventoryId}
-                    </p>
-                  )}
-                  <div className="mt-2 space-y-1 text-xs text-gray-500">
-                    <p>Last export: {formatTimestamp(listing.listedAt)}</p>
-                    <p>Created: {formatTimestamp(listing.createdAt)}</p>
-                    <p>Updated: {formatTimestamp(listing.updatedAt)}</p>
-                    {["baselinker", "base-com"].includes(listing.integration.slug) && (
-                      <p>Exported fields: {getExportFieldsLabel()}</p>
-                    )}
-                  </div>
-                  {listing.exportHistory && listing.exportHistory.length > 0 ? (
-                    <div className="mt-3 rounded border border-gray-800 bg-gray-950/50 p-2">
-                      <p className="text-[10px] uppercase tracking-wide text-gray-500">
-                        Export history
-                      </p>
-                      <div className="mt-2 space-y-2 text-xs text-gray-400">
-                        {listing.exportHistory.slice(0, 5).map((event, index) => (
-                          <div key={`${listing.id}-export-${index}`} className="grid gap-1">
-                            <div className="flex items-center justify-between text-gray-300">
-                              <span>{formatTimestamp(event.exportedAt)}</span>
-                              <span className="uppercase text-[10px] text-gray-500">
-                                {event.status ?? "success"}
-                              </span>
-                            </div>
-                            <div className="grid gap-1">
-                              <span>Inventory: {formatListValue(event.inventoryId)}</span>
-                              <span>Template: {formatListValue(event.templateId)}</span>
-                              <span>Warehouse: {formatListValue(event.warehouseId)}</span>
-                              {event.externalListingId && (
-                                <span>External ID: {event.externalListingId}</span>
-                              )}
-                              {event.fields && event.fields.length > 0 ? (
-                                <span>Fields: {event.fields.join(", ")}</span>
-                              ) : (
-                                <span>Fields: —</span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+            {canStartListing && <StartListingPanel />}
+            {filteredListings.length === 0 ? (
+              <div className="rounded-md border border-gray-700 bg-gray-900/50 px-4 py-8 text-center">
+                {filterIntegrationSlug ? (
+                  <div className="space-y-3">
+                    <div className="text-sm text-gray-300">
+                      {statusTargetLabel} status
                     </div>
-                  ) : (
-                    <p className="mt-2 text-xs text-gray-600">No export history recorded.</p>
-                  )}
-                </div>
-                <div className="ml-4 flex flex-col gap-2">
-                  {["baselinker", "base-com"].includes(listing.integration.slug) && (
-                    <>
-                      {listing.status === "failed" && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => void handleExportAgain(listing.id)}
-                          disabled={exportingListing === listing.id}
-                          className="border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10"
+                    <div className="rounded-md border border-gray-800 bg-gray-950/60 px-3 py-2 text-xs text-gray-400">
+                      Not connected.
+                    </div>
+                    {filterIntegrationSlug === "baselinker" && <SyncConfigurationPanel />}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="border-t border-gray-800 pt-3">
+                      <p className="text-sm text-gray-400">
+                        This product is not listed on any marketplace yet.
+                      </p>
+                      <p className="mt-2 text-xs text-gray-500">
+                        Use the + button in the header to list products on a marketplace.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filterIntegrationSlug && (
+                  <div className="rounded-md border border-gray-800 bg-gray-950/60 px-3 py-2 text-xs text-gray-300">
+                    {statusTargetLabel} status: {filteredListings[0]?.status ?? "Unknown"}
+                  </div>
+                )}
+                {filterIntegrationSlug === "baselinker" && <SyncConfigurationPanel />}
+                {filteredListings.map((listing) => (
+                  <div
+                    key={listing.id}
+                    className="flex items-center justify-between rounded-md border border-gray-700 bg-gray-900/50 px-4 py-3"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-white">
+                          {listing.integration.name}
+                        </span>
+                        <span
+                          className={`rounded border px-2 py-0.5 text-xs ${statusColors[listing.status] || statusColors.pending}`}
                         >
-                          Export again
-                        </Button>
+                          {listing.status}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-gray-400">
+                        Account: {listing.connection.name}
+                      </p>
+                      {listing.externalListingId && (
+                        <p className="text-xs text-gray-500">
+                          External ID: {listing.externalListingId}
+                        </p>
                       )}
-                      {!listing.inventoryId && (
-                        <div className="space-y-1 text-xs text-gray-400">
-                          <label htmlFor={`inventory-${listing.id}`}>
-                            Inventory ID
-                          </label>
-                          <Input
-                            id={`inventory-${listing.id}`}
-                            value={inventoryOverrides[listing.id] ?? ""}
-                            onChange={(e) =>
-                              setInventoryOverrides((prev) => ({
-                                ...prev,
-                                [listing.id]: e.target.value,
-                              }))
-                            }
-                            placeholder="Enter inventory ID"
-                            className="h-7 border-gray-700 bg-gray-950/60 text-gray-200"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => void handleSaveInventoryId(listing.id)}
-                            disabled={savingInventoryId === listing.id}
-                            className="h-7 border-gray-700 text-gray-200 hover:bg-gray-800"
-                          >
-                            Save inventory ID
-                          </Button>
+                      {listing.inventoryId && (
+                        <p className="text-xs text-gray-500">
+                          Inventory ID: {listing.inventoryId}
+                        </p>
+                      )}
+                      <div className="mt-2 space-y-1 text-xs text-gray-500">
+                        <p>Last export: {formatTimestamp(listing.listedAt)}</p>
+                        <p>Created: {formatTimestamp(listing.createdAt)}</p>
+                        <p>Updated: {formatTimestamp(listing.updatedAt)}</p>
+                        {["baselinker", "base-com"].includes(listing.integration.slug) && (
+                          <p>Exported fields: {getExportFieldsLabel()}</p>
+                        )}
+                      </div>
+                      {listing.exportHistory && listing.exportHistory.length > 0 ? (
+                        <div className="mt-3 rounded border border-gray-800 bg-gray-950/50 p-2">
+                          <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                            Export history
+                          </p>
+                          <div className="mt-2 space-y-2 text-xs text-gray-400">
+                            {listing.exportHistory.slice(0, 5).map((event, index) => (
+                              <div key={`${listing.id}-export-${index}`} className="grid gap-1">
+                                <div className="flex items-center justify-between text-gray-300">
+                                  <span>{formatTimestamp(event.exportedAt)}</span>
+                                  <span className="uppercase text-[10px] text-gray-500">
+                                    {event.status ?? "success"}
+                                  </span>
+                                </div>
+                                <div className="grid gap-1">
+                                  <span>Inventory: {formatListValue(event.inventoryId)}</span>
+                                  <span>Template: {formatListValue(event.templateId)}</span>
+                                  <span>Warehouse: {formatListValue(event.warehouseId)}</span>
+                                  {event.externalListingId && (
+                                    <span>External ID: {event.externalListingId}</span>
+                                  )}
+                                  {event.fields && event.fields.length > 0 ? (
+                                    <span>Fields: {event.fields.join(", ")}</span>
+                                  ) : (
+                                    <span>Fields: —</span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
+                      ) : (
+                        <p className="mt-2 text-xs text-gray-600">No export history recorded.</p>
+                      )}
+                    </div>
+                    <div className="ml-4 flex flex-col gap-2">
+                      {["baselinker", "base-com"].includes(listing.integration.slug) && (
+                        <>
+                          {listing.status === "failed" && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => void handleExportAgain(listing.id)}
+                              disabled={exportingListing === listing.id}
+                              className="border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10"
+                            >
+                              Export again
+                            </Button>
+                          )}
+                          {!listing.inventoryId && (
+                            <div className="space-y-1 text-xs text-gray-400">
+                              <label htmlFor={`inventory-${listing.id}`}>
+                                Inventory ID
+                              </label>
+                              <Input
+                                id={`inventory-${listing.id}`}
+                                value={inventoryOverrides[listing.id] ?? ""}
+                                onChange={(e) =>
+                                  setInventoryOverrides((prev) => ({
+                                    ...prev,
+                                    [listing.id]: e.target.value,
+                                  }))
+                                }
+                                placeholder="Enter inventory ID"
+                                className="h-7 border-gray-700 bg-gray-950/60 text-gray-200"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => void handleSaveInventoryId(listing.id)}
+                                disabled={savingInventoryId === listing.id}
+                                className="h-7 border-gray-700 text-gray-200 hover:bg-gray-800"
+                              >
+                                Save inventory ID
+                              </Button>
+                            </div>
+                          )}
+                          {listing.status !== "removed" && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => void handleDeleteFromBase(listing.id)}
+                              disabled={deletingFromBase === listing.id}
+                              className="border-red-500/40 text-red-300 hover:bg-red-500/10"
+                            >
+                              Delete from Base.com
+                            </Button>
+                          )}
+                        </>
                       )}
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        onClick={() => void handleDeleteFromBase(listing.id)}
-                        disabled={deletingFromBase === listing.id}
-                        className="border-red-500/40 text-red-300 hover:bg-red-500/10"
+                        onClick={() => void handlePurgeListing(listing.id)}
+                        disabled={purgingListing === listing.id}
+                        className="text-gray-400 hover:bg-gray-800 hover:text-red-400"
                       >
-                        Delete from Base.com
+                        <Trash2 className="mr-1 size-3" />
+                        Remove history
                       </Button>
-                    </>
-                  )}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => void handlePurgeListing(listing.id)}
-                    disabled={purgingListing === listing.id}
-                    className="text-gray-400 hover:bg-gray-800 hover:text-red-400"
-                  >
-                    <Trash2 className="mr-1 size-3" />
-                    Remove history
-                  </Button>
-                </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         )}
       </div>

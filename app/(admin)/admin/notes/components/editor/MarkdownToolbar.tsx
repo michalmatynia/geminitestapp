@@ -23,6 +23,12 @@ interface MarkdownToolbarProps {
   onRedo?: () => void;
   canUndo?: boolean;
   canRedo?: boolean;
+  editorMode: "markdown" | "wysiwyg" | "code";
+  onEditorModeChange: (mode: "markdown" | "wysiwyg" | "code") => void;
+  isEditorModeLocked?: boolean;
+  isMigrating?: boolean;
+  onMigrateToWysiwyg?: () => void;
+  onMigrateToMarkdown?: () => void;
 }
 
 export function MarkdownToolbar({
@@ -44,18 +50,116 @@ export function MarkdownToolbar({
   onRedo,
   canUndo = false,
   canRedo = false,
+  editorMode,
+  onEditorModeChange,
+  isEditorModeLocked = false,
+  isMigrating = false,
+  onMigrateToWysiwyg,
+  onMigrateToMarkdown,
 }: MarkdownToolbarProps) {
   return (
     <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-gray-700 bg-gray-900 px-3 py-2">
-      <button
-        type="button"
-        onClick={() => setShowPreview(!showPreview)}
-        className="rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
-        title="Toggle preview"
-      >
-        {showPreview ? "Hide Preview" : "Show Preview"}
-      </button>
+      {/* Editor Mode Display/Toggle */}
+      <div className="flex items-center gap-2">
+        {isEditorModeLocked ? (
+          <>
+            {/* Display current mode (locked) */}
+            <span className="px-2 py-1 text-xs bg-gray-800 text-gray-300 rounded border border-gray-600">
+              {editorMode === "markdown" ? "Markdown" : editorMode === "wysiwyg" ? "WYSIWYG" : "Code"}
+            </span>
+            {/* Migration buttons */}
+            {editorMode === "markdown" && (
+              <div className="flex gap-1">
+                {onMigrateToWysiwyg && (
+                  <button
+                    type="button"
+                    onClick={onMigrateToWysiwyg}
+                    disabled={isMigrating}
+                    className="px-2 py-1 text-xs bg-purple-600/20 text-purple-300 border border-purple-500/40 rounded hover:bg-purple-600/30 disabled:opacity-50"
+                    title="Convert this note to WYSIWYG format"
+                  >
+                    {isMigrating ? "Migrating..." : "To WYSIWYG"}
+                  </button>
+                )}
+              </div>
+            )}
+            {editorMode === "wysiwyg" && onMigrateToMarkdown && (
+              <button
+                type="button"
+                onClick={onMigrateToMarkdown}
+                disabled={isMigrating}
+                className="px-2 py-1 text-xs bg-purple-600/20 text-purple-300 border border-purple-500/40 rounded hover:bg-purple-600/30 disabled:opacity-50"
+                title="Convert this note to Markdown format"
+              >
+                {isMigrating ? "Migrating..." : "To Markdown"}
+              </button>
+            )}
+            {editorMode === "code" && onMigrateToMarkdown && (
+              <button
+                type="button"
+                onClick={onMigrateToMarkdown}
+                disabled={isMigrating}
+                className="px-2 py-1 text-xs bg-purple-600/20 text-purple-300 border border-purple-500/40 rounded hover:bg-purple-600/30 disabled:opacity-50"
+                title="Convert this note to Markdown format"
+              >
+                {isMigrating ? "Migrating..." : "To Markdown"}
+              </button>
+            )}
+          </>
+        ) : (
+          /* Mode toggle for new notes */
+          <div className="flex rounded-md border border-gray-600 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => onEditorModeChange("markdown")}
+              className={`px-2 py-1 text-xs transition-colors ${
+                editorMode === "markdown"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              }`}
+              title="Markdown editor"
+            >
+              Markdown
+            </button>
+            <button
+              type="button"
+              onClick={() => onEditorModeChange("wysiwyg")}
+              className={`px-2 py-1 text-xs transition-colors ${
+                editorMode === "wysiwyg"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              }`}
+              title="WYSIWYG editor"
+            >
+              WYSIWYG
+            </button>
+            <button
+              type="button"
+              onClick={() => onEditorModeChange("code")}
+              className={`px-2 py-1 text-xs transition-colors ${
+                editorMode === "code"
+                  ? "bg-green-600 text-white"
+                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              }`}
+              title="Code snippets editor"
+            >
+              Code
+            </button>
+          </div>
+        )}
+      </div>
       <div className="h-6 w-px bg-gray-700 mx-1" />
+      {(editorMode === "markdown" || editorMode === "code") && (
+        <>
+          <button
+            type="button"
+            onClick={() => setShowPreview(!showPreview)}
+            className="rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            title="Toggle preview"
+          >
+            {showPreview ? "Hide Preview" : "Show Preview"}
+          </button>
+          <div className="h-6 w-px bg-gray-700 mx-1" />
       {onUndo && (
         <button
           type="button"
@@ -241,6 +345,8 @@ export function MarkdownToolbar({
       >
         Apply
       </button>
+        </>
+      )}
     </div>
   );
 }

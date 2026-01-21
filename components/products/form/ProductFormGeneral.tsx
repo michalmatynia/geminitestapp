@@ -28,6 +28,7 @@ export default function ProductFormGeneral() {
     setGenerationError,
     product,
     imageSlots,
+    selectedCatalogIds,
   } = useProductFormContext();
 
   const { register, getValues, setValue, watch } = useFormContext<ProductFormData>();
@@ -37,6 +38,8 @@ export default function ProductFormGeneral() {
   const [translating, setTranslating] = useState(false);
   const [identifierType, setIdentifierType] = useState<"ean" | "gtin" | "asin">("ean");
   const allValues = watch();
+  const hasCatalogs = selectedCatalogIds.length > 0;
+  const languagesReady = filteredLanguages.length > 0;
 
   useEffect(() => {
     const vals = getValues();
@@ -153,126 +156,160 @@ export default function ProductFormGeneral() {
 
   return (
     <div className="space-y-4">
-      <Tabs defaultValue={filteredLanguages[0] ? `${filteredLanguages[0].name.toLowerCase()}-name` : "english-name"} className="mb-4">
-        <TabsList>
-          {filteredLanguages.map((language) => {
-            const fieldName = `name_${language.code.toLowerCase()}` as "name_en" | "name_pl" | "name_de";
-            const fieldValue = allValues[fieldName];
-            return (
-              <TabsTrigger
-                key={language.code}
-                value={`${language.name.toLowerCase()}-name`}
-                className={cn(
-                  !fieldValue?.trim()
-                    ? "text-muted-foreground/90 data-[state=active]:text-muted-foreground/90"
-                    : "text-foreground data-[state=inactive]:text-foreground font-medium"
-                )}
-              >
-                {language.name} Name
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
-        {filteredLanguages.map((language) => {
-          const fieldName = `name_${language.code.toLowerCase()}` as "name_en" | "name_pl" | "name_de";
-          return (
-            <TabsContent key={language.code} value={`${language.name.toLowerCase()}-name`}>
-              <Label htmlFor={fieldName}>{language.name} Name</Label>
-              <Input
-                id={fieldName}
-                {...register(fieldName)}
-                aria-invalid={errors[fieldName] ? "true" : "false"}
-              />
-              {errors[fieldName] && (
-                <p className="text-red-500 text-sm mt-1" role="alert">
-                  {errors[fieldName]?.message}
-                </p>
-              )}
-            </TabsContent>
-          );
-        })}
-      </Tabs>
+      {!hasCatalogs && (
+        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          Select a catalog to edit product titles and descriptions. Language fields are based on catalog settings.
+        </div>
+      )}
 
-      <Tabs defaultValue={filteredLanguages[0] ? `${filteredLanguages[0].name.toLowerCase()}-description` : "english-description"} className="mb-4">
-        <TabsList>
-          {filteredLanguages.map((language) => {
-            const fieldName = `description_${language.code.toLowerCase()}` as "description_en" | "description_pl" | "description_de";
-            const fieldValue = allValues[fieldName];
-            return (
-              <TabsTrigger
-                key={language.code}
-                value={`${language.name.toLowerCase()}-description`}
-                className={cn(
-                  !fieldValue?.trim()
-                    ? "text-muted-foreground/90 data-[state=active]:text-muted-foreground/90"
-                    : "text-foreground data-[state=inactive]:text-foreground font-medium"
-                )}
-              >
-                {language.name} Description
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
-        {filteredLanguages.map((language) => {
-          const fieldName = `description_${language.code.toLowerCase()}` as "description_en" | "description_pl" | "description_de";
-          return (
-            <TabsContent key={language.code} value={`${language.name.toLowerCase()}-description`}>
-              <Label htmlFor={fieldName}>{language.name} Description</Label>
-              <Textarea
-                id={fieldName}
-                {...register(fieldName)}
-                aria-invalid={errors[fieldName] ? "true" : "false"}
-              />
-              {errors[fieldName] && (
-                <p className="text-red-500 text-sm mt-1" role="alert">
-                  {errors[fieldName]?.message}
-                </p>
-              )}
-              {language.code === "EN" && (
-                <>
-                  {generationError && (
-                    <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                      {generationError}
-                      <Button
-                        onClick={() => setGenerationError(null)}
-                        className="ml-4 bg-transparent text-red-200 hover:bg-red-500/20"
-                      >
-                        Dismiss
-                      </Button>
-                    </div>
+      {hasCatalogs && !languagesReady && (
+        <div className="space-y-4">
+          <div className="rounded-md border border-slate-500/30 bg-slate-500/5 px-4 py-3">
+            <div className="h-4 w-40 animate-pulse rounded bg-slate-500/20" />
+          </div>
+          <div className="rounded-md border border-slate-500/30 bg-slate-500/5 px-4 py-3">
+            <div className="mb-3 flex gap-2">
+              <div className="h-7 w-24 animate-pulse rounded bg-slate-500/20" />
+              <div className="h-7 w-24 animate-pulse rounded bg-slate-500/20" />
+              <div className="h-7 w-24 animate-pulse rounded bg-slate-500/20" />
+            </div>
+            <div className="h-10 w-full animate-pulse rounded bg-slate-500/20" />
+          </div>
+          <div className="rounded-md border border-slate-500/30 bg-slate-500/5 px-4 py-3">
+            <div className="mb-3 flex gap-2">
+              <div className="h-7 w-28 animate-pulse rounded bg-slate-500/20" />
+              <div className="h-7 w-28 animate-pulse rounded bg-slate-500/20" />
+              <div className="h-7 w-28 animate-pulse rounded bg-slate-500/20" />
+            </div>
+            <div className="h-24 w-full animate-pulse rounded bg-slate-500/20" />
+          </div>
+        </div>
+      )}
+
+      {hasCatalogs && languagesReady && (
+        <>
+          <Tabs defaultValue={filteredLanguages[0] ? `${filteredLanguages[0].name.toLowerCase()}-name` : "english-name"} className="mb-4">
+            <TabsList>
+              {filteredLanguages.map((language) => {
+                const fieldName = `name_${language.code.toLowerCase()}` as "name_en" | "name_pl" | "name_de";
+                const fieldValue = allValues[fieldName];
+                return (
+                  <TabsTrigger
+                    key={language.code}
+                    value={`${language.name.toLowerCase()}-name`}
+                    className={cn(
+                      !fieldValue?.trim()
+                        ? "text-muted-foreground/90 data-[state=active]:text-muted-foreground/90"
+                        : "text-foreground data-[state=inactive]:text-foreground font-medium"
+                    )}
+                  >
+                    {language.name} Name
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+            {filteredLanguages.map((language) => {
+              const fieldName = `name_${language.code.toLowerCase()}` as "name_en" | "name_pl" | "name_de";
+              return (
+                <TabsContent key={language.code} value={`${language.name.toLowerCase()}-name`}>
+                  <Label htmlFor={fieldName}>{language.name} Name</Label>
+                  <Input
+                    id={fieldName}
+                    {...register(fieldName)}
+                    aria-invalid={errors[fieldName] ? "true" : "false"}
+                  />
+                  {errors[fieldName] && (
+                    <p className="text-red-500 text-sm mt-1" role="alert">
+                      {errors[fieldName]?.message}
+                    </p>
                   )}
-                  <div className="flex gap-2 mt-2">
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        void handleGenerateDescription();
-                      }}
-                      disabled={generating}
-                      aria-label="Generate product description"
-                      aria-disabled={generating}
-                    >
-                      {generating ? "Generating..." : "Generate Description"}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        void handleTranslate();
-                      }}
-                      disabled={translating || !product?.id}
-                      aria-label="Translate product names and descriptions"
-                      aria-disabled={translating || !product?.id}
-                      title={!product?.id ? "Save product before translating" : "Translate to other languages"}
-                    >
-                      {translating ? "Translating..." : "Translate"}
-                    </Button>
-                  </div>
-                </>
-              )}
-            </TabsContent>
-          );
-        })}
-      </Tabs>
+                </TabsContent>
+              );
+            })}
+          </Tabs>
+
+          <Tabs defaultValue={filteredLanguages[0] ? `${filteredLanguages[0].name.toLowerCase()}-description` : "english-description"} className="mb-4">
+            <TabsList>
+              {filteredLanguages.map((language) => {
+                const fieldName = `description_${language.code.toLowerCase()}` as "description_en" | "description_pl" | "description_de";
+                const fieldValue = allValues[fieldName];
+                return (
+                  <TabsTrigger
+                    key={language.code}
+                    value={`${language.name.toLowerCase()}-description`}
+                    className={cn(
+                      !fieldValue?.trim()
+                        ? "text-muted-foreground/90 data-[state=active]:text-muted-foreground/90"
+                        : "text-foreground data-[state=inactive]:text-foreground font-medium"
+                    )}
+                  >
+                    {language.name} Description
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+            {filteredLanguages.map((language) => {
+              const fieldName = `description_${language.code.toLowerCase()}` as "description_en" | "description_pl" | "description_de";
+              return (
+                <TabsContent key={language.code} value={`${language.name.toLowerCase()}-description`}>
+                  <Label htmlFor={fieldName}>{language.name} Description</Label>
+                  <Textarea
+                    id={fieldName}
+                    {...register(fieldName)}
+                    aria-invalid={errors[fieldName] ? "true" : "false"}
+                  />
+                  {errors[fieldName] && (
+                    <p className="text-red-500 text-sm mt-1" role="alert">
+                      {errors[fieldName]?.message}
+                    </p>
+                  )}
+                  {language.code === "EN" && (
+                    <>
+                      {generationError && (
+                        <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                          {generationError}
+                          <Button
+                            onClick={() => setGenerationError(null)}
+                            className="ml-4 bg-transparent text-red-200 hover:bg-red-500/20"
+                          >
+                            Dismiss
+                          </Button>
+                        </div>
+                      )}
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            void handleGenerateDescription();
+                          }}
+                          disabled={generating}
+                          aria-label="Generate product description"
+                          aria-disabled={generating}
+                        >
+                          {generating ? "Generating..." : "Generate Description"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            void handleTranslate();
+                          }}
+                          disabled={translating || !product?.id}
+                          aria-label="Translate product names and descriptions"
+                          aria-disabled={translating || !product?.id}
+                          title={!product?.id ? "Save product before translating" : "Translate to other languages"}
+                        >
+                          {translating ? "Translating..." : "Translate"}
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </TabsContent>
+              );
+            })}
+          </Tabs>
+        </>
+      )}
 
       <div className="mb-4 flex flex-col gap-4 md:flex-row">
         <div className="w-full md:w-1/3">

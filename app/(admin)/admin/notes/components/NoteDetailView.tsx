@@ -330,7 +330,10 @@ export function NoteDetailView({
             className="prose max-w-none"
             style={previewTypographyStyle}
             dangerouslySetInnerHTML={{
-              __html: renderMarkdownToHtml(selectedNote.content),
+              __html:
+                selectedNote.editorType === "wysiwyg"
+                  ? selectedNote.content
+                  : renderMarkdownToHtml(selectedNote.content),
             }}
             onMouseOver={(e) => {
               const target = e.target;

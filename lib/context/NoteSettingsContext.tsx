@@ -15,12 +15,14 @@ export const DEFAULT_NOTE_SETTINGS: NoteSettings = {
   viewMode: "grid",
   gridDensity: 4,
   autoformatOnPaste: false,
+  editorMode: "markdown",
 };
 
 const STORAGE_KEY = "noteSettings";
 const DB_SETTING_KEY = "noteSettings:selectedFolderId";
 const DB_NOTEBOOK_KEY = "noteSettings:selectedNotebookId";
 const DB_AUTOFORMAT_KEY = "noteSettings:autoformatOnPaste";
+const DB_EDITOR_MODE_KEY = "noteSettings:editorMode";
 
 interface NoteSettingsContextType {
   settings: NoteSettings;
@@ -133,12 +135,46 @@ async function loadAutoformatFromDb(): Promise<boolean | null> {
   }
 }
 
+async function saveEditorModeToDb(mode: "markdown" | "wysiwyg" | "code"): Promise<void> {
+  try {
+    await fetch("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        key: DB_EDITOR_MODE_KEY,
+        value: mode,
+      }),
+    });
+  } catch (error) {
+    console.error("Failed to save editorMode to database:", error);
+  }
+}
+
+async function loadEditorModeFromDb(): Promise<"markdown" | "wysiwyg" | "code" | null> {
+  try {
+    const response = await fetch("/api/settings");
+    if (!response.ok) return null;
+
+    const settings = await response.json() as Array<{ key: string; value: string }>;
+    const setting = settings.find((s) => s.key === DB_EDITOR_MODE_KEY);
+
+    if (setting && (setting.value === "markdown" || setting.value === "wysiwyg" || setting.value === "code")) {
+      return setting.value;
+    }
+    return null;
+  } catch (error) {
+    console.error("Failed to load editorMode from database:", error);
+    return null;
+  }
+}
+
 export function NoteSettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<NoteSettings>(DEFAULT_NOTE_SETTINGS);
   const [isInitialized, setIsInitialized] = useState(false);
   const previousFolderIdRef = useRef<string | null>(null);
   const previousNotebookIdRef = useRef<string | null>(null);
   const previousAutoformatRef = useRef<boolean>(false);
+  const previousEditorModeRef = useRef<"markdown" | "wysiwyg" | "code">("markdown");
 
   // Load settings from localStorage first (fast), then from database (authoritative)
   useEffect(() => {
@@ -211,6 +247,23 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
           console.error("Failed to update localStorage cache:", error);
         }
       }
+
+      // Load editorMode from database
+      const dbEditorMode = await loadEditorModeFromDb();
+      if (dbEditorMode !== null) {
+        setSettings((prev) => ({ ...prev, editorMode: dbEditorMode }));
+        previousEditorModeRef.current = dbEditorMode;
+        try {
+          const stored = window.localStorage.getItem(STORAGE_KEY);
+          const current = stored ? JSON.parse(stored) : {};
+          window.localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({ ...current, editorMode: dbEditorMode })
+          );
+        } catch (error) {
+          console.error("Failed to update localStorage cache:", error);
+        }
+      }
     };
 
     void loadSettings();
@@ -255,6 +308,15 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
     }
   }, [settings.autoformatOnPaste, isInitialized]);
 
+  // Save editorMode to database when it changes
+  useEffect(() => {
+    if (!isInitialized) return;
+    if (settings.editorMode !== previousEditorModeRef.current) {
+      previousEditorModeRef.current = settings.editorMode;
+      void saveEditorModeToDb(settings.editorMode);
+    }
+  }, [settings.editorMode, isInitialized]);
+
   const updateSettings = (updates: Partial<NoteSettings>) => {
     setSettings((prev) => ({ ...prev, ...updates }));
   };
@@ -265,6 +327,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
     void saveSelectedFolderToDb(null);
     void saveSelectedNotebookToDb(null);
     void saveAutoformatToDb(false);
+    void saveEditorModeToDb("markdown");
   };
 
   return (

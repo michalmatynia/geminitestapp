@@ -21,6 +21,7 @@ interface MarkdownEditorProps {
   previewTypographyStyle: React.CSSProperties;
   onPaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => Promise<void>;
   setLightboxImage: (imgSrc: string | null) => void;
+  isCodeMode?: boolean;
 }
 
 export function MarkdownEditor({
@@ -39,6 +40,7 @@ export function MarkdownEditor({
   previewTypographyStyle,
   onPaste,
   setLightboxImage,
+  isCodeMode = false,
 }: MarkdownEditorProps) {
   const { toast } = useToast();
   const [debouncedContentHtml, setDebouncedContentHtml] = React.useState<string>("");
@@ -92,13 +94,19 @@ export function MarkdownEditor({
         <div className="relative">
           <textarea
             ref={contentRef}
-            placeholder="Enter note content (paste images directly!)"
+            placeholder={isCodeMode
+              ? "Enter code snippets using ```language blocks (e.g., ```javascript)"
+              : "Enter note content (paste images directly!)"}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onPaste={onPaste}
             rows={12}
-            className="w-full rounded-lg border border-gray-700 px-4 py-2"
-            style={{ backgroundColor: contentBackground, color: contentTextColor }}
+            className="w-full rounded-lg border border-gray-700 px-4 py-2 font-mono"
+            style={{
+              backgroundColor: contentBackground,
+              color: contentTextColor,
+              ...(isCodeMode ? { fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace' } : {})
+            }}
             required
           />
           {isPasting && (
@@ -131,7 +139,7 @@ export function MarkdownEditor({
             style={{ backgroundColor: contentBackground, color: contentTextColor }}
           >
             <div className="mb-2 text-xs uppercase tracking-wide text-gray-400">
-              Preview
+              {isCodeMode ? "Code Preview" : "Preview"}
             </div>
             <div
               className="prose max-w-none [&_img]:cursor-pointer [&_img]:transition-opacity [&_img]:hover:opacity-80"

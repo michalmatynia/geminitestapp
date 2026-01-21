@@ -92,7 +92,22 @@ export async function POST(
       );
     }
 
-    await deleteBaseProduct(token, inventoryId, listing.externalListingId);
+    const isMissingBaseProduct = (error: unknown) => {
+      if (!(error instanceof Error)) return false;
+      const message = error.message.toLowerCase();
+      return (
+        message.includes("invalid product identifier") ||
+        message.includes("product does not exist")
+      );
+    };
+
+    try {
+      await deleteBaseProduct(token, inventoryId, listing.externalListingId);
+    } catch (error) {
+      if (!isMissingBaseProduct(error)) {
+        throw error;
+      }
+    }
 
     await repo.updateListingStatus(listingId, "removed");
     await repo.appendExportHistory(listingId, {

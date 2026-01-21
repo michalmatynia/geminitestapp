@@ -8,7 +8,7 @@ import {
   listImportTemplates,
 } from "@/lib/services/import-template-repository";
 import { buildBaseProductData, exportProductToBase } from "@/lib/services/exports/base-exporter";
-import { checkBaseSkuExists } from "@/lib/services/imports/base-client";
+import { checkBaseSkuExists, fetchBaseWarehouses } from "@/lib/services/imports/base-client";
 import { decryptSecret } from "@/lib/utils/encryption";
 
 const exportSchema = z.object({
@@ -30,6 +30,13 @@ export async function POST(
     const { id: productId } = await params;
     const body = await req.json();
     const data = exportSchema.parse(body);
+    const forwardedHost =
+      req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+    const forwardedProto =
+      req.headers.get("x-forwarded-proto") ?? "http";
+    const imageBaseUrl = forwardedHost
+      ? `${forwardedProto}://${forwardedHost}`
+      : new URL(req.url).origin;
 
     console.log("[export-to-base] Starting export", {
       productId,
@@ -177,39 +184,118 @@ export async function POST(
       }
     }
 
+    let warehouseId = await getExportWarehouseId();
+    let validWarehouseIds: Set<string> | null = null;
+    try {
+      const warehouses = await fetchBaseWarehouses(token, data.inventoryId);
+      validWarehouseIds = new Set(warehouses.map((warehouse) => warehouse.id));
+      if (warehouseId) {
+        if (!validWarehouseIds.has(warehouseId)) {
+          const fallbackWarehouseId = warehouses[0]?.id ?? null;
+          console.warn("[export-to-base] Warehouse not in inventory, using fallback", {
+            warehouseId,
+            fallbackWarehouseId,
+            inventoryId: data.inventoryId,
+          });
+          warehouseId = fallbackWarehouseId;
+        }
+      } else {
+        warehouseId = warehouses[0]?.id ?? null;
+      }
+    } catch (error) {
+      console.warn("[export-to-base] Failed to verify warehouse, skipping stock export", {
+        warehouseId,
+        inventoryId: data.inventoryId,
+        error,
+      });
+      validWarehouseIds = null;
+    }
+
+    const filterStockMappings = (entries: typeof mappings) => {
+      if (!validWarehouseIds) return entries;
+      return entries.filter((mapping) => {
+        const key = mapping.sourceKey.trim().toLowerCase();
+        if (!key.startsWith("stock")) return true;
+        const match = key.match(/(\d+)$/);
+        if (!match) return true;
+        return validWarehouseIds.has(match[1]);
+      });
+    };
+
+    let effectiveMappings = filterStockMappings(mappings);
+
     // Export to Base.com
     console.log("[export-to-base] Calling Base.com API", {
       productId,
       inventoryId: data.inventoryId,
-      mappingsCount: mappings.length,
+      mappingsCount: effectiveMappings.length,
     });
 
-    const warehouseId = await getExportWarehouseId();
-
-    const exportData = buildBaseProductData(product, mappings, warehouseId) as Record<string, unknown> & {
-      text_fields?: Record<string, unknown>;
-      prices?: Record<string, unknown>;
-      stock?: Record<string, unknown>;
+    const buildExportSnapshot = (
+      targetWarehouseId: string | null,
+      activeMappings: typeof mappings = effectiveMappings
+    ) => {
+      const exportData = buildBaseProductData(
+        product,
+        activeMappings,
+        targetWarehouseId,
+        { imageBaseUrl }
+      ) as Record<string, unknown> & {
+        text_fields?: Record<string, unknown>;
+        prices?: Record<string, unknown>;
+        stock?: Record<string, unknown>;
+      };
+      const exportFields = Object.keys(exportData).flatMap((key) => {
+        if (key === "text_fields" && exportData.text_fields && typeof exportData.text_fields === "object") {
+          return Object.keys(exportData.text_fields as Record<string, unknown>).map((field) => `text_fields.${field}`);
+        }
+        if (key === "prices" && exportData.prices && typeof exportData.prices === "object") {
+          return Object.keys(exportData.prices as Record<string, unknown>).map((field) => `prices.${field}`);
+        }
+        if (key === "stock" && exportData.stock && typeof exportData.stock === "object") {
+          return Object.keys(exportData.stock as Record<string, unknown>).map((field) => `stock.${field}`);
+        }
+        return [key];
+      });
+      return { exportData, exportFields };
     };
-    const exportFields = Object.keys(exportData).flatMap((key) => {
-      if (key === "text_fields" && exportData.text_fields && typeof exportData.text_fields === "object") {
-        return Object.keys(exportData.text_fields as Record<string, unknown>).map((field) => `text_fields.${field}`);
-      }
-      if (key === "prices" && exportData.prices && typeof exportData.prices === "object") {
-        return Object.keys(exportData.prices as Record<string, unknown>).map((field) => `prices.${field}`);
-      }
-      if (key === "stock" && exportData.stock && typeof exportData.stock === "object") {
-        return Object.keys(exportData.stock as Record<string, unknown>).map((field) => `stock.${field}`);
-      }
-      return [key];
-    });
-    const result = await exportProductToBase(
+
+    let { exportFields } = buildExportSnapshot(warehouseId);
+    let result = await exportProductToBase(
       token,
       data.inventoryId,
       product,
-      mappings,
-      warehouseId
+      effectiveMappings,
+      warehouseId,
+      { imageBaseUrl }
     );
+
+    const isWarehouseMismatch = (message: string | undefined) =>
+      typeof message === "string" &&
+      message.toLowerCase().includes("warehouse") &&
+      message.toLowerCase().includes("not included");
+
+    if (!result.success && warehouseId && isWarehouseMismatch(result.error)) {
+      console.warn("[export-to-base] Retrying without warehouse stock export", {
+        productId,
+        inventoryId: data.inventoryId,
+        warehouseId,
+        error: result.error,
+      });
+      warehouseId = null;
+      effectiveMappings = effectiveMappings.filter(
+        (mapping) => !mapping.sourceKey.trim().toLowerCase().startsWith("stock")
+      );
+      ({ exportFields } = buildExportSnapshot(warehouseId, effectiveMappings));
+      result = await exportProductToBase(
+        token,
+        data.inventoryId,
+        product,
+        effectiveMappings,
+        warehouseId,
+        { imageBaseUrl }
+      );
+    }
 
     if (!result.success) {
       console.error("[export-to-base] Export failed", {

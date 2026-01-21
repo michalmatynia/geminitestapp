@@ -1,11 +1,45 @@
 
-Translations not working
+* When I open Product Edit it takes really long to feed data to fields
+
+* I want my "Export history" to  be collapsible and sortable by date (most recent first by default)
+
+* Each Export request should have a separate row in Export Jobs with information specific to that Export attampt. Removal from Base.com should also be there, with all the information 
+
+In Product List - Operations - I need an Option to Mass Export Products to Base.com
+
+When I export my product, still Stock is not exporting
+
+In Product Edit / Create Tags Field should be searchable field
+
+Opening WYSYWIG Note fails in Edit Mode
+
+I am unable to Open my Note, if I migrate it to Wysiwyg
 
 
+* In Product Edit / Create When a Product is not connected to any catalog, don't show Title and Content, as these are only available on per language basis which is part of catalog. The same goes for price and price groups. Give the user indication 
+to select the Catalog first.
+
+* In Product Create / Edit it seems selecting and saving the catalog doesn't work
+
+* In Product Create / Edit, when the Panel opens, it first shows all language tabs, then it quickly filters through what's available in Catalog and then it shows the contrained langauge tabes (for content and Title). I would like this behavior not to be visible, and filtering should be done prior to showing the final tabs to the user.
+
+* In Product Edit / Create Catalog Field only shows the number of catalogs to which the PRoduct is connected, but I don't see the Catalog Names
+
+
+
+* Clicking Export should create an Export job, so that I can continue working with the page, while the export is being done.
+
+
+In my Note theme I should be able to set I only want the Markdown note or Wysiwyg or code snippet notes. the default being Markdown. I should also be able to apply Theme to All Notes
+
+Note App, switching to Wysywig not workin/ - wait there is segmentation in placenow
+
+* Within omyne note database structure, I want the mark down note to be like a separate note from Wysiwyg. Although you can add a button in Note to Migrate from Markdown and vice versa.
+
+* I would like a third mode aside from Wysiwyg and Markdown, which is Code snippets, which actually is a Markdown, but with specific code coloring, depending how the code is identified with ``` element. The code snippet mode give me the possibility to copy snippet right from the note card with a little "Copy" button.
 
 * Note App, When I move the note to folder, do not uncollapse the folder. 
 
-* Clicking Export should create an Export job, so that I can continue working with the page, while the export is being done.
 
 * Import table should have a search field and should have checkmarks so that I can select which products are to be imported
 
@@ -20,6 +54,7 @@ Add individual syncing options to teh green hose
 
 * Product List, each row should have Price indication based on which currency is currently selected in PRoduct List view.
 
+At some point the exported product should sync image URLs links with my website
 
 * Product Catalog should adhere to the order in which the languages are added, If I add English, then Polish then German, this is the order in which they should be presented. Also, I should be able to reorder languages When in Product Catalog Edit Page.
 

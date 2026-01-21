@@ -7,6 +7,58 @@ type ExportTemplateMapping = {
   targetField: string;  // Base.com API parameter name
 };
 
+const IMAGE_BASE_URL =
+  process.env.NEXT_PUBLIC_APP_URL ||
+  process.env.NEXT_PUBLIC_BASE_URL ||
+  process.env.PUBLIC_BASE_URL ||
+  process.env.APP_URL ||
+  process.env.NEXTAUTH_URL ||
+  "";
+
+const hasScheme = (value: string) => /^[a-z][a-z0-9+.-]*:/i.test(value);
+const resolveImageUrl = (value: string | null | undefined, baseUrl?: string | null) => {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (hasScheme(trimmed)) return trimmed;
+  const baseCandidate = baseUrl ?? IMAGE_BASE_URL;
+  if (!baseCandidate) return trimmed;
+  const base = baseCandidate.replace(/\/+$/, "");
+  const path = trimmed.replace(/^\/+/, "");
+  return `${base}/${path}`;
+};
+
+const IMAGE_TARGET_FIELDS = new Set([
+  "images",
+  "image",
+  "image_urls",
+  "images_url",
+  "images_urls",
+  "images_link_all",
+  "image_links_all",
+]);
+
+const IMAGE_EXPORT_ALIASES = new Set([
+  "image_all",
+  "images_all",
+  "image_slots_all",
+  "image_slots",
+  "image_files",
+  "image_links_all",
+  "image_links",
+  "images_link_all",
+  "image_link_all",
+]);
+
+const normalizeExportTargetField = (targetField: string) => {
+  const trimmed = targetField.trim();
+  const normalized = trimmed.toLowerCase();
+  if (IMAGE_EXPORT_ALIASES.has(normalized)) {
+    return "images";
+  }
+  return trimmed;
+};
+
 const toStringValue = (value: unknown): string | null => {
   if (value === null || value === undefined) return null;
   if (typeof value === "string") return value.trim() || null;
@@ -41,36 +93,47 @@ const toNumberValue = (value: unknown): number | null => {
 const getImageSlotUrl = (
   product: ProductWithImages,
   index: number,
-  mode: "slot" | "file" | "link"
+  mode: "slot" | "file" | "link",
+  imageBaseUrl?: string | null
 ) => {
   if (index < 0) return null;
   if (mode !== "link") {
     const imageFile = product.images?.[index]?.imageFile?.filepath;
-    if (imageFile) return imageFile;
+    const resolved = resolveImageUrl(imageFile, imageBaseUrl);
+    if (resolved) return resolved;
   }
   const link = product.imageLinks?.[index];
-  if (link && typeof link === "string" && link.trim()) return link.trim();
+  const resolved = resolveImageUrl(
+    typeof link === "string" ? link : null,
+    imageBaseUrl
+  );
+  if (resolved) return resolved;
   return null;
 };
 
 const getImageList = (
   product: ProductWithImages,
-  mode: "slot" | "file" | "link"
+  mode: "slot" | "file" | "link",
+  imageBaseUrl?: string | null
 ) => {
   if (mode === "link") {
     return (product.imageLinks ?? [])
-      .map((link) => (typeof link === "string" ? link.trim() : ""))
+      .map(
+        (link) =>
+          resolveImageUrl(typeof link === "string" ? link : null, imageBaseUrl) ??
+          ""
+      )
       .filter(Boolean);
   }
   const slots = (product.images ?? [])
-    .map((entry) => entry.imageFile?.filepath?.trim() ?? "")
+    .map((entry) => resolveImageUrl(entry.imageFile?.filepath, imageBaseUrl) ?? "")
     .filter(Boolean);
   return slots;
 };
 
-const getAllImageUrls = (product: ProductWithImages) => {
-  const slots = getImageList(product, "slot");
-  const links = getImageList(product, "link");
+const getAllImageUrls = (product: ProductWithImages, imageBaseUrl?: string | null) => {
+  const slots = getImageList(product, "slot", imageBaseUrl);
+  const links = getImageList(product, "link", imageBaseUrl);
   return Array.from(new Set([...slots, ...links]));
 };
 
@@ -79,7 +142,8 @@ const getAllImageUrls = (product: ProductWithImages) => {
  */
 const getProductValue = (
   product: ProductWithImages,
-  sourceKey: string
+  sourceKey: string,
+  imageBaseUrl?: string | null
 ): unknown => {
   if (!sourceKey) return null;
 
@@ -89,13 +153,13 @@ const getProductValue = (
     const index = Number.parseInt(slotMatch[2] ?? "", 10) - 1;
     if (Number.isNaN(index)) return null;
     const mode = slotMatch[1] as "slot" | "file" | "link";
-    return getImageSlotUrl(product, index, mode);
+    return getImageSlotUrl(product, index, mode, imageBaseUrl);
   }
   const imageMatch = normalized.match(/^image_(\d+)$/);
   if (imageMatch) {
     const index = Number.parseInt(imageMatch[1] ?? "", 10) - 1;
     if (Number.isNaN(index)) return null;
-    return getImageSlotUrl(product, index, "slot");
+    return getImageSlotUrl(product, index, "slot", imageBaseUrl);
   }
   if (
     normalized === "image_all" ||
@@ -103,15 +167,14 @@ const getProductValue = (
     normalized === "image_files" ||
     normalized === "image_slots_all"
   ) {
-    return getImageList(product, "slot");
+    return getImageList(product, "slot", imageBaseUrl);
   }
   if (normalized === "image_links" || normalized === "image_links_all") {
-    return getImageList(product, "link");
+    return getImageList(product, "link", imageBaseUrl);
   }
   if (normalized === "images_all") {
-    return getAllImageUrls(product);
+    return getAllImageUrls(product, imageBaseUrl);
   }
-
   // Handle dot notation for nested access
   if (sourceKey.includes(".")) {
     const path = sourceKey.split(".").map((part) => part.trim());
@@ -132,7 +195,8 @@ const getProductValue = (
  */
 function applyExportTemplateMappings(
   product: ProductWithImages,
-  mappings: ExportTemplateMapping[]
+  mappings: ExportTemplateMapping[],
+  imageBaseUrl?: string | null
 ): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
@@ -142,28 +206,31 @@ function applyExportTemplateMappings(
 
     if (!sourceKey || !targetField) continue;
 
-    const rawValue = getProductValue(product, sourceKey);
+    const rawValue = getProductValue(product, sourceKey, imageBaseUrl);
     if (rawValue === null || rawValue === undefined) continue;
 
-    if (Array.isArray(rawValue)) {
-      const imageTargets = new Set([
-        "images",
-        "image",
-        "image_urls",
-        "images_url",
-        "images_urls",
-        "images_link_all",
-        "image_links_all",
-      ]);
-      if (imageTargets.has(targetField)) {
+    const targetKey = targetField.toLowerCase();
+    const isImageTarget = IMAGE_TARGET_FIELDS.has(targetKey);
+
+    if (isImageTarget) {
+      if (Array.isArray(rawValue)) {
         const urls = rawValue
-          .map((entry) => (typeof entry === "string" ? entry.trim() : ""))
+          .map((entry) =>
+            typeof entry === "string" ? resolveImageUrl(entry, imageBaseUrl) ?? "" : ""
+          )
           .filter(Boolean);
         if (urls.length > 0) {
           result[targetField] = urls;
         }
         continue;
       }
+      if (typeof rawValue === "string") {
+        const resolved = resolveImageUrl(rawValue, imageBaseUrl);
+        if (resolved) {
+          result[targetField] = [resolved];
+        }
+      }
+      continue;
     }
 
     // Try to convert to string first
@@ -191,7 +258,8 @@ function applyExportTemplateMappings(
 export function buildBaseProductData(
   product: ProductWithImages,
   mappings: ExportTemplateMapping[] = [],
-  warehouseId?: string | null
+  warehouseId?: string | null,
+  options?: { imageBaseUrl?: string | null }
 ): BaseProductRecord {
   // Start with default field mappings in Baselinker API format
   const baseData: BaseProductRecord = {};
@@ -226,7 +294,43 @@ export function buildBaseProductData(
 
   // Apply template mappings (these override defaults)
   if (mappings.length > 0) {
-    const templateData = applyExportTemplateMappings(product, mappings);
+    // Templates are saved as Base -> product mappings, so invert for export.
+    const exportMappings = mappings.map((mapping) => ({
+      sourceKey: mapping.targetField,
+      targetField: normalizeExportTargetField(mapping.sourceKey),
+    }));
+    const templateData = applyExportTemplateMappings(
+      product,
+      exportMappings,
+      options?.imageBaseUrl ?? null
+    );
+    const templateStock = templateData.stock;
+    if (templateStock !== undefined) {
+      const hasWarehouse = Boolean(warehouseId);
+      const baseStock = baseData.stock ?? null;
+      if (typeof templateStock === "string" || typeof templateStock === "number") {
+        const numeric = Number(templateStock);
+        if (hasWarehouse && Number.isFinite(numeric)) {
+          templateData.stock = {
+            ...((baseStock as Record<string, number>) ?? {}),
+            [warehouseId as string]: numeric,
+          };
+        } else if (baseStock) {
+          delete templateData.stock;
+        }
+      } else if (
+        templateStock &&
+        typeof templateStock === "object" &&
+        !Array.isArray(templateStock)
+      ) {
+        templateData.stock = {
+          ...(templateStock as Record<string, unknown>),
+          ...((baseStock as Record<string, number>) ?? {}),
+        };
+      } else if (baseStock) {
+        delete templateData.stock;
+      }
+    }
     Object.assign(baseData, templateData);
   }
 
@@ -241,10 +345,11 @@ export async function exportProductToBase(
   inventoryId: string,
   product: ProductWithImages,
   mappings: ExportTemplateMapping[] = [],
-  warehouseId?: string | null
+  warehouseId?: string | null,
+  options?: { imageBaseUrl?: string | null }
 ): Promise<{ success: boolean; productId?: string; error?: string }> {
   try {
-    const productData = buildBaseProductData(product, mappings, warehouseId);
+    const productData = buildBaseProductData(product, mappings, warehouseId, options);
 
     console.log("[base-exporter] Built product data for export", {
       productId: product.id,

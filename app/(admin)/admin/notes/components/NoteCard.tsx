@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { ChevronRight, Pin, Star } from "lucide-react";
+import { ChevronRight, Pin, Star, Copy, Check } from "lucide-react";
 import type { NoteWithRelations, ThemeRecord } from "@/types/notes";
 import type { NoteCardProps } from "@/types/notes-ui";
 import { BreadcrumbScroller } from "./BreadcrumbScroller";
@@ -39,10 +39,15 @@ function NoteCardBase({
 }: NoteCardProps) {
   // Use provided theme or fall back to dark mode theme
   const effectiveTheme = theme ?? FALLBACK_THEME;
+  const [isCopied, setIsCopied] = React.useState(false);
+  const isCodeNote = note.editorType === "code";
 
   const contentHtml = React.useMemo(
-    () => renderMarkdownToHtml(note.content),
-    [note.content]
+    () =>
+      note.editorType === "wysiwyg"
+        ? note.content
+        : renderMarkdownToHtml(note.content),
+    [note.content, note.editorType]
   );
   const normalizedColor = note.color?.toLowerCase().trim();
   // Only use note's custom color if it's not white (default)
@@ -73,6 +78,17 @@ function NoteCardBase({
   const thumbnailFile = note.files?.find(
     (file) => file.mimetype?.startsWith("image/") && file.filepath
   );
+
+  const handleCopyCode = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(note.content);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy code:", err);
+    }
+  };
 
   return (
     <div
@@ -119,8 +135,31 @@ function NoteCardBase({
       }`}
     >
       <div className="mb-2 flex items-start justify-between gap-2">
-        <h3 className="font-semibold">{note.title}</h3>
         <div className="flex items-center gap-2">
+          <h3 className="font-semibold">{note.title}</h3>
+          {isCodeNote && (
+            <span className="rounded bg-green-600/20 px-1.5 py-0.5 text-[10px] font-medium text-green-400 border border-green-500/30">
+              CODE
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {isCodeNote && (
+            <button
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={handleCopyCode}
+              className={`transition-colors ${
+                isCopied
+                  ? "text-green-500"
+                  : "text-gray-500 hover:text-blue-500"
+              }`}
+              aria-label={isCopied ? "Copied!" : "Copy code"}
+              title={isCopied ? "Copied!" : "Copy code snippet"}
+            >
+              {isCopied ? <Check size={16} /> : <Copy size={16} />}
+            </button>
+          )}
           <button
             type="button"
             onMouseDown={(event) => event.preventDefault()}

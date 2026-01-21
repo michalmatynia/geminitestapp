@@ -1,0 +1,45 @@
+import prisma from "@/lib/prisma";
+import type { NoteFileRecord, NoteFileCreateInput } from "@/types/notes";
+
+export const createNoteFile = async (
+  data: NoteFileCreateInput
+): Promise<NoteFileRecord> => {
+  const createData: any = {
+    note: { connect: { id: data.noteId } },
+    slotIndex: data.slotIndex,
+    filename: data.filename,
+    filepath: data.filepath,
+    mimetype: data.mimetype,
+    size: data.size,
+    ...(data.width !== undefined && { width: data.width }),
+    ...(data.height !== undefined && { height: data.height }),
+  };
+  return prisma.noteFile.create({
+    data: createData,
+  });
+};
+
+export const getNoteFiles = async (
+  noteId: string
+): Promise<NoteFileRecord[]> => {
+  return prisma.noteFile.findMany({
+    where: { noteId },
+    orderBy: { slotIndex: "asc" },
+  });
+};
+
+export const deleteNoteFile = async (
+  noteId: string,
+  slotIndex: number
+): Promise<boolean> => {
+  try {
+    await prisma.noteFile.delete({
+      where: {
+        noteId_slotIndex: { noteId, slotIndex },
+      },
+    });
+    return true;
+  } catch {
+    return false;
+  }
+};

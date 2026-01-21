@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
+import { ObjectId } from "mongodb";
 import { getCatalogRepository } from "@/lib/services/catalog-repository";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
@@ -93,8 +94,10 @@ export async function GET() {
               nextDefaultLanguageId !== catalog.defaultLanguageId;
 
             if (languageIdsChanged || defaultChanged) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const filter = { $or: [{ _id: catalog.id }, { id: catalog.id }] } as any;
               await collection.updateOne(
-                { $or: [{ _id: catalog.id }, { id: catalog.id }] },
+                filter,
                 {
                   $set: {
                     languageIds: nextLanguageIds,

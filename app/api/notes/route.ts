@@ -3,20 +3,7 @@ import { randomUUID } from "crypto";
 import { noteService } from "@/lib/services/noteService/index";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { noteCreateSchema } from "@/lib/validations/notes";
-import type { NoteFilters, NoteWithRelations, RelatedNote } from "@/types/notes";
-
-const buildRelations = (note: NoteWithRelations): RelatedNote[] => {
-  const relations = [
-    ...(note.relationsFrom ?? []).map((rel) => rel.targetNote),
-    ...(note.relationsTo ?? []).map((rel) => rel.sourceNote),
-  ];
-  const seen = new Set<string>();
-  return relations.filter((rel) => {
-    if (!rel?.id || seen.has(rel.id)) return false;
-    seen.add(rel.id);
-    return true;
-  });
-};
+import type { NoteFilters } from "@/types/notes";
 
 /**
  * GET /api/notes
@@ -69,11 +56,7 @@ export async function GET(req: Request) {
 
   try {
     const notes = await noteService.getAll(filters);
-    const withRelations = notes.map((note) => ({
-      ...note,
-      relations: buildRelations(note),
-    }));
-    return NextResponse.json(withRelations);
+    return NextResponse.json(notes);
   } catch (error) {
     const errorId = randomUUID();
     console.error("[notes][GET] Failed to fetch notes", {
@@ -107,10 +90,7 @@ export async function POST(req: Request) {
       ...parsed.data,
       notebookId: resolvedNotebookId,
     });
-    return NextResponse.json(
-      { ...note, relations: buildRelations(note) },
-      { status: 201 }
-    );
+    return NextResponse.json(note, { status: 201 });
   } catch (error: unknown) {
     const errorId = randomUUID();
     if (error instanceof Error) {

@@ -1,0 +1,32 @@
+app/api/products/[id]/export-to-base/route.ts(221,38): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+components/products/ProductListingJobsPanel.tsx(222,26): error TS2345: Argument of type '(this: undefined, listing: ListingJob) => { job: ProductJob; listing: ListingJob; attempt: { exportedAt: string; status?: string | null; inventoryId?: string | null; templateId?: string | null; warehouseId?: string | null; externalListingId?: string | null; fields?: string[] | null; }; attemptIndex: number; }[] | { ...' is not assignable to parameter of type '(this: undefined, value: ListingJob, index: number, array: ListingJob[]) => { job: ProductJob; listing: ListingJob; attempt: { exportedAt: string; ... 5 more ...; fields?: string[] | null; }; attemptIndex: number; } | readonly { ...; }[]'.
+  Type '{ job: ProductJob; listing: ListingJob; attempt: { exportedAt: string; status?: string | null; inventoryId?: string | null; templateId?: string | null; warehouseId?: string | null; externalListingId?: string | null; fields?: string[] | null; }; attemptIndex: number; }[] | { ...; }[]' is not assignable to type '{ job: ProductJob; listing: ListingJob; attempt: { exportedAt: string; status?: string | null; inventoryId?: string | null; templateId?: string | null; warehouseId?: string | null; externalListingId?: string | null; fields?: string[] | null; }; attemptIndex: number; } | readonly { ...; }[]'.
+    Type '{ job: ProductJob; listing: ListingJob; attempt: null; attemptIndex: null; }[]' is not assignable to type '{ job: ProductJob; listing: ListingJob; attempt: { exportedAt: string; status?: string | null; inventoryId?: string | null; templateId?: string | null; warehouseId?: string | null; externalListingId?: string | null; fields?: string[] | null; }; attemptIndex: number; } | readonly { ...; }[]'.
+      Type '{ job: ProductJob; listing: ListingJob; attempt: null; attemptIndex: null; }[]' is not assignable to type 'readonly { job: ProductJob; listing: ListingJob; attempt: { exportedAt: string; status?: string | null; inventoryId?: string | null; templateId?: string | null; warehouseId?: string | null; externalListingId?: string | null; fields?: string[] | null; }; attemptIndex: number; }[]'.
+        Type '{ job: ProductJob; listing: ListingJob; attempt: null; attemptIndex: null; }' is not assignable to type '{ job: ProductJob; listing: ListingJob; attempt: { exportedAt: string; status?: string | null; inventoryId?: string | null; templateId?: string | null; warehouseId?: string | null; externalListingId?: string | null; fields?: string[] | null; }; attemptIndex: number; }'.
+          Types of property 'attempt' are incompatible.
+            Type 'null' is not assignable to type '{ exportedAt: string; status?: string | null; inventoryId?: string | null; templateId?: string | null; warehouseId?: string | null; externalListingId?: string | null; fields?: string[] | null; }'.
+components/products/ProductListingJobsPanel.tsx(236,43): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(predicate: (value: unknown, index: number, array: unknown[]) => value is unknown, thisArg?: any): unknown[]', gave the following error.
+    Argument of type '({ job, listing, attempt }: { job: any; listing: any; attempt: any; }) => boolean' is not assignable to parameter of type '(value: unknown, index: number, array: unknown[]) => value is unknown'.
+      Types of parameters '__0' and 'value' are incompatible.
+        Type 'unknown' is not assignable to type '{ job: any; listing: any; attempt: any; }'.
+  Overload 2 of 2, '(predicate: (value: unknown, index: number, array: unknown[]) => unknown, thisArg?: any): unknown[]', gave the following error.
+    Argument of type '({ job, listing, attempt }: { job: any; listing: any; attempt: any; }) => boolean' is not assignable to parameter of type '(value: unknown, index: number, array: unknown[]) => unknown'.
+      Types of parameters '__0' and 'value' are incompatible.
+        Type 'unknown' is not assignable to type '{ job: any; listing: any; attempt: any; }'.
+components/products/ProductListingJobsPanel.tsx(259,28): error TS18046: 'a' is of type 'unknown'.
+components/products/ProductListingJobsPanel.tsx(259,53): error TS18046: 'a' is of type 'unknown'.
+components/products/ProductListingJobsPanel.tsx(259,76): error TS18046: 'a' is of type 'unknown'.
+components/products/ProductListingJobsPanel.tsx(260,28): error TS18046: 'b' is of type 'unknown'.
+components/products/ProductListingJobsPanel.tsx(260,53): error TS18046: 'b' is of type 'unknown'.
+components/products/ProductListingJobsPanel.tsx(260,76): error TS18046: 'b' is of type 'unknown'.
+components/products/ProductListingJobsPanel.tsx(348,34): error TS2345: Argument of type '({ job, listing, attempt, attemptIndex }: { job: any; listing: any; attempt: any; attemptIndex: any; }) => Element' is not assignable to parameter of type '(value: unknown, index: number, array: unknown[]) => Element'.
+  Types of parameters '__0' and 'value' are incompatible.
+    Type 'unknown' is not assignable to type '{ job: any; listing: any; attempt: any; attemptIndex: any; }'.
+lib/context/ProductFormContext.tsx(189,26): error TS2379: Argument of type '{ product: ProductWithImages | undefined; initialCatalogId: string | undefined; setValue: UseFormSetValue<{ baseProductId?: string | null | undefined; defaultPriceGroupId?: string | ... 1 more ... | undefined; ... 19 more ...; sku?: string | undefined; }>; getValues: UseFormGetValues<...>; }' is not assignable to parameter of type 'UseProductMetadataProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'product' are incompatible.
+    Type 'ProductWithImages | undefined' is not assignable to type 'ProductWithImages'.
+      Type 'undefined' is not assignable to type 'ProductWithImages'.
+        Type 'undefined' is not assignable to type 'ProductRecord'.

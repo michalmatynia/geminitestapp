@@ -40,17 +40,17 @@ export function useProductData({
 
   // Sync catalogFilter when initialCatalogFilter changes (from preferences)
   useEffect(() => {
-    if (preferencesLoaded) {
+    if (preferencesLoaded && catalogFilter !== initialCatalogFilter) {
       setCatalogFilter(initialCatalogFilter);
     }
-  }, [initialCatalogFilter, preferencesLoaded]);
+  }, [initialCatalogFilter, preferencesLoaded, catalogFilter]);
 
   // Sync pageSize when initialPageSize changes (from preferences)
   useEffect(() => {
-    if (preferencesLoaded) {
+    if (preferencesLoaded && pageSize !== initialPageSize) {
       setPageSize(initialPageSize);
     }
-  }, [initialPageSize, preferencesLoaded]);
+  }, [initialPageSize, preferencesLoaded, pageSize]);
 
   // Debounce search
   useEffect(() => {

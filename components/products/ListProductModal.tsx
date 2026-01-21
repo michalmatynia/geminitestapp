@@ -103,7 +103,7 @@ export default function ListProductModal({
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
-        const res = await fetch("/api/products/import-templates");
+        const res = await fetch("/api/products/export-templates");
         if (!res.ok) return;
         const data = (await res.json()) as Template[];
         setTemplates(data);
@@ -118,7 +118,7 @@ export default function ListProductModal({
   useEffect(() => {
     const loadPreferredTemplate = async () => {
       try {
-        const res = await fetch("/api/products/imports/base/active-template");
+        const res = await fetch("/api/products/exports/base/active-template");
         const payload = (await res.json()) as { templateId?: string | null };
         if (!res.ok) return;
         setPreferredTemplateId(payload.templateId ?? null);

@@ -26,7 +26,8 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
     logger.log("Mass delete initiated.");
     const selectedProductIds = table
       .getSelectedRowModel()
-      .rows.map((row) => (row.original as ProductWithImages).id);
+      .rows.map((row) => (row.original as ProductWithImages)?.id)
+      .filter(Boolean);
 
     if (selectedProductIds.length === 0) {
       setActionError("Please select products to delete.");

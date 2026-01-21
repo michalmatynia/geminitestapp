@@ -7,7 +7,9 @@
 
 In Product List - Operations - I need an Option to Mass Export Products to Base.com
 
-When I export my product, still Stock is not exporting
+When I export my product, still Stock is not exporting. My English Name goes into 
+Polish Name is not exported at all. My English Description is inserted into Polish Description in Base.com. My Polish Description is not exported at all. I am using Export Template and its parameter mappings for Export. 
+
 
 In Product Edit / Create Tags Field should be searchable field
 

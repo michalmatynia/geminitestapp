@@ -54,6 +54,13 @@ type ProductListingJobsPanelProps = {
   showBackToProducts?: boolean;
 };
 
+type ListingRow = {
+  job: ProductJob;
+  listing: ListingJob;
+  attempt: ListingAttempt | null;
+  attemptIndex: number | null;
+};
+
 const getStatusIcon = (status: string) => {
   switch (status) {
     case "pending":
@@ -218,8 +225,8 @@ export default function ProductListingJobsPanel({
     return sorted;
   };
 
-  const listingRows = jobs.flatMap((job) =>
-    job.listings.flatMap((listing) => {
+  const listingRows: ListingRow[] = jobs.flatMap((job) =>
+    job.listings.flatMap((listing): ListingRow[] => {
       const history = listing.exportHistory ?? [];
       if (history.length === 0) {
         return [{ job, listing, attempt: null, attemptIndex: null }];

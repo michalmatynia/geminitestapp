@@ -140,10 +140,6 @@ function AdminPageInner() {
     setExportSettingsProduct(product);
   }, [setExportSettingsProduct]);
 
-  const handleSetActionError = useCallback((error: string | null) => {
-    setActionError(error);
-  }, [setActionError]);
-
   const handleSetPage = useCallback((p: number) => {
     setPage(p);
   }, [setPage]);
@@ -188,32 +184,52 @@ function AdminPageInner() {
     setShowListProductModal(true);
   }, [setListProductPreset, setShowListProductModal]);
 
-  // State for integration selection modal (opened by + button)
-  const [showIntegrationModal, setShowIntegrationModal] = useState(false);
-  const [selectedHeaderIntegration, setSelectedHeaderIntegration] = useState<{integrationId: string; connectionId: string} | null>(null);
+  // Mass listing state
+  const [massListIntegration, setMassListIntegration] = useState<{ integrationId: string; connectionId: string } | null>(null);
+  const [massListProductIds, setMassListProductIds] = useState<string[]>([]);
+  const [isMassListing, setIsMassListing] = useState(false);
 
-  const handleOpenIntegrationModal = useCallback(() => {
-    setShowIntegrationModal(true);
-  }, []);
+  // State for integration selection modal (opened by Operations -> Add to Marketplace)
+  const [showIntegrationModal, setShowIntegrationModal] = useState(false);
 
   const handleCloseIntegrationModal = useCallback(() => {
     setShowIntegrationModal(false);
+    setIsMassListing(false);
   }, []);
 
   const handleSelectIntegrationFromModal = useCallback((integrationId: string, connectionId: string) => {
     setShowIntegrationModal(false);
-    setSelectedHeaderIntegration({ integrationId, connectionId });
+    if (isMassListing) {
+       setMassListIntegration({ integrationId, connectionId });
+       // Use currently selected row IDs
+       const ids = Object.keys(rowSelection).filter(id => rowSelection[id]);
+       setMassListProductIds(ids);
+    }
+    // If we ever needed single selection again, we would handle it here, but mass listing covers selected items
+  }, [isMassListing, rowSelection]);
+
+  const handleCloseMassList = useCallback(() => {
+    setMassListIntegration(null);
+    setMassListProductIds([]);
+    setIsMassListing(false);
   }, []);
 
-  const handleCloseHeaderIntegrationModal = useCallback(() => {
-    setSelectedHeaderIntegration(null);
-  }, []);
-
-  const handleHeaderIntegrationSuccess = useCallback(() => {
-    setSelectedHeaderIntegration(null);
+  const handleMassListSuccess = useCallback(() => {
+    setMassListIntegration(null);
+    setMassListProductIds([]);
+    setIsMassListing(false);
     setRefreshTrigger((prev) => prev + 1);
-    toast("Product listed successfully.", { variant: "success" });
-  }, [toast]);
+    // Unselect rows on success? Maybe keep them selected so user can do other things?
+    // Usually mass actions clear selection or user clears manually. Let's keep selection for now or clear it?
+    // User can manually clear.
+    toast("Products listed successfully.", { variant: "success" });
+    void refreshListingBadges();
+  }, [toast, refreshListingBadges]);
+
+  const handleAddToMarketplace = useCallback(() => {
+    setIsMassListing(true);
+    setShowIntegrationModal(true);
+  }, []);
 
   const [loadingGlobalSelection, setLoadingGlobalSelection] = useState(false);
 
@@ -302,7 +318,7 @@ function AdminPageInner() {
       {isDebugOpen && <DebugPanel />}
       <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
         <ProductListHeader
-          onOpenIntegrationModal={handleOpenIntegrationModal}
+          onCreateProduct={handleOpenCreateModal}
           page={page}
           totalPages={totalPages}
           setPage={handleSetPage}
@@ -321,10 +337,11 @@ function AdminPageInner() {
           data={data}
           rowSelection={rowSelection}
           setRowSelection={setRowSelection}
-          onSelectAllGlobal={handleSelectAllGlobal}
+          onSelectAllGlobal={() => void handleSelectAllGlobal()}
           loadingGlobal={loadingGlobalSelection}
           total={total}
-          onDeleteSelected={handleMassDelete}
+          onDeleteSelected={() => void handleMassDelete()}
+          onAddToMarketplace={handleAddToMarketplace}
         />
         {loadError && (
           <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
@@ -395,9 +412,10 @@ function AdminPageInner() {
         exportSettingsProduct={exportSettingsProduct}
         onCloseExportSettings={() => setExportSettingsProduct(null)}
         onListingsUpdated={refreshListingBadges}
-        selectedHeaderIntegration={selectedHeaderIntegration}
-        onCloseHeaderIntegration={handleCloseHeaderIntegrationModal}
-        onHeaderIntegrationSuccess={handleHeaderIntegrationSuccess}
+        massListIntegration={massListIntegration}
+        massListProductIds={massListProductIds}
+        onCloseMassList={handleCloseMassList}
+        onMassListSuccess={handleMassListSuccess}
       />
 
       {showIntegrationModal && (

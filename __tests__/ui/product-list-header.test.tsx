@@ -7,7 +7,7 @@ import { ProductListHeader } from "@/components/products/ProductListHeader";
 
 describe("ProductListHeader Component", () => {
   const mockProps = {
-    onOpenIntegrationModal: jest.fn(),
+    onCreateProduct: jest.fn(),
     page: 1,
     totalPages: 5,
     setPage: jest.fn(),
@@ -48,13 +48,13 @@ describe("ProductListHeader Component", () => {
     render(<ProductListHeader {...mockProps} />);
 
     expect(screen.getByText("Products")).toBeInTheDocument();
-    expect(screen.getByLabelText("Add product to marketplace")).toBeInTheDocument();
+    expect(screen.getByLabelText("Create product")).toBeInTheDocument();
   });
 
-  it("calls onOpenIntegrationModal when + button is clicked", () => {
+  it("calls onCreateProduct when create button is clicked", () => {
     render(<ProductListHeader {...mockProps} />);
-    fireEvent.click(screen.getByLabelText("Add product to marketplace"));
-    expect(mockProps.onOpenIntegrationModal).toHaveBeenCalled();
+    fireEvent.click(screen.getByLabelText("Create product"));
+    expect(mockProps.onCreateProduct).toHaveBeenCalled();
   });
 
   it("renders pagination info correctly", () => {

@@ -1,0 +1,6 @@
+app/api/products/[id]/export-to-base/route.ts(221,38): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+lib/context/ProductFormContext.tsx(189,26): error TS2379: Argument of type '{ product: ProductWithImages | undefined; initialCatalogId: string | undefined; setValue: UseFormSetValue<{ baseProductId?: string | null | undefined; defaultPriceGroupId?: string | ... 1 more ... | undefined; ... 19 more ...; sku?: string | undefined; }>; getValues: UseFormGetValues<...>; }' is not assignable to parameter of type 'UseProductMetadataProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'initialCatalogId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.

@@ -70,7 +70,7 @@ export function useUserPreferences() {
         throw new Error("Failed to update preference");
       }
 
-      const updated = await res.json();
+      await res.json();
 
       // Update local state
       setPreferences(prev => ({

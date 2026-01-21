@@ -62,7 +62,7 @@ export function useProductOperations(setRefreshTrigger: React.Dispatch<React.Set
     try {
       const res = await fetch(`/api/products?sku=${encodeURIComponent(sku)}`);
       if (!res.ok) {
-        const payload = await res.json();
+        const payload = (await res.json()) as { error?: string };
         setActionError(payload?.error || "Failed to validate SKU");
         return;
       }

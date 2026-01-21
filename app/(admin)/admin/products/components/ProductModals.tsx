@@ -7,7 +7,7 @@ import FileManager from "@/components/files/FileManager";
 import ProductForm from "@/components/products/ProductForm";
 import ProductListingsModal from "@/components/products/ProductListingsModal";
 import ListProductModal from "@/components/products/ListProductModal";
-import SelectProductForListingModal from "@/components/products/SelectProductForListingModal";
+import MassListProductModal from "@/components/products/MassListProductModal";
 import {
   ProductFormProvider,
   useProductFormContext,
@@ -35,10 +35,11 @@ interface ProductModalsProps {
   exportSettingsProduct?: ProductWithImages | null;
   onCloseExportSettings?: () => void;
   onListingsUpdated?: () => void;
-  // Header integration selection (from + button dropdown)
-  selectedHeaderIntegration?: { integrationId: string; connectionId: string } | null;
-  onCloseHeaderIntegration?: () => void;
-  onHeaderIntegrationSuccess?: () => void;
+  // Mass Listing
+  massListIntegration?: { integrationId: string; connectionId: string } | null;
+  massListProductIds?: string[];
+  onCloseMassList?: () => void;
+  onMassListSuccess?: () => void;
 }
 
 function CreateProductModalContent({ onClose }: { onClose: () => void }) {
@@ -49,7 +50,7 @@ function CreateProductModalContent({ onClose }: { onClose: () => void }) {
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
         <Button
-          onClick={handleSubmit}
+          onClick={() => void handleSubmit()}
           disabled={uploading}
           className="min-w-[100px]"
         >
@@ -86,7 +87,7 @@ function EditProductModalContent({ onClose }: { onClose: () => void }) {
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
         <Button
-          onClick={handleSubmit}
+          onClick={() => void handleSubmit()}
           disabled={uploading}
           className="min-w-[100px]"
         >
@@ -135,9 +136,10 @@ export function ProductModals({
   exportSettingsProduct,
   onCloseExportSettings,
   onListingsUpdated,
-  selectedHeaderIntegration,
-  onCloseHeaderIntegration,
-  onHeaderIntegrationSuccess,
+  massListIntegration,
+  massListProductIds,
+  onCloseMassList,
+  onMassListSuccess,
 }: ProductModalsProps) {
   return (
     <>
@@ -256,10 +258,10 @@ export function ProductModals({
         </div>
       )}
 
-      {selectedHeaderIntegration && onCloseHeaderIntegration && onHeaderIntegrationSuccess && (
+      {massListIntegration && massListProductIds && massListProductIds.length > 0 && onCloseMassList && onMassListSuccess && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={onCloseHeaderIntegration}
+          onClick={onCloseMassList}
           onMouseDown={(e) => {
             if (e.target !== e.currentTarget) e.stopPropagation();
           }}
@@ -268,11 +270,12 @@ export function ProductModals({
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
           >
-            <SelectProductForListingModal
-              integrationId={selectedHeaderIntegration.integrationId}
-              connectionId={selectedHeaderIntegration.connectionId}
-              onClose={onCloseHeaderIntegration}
-              onSuccess={onHeaderIntegrationSuccess}
+            <MassListProductModal
+              integrationId={massListIntegration.integrationId}
+              connectionId={massListIntegration.connectionId}
+              productIds={massListProductIds}
+              onClose={onCloseMassList}
+              onSuccess={onMassListSuccess}
             />
           </div>
         </div>

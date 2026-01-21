@@ -6,7 +6,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import AdminProductsPage from "@/app/(admin)/admin/products/page";
-import { getProducts } from "@/lib/api";
+import { getProducts, countProducts } from "@/lib/api";
+import { ToastProvider } from "@/components/ui/toast";
 
 const pushMock = jest.fn();
 
@@ -15,10 +16,14 @@ jest.mock("next/navigation", () => ({
     push: pushMock,
     refresh: jest.fn(),
   }),
+  useSearchParams: () => ({
+    get: jest.fn(),
+  }),
 }));
 
 jest.mock("@/lib/api", () => ({
-  getProducts: jest.fn(),
+  getProducts: jest.fn(() => Promise.resolve([])),
+  countProducts: jest.fn(() => Promise.resolve(0)),
 }));
 
 const mockProducts = [
@@ -49,18 +54,38 @@ const mockProducts = [
 describe("Admin Products List UI", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    const mockFetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve([]),
+      })
+    ) as jest.Mock;
+    
+    global.fetch = mockFetch;
+    window.fetch = mockFetch;
+
     (getProducts as jest.Mock).mockResolvedValue(mockProducts);
+    (countProducts as jest.Mock).mockResolvedValue(2);
   });
 
   it("renders product rows", async () => {
-    render(<AdminProductsPage />);
+    render(
+      <ToastProvider>
+        <AdminProductsPage />
+      </ToastProvider>
+    );
 
     expect(await screen.findByText("Product Alpha")).toBeInTheDocument();
     expect(screen.getByText("Product Beta")).toBeInTheDocument();
   });
 
   it("shows row actions menu with Edit, Duplicate, and Remove", async () => {
-    render(<AdminProductsPage />);
+    render(
+      <ToastProvider>
+        <AdminProductsPage />
+      </ToastProvider>
+    );
     await screen.findByText("Product Alpha");
 
     const user = userEvent.setup();
@@ -76,14 +101,12 @@ describe("Admin Products List UI", () => {
     const promptMock = jest
       .spyOn(window, "prompt")
       .mockReturnValue("abc123");
-    const fetchMock = jest
-      .spyOn(global, "fetch")
-      .mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve([]),
-      } as Response);
-
-    render(<AdminProductsPage />);
+    
+    render(
+      <ToastProvider>
+        <AdminProductsPage />
+      </ToastProvider>
+    );
 
     const user = userEvent.setup();
     await user.click(screen.getByLabelText("Create product"));
@@ -95,6 +118,5 @@ describe("Admin Products List UI", () => {
     });
 
     promptMock.mockRestore();
-    fetchMock.mockRestore();
   });
 });

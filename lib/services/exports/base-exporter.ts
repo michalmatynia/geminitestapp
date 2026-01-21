@@ -259,7 +259,10 @@ export function buildBaseProductData(
   product: ProductWithImages,
   mappings: ExportTemplateMapping[] = [],
   warehouseId?: string | null,
-  options?: { imageBaseUrl?: string | null }
+  options?: {
+    imageBaseUrl?: string | null;
+    includeStockWithoutWarehouse?: boolean;
+  }
 ): BaseProductRecord {
   // Start with default field mappings in Baselinker API format
   const baseData: BaseProductRecord = {};
@@ -288,8 +291,12 @@ export function buildBaseProductData(
   }
 
   // Stock needs to be in format: { "warehouse_id": quantity }
-  if (product.stock !== null && warehouseId) {
-    baseData.stock = { [warehouseId]: product.stock };
+  if (product.stock !== null) {
+    if (warehouseId) {
+      baseData.stock = { [warehouseId]: product.stock };
+    } else if (options?.includeStockWithoutWarehouse) {
+      baseData.stock = product.stock;
+    }
   }
 
   // Apply template mappings (these override defaults)
@@ -346,7 +353,10 @@ export async function exportProductToBase(
   product: ProductWithImages,
   mappings: ExportTemplateMapping[] = [],
   warehouseId?: string | null,
-  options?: { imageBaseUrl?: string | null }
+  options?: {
+    imageBaseUrl?: string | null;
+    includeStockWithoutWarehouse?: boolean;
+  }
 ): Promise<{ success: boolean; productId?: string; error?: string }> {
   try {
     const productData = buildBaseProductData(product, mappings, warehouseId, options);

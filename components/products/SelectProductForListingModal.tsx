@@ -60,7 +60,6 @@ export default function SelectProductForListingModal({
   const isBaseComIntegration = ["baselinker", "base-com"].includes(
     integration?.slug ?? ""
   );
-  const selectedProduct = products.find((p) => p.id === selectedProductId);
 
   // Load products
   useEffect(() => {
@@ -104,7 +103,7 @@ export default function SelectProductForListingModal({
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
-        const res = await fetch("/api/products/import-templates");
+        const res = await fetch("/api/products/export-templates");
         if (!res.ok) return;
         const data = (await res.json()) as Template[];
         setTemplates(data);
@@ -118,7 +117,7 @@ export default function SelectProductForListingModal({
   useEffect(() => {
     const loadPreferredTemplate = async () => {
       try {
-        const res = await fetch("/api/products/imports/base/active-template");
+        const res = await fetch("/api/products/exports/base/active-template");
         const payload = (await res.json()) as { templateId?: string | null };
         if (!res.ok) return;
         setPreferredTemplateId(payload.templateId ?? null);

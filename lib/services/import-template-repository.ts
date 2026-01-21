@@ -36,6 +36,7 @@ const LAST_TEMPLATE_KEY = "base_import_last_template_id";
 const ACTIVE_TEMPLATE_KEY = "base_import_active_template_id";
 const PARAMETER_CACHE_KEY = "base_import_parameter_cache";
 const EXPORT_WAREHOUSE_KEY = "base_export_warehouse_id";
+const EXPORT_WAREHOUSE_MAP_KEY = "base_export_warehouse_by_inventory";
 const BASEHOST_MAPPING_KEYS = new Set(["images_basehost_all", "image_basehost_all"]);
 
 const stripBasehostMappings = (mappings: TemplateMapping[]) =>
@@ -62,6 +63,35 @@ const parseTemplates = (value: string | null): Template[] => {
   } catch (error) {
     console.error("[ImportTemplateRepository] Failed to parse templates:", error);
     return [];
+  }
+};
+
+const parseExportWarehouseMap = (value: string | null): Record<string, string> => {
+  if (!value) return {};
+  try {
+    const parsed = JSON.parse(value);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {};
+    }
+    const result: Record<string, string> = {};
+    Object.entries(parsed as Record<string, unknown>).forEach(
+      ([key, raw]) => {
+        const trimmedKey = key.trim();
+        if (!trimmedKey) return;
+        const normalized =
+          typeof raw === "string"
+            ? raw.trim()
+            : raw !== null && raw !== undefined
+              ? String(raw).trim()
+              : "";
+        if (normalized) {
+          result[trimmedKey] = normalized;
+        }
+      }
+    );
+    return result;
+  } catch {
+    return {};
   }
 };
 
@@ -194,6 +224,24 @@ const readExportWarehouseValue = async (): Promise<string | null> => {
   return setting?.value ?? null;
 };
 
+const readExportWarehouseMapValue = async (): Promise<string | null> => {
+  const provider = await getImportTemplateProvider();
+  if (provider === "mongodb") {
+    const mongo = await getMongoDb();
+    const doc = await mongo
+      .collection<{ _id: string; key?: string; value?: string }>("settings")
+      .findOne({
+        $or: [{ _id: EXPORT_WAREHOUSE_MAP_KEY }, { key: EXPORT_WAREHOUSE_MAP_KEY }],
+      });
+    return typeof doc?.value === "string" ? doc.value : null;
+  }
+  const setting = await prisma.setting.findUnique({
+    where: { key: EXPORT_WAREHOUSE_MAP_KEY },
+    select: { value: true },
+  });
+  return setting?.value ?? null;
+};
+
 const writeTemplatesValue = async (value: string) => {
   const provider = await getImportTemplateProvider();
   console.log(`[ImportTemplateRepository] Writing templates... Length: ${value.length}`);
@@ -293,6 +341,31 @@ const writeExportWarehouseValue = async (value: string) => {
     where: { key: EXPORT_WAREHOUSE_KEY },
     update: { value },
     create: { key: EXPORT_WAREHOUSE_KEY, value },
+  });
+};
+
+const writeExportWarehouseMapValue = async (value: string) => {
+  const provider = await getImportTemplateProvider();
+  if (provider === "mongodb") {
+    const mongo = await getMongoDb();
+    await mongo.collection("settings").updateOne(
+      { $or: [{ _id: EXPORT_WAREHOUSE_MAP_KEY }, { key: EXPORT_WAREHOUSE_MAP_KEY }] } as any,
+      {
+        $set: {
+          value,
+          key: EXPORT_WAREHOUSE_MAP_KEY,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
+      },
+      { upsert: true }
+    );
+    return;
+  }
+  await prisma.setting.upsert({
+    where: { key: EXPORT_WAREHOUSE_MAP_KEY },
+    update: { value },
+    create: { key: EXPORT_WAREHOUSE_MAP_KEY, value },
   });
 };
 
@@ -409,13 +482,45 @@ export const setImportActiveTemplateId = async (value: string | null) => {
   await writeActiveTemplateValue(value?.trim() ? value.trim() : "");
 };
 
-export const getExportWarehouseId = async (): Promise<string | null> => {
+export const getExportWarehouseId = async (
+  inventoryId?: string | null
+): Promise<string | null> => {
+  const normalizedInventory = inventoryId?.trim() ?? "";
+  if (normalizedInventory) {
+    const rawMap = await readExportWarehouseMapValue();
+    const map = parseExportWarehouseMap(rawMap);
+    const mapped = map[normalizedInventory];
+    if (mapped) return mapped;
+    const fallback = await readExportWarehouseValue();
+    if (fallback) {
+      map[normalizedInventory] = fallback;
+      await writeExportWarehouseMapValue(JSON.stringify(map));
+      return fallback;
+    }
+    return null;
+  }
   const value = await readExportWarehouseValue();
   return value ? value : null;
 };
 
-export const setExportWarehouseId = async (value: string | null) => {
-  await writeExportWarehouseValue(value?.trim() ? value.trim() : "");
+export const setExportWarehouseId = async (
+  value: string | null,
+  inventoryId?: string | null
+) => {
+  const normalizedInventory = inventoryId?.trim() ?? "";
+  const normalizedValue = value?.trim() ?? "";
+  if (normalizedInventory) {
+    const rawMap = await readExportWarehouseMapValue();
+    const map = parseExportWarehouseMap(rawMap);
+    if (normalizedValue) {
+      map[normalizedInventory] = normalizedValue;
+    } else {
+      delete map[normalizedInventory];
+    }
+    await writeExportWarehouseMapValue(JSON.stringify(map));
+    return;
+  }
+  await writeExportWarehouseValue(normalizedValue);
 };
 
 export type ImportParameterCache = {

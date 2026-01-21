@@ -109,6 +109,45 @@ const PRODUCT_FIELDS = [
 ] as const;
 
 const IMAGE_SLOT_KEYS = Array.from({ length: 15 }, (_, index) => `image_slot_${index + 1}`);
+const ALL_IMAGE_KEYS = [
+  ...IMAGE_SLOT_KEYS,
+  "image_all",
+  "image_slots_all",
+  "image_links_all",
+  "images_all",
+];
+
+const EXPORT_PARAMETER_DOCS = [
+  { key: "sku", description: "Unique product SKU/code." },
+  { key: "ean", description: "EAN barcode." },
+  { key: "weight", description: "Weight (kg)." },
+  { key: "name", description: "Product name (default language)." },
+  { key: "name|en", description: "Product name (English)." },
+  { key: "description", description: "Product description (default language)." },
+  { key: "description|en", description: "Product description (English)." },
+  { key: "text_fields.name", description: "Name inside text_fields object." },
+  { key: "text_fields.description", description: "Description inside text_fields object." },
+  { key: "text_fields.name|en", description: "English name inside text_fields." },
+  { key: "text_fields.description|en", description: "English description inside text_fields." },
+  { key: "prices.0", description: "Price for price group 0." },
+  { key: "prices.<price_group_id>", description: "Price for a specific price group." },
+  { key: "stock", description: "Inventory-level stock (no warehouse)." },
+  { key: "stock.<warehouse_id>", description: "Stock for a specific warehouse." },
+  { key: "stock.bl_<warehouse_id>", description: "Baselinker stock key format." },
+  { key: "images", description: "All product image URLs." },
+  { key: "image", description: "Single product image URL." },
+  { key: "image_links_all", description: "All image links." },
+  { key: "image_slots_all", description: "All image slots." },
+  { key: "images_all", description: "All images (slots + links)." },
+  ...IMAGE_SLOT_KEYS.map((key, index) => ({
+    key,
+    description: `Image slot ${index + 1}.`,
+  })),
+];
+
+const EXPORT_PARAMETER_KEYS = Array.from(
+  new Set(EXPORT_PARAMETER_DOCS.map((entry) => entry.key))
+);
 
 export default function ProductImportsPage() {
   const { toast } = useToast();
@@ -142,22 +181,36 @@ export default function ProductImportsPage() {
   );
   const [uniqueOnly, setUniqueOnly] = useState(true);
   const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [loadingTemplates, setLoadingTemplates] = useState(false);
-  const [templateId, setTemplateId] = useState("");
-  const [templatePreferenceLoaded, setTemplatePreferenceLoaded] =
+  const [templateScope, setTemplateScope] = useState<"import" | "export">(
+    "import"
+  );
+  const [importTemplates, setImportTemplates] = useState<Template[]>([]);
+  const [exportTemplates, setExportTemplates] = useState<Template[]>([]);
+  const [loadingImportTemplates, setLoadingImportTemplates] = useState(false);
+  const [loadingExportTemplates, setLoadingExportTemplates] = useState(false);
+  const [importTemplateId, setImportTemplateId] = useState("");
+  const [importTemplatePreferenceLoaded, setImportTemplatePreferenceLoaded] =
     useState(false);
-  const [activeTemplatePreferenceLoaded, setActiveTemplatePreferenceLoaded] =
+  const [importActiveTemplatePreferenceLoaded, setImportActiveTemplatePreferenceLoaded] =
     useState(false);
-  const [activeTemplatePreferenceId, setActiveTemplatePreferenceId] =
+  const [exportActiveTemplatePreferenceLoaded, setExportActiveTemplatePreferenceLoaded] =
+    useState(false);
+  const [importActiveTemplatePreferenceId, setImportActiveTemplatePreferenceId] =
     useState<string | null>(null);
-
-  const [activeTemplateId, setActiveTemplateId] = useState("");
-  const [templateName, setTemplateName] = useState("");
-  const [templateDescription, setTemplateDescription] = useState("");
-  const [templateMappings, setTemplateMappings] = useState<TemplateMapping[]>([
-    { sourceKey: "", targetField: "" },
-  ]);
+  const [exportActiveTemplatePreferenceId, setExportActiveTemplatePreferenceId] =
+    useState<string | null>(null);
+  const [importActiveTemplateId, setImportActiveTemplateId] = useState("");
+  const [exportActiveTemplateId, setExportActiveTemplateId] = useState("");
+  const [importTemplateName, setImportTemplateName] = useState("");
+  const [exportTemplateName, setExportTemplateName] = useState("");
+  const [importTemplateDescription, setImportTemplateDescription] = useState("");
+  const [exportTemplateDescription, setExportTemplateDescription] = useState("");
+  const [importTemplateMappings, setImportTemplateMappings] = useState<
+    TemplateMapping[]
+  >([{ sourceKey: "", targetField: "" }]);
+  const [exportTemplateMappings, setExportTemplateMappings] = useState<
+    TemplateMapping[]
+  >([{ sourceKey: "", targetField: "" }]);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [deletingTemplate, setDeletingTemplate] = useState(false);
   const [savingExportSettings, setSavingExportSettings] = useState(false);
@@ -180,6 +233,55 @@ export default function ProductImportsPage() {
 
   const [checkingIntegration, setCheckingIntegration] = useState(true);
   const [isBaseConnected, setIsBaseConnected] = useState(false);
+
+  const isImportTemplateScope = templateScope === "import";
+  const currentTemplates = isImportTemplateScope ? importTemplates : exportTemplates;
+  const currentActiveTemplateId = isImportTemplateScope
+    ? importActiveTemplateId
+    : exportActiveTemplateId;
+  const currentTemplateName = isImportTemplateScope
+    ? importTemplateName
+    : exportTemplateName;
+  const currentTemplateDescription = isImportTemplateScope
+    ? importTemplateDescription
+    : exportTemplateDescription;
+  const currentTemplateMappings = isImportTemplateScope
+    ? importTemplateMappings
+    : exportTemplateMappings;
+  const currentLoadingTemplates = isImportTemplateScope
+    ? loadingImportTemplates
+    : loadingExportTemplates;
+  const exportParameterValues = EXPORT_PARAMETER_DOCS.reduce<Record<string, string>>(
+    (acc, entry) => {
+      acc[entry.key] = entry.description;
+      return acc;
+    },
+    {}
+  );
+  const currentParameterValues = isImportTemplateScope
+    ? parameterValues
+    : exportParameterValues;
+  const currentParameterKeys = isImportTemplateScope
+    ? Array.from(new Set([...parameterKeys, ...ALL_IMAGE_KEYS]))
+    : EXPORT_PARAMETER_KEYS;
+
+  const applyTemplate = useCallback((template: Template, scope: "import" | "export") => {
+    const nextMappings =
+      template.mappings.length > 0
+        ? template.mappings
+        : [{ sourceKey: "", targetField: "" }];
+    if (scope === "import") {
+      setImportActiveTemplateId(template.id);
+      setImportTemplateName(template.name);
+      setImportTemplateDescription(template.description ?? "");
+      setImportTemplateMappings(nextMappings);
+      return;
+    }
+    setExportActiveTemplateId(template.id);
+    setExportTemplateName(template.name);
+    setExportTemplateDescription(template.description ?? "");
+    setExportTemplateMappings(nextMappings);
+  }, []);
 
   useEffect(() => {
     const checkIntegration = async () => {
@@ -230,34 +332,47 @@ export default function ProductImportsPage() {
   }, []);
 
   useEffect(() => {
-    const loadTemplates = async () => {
-      setLoadingTemplates(true);
+    const loadImportTemplates = async () => {
+      setLoadingImportTemplates(true);
       try {
         const res = await fetch("/api/products/import-templates");
         const payload = (await res.json()) as Template[];
         if (!res.ok) return;
-        setTemplates(payload);
+        setImportTemplates(payload);
       } catch (error) {
-        console.error("Failed to load templates", error);
+        console.error("Failed to load import templates", error);
       } finally {
-        setLoadingTemplates(false);
+        setLoadingImportTemplates(false);
       }
     };
-    void loadTemplates();
+    void loadImportTemplates();
   }, []);
 
-  const handleSelectTemplate = useCallback((id: string) => {
-    const template = templates.find((item) => item.id === id);
-    if (!template) return;
-    setActiveTemplateId(template.id);
-    setTemplateName(template.name);
-    setTemplateDescription(template.description ?? "");
-    setTemplateMappings(
-      template.mappings.length > 0
-        ? template.mappings
-        : [{ sourceKey: "", targetField: "" }]
-    );
-  }, [templates]);
+  useEffect(() => {
+    const loadExportTemplates = async () => {
+      setLoadingExportTemplates(true);
+      try {
+        const res = await fetch("/api/products/export-templates");
+        const payload = (await res.json()) as Template[];
+        if (!res.ok) return;
+        setExportTemplates(payload);
+      } catch (error) {
+        console.error("Failed to load export templates", error);
+      } finally {
+        setLoadingExportTemplates(false);
+      }
+    };
+    void loadExportTemplates();
+  }, []);
+
+  const handleSelectTemplate = useCallback(
+    (id: string) => {
+      const template = currentTemplates.find((item) => item.id === id);
+      if (!template) return;
+      applyTemplate(template, isImportTemplateScope ? "import" : "export");
+    },
+    [applyTemplate, currentTemplates, isImportTemplateScope]
+  );
 
   useEffect(() => {
     const loadTemplatePreference = async () => {
@@ -266,12 +381,12 @@ export default function ProductImportsPage() {
         const payload = (await res.json()) as { templateId?: string | null };
         if (!res.ok) return;
         if (payload.templateId) {
-          setTemplateId(payload.templateId);
+          setImportTemplateId(payload.templateId);
         }
       } catch (error) {
         console.error("Failed to load import template preference", error);
       } finally {
-        setTemplatePreferenceLoaded(true);
+        setImportTemplatePreferenceLoaded(true);
       }
     };
     void loadTemplatePreference();
@@ -283,25 +398,49 @@ export default function ProductImportsPage() {
         const res = await fetch("/api/products/imports/base/active-template");
         const payload = (await res.json()) as { templateId?: string | null };
         if (!res.ok) return;
-        setActiveTemplatePreferenceId(payload.templateId ?? null);
+        setImportActiveTemplatePreferenceId(payload.templateId ?? null);
       } catch (error) {
-        console.error("Failed to load active template preference", error);
+        console.error("Failed to load active import template preference", error);
       } finally {
-        setActiveTemplatePreferenceLoaded(true);
+        setImportActiveTemplatePreferenceLoaded(true);
       }
     };
     void loadActiveTemplatePreference();
   }, []);
 
   useEffect(() => {
+    const loadExportActiveTemplate = async () => {
+      try {
+        const res = await fetch("/api/products/exports/base/active-template");
+        const payload = (await res.json()) as { templateId?: string | null };
+        if (!res.ok) return;
+        setExportActiveTemplatePreferenceId(payload.templateId ?? null);
+      } catch (error) {
+        console.error("Failed to load export template preference", error);
+      } finally {
+        setExportActiveTemplatePreferenceLoaded(true);
+      }
+    };
+    void loadExportActiveTemplate();
+  }, []);
+
+  useEffect(() => {
+    if (!inventoryId) {
+      setExportWarehouseId("");
+      setExportWarehouseLoaded(true);
+      return;
+    }
+    setExportWarehouseLoaded(false);
     const loadExportWarehouse = async () => {
       try {
-        const res = await fetch("/api/products/imports/base/export-warehouse");
+        const res = await fetch(
+          `/api/products/imports/base/export-warehouse?inventoryId=${encodeURIComponent(
+            inventoryId
+          )}`
+        );
         const payload = (await res.json()) as { warehouseId?: string | null };
         if (!res.ok) return;
-        if (payload.warehouseId) {
-          setExportWarehouseId(payload.warehouseId);
-        }
+        setExportWarehouseId(payload.warehouseId ?? "");
       } catch (error) {
         console.error("Failed to load export warehouse preference", error);
       } finally {
@@ -309,17 +448,17 @@ export default function ProductImportsPage() {
       }
     };
     void loadExportWarehouse();
-  }, []);
+  }, [inventoryId]);
 
   useEffect(() => {
-    if (!templatePreferenceLoaded) return;
+    if (!importTemplatePreferenceLoaded) return;
     const saveTemplatePreference = async () => {
       try {
         await fetch("/api/products/imports/base/last-template", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            templateId: templateId || null,
+            templateId: importTemplateId || null,
           }),
         });
       } catch (error) {
@@ -327,28 +466,47 @@ export default function ProductImportsPage() {
       }
     };
     void saveTemplatePreference();
-  }, [templateId, templatePreferenceLoaded]);
+  }, [importTemplateId, importTemplatePreferenceLoaded]);
 
   useEffect(() => {
-    if (!activeTemplatePreferenceLoaded) return;
+    if (!importActiveTemplatePreferenceLoaded) return;
     const saveActiveTemplatePreference = async () => {
       try {
         await fetch("/api/products/imports/base/active-template", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            templateId: activeTemplateId || null,
+            templateId: importActiveTemplateId || null,
           }),
         });
       } catch (error) {
-        console.error("Failed to save active template preference", error);
+        console.error("Failed to save active import template preference", error);
       }
     };
     void saveActiveTemplatePreference();
-  }, [activeTemplateId, activeTemplatePreferenceLoaded]);
+  }, [importActiveTemplateId, importActiveTemplatePreferenceLoaded]);
+
+  useEffect(() => {
+    if (!exportActiveTemplatePreferenceLoaded) return;
+    const saveExportTemplatePreference = async () => {
+      try {
+        await fetch("/api/products/exports/base/active-template", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            templateId: exportActiveTemplateId || null,
+          }),
+        });
+      } catch (error) {
+        console.error("Failed to save export template preference", error);
+      }
+    };
+    void saveExportTemplatePreference();
+  }, [exportActiveTemplateId, exportActiveTemplatePreferenceLoaded]);
 
   useEffect(() => {
     if (!exportWarehouseLoaded) return;
+    if (!inventoryId) return;
     const saveExportWarehouse = async () => {
       try {
         await fetch("/api/products/imports/base/export-warehouse", {
@@ -356,6 +514,7 @@ export default function ProductImportsPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             warehouseId: exportWarehouseId || null,
+            inventoryId,
           }),
         });
       } catch (error) {
@@ -363,52 +522,82 @@ export default function ProductImportsPage() {
       }
     };
     void saveExportWarehouse();
-  }, [exportWarehouseId, exportWarehouseLoaded]);
+  }, [exportWarehouseId, exportWarehouseLoaded, inventoryId]);
 
   useEffect(() => {
-    if (!templatePreferenceLoaded) return;
-    if (loadingTemplates) return;
-    if (!templateId) return;
-    const exists = templates.some((template) => template.id === templateId);
+    if (!importTemplatePreferenceLoaded) return;
+    if (loadingImportTemplates) return;
+    if (!importTemplateId) return;
+    const exists = importTemplates.some(
+      (template) => template.id === importTemplateId
+    );
     if (!exists) {
-      setTemplateId("");
+      setImportTemplateId("");
     }
-  }, [templateId, templates, loadingTemplates, templatePreferenceLoaded]);
-
-  useEffect(() => {
-    if (!templatePreferenceLoaded) return;
-    if (loadingTemplates) return;
-    if (!templateId) return;
-    if (activeTemplateId) return;
-    const preferred = templates.find((template) => template.id === templateId);
-    if (!preferred) return;
-    handleSelectTemplate(preferred.id);
   }, [
-    templatePreferenceLoaded,
-    loadingTemplates,
-    templateId,
-    activeTemplateId,
-    templates,
-    handleSelectTemplate,
+    importTemplateId,
+    importTemplates,
+    loadingImportTemplates,
+    importTemplatePreferenceLoaded,
   ]);
 
   useEffect(() => {
-    if (!activeTemplatePreferenceLoaded) return;
-    if (loadingTemplates) return;
-    if (activeTemplateId) return;
-    if (!activeTemplatePreferenceId) return;
-    const preferred = templates.find(
-      (template) => template.id === activeTemplatePreferenceId
+    if (!importTemplatePreferenceLoaded) return;
+    if (loadingImportTemplates) return;
+    if (!importTemplateId) return;
+    if (importActiveTemplateId) return;
+    if (importActiveTemplatePreferenceId) return;
+    const preferred = importTemplates.find(
+      (template) => template.id === importTemplateId
     );
     if (!preferred) return;
-    handleSelectTemplate(preferred.id);
+    applyTemplate(preferred, "import");
   }, [
-    activeTemplatePreferenceLoaded,
-    activeTemplatePreferenceId,
-    loadingTemplates,
-    activeTemplateId,
-    templates,
-    handleSelectTemplate,
+    importTemplatePreferenceLoaded,
+    loadingImportTemplates,
+    importTemplateId,
+    importActiveTemplateId,
+    importActiveTemplatePreferenceId,
+    importTemplates,
+    applyTemplate,
+  ]);
+
+  useEffect(() => {
+    if (!importActiveTemplatePreferenceLoaded) return;
+    if (loadingImportTemplates) return;
+    if (importActiveTemplateId) return;
+    if (!importActiveTemplatePreferenceId) return;
+    const preferred = importTemplates.find(
+      (template) => template.id === importActiveTemplatePreferenceId
+    );
+    if (!preferred) return;
+    applyTemplate(preferred, "import");
+  }, [
+    importActiveTemplatePreferenceLoaded,
+    importActiveTemplatePreferenceId,
+    loadingImportTemplates,
+    importActiveTemplateId,
+    importTemplates,
+    applyTemplate,
+  ]);
+
+  useEffect(() => {
+    if (!exportActiveTemplatePreferenceLoaded) return;
+    if (loadingExportTemplates) return;
+    if (exportActiveTemplateId) return;
+    if (!exportActiveTemplatePreferenceId) return;
+    const preferred = exportTemplates.find(
+      (template) => template.id === exportActiveTemplatePreferenceId
+    );
+    if (!preferred) return;
+    applyTemplate(preferred, "export");
+  }, [
+    exportActiveTemplatePreferenceLoaded,
+    exportActiveTemplatePreferenceId,
+    loadingExportTemplates,
+    exportActiveTemplateId,
+    exportTemplates,
+    applyTemplate,
   ]);
 
   useEffect(() => {
@@ -516,46 +705,60 @@ export default function ProductImportsPage() {
   }, [inventoryId, parameterProductId]);
 
   const handleNewTemplate = () => {
-    setActiveTemplateId("");
-    setTemplateName("");
-    setTemplateDescription("");
-    setTemplateMappings([{ sourceKey: "", targetField: "" }]);
+    if (isImportTemplateScope) {
+      setImportActiveTemplateId("");
+      setImportTemplateName("");
+      setImportTemplateDescription("");
+      setImportTemplateMappings([{ sourceKey: "", targetField: "" }]);
+      return;
+    }
+    setExportActiveTemplateId("");
+    setExportTemplateName("");
+    setExportTemplateDescription("");
+    setExportTemplateMappings([{ sourceKey: "", targetField: "" }]);
   };
 
   const handleSaveTemplate = async () => {
-    if (!templateName.trim()) {
+    if (!currentTemplateName.trim()) {
       toast("Template name is required.", { variant: "error" });
       return;
     }
 
-    const incompleteMappings = templateMappings.some(
-      (m) => (m.sourceKey.trim() && !m.targetField.trim()) || (!m.sourceKey.trim() && m.targetField.trim())
+    const incompleteMappings = currentTemplateMappings.some(
+      (m) =>
+        (m.sourceKey.trim() && !m.targetField.trim()) ||
+        (!m.sourceKey.trim() && m.targetField.trim())
     );
 
     if (incompleteMappings) {
-      toast("Please complete all mapping rows or remove empty ones.", { variant: "error" });
+      toast("Please complete all mapping rows or remove empty ones.", {
+        variant: "error",
+      });
       return;
     }
 
-    const cleanedMappings = templateMappings
+    const cleanedMappings = currentTemplateMappings
       .map((mapping) => ({
         sourceKey: mapping.sourceKey.trim(),
         targetField: mapping.targetField.trim(),
       }))
       .filter((mapping) => mapping.sourceKey && mapping.targetField);
-    
+
+    const templateEndpoint = isImportTemplateScope
+      ? "/api/products/import-templates"
+      : "/api/products/export-templates";
+    const activeTemplateId = currentActiveTemplateId;
+
     setSavingTemplate(true);
     try {
       const res = await fetch(
-        activeTemplateId
-          ? `/api/products/import-templates/${activeTemplateId}`
-          : "/api/products/import-templates",
+        activeTemplateId ? `${templateEndpoint}/${activeTemplateId}` : templateEndpoint,
         {
           method: activeTemplateId ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            name: templateName.trim(),
-            description: templateDescription.trim() || undefined,
+            name: currentTemplateName.trim(),
+            description: currentTemplateDescription.trim() || undefined,
             mappings: cleanedMappings,
           }),
         }
@@ -567,23 +770,27 @@ export default function ProductImportsPage() {
         });
         return;
       }
-      setTemplates((prev) => {
-        const next = prev.filter((item) => item.id !== payload.id);
-        return [...next, payload];
-      });
-      setActiveTemplateId(payload.id);
-      setTemplateMappings(
-        payload.mappings.length > 0
-          ? payload.mappings
-          : [{ sourceKey: "", targetField: "" }]
-      );
-      setTemplateName(payload.name);
-      setTemplateDescription(payload.description ?? "");
+      if (isImportTemplateScope) {
+        setImportTemplates((prev) => {
+          const next = prev.filter((item) => item.id !== payload.id);
+          return [...next, payload];
+        });
+      } else {
+        setExportTemplates((prev) => {
+          const next = prev.filter((item) => item.id !== payload.id);
+          return [...next, payload];
+        });
+      }
+      applyTemplate(payload, isImportTemplateScope ? "import" : "export");
       try {
-        const refreshRes = await fetch("/api/products/import-templates");
+        const refreshRes = await fetch(templateEndpoint);
         if (refreshRes.ok) {
           const refreshed = (await refreshRes.json()) as Template[];
-          setTemplates(refreshed);
+          if (isImportTemplateScope) {
+            setImportTemplates(refreshed);
+          } else {
+            setExportTemplates(refreshed);
+          }
         }
       } catch (error) {
         console.error("Failed to refresh templates", error);
@@ -716,11 +923,14 @@ export default function ProductImportsPage() {
   };
 
   const handleDeleteTemplate = async () => {
-    if (!activeTemplateId) return;
+    if (!currentActiveTemplateId) return;
     setDeletingTemplate(true);
     try {
+      const templateEndpoint = isImportTemplateScope
+        ? "/api/products/import-templates"
+        : "/api/products/export-templates";
       const res = await fetch(
-        `/api/products/import-templates/${activeTemplateId}`,
+        `${templateEndpoint}/${currentActiveTemplateId}`,
         { method: "DELETE" }
       );
       const payload = (await res.json()) as { error?: string };
@@ -730,11 +940,17 @@ export default function ProductImportsPage() {
         });
         return;
       }
-      setTemplates((prev) =>
-        prev.filter((item) => item.id !== activeTemplateId)
-      );
-      if (templateId === activeTemplateId) {
-        setTemplateId("");
+      if (isImportTemplateScope) {
+        setImportTemplates((prev) =>
+          prev.filter((item) => item.id !== currentActiveTemplateId)
+        );
+        if (importTemplateId === currentActiveTemplateId) {
+          setImportTemplateId("");
+        }
+      } else {
+        setExportTemplates((prev) =>
+          prev.filter((item) => item.id !== currentActiveTemplateId)
+        );
       }
       handleNewTemplate();
       toast("Template deleted.", { variant: "success" });
@@ -745,11 +961,19 @@ export default function ProductImportsPage() {
     }
   };
 
-  const updateMapping = (
-    index: number,
-    patch: Partial<TemplateMapping>
-  ) => {
-    setTemplateMappings((prev) =>
+  const updateTemplateMappings = useCallback(
+    (updater: (prev: TemplateMapping[]) => TemplateMapping[]) => {
+      if (isImportTemplateScope) {
+        setImportTemplateMappings(updater);
+      } else {
+        setExportTemplateMappings(updater);
+      }
+    },
+    [isImportTemplateScope]
+  );
+
+  const updateMapping = (index: number, patch: Partial<TemplateMapping>) => {
+    updateTemplateMappings((prev) =>
       prev.map((mapping, i) =>
         i === index ? { ...mapping, ...patch } : mapping
       )
@@ -757,14 +981,14 @@ export default function ProductImportsPage() {
   };
 
   const addMappingRow = () => {
-    setTemplateMappings((prev) => [
+    updateTemplateMappings((prev) => [
       ...prev,
       { sourceKey: "", targetField: "" },
     ]);
   };
 
   const removeMappingRow = (index: number) => {
-    setTemplateMappings((prev) =>
+    updateTemplateMappings((prev) =>
       prev.length === 1
         ? [{ sourceKey: "", targetField: "" }]
         : prev.filter((_, i) => i !== index)
@@ -772,7 +996,7 @@ export default function ProductImportsPage() {
   };
 
   const moveMappingRow = (fromIndex: number, toIndex: number) => {
-    setTemplateMappings((prev) => {
+    updateTemplateMappings((prev) => {
       if (toIndex < 0 || toIndex >= prev.length) return prev;
       if (fromIndex < 0 || fromIndex >= prev.length) return prev;
       if (fromIndex === toIndex) return prev;
@@ -841,16 +1065,8 @@ export default function ProductImportsPage() {
     setDragOverMappingIndex(null);
   };
 
-  const ALL_IMAGE_KEYS = [
-    ...IMAGE_SLOT_KEYS,
-    "image_all",
-    "image_slots_all",
-    "image_links_all",
-    "images_all",
-  ];
-
   const filterKeys = (query: string) => {
-    const combined = Array.from(new Set([...parameterKeys, ...ALL_IMAGE_KEYS]));
+    const combined = currentParameterKeys;
     if (!query) return combined;
     const lowered = query.toLowerCase();
     return combined.filter((key) => key.toLowerCase().includes(lowered));
@@ -940,20 +1156,21 @@ export default function ProductImportsPage() {
 
   useEffect(() => {
     if (!isBaseConnected || !inventoryId) return;
+    if (!exportWarehouseLoaded) return;
     if (lastWarehouseInventoryIdRef.current === inventoryId) return;
     lastWarehouseInventoryIdRef.current = inventoryId;
     void handleLoadWarehouses();
-  }, [inventoryId, isBaseConnected]);
+  }, [inventoryId, isBaseConnected, exportWarehouseLoaded]);
 
   const handleSaveExportSettings = async () => {
     setSavingExportSettings(true);
     try {
       const responses = await Promise.all([
-        fetch("/api/products/imports/base/active-template", {
+        fetch("/api/products/exports/base/active-template", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            templateId: activeTemplateId || null,
+            templateId: exportActiveTemplateId || null,
           }),
         }),
         fetch("/api/products/imports/base/export-warehouse", {
@@ -961,15 +1178,7 @@ export default function ProductImportsPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             warehouseId: exportWarehouseId || null,
-          }),
-        }),
-        fetch("/api/products/imports/base/sample-product", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
             inventoryId,
-            productId: parameterProductId.trim() || undefined,
-            saveOnly: true,
           }),
         }),
       ]);
@@ -1011,7 +1220,7 @@ export default function ProductImportsPage() {
           action: "import",
           inventoryId,
           catalogId,
-          templateId: templateId || undefined,
+          templateId: importTemplateId || undefined,
           limit: parsedLimit,
           imageMode,
           uniqueOnly,
@@ -1272,12 +1481,12 @@ export default function ProductImportsPage() {
                   <label className="text-xs text-gray-400">Import template</label>
                   <select
                     className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
-                    value={templateId}
-                    onChange={(event) => setTemplateId(event.target.value)}
-                    disabled={loadingTemplates || templates.length === 0}
+                    value={importTemplateId}
+                    onChange={(event) => setImportTemplateId(event.target.value)}
+                    disabled={loadingImportTemplates || importTemplates.length === 0}
                   >
                     <option value="">No template</option>
-                    {templates.map((template) => (
+                    {importTemplates.map((template) => (
                       <option key={template.id} value={template.id}>
                         {template.name}
                       </option>
@@ -1582,13 +1791,22 @@ export default function ProductImportsPage() {
                   </label>
                   <select
                     className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
-                    value={activeTemplateId}
+                    value={exportActiveTemplateId}
                     onChange={(event) => {
-                      setActiveTemplateId(event.target.value);
+                      const nextId = event.target.value;
+                      const selected = exportTemplates.find(
+                        (template) => template.id === nextId
+                      );
+                      if (selected) {
+                        applyTemplate(selected, "export");
+                      } else {
+                        setExportActiveTemplateId(nextId);
+                      }
                     }}
+                    disabled={loadingExportTemplates || exportTemplates.length === 0}
                   >
                     <option value="">No template (use defaults)</option>
-                    {templates.map((tpl) => (
+                    {exportTemplates.map((tpl) => (
                       <option key={tpl.id} value={tpl.id}>
                         {tpl.name}
                       </option>
@@ -1635,7 +1853,7 @@ export default function ProductImportsPage() {
                 <ul className="mt-2 space-y-1 text-xs text-blue-300/70">
                   <li>• Exports use templates to map internal product fields to Base.com API parameters</li>
                   <li>• Without a template, default field mappings are used (SKU, Name, Price, Stock, etc.)</li>
-                  <li>• Templates created in the Templates tab work for both import and export</li>
+                  <li>• Import and export templates are managed separately in the Templates tab</li>
                   <li>• Export to Base.com from Product List → Integrations → List Products → Select Base.com</li>
                   <li>• Track export jobs in the <Link href="/admin/products/jobs?tab=export" className="text-blue-400 underline">Export Jobs</Link> tab</li>
                 </ul>
@@ -1698,59 +1916,89 @@ export default function ProductImportsPage() {
         <TabsContent value="templates" className="mt-6 space-y-6">
           <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="grid w-fit gap-2">
-                <div className="col-span-2">
-                  <label className="text-xs text-gray-400">
-                    Sample product ID
-                  </label>
-                  <Input
-                    className="mt-2 w-full"
-                    value={parameterProductId}
-                    onChange={(event) =>
-                      setParameterProductId(event.target.value)
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs text-gray-400">Template type</label>
+                  <Tabs
+                    value={templateScope}
+                    onValueChange={(value) =>
+                      setTemplateScope(value === "export" ? "export" : "import")
                     }
-                    placeholder="Base product ID to fetch parameters"
-                  />
-                </div>
-                <div className="flex flex-col items-center">
-                  <Button
-                    type="button"
-                    onClick={handleLoadParameters}
-                    disabled={loadingParameters}
                   >
-                    {loadingParameters
-                      ? "Loading..."
-                      : parameterKeys.length > 0
-                        ? "Unload parameters"
-                        : "Load parameters"}
-                  </Button>
-                  <div className="mt-2 flex items-center gap-1 text-xs text-gray-400">
-                    <span
-                      className={`h-2 w-2 rounded-full ${
-                        parameterKeys.length > 0
-                          ? "bg-emerald-400"
-                          : "bg-gray-600"
-                      }`}
-                    />
-                    <span>
-                      {parameterKeys.length > 0 ? "Loaded" : "Not loaded"}
-                    </span>
-                  </div>
+                    <TabsList className="border border-gray-800 bg-gray-950/60">
+                      <TabsTrigger value="import">Import templates</TabsTrigger>
+                      <TabsTrigger value="export">Export templates</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
                 </div>
-                <div className="flex flex-col items-center">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={handleUseExampleProduct}
-                    disabled={loadingParameters}
-                  >
-                    Use example
-                  </Button>
-                  <div className="mt-2 flex items-center gap-1 text-xs text-gray-400 opacity-0">
-                    <span className="h-2 w-2 rounded-full bg-gray-600" />
-                    <span>Not loaded</span>
+
+                {isImportTemplateScope ? (
+                  <div className="grid w-fit gap-2">
+                    <div className="col-span-2">
+                      <label className="text-xs text-gray-400">
+                        Sample product ID
+                      </label>
+                      <Input
+                        className="mt-2 w-full"
+                        value={parameterProductId}
+                        onChange={(event) =>
+                          setParameterProductId(event.target.value)
+                        }
+                        placeholder="Base product ID to fetch parameters"
+                      />
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <Button
+                        type="button"
+                        onClick={handleLoadParameters}
+                        disabled={loadingParameters}
+                      >
+                        {loadingParameters
+                          ? "Loading..."
+                          : parameterKeys.length > 0
+                            ? "Unload parameters"
+                            : "Load parameters"}
+                      </Button>
+                      <div className="mt-2 flex items-center gap-1 text-xs text-gray-400">
+                        <span
+                          className={`h-2 w-2 rounded-full ${
+                            parameterKeys.length > 0
+                              ? "bg-emerald-400"
+                              : "bg-gray-600"
+                          }`}
+                        />
+                        <span>
+                          {parameterKeys.length > 0 ? "Loaded" : "Not loaded"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={handleUseExampleProduct}
+                        disabled={loadingParameters}
+                      >
+                        Use example
+                      </Button>
+                      <div className="mt-2 flex items-center gap-1 text-xs text-gray-400 opacity-0">
+                        <span className="h-2 w-2 rounded-full bg-gray-600" />
+                        <span>Not loaded</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="rounded-md border border-blue-900/50 bg-blue-900/20 p-3 text-xs text-blue-200">
+                    <p>
+                      Export templates use Base.com API documentation for
+                      parameter keys and descriptions.
+                    </p>
+                    <p className="mt-1 text-blue-300/70">
+                      Use keys like prices.0, stock.&lt;warehouse_id&gt;, or
+                      image slots.
+                    </p>
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -1769,7 +2017,7 @@ export default function ProductImportsPage() {
                 <Button
                   variant="destructive"
                   onClick={handleDeleteTemplate}
-                  disabled={!activeTemplateId || deletingTemplate}
+                  disabled={!currentActiveTemplateId || deletingTemplate}
                 >
                   {deletingTemplate ? "Deleting..." : "Delete"}
                 </Button>
@@ -1778,16 +2026,18 @@ export default function ProductImportsPage() {
 
             <div className="mt-4 grid gap-4 md:grid-cols-[220px_1fr]">
               <div className="space-y-2">
-                <label className="text-xs text-gray-400">Templates</label>
+                <label className="text-xs text-gray-400">
+                  {isImportTemplateScope ? "Import templates" : "Export templates"}
+                </label>
                 <div className="max-h-64 overflow-auto rounded-md border border-gray-800 bg-gray-950/60 p-2">
-                  {templates.length === 0 ? (
+                  {currentTemplates.length === 0 ? (
                     <p className="text-xs text-gray-500">
-                      {loadingTemplates
+                      {currentLoadingTemplates
                         ? "Loading templates..."
                         : "No templates yet."}
                     </p>
                   ) : (
-                    templates
+                    currentTemplates
                       .slice()
                       .sort((a, b) => a.name.localeCompare(b.name))
                       .map((template) => (
@@ -1795,7 +2045,7 @@ export default function ProductImportsPage() {
                           key={template.id}
                           type="button"
                           className={`flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-xs ${
-                            activeTemplateId === template.id
+                            currentActiveTemplateId === template.id
                               ? "bg-emerald-500/20 text-emerald-100"
                               : "text-gray-300 hover:bg-gray-800/60"
                           }`}
@@ -1816,8 +2066,15 @@ export default function ProductImportsPage() {
                     </label>
                     <Input
                       className="mt-2"
-                      value={templateName}
-                      onChange={(event) => setTemplateName(event.target.value)}
+                      value={currentTemplateName}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        if (isImportTemplateScope) {
+                          setImportTemplateName(value);
+                        } else {
+                          setExportTemplateName(value);
+                        }
+                      }}
                       placeholder="Base default mapping"
                     />
                   </div>
@@ -1827,10 +2084,15 @@ export default function ProductImportsPage() {
                     </label>
                     <Input
                       className="mt-2"
-                      value={templateDescription}
-                      onChange={(event) =>
-                        setTemplateDescription(event.target.value)
-                      }
+                      value={currentTemplateDescription}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        if (isImportTemplateScope) {
+                          setImportTemplateDescription(value);
+                        } else {
+                          setExportTemplateDescription(value);
+                        }
+                      }}
                       placeholder="Optional"
                     />
                   </div>
@@ -1841,7 +2103,7 @@ export default function ProductImportsPage() {
                     Parameter mappings
                   </label>
                   <div className="mt-2 space-y-2">
-                    {templateMappings.map((mapping, index) => (
+                    {currentTemplateMappings.map((mapping, index) => (
                       <div
                         key={index}
                         onDragOver={(event) => handleMappingDragOver(event, index)}
@@ -1889,7 +2151,11 @@ export default function ProductImportsPage() {
                                 );
                               }, 120);
                             }}
-                            placeholder="Base parameter key (e.g. material)"
+                            placeholder={
+                              isImportTemplateScope
+                                ? "Base parameter key (e.g. material)"
+                                : "Export parameter key (e.g. prices.0)"
+                            }
                           />
                           {openKeyIndex === index && (
                             <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-gray-800 bg-gray-950 shadow-lg">
@@ -1916,8 +2182,9 @@ export default function ProductImportsPage() {
                           )}
                         </div>
                         <div className="rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-gray-500">
-                          {mapping.sourceKey && parameterValues[mapping.sourceKey]
-                            ? parameterValues[mapping.sourceKey]
+                          {mapping.sourceKey &&
+                          currentParameterValues[mapping.sourceKey]
+                            ? currentParameterValues[mapping.sourceKey]
                             : "—"}
                         </div>
                         <div className="flex items-center gap-2">
@@ -1960,10 +2227,17 @@ export default function ProductImportsPage() {
                       Add mapping
                     </Button>
                   </div>
-                  <p className="mt-3 text-xs text-gray-500">
-                    Source keys can be direct Base fields or parameter names.
-                    Use dotted paths for nested fields (e.g. parameters.size).
-                  </p>
+                  {isImportTemplateScope ? (
+                    <p className="mt-3 text-xs text-gray-500">
+                      Source keys can be direct Base fields or parameter names.
+                      Use dotted paths for nested fields (e.g. parameters.size).
+                    </p>
+                  ) : (
+                    <p className="mt-3 text-xs text-gray-500">
+                      Source keys must match Base.com export fields. Use dotted
+                      paths for nested fields (e.g. prices.0).
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

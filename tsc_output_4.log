@@ -1,0 +1,2 @@
+app/api/products/[id]/export-to-base/route.ts(221,38): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.

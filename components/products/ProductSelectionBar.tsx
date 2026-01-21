@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CheckSquare, Settings2, Trash2 } from "lucide-react";
+import { CheckSquare, Settings2, Trash2, Store } from "lucide-react";
 import type { ProductWithImages } from "@/types";
 import type { RowSelectionState } from "@tanstack/react-table";
 
@@ -21,6 +21,7 @@ interface ProductSelectionBarProps {
   onSelectAllGlobal: () => Promise<void>;
   loadingGlobal?: boolean;
   onDeleteSelected?: () => Promise<void>;
+  onAddToMarketplace?: () => void;
   total?: number;
 }
 
@@ -31,6 +32,7 @@ export function ProductSelectionBar({
   onSelectAllGlobal,
   loadingGlobal,
   onDeleteSelected,
+  onAddToMarketplace,
 }: ProductSelectionBarProps) {
   const handleSelectPage = () => {
     const newSelection = { ...rowSelection };
@@ -93,7 +95,7 @@ export function ProductSelectionBar({
             <DropdownMenuItem
               onClick={() => void onSelectAllGlobal()}
               className="cursor-pointer focus:bg-gray-800 focus:text-white"
-              disabled={loadingGlobal ?? false}
+              disabled={!!loadingGlobal}
             >
               {loadingGlobal ? "Loading..." : "Check All"}
             </DropdownMenuItem>
@@ -122,6 +124,15 @@ export function ProductSelectionBar({
           align="start"
           className="w-56 border-gray-800 bg-gray-900 text-gray-200"
         >
+          <DropdownMenuItem
+            onClick={() => {
+              if (onAddToMarketplace) onAddToMarketplace();
+            }}
+            className="cursor-pointer focus:bg-gray-800 focus:text-white"
+          >
+            <Store className="mr-2 h-4 w-4" />
+            Add to Marketplace
+          </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
               if (onDeleteSelected) void onDeleteSelected();

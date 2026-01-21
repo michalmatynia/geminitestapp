@@ -8,11 +8,14 @@ import {
 
 const requestSchema = z.object({
   warehouseId: z.string().trim().min(1).nullable().optional(),
+  inventoryId: z.string().trim().min(1).nullable().optional(),
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const warehouseId = await getExportWarehouseId();
+    const url = new URL(req.url);
+    const inventoryId = url.searchParams.get("inventoryId")?.trim() || null;
+    const warehouseId = await getExportWarehouseId(inventoryId);
     return NextResponse.json({ warehouseId });
   } catch (error) {
     const errorId = randomUUID();
@@ -32,7 +35,10 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const data = requestSchema.parse(body);
-    await setExportWarehouseId(data.warehouseId ?? null);
+    await setExportWarehouseId(
+      data.warehouseId ?? null,
+      data.inventoryId ?? null
+    );
     return NextResponse.json({ warehouseId: data.warehouseId ?? null });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";

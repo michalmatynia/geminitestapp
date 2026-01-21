@@ -13,7 +13,7 @@ import {
 import type { Catalog } from "@/types/products";
 
 interface ProductListHeaderProps {
-  onOpenIntegrationModal: () => void;
+  onCreateProduct: () => void;
   page: number;
   totalPages: number;
   setPage: (page: number) => void;
@@ -30,7 +30,7 @@ interface ProductListHeaderProps {
 }
 
 export const ProductListHeader = memo(function ProductListHeader({
-  onOpenIntegrationModal,
+  onCreateProduct,
   page,
   totalPages,
   setPage,
@@ -49,9 +49,9 @@ export const ProductListHeader = memo(function ProductListHeader({
     <div className="mb-4 flex items-center justify-between gap-3">
       <div className="flex items-center gap-3">
         <Button
-          onClick={onOpenIntegrationModal}
+          onClick={onCreateProduct}
           className="size-11 rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90"
-          aria-label="Add product to marketplace"
+          aria-label="Create product"
         >
           <PlusIcon className="size-5" />
         </Button>

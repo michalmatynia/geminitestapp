@@ -5,8 +5,8 @@ import { getIntegrationRepository } from "@/lib/services/integration-repository"
 import { getProductListingRepository } from "@/lib/services/product-listing-repository";
 import {
   getExportWarehouseId,
-  listImportTemplates,
 } from "@/lib/services/import-template-repository";
+import { listExportTemplates } from "@/lib/services/export-template-repository";
 import { buildBaseProductData, exportProductToBase } from "@/lib/services/exports/base-exporter";
 import { checkBaseSkuExists, fetchBaseWarehouses } from "@/lib/services/imports/base-client";
 import { decryptSecret } from "@/lib/utils/encryption";
@@ -117,7 +117,7 @@ export async function POST(
     // Get template mappings if templateId provided
     let mappings: { sourceKey: string; targetField: string }[] = [];
     if (data.templateId) {
-      const templates = await listImportTemplates();
+      const templates = await listExportTemplates();
       const template = templates.find((t) => t.id === data.templateId);
       if (template) {
         mappings = template.mappings;
@@ -132,7 +132,13 @@ export async function POST(
         inventoryId: data.inventoryId,
       });
 
-      const skuCheck = await checkBaseSkuExists(token, data.inventoryId, product.sku);
+      const skuVal = product.sku as string;
+      const tokenVal = token as string;
+      const skuCheck = await checkBaseSkuExists(
+        tokenVal,
+        data.inventoryId,
+        skuVal
+      );
       if (skuCheck.exists) {
         console.warn("[export-to-base] SKU already exists in Base.com", {
           sku: product.sku,
@@ -184,7 +190,7 @@ export async function POST(
       }
     }
 
-    let warehouseId = await getExportWarehouseId();
+    let warehouseId = await getExportWarehouseId(data.inventoryId);
     let validWarehouseIds: Set<string> | null = null;
     try {
       const warehouses = await fetchBaseWarehouses(token, data.inventoryId);
@@ -218,7 +224,7 @@ export async function POST(
         if (!key.startsWith("stock")) return true;
         const match = key.match(/(\d+)$/);
         if (!match) return true;
-        return validWarehouseIds.has(match[1]);
+        return validWarehouseIds.has(match[1]!);
       });
     };
 
@@ -233,13 +239,14 @@ export async function POST(
 
     const buildExportSnapshot = (
       targetWarehouseId: string | null,
-      activeMappings: typeof mappings = effectiveMappings
+      activeMappings: typeof mappings = effectiveMappings,
+      includeStockWithoutWarehouse = false
     ) => {
       const exportData = buildBaseProductData(
         product,
         activeMappings,
         targetWarehouseId,
-        { imageBaseUrl }
+        { imageBaseUrl, includeStockWithoutWarehouse }
       ) as Record<string, unknown> & {
         text_fields?: Record<string, unknown>;
         prices?: Record<string, unknown>;
@@ -260,14 +267,20 @@ export async function POST(
       return { exportData, exportFields };
     };
 
-    let { exportFields } = buildExportSnapshot(warehouseId);
+    let includeStockWithoutWarehouse =
+      !warehouseId && product.stock !== null;
+    let { exportFields } = buildExportSnapshot(
+      warehouseId,
+      effectiveMappings,
+      includeStockWithoutWarehouse
+    );
     let result = await exportProductToBase(
       token,
       data.inventoryId,
       product,
       effectiveMappings,
       warehouseId,
-      { imageBaseUrl }
+      { imageBaseUrl, includeStockWithoutWarehouse }
     );
 
     const isWarehouseMismatch = (message: string | undefined) =>
@@ -275,8 +288,13 @@ export async function POST(
       message.toLowerCase().includes("warehouse") &&
       message.toLowerCase().includes("not included");
 
-    if (!result.success && warehouseId && isWarehouseMismatch(result.error)) {
-      console.warn("[export-to-base] Retrying without warehouse stock export", {
+    const isStockMismatch = (message: string | undefined) =>
+      typeof message === "string" &&
+      (message.toLowerCase().includes("stock") ||
+        message.toLowerCase().includes("quantity"));
+
+    if (!result.success && isWarehouseMismatch(result.error) && product.stock !== null) {
+      console.warn("[export-to-base] Retrying with inventory-level stock export", {
         productId,
         inventoryId: data.inventoryId,
         warehouseId,
@@ -286,14 +304,50 @@ export async function POST(
       effectiveMappings = effectiveMappings.filter(
         (mapping) => !mapping.sourceKey.trim().toLowerCase().startsWith("stock")
       );
-      ({ exportFields } = buildExportSnapshot(warehouseId, effectiveMappings));
+      includeStockWithoutWarehouse = true;
+      ({ exportFields } = buildExportSnapshot(
+        warehouseId,
+        effectiveMappings,
+        includeStockWithoutWarehouse
+      ));
       result = await exportProductToBase(
         token,
         data.inventoryId,
         product,
         effectiveMappings,
         warehouseId,
-        { imageBaseUrl }
+        { imageBaseUrl, includeStockWithoutWarehouse }
+      );
+    }
+
+    if (
+      !result.success &&
+      (isWarehouseMismatch(result.error) ||
+        (includeStockWithoutWarehouse && isStockMismatch(result.error)))
+    ) {
+      console.warn("[export-to-base] Retrying without stock export", {
+        productId,
+        inventoryId: data.inventoryId,
+        warehouseId,
+        error: result.error,
+      });
+      warehouseId = null;
+      effectiveMappings = effectiveMappings.filter(
+        (mapping) => !mapping.sourceKey.trim().toLowerCase().startsWith("stock")
+      );
+      includeStockWithoutWarehouse = false;
+      ({ exportFields } = buildExportSnapshot(
+        warehouseId,
+        effectiveMappings,
+        includeStockWithoutWarehouse
+      ));
+      result = await exportProductToBase(
+        token,
+        data.inventoryId,
+        product,
+        effectiveMappings,
+        warehouseId,
+        { imageBaseUrl, includeStockWithoutWarehouse }
       );
     }
 

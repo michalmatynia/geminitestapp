@@ -26,6 +26,7 @@ export const runtime = "nodejs";
 const requestSchema = z.object({
   token: z.string().trim().min(1).optional(),
   action: z.enum(["inventories", "warehouses", "import", "list"]),
+  connectionId: z.string().trim().min(1).optional(),
   inventoryId: z.string().trim().min(1).optional(),
   catalogId: z.string().trim().min(1).optional(),
   templateId: z.string().trim().min(1).optional(),
@@ -45,17 +46,33 @@ export async function POST(req: Request) {
     if (!token) {
       const integrationRepo = await getIntegrationRepository();
       const integrations = await integrationRepo.listIntegrations();
-      const baseIntegration = integrations.find((i) => i.slug === "baselinker");
+      const baseIntegration = integrations.find((i) =>
+        ["baselinker", "base-com"].includes(i.slug)
+      );
 
       if (baseIntegration) {
-        const connections = await integrationRepo.listConnections(
-          baseIntegration.id
-        );
-        // Use the first connection with a token
-        const connection = connections.find((c) => c.baseApiToken);
-        if (connection?.baseApiToken) {
+        let connection = null;
+        if (data.connectionId) {
+          connection = await integrationRepo.getConnectionByIdAndIntegration(
+            data.connectionId,
+            baseIntegration.id
+          );
+        }
+        if (!connection) {
+          const connections = await integrationRepo.listConnections(
+            baseIntegration.id
+          );
+          connection = connections.find(
+            (c) => c.baseApiToken || c.password
+          ) ?? null;
+        }
+        if (connection) {
           try {
-            token = decryptSecret(connection.baseApiToken);
+            if (connection.baseApiToken) {
+              token = decryptSecret(connection.baseApiToken);
+            } else if (connection.password) {
+              token = decryptSecret(connection.password);
+            }
           } catch {
             // Ignore decryption errors, will fail later if token is still missing
           }

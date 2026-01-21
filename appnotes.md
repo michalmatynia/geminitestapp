@@ -1,11 +1,14 @@
 
+When I update product stock, when I hit enter, the product disappears from the list and I need to refresh to restore it.
 
-Default Catalog choice, In Product Catalog Choice should retained
+Default Catalog choice, In Product Catalog Choice should retained, In settings my Default Product View options should be available with Reset to Default button
 
 * Note Links, Notes Rellated to one another are not longer visible in Note Cards and Note Preview
 
 Opening WYSYWIG Note fails in Edit Mode
 
+
+Infer Categories and size , material Automatically
 
 In Product List - Operations - I need an Option to Mass Export Products to Base.com
 

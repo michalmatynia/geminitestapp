@@ -9,38 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/toast";
 import { Loader2, RefreshCcw, Trash2, XCircle, Eye } from "lucide-react";
 import ModalShell from "@/components/ui/modal-shell";
-import ProductListingJobsPanel from "@/components/products/ProductListingJobsPanel";
-
-type ProductAiJobResult = {
-  visionModel?: string;
-  generationModel?: string;
-  visionOutputEnabled?: boolean;
-  generationOutputEnabled?: boolean;
-  analysisInitial?: string;
-  analysis?: string;
-  analysisFinal?: string;
-  descriptionInitial?: string;
-  description?: string;
-  descriptionFinal?: string;
-  [key: string]: any;
-};
-
-type ProductAiJob = {
-  id: string;
-  productId: string;
-  status: "pending" | "running" | "completed" | "failed" | "canceled";
-  type: string;
-  payload: any;
-  result: ProductAiJobResult | null;
-  errorMessage: string | null;
-  createdAt: string;
-  startedAt: string | null;
-  finishedAt: string | null;
-  product?: {
-    name_en: string | null;
-    sku: string | null;
-  };
-};
+import ProductListingJobsPanel from "@/components/products/jobs/ProductListingJobsPanel";
+import type { ProductAiJob } from "@/components/products/jobs/types";
 
 export default function ProductAiJobsPage() {
   const { toast } = useToast();

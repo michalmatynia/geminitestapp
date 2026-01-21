@@ -8,160 +8,26 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/toast";
 import { IntegrationConnectionBasic, IntegrationWithConnections } from "@/types";
-
-type InventoryOption = {
-  id: string;
-  name: string;
-};
-
-type WarehouseOption = {
-  id: string;
-  name: string;
-  typedId?: string;
-};
-
-type WarehouseDebugRaw = {
-  ok: boolean;
-  statusCode: number;
-  error?: string;
-  method: string;
-  parameters: Record<string, unknown>;
-  payload: Record<string, unknown> | null;
-};
-
-type InventoryDebugRaw = WarehouseDebugRaw & {
-  inventories?: InventoryOption[];
-};
-
-type CatalogOption = {
-  id: string;
-  name: string;
-  isDefault?: boolean;
-};
-
-type ImportResponse = {
-  imported: number;
-  failed: number;
-  total: number;
-  errors?: string[];
-};
-
-type ImportListItem = {
-  baseProductId: string;
-  name: string;
-  sku: string | null;
-  exists: boolean;
-  skuExists?: boolean; // SKU already exists in local database
-  description?: string;
-  price?: number;
-  stock?: number;
-  image?: string | null;
-};
-
-type TemplateMapping = {
-  sourceKey: string;
-  targetField: string;
-};
-
-type Template = {
-  id: string;
-  name: string;
-  description?: string | null;
-  mappings: TemplateMapping[];
-};
-
-const PRODUCT_FIELDS = [
-  { value: "sku", label: "SKU" },
-  { value: "baseProductId", label: "Base Product ID" },
-  { value: "ean", label: "EAN" },
-  { value: "gtin", label: "GTIN" },
-  { value: "asin", label: "ASIN" },
-  { value: "name_en", label: "Name (EN)" },
-  { value: "name_pl", label: "Name (PL)" },
-  { value: "name_de", label: "Name (DE)" },
-  { value: "description_en", label: "Description (EN)" },
-  { value: "description_pl", label: "Description (PL)" },
-  { value: "description_de", label: "Description (DE)" },
-  { value: "supplierName", label: "Supplier Name" },
-  { value: "supplierLink", label: "Supplier Link" },
-  { value: "price", label: "Price" },
-  { value: "priceComment", label: "Price Comment" },
-  { value: "stock", label: "Stock" },
-  { value: "sizeLength", label: "Size Length" },
-  { value: "sizeWidth", label: "Size Width" },
-  { value: "weight", label: "Weight" },
-  { value: "length", label: "Length" },
-  { value: "image_1", label: "Image Link 1" },
-  { value: "image_2", label: "Image Link 2" },
-  { value: "image_3", label: "Image Link 3" },
-  { value: "image_4", label: "Image Link 4" },
-  { value: "image_5", label: "Image Link 5" },
-  { value: "image_6", label: "Image Link 6" },
-  { value: "image_7", label: "Image Link 7" },
-  { value: "image_8", label: "Image Link 8" },
-  { value: "image_9", label: "Image Link 9" },
-  { value: "image_10", label: "Image Link 10" },
-  { value: "image_slot_1", label: "Image Slot 1" },
-  { value: "image_slot_2", label: "Image Slot 2" },
-  { value: "image_slot_3", label: "Image Slot 3" },
-  { value: "image_slot_4", label: "Image Slot 4" },
-  { value: "image_slot_5", label: "Image Slot 5" },
-  { value: "image_slot_6", label: "Image Slot 6" },
-  { value: "image_slot_7", label: "Image Slot 7" },
-  { value: "image_slot_8", label: "Image Slot 8" },
-  { value: "image_slot_9", label: "Image Slot 9" },
-  { value: "image_slot_10", label: "Image Slot 10" },
-  { value: "image_slot_11", label: "Image Slot 11" },
-  { value: "image_slot_12", label: "Image Slot 12" },
-  { value: "image_slot_13", label: "Image Slot 13" },
-  { value: "image_slot_14", label: "Image Slot 14" },
-  { value: "image_slot_15", label: "Image Slot 15" },
-  { value: "image_all", label: "Image Slots (All, legacy key)" },
-  { value: "image_slots_all", label: "Image Slots (All)" },
-  { value: "image_links_all", label: "Image Links (All)" },
-  { value: "images_all", label: "Images (All: slots + links)" },
-] as const;
-
-const IMAGE_SLOT_KEYS = Array.from({ length: 15 }, (_, index) => `image_slot_${index + 1}`);
-const ALL_IMAGE_KEYS = [
-  ...IMAGE_SLOT_KEYS,
-  "image_all",
-  "image_slots_all",
-  "image_links_all",
-  "images_all",
-];
-
-const EXPORT_PARAMETER_DOCS = [
-  { key: "sku", description: "Unique product SKU/code." },
-  { key: "ean", description: "EAN barcode." },
-  { key: "weight", description: "Weight (kg)." },
-  { key: "name", description: "Product name (default language)." },
-  { key: "name|en", description: "Product name (English)." },
-  { key: "description", description: "Product description (default language)." },
-  { key: "description|en", description: "Product description (English)." },
-  { key: "text_fields.name", description: "Name inside text_fields object." },
-  { key: "text_fields.description", description: "Description inside text_fields object." },
-  { key: "text_fields.name|en", description: "English name inside text_fields." },
-  { key: "text_fields.description|en", description: "English description inside text_fields." },
-  { key: "prices.0", description: "Price for price group 0." },
-  { key: "prices.<price_group_id>", description: "Price for a specific price group." },
-  { key: "stock", description: "Inventory-level stock (no warehouse)." },
-  { key: "stock.<warehouse_id>", description: "Stock for a specific warehouse." },
-  { key: "stock.bl_<warehouse_id>", description: "Baselinker stock key format." },
-  { key: "images", description: "All product image URLs." },
-  { key: "image", description: "Single product image URL." },
-  { key: "image_links_all", description: "All image links." },
-  { key: "image_slots_all", description: "All image slots." },
-  { key: "images_all", description: "All images (slots + links)." },
-  ...IMAGE_SLOT_KEYS.map((key, index) => ({
-    key,
-    description: `Image slot ${index + 1}.`,
-  })),
-];
-
-const EXPORT_PARAMETER_KEYS = Array.from(
-  new Set(EXPORT_PARAMETER_DOCS.map((entry) => entry.key))
-);
+import { ImportTab } from "@/components/products/imports/ImportTab";
+import { ExportTab } from "@/components/products/imports/ExportTab";
+import {
+  ALL_IMAGE_KEYS,
+  EXPORT_PARAMETER_DOCS,
+  EXPORT_PARAMETER_KEYS,
+  IMAGE_SLOT_KEYS,
+  PRODUCT_FIELDS,
+} from "@/components/products/imports/constants";
+import type {
+  CatalogOption,
+  ImportListItem,
+  ImportResponse,
+  InventoryDebugRaw,
+  InventoryOption,
+  Template,
+  TemplateMapping,
+  WarehouseDebugRaw,
+  WarehouseOption,
+} from "@/components/products/imports/types";
 
 export default function ProductImportsPage() {
   const { toast } = useToast();
@@ -1601,710 +1467,84 @@ export default function ProductImportsPage() {
         </TabsList>
 
         <TabsContent value="imports" className="mt-6 space-y-6">
-          <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-white">Base.com</h2>
-                <p className="mt-1 text-sm text-gray-400">
-                  Connected via Integrations. Load inventories to start importing.
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="flex h-2 w-2 rounded-full bg-green-500"></span>
-                <span className="text-xs text-green-400">Connected</span>
-              </div>
-            </div>
-
-            <div className="mt-4 space-y-4">
-              <div className="flex flex-wrap items-end gap-3">
-                <Button
-                  onClick={() => void handleLoadInventories()}
-                  disabled={loadingInventories}
-                  className="mt-6"
-                >
-                  {loadingInventories ? "Loading..." : "Load inventories"}
-                </Button>
-                <div className="flex-1 min-w-[200px]">
-                  <label className="text-xs text-gray-400">Inventory</label>
-                  <select
-                    className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
-                    value={inventoryId}
-                    onChange={(event) => setInventoryId(event.target.value)}
-                    disabled={inventories.length === 0}
-                  >
-                    {inventories.length === 0 ? (
-                      <option value="">Load inventories first</option>
-                    ) : (
-                      inventories.map((inventory) => (
-                        <option key={inventory.id} value={inventory.id}>
-                          {inventory.name}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => void handleClearInventory()}
-                  disabled={!inventoryId}
-                  className="mt-6"
-                >
-                  Clear inventory
-                </Button>
-                <div className="w-40">
-                  <label className="text-xs text-gray-400">Limit</label>
-                  <select
-                    className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
-                    value={limit}
-                    onChange={(event) => setLimit(event.target.value)}
-                  >
-                    <option value="1">1</option>
-                    <option value="5">5</option>
-                    <option value="10">10</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                    <option value="all">All</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="text-xs text-gray-400">Catalog</label>
-                  <select
-                    className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
-                    value={catalogId}
-                    onChange={(event) => setCatalogId(event.target.value)}
-                    disabled={loadingCatalogs || catalogs.length === 0}
-                  >
-                    {catalogs.length === 0 ? (
-                      <option value="">
-                        {loadingCatalogs ? "Loading catalogs..." : "No catalogs"}
-                      </option>
-                    ) : (
-                      catalogs.map((catalog) => (
-                        <option key={catalog.id} value={catalog.id}>
-                          {catalog.name}
-                          {catalog.isDefault ? " (Default)" : ""}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400">Import template</label>
-                  <select
-                    className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
-                    value={importTemplateId}
-                    onChange={(event) => setImportTemplateId(event.target.value)}
-                    disabled={loadingImportTemplates || importTemplates.length === 0}
-                  >
-                    <option value="">No template</option>
-                    {importTemplates.map((template) => (
-                      <option key={template.id} value={template.id}>
-                        {template.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="text-xs text-gray-400">Images</label>
-                  <select
-                    className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
-                    value={imageMode}
-                    onChange={(event) =>
-                      setImageMode(
-                        event.target.value === "download" ? "download" : "links"
-                      )
-                    }
-                  >
-                    <option value="links">Import image links</option>
-                    <option value="download">Download product images</option>
-                  </select>
-                  <p className="mt-2 text-xs text-gray-500">
-                    Image links keep Base.com URLs. Download stores images in your
-                    uploads folder.
-                  </p>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400">SKU Handling</label>
-                  <div className="mt-2 flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="allowDuplicateSku"
-                      checked={allowDuplicateSku}
-                      onChange={(e) => setAllowDuplicateSku(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-700 bg-gray-900 text-blue-500"
-                    />
-                    <label htmlFor="allowDuplicateSku" className="text-sm text-white">
-                      Allow duplicate SKUs
-                    </label>
-                  </div>
-                  <p className="mt-2 text-xs text-gray-500">
-                    When unchecked, products with existing SKUs will be skipped.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-xs text-gray-500">
-                  Default catalog and price group must be configured before
-                  import.
-                </p>
-                <Button onClick={() => void handleImport()} disabled={importing}>
-                  {importing ? "Importing..." : "Import products"}
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-semibold text-white">
-                  Import list preview
-                </h3>
-                <p className="mt-1 text-xs text-gray-400">
-                  Compare Base products with existing records by Base ID.
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Input
-                  value={importSearch}
-                  onChange={(event) => setImportSearch(event.target.value)}
-                  placeholder="Search products..."
-                  className="h-8 w-48 border-gray-800 bg-gray-900 text-xs text-white placeholder:text-gray-500"
-                />
-                <select
-                  className="rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-white"
-                  value={uniqueOnly ? "unique" : "all"}
-                  onChange={(event) =>
-                    setUniqueOnly(event.target.value === "unique")
-                  }
-                >
-                  <option value="unique">Unique only</option>
-                  <option value="all">All products</option>
-                </select>
-                <Button
-                  onClick={() => void handleLoadImportList()}
-                  disabled={loadingImportList}
-                >
-                  {loadingImportList ? "Loading..." : "Load import list"}
-                </Button>
-              </div>
-            </div>
-
-            {importListStats ? (
-              <div className="mt-3 text-xs text-gray-400">
-                Total: {importListStats.total} · Existing:{" "}
-                {importListStats.existing} · Available: {importListStats.available ?? importListStats.filtered}
-                {" "}· Showing: {importListStats.filtered} · Selected:{" "}
-                {selectedImportCount}
-                {importListStats.skuDuplicates ? (
-                  <span className="text-yellow-400"> · SKU duplicates: {importListStats.skuDuplicates}</span>
-                ) : null}
-              </div>
-            ) : null}
-
-            {filteredImportList.length > 0 ? (
-              <div className="mt-3 max-h-96 overflow-auto rounded-md border border-gray-800 bg-gray-950/70">
-                <div className="grid grid-cols-[28px_50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-gray-800 px-3 py-2 text-[11px] uppercase tracking-wide text-gray-500 sticky top-0 bg-gray-950 z-10">
-                  <span className="flex items-center">
-                    <input
-                      type="checkbox"
-                      aria-label="Select all visible products"
-                      checked={allVisibleSelected}
-                      onChange={(event) => {
-                        if (event.target.checked) {
-                          setSelectedImportIds((prev) => {
-                            const next = new Set(prev);
-                            filteredImportList.forEach((item) => {
-                              if (item.baseProductId) next.add(item.baseProductId);
-                            });
-                            return next;
-                          });
-                        } else {
-                          setSelectedImportIds((prev) => {
-                            const next = new Set(prev);
-                            filteredImportList.forEach((item) => {
-                              if (item.baseProductId) next.delete(item.baseProductId);
-                            });
-                            return next;
-                          });
-                        }
-                      }}
-                      ref={(element) => {
-                        if (element) element.indeterminate = isSomeVisibleSelected;
-                      }}
-                      className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
-                    />
-                  </span>
-                  <span>Img</span>
-                  <span>Base ID</span>
-                  <span>Product</span>
-                  <span>SKU</span>
-                  <span>Price</span>
-                  <span>Qty</span>
-                  <span>Status</span>
-                </div>
-                {filteredImportList.map((item) => (
-                  <div
-                    key={item.baseProductId}
-                    className={`grid grid-cols-[28px_50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-gray-900/70 px-3 py-2 text-xs text-gray-300 last:border-b-0 items-center transition-colors ${
-                      selectedImportIds.has(item.baseProductId)
-                        ? "bg-emerald-500/5"
-                        : "hover:bg-gray-900/40"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedImportIds.has(item.baseProductId)}
-                      onChange={(event) => {
-                        const checked = event.target.checked;
-                        setSelectedImportIds((prev) => {
-                          const next = new Set(prev);
-                          if (checked) {
-                            next.add(item.baseProductId);
-                          } else {
-                            next.delete(item.baseProductId);
-                          }
-                          return next;
-                        });
-                      }}
-                      className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
-                      aria-label={`Select ${item.name}`}
-                    />
-                    <div className="h-10 w-10 overflow-hidden rounded bg-gray-900">
-                      {item.image ? (
-                        <img
-                          src={item.image}
-                          alt=""
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[10px] text-gray-600">
-                          No img
-                        </div>
-                      )}
-                    </div>
-                    <span className="truncate text-gray-400 font-mono text-[11px]">
-                      {item.baseProductId}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="truncate font-medium text-gray-200">
-                        {item.name}
-                      </div>
-                      {item.description && (
-                        <div className="truncate text-[11px] text-gray-500">
-                          {item.description}
-                        </div>
-                      )}
-                    </div>
-                    <span className={`truncate font-mono text-[11px] ${item.skuExists ? "text-yellow-400" : "text-gray-400"}`}>
-                      {item.sku ?? "—"}
-                      {item.skuExists && <span className="ml-1" title="SKU already exists">⚠</span>}
-                    </span>
-                    <span className="truncate">{item.price ?? 0}</span>
-                    <span className="truncate">{item.stock ?? 0}</span>
-                    <span
-                      className={`text-[11px] font-medium ${
-                        item.exists ? "text-amber-400" : item.skuExists ? "text-yellow-400" : "text-emerald-400"
-                      }`}
-                    >
-                      {item.exists ? "Exists" : item.skuExists ? "SKU dup" : "New"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-3 text-xs text-gray-500">
-                {importList.length > 0
-                  ? "No matches for this search."
-                  : "No items loaded yet."}
-              </p>
-            )}
-          </div>
-
-          {lastResult ? (
-            <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
-              <h3 className="text-sm font-semibold text-white">
-                Last import summary
-              </h3>
-              <p className="mt-2 text-sm text-gray-300">
-                Imported {lastResult.imported} of {lastResult.total} product(s).
-              </p>
-              {lastResult.failed > 0 ? (
-                <p className="mt-1 text-sm text-red-300">
-                  {lastResult.failed} failed.
-                </p>
-              ) : null}
-              {lastResult.errors?.length ? (
-                <div className="mt-3 space-y-1 text-xs text-gray-400">
-                  {lastResult.errors.map((error, index) => (
-                    <p key={`${error}-${index}`}>• {error}</p>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
+          <ImportTab
+            inventories={inventories}
+            loadingInventories={loadingInventories}
+            inventoryId={inventoryId}
+            setInventoryId={setInventoryId}
+            handleLoadInventories={handleLoadInventories}
+            handleClearInventory={handleClearInventory}
+            limit={limit}
+            setLimit={setLimit}
+            catalogs={catalogs}
+            loadingCatalogs={loadingCatalogs}
+            catalogId={catalogId}
+            setCatalogId={setCatalogId}
+            importTemplateId={importTemplateId}
+            setImportTemplateId={setImportTemplateId}
+            importTemplates={importTemplates}
+            loadingImportTemplates={loadingImportTemplates}
+            imageMode={imageMode}
+            setImageMode={setImageMode}
+            allowDuplicateSku={allowDuplicateSku}
+            setAllowDuplicateSku={setAllowDuplicateSku}
+            importing={importing}
+            handleImport={handleImport}
+            importSearch={importSearch}
+            setImportSearch={setImportSearch}
+            uniqueOnly={uniqueOnly}
+            setUniqueOnly={setUniqueOnly}
+            handleLoadImportList={handleLoadImportList}
+            loadingImportList={loadingImportList}
+            importListStats={importListStats}
+            importList={importList}
+            filteredImportList={filteredImportList}
+            selectedImportIds={selectedImportIds}
+            setSelectedImportIds={setSelectedImportIds}
+            selectedImportCount={selectedImportCount}
+            allVisibleSelected={allVisibleSelected}
+            isSomeVisibleSelected={isSomeVisibleSelected}
+            lastResult={lastResult}
+          />
         </TabsContent>
 
         <TabsContent value="exports" className="mt-6 space-y-6">
-          <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold text-white">
-                    Base.com Export Settings
-                  </h2>
-                <p className="mt-1 text-sm text-gray-400">
-                  Configure default export settings for Base.com product listings
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="flex h-2 w-2 rounded-full bg-green-500"></span>
-                <span className="text-xs text-green-400">Connected</span>
-              </div>
-            </div>
-
-              <div className="mt-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <label className="text-xs text-gray-400">
-                    Base connection for inventories/warehouses
-                  </label>
-                  <select
-                    className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
-                    value={selectedBaseConnectionId}
-                    onChange={(event) =>
-                      setSelectedBaseConnectionId(event.target.value)
-                    }
-                    disabled={baseConnections.length === 0}
-                  >
-                    {baseConnections.length === 0 ? (
-                      <option value="">No connections loaded</option>
-                    ) : (
-                      <>
-                        <option value="">Select a connection...</option>
-                        {baseConnections.map((connection) => (
-                          <option key={connection.id} value={connection.id}>
-                            {connection.name}
-                          </option>
-                        ))}
-                      </>
-                    )}
-                  </select>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Used for loading inventories/warehouses and debug output.
-                  </p>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400">
-                    Default Inventory
-                  </label>
-                  <select
-                    className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
-                    value={exportInventoryId}
-                    onChange={(event) => setExportInventoryId(event.target.value)}
-                    disabled={inventories.length === 0}
-                  >
-                    {inventories.length === 0 ? (
-                      exportInventoryId ? (
-                        <option value={exportInventoryId}>
-                          Saved inventory ({exportInventoryId})
-                        </option>
-                      ) : (
-                        <option value="">No inventories loaded</option>
-                      )
-                    ) : (
-                      <>
-                        <option value="">Select default inventory...</option>
-                        {inventories.map((inv) => (
-                          <option key={inv.id} value={inv.id}>
-                            {inv.name}
-                          </option>
-                        ))}
-                      </>
-                    )}
-                  </select>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Default inventory for product exports
-                  </p>
-                </div>
-
-                <div>
-                  <label className="text-xs text-gray-400">
-                    Default Export Template
-                  </label>
-                  <select
-                    className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
-                    value={exportActiveTemplateId}
-                    onChange={(event) => {
-                      const nextId = event.target.value;
-                      const selected = exportTemplates.find(
-                        (template) => template.id === nextId
-                      );
-                      if (selected) {
-                        applyTemplate(selected, "export");
-                      } else {
-                        setExportActiveTemplateId(nextId);
-                      }
-                    }}
-                    disabled={loadingExportTemplates || exportTemplates.length === 0}
-                  >
-                    <option value="">No template (use defaults)</option>
-                    {exportTemplates.map((tpl) => (
-                      <option key={tpl.id} value={tpl.id}>
-                        {tpl.name}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Template for field mapping on export
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs text-gray-400">
-                  Default Warehouse ID
-                </label>
-                <select
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
-                  value={exportWarehouseId}
-                  onChange={(event) => setExportWarehouseId(event.target.value)}
-                  disabled={warehouseOptions.length === 0}
-                >
-                  {warehouseOptions.length === 0 ? (
-                    <option value="">Load warehouses first</option>
-                  ) : (
-                    <>
-                      <option value="">Skip stock export</option>
-                      {warehouseOptions.map((warehouse) => (
-                        <option key={warehouse.id} value={warehouse.id}>
-                          {warehouse.name} ({warehouse.id})
-                          {showAllWarehouses &&
-                          !inventoryWarehouseIds.has(warehouse.id)
-                            ? " (not in inventory)"
-                            : ""}
-                        </option>
-                      ))}
-                    </>
-                  )}
-                </select>
-                <p className="mt-1 text-xs text-gray-500">
-                  Used for exporting stock quantities to Base.com. Leave blank to skip stock.
-                </p>
-                <div className="mt-3 flex items-center gap-2 text-xs text-gray-400">
-                  <input
-                    type="checkbox"
-                    id="exportStockFallback"
-                    checked={exportStockFallbackEnabled}
-                    onChange={(event) =>
-                      setExportStockFallbackEnabled(event.target.checked)
-                    }
-                    disabled={!exportStockFallbackLoaded}
-                    className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
-                  />
-                  <label htmlFor="exportStockFallback">
-                    Skip stock when Base rejects the warehouse (allow listing)
-                  </label>
-                </div>
-                {allWarehouses.length > 0 && allWarehouses.length > warehouses.length ? (
-                  <div className="mt-2 flex items-center gap-2 text-xs text-gray-400">
-                    <input
-                      type="checkbox"
-                      id="showAllWarehouses"
-                      checked={showAllWarehouses}
-                      onChange={(event) => setShowAllWarehouses(event.target.checked)}
-                      className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
-                    />
-                    <label htmlFor="showAllWarehouses">
-                      Show all warehouses (may include ones not assigned to the inventory)
-                    </label>
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="rounded-md border border-blue-900/50 bg-blue-900/20 p-4">
-                <h3 className="text-sm font-semibold text-blue-200">
-                  Export Guidelines
-                </h3>
-                <ul className="mt-2 space-y-1 text-xs text-blue-300/70">
-                  <li>• Exports use templates to map internal product fields to Base.com API parameters</li>
-                  <li>• Without a template, default field mappings are used (SKU, Name, Price, Stock, etc.)</li>
-                  <li>• Import and export templates are managed separately in the Templates tab</li>
-                  <li>• Export to Base.com from Product List → Integrations → List Products → Select Base.com</li>
-                  <li>• Track export jobs in the <Link href="/admin/products/jobs?tab=export" className="text-blue-400 underline">Export Jobs</Link> tab</li>
-                </ul>
-              </div>
-
-              <div className="rounded-md border border-gray-800 bg-gray-950 p-4">
-                <h3 className="text-sm font-semibold text-white mb-3">
-                  Quick Actions
-                </h3>
-                <div className="flex flex-wrap gap-3">
-                  <Button
-                    onClick={handleLoadInventories}
-                    disabled={loadingInventories}
-                    variant="outline"
-                    size="sm"
-                    className="border-gray-700"
-                  >
-                    {loadingInventories ? "Loading..." : "Load Inventories"}
-                  </Button>
-                  <Button
-                    onClick={handleLoadWarehouses}
-                    disabled={loadingWarehouses}
-                    variant="outline"
-                    size="sm"
-                    className="border-gray-700"
-                  >
-                    {loadingWarehouses ? "Loading..." : "Load Warehouses"}
-                  </Button>
-                  <Button
-                    onClick={handleDebugWarehouses}
-                    disabled={loadingDebugWarehouses}
-                    variant="outline"
-                    size="sm"
-                    className="border-gray-700"
-                  >
-                    {loadingDebugWarehouses ? "Debugging..." : "Debug Warehouses"}
-                  </Button>
-                  <div className="flex items-center gap-2 text-xs text-gray-400">
-                    <input
-                      type="checkbox"
-                      id="includeAllWarehouses"
-                      checked={includeAllWarehouses}
-                      onChange={(event) => setIncludeAllWarehouses(event.target.checked)}
-                      className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
-                    />
-                    <label htmlFor="includeAllWarehouses">
-                      Try loading global warehouses (if supported)
-                    </label>
-                  </div>
-                  <Button
-                    onClick={handleSaveExportSettings}
-                    disabled={savingExportSettings}
-                    size="sm"
-                  >
-                    {savingExportSettings ? "Saving..." : "Save Export Settings"}
-                  </Button>
-                  <Link href="/admin/products/jobs?tab=export">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-gray-700"
-                    >
-                      View Listing Jobs
-                    </Button>
-                  </Link>
-                  <Link href="/admin/products">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-gray-700"
-                    >
-                      Go to Products
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-              {debugWarehouses ? (
-                <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-semibold text-gray-200">
-                      Warehouse debug (raw IDs)
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setDebugWarehouses(null)}
-                      className="text-[11px] uppercase tracking-wide text-gray-500 hover:text-gray-200"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                  <div className="mt-2 space-y-2">
-                    <div>
-                      <div className="text-[11px] uppercase tracking-wide text-gray-500">
-                        Selected inventory raw response
-                      </div>
-                      {debugWarehouses.inventoriesRaw ? (
-                        <div className="mt-1 space-y-1 text-[11px] text-gray-400">
-                          <div>Method: {debugWarehouses.inventoriesRaw.method}</div>
-                          <div>Status: {debugWarehouses.inventoriesRaw.statusCode}</div>
-                          <div>Ok: {debugWarehouses.inventoriesRaw.ok ? "true" : "false"}</div>
-                          {debugWarehouses.inventoriesRaw.error ? (
-                            <div>Error: {debugWarehouses.inventoriesRaw.error}</div>
-                          ) : null}
-                          {(() => {
-                            const payload = debugWarehouses.inventoriesRaw?.payload;
-                            const inventories = payload
-                              ? (payload.inventories as unknown)
-                              : null;
-                            if (!Array.isArray(inventories)) return null;
-                            const match = inventories.find((inv) => {
-                              if (!inv || typeof inv !== "object") return false;
-                              const record = inv as Record<string, unknown>;
-                              return (
-                                exportInventoryId &&
-                                String(record.inventory_id ?? "") === exportInventoryId
-                              );
-                            });
-                            if (!match) {
-                              return (
-                                <div className="rounded border border-gray-800 bg-gray-950/60 p-2 text-[10px] text-gray-300">
-                                  Selected inventory not found in response.
-                                </div>
-                              );
-                            }
-                            return (
-                              <div className="rounded border border-gray-800 bg-gray-950/60 p-2 text-[10px] text-gray-300">
-                                <div className="text-[11px] uppercase tracking-wide text-gray-500">
-                                  Selected inventory details
-                                </div>
-                                <pre className="mt-1 whitespace-pre-wrap">
-                                  {JSON.stringify(match, null, 2)}
-                                </pre>
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      ) : (
-                        <div className="mt-1 text-gray-500">No raw response.</div>
-                      )}
-                    </div>
-                    <div>
-                      <div className="text-[11px] uppercase tracking-wide text-gray-500">
-                        Inventory warehouses raw response
-                      </div>
-                      {debugWarehouses.inventoryRaw ? (
-                        <div className="mt-1 space-y-1 text-[11px] text-gray-400">
-                          <div>Inventory ID: {exportInventoryId || "—"}</div>
-                          <div>Method: {debugWarehouses.inventoryRaw.method}</div>
-                          <div>Status: {debugWarehouses.inventoryRaw.statusCode}</div>
-                          <div>Ok: {debugWarehouses.inventoryRaw.ok ? "true" : "false"}</div>
-                          {debugWarehouses.inventoryRaw.error ? (
-                            <div>Error: {debugWarehouses.inventoryRaw.error}</div>
-                          ) : null}
-                          <pre className="mt-2 max-h-64 overflow-auto rounded border border-gray-800 bg-gray-950 p-2 text-[10px] text-gray-300">
-                            {debugWarehouses.inventoryRaw.payload
-                              ? JSON.stringify(debugWarehouses.inventoryRaw.payload, null, 2)
-                              : "No payload returned."}
-                          </pre>
-                        </div>
-                      ) : (
-                        <div className="mt-1 text-gray-500">No raw response.</div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          </div>
+          <ExportTab
+            baseConnections={baseConnections}
+            selectedBaseConnectionId={selectedBaseConnectionId}
+            setSelectedBaseConnectionId={setSelectedBaseConnectionId}
+            inventories={inventories}
+            exportInventoryId={exportInventoryId}
+            setExportInventoryId={setExportInventoryId}
+            exportActiveTemplateId={exportActiveTemplateId}
+            setExportActiveTemplateId={setExportActiveTemplateId}
+            exportTemplates={exportTemplates}
+            loadingExportTemplates={loadingExportTemplates}
+            applyTemplate={applyTemplate}
+            exportWarehouseId={exportWarehouseId}
+            setExportWarehouseId={setExportWarehouseId}
+            warehouseOptions={warehouseOptions}
+            showAllWarehouses={showAllWarehouses}
+            setShowAllWarehouses={setShowAllWarehouses}
+            inventoryWarehouseIds={inventoryWarehouseIds}
+            exportStockFallbackEnabled={exportStockFallbackEnabled}
+            setExportStockFallbackEnabled={setExportStockFallbackEnabled}
+            exportStockFallbackLoaded={exportStockFallbackLoaded}
+            allWarehouses={allWarehouses}
+            warehouses={warehouses}
+            handleLoadInventories={handleLoadInventories}
+            loadingInventories={loadingInventories}
+            handleLoadWarehouses={handleLoadWarehouses}
+            loadingWarehouses={loadingWarehouses}
+            handleDebugWarehouses={handleDebugWarehouses}
+            loadingDebugWarehouses={loadingDebugWarehouses}
+            includeAllWarehouses={includeAllWarehouses}
+            setIncludeAllWarehouses={setIncludeAllWarehouses}
+            handleSaveExportSettings={handleSaveExportSettings}
+            savingExportSettings={savingExportSettings}
+            debugWarehouses={debugWarehouses}
+            setDebugWarehouses={setDebugWarehouses}
+          />
         </TabsContent>
 
         <TabsContent value="templates" className="mt-6 space-y-6">

@@ -34,6 +34,24 @@ export function ProductSelectionBar({
   onDeleteSelected,
   onAddToMarketplace,
 }: ProductSelectionBarProps) {
+  const handleSelectAllGlobal = async () => {
+    if (!onSelectAllGlobal) return;
+    try {
+      await onSelectAllGlobal();
+    } catch (error) {
+      console.error("Failed to select all products:", error);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (!onDeleteSelected) return;
+    try {
+      await onDeleteSelected();
+    } catch (error) {
+      console.error("Failed to delete selected products:", error);
+    }
+  };
+
   const handleSelectPage = () => {
     const newSelection = { ...rowSelection };
     data.forEach((product) => {
@@ -93,7 +111,7 @@ export function ProductSelectionBar({
           <DropdownMenuLabel>On All Pages</DropdownMenuLabel>
           <DropdownMenuGroup>
             <DropdownMenuItem
-              onClick={() => void onSelectAllGlobal()}
+              onClick={() => void handleSelectAllGlobal()}
               className="cursor-pointer focus:bg-gray-800 focus:text-white"
               disabled={!!loadingGlobal}
             >
@@ -134,9 +152,7 @@ export function ProductSelectionBar({
             Add to Marketplace
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => {
-              if (onDeleteSelected) void onDeleteSelected();
-            }}
+            onClick={() => void handleDeleteSelected()}
             className="cursor-pointer text-red-400 focus:bg-red-900/20 focus:text-red-300"
           >
             <Trash2 className="mr-2 h-4 w-4" />

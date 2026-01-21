@@ -5,9 +5,9 @@ import ModalShell from "@/components/ui/modal-shell";
 import { Button } from "@/components/ui/button";
 import FileManager from "@/components/files/FileManager";
 import ProductForm from "@/components/products/ProductForm";
-import ProductListingsModal from "@/components/products/ProductListingsModal";
-import ListProductModal from "@/components/products/ListProductModal";
-import MassListProductModal from "@/components/products/MassListProductModal";
+import ProductListingsModal from "@/components/products/modals/ProductListingsModal";
+import ListProductModal from "@/components/products/modals/ListProductModal";
+import MassListProductModal from "@/components/products/modals/MassListProductModal";
 import {
   ProductFormProvider,
   useProductFormContext,
@@ -141,16 +141,29 @@ export function ProductModals({
   onCloseMassList,
   onMassListSuccess,
 }: ProductModalsProps) {
+  const isBackdropMouseDownRef = React.useRef(false);
+
+  const handleBackdropMouseDown = (
+    event: React.MouseEvent<HTMLDivElement>
+  ) => {
+    isBackdropMouseDownRef.current = event.target === event.currentTarget;
+  };
+
+  const handleBackdropMouseUp =
+    (onClose: () => void) => (event: React.MouseEvent<HTMLDivElement>) => {
+      if (event.target === event.currentTarget && isBackdropMouseDownRef.current) {
+        onClose();
+      }
+      isBackdropMouseDownRef.current = false;
+    };
+
   return (
     <>
       {isCreateOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={onCloseCreate}
-          onMouseDown={(e) => {
-            // Only allow close if clicking directly on backdrop
-            if (e.target !== e.currentTarget) e.stopPropagation();
-          }}
+          onMouseDown={handleBackdropMouseDown}
+          onMouseUp={handleBackdropMouseUp(onCloseCreate)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -170,11 +183,8 @@ export function ProductModals({
       {editingProduct && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={onCloseEdit}
-          onMouseDown={(e) => {
-            // Only allow close if clicking directly on backdrop
-            if (e.target !== e.currentTarget) e.stopPropagation();
-          }}
+          onMouseDown={handleBackdropMouseDown}
+          onMouseUp={handleBackdropMouseUp(onCloseEdit)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -194,10 +204,8 @@ export function ProductModals({
       {integrationsProduct && !showListProductModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={onCloseIntegrations}
-          onMouseDown={(e) => {
-            if (e.target !== e.currentTarget) e.stopPropagation();
-          }}
+          onMouseDown={handleBackdropMouseDown}
+          onMouseUp={handleBackdropMouseUp(onCloseIntegrations)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -216,10 +224,8 @@ export function ProductModals({
       {integrationsProduct && showListProductModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={onCloseListProduct}
-          onMouseDown={(e) => {
-            if (e.target !== e.currentTarget) e.stopPropagation();
-          }}
+          onMouseDown={handleBackdropMouseDown}
+          onMouseUp={handleBackdropMouseUp(onCloseListProduct)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -239,10 +245,8 @@ export function ProductModals({
       {exportSettingsProduct && onCloseExportSettings && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={onCloseExportSettings}
-          onMouseDown={(e) => {
-            if (e.target !== e.currentTarget) e.stopPropagation();
-          }}
+          onMouseDown={handleBackdropMouseDown}
+          onMouseUp={handleBackdropMouseUp(onCloseExportSettings)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -261,10 +265,8 @@ export function ProductModals({
       {massListIntegration && massListProductIds && massListProductIds.length > 0 && onCloseMassList && onMassListSuccess && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={onCloseMassList}
-          onMouseDown={(e) => {
-            if (e.target !== e.currentTarget) e.stopPropagation();
-          }}
+          onMouseDown={handleBackdropMouseDown}
+          onMouseUp={handleBackdropMouseUp(onCloseMassList)}
         >
           <div
             onClick={(e) => e.stopPropagation()}

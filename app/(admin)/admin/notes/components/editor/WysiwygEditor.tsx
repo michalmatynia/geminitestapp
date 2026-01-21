@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback, useRef } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
@@ -73,6 +73,7 @@ export function WysiwygEditor({
   contentBackground,
   contentTextColor,
 }: WysiwygEditorProps) {
+  const lastContentRef = useRef(content);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -102,7 +103,7 @@ export function WysiwygEditor({
       TableCell,
       TableHeader,
     ],
-    content: content,
+    content: content || "",
     editorProps: {
       attributes: {
         class:
@@ -112,14 +113,25 @@ export function WysiwygEditor({
     onUpdate: ({ editor }) => {
       // Convert HTML to markdown-like format for storage
       const html = editor.getHTML();
-      setContent(html);
+      if (html !== lastContentRef.current) {
+        lastContentRef.current = html;
+        setContent(html);
+      }
     },
   });
 
   // Update editor content when content prop changes externally
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content);
+    if (!editor || content === lastContentRef.current) {
+      return;
+    }
+    if (content !== editor.getHTML()) {
+      try {
+        lastContentRef.current = content;
+        editor.commands.setContent(content, false);
+      } catch (error) {
+        console.error("Failed to set WYSIWYG content:", error);
+      }
     }
   }, [content, editor]);
 

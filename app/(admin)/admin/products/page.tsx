@@ -7,7 +7,7 @@ import { columns } from "@/components/columns";
 import DebugPanel from "@/components/DebugPanel";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ProductFilters } from "@/components/products/ProductFilters";
+import { ProductFilters } from "@/components/products/list/ProductFilters";
 import { useProductData } from "./hooks/useProductData";
 import { useProductOperations } from "./hooks/useProductOperations";
 import { useCatalogSync } from "./hooks/useCatalogSync";
@@ -20,7 +20,7 @@ import type { RowSelectionState } from "@tanstack/react-table";
 
 const ProductListHeader = dynamic(
   () =>
-    import("@/components/products/ProductListHeader").then(
+    import("@/components/products/list/ProductListHeader").then(
       (mod) => mod.ProductListHeader
     ),
   { ssr: false }
@@ -28,14 +28,14 @@ const ProductListHeader = dynamic(
 
 const ProductSelectionBar = dynamic(
   () =>
-    import("@/components/products/ProductSelectionBar").then(
+    import("@/components/products/list/ProductSelectionBar").then(
       (mod) => mod.ProductSelectionBar
     ),
   { ssr: false }
 );
 
 const SelectIntegrationModal = dynamic(
-  () => import("@/components/products/SelectIntegrationModal"),
+  () => import("@/components/products/modals/SelectIntegrationModal"),
   { ssr: false }
 );
 

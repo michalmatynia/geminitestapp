@@ -35,6 +35,20 @@ export function CatalogsSettings({
     const language = languages.find((l) => l.id === languageId);
     return language ? `${language.name} (${language.code})` : languageId;
   };
+  const languageIdMap = new Map<string, string>();
+  languages.forEach((language) => {
+    if (language.id) languageIdMap.set(language.id, language.id);
+    if (language.code) languageIdMap.set(language.code, language.id);
+  });
+  const normalizeLanguageId = (value?: string | null) =>
+    value ? languageIdMap.get(value) ?? null : null;
+  const resolveCatalogLanguageIds = (catalog: Catalog) => {
+    const unique = Array.from(new Set(catalog.languageIds ?? []));
+    const normalized = unique
+      .map((id) => normalizeLanguageId(id))
+      .filter((id): id is string => Boolean(id));
+    return normalized.length > 0 ? normalized : unique;
+  };
   return (
     <div className="space-y-5">
       <div className="flex justify-start">
@@ -77,19 +91,20 @@ export function CatalogsSettings({
                   </p>
                   {catalog.languageIds && catalog.languageIds.length > 0 ? (
                     <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-300">
-                      {Array.from(new Set(catalog.languageIds)).map(
+                      {resolveCatalogLanguageIds(catalog).map(
                         (languageId, index) => (
                           <span
                             key={languageId}
                             className={`rounded-full border px-2 py-0.5 ${
-                              catalog.defaultLanguageId === languageId
+                              normalizeLanguageId(catalog.defaultLanguageId) ===
+                              languageId
                                 ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
                                 : "border-gray-700 bg-gray-900"
                             }`}
                           >
                             {index + 1}. {getLanguageDisplay(languageId)}
-                            {catalog.defaultLanguageId === languageId &&
-                              " (Default)"}
+                            {normalizeLanguageId(catalog.defaultLanguageId) ===
+                              languageId && " (Default)"}
                           </span>
                         )
                       )}

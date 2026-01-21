@@ -31,7 +31,12 @@ export async function POST(
     }
     const data = deleteSchema.parse(body);
 
-    const inventoryId =
+    // Try to find inventoryId from multiple sources (in order of priority):
+    // 1. Request body (explicit override)
+    // 2. Listing's stored inventoryId
+    // 3. Export history (most recent entry with inventoryId)
+    // 4. Connection's baseLastInventoryId (fallback)
+    let inventoryId =
       data.inventoryId ||
       listing.inventoryId ||
       listing.exportHistory
@@ -40,9 +45,20 @@ export async function POST(
         .find((event) => event.inventoryId)?.inventoryId ||
       null;
 
+    // If still no inventoryId, try to get it from the connection's baseLastInventoryId
+    if (!inventoryId) {
+      const integrationRepo = await getIntegrationRepository();
+      const connectionForInventory = await integrationRepo.getConnectionById(
+        listing.connectionId
+      );
+      if (connectionForInventory?.baseLastInventoryId) {
+        inventoryId = connectionForInventory.baseLastInventoryId;
+      }
+    }
+
     if (!inventoryId) {
       return NextResponse.json(
-        { error: "Missing inventoryId for Base.com deletion." },
+        { error: "Missing inventoryId for Base.com deletion. Please set an inventory ID in the connection settings or provide one manually." },
         { status: 400 }
       );
     }

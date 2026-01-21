@@ -194,7 +194,8 @@ export async function POST(req: Request) {
       return NextResponse.json({
         products: mappedList,
         total: listItems.length,
-        filtered: filteredItems.length,
+        filtered: mappedList.length, // Actual number of items being shown (after limit applied)
+        available: filteredItems.length, // Total available after uniqueOnly filter
         existing: listItems.filter((item) => item.exists).length,
         skuDuplicates: skuDuplicateCount, // New stat
       });

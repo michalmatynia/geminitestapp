@@ -131,6 +131,7 @@ export default function ProductImportsPage() {
   const [importListStats, setImportListStats] = useState<{
     total: number;
     filtered: number;
+    available?: number;
     existing: number;
     skuDuplicates?: number;
   } | null>(null);
@@ -1071,6 +1072,7 @@ export default function ProductImportsPage() {
           ? {
               total: payload.total ?? 0,
               filtered: payload.filtered ?? 0,
+              available: payload.available ?? payload.filtered ?? 0,
               existing: payload.existing ?? 0,
               skuDuplicates: payload.skuDuplicates ?? 0,
             }
@@ -1360,8 +1362,8 @@ export default function ProductImportsPage() {
             {importListStats ? (
               <div className="mt-3 text-xs text-gray-400">
                 Total: {importListStats.total} · Existing:{" "}
-                {importListStats.existing} · Showing: {importListStats.filtered}
-                {" "}· Visible: {filteredImportList.length} · Selected:{" "}
+                {importListStats.existing} · Available: {importListStats.available ?? importListStats.filtered}
+                {" "}· Showing: {importListStats.filtered} · Selected:{" "}
                 {selectedImportCount}
                 {importListStats.skuDuplicates ? (
                   <span className="text-yellow-400"> · SKU duplicates: {importListStats.skuDuplicates}</span>

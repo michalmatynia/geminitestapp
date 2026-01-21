@@ -83,11 +83,11 @@ In Product List, Add a small indicator (maybe an icon underneath SKU) whether th
 
 * When my Dropdown in Product List is set to a given catalog, All PRoduct creations are to be assigned to this catalog.
 
-I am still not seeing the Results in the AI Jobs Detail page when the job is run on a product Generate Description/
+I am still not seeing the detailed Results in the AI Jobs Detail page when the job is run on a product Generate Description/
 When I run the Generate description, I don't get to see the results in the AI Jobs Detail page.
 
 
-I load the import list in the Limit of 10, yet when I see the Import list preview is says Total: 1000 · Existing: 0 · Showing: 1000
+* I load the import list in the Limit of 10, yet when I see the Import list preview is says Total: 1000 · Existing: 0 · Showing: 1000
 
 Title Path for auto generations, and Sending path, 
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ModalShell from "@/components/ui/modal-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +41,7 @@ export default function ProductListingsModal({
   const [error, setError] = useState<string | null>(null);
   const [deletingFromBase, setDeletingFromBase] = useState<string | null>(null);
   const [purgingListing, setPurgingListing] = useState<string | null>(null);
+  const [exportingListing, setExportingListing] = useState<string | null>(null);
   const [inventoryOverrides, setInventoryOverrides] = useState<Record<string, string>>({});
   const [savingInventoryId, setSavingInventoryId] = useState<string | null>(null);
   const [integrations, setIntegrations] = useState<IntegrationWithConnections[]>([]);
@@ -51,26 +52,26 @@ export default function ProductListingsModal({
   const productName =
     product.name_en || product.name_pl || product.name_de || "Unnamed Product";
 
-  useEffect(() => {
-    const fetchListings = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await fetch(`/api/products/${product.id}/listings`);
-        if (!res.ok) {
-          throw new Error("Failed to fetch listings");
-        }
-        const data = (await res.json()) as ProductListingRecord[];
-        setListings(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load listings");
-      } finally {
-        setLoading(false);
+  const fetchListings = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch(`/api/products/${product.id}/listings`);
+      if (!res.ok) {
+        throw new Error("Failed to fetch listings");
       }
-    };
-
-    void fetchListings();
+      const data = (await res.json()) as ProductListingRecord[];
+      setListings(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load listings");
+    } finally {
+      setLoading(false);
+    }
   }, [product.id]);
+
+  useEffect(() => {
+    void fetchListings();
+  }, [fetchListings]);
 
   useEffect(() => {
     const fetchIntegrations = async () => {
@@ -121,6 +122,17 @@ export default function ProductListingsModal({
     if (product.price !== null && product.price !== undefined) fields.push("Price");
     if (product.stock !== null && product.stock !== undefined) fields.push("Stock");
     return fields.length > 0 ? fields.join(", ") : "No exportable fields detected";
+  };
+
+  const getLatestTemplateId = (listing: ProductListingRecord) => {
+    const history = listing.exportHistory ?? [];
+    if (history.length === 0) return null;
+    const sorted = [...history].sort((a, b) => {
+      const aTime = a.exportedAt ? new Date(a.exportedAt).getTime() : 0;
+      const bTime = b.exportedAt ? new Date(b.exportedAt).getTime() : 0;
+      return bTime - aTime;
+    });
+    return sorted[0]?.templateId ?? null;
   };
 
   // Sync direction types
@@ -296,11 +308,8 @@ export default function ProductListingsModal({
 
     try {
       setDeletingFromBase(listingId);
+      // Send inventoryId if available, but let the backend handle fallback logic
       const inventoryId = (inventoryOverrides[listingId] || listing.inventoryId || "").trim();
-      if (!inventoryId) {
-        setError("Inventory ID is required to delete from Base.com.");
-        return;
-      }
       const body = inventoryId ? { inventoryId } : {};
       const res = await fetch(
         `/api/products/${product.id}/listings/${listingId}/delete-from-base`,
@@ -392,6 +401,40 @@ export default function ProductListingsModal({
       setError(err instanceof Error ? err.message : "Failed to save inventory ID");
     } finally {
       setSavingInventoryId(null);
+    }
+  };
+
+  const handleExportAgain = async (listingId: string) => {
+    const listing = listings.find((item) => item.id === listingId);
+    if (!listing) return;
+    const inventoryId = (inventoryOverrides[listingId] || listing.inventoryId || "").trim();
+    if (!inventoryId) {
+      setError("Inventory ID is required.");
+      return;
+    }
+
+    try {
+      setExportingListing(listingId);
+      const templateId = getLatestTemplateId(listing) ?? undefined;
+      const res = await fetch(`/api/products/${product.id}/export-to-base`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          connectionId: listing.connectionId,
+          inventoryId,
+          templateId,
+        }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.error || "Failed to export product");
+      }
+      await fetchListings();
+      onListingsUpdated?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to export product");
+    } finally {
+      setExportingListing(null);
     }
   };
 
@@ -594,6 +637,18 @@ export default function ProductListingsModal({
                 <div className="ml-4 flex flex-col gap-2">
                   {["baselinker", "base-com"].includes(listing.integration.slug) && (
                     <>
+                      {listing.status === "failed" && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void handleExportAgain(listing.id)}
+                          disabled={exportingListing === listing.id}
+                          className="border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10"
+                        >
+                          Export again
+                        </Button>
+                      )}
                       {!listing.inventoryId && (
                         <div className="space-y-1 text-xs text-gray-400">
                           <label htmlFor={`inventory-${listing.id}`}>

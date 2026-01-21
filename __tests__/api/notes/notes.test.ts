@@ -66,7 +66,7 @@ describe("Notes API", () => {
     });
 
     const res = await GET_NOTES(new Request("http://localhost/api/notes"));
-    const notes = await res.json();
+    const notes = (await res.json()) as any[];
 
     expect(res.status).toBe(200);
     expect(notes).toHaveLength(1);
@@ -83,7 +83,7 @@ describe("Notes API", () => {
         "http://localhost/api/notes?search=Alpha&searchScope=title&isPinned=true"
       )
     );
-    const notes = await res.json();
+    const notes = (await res.json()) as any[];
 
     expect(res.status).toBe(200);
     expect(notes).toHaveLength(1);
@@ -106,7 +106,7 @@ describe("Notes API", () => {
         `http://localhost/api/notes?tagIds=${tag.id}&categoryIds=${category.id}`
       )
     );
-    const notes = await res.json();
+    const notes = (await res.json()) as any[];
 
     expect(res.status).toBe(200);
     expect(notes).toHaveLength(1);
@@ -129,7 +129,7 @@ describe("Notes API", () => {
         }),
       })
     );
-    const note = await res.json();
+    const note = (await res.json()) as any;
 
     expect(res.status).toBe(201);
     expect(note.tags[0].tag.name).toBe("Personal");
@@ -154,7 +154,7 @@ describe("Notes API", () => {
     const res = await GET_NOTE(new Request("http://localhost/api/notes/x"), {
       params: Promise.resolve({ id: note.id }),
     });
-    const data = await res.json();
+    const data = (await res.json()) as { id: string };
 
     expect(res.status).toBe(200);
     expect(data.id).toBe(note.id);
@@ -194,7 +194,7 @@ describe("Notes API", () => {
       }),
       { params: Promise.resolve({ id: note.id }) }
     );
-    const data = await res.json();
+    const data = (await res.json()) as any;
 
     expect(res.status).toBe(200);
     expect(data.title).toBe("Updated");

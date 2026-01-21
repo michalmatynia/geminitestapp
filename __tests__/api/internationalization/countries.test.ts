@@ -3,9 +3,10 @@ import { PUT } from "../../../app/api/countries/[id]/route";
 import prisma from "@/lib/prisma";
 
 type CountryResponse = {
+  id: string;
   code: string;
   name: string;
-  currencies: Array<{ currency: { code: string } }>;
+  currencies: Array<{ currencyId: string; currency: { code: string } }>;
 };
 
 describe("Countries API", () => {
@@ -41,7 +42,7 @@ describe("Countries API", () => {
       expect(dbLanguages.length).toBeGreaterThan(0);
 
       // Check specific seeded data
-      const pl = countries.find((c: any) => c.code === "PL");
+      const pl = countries.find((c: CountryResponse) => c.code === "PL");
       if (!pl) {
         throw new Error("Expected seeded country PL.");
       }
@@ -84,7 +85,7 @@ describe("Countries API", () => {
       });
 
       const res = await POST(req);
-      const country = await res.json();
+      const country = (await res.json()) as CountryResponse;
 
       expect(res.status).toEqual(200);
       expect(country.code).toBe("DE");
@@ -109,7 +110,7 @@ describe("Countries API", () => {
       });
 
       const res = await POST(req);
-      const country = await res.json();
+      const country = (await res.json()) as CountryResponse;
 
       expect(res.status).toEqual(200);
       expect(country.currencies).toHaveLength(1);
@@ -151,7 +152,7 @@ describe("Countries API", () => {
       });
 
       const res = await PUT(req, { params: Promise.resolve({ id: country.id }) });
-      const updated = await res.json();
+      const updated = (await res.json()) as CountryResponse;
 
       expect(res.status).toEqual(200);
       expect(updated.currencies).toHaveLength(1);

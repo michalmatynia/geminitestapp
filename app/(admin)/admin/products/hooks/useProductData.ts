@@ -41,6 +41,7 @@ export function useProductData({
   // Sync catalogFilter when initialCatalogFilter changes (from preferences)
   useEffect(() => {
     if (preferencesLoaded && catalogFilter !== initialCatalogFilter) {
+      // eslint-disable-next-line
       setCatalogFilter(initialCatalogFilter);
     }
   }, [initialCatalogFilter, preferencesLoaded, catalogFilter]);
@@ -48,6 +49,7 @@ export function useProductData({
   // Sync pageSize when initialPageSize changes (from preferences)
   useEffect(() => {
     if (preferencesLoaded && pageSize !== initialPageSize) {
+      // eslint-disable-next-line
       setPageSize(initialPageSize);
     }
   }, [initialPageSize, preferencesLoaded, pageSize]);

@@ -12,8 +12,12 @@ import { getImportTemplate } from "@/lib/services/import-template-repository";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { decryptSecret } from "@/lib/utils/encryption";
 import {
+  fetchBaseAllWarehouses,
+  fetchBaseAllWarehousesDebug,
   fetchBaseInventories,
+  fetchBaseInventoriesDebug,
   fetchBaseWarehouses,
+  fetchBaseWarehousesDebug,
   fetchBaseProducts,
   fetchBaseProductIds,
   fetchBaseProductDetails,
@@ -25,9 +29,10 @@ export const runtime = "nodejs";
 
 const requestSchema = z.object({
   token: z.string().trim().min(1).optional(),
-  action: z.enum(["inventories", "warehouses", "import", "list"]),
+  action: z.enum(["inventories", "warehouses", "warehouses_debug", "import", "list"]),
   connectionId: z.string().trim().min(1).optional(),
   inventoryId: z.string().trim().min(1).optional(),
+  includeAllWarehouses: z.boolean().optional(),
   catalogId: z.string().trim().min(1).optional(),
   templateId: z.string().trim().min(1).optional(),
   limit: z.coerce.number().int().positive().optional(),
@@ -100,7 +105,48 @@ export async function POST(req: Request) {
         );
       }
       const warehouses = await fetchBaseWarehouses(token, data.inventoryId);
-      return NextResponse.json({ warehouses });
+      let allWarehouses: { id: string; name: string }[] = [];
+      if (data.includeAllWarehouses) {
+        try {
+          allWarehouses = await fetchBaseAllWarehouses(token);
+        } catch {
+          allWarehouses = [];
+        }
+      }
+      return NextResponse.json({ warehouses, allWarehouses });
+    }
+
+    if (data.action === "warehouses_debug") {
+      if (!data.inventoryId) {
+        return NextResponse.json(
+          { error: "Inventory ID is required." },
+          { status: 400 }
+        );
+      }
+      const inventoryResult = await fetchBaseWarehousesDebug(
+        token,
+        data.inventoryId
+      );
+      const inventoriesResult = await fetchBaseInventoriesDebug(token);
+      let allResult: Awaited<ReturnType<typeof fetchBaseAllWarehousesDebug>> | null =
+        null;
+      if (data.includeAllWarehouses) {
+        try {
+          allResult = await fetchBaseAllWarehousesDebug(token);
+        } catch {
+          allResult = null;
+        }
+      }
+      return NextResponse.json({
+        warehouses: inventoryResult.warehouses,
+        allWarehouses: allResult?.warehouses ?? [],
+        inventories: inventoriesResult.inventories ?? [],
+        raw: {
+          inventory: inventoryResult,
+          inventories: inventoriesResult,
+          all: allResult,
+        },
+      });
     }
 
     if (!data.inventoryId) {

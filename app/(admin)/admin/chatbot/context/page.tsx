@@ -242,6 +242,45 @@ function ChatbotContextPageInner() {
     }
   };
 
+  const handleSaveContexts = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          key: "chatbot_global_context_items",
+          value: JSON.stringify(contexts),
+        }),
+      });
+      if (!res.ok) {
+        const error = (await res.json()) as { error?: string };
+        throw new Error(error.error || "Failed to save contexts.");
+      }
+      const resActive = await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          key: "chatbot_global_context_active",
+          value: JSON.stringify(activeIds),
+        }),
+      });
+      if (!resActive.ok) {
+        const error = (await resActive.json()) as { error?: string };
+        throw new Error(error.error || "Failed to save active contexts.");
+      }
+      toast("Global contexts saved", { variant: "success" });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to save contexts.";
+      toast(message, { variant: "error" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const uniqueTags = Array.from(
     new Set(contexts.flatMap((item) => item.tags || []))
   );
@@ -293,11 +332,13 @@ function ChatbotContextPageInner() {
                 accept="application/pdf"
                 className="hidden"
                 disabled={loading || saving || uploading}
-                onChange={async (event) => {
-                  const file = event.target.files?.[0];
-                  if (!file) return;
-                  await handlePdfUpload(file);
-                  event.target.value = "";
+                onChange={(event) => {
+                  void (async () => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    await handlePdfUpload(file);
+                    event.target.value = "";
+                  })();
                 }}
               />
             </label>
@@ -453,44 +494,7 @@ function ChatbotContextPageInner() {
         <div className="mt-6 flex justify-end">
           <Button
             type="button"
-            onClick={async () => {
-              setSaving(true);
-              try {
-                const res = await fetch("/api/settings", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    key: "chatbot_global_context_items",
-                    value: JSON.stringify(contexts),
-                  }),
-                });
-                if (!res.ok) {
-                  const error = (await res.json()) as { error?: string };
-                  throw new Error(error.error || "Failed to save contexts.");
-                }
-                const resActive = await fetch("/api/settings", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    key: "chatbot_global_context_active",
-                    value: JSON.stringify(activeIds),
-                  }),
-                });
-                if (!resActive.ok) {
-                  const error = (await resActive.json()) as { error?: string };
-                  throw new Error(error.error || "Failed to save active contexts.");
-                }
-                toast("Global contexts saved", { variant: "success" });
-              } catch (error) {
-                const message =
-                  error instanceof Error
-                    ? error.message
-                    : "Failed to save contexts.";
-                toast(message, { variant: "error" });
-              } finally {
-                setSaving(false);
-              }
-            }}
+            onClick={() => void handleSaveContexts()}
             disabled={saving || loading}
           >
             {saving ? "Saving..." : "Save"}

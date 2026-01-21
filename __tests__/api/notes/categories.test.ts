@@ -45,7 +45,7 @@ describe("Notes Categories API", () => {
     const res = await GET_CATEGORIES(
       new Request("http://localhost/api/notes/categories")
     );
-    const categories = await res.json();
+    const categories = (await res.json()) as any[];
 
     expect(res.status).toBe(200);
     expect(categories).toHaveLength(2);
@@ -59,7 +59,7 @@ describe("Notes Categories API", () => {
         body: JSON.stringify({ name: "Projects" }),
       })
     );
-    const created = await res.json();
+    const created = (await res.json()) as { name: string };
 
     expect(res.status).toBe(201);
     expect(created.name).toBe("Projects");
@@ -86,7 +86,7 @@ describe("Notes Categories API", () => {
       }),
       { params: Promise.resolve({ id: category.id }) }
     );
-    const updated = await res.json();
+    const updated = (await res.json()) as { name: string };
 
     expect(res.status).toBe(200);
     expect(updated.name).toBe("New Name");
@@ -100,7 +100,7 @@ describe("Notes Categories API", () => {
     const res = await GET_TREE(
       new Request("http://localhost/api/notes/categories/tree")
     );
-    const tree = await res.json();
+    const tree = (await res.json()) as any[];
 
     expect(res.status).toBe(200);
     expect(tree).toHaveLength(1);

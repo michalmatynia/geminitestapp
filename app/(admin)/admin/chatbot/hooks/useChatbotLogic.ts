@@ -1,21 +1,15 @@
 "use client";
 
-import React, {
+import {
   useState,
-  useRef,
   useEffect,
   useMemo,
   useCallback,
 } from "react";
 import { useToast } from "@/components/ui/toast";
 import {
-  safeLocalStorageGet,
-  readCachedMessages,
-  writeCachedMessages,
-  persistSessionMessage,
   fetchWithTimeout,
   readErrorResponse,
-  safeLocalStorageSet,
 } from "../utils";
 import {
   ChatMessage,
@@ -24,7 +18,7 @@ import {
 } from "@/types/chatbot";
 import type { ChatSession } from "../types";
 import { useSearchParams } from "next/navigation";
-import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from "../constants";
+import { CHATBOT_SETTINGS_KEY } from "../constants";
 
 export const useChatbotLogic = () => {
   const { toast } = useToast();
@@ -92,11 +86,11 @@ export const useChatbotLogic = () => {
     try {
       const response = await fetch("/api/chatbot/sessions");
       if (response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as { sessions?: ChatSession[] };
         setSessions(data.sessions || []);
 
         // If no current session and sessions exist, select the first one
-        if (!currentSessionId && data.sessions.length > 0) {
+        if (!currentSessionId && data.sessions && data.sessions.length > 0) {
           setCurrentSessionId(data.sessions[0].id);
         }
       }
@@ -112,8 +106,10 @@ export const useChatbotLogic = () => {
     try {
       const response = await fetch(`/api/chatbot/sessions/${id}`);
       if (response.ok) {
-        const data = await response.json();
-        setMessages(data.session.messages || []);
+        const data = (await response.json()) as {
+          session: { messages: ChatMessage[] };
+        };
+        setMessages(data.session?.messages || []);
       }
     } catch (error) {
       console.error("Failed to load session messages:", error);
@@ -132,7 +128,7 @@ export const useChatbotLogic = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as { sessionId: string };
         await fetchSessions();
         setCurrentSessionId(data.sessionId);
         setMessages([]);
@@ -320,7 +316,7 @@ export const useChatbotLogic = () => {
         throw new Error("Failed to send message");
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as { message?: string };
 
       if (data.message) {
         const assistantMessage: ChatMessage = {

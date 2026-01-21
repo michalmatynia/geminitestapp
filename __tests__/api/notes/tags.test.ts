@@ -27,7 +27,7 @@ describe("Notes Tags API", () => {
     const res = await GET_TAGS(
       new Request("http://localhost/api/notes/tags")
     );
-    const tags = await res.json();
+    const tags = (await res.json()) as any[];
 
     expect(res.status).toBe(200);
     expect(tags[0].name).toBe("Alpha");
@@ -42,7 +42,7 @@ describe("Notes Tags API", () => {
         body: JSON.stringify({ name: "Personal" }),
       })
     );
-    const tag = await res.json();
+    const tag = (await res.json()) as { name: string };
 
     expect(res.status).toBe(201);
     expect(tag.name).toBe("Personal");
@@ -71,7 +71,7 @@ describe("Notes Tags API", () => {
       }),
       { params: Promise.resolve({ id: tag.id }) }
     );
-    const updated = await res.json();
+    const updated = (await res.json()) as { name: string };
 
     expect(res.status).toBe(200);
     expect(updated.name).toBe("New");

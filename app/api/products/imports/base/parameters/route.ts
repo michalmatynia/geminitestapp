@@ -9,9 +9,18 @@ import {
   setImportParameterCache,
 } from "@/lib/services/import-template-repository";
 
+const optionalIdSchema = z.preprocess(
+  (value) => {
+    if (typeof value !== "string") return value;
+    const trimmed = value.trim();
+    return trimmed ? trimmed : undefined;
+  },
+  z.string().trim().min(1).optional()
+);
+
 const requestSchema = z.object({
-  inventoryId: z.string().trim().min(1).optional(),
-  productId: z.string().trim().min(1).optional(),
+  inventoryId: optionalIdSchema,
+  productId: optionalIdSchema,
   clearOnly: z.boolean().optional(),
 });
 
@@ -329,6 +338,12 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ keys, values });
   } catch (error: unknown) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Inventory ID and Product ID are required.", errorId },
+        { status: 400 }
+      );
+    }
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[debug-error] Failed to load keys", {
       errorId,

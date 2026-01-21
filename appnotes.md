@@ -1,36 +1,19 @@
 
-* When I open Product Edit it takes really long to feed data to fields
+In Integrations Baslinker Tab, create a separate Sync Tab, Where I can set Synchronization intervals. Also, I should be able to setup which way the syning is preferred for each field. So if stock changes in Base.com, should it overwrite what is in my platform, or should it be the other way round. which specific fields are synchronised is set up on per Product basis. So remove syn Price and Sync Inventory Tabs.
 
-* I want my "Export history" to  be collapsible and sortable by date (most recent first by default)
-
-* Each Export request should have a separate row in Export Jobs with information specific to that Export attampt. Removal from Base.com should also be there, with all the information 
+Category Mapping to Base.com
+Save my export settings. They need to be SAVED in the Database. 
 
 In Product List - Operations - I need an Option to Mass Export Products to Base.com
 
 When I export my product, still Stock is not exporting. My English Name goes into 
 Polish Name is not exported at all. My English Description is inserted into Polish Description in Base.com. My Polish Description is not exported at all. I am using Export Template and its parameter mappings for Export. 
 
-
 In Product Edit / Create Tags Field should be searchable field
 
 Opening WYSYWIG Note fails in Edit Mode
 
 I am unable to Open my Note, if I migrate it to Wysiwyg
-
-
-* In Product Edit / Create When a Product is not connected to any catalog, don't show Title and Content, as these are only available on per language basis which is part of catalog. The same goes for price and price groups. Give the user indication 
-to select the Catalog first.
-
-* In Product Create / Edit it seems selecting and saving the catalog doesn't work
-
-* In Product Create / Edit, when the Panel opens, it first shows all language tabs, then it quickly filters through what's available in Catalog and then it shows the contrained langauge tabes (for content and Title). I would like this behavior not to be visible, and filtering should be done prior to showing the final tabs to the user.
-
-* In Product Edit / Create Catalog Field only shows the number of catalogs to which the PRoduct is connected, but I don't see the Catalog Names
-
-
-
-* Clicking Export should create an Export job, so that I can continue working with the page, while the export is being done.
-
 
 In my Note theme I should be able to set I only want the Markdown note or Wysiwyg or code snippet notes. the default being Markdown. I should also be able to apply Theme to All Notes
 
@@ -45,16 +28,7 @@ Note App, switching to Wysywig not workin/ - wait there is segmentation in place
 
 * Import table should have a search field and should have checkmarks so that I can select which products are to be imported
 
-* Mapping parameters resorting
-
- * Product List, when I click on the house which is green synced, I should have the option to remove the product from base.com, but since the connection was already established once, the house should change color to greyish. Also, there should be more information provided by clicking the house, such as when were the exports made, what information was exported, etc.
-
-* CLicking the little greenhouse should also show what is being synchronized with base.com , name, stock, price, description and what type of synchronization is is (is it from base.com only, is it from my product to base.com only or is it both ways, if one is attribute, for example stock, changes, the others need to change too )
-Add individual syncing options to teh green hose
-
 * Notebook App, when I create a new notebook, I should have the option to choose whether I want the notebook to be WYSIWYG or Markdown. Employ the USe of WYSIWYG in Notes.
-
-* Product List, each row should have Price indication based on which currency is currently selected in PRoduct List view.
 
 At some point the exported product should sync image URLs links with my website
 
@@ -71,7 +45,7 @@ At some point the exported product should sync image URLs links with my website
 
 * When I Create Product after adding images, the screen filckers
 
-
+Prefilled Product Templates
 
 
 * my Product list Filter choices are not retained (for example catalog) when I change between pages, they were supposed to be kept in Mongo DB and be persistent.

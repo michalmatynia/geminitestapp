@@ -1045,11 +1045,11 @@ function IntegrationsContent() {
           setEditingConnectionId={setEditingConnectionId}
           connectionForm={connectionForm}
           setConnectionForm={setConnectionForm}
-          onSaveConnection={handleSaveConnection}
-          onDeleteConnection={handleDeleteConnection}
-          onTestConnection={handleTestConnection}
-          onBaselinkerTest={handleBaselinkerTest}
-          onAllegroTest={handleAllegroTest}
+          onSaveConnection={() => void handleSaveConnection()}
+          onDeleteConnection={(c) => void handleDeleteConnection(c)}
+          onTestConnection={(c) => void handleTestConnection(c)}
+          onBaselinkerTest={(c) => void handleBaselinkerTest(c)}
+          onAllegroTest={(c) => void handleAllegroTest(c)}
           isTesting={isTesting}
           testLog={testLog}
           onShowLog={(step) => {
@@ -1079,14 +1079,14 @@ function IntegrationsContent() {
           onCloseSessionModal={() => setShowSessionModal(false)}
           playwrightSettings={playwrightSettings}
           setPlaywrightSettings={setPlaywrightSettings}
-          onSavePlaywrightSettings={handleSavePlaywrightSettings}
+          onSavePlaywrightSettings={() => void handleSavePlaywrightSettings()}
           showPlaywrightSaved={showPlaywrightSaved}
-          onOpenSessionModal={handleOpenSessionModal}
+          onOpenSessionModal={() => void handleOpenSessionModal()}
           savingAllegroSandbox={savingAllegroSandbox}
-          onToggleAllegroSandbox={handleAllegroSandboxToggle}
-          onAllegroAuthorize={handleAllegroAuthorize}
-          onAllegroDisconnect={handleAllegroDisconnect}
-          onAllegroSandboxConnect={handleAllegroSandboxConnect}
+          onToggleAllegroSandbox={(v) => void handleAllegroSandboxToggle(v)}
+          onAllegroAuthorize={() => void handleAllegroAuthorize()}
+          onAllegroDisconnect={() => void handleAllegroDisconnect()}
+          onAllegroSandboxConnect={() => void handleAllegroSandboxConnect()}
           baseApiMethod={baseApiMethod}
           setBaseApiMethod={setBaseApiMethod}
           baseApiParams={baseApiParams}
@@ -1094,7 +1094,7 @@ function IntegrationsContent() {
           baseApiLoading={baseApiLoading}
           baseApiError={baseApiError}
           baseApiResponse={baseApiResponse}
-          onBaseApiRequest={handleBaseApiRequest}
+          onBaseApiRequest={() => void handleBaseApiRequest()}
           allegroApiMethod={allegroApiMethod}
           setAllegroApiMethod={setAllegroApiMethod}
           allegroApiPath={allegroApiPath}
@@ -1104,7 +1104,7 @@ function IntegrationsContent() {
           allegroApiLoading={allegroApiLoading}
           allegroApiError={allegroApiError}
           allegroApiResponse={allegroApiResponse}
-          onAllegroApiRequest={handleAllegroApiRequest}
+          onAllegroApiRequest={() => void handleAllegroApiRequest()}
         />
       )}
     </div>

@@ -119,7 +119,7 @@ export default function AuthSettingsPage() {
             className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-600 disabled:text-gray-300"
             type="button"
             disabled={!dirty || saving}
-            onClick={handleSave}
+            onClick={() => void handleSave()}
           >
             {saving ? "Saving..." : "Save auth provider"}
           </button>

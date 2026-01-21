@@ -119,7 +119,7 @@ export default function MassListProductModal({
   useEffect(() => {
     const loadPreferredInventory = async () => {
       try {
-        const res = await fetch("/api/products/imports/base/sample-product");
+        const res = await fetch("/api/products/exports/base/default-inventory");
         if (!res.ok) return;
         const payload = (await res.json()) as { inventoryId?: string | null };
         setPreferredInventoryId(payload.inventoryId ?? null);

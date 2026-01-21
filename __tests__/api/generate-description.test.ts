@@ -48,7 +48,7 @@ describe("AI Description Generation API", () => {
     );
 
     const res = await POST(req);
-    const data = await res.json();
+    const data = (await res.json()) as { description: string };
 
     expect(res.status).toBe(200);
     expect(data.description).toBe("This is a test description.");

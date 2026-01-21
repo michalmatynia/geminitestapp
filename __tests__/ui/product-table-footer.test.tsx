@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { ProductTableFooter } from "@/components/products/ProductTableFooter";
 import { Table } from "@tanstack/react-table";
 
@@ -12,7 +12,7 @@ describe("ProductTableFooter Component", () => {
     getFilteredRowModel: () => ({ rows: { length: 100 } }),
     getSelectedRowModel: () => ({ rows: [] }),
     setRowSelection: jest.fn(),
-  } as unknown as Table<any>;
+  } as unknown as Table<object>;
 
   const mockProps = {
     table: mockTable,
@@ -35,7 +35,7 @@ describe("ProductTableFooter Component", () => {
     const tableWithSelection = {
       ...mockTable,
       getFilteredSelectedRowModel: () => ({ rows: [{}, {}] }),
-    } as unknown as Table<any>;
+    } as unknown as Table<object>;
 
     render(<ProductTableFooter {...mockProps} table={tableWithSelection} />);
     const deleteButton = screen.getByText("Delete Selected");

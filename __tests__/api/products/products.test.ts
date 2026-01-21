@@ -6,6 +6,7 @@ import { GET as GET_PUBLIC } from "../../../app/api/public/products/[id]/route";
 import { NextRequest } from "next/server";
 import { createMockProduct } from "@/lib/utils/productUtils";
 import prisma from "@/lib/prisma";
+import { Product } from "@prisma/client";
 
 describe("Products API", () => {
   beforeEach(async () => {
@@ -24,14 +25,14 @@ describe("Products API", () => {
       await createMockProduct({ name_en: "Product 1" });
       await createMockProduct({ name_en: "Product 2" });
       const res = await GET_LIST(new Request("http://localhost/api/products"));
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(2);
     });
 
     it("should return an empty array if no products exist", async () => {
       const res = await GET_LIST(new Request("http://localhost/api/products"));
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products).toEqual([]);
     });
@@ -42,7 +43,7 @@ describe("Products API", () => {
       const res = await GET_LIST(
         new Request("http://localhost/api/products?search=lap")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
       expect(products[0].name_en).toEqual("Laptop");
@@ -54,7 +55,7 @@ describe("Products API", () => {
       const res = await GET_LIST(
         new Request("http://localhost/api/products?search=mysz")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
       expect(products[0].name_pl).toEqual("Mysz (PL)");
@@ -66,7 +67,7 @@ describe("Products API", () => {
       const res = await GET_LIST(
         new Request("http://localhost/api/products?search=maus")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
       expect(products[0].name_de).toEqual("Maus (DE)");
@@ -78,7 +79,7 @@ describe("Products API", () => {
       const res = await GET_LIST(
         new Request("http://localhost/api/products?search=gaming")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
       expect(products[0].description_en).toEqual("Fast laptop for gaming");
@@ -90,7 +91,7 @@ describe("Products API", () => {
       const res = await GET_LIST(
         new Request("http://localhost/api/products?search=gier")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
       expect(products[0].description_pl).toEqual("Szybki laptop do gier");
@@ -102,7 +103,7 @@ describe("Products API", () => {
       const res = await GET_LIST(
         new Request("http://localhost/api/products?search=spiele")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
       expect(products[0].description_de).toEqual("Schneller Laptop für Spiele");
@@ -114,7 +115,7 @@ describe("Products API", () => {
       const res = await GET_LIST(
         new Request("http://localhost/api/products?minPrice=200")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
     });
@@ -125,7 +126,7 @@ describe("Products API", () => {
       const res = await GET_LIST(
         new Request("http://localhost/api/products?maxPrice=200")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
     });
@@ -138,7 +139,7 @@ describe("Products API", () => {
       const res = await GET_LIST(
         new Request("http://localhost/api/products?startDate=2023-03-01")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
     });
@@ -151,7 +152,7 @@ describe("Products API", () => {
       const res = await GET_LIST(
         new Request("http://localhost/api/products?endDate=2023-03-01")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
     });
@@ -164,7 +165,7 @@ describe("Products API", () => {
           "http://localhost/api/products?search=lap&minPrice=1000&maxPrice=1500"
         )
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
     });
@@ -175,7 +176,7 @@ describe("Products API", () => {
       const res = await GET_LIST(
         new Request("http://localhost/api/products?sku=ABC")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
       expect(products[0].sku).toEqual("ABC123");
@@ -195,7 +196,7 @@ describe("Products API", () => {
         length: 20,
       });
       const res = await GET_LIST(new Request("http://localhost/api/products"));
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
       const product = products[0];
@@ -258,7 +259,7 @@ describe("Products API", () => {
         body: formData,
       });
       const res = await POST(req);
-      const product = await res.json();
+      const product = (await res.json()) as Product;
 
       expect(res.status).toEqual(200);
       expect(product.name_en).toEqual("New Product (EN)");
@@ -358,7 +359,7 @@ describe("Products API", () => {
       const res = await PUT(req, {
         params: Promise.resolve({ id: product.id }),
       });
-      const updatedProduct = await res.json();
+      const updatedProduct = (await res.json()) as Product;
 
       expect(res.status).toEqual(200);
       expect(updatedProduct.id).toEqual(product.id);
@@ -433,7 +434,7 @@ describe("Products API", () => {
       const res = await GET_PUBLIC(req, {
         params: Promise.resolve({ id: product.id }),
       });
-      const fetchedProduct = await res.json();
+      const fetchedProduct = (await res.json()) as Product;
       expect(res.status).toEqual(200);
       expect(fetchedProduct.name_en).toEqual("Product 1 (EN)");
     });
@@ -442,7 +443,7 @@ describe("Products API", () => {
       const product = await createMockProduct({ name_en: "Product 1 (EN)" });
       const req = new Request(`http://localhost/api/products/${product.id}`);
       const res = await GET_PUBLIC(req, { params: Promise.resolve({ id: product.id }) });
-      const fetchedProduct = await res.json();
+      const fetchedProduct = (await res.json()) as Product;
       expect(res.status).toEqual(200);
       expect(fetchedProduct.name_en).toEqual("Product 1 (EN)");
     });
@@ -525,7 +526,7 @@ describe("Products API", () => {
       const res = await POST_DUPLICATE(req, {
         params: Promise.resolve({ id: product.id }),
       });
-      const duplicated = await res.json();
+      const duplicated = (await res.json()) as Product;
 
       expect(res.status).toEqual(200);
       expect(duplicated.sku).toEqual("NEW123");

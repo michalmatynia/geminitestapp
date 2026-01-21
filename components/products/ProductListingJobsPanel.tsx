@@ -114,6 +114,8 @@ export default function ProductListingJobsPanel({
   const [refreshing, setRefreshing] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [selectedListing, setSelectedListing] = useState<{
     job: ProductJob;
     listing: ListingJob;
@@ -186,6 +188,10 @@ export default function ProductListingJobsPanel({
     setHistoryExpanded(false);
     setHistorySort("desc");
   }, [selectedListing?.listing.id]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, jobs]);
 
   useEffect(() => {
     const hasPending = jobs.some((job) =>
@@ -267,6 +273,12 @@ export default function ProductListingJobsPanel({
     const bTime = new Date(b.attempt?.exportedAt ?? b.listing.updatedAt ?? b.listing.createdAt).getTime();
     return bTime - aTime;
   });
+  const totalRows = sortedRows.length;
+  const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+  const clampedPage = Math.min(page, totalPages);
+  const startIndex = (clampedPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const pagedRows = sortedRows.slice(startIndex, endIndex);
 
   const selectedAttempt = selectedListing?.attempt ?? null;
   const selectedStatus = selectedAttempt?.status ?? selectedListing?.listing.status ?? "";
@@ -343,7 +355,7 @@ export default function ProductListingJobsPanel({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800">
-                {sortedRows.length === 0 ? (
+                {pagedRows.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
                       {loading
@@ -352,7 +364,7 @@ export default function ProductListingJobsPanel({
                     </td>
                   </tr>
                 ) : (
-                  sortedRows.map(({ job, listing, attempt, attemptIndex }) => {
+                  pagedRows.map(({ job, listing, attempt, attemptIndex }) => {
                     const status = attempt?.status ?? listing.status ?? "unknown";
                     const typeLabel = status === "deleted" || status === "removed" ? "Removal" : "Export";
                     const attemptLabel =
@@ -438,6 +450,50 @@ export default function ProductListingJobsPanel({
                 )}
               </tbody>
             </table>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-gray-400">
+            <div>
+              Showing {totalRows === 0 ? 0 : startIndex + 1}–{Math.min(endIndex, totalRows)} of {totalRows}
+            </div>
+            <div className="flex items-center gap-2">
+              <label htmlFor="exportJobsPageSize">Rows</label>
+              <select
+                id="exportJobsPageSize"
+                className="rounded-md border border-gray-800 bg-gray-900 px-2 py-1 text-xs text-white"
+                value={pageSize}
+                onChange={(event) => {
+                  setPageSize(Number(event.target.value));
+                  setPage(1);
+                }}
+              >
+                {[10, 25, 50, 100].map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={clampedPage <= 1}
+                className="border-gray-700 bg-gray-800 hover:bg-gray-700"
+              >
+                Prev
+              </Button>
+              <span className="min-w-[72px] text-center">
+                {clampedPage} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                disabled={clampedPage >= totalPages}
+                className="border-gray-700 bg-gray-800 hover:bg-gray-700"
+              >
+                Next
+              </Button>
+            </div>
           </div>
         </div>
       )}

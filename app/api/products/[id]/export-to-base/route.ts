@@ -6,8 +6,16 @@ import { getProductListingRepository } from "@/lib/services/product-listing-repo
 import {
   getExportWarehouseId,
 } from "@/lib/services/import-template-repository";
-import { listExportTemplates } from "@/lib/services/export-template-repository";
-import { buildBaseProductData, exportProductToBase } from "@/lib/services/exports/base-exporter";
+import {
+  getExportDefaultInventoryId,
+  getExportStockFallbackEnabled,
+  listExportTemplates,
+} from "@/lib/services/export-template-repository";
+import {
+  buildBaseProductData,
+  exportProductToBase,
+  normalizeStockKey,
+} from "@/lib/services/exports/base-exporter";
 import { checkBaseSkuExists, fetchBaseWarehouses } from "@/lib/services/imports/base-client";
 import { decryptSecret } from "@/lib/utils/encryption";
 
@@ -37,11 +45,15 @@ export async function POST(
     const imageBaseUrl = forwardedHost
       ? `${forwardedProto}://${forwardedHost}`
       : new URL(req.url).origin;
+    const defaultInventoryId = await getExportDefaultInventoryId();
+    const resolvedInventoryId = defaultInventoryId || data.inventoryId;
 
     console.log("[export-to-base] Starting export", {
       productId,
       connectionId: data.connectionId,
-      inventoryId: data.inventoryId,
+      inventoryId: resolvedInventoryId,
+      requestedInventoryId: data.inventoryId,
+      defaultInventoryId,
       templateId: data.templateId || "none",
     });
 
@@ -129,14 +141,14 @@ export async function POST(
     if (!allowDuplicateSku && product.sku) {
       console.log("[export-to-base] Checking if SKU exists in Base.com", {
         sku: product.sku,
-        inventoryId: data.inventoryId,
+        inventoryId: resolvedInventoryId,
       });
 
       const skuVal = product.sku as string;
       const tokenVal = token as string;
       const skuCheck = await checkBaseSkuExists(
         tokenVal,
-        data.inventoryId,
+        resolvedInventoryId,
         skuVal
       );
       if (skuCheck.exists) {
@@ -169,7 +181,7 @@ export async function POST(
           integrationId: baseIntegration.id,
           connectionId: data.connectionId,
           externalListingId: null,
-          inventoryId: data.inventoryId,
+          inventoryId: resolvedInventoryId,
         });
         listingId = newListing.id;
       } else {
@@ -180,51 +192,106 @@ export async function POST(
         if (existingListing) {
           listingId = existingListing.id;
           await listingRepo.updateListingStatus(existingListing.id, "pending");
-          if (existingListing.inventoryId !== data.inventoryId) {
+          if (existingListing.inventoryId !== resolvedInventoryId) {
             await listingRepo.updateListingInventoryId(
               existingListing.id,
-              data.inventoryId
+              resolvedInventoryId
             );
           }
         }
       }
     }
 
-    let warehouseId = await getExportWarehouseId(data.inventoryId);
+    let warehouseId = await getExportWarehouseId(resolvedInventoryId);
+    let stockWarehouseAliases: Record<string, string> | null = null;
     let validWarehouseIds: Set<string> | null = null;
     try {
-      const warehouses = await fetchBaseWarehouses(token, data.inventoryId);
-      validWarehouseIds = new Set(warehouses.map((warehouse) => warehouse.id));
+      const warehouses = await fetchBaseWarehouses(token, resolvedInventoryId);
+      const warehouseIdSet = new Set<string>();
+      const warehouseAliases: Record<string, string> = {};
+      const inferTypedWarehouseId = (value: string) => {
+        const match = value.match(/([a-z]+)[_-]?(\d+)/i);
+        if (!match?.[1] || !match?.[2]) return null;
+        const typed = `${match[1].toLowerCase()}_${match[2]}`;
+        return { typed, numeric: match[2] };
+      };
+      for (const warehouse of warehouses) {
+        warehouseIdSet.add(warehouse.id);
+        const inferred = warehouse.typedId ?? inferTypedWarehouseId(warehouse.id)?.typed;
+        if (inferred) {
+          warehouseIdSet.add(inferred);
+          if (inferred !== warehouse.id) {
+            const numeric = inferTypedWarehouseId(inferred)?.numeric;
+            if (numeric) {
+              warehouseAliases[numeric] = inferred;
+            } else {
+              warehouseAliases[warehouse.id] = inferred;
+            }
+          }
+        }
+        if (warehouse.typedId && warehouse.typedId !== warehouse.id) {
+          warehouseAliases[warehouse.id] = warehouse.typedId;
+        }
+      }
+      if (warehouseId) {
+        const inferred = inferTypedWarehouseId(warehouseId);
+        if (inferred?.numeric && inferred.typed) {
+          warehouseAliases[inferred.numeric] = inferred.typed;
+          warehouseIdSet.add(inferred.typed);
+        }
+      }
+      stockWarehouseAliases =
+        Object.keys(warehouseAliases).length > 0 ? warehouseAliases : null;
+      validWarehouseIds = warehouseIdSet;
+      if (warehouseId && stockWarehouseAliases?.[warehouseId]) {
+        warehouseId = stockWarehouseAliases[warehouseId]!;
+      } else if (warehouseId) {
+        const match = warehouses.find(
+          (warehouse) =>
+            warehouse.id === warehouseId || warehouse.typedId === warehouseId
+        );
+        if (match?.typedId) {
+          warehouseId = match.typedId;
+        }
+      }
       if (warehouseId) {
         if (!validWarehouseIds.has(warehouseId)) {
-          const fallbackWarehouseId = warehouses[0]?.id ?? null;
+          const fallbackWarehouseId =
+            warehouses[0]?.typedId ?? warehouses[0]?.id ?? null;
           console.warn("[export-to-base] Warehouse not in inventory, using fallback", {
             warehouseId,
             fallbackWarehouseId,
-            inventoryId: data.inventoryId,
+            inventoryId: resolvedInventoryId,
           });
           warehouseId = fallbackWarehouseId;
         }
       } else {
-        warehouseId = warehouses[0]?.id ?? null;
+        warehouseId = warehouses[0]?.typedId ?? warehouses[0]?.id ?? null;
       }
     } catch (error) {
       console.warn("[export-to-base] Failed to verify warehouse, skipping stock export", {
         warehouseId,
-        inventoryId: data.inventoryId,
+        inventoryId: resolvedInventoryId,
         error,
       });
       validWarehouseIds = null;
     }
 
+    const normalizeStockMappingKey = (value: string) => {
+      const trimmed = value.trim();
+      const withoutPrefix = trimmed.replace(/^stock[._-]?/i, "");
+      return normalizeStockKey(withoutPrefix);
+    };
+
     const filterStockMappings = (entries: typeof mappings) => {
       if (!validWarehouseIds) return entries;
       return entries.filter((mapping) => {
-        const key = mapping.sourceKey.trim().toLowerCase();
-        if (!key.startsWith("stock")) return true;
-        const match = key.match(/(\d+)$/);
-        if (!match) return true;
-        return validWarehouseIds.has(match[1]!);
+        const key = mapping.sourceKey.trim();
+        const lowered = key.toLowerCase();
+        if (!lowered.startsWith("stock")) return true;
+        const normalized = normalizeStockMappingKey(key);
+        if (!normalized) return true;
+        return validWarehouseIds.has(normalized);
       });
     };
 
@@ -233,7 +300,7 @@ export async function POST(
     // Export to Base.com
     console.log("[export-to-base] Calling Base.com API", {
       productId,
-      inventoryId: data.inventoryId,
+      inventoryId: resolvedInventoryId,
       mappingsCount: effectiveMappings.length,
     });
 
@@ -246,7 +313,11 @@ export async function POST(
         product,
         activeMappings,
         targetWarehouseId,
-        { imageBaseUrl, includeStockWithoutWarehouse }
+        {
+          imageBaseUrl,
+          includeStockWithoutWarehouse,
+          stockWarehouseAliases: stockWarehouseAliases ?? undefined,
+        }
       ) as Record<string, unknown> & {
         text_fields?: Record<string, unknown>;
         prices?: Record<string, unknown>;
@@ -267,6 +338,7 @@ export async function POST(
       return { exportData, exportFields };
     };
 
+    const allowStockFallback = await getExportStockFallbackEnabled();
     let includeStockWithoutWarehouse =
       !warehouseId && product.stock !== null;
     let { exportFields } = buildExportSnapshot(
@@ -276,11 +348,15 @@ export async function POST(
     );
     let result = await exportProductToBase(
       token,
-      data.inventoryId,
+      resolvedInventoryId,
       product,
       effectiveMappings,
       warehouseId,
-      { imageBaseUrl, includeStockWithoutWarehouse }
+      {
+        imageBaseUrl,
+        includeStockWithoutWarehouse,
+        stockWarehouseAliases: stockWarehouseAliases ?? undefined,
+      }
     );
 
     const isWarehouseMismatch = (message: string | undefined) =>
@@ -293,41 +369,12 @@ export async function POST(
       (message.toLowerCase().includes("stock") ||
         message.toLowerCase().includes("quantity"));
 
-    if (!result.success && isWarehouseMismatch(result.error) && product.stock !== null) {
-      console.warn("[export-to-base] Retrying with inventory-level stock export", {
-        productId,
-        inventoryId: data.inventoryId,
-        warehouseId,
-        error: result.error,
-      });
-      warehouseId = null;
-      effectiveMappings = effectiveMappings.filter(
-        (mapping) => !mapping.sourceKey.trim().toLowerCase().startsWith("stock")
-      );
-      includeStockWithoutWarehouse = true;
-      ({ exportFields } = buildExportSnapshot(
-        warehouseId,
-        effectiveMappings,
-        includeStockWithoutWarehouse
-      ));
-      result = await exportProductToBase(
-        token,
-        data.inventoryId,
-        product,
-        effectiveMappings,
-        warehouseId,
-        { imageBaseUrl, includeStockWithoutWarehouse }
-      );
-    }
+    const warehouseMismatch = isWarehouseMismatch(result.error);
 
-    if (
-      !result.success &&
-      (isWarehouseMismatch(result.error) ||
-        (includeStockWithoutWarehouse && isStockMismatch(result.error)))
-    ) {
-      console.warn("[export-to-base] Retrying without stock export", {
+    if (!result.success && warehouseMismatch && allowStockFallback) {
+      console.warn("[export-to-base] Warehouse mismatch, retrying without stock", {
         productId,
-        inventoryId: data.inventoryId,
+        inventoryId: resolvedInventoryId,
         warehouseId,
         error: result.error,
       });
@@ -343,11 +390,58 @@ export async function POST(
       ));
       result = await exportProductToBase(
         token,
-        data.inventoryId,
+        resolvedInventoryId,
         product,
         effectiveMappings,
         warehouseId,
-        { imageBaseUrl, includeStockWithoutWarehouse }
+        {
+          imageBaseUrl,
+          includeStockWithoutWarehouse,
+          stockWarehouseAliases: stockWarehouseAliases ?? undefined,
+        }
+      );
+    } else if (!result.success && warehouseMismatch) {
+      console.warn("[export-to-base] Warehouse mismatch, failing export", {
+        productId,
+        inventoryId: resolvedInventoryId,
+        warehouseId,
+        error: result.error,
+      });
+    }
+
+    if (
+      !result.success &&
+      !warehouseMismatch &&
+      includeStockWithoutWarehouse &&
+      isStockMismatch(result.error)
+    ) {
+      console.warn("[export-to-base] Retrying without stock export", {
+        productId,
+        inventoryId: resolvedInventoryId,
+        warehouseId,
+        error: result.error,
+      });
+      warehouseId = null;
+      effectiveMappings = effectiveMappings.filter(
+        (mapping) => !mapping.sourceKey.trim().toLowerCase().startsWith("stock")
+      );
+      includeStockWithoutWarehouse = false;
+      ({ exportFields } = buildExportSnapshot(
+        warehouseId,
+        effectiveMappings,
+        includeStockWithoutWarehouse
+      ));
+      result = await exportProductToBase(
+        token,
+        resolvedInventoryId,
+        product,
+        effectiveMappings,
+        warehouseId,
+        {
+          imageBaseUrl,
+          includeStockWithoutWarehouse,
+          stockWarehouseAliases: stockWarehouseAliases ?? undefined,
+        }
       );
     }
 
@@ -361,7 +455,7 @@ export async function POST(
         await listingRepo.appendExportHistory(listingId, {
           exportedAt: new Date(),
           status: "failed",
-          inventoryId: data.inventoryId,
+          inventoryId: resolvedInventoryId,
           templateId: data.templateId ?? null,
           warehouseId,
           externalListingId: result.productId || null,
@@ -387,7 +481,7 @@ export async function POST(
       await listingRepo.appendExportHistory(listingId, {
         exportedAt: new Date(),
         status: "success",
-        inventoryId: data.inventoryId,
+        inventoryId: resolvedInventoryId,
         templateId: data.templateId ?? null,
         warehouseId,
         externalListingId: result.productId || null,

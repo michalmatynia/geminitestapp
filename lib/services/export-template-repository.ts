@@ -27,6 +27,8 @@ export type Template = {
 
 const SETTINGS_KEY = "base_export_templates";
 const ACTIVE_TEMPLATE_KEY = "base_export_active_template_id";
+const DEFAULT_INVENTORY_KEY = "base_export_default_inventory_id";
+const STOCK_FALLBACK_KEY = "base_export_stock_fallback_enabled";
 const BASEHOST_MAPPING_KEYS = new Set(["images_basehost_all", "image_basehost_all"]);
 
 const stripBasehostMappings = (mappings: TemplateMapping[]) =>
@@ -101,6 +103,42 @@ const readActiveTemplateValue = async (): Promise<string | null> => {
   return setting?.value ?? null;
 };
 
+const readDefaultInventoryValue = async (): Promise<string | null> => {
+  const provider = await getExportTemplateProvider();
+  if (provider === "mongodb") {
+    const mongo = await getMongoDb();
+    const doc = await mongo
+      .collection<{ _id: string; key?: string; value?: string }>("settings")
+      .findOne({
+        $or: [{ _id: DEFAULT_INVENTORY_KEY }, { key: DEFAULT_INVENTORY_KEY }],
+      });
+    return typeof doc?.value === "string" ? doc.value : null;
+  }
+  const setting = await prisma.setting.findUnique({
+    where: { key: DEFAULT_INVENTORY_KEY },
+    select: { value: true },
+  });
+  return setting?.value ?? null;
+};
+
+const readStockFallbackValue = async (): Promise<string | null> => {
+  const provider = await getExportTemplateProvider();
+  if (provider === "mongodb") {
+    const mongo = await getMongoDb();
+    const doc = await mongo
+      .collection<{ _id: string; key?: string; value?: string }>("settings")
+      .findOne({
+        $or: [{ _id: STOCK_FALLBACK_KEY }, { key: STOCK_FALLBACK_KEY }],
+      });
+    return typeof doc?.value === "string" ? doc.value : null;
+  }
+  const setting = await prisma.setting.findUnique({
+    where: { key: STOCK_FALLBACK_KEY },
+    select: { value: true },
+  });
+  return setting?.value ?? null;
+};
+
 const writeTemplatesValue = async (value: string) => {
   const provider = await getExportTemplateProvider();
   console.log(`[ExportTemplateRepository] Writing templates... Length: ${value.length}`);
@@ -150,6 +188,56 @@ const writeActiveTemplateValue = async (value: string) => {
     where: { key: ACTIVE_TEMPLATE_KEY },
     update: { value },
     create: { key: ACTIVE_TEMPLATE_KEY, value },
+  });
+};
+
+const writeDefaultInventoryValue = async (value: string) => {
+  const provider = await getExportTemplateProvider();
+  if (provider === "mongodb") {
+    const mongo = await getMongoDb();
+    await mongo.collection("settings").updateOne(
+      { $or: [{ _id: DEFAULT_INVENTORY_KEY }, { key: DEFAULT_INVENTORY_KEY }] } as any,
+      {
+        $set: {
+          value,
+          key: DEFAULT_INVENTORY_KEY,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
+      },
+      { upsert: true }
+    );
+    return;
+  }
+  await prisma.setting.upsert({
+    where: { key: DEFAULT_INVENTORY_KEY },
+    update: { value },
+    create: { key: DEFAULT_INVENTORY_KEY, value },
+  });
+};
+
+const writeStockFallbackValue = async (value: string) => {
+  const provider = await getExportTemplateProvider();
+  if (provider === "mongodb") {
+    const mongo = await getMongoDb();
+    await mongo.collection("settings").updateOne(
+      { $or: [{ _id: STOCK_FALLBACK_KEY }, { key: STOCK_FALLBACK_KEY }] } as any,
+      {
+        $set: {
+          value,
+          key: STOCK_FALLBACK_KEY,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
+      },
+      { upsert: true }
+    );
+    return;
+  }
+  await prisma.setting.upsert({
+    where: { key: STOCK_FALLBACK_KEY },
+    update: { value },
+    create: { key: STOCK_FALLBACK_KEY, value },
   });
 };
 
@@ -225,4 +313,22 @@ export const getExportActiveTemplateId = async (): Promise<string | null> => {
 
 export const setExportActiveTemplateId = async (value: string | null) => {
   await writeActiveTemplateValue(value?.trim() ? value.trim() : "");
+};
+
+export const getExportDefaultInventoryId = async (): Promise<string | null> => {
+  const value = await readDefaultInventoryValue();
+  return value ? value : null;
+};
+
+export const setExportDefaultInventoryId = async (value: string | null) => {
+  await writeDefaultInventoryValue(value?.trim() ? value.trim() : "");
+};
+
+export const getExportStockFallbackEnabled = async (): Promise<boolean> => {
+  const value = await readStockFallbackValue();
+  return value?.trim().toLowerCase() === "true";
+};
+
+export const setExportStockFallbackEnabled = async (enabled: boolean) => {
+  await writeStockFallbackValue(enabled ? "true" : "false");
 };

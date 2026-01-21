@@ -3,6 +3,7 @@ import { DELETE, PUT } from "../../../app/api/languages/[id]/route";
 import prisma from "@/lib/prisma";
 
 type LanguageResponse = {
+  id: string;
   code: string;
   name: string;
   nativeName?: string | null;
@@ -31,7 +32,7 @@ describe("Languages API", () => {
       const dbLanguages = await prisma.language.findMany();
       expect(dbLanguages.length).toBeGreaterThan(0);
 
-      const en = languages.find((l: any) => l.code === "EN");
+      const en = languages.find((l: LanguageResponse) => l.code === "EN");
       if (!en) {
         throw new Error("Expected seeded language EN.");
       }
@@ -54,7 +55,7 @@ describe("Languages API", () => {
       });
 
       const res = await POST(req);
-      const language = await res.json();
+      const language = (await res.json()) as LanguageResponse;
 
       expect(res.status).toEqual(200);
       expect(language.code).toBe("FR");
@@ -79,11 +80,11 @@ describe("Languages API", () => {
         });
 
         const res = await POST(req);
-        const language = await res.json();
+        const language = (await res.json()) as LanguageResponse;
 
         expect(res.status).toEqual(200);
         expect(language.countries).toHaveLength(1);
-        expect(language.countries[0].countryId).toBe(country.id);
+        expect(language.countries![0].countryId).toBe(country.id);
     });
 
     it("should reject invalid payload", async () => {
@@ -121,12 +122,12 @@ describe("Languages API", () => {
       });
 
       const res = await PUT(req, { params: Promise.resolve({ id: language.id }) });
-      const updated = await res.json();
+      const updated = (await res.json()) as LanguageResponse;
 
       expect(res.status).toEqual(200);
       expect(updated.name).toBe("Polish Updated");
       expect(updated.countries).toHaveLength(1);
-      expect(updated.countries[0].countryId).toBe(country.id);
+      expect(updated.countries![0].countryId).toBe(country.id);
     });
   });
 

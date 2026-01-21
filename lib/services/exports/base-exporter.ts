@@ -90,6 +90,19 @@ const toNumberValue = (value: unknown): number | null => {
   return null;
 };
 
+export const normalizeStockKey = (value: string): string | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const typedMatch = trimmed.match(/([a-z]+)[_-]?(\d+)/i);
+  if (typedMatch?.[1] && typedMatch?.[2]) {
+    const prefix = typedMatch[1].toLowerCase();
+    return `${prefix}_${typedMatch[2]}`;
+  }
+  const match = trimmed.match(/(\d+)/);
+  if (match?.[1]) return match[1];
+  return null;
+};
+
 const getImageSlotUrl = (
   product: ProductWithImages,
   index: number,
@@ -250,6 +263,117 @@ function applyExportTemplateMappings(
   return result;
 }
 
+const mergeTextFields = (
+  baseData: BaseProductRecord,
+  templateData: Record<string, unknown>
+) => {
+  const nextTextFields: Record<string, string> = {};
+
+  const pushValue = (key: string, value: unknown) => {
+    if (value === null || value === undefined) return;
+    const stringValue = toStringValue(value);
+    if (!stringValue) return;
+    nextTextFields[key] = stringValue;
+  };
+
+  if (
+    templateData.text_fields &&
+    typeof templateData.text_fields === "object" &&
+    !Array.isArray(templateData.text_fields)
+  ) {
+    for (const [key, value] of Object.entries(
+      templateData.text_fields as Record<string, unknown>
+    )) {
+      const trimmedKey = key.trim();
+      if (!trimmedKey) continue;
+      pushValue(trimmedKey, value);
+    }
+    delete templateData.text_fields;
+  }
+
+  for (const [key, value] of Object.entries(templateData)) {
+    const trimmedKey = key.trim();
+    if (!trimmedKey) continue;
+    const lowered = trimmedKey.toLowerCase();
+    if (lowered.startsWith("text_fields.")) {
+      const fieldKey = trimmedKey.slice("text_fields.".length);
+      if (fieldKey) {
+        pushValue(fieldKey, value);
+      }
+      delete templateData[key];
+      continue;
+    }
+    if (lowered === "name" || lowered === "description") {
+      pushValue(trimmedKey, value);
+      delete templateData[key];
+      continue;
+    }
+    if (lowered.startsWith("name|") || lowered.startsWith("description|")) {
+      pushValue(trimmedKey, value);
+      delete templateData[key];
+    }
+  }
+
+  if (Object.keys(nextTextFields).length === 0) return;
+
+  const baseTextFields =
+    baseData.text_fields && typeof baseData.text_fields === "object"
+      ? (baseData.text_fields as Record<string, string>)
+      : {};
+
+  baseData.text_fields = {
+    ...baseTextFields,
+    ...nextTextFields,
+  };
+};
+
+const mergeNumericFields = (
+  templateData: Record<string, unknown>,
+  fieldName: "prices" | "stock",
+  normalizeKey?: (value: string) => string | null
+) => {
+  const nextEntries: Record<string, number> = {};
+
+  const existing = templateData[fieldName];
+  if (existing && typeof existing === "object" && !Array.isArray(existing)) {
+    for (const [key, value] of Object.entries(
+      existing as Record<string, unknown>
+    )) {
+      const normalized = normalizeKey ? normalizeKey(key) : key.trim();
+      if (!normalized) continue;
+      const numeric = toNumberValue(value);
+      if (numeric !== null) {
+        nextEntries[normalized] = numeric;
+      }
+    }
+  }
+
+  for (const [key, value] of Object.entries(templateData)) {
+    const trimmedKey = key.trim();
+    const lowered = trimmedKey.toLowerCase();
+    if (!lowered.startsWith(`${fieldName}.`)) continue;
+    const suffix = trimmedKey.slice(fieldName.length + 1);
+    if (!suffix) {
+      delete templateData[key];
+      continue;
+    }
+    const normalized = normalizeKey ? normalizeKey(suffix) : suffix.trim();
+    if (!normalized) {
+      delete templateData[key];
+      continue;
+    }
+    const numeric = toNumberValue(value);
+    if (numeric !== null) {
+      nextEntries[normalized] = numeric;
+    }
+    delete templateData[key];
+  }
+
+  if (Object.keys(nextEntries).length > 0) {
+    templateData[fieldName] = nextEntries;
+  }
+};
+
 /**
  * Build Base.com product data from internal product
  * Applies default mapping + optional template mappings
@@ -262,6 +386,7 @@ export function buildBaseProductData(
   options?: {
     imageBaseUrl?: string | null;
     includeStockWithoutWarehouse?: boolean;
+    stockWarehouseAliases?: Record<string, string>;
   }
 ): BaseProductRecord {
   // Start with default field mappings in Baselinker API format
@@ -311,6 +436,15 @@ export function buildBaseProductData(
       exportMappings,
       options?.imageBaseUrl ?? null
     );
+    mergeTextFields(baseData, templateData);
+    mergeNumericFields(templateData, "prices");
+    const stockAliases = options?.stockWarehouseAliases ?? null;
+    const normalizeStockKeyWithAliases = (value: string) => {
+      const normalized = normalizeStockKey(value);
+      if (!normalized) return null;
+      return stockAliases?.[normalized] ?? normalized;
+    };
+    mergeNumericFields(templateData, "stock", normalizeStockKeyWithAliases);
     const templateStock = templateData.stock;
     if (templateStock !== undefined) {
       const hasWarehouse = Boolean(warehouseId);
@@ -334,6 +468,19 @@ export function buildBaseProductData(
           ...(templateStock as Record<string, unknown>),
           ...((baseStock as Record<string, number>) ?? {}),
         };
+        if (stockAliases) {
+          const nextStock = templateData.stock as Record<string, unknown>;
+          for (const [key, value] of Object.entries(nextStock)) {
+            const normalized = normalizeStockKey(key);
+            if (!normalized) continue;
+            const aliased = stockAliases[normalized];
+            if (!aliased || aliased === key) continue;
+            if (nextStock[aliased] === undefined) {
+              nextStock[aliased] = value;
+            }
+            delete nextStock[key];
+          }
+        }
       } else if (baseStock) {
         delete templateData.stock;
       }
@@ -356,6 +503,7 @@ export async function exportProductToBase(
   options?: {
     imageBaseUrl?: string | null;
     includeStockWithoutWarehouse?: boolean;
+    stockWarehouseAliases?: Record<string, string>;
   }
 ): Promise<{ success: boolean; productId?: string; error?: string }> {
   try {

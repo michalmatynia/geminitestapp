@@ -23,7 +23,7 @@ describe("Agent API", () => {
     });
 
     const res = await createRun(req);
-    const data = await res.json();
+    const data = (await res.json()) as { error: string };
 
     expect(res.status).toBe(400);
     expect(data.error).toBe("Prompt is required.");
@@ -54,7 +54,7 @@ describe("Agent API", () => {
     });
 
     const res = await listRuns();
-    const data = await res.json();
+    const data = (await res.json()) as { runs: any[] };
 
     expect(res.status).toBe(200);
     expect(data.runs).toHaveLength(1);
@@ -77,7 +77,7 @@ describe("Agent API", () => {
     const res = await getLogs(new Request("http://localhost"), {
       params: Promise.resolve({ runId: run.id }),
     });
-    const data = await res.json();
+    const data = (await res.json()) as { logs: any[] };
 
     expect(res.status).toBe(200);
     expect(data.logs).toHaveLength(1);
@@ -100,7 +100,7 @@ describe("Agent API", () => {
     const res = await getAudits(new Request("http://localhost"), {
       params: Promise.resolve({ runId: run.id }),
     });
-    const data = await res.json();
+    const data = (await res.json()) as { audits: any[] };
 
     expect(res.status).toBe(200);
     expect(data.audits).toHaveLength(1);

@@ -37,6 +37,7 @@ const ACTIVE_TEMPLATE_KEY = "base_import_active_template_id";
 const PARAMETER_CACHE_KEY = "base_import_parameter_cache";
 const EXPORT_WAREHOUSE_KEY = "base_export_warehouse_id";
 const EXPORT_WAREHOUSE_MAP_KEY = "base_export_warehouse_by_inventory";
+const EXPORT_WAREHOUSE_SKIP_VALUE = "__skip__";
 const BASEHOST_MAPPING_KEYS = new Set(["images_basehost_all", "image_basehost_all"]);
 
 const stripBasehostMappings = (mappings: TemplateMapping[]) =>
@@ -84,7 +85,7 @@ const parseExportWarehouseMap = (value: string | null): Record<string, string> =
             : raw !== null && raw !== undefined
               ? String(raw).trim()
               : "";
-        if (normalized) {
+        if (normalized || normalized === EXPORT_WAREHOUSE_SKIP_VALUE) {
           result[trimmedKey] = normalized;
         }
       }
@@ -490,6 +491,9 @@ export const getExportWarehouseId = async (
     const rawMap = await readExportWarehouseMapValue();
     const map = parseExportWarehouseMap(rawMap);
     const mapped = map[normalizedInventory];
+    if (mapped === EXPORT_WAREHOUSE_SKIP_VALUE) {
+      return null;
+    }
     if (mapped) return mapped;
     const fallback = await readExportWarehouseValue();
     if (fallback) {
@@ -512,11 +516,7 @@ export const setExportWarehouseId = async (
   if (normalizedInventory) {
     const rawMap = await readExportWarehouseMapValue();
     const map = parseExportWarehouseMap(rawMap);
-    if (normalizedValue) {
-      map[normalizedInventory] = normalizedValue;
-    } else {
-      delete map[normalizedInventory];
-    }
+    map[normalizedInventory] = normalizedValue || EXPORT_WAREHOUSE_SKIP_VALUE;
     await writeExportWarehouseMapValue(JSON.stringify(map));
     return;
   }

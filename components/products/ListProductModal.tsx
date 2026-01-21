@@ -65,6 +65,10 @@ export default function ListProductModal({
   const selectedIntegration = integrations.find(
     (i) => i.id === selectedIntegrationId
   );
+  const selectedConnection = selectedIntegration?.connections.find(
+    (connection) => connection.id === selectedConnectionId
+  );
+  const hasPresetSelection = Boolean(initialIntegrationId && initialConnectionId);
 
   const isBaseComIntegration = ["baselinker", "base-com"].includes(
     selectedIntegration?.slug ?? ""
@@ -133,7 +137,7 @@ export default function ListProductModal({
   useEffect(() => {
     const loadPreferredInventory = async () => {
       try {
-        const res = await fetch("/api/products/imports/base/sample-product");
+        const res = await fetch("/api/products/exports/base/default-inventory");
         if (!res.ok) return;
         const payload = (await res.json()) as { inventoryId?: string | null };
         setPreferredInventoryId(payload.inventoryId ?? null);
@@ -367,52 +371,71 @@ export default function ListProductModal({
           </div>
         ) : (
           <>
-            <div className="space-y-2">
-              <Label htmlFor="integration">Marketplace / Integration</Label>
-              <Select
-                value={selectedIntegrationId}
-                onValueChange={setSelectedIntegrationId}
-              >
-                <SelectTrigger id="integration">
-                  <SelectValue placeholder="Select a marketplace..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {integrationsWithConnections
-                    .filter((integration) => integration.id)
-                    .map((integration) => (
-                      <SelectItem key={integration.id} value={integration.id}>
-                        {integration.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {selectedIntegration && (
-              <div className="space-y-2">
-                <Label htmlFor="connection">Account</Label>
-                <Select
-                  value={selectedConnectionId}
-                  onValueChange={setSelectedConnectionId}
-                >
-                  <SelectTrigger id="connection">
-                    <SelectValue placeholder="Select an account..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {selectedIntegration.connections
-                      .filter((connection) => connection.id)
-                      .map((connection) => (
-                        <SelectItem key={connection.id} value={connection.id}>
-                          {connection.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-gray-500">
-                  Choose which account to use for listing this product on{" "}
-                  {selectedIntegration.name}.
+            {hasPresetSelection ? (
+              <div className="rounded-md border border-gray-800 bg-gray-950/60 px-4 py-3 text-sm text-gray-300">
+                <p>
+                  Marketplace:{" "}
+                  <span className="font-medium text-white">
+                    {selectedIntegration?.name || "Selected integration"}
+                  </span>
+                </p>
+                <p className="mt-1">
+                  Account:{" "}
+                  <span className="font-medium text-white">
+                    {selectedConnection?.name || "Selected account"}
+                  </span>
                 </p>
               </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="integration">Marketplace / Integration</Label>
+                  <Select
+                    value={selectedIntegrationId}
+                    onValueChange={setSelectedIntegrationId}
+                  >
+                    <SelectTrigger id="integration">
+                      <SelectValue placeholder="Select a marketplace..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {integrationsWithConnections
+                        .filter((integration) => integration.id)
+                        .map((integration) => (
+                          <SelectItem key={integration.id} value={integration.id}>
+                            {integration.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {selectedIntegration && (
+                  <div className="space-y-2">
+                    <Label htmlFor="connection">Account</Label>
+                    <Select
+                      value={selectedConnectionId}
+                      onValueChange={setSelectedConnectionId}
+                    >
+                      <SelectTrigger id="connection">
+                        <SelectValue placeholder="Select an account..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {selectedIntegration.connections
+                          .filter((connection) => connection.id)
+                          .map((connection) => (
+                            <SelectItem key={connection.id} value={connection.id}>
+                              {connection.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500">
+                      Choose which account to use for listing this product on{" "}
+                      {selectedIntegration.name}.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
 
             {isBaseComIntegration && selectedConnectionId && (

@@ -20,7 +20,7 @@ describe("CMS API", () => {
     });
 
     const res = await POST(req);
-    const data = await res.json();
+    const data = (await res.json()) as { slug: string };
 
     expect(res.status).toBe(200);
     expect(data.slug).toBe("test-slug");
@@ -44,7 +44,7 @@ describe("CMS API", () => {
     });
 
     const res = await GET();
-    const data = await res.json();
+    const data = (await res.json()) as any[];
 
     expect(res.status).toBe(200);
     expect(data.length).toBe(2);

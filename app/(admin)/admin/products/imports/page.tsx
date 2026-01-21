@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/toast";
-import { IntegrationWithConnections } from "@/types";
+import { IntegrationConnectionBasic, IntegrationWithConnections } from "@/types";
 
 type InventoryOption = {
   id: string;
@@ -17,6 +17,20 @@ type InventoryOption = {
 type WarehouseOption = {
   id: string;
   name: string;
+  typedId?: string;
+};
+
+type WarehouseDebugRaw = {
+  ok: boolean;
+  statusCode: number;
+  error?: string;
+  method: string;
+  parameters: Record<string, unknown>;
+  payload: Record<string, unknown> | null;
+};
+
+type InventoryDebugRaw = WarehouseDebugRaw & {
+  inventories?: InventoryOption[];
 };
 
 type CatalogOption = {
@@ -154,9 +168,24 @@ export default function ProductImportsPage() {
   // Token is now handled by the backend via integration
   const [inventories, setInventories] = useState<InventoryOption[]>([]);
   const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
+  const [allWarehouses, setAllWarehouses] = useState<WarehouseOption[]>([]);
+  const [showAllWarehouses, setShowAllWarehouses] = useState(false);
+  const [includeAllWarehouses, setIncludeAllWarehouses] = useState(false);
   const [inventoryId, setInventoryId] = useState("");
+  const [exportInventoryId, setExportInventoryId] = useState("");
   const [exportWarehouseId, setExportWarehouseId] = useState("");
   const [exportWarehouseLoaded, setExportWarehouseLoaded] = useState(false);
+  const [exportInventoryPreferenceLoaded, setExportInventoryPreferenceLoaded] =
+    useState(false);
+  const [debugWarehouses, setDebugWarehouses] = useState<{
+    inventory?: WarehouseOption[];
+    all?: WarehouseOption[];
+    inventories?: InventoryOption[];
+    inventoryRaw?: WarehouseDebugRaw | null;
+    inventoriesRaw?: InventoryDebugRaw | null;
+    allRaw?: WarehouseDebugRaw | null;
+  } | null>(null);
+  const [loadingDebugWarehouses, setLoadingDebugWarehouses] = useState(false);
   const [catalogs, setCatalogs] = useState<CatalogOption[]>([]);
   const [catalogId, setCatalogId] = useState("");
   const [limit, setLimit] = useState("all");
@@ -211,6 +240,10 @@ export default function ProductImportsPage() {
   const [exportTemplateMappings, setExportTemplateMappings] = useState<
     TemplateMapping[]
   >([{ sourceKey: "", targetField: "" }]);
+  const [exportStockFallbackEnabled, setExportStockFallbackEnabled] =
+    useState(false);
+  const [exportStockFallbackLoaded, setExportStockFallbackLoaded] =
+    useState(false);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [deletingTemplate, setDeletingTemplate] = useState(false);
   const [savingExportSettings, setSavingExportSettings] = useState(false);
@@ -229,10 +262,15 @@ export default function ProductImportsPage() {
   );
   const lastParameterProductIdRef = useRef<string | null>(null);
   const lastWarehouseInventoryIdRef = useRef<string | null>(null);
+  const autoInventoriesLoadedRef = useRef(false);
   const [parameterCacheReady, setParameterCacheReady] = useState(false);
 
   const [checkingIntegration, setCheckingIntegration] = useState(true);
   const [isBaseConnected, setIsBaseConnected] = useState(false);
+  const [baseConnections, setBaseConnections] = useState<
+    IntegrationConnectionBasic[]
+  >([]);
+  const [selectedBaseConnectionId, setSelectedBaseConnectionId] = useState("");
 
   const isImportTemplateScope = templateScope === "import";
   const currentTemplates = isImportTemplateScope ? importTemplates : exportTemplates;
@@ -264,6 +302,52 @@ export default function ProductImportsPage() {
   const currentParameterKeys = isImportTemplateScope
     ? Array.from(new Set([...parameterKeys, ...ALL_IMAGE_KEYS]))
     : EXPORT_PARAMETER_KEYS;
+  const inventoryWarehouseIds = new Set(warehouses.map((warehouse) => warehouse.id));
+  const warehouseOptions =
+    showAllWarehouses && allWarehouses.length > 0 ? allWarehouses : warehouses;
+  const normalizeWarehouseId = (value: string) => value.trim().toLowerCase();
+  const inferTypedWarehouseId = (value: string) => {
+    const match = value.match(/([a-z]+)[_-]?(\d+)/i);
+    if (!match?.[1] || !match?.[2]) return null;
+    return { typed: `${match[1].toLowerCase()}_${match[2]}`, numeric: match[2] };
+  };
+  const acceptedWarehouseIds = new Set<string>();
+  const warehouseAliases: Record<string, string> = {};
+  for (const warehouse of warehouses) {
+    const typed = warehouse.typedId ?? inferTypedWarehouseId(warehouse.id)?.typed;
+    if (typed) {
+      acceptedWarehouseIds.add(normalizeWarehouseId(typed));
+      const numeric = inferTypedWarehouseId(typed)?.numeric;
+      if (numeric) {
+        warehouseAliases[numeric] = typed;
+      }
+    } else if (warehouse.id) {
+      acceptedWarehouseIds.add(normalizeWarehouseId(warehouse.id));
+    }
+  }
+  const stockMappingEntries = currentTemplateMappings
+    .map((mapping) => mapping.sourceKey.trim())
+    .filter((key) => key.toLowerCase().startsWith("stock"))
+    .map((key) => {
+      const suffix = key.replace(/^stock[._-]?/i, "").trim();
+      return { key, suffix, normalized: normalizeWarehouseId(suffix) };
+    });
+  const invalidStockMappings =
+    acceptedWarehouseIds.size > 0
+      ? stockMappingEntries.filter(
+          ({ suffix, normalized }) => suffix && !acceptedWarehouseIds.has(normalized)
+        )
+      : [];
+  const hasStockMappingMismatch =
+    !isImportTemplateScope && invalidStockMappings.length > 0;
+  const invalidStockMappingLabels = invalidStockMappings.map(({ key }) => key);
+  const stockMappingSuggestions = invalidStockMappings
+    .map(({ suffix }) => {
+      const numeric = suffix.match(/(\d+)/)?.[1];
+      const typed = numeric ? warehouseAliases[numeric] : null;
+      return typed ? `stock.${typed}` : null;
+    })
+    .filter((value): value is string => Boolean(value));
 
   const applyTemplate = useCallback((template: Template, scope: "import" | "export") => {
     const nextMappings =
@@ -293,12 +377,13 @@ export default function ProductImportsPage() {
           // Check if there is at least one connection with a token (though frontend doesn't see token, it sees connections)
           // The backend route /api/integrations/with-connections returns connections.
           // We can check if any connection exists.
-          if (
-            baseIntegration &&
-            baseIntegration.connections &&
-            baseIntegration.connections.length > 0
-          ) {
+          const connections = baseIntegration?.connections ?? [];
+          setBaseConnections(connections);
+          if (connections.length > 0) {
             setIsBaseConnected(true);
+            if (!selectedBaseConnectionId) {
+              setSelectedBaseConnectionId(connections[0]?.id ?? "");
+            }
           }
         }
       } catch (error) {
@@ -425,7 +510,41 @@ export default function ProductImportsPage() {
   }, []);
 
   useEffect(() => {
-    if (!inventoryId) {
+    const loadExportDefaultInventory = async () => {
+      try {
+        const res = await fetch("/api/products/exports/base/default-inventory");
+        const payload = (await res.json()) as { inventoryId?: string | null };
+        if (!res.ok) return;
+        if (payload.inventoryId) {
+          setExportInventoryId(payload.inventoryId);
+        }
+      } catch (error) {
+        console.error("Failed to load export default inventory", error);
+      } finally {
+        setExportInventoryPreferenceLoaded(true);
+      }
+    };
+    void loadExportDefaultInventory();
+  }, []);
+
+  useEffect(() => {
+    const loadExportStockFallback = async () => {
+      try {
+        const res = await fetch("/api/products/exports/base/stock-fallback");
+        const payload = (await res.json()) as { enabled?: boolean };
+        if (!res.ok) return;
+        setExportStockFallbackEnabled(Boolean(payload.enabled));
+      } catch (error) {
+        console.error("Failed to load export stock fallback setting", error);
+      } finally {
+        setExportStockFallbackLoaded(true);
+      }
+    };
+    void loadExportStockFallback();
+  }, []);
+
+  useEffect(() => {
+    if (!exportInventoryId) {
       setExportWarehouseId("");
       setExportWarehouseLoaded(true);
       return;
@@ -435,7 +554,7 @@ export default function ProductImportsPage() {
       try {
         const res = await fetch(
           `/api/products/imports/base/export-warehouse?inventoryId=${encodeURIComponent(
-            inventoryId
+            exportInventoryId
           )}`
         );
         const payload = (await res.json()) as { warehouseId?: string | null };
@@ -448,7 +567,7 @@ export default function ProductImportsPage() {
       }
     };
     void loadExportWarehouse();
-  }, [inventoryId]);
+  }, [exportInventoryId]);
 
   useEffect(() => {
     if (!importTemplatePreferenceLoaded) return;
@@ -487,42 +606,13 @@ export default function ProductImportsPage() {
   }, [importActiveTemplateId, importActiveTemplatePreferenceLoaded]);
 
   useEffect(() => {
-    if (!exportActiveTemplatePreferenceLoaded) return;
-    const saveExportTemplatePreference = async () => {
-      try {
-        await fetch("/api/products/exports/base/active-template", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            templateId: exportActiveTemplateId || null,
-          }),
-        });
-      } catch (error) {
-        console.error("Failed to save export template preference", error);
-      }
-    };
-    void saveExportTemplatePreference();
-  }, [exportActiveTemplateId, exportActiveTemplatePreferenceLoaded]);
-
-  useEffect(() => {
-    if (!exportWarehouseLoaded) return;
-    if (!inventoryId) return;
-    const saveExportWarehouse = async () => {
-      try {
-        await fetch("/api/products/imports/base/export-warehouse", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            warehouseId: exportWarehouseId || null,
-            inventoryId,
-          }),
-        });
-      } catch (error) {
-        console.error("Failed to save export warehouse preference", error);
-      }
-    };
-    void saveExportWarehouse();
-  }, [exportWarehouseId, exportWarehouseLoaded, inventoryId]);
+    if (!exportInventoryPreferenceLoaded) return;
+    if (!inventories.length) return;
+    if (exportInventoryId && inventories.some((inv) => inv.id === exportInventoryId)) {
+      return;
+    }
+    setExportInventoryId(inventories[0]?.id ?? "");
+  }, [exportInventoryPreferenceLoaded, inventories, exportInventoryId]);
 
   useEffect(() => {
     if (!importTemplatePreferenceLoaded) return;
@@ -1072,17 +1162,21 @@ export default function ProductImportsPage() {
     return combined.filter((key) => key.toLowerCase().includes(lowered));
   };
 
-  const handleLoadInventories = async () => {
+  const handleLoadInventories = useCallback(async () => {
     if (!isBaseConnected) {
       toast("Please connect Base integration first.", { variant: "error" });
       return;
     }
     setLoadingInventories(true);
     try {
+      const body: Record<string, unknown> = { action: "inventories" };
+      if (selectedBaseConnectionId) {
+        body.connectionId = selectedBaseConnectionId;
+      }
       const res = await fetch("/api/products/imports/base", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "inventories" }),
+        body: JSON.stringify(body),
       });
       const payload = (await res.json()) as {
         inventories?: InventoryOption[];
@@ -1103,32 +1197,64 @@ export default function ProductImportsPage() {
         if (!hasCurrent) {
           setInventoryId(nextInventories[0]?.id ?? "");
         }
+        if (exportInventoryPreferenceLoaded) {
+          const hasExportCurrent = exportInventoryId
+            ? nextInventories.some((inv) => inv.id === exportInventoryId)
+            : false;
+          if (!hasExportCurrent) {
+            setExportInventoryId(nextInventories[0]?.id ?? "");
+          }
+        }
       }
     } catch (error) {
       toast("Failed to load inventories.", { variant: "error" });
     } finally {
       setLoadingInventories(false);
     }
-  };
+  }, [
+    exportInventoryId,
+    exportInventoryPreferenceLoaded,
+    inventoryId,
+    isBaseConnected,
+    selectedBaseConnectionId,
+    toast,
+  ]);
 
-  const handleLoadWarehouses = async () => {
+  useEffect(() => {
+    if (checkingIntegration) return;
+    if (!isBaseConnected) return;
+    if (autoInventoriesLoadedRef.current) return;
+    autoInventoriesLoadedRef.current = true;
+    void handleLoadInventories();
+  }, [checkingIntegration, handleLoadInventories, isBaseConnected]);
+
+  const handleLoadWarehouses = useCallback(async () => {
     if (!isBaseConnected) {
       toast("Please connect Base integration first.", { variant: "error" });
       return;
     }
-    if (!inventoryId) {
+    if (!exportInventoryId) {
       toast("Select an inventory before loading warehouses.", { variant: "error" });
       return;
     }
     setLoadingWarehouses(true);
     try {
+      const body: Record<string, unknown> = {
+        action: "warehouses",
+        inventoryId: exportInventoryId,
+        includeAllWarehouses,
+      };
+      if (selectedBaseConnectionId) {
+        body.connectionId = selectedBaseConnectionId;
+      }
       const res = await fetch("/api/products/imports/base", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "warehouses", inventoryId }),
+        body: JSON.stringify(body),
       });
       const payload = (await res.json()) as {
         warehouses?: WarehouseOption[];
+        allWarehouses?: WarehouseOption[];
         error?: string;
       };
       if (!res.ok) {
@@ -1138,34 +1264,104 @@ export default function ProductImportsPage() {
         return;
       }
       const nextWarehouses = payload.warehouses ?? [];
+      const nextAllWarehouses = payload.allWarehouses ?? [];
       setWarehouses(nextWarehouses);
-      if (nextWarehouses.length) {
-        const hasCurrent = exportWarehouseId
-          ? nextWarehouses.some((warehouse) => warehouse.id === exportWarehouseId)
-          : false;
-        if (!hasCurrent) {
-          setExportWarehouseId(nextWarehouses[0]?.id ?? "");
-        }
+      setAllWarehouses(nextAllWarehouses);
+      if (nextAllWarehouses.length === 0) {
+        setShowAllWarehouses(false);
       }
+      // Keep the saved warehouse selection; do not auto-pick a default.
     } catch (error) {
       toast("Failed to load warehouses.", { variant: "error" });
     } finally {
       setLoadingWarehouses(false);
     }
+  }, [
+    includeAllWarehouses,
+    isBaseConnected,
+    exportInventoryId,
+    exportWarehouseId,
+    selectedBaseConnectionId,
+  ]);
+
+  const handleDebugWarehouses = async () => {
+    if (!isBaseConnected) {
+      toast("Please connect Base integration first.", { variant: "error" });
+      return;
+    }
+    if (!exportInventoryId) {
+      toast("Select an inventory before debugging warehouses.", {
+        variant: "error",
+      });
+      return;
+    }
+    setLoadingDebugWarehouses(true);
+    try {
+      const body: Record<string, unknown> = {
+        action: "warehouses_debug",
+        inventoryId: exportInventoryId,
+        includeAllWarehouses,
+      };
+      if (selectedBaseConnectionId) {
+        body.connectionId = selectedBaseConnectionId;
+      }
+      const res = await fetch("/api/products/imports/base", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const payload = (await res.json()) as {
+        warehouses?: WarehouseOption[];
+        allWarehouses?: WarehouseOption[];
+        inventories?: InventoryOption[];
+        raw?: {
+          inventory?: WarehouseDebugRaw | null;
+          inventories?: InventoryDebugRaw | null;
+          all?: WarehouseDebugRaw | null;
+        };
+        error?: string;
+      };
+      if (!res.ok) {
+        toast(payload.error || "Failed to debug warehouses.", {
+          variant: "error",
+        });
+        return;
+      }
+      setDebugWarehouses({
+        inventory: payload.warehouses ?? [],
+        all: payload.allWarehouses ?? [],
+        inventories: payload.inventories ?? [],
+        inventoryRaw: payload.raw?.inventory ?? null,
+        inventoriesRaw: payload.raw?.inventories ?? null,
+        allRaw: payload.raw?.all ?? null,
+      });
+      if (payload.error) {
+        toast(payload.error, { variant: "error" });
+      }
+    } catch (error) {
+      toast("Failed to debug warehouses.", { variant: "error" });
+    } finally {
+      setLoadingDebugWarehouses(false);
+    }
   };
 
   useEffect(() => {
-    if (!isBaseConnected || !inventoryId) return;
+    if (!isBaseConnected || !exportInventoryId) return;
     if (!exportWarehouseLoaded) return;
-    if (lastWarehouseInventoryIdRef.current === inventoryId) return;
-    lastWarehouseInventoryIdRef.current = inventoryId;
+    if (lastWarehouseInventoryIdRef.current === exportInventoryId) return;
+    lastWarehouseInventoryIdRef.current = exportInventoryId;
     void handleLoadWarehouses();
-  }, [inventoryId, isBaseConnected, exportWarehouseLoaded]);
+  }, [exportInventoryId, isBaseConnected, exportWarehouseLoaded]);
+
+  useEffect(() => {
+    if (includeAllWarehouses) return;
+    setShowAllWarehouses(false);
+  }, [includeAllWarehouses]);
 
   const handleSaveExportSettings = async () => {
     setSavingExportSettings(true);
     try {
-      const responses = await Promise.all([
+      const requests: Promise<Response>[] = [
         fetch("/api/products/exports/base/active-template", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1173,15 +1369,34 @@ export default function ProductImportsPage() {
             templateId: exportActiveTemplateId || null,
           }),
         }),
-        fetch("/api/products/imports/base/export-warehouse", {
+        fetch("/api/products/exports/base/default-inventory", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            warehouseId: exportWarehouseId || null,
-            inventoryId,
+            inventoryId: exportInventoryId || null,
           }),
         }),
-      ]);
+        fetch("/api/products/exports/base/stock-fallback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            enabled: exportStockFallbackEnabled,
+          }),
+        }),
+      ];
+      if (exportInventoryId) {
+        requests.push(
+          fetch("/api/products/imports/base/export-warehouse", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              warehouseId: exportWarehouseId || null,
+              inventoryId: exportInventoryId,
+            }),
+          })
+        );
+      }
+      const responses = await Promise.all(requests);
       const failed = responses.find((res) => !res.ok);
       if (failed) {
         toast("Failed to save export settings.", { variant: "error" });
@@ -1757,18 +1972,53 @@ export default function ProductImportsPage() {
 
               <div className="mt-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className="text-xs text-gray-400">
+                    Base connection for inventories/warehouses
+                  </label>
+                  <select
+                    className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                    value={selectedBaseConnectionId}
+                    onChange={(event) =>
+                      setSelectedBaseConnectionId(event.target.value)
+                    }
+                    disabled={baseConnections.length === 0}
+                  >
+                    {baseConnections.length === 0 ? (
+                      <option value="">No connections loaded</option>
+                    ) : (
+                      <>
+                        <option value="">Select a connection...</option>
+                        {baseConnections.map((connection) => (
+                          <option key={connection.id} value={connection.id}>
+                            {connection.name}
+                          </option>
+                        ))}
+                      </>
+                    )}
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Used for loading inventories/warehouses and debug output.
+                  </p>
+                </div>
                 <div>
                   <label className="text-xs text-gray-400">
                     Default Inventory
                   </label>
                   <select
                     className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
-                    value={inventoryId}
-                    onChange={(event) => setInventoryId(event.target.value)}
+                    value={exportInventoryId}
+                    onChange={(event) => setExportInventoryId(event.target.value)}
                     disabled={inventories.length === 0}
                   >
                     {inventories.length === 0 ? (
-                      <option value="">No inventories loaded</option>
+                      exportInventoryId ? (
+                        <option value={exportInventoryId}>
+                          Saved inventory ({exportInventoryId})
+                        </option>
+                      ) : (
+                        <option value="">No inventories loaded</option>
+                      )
                     ) : (
                       <>
                         <option value="">Select default inventory...</option>
@@ -1826,16 +2076,20 @@ export default function ProductImportsPage() {
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                   value={exportWarehouseId}
                   onChange={(event) => setExportWarehouseId(event.target.value)}
-                  disabled={warehouses.length === 0}
+                  disabled={warehouseOptions.length === 0}
                 >
-                  {warehouses.length === 0 ? (
+                  {warehouseOptions.length === 0 ? (
                     <option value="">Load warehouses first</option>
                   ) : (
                     <>
                       <option value="">Skip stock export</option>
-                      {warehouses.map((warehouse) => (
+                      {warehouseOptions.map((warehouse) => (
                         <option key={warehouse.id} value={warehouse.id}>
-                          {warehouse.name}
+                          {warehouse.name} ({warehouse.id})
+                          {showAllWarehouses &&
+                          !inventoryWarehouseIds.has(warehouse.id)
+                            ? " (not in inventory)"
+                            : ""}
                         </option>
                       ))}
                     </>
@@ -1844,6 +2098,35 @@ export default function ProductImportsPage() {
                 <p className="mt-1 text-xs text-gray-500">
                   Used for exporting stock quantities to Base.com. Leave blank to skip stock.
                 </p>
+                <div className="mt-3 flex items-center gap-2 text-xs text-gray-400">
+                  <input
+                    type="checkbox"
+                    id="exportStockFallback"
+                    checked={exportStockFallbackEnabled}
+                    onChange={(event) =>
+                      setExportStockFallbackEnabled(event.target.checked)
+                    }
+                    disabled={!exportStockFallbackLoaded}
+                    className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
+                  />
+                  <label htmlFor="exportStockFallback">
+                    Skip stock when Base rejects the warehouse (allow listing)
+                  </label>
+                </div>
+                {allWarehouses.length > 0 && allWarehouses.length > warehouses.length ? (
+                  <div className="mt-2 flex items-center gap-2 text-xs text-gray-400">
+                    <input
+                      type="checkbox"
+                      id="showAllWarehouses"
+                      checked={showAllWarehouses}
+                      onChange={(event) => setShowAllWarehouses(event.target.checked)}
+                      className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
+                    />
+                    <label htmlFor="showAllWarehouses">
+                      Show all warehouses (may include ones not assigned to the inventory)
+                    </label>
+                  </div>
+                ) : null}
               </div>
 
               <div className="rounded-md border border-blue-900/50 bg-blue-900/20 p-4">
@@ -1883,6 +2166,27 @@ export default function ProductImportsPage() {
                     {loadingWarehouses ? "Loading..." : "Load Warehouses"}
                   </Button>
                   <Button
+                    onClick={handleDebugWarehouses}
+                    disabled={loadingDebugWarehouses}
+                    variant="outline"
+                    size="sm"
+                    className="border-gray-700"
+                  >
+                    {loadingDebugWarehouses ? "Debugging..." : "Debug Warehouses"}
+                  </Button>
+                  <div className="flex items-center gap-2 text-xs text-gray-400">
+                    <input
+                      type="checkbox"
+                      id="includeAllWarehouses"
+                      checked={includeAllWarehouses}
+                      onChange={(event) => setIncludeAllWarehouses(event.target.checked)}
+                      className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
+                    />
+                    <label htmlFor="includeAllWarehouses">
+                      Try loading global warehouses (if supported)
+                    </label>
+                  </div>
+                  <Button
                     onClick={handleSaveExportSettings}
                     disabled={savingExportSettings}
                     size="sm"
@@ -1909,6 +2213,96 @@ export default function ProductImportsPage() {
                   </Link>
                 </div>
               </div>
+              {debugWarehouses ? (
+                <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-semibold text-gray-200">
+                      Warehouse debug (raw IDs)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setDebugWarehouses(null)}
+                      className="text-[11px] uppercase tracking-wide text-gray-500 hover:text-gray-200"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div className="mt-2 space-y-2">
+                    <div>
+                      <div className="text-[11px] uppercase tracking-wide text-gray-500">
+                        Selected inventory raw response
+                      </div>
+                      {debugWarehouses.inventoriesRaw ? (
+                        <div className="mt-1 space-y-1 text-[11px] text-gray-400">
+                          <div>Method: {debugWarehouses.inventoriesRaw.method}</div>
+                          <div>Status: {debugWarehouses.inventoriesRaw.statusCode}</div>
+                          <div>Ok: {debugWarehouses.inventoriesRaw.ok ? "true" : "false"}</div>
+                          {debugWarehouses.inventoriesRaw.error ? (
+                            <div>Error: {debugWarehouses.inventoriesRaw.error}</div>
+                          ) : null}
+                          {(() => {
+                            const payload = debugWarehouses.inventoriesRaw?.payload;
+                            const inventories = payload
+                              ? (payload.inventories as unknown)
+                              : null;
+                            if (!Array.isArray(inventories)) return null;
+                            const match = inventories.find((inv) => {
+                              if (!inv || typeof inv !== "object") return false;
+                              const record = inv as Record<string, unknown>;
+                              return (
+                                exportInventoryId &&
+                                String(record.inventory_id ?? "") === exportInventoryId
+                              );
+                            });
+                            if (!match) {
+                              return (
+                                <div className="rounded border border-gray-800 bg-gray-950/60 p-2 text-[10px] text-gray-300">
+                                  Selected inventory not found in response.
+                                </div>
+                              );
+                            }
+                            return (
+                              <div className="rounded border border-gray-800 bg-gray-950/60 p-2 text-[10px] text-gray-300">
+                                <div className="text-[11px] uppercase tracking-wide text-gray-500">
+                                  Selected inventory details
+                                </div>
+                                <pre className="mt-1 whitespace-pre-wrap">
+                                  {JSON.stringify(match, null, 2)}
+                                </pre>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      ) : (
+                        <div className="mt-1 text-gray-500">No raw response.</div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="text-[11px] uppercase tracking-wide text-gray-500">
+                        Inventory warehouses raw response
+                      </div>
+                      {debugWarehouses.inventoryRaw ? (
+                        <div className="mt-1 space-y-1 text-[11px] text-gray-400">
+                          <div>Inventory ID: {exportInventoryId || "—"}</div>
+                          <div>Method: {debugWarehouses.inventoryRaw.method}</div>
+                          <div>Status: {debugWarehouses.inventoryRaw.statusCode}</div>
+                          <div>Ok: {debugWarehouses.inventoryRaw.ok ? "true" : "false"}</div>
+                          {debugWarehouses.inventoryRaw.error ? (
+                            <div>Error: {debugWarehouses.inventoryRaw.error}</div>
+                          ) : null}
+                          <pre className="mt-2 max-h-64 overflow-auto rounded border border-gray-800 bg-gray-950 p-2 text-[10px] text-gray-300">
+                            {debugWarehouses.inventoryRaw.payload
+                              ? JSON.stringify(debugWarehouses.inventoryRaw.payload, null, 2)
+                              : "No payload returned."}
+                          </pre>
+                        </div>
+                      ) : (
+                        <div className="mt-1 text-gray-500">No raw response.</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
         </TabsContent>
@@ -2102,6 +2496,22 @@ export default function ProductImportsPage() {
                   <label className="text-xs text-gray-400">
                     Parameter mappings
                   </label>
+                  {hasStockMappingMismatch ? (
+                    <div className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-200">
+                      <p>
+                        Some stock keys do not match the selected inventory
+                        warehouses. Base.com will reject stock for these keys.
+                      </p>
+                      <p className="mt-1 text-amber-300/80">
+                        Invalid stock keys: {invalidStockMappingLabels.join(", ")}
+                      </p>
+                      {stockMappingSuggestions.length > 0 ? (
+                        <p className="mt-1 text-amber-300/80">
+                          Suggested keys: {stockMappingSuggestions.join(", ")}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
                   <div className="mt-2 space-y-2">
                     {currentTemplateMappings.map((mapping, index) => (
                       <div

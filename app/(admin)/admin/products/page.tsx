@@ -318,7 +318,7 @@ function AdminPageInner() {
       {isDebugOpen && <DebugPanel />}
       <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
         <ProductListHeader
-          onCreateProduct={handleOpenCreateModal}
+          onCreateProduct={() => void handleOpenCreateModal()}
           page={page}
           totalPages={totalPages}
           setPage={handleSetPage}
@@ -337,10 +337,11 @@ function AdminPageInner() {
           data={data}
           rowSelection={rowSelection}
           setRowSelection={setRowSelection}
-          onSelectAllGlobal={() => void handleSelectAllGlobal()}
+          onSelectAllGlobal={handleSelectAllGlobal}
           loadingGlobal={loadingGlobalSelection}
           total={total}
-          onDeleteSelected={() => void handleMassDelete()}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          onDeleteSelected={handleMassDelete as any}
           onAddToMarketplace={handleAddToMarketplace}
         />
         {loadError && (

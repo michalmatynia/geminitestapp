@@ -5,6 +5,7 @@ import { POST as POST_UPLOAD } from "@/app/api/databases/upload/route";
 import { POST as POST_DELETE } from "@/app/api/databases/delete/route";
 import fs from "fs/promises";
 import { execFile } from "child_process";
+import { Stats } from "fs";
 
 jest.mock("child_process", () => {
   const actual = jest.requireActual<typeof import("child_process")>(
@@ -71,12 +72,12 @@ describe("Databases API", () => {
         size: 1024,
         birthtime: new Date(),
         mtime: new Date(),
-      } as any);
+      } as unknown as Stats);
 
       const res = await GET_BACKUPS(
         new Request("http://localhost/api/databases/backups?type=postgresql")
       );
-      const backups = await res.json();
+      const backups = (await res.json()) as any[];
       expect(res.status).toEqual(200);
       expect(backups.length).toEqual(1);
       expect(backups[0].name).toEqual("stardb-backup-123.dump");

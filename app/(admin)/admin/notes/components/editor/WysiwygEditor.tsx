@@ -37,6 +37,36 @@ interface WysiwygEditorProps {
   contentTextColor: string;
 }
 
+interface ToolbarButtonProps {
+  onClick: () => void;
+  isActive?: boolean;
+  disabled?: boolean;
+  title: string;
+  children: React.ReactNode;
+}
+
+const ToolbarButton = ({
+  onClick,
+  isActive = false,
+  disabled = false,
+  title,
+  children,
+}: ToolbarButtonProps) => (
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={disabled}
+    title={title}
+    className={`rounded p-1.5 transition-colors ${
+      isActive
+        ? "bg-blue-600 text-white"
+        : "bg-gray-800 text-gray-200 hover:bg-gray-700"
+    } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+  >
+    {children}
+  </button>
+);
+
 export function WysiwygEditor({
   content,
   setContent,
@@ -128,34 +158,6 @@ export function WysiwygEditor({
       </div>
     );
   }
-
-  const ToolbarButton = ({
-    onClick,
-    isActive = false,
-    disabled = false,
-    title,
-    children,
-  }: {
-    onClick: () => void;
-    isActive?: boolean;
-    disabled?: boolean;
-    title: string;
-    children: React.ReactNode;
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      className={`rounded p-1.5 transition-colors ${
-        isActive
-          ? "bg-blue-600 text-white"
-          : "bg-gray-800 text-gray-200 hover:bg-gray-700"
-      } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-    >
-      {children}
-    </button>
-  );
 
   return (
     <div className="space-y-2">

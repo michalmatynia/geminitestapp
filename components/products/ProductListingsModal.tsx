@@ -48,6 +48,7 @@ export default function ProductListingsModal({
   const [loadingIntegrations, setLoadingIntegrations] = useState(false);
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>("");
   const [selectedConnectionId, setSelectedConnectionId] = useState<string>("");
+  const [historyOpenByListing, setHistoryOpenByListing] = useState<Record<string, boolean>>({});
 
   const productName =
     product.name_en || product.name_pl || product.name_de || "Unnamed Product";
@@ -610,34 +611,52 @@ export default function ProductListingsModal({
                       </div>
                       {listing.exportHistory && listing.exportHistory.length > 0 ? (
                         <div className="mt-3 rounded border border-gray-800 bg-gray-950/50 p-2">
-                          <p className="text-[10px] uppercase tracking-wide text-gray-500">
-                            Export history
-                          </p>
-                          <div className="mt-2 space-y-2 text-xs text-gray-400">
-                            {listing.exportHistory.slice(0, 5).map((event, index) => (
-                              <div key={`${listing.id}-export-${index}`} className="grid gap-1">
-                                <div className="flex items-center justify-between text-gray-300">
-                                  <span>{formatTimestamp(event.exportedAt)}</span>
-                                  <span className="uppercase text-[10px] text-gray-500">
-                                    {event.status ?? "success"}
-                                  </span>
-                                </div>
-                                <div className="grid gap-1">
-                                  <span>Inventory: {formatListValue(event.inventoryId)}</span>
-                                  <span>Template: {formatListValue(event.templateId)}</span>
-                                  <span>Warehouse: {formatListValue(event.warehouseId)}</span>
-                                  {event.externalListingId && (
-                                    <span>External ID: {event.externalListingId}</span>
-                                  )}
-                                  {event.fields && event.fields.length > 0 ? (
-                                    <span>Fields: {event.fields.join(", ")}</span>
-                                  ) : (
-                                    <span>Fields: —</span>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
+                          <div className="flex items-center justify-between">
+                            <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                              Export history
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setHistoryOpenByListing((prev) => ({
+                                  ...prev,
+                                  [listing.id]: !(prev[listing.id] ?? false),
+                                }))
+                              }
+                              className="text-[10px] uppercase tracking-wide text-gray-400 hover:text-gray-200"
+                            >
+                              {(historyOpenByListing[listing.id] ?? false)
+                                ? "Hide"
+                                : "Show"}
+                            </button>
                           </div>
+                          {(historyOpenByListing[listing.id] ?? false) ? (
+                            <div className="mt-2 space-y-2 text-xs text-gray-400">
+                              {listing.exportHistory.slice(0, 5).map((event, index) => (
+                                <div key={`${listing.id}-export-${index}`} className="grid gap-1">
+                                  <div className="flex items-center justify-between text-gray-300">
+                                    <span>{formatTimestamp(event.exportedAt)}</span>
+                                    <span className="uppercase text-[10px] text-gray-500">
+                                      {event.status ?? "success"}
+                                    </span>
+                                  </div>
+                                  <div className="grid gap-1">
+                                    <span>Inventory: {formatListValue(event.inventoryId)}</span>
+                                    <span>Template: {formatListValue(event.templateId)}</span>
+                                    <span>Warehouse: {formatListValue(event.warehouseId)}</span>
+                                    {event.externalListingId && (
+                                      <span>External ID: {event.externalListingId}</span>
+                                    )}
+                                    {event.fields && event.fields.length > 0 ? (
+                                      <span>Fields: {event.fields.join(", ")}</span>
+                                    ) : (
+                                      <span>Fields: —</span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : null}
                         </div>
                       ) : (
                         <p className="mt-2 text-xs text-gray-600">No export history recorded.</p>

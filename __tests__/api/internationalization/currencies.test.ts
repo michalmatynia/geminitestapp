@@ -2,9 +2,10 @@ import { GET, POST } from "../../../app/api/currencies/route";
 import prisma from "@/lib/prisma";
 
 type CurrencyResponse = {
+  id: string;
   code: string;
   name: string;
-  symbol: string;
+  symbol: string | null;
 };
 
 describe("Currencies API", () => {
@@ -28,7 +29,7 @@ describe("Currencies API", () => {
       const dbCurrencies = await prisma.currency.findMany();
       expect(dbCurrencies.length).toBeGreaterThan(0);
 
-      const usd = currencies.find((c: any) => c.code === "USD");
+      const usd = currencies.find((c: CurrencyResponse) => c.code === "USD");
       if (!usd) {
         throw new Error("Expected seeded currency USD.");
       }
@@ -54,7 +55,7 @@ describe("Currencies API", () => {
       });
 
       const res = await POST(req);
-      const currency = await res.json();
+      const currency = (await res.json()) as CurrencyResponse;
 
       expect(res.status).toEqual(200);
       expect(currency.code).toBe("USD");

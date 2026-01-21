@@ -13,9 +13,17 @@ export type BaseInventory = {
 export type BaseWarehouse = {
   id: string;
   name: string;
+  typedId?: string;
 };
 
 export type BaseProductRecord = Record<string, unknown>;
+
+export type BaseApiRawResult = {
+  ok: boolean;
+  statusCode: number;
+  payload: BaseApiResponse | null;
+  error?: string;
+};
 
 const DEFAULT_BASE_API_URL = "https://api.baselinker.com/connector.php";
 
@@ -85,11 +93,17 @@ const extractWarehouseList = (payload: BaseApiResponse): BaseWarehouse[] => {
         toStringId(record.id) ??
         toStringId(record.storage_id);
       if (!id) return null;
+      const type =
+        typeof record.warehouse_type === "string" && record.warehouse_type.trim()
+          ? record.warehouse_type.trim().toLowerCase()
+          : null;
+      const typedId =
+        type && !id.startsWith(`${type}_`) ? `${type}_${id}` : type ? id : undefined;
       const name =
         (typeof record.name === "string" && record.name.trim()) ||
         (typeof record.label === "string" && record.label.trim()) ||
         id;
-      return { id, name };
+      return { id, name, typedId };
     })
     .filter(Boolean) as BaseWarehouse[];
 };
@@ -205,6 +219,51 @@ export async function callBaseApi(
   return payload;
 }
 
+export async function callBaseApiRaw(
+  token: string,
+  method: string,
+  parameters: Record<string, unknown> = {}
+): Promise<BaseApiRawResult> {
+  const endpoint = buildBaseApiUrl();
+  const body = new URLSearchParams({
+    token,
+    method,
+    parameters: JSON.stringify(parameters),
+  });
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+
+  let payload: BaseApiResponse | null = null;
+  try {
+    payload = (await response.json()) as BaseApiResponse;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Invalid JSON payload.";
+    return {
+      ok: false,
+      statusCode: response.status,
+      payload: null,
+      error: message,
+    };
+  }
+
+  const apiError =
+    payload?.status === "ERROR"
+      ? (typeof payload.error_message === "string" && payload.error_message) ||
+        (typeof payload.error_code === "string" && payload.error_code) ||
+        "Base API error."
+      : undefined;
+
+  return {
+    ok: response.ok && !apiError,
+    statusCode: response.status,
+    payload,
+    ...(apiError ? { error: apiError } : {}),
+  };
+}
+
 export async function deleteBaseProduct(
   token: string,
   inventoryId: string,
@@ -236,6 +295,35 @@ export async function fetchBaseInventories(token: string) {
   return [];
 }
 
+export async function fetchBaseInventoriesDebug(token: string) {
+  const methods = ["getInventories", "getInventory", "getInventoryList"];
+  let lastResult: BaseApiRawResult | null = null;
+  for (const method of methods) {
+    const result = await callBaseApiRaw(token, method);
+    lastResult = result;
+    const inventories = result.payload ? extractInventoryList(result.payload) : [];
+    if (inventories.length > 0) {
+      return {
+        ...result,
+        method,
+        parameters: {},
+        inventories,
+      };
+    }
+  }
+  return {
+    ...(lastResult ?? {
+      ok: false,
+      statusCode: 500,
+      payload: null,
+      error: "No inventory response.",
+    }),
+    method: methods[0],
+    parameters: {},
+    inventories: [],
+  };
+}
+
 export async function fetchBaseWarehouses(token: string, inventoryId: string) {
   const methods = ["getInventoryWarehouses"];
   let lastError: Error | null = null;
@@ -256,6 +344,52 @@ export async function fetchBaseWarehouses(token: string, inventoryId: string) {
     throw lastError;
   }
   return [];
+}
+
+export async function fetchBaseWarehousesDebug(token: string, inventoryId: string) {
+  const method = "getInventoryWarehouses";
+  const parameters = { inventory_id: inventoryId };
+  const result = await callBaseApiRaw(token, method, parameters);
+  const warehouses = result.payload ? extractWarehouseList(result.payload) : [];
+  return {
+    ...result,
+    method,
+    parameters,
+    warehouses,
+  };
+}
+
+export async function fetchBaseAllWarehouses(token: string) {
+  const methods = ["getWarehouses"];
+  let lastError: Error | null = null;
+  for (const method of methods) {
+    try {
+      const payload = await callBaseApi(token, method);
+      const warehouses = extractWarehouseList(payload);
+      if (warehouses.length > 0) {
+        return warehouses;
+      }
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error("Base API error.");
+    }
+  }
+  if (lastError) {
+    throw lastError;
+  }
+  return [];
+}
+
+export async function fetchBaseAllWarehousesDebug(token: string) {
+  const method = "getWarehouses";
+  const parameters = {};
+  const result = await callBaseApiRaw(token, method, parameters);
+  const warehouses = result.payload ? extractWarehouseList(result.payload) : [];
+  return {
+    ...result,
+    method,
+    parameters,
+    warehouses,
+  };
 }
 
 export async function fetchBaseProductIds(token: string, inventoryId: string) {

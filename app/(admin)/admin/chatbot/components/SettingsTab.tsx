@@ -25,8 +25,6 @@ export function SettingsTab({
   setUseGlobalContext,
   useLocalContext,
   setUseLocalContext,
-  localContextMode,
-  setLocalContextMode,
   searchProvider,
   setSearchProvider,
   agentModeEnabled,
@@ -178,7 +176,7 @@ export function SettingsTab({
 
       <div className="flex justify-end">
         <Button
-          onClick={saveChatbotSettings}
+          onClick={() => void saveChatbotSettings()}
           disabled={!settingsDirty}
         >
           {settingsSaving ? "Saving..." : "Save Settings"}

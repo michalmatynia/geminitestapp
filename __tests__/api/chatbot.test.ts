@@ -23,7 +23,7 @@ describe("Chatbot API", () => {
     );
 
     const res = await GET();
-    const data = await res.json();
+    const data = (await res.json()) as { models: string[] };
 
     expect(res.status).toBe(200);
     expect(data.models).toEqual(["test-model", "llava"]);
@@ -35,7 +35,7 @@ describe("Chatbot API", () => {
     );
 
     const res = await GET();
-    const data = await res.json();
+    const data = (await res.json()) as { error: string; errorId?: string };
 
     expect(res.status).toBe(502);
     expect(data.error).toContain("Failed to load models");
@@ -50,7 +50,7 @@ describe("Chatbot API", () => {
     });
 
     const res = await POST(req);
-    const data = await res.json();
+    const data = (await res.json()) as { error: string };
 
     expect(res.status).toBe(400);
     expect(data.error).toBe("No messages provided.");
@@ -72,7 +72,7 @@ describe("Chatbot API", () => {
     });
 
     const res = await POST(req);
-    const data = await res.json();
+    const data = (await res.json()) as { message: string };
 
     expect(res.status).toBe(200);
     expect(data.message).toBe("Hello from model.");
@@ -98,7 +98,7 @@ describe("Chatbot API", () => {
     });
 
     const res = await POST(req);
-    const data = await res.json();
+    const data = (await res.json()) as { error: string; errorId?: string };
 
     expect(res.status).toBe(502);
     expect(data.error).toContain("Ollama error");
@@ -118,7 +118,7 @@ describe("Chatbot API", () => {
     });
 
     const res = await POST(req);
-    const data = await res.json();
+    const data = (await res.json()) as { errorId?: string };
 
     expect(res.status).toBe(500);
     expect(data.errorId).toBeDefined();

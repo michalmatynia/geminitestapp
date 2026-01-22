@@ -12,17 +12,7 @@ import {
 } from "@/components/ui/select";
 import ModalShell from "@/components/ui/modal-shell";
 import type { ProductWithImages, IntegrationWithConnections } from "@/types";
-
-type Template = {
-  id: string;
-  name: string;
-  description?: string | null;
-};
-
-type BaseInventory = {
-  id: string;
-  name: string;
-};
+import type { Template, BaseInventory } from "@/types/product-imports";
 
 type SelectProductForListingModalProps = {
   integrationId: string;

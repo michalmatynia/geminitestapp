@@ -7,6 +7,7 @@ import {
   DELETE as DELETE_TAG,
 } from "@/app/api/notes/tags/[id]/route";
 import prisma from "@/lib/prisma";
+import { Tag } from "@prisma/client";
 
 describe("Notes Tags API", () => {
   beforeEach(async () => {
@@ -27,7 +28,7 @@ describe("Notes Tags API", () => {
     const res = await GET_TAGS(
       new Request("http://localhost/api/notes/tags")
     );
-    const tags = (await res.json()) as any[];
+    const tags = (await res.json()) as Tag[];
 
     expect(res.status).toBe(200);
     expect(tags[0].name).toBe("Alpha");

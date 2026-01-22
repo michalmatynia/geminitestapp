@@ -15,40 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import ModalShell from "@/components/ui/modal-shell";
 import { Input } from "@/components/ui/input";
-
-type ListingJob = {
-  id: string;
-  productId: string;
-  integrationId: string;
-  integrationName: string;
-  integrationSlug: string;
-  connectionId: string;
-  connectionName: string;
-  status: string;
-  externalListingId: string | null;
-  inventoryId: string | null;
-  listedAt: string | null;
-  exportHistory: Array<{
-    exportedAt: string;
-    status?: string | null;
-    inventoryId?: string | null;
-    templateId?: string | null;
-    warehouseId?: string | null;
-    externalListingId?: string | null;
-    fields?: string[] | null;
-  }> | null;
-  createdAt: string;
-  updatedAt: string;
-};
-
-type ListingAttempt = NonNullable<ListingJob["exportHistory"]>[number];
-
-type ProductJob = {
-  productId: string;
-  productName: string;
-  productSku: string | null;
-  listings: ListingJob[];
-};
+import type { ListingJob, ListingAttempt, ProductJob } from "@/types/product-listings";
 
 type ProductListingJobsPanelProps = {
   showBackToProducts?: boolean;

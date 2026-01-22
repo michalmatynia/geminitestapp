@@ -2,15 +2,14 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { CatalogOption, ImportListItem, ImportResponse, InventoryOption, Template } from "./types";
-
-type ImportListStats = {
-  total: number;
-  existing: number;
-  available?: number;
-  filtered: number;
-  skuDuplicates?: number;
-};
+import type {
+  CatalogOption,
+  ImportListItem,
+  ImportResponse,
+  InventoryOption,
+  Template,
+  ImportListStats,
+} from "@/types/product-imports";
 
 type ImportTabProps = {
   inventories: InventoryOption[];

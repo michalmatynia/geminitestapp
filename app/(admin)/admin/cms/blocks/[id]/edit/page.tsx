@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 interface Block {
   id: string;
   name: string;
-  content: any;
+  content: string;
 }
 
 export default function EditBlockPage() {
@@ -23,22 +23,32 @@ export default function EditBlockPage() {
     if (id) {
       void fetch(`/api/cms/blocks/${id}`)
         .then((res) => res.json())
-        .then(setBlock);
+        .then((data: { id: string; name: string; content: unknown }) => {
+          setBlock({
+            ...data,
+            content:
+              typeof data.content === "string"
+                ? data.content
+                : JSON.stringify(data.content, null, 2),
+          });
+        });
     }
   }, [id]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!block) return;
+    void (async () => {
+      if (!block) return;
 
-    await fetch(`/api/cms/blocks/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ ...block, content: JSON.parse(block.content) }),
-    });
-    router.push("/admin/cms/blocks");
+      await fetch(`/api/cms/blocks/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ...block, content: JSON.parse(block.content) }),
+      });
+      router.push("/admin/cms/blocks");
+    })();
   };
 
   if (!block) {
@@ -62,7 +72,7 @@ export default function EditBlockPage() {
           <Label htmlFor="content">Content (JSON)</Label>
           <Textarea
             id="content"
-            value={JSON.stringify(block.content, null, 2)}
+            value={block.content}
             onChange={(e) => setBlock({ ...block, content: e.target.value })}
             rows={10}
             required

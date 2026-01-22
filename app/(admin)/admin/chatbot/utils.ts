@@ -1,8 +1,6 @@
 import {
   AgentAuditLog,
   AgentBrowserLog,
-  AgentPlanStep,
-  AgentSnapshot,
   ChatMessage,
   ModelProfile,
   ModelTaskRule,
@@ -135,7 +133,7 @@ export const readErrorResponse = async (res: Response) => {
       message: data.error || "Request failed.", 
       errorId: data.errorId 
     };
-  } catch (error) {
+  } catch (_error) {
     try {
       const text = await res.text();
       return { message: text || "Request failed." };

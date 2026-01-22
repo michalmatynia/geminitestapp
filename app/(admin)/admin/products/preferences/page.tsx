@@ -13,13 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { useRouter } from "next/navigation";
-
-type UserPreferences = {
-  productListNameLocale: string | null;
-  productListCatalogFilter: string | null;
-  productListCurrencyCode: string | null;
-  productListPageSize: number | null;
-};
+import { UserPreferences } from "@/types/products";
 
 type Catalog = {
   id: string;

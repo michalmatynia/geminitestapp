@@ -1,18 +1,12 @@
 import React from "react";
 import { MoreVertical } from "lucide-react";
-import { Catalog } from "@/types/products";
+import { Catalog, Language } from "@/types/products";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-type Language = {
-  id: string;
-  code: string;
-  name: string;
-};
 
 type CatalogsSettingsProps = {
   loadingCatalogs: boolean;

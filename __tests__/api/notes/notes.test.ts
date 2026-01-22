@@ -5,6 +5,20 @@ import {
   DELETE as DELETE_NOTE,
 } from "@/app/api/notes/[id]/route";
 import prisma from "@/lib/prisma";
+import {
+  Note,
+  Tag,
+  Category,
+  NoteTag,
+  NoteCategory,
+  NoteRelation,
+} from "@prisma/client";
+
+type NoteWithRelations = Note & {
+  tags: (NoteTag & { tag: Tag })[];
+  categories: (NoteCategory & { category: Category })[];
+  relationsFrom: (NoteRelation & { targetNote: Note })[];
+};
 
 const createTag = (name: string) => prisma.tag.create({ data: { name } });
 const createCategory = (name: string, parentId?: string | null) =>
@@ -66,7 +80,7 @@ describe("Notes API", () => {
     });
 
     const res = await GET_NOTES(new Request("http://localhost/api/notes"));
-    const notes = (await res.json()) as any[];
+    const notes = (await res.json()) as NoteWithRelations[];
 
     expect(res.status).toBe(200);
     expect(notes).toHaveLength(1);
@@ -83,7 +97,7 @@ describe("Notes API", () => {
         "http://localhost/api/notes?search=Alpha&searchScope=title&isPinned=true"
       )
     );
-    const notes = (await res.json()) as any[];
+    const notes = (await res.json()) as NoteWithRelations[];
 
     expect(res.status).toBe(200);
     expect(notes).toHaveLength(1);
@@ -106,7 +120,7 @@ describe("Notes API", () => {
         `http://localhost/api/notes?tagIds=${tag.id}&categoryIds=${category.id}`
       )
     );
-    const notes = (await res.json()) as any[];
+    const notes = (await res.json()) as NoteWithRelations[];
 
     expect(res.status).toBe(200);
     expect(notes).toHaveLength(1);
@@ -129,7 +143,7 @@ describe("Notes API", () => {
         }),
       })
     );
-    const note = (await res.json()) as any;
+    const note = (await res.json()) as NoteWithRelations;
 
     expect(res.status).toBe(201);
     expect(note.tags[0].tag.name).toBe("Personal");
@@ -194,7 +208,7 @@ describe("Notes API", () => {
       }),
       { params: Promise.resolve({ id: note.id }) }
     );
-    const data = (await res.json()) as any;
+    const data = (await res.json()) as NoteWithRelations;
 
     expect(res.status).toBe(200);
     expect(data.title).toBe("Updated");

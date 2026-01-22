@@ -42,7 +42,7 @@ export default function BlocksPage() {
               <Link href={`/admin/cms/blocks/${block.id}/edit`}>
                 <span className="hover:underline">{block.name}</span>
               </Link>
-              <Button variant="destructive" onClick={() => handleDelete(block.id)}>Delete</Button>
+              <Button variant="destructive" onClick={() => void handleDelete(block.id)}>Delete</Button>
             </li>
           ))}
         </ul>

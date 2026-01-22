@@ -91,7 +91,7 @@ export const useChatbotLogic = () => {
 
         // If no current session and sessions exist, select the first one
         if (!currentSessionId && data.sessions && data.sessions.length > 0) {
-          setCurrentSessionId(data.sessions[0].id);
+          setCurrentSessionId(data.sessions[0]?.id ?? null);
         }
       }
     } catch (error) {
@@ -220,7 +220,7 @@ export const useChatbotLogic = () => {
         throw new Error("No chatbot settings saved.");
       }
       // Logic to parse and set settings would go here, simplified for extraction
-    } catch (error) {
+    } catch (_error) {
       // Fallback to local storage or defaults
     }
   }, []);

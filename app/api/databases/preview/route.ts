@@ -136,7 +136,7 @@ export async function POST(req: Request) {
     const adminUrl = new URL(dbUrl);
     adminUrl.pathname = "/postgres";
     adminUrl.searchParams.delete("schema");
-    const adminClient = 
+    const adminClient =
       previewMode === "backup"
         ? new Client({ connectionString: adminUrl.toString() })
         : null;
@@ -181,9 +181,7 @@ export async function POST(req: Request) {
       previewClient = new Client({ connectionString: previewUrl.toString() });
       await previewClient.connect();
 
-      const tablesResult = await previewClient.query<{ 
-        tablename: string;
-      }>(
+      const tablesResult = await previewClient.query<{ tablename: string }>(
         "SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename"
       );
       const tables = tablesResult.rows.map((row) => row.tablename);
@@ -193,7 +191,7 @@ export async function POST(req: Request) {
       }
 
       if (tables.length > 0) {
-        const estimateRows = await previewClient.query<{ 
+        const estimateRows = await previewClient.query<{
           relname: string;
           reltuples: number;
         }>( 
@@ -214,14 +212,62 @@ export async function POST(req: Request) {
         }));
       }
 
-            for (const table of tables) {
+      for (const table of tables) {
+        const countResult = await previewClient.query<{ total: string }>( 
+          `SELECT COUNT(*)::bigint AS total FROM "${table}"`
+        );
+        const totalRows = Number(countResult.rows[0]?.total ?? 0);
 
-              const countResult = await previewClient.query<{ total: string }>(
+        const rowsResult = await previewClient.query(
+          `SELECT * FROM "${table}" LIMIT $1 OFFSET $2`,
+          [safePageSize, offset]
+        );
 
-                `SELECT COUNT(*)::bigint AS total FROM "${table}"`
+        tableRows.push({
+          name: table,
+          rows: rowsResult.rows,
+          totalRows,
+        });
+      }
+    } finally {
+      await previewClient?.end();
+      if (previewMode === "backup" && previewDbName && adminClient) {
+        try {
+          await adminClient.query(
+            `DROP DATABASE IF EXISTS "${previewDbName}" WITH (FORCE)`
+          );
+        } catch (e) {
+          console.error("Failed to drop preview database", e);
+        }
+        await adminClient.end();
+      }
+    }
 
-              );
+    const groupObj: Record<string, string[]> = {};
+    for (const [key, val] of groups) {
+      groupObj[key] = Array.from(val);
+    }
 
-              const totalRows = Number(countResult.rows[0]?.total ?? 0);
-
-      
+    return NextResponse.json({
+      stats: {
+        tables: tableStats,
+        groups: groupObj,
+      },
+      data: tableRows,
+    });
+  } catch (error) {
+    console.error("[databases][preview] Unexpected error", {
+      errorId,
+      stage,
+      error,
+    });
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Internal Server Error",
+        errorId,
+        stage,
+      },
+      { status: 500 }
+    );
+  }
+}

@@ -10,7 +10,7 @@ import { useToast } from "@/components/ui/toast";
 import { Loader2, RefreshCcw, Trash2, XCircle, Eye } from "lucide-react";
 import ModalShell from "@/components/ui/modal-shell";
 import ProductListingJobsPanel from "@/components/products/jobs/ProductListingJobsPanel";
-import type { ProductAiJob } from "@/components/products/jobs/types";
+import type { ProductAiJob } from "@/types/product-jobs";
 
 export default function ProductAiJobsPage() {
   const { toast } = useToast();

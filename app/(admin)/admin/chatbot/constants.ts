@@ -1,7 +1,13 @@
+import {
+  ChatbotSettingsPayload,
+  ModelTaskRule,
+  AgentSettingsPayload,
+} from "@/types/chatbot";
+
 export const CHATBOT_SETTINGS_KEY = "default";
 export const CHATBOT_SETTINGS_STORAGE_KEY = "chatbot.settings.v1";
 
-export const DEFAULT_CHATBOT_SETTINGS: any = {
+export const DEFAULT_CHATBOT_SETTINGS: ChatbotSettingsPayload = {
   model: "",
   webSearchEnabled: false,
   useGlobalContext: false,
@@ -32,7 +38,7 @@ export const DEFAULT_CHATBOT_SETTINGS: any = {
   loopBackoffMaxMs: 12000,
 };
 
-export const MODEL_TASK_RULES: Record<string, any> = {
+export const MODEL_TASK_RULES: Record<string, ModelTaskRule> = {
   main: { preferLarge: true, minSize: 7, preferReasoning: true },
   planner: { preferLarge: true, minSize: 7, preferReasoning: true },
   selfCheck: { preferLarge: true, minSize: 7 },
@@ -45,7 +51,7 @@ export const MODEL_TASK_RULES: Record<string, any> = {
   outputNormalization: { preferSmall: true, targetSize: 3, maxSize: 7 },
 };
 
-export const DEFAULT_AGENT_SETTINGS: any = {
+export const DEFAULT_AGENT_SETTINGS: AgentSettingsPayload = {
   agentBrowser: "chromium",
   runHeadless: true,
   ignoreRobotsTxt: false,

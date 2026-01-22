@@ -27,7 +27,7 @@ import type {
   TemplateMapping,
   WarehouseDebugRaw,
   WarehouseOption,
-} from "@/components/products/imports/types";
+} from "@/types/product-imports";
 
 export default function ProductImportsPage() {
   const { toast } = useToast();

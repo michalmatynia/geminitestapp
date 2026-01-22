@@ -3,6 +3,8 @@ export type InventoryOption = {
   name: string;
 };
 
+export type BaseInventory = InventoryOption;
+
 export type WarehouseOption = {
   id: string;
   name: string;
@@ -56,5 +58,29 @@ export type Template = {
   id: string;
   name: string;
   description?: string | null;
-  mappings: TemplateMapping[];
+  mappings?: TemplateMapping[];
 };
+
+export type ExportParameterDoc = {
+  name: string;
+  type: string;
+  description: string;
+  required: boolean;
+};
+
+export type ImportListStats = {
+  total: number;
+  filtered: number;
+  available?: number;
+  existing: number;
+  skuDuplicates?: number;
+};
+
+export type DebugWarehouses = {
+  inventory?: WarehouseOption[];
+  all?: WarehouseOption[];
+  inventories?: InventoryOption[];
+  inventoryRaw?: WarehouseDebugRaw | null;
+  inventoriesRaw?: InventoryDebugRaw | null;
+  allRaw?: WarehouseDebugRaw | null;
+} | null;

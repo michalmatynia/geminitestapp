@@ -5,20 +5,10 @@ import { Button } from "@/components/ui/button";
 import type {
   InventoryOption,
   Template,
-  WarehouseDebugRaw,
   WarehouseOption,
-  InventoryDebugRaw,
-} from "./types";
+  DebugWarehouses,
+} from "@/types/product-imports";
 import type { IntegrationConnectionBasic } from "@/types";
-
-type DebugWarehouses = {
-  inventory?: WarehouseOption[];
-  all?: WarehouseOption[];
-  inventories?: InventoryOption[];
-  inventoryRaw?: WarehouseDebugRaw | null;
-  inventoriesRaw?: InventoryDebugRaw | null;
-  allRaw?: WarehouseDebugRaw | null;
-} | null;
 
 type ExportTabProps = {
   baseConnections: IntegrationConnectionBasic[];

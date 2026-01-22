@@ -3,6 +3,7 @@ import { GET, POST } from "@/app/api/cms/slugs/route";
 import { DELETE } from "@/app/api/cms/slugs/[id]/route";
 
 import prisma from "@/lib/prisma";
+import { Slug } from "@prisma/client";
 
 describe("CMS API", () => {
   beforeEach(async () => {
@@ -44,7 +45,7 @@ describe("CMS API", () => {
     });
 
     const res = await GET();
-    const data = (await res.json()) as any[];
+    const data = (await res.json()) as Slug[];
 
     expect(res.status).toBe(200);
     expect(data.length).toBe(2);

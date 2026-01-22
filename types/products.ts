@@ -76,3 +76,14 @@ export type ProductTag = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+export type UserPreferences = {
+  productListNameLocale: string | null;
+  productListCatalogFilter: string | null;
+  productListCurrencyCode: string | null;
+  productListPageSize: number | null;
+};
+
+export type IntegrationDbProvider = "prisma" | "mongodb";
+
+export type SyncDirection = "to_base" | "from_base" | "bidirectional" | "none";

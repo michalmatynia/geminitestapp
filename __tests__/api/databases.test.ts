@@ -66,7 +66,7 @@ describe("Databases API", () => {
         .mockResolvedValue([
           "stardb-backup-123.dump",
           "restore-log.json",
-        ] as any);
+        ] as unknown as string[]);
       jest.spyOn(fs, "readFile").mockResolvedValue("{}");
       jest.spyOn(fs, "stat").mockResolvedValue({
         size: 1024,
@@ -77,7 +77,7 @@ describe("Databases API", () => {
       const res = await GET_BACKUPS(
         new Request("http://localhost/api/databases/backups?type=postgresql")
       );
-      const backups = (await res.json()) as any[];
+      const backups = (await res.json()) as { name: string }[];
       expect(res.status).toEqual(200);
       expect(backups.length).toEqual(1);
       expect(backups[0].name).toEqual("stardb-backup-123.dump");

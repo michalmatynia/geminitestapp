@@ -1,5 +1,15 @@
 
-When I update product stock, when I hit enter, the product disappears from the list and I need to refresh to restore it.
+When I update product stock, The product disconnects from the catalog.
+
+One Click creation Templates for Product (with  Stock Inserted)
+
+One Click list on Base
+
+Default Price group should be selected in Product as soon as the catalog is selected, cause it's the default group of the catalog
+
+Product images are not getting Reordered.
+
+Infer Category
 
 Default Catalog choice, In Product Catalog Choice should retained, In settings my Default Product View options should be available with Reset to Default button
 
@@ -7,8 +17,7 @@ Default Catalog choice, In Product Catalog Choice should retained, In settings m
 
 Opening WYSYWIG Note fails in Edit Mode
 
-
-Infer Categories and size , material Automatically
+Infer Categories and size , material, Lore Tag Automatically
 
 In Product List - Operations - I need an Option to Mass Export Products to Base.com
 
@@ -229,6 +238,9 @@ Enhance Components
 Make components more robust and modular
 Segment them into proper sections
 
+## AI PATHS
+
+Signal paths for different ai tasks
 # Agentic AI
 Enhance functionality of
 1. Planner/replanner vs. executor (already split for you) V

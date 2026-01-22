@@ -12,16 +12,18 @@ export default function CreateBlockPage() {
   const [content, setContent] = useState("");
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("/api/cms/blocks", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name, content: JSON.parse(content) }),
-    });
-    router.push("/admin/cms/blocks");
+    void (async () => {
+      await fetch("/api/cms/blocks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, content: JSON.parse(content) }),
+      });
+      router.push("/admin/cms/blocks");
+    })();
   };
 
   return (

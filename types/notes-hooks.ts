@@ -1,21 +1,39 @@
-import type { MutableRefObject } from "react";
-import type { NoteWithRelations, CategoryWithChildren, ThemeRecord, NotebookRecord } from "@/types/notes";
+import type { RefObject } from "react";
+import type {
+  NoteWithRelations,
+  CategoryWithChildren,
+  ThemeRecord,
+  NotebookRecord,
+} from "@/types/notes";
 import type { NoteSettings } from "@/types/notes-settings";
 
 export type UndoAction =
-  | { type: "moveNote"; noteId: string; fromFolderId: string | null; toFolderId: string | null }
-  | { type: "moveFolder"; folderId: string; fromParentId: string | null; toParentId: string | null }
+  | {
+      type: "moveNote";
+      noteId: string;
+      fromFolderId: string | null;
+      toFolderId: string | null;
+    }
+  | {
+      type: "moveFolder";
+      folderId: string;
+      fromParentId: string | null;
+      toParentId: string | null;
+    }
   | { type: "renameFolder"; folderId: string; fromName: string; toName: string }
   | { type: "renameNote"; noteId: string; fromTitle: string; toTitle: string };
 
 export interface UseNoteOperationsProps {
   selectedNotebookId: string | null;
-  notesRef: MutableRefObject<NoteWithRelations[]>;
-  folderTreeRef: MutableRefObject<CategoryWithChildren[]>;
+  notesRef: RefObject<NoteWithRelations[]>;
+  folderTreeRef: RefObject<CategoryWithChildren[]>;
   fetchNotes: () => Promise<void>;
   fetchFolderTree: () => Promise<void>;
   setUndoStack: React.Dispatch<React.SetStateAction<UndoAction[]>>;
-  toast: (message: string, options?: { variant?: "success" | "error" | "info"; duration?: number }) => void;
+  toast: (
+    message: string,
+    options?: { variant?: "success" | "error" | "info"; duration?: number },
+  ) => void;
   setSelectedFolderId: (id: string | null) => void;
   setSelectedNote: (note: NoteWithRelations | null) => void;
   selectedNote: NoteWithRelations | null;

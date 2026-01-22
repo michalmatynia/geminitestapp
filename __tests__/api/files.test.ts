@@ -65,7 +65,7 @@ describe("Files API", () => {
   describe("GET /api/files", () => {
     it("should return all files", async () => {
       const res = await GET(new Request("http://localhost/api/files"));
-      const files = (await res.json()) as any[];
+      const files = (await res.json()) as ImageFile[];
       expect(res.status).toBe(200);
       expect(files.length).toBe(2);
     });
@@ -74,7 +74,7 @@ describe("Files API", () => {
       const res = await GET(
         new Request("http://localhost/api/files?filename=test-image")
       );
-      const files = (await res.json()) as any[];
+      const files = (await res.json()) as ImageFile[];
       expect(res.status).toBe(200);
       expect(files.length).toBe(1);
       expect(files[0].filename).toBe("test-image1.jpg");
@@ -84,7 +84,7 @@ describe("Files API", () => {
       const res = await GET(
         new Request(`http://localhost/api/files?productId=${product1.id}`)
       );
-      const files = (await res.json()) as any[];
+      const files = (await res.json()) as ImageFile[];
       expect(res.status).toBe(200);
       expect(files.length).toBe(1);
       expect(files[0].filename).toBe("test-image1.jpg");
@@ -94,7 +94,7 @@ describe("Files API", () => {
       const res = await GET(
         new Request("http://localhost/api/files?productName=Product A")
       );
-      const files = (await res.json()) as any[];
+      const files = (await res.json()) as ImageFile[];
       expect(res.status).toBe(200);
       expect(files.length).toBe(1);
       expect(files[0].filename).toBe("test-image1.jpg");
@@ -105,7 +105,7 @@ describe("Files API", () => {
     it("should delete a file", async () => {
       const res = await DELETE(new Request("http://localhost"), {
         params: Promise.resolve({ id: imageFile2.id }),
-      } as any);
+      } as unknown as { params: Promise<{ id: string }> });
       expect(res.status).toBe(204);
 
       const deletedFile = await prisma.imageFile.findUnique({
@@ -117,7 +117,7 @@ describe("Files API", () => {
     it("should return 404 for non-existent file", async () => {
       const res = await DELETE(new Request("http://localhost"), {
         params: Promise.resolve({ id: "non-existent-id" }),
-      } as any);
+      } as unknown as { params: Promise<{ id: string }> });
       expect(res.status).toBe(404);
     });
   });

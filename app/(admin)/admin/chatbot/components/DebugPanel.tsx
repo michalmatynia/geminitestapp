@@ -2,6 +2,7 @@
 
 import React from "react";
 import { ChatbotDebugState } from "@/types/chatbot";
+import { AgentAuditLog } from "@prisma/client";
 
 interface LogEntry {
   id: string;
@@ -13,7 +14,7 @@ interface LogEntry {
 interface DebugPanelProps {
   debugState: ChatbotDebugState;
   agentRunLogs: LogEntry[];
-  _agentRunAudits: any[];
+  _agentRunAudits: AgentAuditLog[];
 }
 
 export function DebugPanel({

@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { IntegrationWithConnections, ProductListingRecord, ProductWithImages } from "@/types";
+import { SyncDirection } from "@/types/products";
 import { Trash2, ArrowRight, ArrowLeft, ArrowLeftRight, Check, X } from "lucide-react";
 
 type ProductListingsModalProps = {
@@ -135,9 +136,6 @@ export default function ProductListingsModal({
     });
     return sorted[0]?.templateId ?? null;
   };
-
-  // Sync direction types
-  type SyncDirection = "to_base" | "from_base" | "bidirectional" | "none";
 
   // Define sync configuration for each field
   const getSyncFields = () => {

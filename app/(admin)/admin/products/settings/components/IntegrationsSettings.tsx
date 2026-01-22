@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/toast";
-
-type IntegrationDbProvider = "prisma" | "mongodb";
+import { IntegrationDbProvider } from "@/types/products";
 
 export function IntegrationsSettings() {
   const { toast } = useToast();

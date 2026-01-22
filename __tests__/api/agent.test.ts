@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { ChatbotAgentRun, AgentBrowserLog, AgentAuditLog } from "@prisma/client";
 import { GET as listRuns, POST as createRun } from "@/app/api/chatbot/agent/route";
 import { GET as getLogs } from "@/app/api/chatbot/agent/[runId]/logs/route";
 import { GET as getAudits } from "@/app/api/chatbot/agent/[runId]/audits/route";
@@ -54,7 +55,11 @@ describe("Agent API", () => {
     });
 
     const res = await listRuns();
-    const data = (await res.json()) as { runs: any[] };
+    const data = (await res.json()) as {
+      runs: (ChatbotAgentRun & {
+        _count: { browserLogs: number; browserSnapshots: number };
+      })[];
+    };
 
     expect(res.status).toBe(200);
     expect(data.runs).toHaveLength(1);
@@ -77,7 +82,7 @@ describe("Agent API", () => {
     const res = await getLogs(new Request("http://localhost"), {
       params: Promise.resolve({ runId: run.id }),
     });
-    const data = (await res.json()) as { logs: any[] };
+    const data = (await res.json()) as { logs: AgentBrowserLog[] };
 
     expect(res.status).toBe(200);
     expect(data.logs).toHaveLength(1);
@@ -100,7 +105,7 @@ describe("Agent API", () => {
     const res = await getAudits(new Request("http://localhost"), {
       params: Promise.resolve({ runId: run.id }),
     });
-    const data = (await res.json()) as { audits: any[] };
+    const data = (await res.json()) as { audits: AgentAuditLog[] };
 
     expect(res.status).toBe(200);
     expect(data.audits).toHaveLength(1);

@@ -13,17 +13,7 @@ import {
 import ModalShell from "@/components/ui/modal-shell";
 import type { IntegrationWithConnections } from "@/types";
 import { logger } from "@/lib/logger";
-
-type Template = {
-  id: string;
-  name: string;
-  description?: string | null;
-};
-
-type BaseInventory = {
-  id: string;
-  name: string;
-};
+import type { Template, BaseInventory } from "@/types/product-imports";
 
 type MassListProductModalProps = {
   productIds: string[];

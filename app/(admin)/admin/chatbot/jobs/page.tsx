@@ -280,7 +280,7 @@ export default function ChatbotJobsPage() {
         kind: "agent" as const,
         id: run.id,
         createdAt: run.createdAt,
-        status: run.status,
+        status: run.status as ChatbotJob["status"],
         model: run.model,
         prompt: run.prompt,
         errorMessage: run.errorMessage ?? null,

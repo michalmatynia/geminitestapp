@@ -8,21 +8,21 @@ import CmsLayout from "./layout";
 interface Page {
   id: string;
   name: string;
-  components: any[];
+  components: unknown[];
 }
 
 export default function EditPagePage() {
   const [page, setPage] = useState<Page | null>(null);
   const router = useRouter();
-  const params = useParams();
-  const id = params.id as string;
+  const { id } = useParams();
 
   useEffect(() => {
-    if (id) {
-      void fetch(`/api/cms/pages/${id}`)
-        .then((res) => res.json())
-        .then(setPage);
-    }
+    const fetchPage = async () => {
+      const res = await fetch(`/api/cms/pages/${id}`);
+      const data = (await res.json()) as Page;
+      setPage(data);
+    };
+    void fetchPage();
   }, [id]);
 
   const handleSave = async () => {
@@ -46,7 +46,7 @@ export default function EditPagePage() {
     <CmsLayout>
       {/* Page preview will go here */}
       <div className="flex justify-end">
-        <Button onClick={handleSave}>Save</Button>
+        <Button onClick={() => { void handleSave(); }}>Save</Button>
       </div>
     </CmsLayout>
   );

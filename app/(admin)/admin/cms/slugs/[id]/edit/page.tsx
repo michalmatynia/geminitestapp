@@ -45,13 +45,12 @@ export default function EditSlugPage() {
     return <div>Loading...</div>;
   }
 
-  return (
-    <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold">Edit Slug</h1>
-      <form onSubmit={handleSubmit} className="mt-6">
-        <div className="mb-4">
-          <Label htmlFor="slug">Slug</Label>
-          <Input
+      return (
+        <div className="container mx-auto py-10">
+          <h1 className="text-3xl font-bold">Edit Slug</h1>
+          <form onSubmit={(e) => { void handleSubmit(e); }} className="mt-6">
+            <div className="mb-4">
+              <Label htmlFor="slug">Slug</Label>          <Input
             id="slug"
             value={slug.slug}
             onChange={(e) => setSlug({ ...slug, slug: e.target.value })}

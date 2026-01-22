@@ -45,7 +45,7 @@ export default function CreatePagePage() {
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-3xl font-bold">Create Page</h1>
-      <form onSubmit={handleSubmit} className="mt-6">
+      <form onSubmit={(e) => { void handleSubmit(e); }} className="mt-6">
         <div className="mb-4">
           <Label htmlFor="name">Page Name</Label>
           <Input

@@ -20,7 +20,6 @@ import type { NoteRepository } from "@/types/services/note-repository";
 import type {
   NoteTagEmbedded,
   NoteCategoryEmbedded,
-  RelatedNoteEmbedded,
   NoteRelationFromEmbedded,
   NoteRelationToEmbedded,
   NoteDocument,

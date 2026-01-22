@@ -1,5 +1,4 @@
 import prisma from "@/lib/prisma";
-import { ProductAiJobStatus } from "@prisma/client";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { productService } from "./productService";
 
@@ -13,7 +12,7 @@ async function saveToMongo(job: any) {
     const mongo = await getMongoDb();
     const { id, createdAt, ...data } = job;
     await mongo.collection(JOBS_COLLECTION).updateOne(
-      { _id: id as any },
+      { _id: id },
       {
         $set: { ...data, updatedAt: new Date() },
         $setOnInsert: { createdAt: createdAt || new Date() },
@@ -122,7 +121,7 @@ export async function deleteProductAiJob(jobId: string) {
   });
   if (process.env.MONGODB_URI) {
     const mongo = await getMongoDb();
-    await mongo.collection(JOBS_COLLECTION).deleteOne({ _id: jobId as any });
+    await mongo.collection(JOBS_COLLECTION).deleteOne({ _id: jobId });
   }
 }
 

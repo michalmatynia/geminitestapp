@@ -59,13 +59,13 @@ const populateRelations = <T extends NoteWithRelations | NoteWithRelations[] | n
         return data.map(note => ({
             ...note,
             relations: buildRelations(note)
-        })) as unknown as T;
+        })) as T;
     }
     const note = data as NoteWithRelations;
     return {
         ...note,
         relations: buildRelations(note)
-    } as unknown as T;
+    } as T;
 };
 
 export const noteService: NoteRepository = {

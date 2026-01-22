@@ -183,12 +183,6 @@ const extractProducts = (payload: BaseApiResponse): BaseProductRecord[] => {
   return [];
 };
 
-const hasProductDetails = (product: BaseProductRecord) => {
-  const keys = Object.keys(product);
-  const idKeys = new Set(["id", "product_id", "base_product_id"]);
-  return keys.some((key) => !idKeys.has(key));
-};
-
 export async function callBaseApi(
   token: string,
   method: string,

@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getIntegrationDataProvider } from "@/lib/services/integration-provider";
@@ -180,7 +181,7 @@ const prismaRepository: ProductListingRepository = {
       : [];
     await prisma.productListing.update({
       where: { id },
-      data: { exportHistory: [...current, event] as any },
+      data: { exportHistory: [...current, event] as Prisma.InputJsonValue[] },
     });
   },
 

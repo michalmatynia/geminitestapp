@@ -50,13 +50,12 @@ export default function PagesPage() {
       <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
         <ul>
           {pages.map((page) => (
-            <li key={page.id} className="flex justify-between items-center py-2 border-b border-gray-700">
-              <Link href={`/admin/cms/pages/${page.id}/edit`}>
-                <span className="hover:underline">{page.name} ({page.slugs.map(s => `/${s.slug.slug}`).join(', ')})</span>
-              </Link>
-              <Button variant="destructive" onClick={() => handleDelete(page.id)}>Delete</Button>
-            </li>
-          ))}
+                          <li key={page.id} className="flex justify-between items-center py-2 border-b border-gray-700">
+                            <Link href={`/admin/cms/pages/${page.id}/edit`}>
+                              <span className="hover:underline">{page.name} ({page.slugs.map(s => `/${s.slug.slug}`).join(', ')})</span>
+                            </Link>
+                            <Button variant="destructive" onClick={() => { void handleDelete(page.id); }}>Delete</Button>
+                          </li>          ))}
         </ul>
       </div>
     </div>

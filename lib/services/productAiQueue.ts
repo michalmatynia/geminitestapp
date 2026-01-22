@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { generateProductDescription } from "./aiDescriptionService";
 import { translateProduct } from "./aiTranslationService";
 import type { ProductFormData } from "@/types";
@@ -469,7 +470,7 @@ const pollQueue = async () => {
         data: {
           status: "completed",
           finishedAt: new Date(),
-          result: result as any,
+          result: result as Prisma.InputJsonValue,
         },
       });
       console.log(`[productAiQueue] Job ${nextJob.id} marked as completed`);
@@ -583,7 +584,7 @@ export const processSingleJob = async (jobId: string) => {
       data: {
         status: "completed",
         finishedAt: new Date(),
-        result: result as any,
+        result: result as Prisma.InputJsonValue,
       },
     });
     console.log(`[processSingleJob] Job ${job.id} marked as completed`);

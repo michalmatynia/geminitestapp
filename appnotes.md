@@ -1,19 +1,66 @@
 
+When I run Description Generation in KEYCHA913, the console.log stated it is "Processing with 20 images" even though the product only had 5 images
+
+[processDescriptionGeneration] Starting for productId: 07dea6fd-025a-447c-a149-f803c980ae66
+[processDescriptionGeneration] ProductId type: string, value: "07dea6fd-025a-447c-a149-f803c980ae66"
+[processDescriptionGeneration] Payload keys: []
+[processDescriptionGeneration] payload.isTest: undefined
+[processDescriptionGeneration] payload.productData exists: false
+[processSingleJob] Job cmkpj9cjg0004gdc999bzm918 is not pending (status: running), skipping
+[api/products/ai-jobs/enqueue] Job cmkpj9cjg0004gdc999bzm918 processing initiated successfully
+[processDescriptionGeneration] Found product: Dragon | Adjustable Size | Metal | Ring | D&D
+[processDescriptionGeneration] Processing with 20 images
+ GET /api/products/ai-jobs/cmkpj9cjg0004gdc999bzm918 200 in 781ms (compile: 664ms, render: 117ms)
+[productAiQueue] Already processing a job, skipping poll
+ GET /api/products/ai-jobs/cmkpj9cjg0004gdc999bzm918 200 in 195ms (compile: 78ms, render: 117ms)
+[productAiQueue] Already processing a job, skipping poll
+ GET /api/products/ai-jobs/cmkpj9cjg0004gdc999bzm918 200 in 118ms (compile: 5ms, render: 113ms)
+[productAiQueue] Already processing a job, skipping poll
+ GET /api/products/ai-jobs/cmkpj9cjg0004gdc999bzm918 200 in 110ms (compile: 3ms, render: 108ms)
+ GET /api/products/ai-jobs/cmkpj9cjg0004gdc999bzm918 200 in 120ms (compile: 7ms, render: 113ms)
+ź[productAiQueue] Already processing a job, skipping poll
+ GET /api/products/ai-jobs/cmkpj9cjg0004gdc999bzm918 200 in 109ms (compile: 5ms, render: 104ms)
+[productAiQueue] Already processing a job, skipping poll
+ GET /api/products/ai-jobs/cmkpj9cjg0004gdc999bzm918 200 in 105ms (compile: 4ms, render: 101ms)
+ GET /api/products/ai-jobs/cmkpj9cjg0004gdc999bzm918 200 in 106ms (compile: 4ms, render: 102ms)
+[productAiQueue] Already processing a job, skipping poll
+ GET /api/products/ai-jobs/cmkpj9cjg0004gdc999bzm918 200 in 104ms (compile: 3ms, render: 101ms)
+[productAiQueue] Already processing a job, skipping poll
+ GET /api/products/ai-jobs/cmkpj9cjg0004gdc999bzm918 200 in 106ms (compile: 4ms, render: 102ms)
+[productAiQueue] Already processing a job, skipping poll
+ GET /api/products/ai-jobs/cmkpj9cjg0004gdc999bzm918 200 in 101ms (compile: 3ms, render: 98ms)
+ GET /api/products/ai-jobs/cmkpj9cjg0004gdc999bzm918 200 in 102ms (compile: 4ms, render: 98ms)
+[productAiQueue] Already processing a job, skipping poll
+ GET /api/products/ai-jobs/cmkpj9cjg0004gdc999bzm918 200 in 104ms (compile: 3ms, render: 101ms)
+[productAiQueue] Already processing a job, skipping poll
+ GET /api/products/ai-jobs/cmkpj9cjg0004gdc999bzm918 200 in 107ms (compile: 4ms, render: 103ms)
+
+
 When I update product stock, The product disconnects from the catalog.
 
 One Click creation Templates for Product (with  Stock Inserted)
 
 One Click list on Base
 
+Link Note to Product? Why not, a special kind of Theme
+
 Default Price group should be selected in Product as soon as the catalog is selected, cause it's the default group of the catalog
+
+After selecting a catalog, default price group is not automatically assingned to product
 
 Product images are not getting Reordered.
 
 Infer Category
 
+Note App, Note cards show two images even if there is only one image file attached
+
 Default Catalog choice, In Product Catalog Choice should retained, In settings my Default Product View options should be available with Reset to Default button
 
 * Note Links, Notes Rellated to one another are not longer visible in Note Cards and Note Preview
+
+Notebook Rename doesn't work
+
+Markdown TO Wysywig make it a dropdown and place it by Delete
 
 Opening WYSYWIG Note fails in Edit Mode
 

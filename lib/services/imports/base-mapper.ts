@@ -77,8 +77,9 @@ const pickFirstIntFromObject = (record: BaseProductRecord, key: string) => {
     if (typeof v === "number") return toInt(v);
     if (typeof v === "string") return toInt(v);
     if (typeof v === "object" && v) {
+      const pObj = v as Record<string, unknown>;
       const p = toInt(
-        (v as any).price ?? (v as any).price_brutto ?? (v as any).price_gross
+        pObj.price ?? pObj.price_brutto ?? pObj.price_gross
       );
       if (p !== null) return p;
     }
@@ -467,30 +468,24 @@ export function mapBaseProduct(
   const length = pickInt(record, ["length"]);
 
   const mapped: ProductCreateData = {
+    baseProductId: baseProductId ?? undefined,
+    name_en: nameEn ?? undefined,
+    name_pl: namePl ?? undefined,
+    name_de: nameDe ?? undefined,
+    description_en: descriptionEn ?? undefined,
+    description_pl: descriptionPl ?? undefined,
+    description_de: descriptionDe ?? undefined,
     sku: sku ?? undefined,
-    baseProductId: baseProductId ?? null,
-    defaultPriceGroupId: null,
-    name_en: nameEn ?? null,
-    name_pl: namePl ?? null,
-    name_de: nameDe ?? null,
-    description_en: descriptionEn ?? null,
-    description_pl: descriptionPl ?? null,
-    description_de: descriptionDe ?? null,
-    supplierName: pickString(record, ["supplierName", "supplier_name"]),
-    supplierLink: pickString(record, ["supplierLink", "supplier_url"]),
-    priceComment: pickString(record, ["priceComment", "price_comment"]),
-    stock: stock ?? null,
-    price: price ?? null,
-    sizeLength: sizeLength ?? null,
-    sizeWidth: sizeWidth ?? null,
-    weight: weight ?? null,
-    length: length ?? null,
-    imageLinks: extractBaseImageUrls(record),
+    price: price ?? undefined,
+    stock: stock ?? undefined,
+    weight: weight ?? undefined,
+    sizeLength: sizeLength ?? undefined,
+    sizeWidth: sizeWidth ?? undefined,
+    length: length ?? undefined,
+    imageLinks: getImageUrlsForAll(record),
   };
 
-  if (mappings.length > 0) {
-    applyTemplateMappings(record, mapped, mappings);
-  }
+  applyTemplateMappings(record, mapped, mappings);
 
   return mapped;
 }

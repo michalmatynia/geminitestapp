@@ -5,6 +5,7 @@ import type {
   CategoryCreateInput,
   CategoryUpdateInput,
 } from "@/types/notes";
+import { Prisma } from "@prisma/client";
 import { getOrCreateDefaultNotebook } from "./notebook-impl";
 
 export const getAllCategories = async (
@@ -65,7 +66,7 @@ export const createCategory = async (
   const resolvedNotebookId =
     data.notebookId ?? (await getOrCreateDefaultNotebook()).id;
 
-  const createData: any = {
+  const createData: Prisma.CategoryCreateInput = {
     name: data.name,
     notebook: { connect: { id: resolvedNotebookId } },
   };
@@ -82,7 +83,7 @@ export const updateCategory = async (
   data: CategoryUpdateInput
 ): Promise<CategoryRecord | null> => {
   try {
-    const updateData: any = {
+    const updateData: Prisma.CategoryUpdateInput = {
       ...(data.name !== undefined && { name: data.name }),
       ...(data.description !== undefined && {
         description: data.description,

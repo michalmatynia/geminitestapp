@@ -7,7 +7,7 @@ import CmsSideMenu from "@/components/cms/CmsSideMenu";
 interface Page {
   id: string;
   name: string;
-  components: any[];
+  components: unknown[];
 }
 
 export default function CmsLayout({

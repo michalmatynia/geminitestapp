@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import type { Document, Filter } from "mongodb";
 import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { getProductDataProvider } from "@/lib/services/product-provider";
@@ -101,11 +102,11 @@ const readTemplatesValue = async (): Promise<string | null> => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<{ _id: any; key?: string; value?: string }>("settings")
+      .collection("settings")
       .findOne({
         $or: [{ _id: SETTINGS_KEY }, { key: SETTINGS_KEY }],
-      } as any);
-    const val = typeof doc?.value === "string" ? doc.value : null;
+      } as Filter<Document>);
+    const val = doc && typeof doc.value === "string" ? doc.value : null;
     console.log(`[ImportTemplateRepository] Read templates (Mongo):`, val ? `${val.length} chars` : "null");
     return val;
   }
@@ -122,11 +123,11 @@ const readSampleProductValue = async (): Promise<string | null> => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<{ _id: any; key?: string; value?: string }>("settings")
+      .collection("settings")
       .findOne({
         $or: [{ _id: SAMPLE_PRODUCT_KEY }, { key: SAMPLE_PRODUCT_KEY }],
-      } as any);
-    return typeof doc?.value === "string" ? doc.value : null;
+      } as Filter<Document>);
+    return doc && typeof doc.value === "string" ? doc.value : null;
   }
   const setting = await prisma.setting.findUnique({
     where: { key: SAMPLE_PRODUCT_KEY },
@@ -140,11 +141,11 @@ const readSampleInventoryValue = async (): Promise<string | null> => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<{ _id: string; key?: string; value?: string }>("settings")
+      .collection("settings")
       .findOne({
         $or: [{ _id: SAMPLE_INVENTORY_KEY }, { key: SAMPLE_INVENTORY_KEY }],
-      });
-    return typeof doc?.value === "string" ? doc.value : null;
+      } as Filter<Document>);
+    return doc && typeof doc.value === "string" ? doc.value : null;
   }
   const setting = await prisma.setting.findUnique({
     where: { key: SAMPLE_INVENTORY_KEY },
@@ -158,11 +159,11 @@ const readLastTemplateValue = async (): Promise<string | null> => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<{ _id: string; key?: string; value?: string }>("settings")
+      .collection("settings")
       .findOne({
         $or: [{ _id: LAST_TEMPLATE_KEY }, { key: LAST_TEMPLATE_KEY }],
-      });
-    return typeof doc?.value === "string" ? doc.value : null;
+      } as Filter<Document>);
+    return doc && typeof doc.value === "string" ? doc.value : null;
   }
   const setting = await prisma.setting.findUnique({
     where: { key: LAST_TEMPLATE_KEY },
@@ -176,11 +177,11 @@ const readActiveTemplateValue = async (): Promise<string | null> => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<{ _id: string; key?: string; value?: string }>("settings")
+      .collection("settings")
       .findOne({
         $or: [{ _id: ACTIVE_TEMPLATE_KEY }, { key: ACTIVE_TEMPLATE_KEY }],
-      });
-    return typeof doc?.value === "string" ? doc.value : null;
+      } as Filter<Document>);
+    return doc && typeof doc.value === "string" ? doc.value : null;
   }
   const setting = await prisma.setting.findUnique({
     where: { key: ACTIVE_TEMPLATE_KEY },
@@ -194,11 +195,11 @@ const readParameterCacheValue = async (): Promise<string | null> => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<{ _id: string; key?: string; value?: string }>("settings")
+      .collection("settings")
       .findOne({
         $or: [{ _id: PARAMETER_CACHE_KEY }, { key: PARAMETER_CACHE_KEY }],
-      });
-    return typeof doc?.value === "string" ? doc.value : null;
+      } as Filter<Document>);
+    return doc && typeof doc.value === "string" ? doc.value : null;
   }
   const setting = await prisma.setting.findUnique({
     where: { key: PARAMETER_CACHE_KEY },
@@ -212,11 +213,11 @@ const readExportWarehouseValue = async (): Promise<string | null> => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<{ _id: string; key?: string; value?: string }>("settings")
+      .collection("settings")
       .findOne({
         $or: [{ _id: EXPORT_WAREHOUSE_KEY }, { key: EXPORT_WAREHOUSE_KEY }],
-      });
-    return typeof doc?.value === "string" ? doc.value : null;
+      } as Filter<Document>);
+    return doc && typeof doc.value === "string" ? doc.value : null;
   }
   const setting = await prisma.setting.findUnique({
     where: { key: EXPORT_WAREHOUSE_KEY },
@@ -230,11 +231,11 @@ const readExportWarehouseMapValue = async (): Promise<string | null> => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<{ _id: string; key?: string; value?: string }>("settings")
+      .collection("settings")
       .findOne({
         $or: [{ _id: EXPORT_WAREHOUSE_MAP_KEY }, { key: EXPORT_WAREHOUSE_MAP_KEY }],
-      });
-    return typeof doc?.value === "string" ? doc.value : null;
+      } as Filter<Document>);
+    return doc && typeof doc.value === "string" ? doc.value : null;
   }
   const setting = await prisma.setting.findUnique({
     where: { key: EXPORT_WAREHOUSE_MAP_KEY },
@@ -249,7 +250,7 @@ const writeTemplatesValue = async (value: string) => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     await mongo.collection("settings").updateMany(
-      { $or: [{ _id: SETTINGS_KEY }, { key: SETTINGS_KEY }] } as any,
+      { $or: [{ _id: SETTINGS_KEY }, { key: SETTINGS_KEY }] } as Filter<Document>,
       {
         $set: {
           value,
@@ -275,7 +276,7 @@ const writeSampleProductValue = async (value: string) => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     await mongo.collection("settings").updateOne(
-      { $or: [{ _id: SAMPLE_PRODUCT_KEY }, { key: SAMPLE_PRODUCT_KEY }] } as any,
+      { $or: [{ _id: SAMPLE_PRODUCT_KEY }, { key: SAMPLE_PRODUCT_KEY }] } as Filter<Document>,
       {
         $set: {
           value,
@@ -300,7 +301,7 @@ const writeSampleInventoryValue = async (value: string) => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     await mongo.collection("settings").updateOne(
-      { $or: [{ _id: SAMPLE_INVENTORY_KEY }, { key: SAMPLE_INVENTORY_KEY }] } as any,
+      { $or: [{ _id: SAMPLE_INVENTORY_KEY }, { key: SAMPLE_INVENTORY_KEY }] } as Filter<Document>,
       {
         $set: {
           value,
@@ -325,7 +326,7 @@ const writeExportWarehouseValue = async (value: string) => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     await mongo.collection("settings").updateOne(
-      { $or: [{ _id: EXPORT_WAREHOUSE_KEY }, { key: EXPORT_WAREHOUSE_KEY }] } as any,
+      { $or: [{ _id: EXPORT_WAREHOUSE_KEY }, { key: EXPORT_WAREHOUSE_KEY }] } as Filter<Document>,
       {
         $set: {
           value,
@@ -350,7 +351,7 @@ const writeExportWarehouseMapValue = async (value: string) => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     await mongo.collection("settings").updateOne(
-      { $or: [{ _id: EXPORT_WAREHOUSE_MAP_KEY }, { key: EXPORT_WAREHOUSE_MAP_KEY }] } as any,
+      { $or: [{ _id: EXPORT_WAREHOUSE_MAP_KEY }, { key: EXPORT_WAREHOUSE_MAP_KEY }] } as Filter<Document>,
       {
         $set: {
           value,
@@ -375,7 +376,7 @@ const writeLastTemplateValue = async (value: string) => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     await mongo.collection("settings").updateOne(
-      { $or: [{ _id: LAST_TEMPLATE_KEY }, { key: LAST_TEMPLATE_KEY }] } as any,
+      { $or: [{ _id: LAST_TEMPLATE_KEY }, { key: LAST_TEMPLATE_KEY }] } as Filter<Document>,
       {
         $set: {
           value,
@@ -400,7 +401,7 @@ const writeActiveTemplateValue = async (value: string) => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     await mongo.collection("settings").updateOne(
-      { $or: [{ _id: ACTIVE_TEMPLATE_KEY }, { key: ACTIVE_TEMPLATE_KEY }] } as any,
+      { $or: [{ _id: ACTIVE_TEMPLATE_KEY }, { key: ACTIVE_TEMPLATE_KEY }] } as Filter<Document>,
       {
         $set: {
           value,
@@ -425,7 +426,7 @@ const writeParameterCacheValue = async (value: string) => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     await mongo.collection("settings").updateOne(
-      { $or: [{ _id: PARAMETER_CACHE_KEY }, { key: PARAMETER_CACHE_KEY }] } as any,
+      { $or: [{ _id: PARAMETER_CACHE_KEY }, { key: PARAMETER_CACHE_KEY }] } as Filter<Document>,
       {
         $set: {
           value,

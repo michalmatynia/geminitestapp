@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import type { Document, Filter } from "mongodb";
 import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { getProductDataProvider } from "@/lib/services/product-provider";

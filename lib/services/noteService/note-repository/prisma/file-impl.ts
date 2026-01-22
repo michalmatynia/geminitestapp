@@ -1,10 +1,11 @@
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import type { NoteFileRecord, NoteFileCreateInput } from "@/types/notes";
 
 export const createNoteFile = async (
   data: NoteFileCreateInput
 ): Promise<NoteFileRecord> => {
-  const createData: any = {
+  const createData: Prisma.NoteFileCreateInput = {
     note: { connect: { id: data.noteId } },
     slotIndex: data.slotIndex,
     filename: data.filename,

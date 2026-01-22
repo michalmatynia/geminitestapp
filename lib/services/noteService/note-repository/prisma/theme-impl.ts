@@ -4,6 +4,7 @@ import type {
   ThemeCreateInput,
   ThemeUpdateInput,
 } from "@/types/notes";
+import { Prisma } from "@prisma/client";
 import { getOrCreateDefaultNotebook } from "./notebook-impl";
 
 export const getAllThemes = async (
@@ -27,7 +28,7 @@ export const createTheme = async (
   const resolvedNotebookId =
     data.notebookId ?? (await getOrCreateDefaultNotebook()).id;
 
-  const createData: any = {
+  const createData: Prisma.ThemeCreateInput = {
     name: data.name,
     notebook: { connect: { id: resolvedNotebookId } },
     ...(data.textColor !== undefined && { textColor: data.textColor }),
@@ -70,7 +71,7 @@ export const updateTheme = async (
   data: ThemeUpdateInput
 ): Promise<ThemeRecord | null> => {
   try {
-    const updateData: any = {
+    const updateData: Prisma.ThemeUpdateInput = {
       ...(data.name !== undefined && { name: data.name }),
       ...(data.notebookId !== undefined &&
         (data.notebookId

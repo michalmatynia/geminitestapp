@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { User, LogOut, LogIn } from "lucide-react";
+import { LogOut, LogIn } from "lucide-react";
 
 export function UserNav() {
   const { data: session } = useSession();

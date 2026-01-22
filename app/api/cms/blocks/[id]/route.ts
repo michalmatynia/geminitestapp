@@ -34,7 +34,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     }
 
     return NextResponse.json(block);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: "Failed to fetch block" },
       { status: 500 }
@@ -67,7 +67,7 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
     });
 
     return NextResponse.json(updatedBlock);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: "Failed to update block" },
       { status: 500 }
@@ -88,7 +88,7 @@ export async function DELETE(req: NextRequest, ctx: Ctx) {
     });
 
     return new Response(null, { status: 204 });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: "Failed to delete block" },
       { status: 500 }

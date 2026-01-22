@@ -62,6 +62,7 @@ function FolderTreeBase({
     return ids;
   }, []);
 
+  /*
   const findFolderPathIds = useCallback(
     (foldersToScan: CategoryWithChildren[], targetId: string) => {
       const path: string[] = [];
@@ -85,6 +86,7 @@ function FolderTreeBase({
     },
     []
   );
+  */
 
   const findFolderById = useCallback(
     function findFolderById(
@@ -204,7 +206,7 @@ function FolderTreeBase({
       });
 
       if (response.ok) {
-        const result = await response.json();
+        await response.json();
         toast(`Successfully imported ${counts.folders} folders and ${counts.notes} notes`);
 
         if (onRefreshFolders) {

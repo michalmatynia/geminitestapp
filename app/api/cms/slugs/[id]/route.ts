@@ -33,7 +33,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     }
 
     return NextResponse.json(slug);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: "Failed to fetch slug" },
       { status: 500 }
@@ -54,7 +54,7 @@ export async function DELETE(req: NextRequest, ctx: Ctx) {
     });
 
     return new Response(null, { status: 204 });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: "Failed to delete slug" },
       { status: 500 }
@@ -94,7 +94,7 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
     });
 
     return NextResponse.json(updatedSlug);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: "Failed to update slug" },
       { status: 500 }

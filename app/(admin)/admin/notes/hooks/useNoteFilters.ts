@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { UseNoteFiltersProps } from "@/types/notes-hooks";
 
-export function useNoteFilters({ settings, updateSettings }: UseNoteFiltersProps) {
+export function useNoteFilters({ settings, updateSettings: _updateSettings }: UseNoteFiltersProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
   const [filterPinned, setFilterPinned] = useState<boolean | undefined>(undefined);

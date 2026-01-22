@@ -44,7 +44,7 @@ function IntegrationsContent() {
     integrationId?: string | null | undefined;
     connectionId?: string | null | undefined;
   } | null>(null);
-  const [lastTestError, setLastTestError] = useState<string | null>(null);
+  const [_lastTestError, setLastTestError] = useState<string | null>(null);
   const [showTestSuccessModal, setShowTestSuccessModal] = useState(false);
   const [testSuccessMessage, setTestSuccessMessage] = useState<string | null>(
     null

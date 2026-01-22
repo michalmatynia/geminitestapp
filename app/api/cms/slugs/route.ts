@@ -19,7 +19,7 @@ export async function GET() {
       },
     });
     return NextResponse.json(slugs);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: "Failed to fetch slugs" },
       { status: 500 }

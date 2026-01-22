@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
-import type { CategoryWithChildren, NoteWithRelations, TagRecord, NoteFileRecord, ThemeRecord } from "@/types/notes";
+import type { CategoryWithChildren, NoteWithRelations, TagRecord, NoteFileRecord } from "@/types/notes";
 import type { NoteFormProps } from "@/types/notes-ui";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
@@ -477,8 +477,8 @@ export function NoteForm({
         setTagInput("");
         setIsTagDropdownOpen(false);
       }
-    } catch (error) {
-      console.error("Failed to create tag:", error);
+    } catch (_error) {
+      console.error("Failed to create tag:", _error);
     }
   };
 
@@ -543,8 +543,8 @@ export function NoteForm({
       } else {
         toast("Failed to delete file");
       }
-    } catch (error) {
-      console.error("Failed to delete file:", error);
+    } catch (_error) {
+      console.error("Failed to delete file:", _error);
       toast("Failed to delete file");
     }
   };

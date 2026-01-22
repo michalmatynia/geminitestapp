@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { ChevronLeft, ChevronRight, Star, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NoteForm } from "./NoteForm";
 import { buildBreadcrumbPath, renderMarkdownToHtml } from "../utils";
-import type { NoteWithRelations, CategoryWithChildren, TagRecord, ThemeRecord } from "@/types/notes";
+import type { NoteWithRelations } from "@/types/notes";
 import type { NoteDetailViewProps } from "@/types/notes-ui";
 import { useToast } from "@/components/ui/toast";
 

@@ -22,8 +22,8 @@ interface ProductFormProps {
  * @param submitButtonText - The text to display on the submit button.
  */
 export default function ProductForm({
-  submitButtonText,
-  skuRequired = false,
+  submitButtonText: _submitButtonText,
+  skuRequired: _skuRequired = false,
 }: ProductFormProps) {
   const {
     handleSubmit,

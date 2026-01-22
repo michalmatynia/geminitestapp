@@ -31,7 +31,7 @@ function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
 }
 
 function EditProductForm() {
-  const { showFileManager, handleMultiFileSelect, uploading, handleSubmit, product } = useProductFormContext();
+  const { showFileManager, handleMultiFileSelect, uploading, handleSubmit } = useProductFormContext();
 
   return (
     <div className="rounded-lg bg-gray-950 p-6 shadow-lg">

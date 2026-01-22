@@ -24,7 +24,7 @@ export function ConnectionManager({
   activeIntegration,
   connections,
   editingConnectionId,
-  setEditingConnectionId,
+  setEditingConnectionId: _setEditingConnectionId,
   connectionForm,
   setConnectionForm,
   onSave,

@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { ChevronRight, Pin, Star, Copy, Check } from "lucide-react";
-import type { NoteWithRelations, ThemeRecord } from "@/types/notes";
+import type { ThemeRecord } from "@/types/notes";
 import type { NoteCardProps } from "@/types/notes-ui";
 import { BreadcrumbScroller } from "./BreadcrumbScroller";
 import { darkenColor, renderMarkdownToHtml } from "../utils";

@@ -42,7 +42,7 @@ export async function DELETE(
     const { jobId } = await params;
     await deleteProductAiJob(jobId);
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to delete job" }, { status: 500 });
   }
 }

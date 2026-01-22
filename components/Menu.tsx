@@ -7,8 +7,6 @@ import {
   DatabaseIcon,
   BookOpenIcon,
   SettingsIcon,
-  UploadIcon,
-  PlugIcon,
   MessageCircleIcon,
   StickyNoteIcon,
   ShieldIcon,

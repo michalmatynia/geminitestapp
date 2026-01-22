@@ -226,7 +226,7 @@ export function buildPlanStepsFromSpecs(
   const preflightSteps = includeSafety
     ? buildSafetyCheckSteps(meta ?? undefined, maxStepAttempts)
     : [];
-  const plannedSteps: PlanStep[] = stepSpecs.map((step, index) => ({
+  const plannedSteps: PlanStep[] = stepSpecs.map((step, _index) => ({
     id: randomUUID(),
     title: step.title?.trim() || "Review the page state.",
     status: "pending" as const,

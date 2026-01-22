@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import type { NoteWithRelations } from "@/types/notes";
-import type { UndoAction, UseNoteOperationsProps } from "@/types/notes-hooks";
+import type { UseNoteOperationsProps } from "@/types/notes-hooks";
 import { findFolderParentId, findFolderById } from "../utils";
 
 export function useNoteOperations({

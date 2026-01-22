@@ -14,7 +14,6 @@ import {
   ALL_IMAGE_KEYS,
   EXPORT_PARAMETER_DOCS,
   EXPORT_PARAMETER_KEYS,
-  IMAGE_SLOT_KEYS,
   PRODUCT_FIELDS,
 } from "@/components/products/imports/constants";
 import type {
@@ -752,7 +751,7 @@ export default function ProductImportsPage() {
         console.error("Failed to refresh templates", error);
       }
       toast("Template saved.", { variant: "success" });
-    } catch (error) {
+    } catch (_error) {
       toast("Failed to save template.", { variant: "error" });
     } finally {
       setSavingTemplate(false);
@@ -774,7 +773,7 @@ export default function ProductImportsPage() {
           }),
         });
         toast("Parameters cleared.", { variant: "success" });
-      } catch (error) {
+      } catch (_error) {
         toast("Failed to clear parameters.", { variant: "error" });
       }
       return;
@@ -813,7 +812,7 @@ export default function ProductImportsPage() {
       toast(`Loaded ${payload.keys?.length ?? 0} keys.`, {
         variant: "success",
       });
-    } catch (error) {
+    } catch (_error) {
       toast("Failed to load parameters.", { variant: "error" });
     } finally {
       setLoadingParameters(false);
@@ -843,7 +842,7 @@ export default function ProductImportsPage() {
         }),
       });
       toast("Inventory cleared.", { variant: "success" });
-    } catch (error) {
+    } catch (_error) {
       toast("Failed to clear inventory.", { variant: "error" });
     }
   };
@@ -871,7 +870,7 @@ export default function ProductImportsPage() {
         setParameterProductId(payload.productId);
         toast("Sample product loaded.", { variant: "success" });
       }
-    } catch (error) {
+    } catch (_error) {
       toast("Failed to load sample product.", { variant: "error" });
     } finally {
       setLoadingParameters(false);
@@ -910,7 +909,7 @@ export default function ProductImportsPage() {
       }
       handleNewTemplate();
       toast("Template deleted.", { variant: "success" });
-    } catch (error) {
+    } catch (_error) {
       toast("Failed to delete template.", { variant: "error" });
     } finally {
       setDeletingTemplate(false);
@@ -1072,7 +1071,7 @@ export default function ProductImportsPage() {
           }
         }
       }
-    } catch (error) {
+    } catch (_error) {
       toast("Failed to load inventories.", { variant: "error" });
     } finally {
       setLoadingInventories(false);
@@ -1137,7 +1136,7 @@ export default function ProductImportsPage() {
         setShowAllWarehouses(false);
       }
       // Keep the saved warehouse selection; do not auto-pick a default.
-    } catch (error) {
+    } catch (_error) {
       toast("Failed to load warehouses.", { variant: "error" });
     } finally {
       setLoadingWarehouses(false);
@@ -1204,7 +1203,7 @@ export default function ProductImportsPage() {
       if (payload.error) {
         toast(payload.error, { variant: "error" });
       }
-    } catch (error) {
+    } catch (_error) {
       toast("Failed to debug warehouses.", { variant: "error" });
     } finally {
       setLoadingDebugWarehouses(false);
@@ -1269,7 +1268,7 @@ export default function ProductImportsPage() {
         return;
       }
       toast("Export settings saved.", { variant: "success" });
-    } catch (error) {
+    } catch (_error) {
       toast("Failed to save export settings.", { variant: "error" });
     } finally {
       setSavingExportSettings(false);
@@ -1322,7 +1321,7 @@ export default function ProductImportsPage() {
       toast(`Imported ${payload.imported} product(s)${skippedMsg}.`, {
         variant: "success",
       });
-    } catch (error) {
+    } catch (_error) {
       toast("Import failed.", { variant: "error" });
     } finally {
       setImporting(false);
@@ -1383,7 +1382,7 @@ export default function ProductImportsPage() {
             }
           : null
       );
-    } catch (error) {
+    } catch (_error) {
       toast("Failed to load import list.", { variant: "error" });
     } finally {
       setLoadingImportList(false);

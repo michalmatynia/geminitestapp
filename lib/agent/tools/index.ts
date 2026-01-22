@@ -1,6 +1,5 @@
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
-import { validateAndAddAgentLongTermMemory } from "@/lib/agent/memory";
 import { randomUUID } from "crypto";
 import { promises as fs } from "fs";
 import path from "path";
@@ -12,7 +11,6 @@ import {
   normalizeProductNames,
   normalizeEmailCandidates,
   buildEvidenceSnippets,
-  toDataUrl,
   safeText,
   parseCredentials,
   parseExtractionRequest,
@@ -47,7 +45,6 @@ import {
 } from "./playwright/extraction";
 import {
   fetchSearchResults,
-  fetchDuckDuckGoResults,
 } from "./search";
 import {
   validateExtractionWithLLM,
@@ -93,7 +90,6 @@ export type AgentToolResult = {
 
 type AgentControlAction = "goto" | "reload" | "snapshot";
 
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
 const DEFAULT_OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? "qwen3-vl:30b";
 
 const resolveIgnoreRobotsTxt = (planState: unknown) => {

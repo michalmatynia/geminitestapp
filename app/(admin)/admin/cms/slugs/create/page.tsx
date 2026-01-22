@@ -39,7 +39,7 @@ export default function CreateSlugPage() {
         const data = await res.json() as { error?: string };
         setError(data.error || "Failed to create slug.");
       }
-    } catch (err) {
+    } catch (_err) {
       setError("An unexpected error occurred.");
     }
   };

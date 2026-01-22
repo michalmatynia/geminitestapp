@@ -1,7 +1,6 @@
 "use client";
 
 import React, {
-  ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -1040,11 +1039,6 @@ export default function ProductSettingsPage() {
       return next;
     });
   };
-
-  const languageNameMap = useMemo(
-    () => new Map(languages.map((language) => [language.id, language.name])),
-    [languages]
-  );
 
   const selectedLanguages = useMemo(
     () =>

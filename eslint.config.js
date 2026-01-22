@@ -18,6 +18,11 @@ const configFiles = [
   "postcss.config.mjs",
   "prisma/seed.js",
   "server.cjs",
+  "check-catalog.mjs",
+  "check-job.mjs",
+  "debug-db.cjs",
+  "debug-product.mjs",
+  "scripts/cleanup-base-export-templates.mjs",
 ];
 
 const disableTypeCheckedForConfigFiles = compat

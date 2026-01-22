@@ -1,6 +1,5 @@
 import prisma from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
-import { string } from "zod";
 
 export type AuditLevel = "info" | "warning" | "error";
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";

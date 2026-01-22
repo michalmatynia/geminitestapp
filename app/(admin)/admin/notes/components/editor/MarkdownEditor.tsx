@@ -2,8 +2,7 @@
 
 import React from "react";
 import { useToast } from "@/components/ui/toast";
-import { renderMarkdownToHtml, autoformatMarkdown } from "../../utils";
-import type { NoteFileRecord } from "@/types/notes";
+import { renderMarkdownToHtml } from "../../utils";
 
 interface MarkdownEditorProps {
   content: string;

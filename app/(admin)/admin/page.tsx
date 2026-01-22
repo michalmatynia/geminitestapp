@@ -2,15 +2,9 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
-import { useEffect, useState } from "react";
-
-interface WebSocketData {
-  type: string;
-  count: number;
-}
+import { useState } from "react";
 
 export default function AdminDashboard() {
-  const [connections, setConnections] = useState(0);
   const [recentActivityOpen, setRecentActivityOpen] = useState(true);
 
   // useEffect(() => {

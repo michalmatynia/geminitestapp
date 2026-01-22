@@ -39,7 +39,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = await req.json() as unknown;
     const data = templateSchema.parse(body);
     const template = await createExportTemplate({
       name: data.name,

@@ -210,8 +210,29 @@ async function processDescriptionGeneration(job: Job) {
     };
 
     const uploadedImages = (product.images as any[])?.map((img: any) => (img.imageFile?.filepath as string)).filter((p: string): p is string => Boolean(p)) || [];
-    const externalImages = product.imageLinks || [];
-    allImageUrls = [...externalImages, ...uploadedImages];
+    const rawExternalImages = product.imageLinks || [];
+
+    // Filter out empty strings and invalid URLs from imageLinks
+    const externalImages = rawExternalImages.filter((url: string) => url && url.trim().length > 0);
+
+    console.log(`[processDescriptionGeneration] Image breakdown:`, {
+      uploadedImages: uploadedImages.length,
+      uploadedImagesPaths: uploadedImages.slice(0, 3),
+      rawExternalImages: rawExternalImages.length,
+      externalImages: externalImages.length,
+      externalImagesPaths: externalImages.slice(0, 3),
+      emptyImageLinksRemoved: rawExternalImages.length - externalImages.length
+    });
+
+    // Remove duplicates between uploaded and external images
+    const uploadedSet = new Set(uploadedImages);
+    const uniqueExternalImages = externalImages.filter((url: string) => !uploadedSet.has(url));
+
+    allImageUrls = [...uploadedImages, ...uniqueExternalImages];
+
+    if (uniqueExternalImages.length < externalImages.length) {
+      console.log(`[processDescriptionGeneration] Removed ${externalImages.length - uniqueExternalImages.length} duplicate images from imageLinks`);
+    }
   }
 
   console.log(`[processDescriptionGeneration] Processing with ${allImageUrls.length} images`);

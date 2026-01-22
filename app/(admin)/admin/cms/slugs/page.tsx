@@ -57,7 +57,7 @@ export default function SlugsPage() {
               </Link>
               <Button
                 variant="destructive"
-                onClick={() => handleDelete(slug.id)}
+                onClick={() => void handleDelete(slug.id)}
               >
                 Delete
               </Button>

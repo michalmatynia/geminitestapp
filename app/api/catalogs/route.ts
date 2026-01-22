@@ -95,6 +95,7 @@ export async function GET() {
             if (languageIdsChanged || defaultChanged) {
               const filter = { $or: [{ _id: catalog.id }, { id: catalog.id }] };
               await collection.updateOne(
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
                 filter as unknown as any,
                 {
                   $set: {

@@ -11,6 +11,7 @@ import { getDiskPathFromPublicPath, uploadFile } from "@/lib/utils/fileUploader"
 import { getProductRepository } from "@/lib/services/product-repository";
 import type { ProductFilters } from "@/types/services/product-repository";
 import { getImageFileRepository } from "@/lib/services/image-file-repository";
+import { getCatalogRepository } from "@/lib/services/catalog-repository";
 
 const resolveProductRepository = async () => getProductRepository();
 const resolveImageFileRepository = async () => getImageFileRepository();
@@ -138,16 +139,24 @@ async function updateProduct(id: string, formData: FormData) {
 
     const images = formData.getAll("images") as File[];
     const imageFileIds = formData.getAll("imageFileIds") as string[];
-    const catalogIds = normalizeCatalogIds(formData.getAll("catalogIds"));
-    const categoryIds = normalizeCategoryIds(formData.getAll("categoryIds"));
-    const tagIds = normalizeTagIds(formData.getAll("tagIds"));
     await linkImagesToProduct(id, images, imageFileIds, validatedData.sku);
     if (validatedData.sku) {
       await moveLinkedTempImagesToSku(id, validatedData.sku);
     }
-    await updateProductCatalogs(id, catalogIds);
-    await updateProductCategories(id, categoryIds);
-    await updateProductTags(id, tagIds);
+
+    // Only update catalogs/categories/tags if explicitly provided in formData
+    if (formData.has("catalogIds")) {
+      const catalogIds = normalizeCatalogIds(formData.getAll("catalogIds"));
+      await updateProductCatalogs(id, catalogIds);
+    }
+    if (formData.has("categoryIds")) {
+      const categoryIds = normalizeCategoryIds(formData.getAll("categoryIds"));
+      await updateProductCategories(id, categoryIds);
+    }
+    if (formData.has("tagIds")) {
+      const tagIds = normalizeTagIds(formData.getAll("tagIds"));
+      await updateProductTags(id, tagIds);
+    }
 
     return await getProductById(updatedProduct.id);
   } catch (error) {
@@ -316,6 +325,21 @@ function normalizeTagIds(entries: FormDataEntryValue[]) {
 async function updateProductCatalogs(productId: string, catalogIds: string[]) {
   const productRepository = await resolveProductRepository();
   await productRepository.replaceProductCatalogs(productId, catalogIds);
+
+  // Auto-assign default price group from the first catalog if product doesn't have one
+  const firstCatalogId = catalogIds[0];
+  if (firstCatalogId) {
+    const product = await productRepository.getProductById(productId);
+    if (product && !product.defaultPriceGroupId) {
+      const catalogRepository = await getCatalogRepository();
+      const catalog = await catalogRepository.getCatalogById(firstCatalogId);
+      if (catalog?.defaultPriceGroupId) {
+        await productRepository.updateProduct(productId, {
+          defaultPriceGroupId: catalog.defaultPriceGroupId,
+        });
+      }
+    }
+  }
 }
 
 async function updateProductCategories(productId: string, categoryIds: string[]) {

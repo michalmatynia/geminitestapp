@@ -138,7 +138,7 @@ export async function PATCH(
       );
     }
 
-    const body = await req.json();
+    const body = await req.json() as unknown;
     const data = patchProductSchema.parse(body);
 
     // Use productService to update specific fields

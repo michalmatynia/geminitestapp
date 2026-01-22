@@ -47,7 +47,7 @@ export default function CreateSlugPage() {
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-3xl font-bold">Create Slug</h1>
-      <form onSubmit={handleSubmit} className="mt-6">
+      <form onSubmit={(e) => void handleSubmit(e)} className="mt-6">
         <div className="mb-4">
           <Label htmlFor="slug">Slug</Label>
           <Input

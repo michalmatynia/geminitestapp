@@ -20,7 +20,7 @@ export default function CreateBlockPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, content: JSON.parse(content) }),
+        body: JSON.stringify({ name, content: JSON.parse(content) as unknown }),
       });
       router.push("/admin/cms/blocks");
     })();

@@ -486,7 +486,7 @@ function DatabasePreviewPageInner() {
             </h2>
             <button
               type="button"
-              onClick={copyRaw}
+              onClick={() => void copyRaw()}
               className="rounded-md border border-gray-800 bg-gray-900 px-3 py-1.5 text-xs text-gray-200 hover:bg-gray-800"
             >
               Copy

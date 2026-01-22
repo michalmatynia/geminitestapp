@@ -257,7 +257,7 @@ export default function DatabasesPage() {
             setIsRestoreModalOpen(false);
             setSelectedBackupForRestore(null);
           }}
-          onConfirm={handleRestoreConfirm}
+          onConfirm={(t) => void handleRestoreConfirm(t)}
         />
       )}
 
@@ -311,7 +311,7 @@ export default function DatabasesPage() {
           <input
             type="file"
             ref={fileInputRef}
-            onChange={handleUpload}
+            onChange={(e) => void handleUpload(e)}
             className="hidden"
             accept={activeTab === "postgresql" ? ".dump" : ".archive"}
           />

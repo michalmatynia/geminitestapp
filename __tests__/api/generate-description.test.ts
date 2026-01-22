@@ -112,6 +112,7 @@ describe("AI Description Generation API", () => {
 
     await POST(req);
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     expect(createMock).toHaveBeenCalledWith(
       expect.objectContaining({
         messages: expect.arrayContaining([

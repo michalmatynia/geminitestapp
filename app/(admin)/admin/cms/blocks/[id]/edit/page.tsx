@@ -45,7 +45,10 @@ export default function EditBlockPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ ...block, content: JSON.parse(block.content) }),
+        body: JSON.stringify({
+          ...block,
+          content: JSON.parse(block.content) as unknown,
+        }),
       });
       router.push("/admin/cms/blocks");
     })();

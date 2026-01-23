@@ -29,7 +29,7 @@ export async function getSettingValue(key: string): Promise<string | null> {
   if (!value && process.env.MONGODB_URI) {
     try {
       const mongo = await getMongoDb();
-      const doc = await mongo.collection("settings").findOne({ _id: key }) as { value: string } | null;
+      const doc = await mongo.collection("settings").findOne({ _id: key } as any) as { value: string } | null;
       if (doc && typeof doc.value === "string") {
         value = doc.value;
       }

@@ -17,6 +17,20 @@ import { useToast } from "@/components/ui/toast";
 import { ProductDraft, CreateProductDraftInput } from "@/types/drafts";
 import type { CatalogRecord, PriceGroupWithDetails } from "@/types";
 import type { ProductCategory, ProductTag } from "@/types/products";
+import {
+  Package,
+  ShoppingCart,
+  Tag,
+  Star,
+  Heart,
+  Zap,
+  Gift,
+  Truck,
+  DollarSign,
+  Award,
+  Box,
+  Sparkles,
+} from "lucide-react";
 
 interface DraftCreatorProps {
   draftId: string | null;
@@ -54,6 +68,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
   const [stock, setStock] = useState("");
   const [baseProductId, setBaseProductId] = useState("");
   const [active, setActive] = useState(true);
+  const [icon, setIcon] = useState<string | null>(null);
   const [imageLinks, setImageLinks] = useState<string[]>(Array(15).fill(""));
 
   // Metadata
@@ -166,6 +181,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
       setStock("");
       setBaseProductId("");
       setActive(true);
+      setIcon(null);
       setImageLinks(Array(15).fill(""));
       setSelectedCatalogIds([]);
       setSelectedCategoryIds([]);
@@ -208,6 +224,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
         setStock(draft.stock?.toString() || "");
         setBaseProductId(draft.baseProductId || "");
         setActive(draft.active ?? true);
+        setIcon(draft.icon || null);
         const links = draft.imageLinks && draft.imageLinks.length > 0 ? draft.imageLinks : [];
         setImageLinks([...links, ...(Array(Math.max(0, 15 - links.length)).fill("") as string[])]);
         setSelectedCatalogIds(draft.catalogIds || []);
@@ -261,6 +278,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
         tagIds: selectedTagIds,
         defaultPriceGroupId: selectedPriceGroupId || null,
         active,
+        icon,
         imageLinks: imageLinks.filter((link) => link.trim()),
         baseProductId: baseProductId.trim() || null,
       };
@@ -305,6 +323,22 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
       prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
     );
   };
+
+  // Available icons
+  const availableIcons = [
+    { id: "package", icon: Package, label: "Package" },
+    { id: "shopping-cart", icon: ShoppingCart, label: "Shopping Cart" },
+    { id: "tag", icon: Tag, label: "Tag" },
+    { id: "star", icon: Star, label: "Star" },
+    { id: "heart", icon: Heart, label: "Heart" },
+    { id: "zap", icon: Zap, label: "Lightning" },
+    { id: "gift", icon: Gift, label: "Gift" },
+    { id: "truck", icon: Truck, label: "Truck" },
+    { id: "dollar-sign", icon: DollarSign, label: "Dollar" },
+    { id: "award", icon: Award, label: "Award" },
+    { id: "box", icon: Box, label: "Box" },
+    { id: "sparkles", icon: Sparkles, label: "Sparkles" },
+  ];
 
   if (loading) {
     return (
@@ -353,11 +387,42 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            <Switch checked={active} onCheckedChange={setActive} id="active" />
-            <Label htmlFor="active" className="cursor-pointer">
-              Active (products will be active by default)
-            </Label>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-900 px-4 py-3">
+              <div>
+                <Label htmlFor="active" className="cursor-pointer">
+                  Active Draft
+                </Label>
+                <p className="text-xs text-gray-400">
+                  Show quick create button in products list
+                </p>
+              </div>
+              <Switch id="active" checked={active} onCheckedChange={setActive} />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Icon</Label>
+              <div className="grid grid-cols-6 gap-2">
+                {availableIcons.map((item) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setIcon(icon === item.id ? null : item.id)}
+                      className={`flex h-10 w-10 items-center justify-center rounded-md border transition ${
+                        icon === item.id
+                          ? "border-emerald-500 bg-emerald-500/20 text-emerald-400"
+                          : "border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-600 hover:text-gray-300"
+                      }`}
+                      title={item.label}
+                    >
+                      <IconComponent className="h-5 w-5" />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
 

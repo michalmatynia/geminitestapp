@@ -1,7 +1,8 @@
 import 'dotenv/config';
 import '@testing-library/jest-dom';
-import { vi } from 'vitest';
+import { vi, beforeAll, afterEach, afterAll } from 'vitest';
 import React from 'react';
+import { server } from './mocks/server';
 
 // Mock next/image
 vi.mock('next/image', () => ({
@@ -22,3 +23,24 @@ vi.mock('next/link', () => ({
     children: React.ReactNode;
   }) => React.createElement('a', { href }, children),
 }));
+
+/**
+ * MSW Server Setup for Vitest
+ * Establishes request mocking for all tests
+ */
+beforeAll(() => {
+  // Start the MSW server before all tests
+  server.listen({
+    onUnhandledRequest: 'error',
+  });
+});
+
+afterEach(() => {
+  // Reset handlers after each test to ensure test isolation
+  server.resetHandlers();
+});
+
+afterAll(() => {
+  // Clean up and stop the server after all tests complete
+  server.close();
+});

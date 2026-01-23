@@ -4,13 +4,46 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { ProductDraft } from "@/types/drafts";
-import { PlusIcon, Edit2Icon, TrashIcon, CheckIcon, XIcon } from "lucide-react";
+import {
+  PlusIcon,
+  Edit2Icon,
+  TrashIcon,
+  CheckIcon,
+  XIcon,
+  Package,
+  ShoppingCart,
+  Tag,
+  Star,
+  Heart,
+  Zap,
+  Gift,
+  Truck,
+  DollarSign,
+  Award,
+  Box,
+  Sparkles,
+} from "lucide-react";
 
 interface DraftListProps {
   onEdit: (id: string) => void;
   onCreateNew: () => void;
   refreshTrigger: number;
 }
+
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  package: Package,
+  "shopping-cart": ShoppingCart,
+  tag: Tag,
+  star: Star,
+  heart: Heart,
+  zap: Zap,
+  gift: Gift,
+  truck: Truck,
+  "dollar-sign": DollarSign,
+  award: Award,
+  box: Box,
+  sparkles: Sparkles,
+};
 
 export function DraftList({ onEdit, onCreateNew, refreshTrigger }: DraftListProps) {
   const [drafts, setDrafts] = useState<ProductDraft[]>([]);
@@ -94,6 +127,14 @@ export function DraftList({ onEdit, onCreateNew, refreshTrigger }: DraftListProp
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
+                    {draft.icon && (() => {
+                      const IconComponent = iconMap[draft.icon as string];
+                      return IconComponent ? (
+                        <div className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-700 bg-gray-800 text-gray-400">
+                          <IconComponent className="h-4 w-4" />
+                        </div>
+                      ) : null;
+                    })()}
                     <h3 className="text-lg font-medium text-white">{draft.name}</h3>
                     {draft.active !== undefined && (
                       <span

@@ -1,19 +1,4 @@
 
-Obrazy data:blobs w Base
-
-{
-"method": "addInventoryProduct",
-"parameters": {
-"inventory_id": 123,
-"product_id": 456,
-"images": {
-"0": "data:iVBORw0KGgo...",
-}
-}
-}
-
-
-
 i to, zeby robił post produkcje na automacie
 
 import OpenAI from "openai";

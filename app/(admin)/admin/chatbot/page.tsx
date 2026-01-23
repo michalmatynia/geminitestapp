@@ -172,7 +172,6 @@ function ChatbotPageInner() {
           <DebugPanel
             debugState={debugState}
             agentRunLogs={[]}
-            agentRunAudits={[]}
           />
         </div>
       </div>

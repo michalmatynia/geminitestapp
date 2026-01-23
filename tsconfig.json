@@ -25,6 +25,7 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
+    "declaration": true,
     "plugins": [
       {
         "name": "next"
@@ -34,7 +35,10 @@
       "@/*": [
         "./*"
       ]
-    }
+    },
+    "types": [
+      "vitest/globals"
+    ]
   },
   "include": [
     "next-env.d.ts",

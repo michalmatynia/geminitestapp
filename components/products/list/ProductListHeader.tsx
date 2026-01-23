@@ -1,7 +1,23 @@
 "use client";
 
 import { memo } from "react";
-import { PlusIcon } from "lucide-react";
+import {
+  PlusIcon,
+  ChevronLeft,
+  ChevronRight,
+  Package,
+  ShoppingCart,
+  Tag,
+  Star,
+  Heart,
+  Zap,
+  Gift,
+  Truck,
+  DollarSign,
+  Award,
+  Box,
+  Sparkles,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -11,9 +27,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Catalog } from "@/types/products";
+import type { ProductDraft } from "@/types/drafts";
+
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  package: Package,
+  "shopping-cart": ShoppingCart,
+  tag: Tag,
+  star: Star,
+  heart: Heart,
+  zap: Zap,
+  gift: Gift,
+  truck: Truck,
+  "dollar-sign": DollarSign,
+  award: Award,
+  box: Box,
+  sparkles: Sparkles,
+};
 
 interface ProductListHeaderProps {
   onCreateProduct: () => void;
+  onCreateFromDraft?: (draftId: string) => void;
+  activeDrafts?: ProductDraft[];
   page: number;
   totalPages: number;
   setPage: (page: number) => void;
@@ -31,6 +65,8 @@ interface ProductListHeaderProps {
 
 export const ProductListHeader = memo(function ProductListHeader({
   onCreateProduct,
+  onCreateFromDraft,
+  activeDrafts = [],
   page,
   totalPages,
   setPage,
@@ -46,63 +82,121 @@ export const ProductListHeader = memo(function ProductListHeader({
   catalogs,
 }: ProductListHeaderProps) {
   return (
-    <div className="mb-4 flex items-center justify-between gap-3">
-      <div className="flex items-center gap-3">
-        <Button
-          onClick={onCreateProduct}
-          className="size-11 rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90"
-          aria-label="Create product"
-        >
-          <PlusIcon className="size-5" />
-        </Button>
-        <h1 className="text-3xl font-bold text-white">Products</h1>
+    <div className="mb-6 space-y-4">
+      {/* Header with title and create button */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={onCreateProduct}
+              className="h-12 w-12 rounded-full p-0"
+              aria-label="Create new product"
+            >
+              <PlusIcon className="h-5 w-5" />
+            </Button>
+            {activeDrafts.map((draft) => {
+              const IconComponent = draft.icon ? iconMap[draft.icon] : null;
+              return (
+                <Button
+                  key={draft.id}
+                  onClick={() => onCreateFromDraft?.(draft.id)}
+                  className="h-12 w-12 rounded-full border-2 border-gray-700 bg-gray-800 p-0 hover:border-emerald-500 hover:bg-gray-700"
+                  aria-label={`Create product from ${draft.name}`}
+                  title={draft.name}
+                >
+                  {IconComponent ? (
+                    <IconComponent className="h-5 w-5" />
+                  ) : (
+                    <Package className="h-5 w-5" />
+                  )}
+                </Button>
+              );
+            })}
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Products</h1>
+            <p className="text-sm text-muted-foreground">
+              Manage and organize your product catalog
+            </p>
+          </div>
+        </div>
       </div>
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">Page</span>
-          <button
+
+      {/* Controls section */}
+      <div className="flex flex-col gap-4 rounded-lg border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+        {/* Pagination controls */}
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-muted-foreground">
+            Page
+          </span>
+          <Button
             type="button"
             onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page <= 1}
-            className="rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition disabled:opacity-50"
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0"
+            aria-label="Previous page"
           >
-            Prev
-          </button>
-          <span className="text-xs text-gray-300">
-            {page} / {totalPages}
-          </span>
-          <button
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex items-center gap-2 px-2">
+            <span className="min-w-fit text-sm font-medium">
+              {page}
+            </span>
+            <span className="text-sm text-muted-foreground">/</span>
+            <span className="min-w-fit text-sm text-muted-foreground">
+              {totalPages}
+            </span>
+          </div>
+          <Button
             type="button"
             onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page >= totalPages}
-            className="rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition disabled:opacity-50"
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0"
+            aria-label="Next page"
           >
-            Next
-          </button>
-          <select
-            value={pageSize}
-            onChange={(e) => {
-              setPageSize(Number(e.target.value));
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+
+          {/* Page size selector */}
+          <Select
+            value={String(pageSize)}
+            onValueChange={(value) => {
+              setPageSize(Number(value));
               setPage(1);
             }}
-            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-300 border border-gray-700"
-            aria-label="Products per page"
           >
-            {[12, 24, 48].map((size) => (
-              <option key={size} value={size}>
-                {size} / page
-              </option>
-            ))}
-          </select>
+            <SelectTrigger
+              className="w-32"
+              aria-label="Products per page"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {[12, 24, 48].map((size) => (
+                <SelectItem key={size} value={String(size)}>
+                  {size} per page
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <div className="w-44">
+
+        {/* Filter selectors */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
           <Select
             value={nameLocale}
             onValueChange={(value) =>
               setNameLocale(value as "name_en" | "name_pl" | "name_de")
             }
           >
-            <SelectTrigger aria-label="Select product name language">
+            <SelectTrigger
+              className="w-full sm:w-44"
+              aria-label="Select product name language"
+            >
               <SelectValue placeholder="Language" />
             </SelectTrigger>
             <SelectContent>
@@ -111,10 +205,12 @@ export const ProductListHeader = memo(function ProductListHeader({
               <SelectItem value="name_de">German</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-        <div className="w-36">
+
           <Select value={currencyCode} onValueChange={setCurrencyCode}>
-            <SelectTrigger aria-label="Select currency">
+            <SelectTrigger
+              className="w-full sm:w-32"
+              aria-label="Select currency"
+            >
               <SelectValue placeholder="Currency" />
             </SelectTrigger>
             <SelectContent>
@@ -125,10 +221,12 @@ export const ProductListHeader = memo(function ProductListHeader({
               ))}
             </SelectContent>
           </Select>
-        </div>
-        <div className="w-52">
+
           <Select value={catalogFilter} onValueChange={setCatalogFilter}>
-            <SelectTrigger aria-label="Filter by catalog">
+            <SelectTrigger
+              className="w-full sm:w-52"
+              aria-label="Filter by catalog"
+            >
               <SelectValue placeholder="Catalog" />
             </SelectTrigger>
             <SelectContent>

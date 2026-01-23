@@ -46,12 +46,13 @@ export async function GET() {
  * Update user preferences
  */
 export async function PATCH(req: NextRequest) {
+  let data: any = {};
   try {
     const body = await req.json();
     const parsed = updatePreferencesSchema.parse(body);
 
     // Type assertion to handle exactOptionalPropertyTypes
-    const data = {
+    data = {
       ...(parsed.productListNameLocale !== undefined && { productListNameLocale: parsed.productListNameLocale }),
       ...(parsed.productListCatalogFilter !== undefined && { productListCatalogFilter: parsed.productListCatalogFilter }),
       ...(parsed.productListCurrencyCode !== undefined && { productListCurrencyCode: parsed.productListCurrencyCode }),

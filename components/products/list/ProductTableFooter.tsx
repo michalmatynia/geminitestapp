@@ -6,6 +6,18 @@ import { Button } from "@/components/ui/button";
 import { ProductWithImages } from "@/types";
 import { logger } from "@/lib/logger";
 import { useToast } from "@/components/ui/toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
+import { Trash2 } from "lucide-react";
 
 interface ProductTableFooterProps<TData> {
   table: ReactTable<TData>;
@@ -21,6 +33,7 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
   const selectedCount = table.getFilteredSelectedRowModel().rows.length;
   const hasSelection = selectedCount > 0;
   const { toast } = useToast();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleMassDelete = async () => {
     logger.log("Mass delete initiated.");
@@ -34,68 +47,96 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
       return;
     }
 
-    if (
-      window.confirm(
-        `Are you sure you want to delete ${selectedProductIds.length} selected products?`
-      )
-    ) {
-      try {
-        const deletePromises = selectedProductIds.map((id) =>
-          fetch(`/api/products/${id}`, {
-            method: "DELETE",
-          })
-        );
-        const results = await Promise.all(deletePromises);
+    try {
+      const deletePromises = selectedProductIds.map((id) =>
+        fetch(`/api/products/${id}`, {
+          method: "DELETE",
+        })
+      );
+      const results = await Promise.all(deletePromises);
 
-        const failedDeletions = results.filter((res) => !res.ok);
+      const failedDeletions = results.filter((res) => !res.ok);
 
-        if (failedDeletions.length > 0) {
-          let errorIdSuffix = "";
-          try {
-            const firstFailed = failedDeletions[0];
-            if (firstFailed) {
-              const payload = (await firstFailed.json()) as {
-                errorId?: string;
-              };
-              if (payload?.errorId) {
-                errorIdSuffix = ` (Error ID: ${payload.errorId})`;
-              }
+      if (failedDeletions.length > 0) {
+        let errorIdSuffix = "";
+        try {
+          const firstFailed = failedDeletions[0];
+          if (firstFailed) {
+            const payload = (await firstFailed.json()) as {
+              errorId?: string;
+            };
+            if (payload?.errorId) {
+              errorIdSuffix = ` (Error ID: ${payload.errorId})`;
             }
-          } catch {
-            errorIdSuffix = "";
           }
-          setActionError(`Some products could not be deleted.${errorIdSuffix}`);
-        } else {
-          toast("Selected products deleted successfully.", {
-            variant: "success",
-          });
+        } catch {
+          errorIdSuffix = "";
         }
-        table.setRowSelection({}); // Clear selection after deletion
-        setRefreshTrigger((prev) => prev + 1); // Refresh the product list
-      } catch (error) {
-        logger.error("Error during mass deletion:", error);
-        setActionError("An error occurred during deletion.");
+        setActionError(`Some products could not be deleted.${errorIdSuffix}`);
+        toast("Some products could not be deleted", {
+          variant: "error",
+        });
+      } else {
+        toast("Selected products deleted successfully.", {
+          variant: "success",
+        });
       }
+      table.setRowSelection({}); // Clear selection after deletion
+      setRefreshTrigger((prev) => prev + 1); // Refresh the product list
+      setShowDeleteConfirm(false);
+    } catch (error) {
+      logger.error("Error during mass deletion:", error);
+      setActionError("An error occurred during deletion.");
+      toast("An error occurred during deletion", {
+        variant: "error",
+      });
     }
   };
 
   return (
-    <div className="space-y-3 px-2 py-4">
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">
-          {selectedCount} of {table.getFilteredRowModel().rows.length} row(s)
-          selected.
+    <>
+      <div className="space-y-3 border-t bg-muted/50 px-4 py-4">
+        <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+          <div className="text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">{selectedCount}</span>{" "}
+            of <span className="font-medium text-foreground">{table.getFilteredRowModel().rows.length}</span>{" "}
+            row(s) selected.
+          </div>
+          <Button
+            onClick={() => setShowDeleteConfirm(true)}
+            disabled={!hasSelection}
+            variant="destructive"
+            size="sm"
+            className="gap-2"
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete Selected ({selectedCount})
+          </Button>
         </div>
-        <Button
-          onClick={() => {
-            void handleMassDelete();
-          }}
-          disabled={!hasSelection}
-          className="bg-primary text-primary-foreground hover:bg-primary/90"
-        >
-          Delete Selected
-        </Button>
       </div>
-    </div>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete selected products?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedCount} selected{" "}
+              {selectedCount === 1 ? "product" : "products"}? This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void handleMassDelete()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }) as <TData>(props: ProductTableFooterProps<TData>) => React.JSX.Element;

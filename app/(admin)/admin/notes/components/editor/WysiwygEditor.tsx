@@ -128,7 +128,7 @@ export function WysiwygEditor({
     if (content !== editor.getHTML()) {
       try {
         lastContentRef.current = content;
-        editor.commands.setContent(content, false);
+        editor.commands.setContent(content, { emitUpdate: false });
       } catch (error) {
         console.error("Failed to set WYSIWYG content:", error);
       }

@@ -134,12 +134,17 @@ export default function ProductImageManager() {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
 
-    if (draggedIndex !== null && draggedIndex !== index) {
+    // Only update state if the index actually changed to prevent flickering
+    if (draggedIndex !== null && draggedIndex !== index && dragOverIndex !== index) {
       setDragOverIndex(index);
     }
   };
 
-  const handleDragLeave = () => {
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    // Only clear drag over if we're actually leaving the element (not just moving to a child)
+    if (e.currentTarget.contains(e.relatedTarget as Node)) {
+      return;
+    }
     setDragOverIndex(null);
   };
 

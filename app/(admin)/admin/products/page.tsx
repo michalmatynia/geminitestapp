@@ -18,19 +18,12 @@ import { ProductWithImages } from "@/types";
 import { useToast } from "@/components/ui/toast";
 import { logger } from "@/lib/logger";
 import type { RowSelectionState } from "@tanstack/react-table";
+import type { ProductDraft } from "@/types/drafts";
 
 const ProductListHeader = dynamic(
   () =>
     import("@/components/products/list/ProductListHeader").then(
       (mod) => mod.ProductListHeader
-    ),
-  { ssr: false }
-);
-
-const ProductSelectionBar = dynamic(
-  () =>
-    import("@/components/products/list/ProductSelectionBar").then(
-      (mod) => mod.ProductSelectionBar
     ),
   { ssr: false }
 );
@@ -46,6 +39,7 @@ function AdminPageInner() {
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const { toast } = useToast();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [activeDrafts, setActiveDrafts] = useState<ProductDraft[]>([]);
 
   // Load user preferences
   const {
@@ -59,7 +53,6 @@ function AdminPageInner() {
 
   const {
     data,
-    total,
     totalPages,
     page,
     setPage,
@@ -165,6 +158,38 @@ function AdminPageInner() {
     updateCatalogFilter(filter);
   }, [setCatalogFilter, updateCatalogFilter]);
 
+  // Load active drafts
+  useEffect(() => {
+    const loadActiveDrafts = async () => {
+      try {
+        const res = await fetch("/api/drafts");
+        if (res.ok) {
+          const drafts = await res.json() as ProductDraft[];
+          setActiveDrafts(drafts.filter(d => d.active));
+        }
+      } catch (error) {
+        console.error("Failed to load active drafts:", error);
+      }
+    };
+    void loadActiveDrafts();
+  }, []);
+
+  const handleCreateFromDraft = useCallback(async (draftId: string) => {
+    try {
+      const res = await fetch(`/api/drafts/${draftId}`);
+      if (!res.ok) throw new Error("Failed to load draft");
+
+      const draft = await res.json();
+      // TODO: Open create modal with draft values pre-filled
+      // For now, just open the create modal
+      handleOpenCreateModal();
+      toast(`Creating product from draft: ${draft.name}`, { variant: "success" });
+    } catch (error) {
+      console.error("Failed to load draft:", error);
+      toast("Failed to load draft template", { variant: "error" });
+    }
+  }, [handleOpenCreateModal, toast]);
+
   const handleCloseCreate = useCallback(() => setIsCreateOpen(false), [setIsCreateOpen]);
   const handleCloseEdit = useCallback(() => setEditingProduct(null), [setEditingProduct]);
   const handleCloseIntegrations = useCallback(() => {
@@ -238,7 +263,7 @@ function AdminPageInner() {
 
   const [loadingGlobalSelection, setLoadingGlobalSelection] = useState(false);
 
-  const handleSelectAllGlobal = async () => {
+  const handleSelectAllGlobal = useCallback(async () => {
     setLoadingGlobalSelection(true);
     try {
       const params = new URLSearchParams();
@@ -267,9 +292,9 @@ function AdminPageInner() {
     } finally {
       setLoadingGlobalSelection(false);
     }
-  };
+  }, [search, sku, minPrice, maxPrice, startDate, endDate, catalogFilter, toast]);
 
-  const handleMassDelete = async () => {
+  const handleMassDelete = useCallback(async () => {
     logger.log("Mass delete initiated.");
     const selectedProductIds = Object.keys(rowSelection).filter(
       (id) => rowSelection[id]
@@ -301,7 +326,7 @@ function AdminPageInner() {
         setActionError("An error occurred during deletion.");
       }
     }
-  };
+  }, [rowSelection, setActionError, toast]);
 
   useEffect(() => {
     setIsDebugOpen(searchParams.get("debug") === "true");
@@ -324,6 +349,8 @@ function AdminPageInner() {
       <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
         <ProductListHeader
           onCreateProduct={() => void handleOpenCreateModal()}
+          onCreateFromDraft={handleCreateFromDraft}
+          activeDrafts={activeDrafts}
           page={page}
           totalPages={totalPages}
           setPage={handleSetPage}
@@ -337,16 +364,6 @@ function AdminPageInner() {
           catalogFilter={catalogFilter}
           setCatalogFilter={handleSetCatalogFilter}
           catalogs={catalogs}
-        />
-        <ProductSelectionBar
-          data={data}
-          rowSelection={rowSelection}
-          setRowSelection={setRowSelection}
-          onSelectAllGlobal={() => void handleSelectAllGlobal()}
-          loadingGlobal={loadingGlobalSelection}
-          total={total}
-          onDeleteSelected={() => void handleMassDelete()}
-          onAddToMarketplace={handleAddToMarketplace}
         />
         {loadError && (
           <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
@@ -377,6 +394,13 @@ function AdminPageInner() {
           setStartDate={setStartDate}
           endDate={endDate}
           setEndDate={setEndDate}
+          data={data}
+          rowSelection={rowSelection}
+          setRowSelection={setRowSelection}
+          onSelectAllGlobal={handleSelectAllGlobal}
+          loadingGlobal={loadingGlobalSelection}
+          onDeleteSelected={handleMassDelete}
+          onAddToMarketplace={handleAddToMarketplace}
         />
         <DataTable
           columns={columns}
@@ -417,7 +441,7 @@ function AdminPageInner() {
         listProductPreset={listProductPreset}
         exportSettingsProduct={exportSettingsProduct}
         onCloseExportSettings={() => setExportSettingsProduct(null)}
-        onListingsUpdated={refreshListingBadges}
+        onListingsUpdated={() => void refreshListingBadges()}
         massListIntegration={massListIntegration}
         massListProductIds={massListProductIds}
         onCloseMassList={handleCloseMassList}

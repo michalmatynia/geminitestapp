@@ -2,6 +2,10 @@
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone", // Docker-friendly build output
+  serverExternalPackages: [
+    '@prisma/client',
+    'bcrypt',
+  ],
   images: {
     remotePatterns: [
       {

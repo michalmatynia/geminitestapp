@@ -17,3 +17,11 @@ npx prisma generate
 npx prisma migrate dev
 prisma migrate reset
 npx prisma db push
+
+Prepare a suite tests in vitests
+use tanstack query across application
+
+use ShadCN/ui (Product List - Done, Notificatoins - Done, )
+Enable React Server Components - Implement
+ Add MSW 2.0 - Implement MSW Proper API mocking in all tests
+ Add tsx for scripts 

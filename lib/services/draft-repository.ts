@@ -113,7 +113,7 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
     updatedAt: now,
   };
 
-  await mongo.collection("product_drafts").insertOne(draft);
+  await mongo.collection("product_drafts").insertOne(draft as any);
 
   return {
     id,
@@ -155,7 +155,7 @@ const updateDraft_Mongo = async (id: string, input: UpdateProductDraftInput): Pr
   const now = new Date();
 
   const result = await mongo.collection("product_drafts").findOneAndUpdate(
-    { _id: id },
+    { _id: id } as any,
     {
       $set: {
         ...input,
@@ -204,7 +204,7 @@ const updateDraft_Mongo = async (id: string, input: UpdateProductDraftInput): Pr
 
 const deleteDraft_Mongo = async (id: string): Promise<boolean> => {
   const mongo = await getMongoDb();
-  const result = await mongo.collection("product_drafts").deleteOne({ _id: id });
+  const result = await mongo.collection("product_drafts").deleteOne({ _id: id } as any);
   return result.deletedCount > 0;
 };
 

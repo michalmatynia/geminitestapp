@@ -79,51 +79,48 @@ export const ProductSelectionBar = memo(function ProductSelectionBar({
   );
 
   return (
-    <div className="mb-4 flex items-center gap-2">
+    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
-            className="gap-2 border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+            className="gap-2"
           >
             <CheckSquare className="h-4 w-4" />
-            Checked products settings
+            Selection
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="start"
-          className="w-56 border-gray-800 bg-gray-900 text-gray-200"
-        >
+        <DropdownMenuContent align="start" className="w-56">
           <DropdownMenuLabel>On this Page</DropdownMenuLabel>
           <DropdownMenuGroup>
             <DropdownMenuItem
               onClick={handleSelectPage}
-              className="cursor-pointer focus:bg-gray-800 focus:text-white"
+              className="cursor-pointer"
             >
-              Check All
+              Select All on Page
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={handleDeselectPage}
-              className="cursor-pointer focus:bg-gray-800 focus:text-white"
+              className="cursor-pointer"
             >
-              Uncheck All
+              Deselect All on Page
             </DropdownMenuItem>
           </DropdownMenuGroup>
-          <DropdownMenuSeparator className="bg-gray-800" />
+          <DropdownMenuSeparator />
           <DropdownMenuLabel>On All Pages</DropdownMenuLabel>
           <DropdownMenuGroup>
             <DropdownMenuItem
               onClick={() => void handleSelectAllGlobal()}
-              className="cursor-pointer focus:bg-gray-800 focus:text-white"
+              className="cursor-pointer"
               disabled={!!loadingGlobal}
             >
-              {loadingGlobal ? "Loading..." : "Check All"}
+              {loadingGlobal ? "Loading..." : "Select All Globally"}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={handleDeselectAll}
-              className="cursor-pointer focus:bg-gray-800 focus:text-white"
+              className="cursor-pointer"
             >
-              Uncheck All
+              Deselect All
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>
@@ -133,32 +130,30 @@ export const ProductSelectionBar = memo(function ProductSelectionBar({
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
-            className="gap-2 border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+            className="gap-2"
             disabled={!hasSelection}
           >
             <Settings2 className="h-4 w-4" />
-            Operations
+            Actions
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="start"
-          className="w-56 border-gray-800 bg-gray-900 text-gray-200"
-        >
+        <DropdownMenuContent align="start" className="w-56">
           <DropdownMenuItem
             onClick={() => {
               if (onAddToMarketplace) onAddToMarketplace();
             }}
-            className="cursor-pointer focus:bg-gray-800 focus:text-white"
+            className="cursor-pointer gap-2"
           >
-            <Store className="mr-2 h-4 w-4" />
+            <Store className="h-4 w-4" />
             Add to Marketplace
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() => void handleDeleteSelected()}
-            className="cursor-pointer text-red-400 focus:bg-red-900/20 focus:text-red-300"
+            className="cursor-pointer gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
           >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete
+            <Trash2 className="h-4 w-4" />
+            Delete Selected
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

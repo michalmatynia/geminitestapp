@@ -1,8 +1,8 @@
-import { vi, SpyInstance } from "vitest";
+import { vi, MockInstance } from "vitest";
 import { GET, POST } from "@/app/api/chatbot/route";
 
 describe("Chatbot API", () => {
-  let consoleErrorSpy: SpyInstance;
+  let consoleErrorSpy: MockInstance;
 
   beforeEach(() => {
     global.fetch = vi.fn();

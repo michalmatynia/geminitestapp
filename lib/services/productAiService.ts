@@ -121,7 +121,7 @@ export async function deleteProductAiJob(jobId: string) {
   });
   if (process.env.MONGODB_URI) {
     const mongo = await getMongoDb();
-    await mongo.collection(JOBS_COLLECTION).deleteOne({ _id: jobId });
+    await mongo.collection(JOBS_COLLECTION).deleteOne({ _id: jobId } as any);
   }
 }
 

@@ -1,21 +1,26 @@
 
-I still need to choose account when listing with Baseom
+* I still need to choose account when listing with Baseom
 
-I still need to provide the account when I list the product 
+* WHen I click on + to list my product and then select Baselinker as my target Export, in teh same modal a dropdown appears, where I still need to choose which account I want to export to, this default export account is already defined in my export settings and I shouldn't need to choose it again, it should be pre-selected
 
-It looks like Product List is re-rendering
+I'm trying to export my product KEYCHA914 to Base.com, but I am unable to 
 
-When I Create Product after adding images, the screen filckers when I try to resort images
+carry out copilot installations
+
+move Operations nav underneath 
+I still get console logs when I change Filters
+
+* When I Create Product after adding images, the screen filckers when I try to resort images
 
 In Product Drafts, Price group default of the catalog
 
-* Also, add one additional field, a choice of Black and White Circular Icons, When the Draft is set to Active in the Draft List ( with a Radio button), The Icon will appear in the product list Right under the Products text, to the Right of Big Plus that Creates Products from scratch. Clicking the Draft Icons will launch a modal panel with prefilled values, like it is set up in the Draft Template
+In Products - Drafts Section, When I Edit the Draft, , add one additional field, a choice of Black and White Circular Icons, When the Draft is set to Active in the Draft List ( with a Radio button), The Icon will appear in the product list Right under the Products text, to the Right of Big Plus that Creates Products from scratch. Clicking the Draft Icons will launch a modal panel with prefilled values, like it is set up in the Draft Template
 
 Draft list reorders like mapping parameters
 
-I need a new page, Called Panel, where I can set up different things in regards to Product modal Page. 
+* In progress with Drafts - > I need a new page, Called Panel, where I can set up different things in regards to Product modal Page. 
 
-In Product Edit / Create Tags Field should be searchable field
+In Product - Edit / Create pages Tag Field should be searchable field
 
 PArameter Product
 
@@ -25,13 +30,6 @@ In Product List, Add a small indicator (maybe an icon underneath SKU) whether th
 
 Aut-Save Product Modal draft on product create, not to loose info.  
 
-* After selecting a catalog, default price group is not automatically assingned to product
-Default Price group should be attached to Product as soon as the catalog is selected, cause it's the default group of the catalog
-
-* When I update product stock, The product disconnects from the catalog.
-
-* Product List, One Click list on Base
-
 One Click creation Templates for Product (with  Stock Inserted)
 Prefilled Product Templates -> Add Jewellery add Figure etc.
 
@@ -39,7 +37,6 @@ Infer Categories and size , material, Lore Tag Automatically
 
 
 Link Note to Product? Why not, a special kind of Theme that has this linking field
-
 
 
 Infer Category

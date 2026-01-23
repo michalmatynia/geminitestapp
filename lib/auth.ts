@@ -217,7 +217,19 @@ export const auth = async (...args: any[]) => {
               name: "Admin User (Mock)",
               email: "admin@example.com",
               role: "admin",
-              permissions: ["*"], // Wildcard or list all
+              permissions: [
+                "auth.users.write",
+                "auth.users.read",
+                "products.manage",
+                "notes.manage",
+                "chatbot.manage",
+                "settings.manage",
+                "drafts.manage",
+                "integrations.manage",
+                "files.manage",
+                "databases.manage",
+                "cms.manage"
+              ],
               image: null
           },
           expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()

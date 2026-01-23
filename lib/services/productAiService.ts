@@ -1,53 +1,19 @@
-import prisma from "@/lib/prisma";
-import { getMongoDb } from "@/lib/db/mongo-client";
 import { productService } from "./productService";
+import { getProductAiJobRepository } from "@/lib/services/product-ai-job-repository";
 
 export type ProductAiJobType = "description_generation" | "translation";
 
-const JOBS_COLLECTION = "product_ai_jobs";
-
-// Why: Supporting both Prisma and MongoDB requires keeping both stores in sync.
-// We write to both on every job change. MongoDB failures are logged but silent
-// to prevent blocking Prisma writes (MongoDB may not be available in all environments).
-// This ensures jobs can be queried from either database without rebuilding data.
-async function saveToMongo(job: any) {
-  if (!process.env.MONGODB_URI) return;
-  try {
-    const mongo = await getMongoDb();
-    const { id, createdAt, ...data } = job;
-    await mongo.collection(JOBS_COLLECTION).updateOne(
-      { _id: id },
-      {
-        $set: { ...data, updatedAt: new Date() },
-        $setOnInsert: { createdAt: createdAt || new Date() },
-      },
-      { upsert: true }
-    );
-  } catch (error) {
-    console.error("Failed to save job to MongoDB:", error);
-  }
-}
-
 export async function enqueueProductAiJob(productId: string, type: ProductAiJobType, payload: any) {
   console.log(`[enqueueProductAiJob] Creating job for productId: ${productId}, type: ${type}`);
-  const job = await prisma.productAiJob.create({
-    data: {
-      productId,
-      type,
-      payload,
-      status: "pending",
-    },
-  });
+  const jobRepository = await getProductAiJobRepository();
+  const job = await jobRepository.createJob(productId, type, payload);
   console.log(`[enqueueProductAiJob] Job created with id: ${job.id}`);
-  await saveToMongo(job);
   return job;
 }
 
 export async function getProductAiJobs(productId?: string) {
-  const jobs = await prisma.productAiJob.findMany({
-    where: productId ? { productId } : {},
-    orderBy: { createdAt: "desc" },
-  });
+  const jobRepository = await getProductAiJobRepository();
+  const jobs = await jobRepository.findJobs(productId);
 
   // Manually enrich with product data
   const enrichedJobs = await Promise.all(jobs.map(async (job) => {
@@ -73,9 +39,8 @@ export async function getProductAiJobs(productId?: string) {
 }
 
 export async function getProductAiJob(jobId: string) {
-  const job = await prisma.productAiJob.findUnique({
-    where: { id: jobId },
-  });
+  const jobRepository = await getProductAiJobRepository();
+  const job = await jobRepository.findJobById(jobId);
   if (!job) return null;
 
   let product = null;
@@ -93,55 +58,30 @@ export async function getProductAiJob(jobId: string) {
 }
 
 export async function updateProductAiJob(jobId: string, data: any) {
-  const job = await prisma.productAiJob.update({
-    where: { id: jobId },
-    data,
-  });
-  await saveToMongo(job);
-  return job;
+  const jobRepository = await getProductAiJobRepository();
+  return jobRepository.updateJob(jobId, data);
 }
 
 export async function cancelProductAiJob(jobId: string) {
-  const job = await prisma.productAiJob.findUnique({ where: { id: jobId } });
+  const jobRepository = await getProductAiJobRepository();
+  const job = await jobRepository.findJobById(jobId);
   if (!job) throw new Error("Job not found");
   if (job.status !== "pending" && job.status !== "running") {
     throw new Error("Only pending or running jobs can be canceled");
   }
 
-  const updated = await prisma.productAiJob.update({
-    where: { id: jobId },
-    data: {
-      status: "canceled",
-      finishedAt: new Date(),
-    },
+  return jobRepository.updateJob(jobId, {
+    status: "canceled",
+    finishedAt: new Date(),
   });
-  await saveToMongo(updated);
-  return updated;
 }
 
 export async function deleteProductAiJob(jobId: string) {
-  await prisma.productAiJob.delete({
-    where: { id: jobId },
-  });
-  if (process.env.MONGODB_URI) {
-    const mongo = await getMongoDb();
-    await mongo.collection(JOBS_COLLECTION).deleteOne({ _id: jobId } as any);
-  }
+  const jobRepository = await getProductAiJobRepository();
+  await jobRepository.deleteJob(jobId);
 }
 
 export async function deleteTerminalProductAiJobs() {
-  const result = await prisma.productAiJob.deleteMany({
-    where: {
-      status: {
-        in: ["completed", "failed", "canceled"],
-      },
-    },
-  });
-  if (process.env.MONGODB_URI) {
-    const mongo = await getMongoDb();
-    await mongo.collection(JOBS_COLLECTION).deleteMany({
-      status: { $in: ["completed", "failed", "canceled"] }
-    });
-  }
-  return result;
+  const jobRepository = await getProductAiJobRepository();
+  return jobRepository.deleteTerminalJobs();
 }

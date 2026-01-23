@@ -3,6 +3,12 @@ npx prisma migrate dev
 npx prisma generate
 /admin/system/logs
 
+In Product List, when All Catalogs are viewed currency is supposed to have PLN and EUR, but has additional code like  value that should not be there
+
+When I create a user manually I should have the option to add their role, including the super user role, also , I should be able to verify them manually by clicking edit.
+
+I need to manage the Auth system create a super user and have the option to verify my super user , then restore proper authing system.
+
 * When I create Product from Draft, when I add images, the images are not being added and the modal closes. When I try to upload images during Product Edit, the images disappear, but when I open the Product again, they are there.
 
 * In my Product Create / Edit modal, I can now see Price Groups overview with a Standard Group, PLN, EUR. Standard Group shouldn't be there, it's not a price group it's just a type of price group.

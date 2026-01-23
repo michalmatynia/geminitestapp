@@ -1,5 +1,4 @@
 import prisma from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 import { generateProductDescription } from "./aiDescriptionService";
 import { translateProduct } from "./aiTranslationService";
 import type { ProductFormData } from "@/types";
@@ -8,6 +7,7 @@ import { defaultLanguages } from "@/lib/internationalizationDefaults";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { ObjectId } from "mongodb";
 import { getProductDataProvider } from "@/lib/services/product-provider";
+import { getProductAiJobRepository } from "@/lib/services/product-ai-job-repository";
 
 type LanguageRecord = {
   id: string;
@@ -442,10 +442,8 @@ const pollQueue = async () => {
   lastPollTime = Date.now();
   try {
     console.log("[productAiQueue] Polling for pending jobs...");
-    const nextJob = await prisma.productAiJob.findFirst({
-      where: { status: "pending" },
-      orderBy: { createdAt: "asc" },
-    });
+    const jobRepository = await getProductAiJobRepository();
+    const nextJob = await jobRepository.findNextPendingJob();
 
     if (!nextJob) {
       console.log("[productAiQueue] No pending jobs found");
@@ -455,9 +453,9 @@ const pollQueue = async () => {
 
     console.log(`[productAiQueue] Found job ${nextJob.id} of type "${nextJob.type}", processing...`);
 
-    await prisma.productAiJob.update({
-      where: { id: nextJob.id },
-      data: { status: "running", startedAt: new Date() },
+    await jobRepository.updateJob(nextJob.id, {
+      status: "running",
+      startedAt: new Date(),
     });
 
           try {
@@ -486,32 +484,23 @@ const pollQueue = async () => {
         throw new Error(`Unknown job type: ${nextJob.type}`);
       }
 
-      await prisma.productAiJob.update({
-        where: { id: nextJob.id },
-        data: {
-          status: "completed",
-          finishedAt: new Date(),
-          result: result as Prisma.InputJsonValue,
-        },
+      await jobRepository.updateJob(nextJob.id, {
+        status: "completed",
+        finishedAt: new Date(),
+        result,
       });
       console.log(`[productAiQueue] Job ${nextJob.id} marked as completed`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Job failed.";
       console.error(`[productAiQueue] Job ${nextJob.id} failed:`, message);
-      await prisma.productAiJob.update({
-        where: { id: nextJob.id },
-        data: {
-          status: "failed",
-          finishedAt: new Date(),
-          errorMessage: message,
-        },
+      await jobRepository.updateJob(nextJob.id, {
+        status: "failed",
+        finishedAt: new Date(),
+        errorMessage: message,
       });
     }
 
-    const remainingJob = await prisma.productAiJob.findFirst({
-      where: { status: "pending" },
-      select: { id: true },
-    });
+    const remainingJob = await jobRepository.findAnyPendingJob();
     if (!remainingJob) {
       stopProductAiJobQueue("queue drained");
     }
@@ -564,9 +553,8 @@ export const getQueueStatus = () => {
 export const processSingleJob = async (jobId: string) => {
   console.log(`[processSingleJob] Processing job ${jobId}`);
 
-  const job = await prisma.productAiJob.findUnique({
-    where: { id: jobId },
-  });
+  const jobRepository = await getProductAiJobRepository();
+  const job = await jobRepository.findJobById(jobId);
 
   if (!job) {
     console.error(`[processSingleJob] Job ${jobId} not found`);
@@ -580,9 +568,9 @@ export const processSingleJob = async (jobId: string) => {
 
   console.log(`[processSingleJob] Found job ${job.id} of type "${job.type}", processing...`);
 
-  await prisma.productAiJob.update({
-    where: { id: job.id },
-    data: { status: "running", startedAt: new Date() },
+  await jobRepository.updateJob(job.id, {
+    status: "running",
+    startedAt: new Date(),
   });
 
   try {
@@ -600,25 +588,19 @@ export const processSingleJob = async (jobId: string) => {
       throw new Error(`Unknown job type: ${job.type}`);
     }
 
-    await prisma.productAiJob.update({
-      where: { id: job.id },
-      data: {
-        status: "completed",
-        finishedAt: new Date(),
-        result: result as Prisma.InputJsonValue,
-      },
+    await jobRepository.updateJob(job.id, {
+      status: "completed",
+      finishedAt: new Date(),
+      result,
     });
     console.log(`[processSingleJob] Job ${job.id} marked as completed`);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Job failed.";
     console.error(`[processSingleJob] Job ${job.id} failed:`, message);
-    await prisma.productAiJob.update({
-      where: { id: job.id },
-      data: {
-        status: "failed",
-        finishedAt: new Date(),
-        errorMessage: message,
-      },
+    await jobRepository.updateJob(job.id, {
+      status: "failed",
+      finishedAt: new Date(),
+      errorMessage: message,
     });
     throw error;
   }

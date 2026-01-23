@@ -7,7 +7,7 @@ export interface CapturedLog {
   timestamp: string;
   level: "info" | "warn" | "error";
   message: string;
-  context?: Record<string, unknown>;
+  context?: Record<string, unknown> | undefined;
 }
 
 export class LogCapture {

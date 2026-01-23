@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { chatbotSessionRepository } from "@/lib/services/chatbot-session-repository";
 import type { ChatSession } from "@/types/chatbot";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { notFoundError } from "@/lib/errors/app-error";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -18,12 +22,31 @@ type DeleteSessionBody = {
   sessionId: string;
 };
 
+const createSessionSchema = z.object({
+  title: z.string().trim().optional(),
+  settings: z.unknown().optional(),
+});
+
+const updateSessionSchema = z.object({
+  sessionId: z.string().trim().min(1),
+  title: z.string().trim().optional(),
+});
+
+const deleteSessionSchema = z.object({
+  sessionId: z.string().trim().min(1),
+});
+
 // POST /api/chatbot/sessions - Create new session
 export async function POST(req: Request) {
   const requestStart = Date.now();
   try {
-    const body = (await req.json()) as CreateSessionBody;
-    const { title, settings } = body;
+    const parsed = await parseJsonBody(req, createSessionSchema, {
+      logPrefix: "chatbot.sessions.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const { title, settings } = parsed.data as CreateSessionBody;
 
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][sessions][POST] Request", {
@@ -45,16 +68,16 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ sessionId: session.id, session }, { status: 201 });
   } catch (error) {
-    console.error("[chatbot][sessions][POST] Failed to create session", error);
-    return NextResponse.json(
-      { error: "Failed to create session." },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.sessions.POST",
+      fallbackMessage: "Failed to create session.",
+    });
   }
 }
 
 // GET /api/chatbot/sessions - List all sessions
-export async function GET() {
+export async function GET(req: Request) {
   const requestStart = Date.now();
   try {
     const sessions = await chatbotSessionRepository.findAll();
@@ -68,11 +91,11 @@ export async function GET() {
 
     return NextResponse.json({ sessions });
   } catch (error) {
-    console.error("[chatbot][sessions][GET] Failed to list sessions", error);
-    return NextResponse.json(
-      { error: "Failed to list sessions." },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.sessions.GET",
+      fallbackMessage: "Failed to list sessions.",
+    });
   }
 }
 
@@ -80,15 +103,13 @@ export async function GET() {
 export async function PATCH(req: Request) {
   const requestStart = Date.now();
   try {
-    const body = (await req.json()) as UpdateSessionBody;
-    const { sessionId, title } = body;
-
-    if (!sessionId) {
-      return NextResponse.json(
-        { error: "Session ID is required." },
-        { status: 400 }
-      );
+    const parsed = await parseJsonBody(req, updateSessionSchema, {
+      logPrefix: "chatbot.sessions.PATCH",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
     }
+    const { sessionId, title } = parsed.data as UpdateSessionBody;
 
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][sessions][PATCH] Request", {
@@ -98,14 +119,14 @@ export async function PATCH(req: Request) {
     }
 
     const updated = await chatbotSessionRepository.update(sessionId, {
-      title: title?.trim(),
+      title: title?.trim() || undefined,
     });
 
     if (!updated) {
-      return NextResponse.json(
-        { error: "Session not found." },
-        { status: 404 }
-      );
+      return createErrorResponse(notFoundError("Session not found.", { sessionId }), {
+        request: req,
+        source: "chatbot.sessions.PATCH",
+      });
     }
 
     if (DEBUG_CHATBOT) {
@@ -117,11 +138,11 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ session: updated });
   } catch (error) {
-    console.error("[chatbot][sessions][PATCH] Failed to update session", error);
-    return NextResponse.json(
-      { error: "Failed to update session." },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.sessions.PATCH",
+      fallbackMessage: "Failed to update session.",
+    });
   }
 }
 
@@ -129,15 +150,13 @@ export async function PATCH(req: Request) {
 export async function DELETE(req: Request) {
   const requestStart = Date.now();
   try {
-    const body = (await req.json()) as DeleteSessionBody;
-    const { sessionId } = body;
-
-    if (!sessionId) {
-      return NextResponse.json(
-        { error: "Session ID is required." },
-        { status: 400 }
-      );
+    const parsed = await parseJsonBody(req, deleteSessionSchema, {
+      logPrefix: "chatbot.sessions.DELETE",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
     }
+    const { sessionId } = parsed.data as DeleteSessionBody;
 
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][sessions][DELETE] Request", {
@@ -148,10 +167,10 @@ export async function DELETE(req: Request) {
     const deleted = await chatbotSessionRepository.delete(sessionId);
 
     if (!deleted) {
-      return NextResponse.json(
-        { error: "Session not found." },
-        { status: 404 }
-      );
+      return createErrorResponse(notFoundError("Session not found.", { sessionId }), {
+        request: req,
+        source: "chatbot.sessions.DELETE",
+      });
     }
 
     if (DEBUG_CHATBOT) {
@@ -163,10 +182,10 @@ export async function DELETE(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[chatbot][sessions][DELETE] Failed to delete session", error);
-    return NextResponse.json(
-      { error: "Failed to delete session." },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.sessions.DELETE",
+      fallbackMessage: "Failed to delete session.",
+    });
   }
 }

@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import { hash } from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { getAuthDataProvider } from "@/lib/services/auth-provider";
 import { normalizeAuthEmail } from "@/lib/services/auth-user-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { conflictError, internalError } from "@/lib/errors/app-error";
 
 export const runtime = "nodejs";
 
@@ -26,30 +28,28 @@ type MongoUserDoc = {
 };
 
 export async function POST(req: Request) {
-  const errorId = randomUUID();
   try {
-    const body = (await req.json()) as unknown;
-    const data = registerSchema.parse(body);
+    const parsed = await parseJsonBody(req, registerSchema, {
+      logPrefix: "auth.register.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
     const email = normalizeAuthEmail(data.email);
     const passwordHash = await hash(data.password, 12);
 
     const provider = await getAuthDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw internalError("MongoDB is not configured.");
       }
       const db = await getMongoDb();
       const existing = await db
         .collection<MongoUserDoc>("users")
         .findOne({ email });
       if (existing) {
-        return NextResponse.json(
-          { error: "User already exists." },
-          { status: 400 }
-        );
+        throw conflictError("User already exists.", { email });
       }
       const now = new Date();
       const doc: MongoUserDoc = {
@@ -69,10 +69,7 @@ export async function POST(req: Request) {
     }
 
     if (!process.env.DATABASE_URL) {
-      return NextResponse.json(
-        { error: "Postgres is not configured." },
-        { status: 500 }
-      );
+      throw internalError("Postgres is not configured.");
     }
 
     const existing = await prisma.user.findUnique({
@@ -80,10 +77,7 @@ export async function POST(req: Request) {
       select: { id: true },
     });
     if (existing) {
-      return NextResponse.json(
-        { error: "User already exists." },
-        { status: 400 }
-      );
+      throw conflictError("User already exists.", { email });
     }
 
     const user = await prisma.user.create({
@@ -96,21 +90,10 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(user, { status: 201 });
   } catch (error: unknown) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten(), errorId },
-        { status: 400 }
-      );
-    }
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 400 }
-      );
-    }
-    return NextResponse.json(
-      { error: "An unknown error occurred", errorId },
-      { status: 400 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "auth.register.POST",
+      fallbackMessage: "Failed to register user",
+    });
   }
 }

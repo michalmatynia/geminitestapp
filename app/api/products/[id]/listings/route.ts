@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
-import {
-  getProductListingRepository,
-} from "@/lib/services/product-listing-repository";
+import { getProductListingRepository } from "@/lib/services/product-listing-repository";
 import { getProductRepository } from "@/lib/services/product-repository";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { badRequestError, conflictError, notFoundError } from "@/lib/errors/app-error";
 
 const createListingSchema = z.object({
   integrationId: z.string().min(1),
@@ -22,19 +22,18 @@ export async function GET(
 ) {
   try {
     const { id: productId } = await params;
+    if (!productId) {
+      throw badRequestError("Product id is required");
+    }
     const repo = await getProductListingRepository();
     const listings = await repo.getListingsByProductId(productId);
     return NextResponse.json(listings);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[product-listings][GET] Failed to fetch listings", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "product-listings.GET",
+      fallbackMessage: "Failed to fetch listings",
     });
-    return NextResponse.json(
-      { error: "Failed to fetch listings", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -48,42 +47,32 @@ export async function POST(
 ) {
   try {
     const { id: productId } = await params;
-
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch (error) {
-      const errorId = randomUUID();
-      console.error("[product-listings][POST] Failed to parse JSON body", {
-        errorId,
-        error,
-      });
-      return NextResponse.json(
-        { error: "Invalid JSON payload", errorId },
-        { status: 400 }
-      );
+    if (!productId) {
+      throw badRequestError("Product id is required");
     }
 
-    const data = createListingSchema.parse(body);
+    const parsed = await parseJsonBody(req, createListingSchema, {
+      logPrefix: "product-listings.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
 
     // Verify product exists
     const productRepo = await getProductRepository();
     const product = await productRepo.getProductById(productId);
     if (!product) {
-      return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 }
-      );
+      throw notFoundError("Product not found", { productId });
     }
 
     // Verify integration exists
     const integrationRepo = await getIntegrationRepository();
     const integration = await integrationRepo.getIntegrationById(data.integrationId);
     if (!integration) {
-      return NextResponse.json(
-        { error: "Integration not found" },
-        { status: 404 }
-      );
+      throw notFoundError("Integration not found", {
+        integrationId: data.integrationId,
+      });
     }
 
     // Verify connection exists and belongs to the integration
@@ -92,9 +81,9 @@ export async function POST(
       data.integrationId
     );
     if (!connection) {
-      return NextResponse.json(
-        { error: "Connection not found or does not belong to the integration" },
-        { status: 404 }
+      throw notFoundError(
+        "Connection not found or does not belong to the integration",
+        { connectionId: data.connectionId, integrationId: data.integrationId }
       );
     }
 
@@ -102,10 +91,10 @@ export async function POST(
     const listingRepo = await getProductListingRepository();
     const exists = await listingRepo.listingExists(productId, data.connectionId);
     if (exists) {
-      return NextResponse.json(
-        { error: "Product is already listed on this account" },
-        { status: 409 }
-      );
+      throw conflictError("Product is already listed on this account", {
+        productId,
+        connectionId: data.connectionId,
+      });
     }
 
     const listing = await listingRepo.createListing({
@@ -116,24 +105,10 @@ export async function POST(
 
     return NextResponse.json(listing, { status: 201 });
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof z.ZodError) {
-      console.warn("[product-listings][POST] Invalid payload", {
-        errorId,
-        issues: error.flatten(),
-      });
-      return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten(), errorId },
-        { status: 400 }
-      );
-    }
-    console.error("[product-listings][POST] Failed to create listing", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "product-listings.POST",
+      fallbackMessage: "Failed to create listing",
     });
-    return NextResponse.json(
-      { error: "Failed to create listing", errorId },
-      { status: 500 }
-    );
   }
 }

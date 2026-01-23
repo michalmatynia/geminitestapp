@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { decryptSecret, encryptSecret } from "@/lib/utils/encryption";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { badRequestError, notFoundError } from "@/lib/errors/app-error";
 
 const requestSchema = z.object({
   method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).default("GET"),
@@ -28,33 +30,33 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string; connectionId: string }> }
 ) {
-  const errorId = randomUUID();
   try {
     const { id, connectionId } = await params;
-    const body = (await req.json()) as unknown;
-    const data = requestSchema.parse(body);
+    if (!id || !connectionId) {
+      throw badRequestError("Integration id and connection id are required");
+    }
+    const parsed = await parseJsonBody(req, requestSchema, {
+      logPrefix: "integrations.allegro.request.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
 
     if (data.path.includes("://")) {
-      return NextResponse.json(
-        { error: "Path must be relative to the Allegro API base URL.", errorId },
-        { status: 400 }
-      );
+      throw badRequestError("Path must be relative to the Allegro API base URL.");
     }
 
     if (!data.path.startsWith("/")) {
-      return NextResponse.json(
-        { error: "Path must start with /", errorId },
-        { status: 400 }
-      );
+      throw badRequestError("Path must start with /");
     }
 
     const repo = await getIntegrationRepository();
     const integration = await repo.getIntegrationById(id);
     if (!integration || integration.slug !== "allegro") {
-      return NextResponse.json(
-        { error: "Allegro integration not found.", errorId },
-        { status: 404 }
-      );
+      throw notFoundError("Allegro integration not found.", {
+        integrationId: id,
+      });
     }
 
     const connection = await repo.getConnectionByIdAndIntegration(
@@ -62,17 +64,11 @@ export async function POST(
       id
     );
     if (!connection) {
-      return NextResponse.json(
-        { error: "Connection not found.", errorId },
-        { status: 404 }
-      );
+      throw notFoundError("Connection not found.", { connectionId });
     }
 
     if (!connection.allegroAccessToken) {
-      return NextResponse.json(
-        { error: "Allegro access token missing. Connect first.", errorId },
-        { status: 400 }
-      );
+      throw badRequestError("Allegro access token missing. Connect first.");
     }
 
     const clientId = connection.username?.trim();
@@ -182,14 +178,10 @@ export async function POST(
       refreshed,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[allegro][request] Failed to proxy request", {
-      errorId,
-      message,
+    return createErrorResponse(error, {
+      request: req,
+      source: "integrations.allegro.request.POST",
+      fallbackMessage: "Failed to proxy request",
     });
-    return NextResponse.json(
-      { error: message, errorId },
-      { status: 500 }
-    );
   }
 }

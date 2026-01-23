@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { productService } from "@/lib/services/productService";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError } from "@/lib/errors/app-error";
 
 type Params = { id: string; imageFileId: string };
 type Ctx = { params: Params | Promise<Params> };
@@ -24,31 +25,19 @@ export async function DELETE(req: NextRequest, ctx: Ctx) {
 
     // This should never happen for this route shape, but keep the guard + logging
     if (!productId || !imageFileId) {
-      const errorId = randomUUID();
-      console.error("[products][IMAGES][DELETE] Missing params", {
-        errorId,
+      throw badRequestError("Product id and image file id are required", {
         productId,
         imageFileId,
       });
-      return NextResponse.json(
-        { error: "Product id and image file id are required", errorId },
-        { status: 400 }
-      );
     }
 
     await productService.unlinkImageFromProduct(productId, imageFileId);
     return new Response(null, { status: 204 });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[products][IMAGES][DELETE] Failed to disconnect image", {
-      errorId,
-      error,
-      productId,
-      imageFileId,
+    return createErrorResponse(error, {
+      request: req,
+      source: "products.images.DELETE",
+      fallbackMessage: "Failed to disconnect image",
     });
-    return NextResponse.json(
-      { error: "Failed to disconnect image", errorId },
-      { status: 500 }
-    );
   }
 }

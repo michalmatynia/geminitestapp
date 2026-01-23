@@ -2,43 +2,38 @@ import { NextResponse } from "next/server";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { decryptSecret } from "@/lib/utils/encryption";
 import { fetchBaseInventories } from "@/lib/services/imports/base-client";
-import { randomUUID } from "crypto";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, notFoundError } from "@/lib/errors/app-error";
 
 /**
  * GET /api/integrations/[id]/connections/[connectionId]/base/inventories
  * Fetches available inventories from Base.com/Baselinker API.
  */
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string; connectionId: string }> }
 ) {
   try {
     const { id, connectionId } = await params;
+    if (!id || !connectionId) {
+      throw badRequestError("Integration id and connection id are required");
+    }
 
     const repo = await getIntegrationRepository();
     const connection = await repo.getConnectionByIdAndIntegration(connectionId, id);
 
     if (!connection) {
-      return NextResponse.json(
-        { error: "Connection not found" },
-        { status: 404 }
-      );
+      throw notFoundError("Connection not found", { connectionId, integrationId: id });
     }
 
     const integration = await repo.getIntegrationById(id);
 
     if (!integration) {
-      return NextResponse.json(
-        { error: "Integration not found" },
-        { status: 404 }
-      );
+      throw notFoundError("Integration not found", { integrationId: id });
     }
 
     if (integration.slug !== "baselinker") {
-      return NextResponse.json(
-        { error: "This endpoint is for Base.com/Baselinker connections only." },
-        { status: 400 }
-      );
+      throw badRequestError("This endpoint is for Base.com/Baselinker connections only.");
     }
 
     // Get the Base API token
@@ -51,10 +46,7 @@ export async function GET(
     }
 
     if (!baseToken) {
-      return NextResponse.json(
-        { error: "No Base API token configured. Please test the connection first." },
-        { status: 400 }
-      );
+      throw badRequestError("No Base API token configured. Please test the connection first.");
     }
 
     const inventories = await fetchBaseInventories(baseToken);
@@ -65,15 +57,10 @@ export async function GET(
       lastInventoryId: connection.baseLastInventoryId,
     });
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[integrations][connections][base][inventories] Error", {
-      errorId,
-      message,
+    return createErrorResponse(error, {
+      request: req,
+      source: "integrations.base.inventories.GET",
+      fallbackMessage: "Failed to fetch inventories",
     });
-    return NextResponse.json(
-      { error: message, errorId },
-      { status: 500 }
-    );
   }
 }

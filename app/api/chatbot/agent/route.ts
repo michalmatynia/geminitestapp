@@ -1,22 +1,25 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
 import { startAgentQueue } from "@/lib/agent/core/queue";
 import { logAgentAudit } from "@/lib/agent/audit";
 import { promises as fs } from "fs";
 import path from "path";
 import { AgentRunStatus } from "@prisma/client";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, internalError } from "@/lib/errors/app-error";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
-export async function GET() {
+export async function GET(req: Request) {
   const requestStart = Date.now();
   try {
     startAgentQueue();
     if (!("chatbotAgentRun" in prisma)) {
-      return NextResponse.json(
-        { error: "Agent runs not initialized. Run prisma generate/db push." },
-        { status: 500 }
+      return createErrorResponse(
+        internalError(
+          "Agent runs not initialized. Run prisma generate/db push."
+        ),
+        { request: req, source: "chatbot.agent.GET" }
       );
     }
     const runs = await prisma.chatbotAgentRun.findMany({
@@ -52,15 +55,11 @@ export async function GET() {
     }
     return NextResponse.json({ runs });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[chatbot][agent][GET] Failed to fetch runs", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.agent.GET",
+      fallbackMessage: "Failed to fetch agent runs.",
     });
-    return NextResponse.json(
-      { error: "Failed to fetch agent runs.", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -68,12 +67,14 @@ export async function POST(req: Request) {
   const requestStart = Date.now();
   try {
     if (!("chatbotAgentRun" in prisma)) {
-      return NextResponse.json(
-        { error: "Agent runs not initialized. Run prisma generate/db push." },
-        { status: 500 }
+      return createErrorResponse(
+        internalError(
+          "Agent runs not initialized. Run prisma generate/db push."
+        ),
+        { request: req, source: "chatbot.agent.POST" }
       );
     }
-    const body = (await req.json()) as {
+    let body: {
       prompt?: string;
       model?: string;
       tools?: string[];
@@ -102,11 +103,20 @@ export async function POST(req: Request) {
       };
     };
 
+    try {
+      body = (await req.json()) as typeof body;
+    } catch (error) {
+      return createErrorResponse(badRequestError("Invalid JSON payload"), {
+        request: req,
+        source: "chatbot.agent.POST",
+      });
+    }
+
     if (!body.prompt?.trim()) {
-      return NextResponse.json(
-        { error: "Prompt is required." },
-        { status: 400 }
-      );
+      return createErrorResponse(badRequestError("Prompt is required."), {
+        request: req,
+        source: "chatbot.agent.POST",
+      });
     }
     const normalizePlanSettings = (input?: {
       maxSteps?: number;
@@ -253,15 +263,11 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ runId: run.id, status: run.status });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[chatbot][agent][POST] Failed to enqueue run", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.agent.POST",
+      fallbackMessage: "Failed to enqueue agent run.",
     });
-    return NextResponse.json(
-      { error: "Failed to enqueue agent run.", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -269,9 +275,11 @@ export async function DELETE(req: Request) {
   const requestStart = Date.now();
   try {
     if (!("chatbotAgentRun" in prisma)) {
-      return NextResponse.json(
-        { error: "Agent runs not initialized. Run prisma generate/db push." },
-        { status: 500 }
+      return createErrorResponse(
+        internalError(
+          "Agent runs not initialized. Run prisma generate/db push."
+        ),
+        { request: req, source: "chatbot.agent.DELETE" }
       );
     }
     const url = new URL(req.url);
@@ -283,10 +291,10 @@ export async function DELETE(req: Request) {
       AgentRunStatus.waiting_human,
     ];
     if (scope !== "terminal") {
-      return NextResponse.json(
-        { error: "Unsupported delete scope." },
-        { status: 400 }
-      );
+      return createErrorResponse(badRequestError("Unsupported delete scope."), {
+        request: req,
+        source: "chatbot.agent.DELETE",
+      });
     }
     const runs = await prisma.chatbotAgentRun.findMany({
       where: { status: { in: terminalStatuses } },
@@ -315,14 +323,10 @@ export async function DELETE(req: Request) {
     }
     return NextResponse.json({ deleted: ids.length });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[chatbot][agent][DELETE] Failed to delete runs", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.agent.DELETE",
+      fallbackMessage: "Failed to delete agent runs.",
     });
-    return NextResponse.json(
-      { error: "Failed to delete agent runs.", errorId },
-      { status: 500 }
-    );
   }
 }

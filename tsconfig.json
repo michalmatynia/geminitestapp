@@ -25,7 +25,7 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
-    "declaration": true,
+    "declaration": false,
     "plugins": [
       {
         "name": "next"

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { decryptSecret, encryptSecret } from "@/lib/utils/encryption";
+import { logSystemEvent } from "@/lib/services/system-logger";
 
 const PROD_TOKEN_URL =
   process.env.ALLEGRO_TOKEN_URL ?? "https://allegro.pl/auth/oauth/token";
@@ -143,10 +144,16 @@ export async function GET(
 
     return response;
   } catch (error) {
-    console.error("[allegro][callback] OAuth failed", {
-      integrationId,
-      connectionId,
+    void logSystemEvent({
+      level: "error",
+      message: "Allegro OAuth callback failed",
+      source: "integrations.allegro.callback.GET",
       error,
+      request: req,
+      context: {
+        integrationId,
+        connectionId,
+      },
     });
     return NextResponse.redirect(
       toErrorRedirect(requestUrl.origin, "Allegro authorization failed.")

@@ -1,25 +1,20 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError } from "@/lib/errors/app-error";
 
 /**
  * POST /api/products/categories/migrate
  * Copies product categories from Postgres (Prisma) to MongoDB.
  */
-export async function POST() {
+export async function POST(req: Request) {
   try {
     if (!process.env.DATABASE_URL) {
-      return NextResponse.json(
-        { error: "Postgres is not configured." },
-        { status: 400 }
-      );
+      throw badRequestError("Postgres is not configured.");
     }
     if (!process.env.MONGODB_URI) {
-      return NextResponse.json(
-        { error: "MongoDB is not configured." },
-        { status: 400 }
-      );
+      throw badRequestError("MongoDB is not configured.");
     }
 
     const categories = await prisma.productCategory.findMany({
@@ -56,11 +51,10 @@ export async function POST() {
 
     return NextResponse.json({ migrated: categories.length });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[product-categories][MIGRATE] Failed", { errorId, error });
-    return NextResponse.json(
-      { error: "Failed to migrate product categories", errorId },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "product-categories.MIGRATE",
+      fallbackMessage: "Failed to migrate product categories",
+    });
   }
 }

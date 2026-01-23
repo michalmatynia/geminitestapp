@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import { getProductListingRepository } from "@/lib/services/product-listing-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { badRequestError, notFoundError } from "@/lib/errors/app-error";
 
 const updateListingSchema = z.object({
   inventoryId: z.string().trim().min(1).nullable(),
@@ -17,6 +19,9 @@ export async function DELETE(
 ) {
   try {
     const { id: productId, listingId } = await params;
+    if (!productId || !listingId) {
+      throw badRequestError("Product id and listing id are required");
+    }
 
     const repo = await getProductListingRepository();
 
@@ -24,33 +29,23 @@ export async function DELETE(
     const listing = await repo.getListingById(listingId);
 
     if (!listing) {
-      return NextResponse.json(
-        { error: "Listing not found" },
-        { status: 404 }
-      );
+      throw notFoundError("Listing not found", { listingId });
     }
 
     // Verify it belongs to this product
     if (listing.productId !== productId) {
-      return NextResponse.json(
-        { error: "Listing not found" },
-        { status: 404 }
-      );
+      throw notFoundError("Listing not found", { listingId, productId });
     }
 
     await repo.updateListingStatus(listingId, "removed");
 
     return NextResponse.json({ status: "removed" });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[product-listings][DELETE] Failed to delete listing", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "product-listings.DELETE",
+      fallbackMessage: "Failed to delete listing",
     });
-    return NextResponse.json(
-      { error: "Failed to delete listing", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -64,50 +59,30 @@ export async function PATCH(
 ) {
   try {
     const { id: productId, listingId } = await params;
+    if (!productId || !listingId) {
+      throw badRequestError("Product id and listing id are required");
+    }
     const repo = await getProductListingRepository();
     const listing = await repo.getListingById(listingId);
 
     if (!listing || listing.productId !== productId) {
-      return NextResponse.json({ error: "Listing not found" }, { status: 404 });
+      throw notFoundError("Listing not found", { listingId, productId });
     }
 
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch (error) {
-      const errorId = randomUUID();
-      console.error("[product-listings][PATCH] Failed to parse JSON body", {
-        errorId,
-        error,
-      });
-      return NextResponse.json(
-        { error: "Invalid JSON payload", errorId },
-        { status: 400 }
-      );
+    const parsed = await parseJsonBody(req, updateListingSchema, {
+      logPrefix: "product-listings.PATCH",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
     }
-
-    const data = updateListingSchema.parse(body);
+    const data = parsed.data;
     await repo.updateListingInventoryId(listingId, data.inventoryId ?? null);
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof z.ZodError) {
-      console.warn("[product-listings][PATCH] Invalid payload", {
-        errorId,
-        issues: error.flatten(),
-      });
-      return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten(), errorId },
-        { status: 400 }
-      );
-    }
-    console.error("[product-listings][PATCH] Failed to update listing", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "product-listings.PATCH",
+      fallbackMessage: "Failed to update listing",
     });
-    return NextResponse.json(
-      { error: "Failed to update listing", errorId },
-      { status: 500 }
-    );
   }
 }

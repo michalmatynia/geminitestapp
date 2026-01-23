@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { getProductListingRepository } from "@/lib/services/product-listing-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
 
 /**
  * GET /api/products/listings
  * Returns a map of product IDs to their most relevant listing status.
  */
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const repo = await getProductListingRepository();
     const listings = await repo.listAllListings();
@@ -34,11 +34,10 @@ export async function GET() {
 
     return NextResponse.json(Object.fromEntries(byProduct.entries()));
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[product-listings][GET] Failed to fetch listing summary", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "product-listings.GET",
+      fallbackMessage: "Failed to fetch listing summary",
     });
-    return NextResponse.json({});
   }
 }

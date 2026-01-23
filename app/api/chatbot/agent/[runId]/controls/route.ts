@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
 import { runAgentBrowserControl } from "@/lib/agent/tools";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, internalError } from "@/lib/errors/app-error";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -11,29 +12,39 @@ export async function POST(
 ) {
   try {
     if (!("chatbotAgentRun" in prisma)) {
-      return NextResponse.json(
-        { error: "Agent runs not initialized. Run prisma generate/db push." },
-        { status: 500 }
+      return createErrorResponse(
+        internalError(
+          "Agent runs not initialized. Run prisma generate/db push."
+        ),
+        { request: req, source: "chatbot.agent.controls.POST" }
       );
     }
     const { runId } = await params;
-    const body = (await req.json()) as {
+    let body: {
       action?: string;
       url?: string;
       stepId?: string;
       stepLabel?: string;
     };
+    try {
+      body = (await req.json()) as typeof body;
+    } catch (error) {
+      return createErrorResponse(badRequestError("Invalid JSON payload"), {
+        request: req,
+        source: "chatbot.agent.controls.POST",
+      });
+    }
     const action = body.action as "goto" | "reload" | "snapshot" | undefined;
     if (!action || !["goto", "reload", "snapshot"].includes(action)) {
-      return NextResponse.json(
-        { error: "Invalid control action." },
-        { status: 400 }
-      );
+      return createErrorResponse(badRequestError("Invalid control action."), {
+        request: req,
+        source: "chatbot.agent.controls.POST",
+      });
     }
     if (action === "goto" && !body.url?.trim()) {
-      return NextResponse.json(
-        { error: "URL is required for goto action." },
-        { status: 400 }
+      return createErrorResponse(
+        badRequestError("URL is required for goto action."),
+        { request: req, source: "chatbot.agent.controls.POST" }
       );
     }
 
@@ -54,19 +65,22 @@ export async function POST(
     });
 
     if (!result.ok) {
-      return NextResponse.json(
-        { error: result.error || "Control action failed.", errorId: result.errorId },
-        { status: 500 }
+      return createErrorResponse(
+        internalError(result.error || "Control action failed."),
+        {
+          request: req,
+          source: "chatbot.agent.controls.POST",
+          extra: { controlErrorId: result.errorId },
+        }
       );
     }
 
     return NextResponse.json({ ok: true, output: result.output });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[chatbot][agent][control] Failed", { errorId, error });
-    return NextResponse.json(
-      { error: "Failed to run agent control action.", errorId },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.agent.controls.POST",
+      fallbackMessage: "Failed to run agent control action.",
+    });
   }
 }

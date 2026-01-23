@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { decryptSecret } from "@/lib/utils/encryption";
@@ -8,6 +7,9 @@ import {
   getImportParameterCache,
   setImportParameterCache,
 } from "@/lib/services/import-template-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { badRequestError, notFoundError } from "@/lib/errors/app-error";
 
 const optionalIdSchema = z.preprocess(
   (value) => {
@@ -252,10 +254,14 @@ const collectParameterKeys = (product: Record<string, unknown>) => {
 };
 
 export async function POST(req: Request) {
-  const errorId = randomUUID();
   try {
-    const body = await req.json();
-    const data = requestSchema.parse(body);
+    const parsed = await parseJsonBody(req, requestSchema, {
+      logPrefix: "imports.base.parameters.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
 
     if (data.clearOnly) {
       await setImportParameterCache({
@@ -268,29 +274,20 @@ export async function POST(req: Request) {
     }
 
     if (!data.inventoryId || !data.productId) {
-      return NextResponse.json(
-        { error: "Inventory ID and Product ID are required.", errorId },
-        { status: 400 }
-      );
+      throw badRequestError("Inventory ID and Product ID are required.");
     }
 
     const integrationRepo = await getIntegrationRepository();
     const integrations = await integrationRepo.listIntegrations();
     const baseIntegration = integrations.find((i) => i.slug === "baselinker");
     if (!baseIntegration) {
-      return NextResponse.json(
-        { error: "Base integration not found.", errorId },
-        { status: 404 }
-      );
+      throw notFoundError("Base integration not found.");
     }
 
     const connections = await integrationRepo.listConnections(baseIntegration.id);
     const connection = connections.find((c) => c.baseApiToken);
     if (!connection?.baseApiToken) {
-      return NextResponse.json(
-        { error: "No Base API token configured.", errorId },
-        { status: 400 }
-      );
+      throw badRequestError("No Base API token configured.");
     }
 
     const token = decryptSecret(connection.baseApiToken);
@@ -300,10 +297,9 @@ export async function POST(req: Request) {
     });
     const product = extractProductRecord(payload, data.productId);
     if (!product || typeof product !== "object") {
-      return NextResponse.json(
-        { error: "Product not found in response.", errorId },
-        { status: 404 }
-      );
+      throw notFoundError("Product not found in response.", {
+        productId: data.productId,
+      });
     }
     
     // Inject inventory_id if missing, so it can be mapped
@@ -338,26 +334,15 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ keys, values });
   } catch (error: unknown) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Inventory ID and Product ID are required.", errorId },
-        { status: 400 }
-      );
-    }
-    const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[debug-error] Failed to load keys", {
-      errorId,
-      message,
-      stack: error instanceof Error ? error.stack : undefined
+    return createErrorResponse(error, {
+      request: req,
+      source: "imports.base.parameters.POST",
+      fallbackMessage: "Failed to load parameters",
     });
-    return NextResponse.json(
-      { error: message, errorId },
-      { status: 500 }
-    );
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const cache = await getImportParameterCache();
     return NextResponse.json(
@@ -371,14 +356,10 @@ export async function GET() {
         : { keys: [], values: {} }
     );
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[base-import-parameters][GET] Failed to load cache", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "imports.base.parameters.GET",
+      fallbackMessage: "Failed to load cached parameters.",
     });
-    return NextResponse.json(
-      { error: "Failed to load cached parameters.", errorId },
-      { status: 500 }
-    );
   }
 }

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import path from "path";
 import { promises as fs } from "fs";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError } from "@/lib/errors/app-error";
 
 export const runtime = "nodejs";
 
@@ -13,14 +14,17 @@ const getContentType = (filename: string) => {
 };
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ runId: string; file: string }> }
 ) {
   try {
     const { runId, file } = await params;
     const safeFile = path.basename(file);
     if (safeFile !== file) {
-      return NextResponse.json({ error: "Invalid file path." }, { status: 400 });
+      return createErrorResponse(badRequestError("Invalid file path."), {
+        request: req,
+        source: "chatbot.agent.assets.GET",
+      });
     }
 
     const baseDir = path.join(process.cwd(), "tmp", "chatbot-agent", runId);
@@ -34,14 +38,10 @@ export async function GET(
       },
     });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[chatbot][agent][assets] Failed to serve asset", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.agent.assets.GET",
+      fallbackMessage: "Failed to load agent asset.",
     });
-    return NextResponse.json(
-      { error: "Failed to load agent asset.", errorId },
-      { status: 500 }
-    );
   }
 }

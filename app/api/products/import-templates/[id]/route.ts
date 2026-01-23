@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import {
   deleteImportTemplate,
@@ -7,6 +6,9 @@ import {
   updateImportTemplate,
 } from "@/lib/services/import-template-repository";
 import { removeUndefined } from "@/lib/utils";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { badRequestError, notFoundError } from "@/lib/errors/app-error";
 
 const mappingSchema = z.object({
   sourceKey: z.string().trim().min(1),
@@ -20,29 +22,25 @@ const templateSchema = z.object({
 });
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
+    if (!id) {
+      throw badRequestError("Template id is required");
+    }
     const template = await getImportTemplate(id);
     if (!template) {
-      return NextResponse.json(
-        { error: "Template not found." },
-        { status: 404 }
-      );
+      throw notFoundError("Template not found.", { templateId: id });
     }
     return NextResponse.json(template);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[import-templates][GET] Failed to fetch template", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "import-templates.GET",
+      fallbackMessage: "Failed to fetch template.",
     });
-    return NextResponse.json(
-      { error: "Failed to fetch template.", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -52,62 +50,53 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const body = await req.json() as unknown;
-    const data = templateSchema.parse(body);
+    if (!id) {
+      throw badRequestError("Template id is required");
+    }
+    const parsed = await parseJsonBody(req, templateSchema, {
+      logPrefix: "import-templates.PUT",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
     const template = await updateImportTemplate(id, removeUndefined({
       name: data.name,
       description: data.description,
       mappings: data.mappings,
     }));
     if (!template) {
-      return NextResponse.json(
-        { error: "Template not found." },
-        { status: 404 }
-      );
+      throw notFoundError("Template not found.", { templateId: id });
     }
     return NextResponse.json(template);
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid payload.", details: error.flatten(), errorId },
-        { status: 400 }
-      );
-    }
-    console.error("[import-templates][PUT] Failed to update template", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "import-templates.PUT",
+      fallbackMessage: "Failed to update template.",
     });
-    return NextResponse.json(
-      { error: "Failed to update template.", errorId },
-      { status: 500 }
-    );
   }
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
+    if (!id) {
+      throw badRequestError("Template id is required");
+    }
     const deleted = await deleteImportTemplate(id);
     if (!deleted) {
-      return NextResponse.json(
-        { error: "Template not found." },
-        { status: 404 }
-      );
+      throw notFoundError("Template not found.", { templateId: id });
     }
     return NextResponse.json({ ok: true });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[import-templates][DELETE] Failed to delete template", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "import-templates.DELETE",
+      fallbackMessage: "Failed to delete template.",
     });
-    return NextResponse.json(
-      { error: "Failed to delete template.", errorId },
-      { status: 500 }
-    );
   }
 }

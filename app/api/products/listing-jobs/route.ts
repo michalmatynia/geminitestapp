@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { getProductListingRepository } from "@/lib/services/product-listing-repository";
 import { getProductRepository } from "@/lib/services/product-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
 
 /**
  * GET /api/products/listing-jobs
  * Fetches all product listing jobs with product details
  */
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const listingRepo = await getProductListingRepository();
     const productRepo = await getProductRepository();
@@ -51,12 +52,10 @@ export async function GET() {
 
     return NextResponse.json(jobsWithListings);
   } catch (error) {
-    console.error("[listing-jobs][GET] Failed to fetch listing jobs", {
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "product-listings.jobs.GET",
+      fallbackMessage: "Failed to fetch listing jobs",
     });
-    return NextResponse.json(
-      { error: "Failed to fetch listing jobs" },
-      { status: 500 }
-    );
   }
 }

@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import { getProductListingRepository } from "@/lib/services/product-listing-repository";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { deleteBaseProduct } from "@/lib/services/imports/base-client";
 import { decryptSecret } from "@/lib/utils/encryption";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { badRequestError, notFoundError } from "@/lib/errors/app-error";
 
 const deleteSchema = z.object({
   inventoryId: z.string().min(1).optional(),
@@ -16,20 +18,24 @@ export async function POST(
 ) {
   try {
     const { id: productId, listingId } = await params;
+    if (!productId || !listingId) {
+      throw badRequestError("Product id and listing id are required");
+    }
     const repo = await getProductListingRepository();
     const listing = await repo.getListingById(listingId);
 
     if (!listing || listing.productId !== productId) {
-      return NextResponse.json({ error: "Listing not found" }, { status: 404 });
+      throw notFoundError("Listing not found", { listingId, productId });
     }
 
-    let body: unknown = {};
-    try {
-      body = await req.json();
-    } catch {
-      body = {};
+    const parsed = await parseJsonBody(req, deleteSchema, {
+      logPrefix: "product-listings.DELETE_FROM_BASE",
+      allowEmpty: true,
+    });
+    if (!parsed.ok) {
+      return parsed.response;
     }
-    const data = deleteSchema.parse(body);
+    const data = parsed.data;
 
     // Try to find inventoryId from multiple sources (in order of priority):
     // 1. Request body (explicit override)
@@ -57,17 +63,13 @@ export async function POST(
     }
 
     if (!inventoryId) {
-      return NextResponse.json(
-        { error: "Missing inventoryId for Base.com deletion. Please set an inventory ID in the connection settings or provide one manually." },
-        { status: 400 }
+      throw badRequestError(
+        "Missing inventoryId for Base.com deletion. Please set an inventory ID in the connection settings or provide one manually."
       );
     }
 
     if (!listing.externalListingId) {
-      return NextResponse.json(
-        { error: "Missing Base.com product id for deletion." },
-        { status: 400 }
-      );
+      throw badRequestError("Missing Base.com product id for deletion.");
     }
 
     const integrationRepo = await getIntegrationRepository();
@@ -75,7 +77,9 @@ export async function POST(
       listing.connectionId
     );
     if (!connection) {
-      return NextResponse.json({ error: "Connection not found" }, { status: 404 });
+      throw notFoundError("Connection not found", {
+        connectionId: listing.connectionId,
+      });
     }
 
     let token: string | null = null;
@@ -86,10 +90,9 @@ export async function POST(
     }
 
     if (!token) {
-      return NextResponse.json(
-        { error: "Base.com API token not found in connection." },
-        { status: 400 }
-      );
+      throw badRequestError("Base.com API token not found in connection.", {
+        connectionId: listing.connectionId,
+      });
     }
 
     const isMissingBaseProduct = (error: unknown) => {
@@ -119,12 +122,10 @@ export async function POST(
 
     return NextResponse.json({ status: "deleted" });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[product-listings][DELETE_FROM_BASE] Failed to delete", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "product-listings.DELETE_FROM_BASE",
+      fallbackMessage: "Failed to delete listing from Base.com",
     });
-    const message = error instanceof Error ? error.message : "Failed to delete";
-    return NextResponse.json({ error: message, errorId }, { status: 500 });
   }
 }

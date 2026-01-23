@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { randomUUID } from "crypto";
 import {
   clearSystemLogs,
   createSystemLog,
   listSystemLogs,
 } from "@/lib/services/system-log-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
 import type { SystemLogLevel } from "@/types";
 
 const levelSchema = z.enum(["info", "warn", "error"]);
@@ -52,20 +53,23 @@ export async function GET(req: Request) {
     });
     return NextResponse.json(result);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[system-logs][GET] Failed to list logs", { errorId, error });
-    return NextResponse.json(
-      { error: "Failed to list system logs", errorId },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "systemLogs.GET",
+      fallbackMessage: "Failed to list system logs",
+    });
   }
 }
 
 export async function POST(req: Request) {
-  const errorId = randomUUID();
   try {
-    const body = await req.json();
-    const data = createSchema.parse(body);
+    const parsed = await parseJsonBody(req, createSchema, {
+      logPrefix: "systemLogs.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
     const created = await createSystemLog({
       level: (data.level as SystemLogLevel | undefined) ?? undefined,
       message: data.message,
@@ -80,20 +84,15 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ log: created });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[system-logs][POST] Failed to create log", {
-      errorId,
-      message,
+    return createErrorResponse(error, {
+      request: req,
+      source: "systemLogs.POST",
+      fallbackMessage: "Failed to create system log",
     });
-    return NextResponse.json(
-      { error: message, errorId },
-      { status: 500 }
-    );
   }
 }
 
 export async function DELETE(req: Request) {
-  const errorId = randomUUID();
   try {
     const url = new URL(req.url);
     const parsed = clearSchema.parse(Object.fromEntries(url.searchParams.entries()));
@@ -101,14 +100,10 @@ export async function DELETE(req: Request) {
     const result = await clearSystemLogs(before);
     return NextResponse.json({ deleted: result.deleted });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[system-logs][DELETE] Failed to clear logs", {
-      errorId,
-      message,
+    return createErrorResponse(error, {
+      request: req,
+      source: "systemLogs.DELETE",
+      fallbackMessage: "Failed to clear system logs",
     });
-    return NextResponse.json(
-      { error: message, errorId },
-      { status: 500 }
-    );
   }
 }

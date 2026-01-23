@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { decryptSecret } from "@/lib/utils/encryption";
@@ -10,6 +9,9 @@ import {
   setImportSampleInventoryId,
   setImportSampleProductId,
 } from "@/lib/services/import-template-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { badRequestError, notFoundError } from "@/lib/errors/app-error";
 
 const requestSchema = z.object({
   inventoryId: z.string().trim().optional().nullable(),
@@ -62,29 +64,29 @@ const extractFirstProductId = (payload: unknown): string | null => {
   return null;
 };
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const productId = await getImportSampleProductId();
     const inventoryId = await getImportSampleInventoryId();
     return NextResponse.json({ productId, inventoryId });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[base-import-sample][GET] Failed to fetch sample product", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "imports.base.sample-product.GET",
+      fallbackMessage: "Failed to fetch sample product.",
     });
-    return NextResponse.json(
-      { error: "Failed to fetch sample product.", errorId },
-      { status: 500 }
-    );
   }
 }
 
 export async function POST(req: Request) {
-  const errorId = randomUUID();
   try {
-    const body = await req.json();
-    const data = requestSchema.parse(body);
+    const parsed = await parseJsonBody(req, requestSchema, {
+      logPrefix: "imports.base.sample-product.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
 
     const inventoryId = data.inventoryId?.trim() ?? "";
     if (data.saveOnly) {
@@ -103,10 +105,7 @@ export async function POST(req: Request) {
     }
 
     if (!inventoryId) {
-      return NextResponse.json(
-        { error: "Inventory ID is required.", errorId },
-        { status: 400 }
-      );
+      throw badRequestError("Inventory ID is required.");
     }
 
     let productId = data.productId;
@@ -115,20 +114,14 @@ export async function POST(req: Request) {
       const integrations = await integrationRepo.listIntegrations();
       const baseIntegration = integrations.find((i) => i.slug === "baselinker");
       if (!baseIntegration) {
-        return NextResponse.json(
-          { error: "Base integration not found.", errorId },
-          { status: 404 }
-        );
+        throw notFoundError("Base integration not found.");
       }
       const connections = await integrationRepo.listConnections(
         baseIntegration.id
       );
       const connection = connections.find((c) => c.baseApiToken);
       if (!connection?.baseApiToken) {
-        return NextResponse.json(
-          { error: "No Base API token configured.", errorId },
-          { status: 400 }
-        );
+        throw badRequestError("No Base API token configured.");
       }
       const token = decryptSecret(connection.baseApiToken);
       const payload = await callBaseApi(token, "getInventoryProductsList", {
@@ -137,10 +130,7 @@ export async function POST(req: Request) {
       });
       productId = extractFirstProductId(payload) ?? undefined;
       if (!productId) {
-        return NextResponse.json(
-          { error: "No products found in inventory.", errorId },
-          { status: 404 }
-        );
+        throw notFoundError("No products found in inventory.");
       }
     }
 
@@ -148,14 +138,10 @@ export async function POST(req: Request) {
     await setImportSampleInventoryId(inventoryId);
     return NextResponse.json({ productId, inventoryId });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[base-import-sample][POST] Failed to save sample product", {
-      errorId,
-      message,
+    return createErrorResponse(error, {
+      request: req,
+      source: "imports.base.sample-product.POST",
+      fallbackMessage: "Failed to save sample product",
     });
-    return NextResponse.json(
-      { error: message, errorId },
-      { status: 500 }
-    );
   }
 }

@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { decryptSecret, encryptSecret } from "@/lib/utils/encryption";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import {
+  AppErrorCodes,
+  authError,
+  conflictError,
+  createAppError,
+  forbiddenError,
+  notFoundError,
+} from "@/lib/errors/app-error";
 
 type TestLogEntry = {
   step: string;
@@ -25,7 +33,7 @@ const SANDBOX_TOKEN_URL =
  * Tests Allegro API access using stored credentials.
  */
 export async function POST(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string; connectionId: string }> }
 ) {
   let integrationId: string | null = null;
@@ -45,34 +53,61 @@ export async function POST(
     });
   };
 
+  const toAppError = (message: string, status: number) => {
+    if (status === 401) return authError(message);
+    if (status === 403) return forbiddenError(message);
+    if (status === 404) return notFoundError(message);
+    if (status === 409) return conflictError(message);
+    if (status === 429) {
+      return createAppError(message, {
+        code: AppErrorCodes.rateLimited,
+        httpStatus: status,
+        expected: true,
+      });
+    }
+    if (status >= 500) {
+      return createAppError(message, {
+        code: AppErrorCodes.externalService,
+        httpStatus: status,
+        expected: false,
+      });
+    }
+    if (status >= 400) {
+      return createAppError(message, {
+        code: AppErrorCodes.badRequest,
+        httpStatus: status,
+        expected: true,
+      });
+    }
+    return createAppError(message, {
+      code: AppErrorCodes.internal,
+      httpStatus: 500,
+      expected: false,
+    });
+  };
+
   const fail = (step: string, detail: string, status = 400) => {
-    const errorId = randomUUID();
     const safeDetail = detail?.trim() ? detail : "Unknown error";
     pushStep(step, "failed", safeDetail);
-    console.error("[integrations][connections][allegro][test] Failed", {
-      errorId,
-      integrationId,
-      connectionId: integrationConnectionId,
-      step,
-      status,
-      detail: safeDetail,
-    });
-    return NextResponse.json(
-      {
-        error: safeDetail,
+    return createErrorResponse(toAppError(safeDetail, status), {
+      request: req,
+      source: "integrations.allegro.test.POST",
+      fallbackMessage: safeDetail,
+      extra: {
         steps,
-        errorId,
         integrationId,
         connectionId: integrationConnectionId,
       },
-      { status }
-    );
+    });
   };
 
   try {
     const { id, connectionId } = await params;
     integrationId = id;
     integrationConnectionId = connectionId;
+    if (!integrationId || !integrationConnectionId) {
+      return fail("Loading connection", "Integration id and connection id are required", 400);
+    }
 
     pushStep("Loading connection", "pending", "Fetching stored credentials");
     const repo = await getIntegrationRepository();
@@ -226,42 +261,34 @@ export async function POST(
       profile,
     });
   } catch (error: unknown) {
-    const errorId = randomUUID();
     if (error instanceof Error) {
       pushStep("Unexpected error", "failed", error.message);
-      console.error("[integrations][connections][allegro][test] Unexpected", {
-        errorId,
-        integrationId,
-        connectionId: integrationConnectionId,
-        message: error.message,
+      const appError = createAppError(error.message, {
+        code: AppErrorCodes.badRequest,
+        httpStatus: 400,
+        expected: false,
       });
-      return NextResponse.json(
-        {
-          error: error.message,
+      return createErrorResponse(appError, {
+        request: req,
+        source: "integrations.allegro.test.POST",
+        fallbackMessage: "Failed to test connection",
+        extra: {
           steps,
-          errorId,
           integrationId,
           connectionId: integrationConnectionId,
         },
-        { status: 400 }
-      );
+      });
     }
     pushStep("Unexpected error", "failed", "Failed to test connection");
-    console.error("[integrations][connections][allegro][test] Unknown error", {
-      errorId,
-      integrationId,
-      connectionId: integrationConnectionId,
-      error,
-    });
-    return NextResponse.json(
-      {
-        error: "Failed to test connection",
+    return createErrorResponse(error, {
+      request: req,
+      source: "integrations.allegro.test.POST",
+      fallbackMessage: "Failed to test connection",
+      extra: {
         steps,
-        errorId,
         integrationId,
         connectionId: integrationConnectionId,
       },
-      { status: 500 }
-    );
+    });
   }
 }

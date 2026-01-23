@@ -1,17 +1,27 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
+import { z } from "zod";
 import prisma from "@/lib/prisma";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { badRequestError, internalError } from "@/lib/errors/app-error";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 const DEFAULT_SETTINGS_KEY = "default";
+
+const settingsSchema = z.object({
+  key: z.string().trim().optional(),
+  settings: z.unknown().optional(),
+});
 
 export async function GET(req: Request) {
   const requestStart = Date.now();
   try {
     if (!("chatbotSettings" in prisma)) {
-      return NextResponse.json(
-        { error: "Chatbot settings not initialized. Run prisma generate/db push." },
-        { status: 500 }
+      return createErrorResponse(
+        internalError(
+          "Chatbot settings not initialized. Run prisma generate/db push."
+        ),
+        { request: req, source: "chatbot.settings.GET" }
       );
     }
     const url = new URL(req.url);
@@ -28,15 +38,11 @@ export async function GET(req: Request) {
     }
     return NextResponse.json({ settings });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[chatbot][settings][GET] Failed to load settings", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.settings.GET",
+      fallbackMessage: "Failed to load chatbot settings.",
     });
-    return NextResponse.json(
-      { error: "Failed to load chatbot settings.", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -44,23 +50,30 @@ export async function POST(req: Request) {
   const requestStart = Date.now();
   try {
     if (!("chatbotSettings" in prisma)) {
-      return NextResponse.json(
-        { error: "Chatbot settings not initialized. Run prisma generate/db push." },
-        { status: 500 }
+      return createErrorResponse(
+        internalError(
+          "Chatbot settings not initialized. Run prisma generate/db push."
+        ),
+        { request: req, source: "chatbot.settings.POST" }
       );
     }
-    const body = (await req.json()) as { key?: string; settings?: unknown };
-    const key = body.key?.trim() || DEFAULT_SETTINGS_KEY;
-    if (!body.settings || typeof body.settings !== "object") {
-      return NextResponse.json(
-        { error: "Settings payload is required." },
-        { status: 400 }
+    const parsed = await parseJsonBody(req, settingsSchema, {
+      logPrefix: "chatbot.settings.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const key = parsed.data.key?.trim() || DEFAULT_SETTINGS_KEY;
+    if (!parsed.data.settings || typeof parsed.data.settings !== "object") {
+      return createErrorResponse(
+        badRequestError("Settings payload is required."),
+        { request: req, source: "chatbot.settings.POST" }
       );
     }
     const saved = await prisma.chatbotSettings.upsert({
       where: { key },
-      update: { settings: body.settings },
-      create: { key, settings: body.settings },
+      update: { settings: parsed.data.settings },
+      create: { key, settings: parsed.data.settings },
     });
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][settings][POST] Saved", {
@@ -70,14 +83,10 @@ export async function POST(req: Request) {
     }
     return NextResponse.json({ settings: saved });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[chatbot][settings][POST] Failed to save settings", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.settings.POST",
+      fallbackMessage: "Failed to save chatbot settings.",
     });
-    return NextResponse.json(
-      { error: "Failed to save chatbot settings.", errorId },
-      { status: 500 }
-    );
   }
 }

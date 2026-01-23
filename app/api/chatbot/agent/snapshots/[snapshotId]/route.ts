@@ -1,19 +1,22 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { internalError, notFoundError } from "@/lib/errors/app-error";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ snapshotId: string }> }
 ) {
   const requestStart = Date.now();
   try {
     if (!("agentBrowserSnapshot" in prisma)) {
-      return NextResponse.json(
-        { error: "Agent snapshots not initialized. Run prisma generate/db push." },
-        { status: 500 }
+      return createErrorResponse(
+        internalError(
+          "Agent snapshots not initialized. Run prisma generate/db push."
+        ),
+        { request: req, source: "chatbot.agent.snapshot.GET" }
       );
     }
     const { snapshotId } = await params;
@@ -21,7 +24,10 @@ export async function GET(
       where: { id: snapshotId },
     });
     if (!snapshot) {
-      return NextResponse.json({ error: "Snapshot not found." }, { status: 404 });
+      return createErrorResponse(notFoundError("Snapshot not found."), {
+        request: req,
+        source: "chatbot.agent.snapshot.GET",
+      });
     }
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][agent][snapshot] Loaded", {
@@ -31,11 +37,10 @@ export async function GET(
     }
     return NextResponse.json({ snapshot });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[chatbot][agent][snapshot] Failed to load", { errorId, error });
-    return NextResponse.json(
-      { error: "Failed to load agent snapshot.", errorId },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.agent.snapshot.GET",
+      fallbackMessage: "Failed to load agent snapshot.",
+    });
   }
 }

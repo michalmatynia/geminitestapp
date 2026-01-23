@@ -3,24 +3,20 @@ npx prisma migrate dev
 npx prisma generate
 /admin/system/logs
 
+do general clean up , console.log
 
-When I update price / stock, it shouldn't rerender the whole list, should it ?
+
 
 When I create the PRoduct and add Images, I try to resort them and then the Images begin to flicker
 
 LATER - add other GEminiInstructions (especially for the use of tanstack query and schadcn/ui all across application)
 
+centralized error 
+Move on to remaining global APIs (countries, price groups, system logs, chatbot, drafts, settings, etc.).
 LATER - apply consistent error mapping and handling all across the application
 routes, services and client-side error handling
 do Critical paths first, then comprehensive audit
 do a full test run  after
-
-* I am still not seeing the detailed Results in the AI Jobs Detail page when the job is run on a product Generate Description/ Translation 
-When I run the Generate description, I don't get to see the results in the AI Jobs Detail page, 
-
-
-* In my Drafts, Price grup shouldn't be selectable at all, cause it's dependent on what is the Catalog Price Group
-In Product Drafts, Price group default of the catalog
 
 
 In Products List, My drafts are not active in Product List, the Icons Beside + Create Product doesn't launch Create Product modal in Draft mode with prefilled fields.
@@ -60,6 +56,8 @@ Markdown TO Wysywig make it a dropdown and place it by Delete
 Post Production Studio -> Should have changeable options for relight etc. also an option to Generate, or add environemet. Also, each post-production work should be handled in one session, so it's easier to regenerate with an addidtional prompt (or prompt suggestions)
 
 In Product List - Operations - I need an Option to Mass Export Products to Base.com
+
+When I update price / stock, it shouldn't rerender the whole list, should it ?
 
 
 I am unable to Open my Note, if I migrate it to Wysiwyg

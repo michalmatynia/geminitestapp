@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { internalError } from "@/lib/errors/app-error";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -11,9 +12,11 @@ export async function GET(
   const requestStart = Date.now();
   try {
     if (!("agentAuditLog" in prisma)) {
-      return NextResponse.json(
-        { error: "Agent steps not initialized. Run prisma generate/db push." },
-        { status: 500 }
+      return createErrorResponse(
+        internalError(
+          "Agent steps not initialized. Run prisma generate/db push."
+        ),
+        { request: req, source: "chatbot.agent.audits.GET" }
       );
     }
     const { runId } = await params;
@@ -58,11 +61,10 @@ export async function GET(
     }
     return NextResponse.json({ audits: filtered });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[chatbot][agent][audits] Failed to load", { errorId, error });
-    return NextResponse.json(
-      { error: "Failed to load agent steps.", errorId },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.agent.audits.GET",
+      fallbackMessage: "Failed to load agent steps.",
+    });
   }
 }

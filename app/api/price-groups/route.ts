@@ -5,6 +5,9 @@ import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { fallbackCurrencies } from "@/lib/internationalizationFallback";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { conflictError, internalError } from "@/lib/errors/app-error";
 
 const priceGroupSchema = z
   .object({
@@ -102,15 +105,15 @@ const resolveCurrency = (
  * GET /api/price-groups
  * Fetches all price groups with currency details.
  */
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        return createErrorResponse(internalError("MongoDB is not configured."), {
+          request: req,
+          source: "priceGroups.GET",
+        });
       }
       const db = await getMongoDb();
       const currencyMap = await buildCurrencyMap();
@@ -211,11 +214,12 @@ export async function GET() {
       orderBy: [{ name: "asc" }],
     });
     return NextResponse.json(groups);
-  } catch (_error) {
-    return NextResponse.json(
-      { error: "Failed to fetch price groups" },
-      { status: 500 }
-    );
+  } catch (error) {
+    return createErrorResponse(error, {
+      request: req,
+      source: "priceGroups.GET",
+      fallbackMessage: "Failed to fetch price groups",
+    });
   }
 }
 
@@ -225,26 +229,27 @@ export async function GET() {
  */
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as unknown;
-    const data = priceGroupSchema.parse(body);
+    const parsed = await parseJsonBody(req, priceGroupSchema, {
+      logPrefix: "priceGroups.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
 
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw internalError("MongoDB is not configured.");
       }
       const db = await getMongoDb();
       const existingGroupId = await db
         .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
         .findOne({ groupId: data.groupId });
       if (existingGroupId) {
-        return NextResponse.json(
-          { error: "A price group with this ID already exists." },
-          { status: 400 }
-        );
+        throw conflictError("A price group with this ID already exists.", {
+          groupId: data.groupId,
+        });
       }
       if (data.isDefault) {
         await db
@@ -304,18 +309,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json(result);
   } catch (error: unknown) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten() },
-        { status: 400 }
-      );
-    }
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-    return NextResponse.json(
-      { error: "An unknown error occurred" },
-      { status: 400 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "priceGroups.POST",
+      fallbackMessage: "Failed to create price group",
+    });
   }
 }

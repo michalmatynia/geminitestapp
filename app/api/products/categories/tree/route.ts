@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
 import type { ProductCategoryWithChildren } from "@/types/products";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, internalError } from "@/lib/errors/app-error";
 
 type CategoryFromDb = {
   id: string;
@@ -28,10 +29,7 @@ export async function GET(req: Request) {
     const catalogId = searchParams.get("catalogId");
 
     if (!catalogId) {
-      return NextResponse.json(
-        { error: "catalogId query parameter is required" },
-        { status: 400 }
-      );
+      throw badRequestError("catalogId query parameter is required");
     }
 
     const provider = await getProductDataProvider();
@@ -39,10 +37,7 @@ export async function GET(req: Request) {
 
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw internalError("MongoDB is not configured.");
       }
       const db = await getMongoDb();
       const docs = await db
@@ -62,7 +57,7 @@ export async function GET(req: Request) {
       });
     } else {
       if (!process.env.DATABASE_URL) {
-        return NextResponse.json([]);
+        throw badRequestError("Product categories require the Postgres product store.");
       }
       categories = await prisma.productCategory.findMany({
         where: { catalogId },
@@ -83,11 +78,10 @@ export async function GET(req: Request) {
     const tree = buildTree(null);
     return NextResponse.json(tree);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[product-categories][tree][GET] Failed to fetch category tree", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "product-categories.tree.GET",
+      fallbackMessage: "Failed to fetch category tree",
     });
-    return NextResponse.json([]);
   }
 }

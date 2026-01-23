@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { startChatbotJobQueue } from "@/lib/chatbot/jobs/queue";
 import { ChatbotJobStatus } from "@prisma/client";
 import { parseJsonBody } from "@/lib/api/parse-json";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, internalError, notFoundError } from "@/lib/errors/app-error";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -25,12 +26,14 @@ const enqueueJobSchema = z.object({
   userMessage: z.string().trim().optional(),
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     if (!("chatbotJob" in prisma)) {
-      return NextResponse.json(
-        { error: "Chatbot jobs not initialized. Run prisma generate/db push." },
-        { status: 500 }
+      return createErrorResponse(
+        internalError(
+          "Chatbot jobs not initialized. Run prisma generate/db push."
+        ),
+        { request: req, source: "chatbot.jobs.GET" }
       );
     }
 
@@ -45,29 +48,27 @@ export async function GET() {
 
     return NextResponse.json({ jobs });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[chatbot][jobs][GET] Failed to list jobs", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.jobs.GET",
+      fallbackMessage: "Failed to list jobs.",
     });
-    return NextResponse.json(
-      { error: "Failed to list jobs.", errorId },
-      { status: 500 }
-    );
   }
 }
 
 export async function POST(req: Request) {
   try {
     if (!("chatbotJob" in prisma) || !("chatbotSession" in prisma)) {
-      return NextResponse.json(
-        { error: "Chatbot jobs not initialized. Run prisma generate/db push." },
-        { status: 500 }
+      return createErrorResponse(
+        internalError(
+          "Chatbot jobs not initialized. Run prisma generate/db push."
+        ),
+        { request: req, source: "chatbot.jobs.POST" }
       );
     }
 
     const parsed = await parseJsonBody(req, enqueueJobSchema, {
-      logPrefix: "chatbot-jobs",
+      logPrefix: "chatbot.jobs.POST",
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -79,10 +80,10 @@ export async function POST(req: Request) {
     });
 
     if (!session) {
-      return NextResponse.json(
-        { error: "Session not found." },
-        { status: 404 }
-      );
+      return createErrorResponse(notFoundError("Session not found."), {
+        request: req,
+        source: "chatbot.jobs.POST",
+      });
     }
 
     const trimmedUserMessage = parsed.data.userMessage?.trim();
@@ -135,24 +136,22 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ jobId: job.id, status: job.status });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[chatbot][jobs][POST] Failed to enqueue job", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.jobs.POST",
+      fallbackMessage: "Failed to enqueue job.",
     });
-    return NextResponse.json(
-      { error: "Failed to enqueue job.", errorId },
-      { status: 500 }
-    );
   }
 }
 
 export async function DELETE(req: Request) {
   try {
     if (!("chatbotJob" in prisma)) {
-      return NextResponse.json(
-        { error: "Chatbot jobs not initialized. Run prisma generate/db push." },
-        { status: 500 }
+      return createErrorResponse(
+        internalError(
+          "Chatbot jobs not initialized. Run prisma generate/db push."
+        ),
+        { request: req, source: "chatbot.jobs.DELETE" }
       );
     }
 
@@ -167,10 +166,10 @@ export async function DELETE(req: Request) {
     ];
 
     if (scope !== "terminal") {
-      return NextResponse.json(
-        { error: "Unsupported delete scope." },
-        { status: 400 }
-      );
+      return createErrorResponse(badRequestError("Unsupported delete scope."), {
+        request: req,
+        source: "chatbot.jobs.DELETE",
+      });
     }
 
     const result = await prisma.chatbotJob.deleteMany({
@@ -183,14 +182,10 @@ export async function DELETE(req: Request) {
 
     return NextResponse.json({ deleted: result.count });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[chatbot][jobs][DELETE] Failed to delete jobs", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.jobs.DELETE",
+      fallbackMessage: "Failed to delete jobs.",
     });
-    return NextResponse.json(
-      { error: "Failed to delete jobs.", errorId },
-      { status: 500 }
-    );
   }
 }

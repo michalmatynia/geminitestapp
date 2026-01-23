@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
+import { z } from "zod";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { decryptSecret } from "@/lib/utils/encryption";
 import { callBaseApi, fetchBaseProducts } from "@/lib/services/imports/base-client";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { badRequestError, notFoundError } from "@/lib/errors/app-error";
 
 const normalizeParameters = (value: unknown): Record<string, unknown> => {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -10,6 +13,13 @@ const normalizeParameters = (value: unknown): Record<string, unknown> => {
   }
   return value as Record<string, unknown>;
 };
+
+const requestSchema = z
+  .object({
+    method: z.string().trim().min(1),
+    parameters: z.record(z.string(), z.unknown()).optional(),
+  })
+  .passthrough();
 
 /**
  * POST /api/integrations/[id]/connections/[connectionId]/base/request
@@ -19,52 +29,24 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string; connectionId: string }> }
 ) {
-  const errorId = randomUUID();
   try {
     const { id, connectionId } = await params;
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch (error) {
-      console.error("[base][request] Invalid JSON payload", {
-        errorId,
-        error,
-      });
-      return NextResponse.json(
-        { error: "Invalid JSON payload.", errorId },
-        { status: 400 }
-      );
+    if (!id || !connectionId) {
+      throw badRequestError("Integration id and connection id are required");
     }
-
-    if (!body || typeof body !== "object") {
-      return NextResponse.json(
-        { error: "Invalid request body.", errorId },
-        { status: 400 }
-      );
+    const parsed = await parseJsonBody(req, requestSchema, {
+      logPrefix: "integrations.base.request.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
     }
-
-    const method =
-      typeof (body as { method?: unknown }).method === "string"
-        ? (body as { method: string }).method.trim()
-        : "";
-    if (!method) {
-      return NextResponse.json(
-        { error: "Base API method is required.", errorId },
-        { status: 400 }
-      );
-    }
-
-    const parameters = normalizeParameters(
-      (body as { parameters?: unknown }).parameters
-    );
+    const { method } = parsed.data;
+    const parameters = normalizeParameters(parsed.data.parameters);
 
     const repo = await getIntegrationRepository();
     const integration = await repo.getIntegrationById(id);
     if (!integration || integration.slug !== "baselinker") {
-      return NextResponse.json(
-        { error: "Base.com integration not found.", errorId },
-        { status: 404 }
-      );
+      throw notFoundError("Base.com integration not found.", { integrationId: id });
     }
 
     const connection = await repo.getConnectionByIdAndIntegration(
@@ -72,10 +54,7 @@ export async function POST(
       id
     );
     if (!connection) {
-      return NextResponse.json(
-        { error: "Connection not found.", errorId },
-        { status: 404 }
-      );
+      throw notFoundError("Connection not found.", { connectionId });
     }
 
     let baseToken: string | null = null;
@@ -86,10 +65,7 @@ export async function POST(
     }
 
     if (!baseToken) {
-      return NextResponse.json(
-        { error: "No Base API token configured.", errorId },
-        { status: 400 }
-      );
+      throw badRequestError("No Base API token configured.");
     }
 
     const isOrdersLogRequest = method === "getOrdersLog";
@@ -102,10 +78,7 @@ export async function POST(
           ? String(inventoryValue)
           : "";
       if (!inventoryId || inventoryId === "0") {
-        return NextResponse.json(
-          { error: "inventory_id is required.", errorId },
-          { status: 400 }
-        );
+        throw badRequestError("inventory_id is required.");
       }
       const limitRaw = parameters.limit;
       const limit =
@@ -129,10 +102,7 @@ export async function POST(
             ? String(inventoryValue)
             : "";
       if (!inventoryId || inventoryId === "0") {
-        return NextResponse.json(
-          { error: "inventory_id is required.", errorId },
-          { status: 400 }
-        );
+        throw badRequestError("inventory_id is required.");
       }
       const productValue = parameters.product_id ?? parameters.id;
       const productId =
@@ -142,10 +112,7 @@ export async function POST(
             ? String(productValue)
             : "";
       if (!productId) {
-        return NextResponse.json(
-          { error: "product_id is required.", errorId },
-          { status: 400 }
-        );
+        throw badRequestError("product_id is required.");
       }
       const payload = await callBaseApi(baseToken, "getInventoryProductsData", {
         inventory_id: inventoryId,
@@ -211,14 +178,12 @@ export async function POST(
 
     return NextResponse.json({ data: payload });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[base][request] Failed to proxy request", {
-      errorId,
-      message,
+    const message =
+      error instanceof Error ? error.message : "Failed to proxy request";
+    return createErrorResponse(error, {
+      request: req,
+      source: "integrations.base.request.POST",
+      fallbackMessage: message,
     });
-    return NextResponse.json(
-      { error: message, errorId },
-      { status: 500 }
-    );
   }
 }

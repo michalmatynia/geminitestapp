@@ -1,19 +1,29 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
+import { z } from "zod";
 import prisma from "@/lib/prisma";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { badRequestError, internalError, notFoundError } from "@/lib/errors/app-error";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
+const messageSchema = z.object({
+  role: z.string().trim().min(1),
+  content: z.string().trim().min(1),
+});
+
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
   const requestStart = Date.now();
   try {
     if (!("chatbotMessage" in prisma) || !("chatbotSession" in prisma)) {
-      return NextResponse.json(
-        { error: "Chat sessions not initialized. Run prisma generate/db push." },
-        { status: 500 }
+      return createErrorResponse(
+        internalError(
+          "Chat sessions not initialized. Run prisma generate/db push."
+        ),
+        { request: req, source: "chatbot.sessions.messages.GET" }
       );
     }
     const { sessionId } = await params;
@@ -22,7 +32,10 @@ export async function GET(
       select: { id: true },
     });
     if (!session) {
-      return NextResponse.json({ error: "Session not found." }, { status: 404 });
+      return createErrorResponse(notFoundError("Session not found."), {
+        request: req,
+        source: "chatbot.sessions.messages.GET",
+      });
     }
     const messages = await prisma.chatbotMessage.findMany({
       where: { sessionId },
@@ -37,15 +50,11 @@ export async function GET(
     }
     return NextResponse.json({ messages });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[chatbot][sessions][GET] Failed to fetch messages", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.sessions.messages.GET",
+      fallbackMessage: "Failed to fetch messages.",
     });
-    return NextResponse.json(
-      { error: "Failed to fetch messages.", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -56,9 +65,11 @@ export async function POST(
   const requestStart = Date.now();
   try {
     if (!("chatbotMessage" in prisma) || !("chatbotSession" in prisma)) {
-      return NextResponse.json(
-        { error: "Chat sessions not initialized. Run prisma generate/db push." },
-        { status: 500 }
+      return createErrorResponse(
+        internalError(
+          "Chat sessions not initialized. Run prisma generate/db push."
+        ),
+        { request: req, source: "chatbot.sessions.messages.POST" }
       );
     }
     const { sessionId } = await params;
@@ -67,13 +78,22 @@ export async function POST(
       select: { id: true },
     });
     if (!session) {
-      return NextResponse.json({ error: "Session not found." }, { status: 404 });
+      return createErrorResponse(notFoundError("Session not found."), {
+        request: req,
+        source: "chatbot.sessions.messages.POST",
+      });
     }
-    const body = (await req.json()) as { role?: string; content?: string };
+    const parsed = await parseJsonBody(req, messageSchema, {
+      logPrefix: "chatbot.sessions.messages.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const body = parsed.data;
     if (!body.role || !body.content?.trim()) {
-      return NextResponse.json(
-        { error: "Role and content are required." },
-        { status: 400 }
+      return createErrorResponse(
+        badRequestError("Role and content are required."),
+        { request: req, source: "chatbot.sessions.messages.POST" }
       );
     }
     if (DEBUG_CHATBOT) {
@@ -103,14 +123,10 @@ export async function POST(
     }
     return NextResponse.json({ message });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[chatbot][sessions][POST] Failed to add message", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.sessions.messages.POST",
+      fallbackMessage: "Failed to add message.",
     });
-    return NextResponse.json(
-      { error: "Failed to add message.", errorId },
-      { status: 500 }
-    );
   }
 }

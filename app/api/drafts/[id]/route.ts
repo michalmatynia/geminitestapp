@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getDraft, updateDraft, deleteDraft } from "@/lib/services/draft-repository";
 import type { UpdateProductDraftInput } from "@/types/drafts";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { notFoundError } from "@/lib/errors/app-error";
 
 const updateDraftSchema = z.object({
   name: z.string().min(1).optional(),
@@ -48,19 +51,19 @@ export async function GET(
     const draft = await getDraft(id);
 
     if (!draft) {
-      return NextResponse.json(
-        { error: "Draft not found" },
-        { status: 404 }
-      );
+      return createErrorResponse(notFoundError("Draft not found", { id }), {
+        request: req,
+        source: "drafts.byId.GET",
+      });
     }
 
     return NextResponse.json(draft);
   } catch (error) {
-    console.error("Failed to get draft:", error);
-    return NextResponse.json(
-      { error: "Failed to get draft" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "drafts.byId.GET",
+      fallbackMessage: "Failed to get draft",
+    });
   }
 }
 
@@ -74,32 +77,29 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const body = (await req.json()) as unknown;
-    const data = updateDraftSchema.parse(body);
+    const parsed = await parseJsonBody(req, updateDraftSchema, {
+      logPrefix: "drafts.byId.PUT",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
     const draft = await updateDraft(id, data as UpdateProductDraftInput);
 
     if (!draft) {
-      return NextResponse.json(
-        { error: "Draft not found" },
-        { status: 404 }
-      );
+      return createErrorResponse(notFoundError("Draft not found", { id }), {
+        request: req,
+        source: "drafts.byId.PUT",
+      });
     }
 
     return NextResponse.json(draft);
   } catch (error) {
-    console.error("Failed to update draft:", error);
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid request data", details: error.flatten() },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: "Failed to update draft" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "drafts.byId.PUT",
+      fallbackMessage: "Failed to update draft",
+    });
   }
 }
 
@@ -116,18 +116,18 @@ export async function DELETE(
     const success = await deleteDraft(id);
 
     if (!success) {
-      return NextResponse.json(
-        { error: "Draft not found" },
-        { status: 404 }
-      );
+      return createErrorResponse(notFoundError("Draft not found", { id }), {
+        request: req,
+        source: "drafts.byId.DELETE",
+      });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to delete draft:", error);
-    return NextResponse.json(
-      { error: "Failed to delete draft" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "drafts.byId.DELETE",
+      fallbackMessage: "Failed to delete draft",
+    });
   }
 }

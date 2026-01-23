@@ -3,6 +3,12 @@ import fs from "fs/promises";
 import path from "path";
 import { chatbotSessionRepository } from "@/lib/services/chatbot-session-repository";
 import type { ChatMessage } from "@/types/chatbot";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import {
+  badRequestError,
+  externalServiceError,
+  internalError,
+} from "@/lib/errors/app-error";
 
 export const runtime = "nodejs";
 
@@ -64,7 +70,7 @@ const cleanupChatbotTemp = async () => {
   }
 };
 
-export async function GET() {
+export async function GET(req: Request) {
   const requestStart = Date.now();
 
   try {
@@ -74,20 +80,11 @@ export async function GET() {
 
     if (!res.ok) {
       const errorText = await res.text();
-      const errorId = createErrorId();
-
-      console.error("[chatbot][models] Ollama error", {
-        errorId,
-        status: res.status,
-        detail: errorText || res.statusText,
-      });
-
-      return NextResponse.json(
-        {
-          error: `Failed to load models: ${errorText || res.statusText}`,
-          errorId,
-        },
-        { status: 502 }
+      return createErrorResponse(
+        externalServiceError(
+          `Failed to load models: ${errorText || res.statusText}`
+        ),
+        { request: req, source: "chatbot.models.GET" }
       );
     }
 
@@ -105,16 +102,13 @@ export async function GET() {
 
     return NextResponse.json({ models });
   } catch (error) {
-    const errorId = createErrorId();
     const message =
       error instanceof Error ? error.message : "Failed to load models.";
-
-    console.error("[chatbot][models] Unexpected error", {
-      errorId,
-      message,
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.models.GET",
+      fallbackMessage: message,
     });
-
-    return NextResponse.json({ error: message, errorId }, { status: 500 });
   }
 }
 
@@ -125,9 +119,9 @@ export async function POST(req: Request) {
 
   try {
     if (!OLLAMA_MODEL) {
-      return NextResponse.json(
-        { error: "OLLAMA_MODEL is not configured." },
-        { status: 500 }
+      return createErrorResponse(
+        internalError("OLLAMA_MODEL is not configured."),
+        { request: req, source: "chatbot.chat.POST" }
       );
     }
 
@@ -150,14 +144,9 @@ export async function POST(req: Request) {
         try {
           messages = JSON.parse(rawMessages) as ChatMessage[];
         } catch (error) {
-          const errorId = createErrorId();
-          console.error("[chatbot][chat] Failed to parse messages JSON", {
-            errorId,
-            error,
-          });
-          return NextResponse.json(
-            { error: "Invalid messages payload.", errorId },
-            { status: 400 }
+          return createErrorResponse(
+            badRequestError("Invalid messages payload."),
+            { request: req, source: "chatbot.chat.POST" }
           );
         }
       }
@@ -260,28 +249,36 @@ export async function POST(req: Request) {
         }
       }
     } else {
-      const body = (await req.json()) as {
+      let body: {
         messages?: ChatMessage[];
         model?: string;
         sessionId?: string;
       };
+      try {
+        body = (await req.json()) as typeof body;
+      } catch (error) {
+        return createErrorResponse(badRequestError("Invalid JSON payload."), {
+          request: req,
+          source: "chatbot.chat.POST",
+        });
+      }
       messages = body.messages ?? [];
       requestedModel = body.model ?? null;
       sessionId = body.sessionId ?? null;
     }
 
     if (!Array.isArray(messages) || messages.length === 0) {
-      return NextResponse.json(
-        { error: "No messages provided." },
-        { status: 400 }
-      );
+      return createErrorResponse(badRequestError("No messages provided."), {
+        request: req,
+        source: "chatbot.chat.POST",
+      });
     }
 
     if (messages.length > 60) {
-      return NextResponse.json(
-        { error: "Too many messages provided." },
-        { status: 400 }
-      );
+      return createErrorResponse(badRequestError("Too many messages provided."), {
+        request: req,
+        source: "chatbot.chat.POST",
+      });
     }
 
     const hasValidMessages = messages.every(
@@ -292,17 +289,17 @@ export async function POST(req: Request) {
     );
 
     if (!hasValidMessages) {
-      return NextResponse.json(
-        { error: "Invalid message payload." },
-        { status: 400 }
-      );
+      return createErrorResponse(badRequestError("Invalid message payload."), {
+        request: req,
+        source: "chatbot.chat.POST",
+      });
     }
 
     if (messages.some((message) => message.content.length > 10000)) {
-      return NextResponse.json(
-        { error: "Message content too large." },
-        { status: 400 }
-      );
+      return createErrorResponse(badRequestError("Message content too large."), {
+        request: req,
+        source: "chatbot.chat.POST",
+      });
     }
 
     if (DEBUG_CHATBOT) {
@@ -342,17 +339,9 @@ export async function POST(req: Request) {
 
     if (!res.ok) {
       const errorText = await res.text();
-      const errorId = createErrorId();
-
-      console.error("[chatbot][chat] Ollama error", {
-        errorId,
-        status: res.status,
-        detail: errorText || res.statusText,
-      });
-
-      return NextResponse.json(
-        { error: `Ollama error: ${errorText || res.statusText}`, errorId },
-        { status: 502 }
+      return createErrorResponse(
+        externalServiceError(`Ollama error: ${errorText || res.statusText}`),
+        { request: req, source: "chatbot.chat.POST" }
       );
     }
 
@@ -392,16 +381,13 @@ export async function POST(req: Request) {
       sessionId,
     });
   } catch (error) {
-    const errorId = createErrorId();
     const message =
       error instanceof Error ? error.message : "Failed to reach Ollama.";
-
-    console.error("[chatbot][chat] Unexpected error", {
-      errorId,
-      message,
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.chat.POST",
+      fallbackMessage: message,
     });
-
-    return NextResponse.json({ error: message, errorId }, { status: 500 });
   } finally {
     if (tempFiles.length > 0) {
       await Promise.all(

@@ -127,20 +127,21 @@ export async function createSystemLog(
     data: {
       level: payload.level,
       message: payload.message,
-      source: payload.source ?? undefined,
-      context: (payload.context as any) ?? undefined,
-      stack: payload.stack ?? undefined,
-      path: payload.path ?? undefined,
-      method: payload.method ?? undefined,
-      statusCode: payload.statusCode ?? undefined,
-      requestId: payload.requestId ?? undefined,
-      userId: payload.userId ?? undefined,
+      ...(payload.source !== null && payload.source !== undefined ? { source: payload.source } : {}),
+      ...(payload.context !== null && payload.context !== undefined ? { context: payload.context as any } : {}),
+      ...(payload.stack !== null && payload.stack !== undefined ? { stack: payload.stack } : {}),
+      ...(payload.path !== null && payload.path !== undefined ? { path: payload.path } : {}),
+      ...(payload.method !== null && payload.method !== undefined ? { method: payload.method } : {}),
+      ...(payload.statusCode !== null && payload.statusCode !== undefined ? { statusCode: payload.statusCode } : {}),
+      ...(payload.requestId !== null && payload.requestId !== undefined ? { requestId: payload.requestId } : {}),
+      ...(payload.userId !== null && payload.userId !== undefined ? { userId: payload.userId } : {}),
       createdAt: payload.createdAt,
     },
   });
 
   return normalizeLogRecord({
     ...created,
+    level: created.level as SystemLogLevel,
     context: (created.context as Record<string, unknown> | null) ?? null,
     createdAt: created.createdAt,
   });

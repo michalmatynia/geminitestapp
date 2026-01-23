@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, notFoundError } from "@/lib/errors/app-error";
 
 export async function POST(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string; connectionId: string }> }
 ) {
   let integrationId: string | null = null;
@@ -12,15 +14,17 @@ export async function POST(
     const { id, connectionId: connId } = await params;
     integrationId = id;
     connectionId = connId;
+    if (!integrationId || !connectionId) {
+      throw badRequestError("Integration id and connection id are required.");
+    }
 
     const repo = await getIntegrationRepository();
     const integration = await repo.getIntegrationById(id);
 
     if (!integration || integration.slug !== "allegro") {
-      return NextResponse.json(
-        { error: "Allegro integration not found." },
-        { status: 404 }
-      );
+      throw notFoundError("Allegro integration not found.", {
+        integrationId: id,
+      });
     }
 
     await repo.updateConnection(connId, {
@@ -34,14 +38,13 @@ export async function POST(
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("[allegro][disconnect] Failed to disconnect", {
-      integrationId,
-      connectionId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "integrations.allegro.disconnect.POST",
+      fallbackMessage: "Failed to disconnect Allegro.",
+      ...(integrationId || connectionId
+        ? { extra: { integrationId, connectionId } }
+        : {}),
     });
-    return NextResponse.json(
-      { error: "Failed to disconnect Allegro." },
-      { status: 500 }
-    );
   }
 }

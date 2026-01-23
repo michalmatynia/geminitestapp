@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { listDrafts, createDraft } from "@/lib/services/draft-repository";
 import type { CreateProductDraftInput } from "@/types/drafts";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
 
 const createDraftSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -39,16 +41,16 @@ const createDraftSchema = z.object({
  * GET /api/drafts
  * List all product drafts
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const drafts = await listDrafts();
     return NextResponse.json(drafts);
   } catch (error) {
-    console.error("Failed to list drafts:", error);
-    return NextResponse.json(
-      { error: "Failed to list drafts" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "drafts.GET",
+      fallbackMessage: "Failed to list drafts",
+    });
   }
 }
 
@@ -58,23 +60,20 @@ export async function GET() {
  */
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as unknown;
-    const data = createDraftSchema.parse(body);
+    const parsed = await parseJsonBody(req, createDraftSchema, {
+      logPrefix: "drafts.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
     const draft = await createDraft(data as CreateProductDraftInput);
     return NextResponse.json(draft, { status: 201 });
   } catch (error) {
-    console.error("Failed to create draft:", error);
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid request data", details: error.flatten() },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: "Failed to create draft" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "drafts.POST",
+      fallbackMessage: "Failed to create draft",
+    });
   }
 }

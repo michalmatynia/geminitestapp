@@ -1,18 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import { enqueueProductAiJob } from "@/lib/services/productAiService";
+import { z } from "zod";
+import { enqueueProductAiJob, type ProductAiJobType } from "@/lib/services/productAiService";
 import { startProductAiJobQueue, processSingleJob } from "@/lib/services/productAiQueue";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+
+const enqueueSchema = z.object({
+  productId: z.string().trim().min(1),
+  type: z.string().trim().min(1),
+  payload: z.unknown().optional(),
+});
 
 export async function POST(req: NextRequest) {
   try {
-    const { productId, type, payload } = await req.json();
+    const parsed = await parseJsonBody(req, enqueueSchema, {
+      logPrefix: "products.ai-jobs.enqueue.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const { productId, type, payload } = parsed.data;
 
     console.log(`[api/products/ai-jobs/enqueue] Received request - productId: ${productId}, type: ${type}`);
 
-    if (!productId || !type) {
-      return NextResponse.json({ error: "productId and type are required" }, { status: 400 });
-    }
-
-    const job = await enqueueProductAiJob(productId, type, payload);
+    const job = await enqueueProductAiJob(productId, type as ProductAiJobType, payload);
     console.log(`[api/products/ai-jobs/enqueue] Job ${job.id} created`);
 
     // Start the queue worker (for persistent servers)
@@ -35,8 +46,10 @@ export async function POST(req: NextRequest) {
     console.log(`[api/products/ai-jobs/enqueue] Returning response to client`);
     return NextResponse.json({ success: true, jobId: job.id });
   } catch (error) {
-    console.error("[api/products/ai-jobs/enqueue] POST error:", error);
-    const message = error instanceof Error ? error.message : "Failed to enqueue job";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return createErrorResponse(error, {
+      request: req,
+      source: "products.ai-jobs.enqueue.POST",
+      fallbackMessage: "Failed to enqueue job",
+    });
   }
 }

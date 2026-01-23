@@ -3,7 +3,9 @@ import { z } from "zod";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { decryptSecret } from "@/lib/utils/encryption";
 import { fetchBaseProducts } from "@/lib/services/imports/base-client";
-import { randomUUID } from "crypto";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { badRequestError, notFoundError } from "@/lib/errors/app-error";
 
 const requestSchema = z.object({
   inventoryId: z.string().trim().min(1),
@@ -20,34 +22,33 @@ export async function POST(
 ) {
   try {
     const { id, connectionId } = await params;
+    if (!id || !connectionId) {
+      throw badRequestError("Integration id and connection id are required");
+    }
 
-    const body = (await req.json()) as unknown;
-    const data = requestSchema.parse(body);
+    const parsed = await parseJsonBody(req, requestSchema, {
+      logPrefix: "integrations.base.products.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
 
     const repo = await getIntegrationRepository();
     const connection = await repo.getConnectionByIdAndIntegration(connectionId, id);
 
     if (!connection) {
-      return NextResponse.json(
-        { error: "Connection not found" },
-        { status: 404 }
-      );
+      throw notFoundError("Connection not found", { connectionId, integrationId: id });
     }
 
     const integration = await repo.getIntegrationById(id);
 
     if (!integration) {
-      return NextResponse.json(
-        { error: "Integration not found" },
-        { status: 404 }
-      );
+      throw notFoundError("Integration not found", { integrationId: id });
     }
 
     if (integration.slug !== "baselinker") {
-      return NextResponse.json(
-        { error: "This endpoint is for Base.com/Baselinker connections only." },
-        { status: 400 }
-      );
+      throw badRequestError("This endpoint is for Base.com/Baselinker connections only.");
     }
 
     // Get the Base API token
@@ -60,10 +61,7 @@ export async function POST(
     }
 
     if (!baseToken) {
-      return NextResponse.json(
-        { error: "No Base API token configured. Please test the connection first." },
-        { status: 400 }
-      );
+      throw badRequestError("No Base API token configured. Please test the connection first.");
     }
 
     const products = await fetchBaseProducts(baseToken, data.inventoryId, data.limit);
@@ -81,22 +79,10 @@ export async function POST(
       inventoryId: data.inventoryId,
     });
   } catch (error: unknown) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid request", details: error.flatten() },
-        { status: 400 }
-      );
-    }
-
-    const errorId = randomUUID();
-    const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[integrations][connections][base][products] Error", {
-      errorId,
-      message,
+    return createErrorResponse(error, {
+      request: req,
+      source: "integrations.base.products.POST",
+      fallbackMessage: "Failed to fetch products",
     });
-    return NextResponse.json(
-      { error: message, errorId },
-      { status: 500 }
-    );
   }
 }

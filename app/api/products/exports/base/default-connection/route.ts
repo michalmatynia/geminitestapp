@@ -4,6 +4,8 @@ import {
   getExportDefaultConnectionId,
   setExportDefaultConnectionId,
 } from "@/lib/services/export-template-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
 
 const postSchema = z.object({
   connectionId: z.string().nullable(),
@@ -13,16 +15,16 @@ const postSchema = z.object({
  * GET /api/products/exports/base/default-connection
  * Returns the default Base.com connection ID for exports
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const connectionId = await getExportDefaultConnectionId();
     return NextResponse.json({ connectionId });
   } catch (error) {
-    console.error("Failed to get default connection ID:", error);
-    return NextResponse.json(
-      { error: "Failed to get default connection ID" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "exports.base.default-connection.GET",
+      fallbackMessage: "Failed to get default connection ID",
+    });
   }
 }
 
@@ -32,23 +34,20 @@ export async function GET() {
  */
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const data = postSchema.parse(body);
+    const parsed = await parseJsonBody(req, postSchema, {
+      logPrefix: "exports.base.default-connection.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
     await setExportDefaultConnectionId(data.connectionId);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to set default connection ID:", error);
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid request data", details: error.flatten() },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: "Failed to set default connection ID" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "exports.base.default-connection.POST",
+      fallbackMessage: "Failed to set default connection ID",
+    });
   }
 }

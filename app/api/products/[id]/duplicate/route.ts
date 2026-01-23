@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import { productService } from "@/lib/services/productService";
 import { parseJsonBody } from "@/lib/api/parse-json";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, notFoundError } from "@/lib/errors/app-error";
 
 const duplicateSchema = z.object({
   sku: z.string().trim().optional(),
@@ -21,15 +22,10 @@ export async function POST(
     const { id } = await params;
     productId = id;
     if (!id) {
-      const errorId = randomUUID();
-      console.error("[products][DUPLICATE] Missing product id", { errorId });
-      return NextResponse.json(
-        { error: "Product id is required", errorId },
-        { status: 400 }
-      );
+      throw badRequestError("Product id is required");
     }
     const parsed = await parseJsonBody(req, duplicateSchema, {
-      logPrefix: "products-duplicate",
+      logPrefix: "products.DUPLICATE",
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -37,34 +33,15 @@ export async function POST(
     const sku = parsed.data.sku ?? "";
     const product = await productService.duplicateProduct(id, sku);
     if (!product) {
-      const errorId = randomUUID();
-      console.warn("[products][DUPLICATE] Product not found", {
-        errorId,
-        productId,
-      });
-      return NextResponse.json(
-        { error: "Product not found", errorId },
-        { status: 404 }
-      );
+      throw notFoundError("Product not found", { productId });
     }
     return NextResponse.json(product);
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof Error) {
-      console.error("[products][DUPLICATE] Failed to duplicate product", {
-        errorId,
-        productId,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 400 }
-      );
-    }
-    console.error("[products][DUPLICATE] Unknown error", { errorId, error });
-    return NextResponse.json(
-      { error: "An unknown error occurred", errorId },
-      { status: 400 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "products.DUPLICATE",
+      fallbackMessage: "Failed to duplicate product",
+      ...(productId ? { extra: { productId } } : {}),
+    });
   }
 }

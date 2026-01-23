@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { productService } from "@/lib/services/productService";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
 
 /**
  * GET /api/products/count
@@ -14,15 +14,10 @@ export async function GET(req: Request) {
     const count = await productService.countProducts(filters);
     return NextResponse.json({ count });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[products][count][GET] Failed to fetch product count", {
-      errorId,
-      error,
-      filters,
+    return createErrorResponse(error, {
+      request: req,
+      source: "products.count.GET",
+      fallbackMessage: "Failed to fetch product count",
     });
-    return NextResponse.json(
-      { error: "Failed to fetch product count", errorId },
-      { status: 500 }
-    );
   }
 }

@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import {
   deleteExportTemplate,
   getExportTemplate,
   updateExportTemplate,
 } from "@/lib/services/export-template-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { badRequestError, notFoundError } from "@/lib/errors/app-error";
 
 const mappingSchema = z.object({
   sourceKey: z.string().trim().min(1),
@@ -25,24 +27,20 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    if (!id) {
+      throw badRequestError("Template id is required");
+    }
     const template = await getExportTemplate(id);
     if (!template) {
-      return NextResponse.json(
-        { error: "Template not found." },
-        { status: 404 }
-      );
+      throw notFoundError("Template not found.", { templateId: id });
     }
     return NextResponse.json(template);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[export-templates][GET] Failed to fetch template", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "export-templates.GET",
+      fallbackMessage: "Failed to fetch template.",
     });
-    return NextResponse.json(
-      { error: "Failed to fetch template.", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -52,8 +50,16 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const body = await req.json() as unknown;
-    const data = templateSchema.parse(body);
+    if (!id) {
+      throw badRequestError("Template id is required");
+    }
+    const parsed = await parseJsonBody(req, templateSchema, {
+      logPrefix: "export-templates.PUT",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
     const template = await updateExportTemplate(id, {
       name: data.name,
       description: data.description,
@@ -61,28 +67,15 @@ export async function PUT(
       exportImagesAsBase64: data.exportImagesAsBase64,
     });
     if (!template) {
-      return NextResponse.json(
-        { error: "Template not found." },
-        { status: 404 }
-      );
+      throw notFoundError("Template not found.", { templateId: id });
     }
     return NextResponse.json(template);
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid payload.", details: error.flatten(), errorId },
-        { status: 400 }
-      );
-    }
-    console.error("[export-templates][PUT] Failed to update template", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "export-templates.PUT",
+      fallbackMessage: "Failed to update template.",
     });
-    return NextResponse.json(
-      { error: "Failed to update template.", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -92,23 +85,19 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    if (!id) {
+      throw badRequestError("Template id is required");
+    }
     const deleted = await deleteExportTemplate(id);
     if (!deleted) {
-      return NextResponse.json(
-        { error: "Template not found." },
-        { status: 404 }
-      );
+      throw notFoundError("Template not found.", { templateId: id });
     }
     return NextResponse.json({ success: true });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[export-templates][DELETE] Failed to delete template", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "export-templates.DELETE",
+      fallbackMessage: "Failed to delete template.",
     });
-    return NextResponse.json(
-      { error: "Failed to delete template.", errorId },
-      { status: 500 }
-    );
   }
 }

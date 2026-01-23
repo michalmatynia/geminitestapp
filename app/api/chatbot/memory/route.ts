@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { internalError } from "@/lib/errors/app-error";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -8,9 +9,11 @@ export async function GET(req: Request) {
   const requestStart = Date.now();
   try {
     if (!("agentLongTermMemory" in prisma)) {
-      return NextResponse.json(
-        { error: "Long-term memory table not initialized. Run prisma generate/db push." },
-        { status: 500 }
+      return createErrorResponse(
+        internalError(
+          "Long-term memory table not initialized. Run prisma generate/db push."
+        ),
+        { request: req, source: "chatbot.memory.GET" }
       );
     }
     const url = new URL(req.url);
@@ -49,11 +52,10 @@ export async function GET(req: Request) {
     }
     return NextResponse.json({ items });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[chatbot][memory][GET] Failed", { errorId, error });
-    return NextResponse.json(
-      { error: "Failed to load long-term memory.", errorId },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.memory.GET",
+      fallbackMessage: "Failed to load long-term memory.",
+    });
   }
 }

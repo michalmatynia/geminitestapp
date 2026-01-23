@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import {
   createImportTemplate,
   listImportTemplates,
 } from "@/lib/services/import-template-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,27 +21,28 @@ const templateSchema = z.object({
   mappings: z.array(mappingSchema).default([]),
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const templates = await listImportTemplates();
     return NextResponse.json(templates);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[import-templates][GET] Failed to list templates", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "import-templates.GET",
+      fallbackMessage: "Failed to fetch templates.",
     });
-    return NextResponse.json(
-      { error: "Failed to fetch templates.", errorId },
-      { status: 500 }
-    );
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json() as unknown;
-    const data = templateSchema.parse(body);
+    const parsed = await parseJsonBody(req, templateSchema, {
+      logPrefix: "import-templates.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
     const template = await createImportTemplate({
       name: data.name,
       description: data.description ?? null,
@@ -48,20 +50,10 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(template);
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid payload.", details: error.flatten(), errorId },
-        { status: 400 }
-      );
-    }
-    console.error("[import-templates][POST] Failed to create template", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "import-templates.POST",
+      fallbackMessage: "Failed to create template.",
     });
-    return NextResponse.json(
-      { error: "Failed to create template.", errorId },
-      { status: 500 }
-    );
   }
 }

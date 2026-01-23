@@ -61,7 +61,7 @@ export const handlers = [
   }),
 
   http.post('/api/products', async ({ request }) => {
-    const body = await request.json();
+    const body = (await request.json()) as Record<string, unknown>;
     const newProduct = {
       id: Math.random().toString(36).substr(2, 9),
       ...body,
@@ -76,7 +76,7 @@ export const handlers = [
     if (!product) {
       return HttpResponse.json({ error: 'Product not found' }, { status: 404 });
     }
-    const body = await request.json();
+    const body = (await request.json()) as Record<string, unknown>;
     const updatedProduct = {
       ...product,
       ...body,
@@ -125,7 +125,7 @@ export const handlers = [
   }),
 
   http.post('/api/settings', async ({ request }) => {
-    const body = await request.json();
+    const body = (await request.json()) as Record<string, unknown>;
     const newSetting = {
       ...body,
     };

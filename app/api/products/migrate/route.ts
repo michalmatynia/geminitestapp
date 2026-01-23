@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import {
   getProductMigrationTotal,
@@ -8,6 +7,8 @@ import {
 } from "@/lib/services/product-migration";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { removeUndefined } from "@/lib/utils";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError } from "@/lib/errors/app-error";
 
 const migrationDirectionSchema = z.enum(["prisma-to-mongo", "mongo-to-prisma"]);
 
@@ -19,37 +20,29 @@ const migrationSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
-  const errorId = randomUUID();
   try {
     const { searchParams } = new URL(req.url);
     const parsedDirection = migrationDirectionSchema.safeParse(
       searchParams.get("direction")
     );
     if (!parsedDirection.success) {
-      return NextResponse.json(
-        { error: "Invalid migration direction.", errorId },
-        { status: 400 }
-      );
+      throw badRequestError("Invalid migration direction.");
     }
     const total = await getProductMigrationTotal(parsedDirection.data);
     return NextResponse.json({ total });
   } catch (error) {
-    console.error("[products][migration] Failed to get totals", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "products.migrate.GET",
+      fallbackMessage: "Failed to load product migration totals.",
     });
-    return NextResponse.json(
-      { error: "Failed to load product migration totals.", errorId },
-      { status: 500 }
-    );
   }
 }
 
 export async function POST(req: NextRequest) {
-  const errorId = randomUUID();
   try {
     const parsed = await parseJsonBody(req, migrationSchema, {
-      logPrefix: "products-migrate",
+      logPrefix: "products.migrate.POST",
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -62,10 +55,10 @@ export async function POST(req: NextRequest) {
     }) as { direction: MigrationDirection; dryRun?: boolean; cursor?: string | null; batchSize?: number });
     return NextResponse.json({ result });
   } catch (error) {
-    console.error("[products][migration] Failed", { errorId, error });
-    return NextResponse.json(
-      { error: "Failed to run product migration.", errorId },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "products.migrate.POST",
+      fallbackMessage: "Failed to run product migration.",
+    });
   }
 }

@@ -318,13 +318,13 @@ export async function DELETE(
 ) {
   const params = await props.params;
   try {
+    if (!params.id) {
+      throw badRequestError("Category id is required");
+    }
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw internalError("MongoDB is not configured.");
       }
       const db = await getMongoDb();
       const idsToDelete = await collectCategoryIds(db, params.id);
@@ -335,10 +335,7 @@ export async function DELETE(
     }
 
     if (!process.env.DATABASE_URL) {
-      return NextResponse.json(
-        { error: "Product categories require the Postgres product store." },
-        { status: 400 }
-      );
+      throw badRequestError("Product categories require the Postgres product store.");
     }
 
     // The schema has onDelete: Cascade, so children will be deleted automatically
@@ -348,16 +345,12 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[product-categories][DELETE] Failed to delete category", {
-      errorId,
-      categoryId: params.id,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "product-categories.DELETE",
+      fallbackMessage: "Failed to delete category",
+      extra: { categoryId: params.id },
     });
-    return NextResponse.json(
-      { error: "Failed to delete category", errorId },
-      { status: 500 }
-    );
   }
 }
 

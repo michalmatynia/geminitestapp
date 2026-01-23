@@ -1,7 +1,8 @@
 import path from "path";
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { Client } from "pg";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, internalError } from "@/lib/errors/app-error";
 
 import {
   backupsDir,
@@ -12,7 +13,6 @@ import {
 } from "../_utils";
 
 export async function POST(req: Request) {
-  const errorId = randomUUID();
   let stage = "parse";
   let backupName: string | undefined;
   let previewMode: "backup" | "current" = "backup";
@@ -24,14 +24,10 @@ export async function POST(req: Request) {
     try {
       body = await req.json();
     } catch (error) {
-      console.error("[databases][preview] Failed to parse JSON body", {
-        errorId,
-        error,
+      return createErrorResponse(badRequestError("Invalid JSON payload"), {
+        request: req,
+        source: "databases.preview.POST",
       });
-      return NextResponse.json(
-        { error: "Invalid JSON payload", errorId },
-        { status: 400 }
-      );
     }
     const parsed = body as {
       backupName?: string;
@@ -44,9 +40,9 @@ export async function POST(req: Request) {
     const page = parsed.page;
     const pageSize = parsed.pageSize;
     if (previewMode === "backup" && !backupName) {
-      return NextResponse.json(
-        { error: "Backup name is required", errorId },
-        { status: 400 }
+      return createErrorResponse(
+        badRequestError("Backup name is required"),
+        { request: req, source: "databases.preview.POST" }
       );
     }
 
@@ -58,9 +54,9 @@ export async function POST(req: Request) {
 
     const dbUrl = process.env.DATABASE_URL ?? "";
     if (!dbUrl.startsWith("postgres://") && !dbUrl.startsWith("postgresql://")) {
-      return NextResponse.json(
-        { error: "Preview is only supported for PostgreSQL backups.", errorId },
-        { status: 400 }
+      return createErrorResponse(
+        badRequestError("Preview is only supported for PostgreSQL backups."),
+        { request: req, source: "databases.preview.POST" }
       );
     }
 
@@ -79,14 +75,13 @@ export async function POST(req: Request) {
         stderr = result.stderr;
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
-        console.error("[databases][preview] pg_restore --list failed", {
-          errorId,
-          backupName,
-          error: message,
-        });
-        return NextResponse.json(
-          { error: `Failed to inspect backup: ${message}`, errorId, backupName },
-          { status: 500 }
+        return createErrorResponse(
+          internalError(`Failed to inspect backup: ${message}`),
+          {
+            request: req,
+            source: "databases.preview.POST",
+            extra: { backupName },
+          }
         );
       }
       output = [stdout.trim(), stderr.trim()].filter(Boolean).join("\n");
@@ -256,18 +251,12 @@ export async function POST(req: Request) {
       data: tableRows,
     });
   } catch (error) {
-    console.error("[databases][preview] Unexpected error", {
-      errorId,
-      stage,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "databases.preview.POST",
+      fallbackMessage:
+        error instanceof Error ? error.message : "Internal Server Error",
+      extra: { stage },
     });
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Internal Server Error",
-        errorId,
-        stage,
-      },
-      { status: 500 }
-    );
   }
 }

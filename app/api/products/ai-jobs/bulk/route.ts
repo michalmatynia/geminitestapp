@@ -1,16 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { enqueueProductAiJob } from "@/lib/services/productAiService";
+import { z } from "zod";
+import { enqueueProductAiJob, type ProductAiJobType } from "@/lib/services/productAiService";
 import { startProductAiJobQueue } from "@/lib/services/productAiQueue";
 import { getProductRepository } from "@/lib/services/product-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+
+const bulkJobSchema = z.object({
+  type: z.string().trim().min(1),
+  config: z.unknown().optional(),
+});
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { type, config } = body;
-
-    if (!type) {
-      return NextResponse.json({ error: "Job type is required" }, { status: 400 });
+    const parsed = await parseJsonBody(req, bulkJobSchema, {
+      logPrefix: "products.ai-jobs.bulk.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
     }
+    const { type, config } = parsed.data;
 
     // Get all product IDs using repository
     const productRepository = await getProductRepository();
@@ -27,8 +36,8 @@ export async function POST(req: NextRequest) {
     // For now, simple loop using the service
     const jobs = await Promise.all(
       products.map((p) =>
-        enqueueProductAiJob(p.id, type, {
-          ...config,
+        enqueueProductAiJob(p.id, type as ProductAiJobType, {
+          ...(config as Record<string, unknown>),
           // We don't include full product data here, 
           // the worker will fetch it to ensure it's fresh
         })
@@ -43,7 +52,10 @@ export async function POST(req: NextRequest) {
       message: `Queued ${jobs.length} jobs of type ${type}` 
     });
   } catch (error) {
-    console.error("[api/products/ai-jobs/bulk] POST error:", error);
-    return NextResponse.json({ error: "Failed to queue bulk jobs" }, { status: 500 });
+    return createErrorResponse(error, {
+      request: req,
+      source: "products.ai-jobs.bulk.POST",
+      fallbackMessage: "Failed to queue bulk jobs",
+    });
   }
 }

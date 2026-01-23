@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { ensureInternationalizationDefaults } from "@/lib/seedInternationalization";
@@ -11,6 +10,10 @@ import {
 } from "@/lib/internationalizationDefaults";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { conflictError, internalError } from "@/lib/errors/app-error";
+import { logSystemEvent } from "@/lib/services/system-logger";
 import type { CountryCode } from "@prisma/client";
 
 export const runtime = "nodejs";
@@ -124,15 +127,15 @@ const normalizeCountryResponse = (
  * GET /api/countries
  * Fetches all countries (and ensures defaults exist).
  */
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        return createErrorResponse(internalError("MongoDB is not configured."), {
+          request: req,
+          source: "countries.GET",
+        });
       }
       const db = await getMongoDb();
       await seedMongoInternationalization(db);
@@ -177,10 +180,12 @@ export async function GET() {
 
     return NextResponse.json(countries);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[countries][GET] Failed to fetch countries", {
-      errorId,
+    void logSystemEvent({
+      level: "error",
+      message: "Failed to fetch countries",
+      source: "countries.GET",
       error,
+      request: req,
     });
     return NextResponse.json(fallbackCountries);
   }
@@ -192,28 +197,29 @@ export async function GET() {
  */
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as unknown;
-    const data = countrySchema.parse(body);
+    const parsed = await parseJsonBody(req, countrySchema, {
+      logPrefix: "countries.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
 
     const { currencyIds, ...countryData } = data;
 
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw internalError("MongoDB is not configured.");
       }
       const db = await getMongoDb();
       const existing = await db
         .collection<CountryDoc>(COUNTRIES_COLLECTION)
         .findOne({ id: countryData.code });
       if (existing) {
-        return NextResponse.json(
-          { error: "Country code already exists." },
-          { status: 400 }
-        );
+        throw conflictError("Country code already exists.", {
+          code: countryData.code,
+        });
       }
       const requestedCurrencyIds = Array.from(
         new Set(currencyIds ?? [])
@@ -247,6 +253,10 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!process.env.DATABASE_URL) {
+      throw internalError("Postgres product store is not configured.");
+    }
+
     const country = await prisma.country.create({
       data: {
         // countryData.code is a zod enum union; Prisma code is an enum too (compatible)
@@ -268,34 +278,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json(country);
   } catch (error: unknown) {
-    const errorId = randomUUID();
-
-    if (error instanceof z.ZodError) {
-      console.warn("[countries][POST] Invalid payload", {
-        errorId,
-        issues: error.flatten(),
-      });
-      return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten(), errorId },
-        { status: 400 }
-      );
-    }
-
-    if (error instanceof Error) {
-      console.error("[countries][POST] Failed to create country", {
-        errorId,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 400 }
-      );
-    }
-
-    console.error("[countries][POST] Unknown error", { errorId, error });
-    return NextResponse.json(
-      { error: "An unknown error occurred", errorId },
-      { status: 400 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "countries.POST",
+      fallbackMessage: "Failed to create country",
+    });
   }
 }

@@ -14,14 +14,14 @@ export const createErrorResponse = (
   error: unknown,
   options?: ApiErrorOptions
 ) => {
-  const resolved = resolveError(error, { fallbackMessage: options?.fallbackMessage });
+  const resolved = resolveError(error, { ...(options?.fallbackMessage ? { fallbackMessage: options.fallbackMessage } : {}) });
   const level = resolved.expected ? "warn" : "error";
   void logSystemEvent({
     level,
     message: resolved.message,
     source: options?.source ?? "api",
     error,
-    request: options?.request,
+    ...(options?.request ? { request: options.request } : {}),
     statusCode: resolved.httpStatus,
     context: {
       errorId: resolved.errorId,

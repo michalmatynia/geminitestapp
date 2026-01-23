@@ -1,9 +1,10 @@
 import path from "path";
 import { promises as fs } from "fs";
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, internalError } from "@/lib/errors/app-error";
 
 import {
   backupsDir as pgBackupsDir,
@@ -34,7 +35,6 @@ type ExecOutputishError = {
 };
 
 export async function POST(req: Request) {
-  const errorId = randomUUID();
   let stage = "parse";
   let backupName: string | null = null;
   let truncateBeforeRestore = false;
@@ -47,14 +47,10 @@ export async function POST(req: Request) {
     try {
       body = await req.json();
     } catch (error) {
-      console.error("[databases][restore] Failed to parse JSON body", {
-        errorId,
-        error,
+      return createErrorResponse(badRequestError("Invalid JSON payload"), {
+        request: req,
+        source: "databases.restore.POST",
       });
-      return NextResponse.json(
-        { error: "Invalid JSON payload", errorId },
-        { status: 400 }
-      );
     }
 
     const parsed = body as {
@@ -66,16 +62,29 @@ export async function POST(req: Request) {
     truncateBeforeRestore = Boolean(parsed.truncateBeforeRestore);
 
     if (!backupName) {
-      return NextResponse.json(
-        { error: "Backup name is required", errorId },
-        { status: 400 }
-      );
+      return createErrorResponse(badRequestError("Backup name is required"), {
+        request: req,
+        source: "databases.restore.POST",
+      });
     }
 
     if (type === "mongodb") {
       // MongoDB restore
       stage = "validate";
-      assertValidMongoBackupName(backupName);
+      try {
+        assertValidMongoBackupName(backupName);
+      } catch (error) {
+        return createErrorResponse(
+          badRequestError(
+            error instanceof Error ? error.message : "Invalid backup name."
+          ),
+          {
+            request: req,
+            source: "databases.restore.POST",
+            extra: { backupName },
+          }
+        );
+      }
       await ensureMongoBackupsDir();
 
       const backupPath = path.join(mongoBackupsDir, backupName);
@@ -123,25 +132,11 @@ export async function POST(req: Request) {
 
         const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
         await fs.writeFile(logPath, logContent);
-
-        console.error("[databases][restore] Failed to restore backup", {
-          errorId,
-          stage,
-          backupName,
-          truncateBeforeRestore,
-          error,
+        return createErrorResponse(internalError("Failed to restore backup"), {
+          request: req,
+          source: "databases.restore.POST",
+          extra: { stage, backupName, log: logContent },
         });
-
-        return NextResponse.json(
-          {
-            error: "Failed to restore backup",
-            errorId,
-            stage,
-            backupName,
-            log: logContent,
-          },
-          { status: 500 }
-        );
       }
 
       const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
@@ -175,7 +170,20 @@ export async function POST(req: Request) {
     } else {
       // PostgreSQL restore
       stage = "validate";
-      assertValidPgBackupName(backupName);
+      try {
+        assertValidPgBackupName(backupName);
+      } catch (error) {
+        return createErrorResponse(
+          badRequestError(
+            error instanceof Error ? error.message : "Invalid backup name."
+          ),
+          {
+            request: req,
+            source: "databases.restore.POST",
+            extra: { backupName },
+          }
+        );
+      }
       await ensurePgBackupsDir();
 
       const backupPath = path.join(pgBackupsDir, backupName);
@@ -188,13 +196,15 @@ export async function POST(req: Request) {
         !dbUrl.startsWith("postgres://") &&
         !dbUrl.startsWith("postgresql://")
       ) {
-        return NextResponse.json(
+        return createErrorResponse(
+          badRequestError(
+            "Truncate before restore is only supported for PostgreSQL."
+          ),
           {
-            error: "Truncate before restore is only supported for PostgreSQL.",
-            errorId,
-            backupName,
-          },
-          { status: 400 }
+            request: req,
+            source: "databases.restore.POST",
+            extra: { backupName },
+          }
         );
       }
 
@@ -253,25 +263,11 @@ export async function POST(req: Request) {
 
       const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
       await fs.writeFile(logPath, logContent);
-
-      console.error("[databases][restore] Failed to restore backup", {
-        errorId,
-        stage,
-        backupName,
-        truncateBeforeRestore,
-        error,
+      return createErrorResponse(internalError("Failed to restore backup"), {
+        request: req,
+        source: "databases.restore.POST",
+        extra: { stage, backupName, log: logContent },
       });
-
-      return NextResponse.json(
-        {
-          error: "Failed to restore backup",
-          errorId,
-          stage,
-          backupName,
-          log: logContent,
-        },
-        { status: 500 }
-      );
     }
 
     const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
@@ -304,22 +300,11 @@ export async function POST(req: Request) {
     });
   }
   } catch (error) {
-    console.error("[databases][restore] Failed to restore backup", {
-      errorId,
-      stage,
-      backupName,
-      truncateBeforeRestore,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "databases.restore.POST",
+      fallbackMessage: "Failed to restore backup",
+      extra: { stage, backupName },
     });
-
-    return NextResponse.json(
-      {
-        error: "Failed to restore backup",
-        errorId,
-        stage,
-        backupName,
-      },
-      { status: 500 }
-    );
   }
 }

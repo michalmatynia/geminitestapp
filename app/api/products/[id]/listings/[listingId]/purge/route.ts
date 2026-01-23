@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { getProductListingRepository } from "@/lib/services/product-listing-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, notFoundError } from "@/lib/errors/app-error";
 
 export async function DELETE(
   req: Request,
@@ -8,24 +9,23 @@ export async function DELETE(
 ) {
   try {
     const { id: productId, listingId } = await params;
+    if (!productId || !listingId) {
+      throw badRequestError("Product id and listing id are required");
+    }
     const repo = await getProductListingRepository();
     const listing = await repo.getListingById(listingId);
 
     if (!listing || listing.productId !== productId) {
-      return NextResponse.json({ error: "Listing not found" }, { status: 404 });
+      throw notFoundError("Listing not found", { listingId, productId });
     }
 
     await repo.deleteListing(listingId);
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[product-listings][PURGE] Failed to purge listing", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "product-listings.PURGE",
+      fallbackMessage: "Failed to purge listing",
     });
-    return NextResponse.json(
-      { error: "Failed to purge listing", errorId },
-      { status: 500 }
-    );
   }
 }

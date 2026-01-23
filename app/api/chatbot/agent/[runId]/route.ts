@@ -1,25 +1,33 @@
 import { NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
-import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
 import { logAgentAudit } from "@/lib/agent/audit";
 import { startAgentQueue } from "@/lib/agent/core/queue";
 import { promises as fs } from "fs";
 import path from "path";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import {
+  badRequestError,
+  conflictError,
+  internalError,
+  notFoundError,
+} from "@/lib/errors/app-error";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ runId: string }> }
 ) {
   const requestStart = Date.now();
   try {
     startAgentQueue();
     if (!("chatbotAgentRun" in prisma)) {
-      return NextResponse.json(
-        { error: "Agent runs not initialized. Run prisma generate/db push." },
-        { status: 500 }
+      return createErrorResponse(
+        internalError(
+          "Agent runs not initialized. Run prisma generate/db push."
+        ),
+        { request: req, source: "chatbot.agent.run.GET" }
       );
     }
     const { runId } = await params;
@@ -27,7 +35,10 @@ export async function GET(
       where: { id: runId },
     });
     if (!run) {
-      return NextResponse.json({ error: "Run not found." }, { status: 404 });
+      return createErrorResponse(notFoundError("Run not found."), {
+        request: req,
+        source: "chatbot.agent.run.GET",
+      });
     }
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][agent][GET] Run loaded", {
@@ -38,12 +49,11 @@ export async function GET(
     }
     return NextResponse.json({ run });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[chatbot][agent][GET] Failed to load run", { errorId, error });
-    return NextResponse.json(
-      { error: "Failed to load agent run.", errorId },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.agent.run.GET",
+      fallbackMessage: "Failed to load agent run.",
+    });
   }
 }
 
@@ -54,28 +64,39 @@ export async function POST(
   const requestStart = Date.now();
   try {
     if (!("chatbotAgentRun" in prisma)) {
-      return NextResponse.json(
-        { error: "Agent runs not initialized. Run prisma generate/db push." },
-        { status: 500 }
+      return createErrorResponse(
+        internalError(
+          "Agent runs not initialized. Run prisma generate/db push."
+        ),
+        { request: req, source: "chatbot.agent.run.POST" }
       );
     }
     const { runId } = await params;
-    const body = (await req.json()) as {
+    let body: {
       action?: string;
       stepId?: string;
       status?: "completed" | "failed" | "pending";
       prompt?: string;
     };
+
+    try {
+      body = (await req.json()) as typeof body;
+    } catch (error) {
+      return createErrorResponse(badRequestError("Invalid JSON payload"), {
+        request: req,
+        source: "chatbot.agent.run.POST",
+      });
+    }
     if (
       !body.action ||
       !["stop", "resume", "retry_step", "override_step", "approve_step"].includes(
         body.action
       )
     ) {
-      return NextResponse.json(
-        { error: "Unsupported action." },
-        { status: 400 }
-      );
+      return createErrorResponse(badRequestError("Unsupported action."), {
+        request: req,
+        source: "chatbot.agent.run.POST",
+      });
     }
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][agent][POST] Request", {
@@ -89,7 +110,10 @@ export async function POST(
     });
 
     if (!run) {
-      return NextResponse.json({ error: "Run not found." }, { status: 404 });
+      return createErrorResponse(notFoundError("Run not found."), {
+        request: req,
+        source: "chatbot.agent.run.POST",
+      });
     }
 
     if (body.action === "resume") {
@@ -151,15 +175,15 @@ export async function POST(
 
     if (body.action === "retry_step") {
       if (run.status === "running") {
-        return NextResponse.json(
-          { error: "Run is running. Stop it before retrying steps." },
-          { status: 409 }
+        return createErrorResponse(
+          conflictError("Run is running. Stop it before retrying steps."),
+          { request: req, source: "chatbot.agent.run.POST" }
         );
       }
       if (!body.stepId?.trim()) {
-        return NextResponse.json(
-          { error: "stepId is required for retry_step." },
-          { status: 400 }
+        return createErrorResponse(
+          badRequestError("stepId is required for retry_step."),
+          { request: req, source: "chatbot.agent.run.POST" }
         );
       }
       const planState =
@@ -170,9 +194,9 @@ export async function POST(
         ? (planState.steps as Array<Record<string, unknown>>)
         : null;
       if (!steps) {
-        return NextResponse.json(
-          { error: "No plan steps available to retry." },
-          { status: 400 }
+        return createErrorResponse(
+          badRequestError("No plan steps available to retry."),
+          { request: req, source: "chatbot.agent.run.POST" }
         );
       }
       const nextSteps = steps.map((step) => {
@@ -230,15 +254,15 @@ export async function POST(
 
     if (body.action === "override_step") {
       if (run.status === "running") {
-        return NextResponse.json(
-          { error: "Run is running. Stop it before overriding steps." },
-          { status: 409 }
+        return createErrorResponse(
+          conflictError("Run is running. Stop it before overriding steps."),
+          { request: req, source: "chatbot.agent.run.POST" }
         );
       }
       if (!body.stepId?.trim() || !body.status) {
-        return NextResponse.json(
-          { error: "stepId and status are required for override_step." },
-          { status: 400 }
+        return createErrorResponse(
+          badRequestError("stepId and status are required for override_step."),
+          { request: req, source: "chatbot.agent.run.POST" }
         );
       }
       const planState =
@@ -249,9 +273,9 @@ export async function POST(
         ? (planState.steps as Array<Record<string, unknown>>)
         : null;
       if (!steps) {
-        return NextResponse.json(
-          { error: "No plan steps available to override." },
-          { status: 400 }
+        return createErrorResponse(
+          badRequestError("No plan steps available to override."),
+          { request: req, source: "chatbot.agent.run.POST" }
         );
       }
       const nextSteps = steps.map((step) => {
@@ -304,15 +328,15 @@ export async function POST(
 
     if (body.action === "approve_step") {
       if (run.status === "running") {
-        return NextResponse.json(
-          { error: "Run is running. Stop it before approving steps." },
-          { status: 409 }
+        return createErrorResponse(
+          conflictError("Run is running. Stop it before approving steps."),
+          { request: req, source: "chatbot.agent.run.POST" }
         );
       }
       if (!body.stepId?.trim()) {
-        return NextResponse.json(
-          { error: "stepId is required for approve_step." },
-          { status: 400 }
+        return createErrorResponse(
+          badRequestError("stepId is required for approve_step."),
+          { request: req, source: "chatbot.agent.run.POST" }
         );
       }
       const planState =
@@ -387,12 +411,11 @@ export async function POST(
 
     return NextResponse.json({ status: updated.status });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[chatbot][agent][POST] Failed to update run", { errorId, error });
-    return NextResponse.json(
-      { error: "Failed to update agent run.", errorId },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.agent.run.POST",
+      fallbackMessage: "Failed to update agent run.",
+    });
   }
 }
 
@@ -403,9 +426,11 @@ export async function DELETE(
   const requestStart = Date.now();
   try {
     if (!("chatbotAgentRun" in prisma)) {
-      return NextResponse.json(
-        { error: "Agent runs not initialized. Run prisma generate/db push." },
-        { status: 500 }
+      return createErrorResponse(
+        internalError(
+          "Agent runs not initialized. Run prisma generate/db push."
+        ),
+        { request: req, source: "chatbot.agent.run.DELETE" }
       );
     }
     const { runId } = await params;
@@ -413,14 +438,17 @@ export async function DELETE(
       where: { id: runId },
     });
     if (!run) {
-      return NextResponse.json({ error: "Run not found." }, { status: 404 });
+      return createErrorResponse(notFoundError("Run not found."), {
+        request: req,
+        source: "chatbot.agent.run.DELETE",
+      });
     }
     const url = new URL(req.url);
     const force = url.searchParams.get("force") === "true";
     if (run.status === "running" && !force) {
-      return NextResponse.json(
-        { error: "Run is running. Stop it before deleting." },
-        { status: 409 }
+      return createErrorResponse(
+        conflictError("Run is running. Stop it before deleting."),
+        { request: req, source: "chatbot.agent.run.DELETE" }
       );
     }
     if (run.status === "running" && force) {
@@ -443,14 +471,10 @@ export async function DELETE(
     }
     return NextResponse.json({ deleted: true });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[chatbot][agent][DELETE] Failed to delete run", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.agent.run.DELETE",
+      fallbackMessage: "Failed to delete agent run.",
     });
-    return NextResponse.json(
-      { error: "Failed to delete agent run.", errorId },
-      { status: 500 }
-    );
   }
 }

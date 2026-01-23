@@ -8,7 +8,7 @@ interface ExportLog {
   timestamp: string;
   level: "info" | "warn" | "error";
   message: string;
-  context?: Record<string, unknown>;
+  context?: Record<string, unknown> | undefined;
 }
 
 interface ExportLogViewerProps {

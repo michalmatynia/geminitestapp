@@ -457,7 +457,7 @@ const imageToBase64DataUri = async (
     diagnostics?: ImageExportDiagnostics | undefined;
     sourceType?: "slot" | "link" | "mapped" | "unknown";
     index?: number;
-    outputMode?: ImageBase64Mode;
+    outputMode?: ImageBase64Mode | undefined;
     transform?: ImageTransformOptions | null;
   }
 ): Promise<string | null> => {
@@ -619,7 +619,7 @@ export const getProductImagesAsBase64 = async (
   product: ProductWithImages,
   options?: {
     diagnostics?: ImageExportDiagnostics | undefined;
-    outputMode?: ImageBase64Mode;
+    outputMode?: ImageBase64Mode | undefined;
     transform?: ImageTransformOptions | null;
   }
 ): Promise<Record<string, string>> => {
@@ -636,8 +636,8 @@ export const getProductImagesAsBase64 = async (
       diagnostics: options?.diagnostics,
       sourceType: "slot",
       index: slotIndex,
-      outputMode: options?.outputMode,
-      transform: options?.transform,
+      ...(options?.outputMode ? { outputMode: options.outputMode } : {}),
+      ...(options?.transform ? { transform: options.transform } : {}),
     });
     if (base64) {
       images[String(index)] = base64;
@@ -660,8 +660,8 @@ export const getProductImagesAsBase64 = async (
       diagnostics: options?.diagnostics,
       sourceType: "link",
       index: linkIndex,
-      outputMode: options?.outputMode,
-      transform: options?.transform,
+      ...(options?.outputMode ? { outputMode: options.outputMode } : {}),
+      ...(options?.transform ? { transform: options.transform } : {}),
     });
     if (base64) {
       images[String(index)] = base64;
@@ -928,8 +928,8 @@ export async function buildBaseProductData(
     includeStockWithoutWarehouse?: boolean;
     stockWarehouseAliases?: Record<string, string>;
     exportImagesAsBase64?: boolean | undefined;
-    imageDiagnostics?: ImageExportDiagnostics;
-    imageBase64Mode?: ImageBase64Mode;
+    imageDiagnostics?: ImageExportDiagnostics | undefined;
+    imageBase64Mode?: ImageBase64Mode | undefined;
     imageTransform?: ImageTransformOptions | null;
     imagesOnly?: boolean;
   }
@@ -1072,9 +1072,9 @@ export async function exportProductToBase(
     imageBaseUrl?: string | null;
     includeStockWithoutWarehouse?: boolean;
     stockWarehouseAliases?: Record<string, string>;
-    exportImagesAsBase64?: boolean;
-    imageDiagnostics?: ImageExportDiagnostics;
-    imageBase64Mode?: ImageBase64Mode;
+    exportImagesAsBase64?: boolean | undefined;
+    imageDiagnostics?: ImageExportDiagnostics | undefined;
+    imageBase64Mode?: ImageBase64Mode | undefined;
     imageTransform?: ImageTransformOptions | null;
     imagesOnly?: boolean;
   }
@@ -1120,18 +1120,18 @@ export async function exportProductImagesToBase(
   externalProductId: string,
   options?: {
     imageBaseUrl?: string | null;
-    exportImagesAsBase64?: boolean;
-    imageDiagnostics?: ImageExportDiagnostics;
-    imageBase64Mode?: ImageBase64Mode;
+    exportImagesAsBase64?: boolean | undefined;
+    imageDiagnostics?: ImageExportDiagnostics | undefined;
+    imageBase64Mode?: ImageBase64Mode | undefined;
     imageTransform?: ImageTransformOptions | null;
   }
 ): Promise<{ success: boolean; productId?: string; error?: string }> {
   try {
     const productData = await buildBaseProductData(product, [], null, {
       imageBaseUrl: options?.imageBaseUrl ?? null,
-      exportImagesAsBase64: options?.exportImagesAsBase64,
-      imageDiagnostics: options?.imageDiagnostics,
-      imageBase64Mode: options?.imageBase64Mode,
+      ...(options?.exportImagesAsBase64 !== undefined ? { exportImagesAsBase64: options.exportImagesAsBase64 } : {}),
+      ...(options?.imageDiagnostics ? { imageDiagnostics: options.imageDiagnostics } : {}),
+      ...(options?.imageBase64Mode ? { imageBase64Mode: options.imageBase64Mode } : {}),
       imageTransform: options?.imageTransform ?? null,
       imagesOnly: true,
     });

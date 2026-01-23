@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { PRODUCT_DB_PROVIDER_SETTING_KEY } from "@/lib/services/product-provider";
 import { INTEGRATION_DB_PROVIDER_SETTING_KEY } from "@/lib/services/integration-provider";
 import { AUTH_DB_PROVIDER_SETTING_KEY } from "@/lib/services/auth-provider";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { internalError } from "@/lib/errors/app-error";
 
 const shouldLog = () => process.env.DEBUG_SETTINGS === "true";
 
@@ -37,6 +41,11 @@ const productSettingKeys = new Set([
 const canUsePrismaSettings = () =>
   Boolean(process.env.DATABASE_URL) && "setting" in prisma;
 
+const settingSchema = z.object({
+  key: z.string().trim().min(1),
+  value: z.string(),
+});
+
 const listMongoSettings = async (): Promise<SettingRecord[]> => {
   if (!process.env.MONGODB_URI) return [];
   const mongo = await getMongoDb();
@@ -67,7 +76,7 @@ const upsertMongoSetting = async (
   return { key, value };
 };
 
-export async function GET() {
+export async function GET(req: Request) {
   if (shouldLog()) {
     console.log("[settings] GET /api/settings");
   }
@@ -100,11 +109,11 @@ export async function GET() {
     }
     return NextResponse.json(settings);
   } catch (error) {
-    console.error("[settings] failed to fetch", error);
-    return NextResponse.json(
-      { error: "Failed to fetch settings" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "settings.GET",
+      fallbackMessage: "Failed to fetch settings",
+    });
   }
 }
 
@@ -113,19 +122,13 @@ export async function POST(req: Request) {
     console.log("[settings] POST /api/settings");
   }
   try {
-    const { key, value } = (await req.json()) as SettingRecord;
-    if (!key || typeof key !== "string") {
-      return NextResponse.json(
-        { error: "Setting key is required" },
-        { status: 400 }
-      );
+    const parsed = await parseJsonBody(req, settingSchema, {
+      logPrefix: "settings.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
     }
-    if (typeof value !== "string") {
-      return NextResponse.json(
-        { error: "Setting value must be a string" },
-        { status: 400 }
-      );
-    }
+    const { key, value } = parsed.data;
     if (shouldLog()) {
       console.log("[settings] upserting", { key, valuePreview: value.slice(0, 40) });
     }
@@ -145,9 +148,9 @@ export async function POST(req: Request) {
     ]);
     const setting = prismaSetting ?? mongoSetting;
     if (!setting) {
-      return NextResponse.json(
-        { error: "No settings store configured" },
-        { status: 500 }
+      return createErrorResponse(
+        internalError("No settings store configured"),
+        { request: req, source: "settings.POST" }
       );
     }
     if (shouldLog()) {
@@ -155,10 +158,10 @@ export async function POST(req: Request) {
     }
     return NextResponse.json(setting);
   } catch (error) {
-    console.error("[settings] failed to save", error);
-    return NextResponse.json(
-      { error: "Failed to save setting" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "settings.POST",
+      fallbackMessage: "Failed to save setting",
+    });
   }
 }

@@ -795,3 +795,37 @@ model ProductAiJob {
   startedAt    DateTime?
   finishedAt   DateTime?
 }
+
+model ProductDraft {
+  id                  String   @id @default(cuid())
+  name                String
+  description         String?
+  sku                 String?
+  ean                 String?
+  gtin                String?
+  asin                String?
+  name_en             String?
+  name_pl             String?
+  name_de             String?
+  description_en      String?
+  description_pl      String?
+  description_de      String?
+  weight              Int?
+  sizeLength          Int?
+  sizeWidth           Int?
+  length              Int?
+  price               Int?
+  supplierName        String?
+  supplierLink        String?
+  priceComment        String?
+  stock               Int?
+  catalogIds          Json     @default("[]")
+  categoryIds         Json     @default("[]")
+  tagIds              Json     @default("[]")
+  defaultPriceGroupId String?
+  active              Boolean  @default(true)
+  imageLinks          Json     @default("[]")
+  baseProductId       String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}

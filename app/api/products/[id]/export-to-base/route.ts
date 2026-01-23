@@ -24,6 +24,7 @@ const exportSchema = z.object({
   inventoryId: z.string().min(1),
   templateId: z.string().optional(),
   allowDuplicateSku: z.boolean().optional(), // Allow exporting even if SKU exists in Base.com
+  exportImagesAsBase64: z.boolean().optional(), // Export images as base64 data blobs instead of URLs
 });
 
 /**
@@ -128,11 +129,16 @@ export async function POST(
 
     // Get template mappings if templateId provided
     let mappings: { sourceKey: string; targetField: string }[] = [];
+    let exportImagesAsBase64 = data.exportImagesAsBase64 ?? false;
     if (data.templateId) {
       const templates = await listExportTemplates();
       const template = templates.find((t) => t.id === data.templateId);
       if (template) {
         mappings = template.mappings;
+        // Use template's exportImagesAsBase64 setting if not explicitly overridden
+        if (data.exportImagesAsBase64 === undefined && template.exportImagesAsBase64 !== undefined) {
+          exportImagesAsBase64 = template.exportImagesAsBase64;
+        }
       }
     }
 
@@ -304,12 +310,12 @@ export async function POST(
       mappingsCount: effectiveMappings.length,
     });
 
-    const buildExportSnapshot = (
+    const buildExportSnapshot = async (
       targetWarehouseId: string | null,
       activeMappings: typeof mappings = effectiveMappings,
       includeStockWithoutWarehouse = false
     ) => {
-      const exportData = buildBaseProductData(
+      const exportData = await buildBaseProductData(
         product,
         activeMappings,
         targetWarehouseId,
@@ -317,6 +323,7 @@ export async function POST(
           imageBaseUrl,
           includeStockWithoutWarehouse,
           stockWarehouseAliases: stockWarehouseAliases ?? undefined,
+          exportImagesAsBase64: exportImagesAsBase64,
         }
       ) as Record<string, unknown> & {
         text_fields?: Record<string, unknown>;
@@ -341,7 +348,7 @@ export async function POST(
     const allowStockFallback = await getExportStockFallbackEnabled();
     let includeStockWithoutWarehouse =
       !warehouseId && product.stock !== null;
-    let { exportFields } = buildExportSnapshot(
+    let { exportFields } = await buildExportSnapshot(
       warehouseId,
       effectiveMappings,
       includeStockWithoutWarehouse
@@ -356,6 +363,7 @@ export async function POST(
         imageBaseUrl,
         includeStockWithoutWarehouse,
         stockWarehouseAliases: stockWarehouseAliases ?? undefined,
+        exportImagesAsBase64: exportImagesAsBase64,
       }
     );
 
@@ -383,7 +391,7 @@ export async function POST(
         (mapping) => !mapping.sourceKey.trim().toLowerCase().startsWith("stock")
       );
       includeStockWithoutWarehouse = false;
-      ({ exportFields } = buildExportSnapshot(
+      ({ exportFields } = await buildExportSnapshot(
         warehouseId,
         effectiveMappings,
         includeStockWithoutWarehouse
@@ -398,6 +406,7 @@ export async function POST(
           imageBaseUrl,
           includeStockWithoutWarehouse,
           stockWarehouseAliases: stockWarehouseAliases ?? undefined,
+          exportImagesAsBase64: exportImagesAsBase64,
         }
       );
     } else if (!result.success && warehouseMismatch) {
@@ -426,7 +435,7 @@ export async function POST(
         (mapping) => !mapping.sourceKey.trim().toLowerCase().startsWith("stock")
       );
       includeStockWithoutWarehouse = false;
-      ({ exportFields } = buildExportSnapshot(
+      ({ exportFields } = await buildExportSnapshot(
         warehouseId,
         effectiveMappings,
         includeStockWithoutWarehouse
@@ -441,6 +450,7 @@ export async function POST(
           imageBaseUrl,
           includeStockWithoutWarehouse,
           stockWarehouseAliases: stockWarehouseAliases ?? undefined,
+          exportImagesAsBase64: exportImagesAsBase64,
         }
       );
     }

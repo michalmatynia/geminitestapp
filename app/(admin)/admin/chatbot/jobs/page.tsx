@@ -176,13 +176,12 @@ export default function ChatbotJobsPage() {
     setExpandedAuditIds({});
     let isMounted = true;
     setAgentStreamStatus("connecting");
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const source = new EventSource(
       `/api/chatbot/agent/${selectedAgentRunId}/stream`
     );
     source.onmessage = (event) => {
       try {
-        const payload = JSON.parse(event.data) as {
+        const payload = JSON.parse(event.data as string) as {
           snapshot?: AgentSnapshot | null;
         };
         if (payload.snapshot) {

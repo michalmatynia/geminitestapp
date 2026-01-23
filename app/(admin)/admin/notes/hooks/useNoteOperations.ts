@@ -109,7 +109,7 @@ export function useNoteOperations({
         return;
       }
 
-      const note: NoteWithRelations = await response.json();
+      const note = (await response.json()) as NoteWithRelations;
 
       const baseTitle = note.title.replace(/\s*\(\d+\)$/, "");
       let newTitle = `${baseTitle} (1)`;

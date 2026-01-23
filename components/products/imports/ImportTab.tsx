@@ -16,8 +16,8 @@ type ImportTabProps = {
   loadingInventories: boolean;
   inventoryId: string;
   setInventoryId: (value: string) => void;
-  handleLoadInventories: () => void;
-  handleClearInventory: () => void;
+  handleLoadInventories: () => void | Promise<void>;
+  handleClearInventory: () => void | Promise<void>;
   limit: string;
   setLimit: (value: string) => void;
   catalogs: CatalogOption[];
@@ -33,12 +33,12 @@ type ImportTabProps = {
   allowDuplicateSku: boolean;
   setAllowDuplicateSku: (value: boolean) => void;
   importing: boolean;
-  handleImport: () => void;
+  handleImport: () => void | Promise<void>;
   importSearch: string;
   setImportSearch: (value: string) => void;
   uniqueOnly: boolean;
   setUniqueOnly: (value: boolean) => void;
-  handleLoadImportList: () => void;
+  handleLoadImportList: () => void | Promise<void>;
   loadingImportList: boolean;
   importListStats: ImportListStats | null;
   importList: ImportListItem[];

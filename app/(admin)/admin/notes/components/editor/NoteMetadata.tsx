@@ -2,7 +2,7 @@
 
 import React from "react";
 import { X } from "lucide-react";
-import type { TagRecord, NoteWithRelations } from "@/types/notes";
+import type { TagRecord, NoteWithRelations, ThemeRecord } from "@/types/notes";
 
 interface NoteMetadataProps {
   title: string;
@@ -39,7 +39,7 @@ interface NoteMetadataProps {
   relatedNoteResults: NoteWithRelations[];
   isRelatedLoading: boolean;
   onSelectRelatedNote: (noteId: string) => void;
-  effectiveTheme: any; // Using any for simplicity as theme object structure is complex and derived in parent
+  effectiveTheme: ThemeRecord;
   noteId?: string | undefined;
 }
 

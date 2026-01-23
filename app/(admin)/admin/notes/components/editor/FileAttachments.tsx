@@ -135,7 +135,7 @@ export function FileAttachments({
                 </button>
                 <button
                   type="button"
-                  onClick={() => onFileDelete(file.slotIndex)}
+                  onClick={() => { void onFileDelete(file.slotIndex); }}
                   className="rounded-full bg-red-600 p-1.5 text-white hover:bg-red-700"
                   title="Delete file"
                 >

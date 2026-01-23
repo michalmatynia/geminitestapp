@@ -83,6 +83,12 @@ export default function Menu() {
           All Products
         </Link>
         <Link
+          href="/admin/drafts"
+          className="block w-full text-left hover:bg-gray-700 p-2 rounded"
+        >
+          Drafts
+        </Link>
+        <Link
           href="/admin/products/settings"
           className="block w-full text-left hover:bg-gray-700 p-2 rounded"
         >

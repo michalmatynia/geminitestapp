@@ -343,7 +343,7 @@ export default function NotesPage() {
                 setSelectedNote(null);
                 setIsEditing(false);
               }}
-              onCreateFolder={(parentId, name) => void operations.handleCreateFolder(parentId, name)}
+              onCreateFolder={(parentId) => void operations.handleCreateFolder(parentId)}
               onCreateNote={(folderId) => {
                 setSelectedFolderId(folderId);
                 setIsCreating(true);

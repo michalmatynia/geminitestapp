@@ -12,7 +12,7 @@ import {
   RowSelectionState,
   OnChangeFn,
 } from "@tanstack/react-table";
-import React, { useEffect, useState, memo } from "react";
+import React, { useEffect, useState, memo, useMemo } from "react";
 
 import {
   Table,
@@ -52,6 +52,8 @@ interface DataTableProps<TData> {
   footer?: (table: ReactTable<TData>) => React.ReactNode;
   rowSelection?: RowSelectionState;
   onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+  isLoading?: boolean;
+  skeletonRows?: React.ReactNode;
 }
 
 declare module "@tanstack/react-table" {
@@ -88,6 +90,8 @@ export const DataTable = memo(function DataTable<TData>({
   footer,
   rowSelection: controlledRowSelection,
   onRowSelectionChange: controlledOnRowSelectionChange,
+  isLoading = false,
+  skeletonRows,
 }: DataTableProps<TData>) {
   const [internalRowSelection, setInternalRowSelection] = useState<RowSelectionState>({});
   const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
@@ -118,6 +122,31 @@ export const DataTable = memo(function DataTable<TData>({
     }
   }, [sorting, sortingStorageKey]);
 
+  // Memoize table meta to prevent unnecessary re-renders
+  const tableMeta = useMemo(() => ({
+    ...(setRefreshTrigger ? { setRefreshTrigger } : {}),
+    ...(productNameKey ? { productNameKey } : {}),
+    ...(currencyCode ? { currencyCode } : {}),
+    ...(priceGroups ? { priceGroups } : {}),
+    ...(onProductNameClick ? { onProductNameClick } : {}),
+    ...(onProductEditClick ? { onProductEditClick } : {}),
+    ...(onIntegrationsClick ? { onIntegrationsClick } : {}),
+    ...(onExportSettingsClick ? { onExportSettingsClick } : {}),
+    ...(integrationBadgeIds ? { integrationBadgeIds } : {}),
+    ...(integrationBadgeStatuses ? { integrationBadgeStatuses } : {}),
+  }), [
+    setRefreshTrigger,
+    productNameKey,
+    currencyCode,
+    priceGroups,
+    onProductNameClick,
+    onProductEditClick,
+    onIntegrationsClick,
+    onExportSettingsClick,
+    integrationBadgeIds,
+    integrationBadgeStatuses,
+  ]);
+
   // TanStack Table is not compatible with React Compiler memoization warnings.
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable<TData>({
@@ -133,18 +162,7 @@ export const DataTable = memo(function DataTable<TData>({
       rowSelection,
       sorting,
     },
-    meta: {
-      ...(setRefreshTrigger ? { setRefreshTrigger } : {}),
-      ...(productNameKey ? { productNameKey } : {}),
-      ...(currencyCode ? { currencyCode } : {}),
-      ...(priceGroups ? { priceGroups } : {}),
-      ...(onProductNameClick ? { onProductNameClick } : {}),
-      ...(onProductEditClick ? { onProductEditClick } : {}),
-      ...(onIntegrationsClick ? { onIntegrationsClick } : {}),
-      ...(onExportSettingsClick ? { onExportSettingsClick } : {}),
-      ...(integrationBadgeIds ? { integrationBadgeIds } : {}),
-      ...(integrationBadgeStatuses ? { integrationBadgeStatuses } : {}),
-    },
+    meta: tableMeta,
   });
 
   return (
@@ -169,7 +187,18 @@ export const DataTable = memo(function DataTable<TData>({
           ))}
         </TableHeader>
         <TableBody>
-          {table.getRowModel().rows?.length ? (
+          {isLoading ? (
+            skeletonRows || (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center text-muted-foreground"
+                >
+                  Loading...
+                </TableCell>
+              </TableRow>
+            )
+          ) : table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (
               <TableRow
                 key={row.id}

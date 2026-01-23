@@ -105,6 +105,7 @@ export default function ProductImportsPage() {
   const [exportTemplateMappings, setExportTemplateMappings] = useState<
     TemplateMapping[]
   >([{ sourceKey: "", targetField: "" }]);
+  const [exportImagesAsBase64, setExportImagesAsBase64] = useState(false);
   const [exportStockFallbackEnabled, setExportStockFallbackEnabled] =
     useState(false);
   const [exportStockFallbackLoaded, setExportStockFallbackLoaded] =
@@ -230,6 +231,7 @@ export default function ProductImportsPage() {
     setExportTemplateName(template.name);
     setExportTemplateDescription(template.description ?? "");
     setExportTemplateMappings(nextMappings);
+    setExportImagesAsBase64(template.exportImagesAsBase64 ?? false);
   }, []);
 
   useEffect(() => {
@@ -671,6 +673,7 @@ export default function ProductImportsPage() {
     setExportTemplateName("");
     setExportTemplateDescription("");
     setExportTemplateMappings([{ sourceKey: "", targetField: "" }]);
+    setExportImagesAsBase64(false);
   };
 
   const handleSaveTemplate = async () => {
@@ -715,6 +718,7 @@ export default function ProductImportsPage() {
             name: currentTemplateName.trim(),
             description: currentTemplateDescription.trim() || undefined,
             mappings: cleanedMappings,
+            ...(isImportTemplateScope ? {} : { exportImagesAsBase64 }),
           }),
         }
       );
@@ -1241,6 +1245,13 @@ export default function ProductImportsPage() {
             inventoryId: exportInventoryId || null,
           }),
         }),
+        fetch("/api/products/exports/base/default-connection", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            connectionId: selectedBaseConnectionId || null,
+          }),
+        }),
         fetch("/api/products/exports/base/stock-fallback", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1583,7 +1594,7 @@ export default function ProductImportsPage() {
                     <div className="flex flex-col items-center">
                       <Button
                         type="button"
-                        onClick={handleLoadParameters}
+                        onClick={() => { void handleLoadParameters(); }}
                         disabled={loadingParameters}
                       >
                         {loadingParameters
@@ -1609,7 +1620,7 @@ export default function ProductImportsPage() {
                       <Button
                         type="button"
                         variant="secondary"
-                        onClick={handleUseExampleProduct}
+                        onClick={() => { void handleUseExampleProduct(); }}
                         disabled={loadingParameters}
                       >
                         Use example
@@ -1633,26 +1644,25 @@ export default function ProductImportsPage() {
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="secondary"
-                  onClick={handleNewTemplate}
-                  type="button"
-                >
-                  New template
-                </Button>
-                <Button
-                  onClick={handleSaveTemplate}
-                  disabled={savingTemplate}
-                >
-                  {savingTemplate ? "Saving..." : "Save template"}
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={handleDeleteTemplate}
-                  disabled={!currentActiveTemplateId || deletingTemplate}
-                >
-                  {deletingTemplate ? "Deleting..." : "Delete"}
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="secondary"
+                                  onClick={() => { void handleNewTemplate(); }}
+                                  type="button"
+                                >
+                                  New template
+                                </Button>
+                                <Button
+                                  onClick={() => { void handleSaveTemplate(); }}
+                                  disabled={savingTemplate}
+                                >
+                                  {savingTemplate ? "Saving..." : "Save template"}
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  onClick={() => { void handleDeleteTemplate(); }}
+                                  disabled={!currentActiveTemplateId || deletingTemplate}
+                                >                  {deletingTemplate ? "Deleting..." : "Delete"}
                 </Button>
               </div>
             </div>
@@ -1677,14 +1687,13 @@ export default function ProductImportsPage() {
                         <button
                           key={template.id}
                           type="button"
-                          className={`flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-xs ${
-                            currentActiveTemplateId === template.id
-                              ? "bg-emerald-500/20 text-emerald-100"
-                              : "text-gray-300 hover:bg-gray-800/60"
-                          }`}
-                          onClick={() => handleSelectTemplate(template.id)}
-                        >
-                          <span>{template.name}</span>
+                                                      className={`flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-xs ${
+                                                        currentActiveTemplateId === template.id
+                                                          ? "bg-emerald-500/20 text-emerald-100"
+                                                          : "text-gray-300 hover:bg-gray-800/60"
+                                                      }`}
+                                                      onClick={() => { void handleSelectTemplate(template.id); }}
+                                                    >                          <span>{template.name}</span>
                         </button>
                       ))
                   )}
@@ -1730,6 +1739,24 @@ export default function ProductImportsPage() {
                     />
                   </div>
                 </div>
+
+                {!isImportTemplateScope && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="exportImagesAsBase64"
+                      checked={exportImagesAsBase64}
+                      onChange={(e) => setExportImagesAsBase64(e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-800 bg-gray-900 text-emerald-500 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-0"
+                    />
+                    <label
+                      htmlFor="exportImagesAsBase64"
+                      className="text-sm text-gray-300 cursor-pointer"
+                    >
+                      Export images as base64 data blobs
+                    </label>
+                  </div>
+                )}
 
                 <div>
                   <label className="text-xs text-gray-400">

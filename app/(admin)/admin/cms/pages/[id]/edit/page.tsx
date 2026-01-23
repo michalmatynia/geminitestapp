@@ -17,8 +17,9 @@ export default function EditPagePage() {
   const { id } = useParams();
 
   useEffect(() => {
+    if (!id) return;
     const fetchPage = async () => {
-      const res = await fetch(`/api/cms/pages/${id}`);
+      const res = await fetch(`/api/cms/pages/${id as string}`);
       const data = (await res.json()) as Page;
       setPage(data);
     };
@@ -26,9 +27,9 @@ export default function EditPagePage() {
   }, [id]);
 
   const handleSave = async () => {
-    if (!page) return;
+    if (!page || !id) return;
 
-    await fetch(`/api/cms/pages/${id}`, {
+    await fetch(`/api/cms/pages/${id as string}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

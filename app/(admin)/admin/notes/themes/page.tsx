@@ -345,7 +345,7 @@ export default function NoteThemesPage() {
             </div>
           </div>
           <div className="mt-4">
-            <Button onClick={handleCreate} disabled={isSaving}>
+            <Button onClick={() => { void handleCreate(); }} disabled={isSaving}>
               {isSaving ? "Saving..." : "Create"}
             </Button>
           </div>
@@ -354,7 +354,7 @@ export default function NoteThemesPage() {
         <div className="rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white">Existing Themes</h2>
-            <Button variant="outline" onClick={fetchThemes}>
+            <Button variant="outline" onClick={() => { void fetchThemes(); }}>
               Refresh
             </Button>
           </div>
@@ -383,7 +383,7 @@ export default function NoteThemesPage() {
                         {isEditing ? (
                           <>
                             <Button
-                              onClick={() => handleUpdate(theme.id)}
+                              onClick={() => { void handleUpdate(theme.id); }}
                               disabled={isUpdating}
                               size="sm"
                             >
@@ -399,7 +399,7 @@ export default function NoteThemesPage() {
                           </Button>
                         )}
                         <Button
-                          onClick={() => handleDelete(theme.id)}
+                          onClick={() => { void handleDelete(theme.id); }}
                           variant="outline"
                           size="sm"
                           className="border-red-500/40 text-red-300 hover:text-red-200"

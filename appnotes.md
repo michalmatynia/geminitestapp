@@ -1,13 +1,36 @@
 
-Product images cannot be Reordered.
+I still need to choose account when listing with Baseom
+
+I still need to provide the account when I list the product 
+
+It looks like Product List is re-rendering
 
 When I Create Product after adding images, the screen filckers when I try to resort images
+
+In Product Drafts, Price group default of the catalog
+
+* Also, add one additional field, a choice of Black and White Circular Icons, When the Draft is set to Active in the Draft List ( with a Radio button), The Icon will appear in the product list Right under the Products text, to the Right of Big Plus that Creates Products from scratch. Clicking the Draft Icons will launch a modal panel with prefilled values, like it is set up in the Draft Template
+
+Draft list reorders like mapping parameters
+
+I need a new page, Called Panel, where I can set up different things in regards to Product modal Page. 
+
+In Product Edit / Create Tags Field should be searchable field
+
+PArameter Product
+
+Base Category Mapping
+
+In Product List, Add a small indicator (maybe an icon underneath SKU) whether the product was added by the user or is the result of an import. 
+
+Aut-Save Product Modal draft on product create, not to loose info.  
+
 * After selecting a catalog, default price group is not automatically assingned to product
 Default Price group should be attached to Product as soon as the catalog is selected, cause it's the default group of the catalog
 
 * When I update product stock, The product disconnects from the catalog.
 
-Product List, One Click list on Base
+* Product List, One Click list on Base
 
 One Click creation Templates for Product (with  Stock Inserted)
 Prefilled Product Templates -> Add Jewellery add Figure etc.
@@ -36,7 +59,6 @@ Opening WYSYWIG Note fails in Edit Mode
 
 In Product List - Operations - I need an Option to Mass Export Products to Base.com
 
-In Product Edit / Create Tags Field should be searchable field
 
 I am unable to Open my Note, if I migrate it to Wysiwyg
 
@@ -93,7 +115,6 @@ LATER - In Integrations Baslinker Tab, create a separate Sync Tab, Where I can s
 * Check that ->In my Edit / Create Product Page, make the Catalogs Field a dropdown, not a checkbox, and move it to Other Tab
 
 
-In Product List, Add a small indicator (maybe an icon underneath SKU) whether the product was added by the user or is the result of an import. 
 
 
 * When my Dropdown in Product List is set to a given catalog, All PRoduct creations are to be assigned to this catalog.

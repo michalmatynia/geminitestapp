@@ -322,7 +322,7 @@ export function NoteDetailView({
             </Button>
             <Button
               type="button"
-              onClick={onDeleteNote}
+              onClick={() => { void onDeleteNote(); }}
               className="bg-red-600 text-white hover:bg-red-700"
             >
               Delete

@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { logger } from "@/lib/logger";
 import type { Catalog } from "@/types/products";
 import type { PriceGroupWithDetails } from "@/types";
 
 export function useCatalogSync(catalogFilter: string) {
-  const [catalogs, setCatalogs] = useState<Catalog[]>([]);
+  const [rawCatalogs, setRawCatalogs] = useState<Catalog[]>([]);
   const [catalogsLoading, setCatalogsLoading] = useState(true);
   const [catalogsError, setCatalogsError] = useState<string | null>(null);
 
@@ -16,8 +16,18 @@ export function useCatalogSync(catalogFilter: string) {
   const [currencyPriceGroups, setCurrencyPriceGroups] = useState<
     Array<{ id: string; isDefault: boolean; currency?: { code?: string } | null }>
   >([]);
-  
+
   const catalogFilterInitialized = useRef(false);
+
+  // Memoize catalog transformation to prevent new references
+  const catalogs = useMemo(() =>
+    rawCatalogs.map((catalog) => ({
+      ...catalog,
+      priceGroupIds: catalog.priceGroupIds ?? [],
+      defaultPriceGroupId: catalog.defaultPriceGroupId ?? null,
+    })),
+    [rawCatalogs]
+  );
 
   // Load Catalogs
   useEffect(() => {
@@ -32,13 +42,7 @@ export function useCatalogSync(catalogFilter: string) {
         }
         const data = (await res.json()) as Catalog[];
         if (!cancelled) {
-          setCatalogs(
-            data.map((catalog) => ({
-              ...catalog,
-              priceGroupIds: catalog.priceGroupIds ?? [],
-              defaultPriceGroupId: catalog.defaultPriceGroupId ?? null,
-            }))
-          );
+          setRawCatalogs(data);
         }
       } catch (error) {
         logger.error("Failed to load catalogs:", error);
@@ -74,18 +78,19 @@ export function useCatalogSync(catalogFilter: string) {
     return () => { mounted = false; };
   }, []);
 
-  // Sync Currency Options based on Catalog
-  useEffect(() => {
-    if (currencyPriceGroups.length === 0) return;
+  // Memoize currency options to prevent unnecessary re-renders
+  const { codes, fallbackCode } = useMemo(() => {
+    if (currencyPriceGroups.length === 0) return { codes: [], fallbackCode: "" };
+
     const isCatalogScoped = catalogFilter !== "all" && catalogFilter !== "unassigned";
     const catalog = isCatalogScoped ? catalogs.find((entry) => entry.id === catalogFilter) : undefined;
     const catalogPriceGroupIds = catalog?.priceGroupIds ?? [];
     const allowedGroupIds = catalogPriceGroupIds.length > 0 ? new Set(catalogPriceGroupIds) : null;
-    
+
     const candidateGroups = allowedGroupIds
       ? currencyPriceGroups.filter((group) => allowedGroupIds.has(group.id))
       : currencyPriceGroups;
-      
+
     const codes = Array.from(
       new Set(
         candidateGroups
@@ -93,17 +98,22 @@ export function useCatalogSync(catalogFilter: string) {
           .filter((code): code is string => Boolean(code))
       )
     );
-    
-    setCurrencyOptions(codes);
-    
+
     const defaultGroupId = catalog?.defaultPriceGroupId ?? null;
     const defaultGroup = defaultGroupId
       ? candidateGroups.find((group) => group.id === defaultGroupId)
       : candidateGroups.find((group) => group.isDefault);
-      
+
     const fallbackCode = defaultGroup?.currency?.code || codes[0] || "";
-    setCurrencyCode((prev) => (prev && codes.includes(prev) ? prev : fallbackCode));
+
+    return { codes, fallbackCode };
   }, [catalogFilter, catalogs, currencyPriceGroups]);
+
+  // Sync Currency Options based on Catalog
+  useEffect(() => {
+    setCurrencyOptions(codes);
+    setCurrencyCode((prev) => (prev && codes.includes(prev) ? prev : fallbackCode));
+  }, [codes, fallbackCode]);
 
   return {
     catalogs,

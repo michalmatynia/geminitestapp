@@ -28,7 +28,7 @@ type MongoUserDoc = {
 export async function POST(req: Request) {
   const errorId = randomUUID();
   try {
-    const body = await req.json();
+    const body = (await req.json()) as unknown;
     const data = registerSchema.parse(body);
     const email = normalizeAuthEmail(data.email);
     const passwordHash = await hash(data.password, 12);

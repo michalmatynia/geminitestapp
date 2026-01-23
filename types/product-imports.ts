@@ -59,6 +59,7 @@ export type Template = {
   name: string;
   description?: string | null;
   mappings?: TemplateMapping[];
+  exportImagesAsBase64?: boolean;
 };
 
 export type ExportParameterDoc = {

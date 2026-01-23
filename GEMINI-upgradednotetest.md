@@ -45,7 +45,7 @@ Data Display: TanStack Table – Implements TanStack Table (formerly React Table
 
 Icons: Lucide React – Utilizes Lucide (an icon library) for consistent, lightweight SVG icons throughout the UI.
 
-Testing: Jest – Configured as the testing framework for unit and integration tests, enabling regression testing of API endpoints and critical functions.
+Testing: Vitest – Configured as the testing framework for unit and integration tests, enabling regression testing of API endpoints and critical functions.
 
 AI Integration: OpenAI API – Integrates with OpenAI (e.g., GPT-3.5-Turbo and GPT-4o models) to generate product descriptions based on prompts. GPT-4o is a multimodal model that can process images in addition to text, which the application can leverage for richer descriptions.
 
@@ -89,7 +89,7 @@ Migrations – A series of migration files (in prisma/migrations/) that record c
 
 seed.ts – A script to seed the database with initial data. This script is executed with npm run seed and creates sample entries (products with placeholder data, some image files, maybe initial settings or slugs) to help developers start with meaningful data.
 
-__tests__/ – Contains unit and integration tests (Jest) for various parts of the application:
+__tests__/ – Contains unit and integration tests (Vitest) for various parts of the application:
 
 Tests cover API endpoints to ensure that each route returns expected responses and that the business logic in the services behaves correctly (e.g., creating a product, linking an image, error cases like duplicate SKU, etc.).
 
@@ -220,7 +220,7 @@ AI Generation Tests: If possible, tests for the description generation endpoint 
 
 Other Edge Cases: The suite likely includes tests for invalid inputs and security. For example, attempting to create a product with a duplicate SKU might return a specific error that is tested. Or uploading a non-database file to the restore endpoint should be handled without crashing the app.
 
-Testing Tools: The tests use Jest and may utilize Supertest or Next.js testing utilities to simulate HTTP requests to the API routes. Each test run ensures the database is in a known state (using migrations and fresh seed data or using transactions/rollbacks). Running npm run test will execute all tests, and a CI environment can also run these to prevent regressions.
+Testing Tools: The tests use Vitest and may utilize Supertest or Next.js testing utilities to simulate HTTP requests to the API routes. Each test run ensures the database is in a known state (using migrations and fresh seed data or using transactions/rollbacks). Running npm run test will execute all tests, and a CI environment can also run these to prevent regressions.
 
 Available Scripts
 
@@ -232,7 +232,7 @@ npm run build – Builds the Next.js application for production, optimizing asse
 
 npm run start – Runs the Next.js app in production mode (you must build first). In a deployment environment, this would launch the server on the port specified by PORT (default 3000).
 
-npm run test – Runs the Jest test suite. This will execute all tests in the __tests__ directory.
+npm run test – Runs the Vitest test suite. This will execute all tests in the __tests__ directory.
 
 npm run seed – Executes the database seeding script to populate initial data. This can be run after migrations or any time you want to reset the DB to a known state with sample data.
 

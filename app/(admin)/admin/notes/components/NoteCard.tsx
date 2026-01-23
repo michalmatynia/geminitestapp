@@ -178,12 +178,11 @@ function NoteCardBase({
         </div>
         <div className="flex items-center gap-2">
           {isCodeNote && (
-            <button
-              type="button"
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={handleCopyCode}
-              className={`transition-colors ${
-                isCopied
+                          <button
+                            type="button"
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={(e) => { void handleCopyCode(e); }}
+                            className={`transition-colors ${                isCopied
                   ? "text-green-500"
                   : "text-gray-500 hover:text-blue-500"
               }`}

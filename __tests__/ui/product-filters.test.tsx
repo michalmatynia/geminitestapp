@@ -1,24 +1,21 @@
-/**
- * @jest-environment jsdom
- */
-
+import { vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { ProductFilters } from "@/components/products/ProductFilters";
+import { ProductFilters } from "@/components/products/list/ProductFilters";
 
 describe("ProductFilters Component", () => {
   const mockProps = {
     search: "",
-    setSearch: jest.fn(),
+    setSearch: vi.fn(),
     sku: "",
-    setSku: jest.fn(),
+    setSku: vi.fn(),
     minPrice: undefined,
-    setMinPrice: jest.fn(),
+    setMinPrice: vi.fn(),
     maxPrice: undefined,
-    setMaxPrice: jest.fn(),
+    setMaxPrice: vi.fn(),
     startDate: "",
-    setStartDate: jest.fn(),
+    setStartDate: vi.fn(),
     endDate: "",
-    setEndDate: jest.fn(),
+    setEndDate: vi.fn(),
   };
 
   it("renders all filter inputs", () => {

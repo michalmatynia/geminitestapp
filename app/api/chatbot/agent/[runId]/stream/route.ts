@@ -42,7 +42,7 @@ export async function GET(
       };
 
       await sendSnapshot();
-      timer = setInterval(sendSnapshot, 2000);
+      timer = setInterval(() => { void sendSnapshot(); }, 2000);
 
       req.signal.addEventListener("abort", () => {
         if (timer) {

@@ -225,7 +225,7 @@ export async function POST(req: Request) {
 
         tableRows.push({
           name: table,
-          rows: rowsResult.rows,
+          rows: rowsResult.rows as Record<string, unknown>[],
           totalRows,
         });
       }
@@ -244,7 +244,7 @@ export async function POST(req: Request) {
     }
 
     const groupObj: Record<string, string[]> = {};
-    for (const [key, val] of groups) {
+    for (const [key, val] of Array.from(groups.entries())) {
       groupObj[key] = Array.from(val);
     }
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { UseNoteFiltersProps } from "@/types/notes-hooks";
+import type { NoteWithRelations } from "@/types/notes";
 
 export function useNoteFilters({ settings, updateSettings: _updateSettings }: UseNoteFiltersProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -46,7 +47,7 @@ export function useNoteFilters({ settings, updateSettings: _updateSettings }: Us
     return () => clearTimeout(timer);
   }, [highlightTagId]);
 
-  const handleFilterByTag = useCallback((tagId: string, setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: any) => void, setIsEditing: (val: boolean) => void) => {
+  const handleFilterByTag = useCallback((tagId: string, setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: NoteWithRelations | null) => void, setIsEditing: (val: boolean) => void) => {
     setSelectedFolderId(null);
     setFilterTagIds([tagId]);
     setSearchQuery("");
@@ -55,7 +56,7 @@ export function useNoteFilters({ settings, updateSettings: _updateSettings }: Us
     setHighlightTagId(tagId);
   }, []);
 
-  const handleToggleFavoritesFilter = useCallback((setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: any) => void, setIsEditing: (val: boolean) => void) => {
+  const handleToggleFavoritesFilter = useCallback((setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: NoteWithRelations | null) => void, setIsEditing: (val: boolean) => void) => {
     setFilterFavorite((prev) => (prev ? undefined : true));
     setSelectedFolderId(null);
     setSelectedNote(null);

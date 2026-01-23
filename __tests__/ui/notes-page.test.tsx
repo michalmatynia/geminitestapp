@@ -1,7 +1,8 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 
+import { vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -105,7 +106,7 @@ describe("Notes page UI", () => {
       });
     }
 
-    jest.spyOn(global, "fetch").mockImplementation((input, init) => {
+    vi.spyOn(global, "fetch").mockImplementation((input, init) => {
       const url =
         typeof input === "string"
           ? input
@@ -244,14 +245,14 @@ describe("Notes page UI", () => {
   });
 
   afterEach(() => {
-    (global.fetch as jest.Mock).mockRestore();
+    vi.restoreAllMocks();
   });
 
   it("renders notes from the API", async () => {
     renderNotesPage();
 
-    expect(await screen.findByText("Alpha")).toBeInTheDocument();
-    expect(screen.getByText("Beta")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Alpha" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Beta" })).toBeInTheDocument();
   });
 
   it("filters notes by search and tag", async () => {
@@ -264,17 +265,17 @@ describe("Notes page UI", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Alpha")).toBeInTheDocument();
-      expect(screen.queryByText("Beta")).not.toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Alpha" })).toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "Beta" })).not.toBeInTheDocument();
     });
 
     await user.selectOptions(
-      screen.getByRole("combobox"),
+      screen.getByDisplayValue("Filter by Tag..."),
       screen.getByRole("option", { name: "Work" })
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Alpha")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Alpha" })).toBeInTheDocument();
     });
   });
 
@@ -285,11 +286,11 @@ describe("Notes page UI", () => {
     await user.click(await screen.findByLabelText("Create note"));
     await user.type(screen.getByPlaceholderText("Enter note title"), "Gamma");
     await user.type(
-      screen.getByPlaceholderText("Enter note content"),
+      screen.getByPlaceholderText("Enter note content (paste images directly!)"),
       "Third note"
     );
     await user.click(screen.getByRole("button", { name: "Create" }));
 
-    expect(await screen.findByText("Gamma")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Gamma" })).toBeInTheDocument();
   });
 });

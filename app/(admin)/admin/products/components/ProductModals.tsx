@@ -17,7 +17,6 @@ import type { ProductWithImages } from "@/types";
 interface ProductModalsProps {
   isCreateOpen: boolean;
   initialSku: string;
-  initialCatalogId?: string | undefined;
   onCloseCreate: () => void;
   onCreateSuccess: () => void;
   editingProduct: ProductWithImages | null;
@@ -119,7 +118,6 @@ function EditProductModalContent({ onClose }: { onClose: () => void }) {
 export function ProductModals({
   isCreateOpen: isCreateOpen,
   initialSku,
-  initialCatalogId,
   onCloseCreate,
   onCreateSuccess,
   editingProduct,
@@ -172,7 +170,6 @@ export function ProductModals({
             <ProductFormProvider
               onSuccess={onCreateSuccess}
               initialSku={initialSku}
-              initialCatalogId={initialCatalogId}
             >
               <CreateProductModalContent onClose={onCloseCreate} />
             </ProductFormProvider>

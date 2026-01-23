@@ -30,12 +30,6 @@ export default function ProductImageManager() {
     Array(imageSlots.length).fill("upload")
   );
 
-  // Create stable keys for each slot to prevent React reconciliation issues
-  // These keys stay with the slot content, not the position
-  const slotKeysRef = useRef<string[]>(
-    Array.from({ length: imageSlots.length }, (_, i) => `slot-${i}-${Date.now()}`)
-  );
-
   // Drag and drop state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -159,15 +153,6 @@ export default function ProductImageManager() {
     if (fromIndex !== toIndex) {
       swapImageSlots(fromIndex, toIndex);
 
-      // Also swap the stable keys so they follow the content
-      const keys = slotKeysRef.current;
-      const tempKey = keys[fromIndex];
-      const toKey = keys[toIndex];
-      if (tempKey !== undefined && toKey !== undefined) {
-        keys[fromIndex] = toKey;
-        keys[toIndex] = tempKey;
-      }
-
       // Swap the view modes to follow the content
       setSlotViewModes((prev) => {
         const next = [...prev];
@@ -256,8 +241,13 @@ export default function ProductImageManager() {
           const showLink = (prefersLink && hasLink) || (!hasUpload && hasLink);
           const displayUrl = showLink ? linkValue : slot?.previewUrl;
 
+          // Generate a stable key based on slot content, not position
+          const slotKey = slot
+            ? `slot-${slot.type}-${slot.type === 'existing' ? slot.data.id : slot.previewUrl}-${index}`
+            : `empty-slot-${index}`;
+
           return (
-            <div key={slotKeysRef.current[index]} className="flex flex-col items-center gap-1">
+            <div key={slotKey} className="flex flex-col items-center gap-1">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
                   <span

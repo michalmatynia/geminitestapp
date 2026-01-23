@@ -1,6 +1,8 @@
 import type { ProductWithImages } from "@/types";
 import type { BaseProductRecord } from "@/lib/services/imports/base-client";
 import { callBaseApi } from "@/lib/services/imports/base-client";
+import fs from "fs/promises";
+import { getDiskPathFromPublicPath } from "@/lib/utils/fileUploader";
 
 type ExportTemplateMapping = {
   sourceKey: string;  // Internal product field
@@ -28,16 +30,14 @@ const resolveImageUrl = (value: string | null | undefined, baseUrl?: string | nu
   return `${base}/${path}`;
 };
 
+// Base.com API field names that accept image data
 const IMAGE_TARGET_FIELDS = new Set([
   "images",
   "image",
   "image_urls",
-  "images_url",
-  "images_urls",
-  "images_link_all",
-  "image_links_all",
 ]);
 
+// Internal product field aliases that map to "images" for export
 const IMAGE_EXPORT_ALIASES = new Set([
   "image_all",
   "images_all",
@@ -46,8 +46,6 @@ const IMAGE_EXPORT_ALIASES = new Set([
   "image_files",
   "image_links_all",
   "image_links",
-  "images_link_all",
-  "image_link_all",
 ]);
 
 const normalizeExportTargetField = (targetField: string) => {
@@ -148,6 +146,80 @@ const getAllImageUrls = (product: ProductWithImages, imageBaseUrl?: string | nul
   const slots = getImageList(product, "slot", imageBaseUrl);
   const links = getImageList(product, "link", imageBaseUrl);
   return Array.from(new Set([...slots, ...links]));
+};
+
+/**
+ * Convert image file to base64 data URI for Base.com
+ * Base.com expects format: "data:BASE64STRING" (without MIME type and "base64," prefix)
+ */
+const imageToBase64DataUri = async (filepath: string): Promise<string | null> => {
+  try {
+    // Check if it's a URL (starts with http:// or https://)
+    if (hasScheme(filepath)) {
+      // For external URLs, we need to fetch and convert
+      const response = await fetch(filepath);
+      if (!response.ok) {
+        console.warn(`[imageToBase64DataUri] Failed to fetch external image: ${filepath}`);
+        return null;
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      // Base.com format: "data:" followed directly by base64 string (no MIME type)
+      return `data:${buffer.toString("base64")}`;
+    }
+
+    // For local files
+    const diskPath = getDiskPathFromPublicPath(filepath);
+    const fileBuffer = await fs.readFile(diskPath);
+
+    // Base.com format: "data:" followed directly by base64 string (no MIME type)
+    return `data:${fileBuffer.toString("base64")}`;
+  } catch (error) {
+    console.warn(`[imageToBase64DataUri] Failed to convert image to base64: ${filepath}`, error);
+    return null;
+  }
+};
+
+/**
+ * Get product images as base64 data URIs
+ */
+const getProductImagesAsBase64 = async (
+  product: ProductWithImages
+): Promise<Record<string, string>> => {
+  const images: Record<string, string> = {};
+  const imageSlots = product.images || [];
+
+  let index = 0;
+  for (const imageSlot of imageSlots) {
+    const filepath = imageSlot.imageFile?.filepath;
+    if (!filepath) continue;
+
+    const base64 = await imageToBase64DataUri(filepath);
+    if (base64) {
+      images[String(index)] = base64;
+      index++;
+    }
+  }
+
+  // Also process imageLinks if they exist and we don't have enough images
+  const imageLinks = product.imageLinks || [];
+  for (const link of imageLinks) {
+    if (!link || !link.trim()) continue;
+
+    // Skip if we already have this as an uploaded image
+    const alreadyProcessed = imageSlots.some(
+      slot => slot.imageFile?.filepath === link
+    );
+    if (alreadyProcessed) continue;
+
+    const base64 = await imageToBase64DataUri(link);
+    if (base64) {
+      images[String(index)] = base64;
+      index++;
+    }
+  }
+
+  return images;
 };
 
 /**
@@ -379,7 +451,7 @@ const mergeNumericFields = (
  * Applies default mapping + optional template mappings
  * Returns data in Baselinker API format
  */
-export function buildBaseProductData(
+export async function buildBaseProductData(
   product: ProductWithImages,
   mappings: ExportTemplateMapping[] = [],
   warehouseId?: string | null,
@@ -387,8 +459,9 @@ export function buildBaseProductData(
     imageBaseUrl?: string | null;
     includeStockWithoutWarehouse?: boolean;
     stockWarehouseAliases?: Record<string, string>;
+    exportImagesAsBase64?: boolean;
   }
-): BaseProductRecord {
+): Promise<BaseProductRecord> {
   // Start with default field mappings in Baselinker API format
   const baseData: BaseProductRecord = {};
 
@@ -421,6 +494,14 @@ export function buildBaseProductData(
       baseData.stock = { [warehouseId]: product.stock };
     } else if (options?.includeStockWithoutWarehouse) {
       baseData.stock = product.stock;
+    }
+  }
+
+  // Handle images - export as base64 data URIs if requested
+  if (options?.exportImagesAsBase64) {
+    const base64Images = await getProductImagesAsBase64(product);
+    if (Object.keys(base64Images).length > 0) {
+      baseData.images = base64Images;
     }
   }
 
@@ -485,6 +566,12 @@ export function buildBaseProductData(
         delete templateData.stock;
       }
     }
+
+    // If exporting images as base64, don't let template mappings override them
+    if (options?.exportImagesAsBase64 && baseData.images) {
+      delete templateData.images;
+    }
+
     Object.assign(baseData, templateData);
   }
 
@@ -504,19 +591,11 @@ export async function exportProductToBase(
     imageBaseUrl?: string | null;
     includeStockWithoutWarehouse?: boolean;
     stockWarehouseAliases?: Record<string, string>;
+    exportImagesAsBase64?: boolean;
   }
 ): Promise<{ success: boolean; productId?: string; error?: string }> {
   try {
-    const productData = buildBaseProductData(product, mappings, warehouseId, options);
-
-    console.log("[base-exporter] Built product data for export", {
-      productId: product.id,
-      sku: productData.sku,
-      hasTextFields: Boolean(productData.text_fields),
-      hasPrices: Boolean(productData.prices),
-      hasStock: Boolean(productData.stock),
-      fieldCount: Object.keys(productData).length,
-    });
+    const productData = await buildBaseProductData(product, mappings, warehouseId, options);
 
     // Build API parameters - inventory_id + all product fields as top-level params
     const apiParams: Record<string, unknown> = {
@@ -524,30 +603,13 @@ export async function exportProductToBase(
       ...productData,
     };
 
-    console.log("[base-exporter] Sending to Base.com API", {
-      method: "addInventoryProduct",
-      inventoryId,
-      params: apiParams,
-    });
-
     const response = await callBaseApi(token, "addInventoryProduct", apiParams);
-
-    console.log("[base-exporter] Base.com API response", {
-      status: response.status,
-      productId: response.product_id,
-      response,
-    });
 
     // Extract product ID from response
     // Baselinker API returns { status: "SUCCESS", product_id: "..." }
     const productId = response.product_id
       ? String(response.product_id)
       : null;
-
-    console.log("[base-exporter] Export completed", {
-      success: true,
-      externalProductId: productId,
-    });
 
     return {
       success: true,

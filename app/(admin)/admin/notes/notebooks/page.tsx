@@ -195,7 +195,7 @@ export default function NotebooksPage() {
                 placeholder="Enter notebook name"
               />
             </div>
-            <Button onClick={handleCreate} disabled={isSaving}>
+            <Button onClick={() => { void handleCreate(); }} disabled={isSaving}>
               {isSaving ? "Saving..." : "Create"}
             </Button>
           </div>
@@ -204,7 +204,7 @@ export default function NotebooksPage() {
         <div className="rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white">Your Notebooks</h2>
-            <Button variant="outline" onClick={fetchNotebooks}>
+            <Button variant="outline" onClick={() => { void fetchNotebooks(); }}>
               Refresh
             </Button>
           </div>
@@ -257,7 +257,7 @@ export default function NotebooksPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleUpdate(notebook.id)}
+                            onClick={() => { void handleUpdate(notebook.id); }}
                             disabled={isUpdating}
                           >
                             Save
@@ -308,7 +308,7 @@ export default function NotebooksPage() {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => handleDuplicate(notebook)}
+                                  onClick={() => { void handleDuplicate(notebook); }}
                                   onClickCapture={(event) => event.stopPropagation()}
                                   className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-gray-800"
                                 >
@@ -316,7 +316,7 @@ export default function NotebooksPage() {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => handleDelete(notebook.id)}
+                                  onClick={() => { void handleDelete(notebook.id); }}
                                   onClickCapture={(event) => event.stopPropagation()}
                                   className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-red-300 hover:bg-gray-800"
                                 >

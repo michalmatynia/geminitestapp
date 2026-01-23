@@ -8,6 +8,7 @@ import DebugPanel from "@/components/DebugPanel";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ProductFilters } from "@/components/products/list/ProductFilters";
+import { ProductTableSkeleton } from "@/components/products/list/ProductTableSkeleton";
 import { useProductData } from "./hooks/useProductData";
 import { useProductOperations } from "./hooks/useProductOperations";
 import { useCatalogSync } from "./hooks/useCatalogSync";
@@ -79,6 +80,7 @@ function AdminPageInner() {
     catalogFilter,
     setCatalogFilter,
     loadError,
+    isLoading,
   } = useProductData({
     refreshTrigger,
     initialCatalogFilter: preferences.catalogFilter,
@@ -196,6 +198,9 @@ function AdminPageInner() {
     setShowIntegrationModal(false);
     setIsMassListing(false);
   }, []);
+
+  // Stable row ID getter to prevent DataTable re-renders
+  const getRowId = useCallback((row: ProductWithImages) => row.id, []);
 
   const handleSelectIntegrationFromModal = useCallback((integrationId: string, connectionId: string) => {
     setShowIntegrationModal(false);
@@ -386,16 +391,17 @@ function AdminPageInner() {
           onExportSettingsClick={handleOpenExportSettings}
           integrationBadgeIds={integrationBadgeIds}
           integrationBadgeStatuses={integrationBadgeStatuses}
-          getRowId={(row) => row.id}
+          getRowId={getRowId}
           rowSelection={rowSelection}
           onRowSelectionChange={setRowSelection}
+          isLoading={isLoading}
+          skeletonRows={<ProductTableSkeleton rows={pageSize} />}
         />
       </div>
 
       <ProductModals
         isCreateOpen={isCreateOpen}
         initialSku={initialSku}
-        initialCatalogId={catalogFilter !== "all" ? catalogFilter : undefined}
         onCloseCreate={handleCloseCreate}
         onCreateSuccess={handleCreateSuccess}
         editingProduct={editingProduct}

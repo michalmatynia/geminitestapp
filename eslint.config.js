@@ -13,7 +13,8 @@ const compat = new FlatCompat({
 
 const configFiles = [
   "eslint.config.js",
-  "jest.config.cjs",
+  "vitest.config.ts",
+  "vitest.setup.ts",
   "next.config.mjs",
   "postcss.config.mjs",
   "prisma/seed.js",

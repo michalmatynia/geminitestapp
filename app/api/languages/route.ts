@@ -49,7 +49,9 @@ const seedMongoLanguages = async (db: Awaited<ReturnType<typeof getMongoDb>>) =>
 
     const countries: LanguageCountryDoc[] = [];
     for (const mapping of matchingMappings) {
-      const country = await countriesCollection.findOne({ code: mapping.countryCode });
+      const country = (await countriesCollection.findOne({
+        code: mapping.countryCode,
+      })) as { id: string; code: string; name: string } | null;
       if (country) {
         countries.push({
           countryId: country.id || mapping.countryCode,

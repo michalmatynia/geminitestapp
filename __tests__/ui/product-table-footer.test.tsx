@@ -1,32 +1,38 @@
-/**
- * @jest-environment jsdom
- */
-
+import { vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { ProductTableFooter } from "@/components/products/ProductTableFooter";
+import { ProductTableFooter } from "@/components/products/list/ProductTableFooter";
 import { Table } from "@tanstack/react-table";
+import { ToastProvider } from "@/components/ui/toast";
 
 describe("ProductTableFooter Component", () => {
   const mockTable = {
     getFilteredSelectedRowModel: () => ({ rows: [] }),
     getFilteredRowModel: () => ({ rows: { length: 100 } }),
     getSelectedRowModel: () => ({ rows: [] }),
-    setRowSelection: jest.fn(),
+    setRowSelection: vi.fn(),
   } as unknown as Table<object>;
 
   const mockProps = {
     table: mockTable,
-    setRefreshTrigger: jest.fn(),
-    setActionError: jest.fn(),
+    setRefreshTrigger: vi.fn(),
+    setActionError: vi.fn(),
   };
 
   it("renders selection count", () => {
-    render(<ProductTableFooter {...mockProps} />);
+    render(
+      <ToastProvider>
+        <ProductTableFooter {...mockProps} />
+      </ToastProvider>
+    );
     expect(screen.getByText("0 of 100 row(s) selected.")).toBeInTheDocument();
   });
 
   it("disables delete button when no selection", () => {
-    render(<ProductTableFooter {...mockProps} />);
+    render(
+      <ToastProvider>
+        <ProductTableFooter {...mockProps} />
+      </ToastProvider>
+    );
     const deleteButton = screen.getByText("Delete Selected");
     expect(deleteButton).toBeDisabled();
   });
@@ -37,7 +43,11 @@ describe("ProductTableFooter Component", () => {
       getFilteredSelectedRowModel: () => ({ rows: [{}, {}] }),
     } as unknown as Table<object>;
 
-    render(<ProductTableFooter {...mockProps} table={tableWithSelection} />);
+    render(
+      <ToastProvider>
+        <ProductTableFooter {...mockProps} table={tableWithSelection} />
+      </ToastProvider>
+    );
     const deleteButton = screen.getByText("Delete Selected");
     expect(deleteButton).not.toBeDisabled();
   });

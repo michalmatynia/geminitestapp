@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -25,7 +26,7 @@ interface ProductSelectionBarProps {
   total?: number;
 }
 
-export function ProductSelectionBar({
+export const ProductSelectionBar = memo(function ProductSelectionBar({
   data,
   rowSelection,
   setRowSelection,
@@ -34,47 +35,48 @@ export function ProductSelectionBar({
   onDeleteSelected,
   onAddToMarketplace,
 }: ProductSelectionBarProps) {
-  const handleSelectAllGlobal = async () => {
+  const handleSelectAllGlobal = useCallback(async () => {
     if (!onSelectAllGlobal) return;
     try {
       await onSelectAllGlobal();
     } catch (error) {
       console.error("Failed to select all products:", error);
     }
-  };
+  }, [onSelectAllGlobal]);
 
-  const handleDeleteSelected = async () => {
+  const handleDeleteSelected = useCallback(async () => {
     if (!onDeleteSelected) return;
     try {
       await onDeleteSelected();
     } catch (error) {
       console.error("Failed to delete selected products:", error);
     }
-  };
+  }, [onDeleteSelected]);
 
-  const handleSelectPage = () => {
+  const handleSelectPage = useCallback(() => {
     const newSelection = { ...rowSelection };
     data.forEach((product) => {
       newSelection[product.id] = true;
     });
     setRowSelection(newSelection);
-  };
+  }, [data, rowSelection, setRowSelection]);
 
-  const handleDeselectPage = () => {
+  const handleDeselectPage = useCallback(() => {
     const newSelection = { ...rowSelection };
     data.forEach((product) => {
       delete newSelection[product.id];
     });
     setRowSelection(newSelection);
-  };
+  }, [data, rowSelection, setRowSelection]);
 
-  const handleDeselectAll = () => {
+  const handleDeselectAll = useCallback(() => {
     setRowSelection({});
-  };
+  }, [setRowSelection]);
 
-  const hasSelection = Object.keys(rowSelection).filter(
-    (key) => rowSelection[key]
-  ).length > 0;
+  const hasSelection = useMemo(
+    () => Object.keys(rowSelection).filter((key) => rowSelection[key]).length > 0,
+    [rowSelection]
+  );
 
   return (
     <div className="mb-4 flex items-center gap-2">
@@ -162,4 +164,4 @@ export function ProductSelectionBar({
       </DropdownMenu>
     </div>
   );
-}
+});

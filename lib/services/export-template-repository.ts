@@ -22,6 +22,7 @@ export type Template = {
   name: string;
   description?: string | null;
   mappings: TemplateMapping[];
+  exportImagesAsBase64?: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -29,6 +30,7 @@ export type Template = {
 const SETTINGS_KEY = "base_export_templates";
 const ACTIVE_TEMPLATE_KEY = "base_export_active_template_id";
 const DEFAULT_INVENTORY_KEY = "base_export_default_inventory_id";
+const DEFAULT_CONNECTION_KEY = "base_export_default_connection_id";
 const STOCK_FALLBACK_KEY = "base_export_stock_fallback_enabled";
 const BASEHOST_MAPPING_KEYS = new Set(["images_basehost_all", "image_basehost_all"]);
 
@@ -140,6 +142,24 @@ const readStockFallbackValue = async (): Promise<string | null> => {
   return setting?.value ?? null;
 };
 
+const readDefaultConnectionValue = async (): Promise<string | null> => {
+  const provider = await getExportTemplateProvider();
+  if (provider === "mongodb") {
+    const mongo = await getMongoDb();
+    const doc = await mongo
+      .collection<{ _id: string; key?: string; value?: string }>("settings")
+      .findOne({
+        $or: [{ _id: DEFAULT_CONNECTION_KEY }, { key: DEFAULT_CONNECTION_KEY }],
+      });
+    return typeof doc?.value === "string" ? doc.value : null;
+  }
+  const setting = await prisma.setting.findUnique({
+    where: { key: DEFAULT_CONNECTION_KEY },
+    select: { value: true },
+  });
+  return setting?.value ?? null;
+};
+
 const writeTemplatesValue = async (value: string) => {
   const provider = await getExportTemplateProvider();
   console.log(`[ExportTemplateRepository] Writing templates... Length: ${value.length}`);
@@ -242,6 +262,31 @@ const writeStockFallbackValue = async (value: string) => {
   });
 };
 
+const writeDefaultConnectionValue = async (value: string) => {
+  const provider = await getExportTemplateProvider();
+  if (provider === "mongodb") {
+    const mongo = await getMongoDb();
+    await mongo.collection("settings").updateOne(
+      { $or: [{ _id: DEFAULT_CONNECTION_KEY }, { key: DEFAULT_CONNECTION_KEY }] } as any,
+      {
+        $set: {
+          value,
+          key: DEFAULT_CONNECTION_KEY,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
+      },
+      { upsert: true }
+    );
+    return;
+  }
+  await prisma.setting.upsert({
+    where: { key: DEFAULT_CONNECTION_KEY },
+    update: { value },
+    create: { key: DEFAULT_CONNECTION_KEY, value },
+  });
+};
+
 export const listExportTemplates = async (): Promise<Template[]> => {
   const raw = await readTemplatesValue();
   return parseTemplates(raw);
@@ -258,6 +303,7 @@ export const createExportTemplate = async (input: {
   name: string;
   description?: string | null;
   mappings?: TemplateMapping[];
+  exportImagesAsBase64?: boolean;
 }): Promise<Template> => {
   const templates = await listExportTemplates();
   const now = new Date().toISOString();
@@ -266,6 +312,7 @@ export const createExportTemplate = async (input: {
     name: input.name,
     description: input.description ?? null,
     mappings: input.mappings ?? [],
+    exportImagesAsBase64: input.exportImagesAsBase64 ?? false,
     createdAt: now,
     updatedAt: now,
   };
@@ -280,6 +327,7 @@ export const updateExportTemplate = async (
     name: string | undefined;
     description: string | null | undefined;
     mappings: TemplateMapping[] | undefined;
+    exportImagesAsBase64: boolean | undefined;
   }>
 ): Promise<Template | null> => {
   const templates = await listExportTemplates();
@@ -291,6 +339,7 @@ export const updateExportTemplate = async (
     name: input.name ?? existing.name,
     description: input.description !== undefined ? input.description : existing.description,
     mappings: input.mappings ?? existing.mappings,
+    exportImagesAsBase64: input.exportImagesAsBase64 !== undefined ? input.exportImagesAsBase64 : (existing.exportImagesAsBase64 ?? false),
     createdAt: existing.createdAt,
     updatedAt: new Date().toISOString(),
   } as Template;
@@ -332,4 +381,13 @@ export const getExportStockFallbackEnabled = async (): Promise<boolean> => {
 
 export const setExportStockFallbackEnabled = async (enabled: boolean) => {
   await writeStockFallbackValue(enabled ? "true" : "false");
+};
+
+export const getExportDefaultConnectionId = async (): Promise<string | null> => {
+  const value = await readDefaultConnectionValue();
+  return value ? value : null;
+};
+
+export const setExportDefaultConnectionId = async (value: string | null) => {
+  await writeDefaultConnectionValue(value?.trim() ? value.trim() : "");
 };

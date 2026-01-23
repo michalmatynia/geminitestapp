@@ -21,13 +21,15 @@ type Catalog = {
   currencyCode?: string;
 };
 
+const DEFAULT_PREFERENCES: UserPreferences = {
+  productListNameLocale: "name_en",
+  productListCatalogFilter: "all",
+  productListCurrencyCode: null,
+  productListPageSize: 50,
+};
+
 export default function ProductPreferencesPage() {
-  const [preferences, setPreferences] = useState<UserPreferences>({
-    productListNameLocale: "name_en",
-    productListCatalogFilter: "all",
-    productListCurrencyCode: null,
-    productListPageSize: 50,
-  });
+  const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [catalogs, setCatalogs] = useState<Catalog[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -42,11 +44,11 @@ export default function ProductPreferencesPage() {
         // Load preferences
         const prefsRes = await fetch("/api/user/preferences");
         if (prefsRes.ok) {
-          const prefsData = await prefsRes.json();
+          const prefsData = (await prefsRes.json()) as Partial<UserPreferences>;
           setPreferences({
             productListNameLocale: prefsData.productListNameLocale || "name_en",
             productListCatalogFilter: prefsData.productListCatalogFilter || "all",
-            productListCurrencyCode: prefsData.productListCurrencyCode,
+            productListCurrencyCode: prefsData.productListCurrencyCode || null,
             productListPageSize: prefsData.productListPageSize || 50,
           });
         }
@@ -87,6 +89,30 @@ export default function ProductPreferencesPage() {
     } catch (error) {
       console.error("Failed to save preferences:", error);
       toast("Failed to save preferences", { variant: "error" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleResetToDefault = async () => {
+    try {
+      setSaving(true);
+
+      const res = await fetch("/api/user/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(DEFAULT_PREFERENCES),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to reset preferences");
+      }
+
+      setPreferences(DEFAULT_PREFERENCES);
+      toast("Preferences reset to default", { variant: "success" });
+    } catch (error) {
+      console.error("Failed to reset preferences:", error);
+      toast("Failed to reset preferences", { variant: "error" });
     } finally {
       setSaving(false);
     }
@@ -230,18 +256,28 @@ export default function ProductPreferencesPage() {
             </div>
           </div>
 
-          {/* Save Button */}
-          <div className="flex justify-end gap-3">
+          {/* Action Buttons */}
+          <div className="flex justify-between gap-3">
             <Button
               variant="outline"
-              onClick={() => router.push("/admin/products")}
+              onClick={() => void handleResetToDefault()}
               disabled={saving}
+              className="border-yellow-600 text-yellow-600 hover:bg-yellow-600/10"
             >
-              Cancel
+              Reset to Default
             </Button>
-            <Button onClick={() => void handleSave()} disabled={saving}>
-              {saving ? "Saving..." : "Save Preferences"}
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => router.push("/admin/products")}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button onClick={() => void handleSave()} disabled={saving}>
+                {saving ? "Saving..." : "Save Preferences"}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

@@ -1,52 +1,49 @@
+/**
+ * @vitest-environment node
+ */
+
+import { vi, Mock } from "vitest";
+import { NextRequest } from "next/server";
 import { POST as POST_BACKUP } from "@/app/api/databases/backup/route";
 import { POST as POST_RESTORE } from "@/app/api/databases/restore/route";
 import { GET as GET_BACKUPS } from "@/app/api/databases/backups/route";
 import { POST as POST_UPLOAD } from "@/app/api/databases/upload/route";
 import { POST as POST_DELETE } from "@/app/api/databases/delete/route";
 import fs from "fs/promises";
-import { execFile } from "child_process";
+import { execFileAsync } from "@/app/api/databases/_utils";
 import { Stats } from "fs";
 
-jest.mock("child_process", () => {
-  const actual = jest.requireActual<typeof import("child_process")>(
-    "child_process"
-  );
+vi.mock("@/app/api/databases/_utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/app/api/databases/_utils")>();
   return {
     ...actual,
-    execFile: jest.fn(),
+    execFileAsync: vi.fn().mockResolvedValue({ stdout: "stdout", stderr: "stderr" }),
   };
 });
 
 describe("Databases API", () => {
   beforeEach(() => {
-    jest.resetAllMocks();
-    const execFileMock = execFile as jest.MockedFunction<typeof execFile>;
-    execFileMock.mockImplementation((...args) => {
-      const callback = args[args.length - 1];
-      if (typeof callback === "function") {
-        callback(null, "stdout", "stderr");
-      }
-      return {} as ReturnType<typeof execFile>;
-    });
+    vi.resetAllMocks();
+    (execFileAsync as Mock).mockResolvedValue({ stdout: "stdout", stderr: "stderr" });
   });
 
   describe("POST /api/databases/backup", () => {
     it("should create a backup of the database", async () => {
-      jest.spyOn(fs, "writeFile").mockResolvedValue(undefined);
+      vi.spyOn(fs, "writeFile").mockResolvedValue(undefined);
 
-      const res = await POST_BACKUP(new Request("http://localhost/api/databases/backup", { method: "POST" }));
+      const res = await POST_BACKUP(new NextRequest("http://localhost/api/databases/backup", { method: "POST" }));
       expect(res.status).toEqual(200);
-      expect(execFile).toHaveBeenCalledTimes(1);
+      expect(execFileAsync).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("POST /api/databases/restore", () => {
     it("should restore a database from a backup", async () => {
-      jest.spyOn(fs, "writeFile").mockResolvedValue(undefined);
-      jest.spyOn(fs, "readFile").mockResolvedValueOnce("{}");
+      vi.spyOn(fs, "writeFile").mockResolvedValue(undefined);
+      vi.spyOn(fs, "readFile").mockResolvedValueOnce("{}");
 
       const res = await POST_RESTORE(
-        new Request("http://localhost/api/databases/restore", {
+        new NextRequest("http://localhost/api/databases/restore", {
           method: "POST",
           body: JSON.stringify({
             backupName: "test-backup.dump",
@@ -54,28 +51,27 @@ describe("Databases API", () => {
         })
       );
       expect(res.status).toEqual(200);
-      expect(execFile).toHaveBeenCalledTimes(1);
+      expect(execFileAsync).toHaveBeenCalledTimes(1);
       expect(fs.writeFile).toHaveBeenCalledTimes(2);
     });
   });
 
   describe("GET /api/databases/backups", () => {
     it("should return a list of backups", async () => {
-      jest
-        .spyOn(fs, "readdir")
+      vi.spyOn(fs, "readdir")
         .mockResolvedValue([
           "stardb-backup-123.dump",
           "restore-log.json",
         ] as unknown as string[]);
-      jest.spyOn(fs, "readFile").mockResolvedValue("{}");
-      jest.spyOn(fs, "stat").mockResolvedValue({
+      vi.spyOn(fs, "readFile").mockResolvedValue("{}");
+      vi.spyOn(fs, "stat").mockResolvedValue({
         size: 1024,
         birthtime: new Date(),
         mtime: new Date(),
       } as unknown as Stats);
 
       const res = await GET_BACKUPS(
-        new Request("http://localhost/api/databases/backups?type=postgresql")
+        new NextRequest("http://localhost/api/databases/backups?type=postgresql")
       );
       const backups = (await res.json()) as { name: string }[];
       expect(res.status).toEqual(200);
@@ -86,13 +82,13 @@ describe("Databases API", () => {
 
   describe("POST /api/databases/upload", () => {
     it("should upload a database backup file", async () => {
-      jest.spyOn(fs, "writeFile").mockResolvedValue(undefined);
+      vi.spyOn(fs, "writeFile").mockResolvedValue(undefined);
       const formData = new FormData();
-      const blob = new Blob(["test content"]);
+      const blob = new Blob(["test content"], { type: "application/octet-stream" });
       formData.append("file", blob, "test.dump");
 
       const res = await POST_UPLOAD(
-        new Request("http://localhost/api/databases/upload", {
+        new NextRequest("http://localhost/api/databases/upload", {
           method: "POST",
           body: formData,
         })
@@ -107,7 +103,7 @@ describe("Databases API", () => {
       formData.append("file", blob, "test.txt");
 
       const res = await POST_UPLOAD(
-        new Request("http://localhost/api/databases/upload", {
+        new NextRequest("http://localhost/api/databases/upload", {
           method: "POST",
           body: formData,
         })
@@ -118,10 +114,10 @@ describe("Databases API", () => {
 
   describe("POST /api/databases/delete", () => {
     it("should delete a database backup file", async () => {
-      jest.spyOn(fs, "unlink").mockResolvedValue(undefined);
+      vi.spyOn(fs, "unlink").mockResolvedValue(undefined);
 
       const res = await POST_DELETE(
-        new Request("http://localhost/api/databases/delete", {
+        new NextRequest("http://localhost/api/databases/delete", {
           method: "POST",
           body: JSON.stringify({ backupName: "test.dump" }),
         })

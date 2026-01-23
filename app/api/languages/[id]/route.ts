@@ -113,7 +113,7 @@ export async function PUT(
         if (uniqueIds.length > 0) {
           const countriesCollection = mongo.collection("countries");
           for (const countryId of uniqueIds) {
-            const country = await countriesCollection.findOne({ id: countryId });
+            const country = (await countriesCollection.findOne({ id: countryId })) as { id: string; code: string; name: string } | null;
             if (country) {
               countries.push({
                 countryId: country.id,

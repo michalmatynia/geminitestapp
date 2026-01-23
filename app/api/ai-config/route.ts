@@ -3,7 +3,7 @@ import { getMongoDb } from "@/lib/db/mongo-client";
 
 export async function POST(req: NextRequest) {
   try {
-    const data = await req.json();
+    const data = (await req.json()) as Record<string, unknown>;
     if (!process.env.MONGODB_URI) {
       // If no MongoDB, we just skip this part or return success if we don't want to block
       return NextResponse.json({ success: true, message: "MongoDB not configured, skipping." });

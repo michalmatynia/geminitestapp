@@ -98,7 +98,7 @@ export function MarkdownEditor({
               : "Enter note content (paste images directly!)"}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            onPaste={onPaste}
+            onPaste={(e) => { void onPaste(e); }}
             rows={12}
             className="w-full rounded-lg border border-gray-700 px-4 py-2 font-mono"
             style={{

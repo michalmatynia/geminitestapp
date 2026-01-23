@@ -20,6 +20,7 @@ export function useProductData({
 }: UseProductDataProps) {
   const [data, setData] = useState<ProductWithImages[]>([]);
   const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Filter state
   const [search, setSearch] = useState<string>("");
@@ -97,6 +98,7 @@ export function useProductData({
     console.log("[useProductData] Loading products with filters:", filters);
     let cancelled = false;
     const loadProducts = async () => {
+      setIsLoading(true);
       setLoadError(null);
       try {
         const [products, productCount] = await Promise.all([
@@ -113,6 +115,10 @@ export function useProductData({
         logger.error("Failed to load products:", error);
         if (!cancelled) {
           setLoadError(message);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
         }
       }
     };
@@ -150,5 +156,6 @@ export function useProductData({
     catalogFilter,
     setCatalogFilter,
     loadError,
+    isLoading,
   };
 }

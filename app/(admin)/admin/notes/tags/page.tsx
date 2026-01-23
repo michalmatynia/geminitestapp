@@ -208,7 +208,7 @@ export default function NoteTagsPage() {
                 className="h-10 w-20 rounded border border-gray-700 bg-gray-800"
               />
             </div>
-            <Button onClick={handleCreate} disabled={isSaving}>
+            <Button onClick={() => { void handleCreate(); }} disabled={isSaving}>
               {isSaving ? "Saving..." : "Create"}
             </Button>
           </div>
@@ -217,7 +217,7 @@ export default function NoteTagsPage() {
         <div className="rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white">Existing Tags</h2>
-            <Button variant="outline" onClick={fetchTags}>
+            <Button variant="outline" onClick={() => { void fetchTags(); }}>
               Refresh
             </Button>
           </div>
@@ -264,7 +264,7 @@ export default function NoteTagsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleUpdate(tag.id)}
+                            onClick={() => { void handleUpdate(tag.id); }}
                             disabled={isUpdating}
                           >
                             Save
@@ -288,7 +288,7 @@ export default function NoteTagsPage() {
                       )}
                       <button
                         type="button"
-                        onClick={() => handleDelete(tag.id)}
+                        onClick={() => { void handleDelete(tag.id); }}
                         className="text-gray-400 hover:text-red-400"
                         aria-label={`Delete ${tag.name}`}
                       >

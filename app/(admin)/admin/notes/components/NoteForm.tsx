@@ -201,7 +201,7 @@ export function NoteForm({
       setEditorMode("wysiwyg");
       toast("Note migrated to WYSIWYG format", { variant: "success" });
       onSuccess?.();
-    } catch (error) {
+    } catch {
       toast("Failed to migrate note", { variant: "error" });
     } finally {
       setIsMigrating(false);
@@ -232,7 +232,7 @@ export function NoteForm({
       setEditorMode("markdown");
       toast("Note migrated to Markdown format", { variant: "success" });
       onSuccess?.();
-    } catch (error) {
+    } catch {
       toast("Failed to migrate note", { variant: "error" });
     } finally {
       setIsMigrating(false);
@@ -514,7 +514,7 @@ export function NoteForm({
         setNoteFiles((prev) => [...prev.filter((f) => f.slotIndex !== slotIndex), newFile].sort((a, b) => a.slotIndex - b.slotIndex));
         toast("File uploaded successfully");
       } else {
-        const error = await response.json();
+        const error = (await response.json()) as { error?: string };
         toast(error.error || "Failed to upload file");
       }
     } catch (error) {
@@ -656,7 +656,7 @@ export function NoteForm({
 
           toast("Image pasted and uploaded");
         } else {
-          const error = await response.json();
+          const error = (await response.json()) as { error?: string };
           toast(error.error || "Failed to upload pasted image");
         }
       } catch (error) {
@@ -900,12 +900,11 @@ export function NoteForm({
 
   return (
     <>
-    <form
-      id={note ? "note-edit-form" : undefined}
-      onSubmit={handleSubmit}
-      className="space-y-4"
-    >
-      {!note && (
+          <form
+            id={note ? "note-edit-form" : undefined}
+            onSubmit={(e) => { void handleSubmit(e); }}
+            className="space-y-4"
+          >      {!note && (
         <div className="flex gap-2 pb-4 border-b border-gray-700">
           <Button
             type="submit"
@@ -955,13 +954,12 @@ export function NoteForm({
           onApplySpanStyle={applySpanStyle}
           onInsertFileReference={insertFileReference}
           editorMode={editorMode}
-          onEditorModeChange={handleEditorModeChange}
-          isEditorModeLocked={isEditorModeLocked}
-          isMigrating={isMigrating}
-          onMigrateToWysiwyg={handleMigrateToWysiwyg}
-          onMigrateToMarkdown={handleMigrateToMarkdown}
-        />
-        {editorMode === "markdown" || editorMode === "code" ? (
+                      onEditorModeChange={handleEditorModeChange}
+                      isEditorModeLocked={isEditorModeLocked}
+                      isMigrating={isMigrating}
+                      onMigrateToWysiwyg={() => { void handleMigrateToWysiwyg(); }}
+                      onMigrateToMarkdown={() => { void handleMigrateToMarkdown(); }}
+                    />        {editorMode === "markdown" || editorMode === "code" ? (
           <MarkdownEditor
             content={content}
             setContent={setContent}

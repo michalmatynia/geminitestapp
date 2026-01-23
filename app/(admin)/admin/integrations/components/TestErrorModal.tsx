@@ -119,7 +119,7 @@ export function TestErrorModal({
             <button
               className="rounded-md border border-gray-700 px-3 py-1.5 text-xs text-gray-200 hover:bg-gray-800"
               type="button"
-              onClick={handleCopyTestError}
+              onClick={() => { void handleCopyTestError(); }}
             >
               Copy
             </button>

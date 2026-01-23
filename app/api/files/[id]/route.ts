@@ -4,8 +4,11 @@ import { NextResponse } from "next/server";
 import { getDiskPathFromPublicPath } from "@/lib/utils/fileUploader";
 import { getImageFileRepository } from "@/lib/services/image-file-repository";
 
-export async function DELETE(req: Request, { params }: any) {
-  const { id } = params;
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
 
   try {
     const imageFileRepository = await getImageFileRepository();

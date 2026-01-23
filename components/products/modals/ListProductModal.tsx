@@ -45,6 +45,7 @@ export default function ListProductModal({
   const [inventories, setInventories] = useState<BaseInventory[]>([]);
   const [selectedInventoryId, setSelectedInventoryId] = useState<string>("");
   const [preferredInventoryId, setPreferredInventoryId] = useState<string | null>(null);
+  const [preferredConnectionId, setPreferredConnectionId] = useState<string | null>(null);
   const [loadingInventories, setLoadingInventories] = useState(false);
   const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
   const previousConnectionId = useRef<string>("");
@@ -137,6 +138,21 @@ export default function ListProductModal({
     };
 
     void loadPreferredInventory();
+  }, []);
+
+  useEffect(() => {
+    const loadPreferredConnection = async () => {
+      try {
+        const res = await fetch("/api/products/exports/base/default-connection");
+        if (!res.ok) return;
+        const payload = (await res.json()) as { connectionId?: string | null };
+        setPreferredConnectionId(payload.connectionId ?? null);
+      } catch {
+        // Ignore connection preference errors
+      }
+    };
+
+    void loadPreferredConnection();
   }, []);
 
   // Reset connection when user changes the integration selection.
@@ -238,6 +254,48 @@ export default function ListProductModal({
     preferredInventoryId,
     selectedInventoryId,
     loadingInventories,
+  ]);
+
+  // Auto-select Base.com integration if there's a preferred connection
+  useEffect(() => {
+    if (selectedIntegrationId) return; // Don't override if already selected
+    if (!preferredConnectionId) return;
+    if (integrations.length === 0) return;
+    if (hasPresetSelection) return; // Don't override preset selections
+
+    // Find the integration that contains the preferred connection
+    const integrationWithPreferredConnection = integrations.find((integration) =>
+      integration.connections.some((conn) => conn.id === preferredConnectionId)
+    );
+
+    if (integrationWithPreferredConnection) {
+      setSelectedIntegrationId(integrationWithPreferredConnection.id);
+    }
+  }, [
+    preferredConnectionId,
+    selectedIntegrationId,
+    integrations,
+    hasPresetSelection,
+  ]);
+
+  // Auto-select default connection for Base.com integration
+  useEffect(() => {
+    if (!isBaseComIntegration) return;
+    if (selectedConnectionId) return; // Don't override if already selected
+    if (!preferredConnectionId) return;
+    if (!selectedIntegration?.connections) return;
+    // Check if the preferred connection exists in the current integration
+    const connectionExists = selectedIntegration.connections.some(
+      (conn) => conn.id === preferredConnectionId
+    );
+    if (connectionExists) {
+      setSelectedConnectionId(preferredConnectionId);
+    }
+  }, [
+    isBaseComIntegration,
+    preferredConnectionId,
+    selectedConnectionId,
+    selectedIntegration,
   ]);
 
   const handleSubmit = async () => {

@@ -44,8 +44,8 @@ export async function POST(req: Request) {
       data: { slug },
     });
     return NextResponse.json(newSlug);
-  } catch (error: any) {
-    if (error.code === 'P2002') {
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
       return NextResponse.json(
         { error: "Slug already exists." },
         { status: 409 }

@@ -1033,7 +1033,7 @@ function IntegrationsContent() {
     <div className="container mx-auto py-10">
       <IntegrationList
         integrations={integrations}
-        onIntegrationClick={handleIntegrationClick}
+        onIntegrationClick={(def) => { void handleIntegrationClick(def); }}
       />
 
       {isModalOpen && activeIntegration && (

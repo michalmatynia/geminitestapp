@@ -75,13 +75,14 @@ export function useProductMetadata({
   const [languages, setLanguages] = useState<Language[]>(FALLBACK_LANGUAGES);
   const [priceGroups, setPriceGroups] = useState<PriceGroupWithDetails[]>([]);
 
-  // Initialize catalog selection for new products
-  useEffect(() => {
-    if (product) return; // Only for new products
-    if (!initialCatalogId) return;
-    if (initialCatalogId === "unassigned") return;
-    setSelectedCatalogIds([initialCatalogId]);
-  }, [product, initialCatalogId]);
+  // Initialize catalog selection for new products - REMOVED
+  // Auto-assignment removed per user request - use Drafts feature instead
+  // useEffect(() => {
+  //   if (product) return; // Only for new products
+  //   if (!initialCatalogId) return;
+  //   if (initialCatalogId === "unassigned") return;
+  //   setSelectedCatalogIds([initialCatalogId]);
+  // }, [product, initialCatalogId]);
 
   // Auto-set defaultPriceGroupId when catalog is selected for new products
   useEffect(() => {

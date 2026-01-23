@@ -1,25 +1,22 @@
-/**
- * @jest-environment jsdom
- */
-
+import { vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { ProductListHeader } from "@/components/products/ProductListHeader";
+import { ProductListHeader } from "@/components/products/list/ProductListHeader";
 
 describe("ProductListHeader Component", () => {
   const mockProps = {
-    onCreateProduct: jest.fn(),
+    onCreateProduct: vi.fn(),
     page: 1,
     totalPages: 5,
-    setPage: jest.fn(),
+    setPage: vi.fn(),
     pageSize: 24,
-    setPageSize: jest.fn(),
+    setPageSize: vi.fn(),
     nameLocale: "name_en" as const,
-    setNameLocale: jest.fn(),
+    setNameLocale: vi.fn(),
     currencyCode: "USD",
-    setCurrencyCode: jest.fn(),
+    setCurrencyCode: vi.fn(),
     currencyOptions: ["USD", "PLN", "EUR"],
     catalogFilter: "all",
-    setCatalogFilter: jest.fn(),
+    setCatalogFilter: vi.fn(),
     catalogs: [
       {
         id: "cat-1",

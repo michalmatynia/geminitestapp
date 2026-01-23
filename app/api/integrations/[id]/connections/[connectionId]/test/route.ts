@@ -123,7 +123,7 @@ export async function POST(
       );
       try {
         const raw = decryptSecret(connection.playwrightStorageState);
-        const parsed = JSON.parse(raw);
+        const parsed = JSON.parse(raw) as { cookies?: unknown[]; origins?: unknown[] };
 
         // minimal validation so TS + runtime both stay sane
         if (Array.isArray(parsed.cookies) && Array.isArray(parsed.origins)) {

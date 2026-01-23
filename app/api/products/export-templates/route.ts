@@ -18,6 +18,7 @@ const templateSchema = z.object({
   name: z.string().trim().min(1),
   description: z.string().trim().optional(),
   mappings: z.array(mappingSchema).default([]),
+  exportImagesAsBase64: z.boolean().optional(),
 });
 
 export async function GET() {
@@ -45,6 +46,7 @@ export async function POST(req: Request) {
       name: data.name,
       description: data.description ?? null,
       mappings: data.mappings,
+      ...(data.exportImagesAsBase64 !== undefined && { exportImagesAsBase64: data.exportImagesAsBase64 }),
     });
     return NextResponse.json(template);
   } catch (error: unknown) {

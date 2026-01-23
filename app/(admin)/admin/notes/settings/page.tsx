@@ -253,7 +253,7 @@ export default function NoteSettingsPage() {
                       value={option.value}
                       checked={settings.editorMode === option.value}
                       onChange={() =>
-                        updateSettings({ editorMode: option.value as NoteSettings["editorMode"] })
+                        updateSettings({ editorMode: option.value })
                       }
                       className="h-4 w-4 border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"
                     />

@@ -21,7 +21,7 @@ export async function POST(
   try {
     const { id, connectionId } = await params;
 
-    const body = await req.json();
+    const body = (await req.json()) as unknown;
     const data = requestSchema.parse(body);
 
     const repo = await getIntegrationRepository();

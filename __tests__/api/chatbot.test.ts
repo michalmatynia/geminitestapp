@@ -1,20 +1,21 @@
+import { vi, SpyInstance } from "vitest";
 import { GET, POST } from "@/app/api/chatbot/route";
 
 describe("Chatbot API", () => {
-  let consoleErrorSpy: jest.SpyInstance;
+  let consoleErrorSpy: SpyInstance;
 
   beforeEach(() => {
-    global.fetch = jest.fn();
-    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    global.fetch = vi.fn();
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
     consoleErrorSpy.mockRestore();
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("should list available Ollama models", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce(
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
       new Response(
         JSON.stringify({
           models: [{ name: "test-model" }, { name: "llava" }],
@@ -30,7 +31,7 @@ describe("Chatbot API", () => {
   });
 
   it("should return an error when model listing fails", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce(
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
       new Response("Provider down", { status: 502 })
     );
 
@@ -57,7 +58,7 @@ describe("Chatbot API", () => {
   });
 
   it("should proxy chat requests to Ollama", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce(
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
       new Response(
         JSON.stringify({ message: { content: "Hello from model." } })
       )
@@ -85,7 +86,7 @@ describe("Chatbot API", () => {
   });
 
   it("should return a debug errorId when chat proxy fails", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce(
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
       new Response("Model unavailable", { status: 502 })
     );
 
@@ -107,7 +108,7 @@ describe("Chatbot API", () => {
   });
 
   it("should return a debug errorId on unexpected chat errors", async () => {
-    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error("Network down"));
+    (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error("Network down"));
 
     const req = new Request("http://localhost/api/chatbot", {
       method: "POST",

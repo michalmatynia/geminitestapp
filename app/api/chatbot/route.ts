@@ -323,7 +323,7 @@ export async function POST(req: Request) {
     }
 
     // IMPORTANT: do NOT redeclare `requestStart` inside this block (TDZ issue).
-    await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+    const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestPayload),

@@ -1,7 +1,8 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 
+import { vi, Mock } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -9,21 +10,21 @@ import AdminProductsPage from "@/app/(admin)/admin/products/page";
 import { getProducts, countProducts } from "@/lib/api";
 import { ToastProvider } from "@/components/ui/toast";
 
-const pushMock = jest.fn();
+const pushMock = vi.fn();
 
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: pushMock,
-    refresh: jest.fn(),
+    refresh: vi.fn(),
   }),
   useSearchParams: () => ({
-    get: jest.fn(),
+    get: vi.fn(),
   }),
 }));
 
-jest.mock("@/lib/api", () => ({
-  getProducts: jest.fn(() => Promise.resolve([])),
-  countProducts: jest.fn(() => Promise.resolve(0)),
+vi.mock("@/lib/api", () => ({
+  getProducts: vi.fn(() => Promise.resolve([])),
+  countProducts: vi.fn(() => Promise.resolve(0)),
 }));
 
 const mockProducts = [
@@ -53,20 +54,20 @@ const mockProducts = [
 
 describe("Admin Products List UI", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
-    const mockFetch = jest.fn(() =>
+    const mockFetch = vi.fn(() =>
       Promise.resolve({
         ok: true,
         json: () => Promise.resolve([]),
       })
-    ) as jest.Mock;
+    ) as Mock;
     
     global.fetch = mockFetch;
     window.fetch = mockFetch;
 
-    (getProducts as jest.Mock).mockResolvedValue(mockProducts);
-    (countProducts as jest.Mock).mockResolvedValue(2);
+    (getProducts as Mock).mockResolvedValue(mockProducts);
+    (countProducts as Mock).mockResolvedValue(2);
   });
 
   it("renders product rows", async () => {
@@ -98,7 +99,7 @@ describe("Admin Products List UI", () => {
   });
 
   it("prompts for SKU before opening the create modal and pre-fills SKU", async () => {
-    const promptMock = jest
+    const promptMock = vi
       .spyOn(window, "prompt")
       .mockReturnValue("abc123");
     
@@ -111,8 +112,8 @@ describe("Admin Products List UI", () => {
     const user = userEvent.setup();
     await user.click(screen.getByLabelText("Create product"));
 
-    await screen.findByText("Create Product");
-    const skuInput = screen.getByLabelText<HTMLInputElement>("SKU");
+    await screen.findByRole("heading", { name: "Product" });
+    const skuInput = screen.getByLabelText<HTMLInputElement>(/SKU/i);
     await waitFor(() => {
       expect(skuInput.value).toBe("ABC123");
     });

@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 import { cn } from "@/lib/utils";
 
 import "./globals.css";
@@ -22,14 +23,16 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={cn(inter.className)}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <ToastProvider>{children}</ToastProvider>
-        </ThemeProvider>
+        <QueryProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <ToastProvider>{children}</ToastProvider>
+          </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   );

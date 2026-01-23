@@ -130,7 +130,7 @@ export function BaselinkerSettings({
               />
               <button
                 type="button"
-                onClick={handleSaveSyncInterval}
+                onClick={() => { void handleSaveSyncInterval(); }}
                 disabled={savingSyncInterval}
                 className="rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 hover:bg-gray-200 disabled:opacity-50"
               >

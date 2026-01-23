@@ -213,7 +213,7 @@ function FolderTreeBase({
           await onRefreshFolders();
         }
       } else {
-        const error = await response.json();
+        const error = (await response.json()) as { error?: string };
         toast(error.error || "Failed to import folder structure", { variant: "error" });
       }
     } catch (error) {
@@ -499,7 +499,7 @@ function FolderTreeBase({
           } ${isImporting ? "opacity-50 pointer-events-none" : ""}`}
           onDragOver={handleDropzoneDragOver}
           onDragLeave={handleDropzoneDragLeave}
-          onDrop={handleFolderImport}
+          onDrop={(e) => { void handleFolderImport(e); }}
         >
           <div className="p-4 text-center">
             <Upload

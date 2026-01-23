@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -16,7 +17,7 @@ import {
 import { useToast } from "@/components/ui/toast";
 import { ProductDraft, CreateProductDraftInput } from "@/types/drafts";
 import type { CatalogRecord } from "@/types";
-import type { ProductCategory, ProductTag } from "@/types/products";
+import type { ProductCategory, ProductTag, ProductParameter, ProductParameterValue } from "@/types/products";
 import {
   Package,
   ShoppingCart,
@@ -75,10 +76,13 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
   const [catalogs, setCatalogs] = useState<CatalogRecord[]>([]);
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [tags, setTags] = useState<ProductTag[]>([]);
+  const [parameters, setParameters] = useState<ProductParameter[]>([]);
+  const [parametersLoading, setParametersLoading] = useState(false);
 
   const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [parameterValues, setParameterValues] = useState<ProductParameterValue[]>([]);
 
   // Load metadata
   useEffect(() => {
@@ -144,6 +148,43 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
     void loadTags();
   }, [selectedCatalogIds]);
 
+  // Load parameters when catalogs are selected
+  useEffect(() => {
+    if (selectedCatalogIds.length === 0) {
+      setParameters([]);
+      return;
+    }
+
+    let cancelled = false;
+    const loadParameters = async () => {
+      setParametersLoading(true);
+      try {
+        const parameterPromises = selectedCatalogIds.map((catalogId) =>
+          fetch(`/api/products/parameters?catalogId=${catalogId}`).then((res) => res.json())
+        );
+        const parameterArrays = await Promise.all(parameterPromises);
+        const allParameters = parameterArrays.flat() as ProductParameter[];
+        if (!cancelled) {
+          setParameters(allParameters);
+        }
+      } catch (error) {
+        console.error("Failed to load parameters:", error);
+        if (!cancelled) {
+          setParameters([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setParametersLoading(false);
+        }
+      }
+    };
+
+    void loadParameters();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCatalogIds]);
+
   // Load existing draft
   useEffect(() => {
     if (!draftId) {
@@ -176,6 +217,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
       setSelectedCatalogIds([]);
       setSelectedCategoryIds([]);
       setSelectedTagIds([]);
+      setParameterValues([]);
       return;
     }
 
@@ -219,6 +261,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
         setSelectedCatalogIds(draft.catalogIds || []);
         setSelectedCategoryIds(draft.categoryIds || []);
         setSelectedTagIds(draft.tagIds || []);
+        setParameterValues(draft.parameters || []);
       } catch (error) {
         console.error("Failed to load draft:", error);
         toast("Failed to load draft", { variant: "error" });
@@ -264,6 +307,12 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
         catalogIds: selectedCatalogIds,
         categoryIds: selectedCategoryIds,
         tagIds: selectedTagIds,
+        parameters: parameterValues
+          .map((entry) => ({
+            parameterId: entry.parameterId?.trim(),
+            value: typeof entry.value === "string" ? entry.value.trim() : "",
+          }))
+          .filter((entry) => entry.parameterId),
         active,
         icon,
         imageLinks: imageLinks.filter((link) => link.trim()),
@@ -311,6 +360,40 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
     );
   };
 
+  const addParameterValue = () => {
+    setParameterValues((prev) => [...prev, { parameterId: "", value: "" }]);
+  };
+
+  const updateParameterId = (index: number, parameterId: string) => {
+    setParameterValues((prev) => {
+      const next = [...prev];
+      if (!next[index]) return prev;
+      next[index] = { ...next[index], parameterId };
+      return next;
+    });
+  };
+
+  const updateParameterValue = (index: number, value: string) => {
+    setParameterValues((prev) => {
+      const next = [...prev];
+      if (!next[index]) return prev;
+      next[index] = { ...next[index], value };
+      return next;
+    });
+  };
+
+  const removeParameterValue = (index: number) => {
+    setParameterValues((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const selectedParameterIds = useMemo(
+    () => parameterValues.map((entry) => entry.parameterId).filter(Boolean),
+    [parameterValues]
+  );
+
+  const getParameterLabel = (parameter: ProductParameter) =>
+    parameter.name_en || parameter.name_pl || parameter.name_de || "Unnamed parameter";
+
   // Available icons
   const availableIcons = [
     { id: "package", icon: Package, label: "Package" },
@@ -347,8 +430,14 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
       </div>
 
       <div className="space-y-6">
-        {/* Draft Info */}
-        <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4">
+        <Tabs defaultValue="details" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="parameters">Parameters</TabsTrigger>
+          </TabsList>
+          <TabsContent value="details" className="mt-0 space-y-6">
+            {/* Draft Info */}
+            <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4">
           <h3 className="text-sm font-semibold text-white">Draft Information</h3>
 
           <div className="space-y-2">
@@ -762,6 +851,93 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
             </p>
           </div>
         </div>
+          </TabsContent>
+          <TabsContent value="parameters" className="mt-0 space-y-4">
+            <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-4 space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-white">Parameters</h3>
+                  <p className="text-xs text-gray-400">
+                    Set default parameter values for products created from this draft.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addParameterValue}
+                  disabled={parametersLoading || parameters.length === 0}
+                >
+                  Add parameter
+                </Button>
+              </div>
+
+              {parametersLoading ? (
+                <div className="rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+                  Loading parameters...
+                </div>
+              ) : parameters.length === 0 ? (
+                <div className="rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+                  No parameters available for the selected catalog(s).
+                </div>
+              ) : parameterValues.length === 0 ? (
+                <div className="rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+                  Add your first parameter to start defining defaults.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {parameterValues.map((entry, index) => {
+                    const availableOptions = parameters.filter(
+                      (parameter) =>
+                        !selectedParameterIds.includes(parameter.id) ||
+                        parameter.id === entry.parameterId
+                    );
+                    return (
+                      <div
+                        key={`${entry.parameterId || "new"}-${index}`}
+                        className="flex flex-col gap-3 rounded-md border border-gray-800 bg-gray-950/60 p-3 md:flex-row md:items-center"
+                      >
+                        <div className="w-full md:w-64">
+                          <Select
+                            value={entry.parameterId}
+                            onValueChange={(value) => updateParameterId(index, value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select parameter" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableOptions.map((parameter) => (
+                                <SelectItem key={parameter.id} value={parameter.id}>
+                                  {getParameterLabel(parameter)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex-1">
+                          <Input
+                            value={entry.value}
+                            onChange={(event) =>
+                              updateParameterValue(index, event.target.value)
+                            }
+                            placeholder="Value"
+                            disabled={!entry.parameterId}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => removeParameterValue(index)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
 
         {/* Actions */}
         <div className="flex justify-end gap-3">

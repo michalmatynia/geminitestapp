@@ -37,6 +37,27 @@ const imageLinksSchema = z.preprocess((value: unknown): string[] => {
   return [];
 }, z.array(z.string().trim()));
 
+const parameterValueSchema = z.object({
+  parameterId: z.string().trim().min(1, "Parameter ID is required"),
+  value: z.string().optional().nullable(),
+});
+
+const parametersSchema = z.preprocess((value: unknown): unknown[] => {
+  if (value === null || value === undefined) return [];
+  if (Array.isArray(value)) return value as unknown[];
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    try {
+      const parsed = JSON.parse(trimmed) as unknown;
+      if (Array.isArray(parsed)) return parsed as unknown[];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}, z.array(parameterValueSchema));
+
 const productBaseSchema = z.object({
   baseProductId: z.string().nullish(),
   defaultPriceGroupId: z.string().nullish(),
@@ -59,6 +80,7 @@ const productBaseSchema = z.object({
   weight: emptyStringToUndefined.nullish(),
   length: emptyStringToUndefined.nullish(),
   imageLinks: imageLinksSchema.optional(),
+  parameters: parametersSchema.optional(),
 });
 
 export const productCreateSchema = productBaseSchema.extend({

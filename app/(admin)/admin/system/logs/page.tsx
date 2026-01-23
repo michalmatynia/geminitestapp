@@ -108,7 +108,7 @@ export default function SystemLogsPage() {
       const payload = JSON.stringify(logs, null, 2);
       await navigator.clipboard.writeText(payload);
       toast("Logs copied to clipboard.", { variant: "success" });
-    } catch (error) {
+    } catch (_error) {
       toast("Failed to copy logs.", { variant: "error" });
     }
   };
@@ -142,7 +142,7 @@ export default function SystemLogsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={exportLogs}
+            onClick={() => void exportLogs()}
             className="border-gray-700"
             disabled={logs.length === 0}
           >
@@ -152,7 +152,7 @@ export default function SystemLogsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={clearLogs}
+            onClick={() => void clearLogs()}
             className="border-red-500/40 text-red-200 hover:bg-red-500/10"
             disabled={logs.length === 0}
           >

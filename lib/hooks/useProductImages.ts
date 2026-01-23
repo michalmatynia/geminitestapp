@@ -26,21 +26,32 @@ const buildImageSlotsFromProduct = (product?: ProductWithImages) => {
         type: "existing",
         data: pImg.imageFile,
         previewUrl: pImg.imageFile.filepath,
+        slotId: pImg.imageFile.id,
       };
     }
   });
   return slots;
 };
 
-export function useProductImages(product?: ProductWithImages) {
+const createSlotId = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+export function useProductImages(
+  product?: ProductWithImages,
+  initialImageLinks?: string[] | null
+) {
   const [imageSlots, setImageSlots] = useState<(ProductImageSlot | null)[]>(
     () => buildImageSlotsFromProduct(product)
   );
   const [imageLinks, setImageLinks] = useState<string[]>(
-    () => normalizeImageLinks(product?.imageLinks)
+    () => normalizeImageLinks(product?.imageLinks ?? initialImageLinks)
   );
   const [showFileManager, setShowFileManager] = useState(false);
   const objectUrlsRef = useRef<string[]>([]);
+  const isReorderingRef = useRef(false);
+  const pendingRefreshRef = useRef<ProductWithImages | null>(null);
 
   // Effect to clean up object URLs when component unmounts or imageSlots change
   useEffect(() => {
@@ -75,6 +86,7 @@ export function useProductImages(product?: ProductWithImages) {
           type: "file",
           data: file,
           previewUrl: URL.createObjectURL(file),
+          slotId: createSlotId(),
         };
       } else {
         // Revoke object URL if clearing the slot
@@ -101,6 +113,7 @@ export function useProductImages(product?: ProductWithImages) {
           type: "existing",
           data: file,
           previewUrl: file.filepath,
+          slotId: file.id,
         };
       } else {
         // Revoke object URL if clearing the slot
@@ -169,6 +182,7 @@ export function useProductImages(product?: ProductWithImages) {
               type: "file",
               data: file,
               previewUrl: URL.createObjectURL(file),
+              slotId: createSlotId(),
             };
           }
           fileIndex++;
@@ -190,6 +204,7 @@ export function useProductImages(product?: ProductWithImages) {
               type: "existing",
               data: file,
               previewUrl: file.filepath,
+              slotId: file.id,
             };
           }
           fileIndex++;
@@ -222,28 +237,64 @@ export function useProductImages(product?: ProductWithImages) {
     });
   }, []);
 
-  // Function to refresh state from product (e.g. after save)
-  const refreshFromProduct = useCallback((savedProduct: ProductWithImages) => {
-    setImageSlots(() => {
-      const newSlots: (ProductImageSlot | null)[] = Array.from(
-        { length: TOTAL_IMAGE_SLOTS },
-        () => null
-      );
+  const applyRefresh = useCallback((savedProduct: ProductWithImages) => {
+    setImageSlots((prevSlots) => {
+      // Instead of replacing all slots, update only what changed
+      // This prevents flickering by keeping existing references when possible
+      const newSlots: (ProductImageSlot | null)[] = [...prevSlots];
+
+      // Update slots with saved images
       savedProduct.images
         .slice(0, TOTAL_IMAGE_SLOTS)
         .forEach((pImg, index) => {
           if (pImg.imageFile) {
-            newSlots[index] = {
-              type: "existing",
-              data: pImg.imageFile,
-              previewUrl: pImg.imageFile.filepath,
-            };
+            const existingSlot = newSlots[index];
+            // Only update if the image ID changed or slot was empty
+            if (!existingSlot || existingSlot.type !== "existing" || existingSlot.slotId !== pImg.imageFile.id) {
+              newSlots[index] = {
+                type: "existing",
+                data: pImg.imageFile,
+                previewUrl: pImg.imageFile.filepath,
+                slotId: pImg.imageFile.id,
+              };
+            }
           }
         });
+
+      // Clear slots beyond saved images count
+      for (let i = savedProduct.images.length; i < TOTAL_IMAGE_SLOTS; i++) {
+        if (newSlots[i]?.type === "file") {
+          // Keep temporary file uploads that haven't been saved yet
+          continue;
+        }
+        newSlots[i] = null;
+      }
+
       return newSlots;
     });
     setImageLinks(normalizeImageLinks(savedProduct.imageLinks));
   }, []);
+
+  const setImagesReordering = useCallback((value: boolean) => {
+    isReorderingRef.current = value;
+    if (!value && pendingRefreshRef.current) {
+      const pending = pendingRefreshRef.current;
+      pendingRefreshRef.current = null;
+      applyRefresh(pending);
+    }
+  }, [applyRefresh]);
+
+  // Function to refresh state from product (e.g. after save)
+  const refreshFromProduct = useCallback((savedProduct: ProductWithImages) => {
+    if (isReorderingRef.current) {
+      pendingRefreshRef.current = savedProduct;
+      if (process.env.NODE_ENV !== "production") {
+        console.info("[product-images] Refresh deferred during reorder");
+      }
+      return;
+    }
+    applyRefresh(savedProduct);
+  }, [applyRefresh]);
 
   return {
     imageSlots,
@@ -258,5 +309,6 @@ export function useProductImages(product?: ProductWithImages) {
     swapImageSlots,
     setImageLinkAt,
     refreshFromProduct,
+    setImagesReordering,
   };
 }

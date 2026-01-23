@@ -17,6 +17,7 @@ import {
   Award,
   Box,
   Sparkles,
+  Pin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,6 +43,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   award: Award,
   box: Box,
   sparkles: Sparkles,
+  pin: Pin,
 };
 
 interface ProductListHeaderProps {
@@ -83,43 +85,38 @@ export const ProductListHeader = memo(function ProductListHeader({
 }: ProductListHeaderProps) {
   return (
     <div className="mb-6 space-y-4">
-      {/* Header with title and create button */}
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={onCreateProduct}
-              className="h-12 w-12 rounded-full p-0"
-              aria-label="Create new product"
-            >
-              <PlusIcon className="h-5 w-5" />
-            </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            onClick={onCreateProduct}
+            className="h-14 w-14 rounded-full p-0"
+            aria-label="Create new product"
+          >
+            <PlusIcon className="h-6 w-6" />
+          </Button>
+          <div className="flex flex-wrap items-center gap-1.5">
             {activeDrafts.map((draft) => {
               const IconComponent = draft.icon ? iconMap[draft.icon] : null;
               return (
                 <Button
                   key={draft.id}
                   onClick={() => onCreateFromDraft?.(draft.id)}
-                  className="h-12 w-12 rounded-full border-2 border-gray-700 bg-gray-800 p-0 hover:border-emerald-500 hover:bg-gray-700"
+                  className="h-8 w-8 rounded-full border border-transparent bg-transparent p-0 text-white hover:border-white/30 hover:bg-white/10"
                   aria-label={`Create product from ${draft.name}`}
                   title={draft.name}
                 >
                   {IconComponent ? (
-                    <IconComponent className="h-5 w-5" />
+                    <IconComponent className="h-3.5 w-3.5" />
                   ) : (
-                    <Package className="h-5 w-5" />
+                    <Package className="h-3.5 w-3.5" />
                   )}
                 </Button>
               );
             })}
           </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Products</h1>
-            <p className="text-sm text-muted-foreground">
-              Manage and organize your product catalog
-            </p>
-          </div>
         </div>
+        <h1 className="text-3xl font-bold tracking-tight">Products</h1>
       </div>
 
       {/* Controls section */}

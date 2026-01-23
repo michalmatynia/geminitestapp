@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
+import { getMongoDb } from "@/lib/db/mongo-client";
 import { productService } from "@/lib/services/productService";
 import ProductCard from "@/components/products/ProductCard";
 import type { ProductWithImages } from "@/types";
@@ -7,8 +9,49 @@ import type { ProductWithImages } from "@/types";
 export const dynamic = "force-dynamic";
 
 const notNull = <T,>(value: T | null | undefined): value is T => value != null;
+const FRONT_PAGE_SETTING_KEY = "front_page_app";
+const FRONT_PAGE_ALLOWED = new Set(["products", "chatbot", "notes"]);
+
+type SettingDocument = {
+  _id: string;
+  key?: string;
+  value?: string;
+};
+
+const canUsePrismaSettings = () =>
+  Boolean(process.env.DATABASE_URL) && "setting" in prisma;
+
+const getFrontPageSetting = async (): Promise<string | null> => {
+  if (canUsePrismaSettings()) {
+    const setting = await prisma.setting.findUnique({
+      where: { key: FRONT_PAGE_SETTING_KEY },
+      select: { value: true },
+    });
+    if (setting?.value) {
+      return setting.value;
+    }
+  }
+
+  if (!process.env.MONGODB_URI) return null;
+  const mongo = await getMongoDb();
+  const doc = await mongo
+    .collection<SettingDocument>("settings")
+    .findOne({ _id: FRONT_PAGE_SETTING_KEY });
+  return doc?.value ?? null;
+};
 
 export default async function HomePage() {
+  const frontPageApp = await getFrontPageSetting();
+
+  if (frontPageApp && FRONT_PAGE_ALLOWED.has(frontPageApp)) {
+    if (frontPageApp === "chatbot") {
+      redirect("/admin/chatbot");
+    }
+    if (frontPageApp === "notes") {
+      redirect("/admin/notes");
+    }
+  }
+
   const defaultSlug = await prisma.slug.findFirst({
     where: { isDefault: true },
   });

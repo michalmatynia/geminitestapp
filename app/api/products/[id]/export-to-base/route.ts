@@ -474,7 +474,7 @@ export async function POST(
           Object.keys(warehouseAliases).length > 0 ? warehouseAliases : null;
         validWarehouseIds = warehouseIdSet;
         if (warehouseId && stockWarehouseAliases?.[warehouseId]) {
-          warehouseId = stockWarehouseAliases[warehouseId]!;
+          warehouseId = stockWarehouseAliases[warehouseId];
         } else if (warehouseId) {
           const match = warehouses.find(
             (warehouse) =>

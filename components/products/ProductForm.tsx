@@ -10,6 +10,7 @@ import ProductFormGeneral from "./form/ProductFormGeneral";
 import ProductFormOther from "./form/ProductFormOther";
 import ProductFormImages from "./form/ProductFormImages";
 import ProductFormImportInfo from "./form/ProductFormImportInfo";
+import ProductFormParameters from "./form/ProductFormParameters";
 
 interface ProductFormProps {
   submitButtonText: string;
@@ -43,9 +44,10 @@ export default function ProductForm({
     <form onSubmit={handleSubmit} className="relative min-h-[400px] pb-10">
       {isDebugOpen && <DebugPanel />}
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="other">Other</TabsTrigger>
+          <TabsTrigger value="parameters">Parameters</TabsTrigger>
           <TabsTrigger value="images">Images</TabsTrigger>
           <TabsTrigger value="import-info">Import Info</TabsTrigger>
         </TabsList>
@@ -54,6 +56,9 @@ export default function ProductForm({
         </TabsContent>
         <TabsContent value="other" className="mt-4">
           <ProductFormOther />
+        </TabsContent>
+        <TabsContent value="parameters" className="mt-4">
+          <ProductFormParameters />
         </TabsContent>
         <TabsContent value="images" className="mt-4">
           <ProductFormImages />

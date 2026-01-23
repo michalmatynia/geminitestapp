@@ -30,14 +30,6 @@ interface ProductFiltersProps {
   setStartDate: (value: string) => void;
   endDate: string;
   setEndDate: (value: string) => void;
-  // Selection props
-  data?: ProductWithImages[];
-  rowSelection?: RowSelectionState;
-  setRowSelection?: (selection: RowSelectionState) => void;
-  onSelectAllGlobal?: () => Promise<void>;
-  loadingGlobal?: boolean;
-  onDeleteSelected?: () => Promise<void>;
-  onAddToMarketplace?: () => void;
 }
 
 export const ProductFilters = memo(function ProductFilters({
@@ -53,13 +45,6 @@ export const ProductFilters = memo(function ProductFilters({
   setStartDate,
   endDate,
   setEndDate,
-  data = [],
-  rowSelection = {},
-  setRowSelection = () => {},
-  onSelectAllGlobal,
-  loadingGlobal,
-  onDeleteSelected,
-  onAddToMarketplace,
 }: ProductFiltersProps) {
   const hasActiveFilters = search || sku || minPrice || maxPrice || startDate || endDate;
 
@@ -71,49 +56,6 @@ export const ProductFilters = memo(function ProductFilters({
     setStartDate("");
     setEndDate("");
   };
-
-  const handleSelectAllGlobal = useCallback(async () => {
-    if (!onSelectAllGlobal) return;
-    try {
-      await onSelectAllGlobal();
-    } catch (error) {
-      console.error("Failed to select all products:", error);
-    }
-  }, [onSelectAllGlobal]);
-
-  const handleDeleteSelected = useCallback(async () => {
-    if (!onDeleteSelected) return;
-    try {
-      await onDeleteSelected();
-    } catch (error) {
-      console.error("Failed to delete selected products:", error);
-    }
-  }, [onDeleteSelected]);
-
-  const handleSelectPage = useCallback(() => {
-    const newSelection = { ...rowSelection };
-    data.forEach((product) => {
-      newSelection[product.id] = true;
-    });
-    setRowSelection(newSelection);
-  }, [data, rowSelection, setRowSelection]);
-
-  const handleDeselectPage = useCallback(() => {
-    const newSelection = { ...rowSelection };
-    data.forEach((product) => {
-      delete newSelection[product.id];
-    });
-    setRowSelection(newSelection);
-  }, [data, rowSelection, setRowSelection]);
-
-  const handleDeselectAll = useCallback(() => {
-    setRowSelection({});
-  }, [setRowSelection]);
-
-  const hasSelection = useMemo(
-    () => Object.keys(rowSelection).filter((key) => rowSelection[key]).length > 0,
-    [rowSelection]
-  );
 
   return (
     <div className="mb-4 space-y-3 rounded-lg border bg-card p-4">
@@ -231,89 +173,149 @@ export const ProductFilters = memo(function ProductFilters({
           />
         </div>
       </div>
+    </div>
+  );
+});
 
-      {/* Selection and Actions */}
-      <div className="flex flex-wrap gap-2 border-t pt-3 sm:gap-3">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2"
-            >
-              <CheckSquare className="h-4 w-4" />
-              Selection
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56">
-            <DropdownMenuLabel>On this Page</DropdownMenuLabel>
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                onClick={handleSelectPage}
-                className="cursor-pointer"
-              >
-                Select All on Page
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleDeselectPage}
-                className="cursor-pointer"
-              >
-                Deselect All on Page
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel>On All Pages</DropdownMenuLabel>
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                onClick={() => void handleSelectAllGlobal()}
-                className="cursor-pointer"
-                disabled={!!loadingGlobal}
-              >
-                {loadingGlobal ? "Loading..." : "Select All Globally"}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleDeselectAll}
-                className="cursor-pointer"
-              >
-                Deselect All
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+interface ProductSelectionActionsProps {
+  data?: ProductWithImages[];
+  rowSelection?: RowSelectionState;
+  setRowSelection?: (selection: RowSelectionState) => void;
+  onSelectAllGlobal?: () => Promise<void>;
+  loadingGlobal?: boolean;
+  onDeleteSelected?: () => Promise<void>;
+  onAddToMarketplace?: () => void;
+}
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              disabled={!hasSelection}
-            >
-              <Settings2 className="h-4 w-4" />
-              Actions
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56">
+export const ProductSelectionActions = memo(function ProductSelectionActions({
+  data = [],
+  rowSelection = {},
+  setRowSelection = () => {},
+  onSelectAllGlobal,
+  loadingGlobal,
+  onDeleteSelected,
+  onAddToMarketplace,
+}: ProductSelectionActionsProps) {
+  const handleSelectAllGlobal = useCallback(async () => {
+    if (!onSelectAllGlobal) return;
+    try {
+      await onSelectAllGlobal();
+    } catch (error) {
+      console.error("Failed to select all products:", error);
+    }
+  }, [onSelectAllGlobal]);
+
+  const handleDeleteSelected = useCallback(async () => {
+    if (!onDeleteSelected) return;
+    try {
+      await onDeleteSelected();
+    } catch (error) {
+      console.error("Failed to delete selected products:", error);
+    }
+  }, [onDeleteSelected]);
+
+  const handleSelectPage = useCallback(() => {
+    const newSelection = { ...rowSelection };
+    data.forEach((product) => {
+      newSelection[product.id] = true;
+    });
+    setRowSelection(newSelection);
+  }, [data, rowSelection, setRowSelection]);
+
+  const handleDeselectPage = useCallback(() => {
+    const newSelection = { ...rowSelection };
+    data.forEach((product) => {
+      delete newSelection[product.id];
+    });
+    setRowSelection(newSelection);
+  }, [data, rowSelection, setRowSelection]);
+
+  const handleDeselectAll = useCallback(() => {
+    setRowSelection({});
+  }, [setRowSelection]);
+
+  const hasSelection = useMemo(
+    () => Object.keys(rowSelection).filter((key) => rowSelection[key]).length > 0,
+    [rowSelection]
+  );
+
+  return (
+    <div className="flex flex-wrap gap-2 border-t pt-3 sm:gap-3">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-2">
+            <CheckSquare className="h-4 w-4" />
+            Selection
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-56">
+          <DropdownMenuLabel>On this Page</DropdownMenuLabel>
+          <DropdownMenuGroup>
             <DropdownMenuItem
-              onClick={() => {
-                if (onAddToMarketplace) onAddToMarketplace();
-              }}
-              className="cursor-pointer gap-2"
+              onClick={handleSelectPage}
+              className="cursor-pointer"
             >
-              <Store className="h-4 w-4" />
-              Add to Marketplace
+              Select All on Page
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => void handleDeleteSelected()}
-              className="cursor-pointer gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
+              onClick={handleDeselectPage}
+              className="cursor-pointer"
             >
-              <Trash2 className="h-4 w-4" />
-              Delete Selected
+              Deselect All on Page
             </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel>On All Pages</DropdownMenuLabel>
+          <DropdownMenuGroup>
+            <DropdownMenuItem
+              onClick={() => void handleSelectAllGlobal()}
+              className="cursor-pointer"
+              disabled={!!loadingGlobal}
+            >
+              {loadingGlobal ? "Loading..." : "Select All Globally"}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={handleDeselectAll}
+              className="cursor-pointer"
+            >
+              Deselect All
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            disabled={!hasSelection}
+          >
+            <Settings2 className="h-4 w-4" />
+            Actions
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-56">
+          <DropdownMenuItem
+            onClick={() => {
+              if (onAddToMarketplace) onAddToMarketplace();
+            }}
+            className="cursor-pointer gap-2"
+          >
+            <Store className="h-4 w-4" />
+            Add to Marketplace
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => void handleDeleteSelected()}
+            className="cursor-pointer gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete Selected
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 });

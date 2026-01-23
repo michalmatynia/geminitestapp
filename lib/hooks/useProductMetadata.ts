@@ -6,7 +6,7 @@ import type {
   PriceGroupWithDetails,
   ProductFormData,
 } from "@/types";
-import type { ProductCategory, ProductTag } from "@/types/products";
+import type { ProductCategory, ProductTag, ProductParameter } from "@/types/products";
 import { UseFormSetValue, UseFormGetValues } from "react-hook-form";
 
 // We need a generic way to set form values if we want to update defaultPriceGroupId, but strict types might be hard.
@@ -42,6 +42,9 @@ const FALLBACK_LANGUAGES: Language[] = [
 interface UseProductMetadataProps {
   product?: ProductWithImages | undefined;
   initialCatalogId?: string | undefined;
+  initialCatalogIds?: string[] | undefined;
+  initialCategoryIds?: string[] | undefined;
+  initialTagIds?: string[] | undefined;
   setValue: UseFormSetValue<ProductFormData>;
   getValues: UseFormGetValues<ProductFormData>;
 }
@@ -49,6 +52,9 @@ interface UseProductMetadataProps {
 export function useProductMetadata({
   product,
   initialCatalogId,
+  initialCatalogIds,
+  initialCategoryIds,
+  initialTagIds,
   setValue,
   getValues,
 }: UseProductMetadataProps) {
@@ -57,32 +63,43 @@ export function useProductMetadata({
   const [catalogsError, setCatalogsError] = useState<string | null>(null);
   
   const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>(
-    () => product?.catalogs?.map((entry) => entry.catalogId) ?? []
+    () =>
+      product?.catalogs?.map((entry) => entry.catalogId) ??
+      initialCatalogIds ??
+      []
   );
 
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
-    () => product?.categories?.map((entry: { categoryId: string }) => entry.categoryId) ?? []
+    () =>
+      product?.categories?.map((entry: { categoryId: string }) => entry.categoryId) ??
+      initialCategoryIds ??
+      []
   );
 
   const [tags, setTags] = useState<ProductTag[]>([]);
   const [tagsLoading, setTagsLoading] = useState(false);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
-    () => product?.tags?.map((entry: { tagId: string }) => entry.tagId) ?? []
+    () =>
+      product?.tags?.map((entry: { tagId: string }) => entry.tagId) ??
+      initialTagIds ??
+      []
   );
 
   const [languages, setLanguages] = useState<Language[]>(FALLBACK_LANGUAGES);
   const [priceGroups, setPriceGroups] = useState<PriceGroupWithDetails[]>([]);
+  const [parameters, setParameters] = useState<ProductParameter[]>([]);
+  const [parametersLoading, setParametersLoading] = useState(false);
 
-  // Initialize catalog selection for new products - REMOVED
-  // Auto-assignment removed per user request - use Drafts feature instead
-  // useEffect(() => {
-  //   if (product) return; // Only for new products
-  //   if (!initialCatalogId) return;
-  //   if (initialCatalogId === "unassigned") return;
-  //   setSelectedCatalogIds([initialCatalogId]);
-  // }, [product, initialCatalogId]);
+  // Auto-select default catalog for new products when none is chosen
+  useEffect(() => {
+    if (product) return;
+    if (selectedCatalogIds.length > 0) return;
+    if (catalogs.length === 0) return;
+    const defaultCatalog = catalogs.find((catalog) => catalog.isDefault);
+    setSelectedCatalogIds([defaultCatalog?.id ?? catalogs[0].id]);
+  }, [product, selectedCatalogIds.length, catalogs]);
 
   // Auto-set defaultPriceGroupId when catalog is selected for new products
   useEffect(() => {
@@ -171,6 +188,44 @@ export function useProductMetadata({
     };
 
     void loadTags();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCatalogIds]);
+
+  // Load parameters when catalogs are selected
+  useEffect(() => {
+    if (selectedCatalogIds.length === 0) {
+      setParameters([]);
+      return;
+    }
+
+    let cancelled = false;
+    const loadParameters = async () => {
+      setParametersLoading(true);
+      try {
+        const parameterPromises = selectedCatalogIds.map((catalogId) =>
+          fetch(`/api/products/parameters?catalogId=${catalogId}`).then((res) => res.json())
+        );
+        const parameterArrays = await Promise.all(parameterPromises);
+        const allParameters = parameterArrays.flat() as ProductParameter[];
+
+        if (!cancelled) {
+          setParameters(allParameters);
+        }
+      } catch (error) {
+        console.error("Failed to load parameters:", error);
+        if (!cancelled) {
+          setParameters([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setParametersLoading(false);
+        }
+      }
+    };
+
+    void loadParameters();
     return () => {
       cancelled = true;
     };
@@ -280,12 +335,7 @@ export function useProductMetadata({
     const allowedGroupIds = new Set<string>();
     const orderedGroups: PriceGroupWithDetails[] = [];
 
-    const defaultGroup = priceGroups.find((pg) => pg.isDefault);
-    if (defaultGroup) {
-      orderedGroups.push(defaultGroup);
-      allowedGroupIds.add(defaultGroup.id);
-    }
-
+    // Only include price groups that are explicitly assigned to selected catalogs
     selectedCatalogIds.forEach((catalogId) => {
       const catalog = catalogs.find((c) => c.id === catalogId);
       if (catalog?.priceGroupIds) {
@@ -342,6 +392,8 @@ export function useProductMetadata({
     tagsLoading,
     selectedTagIds,
     toggleTag,
+    parameters,
+    parametersLoading,
     filteredLanguages,
     filteredPriceGroups,
   };

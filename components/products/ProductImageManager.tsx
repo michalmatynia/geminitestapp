@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import NextImage from "next/image";
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ export default function ProductImageManager() {
     setShowFileManager,
     swapImageSlots,
     uploadError,
+    setImagesReordering,
   } = useProductFormContext();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -29,6 +30,7 @@ export default function ProductImageManager() {
   const [slotViewModes, setSlotViewModes] = useState<Array<"upload" | "link">>(
     Array(imageSlots.length).fill("upload")
   );
+  const dragImageRef = useRef<HTMLImageElement | null>(null);
 
   // Drag and drop state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -113,21 +115,18 @@ export default function ProductImageManager() {
     if (!slot) return; // Don't allow dragging empty slots
 
     setDraggedIndex(index);
+    setImagesReordering(true);
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", String(index));
-
-    // Add visual feedback
-    const target = e.currentTarget;
-    requestAnimationFrame(() => {
-      target.style.opacity = "0.5";
-    });
+    if (dragImageRef.current) {
+      e.dataTransfer.setDragImage(dragImageRef.current, 0, 0);
+    }
   };
 
-  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
-    const target = e.currentTarget;
-    target.style.opacity = "1";
+  const handleDragEnd = (_e: React.DragEvent<HTMLDivElement>) => {
     setDraggedIndex(null);
     setDragOverIndex(null);
+    setImagesReordering(false);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
@@ -172,9 +171,21 @@ export default function ProductImageManager() {
     }
 
     setDraggedIndex(null);
+    setImagesReordering(false);
   };
 
   useEffect(() => {
+    if (!dragImageRef.current) {
+      const GlobalImage =
+        typeof window !== "undefined" && window.Image ? window.Image : null;
+      if (!GlobalImage) {
+        return;
+      }
+      const img = new GlobalImage();
+      img.src =
+        "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+      dragImageRef.current = img;
+    }
     setSlotViewModes((prev) => {
       const next = Array(imageSlots.length).fill("upload") as Array<
         "upload" | "link"
@@ -246,10 +257,9 @@ export default function ProductImageManager() {
           const showLink = (prefersLink && hasLink) || (!hasUpload && hasLink);
           const displayUrl = showLink ? linkValue : slot?.previewUrl;
 
-          // Generate a stable key based on slot content, not position
-          const slotKey = slot
-            ? `slot-${slot.type}-${slot.type === 'existing' ? slot.data.id : slot.previewUrl}-${index}`
-            : `empty-slot-${index}`;
+          // Use index as key to prevent re-mounting during drag/drop and updates
+          // This eliminates flickering when reordering or updating slots
+          const slotKey = `slot-${index}`;
 
           return (
             <div key={slotKey} className="flex flex-col items-center gap-1">
@@ -296,7 +306,7 @@ export default function ProductImageManager() {
                 className={`
                   relative flex h-24 w-24 items-center justify-center rounded-md border bg-gray-800 transition-all
                   ${hasUpload ? "cursor-grab active:cursor-grabbing" : ""}
-                  ${isDragging ? "opacity-50" : ""}
+                  ${isDragging ? "opacity-70 ring-2 ring-emerald-400/60 scale-[0.98]" : ""}
                   ${isDragOver ? "border-emerald-500 border-2 bg-emerald-500/10" : "border-gray-700"}
                 `}
               >
@@ -307,7 +317,7 @@ export default function ProductImageManager() {
                         <GripVertical className="h-3 w-3" />
                       </div>
                     ) : null}
-                    <Image
+                    <NextImage
                       src={displayUrl}
                       alt={`Product Image ${index + 1}`}
                       width={128}

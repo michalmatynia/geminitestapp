@@ -7,6 +7,12 @@ const marketplaces = [
       "Manage Allegro listings, connections, mappings, and templates.",
     href: "/admin/products/marketplaces/allegro",
   },
+  {
+    name: "Category Mapper",
+    description:
+      "Map external marketplace categories to your internal product categories for import/export.",
+    href: "/admin/products/marketplaces/category-mapper",
+  },
 ];
 
 export default function MarketplacesPage() {

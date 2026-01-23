@@ -1,0 +1,84 @@
+import { NextResponse } from "next/server";
+import type { ObjectId } from "mongodb";
+import prisma from "@/lib/prisma";
+import { getMongoDb } from "@/lib/db/mongo-client";
+import { getAuthDataProvider } from "@/lib/services/auth-provider";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { internalError } from "@/lib/errors/app-error";
+import type { AuthUserSummary } from "@/types/auth";
+
+export const runtime = "nodejs";
+
+type MongoUserDoc = {
+  _id: ObjectId;
+  email?: string | null;
+  name?: string | null;
+  image?: string | null;
+  emailVerified?: Date | null;
+  createdAt?: Date | null;
+};
+
+export async function GET(req: Request) {
+  try {
+    const provider = await getAuthDataProvider();
+    if (provider === "mongodb") {
+      if (!process.env.MONGODB_URI) {
+        throw internalError("MongoDB is not configured.");
+      }
+      const db = await getMongoDb();
+      const docs = await db
+        .collection<MongoUserDoc>("users")
+        .find({})
+        .sort({ createdAt: -1 })
+        .limit(500)
+        .toArray();
+
+      const users: AuthUserSummary[] = docs.map((doc) => ({
+        id: doc._id.toString(),
+        email: doc.email ?? null,
+        name: doc.name ?? null,
+        image: doc.image ?? null,
+        emailVerified: doc.emailVerified
+          ? doc.emailVerified.toISOString()
+          : null,
+        provider,
+      }));
+
+      return NextResponse.json({ provider, users });
+    }
+
+    if (!process.env.DATABASE_URL) {
+      throw internalError("Postgres is not configured.");
+    }
+
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        image: true,
+        emailVerified: true,
+      },
+      orderBy: { email: "asc" },
+    });
+
+    const payload: AuthUserSummary[] = users.map((user) => ({
+      id: user.id,
+      email: user.email ?? null,
+      name: user.name ?? null,
+      image: user.image ?? null,
+      emailVerified: user.emailVerified
+        ? user.emailVerified.toISOString()
+        : null,
+      provider,
+    }));
+
+    return NextResponse.json({ provider, users: payload });
+  } catch (error) {
+    return createErrorResponse(error, {
+      request: req,
+      source: "auth.users.GET",
+      fallbackMessage: "Failed to load users",
+    });
+  }
+}

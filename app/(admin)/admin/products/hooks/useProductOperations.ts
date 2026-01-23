@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { logger } from "@/lib/logger";
 import { useToast } from "@/components/ui/toast";
 import type { ProductWithImages } from "@/types";
+import type { ProductDraft } from "@/types/drafts";
 
 export function useProductOperations(setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>) {
   const { toast } = useToast();
@@ -80,6 +81,12 @@ export function useProductOperations(setRefreshTrigger: React.Dispatch<React.Set
     setIsCreateOpen(true);
   };
 
+  const handleOpenCreateFromDraft = (draft: ProductDraft) => {
+    const draftSku = typeof draft.sku === "string" ? draft.sku.trim().toUpperCase() : "";
+    setInitialSku(draftSku);
+    setIsCreateOpen(true);
+  };
+
   const handleCreateSuccess = () => {
     setIsCreateOpen(false);
     setInitialSku("");
@@ -115,6 +122,7 @@ export function useProductOperations(setRefreshTrigger: React.Dispatch<React.Set
     isCreateOpen,
     setIsCreateOpen,
     initialSku,
+    setInitialSku,
     editingProduct,
     setEditingProduct,
     lastEditedId,
@@ -132,6 +140,7 @@ export function useProductOperations(setRefreshTrigger: React.Dispatch<React.Set
     setExportSettingsProduct,
     refreshListingBadges,
     handleOpenCreateModal,
+    handleOpenCreateFromDraft,
     handleCreateSuccess,
     handleEditSuccess,
     handleEditSave,

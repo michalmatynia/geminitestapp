@@ -1,10 +1,12 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { useProductFormContext } from "@/lib/context/ProductFormContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -56,6 +58,20 @@ export default function ProductFormOther() {
   const isNewProduct = !product;
   const selectedCatalog = catalogs.find((c) => selectedCatalogIds.includes(c.id));
   const isPriceGroupAutoAssigned = !!(isNewProduct && selectedCatalog?.defaultPriceGroupId);
+  const [categoryQuery, setCategoryQuery] = useState("");
+  const [tagQuery, setTagQuery] = useState("");
+  const filteredCategories = useMemo(() => {
+    const normalized = categoryQuery.trim().toLowerCase();
+    if (!normalized) return categories;
+    return categories.filter((category) =>
+      category.name.toLowerCase().includes(normalized)
+    );
+  }, [categories, categoryQuery]);
+  const filteredTags = useMemo(() => {
+    const normalized = tagQuery.trim().toLowerCase();
+    if (!normalized) return tags;
+    return tags.filter((tag) => tag.name.toLowerCase().includes(normalized));
+  }, [tags, tagQuery]);
 
   // Calculate prices for all price groups
   const priceGroupPrices = filteredPriceGroups.map((group) => {
@@ -296,15 +312,41 @@ export default function ProductFormOther() {
             ) : categories.length === 0 ? (
               <div className="p-2 text-sm text-muted-foreground">No categories found</div>
             ) : (
-              categories.map((category) => (
-                <DropdownMenuCheckboxItem
-                  key={category.id}
-                  checked={selectedCategoryIds.includes(category.id)}
-                  onCheckedChange={() => toggleCategory(category.id)}
-                >
-                  {category.name}
-                </DropdownMenuCheckboxItem>
-              ))
+              <>
+                <div className="p-2">
+                  <div className="relative">
+                    <Input
+                      value={categoryQuery}
+                      onChange={(event) => setCategoryQuery(event.target.value)}
+                      placeholder="Search categories..."
+                      className="h-8 pr-8"
+                    />
+                    {categoryQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setCategoryQuery("")}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white"
+                        aria-label="Clear category search"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {filteredCategories.length === 0 ? (
+                  <div className="px-2 pb-2 text-sm text-muted-foreground">No matching categories</div>
+                ) : (
+                  filteredCategories.map((category) => (
+                    <DropdownMenuCheckboxItem
+                      key={category.id}
+                      checked={selectedCategoryIds.includes(category.id)}
+                      onCheckedChange={() => toggleCategory(category.id)}
+                    >
+                      {category.name}
+                    </DropdownMenuCheckboxItem>
+                  ))
+                )}
+              </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
@@ -327,15 +369,41 @@ export default function ProductFormOther() {
             ) : tags.length === 0 ? (
               <div className="p-2 text-sm text-muted-foreground">No tags found</div>
             ) : (
-              tags.map((tag) => (
-                <DropdownMenuCheckboxItem
-                  key={tag.id}
-                  checked={selectedTagIds.includes(tag.id)}
-                  onCheckedChange={() => toggleTag(tag.id)}
-                >
-                  {tag.name}
-                </DropdownMenuCheckboxItem>
-              ))
+              <>
+                <div className="p-2">
+                  <div className="relative">
+                    <Input
+                      value={tagQuery}
+                      onChange={(event) => setTagQuery(event.target.value)}
+                      placeholder="Search tags..."
+                      className="h-8 pr-8"
+                    />
+                    {tagQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setTagQuery("")}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white"
+                        aria-label="Clear tag search"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {filteredTags.length === 0 ? (
+                  <div className="px-2 pb-2 text-sm text-muted-foreground">No matching tags</div>
+                ) : (
+                  filteredTags.map((tag) => (
+                    <DropdownMenuCheckboxItem
+                      key={tag.id}
+                      checked={selectedTagIds.includes(tag.id)}
+                      onCheckedChange={() => toggleTag(tag.id)}
+                    >
+                      {tag.name}
+                    </DropdownMenuCheckboxItem>
+                  ))
+                )}
+              </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>

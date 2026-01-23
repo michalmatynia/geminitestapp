@@ -14,19 +14,24 @@ export function useNoteMetadata(note: { id?: string; title?: string; color?: str
 
   // Sync when note changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTitle(note?.title || "");
   }, [note?.id, note?.title]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setColor(note?.color?.toLowerCase().trim() || "#ffffff");
   }, [note?.id, note?.color]);
 
   // Sync status flags when note changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsPinned(note?.isPinned || false);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsArchived(note?.isArchived || false);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsFavorite(note?.isFavorite || false);
-  }, [note?.id]);
+  }, [note?.id, note?.isPinned, note?.isArchived, note?.isFavorite]);
 
   const getReadableTextColor = (hex: string) => {
     const normalized = hex.replace("#", "");

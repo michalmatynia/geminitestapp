@@ -143,7 +143,7 @@ export async function POST(req: Request) {
       if (rawMessages && typeof rawMessages === "string") {
         try {
           messages = JSON.parse(rawMessages) as ChatMessage[];
-        } catch (error) {
+        } catch (_error) {
           return createErrorResponse(
             badRequestError("Invalid messages payload."),
             { request: req, source: "chatbot.chat.POST" }
@@ -256,7 +256,7 @@ export async function POST(req: Request) {
       };
       try {
         body = (await req.json()) as typeof body;
-      } catch (error) {
+      } catch (_error) {
         return createErrorResponse(badRequestError("Invalid JSON payload."), {
           request: req,
           source: "chatbot.chat.POST",

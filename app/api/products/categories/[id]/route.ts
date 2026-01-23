@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { getProductDataProvider } from "@/lib/services/product-provider";
@@ -11,6 +12,15 @@ import {
   internalError,
   notFoundError,
 } from "@/lib/errors/app-error";
+
+interface MongoCategory {
+  id: string;
+  _id?: unknown;
+  parentId?: string | null;
+  catalogId?: string;
+  name?: string;
+  [key: string]: unknown;
+}
 
 const productCategoryUpdateSchema = z.object({
   name: z.string().min(1).optional(),
@@ -40,28 +50,26 @@ export async function GET(
       }
       const db = await getMongoDb();
       const category = await db
-        .collection("product_categories")
+        .collection<MongoCategory>("product_categories")
         .findOne({ id: params.id });
       if (!category) {
         throw notFoundError("Category not found", { categoryId: params.id });
       }
       const children = await db
-        .collection("product_categories")
+        .collection<MongoCategory>("product_categories")
         .find({ parentId: params.id })
         .toArray();
       const parent = category.parentId
         ? await db
-            .collection("product_categories")
+            .collection<MongoCategory>("product_categories")
             .findOne({ id: category.parentId })
         : null;
       return NextResponse.json({
         ...category,
-        id: category.id ?? category._id,
+        id: category.id ?? String(category._id),
         children: children.map((child) => {
-          const { _id, ...rest } = child as unknown as {
-            _id?: { toString?: () => string };
-          } & Record<string, unknown>;
-          const fallbackId = _id?.toString ? _id.toString() : undefined;
+          const { _id, ...rest } = child;
+          const fallbackId = _id ? String(_id) : undefined;
           return {
             ...rest,
             id: (rest as { id?: string }).id ?? fallbackId,
@@ -69,10 +77,8 @@ export async function GET(
         }),
         parent: parent
           ? (() => {
-              const { _id, ...rest } = parent as unknown as {
-                _id?: { toString?: () => string };
-              } & Record<string, unknown>;
-              const fallbackId = _id?.toString ? _id.toString() : undefined;
+              const { _id, ...rest } = parent;
+              const fallbackId = _id ? String(_id) : undefined;
               return {
                 ...rest,
                 id: (rest as { id?: string }).id ?? fallbackId,
@@ -139,20 +145,20 @@ export async function PUT(
       }
       const db = await getMongoDb();
       const current = await db
-        .collection("product_categories")
+        .collection<MongoCategory>("product_categories")
         .findOne({ id: params.id });
       if (!current) {
         throw notFoundError("Category not found", { categoryId: params.id });
       }
 
       const nextCatalogId =
-        catalogId ?? (current as { catalogId?: string }).catalogId;
+        catalogId ?? current.catalogId;
       const nextParentId =
         parentId !== undefined
           ? parentId
-          : catalogId && catalogId !== (current as { catalogId?: string }).catalogId
+          : catalogId && catalogId !== current.catalogId
             ? null
-            : (current as { parentId?: string | null }).parentId ?? null;
+            : current.parentId ?? null;
 
       if (!nextCatalogId) {
         throw badRequestError("Catalog ID is required.");
@@ -160,7 +166,7 @@ export async function PUT(
 
       if (nextParentId) {
         const parent = await db
-          .collection("product_categories")
+          .collection<MongoCategory>("product_categories")
           .findOne({ id: nextParentId });
         if (!parent || parent.catalogId !== nextCatalogId) {
           throw badRequestError("Parent category must be in the same catalog.", {
@@ -174,7 +180,7 @@ export async function PUT(
       if (
         nextParentId !== null &&
         (catalogId === undefined ||
-          catalogId === (current as { catalogId?: string }).catalogId)
+          catalogId === current.catalogId)
       ) {
         const isDescendant = await checkIsDescendantMongo(
           db,
@@ -187,7 +193,7 @@ export async function PUT(
       }
 
       if (name !== undefined) {
-        const existing = await db.collection("product_categories").findOne({
+        const existing = await db.collection<MongoCategory>("product_categories").findOne({
           name,
           parentId: nextParentId,
           catalogId: nextCatalogId,
@@ -213,10 +219,10 @@ export async function PUT(
       };
 
       await db
-        .collection("product_categories")
+        .collection<MongoCategory>("product_categories")
         .updateOne({ id: params.id }, { $set: updateDoc });
       const updated = await db
-        .collection("product_categories")
+        .collection<MongoCategory>("product_categories")
         .findOne({ id: params.id });
       return NextResponse.json(updated);
     }
@@ -324,10 +330,13 @@ export async function DELETE(
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        throw internalError("MongoDB is not configured.");
+        return NextResponse.json(
+          { error: "MongoDB is not configured." },
+          { status: 500 }
+        );
       }
       const db = await getMongoDb();
-      const idsToDelete = await collectCategoryIds(db, params.id);
+      const idsToDelete = await collectCategoryIds(db, params.id as string);
       await db
         .collection("product_categories")
         .deleteMany({ id: { $in: idsToDelete } });
@@ -335,7 +344,10 @@ export async function DELETE(
     }
 
     if (!process.env.DATABASE_URL) {
-      throw badRequestError("Product categories require the Postgres product store.");
+      return NextResponse.json(
+        { error: "Product categories require the Postgres product store." },
+        { status: 400 }
+      );
     }
 
     // The schema has onDelete: Cascade, so children will be deleted automatically
@@ -345,12 +357,16 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    return createErrorResponse(error, {
-      request: req,
-      source: "product-categories.DELETE",
-      fallbackMessage: "Failed to delete category",
-      extra: { categoryId: params.id },
+    const errorId = randomUUID();
+    console.error("[product-categories][DELETE] Failed to delete category", {
+      errorId,
+      categoryId: params.id,
+      error,
     });
+    return NextResponse.json(
+      { error: "Failed to delete category", errorId },
+      { status: 500 }
+    );
   }
 }
 
@@ -381,7 +397,7 @@ async function checkIsDescendantMongo(
 ): Promise<boolean> {
   if (categoryId === targetId) return true;
   const children = await db
-    .collection<{ id: string }>("product_categories")
+    .collection<MongoCategory>("product_categories")
     .find({ parentId: categoryId })
     .project({ id: 1 })
     .toArray();
@@ -403,7 +419,7 @@ async function collectCategoryIds(
     const current = queue.shift();
     if (!current) continue;
     const children = await db
-      .collection<{ id: string }>("product_categories")
+      .collection<MongoCategory>("product_categories")
       .find({ parentId: current })
       .project({ id: 1 })
       .toArray();

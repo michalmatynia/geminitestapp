@@ -71,6 +71,42 @@ function SignInContent() {
           >
             {isSubmitting ? "Signing in..." : "Sign in"}
           </button>
+          
+          {/* Temporary debug link to omit authing */}
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setIsSubmitting(true);
+                void signIn("credentials", {
+                  email: "admin@example.com",
+                  password: "admin123",
+                  callbackUrl: "/admin",
+                });
+              }}
+              className="w-full rounded-md border border-dashed border-yellow-500/50 py-2 text-xs font-medium text-yellow-500 hover:bg-yellow-500/10"
+            >
+              [TEMP] Bypass Login (Admin)
+            </button>
+             <button
+              type="button"
+              onClick={() => {
+                if (!email) {
+                    alert("Please enter an email to bypass with.");
+                    return;
+                }
+                setIsSubmitting(true);
+                void signIn("credentials", {
+                  email: email,
+                  password: "admin123",
+                  callbackUrl: "/admin",
+                });
+              }}
+              className="w-full rounded-md border border-dashed border-blue-500/50 py-2 text-xs font-medium text-blue-500 hover:bg-blue-500/10"
+            >
+              [TEMP] Magic Login (Current Email)
+            </button>
+          </div>
         </form>
         <div className="space-y-3">
           <div className="flex items-center gap-3 text-xs text-gray-500">

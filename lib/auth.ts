@@ -10,6 +10,7 @@ import prisma from "@/lib/prisma";
 import { getMongoClient } from "@/lib/db/mongo-client";
 import { getAuthDataProvider } from "@/lib/services/auth-provider";
 import { findAuthUserByEmail } from "@/lib/services/auth-user-repository";
+import { getAuthAccessForUser } from "@/lib/services/auth-access";
 import { authConfig } from "./auth.config";
 
 const credentialsProvider = Credentials({
@@ -28,8 +29,66 @@ const credentialsProvider = Credentials({
       }
 
       console.log("[AUTH] Attempting to find user:", email);
+      
       // findAuthUserByEmail uses getAuthDataProvider() internally to choose DB
-      const user = await findAuthUserByEmail(email);
+      let user = await findAuthUserByEmail(email);
+
+      // Development bypass for easy access
+      if (process.env.NODE_ENV === "development" && password === "admin123") {
+         console.log("[AUTH] Checking development bypass for:", email);
+         
+         if (user) {
+             console.log("[AUTH] User found in DB. Bypassing password check (Development).");
+             return {
+                id: user.id,
+                email: user.email,
+                name: user.name ?? null,
+                image: user.image ?? null,
+             };
+         }
+         
+         if (email === "admin@example.com") {
+             console.log("[AUTH] Admin user NOT found in DB. Creating auto-admin for development...");
+             try {
+                const provider = await getAuthDataProvider();
+                const hashedPassword = await bcrypt.hash("admin123", 10);
+                
+                if (provider === "mongodb") {
+                   const { getMongoDb } = await import("@/lib/db/mongo-client");
+                   const db = await getMongoDb();
+                   const result = await db.collection("users").insertOne({
+                      email: "admin@example.com",
+                      name: "Admin User",
+                      passwordHash: hashedPassword,
+                      createdAt: new Date(),
+                      updatedAt: new Date()
+                   });
+                   return {
+                      id: result.insertedId.toString(),
+                      email: "admin@example.com",
+                      name: "Admin User",
+                      image: null
+                   };
+                } else {
+                   const newUser = await prisma.user.create({
+                      data: {
+                         email: "admin@example.com",
+                         name: "Admin User",
+                         passwordHash: hashedPassword
+                      }
+                   });
+                   return {
+                      id: newUser.id,
+                      email: newUser.email,
+                      name: newUser.name,
+                      image: newUser.image
+                   };
+                }
+             } catch (err) {
+                 console.error("[AUTH] Failed to create auto-admin:", err);
+             }
+         }
+      }
 
       if (!user) {
         console.log("[AUTH] User not found");
@@ -88,7 +147,7 @@ const buildProviders = () => {
   return providers;
 };
 
-export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
+export const { handlers, auth: originalAuth, signIn, signOut } = NextAuth(async () => {
   try {
     console.log("[AUTH] Starting configuration...");
     const provider = await getAuthDataProvider();
@@ -115,6 +174,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
       ...authConfig,
       ...(adapter && { adapter }),
       providers: buildProviders(),
+      callbacks: {
+        ...(authConfig.callbacks ?? {}),
+        async jwt({ token, user }) {
+          const userId = user?.id ?? token.sub;
+          if (userId) {
+            const access = await getAuthAccessForUser(userId);
+            token.role = access.roleId;
+            token.permissions = access.permissions;
+          }
+          return token;
+        },
+        async session({ session, token }) {
+          if (session.user) {
+            session.user.id = token.sub ?? session.user.id;
+            session.user.role = token.role ?? null;
+            session.user.permissions = token.permissions ?? [];
+          }
+          return session;
+        },
+      },
       debug: true,
     };
   } catch (error) {
@@ -122,3 +201,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
     throw error;
   }
 });
+
+// Wrapper for auth to provide mock session in dev
+export const auth = async (...args: any[]) => {
+  const session = await originalAuth(...args);
+  
+  if (!session?.user && process.env.NODE_ENV === "development") {
+      console.log("[AUTH] Mocking Admin Session (Dev Mode)");
+      // Check if we can find a real admin user to use for the ID
+      // This is helpful if you want to attach data to a real user even in "no-auth" mode.
+      // But for "access as regular admin", a fixed mock is safer and faster.
+      return {
+          user: {
+              id: "admin-mock-id", // Use a fixed ID so data might not persist if reliant on real DB ID
+              name: "Admin User (Mock)",
+              email: "admin@example.com",
+              role: "admin",
+              permissions: ["*"], // Wildcard or list all
+              image: null
+          },
+          expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      };
+  }
+  
+  return session;
+};

@@ -150,9 +150,11 @@ describe("AI Description Generation API", () => {
     expect(mockCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         model: "gpt-3.5-turbo",
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         messages: expect.arrayContaining([
           expect.objectContaining({
             role: "user",
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             content: expect.arrayContaining([
               expect.objectContaining({
                 text: "Custom prompt for Test Product",

@@ -1,3 +1,5 @@
+import type { ProductParameterValue } from "@/types/products";
+
 export type ProductDraft = {
   id: string;
   name: string;
@@ -32,6 +34,7 @@ export type ProductDraft = {
   catalogIds?: string[];
   categoryIds?: string[];
   tagIds?: string[];
+  parameters?: ProductParameterValue[];
 
   // Price group
   defaultPriceGroupId?: string | null;
@@ -78,6 +81,7 @@ export type CreateProductDraftInput = {
   catalogIds?: string[] | undefined;
   categoryIds?: string[] | undefined;
   tagIds?: string[] | undefined;
+  parameters?: ProductParameterValue[] | undefined;
   defaultPriceGroupId?: string | null | undefined;
   active?: boolean | undefined;
   icon?: string | null | undefined;

@@ -9,6 +9,10 @@ export type ProductAiJobResult = {
   descriptionInitial?: string;
   description?: string;
   descriptionFinal?: string;
+  translationModel?: string;
+  sourceLanguage?: string;
+  targetLanguages?: string[];
+  translations?: Record<string, { name?: string; description?: string }>;
   [key: string]: unknown;
 };
 

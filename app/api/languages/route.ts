@@ -29,6 +29,12 @@ type LanguageCountryDoc = {
   };
 };
 
+type CountryDoc = {
+  id: string;
+  code: string;
+  name: string;
+};
+
 type LanguageDoc = {
   id: string;
   code: string;
@@ -173,7 +179,7 @@ export async function POST(req: Request) {
       if (uniqueIds.length > 0) {
         const countriesCollection = mongo.collection("countries");
         for (const countryId of uniqueIds) {
-          const country = await countriesCollection.findOne({ id: countryId });
+          const country = (await countriesCollection.findOne({ id: countryId })) as unknown as CountryDoc | null;
           if (country) {
             countries.push({
               countryId: country.id,

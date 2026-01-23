@@ -128,7 +128,7 @@ export function DraftList({ onEdit, onCreateNew, refreshTrigger }: DraftListProp
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
                     {draft.icon && (() => {
-                      const IconComponent = iconMap[draft.icon as string];
+                      const IconComponent = iconMap[draft.icon];
                       return IconComponent ? (
                         <div className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-700 bg-gray-800 text-gray-400">
                           <IconComponent className="h-4 w-4" />

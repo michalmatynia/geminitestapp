@@ -43,6 +43,7 @@ const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => (
   sizeWidth: doc.sizeWidth ?? null,
   weight: doc.weight ?? null,
   length: doc.length ?? null,
+  parameters: Array.isArray(doc.parameters) ? doc.parameters : [],
   imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
   createdAt: doc.createdAt ?? new Date(),
   updatedAt: doc.updatedAt ?? new Date(),
@@ -73,6 +74,7 @@ const toProductBase = (doc: ProductDocument): ProductRecord => ({
   sizeWidth: doc.sizeWidth ?? null,
   weight: doc.weight ?? null,
   length: doc.length ?? null,
+  parameters: Array.isArray(doc.parameters) ? doc.parameters : [],
   imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
   createdAt: doc.createdAt ?? new Date(),
   updatedAt: doc.updatedAt ?? new Date(),
@@ -232,6 +234,7 @@ export const mongoProductRepository: ProductRepository = {
       sizeWidth: typeof data.sizeWidth === "number" ? data.sizeWidth : null,
       weight: typeof data.weight === "number" ? data.weight : null,
       length: typeof data.length === "number" ? data.length : null,
+      parameters: Array.isArray(data.parameters) ? data.parameters : [],
       imageLinks: Array.isArray(data.imageLinks) ? data.imageLinks : [],
       createdAt: now,
       updatedAt: now,
@@ -289,6 +292,11 @@ export const mongoProductRepository: ProductRepository = {
         : null),
       ...(data.weight !== undefined ? { weight: data.weight ?? null } : null),
       ...(data.length !== undefined ? { length: data.length ?? null } : null),
+      ...(data.parameters !== undefined
+        ? {
+            parameters: Array.isArray(data.parameters) ? data.parameters : [],
+          }
+        : null),
       ...(data.imageLinks !== undefined
         ? {
             imageLinks: Array.isArray(data.imageLinks)
@@ -366,6 +374,7 @@ export const mongoProductRepository: ProductRepository = {
       sizeWidth: existing.sizeWidth ?? null,
       weight: existing.weight ?? null,
       length: existing.length ?? null,
+      parameters: Array.isArray(existing.parameters) ? existing.parameters : [],
       imageLinks: Array.isArray(existing.imageLinks) ? existing.imageLinks : [],
       createdAt: now,
       updatedAt: now,

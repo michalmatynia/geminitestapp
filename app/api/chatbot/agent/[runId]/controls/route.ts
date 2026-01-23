@@ -28,7 +28,7 @@ export async function POST(
     };
     try {
       body = (await req.json()) as typeof body;
-    } catch (error) {
+    } catch (_error) {
       return createErrorResponse(badRequestError("Invalid JSON payload"), {
         request: req,
         source: "chatbot.agent.controls.POST",

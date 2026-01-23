@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
-import type { CategoryWithChildren, NoteWithRelations, TagRecord, NoteFileRecord } from "@/types/notes";
+import type { CategoryWithChildren, NoteWithRelations, NoteFileRecord } from "@/types/notes";
 import type { NoteFormProps } from "@/types/notes-ui";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
@@ -93,15 +93,12 @@ export function NoteForm({
     uploadingSlots,
     addUploadingSlot,
     removeUploadingSlot,
-    isSlotUploading,
     lightboxImage,
     openLightbox,
     closeLightbox,
     isPasting,
     setIsPasting,
     MAX_SLOTS,
-    canAddMoreFiles,
-    addFile,
     removeFile,
   } = useNoteFileAttachments(note?.files);
 
@@ -116,7 +113,6 @@ export function NoteForm({
   // Tags
   const {
     selectedTagIds,
-    setSelectedTagIds,
     tagInput,
     setTagInput,
     isTagDropdownOpen,
@@ -589,7 +585,7 @@ export function NoteForm({
 
   useEffect(() => {
     setNoteFiles(note?.files || []);
-  }, [note?.files]);
+  }, [note?.files, setNoteFiles]);
 
   useEffect(() => {
     if (!note) {

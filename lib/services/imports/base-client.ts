@@ -531,3 +531,106 @@ export async function checkBaseSkuExists(
     return { exists: false };
   }
 }
+
+export type BaseCategory = {
+  id: string;
+  name: string;
+  parentId: string | null;
+};
+
+/**
+ * Fetches categories from Base.com inventory.
+ * Uses the getInventoryCategories API method.
+ */
+export async function fetchBaseCategories(token: string): Promise<BaseCategory[]> {
+  const payload = await callBaseApi(token, "getInventoryCategories", {});
+
+  // Categories may be returned as an object keyed by ID or as an array
+  const rawCategories =
+    payload.categories ??
+    (payload.data as Record<string, unknown> | undefined)?.categories ??
+    payload;
+
+  // Handle object format (keyed by category_id)
+  if (rawCategories && typeof rawCategories === "object" && !Array.isArray(rawCategories)) {
+    return Object.entries(rawCategories as Record<string, unknown>)
+      .filter(([key]) => key !== "status" && key !== "error_code" && key !== "error_message")
+      .map(([key, value]) => {
+        const cat = value as Record<string, unknown>;
+        const id = toStringId(cat.category_id) ?? toStringId(cat.id) ?? key;
+        const name =
+          (typeof cat.name === "string" && cat.name.trim()) ||
+          (typeof cat.label === "string" && cat.label.trim()) ||
+          id;
+        const parentId = toStringId(cat.parent_id) ?? toStringId(cat.parent_category_id) ?? null;
+        return { id, name, parentId };
+      });
+  }
+
+  // Handle array format
+  if (Array.isArray(rawCategories)) {
+    return rawCategories.map((cat: Record<string, unknown>) => {
+      const id = toStringId(cat.category_id) ?? toStringId(cat.id) ?? "";
+      const name =
+        (typeof cat.name === "string" && cat.name.trim()) ||
+        (typeof cat.label === "string" && cat.label.trim()) ||
+        id;
+      const parentId = toStringId(cat.parent_id) ?? toStringId(cat.parent_category_id) ?? null;
+      return { id, name, parentId };
+    });
+  }
+
+  return [];
+}
+
+/**
+ * Fetches categories with debug information.
+ */
+export async function fetchBaseCategoriesDebug(token: string) {
+  const method = "getInventoryCategories";
+  const parameters = {};
+  const result = await callBaseApiRaw(token, method, parameters);
+  const categories = result.payload ? await fetchBaseCategoriesFromPayload(result.payload) : [];
+  return {
+    ...result,
+    method,
+    parameters,
+    categories,
+  };
+}
+
+function fetchBaseCategoriesFromPayload(payload: BaseApiResponse): BaseCategory[] {
+  const rawCategories =
+    payload.categories ??
+    (payload.data as Record<string, unknown> | undefined)?.categories ??
+    payload;
+
+  if (rawCategories && typeof rawCategories === "object" && !Array.isArray(rawCategories)) {
+    return Object.entries(rawCategories as Record<string, unknown>)
+      .filter(([key]) => key !== "status" && key !== "error_code" && key !== "error_message")
+      .map(([key, value]) => {
+        const cat = value as Record<string, unknown>;
+        const id = toStringId(cat.category_id) ?? toStringId(cat.id) ?? key;
+        const name =
+          (typeof cat.name === "string" && cat.name.trim()) ||
+          (typeof cat.label === "string" && cat.label.trim()) ||
+          id;
+        const parentId = toStringId(cat.parent_id) ?? toStringId(cat.parent_category_id) ?? null;
+        return { id, name, parentId };
+      });
+  }
+
+  if (Array.isArray(rawCategories)) {
+    return rawCategories.map((cat: Record<string, unknown>) => {
+      const id = toStringId(cat.category_id) ?? toStringId(cat.id) ?? "";
+      const name =
+        (typeof cat.name === "string" && cat.name.trim()) ||
+        (typeof cat.label === "string" && cat.label.trim()) ||
+        id;
+      const parentId = toStringId(cat.parent_id) ?? toStringId(cat.parent_category_id) ?? null;
+      return { id, name, parentId };
+    });
+  }
+
+  return [];
+}

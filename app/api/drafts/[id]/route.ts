@@ -31,6 +31,14 @@ const updateDraftSchema = z.object({
   catalogIds: z.array(z.string()).optional(),
   categoryIds: z.array(z.string()).optional(),
   tagIds: z.array(z.string()).optional(),
+  parameters: z
+    .array(
+      z.object({
+        parameterId: z.string().min(1),
+        value: z.string().optional().nullable(),
+      })
+    )
+    .optional(),
   defaultPriceGroupId: z.string().optional().nullable(),
   active: z.boolean().optional(),
   icon: z.string().optional().nullable(),

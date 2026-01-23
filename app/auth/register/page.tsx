@@ -107,6 +107,22 @@ export default function RegisterPage() {
           >
             {isSubmitting ? "Creating..." : "Create account"}
           </button>
+          
+          {/* Temporary debug link to omit authing */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsSubmitting(true);
+              void signIn("credentials", {
+                email: "admin@example.com",
+                password: "admin123",
+                callbackUrl: "/admin",
+              });
+            }}
+            className="w-full rounded-md border border-dashed border-yellow-500/50 py-2 text-xs font-medium text-yellow-500 hover:bg-yellow-500/10"
+          >
+            [TEMP] Bypass Registration (Login as Admin)
+          </button>
         </form>
         <p className="text-xs text-gray-400">
           Already have an account?{" "}

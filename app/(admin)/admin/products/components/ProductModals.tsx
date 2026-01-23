@@ -13,10 +13,12 @@ import {
   useProductFormContext,
 } from "@/lib/context/ProductFormContext";
 import type { ProductWithImages } from "@/types";
+import type { ProductDraft } from "@/types/drafts";
 
 interface ProductModalsProps {
   isCreateOpen: boolean;
   initialSku: string;
+  createDraft?: ProductDraft | null;
   onCloseCreate: () => void;
   onCreateSuccess: () => void;
   editingProduct: ProductWithImages | null;
@@ -118,6 +120,7 @@ function EditProductModalContent({ onClose }: { onClose: () => void }) {
 export function ProductModals({
   isCreateOpen: isCreateOpen,
   initialSku,
+  createDraft,
   onCloseCreate,
   onCreateSuccess,
   editingProduct,
@@ -168,8 +171,10 @@ export function ProductModals({
             onMouseDown={(e) => e.stopPropagation()}
           >
             <ProductFormProvider
+              key={createDraft?.id ?? "create"}
               onSuccess={onCreateSuccess}
               initialSku={initialSku}
+              draft={createDraft ?? undefined}
             >
               <CreateProductModalContent onClose={onCloseCreate} />
             </ProductFormProvider>

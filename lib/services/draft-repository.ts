@@ -46,6 +46,7 @@ const listDrafts_Mongo = async (): Promise<ProductDraft[]> => {
     catalogIds: Array.isArray(draft.catalogIds) ? draft.catalogIds : [],
     categoryIds: Array.isArray(draft.categoryIds) ? draft.categoryIds : [],
     tagIds: Array.isArray(draft.tagIds) ? draft.tagIds : [],
+    parameters: Array.isArray(draft.parameters) ? draft.parameters : [],
     defaultPriceGroupId: draft.defaultPriceGroupId || null,
     active: draft.active ?? true,
     imageLinks: Array.isArray(draft.imageLinks) ? draft.imageLinks : [],
@@ -87,6 +88,7 @@ const getDraft_Mongo = async (id: string): Promise<ProductDraft | null> => {
     catalogIds: Array.isArray(draft.catalogIds) ? draft.catalogIds : [],
     categoryIds: Array.isArray(draft.categoryIds) ? draft.categoryIds : [],
     tagIds: Array.isArray(draft.tagIds) ? draft.tagIds : [],
+    parameters: Array.isArray(draft.parameters) ? draft.parameters : [],
     defaultPriceGroupId: draft.defaultPriceGroupId || null,
     active: draft.active ?? true,
     imageLinks: Array.isArray(draft.imageLinks) ? draft.imageLinks : [],
@@ -107,6 +109,7 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
     catalogIds: input.catalogIds || [],
     categoryIds: input.categoryIds || [],
     tagIds: input.tagIds || [],
+    parameters: input.parameters || [],
     imageLinks: input.imageLinks || [],
     active: input.active ?? true,
     createdAt: now,
@@ -141,6 +144,7 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
     catalogIds: draft.catalogIds,
     categoryIds: draft.categoryIds,
     tagIds: draft.tagIds,
+    parameters: draft.parameters,
     defaultPriceGroupId: input.defaultPriceGroupId || null,
     active: draft.active,
     imageLinks: draft.imageLinks,
@@ -193,6 +197,7 @@ const updateDraft_Mongo = async (id: string, input: UpdateProductDraftInput): Pr
     catalogIds: Array.isArray(result.catalogIds) ? result.catalogIds : [],
     categoryIds: Array.isArray(result.categoryIds) ? result.categoryIds : [],
     tagIds: Array.isArray(result.tagIds) ? result.tagIds : [],
+    parameters: Array.isArray(result.parameters) ? result.parameters : [],
     defaultPriceGroupId: result.defaultPriceGroupId || null,
     active: result.active ?? true,
     imageLinks: Array.isArray(result.imageLinks) ? result.imageLinks : [],
@@ -219,6 +224,7 @@ const listDrafts_Prisma = async (): Promise<ProductDraft[]> => {
     catalogIds: draft.catalogIds as string[],
     categoryIds: draft.categoryIds as string[],
     tagIds: draft.tagIds as string[],
+    parameters: draft.parameters as unknown[],
     imageLinks: draft.imageLinks as string[],
   }));
 };
@@ -235,6 +241,7 @@ const getDraft_Prisma = async (id: string): Promise<ProductDraft | null> => {
     catalogIds: draft.catalogIds as string[],
     categoryIds: draft.categoryIds as string[],
     tagIds: draft.tagIds as string[],
+    parameters: draft.parameters as unknown[],
     imageLinks: draft.imageLinks as string[],
   };
 };
@@ -266,6 +273,7 @@ const createDraft_Prisma = async (input: CreateProductDraftInput): Promise<Produ
       catalogIds: input.catalogIds || [],
       categoryIds: input.categoryIds || [],
       tagIds: input.tagIds || [],
+      parameters: input.parameters || [],
       defaultPriceGroupId: input.defaultPriceGroupId,
       active: input.active ?? true,
       imageLinks: input.imageLinks || [],
@@ -278,6 +286,7 @@ const createDraft_Prisma = async (input: CreateProductDraftInput): Promise<Produ
     catalogIds: draft.catalogIds as string[],
     categoryIds: draft.categoryIds as string[],
     tagIds: draft.tagIds as string[],
+    parameters: draft.parameters as unknown[],
     imageLinks: draft.imageLinks as string[],
   };
 };
@@ -294,6 +303,7 @@ const updateDraft_Prisma = async (id: string, input: UpdateProductDraftInput): P
       catalogIds: draft.catalogIds as string[],
       categoryIds: draft.categoryIds as string[],
       tagIds: draft.tagIds as string[],
+      parameters: draft.parameters as unknown[],
       imageLinks: draft.imageLinks as string[],
     };
   } catch {

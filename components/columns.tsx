@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef, Row } from "@tanstack/react-table";
-import { ArrowUpDown, MoreVertical, PlusCircle, Store } from "lucide-react";
+import { ArrowUpDown, Download, MoreVertical, PlusCircle, Store } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -288,6 +288,8 @@ export const columns: ColumnDef<ProductWithImages>[] = [
 
       const handleNameClick = meta?.onProductNameClick;
 
+      const isImported = !!product.baseProductId;
+
       return (
         <div>
           {handleNameClick ? (
@@ -303,7 +305,16 @@ export const columns: ColumnDef<ProductWithImages>[] = [
           )}
 
           {product.sku && (
-            <div className="text-sm text-gray-500">{product.sku}</div>
+            <div className="flex items-center gap-1.5 text-sm text-gray-500">
+              <span>{product.sku}</span>
+              {isImported && (
+                <Download
+                  className="size-3 text-blue-400"
+                  title="Imported product"
+                  aria-label="Imported product"
+                />
+              )}
+            </div>
           )}
         </div>
       );

@@ -11,6 +11,7 @@ import {
   StickyNoteIcon,
   ShieldIcon,
   ActivityIcon,
+  HomeIcon,
 } from "lucide-react";
 import CollapsibleMenu from "@/components/CollapsibleMenu";
 import { useAdminLayout } from "@/lib/context/AdminLayoutContext";
@@ -88,6 +89,12 @@ export default function Menu() {
           className="block w-full text-left hover:bg-gray-700 p-2 rounded"
         >
           Drafts
+        </Link>
+        <Link
+          href="/admin/products/constructor"
+          className="block w-full text-left hover:bg-gray-700 p-2 rounded"
+        >
+          Constructor
         </Link>
         <Link
           href="/admin/products/settings"
@@ -169,6 +176,13 @@ export default function Menu() {
       >
         <DatabaseIcon className="mr-2" />
         {!isMenuCollapsed && "Databases"}
+      </Link>
+      <Link
+        href="/admin/front-manage"
+        className="flex items-center hover:bg-gray-700 p-2 rounded"
+      >
+        <HomeIcon className="mr-2" />
+        {!isMenuCollapsed && "Front Manage"}
       </Link>
       <Link
         href="/admin/system/logs"

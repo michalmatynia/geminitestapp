@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     let body: unknown;
     try {
       body = await req.json();
-    } catch (error) {
+    } catch (_error) {
       return createErrorResponse(badRequestError("Invalid JSON payload"), {
         request: req,
         source: "databases.restore.POST",

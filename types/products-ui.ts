@@ -5,12 +5,14 @@ export type ProductImageSlot =
       type: "file"; // A new File object
       data: File;
       previewUrl: string;
+      slotId: string;
       originalIndex?: number | undefined; // Optional: original index if moved
     }
   | {
       type: "existing"; // An existing ImageFile from the DB
       data: ImageFileSelection;
       previewUrl: string; // The filepath of the existing image
+      slotId: string;
       originalIndex?: number | undefined; // Optional: original index if moved
     }
   | null; // Empty slot

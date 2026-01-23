@@ -1,13 +1,13 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { memo, Profiler, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import type { ProfilerOnRenderCallback } from "react";
 import dynamic from "next/dynamic";
 import { DataTable } from "@/components/data-table";
 import { columns } from "@/components/columns";
 import DebugPanel from "@/components/DebugPanel";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ProductFilters } from "@/components/products/list/ProductFilters";
 import { ProductTableSkeleton } from "@/components/products/list/ProductTableSkeleton";
 import { useProductData } from "./hooks/useProductData";
 import { useProductOperations } from "./hooks/useProductOperations";
@@ -17,13 +17,31 @@ import { ProductModals } from "./components/ProductModals";
 import { ProductWithImages } from "@/types";
 import { useToast } from "@/components/ui/toast";
 import { logger } from "@/lib/logger";
-import type { RowSelectionState } from "@tanstack/react-table";
+import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import type { ProductDraft } from "@/types/drafts";
+import type { Catalog } from "@/types/products";
+import type { PriceGroupWithDetails } from "@/types";
 
 const ProductListHeader = dynamic(
   () =>
     import("@/components/products/list/ProductListHeader").then(
       (mod) => mod.ProductListHeader
+    ),
+  { ssr: false }
+);
+
+const ProductFilters = dynamic(
+  () =>
+    import("@/components/products/list/ProductFilters").then(
+      (mod) => mod.ProductFilters
+    ),
+  { ssr: false }
+);
+
+const ProductSelectionActions = dynamic(
+  () =>
+    import("@/components/products/list/ProductFilters").then(
+      (mod) => mod.ProductSelectionActions
     ),
   { ssr: false }
 );
@@ -40,6 +58,7 @@ function AdminPageInner() {
   const { toast } = useToast();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [activeDrafts, setActiveDrafts] = useState<ProductDraft[]>([]);
+  const [createDraft, setCreateDraft] = useState<ProductDraft | null>(null);
 
   // Load user preferences
   const {
@@ -110,6 +129,7 @@ function AdminPageInner() {
     setExportSettingsProduct,
     refreshListingBadges,
     handleOpenCreateModal,
+    handleOpenCreateFromDraft,
     handleCreateSuccess,
     handleEditSuccess,
     handleEditSave,
@@ -126,6 +146,11 @@ function AdminPageInner() {
   const handleOpenEditModal = useCallback((product: ProductWithImages) => {
     setEditingProduct(product);
   }, [setEditingProduct]);
+
+  const handleOpenCreate = useCallback(() => {
+    setCreateDraft(null);
+    void handleOpenCreateModal();
+  }, [handleOpenCreateModal]);
 
   const handleOpenIntegrationsModal = useCallback((product: ProductWithImages) => {
     setIntegrationsProduct(product);
@@ -165,7 +190,7 @@ function AdminPageInner() {
         const res = await fetch("/api/drafts");
         if (res.ok) {
           const drafts = await res.json() as ProductDraft[];
-          setActiveDrafts(drafts.filter(d => d.active));
+          setActiveDrafts(drafts.filter((d) => d.active !== false));
         }
       } catch (error) {
         console.error("Failed to load active drafts:", error);
@@ -174,23 +199,31 @@ function AdminPageInner() {
     void loadActiveDrafts();
   }, []);
 
-  const handleCreateFromDraft = useCallback(async (draftId: string) => {
-    try {
-      const res = await fetch(`/api/drafts/${draftId}`);
-      if (!res.ok) throw new Error("Failed to load draft");
+  const handleCreateFromDraft = useCallback((draftId: string) => {
+    const run = async () => {
+      try {
+        const res = await fetch(`/api/drafts/${draftId}`);
+        if (!res.ok) throw new Error("Failed to load draft");
 
-      const draft = await res.json();
-      // TODO: Open create modal with draft values pre-filled
-      // For now, just open the create modal
-      handleOpenCreateModal();
-      toast(`Creating product from draft: ${draft.name}`, { variant: "success" });
-    } catch (error) {
-      console.error("Failed to load draft:", error);
-      toast("Failed to load draft template", { variant: "error" });
-    }
-  }, [handleOpenCreateModal, toast]);
+        const draft = (await res.json()) as ProductDraft;
+        setCreateDraft(draft);
+        handleOpenCreateFromDraft(draft);
+        toast(`Creating product from draft: ${draft.name}`, { variant: "success" });
+      } catch (error) {
+        console.error("Failed to load draft:", error);
+        toast("Failed to load draft template", { variant: "error" });
+      }
+    };
+    void run();
+  }, [handleOpenCreateFromDraft, toast]);
 
-  const handleCloseCreate = useCallback(() => setIsCreateOpen(false), [setIsCreateOpen]);
+  const handleCloseCreate = useCallback(() => {
+    setIsCreateOpen(false);
+    setCreateDraft(null);
+  }, [setIsCreateOpen]);
+  const handleDismissActionError = useCallback(() => {
+    setActionError(null);
+  }, [setActionError]);
   const handleCloseEdit = useCallback(() => setEditingProduct(null), [setEditingProduct]);
   const handleCloseIntegrations = useCallback(() => {
     setIntegrationsProduct(null);
@@ -264,6 +297,12 @@ function AdminPageInner() {
   const [loadingGlobalSelection, setLoadingGlobalSelection] = useState(false);
 
   const handleSelectAllGlobal = useCallback(async () => {
+    const perfStartMark = "products:selectAllGlobal:start";
+    const perfEndMark = "products:selectAllGlobal:end";
+    const perfEnabled = isDebugOpen && typeof performance !== "undefined";
+    if (perfEnabled) {
+      performance.mark(perfStartMark);
+    }
     setLoadingGlobalSelection(true);
     try {
       const params = new URLSearchParams();
@@ -290,42 +329,49 @@ function AdminPageInner() {
       console.error(error);
       toast("Failed to select all products", { variant: "error" });
     } finally {
+      if (perfEnabled) {
+        performance.mark(perfEndMark);
+        performance.measure("products:selectAllGlobal", perfStartMark, perfEndMark);
+      }
       setLoadingGlobalSelection(false);
     }
-  }, [search, sku, minPrice, maxPrice, startDate, endDate, catalogFilter, toast]);
+  }, [search, sku, minPrice, maxPrice, startDate, endDate, catalogFilter, toast, isDebugOpen]);
 
-  const handleMassDelete = useCallback(async () => {
-    logger.log("Mass delete initiated.");
-    const selectedProductIds = Object.keys(rowSelection).filter(
-      (id) => rowSelection[id]
-    );
+  const handleMassDelete = useCallback(() => {
+    const run = async () => {
+      logger.log("Mass delete initiated.");
+      const selectedProductIds = Object.keys(rowSelection).filter(
+        (id) => rowSelection[id]
+      );
 
-    if (selectedProductIds.length === 0) return;
+      if (selectedProductIds.length === 0) return;
 
-    if (
-      window.confirm(
-        `Are you sure you want to delete ${selectedProductIds.length} selected products?`
-      )
-    ) {
-      try {
-        const deletePromises = selectedProductIds.map((id) =>
-          fetch(`/api/products/${id}`, { method: "DELETE" })
-        );
-        const results = await Promise.all(deletePromises);
-        const failedDeletions = results.filter((res) => !res.ok);
+      if (
+        window.confirm(
+          `Are you sure you want to delete ${selectedProductIds.length} selected products?`
+        )
+      ) {
+        try {
+          const deletePromises = selectedProductIds.map((id) =>
+            fetch(`/api/products/${id}`, { method: "DELETE" })
+          );
+          const results = await Promise.all(deletePromises);
+          const failedDeletions = results.filter((res) => !res.ok);
 
-        if (failedDeletions.length > 0) {
-          setActionError("Some products could not be deleted.");
-        } else {
-          toast("Selected products deleted successfully.", { variant: "success" });
+          if (failedDeletions.length > 0) {
+            setActionError("Some products could not be deleted.");
+          } else {
+            toast("Selected products deleted successfully.", { variant: "success" });
+          }
+          setRowSelection({});
+          setRefreshTrigger((prev) => prev + 1);
+        } catch (error) {
+          logger.error("Error during mass deletion:", error);
+          setActionError("An error occurred during deletion.");
         }
-        setRowSelection({});
-        setRefreshTrigger((prev) => prev + 1);
-      } catch (error) {
-        logger.error("Error during mass deletion:", error);
-        setActionError("An error occurred during deletion.");
       }
-    }
+    };
+    void run();
   }, [rowSelection, setActionError, toast]);
 
   useEffect(() => {
@@ -343,91 +389,88 @@ function AdminPageInner() {
     }
   }, [data, lastEditedId]);
 
+  const tableSkeleton = useMemo(
+    () => <ProductTableSkeleton rows={pageSize} />,
+    [pageSize]
+  );
+
+  const handleProductsTableRender = useCallback<ProfilerOnRenderCallback>(
+    (_id, _phase, actualDuration, _baseDuration, _startTime, commitTime) => {
+      if (!isDebugOpen || typeof performance === "undefined") return;
+      performance.measure("products:tableRender", {
+        start: commitTime - actualDuration,
+        end: commitTime,
+      });
+    },
+    [isDebugOpen]
+  );
+
   return (
     <div className="container mx-auto py-10">
       {isDebugOpen && <DebugPanel />}
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-        <ProductListHeader
-          onCreateProduct={() => void handleOpenCreateModal()}
-          onCreateFromDraft={handleCreateFromDraft}
-          activeDrafts={activeDrafts}
-          page={page}
-          totalPages={totalPages}
-          setPage={handleSetPage}
-          pageSize={pageSize}
-          setPageSize={handleSetPageSize}
-          nameLocale={preferences.nameLocale}
-          setNameLocale={handleSetNameLocale}
-          currencyCode={currencyCode}
-          setCurrencyCode={handleSetCurrencyCode}
-          currencyOptions={currencyOptions}
-          catalogFilter={catalogFilter}
-          setCatalogFilter={handleSetCatalogFilter}
-          catalogs={catalogs}
-        />
-        {loadError && (
-          <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-            {loadError}
-          </div>
-        )}
-        {actionError && (
-          <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-            {actionError}
-            <Button
-              onClick={() => setActionError(null)}
-              className="ml-4 bg-transparent text-red-200 hover:bg-red-500/20"
-            >
-              Dismiss
-            </Button>
-          </div>
-        )}
-        <ProductFilters
-          search={search}
-          setSearch={setSearch}
-          sku={sku}
-          setSku={setSku}
-          minPrice={minPrice}
-          setMinPrice={setMinPrice}
-          maxPrice={maxPrice}
-          setMaxPrice={setMaxPrice}
-          startDate={startDate}
-          setStartDate={setStartDate}
-          endDate={endDate}
-          setEndDate={setEndDate}
-          data={data}
-          rowSelection={rowSelection}
-          setRowSelection={setRowSelection}
-          onSelectAllGlobal={handleSelectAllGlobal}
-          loadingGlobal={loadingGlobalSelection}
-          onDeleteSelected={handleMassDelete}
-          onAddToMarketplace={handleAddToMarketplace}
-        />
-        <DataTable
-          columns={columns}
-          data={data}
-          setRefreshTrigger={setRefreshTrigger}
-          productNameKey={preferences.nameLocale}
-          currencyCode={currencyCode}
-          priceGroups={priceGroups}
-          onProductNameClick={handleOpenEditModal}
-          onProductEditClick={handleOpenEditModal}
-          onIntegrationsClick={handleOpenIntegrationsModal}
-          onExportSettingsClick={handleOpenExportSettings}
-          integrationBadgeIds={integrationBadgeIds}
-          integrationBadgeStatuses={integrationBadgeStatuses}
-          getRowId={getRowId}
-          rowSelection={rowSelection}
-          onRowSelectionChange={setRowSelection}
-          isLoading={isLoading}
-          skeletonRows={<ProductTableSkeleton rows={pageSize} />}
-        />
-      </div>
-
+      <ProductListPanel
+        onCreateProduct={handleOpenCreate}
+        onCreateFromDraft={handleCreateFromDraft}
+        activeDrafts={activeDrafts}
+        page={page}
+        totalPages={totalPages}
+        setPage={handleSetPage}
+        pageSize={pageSize}
+        setPageSize={handleSetPageSize}
+        nameLocale={preferences.nameLocale}
+        setNameLocale={handleSetNameLocale}
+        currencyCode={currencyCode}
+        setCurrencyCode={handleSetCurrencyCode}
+        currencyOptions={currencyOptions}
+        catalogFilter={catalogFilter}
+        setCatalogFilter={handleSetCatalogFilter}
+        catalogs={catalogs}
+        loadError={loadError}
+        actionError={actionError}
+        onDismissActionError={handleDismissActionError}
+        search={search}
+        setSearch={setSearch}
+        sku={sku}
+        setSku={setSku}
+        minPrice={minPrice}
+        setMinPrice={setMinPrice}
+        maxPrice={maxPrice}
+        setMaxPrice={setMaxPrice}
+        startDate={startDate}
+        setStartDate={setStartDate}
+        endDate={endDate}
+        setEndDate={setEndDate}
+        data={data}
+        rowSelection={rowSelection}
+        setRowSelection={setRowSelection}
+        onSelectAllGlobal={handleSelectAllGlobal}
+        loadingGlobal={loadingGlobalSelection}
+        onDeleteSelected={() => void handleMassDelete()}
+        onAddToMarketplace={handleAddToMarketplace}
+        handleProductsTableRender={handleProductsTableRender}
+        tableColumns={columns}
+        setRefreshTrigger={setRefreshTrigger}
+        productNameKey={preferences.nameLocale}
+        priceGroups={priceGroups}
+        onProductNameClick={handleOpenEditModal}
+        onProductEditClick={handleOpenEditModal}
+        onIntegrationsClick={handleOpenIntegrationsModal}
+        onExportSettingsClick={handleOpenExportSettings}
+        integrationBadgeIds={integrationBadgeIds}
+        integrationBadgeStatuses={integrationBadgeStatuses}
+        getRowId={getRowId}
+        isLoading={isLoading}
+        skeletonRows={tableSkeleton}
+      />
       <ProductModals
         isCreateOpen={isCreateOpen}
         initialSku={initialSku}
+        createDraft={createDraft}
         onCloseCreate={handleCloseCreate}
-        onCreateSuccess={handleCreateSuccess}
+        onCreateSuccess={() => {
+          handleCreateSuccess();
+          setCreateDraft(null);
+        }}
         editingProduct={editingProduct}
         onCloseEdit={handleCloseEdit}
         onEditSuccess={handleEditSuccess}
@@ -457,6 +500,262 @@ function AdminPageInner() {
     </div>
   );
 }
+
+type ProductListPanelProps = {
+  onCreateProduct: () => void;
+  onCreateFromDraft: (draftId: string) => void;
+  activeDrafts: ProductDraft[];
+  page: number;
+  totalPages: number;
+  setPage: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
+  nameLocale: "name_en" | "name_pl" | "name_de";
+  setNameLocale: (locale: "name_en" | "name_pl" | "name_de") => void;
+  currencyCode: string;
+  setCurrencyCode: (code: string) => void;
+  currencyOptions: string[];
+  catalogFilter: string;
+  setCatalogFilter: (filter: string) => void;
+  catalogs: Catalog[];
+  loadError: string | null;
+  actionError: string | null;
+  onDismissActionError: () => void;
+  search: string;
+  setSearch: (value: string) => void;
+  sku: string;
+  setSku: (value: string) => void;
+  minPrice: number | undefined;
+  setMinPrice: (value: number | undefined) => void;
+  maxPrice: number | undefined;
+  setMaxPrice: (value: number | undefined) => void;
+  startDate: string;
+  setStartDate: (value: string) => void;
+  endDate: string;
+  setEndDate: (value: string) => void;
+  data: ProductWithImages[];
+  rowSelection: RowSelectionState;
+  setRowSelection: (value: RowSelectionState) => void;
+  onSelectAllGlobal: () => void;
+  loadingGlobal: boolean;
+  onDeleteSelected: () => void;
+  onAddToMarketplace: () => void;
+  handleProductsTableRender: ProfilerOnRenderCallback;
+  tableColumns: ColumnDef<ProductWithImages>[];
+  setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;
+  productNameKey: "name_en" | "name_pl" | "name_de";
+  priceGroups: PriceGroupWithDetails[];
+  onProductNameClick: (row: ProductWithImages) => void;
+  onProductEditClick: (row: ProductWithImages) => void;
+  onIntegrationsClick: (row: ProductWithImages) => void;
+  onExportSettingsClick: (row: ProductWithImages) => void;
+  integrationBadgeIds: Set<string>;
+  integrationBadgeStatuses: Map<string, string>;
+  getRowId: (row: ProductWithImages) => string | number;
+  isLoading: boolean;
+  skeletonRows: React.ReactNode;
+};
+
+const ProductListPanel = memo(function ProductListPanel({
+  onCreateProduct,
+  onCreateFromDraft,
+  activeDrafts,
+  page,
+  totalPages,
+  setPage,
+  pageSize,
+  setPageSize,
+  nameLocale,
+  setNameLocale,
+  currencyCode,
+  setCurrencyCode,
+  currencyOptions,
+  catalogFilter,
+  setCatalogFilter,
+  catalogs,
+  loadError,
+  actionError,
+  onDismissActionError,
+  search,
+  setSearch,
+  sku,
+  setSku,
+  minPrice,
+  setMinPrice,
+  maxPrice,
+  setMaxPrice,
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate,
+  data,
+  rowSelection,
+  setRowSelection,
+  onSelectAllGlobal,
+  loadingGlobal,
+  onDeleteSelected,
+  onAddToMarketplace,
+  handleProductsTableRender,
+  tableColumns,
+  setRefreshTrigger,
+  productNameKey,
+  priceGroups,
+  onProductNameClick,
+  onProductEditClick,
+  onIntegrationsClick,
+  onExportSettingsClick,
+  integrationBadgeIds,
+  integrationBadgeStatuses,
+  getRowId,
+  isLoading,
+  skeletonRows,
+}: ProductListPanelProps) {
+  const headerProps = useMemo(
+    () => ({
+      onCreateProduct,
+      onCreateFromDraft,
+      activeDrafts,
+      page,
+      totalPages,
+      setPage,
+      pageSize,
+      setPageSize,
+      nameLocale,
+      setNameLocale,
+      currencyCode,
+      setCurrencyCode,
+      currencyOptions,
+      catalogFilter,
+      setCatalogFilter,
+      catalogs,
+    }),
+    [
+      onCreateProduct,
+      onCreateFromDraft,
+      activeDrafts,
+      page,
+      totalPages,
+      setPage,
+      pageSize,
+      setPageSize,
+      nameLocale,
+      setNameLocale,
+      currencyCode,
+      setCurrencyCode,
+      currencyOptions,
+      catalogFilter,
+      setCatalogFilter,
+      catalogs,
+    ]
+  );
+
+  const filtersProps = useMemo(
+    () => ({
+      search,
+      setSearch,
+      sku,
+      setSku,
+      minPrice,
+      setMinPrice,
+      maxPrice,
+      setMaxPrice,
+      startDate,
+      setStartDate,
+      endDate,
+      setEndDate,
+    }),
+    [
+      search,
+      setSearch,
+      sku,
+      setSku,
+      minPrice,
+      setMinPrice,
+      maxPrice,
+      setMaxPrice,
+      startDate,
+      setStartDate,
+      endDate,
+      setEndDate,
+    ]
+  );
+
+  const tableProps = useMemo(
+    () => ({
+      columns: tableColumns,
+      data,
+      setRefreshTrigger,
+      productNameKey,
+      currencyCode,
+      priceGroups,
+      onProductNameClick,
+      onProductEditClick,
+      onIntegrationsClick,
+      onExportSettingsClick,
+      integrationBadgeIds,
+      integrationBadgeStatuses,
+      getRowId,
+      rowSelection,
+      onRowSelectionChange: setRowSelection,
+      isLoading,
+      skeletonRows,
+    }),
+    [
+      tableColumns,
+      data,
+      setRefreshTrigger,
+      productNameKey,
+      currencyCode,
+      priceGroups,
+      onProductNameClick,
+      onProductEditClick,
+      onIntegrationsClick,
+      onExportSettingsClick,
+      integrationBadgeIds,
+      integrationBadgeStatuses,
+      getRowId,
+      rowSelection,
+      setRowSelection,
+      isLoading,
+      skeletonRows,
+    ]
+  );
+
+  return (
+    <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
+      <ProductListHeader {...headerProps} />
+      {loadError && (
+        <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {loadError}
+        </div>
+      )}
+      {actionError && (
+        <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {actionError}
+          <Button
+            onClick={onDismissActionError}
+            className="ml-4 bg-transparent text-red-200 hover:bg-red-500/20"
+          >
+            Dismiss
+          </Button>
+        </div>
+      )}
+      <ProductFilters {...filtersProps} />
+      <ProductSelectionActions
+        data={data}
+        rowSelection={rowSelection}
+        setRowSelection={setRowSelection}
+        onSelectAllGlobal={onSelectAllGlobal}
+        loadingGlobal={loadingGlobal}
+        onDeleteSelected={onDeleteSelected}
+        onAddToMarketplace={onAddToMarketplace}
+      />
+      <Profiler id="ProductsTable" onRender={handleProductsTableRender}>
+        <DataTable {...tableProps} />
+      </Profiler>
+    </div>
+  );
+});
 
 export default function AdminPage() {
   return (

@@ -29,6 +29,7 @@ model Product {
   sizeWidth           Int?
   weight              Int?
   length              Int?
+  parameters          Json                        @default("[]")
   imageLinks          String[]                    @default([])
   createdAt           DateTime                    @default(now())
   updatedAt           DateTime                    @updatedAt
@@ -279,7 +280,23 @@ model Catalog {
   languages         CatalogLanguage[]
   categories        ProductCategory[]
   tags              ProductTag[]
+  parameters        ProductParameter[]
   defaultLanguage   Language?         @relation("CatalogDefaultLanguage", fields: [defaultLanguageId], references: [id])
+}
+
+model ProductParameter {
+  id        String   @id @default(cuid())
+  catalogId String
+  name_en   String
+  name_pl   String?
+  name_de   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  catalog Catalog @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+
+  @@index([catalogId])
+  @@unique([catalogId, name_en])
 }
 
 model ProductCatalog {
@@ -687,6 +704,7 @@ model ProductCategory {
   createdAt   DateTime                    @default(now())
   updatedAt   DateTime                    @updatedAt
   products    ProductCategoryAssignment[]
+  mappings    CategoryMapping[]
 
   @@unique([catalogId, parentId, name])
 }
@@ -840,10 +858,52 @@ model ProductDraft {
   catalogIds          Json     @default("[]")
   categoryIds         Json     @default("[]")
   tagIds              Json     @default("[]")
+  parameters          Json     @default("[]")
   defaultPriceGroupId String?
   active              Boolean  @default(true)
   imageLinks          Json     @default("[]")
   baseProductId       String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+}
+
+// Stores external marketplace categories fetched from APIs (e.g., Base.com)
+model ExternalCategory {
+  id               String   @id @default(cuid())
+  connectionId     String   // Links to IntegrationConnection
+  externalId       String   // Category ID from marketplace
+  name             String
+  parentExternalId String?  // Parent category ID from marketplace
+  path             String?  // Full path like "Electronics > Phones"
+  depth            Int      @default(0)
+  isLeaf           Boolean  @default(true)
+  metadata         Json?    // Marketplace-specific data
+  fetchedAt        DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  mappings CategoryMapping[]
+
+  @@unique([connectionId, externalId])
+  @@index([connectionId])
+  @@index([parentExternalId])
+}
+
+// Maps external marketplace categories to internal ProductCategories
+model CategoryMapping {
+  id                 String   @id @default(cuid())
+  connectionId       String   // Links to IntegrationConnection
+  externalCategoryId String   // Links to ExternalCategory
+  internalCategoryId String   // Links to ProductCategory
+  catalogId          String   // Which catalog the internal category belongs to
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  externalCategory ExternalCategory @relation(fields: [externalCategoryId], references: [id], onDelete: Cascade)
+  internalCategory ProductCategory  @relation(fields: [internalCategoryId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, externalCategoryId, catalogId])
+  @@index([connectionId])
+  @@index([internalCategoryId])
 }

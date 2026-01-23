@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import type { Document, UpdateFilter } from "mongodb";
 import prisma from "@/lib/prisma";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
@@ -211,7 +212,7 @@ export async function DELETE(
       // Remove language from any catalogs that reference it
       await mongo.collection("catalogs").updateMany(
         { languageIds: id },
-        { $pull: { languageIds: id } } as any
+        { $pull: { languageIds: id } } as UpdateFilter<Document>
       );
 
       // Delete the language

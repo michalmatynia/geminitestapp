@@ -7,6 +7,7 @@ const nextConfig = {
     'bcrypt',
   ],
   images: {
+    qualities: [75, 90],
     remotePatterns: [
       {
         protocol: 'https',
@@ -19,6 +20,15 @@ const nextConfig = {
         hostname: 'upload.cdn.baselinker.com',
       },
     ],
+  },
+  async redirects() {
+    return [
+      {
+        source: "/admin/products/constructor",
+        destination: "/admin/products/builder",
+        permanent: false,
+      },
+    ];
   },
 };
 

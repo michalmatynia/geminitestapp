@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { productCreateSchema } from "@/lib/validations/product";
+import type { ProductParameterValue } from "@/types/products";
 export { type PriceGroup, type Currency } from "@prisma/client";
 import type { PriceGroup, Currency } from "@prisma/client";
 
@@ -58,6 +59,7 @@ export type ProductRecord = {
   sizeWidth: number | null;
   weight: number | null;
   length: number | null;
+  parameters?: ProductParameterValue[];
   imageLinks: string[];
   createdAt: Date;
   updatedAt: Date;

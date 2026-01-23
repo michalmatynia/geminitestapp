@@ -28,7 +28,8 @@ import type {
   PriceGroupWithDetails,
   ProductFormData,
 } from "@/types";
-import type { ProductCategory, ProductTag } from "@/types/products";
+import type { ProductDraft } from "@/types/drafts";
+import type { ProductCategory, ProductTag, ProductParameter, ProductParameterValue } from "@/types/products";
 import {
   ProductImageSlot,
 } from "@/types/products-ui";
@@ -60,6 +61,7 @@ interface ProductFormContextType {
   handleMultiFileSelect: (files: ImageFileSelection[]) => void;
   swapImageSlots: (fromIndex: number, toIndex: number) => void;
   setImageLinkAt: (index: number, value: string) => void;
+  setImagesReordering: (reordering: boolean) => void;
   catalogs: CatalogRecord[];
   catalogsLoading: boolean;
   catalogsError: string | null;
@@ -73,6 +75,13 @@ interface ProductFormContextType {
   tagsLoading: boolean;
   selectedTagIds: string[];
   toggleTag: (tagId: string) => void;
+  parameters: ProductParameter[];
+  parametersLoading: boolean;
+  parameterValues: ProductParameterValue[];
+  addParameterValue: () => void;
+  updateParameterId: (index: number, parameterId: string) => void;
+  updateParameterValue: (index: number, value: string) => void;
+  removeParameterValue: (index: number) => void;
   filteredLanguages: Language[];
   filteredPriceGroups: PriceGroupWithDetails[];
   generationError: string | null;
@@ -99,6 +108,7 @@ export const useProductFormContext = () => {
 export function ProductFormProvider({
   children,
   product,
+  draft,
   onSuccess,
   onEditSave,
   requireSku,
@@ -107,6 +117,7 @@ export function ProductFormProvider({
 }: {
   children: React.ReactNode;
   product?: ProductWithImages | undefined;
+  draft?: ProductDraft | null | undefined;
   onSuccess?: (() => void) | undefined;
   onEditSave?: ((saved: ProductWithImages) => void) | undefined;
   requireSku?: boolean | undefined;
@@ -117,27 +128,28 @@ export function ProductFormProvider({
   const methods = useForm<ProductFormData>({
     resolver: zodResolver(formSchema) as Resolver<ProductFormData>,
     defaultValues: {
-      name_en: product?.name_en || "",
-      name_pl: product?.name_pl || "",
-      name_de: product?.name_de || "",
-      price: product?.price || 0,
-      sku: product?.sku || initialSku || "",
-      defaultPriceGroupId: product?.defaultPriceGroupId ?? undefined,
-      baseProductId: product?.baseProductId ?? undefined,
-      ean: product?.ean || "",
-      gtin: product?.gtin || "",
-      asin: product?.asin || "",
-      description_en: product?.description_en || "",
-      description_pl: product?.description_pl || "",
-      description_de: product?.description_de || "",
-      supplierName: product?.supplierName || "",
-      supplierLink: product?.supplierLink || "",
-      priceComment: product?.priceComment || "",
-      stock: product?.stock || 0,
-      sizeLength: product?.sizeLength || 0,
-      sizeWidth: product?.sizeWidth || 0,
-      weight: product?.weight || 0,
-      length: product?.length || 0,
+      name_en: product?.name_en || draft?.name_en || "",
+      name_pl: product?.name_pl || draft?.name_pl || "",
+      name_de: product?.name_de || draft?.name_de || "",
+      price: product?.price ?? draft?.price ?? 0,
+      sku: product?.sku || initialSku || draft?.sku || "",
+      defaultPriceGroupId:
+        product?.defaultPriceGroupId ?? draft?.defaultPriceGroupId ?? undefined,
+      baseProductId: product?.baseProductId ?? draft?.baseProductId ?? undefined,
+      ean: product?.ean || draft?.ean || "",
+      gtin: product?.gtin || draft?.gtin || "",
+      asin: product?.asin || draft?.asin || "",
+      description_en: product?.description_en || draft?.description_en || "",
+      description_pl: product?.description_pl || draft?.description_pl || "",
+      description_de: product?.description_de || draft?.description_de || "",
+      supplierName: product?.supplierName || draft?.supplierName || "",
+      supplierLink: product?.supplierLink || draft?.supplierLink || "",
+      priceComment: product?.priceComment || draft?.priceComment || "",
+      stock: product?.stock ?? draft?.stock ?? 0,
+      sizeLength: product?.sizeLength ?? draft?.sizeLength ?? 0,
+      sizeWidth: product?.sizeWidth ?? draft?.sizeWidth ?? 0,
+      weight: product?.weight ?? draft?.weight ?? 0,
+      length: product?.length ?? draft?.length ?? 0,
     },
   });
   const {
@@ -168,7 +180,8 @@ export function ProductFormProvider({
     swapImageSlots,
     setImageLinkAt,
     refreshFromProduct: refreshImages,
-  } = useProductImages(product);
+    setImagesReordering,
+  } = useProductImages(product, draft?.imageLinks);
 
   const {
     catalogs,
@@ -184,14 +197,37 @@ export function ProductFormProvider({
     tagsLoading,
     selectedTagIds,
     toggleTag,
+    parameters,
+    parametersLoading,
     filteredLanguages,
     filteredPriceGroups,
   } = useProductMetadata({
     product,
     initialCatalogId,
+    initialCatalogIds: draft?.catalogIds,
+    initialCategoryIds: draft?.categoryIds,
+    initialTagIds: draft?.tagIds,
     setValue,
     getValues,
   });
+
+  const normalizeParameterValues = (
+    input?: ProductParameterValue[] | null
+  ): ProductParameterValue[] => {
+    if (!Array.isArray(input)) return [];
+    return input.map((entry) => ({
+      parameterId: typeof entry?.parameterId === "string" ? entry.parameterId : "",
+      value: typeof entry?.value === "string" ? entry.value : "",
+    }));
+  };
+
+  const [parameterValues, setParameterValues] = useState<ProductParameterValue[]>(
+    () => normalizeParameterValues(product?.parameters ?? draft?.parameters ?? [])
+  );
+
+  useEffect(() => {
+    setParameterValues(normalizeParameterValues(product?.parameters ?? draft?.parameters ?? []));
+  }, [product?.id, draft?.id]);
 
   useEffect(() => {
     return () => {
@@ -248,6 +284,13 @@ export function ProductFormProvider({
     selectedTagIds.forEach((tagId) => {
       formData.append("tagIds", tagId);
     });
+    const normalizedParameters = parameterValues
+      .map((entry) => ({
+        parameterId: entry.parameterId?.trim(),
+        value: typeof entry.value === "string" ? entry.value.trim() : "",
+      }))
+      .filter((entry) => entry.parameterId);
+    formData.append("parameters", JSON.stringify(normalizedParameters));
 
     try {
       const response = await fetch(
@@ -335,6 +378,7 @@ export function ProductFormProvider({
           handleMultiFileSelect,
           swapImageSlots,
           setImageLinkAt,
+          setImagesReordering,
           catalogs,
           catalogsLoading,
           catalogsError,
@@ -348,6 +392,27 @@ export function ProductFormProvider({
           tagsLoading,
           selectedTagIds,
           toggleTag,
+          parameters,
+          parametersLoading,
+          parameterValues,
+          addParameterValue: () =>
+            setParameterValues((prev) => [...prev, { parameterId: "", value: "" }]),
+          updateParameterId: (index, parameterId) =>
+            setParameterValues((prev) => {
+              const next = [...prev];
+              if (!next[index]) return prev;
+              next[index] = { ...next[index], parameterId };
+              return next;
+            }),
+          updateParameterValue: (index, value) =>
+            setParameterValues((prev) => {
+              const next = [...prev];
+              if (!next[index]) return prev;
+              next[index] = { ...next[index], value };
+              return next;
+            }),
+          removeParameterValue: (index) =>
+            setParameterValues((prev) => prev.filter((_, i) => i !== index)),
           filteredLanguages,
           filteredPriceGroups,
           generationError,

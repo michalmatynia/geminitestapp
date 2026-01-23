@@ -196,7 +196,7 @@ describe("Products API", () => {
         length: 20,
       });
       const res = await GET_LIST(new Request("http://localhost/api/products"));
-      const products = (await res.json()) as (Product & { images: any[] })[];
+      const products = (await res.json()) as (Product & { images: unknown[] })[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
       const product = products[0]!;

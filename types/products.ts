@@ -77,6 +77,21 @@ export type ProductTag = {
   updatedAt: Date;
 };
 
+export type ProductParameter = {
+  id: string;
+  catalogId: string;
+  name_en: string;
+  name_pl: string | null;
+  name_de: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type ProductParameterValue = {
+  parameterId: string;
+  value: string;
+};
+
 export type UserPreferences = {
   productListNameLocale: string | null;
   productListCatalogFilter: string | null;

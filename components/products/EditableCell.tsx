@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, KeyboardEvent } from "react";
+import { useState, useEffect, useRef, KeyboardEvent, memo } from "react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 
@@ -11,7 +11,12 @@ type EditableCellProps = {
   onUpdate: () => void;
 };
 
-export function EditableCell({ value, productId, field, onUpdate }: EditableCellProps) {
+export const EditableCell = memo(function EditableCell({
+  value,
+  productId,
+  field,
+  onUpdate,
+}: EditableCellProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(String(value ?? ""));
   const [isSaving, setIsSaving] = useState(false);
@@ -116,4 +121,9 @@ export function EditableCell({ value, productId, field, onUpdate }: EditableCell
       {value !== null ? (field === "price" ? value.toFixed(2) : value) : "-"}
     </div>
   );
-}
+},
+(prev, next) =>
+  prev.value === next.value &&
+  prev.productId === next.productId &&
+  prev.field === next.field
+);

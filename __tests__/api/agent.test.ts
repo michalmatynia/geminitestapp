@@ -110,6 +110,6 @@ describe("Agent API", () => {
     expect(res.status).toBe(200);
     expect(data.audits).toHaveLength(1);
     expect(data.audits[0]!.metadata).toBeDefined();
-    expect((data.audits[0]!.metadata as any).step).toBe("tool");
+    expect((data.audits[0]!.metadata as { step: string }).step).toBe("tool");
   });
 });

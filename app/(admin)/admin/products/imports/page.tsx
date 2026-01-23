@@ -258,9 +258,7 @@ export default function ProductImportsPage() {
           setBaseConnections(connections);
           if (connections.length > 0) {
             setIsBaseConnected(true);
-            if (!selectedBaseConnectionId) {
-              setSelectedBaseConnectionId(connections[0]?.id ?? "");
-            }
+            setSelectedBaseConnectionId((prev) => prev || connections[0]?.id || "");
           }
         }
       } catch (error) {
@@ -1205,8 +1203,8 @@ export default function ProductImportsPage() {
     includeAllWarehouses,
     isBaseConnected,
     exportInventoryId,
-    exportWarehouseId,
     selectedBaseConnectionId,
+    toast,
   ]);
 
   const handleDebugWarehouses = async () => {
@@ -1276,7 +1274,7 @@ export default function ProductImportsPage() {
     if (lastWarehouseInventoryIdRef.current === exportInventoryId) return;
     lastWarehouseInventoryIdRef.current = exportInventoryId;
     void handleLoadWarehouses();
-  }, [exportInventoryId, isBaseConnected, exportWarehouseLoaded]);
+  }, [exportInventoryId, isBaseConnected, exportWarehouseLoaded, handleLoadWarehouses]);
 
   useEffect(() => {
     if (includeAllWarehouses) return;

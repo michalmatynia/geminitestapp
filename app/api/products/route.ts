@@ -10,7 +10,6 @@ import { badRequestError } from "@/lib/errors/app-error";
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const filters = Object.fromEntries(searchParams.entries());
-  console.log("[api/products] GET filters:", filters);
 
   try {
     const products = await productService.getProducts(filters);

@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/toast";
 import {
   AUTH_SETTINGS_KEYS,
   DEFAULT_AUTH_ROLES,
+  mergeDefaultRoles,
   parseJsonSetting,
   type AuthRole,
   type AuthUserRoleMap,
@@ -43,9 +44,11 @@ export default function AuthDashboardPage() {
         if (settingsRes.ok) {
           const settings = (await settingsRes.json()) as Array<{ key: string; value: string }>;
           const settingsMap = new Map(settings.map((item) => [item.key, item.value]));
-          const storedRoles = parseJsonSetting<AuthRole[]>(
-            settingsMap.get(AUTH_SETTINGS_KEYS.roles),
-            DEFAULT_AUTH_ROLES
+          const storedRoles = mergeDefaultRoles(
+            parseJsonSetting<AuthRole[]>(
+              settingsMap.get(AUTH_SETTINGS_KEYS.roles),
+              DEFAULT_AUTH_ROLES
+            )
           );
           const storedUserRoles = parseJsonSetting<AuthUserRoleMap>(
             settingsMap.get(AUTH_SETTINGS_KEYS.userRoles),

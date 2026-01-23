@@ -116,6 +116,7 @@ const resolveFallbackLanguages = async (): Promise<string[]> => {
 let intervalId: NodeJS.Timeout | null = null;
 let isProcessing = false;
 let lastPollTime = 0;
+const STALE_RUNNING_TTL_MS = 1000 * 60 * 10;
 
 // Health check to ensure the queue is actually running
 function isQueueHealthy(): boolean {
@@ -443,7 +444,11 @@ const pollQueue = async () => {
   try {
     console.log("[productAiQueue] Polling for pending jobs...");
     const jobRepository = await getProductAiJobRepository();
-    const nextJob = await jobRepository.findNextPendingJob();
+    const staleResult = await jobRepository.markStaleRunningJobs(STALE_RUNNING_TTL_MS);
+    if (staleResult.count > 0) {
+      console.log(`[productAiQueue] Marked ${staleResult.count} stale running jobs as failed`);
+    }
+    const nextJob = await jobRepository.claimNextPendingJob();
 
     if (!nextJob) {
       console.log("[productAiQueue] No pending jobs found");
@@ -452,11 +457,6 @@ const pollQueue = async () => {
     }
 
     console.log(`[productAiQueue] Found job ${nextJob.id} of type "${nextJob.type}", processing...`);
-
-    await jobRepository.updateJob(nextJob.id, {
-      status: "running",
-      startedAt: new Date(),
-    });
 
           try {
 
@@ -484,11 +484,15 @@ const pollQueue = async () => {
         throw new Error(`Unknown job type: ${nextJob.type}`);
       }
 
-      await jobRepository.updateJob(nextJob.id, {
-        status: "completed",
-        finishedAt: new Date(),
-        result,
-      });
+    await jobRepository.updateJob(nextJob.id, {
+      status: "completed",
+      finishedAt: new Date(),
+      result,
+      productId: nextJob.productId,
+      type: nextJob.type,
+      payload: nextJob.payload,
+      createdAt: nextJob.createdAt,
+    });
       console.log(`[productAiQueue] Job ${nextJob.id} marked as completed`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Job failed.";
@@ -497,6 +501,10 @@ const pollQueue = async () => {
         status: "failed",
         finishedAt: new Date(),
         errorMessage: message,
+        productId: nextJob.productId,
+        type: nextJob.type,
+        payload: nextJob.payload,
+        createdAt: nextJob.createdAt,
       });
     }
 
@@ -571,6 +579,10 @@ export const processSingleJob = async (jobId: string) => {
   await jobRepository.updateJob(job.id, {
     status: "running",
     startedAt: new Date(),
+    productId: job.productId,
+    type: job.type,
+    payload: job.payload,
+    createdAt: job.createdAt,
   });
 
   try {
@@ -592,6 +604,10 @@ export const processSingleJob = async (jobId: string) => {
       status: "completed",
       finishedAt: new Date(),
       result,
+      productId: job.productId,
+      type: job.type,
+      payload: job.payload,
+      createdAt: job.createdAt,
     });
     console.log(`[processSingleJob] Job ${job.id} marked as completed`);
   } catch (error) {
@@ -601,6 +617,10 @@ export const processSingleJob = async (jobId: string) => {
       status: "failed",
       finishedAt: new Date(),
       errorMessage: message,
+      productId: job.productId,
+      type: job.type,
+      payload: job.payload,
+      createdAt: job.createdAt,
     });
     throw error;
   }

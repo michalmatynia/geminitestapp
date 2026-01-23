@@ -1,16 +1,18 @@
 import type { NoteRepository } from "@/types/services/note-repository";
 import type { NoteWithRelations, RelatedNote } from "@/types/notes";
 import { cleanupNoteFile } from "./file-cleanup";
-
-// Switch between MongoDB and Prisma based on environment or configuration
-const USE_MONGO = process.env.NOTE_DB_PROVIDER === "mongodb";
+import { getAppDbProvider } from "@/lib/services/app-db-provider";
 
 // Lazy load to avoid initializing Prisma when using MongoDB
 let _repository: NoteRepository | null = null;
 
+const resolveNoteProvider = async (): Promise<"mongodb" | "prisma"> =>
+  getAppDbProvider();
+
 async function getRepository(): Promise<NoteRepository> {
   if (!_repository) {
-    if (USE_MONGO) {
+    const provider = await resolveNoteProvider();
+    if (provider === "mongodb") {
       const { mongoNoteRepository } = await import("./note-repository/mongo-note-repository");
       _repository = mongoNoteRepository;
     } else {

@@ -26,22 +26,28 @@ export async function POST(req: NextRequest) {
     const job = await enqueueProductAiJob(productId, type as ProductAiJobType, payload);
     console.log(`[api/products/ai-jobs/enqueue] Job ${job.id} created`);
 
-    // Start the queue worker (for persistent servers)
-    startProductAiJobQueue();
+    const inlineJobs =
+      process.env.AI_JOBS_INLINE === "true" ||
+      process.env.NODE_ENV !== "production";
 
-    // WORKAROUND: In serverless/development, immediately process this job
-    // since setInterval doesn't persist across function invocations
-    console.log(`[api/products/ai-jobs/enqueue] About to call processSingleJob for job ${job.id}`);
+    if (inlineJobs) {
+      // WORKAROUND: In serverless/development, immediately process this job
+      // since setInterval doesn't persist across function invocations
+      console.log(`[api/products/ai-jobs/enqueue] About to call processSingleJob for job ${job.id}`);
 
-    // Process the job asynchronously but log any errors
-    processSingleJob(job.id)
-      .then(() => {
-        console.log(`[api/products/ai-jobs/enqueue] Job ${job.id} processing initiated successfully`);
-      })
-      .catch(err => {
-        console.error(`[api/products/ai-jobs/enqueue] Failed to process job ${job.id}:`, err);
-        console.error(`[api/products/ai-jobs/enqueue] Error stack:`, err.stack);
-      });
+      // Process the job asynchronously but log any errors
+      processSingleJob(job.id)
+        .then(() => {
+          console.log(`[api/products/ai-jobs/enqueue] Job ${job.id} processing initiated successfully`);
+        })
+        .catch(err => {
+          console.error(`[api/products/ai-jobs/enqueue] Failed to process job ${job.id}:`, err);
+          console.error(`[api/products/ai-jobs/enqueue] Error stack:`, err.stack);
+        });
+    } else {
+      // Start the queue worker (for persistent servers)
+      startProductAiJobQueue();
+    }
 
     console.log(`[api/products/ai-jobs/enqueue] Returning response to client`);
     return NextResponse.json({ success: true, jobId: job.id });

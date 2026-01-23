@@ -20,6 +20,7 @@ export default function ProductAiJobsPage() {
   const [query, setQuery] = useState("");
   const [actionId, setActionId] = useState<string | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkDeletingAll, setBulkDeletingAll] = useState(false);
   const [selectedJob, setSelectedJob] = useState<ProductAiJob | null>(null);
 
   const defaultTab = useMemo(() => {
@@ -109,6 +110,21 @@ export default function ProductAiJobsPage() {
     }
   };
 
+  const clearAllJobs = async () => {
+    if (!window.confirm("Delete ALL AI jobs (including running/pending)?")) return;
+    setBulkDeletingAll(true);
+    try {
+      const res = await fetch("/api/products/ai-jobs?scope=all", { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete all jobs.");
+      await loadJobs();
+      toast("All jobs deleted", { variant: "success" });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Failed to delete all jobs.", { variant: "error" });
+    } finally {
+      setBulkDeletingAll(false);
+    }
+  };
+
   const filteredJobs = jobs.filter(job => 
     [job.id, job.status, job.product?.name_en, job.product?.sku]
       .some(val => val?.toLowerCase().includes(query.toLowerCase()))
@@ -146,6 +162,10 @@ export default function ProductAiJobsPage() {
               <Button variant="destructive" size="sm" onClick={() => void clearCompleted()} disabled={bulkDeleting}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 Clear Finished
+              </Button>
+              <Button variant="destructive" size="sm" onClick={() => void clearAllJobs()} disabled={bulkDeletingAll}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Clear All
               </Button>
             </div>
           </div>

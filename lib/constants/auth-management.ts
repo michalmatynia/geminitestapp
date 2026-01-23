@@ -55,6 +55,18 @@ export const DEFAULT_AUTH_PERMISSIONS: AuthPermission[] = [
 
 export const DEFAULT_AUTH_ROLES: AuthRole[] = [
   {
+    id: "super_admin",
+    name: "Super Admin",
+    description: "Full access to everything.",
+    permissions: DEFAULT_AUTH_PERMISSIONS.map((permission) => permission.id),
+  },
+  {
+    id: "superuser",
+    name: "Super User",
+    description: "Full access including system-level settings.",
+    permissions: DEFAULT_AUTH_PERMISSIONS.map((permission) => permission.id),
+  },
+  {
     id: "admin",
     name: "Admin",
     description: "Full access to all apps and settings.",
@@ -89,3 +101,15 @@ export const parseJsonSetting = <T>(value: string | null | undefined, fallback: 
 };
 
 export const serializeSetting = (value: unknown) => JSON.stringify(value ?? null);
+
+export const mergeDefaultRoles = (roles: AuthRole[] | null | undefined): AuthRole[] => {
+  const incoming = Array.isArray(roles) ? roles : [];
+  const known = new Set(incoming.map((role) => role.id));
+  const merged = [...incoming];
+  for (const role of DEFAULT_AUTH_ROLES) {
+    if (!known.has(role.id)) {
+      merged.push(role);
+    }
+  }
+  return merged;
+};

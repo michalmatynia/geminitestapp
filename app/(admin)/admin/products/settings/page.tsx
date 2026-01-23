@@ -19,15 +19,11 @@ import {
   CurrencyOption,
   CountryOption,
   Catalog,
-  ProductDbProvider,
-  ProductMigrationDirection,
   Language,
   ProductCategoryWithChildren,
   ProductTag,
 } from "@/types/products";
-import { IntegrationsSettings } from "./components/IntegrationsSettings";
 import { PriceGroupsSettings } from "./components/PriceGroupsSettings";
-import { DataSourceSettings } from "./components/DataSourceSettings";
 import { CatalogsSettings } from "./components/CatalogsSettings";
 import { CategoriesSettings } from "@/components/products/settings/CategoriesSettings";
 import { TagsSettings } from "@/components/products/settings/TagsSettings";
@@ -103,18 +99,6 @@ export default function ProductSettingsPage() {
   const [selectedLanguageIds, setSelectedLanguageIds] = useState<string[]>([]);
   const [catalogLanguageQuery, setCatalogLanguageQuery] = useState("");
   const [countrySearch, setCountrySearch] = useState("");
-  const [productDbProvider, setProductDbProvider] =
-    useState<ProductDbProvider>("prisma");
-  const [productDbLoading, setProductDbLoading] = useState(true);
-  const [productDbSaving, setProductDbSaving] = useState(false);
-  const [productDbDirty, setProductDbDirty] = useState(false);
-  const [migrationRunning, setMigrationRunning] = useState(false);
-  const [migrationTotal, setMigrationTotal] = useState(0);
-  const [migrationProcessed, setMigrationProcessed] = useState(0);
-  const [migrationDirection, setMigrationDirection] =
-    useState<ProductMigrationDirection | null>(null);
-  const [missingImageIds, setMissingImageIds] = useState<string[]>([]);
-  const [missingCatalogIds, setMissingCatalogIds] = useState<string[]>([]);
   const [formState, setFormState] = useState({
     isDefault: false,
     groupId: "",
@@ -128,154 +112,6 @@ export default function ProductSettingsPage() {
     addToPrice: 0,
   });
   const { toast } = useToast();
-
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        const res = await fetch("/api/settings", { cache: "no-store" });
-        if (!res.ok) {
-          throw new Error("Failed to load product settings.");
-        }
-        const data = (await res.json()) as { key: string; value: string }[];
-        if (!mounted) return;
-        const settingsMap = new Map(data.map((item) => [item.key, item.value]));
-        const provider =
-          settingsMap.get("product_db_provider") === "mongodb"
-            ? "mongodb"
-            : "prisma";
-        setProductDbProvider(provider);
-        setProductDbDirty(false);
-      } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Failed to load product settings.";
-        toast(message, { variant: "error" });
-      } finally {
-        if (mounted) {
-          setProductDbLoading(false);
-        }
-      }
-    };
-    void load();
-    return () => {
-      mounted = false;
-    };
-  }, [toast]);
-
-  const handleSaveProductDbProvider = async () => {
-    try {
-      setProductDbSaving(true);
-      const res = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: "product_db_provider",
-          value: productDbProvider,
-        }),
-      });
-      if (!res.ok) {
-        throw new Error("Failed to save product data source.");
-      }
-      setProductDbDirty(false);
-      toast("Product data source saved.", { variant: "success" });
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to save product data source.";
-      toast(message, { variant: "error" });
-    } finally {
-      setProductDbSaving(false);
-    }
-  };
-
-  const runProductMigration = async (direction: ProductMigrationDirection) => {
-    const confirmed = window.confirm(
-      "This will overwrite product data in the target database. Continue?"
-    );
-    if (!confirmed) return;
-    try {
-      setMigrationRunning(true);
-      setMigrationDirection(direction);
-      setMigrationProcessed(0);
-      setMigrationTotal(0);
-      setMissingImageIds([]);
-      setMissingCatalogIds([]);
-
-      const totalsRes = await fetch(
-        `/api/products/migrate?direction=${direction}`,
-        { cache: "no-store" }
-      );
-      if (!totalsRes.ok) {
-        throw new Error("Failed to load migration totals.");
-      }
-      const totals = (await totalsRes.json()) as { total: number };
-      setMigrationTotal(totals.total);
-
-      let cursor: string | null = null;
-      let processed = 0;
-      const missingImageSet = new Set<string>();
-      const missingCatalogSet = new Set<string>();
-      const batchSize = 25;
-      if (totals.total === 0) {
-        toast("No products to migrate.", { variant: "success" });
-        return;
-      }
-      while (true) {
-        const res = await fetch("/api/products/migrate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ direction, cursor, batchSize }),
-        });
-        if (!res.ok) {
-          const payload = (await res.json()) as { error?: string };
-          throw new Error(payload.error || "Migration failed.");
-        }
-        const data = (await res.json()) as {
-          result: {
-            productsProcessed: number;
-            nextCursor: string | null;
-            missingImageFileIds: string[];
-            missingCatalogIds: string[];
-          };
-        };
-        processed += data.result.productsProcessed;
-        cursor = data.result.nextCursor;
-        setMigrationProcessed(processed);
-        if (data.result.missingImageFileIds.length > 0) {
-          data.result.missingImageFileIds.forEach((id) =>
-            missingImageSet.add(id)
-          );
-          setMissingImageIds(Array.from(missingImageSet));
-        }
-        if (data.result.missingCatalogIds.length > 0) {
-          data.result.missingCatalogIds.forEach((id) =>
-            missingCatalogSet.add(id)
-          );
-          setMissingCatalogIds(Array.from(missingCatalogSet));
-        }
-        if (!cursor) break;
-      }
-
-      const missingImages =
-        direction === "mongo-to-prisma" ? missingImageSet.size : 0;
-      const missingCatalogs =
-        direction === "mongo-to-prisma" ? missingCatalogSet.size : 0;
-      toast(
-        `Migration completed: ${processed} products. Missing images: ${missingImages}, catalogs: ${missingCatalogs}.`,
-        { variant: "success" }
-      );
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Migration failed.";
-      toast(message, { variant: "error" });
-    } finally {
-      setMigrationRunning(false);
-      setMigrationDirection(null);
-    }
-  };
 
   const refreshPriceGroups = useCallback(async () => {
     try {
@@ -1222,24 +1058,6 @@ export default function ProductSettingsPage() {
                 handleDeleteGroup={(id) => void handleDeleteGroup(id)}
               />
             )}
-            {activeSection === "Data Source" && (
-              <DataSourceSettings
-                productDbLoading={productDbLoading}
-                productDbProvider={productDbProvider}
-                setProductDbProvider={setProductDbProvider}
-                setProductDbDirty={setProductDbDirty}
-                productDbDirty={productDbDirty}
-                productDbSaving={productDbSaving}
-                handleSaveProductDbProvider={() => void handleSaveProductDbProvider()}
-                migrationRunning={migrationRunning}
-                migrationProcessed={migrationProcessed}
-                migrationTotal={migrationTotal}
-                migrationDirection={migrationDirection}
-                missingImageIds={missingImageIds}
-                missingCatalogIds={missingCatalogIds}
-                runProductMigration={(dir) => void runProductMigration(dir)}
-              />
-            )}
             {activeSection === "Catalogs" && (
               <CatalogsSettings
                 loadingCatalogs={loadingCatalogs}
@@ -1270,7 +1088,6 @@ export default function ProductSettingsPage() {
                 handleDeleteLanguage={(id) => void handleDeleteLanguage(id)}
               />
             )}
-            {activeSection === "Integrations" && <IntegrationsSettings />}
             {activeSection === "AI Description" && <AiDescriptionSettings />}
             {activeSection === "AI Translation" && <AiTranslationSettings />}
           </section>

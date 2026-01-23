@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getProductAiJobs, deleteTerminalProductAiJobs } from "@/lib/services/productAiService";
+import { getProductAiJobs, deleteTerminalProductAiJobs, deleteAllProductAiJobs, cleanupStaleRunningProductAiJobs } from "@/lib/services/productAiService";
 import { startProductAiJobQueue, getQueueStatus } from "@/lib/services/productAiQueue";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError } from "@/lib/errors/app-error";
 
 export async function GET(req: NextRequest) {
   try {
+    const staleResult = await cleanupStaleRunningProductAiJobs(1000 * 60 * 10);
+    if (staleResult.count > 0) {
+      console.log(`[api/products/ai-jobs] Marked ${staleResult.count} stale running jobs as failed`);
+    }
     startProductAiJobQueue();
     const { searchParams } = new URL(req.url);
 
@@ -36,6 +40,10 @@ export async function DELETE(req: NextRequest) {
 
     if (scope === "terminal") {
       const result = await deleteTerminalProductAiJobs();
+      return NextResponse.json({ success: true, count: result.count });
+    }
+    if (scope === "all") {
+      const result = await deleteAllProductAiJobs();
       return NextResponse.json({ success: true, count: result.count });
     }
 

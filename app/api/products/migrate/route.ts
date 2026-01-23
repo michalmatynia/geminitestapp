@@ -5,10 +5,13 @@ import {
   migrateProductBatch,
   type MigrationDirection,
 } from "@/lib/services/product-migration";
+import { createFullDatabaseBackup } from "@/lib/services/database-backup";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { removeUndefined } from "@/lib/utils";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError } from "@/lib/errors/app-error";
+
+export const runtime = "nodejs";
 
 const migrationDirectionSchema = z.enum(["prisma-to-mongo", "mongo-to-prisma"]);
 
@@ -47,13 +50,21 @@ export async function POST(req: NextRequest) {
     if (!parsed.ok) {
       return parsed.response;
     }
+    const shouldBackup =
+      !parsed.data.dryRun && (!parsed.data.cursor || parsed.data.cursor === "");
+    if (shouldBackup) {
+      const backupResult = await createFullDatabaseBackup();
+      if (!backupResult.mongo || !backupResult.postgres) {
+        throw new Error("Failed to create full database backup.");
+      }
+    }
     const result = await migrateProductBatch(removeUndefined({
       direction: parsed.data.direction,
       dryRun: Boolean(parsed.data.dryRun),
       cursor: parsed.data.cursor ?? null,
       batchSize: parsed.data.batchSize,
     }) as { direction: MigrationDirection; dryRun?: boolean; cursor?: string | null; batchSize?: number });
-    return NextResponse.json({ result });
+    return NextResponse.json({ result, backup: shouldBackup });
   } catch (error) {
     return createErrorResponse(error, {
       request: req,

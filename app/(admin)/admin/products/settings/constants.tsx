@@ -1,34 +1,13 @@
 import React, { ReactNode } from "react";
-import { ProductDbProvider } from "@/types/products";
-
 export const settingSections = [
   "Categories",
   "Tags",
   "Price Groups",
   "Catalogs",
-  "Data Source",
   "Internationalization",
-  "Integrations",
   "AI Description",
   "AI Translation",
 ] as const;
-
-export const productDbOptions: Array<{
-  value: ProductDbProvider;
-  label: string;
-  description: string;
-}> = [
-  {
-    value: "prisma",
-    label: "Postgres (Prisma)",
-    description: "Default relational storage for product data.",
-  },
-  {
-    value: "mongodb",
-    label: "MongoDB",
-    description: "Document storage for product data.",
-  },
-];
 
 export const countryCodeOptions = [
   { code: "PL", name: "Poland" },

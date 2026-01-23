@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/toast";
 import {
   AUTH_SETTINGS_KEYS,
   DEFAULT_AUTH_ROLES,
+  mergeDefaultRoles,
   parseJsonSetting,
   serializeSetting,
   type AuthRole,
@@ -23,7 +24,7 @@ type AuthUsersResponse = {
   users: AuthUserSummary[];
 };
 
-const EMPTY_CREATE = { name: "", email: "", password: "" };
+const EMPTY_CREATE = { name: "", email: "", password: "", roleId: "none", verified: false };
 
 export default function AuthUsersPage() {
   const { toast } = useToast();
@@ -39,11 +40,19 @@ export default function AuthUsersPage() {
   const [editingUser, setEditingUser] = useState<AuthUserSummary | null>(null);
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
+  const [editVerified, setEditVerified] = useState(false);
   const [savingUser, setSavingUser] = useState(false);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState(EMPTY_CREATE);
   const [creatingUser, setCreatingUser] = useState(false);
+
+  const [mockEmail, setMockEmail] = useState("");
+  const [mockPassword, setMockPassword] = useState("");
+  const [mockStatus, setMockStatus] = useState<"idle" | "success" | "error">("idle");
+  const [mockMessage, setMockMessage] = useState("");
+  const [mockSigningIn, setMockSigningIn] = useState(false);
+  const [mockOpen, setMockOpen] = useState(false);
 
   const loadUsers = useCallback(async () => {
     try {
@@ -62,9 +71,11 @@ export default function AuthUsersPage() {
       if (settingsRes.ok) {
         const settings = (await settingsRes.json()) as Array<{ key: string; value: string }>;
         const settingsMap = new Map(settings.map((item) => [item.key, item.value]));
-        const storedRoles = parseJsonSetting<AuthRole[]>(
+        const storedRoles = mergeDefaultRoles(
+          parseJsonSetting<AuthRole[]>(
           settingsMap.get(AUTH_SETTINGS_KEYS.roles),
           DEFAULT_AUTH_ROLES
+        )
         );
         const storedUserRoles = parseJsonSetting<AuthUserRoleMap>(
           settingsMap.get(AUTH_SETTINGS_KEYS.userRoles),
@@ -138,6 +149,7 @@ export default function AuthUsersPage() {
     setEditingUser(user);
     setEditName(user.name ?? "");
     setEditEmail(user.email ?? "");
+    setEditVerified(Boolean(user.emailVerified));
   };
 
   const handleSaveUser = async () => {
@@ -148,11 +160,14 @@ export default function AuthUsersPage() {
     }
     try {
       setSavingUser(true);
-      const payload: { name?: string; email: string } = {
+      const payload: { name?: string; email: string; emailVerified?: boolean } = {
         email: editEmail.trim(),
       };
       if (editName.trim()) {
         payload.name = editName.trim();
+      }
+      if (editVerified !== Boolean(editingUser.emailVerified)) {
+        payload.emailVerified = editVerified;
       }
       const res = await fetch(`/api/auth/users/${editingUser.id}`, {
         method: "PATCH",
@@ -199,6 +214,32 @@ export default function AuthUsersPage() {
       if (!res.ok) {
         throw new Error("Failed to create user");
       }
+      const created = (await res.json()) as AuthUserSummary;
+
+      if (createForm.roleId && createForm.roleId !== "none") {
+        const nextRoles = { ...userRoles, [created.id]: createForm.roleId };
+        const rolesRes = await fetch("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            key: AUTH_SETTINGS_KEYS.userRoles,
+            value: serializeSetting(nextRoles),
+          }),
+        });
+        if (rolesRes.ok) {
+          setUserRoles(nextRoles);
+          setDirtyRoles(false);
+        }
+      }
+
+      if (createForm.verified) {
+        await fetch(`/api/auth/users/${created.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ emailVerified: true }),
+        });
+      }
+
       toast("User created", { variant: "success" });
       setCreateOpen(false);
       setCreateForm(EMPTY_CREATE);
@@ -208,6 +249,44 @@ export default function AuthUsersPage() {
       toast("Failed to create user", { variant: "error" });
     } finally {
       setCreatingUser(false);
+    }
+  };
+
+  const handleMockSignIn = async () => {
+    if (!mockEmail.trim() || !mockPassword.trim()) {
+      setMockStatus("error");
+      setMockMessage("Email and password are required.");
+      return;
+    }
+    try {
+      setMockSigningIn(true);
+      setMockStatus("idle");
+      setMockMessage("");
+      const res = await fetch("/api/auth/mock-signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: mockEmail.trim(),
+          password: mockPassword,
+        }),
+      });
+      if (!res.ok) {
+        throw new Error("Mock sign-in failed");
+      }
+      const payload = (await res.json()) as { ok: boolean; message?: string };
+      if (payload.ok) {
+        setMockStatus("success");
+        setMockMessage(payload.message ?? "Credentials are valid.");
+      } else {
+        setMockStatus("error");
+        setMockMessage(payload.message ?? "Sign-in failed. Check credentials.");
+      }
+    } catch (error) {
+      console.error("Mock sign-in failed:", error);
+      setMockStatus("error");
+      setMockMessage("Sign-in failed. Check server logs.");
+    } finally {
+      setMockSigningIn(false);
     }
   };
 
@@ -223,6 +302,9 @@ export default function AuthUsersPage() {
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" onClick={() => void loadUsers()} disabled={loading}>
             Refresh
+          </Button>
+          <Button variant="outline" onClick={() => setMockOpen(true)}>
+            Mock Sign-in
           </Button>
           <Button variant="outline" onClick={() => setCreateOpen(true)}>
             Create User
@@ -345,6 +427,18 @@ export default function AuthUsersPage() {
                 className="bg-gray-900 border-gray-700 text-white"
               />
             </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="edit-verified"
+                type="checkbox"
+                checked={editVerified}
+                onChange={(event) => setEditVerified(event.target.checked)}
+                className="h-4 w-4 rounded border-gray-700 bg-gray-900"
+              />
+              <Label htmlFor="edit-verified" className="text-xs text-gray-300">
+                Email verified
+              </Label>
+            </div>
           </div>
           <DialogFooter className="pt-4">
             <Button variant="outline" onClick={() => setEditingUser(null)}>
@@ -403,6 +497,46 @@ export default function AuthUsersPage() {
                 className="bg-gray-900 border-gray-700 text-white"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="create-role" className="text-xs text-gray-300">
+                Role
+              </Label>
+              <Select
+                value={createForm.roleId}
+                onValueChange={(value) =>
+                  setCreateForm((prev) => ({ ...prev, roleId: value }))
+                }
+              >
+                <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Unassigned</SelectItem>
+                  {roles.map((role) => (
+                    <SelectItem key={role.id} value={role.id}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="create-verified"
+                type="checkbox"
+                checked={createForm.verified}
+                onChange={(event) =>
+                  setCreateForm((prev) => ({
+                    ...prev,
+                    verified: event.target.checked,
+                  }))
+                }
+                className="h-4 w-4 rounded border-gray-700 bg-gray-900"
+              />
+              <Label htmlFor="create-verified" className="text-xs text-gray-300">
+                Mark email as verified
+              </Label>
+            </div>
           </div>
           <DialogFooter className="pt-4">
             <Button variant="outline" onClick={() => setCreateOpen(false)}>
@@ -410,6 +544,61 @@ export default function AuthUsersPage() {
             </Button>
             <Button onClick={() => void handleCreateUser()} disabled={creatingUser}>
               {creatingUser ? "Creating..." : "Create user"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={mockOpen} onOpenChange={setMockOpen}>
+        <DialogContent className="bg-gray-950 border-gray-800 text-white">
+          <DialogHeader>
+            <DialogTitle>Mock Sign-in</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-xs text-gray-400">
+              Verify credentials against MongoDB without changing your session.
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="mock-email" className="text-xs text-gray-300">
+                Email
+              </Label>
+              <Input
+                id="mock-email"
+                value={mockEmail}
+                onChange={(event) => setMockEmail(event.target.value)}
+                className="bg-gray-900 border-gray-700 text-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="mock-password" className="text-xs text-gray-300">
+                Password
+              </Label>
+              <Input
+                id="mock-password"
+                type="password"
+                value={mockPassword}
+                onChange={(event) => setMockPassword(event.target.value)}
+                className="bg-gray-900 border-gray-700 text-white"
+              />
+            </div>
+            {mockStatus !== "idle" ? (
+              <div
+                className={`rounded-md border px-3 py-2 text-xs ${
+                  mockStatus === "success"
+                    ? "border-green-500/40 bg-green-500/10 text-green-200"
+                    : "border-red-500/40 bg-red-500/10 text-red-200"
+                }`}
+              >
+                {mockMessage}
+              </div>
+            ) : null}
+          </div>
+          <DialogFooter className="pt-4">
+            <Button variant="outline" onClick={() => setMockOpen(false)}>
+              Close
+            </Button>
+            <Button onClick={() => void handleMockSignIn()} disabled={mockSigningIn}>
+              {mockSigningIn ? "Testing..." : "Test Sign-in"}
             </Button>
           </DialogFooter>
         </DialogContent>

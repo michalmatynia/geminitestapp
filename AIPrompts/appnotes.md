@@ -9,8 +9,6 @@ When I create a user manually I should have the option to add their role, includ
 
 I need to manage the Auth system create a super user and have the option to verify my super user , then restore proper authing system.
 
-* When I create Product from Draft, when I add images, the images are not being added and the modal closes. When I try to upload images during Product Edit, the images disappear, but when I open the Product again, they are there.
-
 * In my Product Create / Edit modal, I can now see Price Groups overview with a Standard Group, PLN, EUR. Standard Group shouldn't be there, it's not a price group it's just a type of price group.
 
 * In my Products, I need a Constructor Page, where I can construct how I want my Product to look like. The first subpage will be Parameters page, Where I can add custom Parameters and their values to the product. The Parameters are multilingual and should be translatable. Add Parameters Tab to Product Create / Edit Page. Also Add it to Drafts PAge. In Parameters list within a product, I can choose from the parameter list dropdown to the left (and choose parameters based on my Parameter list from construct), to the right, I can add a parameter value. which is just a text field where I can enter values.*
@@ -22,10 +20,6 @@ I need to manage the Auth system create a super user and have the option to veri
 Producer list
 
 * In Product - Edit / Create pages Tag Field should be searchable field
-
-* When I update price / stock, the whole list re-renders,  the same When I update the modal window, the whole product list re-renders.is it necessary ?
-
-* In Product List, Add a small indicator (maybe an icon underneath SKU) whether the product was added by the user or is the result of an import. 
 
 Infer Categories and size , material, Lore Tag Automatically
 
@@ -39,10 +33,6 @@ In Product List - Operations - I need an Option to Mass Export Products to Base.
 
 
 * Import table should have a search field and should have checkmarks so that I can select which products are to be imported
-
-* When I create the PRoduct and add Images, I try to resort them and then the Images begin to flicker
-
- I want all of my product data to by hybrid. Database
 
 
 LATER - add other GEminiInstructions (especially for the use of tanstack query and schadcn/ui all across application)

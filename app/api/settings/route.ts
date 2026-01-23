@@ -3,9 +3,7 @@ import { z } from "zod";
 
 import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
-import { PRODUCT_DB_PROVIDER_SETTING_KEY } from "@/lib/services/product-provider";
-import { INTEGRATION_DB_PROVIDER_SETTING_KEY } from "@/lib/services/integration-provider";
-import { AUTH_DB_PROVIDER_SETTING_KEY } from "@/lib/services/auth-provider";
+import { APP_DB_PROVIDER_SETTING_KEY, getAppDbProvider } from "@/lib/services/app-db-provider";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { internalError } from "@/lib/errors/app-error";
@@ -24,9 +22,7 @@ type SettingDocument = {
 
 const SETTINGS_COLLECTION = "settings";
 const productSettingKeys = new Set([
-  PRODUCT_DB_PROVIDER_SETTING_KEY,
-  INTEGRATION_DB_PROVIDER_SETTING_KEY,
-  AUTH_DB_PROVIDER_SETTING_KEY,
+  APP_DB_PROVIDER_SETTING_KEY,
   "ai_vision_model",
   "ai_vision_user_prompt",
   "ai_vision_prompt",
@@ -38,8 +34,8 @@ const productSettingKeys = new Set([
   "ai_description_test_product_id",
 ]);
 
-const canUsePrismaSettings = () =>
-  Boolean(process.env.DATABASE_URL) && "setting" in prisma;
+const canUsePrismaSettings = (provider: "prisma" | "mongodb") =>
+  provider === "prisma" && Boolean(process.env.DATABASE_URL) && "setting" in prisma;
 
 const settingSchema = z.object({
   key: z.string().trim().min(1),
@@ -81,8 +77,9 @@ export async function GET(req: Request) {
     console.log("[settings] GET /api/settings");
   }
   try {
+    const provider = await getAppDbProvider();
     const prismaSettings: SettingRecord[] = [];
-    if (canUsePrismaSettings()) {
+    if (canUsePrismaSettings(provider)) {
       const settings = await prisma.setting.findMany({
         select: { key: true, value: true },
       });
@@ -90,16 +87,22 @@ export async function GET(req: Request) {
     }
     const mongoSettings = await listMongoSettings();
     const settingsMap = new Map<string, SettingRecord>();
-    prismaSettings.forEach((setting) => {
-      settingsMap.set(setting.key, setting);
-    });
-    mongoSettings.forEach((setting) => {
-      const shouldOverride =
-        productSettingKeys.has(setting.key) || !settingsMap.has(setting.key);
-      if (shouldOverride) {
+    if (provider === "mongodb") {
+      mongoSettings.forEach((setting) => {
         settingsMap.set(setting.key, setting);
-      }
-    });
+      });
+    } else {
+      prismaSettings.forEach((setting) => {
+        settingsMap.set(setting.key, setting);
+      });
+      mongoSettings.forEach((setting) => {
+        const shouldOverride =
+          productSettingKeys.has(setting.key) || !settingsMap.has(setting.key);
+        if (shouldOverride) {
+          settingsMap.set(setting.key, setting);
+        }
+      });
+    }
     const settings = Array.from(settingsMap.values());
     if (shouldLog()) {
       console.log("[settings] fetched", {
@@ -132,11 +135,12 @@ export async function POST(req: Request) {
     if (shouldLog()) {
       console.log("[settings] upserting", { key, valuePreview: value.slice(0, 40) });
     }
+    const provider = await getAppDbProvider();
     const shouldWriteMongo =
       Boolean(process.env.MONGODB_URI) &&
-      (productSettingKeys.has(key) || !canUsePrismaSettings());
+      (provider === "mongodb" || productSettingKeys.has(key) || !canUsePrismaSettings(provider));
     const [prismaSetting, mongoSetting] = await Promise.all([
-      canUsePrismaSettings()
+      canUsePrismaSettings(provider)
         ? prisma.setting.upsert({
             where: { key },
             update: { value },

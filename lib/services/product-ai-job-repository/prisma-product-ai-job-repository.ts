@@ -60,6 +60,19 @@ export const prismaProductAiJobRepository: ProductAiJobRepository = {
     return job ? mapJob(job) : null;
   },
 
+  async claimNextPendingJob() {
+    const job = await prisma.productAiJob.findFirst({
+      where: { status: "pending" },
+      orderBy: { createdAt: "asc" },
+    });
+    if (!job) return null;
+    const updated = await prisma.productAiJob.update({
+      where: { id: job.id },
+      data: { status: "running", startedAt: new Date() },
+    });
+    return mapJob(updated);
+  },
+
   async updateJob(jobId, data: ProductAiJobUpdate) {
     const job = await prisma.productAiJob.update({
       where: { id: jobId },
@@ -75,6 +88,27 @@ export const prismaProductAiJobRepository: ProductAiJobRepository = {
   async deleteTerminalJobs() {
     const result = await prisma.productAiJob.deleteMany({
       where: { status: { in: ["completed", "failed", "canceled"] } },
+    });
+    return { count: result.count };
+  },
+
+  async deleteAllJobs() {
+    const result = await prisma.productAiJob.deleteMany({});
+    return { count: result.count };
+  },
+
+  async markStaleRunningJobs(maxAgeMs: number) {
+    const cutoff = new Date(Date.now() - maxAgeMs);
+    const result = await prisma.productAiJob.updateMany({
+      where: {
+        status: "running",
+        startedAt: { lt: cutoff },
+      },
+      data: {
+        status: "failed",
+        finishedAt: new Date(),
+        errorMessage: "Job marked failed due to stale running state.",
+      },
     });
     return { count: result.count };
   },

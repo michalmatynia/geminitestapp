@@ -11,6 +11,7 @@ import {
   AUTH_SETTINGS_KEYS,
   DEFAULT_AUTH_PERMISSIONS,
   DEFAULT_AUTH_ROLES,
+  mergeDefaultRoles,
   parseJsonSetting,
   serializeSetting,
   type AuthPermission,
@@ -51,9 +52,11 @@ export default function AuthPermissionsPage() {
           map.get(AUTH_SETTINGS_KEYS.permissions),
           DEFAULT_AUTH_PERMISSIONS
         );
-        const storedRoles = parseJsonSetting<AuthRole[]>(
-          map.get(AUTH_SETTINGS_KEYS.roles),
-          DEFAULT_AUTH_ROLES
+        const storedRoles = mergeDefaultRoles(
+          parseJsonSetting<AuthRole[]>(
+            map.get(AUTH_SETTINGS_KEYS.roles),
+            DEFAULT_AUTH_ROLES
+          )
         );
         setPermissions(storedPermissions);
         setRoles(storedRoles);

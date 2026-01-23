@@ -85,3 +85,13 @@ export async function deleteTerminalProductAiJobs() {
   const jobRepository = await getProductAiJobRepository();
   return jobRepository.deleteTerminalJobs();
 }
+
+export async function deleteAllProductAiJobs() {
+  const jobRepository = await getProductAiJobRepository();
+  return jobRepository.deleteAllJobs();
+}
+
+export async function cleanupStaleRunningProductAiJobs(maxAgeMs: number) {
+  const jobRepository = await getProductAiJobRepository();
+  return jobRepository.markStaleRunningJobs(maxAgeMs);
+}

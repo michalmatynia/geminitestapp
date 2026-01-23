@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import type { Filter, Document, ObjectId } from "mongodb";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import type { SystemLogLevel, SystemLogRecord } from "@/types";
@@ -37,6 +38,9 @@ export type ListSystemLogsResult = {
 };
 
 const SYSTEM_LOGS_COLLECTION = "system_logs";
+
+const isMissingPrismaTable = (error: unknown) =>
+  error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021";
 
 const normalizeLogRecord = (record: SystemLogRecord): SystemLogRecord => ({
   ...record,
@@ -123,28 +127,40 @@ export async function createSystemLog(
     return normalizeLogRecord(payload);
   }
 
-  const created = await prisma.systemLog.create({
-    data: {
-      level: payload.level,
-      message: payload.message,
-      ...(payload.source !== null && payload.source !== undefined ? { source: payload.source } : {}),
-      ...(payload.context !== null && payload.context !== undefined ? { context: payload.context as any } : {}),
-      ...(payload.stack !== null && payload.stack !== undefined ? { stack: payload.stack } : {}),
-      ...(payload.path !== null && payload.path !== undefined ? { path: payload.path } : {}),
-      ...(payload.method !== null && payload.method !== undefined ? { method: payload.method } : {}),
-      ...(payload.statusCode !== null && payload.statusCode !== undefined ? { statusCode: payload.statusCode } : {}),
-      ...(payload.requestId !== null && payload.requestId !== undefined ? { requestId: payload.requestId } : {}),
-      ...(payload.userId !== null && payload.userId !== undefined ? { userId: payload.userId } : {}),
-      createdAt: payload.createdAt,
-    },
-  });
+  try {
+    const created = await prisma.systemLog.create({
+      data: {
+        level: payload.level,
+        message: payload.message,
+        ...(payload.source !== null && payload.source !== undefined ? { source: payload.source } : {}),
+        ...(payload.context !== null && payload.context !== undefined ? { context: payload.context as any } : {}),
+        ...(payload.stack !== null && payload.stack !== undefined ? { stack: payload.stack } : {}),
+        ...(payload.path !== null && payload.path !== undefined ? { path: payload.path } : {}),
+        ...(payload.method !== null && payload.method !== undefined ? { method: payload.method } : {}),
+        ...(payload.statusCode !== null && payload.statusCode !== undefined ? { statusCode: payload.statusCode } : {}),
+        ...(payload.requestId !== null && payload.requestId !== undefined ? { requestId: payload.requestId } : {}),
+        ...(payload.userId !== null && payload.userId !== undefined ? { userId: payload.userId } : {}),
+        createdAt: payload.createdAt,
+      },
+    });
 
-  return normalizeLogRecord({
-    ...created,
-    level: created.level as SystemLogLevel,
-    context: (created.context as Record<string, unknown> | null) ?? null,
-    createdAt: created.createdAt,
-  });
+    return normalizeLogRecord({
+      ...created,
+      level: created.level as SystemLogLevel,
+      context: (created.context as Record<string, unknown> | null) ?? null,
+      createdAt: created.createdAt,
+    });
+  } catch (error) {
+    if (isMissingPrismaTable(error) && process.env.MONGODB_URI) {
+      const mongo = await getMongoDb();
+      await mongo.collection(SYSTEM_LOGS_COLLECTION).insertOne({
+        _id: payload.id as any,
+        ...payload,
+      });
+      return normalizeLogRecord(payload);
+    }
+    throw error;
+  }
 }
 
 export async function listSystemLogs(
@@ -191,24 +207,46 @@ export async function listSystemLogs(
     };
   }
 
-  const [total, rows] = await Promise.all([
-    prisma.systemLog.count({ where }),
-    prisma.systemLog.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    }),
-  ]);
+  try {
+    const [total, rows] = await Promise.all([
+      prisma.systemLog.count({ where }),
+      prisma.systemLog.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
 
-  const logs = rows.map((row: any) =>
-    normalizeLogRecord({
-      ...row,
-      context: (row.context as Record<string, unknown> | null) ?? null,
-    })
-  );
+    const logs = rows.map((row: any) =>
+      normalizeLogRecord({
+        ...row,
+        context: (row.context as Record<string, unknown> | null) ?? null,
+      })
+    );
 
-  return { logs, total, page, pageSize };
+    return { logs, total, page, pageSize };
+  } catch (error) {
+    if (isMissingPrismaTable(error) && process.env.MONGODB_URI) {
+      const mongo = await getMongoDb();
+      const filter = buildMongoFilter(input);
+      const total = await mongo
+        .collection(SYSTEM_LOGS_COLLECTION)
+        .countDocuments(filter);
+      const docs = await mongo
+        .collection(SYSTEM_LOGS_COLLECTION)
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * pageSize)
+        .limit(pageSize)
+        .toArray();
+      const logs = docs.map((doc) =>
+        normalizeLogRecord(toSystemLogRecord(doc as any))
+      );
+      return { logs, total, page, pageSize };
+    }
+    throw error;
+  }
 }
 
 export async function clearSystemLogs(before?: Date | null) {
@@ -223,6 +261,18 @@ export async function clearSystemLogs(before?: Date | null) {
   }
 
   const where = before ? { createdAt: { lte: before } } : {};
-  const result = await prisma.systemLog.deleteMany({ where });
-  return { deleted: result.count };
+  try {
+    const result = await prisma.systemLog.deleteMany({ where });
+    return { deleted: result.count };
+  } catch (error) {
+    if (isMissingPrismaTable(error) && process.env.MONGODB_URI) {
+      const mongo = await getMongoDb();
+      const filter = before ? { createdAt: { $lte: before } } : {};
+      const result = await mongo
+        .collection(SYSTEM_LOGS_COLLECTION)
+        .deleteMany(filter);
+      return { deleted: result.deletedCount ?? 0 };
+    }
+    throw error;
+  }
 }

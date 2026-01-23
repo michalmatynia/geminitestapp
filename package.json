@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "seed": "node prisma/seed.js",
     "seed:admin": "tsx seed-admin.ts",
+    "cleanup:db-providers": "tsx scripts/cleanup-db-provider-settings.ts",
     "debug": "tsx debug-script.ts",
     "test": "vitest",
     "test:ui": "vitest --ui",

@@ -15,6 +15,7 @@ const registerSchema = z.object({
   email: z.string().trim().email(),
   password: z.string().min(8),
   name: z.string().trim().min(1).optional(),
+  emailVerified: z.boolean().optional(),
 });
 
 type MongoUserDoc = {
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
         email,
         name: data.name ?? null,
         passwordHash,
-        emailVerified: null,
+        emailVerified: data.emailVerified ? now : null,
         image: null,
         createdAt: now,
         updatedAt: now,
@@ -85,6 +86,7 @@ export async function POST(req: Request) {
         email,
         name: data.name ?? null,
         passwordHash,
+        ...(data.emailVerified ? { emailVerified: new Date() } : {}),
       },
       select: { id: true, email: true, name: true },
     });

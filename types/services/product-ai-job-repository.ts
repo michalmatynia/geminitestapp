@@ -29,7 +29,10 @@ export type ProductAiJobUpdate = Partial<
     | "startedAt"
     | "finishedAt"
   >
->;
+> & {
+  productId?: string;
+  createdAt?: Date;
+};
 
 export type ProductAiJobRepository = {
   createJob(
@@ -41,7 +44,10 @@ export type ProductAiJobRepository = {
   findJobById(jobId: string): Promise<ProductAiJobRecord | null>;
   findNextPendingJob(): Promise<ProductAiJobRecord | null>;
   findAnyPendingJob(): Promise<ProductAiJobRecord | null>;
+  claimNextPendingJob(): Promise<ProductAiJobRecord | null>;
   updateJob(jobId: string, data: ProductAiJobUpdate): Promise<ProductAiJobRecord>;
   deleteJob(jobId: string): Promise<void>;
   deleteTerminalJobs(): Promise<{ count: number }>;
+  deleteAllJobs(): Promise<{ count: number }>;
+  markStaleRunningJobs(maxAgeMs: number): Promise<{ count: number }>;
 };

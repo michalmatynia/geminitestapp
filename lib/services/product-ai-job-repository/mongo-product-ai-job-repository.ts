@@ -90,18 +90,95 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
     return doc ? toRecord(doc) : null;
   },
 
-  async updateJob(jobId, data: ProductAiJobUpdate) {
+  async claimNextPendingJob() {
     const db = await getMongoDb();
     const now = new Date();
     const result = await db
       .collection<JobDocument>(JOBS_COLLECTION)
       .findOneAndUpdate(
-        { $or: [{ _id: jobId }, { id: jobId }] },
-        { $set: { ...data, updatedAt: now } },
+        { status: "pending" },
+        { $set: { status: "running", startedAt: now, updatedAt: now } },
+        { sort: { createdAt: 1 }, returnDocument: "after" }
+      );
+    if (!result || !result.value) return null;
+    return toRecord(result.value);
+  },
+
+  async updateJob(jobId, data: ProductAiJobUpdate) {
+    const db = await getMongoDb();
+    const now = new Date();
+    const idString = typeof jobId === "string" ? jobId : String(jobId);
+    const { productId, type, payload, createdAt, ...rest } = data;
+    const updateData = { ...rest, updatedAt: now };
+    const filter = {
+      $or: [
+        { _id: jobId },
+        { id: jobId },
+        { _id: idString },
+        { id: idString },
+      ],
+    };
+    const result = await db
+      .collection<JobDocument>(JOBS_COLLECTION)
+      .findOneAndUpdate(
+        filter,
+        { $set: updateData },
         { returnDocument: "after" }
       );
 
     if (!result.value) {
+      const existing = await db
+        .collection<JobDocument>(JOBS_COLLECTION)
+        .findOne(filter);
+      if (existing) {
+        const retry = await db
+          .collection<JobDocument>(JOBS_COLLECTION)
+          .findOneAndUpdate(
+            { _id: existing._id },
+            { $set: updateData },
+            { returnDocument: "after" }
+          );
+        if (retry.value) {
+          return toRecord(retry.value);
+        }
+      }
+      if (productId && type && payload !== undefined) {
+        const seed: JobDocument = {
+          _id: idString,
+          id: idString,
+          productId,
+          status: data.status ?? "pending",
+          type,
+          payload,
+          result: data.result,
+          errorMessage: data.errorMessage ?? null,
+          createdAt: createdAt ?? now,
+          startedAt: data.startedAt ?? null,
+          finishedAt: data.finishedAt ?? null,
+          updatedAt: now,
+        };
+        await db.collection<JobDocument>(JOBS_COLLECTION).updateOne(
+          { _id: idString },
+          {
+            $set: updateData,
+            $setOnInsert: {
+              _id: seed._id,
+              id: seed.id,
+              productId: seed.productId,
+              type: seed.type,
+              payload: seed.payload,
+              createdAt: seed.createdAt,
+            },
+          },
+          { upsert: true }
+        );
+        const inserted = await db
+          .collection<JobDocument>(JOBS_COLLECTION)
+          .findOne({ _id: idString });
+        if (inserted) {
+          return toRecord(inserted);
+        }
+      }
       throw new Error("Job not found");
     }
 
@@ -121,5 +198,31 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
       .collection<JobDocument>(JOBS_COLLECTION)
       .deleteMany({ status: { $in: ["completed", "failed", "canceled"] } });
     return { count: result.deletedCount ?? 0 };
+  },
+
+  async deleteAllJobs() {
+    const db = await getMongoDb();
+    const result = await db
+      .collection<JobDocument>(JOBS_COLLECTION)
+      .deleteMany({});
+    return { count: result.deletedCount ?? 0 };
+  },
+
+  async markStaleRunningJobs(maxAgeMs: number) {
+    const db = await getMongoDb();
+    const cutoff = new Date(Date.now() - maxAgeMs);
+    const result = await db
+      .collection<JobDocument>(JOBS_COLLECTION)
+      .updateMany(
+        { status: "running", startedAt: { $lt: cutoff } },
+        {
+          $set: {
+            status: "failed",
+            finishedAt: new Date(),
+            errorMessage: "Job marked failed due to stale running state.",
+          },
+        }
+      );
+    return { count: result.modifiedCount ?? 0 };
   },
 };

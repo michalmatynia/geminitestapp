@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BellIcon, SparklesIcon, ArrowRightIcon } from "lucide-react";
+import { BellIcon, SparklesIcon, ArrowRightIcon, Database } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -34,6 +34,15 @@ const settings: SettingsOption[] = [
     color: "blue",
     bgColor: "bg-blue-500/10",
   },
+  {
+    id: "database",
+    href: "/admin/settings/database",
+    icon: Database,
+    title: "Database",
+    description: "Select the global database provider for the entire app.",
+    color: "amber",
+    bgColor: "bg-amber-500/10",
+  },
 ];
 
 const colorClasses: Record<string, { border: string; text: string }> = {
@@ -44,6 +53,10 @@ const colorClasses: Record<string, { border: string; text: string }> = {
   blue: {
     border: "group-hover:border-blue-500/50",
     text: "text-blue-400",
+  },
+  amber: {
+    border: "group-hover:border-amber-500/50",
+    text: "text-amber-400",
   },
 };
 

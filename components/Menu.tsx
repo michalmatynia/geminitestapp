@@ -231,10 +231,22 @@ export default function Menu() {
       </CollapsibleMenu>
       <CollapsibleMenu title="Settings" icon={<SettingsIcon />}>
         <Link
+          href="/admin/settings"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Overview
+        </Link>
+        <Link
           href="/admin/settings/notifications"
           className="block hover:bg-gray-700 p-2 rounded"
         >
           Notifications
+        </Link>
+        <Link
+          href="/admin/settings/database"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Database
         </Link>
       </CollapsibleMenu>
       <CollapsibleMenu title="Auth" icon={<ShieldIcon />} href="/admin/auth">

@@ -15,6 +15,7 @@ export const runtime = "nodejs";
 const updateSchema = z.object({
   name: z.string().trim().min(1).max(200).optional().nullable(),
   email: z.string().trim().email().optional().nullable(),
+  emailVerified: z.boolean().optional().nullable(),
 });
 
 type MongoUserDoc = {
@@ -26,7 +27,10 @@ type MongoUserDoc = {
   updatedAt?: Date | null;
 };
 
-export async function PATCH(req: Request, context: { params: { id: string } }) {
+export async function PATCH(
+  req: Request,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
     const parsed = await parseJsonBody(req, updateSchema, {
       logPrefix: "auth.users.PATCH",
@@ -35,8 +39,8 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
       return parsed.response;
     }
 
-    const { name, email } = parsed.data;
-    if (name === undefined && email === undefined) {
+    const { name, email, emailVerified } = parsed.data;
+    if (name === undefined && email === undefined && emailVerified === undefined) {
       return NextResponse.json(
         { error: "No updates provided." },
         { status: 400 }
@@ -44,7 +48,7 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
     }
 
     const provider = await getAuthDataProvider();
-    const userId = context.params.id;
+    const { id: userId } = await context.params;
 
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
@@ -76,6 +80,9 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
       const updateDoc: Partial<MongoUserDoc> = {
         ...(typeof name === "string" ? { name } : {}),
         ...(typeof nextEmail === "string" ? { email: nextEmail } : {}),
+        ...(typeof emailVerified === "boolean"
+          ? { emailVerified: emailVerified ? new Date() : null }
+          : {}),
         updatedAt: new Date(),
       };
 
@@ -125,6 +132,9 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
       data: {
         ...(typeof name === "string" ? { name } : {}),
         ...(typeof nextEmail === "string" ? { email: nextEmail } : {}),
+        ...(typeof emailVerified === "boolean"
+          ? { emailVerified: emailVerified ? new Date() : null }
+          : {}),
       },
       select: {
         id: true,

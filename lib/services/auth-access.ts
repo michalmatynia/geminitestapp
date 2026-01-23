@@ -4,6 +4,7 @@ import {
   AUTH_SETTINGS_KEYS,
   DEFAULT_AUTH_PERMISSIONS,
   DEFAULT_AUTH_ROLES,
+  mergeDefaultRoles,
   parseJsonSetting,
   type AuthPermission,
   type AuthRole,
@@ -41,7 +42,7 @@ export const getAuthPermissions = async (): Promise<AuthPermission[]> => {
 
 export const getAuthRoles = async (): Promise<AuthRole[]> => {
   const value = await readSettingValue(AUTH_SETTINGS_KEYS.roles);
-  return parseJsonSetting<AuthRole[]>(value, DEFAULT_AUTH_ROLES);
+  return mergeDefaultRoles(parseJsonSetting<AuthRole[]>(value, DEFAULT_AUTH_ROLES));
 };
 
 export const getAuthUserRoles = async (): Promise<AuthUserRoleMap> => {

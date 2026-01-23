@@ -16,6 +16,7 @@ export function useCatalogSync(catalogFilter: string) {
   const [currencyPriceGroups, setCurrencyPriceGroups] = useState<
     Array<{ id: string; isDefault: boolean; currency?: { code?: string } | null }>
   >([]);
+  const [allowedCurrencyCodes, setAllowedCurrencyCodes] = useState<string[]>([]);
 
   const catalogFilterInitialized = useRef(false);
 
@@ -78,6 +79,27 @@ export function useCatalogSync(catalogFilter: string) {
     return () => { mounted = false; };
   }, []);
 
+  // Load allowed currencies to avoid displaying invalid codes.
+  useEffect(() => {
+    let mounted = true;
+    const loadCurrencies = async () => {
+      try {
+        const res = await fetch("/api/currencies");
+        if (!res.ok) return;
+        const data = await res.json() as Array<{ code?: string | null }>;
+        if (!mounted) return;
+        const codes = data
+          .map((entry) => entry.code?.trim().toUpperCase())
+          .filter((code): code is string => Boolean(code));
+        setAllowedCurrencyCodes(Array.from(new Set(codes)));
+      } catch (error) {
+        logger.error("Failed to load currencies:", error);
+      }
+    };
+    void loadCurrencies();
+    return () => { mounted = false; };
+  }, []);
+
   // Memoize currency options to prevent unnecessary re-renders
   const { codes, fallbackCode } = useMemo(() => {
     if (currencyPriceGroups.length === 0) return { codes: [], fallbackCode: "" };
@@ -91,13 +113,21 @@ export function useCatalogSync(catalogFilter: string) {
       ? currencyPriceGroups.filter((group) => allowedGroupIds.has(group.id))
       : currencyPriceGroups;
 
-    const codes = Array.from(
+    let codes = Array.from(
       new Set(
         candidateGroups
           .map((group) => group.currency?.code)
           .filter((code): code is string => Boolean(code))
       )
-    );
+    ).map((code) => code.trim().toUpperCase());
+
+    const allowedSet = new Set(allowedCurrencyCodes.map((code) => code.trim().toUpperCase()));
+    if (allowedSet.size > 0) {
+      codes = codes.filter((code) => allowedSet.has(code));
+    } else {
+      // Basic safety filter if no allowed list available.
+      codes = codes.filter((code) => /^[A-Z]{3,5}$/.test(code));
+    }
 
     const defaultGroupId = catalog?.defaultPriceGroupId ?? null;
     const defaultGroup = defaultGroupId
@@ -107,7 +137,7 @@ export function useCatalogSync(catalogFilter: string) {
     const fallbackCode = defaultGroup?.currency?.code || codes[0] || "";
 
     return { codes, fallbackCode };
-  }, [catalogFilter, catalogs, currencyPriceGroups]);
+  }, [catalogFilter, catalogs, currencyPriceGroups, allowedCurrencyCodes]);
 
   // Sync Currency Options based on Catalog
   useEffect(() => {

@@ -3,11 +3,14 @@
 
 * WHen I click on + to list my product and then select Baselinker as my target Export, in teh same modal a dropdown appears, where I still need to choose which account I want to export to, this default export account is already defined in my export settings and I shouldn't need to choose it again, it should be pre-selected
 
-I'm trying to export my product KEYCHA914 to Base.com, but I am unable to 
+I'm trying to export my product SKU "KEYCHA914" to Base.com, but I am unable to. I Receive an error "Nie można zapisać zdjęć dołączonych do produktu
+". Whereas I can Export my Product SKU "VFSDV" without any problems and with images. The difference is that KEYCHA914 has 3 images and VFSDV only one, which can affect the import. Also there is difference in the format that the images are in.
 
-carry out copilot installations
 
-move Operations nav underneath 
+In my Drafts, Price grup shouldn't be there at all, cause it's dependent on what is the Catalog Price Group
+
+In Products List, My drafts are not active in Product List, the Icons Beside + Create Product don't launch Create Product modal in Draft mode with prefilled fields.
+
 I still get console logs when I change Filters
 
 * When I Create Product after adding images, the screen filckers when I try to resort images

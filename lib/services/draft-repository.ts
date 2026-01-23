@@ -57,7 +57,7 @@ const listDrafts_Mongo = async (): Promise<ProductDraft[]> => {
 
 const getDraft_Mongo = async (id: string): Promise<ProductDraft | null> => {
   const mongo = await getMongoDb();
-  const draft = await mongo.collection("product_drafts").findOne({ _id: id });
+  const draft = await mongo.collection("product_drafts").findOne({ _id: id } as any);
 
   if (!draft) return null;
 

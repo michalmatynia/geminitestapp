@@ -368,7 +368,7 @@ export default function NotesPage() {
               onUndo={() => void handleUndoFolderTree(1)}
               undoHistory={undoHistory}
               onUndoAtIndex={handleUndoAtIndex}
-              onRefreshFolders={() => void fetchFolderTree()}
+              onRefreshFolders={() => fetchFolderTree()}
             />
           </div>
         )}
@@ -387,7 +387,7 @@ export default function NotesPage() {
               isEditing={isEditing}
               setIsEditing={setIsEditing}
               onToggleFavorite={(note) => void handleToggleFavorite(note)}
-              onDeleteNote={() => void handleDeleteNote()}
+              onDeleteNote={handleDeleteNote}
               tags={tags}
               selectedNotebookId={settings.selectedNotebookId}
               onUpdateSuccess={handleUpdateSuccess}
@@ -395,7 +395,7 @@ export default function NotesPage() {
               selectedNoteTheme={themeLogic.selectedNoteTheme}
               onSelectRelatedNote={(id) => void handleSelectNoteFromTree(id)}
               onFilterByTag={(tagId) => filters.handleFilterByTag(tagId, setSelectedFolderId, setSelectedNote, setIsEditing)}
-              onUnlinkRelatedNote={(id) => void handleUnlinkRelatedNote(id)}
+              onUnlinkRelatedNote={(id) => handleUnlinkRelatedNote(id)}
             />
           ) : (
             <NoteListView

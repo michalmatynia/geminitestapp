@@ -63,8 +63,8 @@ describe("Agent API", () => {
 
     expect(res.status).toBe(200);
     expect(data.runs).toHaveLength(1);
-    expect(data.runs[0]._count.browserLogs).toBe(1);
-    expect(data.runs[0]._count.browserSnapshots).toBe(1);
+    expect(data.runs[0]!._count.browserLogs).toBe(1);
+    expect(data.runs[0]!._count.browserSnapshots).toBe(1);
   });
 
   it("should return agent logs for a run", async () => {
@@ -86,7 +86,7 @@ describe("Agent API", () => {
 
     expect(res.status).toBe(200);
     expect(data.logs).toHaveLength(1);
-    expect(data.logs[0].message).toBe("Log entry");
+    expect(data.logs[0]!.message).toBe("Log entry");
   });
 
   it("should return agent audit logs for a run", async () => {
@@ -109,6 +109,7 @@ describe("Agent API", () => {
 
     expect(res.status).toBe(200);
     expect(data.audits).toHaveLength(1);
-    expect(data.audits[0].metadata.step).toBe("tool");
+    expect(data.audits[0]!.metadata).toBeDefined();
+    expect((data.audits[0]!.metadata as any).step).toBe("tool");
   });
 });

@@ -95,7 +95,7 @@ export default function NotificationSettingsPage() {
                 <Label htmlFor="position" className="mb-3 block text-sm font-semibold">
                   Toast Position
                 </Label>
-                <Select value={position} onValueChange={setPosition}>
+                <Select value={position} onValueChange={(val) => setPosition(val as PositionType)}>
                   <SelectTrigger id="position">
                     <SelectValue placeholder="Select position" />
                   </SelectTrigger>
@@ -120,7 +120,7 @@ export default function NotificationSettingsPage() {
                 <Label htmlFor="accent" className="mb-3 block text-sm font-semibold">
                   Accent Color
                 </Label>
-                <Select value={accent} onValueChange={setAccent}>
+                <Select value={accent} onValueChange={(val) => setAccent(val as AccentType)}>
                   <SelectTrigger id="accent">
                     <SelectValue placeholder="Select accent color" />
                   </SelectTrigger>

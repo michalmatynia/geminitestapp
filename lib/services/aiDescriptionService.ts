@@ -152,7 +152,7 @@ export async function generateProductDescription(params: {
         return { type: "image_url" as const, image_url: { url: `data:${mimetype};base64,${base64Image}` } };
       } catch { return null; }
     });
-    processedImages = (await Promise.all(imagePromises)).filter((img): img is ChatCompletionContentPart => img !== null);
+    processedImages = (await Promise.all(imagePromises)).filter((img) => img !== null) as ChatCompletionContentPart[];
   }
 
   let analysisInitial = "";

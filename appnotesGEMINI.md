@@ -22,6 +22,5 @@ Prepare a suite tests in vitests
 use tanstack query across application
 
 use ShadCN/ui (Product List - Done, Notificatoins - Done, )
-Enable React Server Components - Implement
+Enable React Server Components - Implement  optimize frontend pages to fetch data server-side
  Add MSW 2.0 - Implement MSW Proper API mocking in all tests
- Add tsx for scripts 

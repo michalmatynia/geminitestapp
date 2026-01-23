@@ -84,8 +84,8 @@ describe("Notes API", () => {
 
     expect(res.status).toBe(200);
     expect(notes).toHaveLength(1);
-    expect(notes[0].tags[0].tag.name).toBe("Work");
-    expect(notes[0].categories[0].category.name).toBe("Projects");
+    expect(notes[0]!.tags[0]!.tag.name).toBe("Work");
+    expect(notes[0]!.categories[0]!.category.name).toBe("Projects");
   });
 
   it("filters notes by search scope and flags", async () => {
@@ -101,7 +101,7 @@ describe("Notes API", () => {
 
     expect(res.status).toBe(200);
     expect(notes).toHaveLength(1);
-    expect(notes[0].title).toBe("Alpha");
+    expect(notes[0]!.title).toBe("Alpha");
   });
 
   it("filters notes by tags and categories", async () => {
@@ -124,7 +124,7 @@ describe("Notes API", () => {
 
     expect(res.status).toBe(200);
     expect(notes).toHaveLength(1);
-    expect(notes[0].title).toBe("With relations");
+    expect(notes[0]!.title).toBe("With relations");
   });
 
   it("creates a note with tags and categories", async () => {
@@ -146,8 +146,8 @@ describe("Notes API", () => {
     const note = (await res.json()) as NoteWithRelations;
 
     expect(res.status).toBe(201);
-    expect(note.tags[0].tag.name).toBe("Personal");
-    expect(note.categories[0].category.name).toBe("Home");
+    expect(note.tags[0]!.tag.name).toBe("Personal");
+    expect(note.categories[0]!.category.name).toBe("Home");
   });
 
   it("rejects note creation without title/content", async () => {
@@ -212,9 +212,9 @@ describe("Notes API", () => {
 
     expect(res.status).toBe(200);
     expect(data.title).toBe("Updated");
-    expect(data.tags[0].tag.id).toBe(tag2.id);
-    expect(data.categories[0].category.id).toBe(category2.id);
-    expect(data.relationsFrom[0].targetNote.id).toBe(related.id);
+    expect(data.tags[0]!.tag.id).toBe(tag2.id);
+    expect(data.categories[0]!.category.id).toBe(category2.id);
+    expect(data.relationsFrom[0]!.targetNote.id).toBe(related.id);
   });
 
   it("deletes a note", async () => {

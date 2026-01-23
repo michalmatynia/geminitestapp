@@ -48,6 +48,24 @@ model Setting {
   updatedAt DateTime @updatedAt
 }
 
+model SystemLog {
+  id         String   @id @default(cuid())
+  level      String   @default("error")
+  message    String
+  source     String?
+  context    Json?
+  stack      String?
+  path       String?
+  method     String?
+  statusCode Int?
+  requestId  String?
+  userId     String?
+  createdAt  DateTime @default(now())
+
+  @@index([level])
+  @@index([createdAt])
+}
+
 model ChatbotSettings {
   id        String   @id @default(cuid())
   key       String   @unique

@@ -80,6 +80,13 @@ async function getProductById(id: string) {
   return productRepository.getProductById(id);
 }
 
+async function getProductBySku(sku: string) {
+  const productRepository = await resolveProductRepository();
+  const product = await productRepository.getProductBySku(sku);
+  if (!product) return null;
+  return getProductById(product.id);
+}
+
 /**
  * Creates a new product.
  * @param formData - The product data from the form.
@@ -218,6 +225,10 @@ async function duplicateProduct(id: string, sku: string) {
  * @param imageFileId - The ID of the image file.
  * @returns The result of the deletion.
  */
+// Why: Images may be linked to multiple products. Only delete the physical file
+// and folder after confirming no other products reference this image. This prevents
+// accidental data loss if the same image is reused and orphaned disk directories
+// from cluttering the storage.
 async function unlinkImageFromProduct(productId: string, imageFileId: string) {
   const productRepository = await resolveProductRepository();
   const imageFileRepository = await resolveImageFileRepository();
@@ -304,6 +315,9 @@ async function linkImagesToProduct(
 
 const tempProductPathPrefix = "/uploads/products/temp/";
 
+// Why: HTML form's getAll("catalogIds") returns entries for EACH selected item.
+// Normalize to trim whitespace (user selection artifacts) and filter empty strings
+// (unchecked checkboxes). This prevents invalid IDs from entering the database.
 function normalizeCatalogIds(entries: FormDataEntryValue[]) {
   return entries
     .map((entry) => (typeof entry === "string" ? entry.trim() : ""))
@@ -326,7 +340,9 @@ async function updateProductCatalogs(productId: string, catalogIds: string[]) {
   const productRepository = await resolveProductRepository();
   await productRepository.replaceProductCatalogs(productId, catalogIds);
 
-  // Auto-assign default price group from the first catalog if product doesn't have one
+  // Why: Products need a default price group for inventory/listing calculations.
+  // Auto-assigning from the first assigned catalog prevents incomplete product state.
+  // Only sets it if the product doesn't already have one to preserve manual overrides.
   const firstCatalogId = catalogIds[0];
   if (firstCatalogId) {
     const product = await productRepository.getProductById(productId);
@@ -352,6 +368,10 @@ async function updateProductTags(productId: string, tagIds: string[]) {
   await productRepository.replaceProductTags(productId, tagIds);
 }
 
+// Why: Temp path allows users to upload images before saving a product. Once a
+// SKU is assigned, we permanently organize images by SKU for easy product recovery.
+// Sanitization (replacing non-alphanumeric with underscore) prevents path injection
+// and filesystem-specific naming issues across different OS environments.
 async function moveTempImageFilesToSku(imageFileIds: string[], sku: string) {
   const imageFileRepository = await resolveImageFileRepository();
   const imageFiles = await imageFileRepository.findImageFilesByIds(
@@ -402,6 +422,7 @@ export const productService = {
   getProducts,
   countProducts,
   getProductById,
+  getProductBySku,
   createProduct,
   updateProduct,
   deleteProduct,

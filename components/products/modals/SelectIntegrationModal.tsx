@@ -68,17 +68,43 @@ export default function SelectIntegrationModal({
 
   // Auto-select integration and connection based on preferred connection
   useEffect(() => {
-    if (defaultsLoaded) return;
-    if (!preferredConnectionId) return;
-    if (integrations.length === 0) return;
-    if (selectedIntegrationId || selectedConnectionId) return;
+    console.log('[SelectIntegrationModal] Initial auto-select check:', {
+      defaultsLoaded,
+      preferredConnectionId,
+      integrationsCount: integrations.length,
+      selectedIntegrationId,
+      selectedConnectionId
+    });
+
+    if (defaultsLoaded) {
+      console.log('[SelectIntegrationModal] Skipping - defaults already loaded');
+      return;
+    }
+    if (!preferredConnectionId) {
+      console.log('[SelectIntegrationModal] Skipping - no preferred connection');
+      return;
+    }
+    if (integrations.length === 0) {
+      console.log('[SelectIntegrationModal] Skipping - no integrations loaded yet');
+      return;
+    }
+    if (selectedIntegrationId || selectedConnectionId) {
+      console.log('[SelectIntegrationModal] Skipping - already have selection');
+      return;
+    }
 
     // Find the integration that contains the preferred connection
     const integrationWithPreferredConnection = integrations.find((integration) =>
       integration.connections.some((conn) => conn.id === preferredConnectionId)
     );
 
+    console.log('[SelectIntegrationModal] Found integration with preferred connection:', integrationWithPreferredConnection?.name);
+
     if (integrationWithPreferredConnection) {
+      console.log('[SelectIntegrationModal] ✓ Auto-selecting on initial load:', {
+        integration: integrationWithPreferredConnection.name,
+        connectionId: preferredConnectionId
+      });
       setSelectedIntegrationId(integrationWithPreferredConnection.id);
       setSelectedConnectionId(preferredConnectionId);
       setDefaultsLoaded(true);
@@ -86,28 +112,6 @@ export default function SelectIntegrationModal({
   }, [preferredConnectionId, integrations, selectedIntegrationId, selectedConnectionId, defaultsLoaded]);
 
   const selectedIntegration = integrations.find((i) => i.id === selectedIntegrationId);
-
-  // Auto-select connection when integration changes (if preferred connection exists in that integration)
-  useEffect(() => {
-    if (!selectedIntegrationId) return;
-    if (!preferredConnectionId) return;
-
-    const integration = integrations.find((i) => i.id === selectedIntegrationId);
-    if (!integration) return;
-
-    // Check if the preferred connection exists in the selected integration
-    const connectionExists = integration.connections.some((conn) => conn.id === preferredConnectionId);
-
-    // Only auto-select if no connection is selected OR if we need to switch to the preferred one
-    if (connectionExists && !selectedConnectionId) {
-      console.log('[SelectIntegrationModal] Auto-selecting preferred connection:', preferredConnectionId);
-      setSelectedConnectionId(preferredConnectionId);
-    } else if (!connectionExists && selectedConnectionId === preferredConnectionId) {
-      // Clear if the preferred connection doesn't exist in this integration
-      console.log('[SelectIntegrationModal] Clearing connection - not in this integration');
-      setSelectedConnectionId("");
-    }
-  }, [selectedIntegrationId, preferredConnectionId, integrations, selectedConnectionId]);
 
   const handleContinue = () => {
     if (selectedIntegrationId && selectedConnectionId) {
@@ -139,25 +143,35 @@ export default function SelectIntegrationModal({
                 value={selectedIntegrationId}
                 onValueChange={(value) => {
                   console.log('[SelectIntegrationModal] Integration selected:', value);
-                  console.log('[SelectIntegrationModal] Preferred connection ID:', preferredConnectionId);
+                  console.log('[SelectIntegrationModal] Current preferred connection ID:', preferredConnectionId);
+
                   setSelectedIntegrationId(value);
-                  // Check if the newly selected integration has the preferred connection
+
+                  // Find the newly selected integration
                   const newIntegration = integrations.find((i) => i.id === value);
-                  console.log('[SelectIntegrationModal] Found integration:', newIntegration?.name);
+                  console.log('[SelectIntegrationModal] Found integration:', newIntegration?.name, 'with', newIntegration?.connections.length, 'connections');
+
+                  if (newIntegration?.connections) {
+                    console.log('[SelectIntegrationModal] Connection IDs:', newIntegration.connections.map(c => `${c.name}(${c.id})`).join(', '));
+                  }
+
+                  // Auto-select preferred connection if it exists in this integration
                   if (newIntegration && preferredConnectionId) {
-                    const hasPreferredConnection = newIntegration.connections.some(
+                    const preferredConnection = newIntegration.connections.find(
                       (conn) => conn.id === preferredConnectionId
                     );
-                    console.log('[SelectIntegrationModal] Has preferred connection:', hasPreferredConnection);
-                    if (hasPreferredConnection) {
-                      // Auto-select the preferred connection
-                      console.log('[SelectIntegrationModal] Auto-selecting preferred connection in onValueChange');
+
+                    console.log('[SelectIntegrationModal] Found preferred connection:', preferredConnection?.name);
+
+                    if (preferredConnection) {
+                      console.log('[SelectIntegrationModal] ✓ Auto-selecting preferred connection:', preferredConnection.name);
                       setSelectedConnectionId(preferredConnectionId);
                       return;
                     }
                   }
-                  // Otherwise, clear the connection
-                  console.log('[SelectIntegrationModal] Clearing connection');
+
+                  // No preferred connection in this integration - clear selection
+                  console.log('[SelectIntegrationModal] ✗ No preferred connection found - clearing selection');
                   setSelectedConnectionId("");
                 }}
               >

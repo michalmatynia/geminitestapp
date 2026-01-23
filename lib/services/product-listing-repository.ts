@@ -27,6 +27,7 @@ export type ProductListingExportEvent = {
   warehouseId?: string | null;
   externalListingId?: string | null;
   fields?: string[] | null;
+  requestId?: string | null;
 };
 
 export type ProductListingWithDetails = ProductListingRecord & {

@@ -62,6 +62,22 @@ export type Template = {
   exportImagesAsBase64?: boolean;
 };
 
+export type ImageBase64Mode = "base-only" | "full-data-uri";
+
+export type ImageTransformOptions = {
+  forceJpeg?: boolean;
+  maxDimension?: number;
+  jpegQuality?: number;
+};
+
+export type ImageRetryPreset = {
+  id: string;
+  label: string;
+  description: string;
+  imageBase64Mode: ImageBase64Mode;
+  transform: ImageTransformOptions;
+};
+
 export type ExportParameterDoc = {
   name: string;
   type: string;

@@ -2,13 +2,19 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type {
   InventoryOption,
   Template,
   WarehouseOption,
   DebugWarehouses,
+  ImageRetryPreset,
 } from "@/types/product-imports";
 import type { IntegrationConnectionBasic } from "@/types";
+import {
+  getDefaultImageRetryPresets,
+  withImageRetryPresetLabels,
+} from "@/lib/constants/image-retry-presets";
 
 type ExportTabProps = {
   baseConnections: IntegrationConnectionBasic[];
@@ -33,6 +39,13 @@ type ExportTabProps = {
   exportStockFallbackLoaded: boolean;
   allWarehouses: WarehouseOption[];
   warehouses: WarehouseOption[];
+  imageRetryPresets: ImageRetryPreset[];
+  setImageRetryPresets: (
+    value:
+      | ImageRetryPreset[]
+      | ((prev: ImageRetryPreset[]) => ImageRetryPreset[])
+  ) => void;
+  imageRetryPresetsLoaded: boolean;
   handleLoadInventories: () => void | Promise<void>;
   loadingInventories: boolean;
   handleLoadWarehouses: () => void | Promise<void>;
@@ -70,6 +83,9 @@ export function ExportTab({
   exportStockFallbackLoaded,
   allWarehouses,
   warehouses,
+  imageRetryPresets,
+  setImageRetryPresets,
+  imageRetryPresetsLoaded,
   handleLoadInventories,
   loadingInventories,
   handleLoadWarehouses,
@@ -83,6 +99,29 @@ export function ExportTab({
   debugWarehouses,
   setDebugWarehouses,
 }: ExportTabProps) {
+  const updateImageRetryPreset = (
+    presetId: string,
+    update: Partial<ImageRetryPreset["transform"]>
+  ) => {
+    setImageRetryPresets((prev) =>
+      prev.map((preset) => {
+        if (preset.id !== presetId) return preset;
+        const nextPreset = withImageRetryPresetLabels({
+          ...preset,
+          transform: {
+            ...preset.transform,
+            ...update,
+          },
+        });
+        return nextPreset;
+      })
+    );
+  };
+
+  const handleResetImageRetryPresets = () => {
+    setImageRetryPresets(getDefaultImageRetryPresets());
+  };
+
   return (
     <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
       <div className="flex items-center justify-between">
@@ -251,6 +290,98 @@ export function ExportTab({
               </label>
             </div>
           ) : null}
+        </div>
+
+        <div className="rounded-md border border-gray-800 bg-gray-950 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-white">
+                Image retry presets
+              </h3>
+              <p className="mt-1 text-xs text-gray-500">
+                Used by Retry image export and Re-export images only actions.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleResetImageRetryPresets}
+              disabled={!imageRetryPresetsLoaded}
+              className="border-gray-700"
+            >
+              Reset defaults
+            </Button>
+          </div>
+          {!imageRetryPresetsLoaded ? (
+            <p className="mt-3 text-xs text-gray-500">Loading presets...</p>
+          ) : (
+            <div className="mt-3 space-y-3">
+              {imageRetryPresets.map((preset) => (
+                <div
+                  key={preset.id}
+                  className="rounded-md border border-gray-800 bg-gray-950/60 p-3"
+                >
+                  <div className="text-xs font-semibold text-gray-200">
+                    {preset.label}
+                  </div>
+                  <div className="mt-1 text-[11px] text-gray-500">
+                    {preset.description}
+                  </div>
+                  <div className="mt-2 grid gap-3 md:grid-cols-2">
+                    <div>
+                      <label className="text-[10px] text-gray-500">
+                        Max dimension (px)
+                      </label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={preset.transform.maxDimension ?? ""}
+                        onChange={(event) => {
+                          const raw = event.target.value;
+                          updateImageRetryPreset(preset.id, {
+                            maxDimension: raw ? Number(raw) : (undefined as any),
+                          });
+                        }}
+                        className="mt-1 h-8"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-gray-500">
+                        JPEG quality
+                      </label>
+                      <Input
+                        type="number"
+                        min={10}
+                        max={100}
+                        value={preset.transform.jpegQuality ?? ""}
+                        onChange={(event) => {
+                          const raw = event.target.value;
+                          updateImageRetryPreset(preset.id, {
+                            jpegQuality: raw ? Number(raw) : (undefined as any),
+                          });
+                        }}
+                        className="mt-1 h-8"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2 text-[11px] text-gray-400">
+                    <input
+                      type="checkbox"
+                      checked={preset.transform.forceJpeg ?? true}
+                      onChange={(event) =>
+                        updateImageRetryPreset(preset.id, {
+                          forceJpeg: event.target.checked,
+                        })
+                      }
+                      className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
+                    />
+                    <span>Force JPEG conversion</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="rounded-md border border-blue-900/50 bg-blue-900/20 p-4">

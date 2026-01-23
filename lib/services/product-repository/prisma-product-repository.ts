@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import { conflictError } from "@/lib/errors/app-error";
 import type { CatalogRecord, ImageFileRecord, ProductRecord } from "@/types";
 import type {
   CreateProductInput,
@@ -281,6 +282,12 @@ export const prismaProductRepository: ProductRepository = {
     };
   },
 
+  async getProductBySku(sku: string) {
+    const product = await prisma.product.findUnique({ where: { sku } });
+    if (!product) return null;
+    return toProductRecord(product);
+  },
+
   async findProductByBaseId(baseProductId: string) {
     const product = await prisma.product.findFirst({
       where: { baseProductId },
@@ -290,9 +297,36 @@ export const prismaProductRepository: ProductRepository = {
   },
 
   async createProduct(data: CreateProductInput) {
+    if (data.sku) {
+      const existing = await prisma.product.findUnique({
+        where: { sku: data.sku },
+        select: { id: true },
+      });
+      if (existing) {
+        throw conflictError("A product with this SKU already exists.", {
+          sku: data.sku,
+          productId: existing.id,
+        });
+      }
+    }
+
     const cleanData = removeUndefined(data) as Prisma.ProductCreateInput;
-    const product = await prisma.product.create({ data: cleanData });
-    return toProductRecord(product);
+    try {
+      const product = await prisma.product.create({ data: cleanData });
+      return toProductRecord(product);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002" &&
+        Array.isArray(error.meta?.target) &&
+        error.meta?.target.includes("sku")
+      ) {
+        throw conflictError("A product with this SKU already exists.", {
+          sku: data.sku ?? null,
+        });
+      }
+      throw error;
+    }
   },
 
   async updateProduct(id: string, data: UpdateProductInput) {
@@ -319,7 +353,10 @@ export const prismaProductRepository: ProductRepository = {
       select: { id: true },
     });
     if (existingSku) {
-      throw new Error("A product with this SKU already exists.");
+      throw conflictError("A product with this SKU already exists.", {
+        sku,
+        productId: existingSku.id,
+      });
     }
 
     const duplicated = await prisma.product.create({

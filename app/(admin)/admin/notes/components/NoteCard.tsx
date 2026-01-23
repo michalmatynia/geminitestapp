@@ -43,10 +43,16 @@ function NoteCardBase({
   const isCodeNote = note.editorType === "code";
 
   const contentHtml = React.useMemo(
-    () =>
-      note.editorType === "wysiwyg"
+    () => {
+      let html = note.editorType === "wysiwyg"
         ? note.content
-        : renderMarkdownToHtml(note.content),
+        : renderMarkdownToHtml(note.content);
+      // Remove image tags from preview to avoid duplication with thumbnail
+      html = html.replace(/<img[^>]*>/g, '');
+      // Also remove image paragraphs (markdown renders images in <p> tags)
+      html = html.replace(/<p>\s*<\/p>/g, '');
+      return html;
+    },
     [note.content, note.editorType]
   );
   const normalizedColor = note.color?.toLowerCase().trim();

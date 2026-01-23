@@ -9,6 +9,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { autoformatMarkdown } from "../utils";
 import { useUndo } from "../hooks/useUndo";
+import { useNoteMetadata } from "../hooks/useNoteMetadata";
+import { useEditorMode } from "../hooks/useEditorMode";
+import { useNoteFileAttachments } from "../hooks/useNoteFileAttachments";
+import { useNoteTags } from "../hooks/useNoteTags";
 import { useNoteSettings } from "@/lib/context/NoteSettingsContext";
 import { MarkdownToolbar } from "./editor/MarkdownToolbar";
 import { FileAttachments } from "./editor/FileAttachments";
@@ -42,7 +46,7 @@ export function NoteForm({
   notebookId,
   folderTheme,
 }: NoteFormProps) {
-  const [title, setTitle] = useState(note?.title || "");
+  // Content & undo/redo
   const {
     state: content,
     setState: setContent,
@@ -53,22 +57,73 @@ export function NoteForm({
     resetHistory,
   } = useUndo(note?.content || "");
 
-  useEffect(() => {
-    if (note?.id) {
-      setTitle(note.title);
-      resetHistory(note.content);
-    }
-  }, [note?.id, note?.title, note?.content, resetHistory]);
+  // Note metadata (title, color, status)
+  const {
+    title,
+    setTitle,
+    color,
+    setColor,
+    isPinned,
+    setIsPinned,
+    isArchived,
+    setIsArchived,
+    isFavorite,
+    setIsFavorite,
+    getReadableTextColor,
+  } = useNoteMetadata(note);
 
-  const [color, setColor] = useState(note?.color?.toLowerCase().trim() || "#ffffff");
-  const [isPinned, setIsPinned] = useState(note?.isPinned || false);
-  const [isArchived, setIsArchived] = useState(note?.isArchived || false);
-  const [isFavorite, setIsFavorite] = useState(note?.isFavorite || false);
+  // Editor mode & migration
+  const {
+    editorMode,
+    setEditorMode: handleEditorModeChange,
+    isEditorModeLocked,
+    isMigrating,
+    handleMigrateToWysiwyg,
+    handleMigrateToMarkdown,
+  } = useEditorMode(note, useNoteSettings().settings.editorMode);
+
+  // File attachments
+  const {
+    noteFiles,
+    setNoteFiles,
+    uploadingSlots,
+    addUploadingSlot,
+    removeUploadingSlot,
+    isSlotUploading,
+    lightboxImage,
+    openLightbox,
+    closeLightbox,
+    isPasting,
+    setIsPasting,
+    MAX_SLOTS,
+    canAddMoreFiles,
+    addFile,
+    removeFile,
+  } = useNoteFileAttachments(note?.files);
+
+  // Tags
+  const {
+    selectedTagIds,
+    setSelectedTagIds,
+    tagInput,
+    setTagInput,
+    isTagDropdownOpen,
+    setIsTagDropdownOpen,
+    filteredTags,
+    handleAddTag,
+    handleCreateTag,
+    handleRemoveTag,
+  } = useNoteTags(
+    note?.tags.map((t) => t.tagId) || [],
+    availableTags,
+    notebookId,
+    note?.notebookId,
+    onTagCreated
+  );
+
+  // Remaining UI state
   const [selectedFolderId, setSelectedFolderId] = useState<string>(
     note?.categories[0]?.categoryId || defaultFolderId || ""
-  );
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
-    note?.tags.map((t) => t.tagId) || []
   );
   const [selectedRelatedNotes, setSelectedRelatedNotes] = useState< 
     Array<{ id: string; title: string; color: string | null; content: string }>
@@ -93,162 +148,22 @@ export function NoteForm({
   const [isRelatedLoading, setIsRelatedLoading] = useState(false);
   const relatedSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contentRef = useRef<HTMLTextAreaElement>(null);
-  const [tagInput, setTagInput] = useState("");
-  const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
   const [textColor, setTextColor] = useState("#ffffff");
   const [fontFamily, setFontFamily] = useState("inherit");
   const [showPreview, setShowPreview] = useState(false);
   const [editorWidth, setEditorWidth] = useState<number | null>(null);
   const [isDraggingSplitter, setIsDraggingSplitter] = useState(false);
   const editorSplitRef = useRef<HTMLDivElement>(null);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [noteFiles, setNoteFiles] = useState<NoteFileRecord[]>(note?.files || []);
-  const [uploadingSlots, setUploadingSlots] = useState<Set<number>>(new Set());
-  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
-  const [isPasting, setIsPasting] = useState(false);
   const { toast } = useToast();
   const { settings } = useNoteSettings();
-  const [isMigrating, setIsMigrating] = useState(false);
 
-  // For existing notes, use the note's editorType; for new notes, use the setting preference
-  const noteEditorType = (note?.editorType as "markdown" | "wysiwyg" | "code") || settings.editorMode;
-  const [editorMode, setEditorMode] = useState<"markdown" | "wysiwyg" | "code">(noteEditorType);
-
-  const MAX_SLOTS = 10;
-
+  // Sync undo history when note changes
   useEffect(() => {
-    setColor(note?.color?.toLowerCase().trim() || "#ffffff");
-  }, [note?.id, note?.color]);
-
-  // Sync editorMode from note's editorType when it changes (for existing notes)
-  useEffect(() => {
-    if (note?.editorType) {
-      setEditorMode(note.editorType as "markdown" | "wysiwyg" | "code");
-    } else {
-      // For new notes, use the settings preference
-      setEditorMode(settings.editorMode);
+    if (note?.id) {
+      resetHistory(note.content);
     }
-  }, [note?.id, note?.editorType, settings.editorMode]);
-
-  // For existing notes, editor mode is locked to the note's type
-  // Users can only switch by migrating the note
-  const isEditorModeLocked = Boolean(note?.id);
-
-  const handleEditorModeChange = (mode: "markdown" | "wysiwyg" | "code") => {
-    // Only allow changing for new notes (without ID)
-    if (!note?.id) {
-      setEditorMode(mode);
-    }
-  };
-
-  // Convert markdown to HTML for migration
-  const convertMarkdownToHtml = (markdown: string): string => {
-    // Basic markdown to HTML conversion
-    // The WYSIWYG editor (TipTap) can handle basic HTML
-    let html = markdown;
-    // Headers
-    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-    // Bold and italic
-    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    // Inline code
-    html = html.replace(/`(.+?)`/g, '<code>$1</code>');
-    // Lists
-    html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-    html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-    // Paragraphs
-    html = html.split('\n\n').map(p => {
-      if (!p.startsWith('<')) return `<p>${p}</p>`;
-      return p;
-    }).join('\n');
-    return html;
-  };
-
-  // Convert HTML to markdown for migration (using turndown)
-  const convertHtmlToMarkdown = async (html: string): Promise<string> => {
-    const TurndownService = (await import('turndown')).default;
-    const turndownService = new TurndownService({
-      headingStyle: 'atx',
-      codeBlockStyle: 'fenced',
-    });
-    return turndownService.turndown(html);
-  };
-
-  const handleMigrateToWysiwyg = async () => {
-    if (!note?.id) return;
-
-    setIsMigrating(true);
-    try {
-      const htmlContent = convertMarkdownToHtml(content);
-
-      const res = await fetch(`/api/notes/${note.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: htmlContent,
-          editorType: "wysiwyg",
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to migrate note");
-      }
-
-      setContent(htmlContent);
-      setEditorMode("wysiwyg");
-      toast("Note migrated to WYSIWYG format", { variant: "success" });
-      onSuccess?.();
-    } catch {
-      toast("Failed to migrate note", { variant: "error" });
-    } finally {
-      setIsMigrating(false);
-    }
-  };
-
-  const handleMigrateToMarkdown = async () => {
-    if (!note?.id) return;
-
-    setIsMigrating(true);
-    try {
-      const markdownContent = await convertHtmlToMarkdown(content);
-
-      const res = await fetch(`/api/notes/${note.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: markdownContent,
-          editorType: "markdown",
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to migrate note");
-      }
-
-      setContent(markdownContent);
-      setEditorMode("markdown");
-      toast("Note migrated to Markdown format", { variant: "success" });
-      onSuccess?.();
-    } catch {
-      toast("Failed to migrate note", { variant: "error" });
-    } finally {
-      setIsMigrating(false);
-    }
-  };
-
-  const getReadableTextColor = (hex: string) => {
-    const normalized = hex.replace("#", "");
-    if (normalized.length !== 6) return "#f8fafc";
-    const num = parseInt(normalized, 16);
-    const r = (num >> 16) & 0xff;
-    const g = (num >> 8) & 0xff;
-    const b = num & 0xff;
-    const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-    return luminance > 0.7 ? "#0f172a" : "#f8fafc";
-  };
+  }, [note?.id, note?.content, resetHistory]);
 
   // Use provided theme or fall back to dark mode theme
   const effectiveTheme = folderTheme ?? FALLBACK_THEME;
@@ -431,61 +346,6 @@ export function NoteForm({
     });
   };
 
-  const filteredTags = useMemo(() => availableTags.filter(
-    (tag) =>
-      tag.name.toLowerCase().includes(tagInput.toLowerCase()) &&
-      !selectedTagIds.includes(tag.id)
-  ), [availableTags, tagInput, selectedTagIds]);
-
-  const handleAddTag = (tag: TagRecord) => {
-    setSelectedTagIds([...selectedTagIds, tag.id]);
-    setTagInput("");
-    setIsTagDropdownOpen(false);
-  };
-
-  const handleCreateTag = async () => {
-    if (!tagInput.trim()) return;
-
-    const existingTag = availableTags.find(
-      (t) => t.name.toLowerCase() === tagInput.trim().toLowerCase()
-    );
-
-    if (existingTag) {
-      if (!selectedTagIds.includes(existingTag.id)) {
-        handleAddTag(existingTag);
-      } else {
-        setTagInput("");
-        setIsTagDropdownOpen(false);
-      }
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/notes/tags", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: tagInput.trim(),
-          notebookId: notebookId ?? note?.notebookId ?? null,
-        }),
-      });
-
-      if (response.ok) {
-        const newTag = (await response.json()) as TagRecord;
-        onTagCreated();
-        setSelectedTagIds((prev) => [...prev, newTag.id]);
-        setTagInput("");
-        setIsTagDropdownOpen(false);
-      }
-    } catch (_error) {
-      console.error("Failed to create tag:", _error);
-    }
-  };
-
-  const handleRemoveTag = (tagId: string) => {
-    setSelectedTagIds(selectedTagIds.filter((id) => id !== tagId));
-  };
-
   const handleFileUpload = async (slotIndex: number, file: File) => {
     if (!note?.id) {
       toast("Please save the note first before uploading files");
@@ -497,7 +357,7 @@ export function NoteForm({
       return;
     }
 
-    setUploadingSlots((prev) => new Set(prev).add(slotIndex));
+    addUploadingSlot(slotIndex);
 
     try {
       const formData = new FormData();
@@ -521,11 +381,7 @@ export function NoteForm({
       console.error("Failed to upload file:", error);
       toast("Failed to upload file");
     } finally {
-      setUploadingSlots((prev) => {
-        const next = new Set(prev);
-        next.delete(slotIndex);
-        return next;
-      });
+      removeUploadingSlot(slotIndex);
     }
   };
 
@@ -538,7 +394,7 @@ export function NoteForm({
       });
 
       if (response.ok) {
-        setNoteFiles((prev) => prev.filter((f) => f.slotIndex !== slotIndex));
+        removeFile(noteFiles.find((f) => f.slotIndex === slotIndex)?.id || "");
         toast("File deleted successfully");
       } else {
         toast("Failed to delete file");

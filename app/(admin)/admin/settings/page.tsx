@@ -62,7 +62,7 @@ export default function SettingsHomePage() {
       <div className="grid gap-4 md:grid-cols-2">
         {settings.map((setting) => {
           const Icon = setting.icon;
-          const colors = colorClasses[setting.color] || colorClasses.emerald;
+          const colors = colorClasses[setting.color] || colorClasses.emerald!;
 
           return (
             <Link key={setting.id} href={setting.href}>

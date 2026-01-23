@@ -69,8 +69,8 @@ describe("Products API - Pagination and Count", () => {
 
       expect(page1.length).toEqual(2);
       expect(page2.length).toEqual(2);
-      expect(page1[0].id).not.toEqual(page2[0].id);
-      expect(page1[1].id).not.toEqual(page2[1].id);
+      expect(page1[0]!.id).not.toEqual(page2[0]!.id);
+      expect(page1[1]!.id).not.toEqual(page2[1]!.id);
     });
   });
 });

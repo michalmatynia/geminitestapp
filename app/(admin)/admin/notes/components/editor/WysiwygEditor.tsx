@@ -67,6 +67,17 @@ const ToolbarButton = ({
   </button>
 );
 
+const sanitizeContent = (html: string | undefined | null): string => {
+  if (!html) return '';
+  // Ensure content is a string
+  if (typeof html !== 'string') return '';
+  // Remove any script tags and potentially dangerous content
+  const temp = document.createElement('div');
+  temp.innerHTML = html;
+  // Get safe HTML back
+  return temp.innerHTML;
+};
+
 export function WysiwygEditor({
   content,
   setContent,
@@ -74,6 +85,7 @@ export function WysiwygEditor({
   contentTextColor,
 }: WysiwygEditorProps) {
   const lastContentRef = useRef(content);
+  
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -103,7 +115,7 @@ export function WysiwygEditor({
       TableCell,
       TableHeader,
     ],
-    content: content || "",
+    content: sanitizeContent(content),
     editorProps: {
       attributes: {
         class:
@@ -125,12 +137,22 @@ export function WysiwygEditor({
     if (!editor || content === lastContentRef.current) {
       return;
     }
-    if (content !== editor.getHTML()) {
+    const sanitized = sanitizeContent(content);
+    if (sanitized !== editor.getHTML()) {
       try {
         lastContentRef.current = content;
-        editor.commands.setContent(content, { emitUpdate: false });
+        editor.commands.setContent(sanitized, { emitUpdate: false });
       } catch (error) {
         console.error("Failed to set WYSIWYG content:", error);
+        // Try to recover by clearing and setting plain text
+        try {
+          editor.commands.clearContent();
+          if (typeof content === 'string' && content.trim()) {
+            editor.commands.insertContent(sanitizeContent(content));
+          }
+        } catch (fallbackError) {
+          console.error("Failed to recover from WYSIWYG error:", fallbackError);
+        }
       }
     }
   }, [content, editor]);

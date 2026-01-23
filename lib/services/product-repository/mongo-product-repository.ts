@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import type { Filter, WithId } from "mongodb";
 import { getMongoDb } from "@/lib/db/mongo-client";
+import { conflictError } from "@/lib/errors/app-error";
 import type { ProductRecord, ProductWithImages } from "@/types";
 import { mongoCatalogRepository } from "@/lib/services/catalog-repository/mongo-catalog-repository";
 import { mongoImageFileRepository } from "@/lib/services/image-file-repository/mongo-image-file-repository";
@@ -166,6 +167,14 @@ export const mongoProductRepository: ProductRepository = {
     return doc ? toProductResponse({ ...doc, _id: doc._id }) : null;
   },
 
+  async getProductBySku(sku: string) {
+    const db = await getMongoDb();
+    const doc = await db
+      .collection<ProductDocument>(productCollectionName)
+      .findOne({ sku });
+    return doc ? toProductBase(doc) : null;
+  },
+
   async findProductByBaseId(baseProductId: string) {
     const db = await getMongoDb();
     const doc = await db
@@ -178,6 +187,17 @@ export const mongoProductRepository: ProductRepository = {
     const db = await getMongoDb();
     const now = new Date();
     const id = randomUUID();
+    if (data.sku) {
+      const existing = await db
+        .collection<ProductDocument>(productCollectionName)
+        .findOne({ sku: data.sku });
+      if (existing) {
+        throw conflictError("A product with this SKU already exists.", {
+          sku: data.sku,
+          productId: existing.id ?? existing._id,
+        });
+      }
+    }
     const document: ProductDocument = {
       _id: id,
       id,
@@ -314,7 +334,10 @@ export const mongoProductRepository: ProductRepository = {
       .collection<ProductDocument>(productCollectionName)
       .findOne({ sku });
     if (skuExists) {
-      throw new Error("A product with this SKU already exists.");
+      throw conflictError("A product with this SKU already exists.", {
+        sku,
+        productId: skuExists.id ?? skuExists._id,
+      });
     }
 
     const now = new Date();

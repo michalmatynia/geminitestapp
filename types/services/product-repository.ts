@@ -23,6 +23,7 @@ export type ProductRepository = {
   getProducts(filters: ProductFilters): Promise<ProductWithImages[]>;
   countProducts(filters: ProductFilters): Promise<number>;
   getProductById(id: string): Promise<ProductWithImages | null>;
+  getProductBySku(sku: string): Promise<ProductRecord | null>;
   findProductByBaseId(baseProductId: string): Promise<ProductRecord | null>;
   createProduct(data: CreateProductInput): Promise<ProductRecord>;
   updateProduct(

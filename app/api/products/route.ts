@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { productService } from "@/lib/services/productService";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError } from "@/lib/errors/app-error";
 
 /**
  * GET /api/products
@@ -15,16 +16,11 @@ export async function GET(req: Request) {
     const products = await productService.getProducts(filters);
     return NextResponse.json(products);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[products][GET] Failed to fetch products", {
-      errorId,
-      error,
-      filters,
+    return createErrorResponse(error, {
+      request: req,
+      source: "products.GET",
+      fallbackMessage: "Failed to fetch products",
     });
-    return NextResponse.json(
-      { error: "Failed to fetch products", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -38,34 +34,25 @@ export async function POST(req: Request) {
     try {
       formData = await req.formData();
     } catch (error) {
-      const errorId = randomUUID();
-      console.error("[products][POST] Failed to parse form data", {
-        errorId,
-        error,
-      });
-      return NextResponse.json(
-        { error: "Invalid form data payload", errorId },
-        { status: 400 }
-      );
+      throw badRequestError("Invalid form data payload", { error });
+    }
+    const idempotencyKey =
+      req.headers.get("idempotency-key") ??
+      req.headers.get("x-idempotency-key");
+    const skuField = formData.get("sku");
+    if (idempotencyKey && typeof skuField === "string" && skuField.trim()) {
+      const existing = await productService.getProductBySku(skuField.trim());
+      if (existing) {
+        return NextResponse.json({ ...existing, idempotent: true });
+      }
     }
     const product = await productService.createProduct(formData);
     return NextResponse.json(product);
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof Error) {
-      console.error("[products][POST] Failed to create product", {
-        errorId,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 400 }
-      );
-    }
-    console.error("[products][POST] Unknown error", { errorId, error });
-    return NextResponse.json(
-      { error: "An unknown error occurred", errorId },
-      { status: 400 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "products.POST",
+      fallbackMessage: "Failed to create product",
+    });
   }
 }

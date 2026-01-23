@@ -4,6 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -12,13 +18,34 @@ import {
 } from "@/components/ui/select";
 import ModalShell from "@/components/ui/modal-shell";
 import type { ProductWithImages, IntegrationWithConnections } from "@/types";
-import type { Template, BaseInventory } from "@/types/product-imports";
+import type {
+  Template,
+  BaseInventory,
+  ImageRetryPreset,
+  ImageTransformOptions,
+} from "@/types/product-imports";
+import { ExportLogViewer } from "./ExportLogViewer";
+import type { CapturedLog } from "@/lib/services/exports/log-capture";
+import { useImageRetryPresets } from "./useImageRetryPresets";
 
 type SelectProductForListingModalProps = {
   integrationId: string;
   connectionId: string;
   onClose: () => void;
   onSuccess: () => void;
+};
+
+const normalizeSearchText = (value: string) =>
+  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+const isImageExportError = (message: string | null) => {
+  if (!message) return false;
+  const normalized = normalizeSearchText(message.toLowerCase());
+  return (
+    normalized.includes("zdjec") ||
+    normalized.includes("image") ||
+    normalized.includes("photo")
+  );
 };
 
 export default function SelectProductForListingModal({
@@ -46,6 +73,11 @@ export default function SelectProductForListingModal({
   const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
   const previousConnectionId = useRef<string>("");
   const previousIntegrationId = useRef<string>("");
+
+  // Export logging
+  const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
+  const [logsOpen, setLogsOpen] = useState(false);
+  const imageRetryPresets = useImageRetryPresets();
 
   const isBaseComIntegration = ["baselinker", "base-com"].includes(
     integration?.slug ?? ""
@@ -216,6 +248,45 @@ export default function SelectProductForListingModal({
     loadingInventories,
   ]);
 
+  const exportToBase = async (options?: {
+    imageBase64Mode?: "base-only" | "full-data-uri";
+    imageTransform?: ImageTransformOptions | null;
+  }) => {
+    const payload: Record<string, unknown> = {
+      connectionId,
+      inventoryId: selectedInventoryId,
+      templateId: selectedTemplateId !== "none" ? selectedTemplateId : undefined,
+      allowDuplicateSku,
+    };
+
+    if (options?.imageBase64Mode) {
+      payload.imageBase64Mode = options.imageBase64Mode;
+      payload.exportImagesAsBase64 = true;
+    }
+    if (options?.imageTransform) {
+      payload.imageTransform = options.imageTransform;
+      payload.exportImagesAsBase64 = true;
+    }
+
+    const res = await fetch(`/api/products/${selectedProductId}/export-to-base`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (data.logs) {
+      setExportLogs(data.logs);
+    }
+
+    if (!res.ok) {
+      if (data.skuExists) {
+        throw new Error(data.error || "SKU already exists in Base.com");
+      }
+      throw new Error(data.error || "Failed to export product to Base.com");
+    }
+  };
+
   const handleSubmit = async () => {
     if (!selectedProductId) {
       setError("Please select a product");
@@ -230,27 +301,11 @@ export default function SelectProductForListingModal({
     try {
       setSubmitting(true);
       setError(null);
+      setExportLogs([]);
+      setLogsOpen(true);
 
       if (isBaseComIntegration) {
-        const res = await fetch(`/api/products/${selectedProductId}/export-to-base`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            connectionId,
-            inventoryId: selectedInventoryId,
-            templateId: selectedTemplateId !== "none" ? selectedTemplateId : undefined,
-            allowDuplicateSku,
-          }),
-        });
-
-        if (!res.ok) {
-          const data = (await res.json()) as { error?: string; skuExists?: boolean };
-          if (data.skuExists) {
-            throw new Error(data.error || "SKU already exists in Base.com");
-          }
-          throw new Error(data.error || "Failed to export product to Base.com");
-        }
-
+        await exportToBase();
         onSuccess();
       } else {
         const res = await fetch(`/api/products/${selectedProductId}/listings`, {
@@ -271,6 +326,27 @@ export default function SelectProductForListingModal({
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to list product");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleImageRetry = async (preset: ImageRetryPreset) => {
+    if (!selectedProductId || !isBaseComIntegration || !selectedInventoryId) {
+      return;
+    }
+    try {
+      setSubmitting(true);
+      setError(null);
+      setExportLogs([]);
+      setLogsOpen(true);
+      await exportToBase({
+        imageBase64Mode: preset.imageBase64Mode,
+        imageTransform: preset.transform,
+      });
+      onSuccess();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to export product");
     } finally {
       setSubmitting(false);
     }
@@ -317,7 +393,44 @@ export default function SelectProductForListingModal({
       <div className="space-y-6">
         {error && (
           <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-            {error}
+            <div className="flex flex-col gap-3">
+              <span>{error}</span>
+              {isBaseComIntegration && isImageExportError(error) ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="bg-red-500/20 text-red-100 hover:bg-red-500/30"
+                        disabled={submitting}
+                      >
+                        Retry image export
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="bg-gray-950 border-gray-800">
+                      {imageRetryPresets.map((preset) => (
+                        <DropdownMenuItem
+                          key={preset.id}
+                          onSelect={() => void handleImageRetry(preset)}
+                          className="text-gray-200 focus:bg-gray-800/70"
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-sm">{preset.label}</span>
+                            <span className="text-xs text-gray-400">
+                              {preset.description}
+                            </span>
+                          </div>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <span className="text-xs text-red-200/80">
+                    Applies JPEG resize/compression and retries automatically.
+                  </span>
+                </div>
+              ) : null}
+            </div>
           </div>
         )}
 
@@ -429,6 +542,15 @@ export default function SelectProductForListingModal({
               </>
             )}
           </>
+        )}
+        {exportLogs.length > 0 && (
+          <div className="mt-4 border-t border-gray-700 pt-4">
+            <ExportLogViewer
+              logs={exportLogs}
+              isOpen={logsOpen}
+              onToggle={setLogsOpen}
+            />
+          </div>
         )}
       </div>
     </ModalShell>

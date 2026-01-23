@@ -29,6 +29,10 @@ const createErrorId = () => {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 };
 
+// Why: Chatbot generates temp files (uploads, debug logs). Without cleanup, disk
+// fills up over time. We debounce cleanup (at most every 10 minutes) to avoid
+// expensive readdir/stat calls on every request while ensuring old files don't
+// persist beyond 24 hours. Errors are silent (best-effort) to avoid blocking chat.
 const cleanupChatbotTemp = async () => {
   const now = Date.now();
   if (now - lastTempCleanupAt < TEMP_CLEANUP_INTERVAL_MS) return;
@@ -134,6 +138,10 @@ export async function POST(req: Request) {
     let requestedModel: string | null = null;
     let sessionId: string | null = null;
 
+    // Why: Support both multipart (for file uploads) and JSON (for direct API calls).
+    // Multipart is used by browsers; JSON by third-party integrations. Images must be
+    // base64-encoded in the message body for Ollama's vision capability. Other files
+    // are too large to embed, so we just mention their names in the message content.
     if (contentType.includes("multipart/form-data")) {
       const formData = await req.formData();
 
@@ -203,7 +211,10 @@ export async function POST(req: Request) {
         );
       }
 
-      // Attach images to the most recent user message
+      // Why: Users upload images to attach to a query. We search backwards (most recent
+      // first) to find the latest user message, not the latest assistant response. This
+      // handles cases where a user sends multiple messages or has context from prior turns.
+      // Reverse + math converts back-index to forward-index correctly.
       if (imageFiles.length > 0 && messages.length > 0) {
         const lastIndex = [...messages]
           .reverse()

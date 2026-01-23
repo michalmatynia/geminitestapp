@@ -115,6 +115,7 @@ export type ProductListingExportEvent = {
   warehouseId?: string | null;
   externalListingId?: string | null;
   fields?: string[] | null;
+  requestId?: string | null;
 };
 
 export type ProductListingRecord = {
@@ -138,4 +139,21 @@ export type ProductListingRecord = {
     id: string;
     name: string;
   };
+};
+
+export type SystemLogLevel = "info" | "warn" | "error";
+
+export type SystemLogRecord = {
+  id: string;
+  level: SystemLogLevel;
+  message: string;
+  source?: string | null;
+  context?: Record<string, unknown> | null;
+  stack?: string | null;
+  path?: string | null;
+  method?: string | null;
+  statusCode?: number | null;
+  requestId?: string | null;
+  userId?: string | null;
+  createdAt: Date | string;
 };

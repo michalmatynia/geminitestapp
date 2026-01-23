@@ -14,6 +14,8 @@ import ModalShell from "@/components/ui/modal-shell";
 import type { IntegrationWithConnections } from "@/types";
 import { logger } from "@/lib/logger";
 import type { Template, BaseInventory } from "@/types/product-imports";
+import { ExportLogViewer } from "./ExportLogViewer";
+import type { CapturedLog } from "@/lib/services/exports/log-capture";
 
 type MassListProductModalProps = {
   productIds: string[];
@@ -48,6 +50,10 @@ export default function MassListProductModal({
   const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
   const previousConnectionId = useRef<string>("");
   const previousIntegrationId = useRef<string>("");
+  
+  // Export logging - for mass operations, store all logs
+  const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
+  const [logsOpen, setLogsOpen] = useState(false);
 
   const isBaseComIntegration = ["baselinker", "base-com"].includes(
     integration?.slug ?? ""
@@ -212,8 +218,11 @@ export default function MassListProductModal({
     setSubmitting(true);
     setError(null);
     setProgress({ current: 0, total: productIds.length, errors: 0 });
+    setExportLogs([]);
+    setLogsOpen(true);
 
     let errors = 0;
+    const allLogs: CapturedLog[] = [];
     
     for (let i = 0; i < productIds.length; i++) {
         const productId = productIds[i];
@@ -232,6 +241,12 @@ export default function MassListProductModal({
                   }),
                 });
         
+                const data = await res.json().catch(() => ({}));
+                if (data.logs) {
+                  allLogs.push(...data.logs);
+                  setExportLogs([...allLogs]);
+                }
+
                 if (!res.ok) {
                     errors++;
                 }
@@ -411,6 +426,15 @@ export default function MassListProductModal({
                 </>
                 )}
             </>
+        )}
+        {exportLogs.length > 0 && (
+          <div className="mt-4 border-t border-gray-700 pt-4">
+            <ExportLogViewer
+              logs={exportLogs}
+              isOpen={logsOpen}
+              onToggle={setLogsOpen}
+            />
+          </div>
         )}
       </div>
     </ModalShell>

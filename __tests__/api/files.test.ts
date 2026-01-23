@@ -77,7 +77,7 @@ describe("Files API", () => {
       const files = (await res.json()) as ImageFile[];
       expect(res.status).toBe(200);
       expect(files.length).toBe(1);
-      expect(files[0].filename).toBe("test-image1.jpg");
+      expect(files[0]!.filename).toBe("test-image1.jpg");
     });
 
     it("should filter files by product ID", async () => {
@@ -87,7 +87,7 @@ describe("Files API", () => {
       const files = (await res.json()) as ImageFile[];
       expect(res.status).toBe(200);
       expect(files.length).toBe(1);
-      expect(files[0].filename).toBe("test-image1.jpg");
+      expect(files[0]!.filename).toBe("test-image1.jpg");
     });
 
     it("should filter files by product name", async () => {
@@ -97,7 +97,7 @@ describe("Files API", () => {
       const files = (await res.json()) as ImageFile[];
       expect(res.status).toBe(200);
       expect(files.length).toBe(1);
-      expect(files[0].filename).toBe("test-image1.jpg");
+      expect(files[0]!.filename).toBe("test-image1.jpg");
     });
   });
 

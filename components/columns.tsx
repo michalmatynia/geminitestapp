@@ -16,6 +16,7 @@ import {
 import { useToast } from "@/components/ui/toast";
 import MissingImagePlaceholder from "@/components/ui/missing-image-placeholder";
 import { EditableCell } from "@/components/products/EditableCell";
+import { ProductImageCell } from "@/components/products/cells/ProductImageCell";
 import type { ProductWithImages } from "@/types";
 import type { PriceGroupForCalculation } from "@/components/data-table";
 
@@ -251,16 +252,11 @@ export const columns: ColumnDef<ProductWithImages>[] = [
 
       const imageUrl = firstFileImage || firstLinkImage;
 
-      return imageUrl ? (
-        <Image
-          src={imageUrl}
-          alt="Product Image"
-          width={64}
-          height={64}
-          className="size-16 rounded-md object-cover"
+      return (
+        <ProductImageCell
+          imageUrl={imageUrl || null}
+          productName={product.name_en || product.name_pl || "Product"}
         />
-      ) : (
-        <MissingImagePlaceholder className="size-16" />
       );
     },
   },

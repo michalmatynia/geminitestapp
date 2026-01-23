@@ -84,7 +84,7 @@ describe("Languages API", () => {
 
         expect(res.status).toEqual(200);
         expect(language.countries).toHaveLength(1);
-        expect(language.countries![0].countryId).toBe(country.id);
+        expect(language.countries![0]!.countryId).toBe(country.id);
     });
 
     it("should reject invalid payload", async () => {
@@ -127,7 +127,7 @@ describe("Languages API", () => {
       expect(res.status).toEqual(200);
       expect(updated.name).toBe("Polish Updated");
       expect(updated.countries).toHaveLength(1);
-      expect(updated.countries![0].countryId).toBe(country.id);
+      expect(updated.countries![0]!.countryId).toBe(country.id);
     });
   });
 

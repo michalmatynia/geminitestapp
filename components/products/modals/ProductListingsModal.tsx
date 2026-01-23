@@ -5,6 +5,12 @@ import ModalShell from "@/components/ui/modal-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -14,6 +20,10 @@ import {
 import { IntegrationWithConnections, ProductListingRecord, ProductWithImages } from "@/types";
 import { SyncDirection } from "@/types/products";
 import { Trash2, ArrowRight, ArrowLeft, ArrowLeftRight, Check, X } from "lucide-react";
+import { ExportLogViewer } from "./ExportLogViewer";
+import type { CapturedLog } from "@/lib/services/exports/log-capture";
+import type { ImageRetryPreset, ImageTransformOptions } from "@/types/product-imports";
+import { useImageRetryPresets } from "./useImageRetryPresets";
 
 type ProductListingsModalProps = {
   product: ProductWithImages;
@@ -28,6 +38,19 @@ const statusColors: Record<string, string> = {
   active: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
   failed: "bg-red-500/20 text-red-300 border-red-500/40",
   removed: "bg-gray-500/20 text-gray-300 border-gray-500/40",
+};
+
+const normalizeSearchText = (value: string) =>
+  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+const isImageExportError = (message: string | null) => {
+  if (!message) return false;
+  const normalized = normalizeSearchText(message.toLowerCase());
+  return (
+    normalized.includes("zdjec") ||
+    normalized.includes("image") ||
+    normalized.includes("photo")
+  );
 };
 
 export default function ProductListingsModal({
@@ -50,6 +73,10 @@ export default function ProductListingsModal({
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>("");
   const [selectedConnectionId, setSelectedConnectionId] = useState<string>("");
   const [historyOpenByListing, setHistoryOpenByListing] = useState<Record<string, boolean>>({});
+  const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
+  const [logsOpen, setLogsOpen] = useState(false);
+  const [lastExportListingId, setLastExportListingId] = useState<string | null>(null);
+  const imageRetryPresets = useImageRetryPresets();
 
   const productName =
     product.name_en || product.name_pl || product.name_de || "Unnamed Product";
@@ -487,6 +514,94 @@ export default function ProductListingsModal({
     }
   };
 
+  const exportListingToBase = async (
+    listingId: string,
+    options?: {
+      imageBase64Mode?: "base-only" | "full-data-uri";
+      imageTransform?: ImageTransformOptions | null;
+    }
+  ) => {
+    const listing = listings.find((item) => item.id === listingId);
+    if (!listing) return;
+    const inventoryId = (inventoryOverrides[listingId] || listing.inventoryId || "").trim();
+    if (!inventoryId) {
+      throw new Error("Inventory ID is required.");
+    }
+    const templateId = getLatestTemplateId(listing) ?? undefined;
+    const payload: Record<string, unknown> = {
+      connectionId: listing.connectionId,
+      inventoryId,
+      templateId,
+    };
+    if (options?.imageBase64Mode) {
+      payload.imageBase64Mode = options.imageBase64Mode;
+      payload.exportImagesAsBase64 = true;
+    }
+    if (options?.imageTransform) {
+      payload.imageTransform = options.imageTransform;
+      payload.exportImagesAsBase64 = true;
+    }
+
+    const res = await fetch(`/api/products/${product.id}/export-to-base`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const payloadRes = await res.json().catch(() => ({}));
+    if (payloadRes.logs) {
+      setExportLogs(payloadRes.logs);
+    }
+    if (!res.ok) {
+      throw new Error(payloadRes.error || "Failed to export product");
+    }
+  };
+
+  const exportListingImagesOnly = async (
+    listingId: string,
+    options?: {
+      imageBase64Mode?: "base-only" | "full-data-uri";
+      imageTransform?: ImageTransformOptions | null;
+    }
+  ) => {
+    const listing = listings.find((item) => item.id === listingId);
+    if (!listing) return;
+    const inventoryId = (inventoryOverrides[listingId] || listing.inventoryId || "").trim();
+    if (!inventoryId) {
+      throw new Error("Inventory ID is required.");
+    }
+    if (!listing.externalListingId) {
+      throw new Error("External Base.com product ID is missing.");
+    }
+    const payload: Record<string, unknown> = {
+      connectionId: listing.connectionId,
+      inventoryId,
+      imagesOnly: true,
+      listingId: listing.id,
+      externalListingId: listing.externalListingId,
+      allowDuplicateSku: true,
+      exportImagesAsBase64: true,
+    };
+    if (options?.imageBase64Mode) {
+      payload.imageBase64Mode = options.imageBase64Mode;
+    }
+    if (options?.imageTransform) {
+      payload.imageTransform = options.imageTransform;
+    }
+
+    const res = await fetch(`/api/products/${product.id}/export-to-base`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const payloadRes = await res.json().catch(() => ({}));
+    if (payloadRes.logs) {
+      setExportLogs(payloadRes.logs);
+    }
+    if (!res.ok) {
+      throw new Error(payloadRes.error || "Failed to export product images");
+    }
+  };
+
   const handleExportAgain = async (listingId: string) => {
     const listing = listings.find((item) => item.id === listingId);
     if (!listing) return;
@@ -498,20 +613,53 @@ export default function ProductListingsModal({
 
     try {
       setExportingListing(listingId);
-      const templateId = getLatestTemplateId(listing) ?? undefined;
-      const res = await fetch(`/api/products/${product.id}/export-to-base`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          connectionId: listing.connectionId,
-          inventoryId,
-          templateId,
-        }),
+      setLastExportListingId(listingId);
+      setExportLogs([]);
+      setLogsOpen(true);
+      await exportListingToBase(listingId);
+      await fetchListings();
+      onListingsUpdated?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to export product");
+    } finally {
+      setExportingListing(null);
+    }
+  };
+
+  const handleExportImagesOnly = async (
+    listingId: string,
+    preset?: ImageRetryPreset
+  ) => {
+    try {
+      setExportingListing(listingId);
+      setLastExportListingId(listingId);
+      setError(null);
+      setExportLogs([]);
+      setLogsOpen(true);
+      await exportListingImagesOnly(listingId, preset ? {
+        imageBase64Mode: preset.imageBase64Mode,
+        imageTransform: preset.transform,
+      } : undefined);
+      await fetchListings();
+      onListingsUpdated?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to export product images");
+    } finally {
+      setExportingListing(null);
+    }
+  };
+
+  const handleImageRetry = async (preset: ImageRetryPreset) => {
+    if (!lastExportListingId) return;
+    try {
+      setExportingListing(lastExportListingId);
+      setError(null);
+      setExportLogs([]);
+      setLogsOpen(true);
+      await exportListingToBase(lastExportListingId, {
+        imageBase64Mode: preset.imageBase64Mode,
+        imageTransform: preset.transform,
       });
-      if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
-        throw new Error(payload.error || "Failed to export product");
-      }
       await fetchListings();
       onListingsUpdated?.();
     } catch (err) {
@@ -532,7 +680,44 @@ export default function ProductListingsModal({
           <p className="text-sm text-gray-400">Loading listings...</p>
         ) : error ? (
           <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-            {error}
+            <div className="flex flex-col gap-3">
+              <span>{error}</span>
+              {isImageExportError(error) && lastExportListingId ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="bg-red-500/20 text-red-100 hover:bg-red-500/30"
+                        disabled={Boolean(exportingListing)}
+                      >
+                        Retry image export
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="bg-gray-950 border-gray-800">
+                      {imageRetryPresets.map((preset) => (
+                        <DropdownMenuItem
+                          key={preset.id}
+                          onSelect={() => void handleImageRetry(preset)}
+                          className="text-gray-200 focus:bg-gray-800/70"
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-sm">{preset.label}</span>
+                            <span className="text-xs text-gray-400">
+                              {preset.description}
+                            </span>
+                          </div>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <span className="text-xs text-red-200/80">
+                    Applies JPEG resize/compression and retries automatically.
+                  </span>
+                </div>
+              ) : null}
+            </div>
           </div>
         ) : (
           <div className="space-y-3">
@@ -675,6 +860,56 @@ export default function ProductListingsModal({
                               Export again
                             </Button>
                           )}
+                          {listing.status !== "removed" && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={
+                                    exportingListing === listing.id ||
+                                    !listing.externalListingId
+                                  }
+                                  className="border-sky-500/40 text-sky-200 hover:bg-sky-500/10"
+                                >
+                                  Re-export images only
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align="start"
+                                className="bg-gray-950 border-gray-800"
+                              >
+                                <DropdownMenuItem
+                                  onSelect={() => void handleExportImagesOnly(listing.id)}
+                                  className="text-gray-200 focus:bg-gray-800/70"
+                                >
+                                  <div className="flex flex-col">
+                                    <span className="text-sm">No resize (base-only)</span>
+                                    <span className="text-xs text-gray-400">
+                                      Re-send images without extra compression.
+                                    </span>
+                                  </div>
+                                </DropdownMenuItem>
+                                {imageRetryPresets.map((preset) => (
+                                  <DropdownMenuItem
+                                    key={preset.id}
+                                    onSelect={() =>
+                                      void handleExportImagesOnly(listing.id, preset)
+                                    }
+                                    className="text-gray-200 focus:bg-gray-800/70"
+                                  >
+                                    <div className="flex flex-col">
+                                      <span className="text-sm">{preset.label}</span>
+                                      <span className="text-xs text-gray-400">
+                                        {preset.description}
+                                      </span>
+                                    </div>
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                           {!listing.inventoryId && (
                             <div className="space-y-1 text-xs text-gray-400">
                               <label htmlFor={`inventory-${listing.id}`}>
@@ -734,6 +969,15 @@ export default function ProductListingsModal({
                 ))}
               </div>
             )}
+          </div>
+        )}
+        {exportLogs.length > 0 && (
+          <div className="mt-4 border-t border-gray-700 pt-4">
+            <ExportLogViewer
+              logs={exportLogs}
+              isOpen={logsOpen}
+              onToggle={setLogsOpen}
+            />
           </div>
         )}
       </div>

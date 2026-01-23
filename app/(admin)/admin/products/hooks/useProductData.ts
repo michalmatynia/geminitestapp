@@ -95,7 +95,6 @@ export function useProductData({
       pageSize,
       catalogId: catalogFilter === "all" ? undefined : catalogFilter,
     };
-    console.log("[useProductData] Loading products with filters:", filters);
     let cancelled = false;
     const loadProducts = async () => {
       setIsLoading(true);

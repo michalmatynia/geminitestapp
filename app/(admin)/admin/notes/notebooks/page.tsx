@@ -297,7 +297,8 @@ export default function NotebooksPage() {
                               <div className="absolute right-0 top-full z-50 mt-2 w-44 rounded-md border border-gray-700 bg-gray-900 p-1 shadow-lg">
                                 <button
                                   type="button"
-                                  onClick={() => {
+                                  onClick={(event) => {
+                                    event.stopPropagation();
                                     handleEditStart(notebook);
                                     setMenuNotebookId(null);
                                   }}
@@ -308,7 +309,10 @@ export default function NotebooksPage() {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => { void handleDuplicate(notebook); }}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    void handleDuplicate(notebook);
+                                  }}
                                   onClickCapture={(event) => event.stopPropagation()}
                                   className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-gray-800"
                                 >
@@ -316,7 +320,10 @@ export default function NotebooksPage() {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => { void handleDelete(notebook.id); }}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    void handleDelete(notebook.id);
+                                  }}
                                   onClickCapture={(event) => event.stopPropagation()}
                                   className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-red-300 hover:bg-gray-800"
                                 >

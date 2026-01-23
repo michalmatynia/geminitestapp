@@ -1,25 +1,6 @@
 import EditProductForm from "@/components/products/EditProductForm";
-import { randomUUID } from "crypto";
 import { productService } from "@/lib/services/productService";
-import type { ProductWithImages } from "@/types";
-
-async function getProduct(id: string): Promise<{
-  product: ProductWithImages | null;
-  errorId?: string;
-}> {
-  try {
-    const product = await productService.getProductById(id);
-    return { product };
-  } catch (error) {
-    const errorId = randomUUID();
-    console.error("[products][EDIT] Failed to load product", {
-      errorId,
-      productId: id,
-      error,
-    });
-    return { product: null, errorId };
-  }
-}
+import { notFound } from "next/navigation";
 
 export default async function EditProductPage({
   params,
@@ -27,13 +8,9 @@ export default async function EditProductPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { product, errorId } = await getProduct(id);
-
+  const product = await productService.getProductById(id);
   if (!product) {
-    if (errorId) {
-      return <div>Failed to load product. Error ID: {errorId}</div>;
-    }
-    return <div>Product not found</div>;
+    notFound();
   }
 
   return <EditProductForm product={product} />;

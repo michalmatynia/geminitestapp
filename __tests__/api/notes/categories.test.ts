@@ -107,8 +107,8 @@ describe("Notes Categories API", () => {
 
     expect(res.status).toBe(200);
     expect(tree).toHaveLength(1);
-    expect(tree[0].children).toHaveLength(1);
-    expect(tree[0].children[0].notes).toHaveLength(1);
+    expect(tree[0]!.children).toHaveLength(1);
+    expect(tree[0]!.children[0]!.notes).toHaveLength(1);
   });
 
   it("deletes categories recursively with notes", async () => {

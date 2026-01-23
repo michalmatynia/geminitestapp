@@ -18,6 +18,7 @@ export type ListingJob = {
     warehouseId?: string | null;
     externalListingId?: string | null;
     fields?: string[] | null;
+    requestId?: string | null;
   }> | null;
   createdAt: string;
   updatedAt: string;

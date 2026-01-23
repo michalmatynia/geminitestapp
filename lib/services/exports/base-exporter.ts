@@ -2,6 +2,8 @@ import type { ProductWithImages } from "@/types";
 import type { BaseProductRecord } from "@/lib/services/imports/base-client";
 import { callBaseApi } from "@/lib/services/imports/base-client";
 import fs from "fs/promises";
+import path from "path";
+import sharp from "sharp";
 import { getDiskPathFromPublicPath } from "@/lib/utils/fileUploader";
 
 type ExportTemplateMapping = {
@@ -18,7 +20,10 @@ const IMAGE_BASE_URL =
   "";
 
 const hasScheme = (value: string) => /^[a-z][a-z0-9+.-]*:/i.test(value);
-const resolveImageUrl = (value: string | null | undefined, baseUrl?: string | null) => {
+export const resolveImageUrl = (
+  value: string | null | undefined,
+  baseUrl?: string | null
+) => {
   if (!value) return null;
   const trimmed = value.trim();
   if (!trimmed) return null;
@@ -28,6 +33,232 @@ const resolveImageUrl = (value: string | null | undefined, baseUrl?: string | nu
   const base = baseCandidate.replace(/\/+$/, "");
   const path = trimmed.replace(/^\/+/, "");
   return `${base}/${path}`;
+};
+
+export type ImageExportDiagnostics = {
+  log: (message: string, data?: Record<string, unknown>) => void;
+};
+
+export type ImageBase64Mode = "base-only" | "full-data-uri";
+
+export type ImageTransformOptions = {
+  forceJpeg?: boolean;
+  maxDimension?: number;
+  jpegQuality?: number;
+};
+
+export type ImageUrlDiagnostic = {
+  sourceType: "slot" | "link";
+  index: number;
+  filepath: string | null;
+  resolvedUrl: string | null;
+  mimetype?: string | null;
+  size?: number | null;
+  supported: boolean;
+  reason?: string;
+  extension?: string | null;
+  normalizedMime?: string | null;
+};
+
+const SUPPORTED_IMAGE_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+]);
+
+const SUPPORTED_IMAGE_EXTENSIONS = new Set([
+  ".jpg",
+  ".jpeg",
+  ".jpe",
+  ".jfif",
+  ".png",
+  ".gif",
+]);
+
+const UNSUPPORTED_IMAGE_EXTENSIONS = new Set([
+  ".webp",
+  ".avif",
+  ".heic",
+  ".heif",
+  ".tif",
+  ".tiff",
+  ".bmp",
+  ".svg",
+]);
+
+const normalizeMimeType = (value?: string | null) => {
+  if (!value) return null;
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed) return null;
+  const base = trimmed.split(";")[0]?.trim() ?? trimmed;
+  if (base === "image/jpg" || base === "image/pjpeg") return "image/jpeg";
+  if (base === "image/x-png") return "image/png";
+  return base;
+};
+
+const getUrlExtension = (value: string) => {
+  const clean = value.split("#")[0]?.split("?")[0] ?? value;
+  return path.extname(clean).toLowerCase();
+};
+
+const isSupportedImageMime = (value?: string | null) => {
+  const normalized = normalizeMimeType(value);
+  if (!normalized) return false;
+  return SUPPORTED_IMAGE_MIME_TYPES.has(normalized);
+};
+
+const inferMimeFromExtension = (extension?: string | null) => {
+  if (!extension) return null;
+  if (SUPPORTED_IMAGE_EXTENSIONS.has(extension)) {
+    if (extension === ".png") return "image/png";
+    if (extension === ".gif") return "image/gif";
+    return "image/jpeg";
+  }
+  if (extension === ".webp") return "image/webp";
+  if (extension === ".avif") return "image/avif";
+  if (extension === ".heic") return "image/heic";
+  if (extension === ".heif") return "image/heif";
+  if (extension === ".tif" || extension === ".tiff") return "image/tiff";
+  if (extension === ".bmp") return "image/bmp";
+  if (extension === ".svg") return "image/svg+xml";
+  return null;
+};
+
+const getImageSupportStatus = (url: string, mimetype?: string | null) => {
+  const normalizedMime = normalizeMimeType(mimetype);
+  if (normalizedMime) {
+    return {
+      supported: isSupportedImageMime(normalizedMime),
+      reason: isSupportedImageMime(normalizedMime)
+        ? undefined
+        : `unsupported_mimetype:${normalizedMime}`,
+      normalizedMime,
+      extension: null,
+    };
+  }
+  const extension = getUrlExtension(url);
+  if (!extension) {
+    return {
+      supported: true,
+      reason: "unknown_extension",
+      extension: null,
+      normalizedMime: null,
+    };
+  }
+  if (SUPPORTED_IMAGE_EXTENSIONS.has(extension)) {
+    return {
+      supported: true,
+      extension,
+      normalizedMime: inferMimeFromExtension(extension),
+    };
+  }
+  if (UNSUPPORTED_IMAGE_EXTENSIONS.has(extension)) {
+    return {
+      supported: false,
+      reason: `unsupported_extension:${extension}`,
+      extension,
+      normalizedMime: inferMimeFromExtension(extension),
+    };
+  }
+  return {
+    supported: true,
+    reason: "unknown_extension",
+    extension,
+    normalizedMime: inferMimeFromExtension(extension),
+  };
+};
+
+const shouldIncludeImageUrl = (
+  url: string,
+  options?: {
+    mimetype?: string | null;
+    diagnostics?: ImageExportDiagnostics;
+    sourceType?: "slot" | "link" | "mapped" | "unknown";
+    index?: number;
+    source?: string | null;
+  }
+) => {
+  const status = getImageSupportStatus(url, options?.mimetype);
+  if (status.supported) return true;
+  options?.diagnostics?.log("Skipping unsupported image format", {
+    url,
+    source: options?.source ?? url,
+    sourceType: options?.sourceType ?? "unknown",
+    index: options?.index,
+    mimetype: options?.mimetype ?? null,
+    reason: status.reason,
+    extension: status.extension,
+  });
+  return false;
+};
+
+export const collectProductImageDiagnostics = (
+  product: ProductWithImages,
+  imageBaseUrl?: string | null
+): ImageUrlDiagnostic[] => {
+  const diagnostics: ImageUrlDiagnostic[] = [];
+
+  const slotImages = product.images ?? [];
+  slotImages.forEach((entry, index) => {
+    const filepath = entry?.imageFile?.filepath ?? null;
+    const resolvedUrl = resolveImageUrl(filepath, imageBaseUrl);
+    if (!resolvedUrl) {
+      diagnostics.push({
+        sourceType: "slot",
+        index,
+        filepath,
+        resolvedUrl: null,
+        mimetype: entry?.imageFile?.mimetype ?? null,
+        size: entry?.imageFile?.size ?? null,
+        supported: false,
+        reason: "missing_url",
+      });
+      return;
+    }
+    const status = getImageSupportStatus(resolvedUrl, entry?.imageFile?.mimetype);
+    diagnostics.push({
+      sourceType: "slot",
+      index,
+      filepath,
+      resolvedUrl,
+      mimetype: entry?.imageFile?.mimetype ?? null,
+      size: entry?.imageFile?.size ?? null,
+      supported: status.supported,
+      ...(status.reason ? { reason: status.reason } : {}),
+      extension: status.extension,
+      normalizedMime: status.normalizedMime,
+    });
+  });
+
+  const linkImages = product.imageLinks ?? [];
+  linkImages.forEach((link, index) => {
+    const filepath = typeof link === "string" ? link : null;
+    const resolvedUrl = resolveImageUrl(filepath, imageBaseUrl);
+    if (!resolvedUrl) {
+      diagnostics.push({
+        sourceType: "link",
+        index,
+        filepath,
+        resolvedUrl: null,
+        supported: false,
+        reason: "missing_url",
+      });
+      return;
+    }
+    const status = getImageSupportStatus(resolvedUrl);
+    diagnostics.push({
+      sourceType: "link",
+      index,
+      filepath,
+      resolvedUrl,
+      supported: status.supported,
+      reason: status.reason,
+      extension: status.extension,
+      normalizedMime: status.normalizedMime,
+    });
+  });
+
+  return diagnostics;
 };
 
 // Base.com API field names that accept image data
@@ -105,46 +336,99 @@ const getImageSlotUrl = (
   product: ProductWithImages,
   index: number,
   mode: "slot" | "file" | "link",
-  imageBaseUrl?: string | null
+  imageBaseUrl?: string | null,
+  diagnostics?: ImageExportDiagnostics
 ) => {
   if (index < 0) return null;
   if (mode !== "link") {
-    const imageFile = product.images?.[index]?.imageFile?.filepath;
+    const slotEntry = product.images?.[index];
+    const imageFile = slotEntry?.imageFile?.filepath;
     const resolved = resolveImageUrl(imageFile, imageBaseUrl);
-    if (resolved) return resolved;
+    if (
+      resolved &&
+      shouldIncludeImageUrl(resolved, {
+        mimetype: slotEntry?.imageFile?.mimetype ?? null,
+        diagnostics,
+        sourceType: "slot",
+        index,
+        source: imageFile ?? resolved,
+      })
+    ) {
+      return resolved;
+    }
   }
   const link = product.imageLinks?.[index];
   const resolved = resolveImageUrl(
     typeof link === "string" ? link : null,
     imageBaseUrl
   );
-  if (resolved) return resolved;
+  if (
+    resolved &&
+    shouldIncludeImageUrl(resolved, {
+      diagnostics,
+      sourceType: "link",
+      index,
+      source: typeof link === "string" ? link : resolved,
+    })
+  )
+    return resolved;
   return null;
 };
 
 const getImageList = (
   product: ProductWithImages,
   mode: "slot" | "file" | "link",
-  imageBaseUrl?: string | null
+  imageBaseUrl?: string | null,
+  diagnostics?: ImageExportDiagnostics
 ) => {
   if (mode === "link") {
     return (product.imageLinks ?? [])
-      .map(
-        (link) =>
-          resolveImageUrl(typeof link === "string" ? link : null, imageBaseUrl) ??
-          ""
-      )
+      .map((link, index) => {
+        const resolved =
+          resolveImageUrl(typeof link === "string" ? link : null, imageBaseUrl) ?? "";
+        if (
+          resolved &&
+          !shouldIncludeImageUrl(resolved, {
+            diagnostics,
+            sourceType: "link",
+            index,
+            source: typeof link === "string" ? link : resolved,
+          })
+        ) {
+          return "";
+        }
+        return resolved;
+      })
       .filter(Boolean);
   }
   const slots = (product.images ?? [])
-    .map((entry) => resolveImageUrl(entry.imageFile?.filepath, imageBaseUrl) ?? "")
+    .map((entry, index) => {
+      const resolved = resolveImageUrl(entry.imageFile?.filepath, imageBaseUrl) ?? "";
+      if (
+        resolved &&
+        !shouldIncludeImageUrl(resolved, {
+          mimetype: entry.imageFile?.mimetype ?? null,
+          diagnostics,
+          sourceType: "slot",
+          index,
+          source: entry.imageFile?.filepath ?? resolved,
+        })
+      ) {
+        return "";
+      }
+      return resolved;
+    })
     .filter(Boolean);
   return slots;
 };
 
-const getAllImageUrls = (product: ProductWithImages, imageBaseUrl?: string | null) => {
-  const slots = getImageList(product, "slot", imageBaseUrl);
-  const links = getImageList(product, "link", imageBaseUrl);
+const getAllImageUrls = (
+  product: ProductWithImages,
+  imageBaseUrl?: string | null,
+  diagnostics?: ImageExportDiagnostics
+) => {
+  const slots = getImageList(product, "slot", imageBaseUrl, diagnostics);
+  const links = getImageList(product, "link", imageBaseUrl, diagnostics);
   return Array.from(new Set([...slots, ...links]));
 };
 
@@ -152,30 +436,178 @@ const getAllImageUrls = (product: ProductWithImages, imageBaseUrl?: string | nul
  * Convert image file to base64 data URI for Base.com
  * Base.com expects format: "data:BASE64STRING" (without MIME type and "base64," prefix)
  */
-const imageToBase64DataUri = async (filepath: string): Promise<string | null> => {
+const FORMAT_MIME_MAP: Record<string, string> = {
+  jpeg: "image/jpeg",
+  jpg: "image/jpeg",
+  png: "image/png",
+  gif: "image/gif",
+  webp: "image/webp",
+  avif: "image/avif",
+  heic: "image/heic",
+  heif: "image/heif",
+  tiff: "image/tiff",
+  bmp: "image/bmp",
+  svg: "image/svg+xml",
+};
+
+const imageToBase64DataUri = async (
+  filepath: string,
+  options?: {
+    contentTypeHint?: string | null;
+    diagnostics?: ImageExportDiagnostics;
+    sourceType?: "slot" | "link" | "mapped" | "unknown";
+    index?: number;
+    outputMode?: ImageBase64Mode;
+    transform?: ImageTransformOptions | null;
+  }
+): Promise<string | null> => {
+  const diagnostics = options?.diagnostics;
+  const sourceType = options?.sourceType ?? "unknown";
+  const index = options?.index;
+  const outputMode: ImageBase64Mode = options?.outputMode ?? "base-only";
+  const transform = options?.transform ?? null;
   try {
-    // Check if it's a URL (starts with http:// or https://)
+    let buffer: Buffer;
+    let originalBytes: number | null = null;
+    let contentType = normalizeMimeType(options?.contentTypeHint);
+    let metadataWidth: number | null = null;
+    let metadataHeight: number | null = null;
+
     if (hasScheme(filepath)) {
-      // For external URLs, we need to fetch and convert
       const response = await fetch(filepath);
       if (!response.ok) {
-        console.warn(`[imageToBase64DataUri] Failed to fetch external image: ${filepath}`);
+        diagnostics?.log("Failed to fetch external image", {
+          url: filepath,
+          sourceType,
+          index,
+          status: response.status,
+        });
         return null;
       }
+      const headerType = normalizeMimeType(response.headers.get("content-type"));
+      if (headerType) {
+        contentType = headerType;
+      }
       const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      // Base.com format: "data:" followed directly by base64 string (no MIME type)
-      return `data:${buffer.toString("base64")}`;
+      buffer = Buffer.from(arrayBuffer);
+      originalBytes = buffer.length;
+    } else {
+      const diskPath = getDiskPathFromPublicPath(filepath);
+      buffer = await fs.readFile(diskPath);
+      originalBytes = buffer.length;
     }
 
-    // For local files
-    const diskPath = getDiskPathFromPublicPath(filepath);
-    const fileBuffer = await fs.readFile(diskPath);
+    let format: string | null = null;
+    try {
+      const metadata = await sharp(buffer, { failOnError: false }).metadata();
+      format = metadata.format ? metadata.format.toLowerCase() : null;
+      metadataWidth = metadata.width ?? null;
+      metadataHeight = metadata.height ?? null;
+    } catch (error) {
+      diagnostics?.log("Failed to read image metadata", {
+        source: filepath,
+        sourceType,
+        index,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
 
-    // Base.com format: "data:" followed directly by base64 string (no MIME type)
-    return `data:${fileBuffer.toString("base64")}`;
+    const extension = getUrlExtension(filepath);
+    const formatMime = format ? FORMAT_MIME_MAP[format] ?? null : null;
+    const inferredMime = contentType ?? inferMimeFromExtension(extension);
+
+    let shouldConvert: boolean;
+    if (formatMime) {
+      shouldConvert = !isSupportedImageMime(formatMime);
+    } else if (inferredMime) {
+      shouldConvert = !isSupportedImageMime(inferredMime);
+    } else {
+      shouldConvert = Boolean(extension && UNSUPPORTED_IMAGE_EXTENSIONS.has(extension));
+    }
+    if (transform?.forceJpeg) {
+      shouldConvert = true;
+    }
+
+    const maxDimension = transform?.maxDimension ?? null;
+    const needsResize =
+      Boolean(maxDimension) &&
+      metadataWidth !== null &&
+      metadataHeight !== null &&
+      (metadataWidth > (maxDimension ?? 0) || metadataHeight > (maxDimension ?? 0));
+
+    let outputBuffer = buffer;
+    let outputFormat = formatMime ?? inferredMime;
+    let converted = false;
+    let resized = false;
+
+    if (shouldConvert || needsResize) {
+      try {
+        let pipeline = sharp(buffer, { failOnError: false });
+        if (needsResize && maxDimension) {
+          pipeline = pipeline.resize({
+            width: maxDimension,
+            height: maxDimension,
+            fit: "inside",
+            withoutEnlargement: true,
+          });
+          resized = true;
+        }
+        if (shouldConvert) {
+          pipeline = pipeline.jpeg({ quality: transform?.jpegQuality ?? 85 });
+          outputFormat = "image/jpeg";
+          converted = true;
+        }
+        outputBuffer = await pipeline.toBuffer();
+        if (!shouldConvert) {
+          outputFormat = formatMime ?? inferredMime;
+        }
+        diagnostics?.log("Converted image to supported format", {
+          source: filepath,
+          sourceType,
+          index,
+          originalFormat: formatMime ?? inferredMime ?? null,
+          outputFormat,
+          resized,
+        });
+      } catch (error) {
+        diagnostics?.log("Failed to convert image to supported format", {
+          source: filepath,
+          sourceType,
+          index,
+          originalFormat: formatMime ?? inferredMime ?? null,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return null;
+      }
+    }
+
+    const base64 = outputBuffer.toString("base64");
+    diagnostics?.log("Prepared image for Base export", {
+      source: filepath,
+      sourceType,
+      index,
+      originalBytes,
+      outputBytes: outputBuffer.length,
+      base64Length: base64.length,
+      contentType: contentType ?? null,
+      outputFormat: outputFormat ?? null,
+      converted,
+      resized,
+      outputMode,
+    });
+
+    if (outputMode === "full-data-uri") {
+      const mime = outputFormat ?? "image/jpeg";
+      return `data:${mime};base64,${base64}`;
+    }
+    return `data:${base64}`;
   } catch (error) {
-    console.warn(`[imageToBase64DataUri] Failed to convert image to base64: ${filepath}`, error);
+    diagnostics?.log("Failed to convert image to base64", {
+      source: filepath,
+      sourceType,
+      index,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 };
@@ -183,18 +615,30 @@ const imageToBase64DataUri = async (filepath: string): Promise<string | null> =>
 /**
  * Get product images as base64 data URIs
  */
-const getProductImagesAsBase64 = async (
-  product: ProductWithImages
+export const getProductImagesAsBase64 = async (
+  product: ProductWithImages,
+  options?: {
+    diagnostics?: ImageExportDiagnostics;
+    outputMode?: ImageBase64Mode;
+    transform?: ImageTransformOptions | null;
+  }
 ): Promise<Record<string, string>> => {
   const images: Record<string, string> = {};
   const imageSlots = product.images || [];
 
   let index = 0;
-  for (const imageSlot of imageSlots) {
+  for (const [slotIndex, imageSlot] of imageSlots.entries()) {
     const filepath = imageSlot.imageFile?.filepath;
     if (!filepath) continue;
 
-    const base64 = await imageToBase64DataUri(filepath);
+    const base64 = await imageToBase64DataUri(filepath, {
+      contentTypeHint: imageSlot.imageFile?.mimetype ?? null,
+      diagnostics: options?.diagnostics,
+      sourceType: "slot",
+      index: slotIndex,
+      outputMode: options?.outputMode,
+      transform: options?.transform,
+    });
     if (base64) {
       images[String(index)] = base64;
       index++;
@@ -203,7 +647,7 @@ const getProductImagesAsBase64 = async (
 
   // Also process imageLinks if they exist and we don't have enough images
   const imageLinks = product.imageLinks || [];
-  for (const link of imageLinks) {
+  for (const [linkIndex, link] of imageLinks.entries()) {
     if (!link || !link.trim()) continue;
 
     // Skip if we already have this as an uploaded image
@@ -212,7 +656,13 @@ const getProductImagesAsBase64 = async (
     );
     if (alreadyProcessed) continue;
 
-    const base64 = await imageToBase64DataUri(link);
+    const base64 = await imageToBase64DataUri(link, {
+      diagnostics: options?.diagnostics,
+      sourceType: "link",
+      index: linkIndex,
+      outputMode: options?.outputMode,
+      transform: options?.transform,
+    });
     if (base64) {
       images[String(index)] = base64;
       index++;
@@ -228,7 +678,8 @@ const getProductImagesAsBase64 = async (
 const getProductValue = (
   product: ProductWithImages,
   sourceKey: string,
-  imageBaseUrl?: string | null
+  imageBaseUrl?: string | null,
+  diagnostics?: ImageExportDiagnostics
 ): unknown => {
   if (!sourceKey) return null;
 
@@ -238,13 +689,13 @@ const getProductValue = (
     const index = Number.parseInt(slotMatch[2] ?? "", 10) - 1;
     if (Number.isNaN(index)) return null;
     const mode = slotMatch[1] as "slot" | "file" | "link";
-    return getImageSlotUrl(product, index, mode, imageBaseUrl);
+    return getImageSlotUrl(product, index, mode, imageBaseUrl, diagnostics);
   }
   const imageMatch = normalized.match(/^image_(\d+)$/);
   if (imageMatch) {
     const index = Number.parseInt(imageMatch[1] ?? "", 10) - 1;
     if (Number.isNaN(index)) return null;
-    return getImageSlotUrl(product, index, "slot", imageBaseUrl);
+    return getImageSlotUrl(product, index, "slot", imageBaseUrl, diagnostics);
   }
   if (
     normalized === "image_all" ||
@@ -252,13 +703,13 @@ const getProductValue = (
     normalized === "image_files" ||
     normalized === "image_slots_all"
   ) {
-    return getImageList(product, "slot", imageBaseUrl);
+    return getImageList(product, "slot", imageBaseUrl, diagnostics);
   }
   if (normalized === "image_links" || normalized === "image_links_all") {
-    return getImageList(product, "link", imageBaseUrl);
+    return getImageList(product, "link", imageBaseUrl, diagnostics);
   }
   if (normalized === "images_all") {
-    return getAllImageUrls(product, imageBaseUrl);
+    return getAllImageUrls(product, imageBaseUrl, diagnostics);
   }
   // Handle dot notation for nested access
   if (sourceKey.includes(".")) {
@@ -281,7 +732,8 @@ const getProductValue = (
 function applyExportTemplateMappings(
   product: ProductWithImages,
   mappings: ExportTemplateMapping[],
-  imageBaseUrl?: string | null
+  imageBaseUrl?: string | null,
+  imageDiagnostics?: ImageExportDiagnostics
 ): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
@@ -291,7 +743,7 @@ function applyExportTemplateMappings(
 
     if (!sourceKey || !targetField) continue;
 
-    const rawValue = getProductValue(product, sourceKey, imageBaseUrl);
+    const rawValue = getProductValue(product, sourceKey, imageBaseUrl, imageDiagnostics);
     if (rawValue === null || rawValue === undefined) continue;
 
     const targetKey = targetField.toLowerCase();
@@ -303,7 +755,15 @@ function applyExportTemplateMappings(
           .map((entry) =>
             typeof entry === "string" ? resolveImageUrl(entry, imageBaseUrl) ?? "" : ""
           )
-          .filter(Boolean);
+          .filter(Boolean)
+          .filter((url, index) =>
+            shouldIncludeImageUrl(url, {
+              diagnostics: imageDiagnostics,
+              sourceType: "mapped",
+              index,
+              source: url,
+            })
+          );
         if (urls.length > 0) {
           result[targetField] = urls;
         }
@@ -311,7 +771,15 @@ function applyExportTemplateMappings(
       }
       if (typeof rawValue === "string") {
         const resolved = resolveImageUrl(rawValue, imageBaseUrl);
-        if (resolved) {
+        if (
+          resolved &&
+          shouldIncludeImageUrl(resolved, {
+            diagnostics: imageDiagnostics,
+            sourceType: "mapped",
+            index: 0,
+            source: rawValue,
+          })
+        ) {
           result[targetField] = [resolved];
         }
       }
@@ -460,6 +928,10 @@ export async function buildBaseProductData(
     includeStockWithoutWarehouse?: boolean;
     stockWarehouseAliases?: Record<string, string>;
     exportImagesAsBase64?: boolean;
+    imageDiagnostics?: ImageExportDiagnostics;
+    imageBase64Mode?: ImageBase64Mode;
+    imageTransform?: ImageTransformOptions | null;
+    imagesOnly?: boolean;
   }
 ): Promise<BaseProductRecord> {
   // Start with default field mappings in Baselinker API format
@@ -468,28 +940,32 @@ export async function buildBaseProductData(
   // SKU is required
   if (product.sku) baseData.sku = product.sku;
 
+  const imagesOnly = options?.imagesOnly ?? false;
+
   // EAN (optional)
-  if (product.ean) baseData.ean = product.ean;
+  if (!imagesOnly && product.ean) baseData.ean = product.ean;
 
   // Weight (optional)
-  if (product.weight !== null) baseData.weight = product.weight;
+  if (!imagesOnly && product.weight !== null) baseData.weight = product.weight;
 
   // Text fields (name, description, etc.) go in text_fields object
-  const textFields: Record<string, string> = {};
-  if (product.name_en) textFields.name = product.name_en;
-  if (product.description_en) textFields.description = product.description_en;
-  if (Object.keys(textFields).length > 0) {
-    baseData.text_fields = textFields;
+  if (!imagesOnly) {
+    const textFields: Record<string, string> = {};
+    if (product.name_en) textFields.name = product.name_en;
+    if (product.description_en) textFields.description = product.description_en;
+    if (Object.keys(textFields).length > 0) {
+      baseData.text_fields = textFields;
+    }
   }
 
   // Prices need to be in format: { "price_group_id": price_value }
   // Using a default price group - this may need configuration
-  if (product.price !== null) {
+  if (!imagesOnly && product.price !== null) {
     baseData.prices = { "0": product.price };
   }
 
   // Stock needs to be in format: { "warehouse_id": quantity }
-  if (product.stock !== null) {
+  if (!imagesOnly && product.stock !== null) {
     if (warehouseId) {
       baseData.stock = { [warehouseId]: product.stock };
     } else if (options?.includeStockWithoutWarehouse) {
@@ -499,14 +975,18 @@ export async function buildBaseProductData(
 
   // Handle images - export as base64 data URIs if requested
   if (options?.exportImagesAsBase64) {
-    const base64Images = await getProductImagesAsBase64(product);
+    const base64Images = await getProductImagesAsBase64(product, {
+      diagnostics: options.imageDiagnostics,
+      outputMode: options.imageBase64Mode,
+      transform: options.imageTransform ?? null,
+    });
     if (Object.keys(base64Images).length > 0) {
       baseData.images = base64Images;
     }
   }
 
   // Apply template mappings (these override defaults)
-  if (mappings.length > 0) {
+  if (!imagesOnly && mappings.length > 0) {
     // Templates are saved as Base -> product mappings, so invert for export.
     const exportMappings = mappings.map((mapping) => ({
       sourceKey: mapping.targetField,
@@ -515,7 +995,8 @@ export async function buildBaseProductData(
     const templateData = applyExportTemplateMappings(
       product,
       exportMappings,
-      options?.imageBaseUrl ?? null
+      options?.imageBaseUrl ?? null,
+      options?.imageDiagnostics
     );
     mergeTextFields(baseData, templateData);
     mergeNumericFields(templateData, "prices");
@@ -592,6 +1073,10 @@ export async function exportProductToBase(
     includeStockWithoutWarehouse?: boolean;
     stockWarehouseAliases?: Record<string, string>;
     exportImagesAsBase64?: boolean;
+    imageDiagnostics?: ImageExportDiagnostics;
+    imageBase64Mode?: ImageBase64Mode;
+    imageTransform?: ImageTransformOptions | null;
+    imagesOnly?: boolean;
   }
 ): Promise<{ success: boolean; productId?: string; error?: string }> {
   try {
@@ -617,6 +1102,57 @@ export async function exportProductToBase(
     };
   } catch (error) {
     console.error("[base-exporter] Export failed", {
+      productId: product.id,
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+export async function exportProductImagesToBase(
+  token: string,
+  inventoryId: string,
+  product: ProductWithImages,
+  externalProductId: string,
+  options?: {
+    imageBaseUrl?: string | null;
+    exportImagesAsBase64?: boolean;
+    imageDiagnostics?: ImageExportDiagnostics;
+    imageBase64Mode?: ImageBase64Mode;
+    imageTransform?: ImageTransformOptions | null;
+  }
+): Promise<{ success: boolean; productId?: string; error?: string }> {
+  try {
+    const productData = await buildBaseProductData(product, [], null, {
+      imageBaseUrl: options?.imageBaseUrl ?? null,
+      exportImagesAsBase64: options?.exportImagesAsBase64,
+      imageDiagnostics: options?.imageDiagnostics,
+      imageBase64Mode: options?.imageBase64Mode,
+      imageTransform: options?.imageTransform ?? null,
+      imagesOnly: true,
+    });
+
+    const apiParams: Record<string, unknown> = {
+      inventory_id: inventoryId,
+      product_id: externalProductId,
+      ...productData,
+    };
+
+    const response = await callBaseApi(token, "updateInventoryProduct", apiParams);
+    const productId = response.product_id
+      ? String(response.product_id)
+      : externalProductId;
+
+    return {
+      success: true,
+      productId,
+    };
+  } catch (error) {
+    console.error("[base-exporter] Image-only export failed", {
       productId: product.id,
       error: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,

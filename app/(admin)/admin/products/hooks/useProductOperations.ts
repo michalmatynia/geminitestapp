@@ -59,17 +59,14 @@ export function useProductOperations(setRefreshTrigger: React.Dispatch<React.Set
       setActionError("SKU must use uppercase letters and numbers only.");
       return;
     }
-    console.log("[DEBUG] Validating SKU:", sku);
     try {
       const res = await fetch(`/api/products?sku=${encodeURIComponent(sku)}`);
-      console.log("[DEBUG] SKU validation response status:", res.status);
       if (!res.ok) {
         const payload = (await res.json()) as { error?: string };
         setActionError(payload?.error || "Failed to validate SKU");
         return;
       }
       const products = (await res.json()) as ProductWithImages[];
-      console.log("[DEBUG] Found products with SKU:", products.length);
       if (products.some((p) => p.sku === sku)) {
         setActionError("SKU already exists.");
         return;
@@ -79,7 +76,6 @@ export function useProductOperations(setRefreshTrigger: React.Dispatch<React.Set
       setActionError("Failed to validate SKU. Please try again.");
       return;
     }
-    console.log("[DEBUG] Opening create modal with SKU:", sku);
     setInitialSku(sku);
     setIsCreateOpen(true);
   };

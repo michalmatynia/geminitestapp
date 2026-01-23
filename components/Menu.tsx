@@ -10,6 +10,7 @@ import {
   MessageCircleIcon,
   StickyNoteIcon,
   ShieldIcon,
+  ActivityIcon,
 } from "lucide-react";
 import CollapsibleMenu from "@/components/CollapsibleMenu";
 import { useAdminLayout } from "@/lib/context/AdminLayoutContext";
@@ -168,6 +169,13 @@ export default function Menu() {
       >
         <DatabaseIcon className="mr-2" />
         {!isMenuCollapsed && "Databases"}
+      </Link>
+      <Link
+        href="/admin/system/logs"
+        className="flex items-center hover:bg-gray-700 p-2 rounded"
+      >
+        <ActivityIcon className="mr-2" />
+        {!isMenuCollapsed && "System Logs"}
       </Link>
       <CollapsibleMenu title="CMS" icon={<BookOpenIcon />}>
         <Link

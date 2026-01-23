@@ -46,7 +46,7 @@ describe("Products API", () => {
       const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].name_en).toEqual("Laptop");
+      expect(products[0]!.name_en).toEqual("Laptop");
     });
 
     it("should filter products by name_pl using the search parameter", async () => {
@@ -58,7 +58,7 @@ describe("Products API", () => {
       const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].name_pl).toEqual("Mysz (PL)");
+      expect(products[0]!.name_pl).toEqual("Mysz (PL)");
     });
 
     it("should filter products by name_de using the search parameter", async () => {
@@ -70,7 +70,7 @@ describe("Products API", () => {
       const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].name_de).toEqual("Maus (DE)");
+      expect(products[0]!.name_de).toEqual("Maus (DE)");
     });
 
     it("should filter products by description_en using the search parameter", async () => {
@@ -82,7 +82,7 @@ describe("Products API", () => {
       const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].description_en).toEqual("Fast laptop for gaming");
+      expect(products[0]!.description_en).toEqual("Fast laptop for gaming");
     });
 
     it("should filter products by description_pl using the search parameter", async () => {
@@ -94,7 +94,7 @@ describe("Products API", () => {
       const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].description_pl).toEqual("Szybki laptop do gier");
+      expect(products[0]!.description_pl).toEqual("Szybki laptop do gier");
     });
 
     it("should filter products by description_de using the search parameter", async () => {
@@ -106,7 +106,7 @@ describe("Products API", () => {
       const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].description_de).toEqual("Schneller Laptop für Spiele");
+      expect(products[0]!.description_de).toEqual("Schneller Laptop für Spiele");
     });
 
     it("should filter products by minPrice", async () => {
@@ -179,7 +179,7 @@ describe("Products API", () => {
       const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].sku).toEqual("ABC123");
+      expect(products[0]!.sku).toEqual("ABC123");
     });
 
     it("should return the correct response structure", async () => {
@@ -196,10 +196,10 @@ describe("Products API", () => {
         length: 20,
       });
       const res = await GET_LIST(new Request("http://localhost/api/products"));
-      const products = (await res.json()) as Product[];
+      const products = (await res.json()) as (Product & { images: any[] })[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      const product = products[0];
+      const product = products[0]!;
       expect(product).toHaveProperty("id");
       expect(product).toHaveProperty("name_en");
       expect(product.name_en).toEqual("Product 1 (EN)");

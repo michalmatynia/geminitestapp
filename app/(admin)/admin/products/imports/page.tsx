@@ -26,7 +26,12 @@ import type {
   TemplateMapping,
   WarehouseDebugRaw,
   WarehouseOption,
+  ImageRetryPreset,
 } from "@/types/product-imports";
+import {
+  getDefaultImageRetryPresets,
+  normalizeImageRetryPresets,
+} from "@/lib/constants/image-retry-presets";
 
 export default function ProductImportsPage() {
   const { toast } = useToast();
@@ -109,6 +114,11 @@ export default function ProductImportsPage() {
   const [exportStockFallbackEnabled, setExportStockFallbackEnabled] =
     useState(false);
   const [exportStockFallbackLoaded, setExportStockFallbackLoaded] =
+    useState(false);
+  const [imageRetryPresets, setImageRetryPresets] = useState<ImageRetryPreset[]>(
+    getDefaultImageRetryPresets()
+  );
+  const [imageRetryPresetsLoaded, setImageRetryPresetsLoaded] =
     useState(false);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [deletingTemplate, setDeletingTemplate] = useState(false);
@@ -217,7 +227,7 @@ export default function ProductImportsPage() {
 
   const applyTemplate = useCallback((template: Template, scope: "import" | "export") => {
     const nextMappings =
-      template.mappings.length > 0
+      template.mappings && template.mappings.length > 0
         ? template.mappings
         : [{ sourceKey: "", targetField: "" }];
     if (scope === "import") {
@@ -408,6 +418,26 @@ export default function ProductImportsPage() {
       }
     };
     void loadExportStockFallback();
+  }, []);
+
+  useEffect(() => {
+    const loadImageRetryPresets = async () => {
+      try {
+        const res = await fetch(
+          "/api/products/exports/base/image-retry-presets"
+        );
+        const payload = (await res.json()) as { presets?: ImageRetryPreset[] };
+        if (!res.ok) return;
+        if (payload.presets) {
+          setImageRetryPresets(normalizeImageRetryPresets(payload.presets));
+        }
+      } catch (error) {
+        console.error("Failed to load image retry presets", error);
+      } finally {
+        setImageRetryPresetsLoaded(true);
+      }
+    };
+    void loadImageRetryPresets();
   }, []);
 
   useEffect(() => {
@@ -1259,6 +1289,13 @@ export default function ProductImportsPage() {
             enabled: exportStockFallbackEnabled,
           }),
         }),
+        fetch("/api/products/exports/base/image-retry-presets", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            presets: imageRetryPresets,
+          }),
+        }),
       ];
       if (exportInventoryId) {
         requests.push(
@@ -1542,6 +1579,9 @@ export default function ProductImportsPage() {
             exportStockFallbackLoaded={exportStockFallbackLoaded}
             allWarehouses={allWarehouses}
             warehouses={warehouses}
+            imageRetryPresets={imageRetryPresets}
+            setImageRetryPresets={setImageRetryPresets}
+            imageRetryPresetsLoaded={imageRetryPresetsLoaded}
             handleLoadInventories={handleLoadInventories}
             loadingInventories={loadingInventories}
             handleLoadWarehouses={handleLoadWarehouses}

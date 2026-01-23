@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -11,8 +11,23 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import ModalShell from "@/components/ui/modal-shell";
-import { IntegrationWithConnections, ProductWithImages } from "@/types";
-import type { Template, BaseInventory } from "@/types/product-imports";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ProductWithImages } from "@/types";
+import type {
+  BaseInventory,
+  ImageRetryPreset,
+  ImageTransformOptions,
+} from "@/types/product-imports";
+import { ExportLogViewer } from "./ExportLogViewer";
+import type { CapturedLog } from "@/lib/services/exports/log-capture";
+import { useImageRetryPresets } from "./useImageRetryPresets";
+import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
+import { useBaseComSettings } from "./hooks/useBaseComSettings";
 
 type ListProductModalProps = {
   product: ProductWithImages;
@@ -22,6 +37,19 @@ type ListProductModalProps = {
   initialConnectionId?: string | null;
 };
 
+const normalizeSearchText = (value: string) =>
+  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+const isImageExportError = (message: string | null) => {
+  if (!message) return false;
+  const normalized = normalizeSearchText(message.toLowerCase());
+  return (
+    normalized.includes("zdjec") ||
+    normalized.includes("image") ||
+    normalized.includes("photo")
+  );
+};
+
 export default function ListProductModal({
   product,
   onClose,
@@ -29,274 +57,84 @@ export default function ListProductModal({
   initialIntegrationId,
   initialConnectionId,
 }: ListProductModalProps) {
-  const [integrations, setIntegrations] = useState<IntegrationWithConnections[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>("");
-  const [selectedConnectionId, setSelectedConnectionId] = useState<string>("");
-  const [submitting, setSubmitting] = useState(false);
-  const [appliedInitialSelection, setAppliedInitialSelection] = useState(false);
-  const previousIntegrationId = useRef<string>("");
+  // Integration & connection selection
+  const {
+    integrations,
+    loading,
+    selectedIntegrationId,
+    selectedConnectionId,
+    selectedIntegration,
+    isBaseComIntegration,
+    setSelectedIntegrationId,
+    setSelectedConnectionId,
+  } = useIntegrationSelection(initialIntegrationId, initialConnectionId);
 
-  // Base.com specific fields
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("none");
-  const [preferredTemplateId, setPreferredTemplateId] = useState<string | null>(null);
-  const [inventories, setInventories] = useState<BaseInventory[]>([]);
-  const [selectedInventoryId, setSelectedInventoryId] = useState<string>("");
-  const [preferredInventoryId, setPreferredInventoryId] = useState<string | null>(null);
-  const [preferredConnectionId, setPreferredConnectionId] = useState<string | null>(null);
-  const [loadingInventories, setLoadingInventories] = useState(false);
-  const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
-  const previousConnectionId = useRef<string>("");
+  // Base.com specific settings
+  const {
+    templates,
+    selectedTemplateId,
+    setSelectedTemplateId,
+    inventories,
+    selectedInventoryId,
+    setSelectedInventoryId,
+    loadingInventories,
+    allowDuplicateSku,
+    setAllowDuplicateSku,
+  } = useBaseComSettings(isBaseComIntegration, selectedConnectionId);
+
+  // Export logging
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
+  const [logsOpen, setLogsOpen] = useState(false);
+  const imageRetryPresets = useImageRetryPresets();
 
   const productName =
     product.name_en || product.name_pl || product.name_de || "Unnamed Product";
 
-  const selectedIntegration = integrations.find(
-    (i) => i.id === selectedIntegrationId
-  );
   const selectedConnection = selectedIntegration?.connections.find(
     (connection) => connection.id === selectedConnectionId
   );
   const hasPresetSelection = Boolean(initialIntegrationId && initialConnectionId);
 
-  const isBaseComIntegration = ["baselinker", "base-com"].includes(
-    selectedIntegration?.slug ?? ""
-  );
-
-  useEffect(() => {
-    const fetchIntegrations = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await fetch("/api/integrations/with-connections");
-        if (!res.ok) {
-          throw new Error("Failed to fetch integrations");
-        }
-        const data = (await res.json()) as IntegrationWithConnections[];
-        setIntegrations(data);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to load integrations"
-        );
-      } finally {
-        setLoading(false);
-      }
+  const exportToBase = async (options?: {
+    imageBase64Mode?: "base-only" | "full-data-uri";
+    imageTransform?: ImageTransformOptions | null;
+  }) => {
+    const payload: Record<string, unknown> = {
+      connectionId: selectedConnectionId,
+      inventoryId: selectedInventoryId,
+      templateId: selectedTemplateId !== "none" ? selectedTemplateId : undefined,
+      allowDuplicateSku,
     };
 
-    void fetchIntegrations();
-  }, []);
-
-  useEffect(() => {
-    if (initialIntegrationId && !appliedInitialSelection) {
-      setSelectedIntegrationId(initialIntegrationId);
+    if (options?.imageBase64Mode) {
+      payload.imageBase64Mode = options.imageBase64Mode;
+      payload.exportImagesAsBase64 = true;
     }
-  }, [initialIntegrationId, appliedInitialSelection]);
+    if (options?.imageTransform) {
+      payload.imageTransform = options.imageTransform;
+      payload.exportImagesAsBase64 = true;
+    }
 
-  // Load templates for Base.com
-  useEffect(() => {
-    const fetchTemplates = async () => {
-      try {
-        const res = await fetch("/api/products/export-templates");
-        if (!res.ok) return;
-        const data = (await res.json()) as Template[];
-        setTemplates(data);
-      } catch {
-        // Silently fail - templates are optional
+    const res = await fetch(`/api/products/${product.id}/export-to-base`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (data.logs) {
+      setExportLogs(data.logs);
+    }
+
+    if (!res.ok) {
+      if (data.skuExists) {
+        throw new Error(data.error || "SKU already exists in Base.com");
       }
-    };
-
-    void fetchTemplates();
-  }, []);
-
-  useEffect(() => {
-    const loadPreferredTemplate = async () => {
-      try {
-        const res = await fetch("/api/products/exports/base/active-template");
-        const payload = (await res.json()) as { templateId?: string | null };
-        if (!res.ok) return;
-        setPreferredTemplateId(payload.templateId ?? null);
-      } catch {
-        // Ignore template preference errors
-      }
-    };
-
-    void loadPreferredTemplate();
-  }, []);
-
-  useEffect(() => {
-    const loadPreferredInventory = async () => {
-      try {
-        const res = await fetch("/api/products/exports/base/default-inventory");
-        if (!res.ok) return;
-        const payload = (await res.json()) as { inventoryId?: string | null };
-        setPreferredInventoryId(payload.inventoryId ?? null);
-      } catch {
-        // Ignore inventory preference errors
-      }
-    };
-
-    void loadPreferredInventory();
-  }, []);
-
-  useEffect(() => {
-    const loadPreferredConnection = async () => {
-      try {
-        const res = await fetch("/api/products/exports/base/default-connection");
-        if (!res.ok) return;
-        const payload = (await res.json()) as { connectionId?: string | null };
-        setPreferredConnectionId(payload.connectionId ?? null);
-      } catch {
-        // Ignore connection preference errors
-      }
-    };
-
-    void loadPreferredConnection();
-  }, []);
-
-  // Reset connection when user changes the integration selection.
-  useEffect(() => {
-    if (
-      previousIntegrationId.current &&
-      selectedIntegrationId &&
-      selectedIntegrationId !== previousIntegrationId.current
-    ) {
-      setSelectedConnectionId("");
-      setInventories([]);
-      setSelectedInventoryId("");
+      throw new Error(data.error || "Failed to export product to Base.com");
     }
-    previousIntegrationId.current = selectedIntegrationId;
-  }, [selectedIntegrationId]);
-
-  useEffect(() => {
-    if (
-      previousConnectionId.current &&
-      selectedConnectionId &&
-      selectedConnectionId !== previousConnectionId.current
-    ) {
-      setSelectedInventoryId("");
-    }
-    previousConnectionId.current = selectedConnectionId;
-  }, [selectedConnectionId]);
-
-  useEffect(() => {
-    if (
-      initialConnectionId &&
-      initialIntegrationId &&
-      selectedIntegrationId === initialIntegrationId &&
-      !appliedInitialSelection
-    ) {
-      setSelectedConnectionId(initialConnectionId);
-      setAppliedInitialSelection(true);
-    }
-  }, [
-    initialConnectionId,
-    initialIntegrationId,
-    selectedIntegrationId,
-    appliedInitialSelection,
-  ]);
-
-  // Load Base.com inventories when connection is selected
-  useEffect(() => {
-    const loadInventories = async () => {
-      if (!isBaseComIntegration || !selectedConnectionId) {
-        setInventories([]);
-        return;
-      }
-
-      try {
-        setLoadingInventories(true);
-        const res = await fetch("/api/products/imports/base", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "inventories",
-            connectionId: selectedConnectionId,
-          }),
-        });
-
-        if (!res.ok) throw new Error("Failed to load inventories");
-
-        const data = (await res.json()) as { inventories: BaseInventory[] };
-        setInventories(data.inventories || []);
-      } catch (err) {
-        console.error("Failed to load inventories:", err);
-        setError("Failed to load Base.com inventories");
-      } finally {
-        setLoadingInventories(false);
-      }
-    };
-
-    void loadInventories();
-  }, [isBaseComIntegration, selectedConnectionId]);
-
-  useEffect(() => {
-    if (!isBaseComIntegration) return;
-    if (!preferredTemplateId) return;
-    if (selectedTemplateId !== "none") return;
-    setSelectedTemplateId(preferredTemplateId);
-  }, [isBaseComIntegration, preferredTemplateId, selectedTemplateId]);
-
-  useEffect(() => {
-    if (!isBaseComIntegration) return;
-    if (selectedInventoryId) return;
-    if (!inventories.length) return;
-    if (loadingInventories) return;
-    if (preferredInventoryId && inventories.some((inv) => inv.id === preferredInventoryId)) {
-      setSelectedInventoryId(preferredInventoryId);
-      return;
-    }
-    setSelectedInventoryId(inventories[0]?.id ?? "");
-  }, [
-    isBaseComIntegration,
-    inventories,
-    preferredInventoryId,
-    selectedInventoryId,
-    loadingInventories,
-  ]);
-
-  // Auto-select Base.com integration if there's a preferred connection
-  useEffect(() => {
-    if (selectedIntegrationId) return; // Don't override if already selected
-    if (!preferredConnectionId) return;
-    if (integrations.length === 0) return;
-    if (hasPresetSelection) return; // Don't override preset selections
-
-    // Find the integration that contains the preferred connection
-    const integrationWithPreferredConnection = integrations.find((integration) =>
-      integration.connections.some((conn) => conn.id === preferredConnectionId)
-    );
-
-    if (integrationWithPreferredConnection) {
-      setSelectedIntegrationId(integrationWithPreferredConnection.id);
-    }
-  }, [
-    preferredConnectionId,
-    selectedIntegrationId,
-    integrations,
-    hasPresetSelection,
-  ]);
-
-  // Auto-select default connection for Base.com integration
-  useEffect(() => {
-    if (!isBaseComIntegration) return;
-    if (selectedConnectionId) return; // Don't override if already selected
-    if (!preferredConnectionId) return;
-    if (!selectedIntegration?.connections) return;
-    // Check if the preferred connection exists in the current integration
-    const connectionExists = selectedIntegration.connections.some(
-      (conn) => conn.id === preferredConnectionId
-    );
-    if (connectionExists) {
-      setSelectedConnectionId(preferredConnectionId);
-    }
-  }, [
-    isBaseComIntegration,
-    preferredConnectionId,
-    selectedConnectionId,
-    selectedIntegration,
-  ]);
+  };
 
   const handleSubmit = async () => {
     if (!selectedIntegrationId || !selectedConnectionId) {
@@ -312,28 +150,12 @@ export default function ListProductModal({
     try {
       setSubmitting(true);
       setError(null);
+      setExportLogs([]);
+      setLogsOpen(true);
 
       // For Base.com, use export endpoint
       if (isBaseComIntegration) {
-        const res = await fetch(`/api/products/${product.id}/export-to-base`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            connectionId: selectedConnectionId,
-            inventoryId: selectedInventoryId,
-            templateId: selectedTemplateId !== "none" ? selectedTemplateId : undefined,
-            allowDuplicateSku,
-          }),
-        });
-
-        if (!res.ok) {
-          const data = (await res.json()) as { error?: string; skuExists?: boolean };
-          if (data.skuExists) {
-            throw new Error(data.error || "SKU already exists in Base.com");
-          }
-          throw new Error(data.error || "Failed to export product to Base.com");
-        }
-
+        await exportToBase();
         onSuccess();
       } else {
         // For other integrations, use regular listing endpoint
@@ -355,6 +177,27 @@ export default function ListProductModal({
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to list product");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleImageRetry = async (preset: ImageRetryPreset) => {
+    if (!isBaseComIntegration || !selectedConnectionId || !selectedInventoryId) {
+      return;
+    }
+    try {
+      setSubmitting(true);
+      setError(null);
+      setExportLogs([]);
+      setLogsOpen(true);
+      await exportToBase({
+        imageBase64Mode: preset.imageBase64Mode,
+        imageTransform: preset.transform,
+      });
+      onSuccess();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to export product");
     } finally {
       setSubmitting(false);
     }
@@ -402,7 +245,44 @@ export default function ListProductModal({
       <div className="space-y-6">
         {error && (
           <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-            {error}
+            <div className="flex flex-col gap-3">
+              <span>{error}</span>
+              {isBaseComIntegration && isImageExportError(error) ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="bg-red-500/20 text-red-100 hover:bg-red-500/30"
+                        disabled={submitting}
+                      >
+                        Retry image export
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="bg-gray-950 border-gray-800">
+                      {imageRetryPresets.map((preset) => (
+                        <DropdownMenuItem
+                          key={preset.id}
+                          onSelect={() => void handleImageRetry(preset)}
+                          className="text-gray-200 focus:bg-gray-800/70"
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-sm">{preset.label}</span>
+                            <span className="text-xs text-gray-400">
+                              {preset.description}
+                            </span>
+                          </div>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <span className="text-xs text-red-200/80">
+                    Applies JPEG resize/compression and retries automatically.
+                  </span>
+                </div>
+              ) : null}
+            </div>
           </div>
         )}
 
@@ -560,6 +440,15 @@ export default function ListProductModal({
               </>
             )}
           </>
+        )}
+        {exportLogs.length > 0 && (
+          <div className="mt-4 border-t border-gray-700 pt-4">
+            <ExportLogViewer
+              logs={exportLogs}
+              isOpen={logsOpen}
+              onToggle={setLogsOpen}
+            />
+          </div>
         )}
       </div>
     </ModalShell>

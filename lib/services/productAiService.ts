@@ -6,6 +6,10 @@ export type ProductAiJobType = "description_generation" | "translation";
 
 const JOBS_COLLECTION = "product_ai_jobs";
 
+// Why: Supporting both Prisma and MongoDB requires keeping both stores in sync.
+// We write to both on every job change. MongoDB failures are logged but silent
+// to prevent blocking Prisma writes (MongoDB may not be available in all environments).
+// This ensures jobs can be queried from either database without rebuilding data.
 async function saveToMongo(job: any) {
   if (!process.env.MONGODB_URI) return;
   try {

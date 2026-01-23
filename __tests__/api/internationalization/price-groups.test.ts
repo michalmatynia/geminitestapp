@@ -48,7 +48,7 @@ describe("Price Groups API", () => {
       const groups = (await res.json()) as PriceGroupResponse[];
       expect(res.status).toEqual(200);
       expect(groups).toHaveLength(1);
-      expect(groups[0].groupId).toBe("PG1");
+      expect(groups[0]!.groupId).toBe("PG1");
     });
   });
 

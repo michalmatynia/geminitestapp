@@ -1,27 +1,31 @@
 
-* I still need to choose account when listing with Baseom
+px prisma migrate dev
+npx prisma generate
+/admin/system/logs
 
-* WHen I click on + to list my product and then select Baselinker as my target Export, in teh same modal a dropdown appears, where I still need to choose which account I want to export to, this default export account is already defined in my export settings and I shouldn't need to choose it again, it should be pre-selected
 
-I'm trying to export my product SKU "KEYCHA914" to Base.com, but I am unable to. I Receive an error "Nie można zapisać zdjęć dołączonych do produktu
-". Whereas I can Export my Product SKU "VFSDV" without any problems and with images. The difference is that KEYCHA914 has 3 images and VFSDV only one, which can affect the import. Also there is difference in the format that the images are in.
+apply consistent error mapping all across the application
+
+I am still not seeing the detailed Results in the AI Jobs Detail page when the job is run on a product Generate Description/
+When I run the Generate description, I don't get to see the results in the AI Jobs Detail page, 
+
+AI Export Job, I want to see a detailed log for each step of the export job, also want to see the error responses from the API .
+
+
+WHen I click on + to list my product and then select Baselinker as my target Export, in teh same modal a dropdown appears, where I still need to choose which account I want to export to, this default export account is already defined in my export settings and I shouldn't need to choose it again, it should be pre-selected
 
 
 In my Drafts, Price grup shouldn't be there at all, cause it's dependent on what is the Catalog Price Group
 
 In Products List, My drafts are not active in Product List, the Icons Beside + Create Product don't launch Create Product modal in Draft mode with prefilled fields.
 
-I still get console logs when I change Filters
-
-* When I Create Product after adding images, the screen filckers when I try to resort images
-
 In Product Drafts, Price group default of the catalog
 
 In Products - Drafts Section, When I Edit the Draft, , add one additional field, a choice of Black and White Circular Icons, When the Draft is set to Active in the Draft List ( with a Radio button), The Icon will appear in the product list Right under the Products text, to the Right of Big Plus that Creates Products from scratch. Clicking the Draft Icons will launch a modal panel with prefilled values, like it is set up in the Draft Template
 
-Draft list reorders like mapping parameters
+Note APP, simplified NoTE editing, which allows me to edit, delete text right in the note preview. Unless I want a deeper edit. Note Should Auto Save
 
-* In progress with Drafts - > I need a new page, Called Panel, where I can set up different things in regards to Product modal Page. 
+Draft list reorders like mapping parameters
 
 In Product - Edit / Create pages Tag Field should be searchable field
 
@@ -31,30 +35,24 @@ Base Category Mapping
 
 In Product List, Add a small indicator (maybe an icon underneath SKU) whether the product was added by the user or is the result of an import. 
 
-Aut-Save Product Modal draft on product create, not to loose info.  
-
-One Click creation Templates for Product (with  Stock Inserted)
-Prefilled Product Templates -> Add Jewellery add Figure etc.
-
 Infer Categories and size , material, Lore Tag Automatically
 
 
 Link Note to Product? Why not, a special kind of Theme that has this linking field
 
+---
 
-Infer Category
-
-Note App, Note cards show two images even if there is only one image file attached
+* Note App, Note cards show two images even if there is only one image file attached
 
 Default Catalog choice, In Product Catalog Choice should retained, In settings my Default Product View options should be available with Reset to Default button
 
 * Note Links, Notes Rellated to one another are not longer visible in Note Cards and Note Preview
 
-Notebook Rename doesn't work
+* Notebook Rename doesn't work in Notes APP
 
 Markdown TO Wysywig make it a dropdown and place it by Delete
 
-Opening WYSYWIG Note fails in Edit Mode
+* Opening WYSYWIG Note fails in Edit Mode
 
 
 In Product List - Operations - I need an Option to Mass Export Products to Base.com
@@ -63,8 +61,6 @@ In Product List - Operations - I need an Option to Mass Export Products to Base.
 I am unable to Open my Note, if I migrate it to Wysiwyg
 
 In my Note theme I should be able to set I only want the Markdown note or Wysiwyg or code snippet notes. the default being Markdown. I should also be able to apply Theme to All Notes
-
-Note App, switching to Wysywig not workin/ - wait there is segmentation in placenow
 
 * Within omyne note database structure, I want the mark down note to be like a separate note from Wysiwyg. Although you can add a button in Note to Migrate from Markdown and vice versa.
 
@@ -91,6 +87,7 @@ Note App, switching to Wysywig not workin/ - wait there is segmentation in place
 add proper debugging on visual studio code
 
 * I need an option to import one specific product only (found by SKU or Base product id)
+LATER - Aut-Save Product Modal draft on product create, not to loose info.  
 
 LATER - Category Mapping to Base.com
 
@@ -105,22 +102,9 @@ LATER - In Integrations Baslinker Tab, create a separate Sync Tab, Where I can s
 
 # IN PROGRESS
 
-* Product list should remember my choices in terms of navigation, catalog choice and record them in the database, when I leave the page, the settings stay the same. Also incorporate the current state of settings in Products - Preferences Page (which has a mirror layout of the settings page, but relate more to the technical aspects of the Product section as a whole)
-
-
-* -Product default price group is the default Catalog price group, I don't need to make that selection for every single product, it's automatic.
--default price group still asks me to select from dropdown
-* When a product is a added to a Catalog, its default Price Group is the one set in the Catalog. I should not need to make this additional when I create the product. Other non default pricegroups should also be visible in product Edit / Create panel. If the price group is dependent on a default price group, both the calculated price and the price group should be visible in product Edit / Create panel.*
-
-* Check that ->In my Edit / Create Product Page, make the Catalogs Field a dropdown, not a checkbox, and move it to Other Tab
-
-
-
 
 * When my Dropdown in Product List is set to a given catalog, All PRoduct creations are to be assigned to this catalog.
 
-I am still not seeing the detailed Results in the AI Jobs Detail page when the job is run on a product Generate Description/
-When I run the Generate description, I don't get to see the results in the AI Jobs Detail page.
 
 
 * I load the import list in the Limit of 10, yet when I see the Import list preview is says Total: 1000 · Existing: 0 · Showing: 1000
@@ -142,12 +126,6 @@ In note app, If I drag the folder to the edge, it should be moved to root tree
 
 In Product List, hovering over an image should give me a slightly bigger image preview.
 
-
-Move the pagination in Product List under Min Price Max Price Fields 
-
-The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
-
-I also have [auth][warn][debug-enabled] Read more: https://warnings.authjs.dev
 
  I want all of my product data to by hybrid. Database
 

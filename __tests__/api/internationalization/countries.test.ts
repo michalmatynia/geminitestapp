@@ -114,7 +114,7 @@ describe("Countries API", () => {
 
       expect(res.status).toEqual(200);
       expect(country.currencies).toHaveLength(1);
-      expect(country.currencies[0].currencyId).toBe(currency.id);
+      expect(country.currencies[0]!.currencyId).toBe(currency.id);
     });
 
     it("should reject invalid payload", async () => {
@@ -156,7 +156,7 @@ describe("Countries API", () => {
 
       expect(res.status).toEqual(200);
       expect(updated.currencies).toHaveLength(1);
-      expect(updated.currencies[0].currencyId).toBe(currency.id);
+      expect(updated.currencies[0]!.currencyId).toBe(currency.id);
     });
   });
 });

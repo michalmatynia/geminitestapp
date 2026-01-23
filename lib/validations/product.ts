@@ -1,5 +1,14 @@
 import { z } from 'zod';
 
+// Helper: preprocess empty strings to undefined before coercing to number
+const emptyStringToUndefined = z.preprocess(
+  (value) => {
+    if (value === "" || value === null || value === undefined) return undefined;
+    return value;
+  },
+  z.coerce.number().int()
+);
+
 const optionalSku = z.preprocess(
   (value) => {
     if (value === null || value === undefined) return undefined;
@@ -37,18 +46,18 @@ const productBaseSchema = z.object({
   name_en: z.string().nullish(),
   name_pl: z.string().nullish(),
   name_de: z.string().nullish(),
-  price: z.coerce.number().int().nullish(),
+  price: emptyStringToUndefined.nullish(),
   description_en: z.string().nullish(),
   description_pl: z.string().nullish(),
   description_de: z.string().nullish(),
   supplierName: z.string().nullish(),
   supplierLink: z.string().nullish(),
   priceComment: z.string().nullish(),
-  stock: z.coerce.number().int().nullish(),
-  sizeLength: z.coerce.number().int().nullish(),
-  sizeWidth: z.coerce.number().int().nullish(),
-  weight: z.coerce.number().int().nullish(),
-  length: z.coerce.number().int().nullish(),
+  stock: emptyStringToUndefined.nullish(),
+  sizeLength: emptyStringToUndefined.nullish(),
+  sizeWidth: emptyStringToUndefined.nullish(),
+  weight: emptyStringToUndefined.nullish(),
+  length: emptyStringToUndefined.nullish(),
   imageLinks: imageLinksSchema.optional(),
 });
 

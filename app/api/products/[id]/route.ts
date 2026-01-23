@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { productService } from "@/lib/services/productService";
 import { z } from "zod";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, notFoundError } from "@/lib/errors/app-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
 
 /**
  * GET /api/products/[id]
@@ -14,35 +16,21 @@ export async function GET(
   try {
     const { id } = await params;
     if (!id) {
-      const errorId = randomUUID();
-      console.error("[products][GET] Missing product id", { errorId });
-      return NextResponse.json(
-        { error: "Product id is required", errorId },
-        { status: 400 }
-      );
+      throw badRequestError("Product id is required");
     }
 
     const product = await productService.getProductById(id);
     if (!product) {
-      const errorId = randomUUID();
-      console.warn("[products][GET] Product not found", { errorId, productId: id });
-      return NextResponse.json(
-        { error: "Product not found", errorId },
-        { status: 404 }
-      );
+      throw notFoundError("Product not found", { productId: id });
     }
 
     return NextResponse.json(product);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[products][GET] Failed to fetch product", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "products.GET",
+      fallbackMessage: "Failed to fetch product",
     });
-    return NextResponse.json(
-      { error: "Failed to fetch product", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -59,56 +47,28 @@ export async function PUT(
     const { id } = await params;
     productId = id;
     if (!id) {
-      const errorId = randomUUID();
-      console.error("[products][PUT] Missing product id", { errorId });
-      return NextResponse.json(
-        { error: "Product id is required", errorId },
-        { status: 400 }
-      );
+      throw badRequestError("Product id is required");
     }
     let formData: FormData;
     try {
       formData = await req.formData();
     } catch (error) {
-      const errorId = randomUUID();
-      console.error("[products][PUT] Failed to parse form data", {
-        errorId,
-        error,
+      throw badRequestError("Invalid form data payload", {
         productId: id,
+        error,
       });
-      return NextResponse.json(
-        { error: "Invalid form data payload", errorId },
-        { status: 400 }
-      );
     }
     const product = await productService.updateProduct(id, formData);
     if (!product) {
-      const errorId = randomUUID();
-      console.warn("[products][PUT] Product not found", { errorId, productId: id });
-      return NextResponse.json(
-        { error: "Product not found", errorId },
-        { status: 404 }
-      );
+      throw notFoundError("Product not found", { productId: id });
     }
     return NextResponse.json(product);
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof Error) {
-      console.error("[products][PUT] Failed to update product", {
-        errorId,
-        productId,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 400 }
-      );
-    }
-    console.error("[products][PUT] Unknown error", { errorId, error });
-    return NextResponse.json(
-      { error: "An unknown error occurred", errorId },
-      { status: 400 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "products.PUT",
+      fallbackMessage: "Failed to update product",
+    });
   }
 }
 
@@ -130,16 +90,16 @@ export async function PATCH(
     const { id } = await params;
     productId = id;
     if (!id) {
-      const errorId = randomUUID();
-      console.error("[products][PATCH] Missing product id", { errorId });
-      return NextResponse.json(
-        { error: "Product id is required", errorId },
-        { status: 400 }
-      );
+      throw badRequestError("Product id is required");
     }
 
-    const body = await req.json() as unknown;
-    const data = patchProductSchema.parse(body);
+    const parsed = await parseJsonBody(req, patchProductSchema, {
+      logPrefix: "products.PATCH",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
 
     // Use productService to update specific fields
     const updateData = new FormData();
@@ -152,44 +112,16 @@ export async function PATCH(
 
     const product = await productService.updateProduct(id, updateData);
     if (!product) {
-      const errorId = randomUUID();
-      console.warn("[products][PATCH] Product not found", { errorId, productId: id });
-      return NextResponse.json(
-        { error: "Product not found", errorId },
-        { status: 404 }
-      );
+      throw notFoundError("Product not found", { productId: id });
     }
 
     return NextResponse.json(product);
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof z.ZodError) {
-      console.error("[products][PATCH] Validation error", {
-        errorId,
-        productId,
-        errors: error.issues,
-      });
-      return NextResponse.json(
-        { error: "Invalid request data", details: error.issues, errorId },
-        { status: 400 }
-      );
-    }
-    if (error instanceof Error) {
-      console.error("[products][PATCH] Failed to update product", {
-        errorId,
-        productId,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 400 }
-      );
-    }
-    console.error("[products][PATCH] Unknown error", { errorId, error });
-    return NextResponse.json(
-      { error: "An unknown error occurred", errorId },
-      { status: 400 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "products.PATCH",
+      fallbackMessage: "Failed to update product",
+    });
   }
 }
 
@@ -206,33 +138,18 @@ export async function DELETE(
     const { id } = await params;
     productId = id;
     if (!id) {
-      const errorId = randomUUID();
-      console.error("[products][DELETE] Missing product id", { errorId });
-      return NextResponse.json(
-        { error: "Product id is required", errorId },
-        { status: 400 }
-      );
+      throw badRequestError("Product id is required");
     }
     const product = await productService.deleteProduct(id);
     if (!product) {
-      const errorId = randomUUID();
-      console.warn("[products][DELETE] Product not found", { errorId, productId: id });
-      return NextResponse.json(
-        { error: "Product not found", errorId },
-        { status: 404 }
-      );
+      throw notFoundError("Product not found", { productId: id });
     }
     return new Response(null, { status: 204 });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[products][DELETE] Failed to delete product", {
-      errorId,
-      error,
-      productId,
+    return createErrorResponse(error, {
+      request: req,
+      source: "products.DELETE",
+      fallbackMessage: "Failed to delete product",
     });
-    return NextResponse.json(
-      { error: "Failed to delete product", errorId },
-      { status: 500 }
-    );
   }
 }

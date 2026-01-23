@@ -76,7 +76,7 @@ describe("Databases API", () => {
       const backups = (await res.json()) as { name: string }[];
       expect(res.status).toEqual(200);
       expect(backups.length).toEqual(1);
-      expect(backups[0].name).toEqual("stardb-backup-123.dump");
+      expect(backups[0]!.name).toEqual("stardb-backup-123.dump");
     });
   });
 

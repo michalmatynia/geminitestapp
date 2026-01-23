@@ -1,6 +1,7 @@
 import { productService } from "@/lib/services/productService";
 import Image from "next/image";
 import MissingImagePlaceholder from "@/components/ui/missing-image-placeholder";
+import { notFound } from "next/navigation";
 
 export default async function ProductPage({
   params,
@@ -11,7 +12,7 @@ export default async function ProductPage({
   const product = await productService.getProductById(id);
 
   if (!product) {
-    return <div>Product not found</div>;
+    notFound();
   }
 
   const title =

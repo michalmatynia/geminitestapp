@@ -31,8 +31,8 @@ describe("Notes Tags API", () => {
     const tags = (await res.json()) as Tag[];
 
     expect(res.status).toBe(200);
-    expect(tags[0].name).toBe("Alpha");
-    expect(tags[1].name).toBe("Beta");
+    expect(tags[0]!.name).toBe("Alpha");
+    expect(tags[1]!.name).toBe("Beta");
   });
 
   it("creates a tag", async () => {

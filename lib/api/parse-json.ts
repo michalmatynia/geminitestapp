@@ -1,6 +1,6 @@
-import { randomUUID } from "crypto";
-import { NextResponse } from "next/server";
 import { z } from "zod";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, validationError } from "@/lib/errors/app-error";
 
 export type JsonParseResult<T> =
   | { ok: true; data: T }
@@ -25,34 +25,24 @@ export async function parseJsonBody<T>(
     if (options?.allowEmpty) {
       body = {};
     } else {
-      const errorId = randomUUID();
-      console.error(`[${logPrefix}] Failed to parse JSON body`, {
-        errorId,
-        error,
-      });
       return {
         ok: false,
-        response: NextResponse.json(
-          { error: "Invalid JSON payload", errorId },
-          { status: 400 }
-        ),
+        response: createErrorResponse(badRequestError("Invalid JSON payload"), {
+          request: req,
+          source: logPrefix,
+        }),
       };
     }
   }
 
   const result = schema.safeParse(body);
   if (!result.success) {
-    const errorId = randomUUID();
-    console.warn(`[${logPrefix}] Invalid payload`, {
-      errorId,
+    const error = validationError("Invalid payload", {
       issues: result.error.flatten(),
     });
     return {
       ok: false,
-      response: NextResponse.json(
-        { error: "Invalid payload", details: result.error.flatten(), errorId },
-        { status: 400 }
-      ),
+      response: createErrorResponse(error, { request: req, source: logPrefix }),
     };
   }
 

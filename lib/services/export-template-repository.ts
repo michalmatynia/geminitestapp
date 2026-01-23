@@ -3,6 +3,11 @@ import type { Document, Filter } from "mongodb";
 import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { getProductDataProvider } from "@/lib/services/product-provider";
+import {
+  getDefaultImageRetryPresets,
+  normalizeImageRetryPresets,
+} from "@/lib/constants/image-retry-presets";
+import type { ImageRetryPreset } from "@/types/product-imports";
 
 type ExportTemplateProvider = "mongodb" | "prisma";
 
@@ -32,6 +37,7 @@ const ACTIVE_TEMPLATE_KEY = "base_export_active_template_id";
 const DEFAULT_INVENTORY_KEY = "base_export_default_inventory_id";
 const DEFAULT_CONNECTION_KEY = "base_export_default_connection_id";
 const STOCK_FALLBACK_KEY = "base_export_stock_fallback_enabled";
+const IMAGE_RETRY_PRESETS_KEY = "base_export_image_retry_presets";
 const BASEHOST_MAPPING_KEYS = new Set(["images_basehost_all", "image_basehost_all"]);
 
 const stripBasehostMappings = (mappings: TemplateMapping[]) =>
@@ -155,6 +161,24 @@ const readDefaultConnectionValue = async (): Promise<string | null> => {
   }
   const setting = await prisma.setting.findUnique({
     where: { key: DEFAULT_CONNECTION_KEY },
+    select: { value: true },
+  });
+  return setting?.value ?? null;
+};
+
+const readImageRetryPresetsValue = async (): Promise<string | null> => {
+  const provider = await getExportTemplateProvider();
+  if (provider === "mongodb") {
+    const mongo = await getMongoDb();
+    const doc = await mongo
+      .collection<{ _id: string; key?: string; value?: string }>("settings")
+      .findOne({
+        $or: [{ _id: IMAGE_RETRY_PRESETS_KEY }, { key: IMAGE_RETRY_PRESETS_KEY }],
+      });
+    return typeof doc?.value === "string" ? doc.value : null;
+  }
+  const setting = await prisma.setting.findUnique({
+    where: { key: IMAGE_RETRY_PRESETS_KEY },
     select: { value: true },
   });
   return setting?.value ?? null;
@@ -287,6 +311,31 @@ const writeDefaultConnectionValue = async (value: string) => {
   });
 };
 
+const writeImageRetryPresetsValue = async (value: string) => {
+  const provider = await getExportTemplateProvider();
+  if (provider === "mongodb") {
+    const mongo = await getMongoDb();
+    await mongo.collection("settings").updateOne(
+      { $or: [{ _id: IMAGE_RETRY_PRESETS_KEY }, { key: IMAGE_RETRY_PRESETS_KEY }] } as any,
+      {
+        $set: {
+          value,
+          key: IMAGE_RETRY_PRESETS_KEY,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
+      },
+      { upsert: true }
+    );
+    return;
+  }
+  await prisma.setting.upsert({
+    where: { key: IMAGE_RETRY_PRESETS_KEY },
+    update: { value },
+    create: { key: IMAGE_RETRY_PRESETS_KEY, value },
+  });
+};
+
 export const listExportTemplates = async (): Promise<Template[]> => {
   const raw = await readTemplatesValue();
   return parseTemplates(raw);
@@ -390,4 +439,21 @@ export const getExportDefaultConnectionId = async (): Promise<string | null> => 
 
 export const setExportDefaultConnectionId = async (value: string | null) => {
   await writeDefaultConnectionValue(value?.trim() ? value.trim() : "");
+};
+
+export const getExportImageRetryPresets = async (): Promise<ImageRetryPreset[]> => {
+  const raw = await readImageRetryPresetsValue();
+  if (!raw) return getDefaultImageRetryPresets();
+  try {
+    const parsed = JSON.parse(raw);
+    return normalizeImageRetryPresets(parsed);
+  } catch (error) {
+    console.error("[ExportTemplateRepository] Failed to parse image presets:", error);
+    return getDefaultImageRetryPresets();
+  }
+};
+
+export const setExportImageRetryPresets = async (presets: ImageRetryPreset[]) => {
+  const normalized = normalizeImageRetryPresets(presets);
+  await writeImageRetryPresetsValue(JSON.stringify(normalized));
 };

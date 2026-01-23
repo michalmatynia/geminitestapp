@@ -9,11 +9,39 @@ import path from "path";
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 
+// AI-related settings that should be read from MongoDB when available
+const AI_SETTINGS_KEYS = new Set([
+  "ai_vision_model",
+  "ai_vision_user_prompt",
+  "ai_vision_prompt",
+  "ai_vision_output_enabled",
+  "openai_model",
+  "openai_api_key",
+  "description_generation_user_prompt",
+  "description_generation_prompt",
+  "ai_generation_output_enabled",
+]);
+
 export async function getSettingValue(key: string): Promise<string | null> {
   let value: string | null = null;
-  if (process.env.DATABASE_URL) {
+
+  // For AI settings, prefer MongoDB if available
+  if (AI_SETTINGS_KEYS.has(key) && process.env.MONGODB_URI) {
     try {
-      // Accessing prisma.setting should be safe if DATABASE_URL is set
+      const mongo = await getMongoDb();
+      const doc = await mongo.collection("settings").findOne({ _id: key } as any) as { value: string } | null;
+      if (doc && typeof doc.value === "string") {
+        value = doc.value;
+        return value; // Return immediately if found in MongoDB
+      }
+    } catch (err) {
+      console.warn(`Mongo setting fetch failed for ${key}:`, err);
+    }
+  }
+
+  // Fall back to Prisma
+  if (!value && process.env.DATABASE_URL) {
+    try {
       const db = prisma as any;
       if (db.setting) {
         const setting = await db.setting.findUnique({
@@ -26,7 +54,9 @@ export async function getSettingValue(key: string): Promise<string | null> {
       console.warn(`Prisma setting fetch failed for ${key}:`, err);
     }
   }
-  if (!value && process.env.MONGODB_URI) {
+
+  // If still not found and not an AI setting, try MongoDB as fallback
+  if (!value && !AI_SETTINGS_KEYS.has(key) && process.env.MONGODB_URI) {
     try {
       const mongo = await getMongoDb();
       const doc = await mongo.collection("settings").findOne({ _id: key } as any) as { value: string } | null;
@@ -34,9 +64,10 @@ export async function getSettingValue(key: string): Promise<string | null> {
         value = doc.value;
       }
     } catch (err) {
-      console.warn(`Mongo setting fetch failed for ${key}:`, err);
+      console.warn(`Mongo fallback setting fetch failed for ${key}:`, err);
     }
   }
+
   return value;
 }
 
@@ -93,12 +124,12 @@ export async function generateProductDescription(params: {
   ]);
 
   const apiKey = apiKeySetting ?? process.env.OPENAI_API_KEY ?? null;
-  const visionModel = visionModelSetting?.trim() || "gpt-4o";
+  const visionModel = visionModelSetting?.trim() || "gemma3:27b";
   const visionInputPrompt = visionInputPromptSetting?.trim() || "Analyze these product images...";
   const visionOutputPrompt = visionOutputPromptSetting?.trim() || "";
   const isVisionOutputEnabled = visionOutputEnabled !== undefined ? visionOutputEnabled : (visionOutputEnabledSetting === "true");
 
-  const generationModel = generationModelSetting?.trim() || "gpt-3.5-turbo";
+  const generationModel = generationModelSetting?.trim() || "qwen3-vl:30b";
   const generationInputPrompt = generationInputPromptSetting?.trim() || "Generate description for [name_en]";
   const generationOutputPrompt = generationOutputPromptSetting?.trim() || "";
   const isGenerationOutputEnabled = generationOutputEnabled !== undefined ? generationOutputEnabled : (generationOutputEnabledSetting === "true");

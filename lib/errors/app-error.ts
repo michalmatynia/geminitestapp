@@ -19,14 +19,14 @@ export type AppErrorOptions = {
   code: AppErrorCode;
   httpStatus: number;
   cause?: unknown;
-  meta?: Record<string, unknown>;
+  meta?: Record<string, unknown> | undefined;
   expected?: boolean;
 };
 
 export class AppError extends Error {
   code: AppErrorCode;
   httpStatus: number;
-  meta?: Record<string, unknown>;
+  meta?: Record<string, unknown> | undefined;
   expected: boolean;
   override cause?: unknown;
 

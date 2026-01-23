@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { deleteNoteFile } from "@/lib/utils/fileUploader";
 import { noteService } from "@/lib/services/noteService";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, internalError, notFoundError } from "@/lib/errors/app-error";
 
 const MAX_SLOT_INDEX = 9;
 
@@ -18,10 +19,9 @@ export async function DELETE(
   try {
     const slotIndex = parseInt(slotIndexStr, 10);
     if (isNaN(slotIndex) || slotIndex < 0 || slotIndex > MAX_SLOT_INDEX) {
-      return NextResponse.json(
-        { error: `Slot index must be between 0 and ${MAX_SLOT_INDEX}` },
-        { status: 400 }
-      );
+      throw badRequestError(`Slot index must be between 0 and ${MAX_SLOT_INDEX}`, {
+        slotIndex: slotIndexStr,
+      });
     }
 
     // Get the file to find its filepath
@@ -29,32 +29,20 @@ export async function DELETE(
     const file = files.find((f) => f.slotIndex === slotIndex);
 
     if (!file) {
-      return NextResponse.json(
-        { error: "File not found in this slot" },
-        { status: 404 }
-      );
+      throw notFoundError("File not found in this slot", { noteId, slotIndex });
     }
 
     const success = await deleteNoteFile(noteId, slotIndex, file.filepath);
     if (!success) {
-      return NextResponse.json(
-        { error: "Failed to delete file" },
-        { status: 500 }
-      );
+      throw internalError("Failed to delete file", { noteId, slotIndex });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[notes][files][DELETE] Failed to delete file", {
-      errorId,
-      noteId,
-      slotIndex: slotIndexStr,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "notes.files.DELETE",
+      fallbackMessage: "Failed to delete file",
     });
-    return NextResponse.json(
-      { error: "Failed to delete file", errorId },
-      { status: 500 }
-    );
   }
 }

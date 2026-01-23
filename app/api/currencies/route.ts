@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
@@ -7,6 +6,10 @@ import { defaultCurrencies } from "@/lib/internationalizationDefaults";
 import { fallbackCurrencies } from "@/lib/internationalizationFallback";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { conflictError, internalError } from "@/lib/errors/app-error";
+import { logSystemEvent } from "@/lib/services/system-logger";
 
 export const runtime = "nodejs";
 
@@ -54,15 +57,15 @@ const seedMongoCurrencies = async (db: Awaited<ReturnType<typeof getMongoDb>>) =
  * GET /api/currencies
  * Fetches all currencies (and ensures defaults exist).
  */
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        return createErrorResponse(internalError("MongoDB is not configured."), {
+          request: req,
+          source: "currencies.GET",
+        });
       }
       const mongo = await getMongoDb();
       await seedMongoCurrencies(mongo);
@@ -87,10 +90,12 @@ export async function GET() {
 
     return NextResponse.json(currencies);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[currencies][GET] Failed to fetch currencies", {
-      errorId,
+    void logSystemEvent({
+      level: "error",
+      message: "Failed to fetch currencies",
+      source: "currencies.GET",
       error,
+      request: req,
     });
     return NextResponse.json(fallbackCurrencies);
   }
@@ -102,26 +107,25 @@ export async function GET() {
  */
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as unknown;
-    const data = currencySchema.parse(body);
+    const parsed = await parseJsonBody(req, currencySchema, {
+      logPrefix: "currencies.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
 
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw internalError("MongoDB is not configured.");
       }
       const mongo = await getMongoDb();
       const existing = await mongo
         .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
         .findOne({ code: data.code });
       if (existing) {
-        return NextResponse.json(
-          { error: "Currency code already exists." },
-          { status: 400 }
-        );
+        throw conflictError("Currency code already exists.", { code: data.code });
       }
       const now = new Date();
       const doc: CurrencyDoc = {
@@ -136,6 +140,18 @@ export async function POST(req: Request) {
       return NextResponse.json(doc);
     }
 
+    if (!process.env.DATABASE_URL) {
+      throw internalError("Postgres product store is not configured.");
+    }
+
+    const existing = await prisma.currency.findUnique({
+      where: { code: data.code },
+      select: { id: true },
+    });
+    if (existing) {
+      throw conflictError("Currency code already exists.", { code: data.code });
+    }
+
     // Ensure TS sees `code` as Prisma's enum type (matches schema)
     const currency = await prisma.currency.create({
       data: data as unknown as Prisma.CurrencyCreateInput,
@@ -143,34 +159,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json(currency);
   } catch (error: unknown) {
-    const errorId = randomUUID();
-
-    if (error instanceof z.ZodError) {
-      console.warn("[currencies][POST] Invalid payload", {
-        errorId,
-        issues: error.flatten(),
-      });
-      return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten(), errorId },
-        { status: 400 }
-      );
-    }
-
-    if (error instanceof Error) {
-      console.error("[currencies][POST] Failed to create currency", {
-        errorId,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 400 }
-      );
-    }
-
-    console.error("[currencies][POST] Unknown error", { errorId, error });
-    return NextResponse.json(
-      { error: "An unknown error occurred", errorId },
-      { status: 400 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "currencies.POST",
+      fallbackMessage: "Failed to create currency",
+    });
   }
 }

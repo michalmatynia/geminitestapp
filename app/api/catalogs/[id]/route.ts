@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import { getCatalogRepository } from "@/lib/services/catalog-repository";
 import { removeUndefined } from "@/lib/utils";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { badRequestError, notFoundError } from "@/lib/errors/app-error";
 
 const catalogUpdateSchema = z.object({
   name: z.string().trim().min(1).optional(),
@@ -27,54 +29,38 @@ export async function PUT(
     const { id } = await params;
     catalogId = id;
     if (!id) {
-      const errorId = randomUUID();
-      console.error("[catalogs][PUT] Missing catalog id", { errorId });
-      return NextResponse.json(
-        { error: "Catalog id is required", errorId },
-        { status: 400 }
-      );
+      throw badRequestError("Catalog id is required");
     }
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch (error) {
-      const errorId = randomUUID();
-      console.error("[catalogs][PUT] Failed to parse JSON body", {
-        errorId,
-        error,
-        catalogId: id,
-      });
-      return NextResponse.json(
-        { error: "Invalid JSON payload", errorId },
-        { status: 400 }
-      );
+    const parsed = await parseJsonBody(req, catalogUpdateSchema, {
+      logPrefix: "catalogs.PUT",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
     }
-    const data = catalogUpdateSchema.parse(body);
+    const data = parsed.data;
     if (!data.languageIds || data.languageIds.length === 0) {
-      return NextResponse.json(
-        { error: "Select at least one language." },
-        { status: 400 }
-      );
+      throw badRequestError("Select at least one language.", {
+        field: "languageIds",
+      });
     }
     if (!data.defaultLanguageId || !data.languageIds.includes(data.defaultLanguageId)) {
-      return NextResponse.json(
-        { error: "Default language must be one of the selected languages." },
-        { status: 400 }
+      throw badRequestError(
+        "Default language must be one of the selected languages.",
+        { field: "defaultLanguageId" }
       );
     }
     if (!data.priceGroupIds || data.priceGroupIds.length === 0) {
-      return NextResponse.json(
-        { error: "Select at least one price group." },
-        { status: 400 }
-      );
+      throw badRequestError("Select at least one price group.", {
+        field: "priceGroupIds",
+      });
     }
     if (
       !data.defaultPriceGroupId ||
       !data.priceGroupIds.includes(data.defaultPriceGroupId)
     ) {
-      return NextResponse.json(
-        { error: "Default price group must be one of the selected price groups." },
-        { status: 400 }
+      throw badRequestError(
+        "Default price group must be one of the selected price groups.",
+        { field: "defaultPriceGroupId" }
       );
     }
     const catalogRepository = await getCatalogRepository();
@@ -88,41 +74,16 @@ export async function PUT(
       defaultPriceGroupId: data.defaultPriceGroupId,
     }));
     if (!catalog) {
-      return NextResponse.json(
-        { error: "Catalog not found", errorId: randomUUID() },
-        { status: 404 }
-      );
+      throw notFoundError("Catalog not found", { catalogId: id });
     }
     return NextResponse.json(catalog);
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof z.ZodError) {
-      console.warn("[catalogs][PUT] Invalid payload", {
-        errorId,
-        issues: error.flatten(),
-        catalogId,
-      });
-      return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten(), errorId },
-        { status: 400 }
-      );
-    }
-    if (error instanceof Error) {
-      console.error("[catalogs][PUT] Failed to update catalog", {
-        errorId,
-        message: error.message,
-        catalogId,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 400 }
-      );
-    }
-    console.error("[catalogs][PUT] Unknown error", { errorId, error });
-    return NextResponse.json(
-      { error: "An unknown error occurred", errorId },
-      { status: 400 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "catalogs.PUT",
+      fallbackMessage: "Failed to update catalog",
+      ...(catalogId ? { extra: { catalogId } } : {}),
+    });
   }
 }
 
@@ -139,26 +100,17 @@ export async function DELETE(
     const { id } = await params;
     catalogId = id;
     if (!id) {
-      const errorId = randomUUID();
-      console.error("[catalogs][DELETE] Missing catalog id", { errorId });
-      return NextResponse.json(
-        { error: "Catalog id is required", errorId },
-        { status: 400 }
-      );
+      throw badRequestError("Catalog id is required");
     }
     const catalogRepository = await getCatalogRepository();
     await catalogRepository.deleteCatalog(id);
     return new Response(null, { status: 204 });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[catalogs][DELETE] Failed to delete catalog", {
-      errorId,
-      error,
-      catalogId,
+    return createErrorResponse(error, {
+      request: req,
+      source: "catalogs.DELETE",
+      fallbackMessage: "Failed to delete catalog",
+      ...(catalogId ? { extra: { catalogId } } : {}),
     });
-    return NextResponse.json(
-      { error: "Failed to delete catalog", errorId },
-      { status: 500 }
-    );
   }
 }

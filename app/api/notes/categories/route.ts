@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { noteService } from "@/lib/services/noteService/index";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { categoryCreateSchema } from "@/lib/validations/notes";
 import { removeUndefined } from "@/lib/utils";
 import type { CategoryCreateInput } from "@/types/notes";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
 
 /**
  * GET /api/notes/categories
@@ -20,15 +20,11 @@ export async function GET(req: Request) {
     const categories = await noteService.getAllCategories(notebook.id);
     return NextResponse.json(categories);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[categories][GET] Failed to fetch categories", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "categories.GET",
+      fallbackMessage: "Failed to fetch categories",
     });
-    return NextResponse.json(
-      { error: "Failed to fetch categories", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -39,7 +35,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const parsed = await parseJsonBody(req, categoryCreateSchema, {
-      logPrefix: "categories:POST",
+      logPrefix: "categories.POST",
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -53,24 +49,10 @@ export async function POST(req: Request) {
     }) as CategoryCreateInput);
     return NextResponse.json(category, { status: 201 });
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof Error) {
-      console.error("[categories][POST] Failed to create category", {
-        errorId,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 500 }
-      );
-    }
-    console.error("[categories][POST] Unknown error creating category", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "categories.POST",
+      fallbackMessage: "Failed to create category",
     });
-    return NextResponse.json(
-      { error: "Failed to create category", errorId },
-      { status: 500 }
-    );
   }
 }

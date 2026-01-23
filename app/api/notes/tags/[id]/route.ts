@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { noteService } from "@/lib/services/noteService/index";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { tagUpdateSchema } from "@/lib/validations/notes";
 import { removeUndefined } from "@/lib/utils";
 import type { TagUpdateInput } from "@/types/notes";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
 
 /**
  * PATCH /api/notes/tags/[id]
@@ -17,7 +17,7 @@ export async function PATCH(
   const { id } = await params;
   try {
     const parsed = await parseJsonBody(req, tagUpdateSchema, {
-      logPrefix: "tags:PATCH",
+      logPrefix: "tags.PATCH",
       allowEmpty: true,
     });
     if (!parsed.ok) {
@@ -29,16 +29,11 @@ export async function PATCH(
     );
     return NextResponse.json(tag);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[tags][PATCH] Failed to update tag", {
-      errorId,
-      tagId: id,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "tags.PATCH",
+      fallbackMessage: "Failed to update tag",
     });
-    return NextResponse.json(
-      { error: "Failed to update tag", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -55,15 +50,10 @@ export async function DELETE(
     await noteService.deleteTag(id);
     return NextResponse.json({ success: true });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[tags][DELETE] Failed to delete tag", {
-      errorId,
-      tagId: id,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "tags.DELETE",
+      fallbackMessage: "Failed to delete tag",
     });
-    return NextResponse.json(
-      { error: "Failed to delete tag", errorId },
-      { status: 500 }
-    );
   }
 }

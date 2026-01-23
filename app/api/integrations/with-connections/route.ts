@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { getIntegrationsWithConnections } from "@/lib/services/product-listing-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
 
 /**
  * GET /api/integrations/with-connections
@@ -8,19 +8,15 @@ import { getIntegrationsWithConnections } from "@/lib/services/product-listing-r
  * Used for the product listing dropdown selection.
  * Supports both MongoDB and Prisma based on provider settings.
  */
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const integrations = await getIntegrationsWithConnections();
     return NextResponse.json(integrations);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[integrations-with-connections][GET] Failed to fetch", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "integrations.with-connections.GET",
+      fallbackMessage: "Failed to fetch integrations",
     });
-    return NextResponse.json(
-      { error: "Failed to fetch integrations", errorId },
-      { status: 500 }
-    );
   }
 }

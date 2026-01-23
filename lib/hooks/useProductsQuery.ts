@@ -5,15 +5,15 @@ import { getProducts, countProducts } from "@/lib/api";
 import { ProductWithImages } from "@/types";
 
 interface UseProductsFilters {
-  search?: string;
-  sku?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  startDate?: string;
-  endDate?: string;
-  page?: number;
-  pageSize?: number;
-  catalogId?: string;
+  search?: string | undefined;
+  sku?: string | undefined;
+  minPrice?: number | undefined;
+  maxPrice?: number | undefined;
+  startDate?: string | undefined;
+  endDate?: string | undefined;
+  page?: number | undefined;
+  pageSize?: number | undefined;
+  catalogId?: string | undefined;
 }
 
 interface UseProductsOptions {

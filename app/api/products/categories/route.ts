@@ -5,6 +5,8 @@ import prisma from "@/lib/prisma";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, conflictError, internalError } from "@/lib/errors/app-error";
 
 const productCategoryCreateSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -26,20 +28,14 @@ export async function GET(req: Request) {
     const catalogId = searchParams.get("catalogId");
 
     if (!catalogId) {
-      return NextResponse.json(
-        { error: "catalogId query parameter is required" },
-        { status: 400 }
-      );
+      throw badRequestError("catalogId query parameter is required");
     }
 
     const provider = await getProductDataProvider();
 
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw internalError("MongoDB is not configured.");
       }
       const db = await getMongoDb();
       const categories = await db
@@ -61,7 +57,7 @@ export async function GET(req: Request) {
     }
 
     if (!process.env.DATABASE_URL) {
-      return NextResponse.json([]);
+      throw badRequestError("Product categories require the Postgres product store.");
     }
 
     const categories = await prisma.productCategory.findMany({
@@ -70,12 +66,11 @@ export async function GET(req: Request) {
     });
     return NextResponse.json(categories);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[product-categories][GET] Failed to fetch categories", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "product-categories.GET",
+      fallbackMessage: "Failed to fetch categories",
     });
-    return NextResponse.json([]);
   }
 }
 
@@ -87,7 +82,7 @@ export async function POST(req: Request) {
   try {
     const provider = await getProductDataProvider();
     const parsed = await parseJsonBody(req, productCategoryCreateSchema, {
-      logPrefix: "product-categories:POST",
+      logPrefix: "product-categories.POST",
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -97,10 +92,7 @@ export async function POST(req: Request) {
 
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw internalError("MongoDB is not configured.");
       }
       const db = await getMongoDb();
       const existing = await db.collection("product_categories").findOne({
@@ -109,10 +101,11 @@ export async function POST(req: Request) {
         catalogId,
       });
       if (existing) {
-        return NextResponse.json(
-          { error: "A category with this name already exists at this level" },
-          { status: 400 }
-        );
+        throw conflictError("A category with this name already exists at this level", {
+          name,
+          parentId: parentId ?? null,
+          catalogId,
+        });
       }
       const now = new Date();
       const category = {
@@ -130,10 +123,7 @@ export async function POST(req: Request) {
     }
 
     if (!process.env.DATABASE_URL) {
-      return NextResponse.json(
-        { error: "Product categories require the Postgres product store." },
-        { status: 400 }
-      );
+      throw badRequestError("Product categories require the Postgres product store.");
     }
 
     // Check for duplicate name under the same parent within the same catalog
@@ -146,10 +136,11 @@ export async function POST(req: Request) {
     });
 
     if (existing) {
-      return NextResponse.json(
-        { error: "A category with this name already exists at this level" },
-        { status: 400 }
-      );
+      throw conflictError("A category with this name already exists at this level", {
+        name,
+        parentId: parentId ?? null,
+        catalogId,
+      });
     }
 
     const category = await prisma.productCategory.create({
@@ -164,24 +155,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json(category, { status: 201 });
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof Error) {
-      console.error("[product-categories][POST] Failed to create category", {
-        errorId,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 500 }
-      );
-    }
-    console.error("[product-categories][POST] Unknown error", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "product-categories.POST",
+      fallbackMessage: "Failed to create product category",
     });
-    return NextResponse.json(
-      { error: "Failed to create product category", errorId },
-      { status: 500 }
-    );
   }
 }

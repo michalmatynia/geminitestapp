@@ -272,6 +272,32 @@ export default function ProductImportsPage() {
     void checkIntegration();
   }, []);
 
+  // Load saved default connection preference
+  useEffect(() => {
+    if (!isBaseConnected || baseConnections.length === 0) return;
+    if (selectedBaseConnectionId) return; // Already set
+
+    const loadDefaultConnection = async () => {
+      try {
+        const res = await fetch("/api/products/exports/base/default-connection");
+        if (!res.ok) return;
+        const payload = (await res.json()) as { connectionId?: string | null };
+        if (payload.connectionId) {
+          // Check if the saved connection still exists in current connections
+          const connectionExists = baseConnections.some(
+            (conn) => conn.id === payload.connectionId
+          );
+          if (connectionExists) {
+            setSelectedBaseConnectionId(payload.connectionId);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load default connection:", error);
+      }
+    };
+    void loadDefaultConnection();
+  }, [isBaseConnected, baseConnections, selectedBaseConnectionId]);
+
   useEffect(() => {
     const loadCatalogs = async () => {
       setLoadingCatalogs(true);

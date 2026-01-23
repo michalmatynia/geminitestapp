@@ -25,7 +25,6 @@ export default function SelectIntegrationModal({
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>("");
   const [selectedConnectionId, setSelectedConnectionId] = useState<string>("");
   const [preferredConnectionId, setPreferredConnectionId] = useState<string | null>(null);
-  const [defaultsLoaded, setDefaultsLoaded] = useState(false);
 
   // Load preferred connection from export settings
   useEffect(() => {
@@ -66,50 +65,8 @@ export default function SelectIntegrationModal({
     void fetchIntegrations();
   }, []);
 
-  // Auto-select integration and connection based on preferred connection
-  useEffect(() => {
-    console.log('[SelectIntegrationModal] Initial auto-select check:', {
-      defaultsLoaded,
-      preferredConnectionId,
-      integrationsCount: integrations.length,
-      selectedIntegrationId,
-      selectedConnectionId
-    });
-
-    if (defaultsLoaded) {
-      console.log('[SelectIntegrationModal] Skipping - defaults already loaded');
-      return;
-    }
-    if (!preferredConnectionId) {
-      console.log('[SelectIntegrationModal] Skipping - no preferred connection');
-      return;
-    }
-    if (integrations.length === 0) {
-      console.log('[SelectIntegrationModal] Skipping - no integrations loaded yet');
-      return;
-    }
-    if (selectedIntegrationId || selectedConnectionId) {
-      console.log('[SelectIntegrationModal] Skipping - already have selection');
-      return;
-    }
-
-    // Find the integration that contains the preferred connection
-    const integrationWithPreferredConnection = integrations.find((integration) =>
-      integration.connections.some((conn) => conn.id === preferredConnectionId)
-    );
-
-    console.log('[SelectIntegrationModal] Found integration with preferred connection:', integrationWithPreferredConnection?.name);
-
-    if (integrationWithPreferredConnection) {
-      console.log('[SelectIntegrationModal] ✓ Auto-selecting on initial load:', {
-        integration: integrationWithPreferredConnection.name,
-        connectionId: preferredConnectionId
-      });
-      setSelectedIntegrationId(integrationWithPreferredConnection.id);
-      setSelectedConnectionId(preferredConnectionId);
-      setDefaultsLoaded(true);
-    }
-  }, [preferredConnectionId, integrations, selectedIntegrationId, selectedConnectionId, defaultsLoaded]);
+  // Note: We don't auto-select the integration on initial load
+  // The user should manually select the integration, and then we auto-select the connection
 
   const selectedIntegration = integrations.find((i) => i.id === selectedIntegrationId);
 

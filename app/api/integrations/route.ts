@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
 
 const integrationSchema = z.object({
   name: z.string().trim().min(1),
@@ -12,21 +13,17 @@ const integrationSchema = z.object({
  * GET /api/integrations
  * Fetches all integrations.
  */
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const repo = await getIntegrationRepository();
     const integrations = await repo.listIntegrations();
     return NextResponse.json(integrations);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[integrations][GET] Failed to fetch integrations", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "integrations.GET",
+      fallbackMessage: "Failed to fetch integrations",
     });
-    return NextResponse.json(
-      { error: "Failed to fetch integrations", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -36,47 +33,21 @@ export async function GET() {
  */
 export async function POST(req: Request) {
   try {
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch (error) {
-      const errorId = randomUUID();
-      console.error("[integrations][POST] Failed to parse JSON body", {
-        errorId,
-        error,
-      });
-      return NextResponse.json(
-        { error: "Invalid JSON payload", errorId },
-        { status: 400 }
-      );
+    const parsed = await parseJsonBody(req, integrationSchema, {
+      logPrefix: "integrations.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
     }
-    const data = integrationSchema.parse(body);
+    const data = parsed.data;
     const repo = await getIntegrationRepository();
     const integration = await repo.upsertIntegration(data);
     return NextResponse.json(integration);
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof z.ZodError) {
-      console.warn("[integrations][POST] Invalid payload", {
-        errorId,
-        issues: error.flatten(),
-      });
-      return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten(), errorId },
-        { status: 400 }
-      );
-    }
-    if (error instanceof Error) {
-      console.error("[integrations][POST] Failed to create integration", {
-        errorId,
-        message: error.message,
-      });
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-    console.error("[integrations][POST] Unknown error", { errorId, error });
-    return NextResponse.json(
-      { error: "An unknown error occurred", errorId },
-      { status: 400 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "integrations.POST",
+      fallbackMessage: "Failed to create integration",
+    });
   }
 }

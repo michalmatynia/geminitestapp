@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { ensureInternationalizationDefaults } from "@/lib/seedInternationalization";
@@ -7,6 +6,10 @@ import { fallbackLanguages } from "@/lib/internationalizationFallback";
 import { defaultLanguages, countryMappings } from "@/lib/internationalizationDefaults";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { conflictError, internalError } from "@/lib/errors/app-error";
+import { logSystemEvent } from "@/lib/services/system-logger";
 
 export const runtime = "nodejs";
 
@@ -86,15 +89,15 @@ const seedMongoLanguages = async (db: Awaited<ReturnType<typeof getMongoDb>>) =>
  * GET /api/languages
  * Fetches available languages (seeds defaults if empty).
  */
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        return createErrorResponse(internalError("MongoDB is not configured."), {
+          request: req,
+          source: "languages.GET",
+        });
       }
       const mongo = await getMongoDb();
       await seedMongoLanguages(mongo);
@@ -124,8 +127,13 @@ export async function GET() {
     });
     return NextResponse.json(languages);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[languages][GET] Failed to fetch languages", { errorId, error });
+    void logSystemEvent({
+      level: "error",
+      message: "Failed to fetch languages",
+      source: "languages.GET",
+      error,
+      request: req,
+    });
     return NextResponse.json(fallbackLanguages);
   }
 }
@@ -135,29 +143,27 @@ export async function GET() {
  * Creates a language with optional country assignments.
  */
 export async function POST(req: Request) {
-  const errorId = randomUUID();
   try {
-    const body = (await req.json()) as unknown;
-    const data = languageCreateSchema.parse(body);
+    const parsed = await parseJsonBody(req, languageCreateSchema, {
+      logPrefix: "languages.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
     const code = data.code.toUpperCase();
 
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw internalError("MongoDB is not configured.");
       }
       const mongo = await getMongoDb();
       const existing = await mongo
         .collection<LanguageDoc>(LANGUAGES_COLLECTION)
         .findOne({ code });
       if (existing) {
-        return NextResponse.json(
-          { error: "Language code already exists." },
-          { status: 400 }
-        );
+        throw conflictError("Language code already exists.", { code });
       }
 
       const countryIds = data.countryIds ?? [];
@@ -197,6 +203,13 @@ export async function POST(req: Request) {
 
     const countryIds = data.countryIds ?? [];
     const uniqueIds = Array.from(new Set(countryIds));
+    const existingLanguage = await prisma.language.findUnique({
+      where: { code },
+      select: { id: true },
+    });
+    if (existingLanguage) {
+      throw conflictError("Language code already exists.", { code });
+    }
     const existing = await prisma.country.findMany({
       where: { id: { in: uniqueIds } },
       select: { id: true },
@@ -229,30 +242,10 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(language);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      console.warn("[languages][POST] Invalid payload", {
-        errorId,
-        issues: error.flatten(),
-      });
-      return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten(), errorId },
-        { status: 400 }
-      );
-    }
-    if (error instanceof Error) {
-      console.error("[languages][POST] Failed to create language", {
-        errorId,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 400 }
-      );
-    }
-    console.error("[languages][POST] Unknown error", { errorId, error });
-    return NextResponse.json(
-      { error: "An unknown error occurred", errorId },
-      { status: 400 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "languages.POST",
+      fallbackMessage: "Failed to create language",
+    });
   }
 }

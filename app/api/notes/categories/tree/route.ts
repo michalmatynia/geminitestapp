@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { noteService } from "@/lib/services/noteService/index";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
 
 /**
  * GET /api/notes/categories/tree
@@ -16,14 +16,10 @@ export async function GET(req: Request) {
     const tree = await noteService.getCategoryTree(notebook.id);
     return NextResponse.json(tree);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[categories][tree][GET] Failed to fetch category tree", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "categories.tree.GET",
+      fallbackMessage: "Failed to fetch category tree",
     });
-    return NextResponse.json(
-      { error: "Failed to fetch category tree", errorId },
-      { status: 500 }
-    );
   }
 }

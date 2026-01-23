@@ -22,6 +22,10 @@ import { WysiwygEditor } from "./editor/WysiwygEditor";
 
 // Hardcoded dark mode fallback theme - consistent with page styling
 const FALLBACK_THEME = {
+  id: "fallback",
+  name: "Fallback Dark",
+  createdAt: new Date(),
+  updatedAt: new Date(),
   textColor: "#e5e7eb",                // gray-200
   backgroundColor: "#111827",          // gray-900
   markdownHeadingColor: "#ffffff",     // white
@@ -70,7 +74,7 @@ export function NoteForm({
     isFavorite,
     setIsFavorite,
     getReadableTextColor,
-  } = useNoteMetadata(note);
+  } = useNoteMetadata(note ?? null);
 
   // Editor mode & migration
   const {
@@ -80,7 +84,7 @@ export function NoteForm({
     isMigrating,
     handleMigrateToWysiwyg,
     handleMigrateToMarkdown,
-  } = useEditorMode(note, useNoteSettings().settings.editorMode);
+  } = useEditorMode(note ?? null, useNoteSettings().settings.editorMode);
 
   // File attachments
   const {
@@ -100,6 +104,14 @@ export function NoteForm({
     addFile,
     removeFile,
   } = useNoteFileAttachments(note?.files);
+
+  const setLightboxImage = (imgSrc: string | null) => {
+    if (imgSrc) {
+      openLightbox(imgSrc);
+    } else {
+      closeLightbox();
+    }
+  };
 
   // Tags
   const {
@@ -476,7 +488,7 @@ export function NoteForm({
       }
 
       setIsPasting(true);
-      setUploadingSlots((prev) => new Set(prev).add(nextSlot));
+      addUploadingSlot(nextSlot);
 
       const textarea = contentRef.current;
       const cursorPosition = textarea?.selectionStart ?? content.length;
@@ -520,11 +532,7 @@ export function NoteForm({
         toast("Failed to upload pasted image");
       } finally {
         setIsPasting(false);
-        setUploadingSlots((prev) => {
-          const next = new Set(prev);
-          next.delete(nextSlot);
-          return next;
-        });
+        removeUploadingSlot(nextSlot);
       }
     };
 
@@ -813,8 +821,8 @@ export function NoteForm({
                       onEditorModeChange={handleEditorModeChange}
                       isEditorModeLocked={isEditorModeLocked}
                       isMigrating={isMigrating}
-                      onMigrateToWysiwyg={() => { void handleMigrateToWysiwyg(); }}
-                      onMigrateToMarkdown={() => { void handleMigrateToMarkdown(); }}
+                      onMigrateToWysiwyg={() => { void handleMigrateToWysiwyg(content); }}
+                      onMigrateToMarkdown={() => { void handleMigrateToMarkdown(content); }}
                     />        {editorMode === "markdown" || editorMode === "code" ? (
           <MarkdownEditor
             content={content}
@@ -901,12 +909,12 @@ export function NoteForm({
       {lightboxImage && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
-          onClick={() => setLightboxImage(null)}
+          onClick={() => closeLightbox()}
         >
           <button
             type="button"
             className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
-            onClick={() => setLightboxImage(null)}
+            onClick={() => closeLightbox()}
           >
             <X size={24} />
           </button>

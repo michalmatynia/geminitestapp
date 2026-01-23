@@ -55,7 +55,7 @@ export type ImageUrlDiagnostic = {
   mimetype?: string | null;
   size?: number | null;
   supported: boolean;
-  reason?: string;
+  reason?: string | undefined;
   extension?: string | null;
   normalizedMime?: string | null;
 };
@@ -172,7 +172,7 @@ const shouldIncludeImageUrl = (
   url: string,
   options?: {
     mimetype?: string | null;
-    diagnostics?: ImageExportDiagnostics;
+    diagnostics?: ImageExportDiagnostics | undefined;
     sourceType?: "slot" | "link" | "mapped" | "unknown";
     index?: number;
     source?: string | null;
@@ -454,7 +454,7 @@ const imageToBase64DataUri = async (
   filepath: string,
   options?: {
     contentTypeHint?: string | null;
-    diagnostics?: ImageExportDiagnostics;
+    diagnostics?: ImageExportDiagnostics | undefined;
     sourceType?: "slot" | "link" | "mapped" | "unknown";
     index?: number;
     outputMode?: ImageBase64Mode;
@@ -618,7 +618,7 @@ const imageToBase64DataUri = async (
 export const getProductImagesAsBase64 = async (
   product: ProductWithImages,
   options?: {
-    diagnostics?: ImageExportDiagnostics;
+    diagnostics?: ImageExportDiagnostics | undefined;
     outputMode?: ImageBase64Mode;
     transform?: ImageTransformOptions | null;
   }
@@ -927,7 +927,7 @@ export async function buildBaseProductData(
     imageBaseUrl?: string | null;
     includeStockWithoutWarehouse?: boolean;
     stockWarehouseAliases?: Record<string, string>;
-    exportImagesAsBase64?: boolean;
+    exportImagesAsBase64?: boolean | undefined;
     imageDiagnostics?: ImageExportDiagnostics;
     imageBase64Mode?: ImageBase64Mode;
     imageTransform?: ImageTransformOptions | null;

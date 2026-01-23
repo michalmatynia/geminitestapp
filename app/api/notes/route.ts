@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { noteService } from "@/lib/services/noteService/index";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { noteCreateSchema } from "@/lib/validations/notes";
 import type { NoteFilters } from "@/types/notes";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
 
 /**
  * GET /api/notes
@@ -58,16 +58,11 @@ export async function GET(req: Request) {
     const notes = await noteService.getAll(filters);
     return NextResponse.json(notes);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[notes][GET] Failed to fetch notes", {
-      errorId,
-      error,
-      filters,
+    return createErrorResponse(error, {
+      request: req,
+      source: "notes.GET",
+      fallbackMessage: "Failed to fetch notes",
     });
-    return NextResponse.json(
-      { error: "Failed to fetch notes", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -78,7 +73,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const parsed = await parseJsonBody(req, noteCreateSchema, {
-      logPrefix: "notes:POST",
+      logPrefix: "notes.POST",
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -92,24 +87,10 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(note, { status: 201 });
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof Error) {
-      console.error("[notes][POST] Failed to create note", {
-        errorId,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 500 }
-      );
-    }
-    console.error("[notes][POST] Unknown error creating note", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "notes.POST",
+      fallbackMessage: "Failed to create note",
     });
-    return NextResponse.json(
-      { error: "Failed to create note", errorId },
-      { status: 500 }
-    );
   }
 }

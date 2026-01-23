@@ -5,6 +5,8 @@ import prisma from "@/lib/prisma";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, conflictError, internalError } from "@/lib/errors/app-error";
 
 const productTagCreateSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -24,20 +26,14 @@ export async function GET(req: Request) {
     const catalogId = searchParams.get("catalogId");
 
     if (!catalogId) {
-      return NextResponse.json(
-        { error: "catalogId query parameter is required" },
-        { status: 400 }
-      );
+      throw badRequestError("catalogId query parameter is required");
     }
 
     const provider = await getProductDataProvider();
 
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw internalError("MongoDB is not configured.");
       }
       const db = await getMongoDb();
       const tags = await db
@@ -59,7 +55,7 @@ export async function GET(req: Request) {
     }
 
     if (!process.env.DATABASE_URL) {
-      return NextResponse.json([]);
+      throw badRequestError("Product tags require the Postgres product store.");
     }
 
     const tags = await prisma.productTag.findMany({
@@ -68,12 +64,11 @@ export async function GET(req: Request) {
     });
     return NextResponse.json(tags);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[product-tags][GET] Failed to fetch tags", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "product-tags.GET",
+      fallbackMessage: "Failed to fetch tags",
     });
-    return NextResponse.json([]);
   }
 }
 
@@ -85,7 +80,7 @@ export async function POST(req: Request) {
   try {
     const provider = await getProductDataProvider();
     const parsed = await parseJsonBody(req, productTagCreateSchema, {
-      logPrefix: "product-tags:POST",
+      logPrefix: "product-tags.POST",
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -95,10 +90,7 @@ export async function POST(req: Request) {
 
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw internalError("MongoDB is not configured.");
       }
       const db = await getMongoDb();
       const existing = await db.collection("product_tags").findOne({
@@ -106,9 +98,9 @@ export async function POST(req: Request) {
         catalogId,
       });
       if (existing) {
-        return NextResponse.json(
-          { error: "A tag with this name already exists in this catalog" },
-          { status: 400 }
+        throw conflictError(
+          "A tag with this name already exists in this catalog",
+          { name, catalogId }
         );
       }
       const now = new Date();
@@ -125,19 +117,16 @@ export async function POST(req: Request) {
     }
 
     if (!process.env.DATABASE_URL) {
-      return NextResponse.json(
-        { error: "Product tags require the Postgres product store." },
-        { status: 400 }
-      );
+      throw badRequestError("Product tags require the Postgres product store.");
     }
 
     const existing = await prisma.productTag.findFirst({
       where: { name, catalogId },
     });
     if (existing) {
-      return NextResponse.json(
-        { error: "A tag with this name already exists in this catalog" },
-        { status: 400 }
+      throw conflictError(
+        "A tag with this name already exists in this catalog",
+        { name, catalogId }
       );
     }
 
@@ -151,24 +140,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json(tag, { status: 201 });
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof Error) {
-      console.error("[product-tags][POST] Failed to create tag", {
-        errorId,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 500 }
-      );
-    }
-    console.error("[product-tags][POST] Unknown error", {
-      errorId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "product-tags.POST",
+      fallbackMessage: "Failed to create product tag",
     });
-    return NextResponse.json(
-      { error: "Failed to create product tag", errorId },
-      { status: 500 }
-    );
   }
 }

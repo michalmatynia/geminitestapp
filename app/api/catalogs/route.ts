@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import { getCatalogRepository } from "@/lib/services/catalog-repository";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import prisma from "@/lib/prisma";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { badRequestError } from "@/lib/errors/app-error";
+import { logSystemEvent } from "@/lib/services/system-logger";
 
 const catalogSchema = z.object({
   name: z.string().trim().min(1),
@@ -20,7 +23,7 @@ const catalogSchema = z.object({
  * GET /api/catalogs
  * Fetches all catalogs.
  */
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const catalogRepository = await getCatalogRepository();
     let catalogs = await catalogRepository.listCatalogs();
@@ -65,10 +68,14 @@ export async function GET() {
               languageCodeById.set(language.id, language.code);
             });
           } catch (error) {
-            console.warn(
-              "[catalogs][GET] Failed to load legacy languages from Prisma",
-              error
-            );
+            void logSystemEvent({
+              level: "warn",
+              message: "Failed to load legacy languages from Prisma",
+              source: "catalogs.GET",
+              error,
+              request: req,
+              context: { provider },
+            });
           }
         }
 
@@ -115,20 +122,23 @@ export async function GET() {
           })
         );
       } catch (error) {
-        console.warn(
-          "[catalogs][GET] Failed to normalize catalog language IDs",
-          error
-        );
+        void logSystemEvent({
+          level: "warn",
+          message: "Failed to normalize catalog language IDs",
+          source: "catalogs.GET",
+          error,
+          request: req,
+          context: { provider },
+        });
       }
     }
     return NextResponse.json(catalogs);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[catalogs][GET] Failed to fetch catalogs", { errorId, error });
-    return NextResponse.json(
-      { error: "Failed to fetch catalogs", errorId },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "catalogs.GET",
+      fallbackMessage: "Failed to fetch catalogs",
+    });
   }
 }
 
@@ -138,46 +148,39 @@ export async function GET() {
  */
 export async function POST(req: Request) {
   try {
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch (error) {
-      const errorId = randomUUID();
-      console.error("[catalogs][POST] Failed to parse JSON body", {
-        errorId,
-        error,
-      });
-      return NextResponse.json(
-        { error: "Invalid JSON payload", errorId },
-        { status: 400 }
-      );
+    const parsed = await parseJsonBody(req, catalogSchema, {
+      logPrefix: "catalogs.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
     }
-    const data = catalogSchema.parse(body);
+    const data = parsed.data;
     if (!data.languageIds || data.languageIds.length === 0) {
-      return NextResponse.json(
-        { error: "Select at least one language." },
-        { status: 400 }
-      );
+      throw badRequestError("Select at least one language.", {
+        field: "languageIds",
+      });
     }
-    if (!data.defaultLanguageId || !data.languageIds.includes(data.defaultLanguageId)) {
-      return NextResponse.json(
-        { error: "Default language must be one of the selected languages." },
-        { status: 400 }
+    if (
+      !data.defaultLanguageId ||
+      !data.languageIds.includes(data.defaultLanguageId)
+    ) {
+      throw badRequestError(
+        "Default language must be one of the selected languages.",
+        { field: "defaultLanguageId" }
       );
     }
     if (!data.priceGroupIds || data.priceGroupIds.length === 0) {
-      return NextResponse.json(
-        { error: "Select at least one price group." },
-        { status: 400 }
-      );
+      throw badRequestError("Select at least one price group.", {
+        field: "priceGroupIds",
+      });
     }
     if (
       !data.defaultPriceGroupId ||
       !data.priceGroupIds.includes(data.defaultPriceGroupId)
     ) {
-      return NextResponse.json(
-        { error: "Default price group must be one of the selected price groups." },
-        { status: 400 }
+      throw badRequestError(
+        "Default price group must be one of the selected price groups.",
+        { field: "defaultPriceGroupId" }
       );
     }
     const catalogRepository = await getCatalogRepository();
@@ -195,31 +198,10 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(catalog);
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof z.ZodError) {
-      console.warn("[catalogs][POST] Invalid payload", {
-        errorId,
-        issues: error.flatten(),
-      });
-      return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten(), errorId },
-        { status: 400 }
-      );
-    }
-    if (error instanceof Error) {
-      console.error("[catalogs][POST] Failed to create catalog", {
-        errorId,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 400 }
-      );
-    }
-    console.error("[catalogs][POST] Unknown error", { errorId, error });
-    return NextResponse.json(
-      { error: "An unknown error occurred", errorId },
-      { status: 400 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "catalogs.POST",
+      fallbackMessage: "Failed to create catalog",
+    });
   }
 }

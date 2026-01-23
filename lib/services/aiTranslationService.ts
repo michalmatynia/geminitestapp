@@ -14,6 +14,9 @@ interface TranslationResult {
     name: string;
     description: string;
   }>;
+  translationModel?: string;
+  targetLanguages?: string[];
+  sourceLanguage?: string;
 }
 
 export async function translateProduct(params: TranslateProductParams): Promise<TranslationResult> {
@@ -134,5 +137,10 @@ Important:
     throw new Error("Translation failed: No translations were completed successfully.");
   }
 
-  return { translations };
+  return {
+    translations,
+    translationModel,
+    targetLanguages,
+    sourceLanguage
+  };
 }

@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { decryptSecret } from "@/lib/utils/encryption";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, notFoundError } from "@/lib/errors/app-error";
 
 /**
  * GET /api/integrations/connections/[id]/session
  * Returns stored Playwright session cookies for a connection.
  */
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   let connectionId: string | null = null;
@@ -16,30 +17,19 @@ export async function GET(
   try {
     const { id } = await params;
     connectionId = id;
+    if (!connectionId) {
+      throw badRequestError("Connection id is required");
+    }
 
     const repo = await getIntegrationRepository();
     const connection = await repo.getConnectionById(connectionId);
 
     if (!connection) {
-      return NextResponse.json(
-        {
-          error: "Connection not found",
-          errorId: randomUUID(),
-          connectionId,
-        },
-        { status: 404 }
-      );
+      throw notFoundError("Connection not found", { connectionId });
     }
 
     if (!connection.playwrightStorageState) {
-      return NextResponse.json(
-        {
-          error: "No stored Playwright session.",
-          errorId: randomUUID(),
-          connectionId,
-        },
-        { status: 404 }
-      );
+      throw notFoundError("No stored Playwright session.", { connectionId });
     }
 
     const decrypted = decryptSecret(connection.playwrightStorageState);
@@ -54,32 +44,11 @@ export async function GET(
       updatedAt: connection.playwrightStorageStateUpdatedAt,
     });
   } catch (error: unknown) {
-    const errorId = randomUUID();
-
-    if (error instanceof Error) {
-      console.error(
-        "[integrations][connection][session][GET] Failed to load session",
-        {
-          errorId,
-          connectionId,
-          message: error.message,
-        }
-      );
-      return NextResponse.json(
-        { error: error.message, errorId, connectionId },
-        { status: 400 }
-      );
-    }
-
-    console.error("[integrations][connection][session][GET] Unknown error", {
-      errorId,
-      connectionId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "integrations.connection.session.GET",
+      fallbackMessage: "Failed to load session",
+      ...(connectionId ? { extra: { connectionId } } : {}),
     });
-
-    return NextResponse.json(
-      { error: "Failed to load session", errorId, connectionId },
-      { status: 500 }
-    );
   }
 }

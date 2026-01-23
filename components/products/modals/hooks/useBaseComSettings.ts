@@ -30,12 +30,21 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
 
     (async () => {
       try {
-        const res = await fetch(`/api/products/exports/base/templates?connectionId=${connectionId}`);
+        const res = await fetch("/api/products/export-templates");
         if (!res.ok) throw new Error("Failed to load templates");
-        const data = (await res.json()) as { templates: Template[]; preferred: string | null };
-        setTemplates(data.templates);
-        setPreferredTemplateId(data.preferred);
-        setSelectedTemplateId(data.preferred || "none");
+        const data = (await res.json()) as Template[];
+        setTemplates(Array.isArray(data) ? data : []);
+        // Load preferred template
+        try {
+          const prefRes = await fetch("/api/products/exports/base/active-template");
+          if (prefRes.ok) {
+            const prefData = (await prefRes.json()) as { templateId?: string | null };
+            setPreferredTemplateId(prefData.templateId || null);
+            setSelectedTemplateId(prefData.templateId || "none");
+          }
+        } catch {
+          // Preference load failed, not critical
+        }
       } catch (err) {
         console.error("Failed to load templates:", err);
         setTemplates([]);
@@ -47,23 +56,50 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   useEffect(() => {
     if (!isBaseComIntegration || !connectionId) {
       setInventories([]);
+      setLoadingInventories(false);
       return;
     }
 
     setLoadingInventories(true);
     (async () => {
       try {
-        const res = await fetch(`/api/products/exports/base/inventories?connectionId=${connectionId}`);
-        if (!res.ok) throw new Error("Failed to load inventories");
+        const res = await fetch("/api/products/imports/base", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "inventories",
+            connectionId: connectionId,
+          }),
+        });
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error(`Failed to load inventories (${res.status}):`, errorText);
+          setInventories([]);
+          return;
+        }
         const data = (await res.json()) as {
-          inventories: BaseInventory[];
-          preferred: string | null;
-          preferredConnectionId: string | null;
+          inventories?: BaseInventory[];
+          error?: string;
         };
-        setInventories(data.inventories);
-        setPreferredInventoryId(data.preferred);
-        setPreferredConnectionId(data.preferredConnectionId);
-        if (data.preferred) setSelectedInventoryId(data.preferred);
+        if (data.error) {
+          console.error("Failed to load inventories:", data.error);
+          setInventories([]);
+          return;
+        }
+        setInventories(Array.isArray(data.inventories) ? data.inventories : []);
+
+        // Load preferred inventory
+        try {
+          const prefRes = await fetch("/api/products/exports/base/default-inventory");
+          if (prefRes.ok) {
+            const prefData = (await prefRes.json()) as { inventoryId?: string | null };
+            setPreferredInventoryId(prefData.inventoryId || null);
+            setPreferredConnectionId(connectionId);
+            if (prefData.inventoryId) setSelectedInventoryId(prefData.inventoryId);
+          }
+        } catch {
+          // Preference load failed, not critical
+        }
       } catch (err) {
         console.error("Failed to load inventories:", err);
         setInventories([]);

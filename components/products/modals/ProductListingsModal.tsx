@@ -72,6 +72,7 @@ export default function ProductListingsModal({
   const [loadingIntegrations, setLoadingIntegrations] = useState(false);
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>("");
   const [selectedConnectionId, setSelectedConnectionId] = useState<string>("");
+  const [preferredConnectionId, setPreferredConnectionId] = useState<string | null>(null);
   const [historyOpenByListing, setHistoryOpenByListing] = useState<Record<string, boolean>>({});
   const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
   const [logsOpen, setLogsOpen] = useState(false);
@@ -102,6 +103,24 @@ export default function ProductListingsModal({
     void fetchListings();
   }, [fetchListings]);
 
+  // Load preferred connection from export settings
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/products/exports/base/default-connection");
+        if (!res.ok) {
+          console.log('[ProductListingsModal] Failed to load preferred connection');
+          return;
+        }
+        const payload = (await res.json()) as { connectionId?: string | null };
+        console.log('[ProductListingsModal] Loaded preferred connection:', payload.connectionId);
+        setPreferredConnectionId(payload.connectionId ?? null);
+      } catch (error) {
+        console.error('[ProductListingsModal] Error loading preferred connection:', error);
+      }
+    })();
+  }, []);
+
   useEffect(() => {
     const fetchIntegrations = async () => {
       try {
@@ -119,6 +138,9 @@ export default function ProductListingsModal({
 
     void fetchIntegrations();
   }, []);
+
+  // Note: We don't auto-select the integration on initial load
+  // The user should manually select the integration, and then we auto-select the connection
 
   const selectedIntegration = integrations.find(
     (integration) => integration.id === selectedIntegrationId
@@ -268,8 +290,28 @@ export default function ProductListingsModal({
             <Select
               value={selectedIntegrationId}
               onValueChange={(value) => {
+                console.log('[ProductListingsModal] Integration selected:', value);
+                console.log('[ProductListingsModal] Preferred connection ID:', preferredConnectionId);
+
                 setSelectedIntegrationId(value);
-                setSelectedConnectionId("");
+
+                // Try to auto-select preferred connection if it exists in this integration
+                if (preferredConnectionId) {
+                  const newIntegration = integrations.find((i) => i.id === value);
+                  const preferredConnection = newIntegration?.connections.find(
+                    (conn) => conn.id === preferredConnectionId
+                  );
+
+                  if (preferredConnection) {
+                    console.log('[ProductListingsModal] ✓ Auto-selecting preferred connection:', preferredConnection.name);
+                    setSelectedConnectionId(preferredConnectionId);
+                  } else {
+                    console.log('[ProductListingsModal] ✗ Preferred connection not in this integration - clearing');
+                    setSelectedConnectionId("");
+                  }
+                } else {
+                  setSelectedConnectionId("");
+                }
               }}
             >
               <SelectTrigger>

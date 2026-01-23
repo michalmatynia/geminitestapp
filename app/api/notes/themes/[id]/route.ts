@@ -1,33 +1,33 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { noteService } from "@/lib/services/noteService/index";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { themeUpdateSchema } from "@/lib/validations/notes";
 import { removeUndefined } from "@/lib/utils";
 import type { ThemeUpdateInput } from "@/types/notes";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { notFoundError } from "@/lib/errors/app-error";
 
 /**
  * GET /api/notes/themes/[id]
  * Fetches a single theme by ID.
  */
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   try {
     const theme = await noteService.getThemeById(id);
     if (!theme) {
-      return NextResponse.json({ error: "Theme not found" }, { status: 404 });
+      throw notFoundError("Theme not found", { themeId: id });
     }
     return NextResponse.json(theme);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[themes][GET] Failed to fetch theme", { errorId, error });
-    return NextResponse.json(
-      { error: "Failed to fetch theme", errorId },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "themes.GET",
+      fallbackMessage: "Failed to fetch theme",
+    });
   }
 }
 
@@ -42,7 +42,7 @@ export async function PATCH(
   const { id } = await params;
   try {
     const parsed = await parseJsonBody(req, themeUpdateSchema, {
-      logPrefix: "themes:PATCH",
+      logPrefix: "themes.PATCH",
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -52,16 +52,15 @@ export async function PATCH(
       removeUndefined(parsed.data) as ThemeUpdateInput
     );
     if (!updated) {
-      return NextResponse.json({ error: "Theme not found" }, { status: 404 });
+      throw notFoundError("Theme not found", { themeId: id });
     }
     return NextResponse.json(updated);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[themes][PATCH] Failed to update theme", { errorId, error });
-    return NextResponse.json(
-      { error: "Failed to update theme", errorId },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "themes.PATCH",
+      fallbackMessage: "Failed to update theme",
+    });
   }
 }
 
@@ -70,22 +69,21 @@ export async function PATCH(
  * Deletes a theme.
  */
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   try {
     const success = await noteService.deleteTheme(id);
     if (!success) {
-      return NextResponse.json({ error: "Theme not found" }, { status: 404 });
+      throw notFoundError("Theme not found", { themeId: id });
     }
     return NextResponse.json({ success: true });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[themes][DELETE] Failed to delete theme", { errorId, error });
-    return NextResponse.json(
-      { error: "Failed to delete theme", errorId },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "themes.DELETE",
+      fallbackMessage: "Failed to delete theme",
+    });
   }
 }

@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { noteService } from "@/lib/services/noteService/index";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { noteUpdateSchema } from "@/lib/validations/notes";
 import { removeUndefined } from "@/lib/utils";
 import type { NoteUpdateInput } from "@/types/notes";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { notFoundError } from "@/lib/errors/app-error";
 
 /**
  * GET /api/notes/[id]
@@ -19,21 +20,16 @@ export async function GET(
     const note = await noteService.getById(id);
 
     if (!note) {
-      return NextResponse.json({ error: "Note not found" }, { status: 404 });
+      throw notFoundError("Note not found", { noteId: id });
     }
 
     return NextResponse.json(note);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[notes][GET] Failed to fetch note", {
-      errorId,
-      noteId: id,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "notes.GET",
+      fallbackMessage: "Failed to fetch note",
     });
-    return NextResponse.json(
-      { error: "Failed to fetch note", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -48,7 +44,7 @@ export async function PATCH(
   const { id } = await params;
   try {
     const parsed = await parseJsonBody(req, noteUpdateSchema, {
-      logPrefix: "notes:PATCH",
+      logPrefix: "notes.PATCH",
       allowEmpty: true,
     });
     if (!parsed.ok) {
@@ -62,27 +58,11 @@ export async function PATCH(
 
     return NextResponse.json(note);
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof Error) {
-      console.error("[notes][PATCH] Failed to update note", {
-        errorId,
-        noteId: id,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 500 }
-      );
-    }
-    console.error("[notes][PATCH] Unknown error updating note", {
-      errorId,
-      noteId: id,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "notes.PATCH",
+      fallbackMessage: "Failed to update note",
     });
-    return NextResponse.json(
-      { error: "Failed to update note", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -99,15 +79,10 @@ export async function DELETE(
     await noteService.delete(id);
     return NextResponse.json({ success: true });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[notes][DELETE] Failed to delete note", {
-      errorId,
-      noteId: id,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "notes.DELETE",
+      fallbackMessage: "Failed to delete note",
     });
-    return NextResponse.json(
-      { error: "Failed to delete note", errorId },
-      { status: 500 }
-    );
   }
 }

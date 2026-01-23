@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import { getCatalogRepository } from "@/lib/services/catalog-repository";
 import { getProductRepository } from "@/lib/services/product-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { badRequestError } from "@/lib/errors/app-error";
 
 const assignSchema = z.object({
   productIds: z.array(z.string().trim().min(1)).min(1),
@@ -16,21 +18,13 @@ const assignSchema = z.object({
  */
 export async function POST(req: Request) {
   try {
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch (error) {
-      const errorId = randomUUID();
-      console.error("[catalogs][ASSIGN] Failed to parse JSON body", {
-        errorId,
-        error,
-      });
-      return NextResponse.json(
-        { error: "Invalid JSON payload", errorId },
-        { status: 400 }
-      );
+    const parsed = await parseJsonBody(req, assignSchema, {
+      logPrefix: "catalogs.ASSIGN",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
     }
-    const data = assignSchema.parse(body);
+    const data = parsed.data;
     const mode = data.mode ?? "add";
 
     const uniqueCatalogIds = Array.from(new Set(data.catalogIds));
@@ -40,10 +34,9 @@ export async function POST(req: Request) {
     const existingIds = new Set(existingCatalogs.map((entry) => entry.id));
     const validCatalogIds = uniqueCatalogIds.filter((id) => existingIds.has(id));
     if (validCatalogIds.length === 0) {
-      return NextResponse.json(
-        { error: "No valid catalogs found." },
-        { status: 400 }
-      );
+      throw badRequestError("No valid catalogs found.", {
+        catalogIds: uniqueCatalogIds,
+      });
     }
 
     const uniqueProductIds = Array.from(new Set(data.productIds));
@@ -78,31 +71,10 @@ export async function POST(req: Request) {
       mode,
     });
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof z.ZodError) {
-      console.warn("[catalogs][ASSIGN] Invalid payload", {
-        errorId,
-        issues: error.flatten(),
-      });
-      return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten(), errorId },
-        { status: 400 }
-      );
-    }
-    if (error instanceof Error) {
-      console.error("[catalogs][ASSIGN] Failed to assign catalogs", {
-        errorId,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 400 }
-      );
-    }
-    console.error("[catalogs][ASSIGN] Unknown error", { errorId, error });
-    return NextResponse.json(
-      { error: "An unknown error occurred", errorId },
-      { status: 400 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "catalogs.ASSIGN",
+      fallbackMessage: "Failed to assign catalogs",
+    });
   }
 }

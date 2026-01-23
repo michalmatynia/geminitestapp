@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import {
+  badRequestError,
+  conflictError,
+  internalError,
+  notFoundError,
+} from "@/lib/errors/app-error";
 
 const productCategoryUpdateSchema = z.object({
   name: z.string().min(1).optional(),
@@ -24,23 +30,20 @@ export async function GET(
 ) {
   const params = await props.params;
   try {
+    if (!params.id) {
+      throw badRequestError("Category id is required");
+    }
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw internalError("MongoDB is not configured.");
       }
       const db = await getMongoDb();
       const category = await db
         .collection("product_categories")
         .findOne({ id: params.id });
       if (!category) {
-        return NextResponse.json(
-          { error: "Category not found" },
-          { status: 404 }
-        );
+        throw notFoundError("Category not found", { categoryId: params.id });
       }
       const children = await db
         .collection("product_categories")
@@ -80,10 +83,7 @@ export async function GET(
     }
 
     if (!process.env.DATABASE_URL) {
-      return NextResponse.json(
-        { error: "Product categories require the Postgres product store." },
-        { status: 400 }
-      );
+      throw badRequestError("Product categories require the Postgres product store.");
     }
 
     const category = await prisma.productCategory.findUnique({
@@ -95,24 +95,17 @@ export async function GET(
     });
 
     if (!category) {
-      return NextResponse.json(
-        { error: "Category not found" },
-        { status: 404 }
-      );
+      throw notFoundError("Category not found", { categoryId: params.id });
     }
 
     return NextResponse.json(category);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[product-categories][GET] Failed to fetch category", {
-      errorId,
-      categoryId: params.id,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "product-categories.GET",
+      fallbackMessage: "Failed to fetch category",
+      extra: { categoryId: params.id },
     });
-    return NextResponse.json(
-      { error: "Failed to fetch category", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -126,9 +119,12 @@ export async function PUT(
 ) {
   const params = await props.params;
   try {
+    if (!params.id) {
+      throw badRequestError("Category id is required");
+    }
     const provider = await getProductDataProvider();
     const parsed = await parseJsonBody(req, productCategoryUpdateSchema, {
-      logPrefix: "product-categories:PUT",
+      logPrefix: "product-categories.PUT",
       allowEmpty: true,
     });
     if (!parsed.ok) {
@@ -139,20 +135,14 @@ export async function PUT(
 
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw internalError("MongoDB is not configured.");
       }
       const db = await getMongoDb();
       const current = await db
         .collection("product_categories")
         .findOne({ id: params.id });
       if (!current) {
-        return NextResponse.json(
-          { error: "Category not found" },
-          { status: 404 }
-        );
+        throw notFoundError("Category not found", { categoryId: params.id });
       }
 
       const nextCatalogId =
@@ -165,10 +155,7 @@ export async function PUT(
             : (current as { parentId?: string | null }).parentId ?? null;
 
       if (!nextCatalogId) {
-        return NextResponse.json(
-          { error: "Catalog ID is required." },
-          { status: 400 }
-        );
+        throw badRequestError("Catalog ID is required.");
       }
 
       if (nextParentId) {
@@ -176,10 +163,10 @@ export async function PUT(
           .collection("product_categories")
           .findOne({ id: nextParentId });
         if (!parent || parent.catalogId !== nextCatalogId) {
-          return NextResponse.json(
-            { error: "Parent category must be in the same catalog." },
-            { status: 400 }
-          );
+          throw badRequestError("Parent category must be in the same catalog.", {
+            parentId: nextParentId,
+            catalogId: nextCatalogId,
+          });
         }
       }
 
@@ -195,10 +182,7 @@ export async function PUT(
           nextParentId
         );
         if (isDescendant) {
-          return NextResponse.json(
-            { error: "Cannot move category into itself or its descendants" },
-            { status: 400 }
-          );
+          throw badRequestError("Cannot move category into itself or its descendants");
         }
       }
 
@@ -211,10 +195,11 @@ export async function PUT(
         });
 
         if (existing) {
-          return NextResponse.json(
-            { error: "A category with this name already exists at this level" },
-            { status: 400 }
-          );
+          throw conflictError("A category with this name already exists at this level", {
+            name,
+            parentId: nextParentId,
+            catalogId: nextCatalogId,
+          });
         }
       }
 
@@ -237,10 +222,7 @@ export async function PUT(
     }
 
     if (!process.env.DATABASE_URL) {
-      return NextResponse.json(
-        { error: "Product categories require the Postgres product store." },
-        { status: 400 }
-      );
+      throw badRequestError("Product categories require the Postgres product store.");
     }
 
     const current = await prisma.productCategory.findUnique({
@@ -249,7 +231,7 @@ export async function PUT(
     });
 
     if (!current) {
-      return NextResponse.json({ error: "Category not found" }, { status: 404 });
+      throw notFoundError("Category not found", { categoryId: params.id });
     }
 
     const nextCatalogId = catalogId ?? current.catalogId;
@@ -266,10 +248,10 @@ export async function PUT(
         select: { catalogId: true },
       });
       if (!parent || parent.catalogId !== nextCatalogId) {
-        return NextResponse.json(
-          { error: "Parent category must be in the same catalog." },
-          { status: 400 }
-        );
+        throw badRequestError("Parent category must be in the same catalog.", {
+          parentId: nextParentId,
+          catalogId: nextCatalogId,
+        });
       }
     }
 
@@ -280,10 +262,7 @@ export async function PUT(
     ) {
       const isDescendant = await checkIsDescendant(params.id, nextParentId);
       if (isDescendant) {
-        return NextResponse.json(
-          { error: "Cannot move category into itself or its descendants" },
-          { status: 400 }
-        );
+        throw badRequestError("Cannot move category into itself or its descendants");
       }
     }
 
@@ -299,10 +278,11 @@ export async function PUT(
       });
 
       if (existing) {
-        return NextResponse.json(
-          { error: "A category with this name already exists at this level" },
-          { status: 400 }
-        );
+        throw conflictError("A category with this name already exists at this level", {
+          name,
+          parentId: nextParentId,
+          catalogId: nextCatalogId,
+        });
       }
     }
 
@@ -319,27 +299,12 @@ export async function PUT(
 
     return NextResponse.json(category);
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof Error) {
-      console.error("[product-categories][PUT] Failed to update category", {
-        errorId,
-        categoryId: params.id,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 500 }
-      );
-    }
-    console.error("[product-categories][PUT] Unknown error", {
-      errorId,
-      categoryId: params.id,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "product-categories.PUT",
+      fallbackMessage: "Failed to update category",
+      extra: { categoryId: params.id },
     });
-    return NextResponse.json(
-      { error: "Failed to update category", errorId },
-      { status: 500 }
-    );
   }
 }
 

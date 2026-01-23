@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, conflictError, internalError, notFoundError } from "@/lib/errors/app-error";
 
 const productTagUpdateSchema = z.object({
   name: z.string().min(1).optional(),
@@ -22,9 +23,12 @@ export async function PUT(
 ) {
   const params = await props.params;
   try {
+    if (!params.id) {
+      throw badRequestError("Tag id is required");
+    }
     const provider = await getProductDataProvider();
     const parsed = await parseJsonBody(req, productTagUpdateSchema, {
-      logPrefix: "product-tags:PUT",
+      logPrefix: "product-tags.PUT",
       allowEmpty: true,
     });
     if (!parsed.ok) {
@@ -35,23 +39,17 @@ export async function PUT(
 
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw internalError("MongoDB is not configured.");
       }
       const db = await getMongoDb();
       const current = await db.collection("product_tags").findOne({ id: params.id });
       if (!current) {
-        return NextResponse.json({ error: "Tag not found" }, { status: 404 });
+        throw notFoundError("Tag not found", { tagId: params.id });
       }
       const nextCatalogId =
         catalogId ?? (current as { catalogId?: string }).catalogId;
       if (!nextCatalogId) {
-        return NextResponse.json(
-          { error: "Catalog ID is required." },
-          { status: 400 }
-        );
+        throw badRequestError("Catalog ID is required.");
       }
       if (name !== undefined) {
         const existing = await db.collection("product_tags").findOne({
@@ -60,9 +58,9 @@ export async function PUT(
           id: { $ne: params.id },
         });
         if (existing) {
-          return NextResponse.json(
-            { error: "A tag with this name already exists in this catalog" },
-            { status: 400 }
+          throw conflictError(
+            "A tag with this name already exists in this catalog",
+            { name, catalogId: nextCatalogId }
           );
         }
       }
@@ -84,10 +82,7 @@ export async function PUT(
     }
 
     if (!process.env.DATABASE_URL) {
-      return NextResponse.json(
-        { error: "Product tags require the Postgres product store." },
-        { status: 400 }
-      );
+      throw badRequestError("Product tags require the Postgres product store.");
     }
 
     const current = await prisma.productTag.findUnique({
@@ -95,7 +90,7 @@ export async function PUT(
       select: { catalogId: true },
     });
     if (!current) {
-      return NextResponse.json({ error: "Tag not found" }, { status: 404 });
+      throw notFoundError("Tag not found", { tagId: params.id });
     }
     const nextCatalogId = catalogId ?? current.catalogId;
 
@@ -108,9 +103,9 @@ export async function PUT(
         },
       });
       if (existing) {
-        return NextResponse.json(
-          { error: "A tag with this name already exists in this catalog" },
-          { status: 400 }
+        throw conflictError(
+          "A tag with this name already exists in this catalog",
+          { name, catalogId: nextCatalogId }
         );
       }
     }
@@ -126,27 +121,12 @@ export async function PUT(
 
     return NextResponse.json(tag);
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof Error) {
-      console.error("[product-tags][PUT] Failed to update tag", {
-        errorId,
-        tagId: params.id,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 500 }
-      );
-    }
-    console.error("[product-tags][PUT] Unknown error", {
-      errorId,
-      tagId: params.id,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "product-tags.PUT",
+      fallbackMessage: "Failed to update product tag",
+      extra: { tagId: params.id },
     });
-    return NextResponse.json(
-      { error: "Failed to update product tag", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -155,18 +135,18 @@ export async function PUT(
  * Deletes a product tag.
  */
 export async function DELETE(
-  _req: Request,
+  req: Request,
   props: { params: Promise<{ id: string }> }
 ) {
   const params = await props.params;
   try {
+    if (!params.id) {
+      throw badRequestError("Tag id is required");
+    }
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw internalError("MongoDB is not configured.");
       }
       const db = await getMongoDb();
       await db.collection("product_tags").deleteOne({ id: params.id });
@@ -174,24 +154,17 @@ export async function DELETE(
     }
 
     if (!process.env.DATABASE_URL) {
-      return NextResponse.json(
-        { error: "Product tags require the Postgres product store." },
-        { status: 400 }
-      );
+      throw badRequestError("Product tags require the Postgres product store.");
     }
 
     await prisma.productTag.delete({ where: { id: params.id } });
     return NextResponse.json({ success: true });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[product-tags][DELETE] Failed to delete tag", {
-      errorId,
-      tagId: params.id,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "product-tags.DELETE",
+      fallbackMessage: "Failed to delete product tag",
+      extra: { tagId: params.id },
     });
-    return NextResponse.json(
-      { error: "Failed to delete product tag", errorId },
-      { status: 500 }
-    );
   }
 }

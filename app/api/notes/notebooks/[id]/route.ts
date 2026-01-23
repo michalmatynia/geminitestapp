@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { noteService } from "@/lib/services/noteService/index";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { notebookUpdateSchema } from "@/lib/validations/notes";
 import { removeUndefined } from "@/lib/utils";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
 
 /**
  * PATCH /api/notes/notebooks/[id]
@@ -16,7 +16,7 @@ export async function PATCH(
   const { id } = await params;
   try {
     const parsed = await parseJsonBody(req, notebookUpdateSchema, {
-      logPrefix: "notebooks:PATCH",
+      logPrefix: "notebooks.PATCH",
       allowEmpty: true,
     });
     if (!parsed.ok) {
@@ -25,27 +25,11 @@ export async function PATCH(
     const notebook = await noteService.updateNotebook(id, removeUndefined(parsed.data));
     return NextResponse.json(notebook);
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof Error) {
-      console.error("[notebooks][PATCH] Failed to update notebook", {
-        errorId,
-        notebookId: id,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 500 }
-      );
-    }
-    console.error("[notebooks][PATCH] Unknown error updating notebook", {
-      errorId,
-      notebookId: id,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "notebooks.PATCH",
+      fallbackMessage: "Failed to update notebook",
     });
-    return NextResponse.json(
-      { error: "Failed to update notebook", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -62,15 +46,10 @@ export async function DELETE(
     await noteService.deleteNotebook(id);
     return NextResponse.json({ success: true });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[notebooks][DELETE] Failed to delete notebook", {
-      errorId,
-      notebookId: id,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "notebooks.DELETE",
+      fallbackMessage: "Failed to delete notebook",
     });
-    return NextResponse.json(
-      { error: "Failed to delete notebook", errorId },
-      { status: 500 }
-    );
   }
 }

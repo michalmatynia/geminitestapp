@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
 import { ProductDraft, CreateProductDraftInput } from "@/types/drafts";
-import type { CatalogRecord, PriceGroupWithDetails } from "@/types";
+import type { CatalogRecord } from "@/types";
 import type { ProductCategory, ProductTag } from "@/types/products";
 import {
   Package,
@@ -75,30 +75,20 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
   const [catalogs, setCatalogs] = useState<CatalogRecord[]>([]);
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [tags, setTags] = useState<ProductTag[]>([]);
-  const [priceGroups, setPriceGroups] = useState<PriceGroupWithDetails[]>([]);
 
   const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
-  const [selectedPriceGroupId, setSelectedPriceGroupId] = useState<string>("");
 
   // Load metadata
   useEffect(() => {
     const loadMetadata = async () => {
       try {
-        const [catalogsRes, priceGroupsRes] = await Promise.all([
-          fetch("/api/catalogs"),
-          fetch("/api/price-groups"),
-        ]);
+        const catalogsRes = await fetch("/api/catalogs");
 
         if (catalogsRes.ok) {
           const catalogsData = (await catalogsRes.json()) as CatalogRecord[];
           setCatalogs(catalogsData);
-        }
-
-        if (priceGroupsRes.ok) {
-          const pgData = (await priceGroupsRes.json()) as PriceGroupWithDetails[];
-          setPriceGroups(pgData);
         }
       } catch (error) {
         console.error("Failed to load metadata:", error);
@@ -186,7 +176,6 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
       setSelectedCatalogIds([]);
       setSelectedCategoryIds([]);
       setSelectedTagIds([]);
-      setSelectedPriceGroupId("");
       return;
     }
 
@@ -230,7 +219,6 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
         setSelectedCatalogIds(draft.catalogIds || []);
         setSelectedCategoryIds(draft.categoryIds || []);
         setSelectedTagIds(draft.tagIds || []);
-        setSelectedPriceGroupId(draft.defaultPriceGroupId || "");
       } catch (error) {
         console.error("Failed to load draft:", error);
         toast("Failed to load draft", { variant: "error" });
@@ -276,7 +264,6 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
         catalogIds: selectedCatalogIds,
         categoryIds: selectedCategoryIds,
         tagIds: selectedTagIds,
-        defaultPriceGroupId: selectedPriceGroupId || null,
         active,
         icon,
         imageLinks: imageLinks.filter((link) => link.trim()),
@@ -723,28 +710,14 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
           </div>
         )}
 
-        {/* Price Group */}
-        {priceGroups.length > 0 && (
-          <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4">
-            <h3 className="text-sm font-semibold text-white">Default Price Group</h3>
-            <div className="flex flex-wrap gap-2">
-              {priceGroups.map((pg) => (
-                <button
-                  key={pg.id}
-                  type="button"
-                  onClick={() =>
-                    setSelectedPriceGroupId((prev) => (prev === pg.id ? "" : pg.id))
-                  }
-                  className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-                    selectedPriceGroupId === pg.id
-                      ? "bg-yellow-600 text-white"
-                      : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                  }`}
-                >
-                  {pg.name}
-                </button>
-              ))}
-            </div>
+        {/* Price Group Info */}
+        {selectedCatalogIds.length > 0 && (
+          <div className="rounded-lg border border-blue-900/50 bg-blue-950/20 p-4">
+            <h3 className="text-sm font-semibold text-blue-400 mb-2">Price Group Information</h3>
+            <p className="text-sm text-blue-300/70">
+              Products created from this draft will automatically use the default price group from the selected catalog(s).
+              Price groups are configured per catalog and cannot be manually overridden in drafts.
+            </p>
           </div>
         )}
 

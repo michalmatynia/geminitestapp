@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { noteService } from "@/lib/services/noteService";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
 
 interface FolderNode {
   name: string;
@@ -16,10 +19,42 @@ interface NoteImport {
 
 interface ImportRequest {
   notebookId: string;
-  parentFolderId?: string | null;
-  structure?: FolderNode;
-  structures?: FolderNode[];
+  parentFolderId?: string | null | undefined;
+  structure?: FolderNode | undefined;
+  structures?: FolderNode[] | undefined;
 }
+
+const noteImportSchema = z.object({
+  title: z.string().trim().min(1),
+  content: z.string().default(""),
+  path: z.string().trim().min(1),
+});
+
+const folderNodeSchema: z.ZodType<FolderNode> = z.lazy(() =>
+  z.object({
+    name: z.string().trim().min(1),
+    path: z.string().trim().min(1),
+    children: z.array(folderNodeSchema).optional().default([]),
+    notes: z.array(noteImportSchema).optional().default([]),
+  })
+);
+
+const importSchema: z.ZodSchema<ImportRequest> = z
+  .object({
+    notebookId: z.string().trim().min(1),
+    parentFolderId: z.string().trim().min(1).nullable().optional(),
+    structure: folderNodeSchema.optional(),
+    structures: z.array(folderNodeSchema).optional(),
+  })
+  .refine(
+    (data) =>
+      Boolean(data.structure) ||
+      Boolean(data.structures && data.structures.length > 0),
+    {
+      message: "Missing required field: structure or structures",
+      path: ["structures"],
+    }
+  );
 
 async function createFolderStructure(
   node: FolderNode,
@@ -57,22 +92,13 @@ async function createFolderStructure(
 
 export async function POST(req: NextRequest) {
   try {
-    const body: ImportRequest = await req.json();
-    const { notebookId, parentFolderId, structure, structures } = body;
-
-    if (!notebookId) {
-      return NextResponse.json(
-        { error: "Missing required field: notebookId" },
-        { status: 400 }
-      );
+    const parsed = await parseJsonBody(req, importSchema, {
+      logPrefix: "notes.import-folder",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
     }
-
-    if (!structure && (!structures || structures.length === 0)) {
-      return NextResponse.json(
-        { error: "Missing required field: structure or structures" },
-        { status: 400 }
-      );
-    }
+    const { notebookId, parentFolderId, structure, structures } = parsed.data;
 
     const categoryMap = new Map<string, string>();
 
@@ -103,10 +129,10 @@ export async function POST(req: NextRequest) {
       categoriesCreated: categoryMap.size,
     });
   } catch (error) {
-    console.error("Failed to import folder structure:", error);
-    return NextResponse.json(
-      { error: "Failed to import folder structure" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "notes.import-folder",
+      fallbackMessage: "Failed to import folder structure",
+    });
   }
 }

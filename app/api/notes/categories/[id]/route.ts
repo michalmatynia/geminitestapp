@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { noteService } from "@/lib/services/noteService";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { categoryUpdateSchema } from "@/lib/validations/notes";
 import { removeUndefined } from "@/lib/utils";
 import type { CategoryUpdateInput } from "@/types/notes";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
 
 /**
  * PATCH /api/notes/categories/[id]
@@ -17,7 +17,7 @@ export async function PATCH(
   const params = await props.params;
   try {
     const parsed = await parseJsonBody(req, categoryUpdateSchema, {
-      logPrefix: "categories:PATCH",
+      logPrefix: "categories.PATCH",
       allowEmpty: true,
     });
     if (!parsed.ok) {
@@ -29,27 +29,11 @@ export async function PATCH(
     );
     return NextResponse.json(category);
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof Error) {
-      console.error("[categories][PATCH] Failed to update category", {
-        errorId,
-        categoryId: params.id,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 500 }
-      );
-    }
-    console.error("[categories][PATCH] Unknown error updating category", {
-      errorId,
-      categoryId: params.id,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "categories.PATCH",
+      fallbackMessage: "Failed to update category",
     });
-    return NextResponse.json(
-      { error: "Failed to update category", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -72,16 +56,10 @@ export async function DELETE(
     await noteService.deleteCategory(params.id, recursive);
     return NextResponse.json({ success: true });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[categories][DELETE] Failed to delete category", {
-      errorId,
-      categoryId: params.id,
-      recursive,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "categories.DELETE",
+      fallbackMessage: "Failed to delete category",
     });
-    return NextResponse.json(
-      { error: "Failed to delete category", errorId },
-      { status: 500 }
-    );
   }
 }

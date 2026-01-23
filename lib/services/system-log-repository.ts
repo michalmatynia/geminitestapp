@@ -1,32 +1,32 @@
 import { randomUUID } from "crypto";
-import type { Filter, Document } from "mongodb";
+import type { Filter, Document, ObjectId } from "mongodb";
 import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import type { SystemLogLevel, SystemLogRecord } from "@/types";
 
 export type CreateSystemLogInput = {
-  level?: SystemLogLevel;
+  level?: SystemLogLevel | undefined;
   message: string;
-  source?: string | null;
-  context?: Record<string, unknown> | null;
-  stack?: string | null;
-  path?: string | null;
-  method?: string | null;
-  statusCode?: number | null;
-  requestId?: string | null;
-  userId?: string | null;
-  createdAt?: Date;
+  source?: string | null | undefined;
+  context?: Record<string, unknown> | null | undefined;
+  stack?: string | null | undefined;
+  path?: string | null | undefined;
+  method?: string | null | undefined;
+  statusCode?: number | null | undefined;
+  requestId?: string | null | undefined;
+  userId?: string | null | undefined;
+  createdAt?: Date | undefined;
 };
 
 export type ListSystemLogsInput = {
-  page?: number;
-  pageSize?: number;
-  level?: SystemLogLevel | null;
-  source?: string | null;
-  query?: string | null;
-  from?: Date | null;
-  to?: Date | null;
+  page?: number | undefined;
+  pageSize?: number | undefined;
+  level?: SystemLogLevel | null | undefined;
+  source?: string | null | undefined;
+  query?: string | null | undefined;
+  from?: Date | null | undefined;
+  to?: Date | null | undefined;
 };
 
 export type ListSystemLogsResult = {
@@ -44,7 +44,7 @@ const normalizeLogRecord = (record: SystemLogRecord): SystemLogRecord => ({
 });
 
 const toSystemLogRecord = (doc: {
-  _id?: string;
+  _id?: string | ObjectId;
   id?: string;
   level?: string;
   message?: string;
@@ -117,7 +117,7 @@ export async function createSystemLog(
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     await mongo.collection(SYSTEM_LOGS_COLLECTION).insertOne({
-      _id: payload.id,
+      _id: payload.id as any,
       ...payload,
     });
     return normalizeLogRecord(payload);
@@ -128,7 +128,7 @@ export async function createSystemLog(
       level: payload.level,
       message: payload.message,
       source: payload.source ?? undefined,
-      context: payload.context ?? undefined,
+      context: (payload.context as any) ?? undefined,
       stack: payload.stack ?? undefined,
       path: payload.path ?? undefined,
       method: payload.method ?? undefined,
@@ -166,7 +166,7 @@ export async function listSystemLogs(
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .toArray();
-    const logs = docs.map((doc) => normalizeLogRecord(toSystemLogRecord(doc)));
+    const logs = docs.map((doc) => normalizeLogRecord(toSystemLogRecord(doc as any)));
     return { logs, total, page, pageSize };
   }
 
@@ -200,7 +200,7 @@ export async function listSystemLogs(
     }),
   ]);
 
-  const logs = rows.map((row) =>
+  const logs = rows.map((row: any) =>
     normalizeLogRecord({
       ...row,
       context: (row.context as Record<string, unknown> | null) ?? null,

@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { encryptSecret } from "@/lib/utils/encryption";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { badRequestError, conflictError, notFoundError } from "@/lib/errors/app-error";
 
 const createConnectionSchema = z
   .object({
@@ -17,7 +19,7 @@ const createConnectionSchema = z
  * Fetch connections for an integration.
  */
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   let integrationId: string | null = null;
@@ -25,6 +27,9 @@ export async function GET(
   try {
     const { id } = await params;
     integrationId = id;
+    if (!integrationId) {
+      throw badRequestError("Integration id is required");
+    }
 
     const repo = await getIntegrationRepository();
     const connections = await repo.listConnections(integrationId);
@@ -71,16 +76,12 @@ export async function GET(
 
     return NextResponse.json(payload);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[integrations][connections][GET] Failed to fetch", {
-      errorId,
-      integrationId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "integrations.connections.GET",
+      fallbackMessage: "Failed to fetch connections",
+      ...(integrationId ? { extra: { integrationId } } : {}),
     });
-    return NextResponse.json(
-      { error: "Failed to fetch connections", errorId, integrationId },
-      { status: 500 }
-    );
   }
 }
 
@@ -97,40 +98,27 @@ export async function POST(
   try {
     const { id } = await params;
     integrationId = id;
-
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch (error) {
-      const errorId = randomUUID();
-      console.error("[integrations][connections][POST] Invalid JSON", {
-        errorId,
-        integrationId,
-        error,
-      });
-      return NextResponse.json(
-        { error: "Invalid JSON payload", errorId, integrationId },
-        { status: 400 }
-      );
+    if (!integrationId) {
+      throw badRequestError("Integration id is required");
     }
 
-    const data = createConnectionSchema.parse(body);
+    const parsed = await parseJsonBody(req, createConnectionSchema, {
+      logPrefix: "integrations.connections.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
 
     const repo = await getIntegrationRepository();
     const integration = await repo.getIntegrationById(integrationId);
     if (!integration) {
-      return NextResponse.json(
-        { error: "Integration not found", integrationId },
-        { status: 404 }
-      );
+      throw notFoundError("Integration not found", { integrationId });
     }
 
     const existing = await repo.listConnections(integrationId);
     if (existing.length > 0) {
-      return NextResponse.json(
-        { error: "Connection already exists", integrationId },
-        { status: 400 }
-      );
+      throw conflictError("Connection already exists", { integrationId });
     }
 
     const created = await repo.createConnection(integrationId, {
@@ -172,37 +160,11 @@ export async function POST(
       playwrightDeviceName: created.playwrightDeviceName,
     });
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof z.ZodError) {
-      console.warn("[integrations][connections][POST] Invalid payload", {
-        errorId,
-        integrationId,
-        issues: error.flatten(),
-      });
-      return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten(), errorId },
-        { status: 400 }
-      );
-    }
-    if (error instanceof Error) {
-      console.error("[integrations][connections][POST] Failed", {
-        errorId,
-        integrationId,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId, integrationId },
-        { status: 400 }
-      );
-    }
-    console.error("[integrations][connections][POST] Unknown error", {
-      errorId,
-      integrationId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "integrations.connections.POST",
+      fallbackMessage: "Failed to create connection",
+      ...(integrationId ? { extra: { integrationId } } : {}),
     });
-    return NextResponse.json(
-      { error: "An unknown error occurred", errorId, integrationId },
-      { status: 400 }
-    );
   }
 }

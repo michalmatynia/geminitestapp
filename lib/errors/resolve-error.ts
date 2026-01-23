@@ -13,7 +13,7 @@ export type ResolvedError = {
   code: AppErrorCode;
   httpStatus: number;
   expected: boolean;
-  meta?: Record<string, unknown>;
+  meta?: Record<string, unknown> | undefined;
   cause?: unknown;
 };
 

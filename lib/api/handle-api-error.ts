@@ -3,11 +3,11 @@ import { resolveError } from "@/lib/errors/resolve-error";
 import { logSystemEvent } from "@/lib/services/system-logger";
 
 type ApiErrorOptions = {
-  request?: Request;
-  source?: string;
-  fallbackMessage?: string;
-  includeDetails?: boolean;
-  extra?: Record<string, unknown>;
+  request?: Request | undefined;
+  source?: string | undefined;
+  fallbackMessage?: string | undefined;
+  includeDetails?: boolean | undefined;
+  extra?: Record<string, unknown> | undefined;
 };
 
 export const createErrorResponse = (

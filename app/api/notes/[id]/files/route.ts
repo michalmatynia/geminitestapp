@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { uploadNoteFile } from "@/lib/utils/fileUploader";
 import { noteService } from "@/lib/services/noteService";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, conflictError, notFoundError } from "@/lib/errors/app-error";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_SLOT_INDEX = 9;
@@ -19,16 +20,11 @@ export async function GET(
     const files = await noteService.getNoteFiles(id);
     return NextResponse.json(files);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[notes][files][GET] Failed to get files", {
-      errorId,
-      noteId: id,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "notes.files.GET",
+      fallbackMessage: "Failed to get files",
     });
-    return NextResponse.json(
-      { error: "Failed to get files", errorId },
-      { status: 500 }
-    );
   }
 }
 
@@ -46,76 +42,58 @@ export async function POST(
     let formData: FormData;
     try {
       formData = await req.formData();
-    } catch {
-      return NextResponse.json(
-        { error: "Invalid form data" },
-        { status: 400 }
-      );
+    } catch (error) {
+      throw badRequestError("Invalid form data", { error });
     }
 
     const file = formData.get("file") as File | null;
     const slotIndexStr = formData.get("slotIndex") as string | null;
 
     if (!file) {
-      return NextResponse.json(
-        { error: "No file provided" },
-        { status: 400 }
-      );
+      throw badRequestError("No file provided");
     }
 
     if (!slotIndexStr) {
-      return NextResponse.json(
-        { error: "No slot index provided" },
-        { status: 400 }
-      );
+      throw badRequestError("No slot index provided");
     }
 
     const slotIndex = parseInt(slotIndexStr, 10);
     if (isNaN(slotIndex) || slotIndex < 0 || slotIndex > MAX_SLOT_INDEX) {
-      return NextResponse.json(
-        { error: `Slot index must be between 0 and ${MAX_SLOT_INDEX}` },
-        { status: 400 }
-      );
+      throw badRequestError(`Slot index must be between 0 and ${MAX_SLOT_INDEX}`, {
+        slotIndex: slotIndexStr,
+      });
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { error: "File size exceeds 10MB limit" },
-        { status: 400 }
-      );
+      throw badRequestError("File size exceeds 10MB limit", {
+        size: file.size,
+        maxSize: MAX_FILE_SIZE,
+      });
     }
 
     // Check if note exists
     const note = await noteService.getById(noteId);
     if (!note) {
-      return NextResponse.json(
-        { error: "Note not found" },
-        { status: 404 }
-      );
+      throw notFoundError("Note not found", { noteId });
     }
 
     // Check if slot is already occupied
     const existingFiles = await noteService.getNoteFiles(noteId);
     const existingFile = existingFiles.find((f) => f.slotIndex === slotIndex);
     if (existingFile) {
-      return NextResponse.json(
-        { error: `Slot ${slotIndex} is already occupied. Delete the existing file first.` },
-        { status: 409 }
+      throw conflictError(
+        `Slot ${slotIndex} is already occupied. Delete the existing file first.`,
+        { noteId, slotIndex }
       );
     }
 
     const noteFile = await uploadNoteFile(file, noteId, slotIndex);
     return NextResponse.json(noteFile, { status: 201 });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[notes][files][POST] Failed to upload file", {
-      errorId,
-      noteId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "notes.files.POST",
+      fallbackMessage: "Failed to upload file",
     });
-    return NextResponse.json(
-      { error: "Failed to upload file", errorId },
-      { status: 500 }
-    );
   }
 }

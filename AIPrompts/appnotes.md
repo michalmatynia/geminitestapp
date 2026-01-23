@@ -1,27 +1,29 @@
 
-px prisma migrate dev
+npx prisma migrate dev
 npx prisma generate
 /admin/system/logs
 
 
-apply consistent error mapping all across the application
+When I update price / stock, it shouldn't rerender the whole list, should it ?
 
-I am still not seeing the detailed Results in the AI Jobs Detail page when the job is run on a product Generate Description/
+When I create the PRoduct and add Images, I try to resort them and then the Images begin to flicker
+
+LATER - add other GEminiInstructions (especially for the use of tanstack query and schadcn/ui all across application)
+
+LATER - apply consistent error mapping and handling all across the application
+routes, services and client-side error handling
+do Critical paths first, then comprehensive audit
+do a full test run  after
+
+* I am still not seeing the detailed Results in the AI Jobs Detail page when the job is run on a product Generate Description/ Translation 
 When I run the Generate description, I don't get to see the results in the AI Jobs Detail page, 
 
-AI Export Job, I want to see a detailed log for each step of the export job, also want to see the error responses from the API .
 
-
-WHen I click on + to list my product and then select Baselinker as my target Export, in teh same modal a dropdown appears, where I still need to choose which account I want to export to, this default export account is already defined in my export settings and I shouldn't need to choose it again, it should be pre-selected
-
-
-In my Drafts, Price grup shouldn't be there at all, cause it's dependent on what is the Catalog Price Group
-
-In Products List, My drafts are not active in Product List, the Icons Beside + Create Product don't launch Create Product modal in Draft mode with prefilled fields.
-
+* In my Drafts, Price grup shouldn't be selectable at all, cause it's dependent on what is the Catalog Price Group
 In Product Drafts, Price group default of the catalog
 
-In Products - Drafts Section, When I Edit the Draft, , add one additional field, a choice of Black and White Circular Icons, When the Draft is set to Active in the Draft List ( with a Radio button), The Icon will appear in the product list Right under the Products text, to the Right of Big Plus that Creates Products from scratch. Clicking the Draft Icons will launch a modal panel with prefilled values, like it is set up in the Draft Template
+
+In Products List, My drafts are not active in Product List, the Icons Beside + Create Product doesn't launch Create Product modal in Draft mode with prefilled fields.
 
 Note APP, simplified NoTE editing, which allows me to edit, delete text right in the note preview. Unless I want a deeper edit. Note Should Auto Save
 
@@ -54,6 +56,8 @@ Markdown TO Wysywig make it a dropdown and place it by Delete
 
 * Opening WYSYWIG Note fails in Edit Mode
 
+
+Post Production Studio -> Should have changeable options for relight etc. also an option to Generate, or add environemet. Also, each post-production work should be handled in one session, so it's easier to regenerate with an addidtional prompt (or prompt suggestions)
 
 In Product List - Operations - I need an Option to Mass Export Products to Base.com
 

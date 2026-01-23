@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { noteService } from "@/lib/services/noteService/index";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { tagCreateSchema } from "@/lib/validations/notes";
 import { removeUndefined } from "@/lib/utils";
 import type { TagCreateInput } from "@/types/notes";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
 
 /**
  * GET /api/notes/tags
@@ -20,12 +20,11 @@ export async function GET(req: Request) {
     const tags = await noteService.getAllTags(notebook.id);
     return NextResponse.json(tags);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[tags][GET] Failed to fetch tags", { errorId, error });
-    return NextResponse.json(
-      { error: "Failed to fetch tags", errorId },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "tags.GET",
+      fallbackMessage: "Failed to fetch tags",
+    });
   }
 }
 
@@ -36,7 +35,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const parsed = await parseJsonBody(req, tagCreateSchema, {
-      logPrefix: "tags:POST",
+      logPrefix: "tags.POST",
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -50,21 +49,10 @@ export async function POST(req: Request) {
     }) as TagCreateInput);
     return NextResponse.json(tag, { status: 201 });
   } catch (error: unknown) {
-    const errorId = randomUUID();
-    if (error instanceof Error) {
-      console.error("[tags][POST] Failed to create tag", {
-        errorId,
-        message: error.message,
-      });
-      return NextResponse.json(
-        { error: error.message, errorId },
-        { status: 500 }
-      );
-    }
-    console.error("[tags][POST] Unknown error creating tag", { errorId, error });
-    return NextResponse.json(
-      { error: "Failed to create tag", errorId },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "tags.POST",
+      fallbackMessage: "Failed to create tag",
+    });
   }
 }

@@ -23,7 +23,7 @@ describe("Languages API", () => {
 
   describe("GET /api/languages", () => {
     it("should seed default languages on first call", async () => {
-      const res = await GET();
+      const res = await GET(new Request("http://localhost/api/languages"));
       const languages = (await res.json()) as LanguageResponse[];
 
       expect(res.status).toEqual(200);

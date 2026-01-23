@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { encryptSecret } from "@/lib/utils/encryption";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/lib/api/parse-json";
+import { badRequestError } from "@/lib/errors/app-error";
 
 const connectionSchema = z.object({
   name: z.string().trim().min(1),
@@ -42,27 +44,17 @@ export async function PUT(
   try {
     const { id } = await params;
     connectionId = id;
-
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch (error) {
-      const errorId = randomUUID();
-      console.error(
-        "[integrations][connection][PUT] Failed to parse JSON body",
-        {
-          errorId,
-          connectionId,
-          error,
-        }
-      );
-      return NextResponse.json(
-        { error: "Invalid JSON payload", errorId, connectionId },
-        { status: 400 }
-      );
+    if (!connectionId) {
+      throw badRequestError("Connection id is required");
     }
 
-    const data = connectionSchema.parse(body);
+    const parsed = await parseJsonBody(req, connectionSchema, {
+      logPrefix: "integrations.connection.PUT",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
 
     const repo = await getIntegrationRepository();
     const connection = await repo.updateConnection(connectionId, {
@@ -166,49 +158,12 @@ export async function PUT(
       playwrightDeviceName: connection.playwrightDeviceName,
     });
   } catch (error: unknown) {
-    const errorId = randomUUID();
-
-    if (error instanceof z.ZodError) {
-      console.warn("[integrations][connection][PUT] Invalid payload", {
-        errorId,
-        connectionId,
-        issues: error.flatten(),
-      });
-      return NextResponse.json(
-        {
-          error: "Invalid payload",
-          details: error.flatten(),
-          errorId,
-          connectionId,
-        },
-        { status: 400 }
-      );
-    }
-
-    if (error instanceof Error) {
-      console.error(
-        "[integrations][connection][PUT] Failed to update connection",
-        {
-          errorId,
-          connectionId,
-          message: error.message,
-        }
-      );
-      return NextResponse.json(
-        { error: error.message, errorId, connectionId },
-        { status: 400 }
-      );
-    }
-
-    console.error("[integrations][connection][PUT] Unknown error", {
-      errorId,
-      connectionId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "integrations.connection.PUT",
+      fallbackMessage: "Failed to update connection",
+      ...(connectionId ? { extra: { connectionId } } : {}),
     });
-    return NextResponse.json(
-      { error: "An unknown error occurred", errorId, connectionId },
-      { status: 400 }
-    );
   }
 }
 
@@ -217,7 +172,7 @@ export async function PUT(
  * Deletes an integration connection.
  */
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   let connectionId: string | null = null;
@@ -225,36 +180,19 @@ export async function DELETE(
   try {
     const { id } = await params;
     connectionId = id;
+    if (!connectionId) {
+      throw badRequestError("Connection id is required");
+    }
 
     const repo = await getIntegrationRepository();
     await repo.deleteConnection(connectionId);
     return new Response(null, { status: 204 });
   } catch (error: unknown) {
-    const errorId = randomUUID();
-
-    if (error instanceof Error) {
-      console.error(
-        "[integrations][connection][DELETE] Failed to delete connection",
-        {
-          errorId,
-          connectionId,
-          message: error.message,
-        }
-      );
-      return NextResponse.json(
-        { error: error.message, errorId, connectionId },
-        { status: 400 }
-      );
-    }
-
-    console.error("[integrations][connection][DELETE] Unknown error", {
-      errorId,
-      connectionId,
-      error,
+    return createErrorResponse(error, {
+      request: req,
+      source: "integrations.connection.DELETE",
+      fallbackMessage: "Failed to delete connection",
+      ...(connectionId ? { extra: { connectionId } } : {}),
     });
-    return NextResponse.json(
-      { error: "Failed to delete connection", errorId, connectionId },
-      { status: 500 }
-    );
   }
 }

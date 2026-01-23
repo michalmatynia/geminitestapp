@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { noteService } from "@/lib/services/noteService/index";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { themeCreateSchema } from "@/lib/validations/notes";
 import type { ThemeCreateInput } from "@/types/notes";
 import { removeUndefined } from "@/lib/utils";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
 
 /**
  * GET /api/notes/themes
@@ -20,12 +20,11 @@ export async function GET(req: Request) {
     const themes = await noteService.getAllThemes(notebookId);
     return NextResponse.json(themes);
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[themes][GET] Failed to fetch themes", { errorId, error });
-    return NextResponse.json(
-      { error: "Failed to fetch themes", errorId },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "themes.GET",
+      fallbackMessage: "Failed to fetch themes",
+    });
   }
 }
 
@@ -36,7 +35,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const parsed = await parseJsonBody(req, themeCreateSchema, {
-      logPrefix: "themes:POST",
+      logPrefix: "themes.POST",
     });
     if (!parsed.ok) {
       return parsed.response;
@@ -49,11 +48,10 @@ export async function POST(req: Request) {
     }) as ThemeCreateInput);
     return NextResponse.json(theme, { status: 201 });
   } catch (error) {
-    const errorId = randomUUID();
-    console.error("[themes][POST] Failed to create theme", { errorId, error });
-    return NextResponse.json(
-      { error: "Failed to create theme", errorId },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "themes.POST",
+      fallbackMessage: "Failed to create theme",
+    });
   }
 }

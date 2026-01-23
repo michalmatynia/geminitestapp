@@ -284,28 +284,28 @@ export default function ProductAiJobsPage() {
                 </div>
 
                 {/* Model Information */}
-                {selectedJob.result && (selectedJob.result.visionModel || selectedJob.result.generationModel) && (
+                {selectedJob.result && ((selectedJob.result as any).visionModel || (selectedJob.result as any).generationModel) && (
                   <div className="rounded-md bg-gray-900/50 border border-gray-800 p-4">
                     <div className="text-gray-400 font-bold text-xs uppercase mb-3">AI Models Used</div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {selectedJob.result.visionModel && (
+                      {(selectedJob.result as any).visionModel && (
                         <div>
                           <div className="text-blue-400 text-[10px] font-bold uppercase mb-1">Vision Model (Path 1)</div>
-                          <div className="text-white font-mono text-sm">{selectedJob.result.visionModel}</div>
-                          {selectedJob.result.visionOutputEnabled !== undefined && (
+                          <div className="text-white font-mono text-sm">{(selectedJob.result as any).visionModel}</div>
+                          {(selectedJob.result as any).visionOutputEnabled !== undefined && (
                             <div className="text-gray-500 text-[10px] mt-1">
-                              Refinement: {selectedJob.result.visionOutputEnabled ? "Enabled" : "Disabled"}
+                              Refinement: {(selectedJob.result as any).visionOutputEnabled ? "Enabled" : "Disabled"}
                             </div>
                           )}
                         </div>
                       )}
-                      {selectedJob.result.generationModel && (
+                      {(selectedJob.result as any).generationModel && (
                         <div>
                           <div className="text-purple-400 text-[10px] font-bold uppercase mb-1">Generation Model (Path 2)</div>
-                          <div className="text-white font-mono text-sm">{selectedJob.result.generationModel}</div>
-                          {selectedJob.result.generationOutputEnabled !== undefined && (
+                          <div className="text-white font-mono text-sm">{(selectedJob.result as any).generationModel}</div>
+                          {(selectedJob.result as any).generationOutputEnabled !== undefined && (
                             <div className="text-gray-500 text-[10px] mt-1">
-                              Refinement: {selectedJob.result.generationOutputEnabled ? "Enabled" : "Disabled"}
+                              Refinement: {(selectedJob.result as any).generationOutputEnabled ? "Enabled" : "Disabled"}
                             </div>
                           )}
                         </div>
@@ -329,15 +329,15 @@ export default function ProductAiJobsPage() {
                       <div className="space-y-2">
                         <div className="text-blue-400 uppercase text-[10px] font-bold">Path 1: Image Analysis (Initial)</div>
                         <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-gray-800 max-h-40 overflow-auto">
-                          {selectedJob.result.analysisInitial || selectedJob.result.analysis || 'N/A'}
+                          {(selectedJob.result as any).analysisInitial || (selectedJob.result as any).analysis || 'N/A'}
                         </div>
                       </div>
 
-                      {selectedJob.result.analysisFinal && (
+                      {(selectedJob.result as any).analysisFinal && (
                         <div className="space-y-2">
                           <div className="text-blue-400 uppercase text-[10px] font-bold">Path 1: Image Analysis (Final)</div>
                           <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-gray-800 max-h-40 overflow-auto">
-                            {selectedJob.result.analysisFinal}
+                            {(selectedJob.result as any).analysisFinal}
                           </div>
                         </div>
                       )}
@@ -347,18 +347,69 @@ export default function ProductAiJobsPage() {
                       <div className="space-y-2">
                         <div className="text-purple-400 uppercase text-[10px] font-bold">Path 2: Description (Initial)</div>
                         <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-gray-800 max-h-40 overflow-auto whitespace-pre-wrap">
-                          {selectedJob.result.descriptionInitial || selectedJob.result.description || 'N/A'}
+                          {(selectedJob.result as any).descriptionInitial || (selectedJob.result as any).description || 'N/A'}
                         </div>
                       </div>
 
-                      {selectedJob.result.descriptionFinal && (
+                      {(selectedJob.result as any).descriptionFinal && (
                         <div className="space-y-2">
                           <div className="text-purple-400 uppercase text-[10px] font-bold">Path 2: Description (Final)</div>
                           <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-gray-800 max-h-40 overflow-auto whitespace-pre-wrap">
-                            {selectedJob.result.descriptionFinal}
+                            {(selectedJob.result as any).descriptionFinal}
                           </div>
                         </div>
                       )}
+                    </div>
+                  </div>
+                ) : selectedJob.result && typeof selectedJob.result === 'object' && 'translations' in (selectedJob.result as object) ? (
+                  <div className="space-y-4">
+                    <div className="text-gray-400 font-bold text-xs uppercase mb-2">Translation Results</div>
+
+                    {/* Model info for translations */}
+                    {(selectedJob.result as any).translationModel && (
+                      <div className="rounded-md bg-gray-900/50 border border-gray-800 p-4 mb-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <div className="text-green-400 text-[10px] font-bold uppercase mb-1">Translation Model</div>
+                            <div className="text-white font-mono text-sm">{(selectedJob.result as any).translationModel}</div>
+                          </div>
+                          {(selectedJob.result as any).sourceLanguage && (
+                            <div>
+                              <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">Source Language</div>
+                              <div className="text-white text-sm">{(selectedJob.result as any).sourceLanguage}</div>
+                            </div>
+                          )}
+                          {(selectedJob.result as any).targetLanguages && (
+                            <div>
+                              <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">Target Languages</div>
+                              <div className="text-white text-sm">{(selectedJob.result as any).targetLanguages.join(', ')}</div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Translations grid */}
+                    <div className="space-y-4">
+                      {(selectedJob.result as any).translations && Object.entries((selectedJob.result as any).translations).map(([lang, trans]: [string, any]) => (
+                        <div key={lang} className="rounded-md border border-gray-800 bg-gray-900/30 p-4">
+                          <div className="text-green-400 uppercase text-[10px] font-bold mb-3">{lang}</div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">Translated Name</div>
+                              <div className="text-white text-sm p-2 bg-gray-900 rounded border border-gray-800">
+                                {trans.name || 'N/A'}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">Translated Description</div>
+                              <div className="text-white text-sm p-2 bg-gray-900 rounded border border-gray-800 max-h-32 overflow-auto whitespace-pre-wrap">
+                                {trans.description || 'N/A'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ) : (

@@ -1,6 +1,7 @@
 import React from "react";
 import { MoreVertical } from "lucide-react";
 import { Catalog, Language } from "@/types/products";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,13 +47,13 @@ export function CatalogsSettings({
   return (
     <div className="space-y-5">
       <div className="flex justify-start">
-        <button
+        <Button
           className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
           type="button"
           onClick={() => handleOpenCatalogModal()}
         >
           Add Catalog
-        </button>
+        </Button>
       </div>
       <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4">
         <p className="text-sm font-semibold text-white">Existing Catalogs</p>
@@ -108,9 +109,9 @@ export function CatalogsSettings({
                 <div className="flex gap-2">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="p-1 hover:bg-gray-800 rounded-full text-gray-400 hover:text-white">
+                      <Button className="p-1 hover:bg-gray-800 rounded-full text-gray-400 hover:text-white">
                         <MoreVertical className="h-4 w-4" />
-                      </button>
+                      </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem

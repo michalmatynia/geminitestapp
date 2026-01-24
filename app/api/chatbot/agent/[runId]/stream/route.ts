@@ -14,7 +14,7 @@ async function GET_handler(
     if (!("agentBrowserSnapshot" in prisma)) {
       return createErrorResponse(internalError("Agent snapshots not initialized."), {
         request: req,
-        source: "chatbot.agent.stream.GET",
+        source: "chatbot.agent.[runId].stream.GET",
       });
     }
     const { runId } = await params;
@@ -70,10 +70,10 @@ async function GET_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.agent.stream.GET",
+      source: "chatbot.agent.[runId].stream.GET",
       fallbackMessage: "Failed to stream snapshots",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].stream.GET" });
+export const GET = apiHandlerWithParams<{ runId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].stream.GET" });

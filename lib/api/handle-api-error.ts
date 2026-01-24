@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { resolveError, shouldReport } from "@/lib/errors/resolve-error";
-import { logSystemEvent } from "@/lib/services/system-logger";
+import { randomUUID } from "crypto";
+import { resolveError } from "@/lib/errors/resolve-error";
+import { getErrorFingerprint, logSystemEvent } from "@/lib/services/system-logger";
 
 type ApiErrorOptions = {
   request?: Request | undefined;
@@ -30,6 +31,19 @@ export const createErrorResponse = (
     ...(options?.fallbackMessage ? { fallbackMessage: options.fallbackMessage } : {}),
   });
 
+  const requestId =
+    options?.requestId ??
+    options?.request?.headers.get("x-request-id") ??
+    randomUUID();
+
+  const fingerprint = getErrorFingerprint({
+    message: resolved.message,
+    source: options?.source ?? "api",
+    ...(options?.request ? { request: options.request } : {}),
+    statusCode: resolved.httpStatus,
+    error,
+  });
+
   // Determine log level based on error type
   const level = resolved.critical ? "error" : resolved.expected ? "warn" : "error";
 
@@ -40,7 +54,7 @@ export const createErrorResponse = (
     source: options?.source ?? "api",
     error,
     ...(options?.request ? { request: options.request } : {}),
-    ...(options?.requestId ? { requestId: options.requestId } : {}),
+    requestId,
     statusCode: resolved.httpStatus,
     context: {
       errorId: resolved.errorId,
@@ -57,6 +71,7 @@ export const createErrorResponse = (
     error: resolved.message,
     code: resolved.code,
     errorId: resolved.errorId,
+    fingerprint,
   };
 
   // Include retry information for retryable errors
@@ -83,10 +98,9 @@ export const createErrorResponse = (
   const response = NextResponse.json(payload, { status: resolved.httpStatus });
 
   // Set tracking headers
-  if (options?.requestId) {
-    response.headers.set("x-request-id", options.requestId);
-  }
+  response.headers.set("x-request-id", requestId);
   response.headers.set("x-error-id", resolved.errorId);
+  response.headers.set("x-error-fingerprint", fingerprint);
 
   // Set Retry-After header for retryable errors
   if (resolved.retryable && resolved.retryAfterMs) {

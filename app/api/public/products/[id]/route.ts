@@ -17,16 +17,16 @@ async function GET_handler(
     const product = await productService.getProductById(id);
     if (!product) {
       return createErrorResponse(notFoundError("Product not found"), {
-        source: "public.products.GET",
+        source: "public.products.[id].GET",
       });
     }
     return NextResponse.json(product);
   } catch (_error) {
     return createErrorResponse(_error, {
-      source: "public.products.GET",
+      source: "public.products.[id].GET",
       fallbackMessage: "Failed to fetch product",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "public.products.[id].GET" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "public.products.[id].GET" });

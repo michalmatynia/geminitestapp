@@ -18,6 +18,9 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
 import type { ProductCategoryWithChildren, Catalog } from "@/types/products";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 type CategoriesSettingsProps = {
   loading: boolean;
@@ -137,7 +140,7 @@ function CategoryNode({
         style={{ paddingLeft: `${level * 16 + 8}px` }}
       >
         {hasChildren ? (
-          <button
+          <Button
             onClick={() => onToggleExpand(category.id)}
             className="p-0.5 hover:bg-gray-700 rounded"
           >
@@ -146,7 +149,7 @@ function CategoryNode({
             ) : (
               <ChevronRight className="size-4" />
             )}
-          </button>
+          </Button>
         ) : (
           <div className="w-5" />
         )}
@@ -156,7 +159,7 @@ function CategoryNode({
         </div>
 
         <div className="flex items-center gap-1">
-          <button
+          <Button
             onClick={(e) => {
               e.stopPropagation();
               onCreateChild(category.id);
@@ -165,8 +168,8 @@ function CategoryNode({
             title="Add subcategory"
           >
             <FolderPlus className="size-3" />
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={(e) => {
               e.stopPropagation();
               onEdit(category);
@@ -175,8 +178,8 @@ function CategoryNode({
             title="Edit category"
           >
             Edit
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={(e) => {
               e.stopPropagation();
               onDelete(category);
@@ -185,7 +188,7 @@ function CategoryNode({
             title="Delete category"
           >
             <Trash2 className="size-3" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -653,19 +656,19 @@ export function CategoriesSettings({
               <h2 className="text-xl font-semibold text-white">
                 {editingCategory ? "Edit Category" : "Create Category"}
               </h2>
-              <button
+              <Button
                 className="text-sm text-gray-400 hover:text-white"
                 type="button"
                 onClick={() => setShowModal(false)}
               >
                 Close
-              </button>
+              </Button>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-gray-400">Name</label>
-                <input
+                <Label className="text-xs text-gray-400">Name</Label>
+                <Input
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.name}
                   onChange={(e) =>
@@ -676,8 +679,8 @@ export function CategoriesSettings({
               </div>
 
               <div>
-                <label className="text-xs text-gray-400">Description</label>
-                <textarea
+                <Label className="text-xs text-gray-400">Description</Label>
+                <Textarea
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                   rows={3}
                   value={formData.description}
@@ -692,7 +695,7 @@ export function CategoriesSettings({
               </div>
 
               <div>
-                <label className="text-xs text-gray-400">Catalog</label>
+                <Label className="text-xs text-gray-400">Catalog</Label>
                 <select
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.catalogId}
@@ -717,7 +720,7 @@ export function CategoriesSettings({
               </div>
 
               <div>
-                <label className="text-xs text-gray-400">Parent Category</label>
+                <Label className="text-xs text-gray-400">Parent Category</Label>
                 <select
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.parentId ?? ""}
@@ -751,9 +754,9 @@ export function CategoriesSettings({
               </div>
 
               <div>
-                <label className="text-xs text-gray-400">Color</label>
+                <Label className="text-xs text-gray-400">Color</Label>
                 <div className="mt-2 flex items-center gap-3">
-                  <input
+                  <Input
                     type="color"
                     className="h-10 w-20 cursor-pointer rounded border border-gray-800 bg-gray-900"
                     value={formData.color}
@@ -761,7 +764,7 @@ export function CategoriesSettings({
                       setFormData((prev) => ({ ...prev, color: e.target.value }))
                     }
                   />
-                  <input
+                  <Input
                     type="text"
                     className="flex-1 rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                     value={formData.color}
@@ -774,21 +777,21 @@ export function CategoriesSettings({
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4">
-                <button
+                <Button
                   className="rounded-md border border-gray-800 px-3 py-2 text-sm text-gray-300 hover:bg-gray-900"
                   type="button"
                   onClick={() => setShowModal(false)}
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
                   type="button"
                   onClick={() => void handleSave()}
                   disabled={saving}
                 >
                   {saving ? "Saving..." : "Save"}
-                </button>
+                </Button>
               </div>
             </div>
           </div>

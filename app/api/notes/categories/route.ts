@@ -23,7 +23,7 @@ async function GET_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "categories.GET",
+      source: "notes.categories.GET",
       fallbackMessage: "Failed to fetch categories",
     });
   }
@@ -52,7 +52,7 @@ async function POST_handler(req: Request) {
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "categories.POST",
+      source: "notes.categories.POST",
       fallbackMessage: "Failed to create category",
     });
   }

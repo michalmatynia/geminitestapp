@@ -19,6 +19,8 @@ import {
 } from "@/lib/constants/auth-management";
 import { DEFAULT_AUTH_SECURITY_POLICY } from "@/lib/constants/auth-security";
 import type { AuthUserSummary } from "@/types/auth";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type AuthUsersResponse = {
   provider: "prisma" | "mongodb";
@@ -509,11 +511,9 @@ export default function AuthUsersPage() {
               />
             </div>
             <div className="flex items-center gap-2">
-              <input
+              <Checkbox
                 id="edit-verified"
-                type="checkbox"
-                checked={editVerified}
-                onChange={(event) => setEditVerified(event.target.checked)}
+                checked={editVerified} onCheckedChange={(checked) => setEditVerified(Boolean(checked))}
                 className="h-4 w-4 rounded border-gray-700 bg-gray-900"
               />
               <Label htmlFor="edit-verified" className="text-xs text-gray-300">
@@ -528,11 +528,9 @@ export default function AuthUsersPage() {
                 <div className="text-xs text-gray-500">Loading security profile...</div>
               ) : null}
               <div className="flex items-center gap-2">
-                <input
+                <Checkbox
                   id="edit-disabled"
-                  type="checkbox"
-                  checked={editDisabled}
-                  onChange={(event) => setEditDisabled(event.target.checked)}
+                  checked={editDisabled} onCheckedChange={(checked) => setEditDisabled(Boolean(checked))}
                   className="h-4 w-4 rounded border-gray-700 bg-gray-900"
                 />
                 <Label htmlFor="edit-disabled" className="text-xs text-gray-300">
@@ -540,11 +538,9 @@ export default function AuthUsersPage() {
                 </Label>
               </div>
               <div className="flex items-center gap-2">
-                <input
+                <Checkbox
                   id="edit-banned"
-                  type="checkbox"
-                  checked={editBanned}
-                  onChange={(event) => setEditBanned(event.target.checked)}
+                  checked={editBanned} onCheckedChange={(checked) => setEditBanned(Boolean(checked))}
                   className="h-4 w-4 rounded border-gray-700 bg-gray-900"
                 />
                 <Label htmlFor="edit-banned" className="text-xs text-gray-300">
@@ -555,7 +551,7 @@ export default function AuthUsersPage() {
                 <Label htmlFor="edit-allowed-ips" className="text-xs text-gray-300">
                   Allowed IPs (optional)
                 </Label>
-                <textarea
+                <Textarea
                   id="edit-allowed-ips"
                   value={editAllowedIps}
                   onChange={(event) => setEditAllowedIps(event.target.value)}
@@ -659,14 +655,12 @@ export default function AuthUsersPage() {
               </Select>
             </div>
             <div className="flex items-center gap-2">
-              <input
+              <Checkbox
                 id="create-verified"
-                type="checkbox"
-                checked={createForm.verified}
-                onChange={(event) =>
+                checked={createForm.verified} onCheckedChange={(checked) =>
                   setCreateForm((prev) => ({
                     ...prev,
-                    verified: event.target.checked,
+                    verified: Boolean(checked),
                   }))
                 }
                 className="h-4 w-4 rounded border-gray-700 bg-gray-900"

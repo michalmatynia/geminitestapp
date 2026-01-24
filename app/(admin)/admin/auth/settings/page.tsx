@@ -15,6 +15,7 @@ import {
   parseJsonSetting,
   type AuthRole,
 } from "@/lib/constants/auth-management";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DEFAULT_AUTH_SECURITY_POLICY,
   normalizeAuthSecurityPolicy,
@@ -327,13 +328,11 @@ export default function AuthSettingsPage() {
           <div className="space-y-2">
             <Label className="text-xs text-gray-300">Require strong password</Label>
             <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={securityPolicy.requireStrongPassword}
-                onChange={(event) => {
+              <Checkbox
+                checked={securityPolicy.requireStrongPassword} onCheckedChange={(checked) => {
                   setSecurityPolicy((prev) => ({
                     ...prev,
-                    requireStrongPassword: event.target.checked,
+                    requireStrongPassword: Boolean(checked),
                   }));
                   setSecurityDirty(true);
                 }}
@@ -355,21 +354,19 @@ export default function AuthSettingsPage() {
                   ["requireSymbol", "Symbol"],
                 ] as const
               ).map(([key, label]) => (
-                <label key={key} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={securityPolicy[key]}
-                    onChange={(event) => {
+                <Label key={key} className="flex items-center gap-2">
+                  <Checkbox
+                    checked={securityPolicy[key]} onCheckedChange={(checked) => {
                       setSecurityPolicy((prev) => ({
                         ...prev,
-                        [key]: event.target.checked,
+                        [key]: Boolean(checked),
                       }));
                       setSecurityDirty(true);
                     }}
                     className="h-4 w-4 rounded border-gray-700 bg-gray-900"
                   />
                   {label}
-                </label>
+                </Label>
               ))}
             </div>
           </div>

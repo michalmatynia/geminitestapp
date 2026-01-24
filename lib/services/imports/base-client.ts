@@ -236,7 +236,10 @@ export async function callBaseApi(
       (typeof payload.error_message === "string" && payload.error_message) ||
       (typeof payload.error_code === "string" && payload.error_code) ||
       "Base API error.";
-    throw new Error(message);
+    throw externalServiceError(message, {
+      method,
+      errorCode: payload.error_code,
+    });
   }
   return payload;
 }

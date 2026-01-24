@@ -69,7 +69,7 @@ async function GET_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "product-categories.GET",
+      source: "products.categories.GET",
       fallbackMessage: "Failed to fetch categories",
     });
   }
@@ -158,7 +158,7 @@ async function POST_handler(req: Request) {
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "product-categories.POST",
+      source: "products.categories.POST",
       fallbackMessage: "Failed to create product category",
     });
   }

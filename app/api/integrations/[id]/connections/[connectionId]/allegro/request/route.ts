@@ -181,10 +181,10 @@ async function POST_handler(
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "integrations.allegro.request.POST",
+      source: "integrations.[id].connections.[connectionId].allegro.request.POST",
       fallbackMessage: "Failed to proxy request",
     });
   }
 }
 
-export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.request.POST" });
+export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.request.POST" });

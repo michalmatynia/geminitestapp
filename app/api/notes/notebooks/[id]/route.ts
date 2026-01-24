@@ -28,7 +28,7 @@ async function PATCH_handler(
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "notebooks.PATCH",
+      source: "notes.notebooks.[id].PATCH",
       fallbackMessage: "Failed to update notebook",
     });
   }
@@ -49,11 +49,11 @@ async function DELETE_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "notebooks.DELETE",
+      source: "notes.notebooks.[id].DELETE",
       fallbackMessage: "Failed to delete notebook",
     });
   }
 }
 
-export const PATCH = apiHandlerWithParams<any>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "notes.notebooks.[id].PATCH" });
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.notebooks.[id].DELETE" });
+export const PATCH = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "notes.notebooks.[id].PATCH" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.notebooks.[id].DELETE" });

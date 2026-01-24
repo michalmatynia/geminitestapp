@@ -6,6 +6,7 @@ import { getImageFileRepository } from "@/lib/services/image-file-repository";
 import type { ProductFormData } from "@/types";
 import fs from "fs/promises";
 import path from "path";
+import { badRequestError, configurationError } from "@/lib/errors/app-error";
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 
@@ -78,7 +79,9 @@ function getClient(modelName: string, apiKey: string | null) {
                    modelName.startsWith("o1-");
 
   if (isOpenAI) {
-    if (!apiKey) throw new Error("OpenAI API key is missing for GPT model.");
+    if (!apiKey) {
+      throw configurationError("OpenAI API key is missing for GPT model.");
+    }
     return new OpenAI({ apiKey });
   }
 
@@ -98,7 +101,7 @@ export async function generateProductDescription(params: {
   const { productData, imageUrls = [], visionOutputEnabled, generationOutputEnabled } = params;
 
   if (!productData?.name_en) {
-    throw new Error("Product name is required");
+    throw badRequestError("Product name is required", { field: "name_en" });
   }
 
   const [

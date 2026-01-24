@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useNoteSettings } from "@/lib/context/NoteSettingsContext";
 import type { TagRecord } from "@/types/notes";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function NoteTagsPage() {
   const { toast } = useToast();
@@ -174,7 +176,7 @@ export default function NoteTagsPage() {
       <div className="max-w-3xl space-y-6">
         <div className="rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
           <h2 className="mb-4 text-lg font-semibold text-white">Search</h2>
-          <input
+          <Input
             type="text"
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
@@ -186,10 +188,10 @@ export default function NoteTagsPage() {
           <h2 className="mb-4 text-lg font-semibold text-white">Create Tag</h2>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
             <div className="flex-1">
-              <label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
                 Tag Name
-              </label>
-              <input
+              </Label>
+              <Input
                 type="text"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
@@ -198,10 +200,10 @@ export default function NoteTagsPage() {
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
                 Color
-              </label>
-              <input
+              </Label>
+              <Input
                 type="color"
                 value={color}
                 onChange={(event) => setColor(event.target.value)}
@@ -241,13 +243,13 @@ export default function NoteTagsPage() {
                       />
                       {isEditing ? (
                         <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
-                          <input
+                          <Input
                             type="text"
                             value={editingName}
                             onChange={(event) => setEditingName(event.target.value)}
                             className="w-full rounded-md border border-gray-700 bg-gray-800 px-3 py-1 text-sm text-white"
                           />
-                          <input
+                          <Input
                             type="color"
                             value={editingColor}
                             onChange={(event) => setEditingColor(event.target.value)}
@@ -286,14 +288,14 @@ export default function NoteTagsPage() {
                           Edit
                         </Button>
                       )}
-                      <button
+                      <Button
                         type="button"
                         onClick={() => { void handleDelete(tag.id); }}
                         className="text-gray-400 hover:text-red-400"
                         aria-label={`Delete ${tag.name}`}
                       >
                         <Trash2 size={16} />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 );

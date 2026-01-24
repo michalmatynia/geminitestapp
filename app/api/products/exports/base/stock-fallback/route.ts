@@ -19,7 +19,7 @@ async function GET_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "exports.base.stock-fallback.GET",
+      source: "products.exports.base.stock-fallback.GET",
       fallbackMessage: "Failed to fetch stock fallback setting.",
     });
   }
@@ -39,7 +39,7 @@ async function POST_handler(req: Request) {
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "exports.base.stock-fallback.POST",
+      source: "products.exports.base.stock-fallback.POST",
       fallbackMessage: "Failed to save setting",
     });
   }

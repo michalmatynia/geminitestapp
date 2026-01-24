@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/toast";
+import { Button } from "@/components/ui/button";
 
 const integrations = [
   {
@@ -149,13 +150,13 @@ export default function IntegrationsAddPage() {
                 </div>
               </div>
               <div className="mt-6 flex justify-end">
-                <button
+                <Button
                   className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
                   type="button"
                   onClick={() => { void handleAdd(integration); }}
                 >
                   Add
-                </button>
+                </Button>
               </div>
             </div>
           ))}

@@ -1,5 +1,6 @@
 import { GET, POST } from "../../../app/api/currencies/route";
 import prisma from "@/lib/prisma";
+import { NextRequest } from "next/server";
 
 type CurrencyResponse = {
   id: string;
@@ -20,7 +21,7 @@ describe("Currencies API", () => {
 
   describe("GET /api/currencies", () => {
     it("should seed default currencies on first call", async () => {
-      const res = await GET(new Request("http://localhost/api/currencies"));
+      const res = await GET(new NextRequest("http://localhost/api/currencies"));
       const currencies = (await res.json()) as CurrencyResponse[];
 
       expect(res.status).toEqual(200);
@@ -49,7 +50,7 @@ describe("Currencies API", () => {
         symbol: "$",
       };
 
-      const req = new Request("http://localhost/api/currencies", {
+      const req = new NextRequest("http://localhost/api/currencies", {
         method: "POST",
         body: JSON.stringify(newCurrency),
       });
@@ -68,7 +69,7 @@ describe("Currencies API", () => {
         name: "Invalid",
       };
 
-      const req = new Request("http://localhost/api/currencies", {
+      const req = new NextRequest("http://localhost/api/currencies", {
         method: "POST",
         body: JSON.stringify(invalidCurrency),
       });

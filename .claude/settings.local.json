@@ -30,7 +30,17 @@
       "Bash(fi)",
       "Bash(if [ -f \".env\" ])",
       "Bash(then grep -E \"OPENAI_API_KEY|OLLAMA\" .env)",
-      "Bash(else echo \"No .env file found\")"
+      "Bash(else echo \"No .env file found\")",
+      "Bash(cd /Users/michalmatynia/Desktop/NPM/2026/Gemini\\\\ new\\\\ Pull/geminitestapp && npx eslint:*)",
+      "Bash(cd /Users/michalmatynia/Desktop/NPM/2026/Gemini\\\\ new\\\\ Pull/geminitestapp && npm install:*)",
+      "Bash(grep -l '\"\"use client\"\"' app/\\\\\\(admin\\\\\\)/admin/integrations/components/*.tsx)",
+      "Bash(xargs -I{} sh -c 'head -3 \"\"{}\"\" | grep -q \"\"^import\"\" && echo \"\"{}\"\"')",
+      "Bash(for f in app/\\\\\\(admin\\\\\\)/admin/integrations/components/*.tsx)",
+      "Bash(do head -2 \"$f\")",
+      "Read(//Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/**)",
+      "Bash(echo:*)",
+      "Bash(done)",
+      "Bash(npx next build)"
     ]
   }
 }

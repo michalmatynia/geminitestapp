@@ -151,7 +151,7 @@ async function GET_handler(
     void logSystemEvent({
       level: mapped?.expected ? "warn" : "error",
       message,
-      source: "integrations.allegro.callback.GET",
+      source: "integrations.[id].connections.[connectionId].allegro.callback.GET",
       error,
       request: req,
       context: {
@@ -174,4 +174,4 @@ async function GET_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.callback.GET" });
+export const GET = apiHandlerWithParams<{ id: string; connectionId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.callback.GET" });

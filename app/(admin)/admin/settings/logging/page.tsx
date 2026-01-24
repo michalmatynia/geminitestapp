@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { CLIENT_LOGGING_KEYS } from "@/lib/constants/client-logging";
 import { parseJsonSetting, serializeSetting } from "@/lib/constants/auth-management";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 export default function LoggingSettingsPage() {
   const { toast } = useToast();
@@ -46,8 +48,12 @@ export default function LoggingSettingsPage() {
   const saveSettings = async () => {
     try {
       setSaving(true);
-      const parsedTags = clientTags.trim() ? JSON.parse(clientTags) : {};
-      const parsedFlags = clientFlags.trim() ? JSON.parse(clientFlags) : {};
+      const parsedTags = clientTags.trim()
+        ? (JSON.parse(clientTags) as Record<string, unknown>)
+        : {};
+      const parsedFlags = clientFlags.trim()
+        ? (JSON.parse(clientFlags) as Record<string, unknown>)
+        : {};
       const responses = await Promise.all([
         fetch("/api/settings", {
           method: "POST",
@@ -103,8 +109,8 @@ export default function LoggingSettingsPage() {
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <label className="text-xs text-gray-400">Feature flags (JSON)</label>
-            <textarea
+            <Label className="text-xs text-gray-400">Feature flags (JSON)</Label>
+            <Textarea
               className="min-h-[180px] w-full rounded-md border border-gray-800 bg-gray-900 p-2 text-xs text-gray-200"
               value={clientFlags}
               onChange={(event) => {
@@ -114,8 +120,8 @@ export default function LoggingSettingsPage() {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-xs text-gray-400">Tags (JSON)</label>
-            <textarea
+            <Label className="text-xs text-gray-400">Tags (JSON)</Label>
+            <Textarea
               className="min-h-[180px] w-full rounded-md border border-gray-800 bg-gray-900 p-2 text-xs text-gray-200"
               value={clientTags}
               onChange={(event) => {

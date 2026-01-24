@@ -28,7 +28,7 @@ async function GET_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "notes.GET",
+      source: "notes.[id].GET",
       fallbackMessage: "Failed to fetch note",
     });
   }
@@ -61,7 +61,7 @@ async function PATCH_handler(
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "notes.PATCH",
+      source: "notes.[id].PATCH",
       fallbackMessage: "Failed to update note",
     });
   }
@@ -82,12 +82,12 @@ async function DELETE_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "notes.DELETE",
+      source: "notes.[id].DELETE",
       fallbackMessage: "Failed to delete note",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].GET" });
-export const PATCH = apiHandlerWithParams<any>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].PATCH" });
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].DELETE" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].GET" });
+export const PATCH = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].PATCH" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].DELETE" });

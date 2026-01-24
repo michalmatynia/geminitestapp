@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 type TestErrorModalProps = {
   testError: string | null;
   testErrorMeta: {
@@ -70,13 +72,13 @@ export function TestErrorModal({
       >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-white">Playwright Error</h3>
-          <button
+          <Button
             className="text-sm text-gray-400 hover:text-white"
             type="button"
             onClick={onClose}
           >
             Close
-          </button>
+          </Button>
         </div>
         <div className="space-y-3">
           <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3 text-xs text-gray-300">
@@ -116,13 +118,13 @@ export function TestErrorModal({
             <code className="select-text whitespace-pre-wrap">{testError}</code>
           </pre>
           <div className="flex items-center justify-end gap-2">
-            <button
+            <Button
               className="rounded-md border border-gray-700 px-3 py-1.5 text-xs text-gray-200 hover:bg-gray-800"
               type="button"
               onClick={() => { void handleCopyTestError(); }}
             >
               Copy
-            </button>
+            </Button>
           </div>
         </div>
       </div>

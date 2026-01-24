@@ -17,7 +17,7 @@ async function GET_handler(
         internalError(
           "Agent steps not initialized. Run prisma generate/db push."
         ),
-        { request: req, source: "chatbot.agent.audits.GET" }
+        { request: req, source: "chatbot.agent.[runId].audits.GET" }
       );
     }
     const { runId } = await params;
@@ -64,10 +64,10 @@ async function GET_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.agent.audits.GET",
+      source: "chatbot.agent.[runId].audits.GET",
       fallbackMessage: "Failed to load agent steps.",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].audits.GET" });
+export const GET = apiHandlerWithParams<{ runId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].audits.GET" });

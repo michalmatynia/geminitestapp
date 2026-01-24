@@ -8,6 +8,7 @@ import {
 } from "@/app/api/notes/tags/[id]/route";
 import prisma from "@/lib/prisma";
 import { Tag } from "@prisma/client";
+import { NextRequest } from "next/server";
 
 describe("Notes Tags API", () => {
   beforeEach(async () => {
@@ -26,7 +27,7 @@ describe("Notes Tags API", () => {
     });
 
     const res = await GET_TAGS(
-      new Request("http://localhost/api/notes/tags")
+      new NextRequest("http://localhost/api/notes/tags")
     );
     const tags = (await res.json()) as Tag[];
 
@@ -37,7 +38,7 @@ describe("Notes Tags API", () => {
 
   it("creates a tag", async () => {
     const res = await POST_TAG(
-      new Request("http://localhost/api/notes/tags", {
+      new NextRequest("http://localhost/api/notes/tags", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: "Personal" }),
@@ -51,7 +52,7 @@ describe("Notes Tags API", () => {
 
   it("rejects tag creation without a name", async () => {
     const res = await POST_TAG(
-      new Request("http://localhost/api/notes/tags", {
+      new NextRequest("http://localhost/api/notes/tags", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: "" }),
@@ -65,7 +66,7 @@ describe("Notes Tags API", () => {
     const tag = await prisma.tag.create({ data: { name: "Old" } });
 
     const res = await PATCH_TAG(
-      new Request(`http://localhost/api/notes/tags/${tag.id}`, {
+      new NextRequest(`http://localhost/api/notes/tags/${tag.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: "New" }),
@@ -82,7 +83,7 @@ describe("Notes Tags API", () => {
     const tag = await prisma.tag.create({ data: { name: "Delete" } });
 
     const res = await DELETE_TAG(
-      new Request(`http://localhost/api/notes/tags/${tag.id}`, {
+      new NextRequest(`http://localhost/api/notes/tags/${tag.id}`, {
         method: "DELETE",
       }),
       { params: Promise.resolve({ id: tag.id }) }

@@ -50,7 +50,7 @@ async function POST_handler(request: NextRequest) {
   } catch (error) {
     return createErrorResponse(error, {
       request,
-      source: "marketplace/mappings/bulk.POST",
+      source: "marketplace.mappings.bulk.POST",
       fallbackMessage: "Failed to bulk save category mappings",
     });
   }

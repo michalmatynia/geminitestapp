@@ -337,7 +337,7 @@ async function POST_handler(req: Request) {
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "imports.base.parameters.POST",
+      source: "products.imports.base.parameters.POST",
       fallbackMessage: "Failed to load parameters",
     });
   }
@@ -359,7 +359,7 @@ async function GET_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "imports.base.parameters.GET",
+      source: "products.imports.base.parameters.GET",
       fallbackMessage: "Failed to load cached parameters.",
     });
   }

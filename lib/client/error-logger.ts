@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  isSensitiveKey,
+  REDACTED_VALUE,
+  truncateString,
+} from "@/lib/utils/log-redaction";
+
 type ClientErrorContext = Record<string, unknown>;
 
 export type ClientErrorPayload = {
@@ -15,6 +21,7 @@ export type ClientErrorPayload = {
 };
 
 const MAX_CONTEXT_SIZE = 6000;
+const MAX_VALUE_LENGTH = 2000;
 let baseContext: ClientErrorContext = {};
 
 export const setClientErrorBaseContext = (context: ClientErrorContext) => {
@@ -25,12 +32,14 @@ const safeSerialize = (value: unknown) => {
   try {
     const seen = new WeakSet();
     const json = JSON.stringify(value, (_key, val) => {
+      if (_key && isSensitiveKey(_key)) return REDACTED_VALUE;
       if (typeof val === "object" && val !== null) {
         if (seen.has(val)) return "[Circular]";
         seen.add(val);
       }
       if (typeof val === "function") return "[Function]";
       if (typeof val === "bigint") return val.toString();
+      if (typeof val === "string") return truncateString(val, MAX_VALUE_LENGTH);
       return val;
     });
     if (!json) return null;

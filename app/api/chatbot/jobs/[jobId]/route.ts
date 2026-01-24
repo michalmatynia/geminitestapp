@@ -27,7 +27,7 @@ async function GET_handler(
         internalError(
           "Chatbot jobs not initialized. Run prisma generate/db push."
         ),
-        { request: req, source: "chatbot.jobs.GET" }
+        { request: req, source: "chatbot.jobs.[jobId].GET" }
       );
     }
     const { jobId } = await params;
@@ -35,14 +35,14 @@ async function GET_handler(
     if (!job) {
       return createErrorResponse(notFoundError("Job not found."), {
         request: req,
-        source: "chatbot.jobs.GET",
+        source: "chatbot.jobs.[jobId].GET",
       });
     }
     return NextResponse.json({ job });
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.jobs.GET",
+      source: "chatbot.jobs.[jobId].GET",
       fallbackMessage: "Failed to load job.",
     });
   }
@@ -58,7 +58,7 @@ async function POST_handler(
         internalError(
           "Chatbot jobs not initialized. Run prisma generate/db push."
         ),
-        { request: req, source: "chatbot.jobs.POST" }
+        { request: req, source: "chatbot.jobs.[jobId].POST" }
       );
     }
     const { jobId } = await params;
@@ -71,14 +71,14 @@ async function POST_handler(
     if (parsed.data.action !== "cancel") {
       return createErrorResponse(badRequestError("Unsupported action."), {
         request: req,
-        source: "chatbot.jobs.POST",
+        source: "chatbot.jobs.[jobId].POST",
       });
     }
     const job = await prisma.chatbotJob.findUnique({ where: { id: jobId } });
     if (!job) {
       return createErrorResponse(notFoundError("Job not found."), {
         request: req,
-        source: "chatbot.jobs.POST",
+        source: "chatbot.jobs.[jobId].POST",
       });
     }
     if (["completed", "failed", "canceled"].includes(job.status)) {
@@ -95,7 +95,7 @@ async function POST_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.jobs.POST",
+      source: "chatbot.jobs.[jobId].POST",
       fallbackMessage: "Failed to cancel job.",
     });
   }
@@ -111,7 +111,7 @@ async function DELETE_handler(
         internalError(
           "Chatbot jobs not initialized. Run prisma generate/db push."
         ),
-        { request: req, source: "chatbot.jobs.DELETE" }
+        { request: req, source: "chatbot.jobs.[jobId].DELETE" }
       );
     }
     const { jobId } = await params;
@@ -119,7 +119,7 @@ async function DELETE_handler(
     if (!job) {
       return createErrorResponse(notFoundError("Job not found."), {
         request: req,
-        source: "chatbot.jobs.DELETE",
+        source: "chatbot.jobs.[jobId].DELETE",
       });
     }
     const url = new URL(req.url);
@@ -127,7 +127,7 @@ async function DELETE_handler(
     if (job.status === "running" && !force) {
       return createErrorResponse(
         conflictError("Job is running. Cancel it before deleting."),
-        { request: req, source: "chatbot.jobs.DELETE" }
+        { request: req, source: "chatbot.jobs.[jobId].DELETE" }
       );
     }
     if (job.status === "running" && force) {
@@ -144,12 +144,12 @@ async function DELETE_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.jobs.DELETE",
+      source: "chatbot.jobs.[jobId].DELETE",
       fallbackMessage: "Failed to delete job.",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.jobs.[jobId].GET" });
-export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.jobs.[jobId].POST" });
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.jobs.[jobId].DELETE" });
+export const GET = apiHandlerWithParams<{ jobId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.jobs.[jobId].GET" });
+export const POST = apiHandlerWithParams<{ jobId: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.jobs.[jobId].POST" });
+export const DELETE = apiHandlerWithParams<{ jobId: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.jobs.[jobId].DELETE" });

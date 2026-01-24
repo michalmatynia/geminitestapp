@@ -74,7 +74,7 @@ async function POST_handler(req: Request) {
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "catalogs.ASSIGN",
+      source: "catalogs.assign.POST",
       fallbackMessage: "Failed to assign catalogs",
     });
   }

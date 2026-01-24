@@ -2,6 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import type {
   CatalogOption,
   ImportListItem,
@@ -116,7 +118,7 @@ export function ImportTab({
               {loadingInventories ? "Loading..." : "Load inventories"}
             </Button>
             <div className="flex-1 min-w-[200px]">
-              <label className="text-xs text-gray-400">Inventory</label>
+              <Label className="text-xs text-gray-400">Inventory</Label>
               <select
                 className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                 value={inventoryId}
@@ -144,7 +146,7 @@ export function ImportTab({
               Clear inventory
             </Button>
             <div className="w-40">
-              <label className="text-xs text-gray-400">Limit</label>
+              <Label className="text-xs text-gray-400">Limit</Label>
               <select
                 className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                 value={limit}
@@ -162,7 +164,7 @@ export function ImportTab({
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="text-xs text-gray-400">Catalog</label>
+              <Label className="text-xs text-gray-400">Catalog</Label>
               <select
                 className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                 value={catalogId}
@@ -184,7 +186,7 @@ export function ImportTab({
               </select>
             </div>
             <div>
-              <label className="text-xs text-gray-400">Import template</label>
+              <Label className="text-xs text-gray-400">Import template</Label>
               <select
                 className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                 value={importTemplateId}
@@ -203,7 +205,7 @@ export function ImportTab({
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="text-xs text-gray-400">Images</label>
+              <Label className="text-xs text-gray-400">Images</Label>
               <select
                 className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                 value={imageMode}
@@ -222,18 +224,16 @@ export function ImportTab({
               </p>
             </div>
             <div>
-              <label className="text-xs text-gray-400">SKU Handling</label>
+              <Label className="text-xs text-gray-400">SKU Handling</Label>
               <div className="mt-2 flex items-center gap-2">
-                <input
-                  type="checkbox"
+                <Checkbox
                   id="allowDuplicateSku"
-                  checked={allowDuplicateSku}
-                  onChange={(e) => setAllowDuplicateSku(e.target.checked)}
+                  checked={allowDuplicateSku} onCheckedChange={(checked) => setAllowDuplicateSku(Boolean(checked))}
                   className="h-4 w-4 rounded border-gray-700 bg-gray-900 text-blue-500"
                 />
-                <label htmlFor="allowDuplicateSku" className="text-sm text-white">
+                <Label htmlFor="allowDuplicateSku" className="text-sm text-white">
                   Allow duplicate SKUs
-                </label>
+                </Label>
               </div>
               <p className="mt-2 text-xs text-gray-500">
                 When unchecked, products with existing SKUs will be skipped.
@@ -306,12 +306,11 @@ export function ImportTab({
           <div className="mt-3 max-h-96 overflow-auto rounded-md border border-gray-800 bg-gray-950/70">
             <div className="grid grid-cols-[28px_50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-gray-800 px-3 py-2 text-[11px] uppercase tracking-wide text-gray-500 sticky top-0 bg-gray-950 z-10">
               <span className="flex items-center">
-                <input
-                  type="checkbox"
+                <Checkbox
                   aria-label="Select all visible products"
-                  checked={allVisibleSelected}
-                  onChange={(event) => {
-                    if (event.target.checked) {
+                  checked={allVisibleSelected || (isSomeVisibleSelected && "indeterminate")}
+                  onCheckedChange={(checked) => {
+                    if (Boolean(checked)) {
                       setSelectedImportIds((prev) => {
                         const next = new Set(prev);
                         filteredImportList.forEach((item) => {
@@ -328,9 +327,6 @@ export function ImportTab({
                         return next;
                       });
                     }
-                  }}
-                  ref={(element) => {
-                    if (element) element.indeterminate = isSomeVisibleSelected;
                   }}
                   className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
                 />
@@ -352,14 +348,13 @@ export function ImportTab({
                     : "hover:bg-gray-900/40"
                 }`}
               >
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={selectedImportIds.has(item.baseProductId)}
-                  onChange={(event) => {
-                    const checked = event.target.checked;
+                  onCheckedChange={(checked) => {
+                    const isChecked = Boolean(checked);
                     setSelectedImportIds((prev) => {
                       const next = new Set(prev);
-                      if (checked) {
+                      if (isChecked) {
                         next.add(item.baseProductId);
                       } else {
                         next.delete(item.baseProductId);

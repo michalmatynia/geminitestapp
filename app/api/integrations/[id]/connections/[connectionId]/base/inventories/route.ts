@@ -60,10 +60,10 @@ async function GET_handler(
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "integrations.base.inventories.GET",
+      source: "integrations.[id].connections.[connectionId].base.inventories.GET",
       fallbackMessage: "Failed to fetch inventories",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].base.inventories.GET" });
+export const GET = apiHandlerWithParams<{ id: string; connectionId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].base.inventories.GET" });

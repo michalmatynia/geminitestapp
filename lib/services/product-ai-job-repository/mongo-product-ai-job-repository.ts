@@ -5,6 +5,7 @@ import type {
   ProductAiJobRepository,
   ProductAiJobUpdate,
 } from "@/types/services/product-ai-job-repository";
+import { notFoundError } from "@/lib/errors/app-error";
 
 const JOBS_COLLECTION = "product_ai_jobs";
 
@@ -100,8 +101,8 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
         { $set: { status: "running", startedAt: now, updatedAt: now } },
         { sort: { createdAt: 1 }, returnDocument: "after" }
       );
-    if (!result || !result.value) return null;
-    return toRecord(result.value);
+    if (!result) return null;
+    return toRecord(result);
   },
 
   async updateJob(jobId, data: ProductAiJobUpdate) {
@@ -126,7 +127,7 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
         { returnDocument: "after" }
       );
 
-    if (!result.value) {
+    if (!result) {
       const existing = await db
         .collection<JobDocument>(JOBS_COLLECTION)
         .findOne(filter);
@@ -138,8 +139,8 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
             { $set: updateData },
             { returnDocument: "after" }
           );
-        if (retry.value) {
-          return toRecord(retry.value);
+        if (retry) {
+          return toRecord(retry);
         }
       }
       if (productId && type && payload !== undefined) {
@@ -163,7 +164,7 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
             $set: updateData,
             $setOnInsert: {
               _id: seed._id,
-              id: seed.id,
+              id: idString,
               productId: seed.productId,
               type: seed.type,
               payload: seed.payload,
@@ -179,10 +180,10 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
           return toRecord(inserted);
         }
       }
-      throw new Error("Job not found");
+      throw notFoundError("Job not found", { jobId: idString });
     }
 
-    return toRecord(result.value);
+    return toRecord(result);
   },
 
   async deleteJob(jobId) {

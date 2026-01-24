@@ -9,6 +9,7 @@ import {
 import { GET as GET_TREE } from "@/app/api/notes/categories/tree/route";
 import prisma from "@/lib/prisma";
 import { Category, Note } from "@prisma/client";
+import { NextRequest } from "next/server";
 
 const createCategory = (name: string, parentId?: string | null) =>
   prisma.category.create({ data: { name, parentId: parentId ?? null } });
@@ -44,7 +45,7 @@ describe("Notes Categories API", () => {
     });
 
     const res = await GET_CATEGORIES(
-      new Request("http://localhost/api/notes/categories")
+      new NextRequest("http://localhost/api/notes/categories")
     );
     const categories = (await res.json()) as Category[];
 
@@ -54,7 +55,7 @@ describe("Notes Categories API", () => {
 
   it("creates a category and rejects empty names", async () => {
     const res = await POST_CATEGORY(
-      new Request("http://localhost/api/notes/categories", {
+      new NextRequest("http://localhost/api/notes/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: "Projects" }),
@@ -66,7 +67,7 @@ describe("Notes Categories API", () => {
     expect(created.name).toBe("Projects");
 
     const missing = await POST_CATEGORY(
-      new Request("http://localhost/api/notes/categories", {
+      new NextRequest("http://localhost/api/notes/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: "" }),
@@ -80,7 +81,7 @@ describe("Notes Categories API", () => {
     const category = await createCategory("Old Name");
 
     const res = await PATCH_CATEGORY(
-      new Request(`http://localhost/api/notes/categories/${category.id}`, {
+      new NextRequest(`http://localhost/api/notes/categories/${category.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: "New Name" }),
@@ -99,7 +100,7 @@ describe("Notes Categories API", () => {
     await createNote("Child Note", child.id);
 
     const res = await GET_TREE(
-      new Request("http://localhost/api/notes/categories/tree")
+      new NextRequest("http://localhost/api/notes/categories/tree")
     );
     const tree = (await res.json()) as (Category & {
       children: (Category & { notes: Note[] })[];
@@ -118,7 +119,7 @@ describe("Notes Categories API", () => {
     await createNote("Child Note", child.id);
 
     const res = await DELETE_CATEGORY(
-      new Request(
+      new NextRequest(
         `http://localhost/api/notes/categories/${root.id}?recursive=true`,
         { method: "DELETE" }
       ),

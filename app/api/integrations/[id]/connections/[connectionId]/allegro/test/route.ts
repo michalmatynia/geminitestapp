@@ -53,7 +53,7 @@ async function POST_handler(
     pushStep(step, "failed", safeDetail);
     return createErrorResponse(mapStatusToAppError(safeDetail, status), {
       request: req,
-      source: "integrations.allegro.test.POST",
+      source: "integrations.[id].connections.[connectionId].allegro.test.POST",
       fallbackMessage: safeDetail,
       extra: {
         steps,
@@ -232,7 +232,7 @@ async function POST_handler(
       });
       return createErrorResponse(appError, {
         request: req,
-        source: "integrations.allegro.test.POST",
+        source: "integrations.[id].connections.[connectionId].allegro.test.POST",
         fallbackMessage: "Failed to test connection",
         extra: {
           steps,
@@ -244,7 +244,7 @@ async function POST_handler(
     pushStep("Unexpected error", "failed", "Failed to test connection");
     return createErrorResponse(error, {
       request: req,
-      source: "integrations.allegro.test.POST",
+      source: "integrations.[id].connections.[connectionId].allegro.test.POST",
       fallbackMessage: "Failed to test connection",
       extra: {
         steps,
@@ -255,4 +255,4 @@ async function POST_handler(
   }
 }
 
-export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.test.POST" });
+export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.test.POST" });

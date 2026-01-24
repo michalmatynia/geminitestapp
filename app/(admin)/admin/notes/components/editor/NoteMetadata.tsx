@@ -3,6 +3,10 @@
 import React from "react";
 import { X } from "lucide-react";
 import type { TagRecord, NoteWithRelations, ThemeRecord } from "@/types/notes";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface NoteMetadataProps {
   title: string;
@@ -94,10 +98,10 @@ export function NoteMetadata({
     <div className="space-y-4">
       {showTitle ? (
         <div>
-          <label className="mb-2 block text-sm font-medium text-white">
+          <Label className="mb-2 block text-sm font-medium text-white">
             Title
-          </label>
-          <input
+          </Label>
+          <Input
             type="text"
             placeholder="Enter note title"
             value={title}
@@ -109,7 +113,7 @@ export function NoteMetadata({
       ) : null}
 
       <div>
-        <label className="mb-2 block text-sm font-medium text-white">Folder</label>
+        <Label className="mb-2 block text-sm font-medium text-white">Folder</Label>
         <select
           value={selectedFolderId}
           onChange={(e) => setSelectedFolderId(e.target.value)}
@@ -126,22 +130,22 @@ export function NoteMetadata({
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium text-white">Color</label>
+        <Label className="mb-2 block text-sm font-medium text-white">Color</Label>
         <div className="flex items-center gap-2">
-          <input
+          <Input
             type="color"
             value={color}
             onChange={(e) => setColor(e.target.value)}
             className="h-10 w-full cursor-pointer rounded-lg border border-gray-700 bg-gray-800"
           />
-          <button
+          <Button
             type="button"
             onClick={() => setColor("#ffffff")}
             className="whitespace-nowrap rounded-lg border border-gray-700 px-3 py-2 text-xs text-gray-200 hover:bg-gray-800"
             title="Use folder theme background"
           >
             Use Folder Theme
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -155,27 +159,27 @@ export function NoteMetadata({
                 key={tag.id}
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-200 border border-blue-500/30"
               >
-                <button
+                <Button
                   type="button"
                   onClick={() => onTagClick?.(tag.id)}
                   className="hover:text-white"
                 >
                   {tag.name}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => onRemoveTag(tag.id)}
                   className="hover:text-white"
                 >
                   <X size={12} />
-                </button>
+                </Button>
               </span>
             );
           })}
         </div>
         <div className="relative">
           <div className="flex gap-2">
-            <input
+            <Input
               ref={tagInputRef}
               type="text"
               placeholder={selectedTagIds.length === 0 ? "Tags" : "Add tag..."}
@@ -233,9 +237,9 @@ export function NoteMetadata({
       </div>
 
       <div className="space-y-2">
-        <label className="mb-2 block text-sm font-medium text-white">
+        <Label className="mb-2 block text-sm font-medium text-white">
           Related Notes
-        </label>
+        </Label>
         <div className="flex flex-wrap gap-2">
           {selectedRelatedNotes.map((related) => (
             <div
@@ -258,7 +262,7 @@ export function NoteMetadata({
               <div className="text-[11px] leading-snug max-h-8 overflow-hidden opacity-80">
                 {related.content ? related.content : "No content"}
               </div>
-              <button
+              <Button
                 type="button"
                 onClick={(event) => {
                   event.stopPropagation();
@@ -270,13 +274,13 @@ export function NoteMetadata({
                 aria-label="Remove related note"
               >
                 <X size={12} />
-              </button>
+              </Button>
             </div>
           ))}
         </div>
         <div className="relative">
           <div className="flex gap-2">
-            <input
+            <Input
               type="text"
               placeholder="Search notes to relate..."
               value={relatedNoteQuery}
@@ -355,33 +359,27 @@ export function NoteMetadata({
       </div>
 
       <div className="flex gap-4">
-        <label className="flex items-center gap-2 text-white">
-          <input
-            type="checkbox"
-            checked={isPinned}
-            onChange={(e) => setIsPinned(e.target.checked)}
+        <Label className="flex items-center gap-2 text-white">
+          <Checkbox
+            checked={isPinned} onCheckedChange={(checked) => setIsPinned(Boolean(checked))}
             className="rounded"
           />
           <span className="text-sm">Pinned</span>
-        </label>
-        <label className="flex items-center gap-2 text-white">
-          <input
-            type="checkbox"
-            checked={isArchived}
-            onChange={(e) => setIsArchived(e.target.checked)}
+        </Label>
+        <Label className="flex items-center gap-2 text-white">
+          <Checkbox
+            checked={isArchived} onCheckedChange={(checked) => setIsArchived(Boolean(checked))}
             className="rounded"
           />
           <span className="text-sm">Archived</span>
-        </label>
-        <label className="flex items-center gap-2 text-white">
-          <input
-            type="checkbox"
-            checked={isFavorite}
-            onChange={(e) => setIsFavorite(e.target.checked)}
+        </Label>
+        <Label className="flex items-center gap-2 text-white">
+          <Checkbox
+            checked={isFavorite} onCheckedChange={(checked) => setIsFavorite(Boolean(checked))}
             className="rounded"
           />
           <span className="text-sm">Favorite</span>
-        </label>
+        </Label>
       </div>
     </div>
   );

@@ -381,7 +381,7 @@ export default function AuthPermissionsPage() {
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {permissions.map((permission) => (
-                    <label
+                    <Label
                       key={permission.id}
                       className="flex items-start gap-2 text-xs text-gray-300"
                     >
@@ -393,7 +393,7 @@ export default function AuthPermissionsPage() {
                         <span className="font-semibold text-gray-200">{permission.name}</span>
                         <span className="block text-gray-500">{permission.id}</span>
                       </span>
-                    </label>
+                    </Label>
                   ))}
                 </div>
               </div>
@@ -437,7 +437,7 @@ export default function AuthPermissionsPage() {
         <Button variant="outline" onClick={handleReset}>
           Reset defaults
         </Button>
-        <Button onClick={handleSave} disabled={!dirty || saving}>
+        <Button onClick={() => void handleSave()} disabled={!dirty || saving}>
           {saving ? "Saving..." : "Save permissions"}
         </Button>
       </div>

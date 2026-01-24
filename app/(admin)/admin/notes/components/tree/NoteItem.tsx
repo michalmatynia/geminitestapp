@@ -4,6 +4,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { FileText, Edit2, Copy, Trash2, FilePlus } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import type { NoteItemProps } from "@/types/notes-ui";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export const NoteItem = React.memo(function NoteItem({
   note,
@@ -132,7 +134,7 @@ export const NoteItem = React.memo(function NoteItem({
     >
       <FileText className={`size-4 flex-shrink-0 ${isSelected ? "text-white" : "text-gray-500 group-hover:text-gray-300"}`} />
       {isRenaming ? (
-        <input
+        <Input
           ref={renameInputRef}
           type="text"
           defaultValue={note.title}
@@ -154,7 +156,7 @@ export const NoteItem = React.memo(function NoteItem({
       )}
       {!isRenaming && (
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-          <button
+          <Button
             onClick={(e) => {
               e.stopPropagation();
               onCreateNote(folderId);
@@ -163,8 +165,8 @@ export const NoteItem = React.memo(function NoteItem({
             title="Add note"
           >
             <FilePlus className="size-3" />
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={(e) => {
               e.stopPropagation();
               onStartRename(note.id);
@@ -173,8 +175,8 @@ export const NoteItem = React.memo(function NoteItem({
             title="Rename note"
           >
             <Edit2 className="size-3" />
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={(e) => {
               e.stopPropagation();
               onDuplicateNote(note.id);
@@ -183,8 +185,8 @@ export const NoteItem = React.memo(function NoteItem({
             title="Duplicate note"
           >
             <Copy className="size-3" />
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={(e) => {
               e.stopPropagation();
               onDeleteNote(note.id);
@@ -193,7 +195,7 @@ export const NoteItem = React.memo(function NoteItem({
             title="Delete note"
           >
             <Trash2 className="size-3" />
-          </button>
+          </Button>
         </div>
       )}
     </div>

@@ -23,7 +23,7 @@ async function GET_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "notes.files.GET",
+      source: "notes.[id].files.GET",
       fallbackMessage: "Failed to get files",
     });
   }
@@ -93,11 +93,11 @@ async function POST_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "notes.files.POST",
+      source: "notes.[id].files.POST",
       fallbackMessage: "Failed to upload file",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].files.GET" });
-export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].files.POST" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].files.GET" });
+export const POST = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].files.POST" });

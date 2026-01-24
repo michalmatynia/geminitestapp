@@ -7,6 +7,7 @@ import type { ThemeRecord } from "@/types/notes";
 import type { NoteCardProps } from "@/types/notes-ui";
 import { BreadcrumbScroller } from "./BreadcrumbScroller";
 import { darkenColor, renderMarkdownToHtml } from "../utils";
+import { Button } from "@/components/ui/button";
 
 // Hardcoded dark mode fallback theme - consistent with page styling
 const FALLBACK_THEME: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt" | "name" | "notebookId"> = {
@@ -184,7 +185,7 @@ function NoteCardBase({
         </div>
         <div className="flex items-center gap-2">
           {isCodeNote && (
-                          <button
+                          <Button
                             type="button"
                             onMouseDown={(event) => event.preventDefault()}
                             onClick={(e) => { void handleCopyCode(e); }}
@@ -196,9 +197,9 @@ function NoteCardBase({
               title={isCopied ? "Copied!" : "Copy code snippet"}
             >
               {isCopied ? <Check size={16} /> : <Copy size={16} />}
-            </button>
+            </Button>
           )}
-          <button
+          <Button
             type="button"
             onMouseDown={(event) => event.preventDefault()}
             onClick={(event) => {
@@ -213,7 +214,7 @@ function NoteCardBase({
               size={16}
               className={note.isFavorite ? "fill-yellow-400 text-yellow-500" : ""}
             />
-          </button>
+          </Button>
           {note.isPinned && <Pin size={16} className="text-blue-600" />}
         </div>
       </div>
@@ -259,7 +260,7 @@ function NoteCardBase({
               folderTree
             ).map((crumb, index, array) => (
               <React.Fragment key={index}>
-                <button
+                <Button
                   onClick={(e) => {
                     e.stopPropagation();
                     onSelectFolder(crumb.id);
@@ -267,7 +268,7 @@ function NoteCardBase({
                   className="cursor-pointer hover:underline whitespace-nowrap"
                 >
                   {crumb.name}
-                </button>
+                </Button>
                 {index < array.length - 1 && (
                   <ChevronRight size={10} className="flex-shrink-0" />
                 )}

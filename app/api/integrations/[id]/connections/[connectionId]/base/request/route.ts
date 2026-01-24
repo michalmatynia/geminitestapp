@@ -183,10 +183,10 @@ async function POST_handler(
       error instanceof Error ? error.message : "Failed to proxy request";
     return createErrorResponse(error, {
       request: req,
-      source: "integrations.base.request.POST",
+      source: "integrations.[id].connections.[connectionId].base.request.POST",
       fallbackMessage: message,
     });
   }
 }
 
-export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].base.request.POST" });
+export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].base.request.POST" });

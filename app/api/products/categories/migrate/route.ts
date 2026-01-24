@@ -54,7 +54,7 @@ async function POST_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "product-categories.MIGRATE",
+      source: "products.categories.migrate.POST",
       fallbackMessage: "Failed to migrate product categories",
     });
   }

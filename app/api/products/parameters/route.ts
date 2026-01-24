@@ -68,7 +68,7 @@ async function GET_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "product-parameters.GET",
+      source: "products.parameters.GET",
       fallbackMessage: "Failed to fetch product parameters",
     });
   }
@@ -146,7 +146,7 @@ async function POST_handler(req: Request) {
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "product-parameters.POST",
+      source: "products.parameters.POST",
       fallbackMessage: "Failed to create product parameter",
     });
   }

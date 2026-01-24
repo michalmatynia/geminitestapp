@@ -169,7 +169,7 @@ async function PUT_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "countries/[id].PUT",
+      source: "countries.[id].PUT",
       fallbackMessage: "Failed to update country",
     });
   }
@@ -201,11 +201,11 @@ async function DELETE_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "countries/[id].DELETE",
+      source: "countries.[id].DELETE",
       fallbackMessage: "Failed to delete country",
     });
   }
 }
 
-export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "countries.[id].PUT" });
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "countries.[id].DELETE" });
+export const PUT = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "countries.[id].PUT" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "countries.[id].DELETE" });

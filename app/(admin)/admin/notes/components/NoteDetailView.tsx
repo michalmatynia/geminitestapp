@@ -247,7 +247,7 @@ export function NoteDetailView({
             {crumb.isNote ? (
               <span className="text-gray-300">{crumb.name}</span>
             ) : (
-              <button
+              <Button
                 onClick={() => {
                   setSelectedFolderId(crumb.id);
                   setSelectedNote(null);
@@ -256,7 +256,7 @@ export function NoteDetailView({
                 className="cursor-pointer hover:text-blue-400 transition"
               >
                 {crumb.name}
-              </button>
+              </Button>
             )}
             {index < array.length - 1 && (
               <ChevronRight size={16} className="text-gray-600" />
@@ -279,7 +279,7 @@ export function NoteDetailView({
         >
           Back
         </Button>
-        <button
+        <Button
           type="button"
           onClick={() => onToggleFavorite(selectedNote)}
           className="flex items-center gap-2 rounded border border-gray-700 px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white"
@@ -291,7 +291,7 @@ export function NoteDetailView({
           <span className="text-sm">
             {selectedNote.isFavorite ? "Favorited" : "Favorite"}
           </span>
-        </button>
+        </Button>
         {!isEditing ? (
           <Button
             onClick={() => setIsEditing(true)}
@@ -436,7 +436,7 @@ export function NoteDetailView({
                           <div className="line-clamp-2 text-[11px] opacity-80">
                             {relatedNote?.content ?? "No content"}
                           </div>
-                          <button
+                          <Button
                             type="button"
                             onClick={(event) => {
                               event.stopPropagation();
@@ -446,7 +446,7 @@ export function NoteDetailView({
                             aria-label="Unlink related note"
                           >
                             <X size={12} />
-                          </button>
+                          </Button>
                         </div>
                       );
                     })}

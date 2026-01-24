@@ -59,12 +59,12 @@ const generateTotp = (secret: string, timestamp: number, digits = 6, step = 30) 
   buffer.writeBigInt64BE(BigInt(counter));
   const key = base32Decode(secret);
   const hmac = crypto.createHmac("sha1", key).update(buffer).digest();
-  const offset = hmac[hmac.length - 1] & 0x0f;
+  const offset = hmac[hmac.length - 1]! & 0x0f;
   const code =
-    ((hmac[offset] & 0x7f) << 24) |
-    ((hmac[offset + 1] & 0xff) << 16) |
-    ((hmac[offset + 2] & 0xff) << 8) |
-    (hmac[offset + 3] & 0xff);
+    ((hmac[offset]! & 0x7f) << 24) |
+    ((hmac[offset + 1]! & 0xff) << 16) |
+    ((hmac[offset + 2]! & 0xff) << 8) |
+    (hmac[offset + 3]! & 0xff);
   const otp = (code % 10 ** digits).toString().padStart(digits, "0");
   return otp;
 };

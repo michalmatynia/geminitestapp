@@ -24,7 +24,7 @@ async function GET_handler(
     if (safeFile !== file) {
       return createErrorResponse(badRequestError("Invalid file path."), {
         request: req,
-        source: "chatbot.agent.assets.GET",
+        source: "chatbot.agent.[runId].assets.[file].GET",
       });
     }
 
@@ -41,10 +41,10 @@ async function GET_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.agent.assets.GET",
+      source: "chatbot.agent.[runId].assets.[file].GET",
       fallbackMessage: "Failed to load agent asset.",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].assets.[file].GET" });
+export const GET = apiHandlerWithParams<{ runId: string; file: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].assets.[file].GET" });

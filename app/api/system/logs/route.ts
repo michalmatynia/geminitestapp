@@ -56,7 +56,7 @@ async function GET_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "systemLogs.GET",
+      source: "system.logs.GET",
       fallbackMessage: "Failed to list system logs",
     });
   }
@@ -87,7 +87,7 @@ async function POST_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "systemLogs.POST",
+      source: "system.logs.POST",
       fallbackMessage: "Failed to create system log",
     });
   }
@@ -103,7 +103,7 @@ async function DELETE_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "systemLogs.DELETE",
+      source: "system.logs.DELETE",
       fallbackMessage: "Failed to clear system logs",
     });
   }

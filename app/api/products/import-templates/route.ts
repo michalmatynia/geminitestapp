@@ -29,7 +29,7 @@ async function GET_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "import-templates.GET",
+      source: "products.import-templates.GET",
       fallbackMessage: "Failed to fetch templates.",
     });
   }
@@ -53,7 +53,7 @@ async function POST_handler(req: Request) {
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "import-templates.POST",
+      source: "products.import-templates.POST",
       fallbackMessage: "Failed to create template.",
     });
   }

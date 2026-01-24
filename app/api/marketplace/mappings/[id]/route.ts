@@ -32,7 +32,7 @@ async function GET_handler(request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     return createErrorResponse(error, {
       request,
-      source: "marketplace/mappings/[id].GET",
+      source: "marketplace.mappings.[id].GET",
       fallbackMessage: "Failed to fetch category mapping",
     });
   }
@@ -66,7 +66,7 @@ async function PUT_handler(request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     return createErrorResponse(error, {
       request,
-      source: "marketplace/mappings/[id].PUT",
+      source: "marketplace.mappings.[id].PUT",
       fallbackMessage: "Failed to update category mapping",
     });
   }
@@ -94,12 +94,12 @@ async function DELETE_handler(request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     return createErrorResponse(error, {
       request,
-      source: "marketplace/mappings/[id].DELETE",
+      source: "marketplace.mappings.[id].DELETE",
       fallbackMessage: "Failed to delete category mapping",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "marketplace.mappings.[id].GET" });
-export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "marketplace.mappings.[id].PUT" });
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "marketplace.mappings.[id].DELETE" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "marketplace.mappings.[id].GET" });
+export const PUT = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "marketplace.mappings.[id].PUT" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "marketplace.mappings.[id].DELETE" });

@@ -3,7 +3,9 @@ npx prisma migrate dev
 npx prisma generate
 /admin/system/logs
 
-Resorting images during product create from draft still causes image flickering 
+* Resorting images during product create from draft still causes image flickering 
+
+In Product List, changing the price Filter doesn't change anything in the price field (it should show the price after multiplier is applied, cause EUR is a dependent price in the price group)
 
 * When I create a user manually I should have the option to add their role, including the super user role, also , I should be able to verify them manually by clicking edit.
 
@@ -15,7 +17,7 @@ Resorting images during product create from draft still causes image flickering
 ->Link it with Draft
 ->PArameter Product
 
-* In Products, When I enter Marketplaces I need Category Mapper page for each marketplace. It is a page Where I can Set up category Mappings from my platfrom to an external pages for proper Export and Import (in the case of Base.com cause it's an integrator). The first Page will be Base.com but there will be others. I need a page within Category Mapper - Base.com where I can download current category list for a given catalog through API. Then, I can select which categories (or maybe all of them) I want to consider during my mappings, finally, I need a mapping engine, where I can one by one map each Base.com Category to a Category in my Catalog. *
+* In Products, When I enter Marketplaces I need Category Mapper page for each marketplace. It is a page Where I can Set up category Mappings from my platfrom to an external pages for proper Export and Import (in the case of Base.com cause it's an integrator). The first Page will be Base.com but there will be others. I need a page within Category Mapper - Base.com where I can download current category list for a given catalog through API. Then, I can select which categories (or maybe all of them) I want to consider during my mappings, finally, I need a mapping engine, where I can one by one map each Base.com Category to a Category in my Catalog.
 
 Producer list
 
@@ -35,22 +37,7 @@ In Product List - Operations - I need an Option to Mass Export Products to Base.
 * Import table should have a search field and should have checkmarks so that I can select which products are to be imported
 
 
-LATER - add other GEminiInstructions (especially for the use of tanstack query and schadcn/ui all across application)
-
-add a centralized error handling and logging to all global APIs (countries, price groups, system logs, chatbot, drafts, settings, etc.).
-LATER - apply consistent error mapping and handling all across the application
-routes and services 
-standardize the internal createErrorResponse sources to match the new wrapper sources
-* Convert all API routes to use centralized apiHandler/createErrorResponse,
-* Add a shared error mapping helper and wire it into all routes
-Add a shared error mapping helper and wire it into key services
-* Create client-side error handling utilities and implement on the client-side
-* Add error metrics and statistics tracking
-* Create critical error notification service
-* Add error fingerprinting for grouping similar errors
-* Create error recovery patterns for transient errors
-enhance the centralized error handling and logging system
-apply consistent centralized error handling and logging system
+LATER - add other GEminiInstructions (especially for the use of tanstack query and schadcn/ui all across application) 
 
 Note APP, simplified NoTE editing, which allows me to edit, delete text right in the note preview. Unless I want a deeper edit. Note Should Auto Save
 
@@ -59,6 +46,9 @@ Draft list reorders like mapping parameters
 
 Link Note to Product? Why not, a special kind of Theme that has this linking field
 
+Notes App , Importing Mmarkdowns with file attachments
+
+Custom fields in Product (to account for Excluded marketplaces field and Trader checkbox)
 ---
 
 * Note App, Note cards show two images even if there is only one image file attached

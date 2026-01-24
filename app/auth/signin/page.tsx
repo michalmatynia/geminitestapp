@@ -6,6 +6,9 @@ import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { AUTH_SETTINGS_KEYS, parseJsonSetting } from "@/lib/constants/auth-management";
 import { DEFAULT_AUTH_USER_PAGE_SETTINGS } from "@/lib/constants/auth-user-pages";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 function SignInContent() {
   const searchParams = useSearchParams();
@@ -122,10 +125,10 @@ function SignInContent() {
         ) : null}
         <form className="space-y-4" onSubmit={(e) => void handleSubmit(e)}>
           <div className="space-y-2">
-            <label className="text-sm text-gray-300" htmlFor="email">
+            <Label className="text-sm text-gray-300" htmlFor="email">
               Email
-            </label>
-            <input
+            </Label>
+            <Input
               id="email"
               type="email"
               className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
@@ -135,10 +138,10 @@ function SignInContent() {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm text-gray-300" htmlFor="password">
+            <Label className="text-sm text-gray-300" htmlFor="password">
               Password
-            </label>
-            <input
+            </Label>
+            <Input
               id="password"
               type="password"
               className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
@@ -150,10 +153,10 @@ function SignInContent() {
           {mfaRequired ? (
             <>
               <div className="space-y-2">
-                <label className="text-sm text-gray-300" htmlFor="otp">
+                <Label className="text-sm text-gray-300" htmlFor="otp">
                   One-time code
-                </label>
-                <input
+                </Label>
+                <Input
                   id="otp"
                   type="text"
                   className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
@@ -163,10 +166,10 @@ function SignInContent() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm text-gray-300" htmlFor="recovery">
+                <Label className="text-sm text-gray-300" htmlFor="recovery">
                   Recovery code (optional)
-                </label>
-                <input
+                </Label>
+                <Input
                   id="recovery"
                   type="text"
                   className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
@@ -177,13 +180,13 @@ function SignInContent() {
               </div>
             </>
           ) : null}
-          <button
+          <Button
             className="w-full rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-300"
             type="submit"
             disabled={isSubmitting}
           >
             {isSubmitting ? "Signing in..." : mfaRequired ? "Verify & sign in" : "Sign in"}
-          </button>
+          </Button>
         </form>
         {allowSocialLogin ? (
           <div className="space-y-3">
@@ -192,20 +195,20 @@ function SignInContent() {
               or
               <span className="h-px flex-1 bg-gray-800" />
             </div>
-            <button
+            <Button
               className="w-full rounded-md border border-gray-700 px-3 py-2 text-sm font-semibold text-gray-200 hover:border-gray-500"
               type="button"
               onClick={() => void signIn("google", { callbackUrl: "/admin" })}
             >
               Continue with Google
-            </button>
-            <button
+            </Button>
+            <Button
               className="w-full rounded-md border border-gray-700 px-3 py-2 text-sm font-semibold text-gray-200 hover:border-gray-500"
               type="button"
               onClick={() => void signIn("facebook", { callbackUrl: "/admin" })}
             >
               Continue with Facebook
-            </button>
+            </Button>
           </div>
         ) : null}
         <p className="text-xs text-gray-400">

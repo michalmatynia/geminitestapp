@@ -145,7 +145,7 @@ export default function NotificationSettingsPage() {
                 <Label className="mb-3 block text-sm font-semibold">Available Colors</Label>
                 <div className="grid grid-cols-5 gap-2">
                   {accentOptions.map((option) => (
-                    <button
+                    <Button
                       key={option.value}
                       onClick={() => setAccent(option.value)}
                       className={`group relative flex items-center justify-center rounded-lg px-3 py-2 transition-all ${
@@ -158,7 +158,7 @@ export default function NotificationSettingsPage() {
                       <span className="absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-xs font-medium text-white group-hover:block">
                         {option.label}
                       </span>
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>

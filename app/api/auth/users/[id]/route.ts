@@ -169,10 +169,10 @@ async function PATCH_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "auth.users.PATCH",
+      source: "auth.users.[id].PATCH",
       fallbackMessage: "Failed to update user",
     });
   }
 }
 
-export const PATCH = apiHandlerWithParams<any>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "auth.users.[id].PATCH" });
+export const PATCH = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "auth.users.[id].PATCH" });

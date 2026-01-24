@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import ModalShell from "@/components/ui/modal-shell";
 import { useToast } from "@/components/ui/toast";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type ContextItem = {
   id: string;
@@ -325,9 +327,9 @@ function ChatbotContextPageInner() {
             <h2 className="text-3xl font-bold text-white">Global Contexts</h2>
           </div>
           <div className="flex items-center gap-2">
-            <label className="cursor-pointer rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-gray-300">
+            <Label className="cursor-pointer rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-gray-300">
               {uploading ? "Uploading..." : "Upload PDF"}
-              <input
+              <Input
                 type="file"
                 accept="application/pdf"
                 className="hidden"
@@ -341,7 +343,7 @@ function ChatbotContextPageInner() {
                   })();
                 }}
               />
-            </label>
+            </Label>
             <Button
               type="button"
               variant="outline"
@@ -373,7 +375,7 @@ function ChatbotContextPageInner() {
           />
           <div className="flex flex-wrap gap-2 text-xs text-gray-300">
             {uniqueTags.map((tag) => (
-              <button
+              <Button
                 key={tag}
                 type="button"
                 className={`rounded-full border px-3 py-1 transition ${
@@ -390,16 +392,16 @@ function ChatbotContextPageInner() {
                 }}
               >
                 {tag}
-              </button>
+              </Button>
             ))}
             {tagFilters.length > 0 ? (
-              <button
+              <Button
                 type="button"
                 className="rounded-full border border-gray-700 px-3 py-1 text-gray-300 hover:border-gray-500"
                 onClick={() => setTagFilters([])}
               >
                 Clear filters
-              </button>
+              </Button>
             ) : null}
           </div>
         </div>
@@ -450,20 +452,18 @@ function ChatbotContextPageInner() {
                       {item.source === "pdf" ? "PDF" : "Manual"}
                     </td>
                     <td className="px-4 py-3">
-                      <label className="flex items-center gap-2 text-xs text-gray-400">
-                        <input
-                          type="checkbox"
-                          checked={activeIds.includes(item.id)}
-                          onChange={(event) => {
+                      <Label className="flex items-center gap-2 text-xs text-gray-400">
+                        <Checkbox
+                          checked={activeIds.includes(item.id)} onCheckedChange={(checked) => {
                             setActiveIds((prev) =>
-                              event.target.checked
+                              Boolean(checked)
                                 ? [...prev, item.id]
                                 : prev.filter((id) => id !== item.id)
                             );
                           }}
                         />
                         {activeIds.includes(item.id) ? "Enabled" : "Disabled"}
-                      </label>
+                      </Label>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-2">
@@ -543,9 +543,9 @@ function ChatbotContextPageInner() {
             >
               <div className="space-y-4">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-200">
+                  <Label className="mb-2 block text-sm font-medium text-gray-200">
                     Title
-                  </label>
+                  </Label>
                   <Input
                     value={modalDraft.title}
                     onChange={(event) =>
@@ -557,12 +557,12 @@ function ChatbotContextPageInner() {
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-200">
+                  <Label className="mb-2 block text-sm font-medium text-gray-200">
                     Tags
-                  </label>
+                  </Label>
                   <div className="flex flex-wrap gap-2">
                     {(modalDraft.tags || []).map((tag) => (
-                      <button
+                      <Button
                         key={tag}
                         type="button"
                         className="rounded-full border border-gray-700 bg-gray-900 px-3 py-1 text-xs text-gray-200 hover:border-gray-500"
@@ -581,7 +581,7 @@ function ChatbotContextPageInner() {
                       >
                         {tag}
                         <span className="ml-1 text-gray-500">×</span>
-                      </button>
+                      </Button>
                     ))}
                   </div>
                   <div className="mt-2 flex gap-2">
@@ -634,9 +634,9 @@ function ChatbotContextPageInner() {
                   </div>
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-200">
+                  <Label className="mb-2 block text-sm font-medium text-gray-200">
                     Content
-                  </label>
+                  </Label>
                   <Textarea
                     placeholder="Add instructions..."
                     value={modalDraft.content}
@@ -649,18 +649,16 @@ function ChatbotContextPageInner() {
                     disabled={saving}
                   />
                 </div>
-                <label className="flex items-center gap-2 text-sm text-gray-300">
-                  <input
-                    type="checkbox"
-                    checked={modalDraft.active}
-                    onChange={(event) =>
+                <Label className="flex items-center gap-2 text-sm text-gray-300">
+                  <Checkbox
+                    checked={modalDraft.active} onCheckedChange={(checked) =>
                       setModalDraft((prev) =>
-                        prev ? { ...prev, active: event.target.checked } : prev
+                        prev ? { ...prev, active: Boolean(checked) } : prev
                       )
                     }
                   />
                   Active in global context
-                </label>
+                </Label>
               </div>
             </ModalShell>
           </div>

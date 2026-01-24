@@ -17,6 +17,9 @@ import {
   TableIcon,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type PreviewGroup = { type: string; objects: string[] };
 type PreviewTable = { name: string; rowEstimate: number };
@@ -204,7 +207,7 @@ function DatabasePreviewPageInner() {
                 {filteredGroups.length} groups
               </span>
             </div>
-            <input
+            <Input
               type="search"
               value={groupQuery}
               onChange={(event) => setGroupQuery(event.target.value)}
@@ -263,7 +266,7 @@ function DatabasePreviewPageInner() {
                     key={group.type}
                     className="rounded-md border border-gray-800 bg-gray-900/60"
                   >
-                    <button
+                    <Button
                       type="button"
                       onClick={() => toggleGroup(group.type)}
                       className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-gray-200"
@@ -279,7 +282,7 @@ function DatabasePreviewPageInner() {
                       ) : (
                         <ChevronRightIcon className="size-4 text-gray-400" />
                       )}
-                    </button>
+                    </Button>
                     {expanded && (
                       <div className="border-t border-gray-800 px-3 py-2 text-xs text-gray-400">
                         {group.objects.join(", ")}
@@ -334,7 +337,7 @@ function DatabasePreviewPageInner() {
             <div className="flex items-center gap-3 text-xs text-gray-500">
               <span>{tableRows.length} tables</span>
               <div className="flex items-center gap-2">
-                <label className="text-xs text-gray-400">Rows per table</label>
+                <Label className="text-xs text-gray-400">Rows per table</Label>
                 <select
                   value={pageSize}
                   onChange={(event) => {
@@ -351,25 +354,25 @@ function DatabasePreviewPageInner() {
                 </select>
               </div>
               <div className="flex items-center gap-1">
-                <button
+                <Button
                   type="button"
                   onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                   disabled={page <= 1}
                   className="rounded-md border border-gray-800 bg-gray-900 px-2 py-1 text-xs text-gray-200 hover:bg-gray-800"
                 >
                   Prev
-                </button>
+                </Button>
                 <span className="px-2">
                   Page {page} / {maxPage}
                 </span>
-                <button
+                <Button
                   type="button"
                   onClick={() => setPage((prev) => Math.min(maxPage, prev + 1))}
                   disabled={page >= maxPage}
                   className="rounded-md border border-gray-800 bg-gray-900 px-2 py-1 text-xs text-gray-200 hover:bg-gray-800"
                 >
                   Next
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -390,7 +393,7 @@ function DatabasePreviewPageInner() {
                     key={table.name}
                     className="rounded-md border border-gray-800 bg-gray-900/60"
                   >
-                    <button
+                    <Button
                       type="button"
                       onClick={() => toggleTable(table.name)}
                       className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-gray-200"
@@ -407,7 +410,7 @@ function DatabasePreviewPageInner() {
                       ) : (
                         <ChevronRightIcon className="size-4 text-gray-400" />
                       )}
-                    </button>
+                    </Button>
                     {expanded && (
                       <div className="border-t border-gray-800 px-3 py-3">
                         {table.rows.length === 0 ? (
@@ -484,13 +487,13 @@ function DatabasePreviewPageInner() {
             <h2 className="text-sm font-semibold text-white">
               Raw Backup List
             </h2>
-            <button
+            <Button
               type="button"
               onClick={() => void copyRaw()}
               className="rounded-md border border-gray-800 bg-gray-900 px-3 py-1.5 text-xs text-gray-200 hover:bg-gray-800"
             >
               Copy
-            </button>
+            </Button>
           </div>
           <pre className="mt-3 max-h-[60vh] overflow-auto rounded-md border border-gray-800 bg-gray-900/60 p-3 text-xs text-gray-300 whitespace-pre-wrap">
             {content}

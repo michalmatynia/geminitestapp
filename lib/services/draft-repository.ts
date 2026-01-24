@@ -1,5 +1,6 @@
 import type { ProductDraft, CreateProductDraftInput, UpdateProductDraftInput } from "@/types/drafts";
 import type { ProductParameterValue } from "@/types/products";
+import { randomUUID } from "crypto";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import prisma from "@/lib/prisma";

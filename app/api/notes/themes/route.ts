@@ -23,7 +23,7 @@ async function GET_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "themes.GET",
+      source: "notes.themes.GET",
       fallbackMessage: "Failed to fetch themes",
     });
   }
@@ -51,7 +51,7 @@ async function POST_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "themes.POST",
+      source: "notes.themes.POST",
       fallbackMessage: "Failed to create theme",
     });
   }

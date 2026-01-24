@@ -2,6 +2,7 @@ import type { NoteRepository } from "@/types/services/note-repository";
 import type { NoteWithRelations, RelatedNote } from "@/types/notes";
 import { cleanupNoteFile } from "./file-cleanup";
 import { getAppDbProvider } from "@/lib/services/app-db-provider";
+import { configurationError } from "@/lib/errors/app-error";
 
 // Lazy load to avoid initializing Prisma when using MongoDB
 let _repository: NoteRepository | null = null;
@@ -22,7 +23,7 @@ async function getRepository(): Promise<NoteRepository> {
   }
   
   if (!_repository) {
-    throw new Error("Failed to initialize note repository");
+    throw configurationError("Failed to initialize note repository");
   }
 
   return _repository;

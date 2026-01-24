@@ -220,7 +220,7 @@ async function POST_handler(
       } else if (connection.password) {
         token = decryptSecret(connection.password);
       }
-    } catch (error) {
+    } catch (_error) {
       logCapture.stop();
       const logs = logCapture.getLogs();
       return createErrorResponse(
@@ -291,8 +291,8 @@ async function POST_handler(
         inventoryId: resolvedInventoryId,
       });
 
-      const skuVal = product.sku as string;
-      const tokenVal = token as string;
+      const skuVal = product.sku;
+      const tokenVal = token;
       const skuCheck = await checkBaseSkuExists(
         tokenVal,
         resolvedInventoryId,
@@ -570,13 +570,13 @@ async function POST_handler(
       };
       const exportFields = Object.keys(exportData).flatMap((key) => {
         if (key === "text_fields" && exportData.text_fields && typeof exportData.text_fields === "object") {
-          return Object.keys(exportData.text_fields as Record<string, unknown>).map((field) => `text_fields.${field}`);
+          return Object.keys(exportData.text_fields).map((field) => `text_fields.${field}`);
         }
         if (key === "prices" && exportData.prices && typeof exportData.prices === "object") {
-          return Object.keys(exportData.prices as Record<string, unknown>).map((field) => `prices.${field}`);
+          return Object.keys(exportData.prices).map((field) => `prices.${field}`);
         }
         if (key === "stock" && exportData.stock && typeof exportData.stock === "object") {
-          return Object.keys(exportData.stock as Record<string, unknown>).map((field) => `stock.${field}`);
+          return Object.keys(exportData.stock).map((field) => `stock.${field}`);
         }
         return [key];
       });
@@ -866,4 +866,4 @@ async function POST_handler(
   }
 }
 
-export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].export-to-base.POST" });
+export const POST = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].export-to-base.POST" });

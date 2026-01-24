@@ -19,7 +19,7 @@ async function GET_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "categories.tree.GET",
+      source: "notes.categories.tree.GET",
       fallbackMessage: "Failed to fetch category tree",
     });
   }

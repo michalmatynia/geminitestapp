@@ -62,7 +62,7 @@ async function GET_handler(
     if (!draft) {
       return createErrorResponse(notFoundError("Draft not found", { id }), {
         request: req,
-        source: "drafts.byId.GET",
+        source: "drafts.[id].GET",
       });
     }
 
@@ -70,7 +70,7 @@ async function GET_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "drafts.byId.GET",
+      source: "drafts.[id].GET",
       fallbackMessage: "Failed to get draft",
     });
   }
@@ -98,7 +98,7 @@ async function PUT_handler(
     if (!draft) {
       return createErrorResponse(notFoundError("Draft not found", { id }), {
         request: req,
-        source: "drafts.byId.PUT",
+        source: "drafts.[id].PUT",
       });
     }
 
@@ -106,7 +106,7 @@ async function PUT_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "drafts.byId.PUT",
+      source: "drafts.[id].PUT",
       fallbackMessage: "Failed to update draft",
     });
   }
@@ -127,7 +127,7 @@ async function DELETE_handler(
     if (!success) {
       return createErrorResponse(notFoundError("Draft not found", { id }), {
         request: req,
-        source: "drafts.byId.DELETE",
+        source: "drafts.[id].DELETE",
       });
     }
 
@@ -135,12 +135,12 @@ async function DELETE_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "drafts.byId.DELETE",
+      source: "drafts.[id].DELETE",
       fallbackMessage: "Failed to delete draft",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "drafts.[id].GET" });
-export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "drafts.[id].PUT" });
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "drafts.[id].DELETE" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "drafts.[id].GET" });
+export const PUT = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "drafts.[id].PUT" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "drafts.[id].DELETE" });

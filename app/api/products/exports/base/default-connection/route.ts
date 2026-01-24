@@ -23,7 +23,7 @@ async function GET_handler(req: NextRequest) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "exports.base.default-connection.GET",
+      source: "products.exports.base.default-connection.GET",
       fallbackMessage: "Failed to get default connection ID",
     });
   }
@@ -47,7 +47,7 @@ async function POST_handler(req: NextRequest) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "exports.base.default-connection.POST",
+      source: "products.exports.base.default-connection.POST",
       fallbackMessage: "Failed to set default connection ID",
     });
   }

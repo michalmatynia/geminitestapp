@@ -37,7 +37,7 @@ async function GET_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "product-listings.GET",
+      source: "products.listings.GET",
       fallbackMessage: "Failed to fetch listing summary",
     });
   }

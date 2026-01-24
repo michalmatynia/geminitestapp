@@ -212,21 +212,21 @@ export function ParametersSettings({
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button
+                      <Button
                         type="button"
                         onClick={() => openEditModal(parameter)}
                         className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700"
                       >
                         Edit
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
                         onClick={() => void handleDelete(parameter)}
                         className="rounded bg-red-600/80 px-2 py-1 text-xs text-white hover:bg-red-600"
                         title="Delete parameter"
                       >
                         <Trash2 className="size-3" />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ))}

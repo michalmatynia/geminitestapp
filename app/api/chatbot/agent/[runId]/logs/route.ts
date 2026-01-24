@@ -17,7 +17,7 @@ async function GET_handler(
         internalError(
           "Agent logs not initialized. Run prisma generate/db push."
         ),
-        { request: req, source: "chatbot.agent.logs.GET" }
+        { request: req, source: "chatbot.agent.[runId].logs.GET" }
       );
     }
     const { runId } = await params;
@@ -40,10 +40,10 @@ async function GET_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.agent.logs.GET",
+      source: "chatbot.agent.[runId].logs.GET",
       fallbackMessage: "Failed to load agent logs.",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].logs.GET" });
+export const GET = apiHandlerWithParams<{ runId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].logs.GET" });

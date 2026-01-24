@@ -32,7 +32,7 @@ async function GET_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "product-listings.GET",
+      source: "products.[id].listings.GET",
       fallbackMessage: "Failed to fetch listings",
     });
   }
@@ -108,11 +108,11 @@ async function POST_handler(
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "product-listings.POST",
+      source: "products.[id].listings.POST",
       fallbackMessage: "Failed to create listing",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].listings.GET" });
-export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].listings.POST" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].listings.GET" });
+export const POST = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].listings.POST" });

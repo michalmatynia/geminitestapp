@@ -120,7 +120,7 @@ async function POST_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "auth.verify.POST",
+      source: "auth.verify-credentials.POST",
       fallbackMessage: "Failed to verify credentials",
     });
   }

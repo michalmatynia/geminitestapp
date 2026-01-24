@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type DatabaseType = "postgresql" | "mongodb";
 
@@ -56,17 +59,15 @@ const RestoreModal = ({
         <p className="mb-4 text-gray-300">
           Are you sure you want to restore backup <strong>{backupName}</strong>?
         </p>
-        <label className="flex items-center gap-2 mb-6 cursor-pointer">
-          <input
-            type="checkbox"
+        <Label className="flex items-center gap-2 mb-6 cursor-pointer">
+          <Checkbox
             className="size-4 accent-emerald-500"
-            checked={truncate}
-            onChange={(e) => setTruncate(e.target.checked)}
+            checked={truncate} onCheckedChange={(checked) => setTruncate(Boolean(checked))}
           />
           <span className="text-sm text-gray-300">
             Truncate (delete) existing data before restore
           </span>
-        </label>
+        </Label>
         <div className="flex justify-end gap-3">
           <Button variant="secondary" onClick={onClose}>
             Cancel
@@ -264,7 +265,7 @@ export default function DatabasesPage() {
       {/* Tabs */}
       <div className="mb-6 border-b border-gray-700">
         <div className="flex gap-4">
-          <button
+          <Button
             onClick={() => setActiveTab("postgresql")}
             className={`px-4 py-2 font-medium transition ${
               activeTab === "postgresql"
@@ -273,8 +274,8 @@ export default function DatabasesPage() {
             }`}
           >
             PostgreSQL
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => setActiveTab("mongodb")}
             className={`px-4 py-2 font-medium transition ${
               activeTab === "mongodb"
@@ -283,7 +284,7 @@ export default function DatabasesPage() {
             }`}
           >
             MongoDB
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -308,7 +309,7 @@ export default function DatabasesPage() {
           <Button variant="secondary" onClick={handlePreviewCurrent}>
             Preview Current DB
           </Button>
-          <input
+          <Input
             type="file"
             ref={fileInputRef}
             onChange={(e) => void handleUpload(e)}

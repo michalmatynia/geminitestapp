@@ -31,4 +31,4 @@ async function DELETE_handler(
   }
 }
 
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].listings.[listingId].purge.DELETE" });
+export const DELETE = apiHandlerWithParams<{ id: string; listingId: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].listings.[listingId].purge.DELETE" });

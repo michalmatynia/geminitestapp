@@ -9,6 +9,7 @@ import type { ExpandedImageFile } from "@/types/products-ui";
 import FilePreviewModal from "@/components/ui/file-preview-modal";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { Input } from "@/components/ui/input";
 
 interface FileManagerProps {
   onSelectFile?: (files: ImageFileSelection[]) => void;
@@ -112,14 +113,14 @@ export default function FileManager({
         )}
       </div>
       <div className="flex space-x-4 mb-4">
-        <input
+        <Input
           type="text"
           placeholder="Search by filename"
           value={filenameSearch}
           onChange={(e) => setFilenameSearch(e.target.value)}
           className="w-full p-2 bg-gray-800 rounded"
         />
-        <input
+        <Input
           type="text"
           placeholder="Search by product name"
           value={productNameSearch}

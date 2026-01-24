@@ -62,7 +62,7 @@ describe("Databases API", () => {
         .mockResolvedValue([
           { name: "stardb-backup-123.dump", isDirectory: () => false },
           { name: "restore-log.json", isDirectory: () => false },
-        ] as any);
+        ] as unknown as Dirent[]);
       vi.spyOn(fs, "readFile").mockResolvedValue("{}");
       vi.spyOn(fs, "stat").mockResolvedValue({
         size: 1024,

@@ -39,7 +39,7 @@ async function GET_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "export-templates.GET",
+      source: "products.export-templates.[id].GET",
       fallbackMessage: "Failed to fetch template.",
     });
   }
@@ -74,7 +74,7 @@ async function PUT_handler(
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "export-templates.PUT",
+      source: "products.export-templates.[id].PUT",
       fallbackMessage: "Failed to update template.",
     });
   }
@@ -97,12 +97,12 @@ async function DELETE_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "export-templates.DELETE",
+      source: "products.export-templates.[id].DELETE",
       fallbackMessage: "Failed to delete template.",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.export-templates.[id].GET" });
-export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "products.export-templates.[id].PUT" });
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.export-templates.[id].DELETE" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.export-templates.[id].GET" });
+export const PUT = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "products.export-templates.[id].PUT" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.export-templates.[id].DELETE" });

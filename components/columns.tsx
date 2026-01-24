@@ -169,13 +169,13 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
     <div className="flex justify-end">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button
+          <Button
             className="inline-flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-gray-800 hover:text-white"
             aria-label="Open row actions"
             type="button"
           >
             <MoreVertical className="size-4" />
-          </button>
+          </Button>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end">
@@ -221,14 +221,14 @@ export const columns: ColumnDef<ProductWithImages>[] = [
           table.getIsAllPageRowsSelected() ||
           (table.getIsSomePageRowsSelected() && "indeterminate")
         }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        onCheckedChange={(checked) => table.toggleAllPageRowsSelected(!!checked)}
         aria-label="Select all"
       />
     ),
     cell: ({ row }) => (
       <Checkbox
         checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        onCheckedChange={(checked) => row.toggleSelected(!!checked)}
         aria-label="Select row"
       />
     ),
@@ -293,13 +293,13 @@ export const columns: ColumnDef<ProductWithImages>[] = [
       return (
         <div>
           {handleNameClick ? (
-            <button
+            <Button
               className="text-left text-white hover:underline"
               onClick={() => handleNameClick(product)}
               type="button"
             >
               {nameValue || "—"}
-            </button>
+            </Button>
           ) : (
             <span>{nameValue || "—"}</span>
           )}
@@ -464,16 +464,16 @@ export const columns: ColumnDef<ProductWithImages>[] = [
 
       return (
         <div className="inline-flex items-center gap-1">
-          <button
+          <Button
             type="button"
             onClick={() => handleClick(product)}
             className="inline-flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-gray-800 hover:text-emerald-400"
             aria-label="View integrations"
           >
             <PlusCircle className="size-5" />
-          </button>
+          </Button>
           {showMarketplaceBadge && (
-            <button
+            <Button
               type="button"
               onClick={() => handleExportClick?.(product)}
               className={`inline-flex size-6 items-center justify-center rounded-full hover:bg-gray-800 ${badgeClass}`}
@@ -481,7 +481,7 @@ export const columns: ColumnDef<ProductWithImages>[] = [
               aria-label={`Export settings - status: ${status}`}
             >
               <Store className="size-3.5" />
-            </button>
+            </Button>
           )}
         </div>
       );

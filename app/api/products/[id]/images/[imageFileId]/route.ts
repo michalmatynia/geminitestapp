@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { productService } from "@/lib/services/productService";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError } from "@/lib/errors/app-error";
@@ -37,10 +37,10 @@ async function DELETE_handler(req: NextRequest, ctx: Ctx) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "products.images.DELETE",
+      source: "products.[id].images.[imageFileId].DELETE",
       fallbackMessage: "Failed to disconnect image",
     });
   }
 }
 
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].images.[imageFileId].DELETE" });
+export const DELETE = apiHandlerWithParams<{ id: string; imageFileId: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].images.[imageFileId].DELETE" });

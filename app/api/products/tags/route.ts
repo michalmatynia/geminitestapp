@@ -67,7 +67,7 @@ async function GET_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "product-tags.GET",
+      source: "products.tags.GET",
       fallbackMessage: "Failed to fetch tags",
     });
   }
@@ -143,7 +143,7 @@ async function POST_handler(req: Request) {
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "product-tags.POST",
+      source: "products.tags.POST",
       fallbackMessage: "Failed to create product tag",
     });
   }

@@ -41,7 +41,7 @@ async function POST_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "integrations.allegro.disconnect.POST",
+      source: "integrations.[id].connections.[connectionId].allegro.disconnect.POST",
       fallbackMessage: "Failed to disconnect Allegro.",
       ...(integrationId || connectionId
         ? { extra: { integrationId, connectionId } }
@@ -50,4 +50,4 @@ async function POST_handler(
   }
 }
 
-export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.disconnect.POST" });
+export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.disconnect.POST" });

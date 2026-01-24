@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { IntegrationConnection } from "../types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type BaselinkerSettingsProps = {
   activeConnection: IntegrationConnection | null;
@@ -121,21 +123,21 @@ export function BaselinkerSettings({
               )}
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <input
+              <Input
                 type="number"
                 min="1"
                 value={syncIntervalMinutes}
                 onChange={(event) => setSyncIntervalMinutes(event.target.value)}
                 className="w-32 rounded-md border border-gray-800 bg-gray-900 px-2 py-1 text-xs text-white"
               />
-              <button
+              <Button
                 type="button"
                 onClick={() => { void handleSaveSyncInterval(); }}
                 disabled={savingSyncInterval}
                 className="rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 hover:bg-gray-200 disabled:opacity-50"
               >
                 {savingSyncInterval ? "Saving..." : "Save"}
-              </button>
+              </Button>
             </div>
             <p className="mt-2 text-[10px] text-gray-400">
               Controls how often Base.com is checked for listing status updates.
@@ -145,7 +147,7 @@ export function BaselinkerSettings({
             )}
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <button
+            <Button
               type="button"
               onClick={onTest}
               disabled={isTesting}
@@ -156,7 +158,7 @@ export function BaselinkerSettings({
                 : baselinkerConnected
                 ? "Re-test Connection"
                 : "Test Connection"}
-            </button>
+            </Button>
           </div>
           <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-400">
             <p>

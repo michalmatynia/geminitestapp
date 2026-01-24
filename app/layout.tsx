@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Suspense } from "react";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
@@ -34,7 +35,9 @@ export default function RootLayout({
               disableTransitionOnChange
             >
               <ToastProvider>
-                <ClientErrorReporter />
+                <Suspense fallback={null}>
+                  <ClientErrorReporter />
+                </Suspense>
                 {children}
               </ToastProvider>
             </ThemeProvider>

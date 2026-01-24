@@ -32,7 +32,7 @@ async function PATCH_handler(
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "categories.PATCH",
+      source: "notes.categories.[id].PATCH",
       fallbackMessage: "Failed to update category",
     });
   }
@@ -59,11 +59,11 @@ async function DELETE_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "categories.DELETE",
+      source: "notes.categories.[id].DELETE",
       fallbackMessage: "Failed to delete category",
     });
   }
 }
 
-export const PATCH = apiHandlerWithParams<any>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "notes.categories.[id].PATCH" });
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.categories.[id].DELETE" });
+export const PATCH = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "notes.categories.[id].PATCH" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.categories.[id].DELETE" });

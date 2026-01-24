@@ -2,6 +2,10 @@
 
 import { Dispatch, SetStateAction } from "react";
 import { defaultPlaywrightSettings } from "../types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type PlaywrightSettingsProps = {
   settings: typeof defaultPlaywrightSettings;
@@ -33,44 +37,40 @@ export function PlaywrightSettings({
 
       <div className="mt-4 space-y-4">
         <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-3">
-          <label className="flex items-center justify-between text-sm text-gray-300">
+          <Label className="flex items-center justify-between text-sm text-gray-300">
             <span>
               Headless mode
               <span className="ml-2 block text-xs text-gray-500">
                 Hide the browser window during execution.
               </span>
             </span>
-            <input
-              type="checkbox"
+            <Checkbox
               className="h-4 w-4 accent-emerald-400"
-              checked={settings.headless}
-              onChange={(e) =>
-                setSettings((prev) => ({ ...prev, headless: e.target.checked }))
+              checked={settings.headless} onCheckedChange={(checked) =>
+                setSettings((prev) => ({ ...prev, headless: Boolean(checked) }))
               }
             />
-          </label>
+          </Label>
         </div>
 
         <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-3">
-          <label className="flex items-center justify-between text-sm text-gray-300">
+          <Label className="flex items-center justify-between text-sm text-gray-300">
             <span>
               Emulate Device
               <span className="ml-2 block text-xs text-gray-500">
                 Simulate a mobile device or specific browser.
               </span>
             </span>
-            <input
-              type="checkbox"
+            <Checkbox
               className="h-4 w-4 accent-emerald-400"
-              checked={settings.emulateDevice}
-              onChange={(e) =>
+              checked={settings.emulateDevice} onCheckedChange={(checked) =>
                 setSettings((prev) => ({
                   ...prev,
-                  emulateDevice: e.target.checked,
+                  emulateDevice: Boolean(checked),
                 }))
               }
             />
-          </label>
+          </Label>
           {settings.emulateDevice && (
             <div className="mt-3">
               <select
@@ -95,8 +95,8 @@ export function PlaywrightSettings({
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-3">
-            <label className="text-xs text-gray-400">SlowMo (ms)</label>
-            <input
+            <Label className="text-xs text-gray-400">SlowMo (ms)</Label>
+            <Input
               type="number"
               className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
               value={settings.slowMo}
@@ -109,8 +109,8 @@ export function PlaywrightSettings({
             />
           </div>
           <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-3">
-            <label className="text-xs text-gray-400">Timeout (ms)</label>
-            <input
+            <Label className="text-xs text-gray-400">Timeout (ms)</Label>
+            <Input
               type="number"
               className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
               value={settings.timeout}
@@ -125,31 +125,29 @@ export function PlaywrightSettings({
         </div>
 
         <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-3">
-          <label className="flex items-center justify-between text-sm text-gray-300">
+          <Label className="flex items-center justify-between text-sm text-gray-300">
             <span>
               Humanize Mouse
               <span className="ml-2 block text-xs text-gray-500">
                 Add jitter and randomized movement paths.
               </span>
             </span>
-            <input
-              type="checkbox"
+            <Checkbox
               className="h-4 w-4 accent-emerald-400"
-              checked={settings.humanizeMouse}
-              onChange={(e) =>
+              checked={settings.humanizeMouse} onCheckedChange={(checked) =>
                 setSettings((prev) => ({
                   ...prev,
-                  humanizeMouse: e.target.checked,
+                  humanizeMouse: Boolean(checked),
                 }))
               }
             />
-          </label>
+          </Label>
           {settings.humanizeMouse && (
             <div className="mt-3">
-              <label className="text-xs text-gray-400">
+              <Label className="text-xs text-gray-400">
                 Mouse Jitter (pixels)
-              </label>
-              <input
+              </Label>
+              <Input
                 type="number"
                 className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                 value={settings.mouseJitter}
@@ -165,13 +163,13 @@ export function PlaywrightSettings({
         </div>
 
         <div className="flex justify-end">
-          <button
+          <Button
             type="button"
             className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
             onClick={onSave}
           >
             Save Playwright Settings
-          </button>
+          </Button>
         </div>
       </div>
     </div>

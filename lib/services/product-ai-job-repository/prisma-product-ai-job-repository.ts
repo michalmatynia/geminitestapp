@@ -24,7 +24,7 @@ export const prismaProductAiJobRepository: ProductAiJobRepository = {
       data: {
         productId,
         type,
-        payload,
+        payload: payload as any,
         status: "pending",
       },
     });
@@ -76,7 +76,7 @@ export const prismaProductAiJobRepository: ProductAiJobRepository = {
   async updateJob(jobId, data: ProductAiJobUpdate) {
     const job = await prisma.productAiJob.update({
       where: { id: jobId },
-      data,
+      data: data as any,
     });
     return mapJob(job);
   },

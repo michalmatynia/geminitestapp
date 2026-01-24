@@ -29,7 +29,7 @@ async function GET_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "products.GET",
+      source: "products.[id].GET",
       fallbackMessage: "Failed to fetch product",
     });
   }
@@ -43,10 +43,8 @@ async function PUT_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  let productId = "";
   try {
     const { id } = await params;
-    productId = id;
     if (!id) {
       throw badRequestError("Product id is required");
     }
@@ -67,7 +65,7 @@ async function PUT_handler(
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "products.PUT",
+      source: "products.[id].PUT",
       fallbackMessage: "Failed to update product",
     });
   }
@@ -86,10 +84,8 @@ async function PATCH_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  let productId = "";
   try {
     const { id } = await params;
-    productId = id;
     if (!id) {
       throw badRequestError("Product id is required");
     }
@@ -120,7 +116,7 @@ async function PATCH_handler(
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "products.PATCH",
+      source: "products.[id].PATCH",
       fallbackMessage: "Failed to update product",
     });
   }
@@ -134,10 +130,8 @@ async function DELETE_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  let productId = "";
   try {
     const { id } = await params;
-    productId = id;
     if (!id) {
       throw badRequestError("Product id is required");
     }
@@ -149,13 +143,13 @@ async function DELETE_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "products.DELETE",
+      source: "products.[id].DELETE",
       fallbackMessage: "Failed to delete product",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].GET" });
-export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].PUT" });
-export const PATCH = apiHandlerWithParams<any>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].PATCH" });
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].DELETE" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].GET" });
+export const PUT = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].PUT" });
+export const PATCH = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].PATCH" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].DELETE" });

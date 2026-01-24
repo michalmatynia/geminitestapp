@@ -16,6 +16,7 @@ import { logger } from "@/lib/logger";
 import type { Template, BaseInventory } from "@/types/product-imports";
 import { ExportLogViewer } from "./ExportLogViewer";
 import type { CapturedLog } from "@/lib/services/exports/log-capture";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type MassListProductModalProps = {
   productIds: string[];
@@ -407,16 +408,14 @@ export default function MassListProductModal({
                         </div>
 
                         <div className="flex items-center gap-2 pt-2">
-                        <input
-                            type="checkbox"
+                        <Checkbox
                             id="allowDuplicateSku"
-                            checked={allowDuplicateSku}
-                            onChange={(e) => setAllowDuplicateSku(e.target.checked)}
+                            checked={allowDuplicateSku} onCheckedChange={(checked) => setAllowDuplicateSku(Boolean(checked))}
                             className="h-4 w-4 rounded border-gray-700 bg-gray-900 text-blue-500"
                         />
-                        <label htmlFor="allowDuplicateSku" className="text-sm text-gray-300">
+                        <Label htmlFor="allowDuplicateSku" className="text-sm text-gray-300">
                             Allow duplicate SKUs
-                        </label>
+                        </Label>
                         </div>
                         <p className="text-xs text-gray-500">
                         When unchecked, export will fail if the SKU already exists in the Base.com inventory.

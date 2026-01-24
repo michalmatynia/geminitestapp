@@ -1,6 +1,10 @@
 "use client";
 
 import { IntegrationConnection } from "../types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 type BaseApiConsoleProps = {
   activeConnection: IntegrationConnection | null;
@@ -59,7 +63,7 @@ export function BaseApiConsole({
       </div>
       <div className="mb-3 flex flex-wrap gap-2">
         {baseApiPresets.map((preset) => (
-          <button
+          <Button
             key={preset.label}
             type="button"
             className="rounded-full border border-gray-700 px-3 py-1 text-[11px] text-gray-300 hover:border-gray-500"
@@ -69,12 +73,12 @@ export function BaseApiConsole({
             }}
           >
             {preset.label}
-          </button>
+          </Button>
         ))}
       </div>
       <div>
-        <label className="text-xs text-gray-400">Method</label>
-        <input
+        <Label className="text-xs text-gray-400">Method</Label>
+        <Input
           className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white"
           placeholder="getInventories"
           value={method}
@@ -82,22 +86,22 @@ export function BaseApiConsole({
         />
       </div>
       <div className="mt-3">
-        <label className="text-xs text-gray-400">Parameters (JSON)</label>
-        <textarea
+        <Label className="text-xs text-gray-400">Parameters (JSON)</Label>
+        <Textarea
           className="mt-2 h-32 w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-xs text-white"
           value={params}
           onChange={(event) => setParams(event.target.value)}
         />
       </div>
       <div className="mt-3 flex items-center gap-3">
-        <button
+        <Button
           className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-70"
           type="button"
           disabled={loading}
           onClick={onRequest}
         >
           {loading ? "Sending..." : "Send request"}
-        </button>
+        </Button>
         <span className="text-xs text-gray-500">
           Endpoint: https://api.baselinker.com/connector.php
         </span>

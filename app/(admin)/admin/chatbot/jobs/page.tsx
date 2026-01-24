@@ -1148,7 +1148,7 @@ export default function ChatbotJobsPage() {
                             <p className="mt-1 text-gray-200">{step.message}</p>
                             {step.metadata ? (
                               <div className="mt-2">
-                                <button
+                                <Button
                                   type="button"
                                   className="text-[10px] uppercase tracking-wide text-slate-400 hover:text-slate-200"
                                   onClick={() =>
@@ -1161,7 +1161,7 @@ export default function ChatbotJobsPage() {
                                   {expandedAuditIds[step.id]
                                     ? "Hide metadata"
                                     : "Show metadata"}
-                                </button>
+                                </Button>
                                 {expandedAuditIds[step.id] ? (
                                   <pre className="mt-2 whitespace-pre-wrap rounded-md border border-gray-800 bg-gray-900 p-2 text-[10px] text-gray-300">
                                     {JSON.stringify(step.metadata, null, 2)}

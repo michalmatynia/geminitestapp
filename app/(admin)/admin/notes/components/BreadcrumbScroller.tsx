@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function BreadcrumbScroller({
   backgroundColor,
@@ -48,24 +49,24 @@ export function BreadcrumbScroller({
       style={{ backgroundColor }}
     >
       {canScrollLeft && (
-        <button
+        <Button
           type="button"
           aria-label="Scroll breadcrumb left"
           onClick={() => handleScroll("left")}
           className="absolute left-1 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/20 p-1 text-gray-700 hover:bg-black/30"
         >
           <ChevronLeft size={12} />
-        </button>
+        </Button>
       )}
       {canScrollRight && (
-        <button
+        <Button
           type="button"
           aria-label="Scroll breadcrumb right"
           onClick={() => handleScroll("right")}
           className="absolute right-1 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/20 p-1 text-gray-700 hover:bg-black/30"
         >
           <ChevronRight size={12} />
-        </button>
+        </Button>
       )}
       <div
         ref={scrollRef}

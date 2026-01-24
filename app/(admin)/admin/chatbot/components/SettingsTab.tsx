@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useChatbotLogic } from "../hooks/useChatbotLogic";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type SettingsTabProps = ReturnType<typeof useChatbotLogic>;
 
@@ -78,44 +79,36 @@ export function SettingsTab({
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 text-sm text-gray-300">
-            <input
-              type="checkbox"
-              checked={webSearchEnabled}
-              onChange={(e) => setWebSearchEnabled(e.target.checked)}
+          <Label className="flex items-center gap-2 text-sm text-gray-300">
+            <Checkbox
+              checked={webSearchEnabled} onCheckedChange={(checked) => setWebSearchEnabled(Boolean(checked))}
             />
             Enable Web Search
-          </label>
-          <label className="flex items-center gap-2 text-sm text-gray-300">
-            <input
-              type="checkbox"
-              checked={useGlobalContext}
-              onChange={(e) => setUseGlobalContext(e.target.checked)}
+          </Label>
+          <Label className="flex items-center gap-2 text-sm text-gray-300">
+            <Checkbox
+              checked={useGlobalContext} onCheckedChange={(checked) => setUseGlobalContext(Boolean(checked))}
             />
             Use Global Context
-          </label>
-          <label className="flex items-center gap-2 text-sm text-gray-300">
-            <input
-              type="checkbox"
-              checked={useLocalContext}
-              onChange={(e) => setUseLocalContext(e.target.checked)}
+          </Label>
+          <Label className="flex items-center gap-2 text-sm text-gray-300">
+            <Checkbox
+              checked={useLocalContext} onCheckedChange={(checked) => setUseLocalContext(Boolean(checked))}
             />
             Use Local Context
-          </label>
+          </Label>
         </div>
       </div>
 
       <div className="space-y-4">
         <h3 className="text-lg font-medium text-white">Agent Settings</h3>
         <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 text-sm text-gray-300">
-            <input
-              type="checkbox"
-              checked={agentModeEnabled}
-              onChange={(e) => setAgentModeEnabled(e.target.checked)}
+          <Label className="flex items-center gap-2 text-sm text-gray-300">
+            <Checkbox
+              checked={agentModeEnabled} onCheckedChange={(checked) => setAgentModeEnabled(Boolean(checked))}
             />
             Enable Agent Mode
-          </label>
+          </Label>
         </div>
         {agentModeEnabled && (
           <div className="space-y-4 rounded-md border border-gray-800 p-4">
@@ -143,32 +136,26 @@ export function SettingsTab({
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 text-sm text-gray-300">
-                <input
-                  type="checkbox"
-                  checked={agentRunHeadless}
-                  onChange={(e) => setAgentRunHeadless(e.target.checked)}
+              <Label className="flex items-center gap-2 text-sm text-gray-300">
+                <Checkbox
+                  checked={agentRunHeadless} onCheckedChange={(checked) => setAgentRunHeadless(Boolean(checked))}
                 />
                 Run Headless
-              </label>
-              <label className="flex items-center gap-2 text-sm text-gray-300">
-                <input
-                  type="checkbox"
-                  checked={agentIgnoreRobotsTxt}
-                  onChange={(e) => setAgentIgnoreRobotsTxt(e.target.checked)}
+              </Label>
+              <Label className="flex items-center gap-2 text-sm text-gray-300">
+                <Checkbox
+                  checked={agentIgnoreRobotsTxt} onCheckedChange={(checked) => setAgentIgnoreRobotsTxt(Boolean(checked))}
                 />
                 Ignore robots.txt
-              </label>
-              <label className="flex items-center gap-2 text-sm text-gray-300">
-                <input
-                  type="checkbox"
-                  checked={agentRequireHumanApproval}
-                  onChange={(e) =>
-                    setAgentRequireHumanApproval(e.target.checked)
+              </Label>
+              <Label className="flex items-center gap-2 text-sm text-gray-300">
+                <Checkbox
+                  checked={agentRequireHumanApproval} onCheckedChange={(checked) =>
+                    setAgentRequireHumanApproval(Boolean(checked))
                   }
                 />
                 Require Approval
-              </label>
+              </Label>
             </div>
           </div>
         )}

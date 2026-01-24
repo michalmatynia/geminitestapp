@@ -27,7 +27,7 @@ async function GET_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "products.ai-jobs.job.GET",
+      source: "products.ai-jobs.[jobId].GET",
       fallbackMessage: "Failed to fetch job",
     });
   }
@@ -57,7 +57,7 @@ async function POST_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "products.ai-jobs.job.POST",
+      source: "products.ai-jobs.[jobId].POST",
       fallbackMessage: "Failed to update job",
     });
   }
@@ -77,12 +77,12 @@ async function DELETE_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "products.ai-jobs.job.DELETE",
+      source: "products.ai-jobs.[jobId].DELETE",
       fallbackMessage: "Failed to delete job",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.ai-jobs.[jobId].GET" });
-export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.ai-jobs.[jobId].POST" });
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.ai-jobs.[jobId].DELETE" });
+export const GET = apiHandlerWithParams<{ jobId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.ai-jobs.[jobId].GET" });
+export const POST = apiHandlerWithParams<{ jobId: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.ai-jobs.[jobId].POST" });
+export const DELETE = apiHandlerWithParams<{ jobId: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.ai-jobs.[jobId].DELETE" });

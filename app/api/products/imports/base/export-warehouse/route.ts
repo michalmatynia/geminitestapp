@@ -22,7 +22,7 @@ async function GET_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "imports.base.export-warehouse.GET",
+      source: "products.imports.base.export-warehouse.GET",
       fallbackMessage: "Failed to fetch warehouse.",
     });
   }
@@ -45,7 +45,7 @@ async function POST_handler(req: Request) {
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "imports.base.export-warehouse.POST",
+      source: "products.imports.base.export-warehouse.POST",
       fallbackMessage: "Failed to save warehouse",
     });
   }

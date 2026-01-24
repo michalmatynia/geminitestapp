@@ -11,6 +11,8 @@ import type {
   ImageRetryPreset,
 } from "@/types/product-imports";
 import type { IntegrationConnectionBasic } from "@/types";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   getDefaultImageRetryPresets,
   withImageRetryPresetLabels,
@@ -142,9 +144,9 @@ export function ExportTab({
       <div className="mt-6 space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <label className="text-xs text-gray-400">
+            <Label className="text-xs text-gray-400">
               Base connection for inventories/warehouses
-            </label>
+            </Label>
             <select
               className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
               value={selectedBaseConnectionId}
@@ -169,7 +171,7 @@ export function ExportTab({
             </p>
           </div>
           <div>
-            <label className="text-xs text-gray-400">Default Inventory</label>
+            <Label className="text-xs text-gray-400">Default Inventory</Label>
             <select
               className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
               value={exportInventoryId}
@@ -201,9 +203,9 @@ export function ExportTab({
           </div>
 
           <div>
-            <label className="text-xs text-gray-400">
+            <Label className="text-xs text-gray-400">
               Default Export Template
-            </label>
+            </Label>
             <select
               className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
               value={exportActiveTemplateId}
@@ -234,7 +236,7 @@ export function ExportTab({
         </div>
 
         <div>
-          <label className="text-xs text-gray-400">Default Warehouse ID</label>
+          <Label className="text-xs text-gray-400">Default Warehouse ID</Label>
           <select
             className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
             value={exportWarehouseId}
@@ -262,32 +264,28 @@ export function ExportTab({
             stock.
           </p>
           <div className="mt-3 flex items-center gap-2 text-xs text-gray-400">
-            <input
-              type="checkbox"
+            <Checkbox
               id="exportStockFallback"
-              checked={exportStockFallbackEnabled}
-              onChange={(event) =>
-                setExportStockFallbackEnabled(event.target.checked)
+              checked={exportStockFallbackEnabled} onCheckedChange={(checked) =>
+                setExportStockFallbackEnabled(Boolean(checked))
               }
               disabled={!exportStockFallbackLoaded}
               className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
             />
-            <label htmlFor="exportStockFallback">
+            <Label htmlFor="exportStockFallback">
               Skip stock when Base rejects the warehouse (allow listing)
-            </label>
+            </Label>
           </div>
           {allWarehouses.length > 0 && allWarehouses.length > warehouses.length ? (
             <div className="mt-2 flex items-center gap-2 text-xs text-gray-400">
-              <input
-                type="checkbox"
+              <Checkbox
                 id="showAllWarehouses"
-                checked={showAllWarehouses}
-                onChange={(event) => setShowAllWarehouses(event.target.checked)}
+                checked={showAllWarehouses} onCheckedChange={(checked) => setShowAllWarehouses(Boolean(checked))}
                 className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
               />
-              <label htmlFor="showAllWarehouses">
+              <Label htmlFor="showAllWarehouses">
                 Show all warehouses (may include ones not assigned to the inventory)
-              </label>
+              </Label>
             </div>
           ) : null}
         </div>
@@ -330,9 +328,9 @@ export function ExportTab({
                   </div>
                   <div className="mt-2 grid gap-3 md:grid-cols-2">
                     <div>
-                      <label className="text-[10px] text-gray-500">
+                      <Label className="text-[10px] text-gray-500">
                         Max dimension (px)
-                      </label>
+                      </Label>
                       <Input
                         type="number"
                         min={1}
@@ -347,9 +345,9 @@ export function ExportTab({
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-gray-500">
+                      <Label className="text-[10px] text-gray-500">
                         JPEG quality
-                      </label>
+                      </Label>
                       <Input
                         type="number"
                         min={10}
@@ -366,12 +364,10 @@ export function ExportTab({
                     </div>
                   </div>
                   <div className="mt-2 flex items-center gap-2 text-[11px] text-gray-400">
-                    <input
-                      type="checkbox"
-                      checked={preset.transform.forceJpeg ?? true}
-                      onChange={(event) =>
+                    <Checkbox
+                      checked={preset.transform.forceJpeg ?? true} onCheckedChange={(checked) =>
                         updateImageRetryPreset(preset.id, {
-                          forceJpeg: event.target.checked,
+                          forceJpeg: Boolean(checked),
                         })
                       }
                       className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
@@ -451,16 +447,14 @@ export function ExportTab({
               {loadingDebugWarehouses ? "Debugging..." : "Debug Warehouses"}
             </Button>
             <div className="flex items-center gap-2 text-xs text-gray-400">
-              <input
-                type="checkbox"
+              <Checkbox
                 id="includeAllWarehouses"
-                checked={includeAllWarehouses}
-                onChange={(event) => setIncludeAllWarehouses(event.target.checked)}
+                checked={includeAllWarehouses} onCheckedChange={(checked) => setIncludeAllWarehouses(Boolean(checked))}
                 className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
               />
-              <label htmlFor="includeAllWarehouses">
+              <Label htmlFor="includeAllWarehouses">
                 Try loading global warehouses (if supported)
-              </label>
+              </Label>
             </div>
             <Button
               onClick={handleSaveExportSettings}
@@ -487,13 +481,13 @@ export function ExportTab({
               <span className="font-semibold text-gray-200">
                 Warehouse debug (raw IDs)
               </span>
-              <button
+              <Button
                 type="button"
                 onClick={() => setDebugWarehouses(null)}
                 className="text-[11px] uppercase tracking-wide text-gray-500 hover:text-gray-200"
               >
                 Clear
-              </button>
+              </Button>
             </div>
             <div className="mt-2 space-y-2">
               <div>

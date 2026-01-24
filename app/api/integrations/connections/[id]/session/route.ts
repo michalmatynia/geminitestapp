@@ -47,11 +47,11 @@ async function GET_handler(
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "integrations.connection.session.GET",
+      source: "integrations.connections.[id].session.GET",
       fallbackMessage: "Failed to load session",
       ...(connectionId ? { extra: { connectionId } } : {}),
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.connections.[id].session.GET" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.connections.[id].session.GET" });

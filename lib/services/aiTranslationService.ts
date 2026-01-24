@@ -1,5 +1,10 @@
 import OpenAI from "openai";
 import prisma from "@/lib/prisma";
+import {
+  apiKeyInvalidError,
+  configurationError,
+  operationFailedError,
+} from "@/lib/errors/app-error";
 
 interface TranslateProductParams {
   productId: string;
@@ -50,11 +55,15 @@ export async function translateProduct(params: TranslateProductParams): Promise<
     console.log(`[aiTranslationService] Using Ollama at: ${ollamaBaseUrl}`);
 
     if (!ollamaBaseUrl) {
-      throw new Error("OLLAMA_BASE_URL is not configured. Please add it to your environment variables.");
+      throw configurationError(
+        "OLLAMA_BASE_URL is not configured. Please add it to your environment variables."
+      );
     }
   } else {
     if (!process.env.OPENAI_API_KEY) {
-      throw new Error("OpenAI API key is not configured. Please add OPENAI_API_KEY to your environment variables.");
+      throw configurationError(
+        "OpenAI API key is not configured. Please add OPENAI_API_KEY to your environment variables."
+      );
     }
   }
 
@@ -108,7 +117,9 @@ Important:
 
       const content = response.choices[0]?.message?.content;
       if (!content) {
-        throw new Error(`No translation received for ${targetLang}`);
+        throw operationFailedError(`No translation received for ${targetLang}`, undefined, {
+          targetLanguage: targetLang,
+        });
       }
 
       const parsed = JSON.parse(content) as { name?: string; description?: string };
@@ -124,7 +135,10 @@ Important:
 
       // If this is an API key error, throw it to fail the entire job
       if (errorMessage.includes("API key") || errorMessage.includes("401") || errorMessage.includes("authentication")) {
-        throw new Error(`Translation failed: ${errorMessage}. Please check your OpenAI API key configuration.`);
+        throw apiKeyInvalidError(
+          `Translation failed: ${errorMessage}. Please check your OpenAI API key configuration.`,
+          "openai"
+        );
       }
 
       // For other errors, continue with other languages but don't save fallback
@@ -134,7 +148,7 @@ Important:
 
   // If no translations were successful, throw an error
   if (Object.keys(translations).length === 0) {
-    throw new Error("Translation failed: No translations were completed successfully.");
+    throw operationFailedError("Translation failed: No translations were completed successfully.");
   }
 
   return {

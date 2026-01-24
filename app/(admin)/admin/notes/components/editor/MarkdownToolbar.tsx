@@ -3,6 +3,9 @@
 import React from "react";
 import { Undo, Redo } from "lucide-react";
 import type { NoteFileRecord } from "@/types/notes";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface MarkdownToolbarProps {
   noteFiles: NoteFileRecord[];
@@ -71,7 +74,7 @@ export function MarkdownToolbar({
             {editorMode === "markdown" && (
               <div className="flex gap-1">
                 {onMigrateToWysiwyg && (
-                  <button
+                  <Button
                     type="button"
                     onClick={onMigrateToWysiwyg}
                     disabled={isMigrating}
@@ -79,12 +82,12 @@ export function MarkdownToolbar({
                     title="Convert this note to WYSIWYG format"
                   >
                     {isMigrating ? "Migrating..." : "To WYSIWYG"}
-                  </button>
+                  </Button>
                 )}
               </div>
             )}
             {editorMode === "wysiwyg" && onMigrateToMarkdown && (
-              <button
+              <Button
                 type="button"
                 onClick={onMigrateToMarkdown}
                 disabled={isMigrating}
@@ -92,10 +95,10 @@ export function MarkdownToolbar({
                 title="Convert this note to Markdown format"
               >
                 {isMigrating ? "Migrating..." : "To Markdown"}
-              </button>
+              </Button>
             )}
             {editorMode === "code" && onMigrateToMarkdown && (
-              <button
+              <Button
                 type="button"
                 onClick={onMigrateToMarkdown}
                 disabled={isMigrating}
@@ -103,13 +106,13 @@ export function MarkdownToolbar({
                 title="Convert this note to Markdown format"
               >
                 {isMigrating ? "Migrating..." : "To Markdown"}
-              </button>
+              </Button>
             )}
           </>
         ) : (
           /* Mode toggle for new notes */
           <div className="flex rounded-md border border-gray-600 overflow-hidden">
-            <button
+            <Button
               type="button"
               onClick={() => onEditorModeChange("markdown")}
               className={`px-2 py-1 text-xs transition-colors ${
@@ -120,8 +123,8 @@ export function MarkdownToolbar({
               title="Markdown editor"
             >
               Markdown
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={() => onEditorModeChange("wysiwyg")}
               className={`px-2 py-1 text-xs transition-colors ${
@@ -132,8 +135,8 @@ export function MarkdownToolbar({
               title="WYSIWYG editor"
             >
               WYSIWYG
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={() => onEditorModeChange("code")}
               className={`px-2 py-1 text-xs transition-colors ${
@@ -144,24 +147,24 @@ export function MarkdownToolbar({
               title="Code snippets editor"
             >
               Code
-            </button>
+            </Button>
           </div>
         )}
       </div>
       <div className="h-6 w-px bg-gray-700 mx-1" />
       {(editorMode === "markdown" || editorMode === "code") && (
         <>
-          <button
+          <Button
             type="button"
             onClick={() => setShowPreview(!showPreview)}
             className="rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
             title="Toggle preview"
           >
             {showPreview ? "Hide Preview" : "Show Preview"}
-          </button>
+          </Button>
           <div className="h-6 w-px bg-gray-700 mx-1" />
       {onUndo && (
-        <button
+        <Button
           type="button"
           onClick={onUndo}
           disabled={!canUndo}
@@ -169,10 +172,10 @@ export function MarkdownToolbar({
           title="Undo"
         >
           <Undo className="size-3.5" />
-        </button>
+        </Button>
       )}
       {onRedo && (
-        <button
+        <Button
           type="button"
           onClick={onRedo}
           disabled={!canRedo}
@@ -180,106 +183,106 @@ export function MarkdownToolbar({
           title="Redo"
         >
           <Redo className="size-3.5" />
-        </button>
+        </Button>
       )}
       <div className="h-6 w-px bg-gray-700 mx-1" />
-      <button
+      <Button
         type="button"
         onClick={() => onApplyWrap("**", "**", "bold text")}
         className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
         title="Bold"
       >
         Bold
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
         onClick={() => onApplyWrap("*", "*", "italic text")}
         className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
         title="Italic"
       >
         Italic
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
         onClick={() => onApplyWrap("`", "`", "code")}
         className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
         title="Inline code"
       >
         Code
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
         onClick={onApplyBulletList}
         className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
         title="Bullet list"
       >
         Bullet
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
         onClick={onApplyChecklist}
         className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
         title="Checklist"
       >
         Checklist
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
         onClick={() => onApplyLinePrefix("# ")}
         className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
         title="Heading"
       >
         H1
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
         onClick={() => onApplyLinePrefix("## ")}
         className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
         title="Heading 2"
       >
         H2
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
         onClick={() => onApplyLinePrefix("### ")}
         className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
         title="Heading 3"
       >
         H3
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
         onClick={() => onApplyLinePrefix("> ")}
         className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
         title="Blockquote"
       >
         Quote
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
         onClick={() => onInsertAtCursor("\n---\n")}
         className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
         title="Horizontal rule"
       >
         HR
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
         onClick={() => onInsertAtCursor("\n```text\ncode\n```\n")}
         className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
         title="Code block"
       >
         Code Block
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
         onClick={() => onApplyWrap("[", "](https://example.com)", "link text")}
         className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
         title="Link"
       >
         Link
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
         onClick={() =>
           onInsertAtCursor(
@@ -289,7 +292,7 @@ export function MarkdownToolbar({
         title="Table"
       >
         Table
-      </button>
+      </Button>
       {noteFiles.length > 0 && (
         <div className="relative">
           <select
@@ -316,7 +319,7 @@ export function MarkdownToolbar({
         </div>
       )}
       <div className="ml-2 flex items-center gap-2 border-l border-gray-700 pl-2">
-        <label className="text-xs text-gray-400">Font</label>
+        <Label className="text-xs text-gray-400">Font</Label>
         <select
           value={fontFamily}
           onChange={(event) => setFontFamily(event.target.value)}
@@ -329,22 +332,22 @@ export function MarkdownToolbar({
         </select>
       </div>
       <div className="flex items-center gap-2">
-        <label className="text-xs text-gray-400">Color</label>
-        <input
+        <Label className="text-xs text-gray-400">Color</Label>
+        <Input
           type="color"
           value={textColor}
           onChange={(event) => setTextColor(event.target.value)}
           className="h-7 w-10 rounded border border-gray-700 bg-gray-800"
         />
       </div>
-      <button
+      <Button
         type="button"
         onClick={() => onApplySpanStyle(textColor, fontFamily)}
         className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
         title="Apply font and color"
       >
         Apply
-      </button>
+      </Button>
         </>
       )}
     </div>

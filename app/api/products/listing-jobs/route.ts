@@ -55,7 +55,7 @@ async function GET_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "product-listings.jobs.GET",
+      source: "products.listing-jobs.GET",
       fallbackMessage: "Failed to fetch listing jobs",
     });
   }

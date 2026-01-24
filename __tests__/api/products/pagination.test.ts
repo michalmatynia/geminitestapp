@@ -3,6 +3,7 @@ import { GET as GET_LIST } from "../../../app/api/products/route";
 import { createMockProduct } from "@/lib/utils/productUtils";
 import prisma from "@/lib/prisma";
 import { Product } from "@prisma/client";
+import { NextRequest } from "next/server";
 
 describe("Products API - Pagination and Count", () => {
   beforeEach(async () => {
@@ -21,7 +22,7 @@ describe("Products API - Pagination and Count", () => {
       await createMockProduct({ name_en: "P2", sku: "SKU2" });
       await createMockProduct({ name_en: "P3", sku: "SKU3" });
 
-      const res = await GET_COUNT(new Request("http://localhost/api/products/count"));
+      const res = await GET_COUNT(new NextRequest("http://localhost/api/products/count"));
       const data = (await res.json()) as { count: number };
 
       expect(res.status).toEqual(200);
@@ -32,7 +33,7 @@ describe("Products API - Pagination and Count", () => {
       await createMockProduct({ name_en: "Laptop", sku: "SKU1" });
       await createMockProduct({ name_en: "Mouse", sku: "SKU2" });
 
-      const res = await GET_COUNT(new Request("http://localhost/api/products/count?search=lap"));
+      const res = await GET_COUNT(new NextRequest("http://localhost/api/products/count?search=lap"));
       const data = (await res.json()) as { count: number };
 
       expect(res.status).toEqual(200);
@@ -46,7 +47,7 @@ describe("Products API - Pagination and Count", () => {
         await createMockProduct({ name_en: `Product ${i}`, sku: `SKU${i}` });
       }
 
-      const res = await GET_LIST(new Request("http://localhost/api/products?pageSize=2"));
+      const res = await GET_LIST(new NextRequest("http://localhost/api/products?pageSize=2"));
       const products = (await res.json()) as Product[];
 
       expect(res.status).toEqual(200);
@@ -61,10 +62,10 @@ describe("Products API - Pagination and Count", () => {
         await createMockProduct({ name_en: `Product ${i}`, sku: `SKU${i}` });
       }
 
-      const res1 = await GET_LIST(new Request("http://localhost/api/products?page=1&pageSize=2"));
+      const res1 = await GET_LIST(new NextRequest("http://localhost/api/products?page=1&pageSize=2"));
       const page1 = (await res1.json()) as Product[];
 
-      const res2 = await GET_LIST(new Request("http://localhost/api/products?page=2&pageSize=2"));
+      const res2 = await GET_LIST(new NextRequest("http://localhost/api/products?page=2&pageSize=2"));
       const page2 = (await res2.json()) as Product[];
 
       expect(page1.length).toEqual(2);

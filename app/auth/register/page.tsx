@@ -6,6 +6,9 @@ import { signIn } from "next-auth/react";
 import { AUTH_SETTINGS_KEYS, parseJsonSetting } from "@/lib/constants/auth-management";
 import { DEFAULT_AUTH_USER_PAGE_SETTINGS } from "@/lib/constants/auth-user-pages";
 import { DEFAULT_AUTH_SECURITY_POLICY } from "@/lib/constants/auth-security";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -103,10 +106,10 @@ export default function RegisterPage() {
         ) : null}
         <form className="space-y-4" onSubmit={(e) => void handleSubmit(e)}>
           <div className="space-y-2">
-            <label className="text-sm text-gray-300" htmlFor="name">
+            <Label className="text-sm text-gray-300" htmlFor="name">
               Name (optional)
-            </label>
-            <input
+            </Label>
+            <Input
               id="name"
               type="text"
               className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
@@ -116,10 +119,10 @@ export default function RegisterPage() {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm text-gray-300" htmlFor="email">
+            <Label className="text-sm text-gray-300" htmlFor="email">
               Email
-            </label>
-            <input
+            </Label>
+            <Input
               id="email"
               type="email"
               className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
@@ -130,10 +133,10 @@ export default function RegisterPage() {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm text-gray-300" htmlFor="password">
+            <Label className="text-sm text-gray-300" htmlFor="password">
               Password
-            </label>
-            <input
+            </Label>
+            <Input
               id="password"
               type="password"
               className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
@@ -147,13 +150,13 @@ export default function RegisterPage() {
               Minimum {DEFAULT_AUTH_SECURITY_POLICY.minPasswordLength} characters.
             </p>
           </div>
-          <button
+          <Button
             className="w-full rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-300"
             type="submit"
             disabled={isSubmitting || !allowSignup}
           >
             {isSubmitting ? "Creating..." : "Create account"}
-          </button>
+          </Button>
         </form>
         <p className="text-xs text-gray-400">
           Already have an account?{" "}

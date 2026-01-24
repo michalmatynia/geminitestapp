@@ -6,6 +6,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type ChatbotSession = {
   id: string;
@@ -308,15 +310,13 @@ export default function ChatbotSessionsPage() {
               >
                 {bulkDeleting ? "Removing..." : "Remove selected"}
               </Button>
-              <label className="flex items-center gap-2 text-[11px] text-gray-500">
-                <input
-                  type="checkbox"
-                  checked={skipBulkConfirm}
-                  onChange={(event) => setSkipBulkConfirm(event.target.checked)}
+              <Label className="flex items-center gap-2 text-[11px] text-gray-500">
+                <Checkbox
+                  checked={skipBulkConfirm} onCheckedChange={(checked) => setSkipBulkConfirm(Boolean(checked))}
                   disabled={bulkDeleting || selectingAll}
                 />
                 Skip confirmation
-              </label>
+              </Label>
             </div>
 
             <div className="space-y-3">
@@ -326,10 +326,8 @@ export default function ChatbotSessionsPage() {
                   className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-900 px-4 py-3"
                 >
                   <div className="flex items-start gap-3">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(session.id)}
-                      onChange={() => toggleSelected(session.id)}
+                    <Checkbox
+                      checked={selectedIds.has(session.id)} onCheckedChange={() => toggleSelected(session.id)}
                       aria-label={`Select session ${session.title || session.id}`}
                       className="mt-1"
                     />

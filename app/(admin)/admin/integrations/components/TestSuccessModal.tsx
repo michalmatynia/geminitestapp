@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 type TestSuccessModalProps = {
   message: string | null;
   onClose: () => void;
@@ -19,13 +21,13 @@ export function TestSuccessModal({ message, onClose }: TestSuccessModalProps) {
       >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-white">Playwright Test</h3>
-          <button
+          <Button
             className="text-sm text-gray-400 hover:text-white"
             type="button"
             onClick={onClose}
           >
             Close
-          </button>
+          </Button>
         </div>
         <div className="space-y-3 text-sm text-gray-300">
           <div className="max-h-64 overflow-y-auto rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-emerald-100">

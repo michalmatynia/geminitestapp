@@ -5,6 +5,7 @@ import {
   DELETE as DELETE_NOTE,
 } from "@/app/api/notes/[id]/route";
 import prisma from "@/lib/prisma";
+import { NextRequest } from "next/server";
 import {
   Note,
   Tag,
@@ -79,7 +80,7 @@ describe("Notes API", () => {
       categoryIds: [category.id],
     });
 
-    const res = await GET_NOTES(new Request("http://localhost/api/notes"));
+    const res = await GET_NOTES(new NextRequest("http://localhost/api/notes"));
     const notes = (await res.json()) as NoteWithRelations[];
 
     expect(res.status).toBe(200);
@@ -93,7 +94,7 @@ describe("Notes API", () => {
     await createNote({ title: "Gamma", content: "Alpha", isArchived: true });
 
     const res = await GET_NOTES(
-      new Request(
+      new NextRequest(
         "http://localhost/api/notes?search=Alpha&searchScope=title&isPinned=true"
       )
     );
@@ -116,7 +117,7 @@ describe("Notes API", () => {
     await createNote({ title: "Other", content: "No relations" });
 
     const res = await GET_NOTES(
-      new Request(
+      new NextRequest(
         `http://localhost/api/notes?tagIds=${tag.id}&categoryIds=${category.id}`
       )
     );
@@ -132,7 +133,7 @@ describe("Notes API", () => {
     const category = await createCategory("Home");
 
     const res = await POST_NOTES(
-      new Request("http://localhost/api/notes", {
+      new NextRequest("http://localhost/api/notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -152,7 +153,7 @@ describe("Notes API", () => {
 
   it("rejects note creation without title/content", async () => {
     const res = await POST_NOTES(
-      new Request("http://localhost/api/notes", {
+      new NextRequest("http://localhost/api/notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: "", content: "" }),
@@ -165,7 +166,7 @@ describe("Notes API", () => {
   it("fetches a note by id and returns 404 when missing", async () => {
     const note = await createNote({ title: "Lookup", content: "By id" });
 
-    const res = await GET_NOTE(new Request("http://localhost/api/notes/x"), {
+    const res = await GET_NOTE(new NextRequest("http://localhost/api/notes/x"), {
       params: Promise.resolve({ id: note.id }),
     });
     const data = (await res.json()) as { id: string };
@@ -173,7 +174,7 @@ describe("Notes API", () => {
     expect(res.status).toBe(200);
     expect(data.id).toBe(note.id);
 
-    const missing = await GET_NOTE(new Request("http://localhost/api/notes/y"), {
+    const missing = await GET_NOTE(new NextRequest("http://localhost/api/notes/y"), {
       params: Promise.resolve({ id: "missing-id" }),
     });
     expect(missing.status).toBe(404);
@@ -196,7 +197,7 @@ describe("Notes API", () => {
     });
 
     const res = await PATCH_NOTE(
-      new Request(`http://localhost/api/notes/${note.id}`, {
+      new NextRequest(`http://localhost/api/notes/${note.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -221,7 +222,7 @@ describe("Notes API", () => {
     const note = await createNote({ title: "Delete me", content: "Soon" });
 
     const res = await DELETE_NOTE(
-      new Request(`http://localhost/api/notes/${note.id}`, {
+      new NextRequest(`http://localhost/api/notes/${note.id}`, {
         method: "DELETE",
       }),
       { params: Promise.resolve({ id: note.id }) }

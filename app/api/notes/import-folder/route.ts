@@ -132,7 +132,7 @@ async function POST_handler(req: NextRequest) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "notes.import-folder",
+      source: "notes.import-folder.POST",
       fallbackMessage: "Failed to import folder structure",
     });
   }

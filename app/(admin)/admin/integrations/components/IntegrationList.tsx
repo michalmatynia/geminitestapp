@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { PlusIcon, SettingsIcon } from "lucide-react";
 import { Integration, integrationDefinitions } from "../types";
+import { Button } from "@/components/ui/button";
 
 type IntegrationListProps = {
   integrations: Integration[];
@@ -54,14 +55,14 @@ export function IntegrationList({
                     Browser
                   </span>
                   Tradera
-                  <button
+                  <Button
                     type="button"
                     onClick={() => onIntegrationClick(integrationDefinitions[0])}
                     className="rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20"
                     aria-label="Manage Tradera settings"
                   >
                     <SettingsIcon className="size-3.5" />
-                  </button>
+                  </Button>
                 </div>
               )}
               {integrationSlugs.includes("allegro") && (
@@ -70,14 +71,14 @@ export function IntegrationList({
                     API
                   </span>
                   Allegro
-                  <button
+                  <Button
                     type="button"
                     onClick={() => onIntegrationClick(integrationDefinitions[1])}
                     className="rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20"
                     aria-label="Manage Allegro settings"
                   >
                     <SettingsIcon className="size-3.5" />
-                  </button>
+                  </Button>
                 </div>
               )}
               {integrationSlugs.includes("baselinker") && (
@@ -86,14 +87,14 @@ export function IntegrationList({
                     Platform
                   </span>
                   Baselinker
-                  <button
+                  <Button
                     type="button"
                     onClick={() => onIntegrationClick(integrationDefinitions[2])}
                     className="rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20"
                     aria-label="Manage Baselinker settings"
                   >
                     <SettingsIcon className="size-3.5" />
-                  </button>
+                  </Button>
                 </div>
               )}
               {!hasIntegrations && (

@@ -39,7 +39,7 @@ async function GET_handler(req: NextRequest, ctx: Ctx) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "cms/slugs/[id].GET",
+      source: "cms.slugs.[id].GET",
       fallbackMessage: "Failed to fetch slug",
     });
   }
@@ -61,7 +61,7 @@ async function DELETE_handler(req: NextRequest, ctx: Ctx) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "cms/slugs/[id].DELETE",
+      source: "cms.slugs.[id].DELETE",
       fallbackMessage: "Failed to delete slug",
     });
   }
@@ -102,12 +102,12 @@ async function PUT_handler(req: NextRequest, ctx: Ctx) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "cms/slugs/[id].PUT",
+      source: "cms.slugs.[id].PUT",
       fallbackMessage: "Failed to update slug",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "cms.slugs.[id].GET" });
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "cms.slugs.[id].DELETE" });
-export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "cms.slugs.[id].PUT" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "cms.slugs.[id].GET" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "cms.slugs.[id].DELETE" });
+export const PUT = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "cms.slugs.[id].PUT" });

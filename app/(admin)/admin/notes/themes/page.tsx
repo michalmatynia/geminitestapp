@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useNoteSettings } from "@/lib/context/NoteSettingsContext";
 import type { ThemeRecord } from "@/types/notes";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const defaultTheme: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> = {
   name: "",
@@ -194,10 +196,10 @@ export default function NoteThemesPage() {
           <h2 className="mb-4 text-lg font-semibold text-white">Create Theme</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="sm:col-span-2">
-              <label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
                 Theme Name
-              </label>
-              <input
+              </Label>
+              <Input
                 type="text"
                 value={form.name}
                 onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
@@ -206,10 +208,10 @@ export default function NoteThemesPage() {
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
                 Text Color
-              </label>
-              <input
+              </Label>
+              <Input
                 type="color"
                 value={form.textColor}
                 onChange={(event) =>
@@ -219,10 +221,10 @@ export default function NoteThemesPage() {
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
                 Background Color
-              </label>
-              <input
+              </Label>
+              <Input
                 type="color"
                 value={form.backgroundColor}
                 onChange={(event) =>
@@ -232,10 +234,10 @@ export default function NoteThemesPage() {
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
                 Markdown Heading
-              </label>
-              <input
+              </Label>
+              <Input
                 type="color"
                 value={form.markdownHeadingColor}
                 onChange={(event) =>
@@ -245,10 +247,10 @@ export default function NoteThemesPage() {
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
                 Markdown Link
-              </label>
-              <input
+              </Label>
+              <Input
                 type="color"
                 value={form.markdownLinkColor}
                 onChange={(event) =>
@@ -258,10 +260,10 @@ export default function NoteThemesPage() {
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
                 Code Background
-              </label>
-              <input
+              </Label>
+              <Input
                 type="color"
                 value={form.markdownCodeBackground}
                 onChange={(event) =>
@@ -271,10 +273,10 @@ export default function NoteThemesPage() {
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
                 Code Text
-              </label>
-              <input
+              </Label>
+              <Input
                 type="color"
                 value={form.markdownCodeText}
                 onChange={(event) =>
@@ -284,10 +286,10 @@ export default function NoteThemesPage() {
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
                 Related Border Width
-              </label>
-              <input
+              </Label>
+              <Input
                 type="number"
                 min={0}
                 max={8}
@@ -302,10 +304,10 @@ export default function NoteThemesPage() {
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
                 Related Border Color
-              </label>
-              <input
+              </Label>
+              <Input
                 type="color"
                 value={form.relatedNoteBorderColor}
                 onChange={(event) =>
@@ -315,10 +317,10 @@ export default function NoteThemesPage() {
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
                 Related Background
-              </label>
-              <input
+              </Label>
+              <Input
                 type="color"
                 value={form.relatedNoteBackgroundColor}
                 onChange={(event) =>
@@ -331,10 +333,10 @@ export default function NoteThemesPage() {
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
                 Related Text Color
-              </label>
-              <input
+              </Label>
+              <Input
                 type="color"
                 value={form.relatedNoteTextColor}
                 onChange={(event) =>
@@ -410,8 +412,8 @@ export default function NoteThemesPage() {
                     </div>
                     <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                       <div>
-                        <label className="mb-2 block text-xs text-gray-400">Theme Name</label>
-                        <input
+                        <Label className="mb-2 block text-xs text-gray-400">Theme Name</Label>
+                        <Input
                           type="text"
                           value={values.name}
                           disabled={!isEditing}
@@ -423,8 +425,8 @@ export default function NoteThemesPage() {
                         />
                       </div>
                       <div>
-                        <label className="mb-2 block text-xs text-gray-400">Text</label>
-                        <input
+                        <Label className="mb-2 block text-xs text-gray-400">Text</Label>
+                        <Input
                           type="color"
                           disabled={!isEditing}
                           value={values.textColor}
@@ -436,8 +438,8 @@ export default function NoteThemesPage() {
                         />
                       </div>
                       <div>
-                        <label className="mb-2 block text-xs text-gray-400">Background</label>
-                        <input
+                        <Label className="mb-2 block text-xs text-gray-400">Background</Label>
+                        <Input
                           type="color"
                           disabled={!isEditing}
                           value={values.backgroundColor}
@@ -452,8 +454,8 @@ export default function NoteThemesPage() {
                         />
                       </div>
                       <div>
-                        <label className="mb-2 block text-xs text-gray-400">Heading</label>
-                        <input
+                        <Label className="mb-2 block text-xs text-gray-400">Heading</Label>
+                        <Input
                           type="color"
                           disabled={!isEditing}
                           value={values.markdownHeadingColor}
@@ -468,8 +470,8 @@ export default function NoteThemesPage() {
                         />
                       </div>
                       <div>
-                        <label className="mb-2 block text-xs text-gray-400">Link</label>
-                        <input
+                        <Label className="mb-2 block text-xs text-gray-400">Link</Label>
+                        <Input
                           type="color"
                           disabled={!isEditing}
                           value={values.markdownLinkColor}
@@ -484,8 +486,8 @@ export default function NoteThemesPage() {
                         />
                       </div>
                       <div>
-                        <label className="mb-2 block text-xs text-gray-400">Code Bg</label>
-                        <input
+                        <Label className="mb-2 block text-xs text-gray-400">Code Bg</Label>
+                        <Input
                           type="color"
                           disabled={!isEditing}
                           value={values.markdownCodeBackground}
@@ -500,8 +502,8 @@ export default function NoteThemesPage() {
                         />
                       </div>
                       <div>
-                        <label className="mb-2 block text-xs text-gray-400">Code Text</label>
-                        <input
+                        <Label className="mb-2 block text-xs text-gray-400">Code Text</Label>
+                        <Input
                           type="color"
                           disabled={!isEditing}
                           value={values.markdownCodeText}
@@ -516,10 +518,10 @@ export default function NoteThemesPage() {
                         />
                       </div>
                       <div>
-                        <label className="mb-2 block text-xs text-gray-400">
+                        <Label className="mb-2 block text-xs text-gray-400">
                           Related Border Width
-                        </label>
-                        <input
+                        </Label>
+                        <Input
                           type="number"
                           min={0}
                           max={8}
@@ -536,10 +538,10 @@ export default function NoteThemesPage() {
                         />
                       </div>
                       <div>
-                        <label className="mb-2 block text-xs text-gray-400">
+                        <Label className="mb-2 block text-xs text-gray-400">
                           Related Border Color
-                        </label>
-                        <input
+                        </Label>
+                        <Input
                           type="color"
                           disabled={!isEditing}
                           value={values.relatedNoteBorderColor}
@@ -554,10 +556,10 @@ export default function NoteThemesPage() {
                         />
                       </div>
                       <div>
-                        <label className="mb-2 block text-xs text-gray-400">
+                        <Label className="mb-2 block text-xs text-gray-400">
                           Related Background
-                        </label>
-                        <input
+                        </Label>
+                        <Input
                           type="color"
                           disabled={!isEditing}
                           value={values.relatedNoteBackgroundColor}
@@ -572,10 +574,10 @@ export default function NoteThemesPage() {
                         />
                       </div>
                       <div>
-                        <label className="mb-2 block text-xs text-gray-400">
+                        <Label className="mb-2 block text-xs text-gray-400">
                           Related Text Color
-                        </label>
-                        <input
+                        </Label>
+                        <Input
                           type="color"
                           disabled={!isEditing}
                           value={values.relatedNoteTextColor}

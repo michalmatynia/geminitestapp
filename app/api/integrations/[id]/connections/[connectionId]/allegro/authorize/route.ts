@@ -74,7 +74,7 @@ async function GET_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "integrations.allegro.authorize.GET",
+      source: "integrations.[id].connections.[connectionId].allegro.authorize.GET",
       fallbackMessage: "Failed to start Allegro authorization.",
       ...(integrationId || connectionId
         ? { extra: { integrationId, connectionId } }
@@ -83,4 +83,4 @@ async function GET_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.authorize.GET" });
+export const GET = apiHandlerWithParams<{ id: string; connectionId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.authorize.GET" });

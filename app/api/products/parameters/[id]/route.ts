@@ -129,7 +129,7 @@ async function PUT_handler(
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "product-parameters.PUT",
+      source: "products.parameters.[id].PUT",
       fallbackMessage: "Failed to update product parameter",
       extra: { parameterId: params.id },
     });
@@ -168,12 +168,12 @@ async function DELETE_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "product-parameters.DELETE",
+      source: "products.parameters.[id].DELETE",
       fallbackMessage: "Failed to delete product parameter",
       extra: { parameterId: params.id },
     });
   }
 }
 
-export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "products.parameters.[id].PUT" });
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.parameters.[id].DELETE" });
+export const PUT = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "products.parameters.[id].PUT" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.parameters.[id].DELETE" });

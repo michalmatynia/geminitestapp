@@ -69,7 +69,7 @@ async function POST_handler(request: NextRequest) {
   } catch (error) {
     return createErrorResponse(error, {
       request,
-      source: "marketplace/categories/fetch.POST",
+      source: "marketplace.categories.fetch.POST",
       fallbackMessage: "Failed to fetch categories from marketplace",
     });
   }

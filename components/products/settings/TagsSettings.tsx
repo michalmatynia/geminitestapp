@@ -12,6 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Catalog, ProductTag } from "@/types/products";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type TagsSettingsProps = {
   loading: boolean;
@@ -197,21 +199,21 @@ export function TagsSettings({
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button
+                      <Button
                         type="button"
                         onClick={() => openEditModal(tag)}
                         className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700"
                       >
                         Edit
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
                         onClick={() => void handleDelete(tag)}
                         className="rounded bg-red-600/80 px-2 py-1 text-xs text-white hover:bg-red-600"
                         title="Delete tag"
                       >
                         <Trash2 className="size-3" />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -240,19 +242,19 @@ export function TagsSettings({
               <h2 className="text-xl font-semibold text-white">
                 {editingTag ? "Edit Tag" : "Create Tag"}
               </h2>
-              <button
+              <Button
                 className="text-sm text-gray-400 hover:text-white"
                 type="button"
                 onClick={() => setShowModal(false)}
               >
                 Close
-              </button>
+              </Button>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-gray-400">Name</label>
-                <input
+                <Label className="text-xs text-gray-400">Name</Label>
+                <Input
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.name}
                   onChange={(e) =>
@@ -263,7 +265,7 @@ export function TagsSettings({
               </div>
 
               <div>
-                <label className="text-xs text-gray-400">Catalog</label>
+                <Label className="text-xs text-gray-400">Catalog</Label>
                 <select
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.catalogId}
@@ -284,9 +286,9 @@ export function TagsSettings({
               </div>
 
               <div>
-                <label className="text-xs text-gray-400">Color</label>
+                <Label className="text-xs text-gray-400">Color</Label>
                 <div className="mt-2 flex items-center gap-3">
-                  <input
+                  <Input
                     type="color"
                     className="h-10 w-20 cursor-pointer rounded border border-gray-800 bg-gray-900"
                     value={formData.color}
@@ -294,7 +296,7 @@ export function TagsSettings({
                       setFormData((prev) => ({ ...prev, color: e.target.value }))
                     }
                   />
-                  <input
+                  <Input
                     type="text"
                     className="flex-1 rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                     value={formData.color}
@@ -307,21 +309,21 @@ export function TagsSettings({
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4">
-                <button
+                <Button
                   className="rounded-md border border-gray-800 px-3 py-2 text-sm text-gray-300 hover:bg-gray-900"
                   type="button"
                   onClick={() => setShowModal(false)}
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
                   type="button"
                   onClick={() => void handleSave()}
                   disabled={saving}
                 >
                   {saving ? "Saving..." : "Save"}
-                </button>
+                </Button>
               </div>
             </div>
           </div>

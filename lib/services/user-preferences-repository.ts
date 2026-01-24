@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { getProductDataProvider } from "@/lib/services/product-provider";
+import { operationFailedError } from "@/lib/errors/app-error";
 
 export type UserPreferencesData = {
   productListNameLocale?: string | null;
@@ -156,11 +157,13 @@ export async function updateUserPreferences(
         { upsert: true, returnDocument: "after" }
       );
 
-    if (!result.value) {
-      throw new Error("Failed to update preferences");
+    if (!result) {
+      throw operationFailedError("Failed to update preferences", undefined, {
+        userId,
+      });
     }
 
-    return toUserPreferences(result.value);
+    return toUserPreferences(result);
   }
 
   try {

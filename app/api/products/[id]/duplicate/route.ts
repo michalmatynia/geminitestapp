@@ -47,4 +47,4 @@ async function POST_handler(
   }
 }
 
-export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].duplicate.POST" });
+export const POST = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].duplicate.POST" });

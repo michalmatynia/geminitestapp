@@ -70,6 +70,15 @@ function AdminPageInner() {
     setPageSize: updatePageSize,
   } = useUserPreferences();
 
+  // Load catalog and currency data first (priceGroups are needed for price filter conversion)
+  const {
+    catalogs,
+    currencyCode,
+    setCurrencyCode,
+    currencyOptions,
+    priceGroups,
+  } = useCatalogSync(preferences.catalogFilter || "all");
+
   const {
     data,
     totalPages,
@@ -98,15 +107,9 @@ function AdminPageInner() {
     initialCatalogFilter: preferences.catalogFilter,
     initialPageSize: preferences.pageSize,
     preferencesLoaded: !preferencesLoading,
-  });
-
-  const {
-    catalogs,
     currencyCode,
-    setCurrencyCode,
-    currencyOptions,
     priceGroups,
-  } = useCatalogSync(catalogFilter);
+  });
 
   const {
     isCreateOpen,

@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { conflictError } from "@/lib/errors/app-error";
 import type { CatalogRecord, ImageFileRecord, ProductRecord } from "@/types";
+import type { ProductParameterValue } from "@/types/products";
 import type {
   CreateProductInput,
   ProductFilters,
@@ -174,7 +175,7 @@ const toProductRecord = (product: {
   sizeWidth: product.sizeWidth ?? null,
   weight: product.weight ?? null,
   length: product.length ?? null,
-  parameters: Array.isArray(product.parameters) ? product.parameters : [],
+  parameters: Array.isArray(product.parameters) ? (product.parameters as unknown as ProductParameterValue[]) : [],
   imageLinks: Array.isArray(product.imageLinks) ? product.imageLinks : [],
   createdAt: product.createdAt,
   updatedAt: product.updatedAt,

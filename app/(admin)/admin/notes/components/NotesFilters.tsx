@@ -3,6 +3,8 @@
 import React from "react";
 import { Search, FileText, Heading, X, ArrowUp, ArrowDown, Eye, EyeOff, LayoutGrid, List, ChevronDown, Check } from "lucide-react";
 import type { NotesFiltersProps } from "@/types/notes-ui";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export function NotesFilters({
   selectedFolderId,
@@ -32,7 +34,7 @@ export function NotesFilters({
     <div className="flex-1">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-          <input
+          <Input
             type="text"
             placeholder={
               selectedFolderId
@@ -81,21 +83,21 @@ export function NotesFilters({
                 }`}
               >
                 {tag.name}
-                <button
+                <Button
                   onClick={() =>
                     setFilterTagIds(filterTagIds.filter((id) => id !== tag.id))
                   }
                   className="hover:text-white"
                 >
                   <X size={12} />
-                </button>
+                </Button>
               </span>
             );
           })}
         </div>
 
         <div className="mt-2 flex gap-2">
-          <button
+          <Button
             onClick={() => updateSettings({ searchScope: "both" })}
             className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
               searchScope === "both"
@@ -106,8 +108,8 @@ export function NotesFilters({
           >
             <FileText size={14} />
             <Heading size={14} />
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => updateSettings({ searchScope: "title" })}
             className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
               searchScope === "title"
@@ -117,8 +119,8 @@ export function NotesFilters({
             title="Search in title only"
           >
             <Heading size={14} />
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => updateSettings({ searchScope: "content" })}
             className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
               searchScope === "content"
@@ -128,11 +130,11 @@ export function NotesFilters({
             title="Search in content only"
           >
             <FileText size={14} />
-          </button>
+          </Button>
 
           <div className="ml-auto flex items-center gap-1">
             <span className="text-xs text-gray-500 mr-1">Sort:</span>
-            <button
+            <Button
               onClick={() => updateSettings({ sortBy: "created" })}
               className={`rounded px-2 py-1 text-xs transition ${
                 sortBy === "created"
@@ -142,8 +144,8 @@ export function NotesFilters({
               title="Sort by created date"
             >
               Date
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => updateSettings({ sortBy: "updated" })}
               className={`rounded px-2 py-1 text-xs transition ${
                 sortBy === "updated"
@@ -153,8 +155,8 @@ export function NotesFilters({
               title="Sort by modified date"
             >
               Modified
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => updateSettings({ sortBy: "name" })}
               className={`rounded px-2 py-1 text-xs transition ${
                 sortBy === "name"
@@ -164,8 +166,8 @@ export function NotesFilters({
               title="Sort by name"
             >
               Name
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() =>
                 updateSettings({
                   sortOrder: sortOrder === "asc" ? "desc" : "asc",
@@ -179,12 +181,12 @@ export function NotesFilters({
               }
             >
               {sortOrder === "asc" ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
-            </button>
+            </Button>
           </div>
 
           <div className="flex items-center gap-2 ml-2 pl-2 border-l border-gray-700">
             <span className="text-xs text-gray-500">Show:</span>
-            <button
+            <Button
               onClick={() => updateSettings({ showTimestamps: !showTimestamps })}
               className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
                 showTimestamps
@@ -195,8 +197,8 @@ export function NotesFilters({
             >
               {showTimestamps ? <Eye size={12} /> : <EyeOff size={12} />}
               <span>Dates</span>
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => updateSettings({ showBreadcrumbs: !showBreadcrumbs })}
               className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
                 showBreadcrumbs
@@ -207,8 +209,8 @@ export function NotesFilters({
             >
               {showBreadcrumbs ? <Eye size={12} /> : <EyeOff size={12} />}
               <span>Path</span>
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => updateSettings({ showRelatedNotes: !showRelatedNotes })}
               className={`flex items-center gap-1 rounded px-2 py-1 text-xs transition ${
                 showRelatedNotes
@@ -219,10 +221,10 @@ export function NotesFilters({
             >
               {showRelatedNotes ? <Eye size={12} /> : <EyeOff size={12} />}
               <span>Links</span>
-            </button>
+            </Button>
           </div>
           <div className="relative flex items-center gap-2 ml-2 pl-2 border-l border-gray-700">
-            <button
+            <Button
               type="button"
               onClick={() => setIsLayoutOpen((prev) => !prev)}
               className="flex items-center gap-1 rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition"
@@ -231,7 +233,7 @@ export function NotesFilters({
               {viewMode === "list" ? <List size={14} /> : <LayoutGrid size={14} />}
               <span>{layoutLabel}</span>
               <ChevronDown size={12} />
-            </button>
+            </Button>
             {isLayoutOpen && (
               <>
                 <div
@@ -239,7 +241,7 @@ export function NotesFilters({
                   onClick={() => setIsLayoutOpen(false)}
                 />
                 <div className="absolute right-0 top-full z-50 mt-2 w-44 rounded-md border border-gray-700 bg-gray-900 p-1 shadow-lg">
-                  <button
+                  <Button
                     type="button"
                     onClick={() => {
                       updateSettings({ viewMode: "grid", gridDensity: 4 });
@@ -250,8 +252,8 @@ export function NotesFilters({
                     <LayoutGrid size={14} />
                     <span className="flex-1 text-left">Grid (4 per row)</span>
                     {viewMode === "grid" && gridDensity === 4 && <Check size={12} />}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     onClick={() => {
                       updateSettings({ viewMode: "grid", gridDensity: 8 });
@@ -262,8 +264,8 @@ export function NotesFilters({
                     <LayoutGrid size={14} />
                     <span className="flex-1 text-left">Grid (8 per row)</span>
                     {viewMode === "grid" && gridDensity === 8 && <Check size={12} />}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     onClick={() => {
                       updateSettings({ viewMode: "list" });
@@ -274,7 +276,7 @@ export function NotesFilters({
                     <List size={14} />
                     <span className="flex-1 text-left">List</span>
                     {viewMode === "list" && <Check size={12} />}
-                  </button>
+                  </Button>
                 </div>
               </>
             )}

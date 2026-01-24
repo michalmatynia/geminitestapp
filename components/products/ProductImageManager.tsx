@@ -35,6 +35,7 @@ export default function ProductImageManager() {
   // Drag and drop state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [isReordering, setIsReordering] = useState(false);
 
   const pushDebug = (info: Omit<DebugInfo, "timestamp">) => {
     setDebugInfo({
@@ -115,6 +116,7 @@ export default function ProductImageManager() {
     if (!slot) return; // Don't allow dragging empty slots
 
     setDraggedIndex(index);
+    setIsReordering(true);
     setImagesReordering(true);
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", String(index));
@@ -126,6 +128,7 @@ export default function ProductImageManager() {
   const handleDragEnd = (_e: React.DragEvent<HTMLDivElement>) => {
     setDraggedIndex(null);
     setDragOverIndex(null);
+    setIsReordering(false);
     setImagesReordering(false);
   };
 
@@ -171,6 +174,7 @@ export default function ProductImageManager() {
     }
 
     setDraggedIndex(null);
+    setIsReordering(false);
     setImagesReordering(false);
   };
 
@@ -185,6 +189,11 @@ export default function ProductImageManager() {
       img.src =
         "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
       dragImageRef.current = img;
+    }
+    // Skip slotViewModes recalculation during reordering to prevent flickering.
+    // The handleDrop function handles the view mode swap manually.
+    if (isReordering) {
+      return;
     }
     setSlotViewModes((prev) => {
       const next = Array(imageSlots.length).fill("upload") as Array<
@@ -206,7 +215,7 @@ export default function ProductImageManager() {
       }
       return next;
     });
-  }, [imageSlots, imageLinks]);
+  }, [imageSlots, imageLinks, isReordering]);
 
   return (
     <div>

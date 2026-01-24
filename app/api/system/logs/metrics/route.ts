@@ -30,7 +30,7 @@ async function GET_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "systemLogs.metrics.GET",
+      source: "system.logs.metrics.GET",
       fallbackMessage: "Failed to load system log metrics",
     });
   }

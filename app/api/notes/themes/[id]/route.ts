@@ -26,7 +26,7 @@ async function GET_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "themes.GET",
+      source: "notes.themes.[id].GET",
       fallbackMessage: "Failed to fetch theme",
     });
   }
@@ -59,7 +59,7 @@ async function PATCH_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "themes.PATCH",
+      source: "notes.themes.[id].PATCH",
       fallbackMessage: "Failed to update theme",
     });
   }
@@ -83,12 +83,12 @@ async function DELETE_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "themes.DELETE",
+      source: "notes.themes.[id].DELETE",
       fallbackMessage: "Failed to delete theme",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "notes.themes.[id].GET" });
-export const PATCH = apiHandlerWithParams<any>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "notes.themes.[id].PATCH" });
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.themes.[id].DELETE" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "notes.themes.[id].GET" });
+export const PATCH = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "notes.themes.[id].PATCH" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.themes.[id].DELETE" });

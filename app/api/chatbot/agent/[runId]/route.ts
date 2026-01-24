@@ -28,7 +28,7 @@ async function GET_handler(
         internalError(
           "Agent runs not initialized. Run prisma generate/db push."
         ),
-        { request: req, source: "chatbot.agent.run.GET" }
+        { request: req, source: "chatbot.agent.[runId].GET" }
       );
     }
     const { runId } = await params;
@@ -38,7 +38,7 @@ async function GET_handler(
     if (!run) {
       return createErrorResponse(notFoundError("Run not found."), {
         request: req,
-        source: "chatbot.agent.run.GET",
+        source: "chatbot.agent.[runId].GET",
       });
     }
     if (DEBUG_CHATBOT) {
@@ -52,7 +52,7 @@ async function GET_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.agent.run.GET",
+      source: "chatbot.agent.[runId].GET",
       fallbackMessage: "Failed to load agent run.",
     });
   }
@@ -69,7 +69,7 @@ async function POST_handler(
         internalError(
           "Agent runs not initialized. Run prisma generate/db push."
         ),
-        { request: req, source: "chatbot.agent.run.POST" }
+        { request: req, source: "chatbot.agent.[runId].POST" }
       );
     }
     const { runId } = await params;
@@ -85,7 +85,7 @@ async function POST_handler(
     } catch (_error) {
       return createErrorResponse(badRequestError("Invalid JSON payload"), {
         request: req,
-        source: "chatbot.agent.run.POST",
+        source: "chatbot.agent.[runId].POST",
       });
     }
     if (
@@ -96,7 +96,7 @@ async function POST_handler(
     ) {
       return createErrorResponse(badRequestError("Unsupported action."), {
         request: req,
-        source: "chatbot.agent.run.POST",
+        source: "chatbot.agent.[runId].POST",
       });
     }
     if (DEBUG_CHATBOT) {
@@ -113,7 +113,7 @@ async function POST_handler(
     if (!run) {
       return createErrorResponse(notFoundError("Run not found."), {
         request: req,
-        source: "chatbot.agent.run.POST",
+        source: "chatbot.agent.[runId].POST",
       });
     }
 
@@ -178,13 +178,13 @@ async function POST_handler(
       if (run.status === "running") {
         return createErrorResponse(
           conflictError("Run is running. Stop it before retrying steps."),
-          { request: req, source: "chatbot.agent.run.POST" }
+          { request: req, source: "chatbot.agent.[runId].POST" }
         );
       }
       if (!body.stepId?.trim()) {
         return createErrorResponse(
           badRequestError("stepId is required for retry_step."),
-          { request: req, source: "chatbot.agent.run.POST" }
+          { request: req, source: "chatbot.agent.[runId].POST" }
         );
       }
       const planState =
@@ -197,7 +197,7 @@ async function POST_handler(
       if (!steps) {
         return createErrorResponse(
           badRequestError("No plan steps available to retry."),
-          { request: req, source: "chatbot.agent.run.POST" }
+          { request: req, source: "chatbot.agent.[runId].POST" }
         );
       }
       const nextSteps = steps.map((step) => {
@@ -257,13 +257,13 @@ async function POST_handler(
       if (run.status === "running") {
         return createErrorResponse(
           conflictError("Run is running. Stop it before overriding steps."),
-          { request: req, source: "chatbot.agent.run.POST" }
+          { request: req, source: "chatbot.agent.[runId].POST" }
         );
       }
       if (!body.stepId?.trim() || !body.status) {
         return createErrorResponse(
           badRequestError("stepId and status are required for override_step."),
-          { request: req, source: "chatbot.agent.run.POST" }
+          { request: req, source: "chatbot.agent.[runId].POST" }
         );
       }
       const planState =
@@ -276,7 +276,7 @@ async function POST_handler(
       if (!steps) {
         return createErrorResponse(
           badRequestError("No plan steps available to override."),
-          { request: req, source: "chatbot.agent.run.POST" }
+          { request: req, source: "chatbot.agent.[runId].POST" }
         );
       }
       const nextSteps = steps.map((step) => {
@@ -331,13 +331,13 @@ async function POST_handler(
       if (run.status === "running") {
         return createErrorResponse(
           conflictError("Run is running. Stop it before approving steps."),
-          { request: req, source: "chatbot.agent.run.POST" }
+          { request: req, source: "chatbot.agent.[runId].POST" }
         );
       }
       if (!body.stepId?.trim()) {
         return createErrorResponse(
           badRequestError("stepId is required for approve_step."),
-          { request: req, source: "chatbot.agent.run.POST" }
+          { request: req, source: "chatbot.agent.[runId].POST" }
         );
       }
       const planState =
@@ -414,7 +414,7 @@ async function POST_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.agent.run.POST",
+      source: "chatbot.agent.[runId].POST",
       fallbackMessage: "Failed to update agent run.",
     });
   }
@@ -431,7 +431,7 @@ async function DELETE_handler(
         internalError(
           "Agent runs not initialized. Run prisma generate/db push."
         ),
-        { request: req, source: "chatbot.agent.run.DELETE" }
+        { request: req, source: "chatbot.agent.[runId].DELETE" }
       );
     }
     const { runId } = await params;
@@ -441,7 +441,7 @@ async function DELETE_handler(
     if (!run) {
       return createErrorResponse(notFoundError("Run not found."), {
         request: req,
-        source: "chatbot.agent.run.DELETE",
+        source: "chatbot.agent.[runId].DELETE",
       });
     }
     const url = new URL(req.url);
@@ -449,7 +449,7 @@ async function DELETE_handler(
     if (run.status === "running" && !force) {
       return createErrorResponse(
         conflictError("Run is running. Stop it before deleting."),
-        { request: req, source: "chatbot.agent.run.DELETE" }
+        { request: req, source: "chatbot.agent.[runId].DELETE" }
       );
     }
     if (run.status === "running" && force) {
@@ -474,12 +474,12 @@ async function DELETE_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.agent.run.DELETE",
+      source: "chatbot.agent.[runId].DELETE",
       fallbackMessage: "Failed to delete agent run.",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].GET" });
-export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].POST" });
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].DELETE" });
+export const GET = apiHandlerWithParams<{ runId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].GET" });
+export const POST = apiHandlerWithParams<{ runId: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].POST" });
+export const DELETE = apiHandlerWithParams<{ runId: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].DELETE" });

@@ -13,6 +13,7 @@ import {
 import { useToast } from "@/components/ui/toast";
 import { RefreshCcw, Trash2, Download } from "lucide-react";
 import type { SystemLogMetrics, SystemLogRecord, SystemLogLevel } from "@/types";
+import { Label } from "@/components/ui/label";
 
 const levelOptions: Array<{ value: SystemLogLevel | "all"; label: string }> = [
   { value: "all", label: "All levels" },
@@ -217,7 +218,7 @@ export default function SystemLogsPage() {
       <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
         <div className="grid gap-4 md:grid-cols-4">
           <div>
-            <label className="text-xs text-gray-400">Level</label>
+            <Label className="text-xs text-gray-400">Level</Label>
             <Select
               value={level}
               onValueChange={(value) => {
@@ -238,7 +239,7 @@ export default function SystemLogsPage() {
             </Select>
           </div>
           <div>
-            <label className="text-xs text-gray-400">Search</label>
+            <Label className="text-xs text-gray-400">Search</Label>
             <Input
               className="mt-2"
               placeholder="Message or source"
@@ -250,7 +251,7 @@ export default function SystemLogsPage() {
             />
           </div>
           <div>
-            <label className="text-xs text-gray-400">Source</label>
+            <Label className="text-xs text-gray-400">Source</Label>
             <Input
               className="mt-2"
               placeholder="api/products, auth, etc."
@@ -263,7 +264,7 @@ export default function SystemLogsPage() {
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs text-gray-400">From</label>
+              <Label className="text-xs text-gray-400">From</Label>
               <Input
                 className="mt-2"
                 type="date"
@@ -275,7 +276,7 @@ export default function SystemLogsPage() {
               />
             </div>
             <div>
-              <label className="text-xs text-gray-400">To</label>
+              <Label className="text-xs text-gray-400">To</Label>
               <Input
                 className="mt-2"
                 type="date"
@@ -419,35 +420,35 @@ export default function SystemLogsPage() {
                         <div className="mt-2 grid gap-2 md:grid-cols-2">
                           <div>
                             <div className="text-gray-500">App</div>
-                            <div>{String(getContextValue(log.context, "app.version") ?? "—")}</div>
+                            <div>{String((getContextValue(log.context, "app.version") as string | number | null) ?? "—")}</div>
                             <div className="text-gray-500">Build</div>
-                            <div>{String(getContextValue(log.context, "app.buildId") ?? "—")}</div>
+                            <div>{String((getContextValue(log.context, "app.buildId") as string | number | null) ?? "—")}</div>
                             <div className="text-gray-500">Release</div>
-                            <div>{String(getContextValue(log.context, "app.releaseChannel") ?? "—")}</div>
+                            <div>{String((getContextValue(log.context, "app.releaseChannel") as string | number | null) ?? "—")}</div>
                           </div>
                           <div>
                             <div className="text-gray-500">User</div>
-                            <div>{String(getContextValue(log.context, "user.email") ?? "—")}</div>
+                            <div>{String((getContextValue(log.context, "user.email") as string | number | null) ?? "—")}</div>
                             <div className="text-gray-500">Role</div>
-                            <div>{String(getContextValue(log.context, "user.role") ?? "—")}</div>
+                            <div>{String((getContextValue(log.context, "user.role") as string | number | null) ?? "—")}</div>
                             <div className="text-gray-500">Route</div>
-                            <div>{String(getContextValue(log.context, "route") ?? "—")}</div>
+                            <div>{String((getContextValue(log.context, "route") as string | number | null) ?? "—")}</div>
                           </div>
                           <div>
                             <div className="text-gray-500">Device</div>
-                            <div>{String(getContextValue(log.context, "device.platform") ?? "—")}</div>
+                            <div>{String((getContextValue(log.context, "device.platform") as string | number | null) ?? "—")}</div>
                             <div className="text-gray-500">Memory</div>
-                            <div>{String(getContextValue(log.context, "device.deviceMemory") ?? "—")}</div>
+                            <div>{String((getContextValue(log.context, "device.deviceMemory") as string | number | null) ?? "—")}</div>
                             <div className="text-gray-500">Cores</div>
-                            <div>{String(getContextValue(log.context, "device.hardwareConcurrency") ?? "—")}</div>
+                            <div>{String((getContextValue(log.context, "device.hardwareConcurrency") as string | number | null) ?? "—")}</div>
                           </div>
                           <div>
                             <div className="text-gray-500">Network</div>
-                            <div>{String(getContextValue(log.context, "network.effectiveType") ?? "—")}</div>
+                            <div>{String((getContextValue(log.context, "network.effectiveType") as string | number | null) ?? "—")}</div>
                             <div className="text-gray-500">Downlink</div>
-                            <div>{String(getContextValue(log.context, "network.downlink") ?? "—")}</div>
+                            <div>{String((getContextValue(log.context, "network.downlink") as string | number | null) ?? "—")}</div>
                             <div className="text-gray-500">RTT</div>
-                            <div>{String(getContextValue(log.context, "network.rtt") ?? "—")}</div>
+                            <div>{String((getContextValue(log.context, "network.rtt") as string | number | null) ?? "—")}</div>
                           </div>
                         </div>
                       </div>

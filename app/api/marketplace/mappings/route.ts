@@ -35,7 +35,7 @@ async function GET_handler(request: NextRequest) {
   } catch (error) {
     return createErrorResponse(error, {
       request,
-      source: "marketplace/mappings.GET",
+      source: "marketplace.mappings.GET",
       fallbackMessage: "Failed to fetch category mappings",
     });
   }
@@ -83,7 +83,7 @@ async function POST_handler(request: NextRequest) {
   } catch (error) {
     return createErrorResponse(error, {
       request,
-      source: "marketplace/mappings.POST",
+      source: "marketplace.mappings.POST",
       fallbackMessage: "Failed to create category mapping",
     });
   }

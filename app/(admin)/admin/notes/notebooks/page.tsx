@@ -7,6 +7,8 @@ import { useToast } from "@/components/ui/toast";
 import { useNoteSettings } from "@/lib/context/NoteSettingsContext";
 import type { NotebookRecord } from "@/types/notes";
 import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function NotebooksPage() {
   const { toast } = useToast();
@@ -184,10 +186,10 @@ export default function NotebooksPage() {
           <h2 className="mb-4 text-lg font-semibold text-white">Create Notebook</h2>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
             <div className="flex-1">
-              <label className="mb-2 block text-sm font-medium text-gray-200">
+              <Label className="mb-2 block text-sm font-medium text-gray-200">
                 Notebook Name
-              </label>
-              <input
+              </Label>
+              <Input
                 type="text"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
@@ -229,7 +231,7 @@ export default function NotebooksPage() {
                     <div className="flex flex-1 items-center gap-3">
                       {isEditing ? (
                         <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
-                          <input
+                          <Input
                             type="text"
                             value={editingName}
                             onChange={(event) => setEditingName(event.target.value)}
@@ -238,13 +240,13 @@ export default function NotebooksPage() {
                         </div>
                       ) : (
                         <div className="flex flex-col">
-                          <button
+                          <Button
                             type="button"
                             onClick={() => handleEditStart(notebook)}
                             className="text-left text-sm text-gray-200 hover:text-white"
                           >
                             {notebook.name}
-                          </button>
+                          </Button>
                           {isActive && (
                             <span className="text-[11px] text-blue-300">Active</span>
                           )}
@@ -275,7 +277,7 @@ export default function NotebooksPage() {
                       )}
                       {!isEditing && (
                         <div className="relative">
-                          <button
+                          <Button
                             type="button"
                             onClick={(event) => {
                               event.stopPropagation();
@@ -287,7 +289,7 @@ export default function NotebooksPage() {
                             aria-label={`Notebook actions for ${notebook.name}`}
                           >
                             <MoreVertical size={16} />
-                          </button>
+                          </Button>
                           {menuNotebookId === notebook.id && (
                             <>
                               <div
@@ -295,7 +297,7 @@ export default function NotebooksPage() {
                                 onClick={() => setMenuNotebookId(null)}
                               />
                               <div className="absolute right-0 top-full z-50 mt-2 w-44 rounded-md border border-gray-700 bg-gray-900 p-1 shadow-lg">
-                                <button
+                                <Button
                                   type="button"
                                   onClick={(event) => {
                                     event.stopPropagation();
@@ -306,8 +308,8 @@ export default function NotebooksPage() {
                                   className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-gray-800"
                                 >
                                   Rename
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                   type="button"
                                   onClick={(event) => {
                                     event.stopPropagation();
@@ -317,8 +319,8 @@ export default function NotebooksPage() {
                                   className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-gray-800"
                                 >
                                   Duplicate
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                   type="button"
                                   onClick={(event) => {
                                     event.stopPropagation();
@@ -328,7 +330,7 @@ export default function NotebooksPage() {
                                   className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-red-300 hover:bg-gray-800"
                                 >
                                   Delete
-                                </button>
+                                </Button>
                               </div>
                             </>
                           )}

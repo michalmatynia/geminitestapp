@@ -38,10 +38,10 @@ async function DELETE_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "files/[id].DELETE",
+      source: "files.[id].DELETE",
       fallbackMessage: "Failed to delete file",
     });
   }
 }
 
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "files.[id].DELETE" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "files.[id].DELETE" });

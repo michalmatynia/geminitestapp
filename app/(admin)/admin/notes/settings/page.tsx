@@ -14,6 +14,9 @@ import {
 import { useToast } from "@/components/ui/toast";
 import { useNoteSettings, DEFAULT_NOTE_SETTINGS } from "@/lib/context/NoteSettingsContext";
 import type { NoteSettings } from "@/types/notes-settings";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const sortByOptions = [
   { value: "created", label: "Created Date" },
@@ -87,12 +90,12 @@ export default function NoteSettingsPage() {
           <h2 className="mb-4 text-lg font-semibold text-white">Sorting</h2>
           <div className="space-y-4">
             <div>
-              <label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-200">
+              <Label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-200">
                 <span>Sort By</span>
                 {!isDefault("sortBy") && (
                   <span className="text-xs text-blue-400">Modified</span>
                 )}
-              </label>
+              </Label>
               <Select
                 value={settings.sortBy}
                 onValueChange={(value) =>
@@ -113,12 +116,12 @@ export default function NoteSettingsPage() {
             </div>
 
             <div>
-              <label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-200">
+              <Label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-200">
                 <span>Sort Order</span>
                 {!isDefault("sortOrder") && (
                   <span className="text-xs text-blue-400">Modified</span>
                 )}
-              </label>
+              </Label>
               <Select
                 value={settings.sortOrder}
                 onValueChange={(value) =>
@@ -146,13 +149,11 @@ export default function NoteSettingsPage() {
             Card Visibility
           </h2>
           <div className="space-y-4">
-            <label className="flex items-center justify-between">
+            <Label className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={settings.showTimestamps}
-                  onChange={(e) =>
-                    updateSettings({ showTimestamps: e.target.checked })
+                <Checkbox
+                  checked={settings.showTimestamps} onCheckedChange={(checked) =>
+                    updateSettings({ showTimestamps: Boolean(checked) })
                   }
                   className="h-4 w-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"
                 />
@@ -168,15 +169,13 @@ export default function NoteSettingsPage() {
               {!isDefault("showTimestamps") && (
                 <span className="text-xs text-blue-400">Modified</span>
               )}
-            </label>
+            </Label>
 
-            <label className="flex items-center justify-between">
+            <Label className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={settings.showBreadcrumbs}
-                  onChange={(e) =>
-                    updateSettings({ showBreadcrumbs: e.target.checked })
+                <Checkbox
+                  checked={settings.showBreadcrumbs} onCheckedChange={(checked) =>
+                    updateSettings({ showBreadcrumbs: Boolean(checked) })
                   }
                   className="h-4 w-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"
                 />
@@ -192,7 +191,7 @@ export default function NoteSettingsPage() {
               {!isDefault("showBreadcrumbs") && (
                 <span className="text-xs text-blue-400">Modified</span>
               )}
-            </label>
+            </Label>
           </div>
         </div>
 
@@ -200,12 +199,12 @@ export default function NoteSettingsPage() {
         <div className="rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
           <h2 className="mb-4 text-lg font-semibold text-white">Search</h2>
           <div>
-            <label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-200">
+            <Label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-200">
               <span>Default Search Scope</span>
               {!isDefault("searchScope") && (
                 <span className="text-xs text-blue-400">Modified</span>
               )}
-            </label>
+            </Label>
             <Select
               value={settings.searchScope}
               onValueChange={(value) =>
@@ -231,50 +230,55 @@ export default function NoteSettingsPage() {
           <h2 className="mb-4 text-lg font-semibold text-white">Editor</h2>
           <div className="space-y-4">
             <div>
-              <label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-200">
+              <Label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-200">
                 <span>Default Editor Mode</span>
                 {!isDefault("editorMode") && (
                   <span className="text-xs text-blue-400">Modified</span>
                 )}
-              </label>
+              </Label>
               <div className="space-y-2">
-                {editorModeOptions.map((option) => (
-                  <label
-                    key={option.value}
-                    className={`flex items-center gap-3 rounded-md border p-3 cursor-pointer transition-colors ${
-                      settings.editorMode === option.value
-                        ? "border-blue-500 bg-blue-500/10"
-                        : "border-gray-700 hover:border-gray-600"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="editorMode"
-                      value={option.value}
-                      checked={settings.editorMode === option.value}
-                      onChange={() =>
-                        updateSettings({ editorMode: option.value })
-                      }
-                      className="h-4 w-4 border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"
-                    />
-                    <div>
-                      <span className="text-sm font-medium text-gray-200">
-                        {option.label}
-                      </span>
-                      <p className="text-xs text-gray-500">{option.description}</p>
-                    </div>
-                  </label>
-                ))}
+                <RadioGroup
+                  value={settings.editorMode}
+                  onValueChange={(value) =>
+                    updateSettings({ editorMode: value as NoteSettings["editorMode"] })
+                  }
+                  className="space-y-2"
+                >
+                  {editorModeOptions.map((option) => {
+                    const id = `editor-mode-${option.value}`;
+                    const isSelected = settings.editorMode === option.value;
+                    return (
+                      <div
+                        key={option.value}
+                        className={`flex items-start gap-3 rounded-md border p-3 transition-colors ${
+                          isSelected
+                            ? "border-blue-500 bg-blue-500/10"
+                            : "border-gray-700 hover:border-gray-600"
+                        }`}
+                      >
+                        <RadioGroupItem
+                          id={id}
+                          value={option.value}
+                          className="mt-1 border-gray-600 text-blue-600"
+                        />
+                        <Label htmlFor={id} className="flex-1 cursor-pointer">
+                          <span className="text-sm font-medium text-gray-200">
+                            {option.label}
+                          </span>
+                          <p className="text-xs text-gray-500">{option.description}</p>
+                        </Label>
+                      </div>
+                    );
+                  })}
+                </RadioGroup>
               </div>
             </div>
 
-            <label className="flex items-center justify-between">
+            <Label className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={settings.autoformatOnPaste}
-                  onChange={(e) =>
-                    updateSettings({ autoformatOnPaste: e.target.checked })
+                <Checkbox
+                  checked={settings.autoformatOnPaste} onCheckedChange={(checked) =>
+                    updateSettings({ autoformatOnPaste: Boolean(checked) })
                   }
                   className="h-4 w-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"
                 />
@@ -291,7 +295,7 @@ export default function NoteSettingsPage() {
               {!isDefault("autoformatOnPaste") && (
                 <span className="text-xs text-blue-400">Modified</span>
               )}
-            </label>
+            </Label>
           </div>
         </div>
 

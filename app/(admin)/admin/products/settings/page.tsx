@@ -30,6 +30,11 @@ import { TagsSettings } from "@/components/products/settings/TagsSettings";
 import { InternationalizationSettings } from "./components/InternationalizationSettings";
 import { AiDescriptionSettings } from "./components/AiDescriptionSettings";
 import { AiTranslationSettings } from "./components/AiTranslationSettings";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export default function ProductSettingsPage() {
   const generateGroupId = () =>
@@ -1011,7 +1016,7 @@ export default function ProductSettingsPage() {
           <aside className="rounded-md border border-gray-800 bg-gray-900 p-4">
             <div className="flex flex-col gap-2">
               {settingSections.map((section) => (
-                <button
+                <Button
                   key={section}
                   onClick={() => setActiveSection(section)}
                   className={`rounded px-3 py-2 text-left text-sm transition ${
@@ -1021,7 +1026,7 @@ export default function ProductSettingsPage() {
                   }`}
                 >
                   {section}
-                </button>
+                </Button>
               ))}
             </div>
           </aside>
@@ -1106,20 +1111,20 @@ export default function ProductSettingsPage() {
               <h2 className="text-xl font-semibold text-white">
                 {editingCatalogId ? "Edit Catalog" : "Create Catalog"}
               </h2>
-              <button
+              <Button
                 className="text-sm text-gray-400 hover:text-white"
                 type="button"
                 onClick={() => setShowCatalogModal(false)}
               >
                 Close
-              </button>
+              </Button>
             </div>
             <div className="space-y-4">
               {catalogError ? (
                 <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200">
                   <div className="flex items-center justify-between gap-3">
                     <span className="font-semibold">Catalog save failed</span>
-                    <button
+                    <Button
                       className="rounded border border-red-400/50 px-2 py-1 text-[11px] text-red-100 hover:bg-red-500/20"
                       type="button"
                       onClick={() => {
@@ -1132,9 +1137,9 @@ export default function ProductSettingsPage() {
                       }}
                     >
                       Copy
-                    </button>
+                    </Button>
                   </div>
-                  <textarea
+                  <Textarea
                     className="mt-2 w-full resize-none rounded-md border border-red-500/30 bg-gray-900/70 p-2 text-[11px] text-red-100"
                     rows={3}
                     readOnly
@@ -1143,8 +1148,8 @@ export default function ProductSettingsPage() {
                 </div>
               ) : null}
               <div>
-                <label className="text-xs text-gray-400">Name</label>
-                <input
+                <Label className="text-xs text-gray-400">Name</Label>
+                <Input
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                   value={catalogForm.name}
                   onChange={(event) =>
@@ -1156,8 +1161,8 @@ export default function ProductSettingsPage() {
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-400">Description</label>
-                <textarea
+                <Label className="text-xs text-gray-400">Description</Label>
+                <Textarea
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                   rows={3}
                   value={catalogForm.description}
@@ -1169,24 +1174,22 @@ export default function ProductSettingsPage() {
                   }
                 />
               </div>
-              <label className="flex items-center gap-2 text-xs text-gray-300">
-                <input
-                  type="checkbox"
+              <Label className="flex items-center gap-2 text-xs text-gray-300">
+                <Checkbox
                   className="accent-emerald-400"
                   checked={catalogForm.isDefault}
-                  disabled={!editingCatalogId && catalogs.length === 0}
-                  onChange={(event) =>
+                  disabled={!editingCatalogId && catalogs.length === 0} onCheckedChange={(checked) =>
                     setCatalogForm((prev) => ({
                       ...prev,
-                      isDefault: event.target.checked,
+                      isDefault: Boolean(checked),
                     }))
                   }
                 />
                 Set as default catalog
-              </label>
+              </Label>
               <div>
                 <div className="rounded-md border border-gray-800 bg-gray-950/70 p-3">
-                  <label className="text-xs text-gray-400">Languages</label>
+                  <Label className="text-xs text-gray-400">Languages</Label>
                   {languagesLoading ? (
                     <p className="mt-2 text-xs text-gray-500">
                       Loading languages...
@@ -1232,7 +1235,7 @@ export default function ProductSettingsPage() {
                                 )}
                               </div>
                               <div className="flex items-center gap-1">
-                                <button
+                                <Button
                                   type="button"
                                   className="rounded p-1 text-gray-500 hover:bg-gray-800 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500"
                                   onClick={() => moveLanguage(language.id, "up")}
@@ -1242,8 +1245,8 @@ export default function ProductSettingsPage() {
                                   <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                                   </svg>
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                   type="button"
                                   className="rounded p-1 text-gray-500 hover:bg-gray-800 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500"
                                   onClick={() => moveLanguage(language.id, "down")}
@@ -1253,8 +1256,8 @@ export default function ProductSettingsPage() {
                                   <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                   </svg>
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                   type="button"
                                   className="rounded p-1 text-gray-500 hover:bg-red-500/20 hover:text-red-400"
                                   onClick={() => removeLanguage(language.id)}
@@ -1263,7 +1266,7 @@ export default function ProductSettingsPage() {
                                   <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                   </svg>
-                                </button>
+                                </Button>
                               </div>
                             </div>
                           ))
@@ -1276,7 +1279,7 @@ export default function ProductSettingsPage() {
                           </p>
                         ) : (
                           availableLanguages.map((language) => (
-                            <button
+                            <Button
                               key={language.id}
                               type="button"
                               className="flex w-full items-center justify-between rounded-md px-2 py-1 text-left hover:bg-gray-800"
@@ -1289,14 +1292,14 @@ export default function ProductSettingsPage() {
                                 </span>
                               </span>
                               <span className="text-gray-500">Add</span>
-                            </button>
+                            </Button>
                           ))
                         )}
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs text-gray-400">
+                        <Label className="text-xs text-gray-400">
                           Default language
-                        </label>
+                        </Label>
                         <select
                           className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-white"
                           value={defaultLanguageId}
@@ -1322,7 +1325,7 @@ export default function ProductSettingsPage() {
               </div>
               <div>
                 <div className="rounded-md border border-gray-800 bg-gray-950/70 p-3">
-                  <label className="text-xs text-gray-400">Price groups</label>
+                  <Label className="text-xs text-gray-400">Price groups</Label>
                   {loadingGroups ? (
                     <p className="mt-2 text-xs text-gray-500">
                       Loading price groups...
@@ -1344,7 +1347,7 @@ export default function ProductSettingsPage() {
                               (entry) => entry.id === groupId
                             );
                             return (
-                              <button
+                              <Button
                                 key={groupId}
                                 type="button"
                                 className="inline-flex items-center gap-1 rounded-full border border-gray-700 bg-gray-900 px-3 py-1 text-xs text-gray-200 hover:border-gray-500"
@@ -1357,7 +1360,7 @@ export default function ProductSettingsPage() {
                                   </span>
                                 ) : null}
                                 <span className="text-gray-500">×</span>
-                              </button>
+                              </Button>
                             );
                           })
                         )}
@@ -1368,7 +1371,7 @@ export default function ProductSettingsPage() {
                             group.id
                           );
                           return (
-                            <button
+                            <Button
                               key={group.id}
                               type="button"
                               className="flex w-full items-center justify-between rounded-md px-2 py-1 text-left hover:bg-gray-800"
@@ -1383,14 +1386,14 @@ export default function ProductSettingsPage() {
                               <span className="text-gray-500">
                                 {isSelected ? "Remove" : "Add"}
                               </span>
-                            </button>
+                            </Button>
                           );
                         })}
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs text-gray-400">
+                        <Label className="text-xs text-gray-400">
                           Default price group
-                        </label>
+                        </Label>
                         <select
                           className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-white"
                           value={catalogDefaultPriceGroupId}
@@ -1420,21 +1423,21 @@ export default function ProductSettingsPage() {
                 </div>
               </div>
               <div className="flex items-center justify-end gap-3">
-                <button
+                <Button
                   className="rounded-md border border-gray-800 px-3 py-2 text-sm text-gray-300 hover:bg-gray-900"
                   type="button"
                   onClick={() => setShowCatalogModal(false)}
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
                   type="button"
                   onClick={handleSubmitCatalog}
                   disabled={catalogSaving}
                 >
                   {catalogSaving ? "Saving..." : "Save"}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -1456,8 +1459,8 @@ export default function ProductSettingsPage() {
             </div>
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-gray-400">Code</label>
-                <input
+                <Label className="text-xs text-gray-400">Code</Label>
+                <Input
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                   value={languageForm.code}
                   onChange={(event) =>
@@ -1470,8 +1473,8 @@ export default function ProductSettingsPage() {
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-400">Name</label>
-                <input
+                <Label className="text-xs text-gray-400">Name</Label>
+                <Input
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                   value={languageForm.name}
                   onChange={(event) =>
@@ -1484,8 +1487,8 @@ export default function ProductSettingsPage() {
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-400">Native name</label>
-                <input
+                <Label className="text-xs text-gray-400">Native name</Label>
+                <Input
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
                   value={languageForm.nativeName}
                   onChange={(event) =>
@@ -1498,17 +1501,15 @@ export default function ProductSettingsPage() {
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-400">Countries</label>
+                <Label className="text-xs text-gray-400">Countries</Label>
                 <div className="mt-2 flex max-h-64 flex-wrap gap-2 overflow-y-auto">
                   {countries.map((country) => (
-                    <label
+                    <Label
                       key={country.id}
                       className="inline-flex items-center gap-2 rounded border border-gray-800 bg-gray-900 px-2 py-1 text-xs text-gray-200"
                     >
-                      <input
-                        type="checkbox"
-                        checked={selectedCountryIds.includes(country.id)}
-                        onChange={() => toggleCountry(country.id)}
+                      <Checkbox
+                        checked={selectedCountryIds.includes(country.id)} onCheckedChange={() => toggleCountry(country.id)}
                       />
                       <span>
                         {country.name}
@@ -1516,25 +1517,25 @@ export default function ProductSettingsPage() {
                           ({country.code})
                         </span>
                       </span>
-                    </label>
+                    </Label>
                   ))}
                 </div>
               </div>
               <div className="flex items-center justify-end gap-3">
-                <button
+                <Button
                   className="rounded-md border border-gray-800 px-3 py-2 text-sm text-gray-300 hover:bg-gray-900"
                   type="button"
                   onClick={() => setShowLanguageModal(false)}
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
                   type="button"
                   onClick={handleSaveLanguage}
                 >
                   Save
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -1553,32 +1554,30 @@ export default function ProductSettingsPage() {
               <h2 className="text-2xl font-semibold text-white">
                 {editingGroupId ? "Edit Price Group" : "Create Price Group"}
               </h2>
-              <button
+              <Button
                 className="text-sm text-gray-400 hover:text-white"
                 type="button"
                 onClick={() => setShowCreateModal(false)}
               >
                 Close
-              </button>
+              </Button>
             </div>
             <div className="space-y-4">
-              <label className="flex items-center gap-2 text-sm text-gray-300">
-                <input
-                  type="checkbox"
-                  checked={formState.isDefault}
-                  onChange={(event) =>
+              <Label className="flex items-center gap-2 text-sm text-gray-300">
+                <Checkbox
+                  checked={formState.isDefault} onCheckedChange={(checked) =>
                     setFormState((prev) => ({
                       ...prev,
-                      isDefault: event.target.checked,
+                      isDefault: Boolean(checked),
                     }))
                   }
                 />
                 Set as default group
-              </label>
-              <input type="hidden" value={formState.groupId} />
+              </Label>
+              <Input type="hidden" value={formState.groupId} />
               <div>
-                <label className="text-sm text-gray-300">Name</label>
-                <input
+                <Label className="text-sm text-gray-300">Name</Label>
+                <Input
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
                   value={formState.name}
                   onChange={(event) =>
@@ -1590,8 +1589,8 @@ export default function ProductSettingsPage() {
                 />
               </div>
               <div>
-                <label className="text-sm text-gray-300">Description</label>
-                <textarea
+                <Label className="text-sm text-gray-300">Description</Label>
+                <Textarea
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
                   rows={3}
                   value={formState.description}
@@ -1604,7 +1603,7 @@ export default function ProductSettingsPage() {
                 />
               </div>
               <div>
-                <label className="text-sm text-gray-300">Currency</label>
+                <Label className="text-sm text-gray-300">Currency</Label>
                 <select
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
                   value={formState.currencyId}
@@ -1628,42 +1627,33 @@ export default function ProductSettingsPage() {
                 </select>
               </div>
               <div>
-                <label className="text-sm text-gray-300">Group type</label>
-                <div className="mt-2 flex gap-4">
-                  <label className="flex items-center gap-2 text-sm text-gray-300">
-                    <input
-                      type="radio"
-                      checked={formState.groupType === "standard"}
-                      onChange={() =>
-                        setFormState((prev) => ({
-                          ...prev,
-                          groupType: "standard",
-                        }))
-                      }
-                    />
-                    Standard
-                  </label>
-                  <label className="flex items-center gap-2 text-sm text-gray-300">
-                    <input
-                      type="radio"
-                      checked={formState.groupType === "dependent"}
-                      onChange={() =>
-                        setFormState((prev) => ({
-                          ...prev,
-                          groupType: "dependent",
-                        }))
-                      }
-                    />
-                    Dependent
-                  </label>
-                </div>
+                <Label className="text-sm text-gray-300">Group type</Label>
+                <RadioGroup
+                  className="mt-2 flex gap-4"
+                  value={formState.groupType}
+                  onValueChange={(value) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      groupType: value as "standard" | "dependent",
+                    }))
+                  }
+                >
+                  <div className="flex items-center gap-2 text-sm text-gray-300">
+                    <RadioGroupItem value="standard" id="price-group-standard" />
+                    <Label htmlFor="price-group-standard">Standard</Label>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-300">
+                    <RadioGroupItem value="dependent" id="price-group-dependent" />
+                    <Label htmlFor="price-group-dependent">Dependent</Label>
+                  </div>
+                </RadioGroup>
               </div>
               {formState.groupType === "dependent" && (
                 <>
                   <div>
-                    <label className="text-sm text-gray-300">
+                    <Label className="text-sm text-gray-300">
                       Source Price Group
-                    </label>
+                    </Label>
                     <select
                       className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
                       value={formState.sourceGroupId}
@@ -1684,10 +1674,10 @@ export default function ProductSettingsPage() {
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
-                      <label className="text-sm text-gray-300">
+                      <Label className="text-sm text-gray-300">
                         Price Multiplier
-                      </label>
-                      <input
+                      </Label>
+                      <Input
                         className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
                         type="number"
                         step="0.01"
@@ -1701,8 +1691,8 @@ export default function ProductSettingsPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-sm text-gray-300">Add To Price</label>
-                      <input
+                      <Label className="text-sm text-gray-300">Add To Price</Label>
+                      <Input
                         className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
                         type="number"
                         value={formState.addToPrice}
@@ -1719,20 +1709,20 @@ export default function ProductSettingsPage() {
               )}
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <button
+              <Button
                 className="rounded-md border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-gray-500"
                 type="button"
                 onClick={() => setShowCreateModal(false)}
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
                 type="button"
                 onClick={() => void handleSaveGroup()}
               >
                 Save Price Group
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -1750,17 +1740,17 @@ export default function ProductSettingsPage() {
               <h2 className="text-2xl font-semibold text-white">
                 {editingCurrencyId ? "Edit Currency" : "Add Currency"}
               </h2>
-              <button
+              <Button
                 className="text-sm text-gray-400 hover:text-white"
                 type="button"
                 onClick={() => setShowCurrencyModal(false)}
               >
                 Close
-              </button>
+              </Button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-gray-300">Code</label>
+                <Label className="text-sm text-gray-300">Code</Label>
                 <select
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
                   value={currencyForm.code}
@@ -1779,8 +1769,8 @@ export default function ProductSettingsPage() {
                 </select>
               </div>
               <div>
-                <label className="text-sm text-gray-300">Name</label>
-                <input
+                <Label className="text-sm text-gray-300">Name</Label>
+                <Input
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
                   value={currencyForm.name}
                   onChange={(event) =>
@@ -1792,8 +1782,8 @@ export default function ProductSettingsPage() {
                 />
               </div>
               <div>
-                <label className="text-sm text-gray-300">Symbol</label>
-                <input
+                <Label className="text-sm text-gray-300">Symbol</Label>
+                <Input
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
                   value={currencyForm.symbol}
                   onChange={(event) =>
@@ -1807,20 +1797,20 @@ export default function ProductSettingsPage() {
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <button
+              <Button
                 className="rounded-md border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-gray-500"
                 type="button"
                 onClick={() => setShowCurrencyModal(false)}
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
                 type="button"
                 onClick={() => void handleSaveCurrency()}
               >
                 Save Currency
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -1838,17 +1828,17 @@ export default function ProductSettingsPage() {
               <h2 className="text-2xl font-semibold text-white">
                 {editingCountryId ? "Edit Country" : "Add Country"}
               </h2>
-              <button
+              <Button
                 className="text-sm text-gray-400 hover:text-white"
                 type="button"
                 onClick={() => setShowCountryModal(false)}
               >
                 Close
-              </button>
+              </Button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-gray-300">Code</label>
+                <Label className="text-sm text-gray-300">Code</Label>
                 <select
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
                   value={countryForm.code}
@@ -1871,8 +1861,8 @@ export default function ProductSettingsPage() {
                 </select>
               </div>
               <div>
-                <label className="text-sm text-gray-300">Name</label>
-                <input
+                <Label className="text-sm text-gray-300">Name</Label>
+                <Input
                   className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
                   value={countryForm.name}
                   onChange={(event) =>
@@ -1884,7 +1874,7 @@ export default function ProductSettingsPage() {
                 />
               </div>
               <div>
-                <label className="text-sm text-gray-300">Currencies</label>
+                <Label className="text-sm text-gray-300">Currencies</Label>
                 {loadingCurrencies ? (
                   <p className="mt-2 text-xs text-gray-500">
                     Loading currencies...
@@ -1892,14 +1882,12 @@ export default function ProductSettingsPage() {
                 ) : (
                   <div className="mt-2 flex max-h-64 flex-wrap gap-2 overflow-y-auto">
                     {currencyOptions.map((currency) => (
-                      <label
+                      <Label
                         key={currency.id}
                         className="inline-flex items-center gap-2 rounded border border-gray-800 bg-gray-900 px-2 py-1 text-xs text-gray-200"
                       >
-                        <input
-                          type="checkbox"
-                          checked={selectedCurrencyIds.includes(currency.id)}
-                          onChange={() => toggleCountryCurrency(currency.id)}
+                        <Checkbox
+                          checked={selectedCurrencyIds.includes(currency.id)} onCheckedChange={() => toggleCountryCurrency(currency.id)}
                         />
                         <span>
                           {currency.code}
@@ -1907,27 +1895,27 @@ export default function ProductSettingsPage() {
                             {currency.name}
                           </span>
                         </span>
-                      </label>
+                      </Label>
                     ))}
                   </div>
                 )}
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <button
+              <Button
                 className="rounded-md border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-gray-500"
                 type="button"
                 onClick={() => setShowCountryModal(false)}
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
                 type="button"
                 onClick={() => void handleSaveCountry()}
               >
                 Save Country
-              </button>
+              </Button>
             </div>
           </div>
         </div>

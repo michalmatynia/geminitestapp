@@ -44,7 +44,7 @@ async function DELETE_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "product-listings.DELETE",
+      source: "products.[id].listings.[listingId].DELETE",
       fallbackMessage: "Failed to delete listing",
     });
   }
@@ -82,11 +82,11 @@ async function PATCH_handler(
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "product-listings.PATCH",
+      source: "products.[id].listings.[listingId].PATCH",
       fallbackMessage: "Failed to update listing",
     });
   }
 }
 
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].listings.[listingId].DELETE" });
-export const PATCH = apiHandlerWithParams<any>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].listings.[listingId].PATCH" });
+export const DELETE = apiHandlerWithParams<{ id: string; listingId: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].listings.[listingId].DELETE" });
+export const PATCH = apiHandlerWithParams<{ id: string; listingId: string }>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].listings.[listingId].PATCH" });

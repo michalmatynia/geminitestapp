@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type MemoryItem = {
   id: string;
@@ -89,7 +90,7 @@ export default function AgentMemoryPage() {
         <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
           <div className="grid gap-3 md:grid-cols-4">
             <div>
-              <label className="text-xs text-gray-400">Memory key</label>
+              <Label className="text-xs text-gray-400">Memory key</Label>
               <Input
                 value={memoryKey}
                 onChange={(event) => setMemoryKey(event.target.value)}
@@ -98,7 +99,7 @@ export default function AgentMemoryPage() {
               />
             </div>
             <div>
-              <label className="text-xs text-gray-400">Tag</label>
+              <Label className="text-xs text-gray-400">Tag</Label>
               <Input
                 value={tag}
                 onChange={(event) => setTag(event.target.value)}
@@ -107,7 +108,7 @@ export default function AgentMemoryPage() {
               />
             </div>
             <div>
-              <label className="text-xs text-gray-400">Search</label>
+              <Label className="text-xs text-gray-400">Search</Label>
               <Input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
@@ -116,7 +117,7 @@ export default function AgentMemoryPage() {
               />
             </div>
             <div>
-              <label className="text-xs text-gray-400">Limit</label>
+              <Label className="text-xs text-gray-400">Limit</Label>
               <Input
                 type="number"
                 min={1}
@@ -170,7 +171,7 @@ export default function AgentMemoryPage() {
                     {formatDate(item.lastAccessedAt)}
                   </div>
                   <div className="mt-2">
-                    <button
+                    <Button
                       type="button"
                       className="text-[11px] uppercase tracking-wide text-gray-400 hover:text-gray-200"
                       onClick={() =>
@@ -181,7 +182,7 @@ export default function AgentMemoryPage() {
                       }
                     >
                       {expanded[item.id] ? "Hide details" : "Show details"}
-                    </button>
+                    </Button>
                   </div>
                   {expanded[item.id] ? (
                     <div className="mt-2 space-y-2 text-[11px] text-gray-200">

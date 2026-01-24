@@ -39,7 +39,7 @@ async function POST_handler(req: NextRequest) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "databases/delete.POST",
+      source: "databases.delete.POST",
       fallbackMessage: "Failed to delete backup",
     });
   }

@@ -58,7 +58,7 @@ export function SessionSidebar({
                     {session.messages.length} messages
                   </div>
                 </div>
-                <button
+                <Button
                   onClick={(e) => {
                     e.stopPropagation();
                     onDeleteSession(session.id);
@@ -67,7 +67,7 @@ export function SessionSidebar({
                   aria-label="Delete session"
                 >
                   <Trash2 className="size-3" />
-                </button>
+                </Button>
               </div>
             ))}
           </div>

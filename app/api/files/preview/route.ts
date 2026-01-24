@@ -15,7 +15,7 @@ async function GET_handler(req: NextRequest) {
   if (!fileId) {
     return createErrorResponse(badRequestError("File ID is required"), {
       request: req,
-      source: "files/preview.GET",
+      source: "files.preview.GET",
     });
   }
 
@@ -50,7 +50,7 @@ async function GET_handler(req: NextRequest) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "files/preview.GET",
+      source: "files.preview.GET",
       fallbackMessage: "Failed to fetch file preview",
     });
   }

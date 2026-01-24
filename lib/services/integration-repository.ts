@@ -4,6 +4,7 @@ import type { WithId } from "mongodb";
 import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { getIntegrationDataProvider } from "@/lib/services/integration-provider";
+import { conflictError, notFoundError } from "@/lib/errors/app-error";
 
 export type IntegrationRecord = {
   id: string;
@@ -351,7 +352,7 @@ const mongoRepository: IntegrationRepository = {
       .collection<IntegrationConnectionDocument>(CONNECTIONS_COLLECTION)
       .findOne({ integrationId });
     if (existing) {
-      throw new Error("Connection already exists");
+      throw conflictError("Connection already exists", { integrationId });
     }
     const id = randomUUID();
     const doc: IntegrationConnectionDocument = {
@@ -385,7 +386,7 @@ const mongoRepository: IntegrationRepository = {
       .collection<IntegrationConnectionDocument>(CONNECTIONS_COLLECTION)
       .findOne({ _id: id });
     if (!updated) {
-      throw new Error("Connection not found");
+      throw notFoundError("Connection not found", { id });
     }
     return toConnectionRecord(updated);
   },

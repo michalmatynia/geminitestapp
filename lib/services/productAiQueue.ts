@@ -8,6 +8,11 @@ import { getMongoDb } from "@/lib/db/mongo-client";
 import { ObjectId } from "mongodb";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getProductAiJobRepository } from "@/lib/services/product-ai-job-repository";
+import {
+  badRequestError,
+  notFoundError,
+  operationFailedError,
+} from "@/lib/errors/app-error";
 
 type LanguageRecord = {
   id: string;
@@ -185,7 +190,7 @@ async function processDescriptionGeneration(job: Job) {
     if (!product) {
       console.error(`[processDescriptionGeneration] Product not found for ID: "${productId}"`);
       console.error(`[processDescriptionGeneration] This might be a SKU instead of a product ID`);
-      throw new Error("Product not found");
+      throw notFoundError("Product not found", { productId });
     }
 
     console.log(`[processDescriptionGeneration] Found product: ${product.name_en}`);
@@ -272,7 +277,7 @@ async function processTranslation(job: Job) {
 
   if (!product) {
     console.error(`[processTranslation] Product not found for ID: "${productId}"`);
-    throw new Error("Product not found");
+    throw notFoundError("Product not found", { productId });
   }
 
   console.log(`[processTranslation] Found product: ${product.name_en}`);
@@ -283,7 +288,9 @@ async function processTranslation(job: Job) {
   const sourceDescription = product.description_en || "";
 
   if (!sourceName && !sourceDescription) {
-    throw new Error("Product has no English name or description to translate from");
+    throw badRequestError("Product has no English name or description to translate from", {
+      productId,
+    });
   }
 
   // Determine target languages based on product's catalogs
@@ -344,7 +351,9 @@ async function processTranslation(job: Job) {
 
       if (catalogIds.length === 0) {
         console.log(`[processTranslation] No valid catalog IDs found`);
-        throw new Error("Product has catalog assignments but no valid catalog IDs found");
+        throw badRequestError("Product has catalog assignments but no valid catalog IDs found", {
+          productId,
+        });
       }
 
       const catalogs = await prisma.catalog.findMany({
@@ -397,7 +406,10 @@ async function processTranslation(job: Job) {
 
   if (targetLanguages.length === 0) {
     console.log(`[processTranslation] No target languages found for product ${productId}`);
-    throw new Error("No target languages to translate to. Either assign the product to a catalog with languages, or add languages to the Product Settings.");
+    throw badRequestError(
+      "No target languages to translate to. Either assign the product to a catalog with languages, or add languages to the Product Settings.",
+      { productId }
+    );
   }
 
   console.log(`[processTranslation] Translating to: ${targetLanguages.join(", ")}`);
@@ -481,7 +493,10 @@ const pollQueue = async () => {
               console.log(`[productAiQueue] Translation completed for job ${typedJob.id}`);
 
             } else {
-        throw new Error(`Unknown job type: ${nextJob.type}`);
+        throw operationFailedError(`Unknown job type: ${nextJob.type}`, undefined, {
+          jobId: nextJob.id,
+          type: nextJob.type,
+        });
       }
 
     await jobRepository.updateJob(nextJob.id, {
@@ -566,7 +581,7 @@ export const processSingleJob = async (jobId: string) => {
 
   if (!job) {
     console.error(`[processSingleJob] Job ${jobId} not found`);
-    throw new Error("Job not found");
+    throw notFoundError("Job not found", { jobId });
   }
 
   if (job.status !== "pending") {
@@ -597,7 +612,10 @@ export const processSingleJob = async (jobId: string) => {
       result = await processTranslation(typedJob);
       console.log(`[processSingleJob] Translation completed for job ${job.id}`);
     } else {
-      throw new Error(`Unknown job type: ${job.type}`);
+      throw operationFailedError(`Unknown job type: ${job.type}`, undefined, {
+        jobId: job.id,
+        type: job.type,
+      });
     }
 
     await jobRepository.updateJob(job.id, {

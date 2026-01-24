@@ -40,7 +40,7 @@ async function GET_handler(req: NextRequest, ctx: Ctx) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "cms/blocks/[id].GET",
+      source: "cms.blocks.[id].GET",
       fallbackMessage: "Failed to fetch block",
     });
   }
@@ -74,7 +74,7 @@ async function PUT_handler(req: NextRequest, ctx: Ctx) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "cms/blocks/[id].PUT",
+      source: "cms.blocks.[id].PUT",
       fallbackMessage: "Failed to update block",
     });
   }
@@ -96,12 +96,12 @@ async function DELETE_handler(req: NextRequest, ctx: Ctx) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "cms/blocks/[id].DELETE",
+      source: "cms.blocks.[id].DELETE",
       fallbackMessage: "Failed to delete block",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "cms.blocks.[id].GET" });
-export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "cms.blocks.[id].PUT" });
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "cms.blocks.[id].DELETE" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "cms.blocks.[id].GET" });
+export const PUT = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "cms.blocks.[id].PUT" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "cms.blocks.[id].DELETE" });

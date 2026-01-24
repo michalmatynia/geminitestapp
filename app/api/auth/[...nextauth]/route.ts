@@ -12,7 +12,7 @@ async function GET_handler(req: NextRequest) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "auth.nextauth.GET",
+      source: "auth.[...nextauth].GET",
       fallbackMessage: "Failed to process auth request",
     });
   }
@@ -25,7 +25,7 @@ async function POST_handler(req: NextRequest) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "auth.nextauth.POST",
+      source: "auth.[...nextauth].POST",
       fallbackMessage: "Failed to process auth request",
     });
   }

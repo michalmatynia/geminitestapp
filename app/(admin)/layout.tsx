@@ -7,8 +7,8 @@ import { AdminLayoutProvider, useAdminLayout } from "@/lib/context/AdminLayoutCo
 import { NoteSettingsProvider } from "@/lib/context/NoteSettingsContext";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { SessionProvider } from "next-auth/react";
 import { UserNav } from "@/components/UserNav";
+import { Button } from "@/components/ui/button";
 
 const Menu = dynamic(() => import("@/components/Menu"), { ssr: false });
 
@@ -41,7 +41,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               <Link href="/admin">Admin</Link>
             </h1>
           )}
-          <button
+          <Button
             onClick={handleToggleCollapse}
             className="p-2 rounded-full hover:bg-gray-700"
           >
@@ -50,7 +50,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 isMenuCollapsed ? "rotate-180" : ""
               }`}
             />
-          </button>
+          </Button>
         </div>
         <div className="flex-1 overflow-y-auto pr-1">
           <Menu />
@@ -75,13 +75,11 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SessionProvider>
-      <AdminLayoutProvider>
-        <NoteSettingsProvider>
-          <AdminLayoutContent>{children}</AdminLayoutContent>
-        </NoteSettingsProvider>
-      </AdminLayoutProvider>
-    </SessionProvider>
+    <AdminLayoutProvider>
+      <NoteSettingsProvider>
+        <AdminLayoutContent>{children}</AdminLayoutContent>
+      </NoteSettingsProvider>
+    </AdminLayoutProvider>
   );
 }
 

@@ -79,7 +79,7 @@ async function GET_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "integrations.connections.GET",
+      source: "integrations.[id].connections.GET",
       fallbackMessage: "Failed to fetch connections",
       ...(integrationId ? { extra: { integrationId } } : {}),
     });
@@ -163,12 +163,12 @@ async function POST_handler(
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "integrations.connections.POST",
+      source: "integrations.[id].connections.POST",
       fallbackMessage: "Failed to create connection",
       ...(integrationId ? { extra: { integrationId } } : {}),
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.GET" });
-export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.POST" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.GET" });
+export const POST = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.POST" });

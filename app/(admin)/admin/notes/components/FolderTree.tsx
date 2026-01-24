@@ -408,7 +408,7 @@ function FolderTreeBase({
             )}
           </div>
         </div>
-        <button
+        <Button
           onClick={() => onSelectFolder(null)}
           onDragOver={(e) => {
             e.preventDefault();
@@ -444,9 +444,9 @@ function FolderTreeBase({
         >
           <Folder className="size-4" />
           <span>All Notes</span>
-        </button>
+        </Button>
         {onToggleFavorites && (
-          <button
+          <Button
             onClick={() => onToggleFavorites()}
             className={`mt-1 w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition ${
               isFavoritesActive
@@ -456,11 +456,11 @@ function FolderTreeBase({
           >
             <Star className="size-4" />
             <span>Favorites</span>
-          </button>
+          </Button>
         )}
         {undoHistory && undoHistory.length > 0 && (
           <div className="mt-3 rounded border border-gray-800 bg-gray-900/60 p-2 text-xs text-gray-300">
-            <button
+            <Button
               onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
               className="flex w-full items-center justify-between mb-2 text-[10px] uppercase tracking-wide text-gray-500 hover:text-gray-300 transition"
             >
@@ -470,11 +470,11 @@ function FolderTreeBase({
               ) : (
                 <ChevronRight className="size-3" />
               )}
-            </button>
+            </Button>
             {isHistoryExpanded && (
               <div className="space-y-1">
                 {undoHistory.slice(0, 10).map((entry, index) => (
-                  <button
+                  <Button
                     key={`${entry.label}-${index}`}
                     type="button"
                     onClick={() => onUndoAtIndex?.(index)}
@@ -482,7 +482,7 @@ function FolderTreeBase({
                   >
                     <span className="truncate">{entry.label}</span>
                     <span className="text-[10px] text-gray-500">Undo</span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}

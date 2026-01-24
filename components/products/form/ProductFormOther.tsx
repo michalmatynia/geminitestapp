@@ -322,14 +322,14 @@ export default function ProductFormOther() {
                       className="h-8 pr-8"
                     />
                     {categoryQuery && (
-                      <button
+                      <Button
                         type="button"
                         onClick={() => setCategoryQuery("")}
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white"
                         aria-label="Clear category search"
                       >
                         <X className="h-3.5 w-3.5" />
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -379,14 +379,14 @@ export default function ProductFormOther() {
                       className="h-8 pr-8"
                     />
                     {tagQuery && (
-                      <button
+                      <Button
                         type="button"
                         onClick={() => setTagQuery("")}
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white"
                         aria-label="Clear tag search"
                       >
                         <X className="h-3.5 w-3.5" />
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>

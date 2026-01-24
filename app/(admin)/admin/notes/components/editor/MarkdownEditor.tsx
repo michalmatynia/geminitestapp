@@ -3,6 +3,7 @@
 import React from "react";
 import { useToast } from "@/components/ui/toast";
 import { renderMarkdownToHtml } from "../../utils";
+import { Textarea } from "@/components/ui/textarea";
 
 interface MarkdownEditorProps {
   content: string;
@@ -91,7 +92,7 @@ export function MarkdownEditor({
         style={showPreview && editorWidth ? { width: editorWidth } : undefined}
       >
         <div className="relative">
-          <textarea
+          <Textarea
             ref={contentRef}
             placeholder={isCodeMode
               ? "Enter code snippets using ```language blocks (e.g., ```javascript)"

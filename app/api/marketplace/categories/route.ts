@@ -33,7 +33,7 @@ async function GET_handler(request: NextRequest) {
   } catch (error) {
     return createErrorResponse(error, {
       request,
-      source: "marketplace/categories.GET",
+      source: "marketplace.categories.GET",
       fallbackMessage: "Failed to fetch external categories",
     });
   }

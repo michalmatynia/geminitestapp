@@ -482,7 +482,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
                 {availableIcons.map((item) => {
                   const IconComponent = item.icon;
                   return (
-                    <button
+                    <Button
                       key={item.id}
                       type="button"
                       onClick={() => setIcon(icon === item.id ? null : item.id)}
@@ -494,7 +494,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
                       title={item.label}
                     >
                       <IconComponent className="h-5 w-5" />
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -737,7 +737,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
           <h3 className="text-sm font-semibold text-white">Catalogs</h3>
           <div className="flex flex-wrap gap-2">
             {catalogs.map((catalog) => (
-              <button
+              <Button
                 key={catalog.id}
                 type="button"
                 onClick={() => toggleCatalog(catalog.id)}
@@ -748,7 +748,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
                 }`}
               >
                 {catalog.name}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -759,7 +759,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
             <h3 className="text-sm font-semibold text-white">Categories</h3>
             <div className="flex flex-wrap gap-2">
               {categories.map((category) => (
-                <button
+                <Button
                   key={category.id}
                   type="button"
                   onClick={() => toggleCategory(category.id)}
@@ -770,7 +770,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
                   }`}
                 >
                   {category.name}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -782,7 +782,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
             <h3 className="text-sm font-semibold text-white">Tags</h3>
             <div className="flex flex-wrap gap-2">
               {tags.map((tag) => (
-                <button
+                <Button
                   key={tag.id}
                   type="button"
                   onClick={() => toggleTag(tag.id)}
@@ -793,7 +793,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
                   }`}
                 >
                   {tag.name}
-                </button>
+                </Button>
               ))}
             </div>
           </div>

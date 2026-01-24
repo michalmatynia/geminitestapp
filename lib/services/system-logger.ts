@@ -2,8 +2,14 @@ import { createHash } from "crypto";
 import type { SystemLogLevel } from "@/types";
 import { createSystemLog } from "@/lib/services/system-log-repository";
 import { notifyCriticalError } from "@/lib/services/critical-error-notifier";
+import {
+  isSensitiveKey,
+  REDACTED_VALUE,
+  truncateString,
+} from "@/lib/utils/log-redaction";
 
 const MAX_CONTEXT_SIZE = 12000;
+const MAX_VALUE_LENGTH = 4000;
 
 const sanitizeValue = (value: unknown) => {
   try {
@@ -11,12 +17,14 @@ const sanitizeValue = (value: unknown) => {
     const json = JSON.stringify(
       value,
       (_key, val) => {
+        if (_key && isSensitiveKey(_key)) return REDACTED_VALUE;
         if (typeof val === "object" && val !== null) {
           if (seen.has(val)) return "[Circular]";
           seen.add(val);
         }
         if (typeof val === "function") return "[Function]";
         if (typeof val === "bigint") return val.toString();
+        if (typeof val === "string") return truncateString(val, MAX_VALUE_LENGTH);
         return val;
       },
       2
@@ -38,7 +46,7 @@ const sanitizeValue = (value: unknown) => {
   }
 };
 
-const normalizeError = (error: unknown) => {
+export const normalizeErrorInfo = (error: unknown) => {
   if (error instanceof Error) {
     return {
       message: error.message,
@@ -66,7 +74,7 @@ const extractRequestInfo = (request?: Request) => {
   }
 };
 
-const buildFingerprint = (input: {
+export const buildErrorFingerprint = (input: {
   message: string;
   source?: string | null;
   path?: string | null;
@@ -92,6 +100,24 @@ const buildFingerprint = (input: {
   return hash.digest("hex").slice(0, 16);
 };
 
+export const getErrorFingerprint = (input: {
+  message: string;
+  source?: string | null;
+  request?: Request;
+  statusCode?: number | null;
+  error?: unknown;
+}) => {
+  const requestInfo = extractRequestInfo(input.request);
+  const errorInfo = input.error ? normalizeErrorInfo(input.error) : null;
+  return buildErrorFingerprint({
+    message: input.message,
+    source: input.source ?? null,
+    path: requestInfo.path ?? null,
+    statusCode: input.statusCode ?? null,
+    errorInfo,
+  });
+};
+
 export type SystemLogInput = {
   level?: SystemLogLevel;
   message: string;
@@ -107,11 +133,11 @@ export type SystemLogInput = {
 
 export async function logSystemEvent(input: SystemLogInput) {
   try {
-    const errorInfo = input.error ? normalizeError(input.error) : null;
+    const errorInfo = input.error ? normalizeErrorInfo(input.error) : null;
     const requestInfo = extractRequestInfo(input.request);
     const fingerprint =
       input.level === "error" || input.level === "warn" || errorInfo
-        ? buildFingerprint({
+        ? buildErrorFingerprint({
             message: input.message,
             source: input.source ?? null,
             path: input.request?.url ? requestInfo.path ?? null : null,

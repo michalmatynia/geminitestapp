@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { resolveError } from "@/lib/errors/resolve-error";
-import { logSystemEvent } from "@/lib/services/system-logger";
+import { getErrorFingerprint, logSystemEvent } from "@/lib/services/system-logger";
 import type { SystemLogLevel } from "@/types";
 
 /**
@@ -103,7 +103,9 @@ export function apiHandler(
       }
 
       // Add request ID to response headers for client-side tracking
-      response.headers.set("x-request-id", requestId);
+      if (!response.headers.has("x-request-id")) {
+        response.headers.set("x-request-id", requestId);
+      }
       return response;
     } catch (error) {
       return createErrorResponseWithTiming(error, request, context, options);
@@ -161,7 +163,9 @@ export function apiHandlerWithParams<P extends Record<string, string>>(
         });
       }
 
-      response.headers.set("x-request-id", requestId);
+      if (!response.headers.has("x-request-id")) {
+        response.headers.set("x-request-id", requestId);
+      }
       return response;
     } catch (error) {
       return createErrorResponseWithTiming(
@@ -214,6 +218,23 @@ function createErrorResponseWithTiming(
     errorId: resolved.errorId,
   };
 
+  const fingerprint = getErrorFingerprint({
+    message: resolved.message,
+    source: options.source,
+    request,
+    statusCode: resolved.httpStatus,
+    error,
+  });
+
+  payload.fingerprint = fingerprint;
+
+  if (resolved.retryable) {
+    payload.retryable = true;
+    if (resolved.retryAfterMs) {
+      payload.retryAfterMs = resolved.retryAfterMs;
+    }
+  }
+
   if (resolved.expected && resolved.meta) {
     payload.details = resolved.meta;
   } else if (options.includeDetails && resolved.meta) {
@@ -223,6 +244,12 @@ function createErrorResponseWithTiming(
   const response = NextResponse.json(payload, { status: resolved.httpStatus });
   response.headers.set("x-request-id", context.requestId);
   response.headers.set("x-error-id", resolved.errorId);
+  response.headers.set("x-error-fingerprint", fingerprint);
+
+  if (resolved.retryable && resolved.retryAfterMs) {
+    const retryAfterSeconds = Math.ceil(resolved.retryAfterMs / 1000);
+    response.headers.set("Retry-After", String(retryAfterSeconds));
+  }
 
   return response;
 }

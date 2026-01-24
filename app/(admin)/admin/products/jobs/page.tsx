@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import ModalShell from "@/components/ui/modal-shell";
 import ProductListingJobsPanel from "@/components/products/jobs/ProductListingJobsPanel";
 import type { ProductAiJob } from "@/types/product-jobs";
 
-export default function ProductAiJobsPage() {
+function ProductAiJobsPageContent() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const [jobs, setJobs] = useState<ProductAiJob[]>([]);
@@ -460,5 +460,13 @@ export default function ProductAiJobsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ProductAiJobsPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto py-10"><div className="text-gray-400">Loading...</div></div>}>
+      <ProductAiJobsPageContent />
+    </Suspense>
   );
 }

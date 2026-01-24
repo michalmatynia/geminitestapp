@@ -10,6 +10,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { IntegrationWithConnections } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
 type SelectIntegrationModalProps = {
   onClose: () => void;
@@ -93,9 +95,9 @@ export default function SelectIntegrationModal({
         ) : (
           <>
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-300">
+              <Label className="mb-2 block text-sm font-medium text-gray-300">
                 Integration
-              </label>
+              </Label>
               <Select
                 value={selectedIntegrationId}
                 onValueChange={(value) => {
@@ -149,9 +151,9 @@ export default function SelectIntegrationModal({
 
             {selectedIntegration && selectedIntegration.connections.length > 0 && (
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-300">
+                <Label className="mb-2 block text-sm font-medium text-gray-300">
                   Account / Connection
-                </label>
+                </Label>
                 <Select
                   value={selectedConnectionId}
                   onValueChange={setSelectedConnectionId}
@@ -173,21 +175,21 @@ export default function SelectIntegrationModal({
             )}
 
             <div className="flex justify-end gap-3 pt-4">
-              <button
+              <Button
                 type="button"
                 onClick={onClose}
                 className="rounded-md px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={handleContinue}
                 disabled={!selectedIntegrationId || !selectedConnectionId}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Continue
-              </button>
+              </Button>
             </div>
           </>
         )}

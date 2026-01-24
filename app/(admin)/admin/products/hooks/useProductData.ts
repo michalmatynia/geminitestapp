@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { getProducts, countProducts } from "@/lib/api";
-import { ProductWithImages } from "@/types";
+import { ProductWithImages, PriceGroupWithDetails } from "@/types";
 import { logger } from "@/lib/logger";
 
 interface UseProductDataProps {
@@ -10,6 +10,44 @@ interface UseProductDataProps {
   initialCatalogFilter?: string;
   initialPageSize?: number;
   preferencesLoaded?: boolean;
+  currencyCode?: string;
+  priceGroups?: PriceGroupWithDetails[];
+}
+
+/**
+ * Converts a price filter value from the display currency to the base currency.
+ * This allows filtering to work correctly when viewing prices in a dependent currency.
+ */
+function convertPriceFilterToBase(
+  filterValue: number | undefined,
+  currencyCode: string | undefined,
+  priceGroups: PriceGroupWithDetails[] | undefined
+): number | undefined {
+  if (filterValue === undefined || !currencyCode || !priceGroups?.length) {
+    return filterValue;
+  }
+
+  // Find the price group for the selected currency
+  const targetGroup = priceGroups.find(
+    (g) => g.currency?.code === currencyCode || g.currencyCode === currencyCode
+  );
+
+  if (!targetGroup) {
+    return filterValue;
+  }
+
+  // If it's a dependent price group, convert back to base currency
+  if (targetGroup.type === "dependent" && targetGroup.sourceGroupId) {
+    const multiplier = targetGroup.priceMultiplier || 1;
+    const addToPrice = targetGroup.addToPrice || 0;
+
+    // Reverse the formula: displayPrice = basePrice * multiplier + addToPrice
+    // So: basePrice = (displayPrice - addToPrice) / multiplier
+    return Math.round((filterValue - addToPrice) / multiplier);
+  }
+
+  // If it's a standard/base currency, no conversion needed
+  return filterValue;
 }
 
 export function useProductData({
@@ -17,6 +55,8 @@ export function useProductData({
   initialCatalogFilter = "all",
   initialPageSize = 24,
   preferencesLoaded = true,
+  currencyCode,
+  priceGroups,
 }: UseProductDataProps) {
   const [data, setData] = useState<ProductWithImages[]>([]);
   const [total, setTotal] = useState(0);
@@ -82,11 +122,15 @@ export function useProductData({
       return;
     }
 
+    // Convert price filters from display currency to base currency for correct DB queries
+    const convertedMinPrice = convertPriceFilterToBase(minPrice, currencyCode, priceGroups);
+    const convertedMaxPrice = convertPriceFilterToBase(maxPrice, currencyCode, priceGroups);
+
     const filters = {
       search: debouncedSearch,
       sku: debouncedSku,
-      minPrice,
-      maxPrice,
+      minPrice: convertedMinPrice,
+      maxPrice: convertedMaxPrice,
       startDate,
       endDate,
       page,
@@ -124,7 +168,7 @@ export function useProductData({
     return () => {
       cancelled = true;
     };
-  }, [debouncedSearch, debouncedSku, minPrice, maxPrice, startDate, endDate, page, pageSize, catalogFilter, refreshTrigger, preferencesLoaded]);
+  }, [debouncedSearch, debouncedSku, minPrice, maxPrice, startDate, endDate, page, pageSize, catalogFilter, refreshTrigger, preferencesLoaded, currencyCode, priceGroups]);
 
   const totalPages = useMemo(() => {
     return Math.max(1, Math.ceil(total / pageSize));

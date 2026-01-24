@@ -35,7 +35,7 @@ async function cleanupMongo() {
       .collection("settings")
       .deleteMany({
         $or: [
-          { _id: { $in: LEGACY_KEYS } },
+          { _id: { $in: LEGACY_KEYS as any[] } },
           { key: { $in: LEGACY_KEYS } },
         ],
       });

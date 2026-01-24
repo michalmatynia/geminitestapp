@@ -2,6 +2,9 @@
 
 import { Dispatch, SetStateAction } from "react";
 import { Integration, IntegrationConnection, TestLogEntry } from "../types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type ConnectionManagerProps = {
   activeIntegration: Integration;
@@ -72,8 +75,8 @@ export function ConnectionManager({
         </h3>
         <div className="mt-3 space-y-3">
           <div>
-            <label className="text-xs text-gray-400">Connection name</label>
-            <input
+            <Label className="text-xs text-gray-400">Connection name</Label>
+            <Input
               className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white"
               placeholder={connectionNamePlaceholder}
               value={connectionForm.name}
@@ -86,8 +89,8 @@ export function ConnectionManager({
             />
           </div>
           <div>
-            <label className="text-xs text-gray-400">{usernameLabel}</label>
-            <input
+            <Label className="text-xs text-gray-400">{usernameLabel}</Label>
+            <Input
               className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white"
               placeholder={usernamePlaceholder}
               value={connectionForm.username}
@@ -100,8 +103,8 @@ export function ConnectionManager({
             />
           </div>
           <div>
-            <label className="text-xs text-gray-400">{passwordLabel}</label>
-            <input
+            <Label className="text-xs text-gray-400">{passwordLabel}</Label>
+            <Input
               className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white"
               type="password"
               placeholder={
@@ -122,13 +125,13 @@ export function ConnectionManager({
               }
             />
           </div>
-          <button
+          <Button
             className="w-full rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
             type="button"
             onClick={onSave}
           >
             {editingConnectionId ? "Update connection" : "Save connection"}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -150,7 +153,7 @@ export function ConnectionManager({
                   <p className="text-xs text-gray-400">{connection.username}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button
+                  <Button
                     className={`text-xs ${
                       isBaselinker
                         ? "text-purple-300 hover:text-purple-200"
@@ -163,14 +166,14 @@ export function ConnectionManager({
                     disabled={isTesting}
                   >
                     {isTesting ? "Testing..." : "Test"}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     className="text-xs text-red-400 hover:text-red-300"
                     type="button"
                     onClick={() => onDelete(connection)}
                   >
                     Remove
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
@@ -200,7 +203,7 @@ export function ConnectionManager({
                   >
                     <p>{entry.step}</p>
                     {entry.status !== "pending" && (
-                      <button
+                      <Button
                         type="button"
                         className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                           entry.status === "ok"
@@ -210,7 +213,7 @@ export function ConnectionManager({
                         onClick={() => onShowLog(entry)}
                       >
                         {entry.status === "ok" ? "OK" : "FAILED"}
-                      </button>
+                      </Button>
                     )}
                   </div>
                 ))}

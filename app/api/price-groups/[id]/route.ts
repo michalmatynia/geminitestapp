@@ -202,7 +202,7 @@ async function PUT_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "price-groups/[id].PUT",
+      source: "price-groups.[id].PUT",
       fallbackMessage: "Failed to update price group",
     });
   }
@@ -243,11 +243,11 @@ async function DELETE_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "price-groups/[id].DELETE",
+      source: "price-groups.[id].DELETE",
       fallbackMessage: "Failed to delete price group",
     });
   }
 }
 
-export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "price-groups.[id].PUT" });
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "price-groups.[id].DELETE" });
+export const PUT = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "price-groups.[id].PUT" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "price-groups.[id].DELETE" });

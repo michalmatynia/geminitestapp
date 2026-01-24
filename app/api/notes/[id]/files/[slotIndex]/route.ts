@@ -42,10 +42,10 @@ async function DELETE_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "notes.files.DELETE",
+      source: "notes.[id].files.[slotIndex].DELETE",
       fallbackMessage: "Failed to delete file",
     });
   }
 }
 
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].files.[slotIndex].DELETE" });
+export const DELETE = apiHandlerWithParams<{ id: string; slotIndex: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].files.[slotIndex].DELETE" });

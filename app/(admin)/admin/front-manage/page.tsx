@@ -119,7 +119,7 @@ export default function FrontManagePage() {
         <CardContent className="space-y-4">
           <div className="grid gap-3">
             {options.map((option) => (
-              <button
+              <Button
                 key={option.id}
                 type="button"
                 onClick={() => setSelected(option.id)}
@@ -144,7 +144,7 @@ export default function FrontManagePage() {
                 >
                   {option.route}
                 </div>
-              </button>
+              </Button>
             ))}
           </div>
 

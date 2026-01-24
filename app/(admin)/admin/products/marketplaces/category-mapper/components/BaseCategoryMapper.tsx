@@ -5,6 +5,8 @@ import { Download, RefreshCw, Save, ChevronRight, ChevronDown, Check } from "luc
 import { useToast } from "@/components/ui/toast";
 import type { ExternalCategory, CategoryMappingWithDetails } from "@/types/category-mapping";
 import type { ProductCategory, Catalog } from "@/types/products";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
 type BaseCategoryMapperProps = {
   connectionId: string;
@@ -241,13 +243,13 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
 
   // Build tree structure for display
   const categoryTree = useMemo(() => {
-    const buildLevel = (parentExternalId: string | null, depth: number): ExternalCategoryWithState[] => {
+    const buildLevel = (parentExternalId: string | null): ExternalCategoryWithState[] => {
       return externalCategories
         .filter((c) => c.parentExternalId === parentExternalId)
         .sort((a, b) => a.name.localeCompare(b.name));
     };
 
-    return buildLevel(null, 0);
+    return buildLevel(null);
   }, [externalCategories]);
 
   // Count statistics
@@ -272,7 +274,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
           <td className="px-4 py-2">
             <div className="flex items-center" style={{ paddingLeft: `${depth * 20}px` }}>
               {hasChildren ? (
-                <button
+                <Button
                   onClick={() => toggleExpand(category.id)}
                   className="mr-2 rounded p-0.5 text-gray-400 hover:bg-gray-800 hover:text-white"
                 >
@@ -281,7 +283,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
                   ) : (
                     <ChevronRight className="h-4 w-4" />
                   )}
-                </button>
+                </Button>
               ) : (
                 <span className="mr-2 w-5" />
               )}
@@ -334,8 +336,8 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={handleFetchFromBase}
+          <Button
+            onClick={() => void handleFetchFromBase()}
             disabled={fetching}
             className="flex items-center gap-2 rounded-md border border-gray-700 bg-gray-800 px-4 py-2 text-sm text-white hover:bg-gray-700 disabled:opacity-50"
           >
@@ -345,10 +347,10 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
               <Download className="h-4 w-4" />
             )}
             {fetching ? "Fetching..." : "Fetch Categories"}
-          </button>
+          </Button>
 
-          <button
-            onClick={handleSave}
+          <Button
+            onClick={() => void handleSave()}
             disabled={saving || pendingMappings.size === 0}
             className="flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
           >
@@ -358,13 +360,13 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
               <Save className="h-4 w-4" />
             )}
             {saving ? "Saving..." : `Save (${pendingMappings.size})`}
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Catalog Selector */}
       <div className="flex items-center gap-4">
-        <label className="text-sm text-gray-400">Target Catalog:</label>
+        <Label className="text-sm text-gray-400">Target Catalog:</Label>
         <select
           value={selectedCatalogId ?? ""}
           onChange={(e) => setSelectedCatalogId(e.target.value || null)}

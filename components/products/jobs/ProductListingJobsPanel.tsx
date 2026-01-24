@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import ModalShell from "@/components/ui/modal-shell";
 import { Input } from "@/components/ui/input";
 import type { ListingJob, ListingAttempt, ProductJob } from "@/types/product-listings";
+import { Label } from "@/components/ui/label";
 
 type ProductListingJobsPanelProps = {
   showBackToProducts?: boolean;
@@ -423,7 +424,7 @@ export default function ProductListingJobsPanel({
               Showing {totalRows === 0 ? 0 : startIndex + 1}–{Math.min(endIndex, totalRows)} of {totalRows}
             </div>
             <div className="flex items-center gap-2">
-              <label htmlFor="exportJobsPageSize">Rows</label>
+              <Label htmlFor="exportJobsPageSize">Rows</Label>
               <select
                 id="exportJobsPageSize"
                 className="rounded-md border border-gray-800 bg-gray-900 px-2 py-1 text-xs text-white"

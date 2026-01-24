@@ -29,6 +29,7 @@ import type {
   NoteFileDocument,
   ThemeDocument,
 } from "@/types/services/mongo-note-types";
+import { notFoundError } from "@/lib/errors/app-error";
 
 const noteCollectionName = "notes";
 const tagCollectionName = "tags";
@@ -456,7 +457,7 @@ export const mongoNoteRepository: NoteRepository = {
     const db = await getMongoDb();
     const collection = db.collection<NoteDocument>(noteCollectionName);
     const currentDoc = await collection.findOne({ $or: [{ id }, { _id: id }] });
-    if (!currentDoc) throw new Error("Note not found");
+    if (!currentDoc) throw notFoundError("Note not found");
     const fallbackNotebookId =
       currentDoc.notebookId ??
       (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
@@ -563,7 +564,7 @@ export const mongoNoteRepository: NoteRepository = {
       { returnDocument: "after" }
     );
 
-    if (!result) throw new Error("Note not found");
+    if (!result) throw notFoundError("Note not found");
     return toNoteResponse(result);
   },
 
@@ -637,7 +638,7 @@ export const mongoNoteRepository: NoteRepository = {
       { returnDocument: "after" }
     );
 
-    if (!result) throw new Error("Tag not found");
+    if (!result) throw notFoundError("Tag not found");
     return toTagResponse(result);
   },
 
@@ -744,7 +745,7 @@ export const mongoNoteRepository: NoteRepository = {
       { returnDocument: "after" }
     );
 
-    if (!result) throw new Error("Category not found");
+    if (!result) throw notFoundError("Category not found");
     return toCategoryResponse(result);
   },
 

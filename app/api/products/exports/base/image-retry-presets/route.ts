@@ -34,7 +34,7 @@ async function GET_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "exports.base.image-retry-presets.GET",
+      source: "products.exports.base.image-retry-presets.GET",
       fallbackMessage: "Failed to fetch image retry presets.",
     });
   }
@@ -55,7 +55,7 @@ async function POST_handler(req: Request) {
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "exports.base.image-retry-presets.POST",
+      source: "products.exports.base.image-retry-presets.POST",
       fallbackMessage: "Failed to save presets",
     });
   }

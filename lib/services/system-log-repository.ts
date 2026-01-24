@@ -381,7 +381,7 @@ export async function getSystemLogMetrics(
         where: mergeWhere(where, {
           AND: [{ source: { not: null } }, { source: { not: "" } }],
         }),
-        orderBy: { _count: { _all: "desc" } },
+        orderBy: { _count: { id: "desc" } },
         take: 5,
       }),
       prisma.systemLog.groupBy({
@@ -390,7 +390,7 @@ export async function getSystemLogMetrics(
         where: mergeWhere(where, {
           AND: [{ path: { not: null } }, { path: { not: "" } }],
         }),
-        orderBy: { _count: { _all: "desc" } },
+        orderBy: { _count: { id: "desc" } },
         take: 5,
       }),
     ]);

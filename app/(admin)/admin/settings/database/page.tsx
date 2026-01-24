@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@/components/ui/toast";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
 const providerOptions = [
   {
@@ -101,20 +103,20 @@ export default function DatabaseSettingsPage() {
               This overrides product, integration, auth, and notes data sources.
             </p>
           </div>
-          <button
+          <Button
             type="button"
             onClick={() => void saveProvider()}
             disabled={loading || saving || !dirty}
             className="inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-300"
           >
             {saving ? "Saving..." : "Save"}
-          </button>
+          </Button>
         </div>
 
         <div className="mt-6 max-w-lg space-y-2">
-          <label className="text-sm font-medium text-gray-200" htmlFor="app-db-provider">
+          <Label className="text-sm font-medium text-gray-200" htmlFor="app-db-provider">
             Database provider
-          </label>
+          </Label>
           <select
             id="app-db-provider"
             className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-600 disabled:cursor-not-allowed disabled:text-gray-500"

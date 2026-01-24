@@ -18,6 +18,7 @@ import { TestLogModal } from "./TestLogModal";
 import { TestErrorModal } from "./TestErrorModal";
 import { TestSuccessModal } from "./TestSuccessModal";
 import { SessionModal } from "./SessionModal";
+import { Button } from "@/components/ui/button";
 
 type IntegrationModalProps = {
   activeIntegration: Integration;
@@ -230,13 +231,13 @@ export function IntegrationModal({
                 : "Manage connections and marketplace API settings."}
             </p>
           </div>
-          <button
+          <Button
             className="text-sm text-gray-400 hover:text-white"
             type="button"
             onClick={onClose}
           >
             Close
-          </button>
+          </Button>
         </div>
 
         <Tabs defaultValue="connections">
@@ -314,14 +315,14 @@ export function IntegrationModal({
                       ? "Retained"
                       : "Not stored"}
                   </p>
-                  <button
+                  <Button
                     type="button"
                     onClick={onOpenSessionModal}
                     disabled={!activeConnection.hasPlaywrightStorageState}
                     className="text-xs text-emerald-200 hover:text-emerald-100 disabled:cursor-not-allowed disabled:text-gray-600"
                   >
                     View details
-                  </button>
+                  </Button>
                 </div>
                 <p className="mt-1">
                   <span className="text-gray-400">Obtained:</span>{" "}

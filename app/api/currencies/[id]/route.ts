@@ -111,7 +111,7 @@ async function PUT_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "currencies/[id].PUT",
+      source: "currencies.[id].PUT",
       fallbackMessage: "Failed to update currency",
     });
   }
@@ -155,11 +155,11 @@ async function DELETE_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "currencies/[id].DELETE",
+      source: "currencies.[id].DELETE",
       fallbackMessage: "Failed to delete currency",
     });
   }
 }
 
-export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "currencies.[id].PUT" });
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "currencies.[id].DELETE" });
+export const PUT = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "currencies.[id].PUT" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "currencies.[id].DELETE" });

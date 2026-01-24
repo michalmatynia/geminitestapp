@@ -28,6 +28,8 @@ import type {
   WarehouseOption,
   ImageRetryPreset,
 } from "@/types/product-imports";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
@@ -1626,7 +1628,7 @@ export default function ProductImportsPage() {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-xs text-gray-400">Template type</label>
+                  <Label className="text-xs text-gray-400">Template type</Label>
                   <Tabs
                     value={templateScope}
                     onValueChange={(value) =>
@@ -1643,9 +1645,9 @@ export default function ProductImportsPage() {
                 {isImportTemplateScope ? (
                   <div className="grid w-fit gap-2">
                     <div className="col-span-2">
-                      <label className="text-xs text-gray-400">
+                      <Label className="text-xs text-gray-400">
                         Sample product ID
-                      </label>
+                      </Label>
                       <Input
                         className="mt-2 w-full"
                         value={parameterProductId}
@@ -1733,9 +1735,9 @@ export default function ProductImportsPage() {
 
             <div className="mt-4 grid gap-4 md:grid-cols-[220px_1fr]">
               <div className="space-y-2">
-                <label className="text-xs text-gray-400">
+                <Label className="text-xs text-gray-400">
                   {isImportTemplateScope ? "Import templates" : "Export templates"}
-                </label>
+                </Label>
                 <div className="max-h-64 overflow-auto rounded-md border border-gray-800 bg-gray-950/60 p-2">
                   {currentTemplates.length === 0 ? (
                     <p className="text-xs text-gray-500">
@@ -1748,7 +1750,7 @@ export default function ProductImportsPage() {
                       .slice()
                       .sort((a, b) => a.name.localeCompare(b.name))
                       .map((template) => (
-                        <button
+                        <Button
                           key={template.id}
                           type="button"
                                                       className={`flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-xs ${
@@ -1758,7 +1760,7 @@ export default function ProductImportsPage() {
                                                       }`}
                                                       onClick={() => { void handleSelectTemplate(template.id); }}
                                                     >                          <span>{template.name}</span>
-                        </button>
+                        </Button>
                       ))
                   )}
                 </div>
@@ -1767,9 +1769,9 @@ export default function ProductImportsPage() {
               <div className="space-y-4">
                 <div className="grid gap-3 md:grid-cols-2">
                   <div>
-                    <label className="text-xs text-gray-400">
+                    <Label className="text-xs text-gray-400">
                       Template name
-                    </label>
+                    </Label>
                     <Input
                       className="mt-2"
                       value={currentTemplateName}
@@ -1785,9 +1787,9 @@ export default function ProductImportsPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-gray-400">
+                    <Label className="text-xs text-gray-400">
                       Description
-                    </label>
+                    </Label>
                     <Input
                       className="mt-2"
                       value={currentTemplateDescription}
@@ -1806,26 +1808,24 @@ export default function ProductImportsPage() {
 
                 {!isImportTemplateScope && (
                   <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       id="exportImagesAsBase64"
-                      checked={exportImagesAsBase64}
-                      onChange={(e) => setExportImagesAsBase64(e.target.checked)}
+                      checked={exportImagesAsBase64} onCheckedChange={(checked) => setExportImagesAsBase64(Boolean(checked))}
                       className="h-4 w-4 rounded border-gray-800 bg-gray-900 text-emerald-500 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-0"
                     />
-                    <label
+                    <Label
                       htmlFor="exportImagesAsBase64"
                       className="text-sm text-gray-300 cursor-pointer"
                     >
                       Export images as base64 data blobs
-                    </label>
+                    </Label>
                   </div>
                 )}
 
                 <div>
-                  <label className="text-xs text-gray-400">
+                  <Label className="text-xs text-gray-400">
                     Parameter mappings
-                  </label>
+                  </Label>
                   {hasStockMappingMismatch ? (
                     <div className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-200">
                       <p>
@@ -1900,7 +1900,7 @@ export default function ProductImportsPage() {
                           {openKeyIndex === index && (
                             <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-gray-800 bg-gray-950 shadow-lg">
                               {filterKeys(mapping.sourceKey).map((key) => (
-                                  <button
+                                  <Button
                                     key={key}
                                     type="button"
                                     className="block w-full px-3 py-2 text-left text-xs text-gray-200 hover:bg-gray-800"
@@ -1911,7 +1911,7 @@ export default function ProductImportsPage() {
                                     }}
                                   >
                                     {key}
-                                  </button>
+                                  </Button>
                                 ))}
                               {filterKeys(mapping.sourceKey).length === 0 ? (
                                 <div className="px-3 py-2 text-xs text-gray-500">

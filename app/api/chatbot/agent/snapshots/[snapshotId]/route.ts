@@ -17,7 +17,7 @@ async function GET_handler(
         internalError(
           "Agent snapshots not initialized. Run prisma generate/db push."
         ),
-        { request: req, source: "chatbot.agent.snapshot.GET" }
+        { request: req, source: "chatbot.agent.snapshots.[snapshotId].GET" }
       );
     }
     const { snapshotId } = await params;
@@ -27,7 +27,7 @@ async function GET_handler(
     if (!snapshot) {
       return createErrorResponse(notFoundError("Snapshot not found."), {
         request: req,
-        source: "chatbot.agent.snapshot.GET",
+        source: "chatbot.agent.snapshots.[snapshotId].GET",
       });
     }
     if (DEBUG_CHATBOT) {
@@ -40,10 +40,10 @@ async function GET_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.agent.snapshot.GET",
+      source: "chatbot.agent.snapshots.[snapshotId].GET",
       fallbackMessage: "Failed to load agent snapshot.",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.snapshots.[snapshotId].GET" });
+export const GET = apiHandlerWithParams<{ snapshotId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.snapshots.[snapshotId].GET" });

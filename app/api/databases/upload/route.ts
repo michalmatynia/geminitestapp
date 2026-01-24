@@ -28,7 +28,7 @@ async function POST_handler(req: NextRequest) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "databases/upload.POST",
+      source: "databases.upload.POST",
       fallbackMessage: "Failed to upload backup",
     });
   }

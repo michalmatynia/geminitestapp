@@ -12,6 +12,7 @@ import { getProductRepository } from "@/lib/services/product-repository";
 import type { ProductFilters } from "@/types/services/product-repository";
 import { getImageFileRepository } from "@/lib/services/image-file-repository";
 import { getCatalogRepository } from "@/lib/services/catalog-repository";
+import { badRequestError } from "@/lib/errors/app-error";
 
 const resolveProductRepository = async () => getProductRepository();
 const resolveImageFileRepository = async () => getImageFileRepository();
@@ -199,10 +200,13 @@ async function duplicateProduct(id: string, sku: string) {
     const trimmedSku = sku.trim();
     const skuPattern = /^[A-Z0-9]+$/;
     if (!trimmedSku) {
-      throw new Error("SKU is required");
+      throw badRequestError("SKU is required", { field: "sku" });
     }
     if (!skuPattern.test(trimmedSku)) {
-      throw new Error("SKU must use uppercase letters and numbers only");
+      throw badRequestError("SKU must use uppercase letters and numbers only", {
+        field: "sku",
+        value: trimmedSku,
+      });
     }
 
     const productRepository = await resolveProductRepository();

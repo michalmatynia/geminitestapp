@@ -6,6 +6,8 @@ import { useToast } from "@/components/ui/toast";
 import type { CategoryWithChildren } from "@/types/notes";
 import type { FolderNodeProps } from "@/types/notes-ui";
 import { NoteItem } from "./NoteItem";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export const FolderNode = React.memo(function FolderNode({
   folder,
@@ -197,7 +199,7 @@ export const FolderNode = React.memo(function FolderNode({
         }}
       >
         {hasChildren || hasNotes ? (
-          <button
+          <Button
             onClick={() => onToggleExpand(folder.id)}
             className="p-0.5 hover:bg-gray-700 rounded"
           >
@@ -206,7 +208,7 @@ export const FolderNode = React.memo(function FolderNode({
             ) : (
               <ChevronRight className="size-4" />
             )}
-          </button>
+          </Button>
         ) : (
           <div className="w-5" />
         )}
@@ -221,7 +223,7 @@ export const FolderNode = React.memo(function FolderNode({
             <Folder className="size-4 flex-shrink-0" />
           )}
           {isRenaming ? (
-            <input
+            <Input
               ref={renameInputRef}
               type="text"
               defaultValue={folder.name}
@@ -240,7 +242,7 @@ export const FolderNode = React.memo(function FolderNode({
 
         {!isRenaming && (
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-            <button
+            <Button
               onClick={(e) => {
                 e.stopPropagation();
                 onCreateNote(folder.id);
@@ -249,8 +251,8 @@ export const FolderNode = React.memo(function FolderNode({
               title="Add note"
             >
               <FilePlus className="size-3" />
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={(e) => {
                 e.stopPropagation();
                 onCreateSubfolder(folder.id);
@@ -259,8 +261,8 @@ export const FolderNode = React.memo(function FolderNode({
               title="Add subfolder"
             >
               <FolderPlus className="size-3" />
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={(e) => {
                 e.stopPropagation();
                 onStartRename(folder.id);
@@ -269,8 +271,8 @@ export const FolderNode = React.memo(function FolderNode({
               title="Rename folder"
             >
               <Edit2 className="size-3" />
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete(folder.id);
@@ -279,7 +281,7 @@ export const FolderNode = React.memo(function FolderNode({
               title="Delete folder and all contents"
             >
               <Trash2 className="size-3" />
-            </button>
+            </Button>
           </div>
         )}
       </div>

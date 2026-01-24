@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 type SessionCookie = {
   name?: string;
   value?: string;
@@ -43,13 +45,13 @@ export function SessionModal({
               Stored Playwright session details.
             </p>
           </div>
-          <button
+          <Button
             className="text-sm text-gray-400 hover:text-white"
             type="button"
             onClick={onClose}
           >
             Close
-          </button>
+          </Button>
         </div>
 
         {loading ? (

@@ -19,6 +19,8 @@ import { FileAttachments } from "./editor/FileAttachments";
 import { NoteMetadata } from "./editor/NoteMetadata";
 import { MarkdownEditor } from "./editor/MarkdownEditor";
 import { WysiwygEditor } from "./editor/WysiwygEditor";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 // Hardcoded dark mode fallback theme - consistent with page styling
 const FALLBACK_THEME = {
@@ -777,10 +779,10 @@ export function NoteForm({
       )}
 
       <div>
-        <label className="mb-2 block text-sm font-medium text-white">
+        <Label className="mb-2 block text-sm font-medium text-white">
           Title
-        </label>
-        <input
+        </Label>
+        <Input
           type="text"
           placeholder="Enter note title"
           value={title}
@@ -791,9 +793,9 @@ export function NoteForm({
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium text-white">
+        <Label className="mb-2 block text-sm font-medium text-white">
           Content
-        </label>
+        </Label>
         <MarkdownToolbar
           onUndo={undo}
           onRedo={redo}
@@ -907,13 +909,13 @@ export function NoteForm({
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
           onClick={() => closeLightbox()}
         >
-          <button
+          <Button
             type="button"
             className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
             onClick={() => closeLightbox()}
           >
             <X size={24} />
-          </button>
+          </Button>
           <div
             className="relative h-[90vh] w-[90vw] max-h-[90vh] max-w-[90vw]"
             onClick={(e) => e.stopPropagation()}

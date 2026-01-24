@@ -1,6 +1,7 @@
 "use client";
 
 import { TestLogEntry } from "../types";
+import { Button } from "@/components/ui/button";
 
 type TestLogModalProps = {
   selectedStep: (TestLogEntry & { status: "ok" | "failed" }) | null;
@@ -21,13 +22,13 @@ export function TestLogModal({ selectedStep, onClose }: TestLogModalProps) {
       >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-white">Playwright Log</h3>
-          <button
+          <Button
             className="text-sm text-gray-400 hover:text-white"
             type="button"
             onClick={onClose}
           >
             Close
-          </button>
+          </Button>
         </div>
         <div className="space-y-2 text-sm text-gray-300">
           <p>

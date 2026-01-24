@@ -39,7 +39,7 @@ async function GET_handler(_req: Request, context: { params: Promise<{ id: strin
     });
   } catch (error) {
     return createErrorResponse(error, {
-      source: "auth.user.security.GET",
+      source: "auth.users.[id].security.GET",
       fallbackMessage: "Failed to load security profile",
     });
   }
@@ -92,11 +92,11 @@ async function PATCH_handler(req: Request, context: { params: Promise<{ id: stri
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "auth.user.security.PATCH",
+      source: "auth.users.[id].security.PATCH",
       fallbackMessage: "Failed to update security profile",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "auth.users.[id].security.GET" });
-export const PATCH = apiHandlerWithParams<any>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "auth.users.[id].security.PATCH" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "auth.users.[id].security.GET" });
+export const PATCH = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "auth.users.[id].security.PATCH" });

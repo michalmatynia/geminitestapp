@@ -16,6 +16,7 @@ import {
 import CollapsibleMenu from "@/components/CollapsibleMenu";
 import { useAdminLayout } from "@/lib/context/AdminLayoutContext";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 export default function Menu() {
   const { isMenuCollapsed, setIsMenuCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayout();
@@ -210,12 +211,12 @@ export default function Menu() {
         >
           Pages
         </Link>
-        <button
+        <Button
           onClick={handleCreatePageClick}
           className="block w-full text-left hover:bg-gray-700 p-2 rounded"
         >
           Create Page
-        </button>
+        </Button>
         <Link
           href="/admin/cms/blocks"
           className="block hover:bg-gray-700 p-2 rounded"

@@ -85,7 +85,7 @@ async function GET_handler(req: Request) {
         externalServiceError(
           `Failed to load models: ${errorText || res.statusText}`
         ),
-        { request: req, source: "chatbot.models.GET" }
+        { request: req, source: "chatbot.GET" }
       );
     }
 
@@ -107,7 +107,7 @@ async function GET_handler(req: Request) {
       error instanceof Error ? error.message : "Failed to load models.";
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.models.GET",
+      source: "chatbot.GET",
       fallbackMessage: message,
     });
   }
@@ -122,7 +122,7 @@ async function POST_handler(req: Request) {
     if (!OLLAMA_MODEL) {
       return createErrorResponse(
         internalError("OLLAMA_MODEL is not configured."),
-        { request: req, source: "chatbot.chat.POST" }
+        { request: req, source: "chatbot.POST" }
       );
     }
 
@@ -147,7 +147,7 @@ async function POST_handler(req: Request) {
         } catch (_error) {
           return createErrorResponse(
             badRequestError("Invalid messages payload."),
-            { request: req, source: "chatbot.chat.POST" }
+            { request: req, source: "chatbot.POST" }
           );
         }
       }
@@ -260,7 +260,7 @@ async function POST_handler(req: Request) {
       } catch (_error) {
         return createErrorResponse(badRequestError("Invalid JSON payload."), {
           request: req,
-          source: "chatbot.chat.POST",
+          source: "chatbot.POST",
         });
       }
       messages = body.messages ?? [];
@@ -271,14 +271,14 @@ async function POST_handler(req: Request) {
     if (!Array.isArray(messages) || messages.length === 0) {
       return createErrorResponse(badRequestError("No messages provided."), {
         request: req,
-        source: "chatbot.chat.POST",
+          source: "chatbot.POST",
       });
     }
 
     if (messages.length > 60) {
       return createErrorResponse(badRequestError("Too many messages provided."), {
         request: req,
-        source: "chatbot.chat.POST",
+        source: "chatbot.POST",
       });
     }
 
@@ -292,14 +292,14 @@ async function POST_handler(req: Request) {
     if (!hasValidMessages) {
       return createErrorResponse(badRequestError("Invalid message payload."), {
         request: req,
-        source: "chatbot.chat.POST",
+        source: "chatbot.POST",
       });
     }
 
     if (messages.some((message) => message.content.length > 10000)) {
       return createErrorResponse(badRequestError("Message content too large."), {
         request: req,
-        source: "chatbot.chat.POST",
+        source: "chatbot.POST",
       });
     }
 
@@ -342,7 +342,7 @@ async function POST_handler(req: Request) {
       const errorText = await res.text();
       return createErrorResponse(
         externalServiceError(`Ollama error: ${errorText || res.statusText}`),
-        { request: req, source: "chatbot.chat.POST" }
+        { request: req, source: "chatbot.POST" }
       );
     }
 
@@ -386,7 +386,7 @@ async function POST_handler(req: Request) {
       error instanceof Error ? error.message : "Failed to reach Ollama.";
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.chat.POST",
+      source: "chatbot.POST",
       fallbackMessage: message,
     });
   } finally {

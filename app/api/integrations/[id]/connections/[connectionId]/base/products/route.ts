@@ -82,10 +82,10 @@ async function POST_handler(
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "integrations.base.products.POST",
+      source: "integrations.[id].connections.[connectionId].base.products.POST",
       fallbackMessage: "Failed to fetch products",
     });
   }
 }
 
-export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].base.products.POST" });
+export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].base.products.POST" });

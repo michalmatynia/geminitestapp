@@ -17,7 +17,7 @@ async function POST_handler(
         internalError(
           "Agent runs not initialized. Run prisma generate/db push."
         ),
-        { request: req, source: "chatbot.agent.controls.POST" }
+        { request: req, source: "chatbot.agent.[runId].controls.POST" }
       );
     }
     const { runId } = await params;
@@ -32,20 +32,20 @@ async function POST_handler(
     } catch (_error) {
       return createErrorResponse(badRequestError("Invalid JSON payload"), {
         request: req,
-        source: "chatbot.agent.controls.POST",
+        source: "chatbot.agent.[runId].controls.POST",
       });
     }
     const action = body.action as "goto" | "reload" | "snapshot" | undefined;
     if (!action || !["goto", "reload", "snapshot"].includes(action)) {
       return createErrorResponse(badRequestError("Invalid control action."), {
         request: req,
-        source: "chatbot.agent.controls.POST",
+        source: "chatbot.agent.[runId].controls.POST",
       });
     }
     if (action === "goto" && !body.url?.trim()) {
       return createErrorResponse(
         badRequestError("URL is required for goto action."),
-        { request: req, source: "chatbot.agent.controls.POST" }
+        { request: req, source: "chatbot.agent.[runId].controls.POST" }
       );
     }
 
@@ -70,7 +70,7 @@ async function POST_handler(
         internalError(result.error || "Control action failed."),
         {
           request: req,
-          source: "chatbot.agent.controls.POST",
+          source: "chatbot.agent.[runId].controls.POST",
           extra: { controlErrorId: result.errorId },
         }
       );
@@ -80,10 +80,10 @@ async function POST_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.agent.controls.POST",
+      source: "chatbot.agent.[runId].controls.POST",
       fallbackMessage: "Failed to run agent control action.",
     });
   }
 }
 
-export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].controls.POST" });
+export const POST = apiHandlerWithParams<{ runId: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].controls.POST" });

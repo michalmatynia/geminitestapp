@@ -18,6 +18,7 @@ import {
   getMongoDumpCommand,
   execFileAsync as mongoExecFileAsync,
 } from "@/app/api/databases/_utils-mongo";
+import { operationFailedError } from "@/lib/errors/app-error";
 
 export type DatabaseBackupResult = {
   message: string;
@@ -82,7 +83,11 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
       };
     }
 
-    throw new Error(details || message);
+    throw operationFailedError(
+      "Failed to create MongoDB backup",
+      error,
+      details ? { details } : undefined
+    );
   }
 };
 
@@ -135,7 +140,11 @@ export const createPostgresBackup = async (): Promise<DatabaseBackupResult> => {
       };
     }
 
-    throw new Error(details || message);
+    throw operationFailedError(
+      "Failed to create Postgres backup",
+      error,
+      details ? { details } : undefined
+    );
   }
 };
 

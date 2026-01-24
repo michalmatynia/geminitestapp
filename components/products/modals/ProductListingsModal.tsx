@@ -24,6 +24,7 @@ import { ExportLogViewer } from "./ExportLogViewer";
 import type { CapturedLog } from "@/lib/services/exports/log-capture";
 import type { ImageRetryPreset, ImageTransformOptions } from "@/types/product-imports";
 import { useImageRetryPresets } from "./useImageRetryPresets";
+import { Label } from "@/components/ui/label";
 
 type ProductListingsModalProps = {
   product: ProductWithImages;
@@ -284,9 +285,9 @@ export default function ProductListingsModal({
       ) : (
         <div className="space-y-4">
           <div className="text-left">
-            <label className="mb-2 block text-xs font-medium text-gray-300">
+            <Label className="mb-2 block text-xs font-medium text-gray-300">
               Integration
-            </label>
+            </Label>
             <Select
               value={selectedIntegrationId}
               onValueChange={(value) => {
@@ -331,9 +332,9 @@ export default function ProductListingsModal({
 
           {selectedIntegration && selectedIntegration.connections.length > 0 && (
             <div className="text-left">
-              <label className="mb-2 block text-xs font-medium text-gray-300">
+              <Label className="mb-2 block text-xs font-medium text-gray-300">
                 Account / Connection
-              </label>
+              </Label>
               <Select
                 value={selectedConnectionId}
                 onValueChange={setSelectedConnectionId}
@@ -840,7 +841,7 @@ export default function ProductListingsModal({
                             <p className="text-[10px] uppercase tracking-wide text-gray-500">
                               Export history
                             </p>
-                            <button
+                            <Button
                               type="button"
                               onClick={() =>
                                 setHistoryOpenByListing((prev) => ({
@@ -853,7 +854,7 @@ export default function ProductListingsModal({
                               {(historyOpenByListing[listing.id] ?? false)
                                 ? "Hide"
                                 : "Show"}
-                            </button>
+                            </Button>
                           </div>
                           {(historyOpenByListing[listing.id] ?? false) ? (
                             <div className="mt-2 space-y-2 text-xs text-gray-400">
@@ -954,9 +955,9 @@ export default function ProductListingsModal({
                           )}
                           {!listing.inventoryId && (
                             <div className="space-y-1 text-xs text-gray-400">
-                              <label htmlFor={`inventory-${listing.id}`}>
+                              <Label htmlFor={`inventory-${listing.id}`}>
                                 Inventory ID
-                              </label>
+                              </Label>
                               <Input
                                 id={`inventory-${listing.id}`}
                                 value={inventoryOverrides[listing.id] ?? ""}

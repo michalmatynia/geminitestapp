@@ -32,7 +32,7 @@ async function PATCH_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "tags.PATCH",
+      source: "notes.tags.[id].PATCH",
       fallbackMessage: "Failed to update tag",
     });
   }
@@ -53,11 +53,11 @@ async function DELETE_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "tags.DELETE",
+      source: "notes.tags.[id].DELETE",
       fallbackMessage: "Failed to delete tag",
     });
   }
 }
 
-export const PATCH = apiHandlerWithParams<any>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "notes.tags.[id].PATCH" });
-export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.tags.[id].DELETE" });
+export const PATCH = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "notes.tags.[id].PATCH" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.tags.[id].DELETE" });

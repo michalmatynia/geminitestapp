@@ -4,6 +4,9 @@ import React from "react";
 import Image from "next/image";
 import { Upload, FileIcon, Link2, Trash2 } from "lucide-react";
 import type { NoteFileRecord } from "@/types/notes";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface FileAttachmentsProps {
   noteId?: string | undefined;
@@ -44,9 +47,9 @@ export function FileAttachments({
 
   return (
     <div className="space-y-2">
-      <label className="mb-2 block text-sm font-medium text-white">
+      <Label className="mb-2 block text-sm font-medium text-white">
         Attachments ({noteFiles.length}/{maxSlots} slots used)
-      </label>
+      </Label>
       <div className="flex flex-wrap gap-3">
         {(() => {
           const nextSlot = getNextAvailableSlot();
@@ -73,13 +76,13 @@ export function FileAttachments({
                   Full
                 </div>
               ) : (
-                <label className="flex h-full cursor-pointer flex-col items-center justify-center text-gray-500 hover:bg-gray-700/50 hover:text-gray-400 transition-colors">
+                <Label className="flex h-full cursor-pointer flex-col items-center justify-center text-gray-500 hover:bg-gray-700/50 hover:text-gray-400 transition-colors">
                   <Upload size={14} />
                   <span className="mt-1 text-[10px]">Upload</span>
                   <span className="mt-0.5 text-[10px] text-gray-400">
                     {maxSlots - noteFiles.length} left
                   </span>
-                  <input
+                  <Input
                     ref={(el) => {
                       fileInputRefs.current[nextSlot] = el;
                     }}
@@ -94,7 +97,7 @@ export function FileAttachments({
                       e.target.value = "";
                     }}
                   />
-                </label>
+                </Label>
               )}
             </div>
           );
@@ -125,22 +128,22 @@ export function FileAttachments({
                 </div>
               )}
               <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-md bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
-                <button
+                <Button
                   type="button"
                   onClick={() => onInsertFileReference(file)}
                   className="rounded-full bg-blue-600 p-1.5 text-white hover:bg-blue-700"
                   title="Insert into content"
                 >
                   <Link2 size={12} />
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => { void onFileDelete(file.slotIndex); }}
                   className="rounded-full bg-red-600 p-1.5 text-white hover:bg-red-700"
                   title="Delete file"
                 >
                   <Trash2 size={12} />
-                </button>
+                </Button>
               </div>
               <div className="absolute bottom-0 left-0 right-0 rounded-b-md bg-black/70 px-1 py-0.5 text-[9px] text-gray-300 truncate">
                 {formatFileSize(file.size)}

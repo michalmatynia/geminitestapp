@@ -2,6 +2,8 @@
 
 import React, { useRef, useEffect } from "react";
 import { ChatMessage } from "@/types/chatbot";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface ChatInterfaceProps {
   messages: ChatMessage[];
@@ -59,20 +61,20 @@ export function ChatInterface({
       </div>
       <div className="border-t border-gray-800 p-4">
         <form onSubmit={onSend} className="flex gap-2">
-          <input
+          <Input
             className="flex-1 rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..."
             disabled={isSending}
           />
-          <button
+          <Button
             type="submit"
             className="rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             disabled={isSending || !input.trim()}
           >
             {isSending ? "Sending..." : "Send"}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

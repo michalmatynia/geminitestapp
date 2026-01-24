@@ -18,7 +18,7 @@ async function GET_handler(
     if (!session) {
       return createErrorResponse(notFoundError("Session not found."), {
         request: req,
-        source: "chatbot.sessions.session.GET",
+        source: "chatbot.sessions.[sessionId].GET",
       });
     }
 
@@ -34,10 +34,10 @@ async function GET_handler(
     console.error("[chatbot][sessions][GET:sessionId] Failed", error);
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.sessions.session.GET",
+      source: "chatbot.sessions.[sessionId].GET",
       fallbackMessage: "Failed to fetch session.",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.sessions.[sessionId].GET" });
+export const GET = apiHandlerWithParams<{ sessionId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.sessions.[sessionId].GET" });

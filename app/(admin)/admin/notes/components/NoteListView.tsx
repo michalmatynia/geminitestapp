@@ -95,25 +95,25 @@ export function NoteListView({
         </div>
         <div className="ml-auto flex items-center gap-2">
           <span className="text-xs text-gray-500">Page</span>
-          <button
+          <Button
             type="button"
             onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page <= 1}
             className="rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition disabled:opacity-50"
           >
             Prev
-          </button>
+          </Button>
           <span className="text-xs text-gray-300">
             {page} / {totalPages}
           </span>
-          <button
+          <Button
             type="button"
             onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page >= totalPages}
             className="rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition disabled:opacity-50"
           >
             Next
-          </button>
+          </Button>
           <select
             value={pageSize}
             onChange={(e) => {
@@ -182,7 +182,7 @@ export function NoteListView({
           <div className="mb-6 flex items-center gap-2 text-sm text-gray-400">
             {buildBreadcrumbPath(selectedFolderId, null, folderTree).map((crumb, index, array) => (
               <React.Fragment key={index}>
-                <button
+                <Button
                   onClick={() => {
                     setSelectedFolderId(crumb.id);
                     setSelectedNote(null);
@@ -191,7 +191,7 @@ export function NoteListView({
                   className="hover:text-blue-400 transition"
                 >
                   {crumb.name}
-                </button>
+                </Button>
                 {index < array.length - 1 && (
                   <ChevronRight size={16} className="text-gray-600" />
                 )}
@@ -231,25 +231,25 @@ export function NoteListView({
         )}
         {sortedNotes.length > pageSize && (
           <div className="mt-6 flex items-center justify-center gap-3 text-sm text-gray-300">
-            <button
+            <Button
               type="button"
               onClick={() => setPage(Math.max(1, page - 1))}
               disabled={page <= 1}
               className="rounded border border-gray-700 px-3 py-1.5 text-gray-300 hover:bg-gray-800 disabled:opacity-50"
             >
               Previous
-            </button>
+            </Button>
             <span>
               Page {page} of {totalPages}
             </span>
-            <button
+            <Button
               type="button"
               onClick={() => setPage(Math.min(totalPages, page + 1))}
               disabled={page >= totalPages}
               className="rounded border border-gray-700 px-3 py-1.5 text-gray-300 hover:bg-gray-800 disabled:opacity-50"
             >
               Next
-            </button>
+            </Button>
           </div>
         )}
       </div>

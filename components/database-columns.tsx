@@ -24,7 +24,7 @@ const renderSortableHeader = <TData, TValue>(
   const handler = column.getToggleSortingHandler(); // ((event) => void) | undefined
 
   return (
-    <button
+    <Button
       type="button"
       onClick={handler ?? undefined}
       // optional: prevent "clickable" affordance if it can't sort
@@ -35,7 +35,7 @@ const renderSortableHeader = <TData, TValue>(
       <span className="text-xs text-muted-foreground">
         {direction === "asc" ? "▲" : direction === "desc" ? "▼" : "↕"}
       </span>
-    </button>
+    </Button>
   );
 };
 

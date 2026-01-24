@@ -1,5 +1,6 @@
 import { productService } from "./productService";
 import { getProductAiJobRepository } from "@/lib/services/product-ai-job-repository";
+import { invalidStateError, notFoundError } from "@/lib/errors/app-error";
 
 export type ProductAiJobType = "description_generation" | "translation";
 
@@ -65,9 +66,12 @@ export async function updateProductAiJob(jobId: string, data: any) {
 export async function cancelProductAiJob(jobId: string) {
   const jobRepository = await getProductAiJobRepository();
   const job = await jobRepository.findJobById(jobId);
-  if (!job) throw new Error("Job not found");
+  if (!job) throw notFoundError("Job not found", { jobId });
   if (job.status !== "pending" && job.status !== "running") {
-    throw new Error("Only pending or running jobs can be canceled");
+    throw invalidStateError("Only pending or running jobs can be canceled", {
+      jobId,
+      status: job.status,
+    });
   }
 
   return jobRepository.updateJob(jobId, {

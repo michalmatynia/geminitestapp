@@ -24,7 +24,7 @@ async function GET_handler(
         internalError(
           "Chat sessions not initialized. Run prisma generate/db push."
         ),
-        { request: req, source: "chatbot.sessions.messages.GET" }
+        { request: req, source: "chatbot.sessions.[sessionId].messages.GET" }
       );
     }
     const { sessionId } = await params;
@@ -35,7 +35,7 @@ async function GET_handler(
     if (!session) {
       return createErrorResponse(notFoundError("Session not found."), {
         request: req,
-        source: "chatbot.sessions.messages.GET",
+        source: "chatbot.sessions.[sessionId].messages.GET",
       });
     }
     const messages = await prisma.chatbotMessage.findMany({
@@ -53,7 +53,7 @@ async function GET_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.sessions.messages.GET",
+      source: "chatbot.sessions.[sessionId].messages.GET",
       fallbackMessage: "Failed to fetch messages.",
     });
   }
@@ -70,7 +70,7 @@ async function POST_handler(
         internalError(
           "Chat sessions not initialized. Run prisma generate/db push."
         ),
-        { request: req, source: "chatbot.sessions.messages.POST" }
+        { request: req, source: "chatbot.sessions.[sessionId].messages.POST" }
       );
     }
     const { sessionId } = await params;
@@ -81,7 +81,7 @@ async function POST_handler(
     if (!session) {
       return createErrorResponse(notFoundError("Session not found."), {
         request: req,
-        source: "chatbot.sessions.messages.POST",
+        source: "chatbot.sessions.[sessionId].messages.POST",
       });
     }
     const parsed = await parseJsonBody(req, messageSchema, {
@@ -94,7 +94,7 @@ async function POST_handler(
     if (!body.role || !body.content?.trim()) {
       return createErrorResponse(
         badRequestError("Role and content are required."),
-        { request: req, source: "chatbot.sessions.messages.POST" }
+        { request: req, source: "chatbot.sessions.[sessionId].messages.POST" }
       );
     }
     if (DEBUG_CHATBOT) {
@@ -126,11 +126,11 @@ async function POST_handler(
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "chatbot.sessions.messages.POST",
+      source: "chatbot.sessions.[sessionId].messages.POST",
       fallbackMessage: "Failed to add message.",
     });
   }
 }
 
-export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.sessions.[sessionId].messages.GET" });
-export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.sessions.[sessionId].messages.POST" });
+export const GET = apiHandlerWithParams<{ sessionId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.sessions.[sessionId].messages.GET" });
+export const POST = apiHandlerWithParams<{ sessionId: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.sessions.[sessionId].messages.POST" });

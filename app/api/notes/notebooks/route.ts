@@ -18,7 +18,7 @@ async function GET_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "notebooks.GET",
+      source: "notes.notebooks.GET",
       fallbackMessage: "Failed to fetch notebooks",
     });
   }
@@ -41,7 +41,7 @@ async function POST_handler(req: Request) {
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "notebooks.POST",
+      source: "notes.notebooks.POST",
       fallbackMessage: "Failed to create notebook",
     });
   }

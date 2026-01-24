@@ -113,7 +113,7 @@ async function GET_handler(req: Request) {
       if (!process.env.MONGODB_URI) {
         return createErrorResponse(internalError("MongoDB is not configured."), {
           request: req,
-          source: "priceGroups.GET",
+          source: "price-groups.GET",
         });
       }
       const db = await getMongoDb();
@@ -218,7 +218,7 @@ async function GET_handler(req: Request) {
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
-      source: "priceGroups.GET",
+      source: "price-groups.GET",
       fallbackMessage: "Failed to fetch price groups",
     });
   }
@@ -312,7 +312,7 @@ async function POST_handler(req: Request) {
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "priceGroups.POST",
+      source: "price-groups.POST",
       fallbackMessage: "Failed to create price group",
     });
   }

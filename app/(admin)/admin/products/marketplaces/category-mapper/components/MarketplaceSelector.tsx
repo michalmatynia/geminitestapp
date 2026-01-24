@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Store } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type Integration = {
   id: string;
@@ -75,7 +76,7 @@ export function MarketplaceSelector({
               <p className="text-xs text-gray-600">No connections</p>
             ) : (
               integration.connections.map((connection) => (
-                <button
+                <Button
                   key={connection.id}
                   onClick={() => onSelectConnection(connection.id)}
                   className={`w-full rounded px-3 py-2 text-left text-sm transition ${
@@ -85,7 +86,7 @@ export function MarketplaceSelector({
                   }`}
                 >
                   {connection.name}
-                </button>
+                </Button>
               ))
             )}
           </div>

@@ -26,6 +26,7 @@ import {
 import { extractBaseImageUrls, mapBaseProduct } from "@/lib/services/imports/base-mapper";
 import { productCreateSchema } from "@/lib/validations/product";
 import { apiHandler } from "@/lib/api/api-handler";
+import type { ProductWithImages } from "@/types";
 
 export const runtime = "nodejs";
 
@@ -46,7 +47,7 @@ const requestSchema = z.object({
 
 async function POST_handler(req: Request) {
   try {
-    const body = await req.json();
+    const body: unknown = await req.json();
     const data = requestSchema.parse(body);
     let token = data.token;
 
@@ -169,12 +170,12 @@ async function POST_handler(req: Request) {
       });
       const existingIds = new Set(
         allProducts
-          .map((product: any) => product.baseProductId)
+          .map((product: ProductWithImages) => product.baseProductId)
           .filter((id): id is string => typeof id === "string")
       );
       const existingSkus = new Set(
         allProducts
-          .map((product: any) => product.sku)
+          .map((product: ProductWithImages) => product.sku)
           .filter((sku): sku is string => typeof sku === "string" && sku.trim() !== "")
       );
 
@@ -297,7 +298,7 @@ async function POST_handler(req: Request) {
       if (data.uniqueOnly) {
         const existingIds = new Set(
           allProducts
-            .map((product: any) => product.baseProductId)
+            .map((product: ProductWithImages) => product.baseProductId)
             .filter((id): id is string => typeof id === "string")
         );
 
@@ -321,7 +322,7 @@ async function POST_handler(req: Request) {
       if (!allowDuplicateSku) {
         existingSkus = new Set(
           allProducts
-            .map((product: any) => product.sku)
+            .map((product: ProductWithImages) => product.sku)
             .filter((sku): sku is string => typeof sku === "string" && sku.trim() !== "")
         );
       }

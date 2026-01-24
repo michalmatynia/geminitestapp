@@ -58,7 +58,7 @@ async function POST_handler(request: NextRequest) {
     }
 
     // Sync categories to local database
-    const repo = await getExternalCategoryRepository();
+    const repo = getExternalCategoryRepository();
     const syncedCount = await repo.syncFromBase(connectionId, categories);
 
     return NextResponse.json({

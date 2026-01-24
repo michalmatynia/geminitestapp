@@ -16,7 +16,7 @@ const sanitizeValue = (value: unknown) => {
     const seen = new WeakSet();
     const json = JSON.stringify(
       value,
-      (_key, val) => {
+      (_key, val: unknown) => {
         if (_key && isSensitiveKey(_key)) return REDACTED_VALUE;
         if (typeof val === "object" && val !== null) {
           if (seen.has(val)) return "[Circular]";
@@ -40,7 +40,7 @@ const sanitizeValue = (value: unknown) => {
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
       return parsed as Record<string, unknown>;
     }
-    return { value: parsed as unknown };
+    return { value: parsed };
   } catch {
     return { error: "Failed to serialize context." };
   }

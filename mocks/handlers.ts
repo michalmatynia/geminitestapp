@@ -57,7 +57,7 @@ export const handlers = [
     if (!product) {
       return HttpResponse.json({ error: 'Product not found' }, { status: 404 });
     }
-    return HttpResponse.json(product) as any;
+    return HttpResponse.json(product);
   }),
 
   http.post('/api/products', async ({ request }) => {
@@ -90,7 +90,7 @@ export const handlers = [
     if (!product) {
       return HttpResponse.json({ error: 'Product not found' }, { status: 404 });
     }
-    return HttpResponse.json({ success: true }) as any;
+    return HttpResponse.json({ success: true });
   }),
 
   // Catalogs endpoints
@@ -106,7 +106,7 @@ export const handlers = [
     if (!catalog) {
       return HttpResponse.json({ error: 'Catalog not found' }, { status: 404 });
     }
-    return HttpResponse.json(catalog) as any;
+    return HttpResponse.json(catalog);
   }),
 
   // Settings endpoints
@@ -121,7 +121,7 @@ export const handlers = [
     if (!setting) {
       return HttpResponse.json({ error: 'Setting not found' }, { status: 404 });
     }
-    return HttpResponse.json(setting) as any;
+    return HttpResponse.json(setting);
   }),
 
   http.post('/api/settings', async ({ request }) => {

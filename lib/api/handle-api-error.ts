@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { resolveError } from "@/lib/errors/resolve-error";
 import { getErrorFingerprint, logSystemEvent } from "@/lib/services/system-logger";
+import { validationError } from "@/lib/errors/app-error";
 
 type ApiErrorOptions = {
   request?: Request | undefined;
@@ -137,7 +138,6 @@ export const createValidationErrorResponse = (
   fieldErrors: Record<string, string[]>,
   options?: Pick<ApiErrorOptions, "request" | "source" | "requestId">
 ) => {
-  const { validationError } = require("@/lib/errors/app-error");
   const error = validationError("Validation failed", { fields: fieldErrors });
   return createErrorResponse(error, options);
 };

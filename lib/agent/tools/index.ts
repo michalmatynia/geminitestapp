@@ -90,6 +90,26 @@ export type AgentToolResult = {
 
 type AgentControlAction = "goto" | "reload" | "snapshot";
 
+type ExtractionPlan = {
+  target: string | null;
+  fields: string[];
+  primarySelectors: string[];
+  fallbackSelectors: string[];
+  notes: string | null;
+};
+
+type FailureRecoveryPlan = {
+  reason: string | null;
+  selectors: string[];
+  listingUrls: string[];
+  clickSelector: string | null;
+  loginUrl: string | null;
+  usernameSelector: string | null;
+  passwordSelector: string | null;
+  submitSelector: string | null;
+  notes: string | null;
+};
+
 const DEFAULT_OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? "qwen3-vl:30b";
 
 const resolveIgnoreRobotsTxt = (planState: unknown) => {
@@ -224,7 +244,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
           stepId: activeStepId,
           level,
           message,
-          metadata: normalizedMetadata as any,
+          metadata: normalizedMetadata as Prisma.InputJsonValue,
         },
       });
     };
@@ -984,7 +1004,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
             );
             
             // Try plans selectors first
-             const planSelectors = (extractionPlan as any)?.primarySelectors ?? [];
+             const planSelectors = (extractionPlan as ExtractionPlan | null)?.primarySelectors ?? [];
              if (planSelectors.length > 0 && extractedNames.length === 0) {
                  extractedNames = cleanProductNames(
                     await extractProductNamesFromSelectors(page, planSelectors)
@@ -1005,12 +1025,12 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
             // Try fallback selectors
              if (
                 extractedNames.length === 0 &&
-                ((extractionPlan as any)?.fallbackSelectors ?? []).length > 0
+                ((extractionPlan as ExtractionPlan | null)?.fallbackSelectors ?? []).length > 0
             ) {
                  extractedNames = cleanProductNames(
                 await extractProductNamesFromSelectors(
                     page,
-                    (extractionPlan as any)?.fallbackSelectors ?? []
+                    ((extractionPlan as ExtractionPlan | null)?.fallbackSelectors ?? [])
                 )
                 );
             }
@@ -1046,8 +1066,8 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
                 activeStepId ?? undefined
             );
             const recoveryType =
-                ((extractionPlan as any)?.primarySelectors ?? []).length > 0 ||
-                ((extractionPlan as any)?.fallbackSelectors ?? []).length > 0
+                ((extractionPlan as ExtractionPlan | null)?.primarySelectors ?? []).length > 0 ||
+                ((extractionPlan as ExtractionPlan | null)?.fallbackSelectors ?? []).length > 0
                 ? "bad_selectors"
                 : "missing_extraction";
             
@@ -1304,7 +1324,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
         let submitPerformed = false;
         let usernameFilled = false;
         let passwordFilled = false;
-        let recoveryPlan: any = null;
+        let recoveryPlan: FailureRecoveryPlan | null = null;
 
         await log("info", "Detected login credentials.", {
           email: credentials.email ? "[redacted]" : null,

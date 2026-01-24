@@ -11,7 +11,7 @@ export type ProductAiJobRecord = {
   status: ProductAiJobStatus;
   type: string;
   payload: unknown;
-  result?: unknown | null;
+  result?: unknown;
   errorMessage?: string | null;
   createdAt: Date;
   startedAt?: Date | null;

@@ -234,10 +234,11 @@ export const ProductSelectionActions = memo(function ProductSelectionActions({
     setRowSelection({});
   }, [setRowSelection]);
 
-  const hasSelection = useMemo(
-    () => Object.keys(rowSelection).filter((key) => rowSelection[key]).length > 0,
+  const selectedCount = useMemo(
+    () => Object.keys(rowSelection).filter((key) => rowSelection[key]).length,
     [rowSelection]
   );
+  const hasSelection = selectedCount > 0;
 
   return (
     <div className="flex flex-wrap gap-2 border-t pt-3 sm:gap-3">
@@ -246,6 +247,11 @@ export const ProductSelectionActions = memo(function ProductSelectionActions({
           <Button variant="outline" size="sm" className="gap-2">
             <CheckSquare className="h-4 w-4" />
             Selection
+            {selectedCount > 0 && (
+              <span className="rounded-full border border-foreground/15 px-2 py-0.5 text-xs text-muted-foreground">
+                {selectedCount}
+              </span>
+            )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-56">

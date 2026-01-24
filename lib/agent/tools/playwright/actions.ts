@@ -1,5 +1,4 @@
 import type { Page } from "playwright";
-import { captureSessionContext } from "./browser";
 
 export const findFirstVisible = async (locator: ReturnType<Page["locator"]>) => {
   const count = await locator.count();

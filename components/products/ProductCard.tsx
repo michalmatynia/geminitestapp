@@ -22,9 +22,9 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   // ✅ Localized name fallback: en -> pl -> de -> generic
   const name =
-    (product as any).name_en ??
-    (product as any).name_pl ??
-    (product as any).name_de ??
+    product.name_en ??
+    product.name_pl ??
+    product.name_de ??
     "Product";
 
   return (

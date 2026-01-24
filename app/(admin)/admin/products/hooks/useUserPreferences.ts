@@ -10,8 +10,8 @@ export type ProductListPreferences = {
 const DEFAULT_PREFERENCES: ProductListPreferences = {
   nameLocale: "name_en",
   catalogFilter: "all",
-  currencyCode: null,
-  pageSize: 50,
+  currencyCode: "PLN",
+  pageSize: 12,
 };
 
 export function useUserPreferences() {
@@ -40,8 +40,8 @@ export function useUserPreferences() {
         setPreferences({
           nameLocale: (data.productListNameLocale || "name_en") as "name_en" | "name_pl" | "name_de",
           catalogFilter: data.productListCatalogFilter || "all",
-          currencyCode: data.productListCurrencyCode ?? null,
-          pageSize: data.productListPageSize || 50,
+          currencyCode: data.productListCurrencyCode ?? "PLN",
+          pageSize: data.productListPageSize || 12,
         });
       } catch (err) {
         console.error("Failed to load user preferences:", err);
@@ -49,9 +49,20 @@ export function useUserPreferences() {
 
         // Fall back to localStorage if database fails
         const storedLocale = window.localStorage.getItem("productListNameLocale");
-        if (storedLocale === "name_en" || storedLocale === "name_pl" || storedLocale === "name_de") {
-          setPreferences(prev => ({ ...prev, nameLocale: storedLocale }));
-        }
+        const storedCatalogFilter = window.localStorage.getItem("productListCatalogFilter");
+        const storedCurrencyCode = window.localStorage.getItem("productListCurrencyCode");
+        const storedPageSize = window.localStorage.getItem("productListPageSize");
+        setPreferences(prev => ({
+          ...prev,
+          ...(storedLocale === "name_en" || storedLocale === "name_pl" || storedLocale === "name_de"
+            ? { nameLocale: storedLocale }
+            : {}),
+          ...(storedCatalogFilter ? { catalogFilter: storedCatalogFilter } : {}),
+          ...(storedCurrencyCode ? { currencyCode: storedCurrencyCode } : {}),
+          ...(storedPageSize && !Number.isNaN(Number(storedPageSize))
+            ? { pageSize: Number(storedPageSize) }
+            : {}),
+        }));
       } finally {
         setLoading(false);
       }
@@ -62,9 +73,9 @@ export function useUserPreferences() {
 
   // Update preference in database
   const updatePreference = useCallback(async (key: keyof ProductListPreferences, value: unknown) => {
-    try {
-      const apiKey = `productList${key.charAt(0).toUpperCase()}${key.slice(1)}`;
+    const apiKey = `productList${key.charAt(0).toUpperCase()}${key.slice(1)}`;
 
+    try {
       const res = await fetch("/api/user/preferences", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -72,28 +83,39 @@ export function useUserPreferences() {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to update preference");
-      }
-
-      await res.json();
-
-      // Update local state
-      setPreferences(prev => ({
-        ...prev,
-        [key]: value,
-      }));
-
-      // Also update localStorage as backup
-      if (key === "nameLocale") {
-        window.localStorage.setItem("productListNameLocale", String(value));
+        let details: unknown = null;
+        try {
+          details = await res.json();
+        } catch {
+          // Ignore parse errors for non-JSON responses.
+        }
+        console.warn(`Preference update failed for ${key}.`, {
+          status: res.status,
+          details,
+        });
       }
     } catch (err) {
-      console.error(`Failed to update preference ${key}:`, err);
-      // Still update local state even if API fails
-      setPreferences(prev => ({
-        ...prev,
-        [key]: value,
-      }));
+      console.warn(`Preference update request failed for ${key}.`, err);
+    }
+
+    // Always update local state so UI stays responsive.
+    setPreferences(prev => ({
+      ...prev,
+      [key]: value,
+    }));
+
+    // Keep localStorage as a lightweight fallback for key preferences.
+    if (key === "nameLocale") {
+      window.localStorage.setItem("productListNameLocale", String(value));
+    }
+    if (key === "catalogFilter") {
+      window.localStorage.setItem("productListCatalogFilter", String(value));
+    }
+    if (key === "currencyCode") {
+      window.localStorage.setItem("productListCurrencyCode", String(value));
+    }
+    if (key === "pageSize") {
+      window.localStorage.setItem("productListPageSize", String(value));
     }
   }, []);
 

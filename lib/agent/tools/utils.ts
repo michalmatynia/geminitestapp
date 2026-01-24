@@ -1,5 +1,3 @@
-import { promises as fs } from "fs";
-import path from "path";
 
 export const toDataUrl = (buffer: Buffer) =>
   `data:image/png;base64,${buffer.toString("base64")}`;

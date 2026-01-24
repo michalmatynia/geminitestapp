@@ -242,7 +242,7 @@ export default function MassListProductModal({
                   }),
                 });
         
-                const data = await res.json().catch(() => ({}));
+                const data = (await res.json().catch(() => ({}))) as { logs?: CapturedLog[] };
                 if (data.logs) {
                   allLogs.push(...data.logs);
                   setExportLogs([...allLogs]);

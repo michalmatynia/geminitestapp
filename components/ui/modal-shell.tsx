@@ -41,7 +41,7 @@ export default function ModalShell({
             <Button
               type="button"
               onClick={onClose}
-              className="bg-gray-800 text-white hover:bg-gray-700"
+              className="border border-white/20 bg-gray-800 text-white hover:border-white/40 hover:bg-gray-700"
             >
               Close
             </Button>

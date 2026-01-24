@@ -47,7 +47,7 @@ function mapToRecord(record: {
   };
 }
 
-export async function getCategoryMappingRepository(): Promise<CategoryMappingRepository> {
+export function getCategoryMappingRepository(): CategoryMappingRepository {
   return {
     async create(input: CategoryMappingCreateInput): Promise<CategoryMapping> {
       const record = await prisma.categoryMapping.create({

@@ -1,8 +1,7 @@
 "use client";
 
 import type { ColumnDef, Row } from "@tanstack/react-table";
-import { ArrowUpDown, Download, MoreVertical, PlusCircle, Store } from "lucide-react";
-import Image from "next/image";
+import { ArrowUpDown, Bold, Download, MoreVertical, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/toast";
-import MissingImagePlaceholder from "@/components/ui/missing-image-placeholder";
 import { EditableCell } from "@/components/products/EditableCell";
 import { ProductImageCell } from "@/components/products/cells/ProductImageCell";
 import type { ProductWithImages } from "@/types";
@@ -32,60 +30,94 @@ type ToastFn = ReturnType<typeof useToast>["toast"];
  * Calculates the price for a product in the specified currency.
  * Uses price group relationships to convert between currencies.
  */
+function normalizeCurrencyCode(code?: string | null) {
+  return (code ?? "").trim().toUpperCase();
+}
+
+function getGroupCurrencyCode(group: PriceGroupForCalculation) {
+  return normalizeCurrencyCode(group.currency?.code || group.currencyCode || group.groupId);
+}
+
 function calculatePriceForCurrency(
   basePrice: number | null,
   defaultPriceGroupId: string | null,
   targetCurrencyCode: string,
   priceGroups: PriceGroupForCalculation[]
-): { price: number | null; currencyCode: string } {
+): { price: number | null; currencyCode: string; baseCurrencyCode: string } {
   if (basePrice === null || !priceGroups.length) {
-    return { price: null, currencyCode: targetCurrencyCode };
+    return {
+      price: null,
+      currencyCode: targetCurrencyCode,
+      baseCurrencyCode: normalizeCurrencyCode(targetCurrencyCode),
+    };
   }
 
-  // Find the product's default price group (the currency of the stored price)
-  const defaultGroup = defaultPriceGroupId
-    ? priceGroups.find((g) => g.id === defaultPriceGroupId)
-    : priceGroups.find((g) => (g as any).isDefault);
+  const normalizedTarget = normalizeCurrencyCode(targetCurrencyCode);
+
+  const defaultGroup =
+    (defaultPriceGroupId
+      ? priceGroups.find((g) => g.id === defaultPriceGroupId)
+      : undefined) ?? priceGroups.find((g) => g.isDefault) ?? priceGroups[0];
 
   if (!defaultGroup) {
-    // No default group found, return base price with target currency
-    return { price: basePrice, currencyCode: targetCurrencyCode };
+    return {
+      price: basePrice,
+      currencyCode: targetCurrencyCode,
+      baseCurrencyCode: normalizedTarget,
+    };
   }
 
-  const baseCurrencyCode = defaultGroup.currency.code;
+  const baseCurrencyCode = getGroupCurrencyCode(defaultGroup);
 
-  // If the target currency matches the base currency, return the base price
-  if (baseCurrencyCode === targetCurrencyCode) {
-    return { price: basePrice, currencyCode: targetCurrencyCode };
+  if (baseCurrencyCode && baseCurrencyCode === normalizedTarget) {
+    return { price: basePrice, currencyCode: targetCurrencyCode, baseCurrencyCode };
   }
 
-  // Find a price group for the target currency
-  const targetGroup = priceGroups.find((g) => g.currency.code === targetCurrencyCode);
+  const findGroupById = (id?: string | null) =>
+    id ? priceGroups.find((g) => g.id === id || g.groupId === id) : undefined;
 
-  if (!targetGroup) {
-    // No price group for target currency, return base price with its original currency
-    return { price: basePrice, currencyCode: baseCurrencyCode };
+  const resolvePriceForGroup = (
+    group: PriceGroupForCalculation | undefined,
+    visited = new Set<string>()
+  ): number | null => {
+    if (!group) return null;
+    const key = group.id || group.groupId;
+    if (key) {
+      if (visited.has(key)) return null;
+      visited.add(key);
+    }
+
+    if (group.id === defaultGroup.id || group.groupId === defaultGroup.groupId) {
+      return basePrice;
+    }
+
+    if (group.type === "dependent" && group.sourceGroupId) {
+      const source = findGroupById(group.sourceGroupId);
+      const sourcePrice = resolvePriceForGroup(source, visited);
+      if (sourcePrice === null) return null;
+      const multiplier = Number.isFinite(group.priceMultiplier) ? group.priceMultiplier : 1;
+      const addToPrice = Number.isFinite(group.addToPrice) ? group.addToPrice : 0;
+      return sourcePrice * multiplier + addToPrice;
+    }
+
+    return null;
+  };
+
+  const targetGroup = priceGroups.find((group) => {
+    const groupCode = getGroupCurrencyCode(group);
+    return groupCode === normalizedTarget || normalizeCurrencyCode(group.groupId) === normalizedTarget;
+  });
+
+  const resolved = resolvePriceForGroup(targetGroup);
+  if (resolved !== null) {
+    return { price: resolved, currencyCode: targetCurrencyCode, baseCurrencyCode };
   }
 
-  // If target group is dependent and its source is the default group, calculate the price
-  if (targetGroup.type === "dependent" && targetGroup.sourceGroupId === defaultGroup.id) {
-    const calculatedPrice = basePrice * targetGroup.priceMultiplier + targetGroup.addToPrice;
-    return { price: calculatedPrice, currencyCode: targetCurrencyCode };
-  }
-
-  // If target group is standard (not dependent), we can't calculate
-  // Check if there's a dependent group from target that sources from default
-  const dependentFromDefault = priceGroups.find(
-    (g) => g.currency.code === targetCurrencyCode && g.sourceGroupId === defaultGroup.id
-  );
-
-  if (dependentFromDefault) {
-    const calculatedPrice = basePrice * dependentFromDefault.priceMultiplier + dependentFromDefault.addToPrice;
-    return { price: calculatedPrice, currencyCode: targetCurrencyCode };
-  }
-
-  // Can't convert - return base price with original currency
-  return { price: basePrice, currencyCode: baseCurrencyCode };
+  return {
+    price: basePrice,
+    currencyCode: baseCurrencyCode || targetCurrencyCode,
+    baseCurrencyCode: baseCurrencyCode || normalizedTarget,
+  };
 }
 
 interface ColumnActionsProps {
@@ -294,7 +326,8 @@ export const columns: ColumnDef<ProductWithImages>[] = [
         <div>
           {handleNameClick ? (
             <Button
-              className="text-left text-white hover:underline"
+              variant="ghost"
+              className="h-auto w-full cursor-pointer justify-start p-0 text-left text-sm font-normal text-white/90 transition-colors hover:bg-transparent hover:text-white/70 whitespace-normal break-words"
               onClick={() => handleNameClick(product)}
               type="button"
             >
@@ -352,7 +385,11 @@ export const columns: ColumnDef<ProductWithImages>[] = [
       const priceGroups = meta?.priceGroups || [];
 
       // Calculate price for the selected currency
-      const { price: displayPrice, currencyCode: actualCurrency } = calculatePriceForCurrency(
+      const {
+        price: displayPrice,
+        currencyCode: actualCurrency,
+        baseCurrencyCode,
+      } = calculatePriceForCurrency(
         product.price,
         product.defaultPriceGroupId,
         currencyCode,
@@ -361,6 +398,12 @@ export const columns: ColumnDef<ProductWithImages>[] = [
 
       // Show currency indicator if different from selected
       const showCurrencyIndicator = actualCurrency && actualCurrency !== currencyCode;
+      const hasConvertedPrice =
+        displayPrice !== null &&
+        product.price !== null &&
+        baseCurrencyCode &&
+        normalizeCurrencyCode(baseCurrencyCode) !== normalizeCurrencyCode(currencyCode) &&
+        displayPrice !== product.price;
 
       if (!setRefreshTrigger) {
         return (
@@ -373,7 +416,19 @@ export const columns: ColumnDef<ProductWithImages>[] = [
         );
       }
 
-      // For editable cells, we still show the base price but with currency context
+      if (hasConvertedPrice) {
+        return (
+          <div className="flex flex-col items-start">
+            <span className="text-foreground">
+              {displayPrice.toFixed(2)}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              Base: {product.price?.toFixed(2)} {baseCurrencyCode}
+            </span>
+          </div>
+        );
+      }
+
       return (
         <div className="flex items-center gap-1">
           <EditableCell
@@ -455,19 +510,23 @@ export const columns: ColumnDef<ProductWithImages>[] = [
         meta?.integrationBadgeIds?.has(product.id) ?? false;
       const status = meta?.integrationBadgeStatuses?.get(product.id) ?? "pending";
       const statusClasses: Record<string, string> = {
-        active: "text-emerald-300",
-        pending: "text-yellow-300",
-        failed: "text-red-300",
-        removed: "text-gray-400",
+        active: "text-emerald-300 ring-1 ring-emerald-500/25 bg-emerald-500/10 hover:bg-emerald-500/15",
+        pending: "text-amber-300 ring-1 ring-amber-500/25 bg-amber-500/10 hover:bg-amber-500/15",
+        failed: "text-rose-300 ring-1 ring-rose-500/25 bg-rose-500/10 hover:bg-rose-500/15",
+        removed: "text-gray-400 ring-1 ring-gray-500/20 bg-gray-500/10 hover:bg-gray-500/15",
       };
-      const badgeClass = statusClasses[status] ?? "text-gray-300";
+      const badgeClass =
+        statusClasses[status] ??
+        "text-slate-300 ring-1 ring-slate-500/20 bg-slate-500/10 hover:bg-slate-500/15";
 
       return (
         <div className="inline-flex items-center gap-1">
           <Button
             type="button"
             onClick={() => handleClick(product)}
-            className="inline-flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-gray-800 hover:text-emerald-400"
+            variant="ghost"
+            size="icon"
+            className="size-8 cursor-pointer rounded-full text-muted-foreground hover:bg-transparent hover:text-foreground"
             aria-label="View integrations"
           >
             <PlusCircle className="size-5" />
@@ -476,11 +535,13 @@ export const columns: ColumnDef<ProductWithImages>[] = [
             <Button
               type="button"
               onClick={() => handleExportClick?.(product)}
-              className={`inline-flex size-6 items-center justify-center rounded-full hover:bg-gray-800 ${badgeClass}`}
-              title={`Marketplace status: ${status} - Click for export settings`}
-              aria-label={`Export settings - status: ${status}`}
+              variant="ghost"
+              size="icon"
+              className={`size-7 cursor-pointer rounded-full ${badgeClass}`}
+              title={`Base.com status: ${status} - Click for export settings`}
+              aria-label={`Base.com export settings - status: ${status}`}
             >
-              <Store className="size-3.5" />
+              <Bold className="size-3.5" />
             </Button>
           )}
         </div>

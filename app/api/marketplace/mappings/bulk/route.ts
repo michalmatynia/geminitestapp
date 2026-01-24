@@ -39,7 +39,7 @@ async function POST_handler(request: NextRequest) {
       }
     }
 
-    const repo = await getCategoryMappingRepository();
+    const repo = getCategoryMappingRepository();
     const upsertedCount = await repo.bulkUpsert(connectionId, catalogId, mappings);
 
     return NextResponse.json({

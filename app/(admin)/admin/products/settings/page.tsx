@@ -1019,7 +1019,7 @@ export default function ProductSettingsPage() {
                 <Button
                   key={section}
                   onClick={() => setActiveSection(section)}
-                  className={`rounded px-3 py-2 text-left text-sm transition ${
+                  className={`justify-start rounded px-3 py-2 text-left text-sm transition ${
                     activeSection === section
                       ? "bg-gray-800 text-white"
                       : "text-gray-300 hover:bg-gray-800/60"

@@ -110,7 +110,7 @@ export const prismaCatalogRepository: CatalogRepository = {
     if (input.isDefault) {
       await prisma.catalog.updateMany({ data: { isDefault: false } });
     }
-    const catalog = await prisma.catalog.update({
+    await prisma.catalog.update({
       where: { id },
       data: {
         ...(input.name !== undefined && { name: input.name }),

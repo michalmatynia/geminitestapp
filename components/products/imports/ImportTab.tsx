@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import NextImage from "next/image";
 import type {
   CatalogOption,
   ImportListItem,
@@ -365,12 +366,14 @@ export function ImportTab({
                   className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
                   aria-label={`Select ${item.name}`}
                 />
-                <div className="h-10 w-10 overflow-hidden rounded bg-gray-900">
+                <div className="relative h-10 w-10 overflow-hidden rounded bg-gray-900">
                   {item.image ? (
-                    <img
+                    <NextImage
                       src={item.image}
                       alt=""
-                      className="h-full w-full object-cover"
+                      fill
+                      className="object-cover"
+                      unoptimized={!item.image.includes('baselinker.com')}
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-[10px] text-gray-600">

@@ -20,7 +20,7 @@ export function useIntegrationSelection(
 
   // Load preferred connection from export settings
   useEffect(() => {
-    (async () => {
+    void (async () => {
       try {
         const res = await fetch("/api/products/exports/base/default-connection");
         if (!res.ok) {
@@ -38,7 +38,7 @@ export function useIntegrationSelection(
 
   // Load integrations on mount
   useEffect(() => {
-    (async () => {
+    void (async () => {
       try {
         const res = await fetch("/api/integrations/with-connections");
         if (!res.ok) throw new Error("Failed to load integrations");

@@ -89,14 +89,21 @@ const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => 
 
   if (filters.search) {
     const regex = { $regex: filters.search, $options: "i" };
-    filter.$or = [
-      { name_en: regex },
-      { name_pl: regex },
-      { name_de: regex },
-      { description_en: regex },
-      { description_pl: regex },
-      { description_de: regex },
-    ];
+    // If a specific language is selected, only search in that language's name field
+    if (filters.searchLanguage) {
+      // searchLanguage is like "name_en", "name_pl", "name_de"
+      filter.$or = [{ [filters.searchLanguage]: regex }];
+    } else {
+      // Search all language fields
+      filter.$or = [
+        { name_en: regex },
+        { name_pl: regex },
+        { name_de: regex },
+        { description_en: regex },
+        { description_pl: regex },
+        { description_de: regex },
+      ];
+    }
   }
 
   if (filters.minPrice || filters.maxPrice) {

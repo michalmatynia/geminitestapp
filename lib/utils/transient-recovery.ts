@@ -6,7 +6,7 @@ import { getTransientRecoverySettings } from "@/lib/services/transient-recovery-
 export type TransientRecoveryOptions = {
   source?: string;
   circuitId?: string;
-  fallback?: () => Promise<unknown> | unknown;
+  fallback?: () => unknown;
   retry?: RetryOptions;
   circuit?: Omit<CircuitBreakerOptions, "circuitId">;
 };

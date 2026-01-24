@@ -60,7 +60,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<SettingRecord>("settings")
-    .findOne({ $or: [{ _id: key as any }, { key }] });
+    .findOne({ $or: [{ _id: key }, { key }] });
   return typeof doc?.value === "string" ? doc.value : null;
 };
 
@@ -257,7 +257,6 @@ export const checkLoginAllowed = async (input: {
   ip?: string | null;
 }) => {
   await ensureAuthSecurityIndexes();
-  const policy = await getAuthSecurityPolicy();
   const emailKey = normalizeKey(input.email);
   const ipKey = normalizeKey(input.ip);
   const now = new Date();

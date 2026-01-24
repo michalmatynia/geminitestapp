@@ -96,7 +96,7 @@ export default function ClientErrorReporter() {
             (() => {
               try {
                 const raw = window.localStorage.getItem("featureFlags");
-                return raw ? JSON.parse(raw) : null;
+                return raw ? (JSON.parse(raw) as Record<string, unknown>) : null;
               } catch {
                 return null;
               }
@@ -109,7 +109,7 @@ export default function ClientErrorReporter() {
             (() => {
               try {
                 const raw = window.localStorage.getItem("clientLogTags");
-                return raw ? JSON.parse(raw) : null;
+                return raw ? (JSON.parse(raw) as Record<string, unknown>) : null;
               } catch {
                 return null;
               }
@@ -124,7 +124,7 @@ export default function ClientErrorReporter() {
         : null,
     };
     setClientErrorBaseContext(context);
-  }, [pathname, searchParams, session?.user?.email, session?.user?.id, session?.user?.role]);
+  }, [pathname, searchParams, session?.user, session?.user?.email, session?.user?.id, session?.user?.role]);
 
   return null;
 }

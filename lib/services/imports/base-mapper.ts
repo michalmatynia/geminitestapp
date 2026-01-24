@@ -72,7 +72,7 @@ const pickNestedString = (record: BaseProductRecord, paths: string[][]) => {
 const pickFirstIntFromObject = (record: BaseProductRecord, key: string) => {
   const obj = record[key];
   if (!obj || typeof obj !== "object") return null;
-  const values = Object.values(obj as object);
+  const values = Object.values(obj);
   for (const v of values) {
     if (typeof v === "number") return toInt(v);
     if (typeof v === "string") return toInt(v);

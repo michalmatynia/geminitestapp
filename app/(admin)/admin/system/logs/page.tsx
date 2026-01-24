@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -38,6 +39,7 @@ const formatDateParam = (value: string, endOfDay = false) => {
 
 export default function SystemLogsPage() {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   const [logs, setLogs] = useState<SystemLogRecord[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -50,6 +52,38 @@ export default function SystemLogsPage() {
   const [toDate, setToDate] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 50;
+
+  useEffect(() => {
+    if (!searchParams) return;
+    const levelParam = searchParams.get("level");
+    const sourceParam = searchParams.get("source");
+    const queryParam = searchParams.get("query");
+    const fromParam = searchParams.get("from");
+    const toParam = searchParams.get("to");
+    if (levelParam) {
+      const isValidLevel = levelOptions.some((option) => option.value === levelParam);
+      if (isValidLevel) setLevel(levelParam as SystemLogLevel | "all");
+    }
+    if (sourceParam !== null) setSource(sourceParam);
+    if (queryParam !== null) setQuery(queryParam);
+    if (fromParam !== null) {
+      const fromDateValue = new Date(fromParam);
+      setFromDate(
+        Number.isNaN(fromDateValue.getTime())
+          ? fromParam
+          : fromDateValue.toISOString().slice(0, 10)
+      );
+    }
+    if (toParam !== null) {
+      const toDateValue = new Date(toParam);
+      setToDate(
+        Number.isNaN(toDateValue.getTime())
+          ? toParam
+          : toDateValue.toISOString().slice(0, 10)
+      );
+    }
+    setPage(1);
+  }, [searchParams]);
 
   const totalPages = useMemo(() => {
     return Math.max(1, Math.ceil(total / pageSize));

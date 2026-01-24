@@ -1,11 +1,47 @@
 import type { ProductDraft, CreateProductDraftInput, UpdateProductDraftInput } from "@/types/drafts";
 import type { ProductParameterValue } from "@/types/products";
 import { randomUUID } from "crypto";
+import { Prisma } from "@prisma/client";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import prisma from "@/lib/prisma";
 
 type DraftProvider = "mongodb" | "prisma";
+
+type MongoDraftDoc = {
+  _id: string;
+  name?: string;
+  description?: string | null;
+  sku?: string | null;
+  ean?: string | null;
+  gtin?: string | null;
+  asin?: string | null;
+  name_en?: string | null;
+  name_pl?: string | null;
+  name_de?: string | null;
+  description_en?: string | null;
+  description_pl?: string | null;
+  description_de?: string | null;
+  weight?: number | null;
+  sizeLength?: number | null;
+  sizeWidth?: number | null;
+  length?: number | null;
+  price?: number | null;
+  supplierName?: string | null;
+  supplierLink?: string | null;
+  priceComment?: string | null;
+  stock?: number | null;
+  catalogIds?: string[];
+  categoryIds?: string[];
+  tagIds?: string[];
+  parameters?: ProductParameterValue[];
+  defaultPriceGroupId?: string | null;
+  active?: boolean;
+  imageLinks?: string[];
+  baseProductId?: string | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
 
 const getDraftProvider = async (): Promise<DraftProvider> => {
   const provider = await getProductDataProvider();
@@ -16,7 +52,7 @@ const getDraftProvider = async (): Promise<DraftProvider> => {
 const listDrafts_Mongo = async (): Promise<ProductDraft[]> => {
   const mongo = await getMongoDb();
   const drafts = await mongo
-    .collection("product_drafts")
+    .collection<MongoDraftDoc>("product_drafts")
     .find({})
     .sort({ createdAt: -1 })
     .toArray();
@@ -48,7 +84,7 @@ const listDrafts_Mongo = async (): Promise<ProductDraft[]> => {
     categoryIds: Array.isArray(draft.categoryIds) ? draft.categoryIds : [],
     tagIds: Array.isArray(draft.tagIds) ? draft.tagIds : [],
     parameters: Array.isArray(draft.parameters)
-      ? (draft.parameters as ProductParameterValue[])
+      ? draft.parameters
       : [],
     defaultPriceGroupId: draft.defaultPriceGroupId || null,
     active: draft.active ?? true,
@@ -61,7 +97,7 @@ const listDrafts_Mongo = async (): Promise<ProductDraft[]> => {
 
 const getDraft_Mongo = async (id: string): Promise<ProductDraft | null> => {
   const mongo = await getMongoDb();
-  const draft = await mongo.collection("product_drafts").findOne({ _id: id } as any);
+  const draft = await mongo.collection<MongoDraftDoc>("product_drafts").findOne({ _id: id });
 
   if (!draft) return null;
 
@@ -92,7 +128,7 @@ const getDraft_Mongo = async (id: string): Promise<ProductDraft | null> => {
     categoryIds: Array.isArray(draft.categoryIds) ? draft.categoryIds : [],
     tagIds: Array.isArray(draft.tagIds) ? draft.tagIds : [],
     parameters: Array.isArray(draft.parameters)
-      ? (draft.parameters as ProductParameterValue[])
+      ? draft.parameters
       : [],
     defaultPriceGroupId: draft.defaultPriceGroupId || null,
     active: draft.active ?? true,
@@ -108,7 +144,7 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
   const now = new Date();
   const id = randomUUID();
 
-  const draft = {
+  const draft: MongoDraftDoc = {
     _id: id,
     ...input,
     catalogIds: input.catalogIds || [],
@@ -121,7 +157,7 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
     updatedAt: now,
   };
 
-  await mongo.collection("product_drafts").insertOne(draft as any);
+  await mongo.collection("product_drafts").insertOne(draft);
 
   return {
     id,
@@ -146,13 +182,13 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
     supplierLink: input.supplierLink || null,
     priceComment: input.priceComment || null,
     stock: input.stock || null,
-    catalogIds: draft.catalogIds,
-    categoryIds: draft.categoryIds,
-    tagIds: draft.tagIds,
-    parameters: draft.parameters,
+    catalogIds: draft.catalogIds || [],
+    categoryIds: draft.categoryIds || [],
+    tagIds: draft.tagIds || [],
+    parameters: draft.parameters || [],
     defaultPriceGroupId: input.defaultPriceGroupId || null,
-    active: draft.active,
-    imageLinks: draft.imageLinks,
+    active: draft.active ?? true,
+    imageLinks: draft.imageLinks || [],
     baseProductId: input.baseProductId || null,
     createdAt: now,
     updatedAt: now,
@@ -163,60 +199,67 @@ const updateDraft_Mongo = async (id: string, input: UpdateProductDraftInput): Pr
   const mongo = await getMongoDb();
   const now = new Date();
 
-  const result = await mongo.collection("product_drafts").findOneAndUpdate(
-    { _id: id } as any,
+  const result = await mongo.collection<MongoDraftDoc>("product_drafts").findOneAndUpdate(
+    { _id: id },
     {
       $set: {
         ...input,
         updatedAt: now,
-      },
+      } as Partial<MongoDraftDoc>,
     },
     { returnDocument: "after" }
   );
 
   if (!result) return null;
+  
+  // Handle different MongoDB driver versions
+  const doc = (typeof result === 'object' && 'value' in result) 
+    ? (result.value as MongoDraftDoc | null) 
+    : (result as unknown as MongoDraftDoc | null);
+  
+  if (!doc) return null;
 
   return {
-    id: String(result._id),
-    name: result.name || "",
-    description: result.description || null,
-    sku: result.sku || null,
-    ean: result.ean || null,
-    gtin: result.gtin || null,
-    asin: result.asin || null,
-    name_en: result.name_en || null,
-    name_pl: result.name_pl || null,
-    name_de: result.name_de || null,
-    description_en: result.description_en || null,
-    description_pl: result.description_pl || null,
-    description_de: result.description_de || null,
-    weight: result.weight || null,
-    sizeLength: result.sizeLength || null,
-    sizeWidth: result.sizeWidth || null,
-    length: result.length || null,
-    price: result.price || null,
-    supplierName: result.supplierName || null,
-    supplierLink: result.supplierLink || null,
-    priceComment: result.priceComment || null,
-    stock: result.stock || null,
-    catalogIds: Array.isArray(result.catalogIds) ? result.catalogIds : [],
-    categoryIds: Array.isArray(result.categoryIds) ? result.categoryIds : [],
-    tagIds: Array.isArray(result.tagIds) ? result.tagIds : [],
-    parameters: Array.isArray(result.parameters)
-      ? (result.parameters as ProductParameterValue[])
+    id: String(doc._id),
+    name: doc.name || "",
+    description: doc.description || null,
+    sku: doc.sku || null,
+    ean: doc.ean || null,
+    gtin: doc.gtin || null,
+    asin: doc.asin || null,
+    name_en: doc.name_en || null,
+    name_pl: doc.name_pl || null,
+    name_de: doc.name_de || null,
+    description_en: doc.description_en || null,
+    description_pl: doc.description_pl || null,
+    description_de: doc.description_de || null,
+    weight: doc.weight || null,
+    sizeLength: doc.sizeLength || null,
+    sizeWidth: doc.sizeWidth || null,
+    length: doc.length || null,
+    price: doc.price || null,
+    supplierName: doc.supplierName || null,
+    supplierLink: doc.supplierLink || null,
+    priceComment: doc.priceComment || null,
+    stock: doc.stock || null,
+    catalogIds: Array.isArray(doc.catalogIds) ? doc.catalogIds : [],
+    categoryIds: Array.isArray(doc.categoryIds) ? doc.categoryIds : [],
+    tagIds: Array.isArray(doc.tagIds) ? doc.tagIds : [],
+    parameters: Array.isArray(doc.parameters)
+      ? doc.parameters
       : [],
-    defaultPriceGroupId: result.defaultPriceGroupId || null,
-    active: result.active ?? true,
-    imageLinks: Array.isArray(result.imageLinks) ? result.imageLinks : [],
-    baseProductId: result.baseProductId || null,
-    createdAt: result.createdAt || now,
+    defaultPriceGroupId: doc.defaultPriceGroupId || null,
+    active: doc.active ?? true,
+    imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
+    baseProductId: doc.baseProductId || null,
+    createdAt: doc.createdAt || now,
     updatedAt: now,
   };
 };
 
 const deleteDraft_Mongo = async (id: string): Promise<boolean> => {
   const mongo = await getMongoDb();
-  const result = await mongo.collection("product_drafts").deleteOne({ _id: id } as any);
+  const result = await mongo.collection("product_drafts").deleteOne({ _id: id });
   return result.deletedCount > 0;
 };
 
@@ -285,7 +328,7 @@ const createDraft_Prisma = async (input: CreateProductDraftInput): Promise<Produ
       active: input.active ?? true,
       imageLinks: input.imageLinks || [],
       baseProductId: input.baseProductId,
-    } as any, // Type assertion needed due to exactOptionalPropertyTypes
+    } as Prisma.ProductDraftCreateInput, // Type assertion needed due to exactOptionalPropertyTypes
   });
 
   return {
@@ -302,7 +345,7 @@ const updateDraft_Prisma = async (id: string, input: UpdateProductDraftInput): P
   try {
     const draft = await prisma.productDraft.update({
       where: { id },
-      data: input as any, // Type assertion needed due to exactOptionalPropertyTypes
+      data: input as Prisma.ProductDraftUpdateInput, // Type assertion needed due to exactOptionalPropertyTypes
     });
 
     return {

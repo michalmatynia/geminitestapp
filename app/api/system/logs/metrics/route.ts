@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSystemLogMetrics } from "@/lib/services/system-log-repository";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
-import type { SystemLogLevel } from "@/types";
 import { apiHandler } from "@/lib/api/api-handler";
 
 const levelSchema = z.enum(["info", "warn", "error"]);
@@ -20,7 +19,7 @@ async function GET_handler(req: Request) {
     const url = new URL(req.url);
     const parsed = metricsSchema.parse(Object.fromEntries(url.searchParams.entries()));
     const metrics = await getSystemLogMetrics({
-      level: (parsed.level as SystemLogLevel | undefined) ?? undefined,
+      level: parsed.level ?? undefined,
       source: parsed.source ?? undefined,
       query: parsed.query ?? undefined,
       from: parsed.from ? new Date(parsed.from) : null,

@@ -28,11 +28,11 @@ export function useCreateProduct() {
         body: JSON.stringify(payload),
       });
       if (!response.ok) throw new Error("Failed to create product");
-      return response.json();
+      return (await response.json()) as ProductWithImages;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["products-count"] });
+      void queryClient.invalidateQueries({ queryKey: ["products"] });
+      void queryClient.invalidateQueries({ queryKey: ["products-count"] });
     },
   });
 }
@@ -48,10 +48,10 @@ export function useUpdateProduct() {
         body: JSON.stringify(data),
       });
       if (!response.ok) throw new Error("Failed to update product");
-      return response.json();
+      return (await response.json()) as ProductWithImages;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      void queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 }
@@ -65,11 +65,11 @@ export function useDeleteProduct() {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete product");
-      return response.json();
+      return (await response.json()) as { success: boolean };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["products-count"] });
+      void queryClient.invalidateQueries({ queryKey: ["products"] });
+      void queryClient.invalidateQueries({ queryKey: ["products-count"] });
     },
   });
 }

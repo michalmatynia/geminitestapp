@@ -8,6 +8,7 @@ import { getMongoDb } from "@/lib/db/mongo-client";
 import { ObjectId } from "mongodb";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getProductAiJobRepository } from "@/lib/services/product-ai-job-repository";
+import type { ProductAiJobRecord } from "@/types/services/product-ai-job-repository";
 import {
   badRequestError,
   notFoundError,
@@ -22,29 +23,27 @@ type LanguageRecord = {
 
 type JobPayload = {
   isTest?: boolean;
-  productData?: any;
+  productData?: ProductFormData;
   imageUrls?: string[];
   visionOutputEnabled?: boolean;
   generationOutputEnabled?: boolean;
   languageIds?: string[];
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
-type Job = {
-  id: string;
-  productId: string;
-  type: string;
+type Job = ProductAiJobRecord & {
   payload: JobPayload;
-  [key: string]: any;
 };
 
 const normalizeLanguageDoc = (doc: Record<string, unknown>): LanguageRecord | null => {
   const rawId = doc.id ?? doc._id;
   const rawCode = doc.code ?? doc.languageCode ?? doc.isoCode;
   const rawName = doc.name ?? doc.languageName;
-  const id = typeof rawId === "string" ? rawId : rawId ? String(rawId) : "";
-  const code = typeof rawCode === "string" ? rawCode.trim() : rawCode ? String(rawCode) : "";
-  const name = typeof rawName === "string" ? rawName.trim() : rawName ? String(rawName) : "";
+  
+  const id = typeof rawId === "string" ? rawId : (typeof rawId === "number" ? String(rawId) : "");
+  const code = typeof rawCode === "string" ? rawCode.trim() : (typeof rawCode === "number" ? String(rawCode) : "");
+  const name = typeof rawName === "string" ? rawName.trim() : (typeof rawName === "number" ? String(rawName) : "");
+  
   if (!id || !code || !name) return null;
   return { id, code, name };
 };
@@ -52,7 +51,8 @@ const normalizeLanguageDoc = (doc: Record<string, unknown>): LanguageRecord | nu
 const normalizeIdValue = (value: unknown): string => {
   if (typeof value === "string") return value.trim();
   if (typeof value === "number" && Number.isFinite(value)) return String(value);
-  return value ? String(value) : "";
+  if (value instanceof ObjectId) return value.toString();
+  return "";
 };
 
 const fetchLanguagesByIds = async (ids: string[]): Promise<LanguageRecord[]> => {
@@ -157,7 +157,7 @@ async function processDescriptionGeneration(job: Job) {
   // Check if product data is already in the payload (from test mode)
   if (payload.productData && payload.isTest) {
     console.log(`[processDescriptionGeneration] Using product data from payload (test mode)`);
-    const rawData = payload.productData as ProductFormData;
+    const rawData = payload.productData;
 
     // Extract only the fields we need
     productData = {
@@ -215,7 +215,9 @@ async function processDescriptionGeneration(job: Job) {
       length: product.length || 0,
     };
 
-    const uploadedImages = (product.images as any[])?.map((img: any) => (img.imageFile?.filepath as string)).filter((p: string): p is string => Boolean(p)) || [];
+    const uploadedImages = product.images
+      .map((img) => img.imageFile?.filepath)
+      .filter((p): p is string => Boolean(p));
     const rawExternalImages = product.imageLinks || [];
 
     // Filter out empty strings and invalid URLs from imageLinks
@@ -342,9 +344,9 @@ async function processTranslation(job: Job) {
 
       let catalogIds: string[] = [];
       if (Array.isArray(product.catalogs)) {
-        catalogIds = (product.catalogs as any[]).map((c: any) => {
-          return (c.catalogId as string) || (c.id as string) || (c as string);
-        }).filter(Boolean);
+        catalogIds = product.catalogs.map((c) => {
+          return c.catalogId || c.catalog?.id;
+        }).filter((id): id is string => Boolean(id));
       }
 
       console.log(`[processTranslation] Looking up catalog IDs:`, catalogIds);

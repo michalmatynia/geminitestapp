@@ -7,7 +7,6 @@ import {
 } from "@/lib/services/system-log-repository";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
-import type { SystemLogLevel } from "@/types";
 import { apiHandler } from "@/lib/api/api-handler";
 
 const levelSchema = z.enum(["info", "warn", "error"]);
@@ -46,7 +45,7 @@ async function GET_handler(req: Request) {
     const result = await listSystemLogs({
       page: parsed.page ?? undefined,
       pageSize: parsed.pageSize ?? undefined,
-      level: (parsed.level as SystemLogLevel | undefined) ?? undefined,
+      level: parsed.level ?? undefined,
       source: parsed.source ?? undefined,
       query: parsed.query ?? undefined,
       from: parsed.from ? new Date(parsed.from) : null,
@@ -72,7 +71,7 @@ async function POST_handler(req: Request) {
     }
     const data = parsed.data;
     const created = await createSystemLog({
-      level: (data.level as SystemLogLevel | undefined) ?? undefined,
+      level: data.level ?? undefined,
       message: data.message,
       source: data.source ?? undefined,
       context: data.context ?? null,

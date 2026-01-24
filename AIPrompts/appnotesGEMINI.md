@@ -1,6 +1,5 @@
 
 * analyze the structure of the whole Products section and carry out segmentation for better code management
-Add try catch blocks for better bug handling in the Products section
 Optimization and speed up processes
 * Scan Products section for Types and Type Clusters and move them over to types folder.
 
@@ -21,6 +20,4 @@ npx prisma db push
 Prepare a suite tests in vitests
 use tanstack query across application
 
-use ShadCN/ui (Product List - Done, Notificatoins - Done, )
-Enable React Server Components - Implement  optimize frontend pages to fetch data server-side
  Add MSW 2.0 - Implement MSW Proper API mocking in all tests

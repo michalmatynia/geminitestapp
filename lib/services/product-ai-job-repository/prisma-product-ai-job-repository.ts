@@ -1,17 +1,19 @@
+import { ProductAiJob, Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import type {
   ProductAiJobRecord,
   ProductAiJobRepository,
   ProductAiJobUpdate,
+  ProductAiJobStatus,
 } from "@/types/services/product-ai-job-repository";
 
-const mapJob = (job: any): ProductAiJobRecord => ({
+const mapJob = (job: ProductAiJob): ProductAiJobRecord => ({
   id: job.id,
   productId: job.productId,
-  status: job.status,
+  status: job.status as ProductAiJobStatus,
   type: job.type,
-  payload: job.payload,
-  result: job.result ?? null,
+  payload: job.payload as Record<string, unknown>,
+  result: (job.result as Record<string, unknown>) ?? null,
   errorMessage: job.errorMessage ?? null,
   createdAt: job.createdAt,
   startedAt: job.startedAt ?? null,
@@ -24,7 +26,7 @@ export const prismaProductAiJobRepository: ProductAiJobRepository = {
       data: {
         productId,
         type,
-        payload: payload as any,
+        payload: payload as Prisma.InputJsonValue,
         status: "pending",
       },
     });
@@ -76,7 +78,7 @@ export const prismaProductAiJobRepository: ProductAiJobRepository = {
   async updateJob(jobId, data: ProductAiJobUpdate) {
     const job = await prisma.productAiJob.update({
       where: { id: jobId },
-      data: data as any,
+      data: data as Prisma.ProductAiJobUpdateInput,
     });
     return mapJob(job);
   },

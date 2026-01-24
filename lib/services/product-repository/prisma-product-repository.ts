@@ -27,18 +27,28 @@ const buildProductWhere = (filters: ProductFilters) => {
   if (filters.sku) {
     where.sku = {
       contains: filters.sku,
+      mode: 'insensitive',
     };
   }
 
   if (filters.search) {
-    where.OR = [
-      { name_en: { contains: filters.search } },
-      { name_pl: { contains: filters.search } },
-      { name_de: { contains: filters.search } },
-      { description_en: { contains: filters.search } },
-      { description_pl: { contains: filters.search } },
-      { description_de: { contains: filters.search } },
-    ];
+    // If a specific language is selected, only search in that language's name field
+    if (filters.searchLanguage) {
+      // searchLanguage is like "name_en", "name_pl", "name_de"
+      where.OR = [
+        { [filters.searchLanguage]: { contains: filters.search, mode: 'insensitive' } },
+      ];
+    } else {
+      // Search all language fields
+      where.OR = [
+        { name_en: { contains: filters.search, mode: 'insensitive' } },
+        { name_pl: { contains: filters.search, mode: 'insensitive' } },
+        { name_de: { contains: filters.search, mode: 'insensitive' } },
+        { description_en: { contains: filters.search, mode: 'insensitive' } },
+        { description_pl: { contains: filters.search, mode: 'insensitive' } },
+        { description_de: { contains: filters.search, mode: 'insensitive' } },
+      ];
+    }
   }
 
   if (filters.minPrice !== undefined) {

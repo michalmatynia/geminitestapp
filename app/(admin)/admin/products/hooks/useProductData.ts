@@ -12,6 +12,7 @@ interface UseProductDataProps {
   preferencesLoaded?: boolean;
   currencyCode?: string;
   priceGroups?: PriceGroupWithDetails[];
+  searchLanguage?: string; // "name_en" | "name_pl" | "name_de" - limits search to specific language
 }
 
 /**
@@ -57,6 +58,7 @@ export function useProductData({
   preferencesLoaded = true,
   currencyCode,
   priceGroups,
+  searchLanguage,
 }: UseProductDataProps) {
   const [data, setData] = useState<ProductWithImages[]>([]);
   const [total, setTotal] = useState(0);
@@ -79,19 +81,27 @@ export function useProductData({
 
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Sync catalogFilter when initialCatalogFilter changes (from preferences)
-  useEffect(() => {
-    if (preferencesLoaded && catalogFilter !== initialCatalogFilter) {
-      setCatalogFilter(initialCatalogFilter);
-    }
-  }, [initialCatalogFilter, preferencesLoaded, catalogFilter]);
+  // Track whether initial sync from preferences has completed
+  const [initialSyncComplete, setInitialSyncComplete] = useState(false);
 
-  // Sync pageSize when initialPageSize changes (from preferences)
+  // Sync catalogFilter and pageSize when preferences load (single effect to avoid multiple state updates)
   useEffect(() => {
-    if (preferencesLoaded && pageSize !== initialPageSize) {
-      setPageSize(initialPageSize);
+    if (preferencesLoaded && !initialSyncComplete) {
+      // Batch state updates to prevent multiple re-renders
+      const needsCatalogSync = catalogFilter !== initialCatalogFilter;
+      const needsPageSizeSync = pageSize !== initialPageSize;
+
+      if (needsCatalogSync) {
+        setCatalogFilter(initialCatalogFilter);
+      }
+      if (needsPageSizeSync) {
+        setPageSize(initialPageSize);
+      }
+
+      // Mark sync as complete - this will allow the fetch to proceed
+      setInitialSyncComplete(true);
     }
-  }, [initialPageSize, preferencesLoaded, pageSize]);
+  }, [initialCatalogFilter, initialPageSize, preferencesLoaded, initialSyncComplete, catalogFilter, pageSize]);
 
   // Debounce search
   useEffect(() => {
@@ -115,10 +125,11 @@ export function useProductData({
     return () => clearTimeout(t);
   }, [debouncedSearch, debouncedSku, minPrice, maxPrice, startDate, endDate, catalogFilter]);
 
-  // Load products - wait for preferences to load first
+  // Load products - wait for preferences to load AND initial sync to complete
   useEffect(() => {
-    // Don't fetch until preferences are loaded to avoid fetching with default values
-    if (!preferencesLoaded) {
+    // Don't fetch until preferences are loaded AND synced to local state
+    // This prevents a double fetch when preferences differ from initial values
+    if (!preferencesLoaded || !initialSyncComplete) {
       return;
     }
 
@@ -136,6 +147,7 @@ export function useProductData({
       page,
       pageSize,
       catalogId: catalogFilter === "all" ? undefined : catalogFilter,
+      searchLanguage,
     };
     let cancelled = false;
     const loadProducts = async () => {
@@ -168,7 +180,7 @@ export function useProductData({
     return () => {
       cancelled = true;
     };
-  }, [debouncedSearch, debouncedSku, minPrice, maxPrice, startDate, endDate, page, pageSize, catalogFilter, refreshTrigger, preferencesLoaded, currencyCode, priceGroups]);
+  }, [debouncedSearch, debouncedSku, minPrice, maxPrice, startDate, endDate, page, pageSize, catalogFilter, refreshTrigger, preferencesLoaded, initialSyncComplete, currencyCode, priceGroups, searchLanguage]);
 
   const totalPages = useMemo(() => {
     return Math.max(1, Math.ceil(total / pageSize));

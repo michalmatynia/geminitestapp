@@ -29,7 +29,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen bg-gray-900 text-white">
+    <div className="dark flex h-screen bg-gray-900 text-white">
       <aside
         className={`flex h-full flex-col transition-all duration-300 bg-gray-800 p-4 ${
           isMenuCollapsed ? "w-20" : "w-64"
@@ -82,4 +82,3 @@ export default function AdminLayout({
     </AdminLayoutProvider>
   );
 }
-

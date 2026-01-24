@@ -11,6 +11,7 @@ export async function getProducts(filters: {
   page?: number | undefined;
   pageSize?: number | undefined;
   catalogId?: string | undefined;
+  searchLanguage?: string | undefined;
 }): Promise<ProductWithImages[]> {
   const query = new URLSearchParams();
   if (filters.search) query.append("search", filters.search);
@@ -22,6 +23,7 @@ export async function getProducts(filters: {
   if (filters.page) query.append("page", String(filters.page));
   if (filters.pageSize) query.append("pageSize", String(filters.pageSize));
   if (filters.catalogId) query.append("catalogId", filters.catalogId);
+  if (filters.searchLanguage) query.append("searchLanguage", filters.searchLanguage);
 
   const res = await fetch(`/api/products?${query.toString()}`);
   if (!res.ok) {
@@ -50,6 +52,7 @@ export async function countProducts(filters: {
   startDate?: string | undefined;
   endDate?: string | undefined;
   catalogId?: string | undefined;
+  searchLanguage?: string | undefined;
 }): Promise<number> {
   const query = new URLSearchParams();
   if (filters.search) query.append("search", filters.search);
@@ -59,6 +62,7 @@ export async function countProducts(filters: {
   if (filters.startDate) query.append("startDate", filters.startDate);
   if (filters.endDate) query.append("endDate", filters.endDate);
   if (filters.catalogId) query.append("catalogId", filters.catalogId);
+  if (filters.searchLanguage) query.append("searchLanguage", filters.searchLanguage);
 
   const res = await fetch(`/api/products/count?${query.toString()}`);
   if (!res.ok) {

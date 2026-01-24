@@ -1,0 +1,24 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/services/exports/log-capture.ts
+  77:53  error  'firstArg' may use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/services/product-ai-job-repository/prisma-product-ai-job-repository.ts
+  12:3   error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  12:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mocks/__tests__/handlers.test.ts
+    9:55  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   19:62  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   49:62  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   67:62  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   78:62  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   86:55  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   95:62  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  106:55  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  115:62  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  126:62  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  147:55  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  149:27  error  Unsafe member access .name_en on an `any` value  @typescript-eslint/no-unsafe-member-access
+
+✖ 15 problems (15 errors, 0 warnings)
+

@@ -4,8 +4,8 @@ import type { ProductImageSlot } from "@/types/products-ui";
 
 const TOTAL_IMAGE_SLOTS = 15;
 
-const normalizeImageLinks = (links?: string[] | null) => {
-  const next = Array(TOTAL_IMAGE_SLOTS).fill("");
+const normalizeImageLinks = (links?: string[] | null): string[] => {
+  const next: string[] = new Array<string>(TOTAL_IMAGE_SLOTS).fill("");
   if (Array.isArray(links)) {
     links.slice(0, TOTAL_IMAGE_SLOTS).forEach((link, index) => {
       next[index] = typeof link === "string" ? link : "";
@@ -14,7 +14,7 @@ const normalizeImageLinks = (links?: string[] | null) => {
   return next;
 };
 
-const buildImageSlotsFromProduct = (product?: ProductWithImages) => {
+const buildImageSlotsFromProduct = (product?: ProductWithImages): (ProductImageSlot | null)[] => {
   const slots: (ProductImageSlot | null)[] = Array.from(
     { length: TOTAL_IMAGE_SLOTS },
     () => null
@@ -24,7 +24,7 @@ const buildImageSlotsFromProduct = (product?: ProductWithImages) => {
     if (pImg.imageFile) {
       slots[index] = {
         type: "existing",
-        data: pImg.imageFile,
+        data: pImg.imageFile as ImageFileSelection,
         previewUrl: pImg.imageFile.filepath,
         slotId: pImg.imageFile.id,
       };

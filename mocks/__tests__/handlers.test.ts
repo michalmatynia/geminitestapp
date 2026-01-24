@@ -6,7 +6,17 @@ describe('MSW Handlers', () => {
   describe('Products API', () => {
     it('should fetch all products', async () => {
       const response = await fetch('/api/products');
-      const data = await response.json();
+      const data = (await response.json()) as { data: Record<string, unknown>[]; total: number };
+
+      expect(response.status).toBe(200);
+      expect(data.data).toBeDefined();
+      expect(data.total).toBe(2);
+      expect(Array.isArray(data.data)).toBe(true);
+    });
+
+    it('should fetch all products', async () => {
+      const response = await fetch('/api/products');
+      const data = (await response.json()) as { data: Record<string, unknown>[]; total: number };
 
       expect(response.status).toBe(200);
       expect(data.data).toBeDefined();
@@ -16,7 +26,8 @@ describe('MSW Handlers', () => {
 
     it('should fetch a single product by id', async () => {
       const response = await fetch('/api/products/1');
-      const data = await response.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = (await response.json()) as Record<string, any>;
 
       expect(response.status).toBe(200);
       expect(data.id).toBe('1');
@@ -46,7 +57,8 @@ describe('MSW Handlers', () => {
       });
 
       expect(response.status).toBe(201);
-      const data = await response.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = (await response.json()) as Record<string, any>;
       expect(data.name_en).toBe('New Product');
       expect(data.id).toBeDefined();
     });
@@ -64,7 +76,8 @@ describe('MSW Handlers', () => {
       });
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = (await response.json()) as Record<string, any>;
       expect(data.name_en).toBe('Updated Product');
       expect(data.price).toBe(39.99);
     });
@@ -75,7 +88,8 @@ describe('MSW Handlers', () => {
       });
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = (await response.json()) as Record<string, any>;
       expect(data.success).toBe(true);
     });
   });
@@ -83,7 +97,8 @@ describe('MSW Handlers', () => {
   describe('Catalogs API', () => {
     it('should fetch all catalogs', async () => {
       const response = await fetch('/api/catalogs');
-      const data = await response.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = (await response.json()) as { data: any[]; total: number };
 
       expect(response.status).toBe(200);
       expect(data.data).toBeDefined();
@@ -92,7 +107,8 @@ describe('MSW Handlers', () => {
 
     it('should fetch a single catalog', async () => {
       const response = await fetch('/api/catalogs/1');
-      const data = await response.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = (await response.json()) as Record<string, any>;
 
       expect(response.status).toBe(200);
       expect(data.id).toBe('1');
@@ -103,7 +119,8 @@ describe('MSW Handlers', () => {
   describe('Settings API', () => {
     it('should fetch all settings', async () => {
       const response = await fetch('/api/settings');
-      const data = await response.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = (await response.json()) as { data: any[] };
 
       expect(response.status).toBe(200);
       expect(data.data).toBeDefined();
@@ -112,7 +129,8 @@ describe('MSW Handlers', () => {
 
     it('should fetch a single setting', async () => {
       const response = await fetch('/api/settings/SITE_NAME');
-      const data = await response.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = (await response.json()) as Record<string, any>;
 
       expect(response.status).toBe(200);
       expect(data.key).toBe('SITE_NAME');
@@ -123,7 +141,8 @@ describe('MSW Handlers', () => {
   describe('Health Check', () => {
     it('should return health status', async () => {
       const response = await fetch('/api/health');
-      const data = await response.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = (await response.json()) as Record<string, any>;
 
       expect(response.status).toBe(200);
       expect(data.status).toBe('ok');
@@ -144,9 +163,9 @@ describe('MSW Handlers', () => {
       );
 
       const response = await fetch('/api/products');
-      const data = await response.json();
+      const data = (await response.json()) as { data: Record<string, unknown>[] };
 
-      expect(data.data[0].name_en).toBe('Test Override');
+      expect((data.data[0] as Record<string, unknown>).name_en).toBe('Test Override');
     });
   });
 });

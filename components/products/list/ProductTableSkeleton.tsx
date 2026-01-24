@@ -3,12 +3,10 @@ import { TableRow, TableCell } from "@/components/ui/table";
 
 interface ProductTableSkeletonProps {
   rows?: number;
-  columns?: number;
 }
 
 export function ProductTableSkeleton({
-  rows = 12,
-  columns = 7
+  rows = 12
 }: ProductTableSkeletonProps) {
   return (
     <>

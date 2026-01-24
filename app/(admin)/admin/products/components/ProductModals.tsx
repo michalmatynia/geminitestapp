@@ -53,7 +53,7 @@ function CreateProductModalContent({ onClose }: { onClose: () => void }) {
         <Button
           onClick={() => void handleSubmit()}
           disabled={uploading}
-          className="min-w-[100px]"
+          className="min-w-[100px] border border-white/20 hover:border-white/40"
         >
           {uploading ? "Saving..." : "Create"}
         </Button>
@@ -62,7 +62,7 @@ function CreateProductModalContent({ onClose }: { onClose: () => void }) {
       <Button
         type="button"
         onClick={onClose}
-        className="bg-gray-800 text-white hover:bg-gray-700"
+        className="min-w-[100px] border border-white/20 hover:border-white/40"
       >
         Close
       </Button>
@@ -90,7 +90,7 @@ function EditProductModalContent({ onClose }: { onClose: () => void }) {
         <Button
           onClick={() => void handleSubmit()}
           disabled={uploading}
-          className="min-w-[100px]"
+          className="min-w-[100px] border border-white/20 hover:border-white/40"
         >
           {uploading ? "Saving..." : "Update"}
         </Button>
@@ -99,7 +99,7 @@ function EditProductModalContent({ onClose }: { onClose: () => void }) {
       <Button
         type="button"
         onClick={onClose}
-        className="bg-gray-800 text-white hover:bg-gray-700"
+        className="min-w-[100px] border border-white/20 hover:border-white/40"
       >
         Close
       </Button>

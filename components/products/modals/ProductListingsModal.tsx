@@ -106,7 +106,7 @@ export default function ProductListingsModal({
 
   // Load preferred connection from export settings
   useEffect(() => {
-    (async () => {
+    void (async () => {
       try {
         const res = await fetch("/api/products/exports/base/default-connection");
         if (!res.ok) {
@@ -473,7 +473,7 @@ export default function ProductListingsModal({
         }
       );
       if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
+        const payload = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(payload.error || "Failed to delete from Base.com");
       }
       setListings((prev) =>
@@ -534,7 +534,7 @@ export default function ProductListingsModal({
         }
       );
       if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
+        const payload = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(payload.error || "Failed to save inventory ID");
       }
       setListings((prev) =>
@@ -590,7 +590,7 @@ export default function ProductListingsModal({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const payloadRes = await res.json().catch(() => ({}));
+    const payloadRes = (await res.json().catch(() => ({}))) as { logs?: CapturedLog[]; error?: string };
     if (payloadRes.logs) {
       setExportLogs(payloadRes.logs);
     }
@@ -636,7 +636,7 @@ export default function ProductListingsModal({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const payloadRes = await res.json().catch(() => ({}));
+    const payloadRes = (await res.json().catch(() => ({}))) as { logs?: CapturedLog[]; error?: string };
     if (payloadRes.logs) {
       setExportLogs(payloadRes.logs);
     }

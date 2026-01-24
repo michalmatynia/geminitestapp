@@ -5,6 +5,15 @@ import { logger } from "@/lib/logger";
 import type { Catalog } from "@/types/products";
 import type { PriceGroupWithDetails } from "@/types";
 
+type LanguageRecord = { id: string; code: string; name: string };
+type LanguageOption = { value: "name_en" | "name_pl" | "name_de"; label: string };
+
+const supportedLanguageMap: Record<string, LanguageOption> = {
+  EN: { value: "name_en", label: "English" },
+  PL: { value: "name_pl", label: "Polish" },
+  DE: { value: "name_de", label: "German" },
+};
+
 export function useCatalogSync(catalogFilter: string) {
   const [rawCatalogs, setRawCatalogs] = useState<Catalog[]>([]);
   const [catalogsLoading, setCatalogsLoading] = useState(true);
@@ -17,6 +26,7 @@ export function useCatalogSync(catalogFilter: string) {
     Array<{ id: string; isDefault: boolean; currency?: { code?: string } | null }>
   >([]);
   const [allowedCurrencyCodes, setAllowedCurrencyCodes] = useState<string[]>([]);
+  const [languages, setLanguages] = useState<LanguageRecord[]>([]);
 
   const catalogFilterInitialized = useRef(false);
 
@@ -76,6 +86,24 @@ export function useCatalogSync(catalogFilter: string) {
       }
     };
     void loadPriceGroups();
+    return () => { mounted = false; };
+  }, []);
+
+  // Load languages for catalog-scoped language selection.
+  useEffect(() => {
+    let mounted = true;
+    const loadLanguages = async () => {
+      try {
+        const res = await fetch("/api/languages");
+        if (!res.ok) return;
+        const data = (await res.json()) as LanguageRecord[];
+        if (!mounted) return;
+        setLanguages(data);
+      } catch (error) {
+        logger.error("Failed to load languages:", error);
+      }
+    };
+    void loadLanguages();
     return () => { mounted = false; };
   }, []);
 
@@ -145,6 +173,44 @@ export function useCatalogSync(catalogFilter: string) {
     setCurrencyCode((prev) => (prev && codes.includes(prev) ? prev : fallbackCode));
   }, [codes, fallbackCode]);
 
+  const { languageOptions, fallbackNameLocale } = useMemo(() => {
+    const options: LanguageOption[] = [];
+    const isCatalogScoped = catalogFilter !== "all" && catalogFilter !== "unassigned";
+    const catalog = isCatalogScoped ? catalogs.find((entry) => entry.id === catalogFilter) : undefined;
+    const allowedIds = catalog?.languageIds ?? [];
+
+    const scopedLanguages =
+      allowedIds.length > 0
+        ? languages.filter((lang) => allowedIds.includes(lang.id))
+        : languages;
+
+    const seen = new Set<string>();
+    scopedLanguages.forEach((lang) => {
+      const key = lang.code?.trim().toUpperCase();
+      const option = supportedLanguageMap[key];
+      if (!option || seen.has(option.value)) return;
+      seen.add(option.value);
+      options.push(option);
+    });
+
+    if (options.length === 0) {
+      options.push(supportedLanguageMap.EN);
+      options.push(supportedLanguageMap.PL);
+      options.push(supportedLanguageMap.DE);
+    }
+
+    const defaultLanguageId = catalog?.defaultLanguageId ?? null;
+    const defaultLang = defaultLanguageId
+      ? languages.find((lang) => lang.id === defaultLanguageId)
+      : null;
+    const defaultOption = defaultLang
+      ? supportedLanguageMap[defaultLang.code?.trim().toUpperCase()]
+      : undefined;
+    const fallbackNameLocale = defaultOption?.value ?? options[0].value;
+
+    return { languageOptions: options, fallbackNameLocale };
+  }, [catalogFilter, catalogs, languages]);
+
   return {
     catalogs,
     catalogsLoading,
@@ -154,5 +220,7 @@ export function useCatalogSync(catalogFilter: string) {
     currencyOptions,
     priceGroups,
     catalogFilterInitialized,
+    languageOptions,
+    fallbackNameLocale,
   };
 }

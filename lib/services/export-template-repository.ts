@@ -1,5 +1,4 @@
 import { randomUUID } from "crypto";
-import type { Document, Filter } from "mongodb";
 import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { getProductDataProvider } from "@/lib/services/product-provider";
@@ -8,6 +7,8 @@ import {
   normalizeImageRetryPresets,
 } from "@/lib/constants/image-retry-presets";
 import type { ImageRetryPreset } from "@/types/product-imports";
+
+type SettingRecord = { _id: string; key?: string; value?: string };
 
 type ExportTemplateProvider = "mongodb" | "prisma";
 
@@ -50,7 +51,7 @@ const stripBasehostMappings = (mappings: TemplateMapping[]) =>
 const parseTemplates = (value: string | null): Template[] => {
   if (!value) return [];
   try {
-    const parsed = JSON.parse(value);
+    const parsed = JSON.parse(value) as unknown;
     if (!Array.isArray(parsed)) {
       console.warn("[ExportTemplateRepository] Parsed value is not an array:", parsed);
       return [];
@@ -72,10 +73,10 @@ const readTemplatesValue = async (): Promise<string | null> => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<{ _id: any; key?: string; value?: string }>("settings")
+      .collection<SettingRecord>("settings")
       .findOne({
         $or: [{ _id: SETTINGS_KEY }, { key: SETTINGS_KEY }],
-      } as any);
+      });
     const val = typeof doc?.value === "string" ? doc.value : null;
     console.log(
       `[ExportTemplateRepository] Read templates (Mongo):`,
@@ -190,7 +191,7 @@ const writeTemplatesValue = async (value: string) => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     await mongo.collection("settings").updateMany(
-      { $or: [{ _id: SETTINGS_KEY }, { key: SETTINGS_KEY }] } as any,
+      { $or: [{ _id: SETTINGS_KEY }, { key: SETTINGS_KEY }] },
       {
         $set: {
           value,
@@ -216,7 +217,7 @@ const writeActiveTemplateValue = async (value: string) => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     await mongo.collection("settings").updateOne(
-      { $or: [{ _id: ACTIVE_TEMPLATE_KEY }, { key: ACTIVE_TEMPLATE_KEY }] } as any,
+      { $or: [{ _id: ACTIVE_TEMPLATE_KEY }, { key: ACTIVE_TEMPLATE_KEY }] },
       {
         $set: {
           value,
@@ -241,7 +242,7 @@ const writeDefaultInventoryValue = async (value: string) => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     await mongo.collection("settings").updateOne(
-      { $or: [{ _id: DEFAULT_INVENTORY_KEY }, { key: DEFAULT_INVENTORY_KEY }] } as any,
+      { $or: [{ _id: DEFAULT_INVENTORY_KEY }, { key: DEFAULT_INVENTORY_KEY }] },
       {
         $set: {
           value,
@@ -266,7 +267,7 @@ const writeStockFallbackValue = async (value: string) => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     await mongo.collection("settings").updateOne(
-      { $or: [{ _id: STOCK_FALLBACK_KEY }, { key: STOCK_FALLBACK_KEY }] } as any,
+      { $or: [{ _id: STOCK_FALLBACK_KEY }, { key: STOCK_FALLBACK_KEY }] },
       {
         $set: {
           value,
@@ -291,7 +292,7 @@ const writeDefaultConnectionValue = async (value: string) => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     await mongo.collection("settings").updateOne(
-      { $or: [{ _id: DEFAULT_CONNECTION_KEY }, { key: DEFAULT_CONNECTION_KEY }] } as any,
+      { $or: [{ _id: DEFAULT_CONNECTION_KEY }, { key: DEFAULT_CONNECTION_KEY }] },
       {
         $set: {
           value,
@@ -316,7 +317,7 @@ const writeImageRetryPresetsValue = async (value: string) => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     await mongo.collection("settings").updateOne(
-      { $or: [{ _id: IMAGE_RETRY_PRESETS_KEY }, { key: IMAGE_RETRY_PRESETS_KEY }] } as any,
+      { $or: [{ _id: IMAGE_RETRY_PRESETS_KEY }, { key: IMAGE_RETRY_PRESETS_KEY }] },
       {
         $set: {
           value,
@@ -445,7 +446,7 @@ export const getExportImageRetryPresets = async (): Promise<ImageRetryPreset[]> 
   const raw = await readImageRetryPresetsValue();
   if (!raw) return getDefaultImageRetryPresets();
   try {
-    const parsed = JSON.parse(raw);
+    const parsed = JSON.parse(raw) as unknown;
     return normalizeImageRetryPresets(parsed);
   } catch (error) {
     console.error("[ExportTemplateRepository] Failed to parse image presets:", error);

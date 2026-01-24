@@ -25,7 +25,7 @@ export default function FilePreviewModal({
 }: FilePreviewModalProps) {
   return (
     <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50">
-      <div className="bg-gray-900 rounded-lg shadow-lg p-8 max-w-3xl w-full relative">
+      <div className="bg-gray-900 rounded-lg shadow-lg p-6 max-w-2xl w-full relative">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-white"
@@ -33,10 +33,10 @@ export default function FilePreviewModal({
         >
           <XIcon className="size-6" />
         </button>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <h2 className="text-2xl font-bold mb-4">{file.filename}</h2>
-            <div className="relative w-full h-96">
+            <div className="relative w-full h-64">
               <Image
                 src={file.filepath}
                 alt={file.filename}

@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import type { Filter, Document, ObjectId } from "mongodb";
+import type { Filter, ObjectId } from "mongodb";
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { getMongoDb } from "@/lib/db/mongo-client";
@@ -39,6 +39,22 @@ export type ListSystemLogsResult = {
 
 const SYSTEM_LOGS_COLLECTION = "system_logs";
 
+type MongoSystemLogDoc = {
+  _id?: string | ObjectId;
+  id?: string;
+  level?: string;
+  message?: string;
+  source?: string | null;
+  context?: Record<string, unknown> | null;
+  stack?: string | null;
+  path?: string | null;
+  method?: string | null;
+  statusCode?: number | null;
+  requestId?: string | null;
+  userId?: string | null;
+  createdAt?: Date;
+};
+
 const isMissingPrismaTable = (error: unknown) =>
   error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021";
 
@@ -76,8 +92,8 @@ const toSystemLogRecord = (doc: {
   createdAt: doc.createdAt ?? new Date(),
 });
 
-const buildPrismaWhere = (input: ListSystemLogsInput) => {
-  const where: any = {};
+const buildPrismaWhere = (input: ListSystemLogsInput): Prisma.SystemLogWhereInput => {
+  const where: Prisma.SystemLogWhereInput = {};
   if (input.level) {
     where.level = input.level;
   }
@@ -99,20 +115,20 @@ const buildPrismaWhere = (input: ListSystemLogsInput) => {
   return where;
 };
 
-const mergeWhere = (base: any, extra: any) => {
+const mergeWhere = (base: Prisma.SystemLogWhereInput, extra: Prisma.SystemLogWhereInput): Prisma.SystemLogWhereInput => {
   if (!base || Object.keys(base).length === 0) {
     return extra;
   }
   return { AND: [base, extra] };
 };
 
-const buildMongoFilter = (input: ListSystemLogsInput): Filter<Document> => {
-  const filter: Filter<Document> = {};
+const buildMongoFilter = (input: ListSystemLogsInput): Filter<MongoSystemLogDoc> => {
+  const filter: Filter<MongoSystemLogDoc> = {};
   if (input.level) {
     filter.level = input.level;
   }
   if (input.source) {
-    filter.source = { $regex: input.source, $options: "i" } as any;
+    filter.source = { $regex: input.source, $options: "i" };
   }
   if (input.query) {
     filter.$or = [
@@ -124,12 +140,12 @@ const buildMongoFilter = (input: ListSystemLogsInput): Filter<Document> => {
     filter.createdAt = {
       ...(input.from ? { $gte: input.from } : {}),
       ...(input.to ? { $lte: input.to } : {}),
-    } as any;
+    };
   }
   return filter;
 };
 
-const getMongoSystemLogMetrics = async (filter: Filter<Document>): Promise<SystemLogMetrics> => {
+const getMongoSystemLogMetrics = async (filter: Filter<MongoSystemLogDoc>): Promise<SystemLogMetrics> => {
   const mongo = await getMongoDb();
   const now = new Date();
   const last24 = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -168,33 +184,48 @@ const getMongoSystemLogMetrics = async (filter: Filter<Document>): Promise<Syste
         },
       },
     ])
-    .toArray();
+    .toArray() as unknown as [
+      {
+        totals: { count: number }[];
+        levels: { _id: string; count: number }[];
+        sources: { _id: string; count: number }[];
+        paths: { _id: string; count: number }[];
+        last24Hours: { count: number }[];
+        last7Days: { count: number }[];
+      },
+    ];
 
-  const first = result[0] ?? {};
-  const totals = Array.isArray(first.totals) ? first.totals : [];
-  const total = totals[0]?.count ?? 0;
+  const first = result[0];
+  if (!first) {
+    return {
+      total: 0,
+      levels: { info: 0, warn: 0, error: 0 },
+      last24Hours: 0,
+      last7Days: 0,
+      topSources: [],
+      topPaths: [],
+      generatedAt: now,
+    };
+  }
+
+  const total = first.totals[0]?.count ?? 0;
   const levels = { info: 0, warn: 0, error: 0 } as Record<SystemLogLevel, number>;
-  const levelRows = Array.isArray(first.levels) ? first.levels : [];
-  for (const row of levelRows) {
-    const key = row?._id as SystemLogLevel;
+  for (const row of first.levels) {
+    const key = row._id as SystemLogLevel;
     if (key && key in levels) {
-      levels[key] = row.count ?? 0;
+      levels[key] = row.count;
     }
   }
-  const topSources = (Array.isArray(first.sources) ? first.sources : []).map((row) => ({
+  const topSources = first.sources.map((row) => ({
     source: String(row._id ?? ""),
-    count: row.count ?? 0,
+    count: row.count,
   }));
-  const topPaths = (Array.isArray(first.paths) ? first.paths : []).map((row) => ({
+  const topPaths = first.paths.map((row) => ({
     path: String(row._id ?? ""),
-    count: row.count ?? 0,
+    count: row.count,
   }));
-  const last24Hours = Array.isArray(first.last24Hours)
-    ? first.last24Hours[0]?.count ?? 0
-    : 0;
-  const last7Days = Array.isArray(first.last7Days)
-    ? first.last7Days[0]?.count ?? 0
-    : 0;
+  const last24Hours = first.last24Hours[0]?.count ?? 0;
+  const last7Days = first.last7Days[0]?.count ?? 0;
 
   return {
     total,
@@ -229,7 +260,7 @@ export async function createSystemLog(
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     await mongo.collection(SYSTEM_LOGS_COLLECTION).insertOne({
-      _id: payload.id as any,
+      _id: payload.id,
       ...payload,
     });
     return normalizeLogRecord(payload);
@@ -241,7 +272,7 @@ export async function createSystemLog(
         level: payload.level,
         message: payload.message,
         ...(payload.source !== null && payload.source !== undefined ? { source: payload.source } : {}),
-        ...(payload.context !== null && payload.context !== undefined ? { context: payload.context as any } : {}),
+        ...(payload.context !== null && payload.context !== undefined ? { context: payload.context as Prisma.InputJsonValue } : {}),
         ...(payload.stack !== null && payload.stack !== undefined ? { stack: payload.stack } : {}),
         ...(payload.path !== null && payload.path !== undefined ? { path: payload.path } : {}),
         ...(payload.method !== null && payload.method !== undefined ? { method: payload.method } : {}),
@@ -262,7 +293,7 @@ export async function createSystemLog(
     if (isMissingPrismaTable(error) && process.env.MONGODB_URI) {
       const mongo = await getMongoDb();
       await mongo.collection(SYSTEM_LOGS_COLLECTION).insertOne({
-        _id: payload.id as any,
+        _id: payload.id,
         ...payload,
       });
       return normalizeLogRecord(payload);
@@ -282,16 +313,16 @@ export async function listSystemLogs(
     const mongo = await getMongoDb();
     const filter = buildMongoFilter(input);
     const total = await mongo
-      .collection(SYSTEM_LOGS_COLLECTION)
+      .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
       .countDocuments(filter);
     const docs = await mongo
-      .collection(SYSTEM_LOGS_COLLECTION)
+      .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
       .find(filter)
       .sort({ createdAt: -1 })
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .toArray();
-    const logs = docs.map((doc) => normalizeLogRecord(toSystemLogRecord(doc as any)));
+    const logs = docs.map((doc) => normalizeLogRecord(toSystemLogRecord(doc)));
     return { logs, total, page, pageSize };
   }
 
@@ -308,9 +339,10 @@ export async function listSystemLogs(
       }),
     ]);
 
-    const logs = rows.map((row: any) =>
+    const logs = rows.map((row) =>
       normalizeLogRecord({
         ...row,
+        level: row.level as SystemLogLevel,
         context: (row.context as Record<string, unknown> | null) ?? null,
       })
     );
@@ -321,17 +353,17 @@ export async function listSystemLogs(
       const mongo = await getMongoDb();
       const filter = buildMongoFilter(input);
       const total = await mongo
-        .collection(SYSTEM_LOGS_COLLECTION)
+        .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
         .countDocuments(filter);
       const docs = await mongo
-        .collection(SYSTEM_LOGS_COLLECTION)
+        .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
         .find(filter)
         .sort({ createdAt: -1 })
         .skip((page - 1) * pageSize)
         .limit(pageSize)
         .toArray();
       const logs = docs.map((doc) =>
-        normalizeLogRecord(toSystemLogRecord(doc as any))
+        normalizeLogRecord(toSystemLogRecord(doc))
       );
       return { logs, total, page, pageSize };
     }

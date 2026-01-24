@@ -621,7 +621,7 @@ export async function fetchBaseCategoriesDebug(token: string) {
   const method = "getInventoryCategories";
   const parameters = {};
   const result = await callBaseApiRaw(token, method, parameters);
-  const categories = result.payload ? await fetchBaseCategoriesFromPayload(result.payload) : [];
+  const categories = result.payload ? fetchBaseCategoriesFromPayload(result.payload) : [];
   return {
     ...result,
     method,

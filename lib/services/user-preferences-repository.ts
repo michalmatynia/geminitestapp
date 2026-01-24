@@ -56,8 +56,8 @@ const defaultPreferences = (userId: string) => ({
   userId,
   productListNameLocale: "name_en",
   productListCatalogFilter: "all",
-  productListCurrencyCode: null,
-  productListPageSize: 50,
+  productListCurrencyCode: "PLN",
+  productListPageSize: 12,
 });
 
 /**
@@ -122,8 +122,8 @@ export async function getUserPreferences(userId: string): Promise<UserPreference
       userId,
       productListNameLocale: "name_en",
       productListCatalogFilter: "all",
-      productListCurrencyCode: null,
-      productListPageSize: 50,
+      productListCurrencyCode: "PLN",
+      productListPageSize: 12,
     },
   });
 }
@@ -139,6 +139,14 @@ export async function updateUserPreferences(
   if (provider === "mongodb") {
     const db = await getMongoDb();
     const now = new Date();
+    const insertDefaults = {
+      _id: userId,
+      ...defaultPreferences(userId),
+      createdAt: now,
+    } as Record<string, unknown>;
+    for (const key of Object.keys(data)) {
+      delete insertDefaults[key];
+    }
     const result = await db
       .collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION)
       .findOneAndUpdate(
@@ -146,24 +154,30 @@ export async function updateUserPreferences(
         {
           $set: {
             ...data,
-            userId,
             updatedAt: now,
           },
           $setOnInsert: {
-            ...defaultPreferences(userId),
-            createdAt: now,
+            ...insertDefaults,
           },
         },
         { upsert: true, returnDocument: "after" }
       );
 
-    if (!result) {
+    if (result?.value) {
+      return toUserPreferences(result.value as UserPreferencesDocument);
+    }
+
+    const fallbackDoc = await db
+      .collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION)
+      .findOne({ $or: [{ _id: userId }, { userId }] });
+
+    if (!fallbackDoc) {
       throw operationFailedError("Failed to update preferences", undefined, {
         userId,
       });
     }
 
-    return toUserPreferences(result);
+    return toUserPreferences(fallbackDoc);
   }
 
   try {

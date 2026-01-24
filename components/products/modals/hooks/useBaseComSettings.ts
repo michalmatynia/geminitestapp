@@ -13,7 +13,6 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   const [inventories, setInventories] = useState<BaseInventory[]>([]);
   const [selectedInventoryId, setSelectedInventoryId] = useState<string>("");
   const [preferredInventoryId, setPreferredInventoryId] = useState<string | null>(null);
-  const [preferredConnectionId, setPreferredConnectionId] = useState<string | null>(null);
   const [loadingInventories, setLoadingInventories] = useState(false);
   const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
   const previousConnectionId = useRef<string>("");
@@ -28,7 +27,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
     if (previousConnectionId.current === connectionId) return;
     previousConnectionId.current = connectionId;
 
-    (async () => {
+    void (async () => {
       try {
         const res = await fetch("/api/products/export-templates");
         if (!res.ok) throw new Error("Failed to load templates");
@@ -61,7 +60,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
     }
 
     setLoadingInventories(true);
-    (async () => {
+    void (async () => {
       try {
         const res = await fetch("/api/products/imports/base", {
           method: "POST",
@@ -94,7 +93,6 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
           if (prefRes.ok) {
             const prefData = (await prefRes.json()) as { inventoryId?: string | null };
             setPreferredInventoryId(prefData.inventoryId || null);
-            setPreferredConnectionId(connectionId);
             if (prefData.inventoryId) setSelectedInventoryId(prefData.inventoryId);
           }
         } catch {
@@ -133,7 +131,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   // Sync template preference when selected changes
   useEffect(() => {
     if (!isBaseComIntegration || !selectedTemplateId || selectedTemplateId === "none") return;
-    (async () => {
+    void (async () => {
       try {
         await fetch("/api/products/exports/base/templates/preferred", {
           method: "POST",
@@ -149,7 +147,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   // Sync inventory preference when selected changes
   useEffect(() => {
     if (!isBaseComIntegration || !selectedInventoryId) return;
-    (async () => {
+    void (async () => {
       try {
         await fetch("/api/products/exports/base/inventories/preferred", {
           method: "POST",

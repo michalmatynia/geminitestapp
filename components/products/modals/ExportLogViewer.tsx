@@ -83,7 +83,7 @@ export function ExportLogViewer({
         return `[${log.timestamp}] [${log.level.toUpperCase()}] ${log.message}${contextStr}`;
       })
       .join("\n");
-    navigator.clipboard.writeText(logText);
+    void navigator.clipboard.writeText(logText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

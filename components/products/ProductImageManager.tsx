@@ -1,7 +1,7 @@
 "use client";
 
 import NextImage from "next/image";
-import { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -30,12 +30,44 @@ export default function ProductImageManager() {
   const [slotViewModes, setSlotViewModes] = useState<Array<"upload" | "link">>(
     Array(imageSlots.length).fill("upload")
   );
-  const dragImageRef = useRef<HTMLImageElement | null>(null);
+  const [prevSlots, setPrevSlots] = useState(imageSlots);
+  const [prevLinks, setPrevLinks] = useState(imageLinks);
 
   // Drag and drop state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [isReordering, setIsReordering] = useState(false);
+
+  // Sync slotViewModes when imageSlots or imageLinks change - adjusting state during render
+  if (!isReordering && (imageSlots !== prevSlots || imageLinks !== prevLinks)) {
+    setPrevSlots(imageSlots);
+    setPrevLinks(imageLinks);
+
+    const next = Array(imageSlots.length).fill("upload") as Array<
+      "upload" | "link"
+    >;
+    let changed = next.length !== slotViewModes.length;
+
+    for (let i = 0; i < imageSlots.length; i += 1) {
+      const hasUpload = Boolean(imageSlots[i]);
+      const hasLink = Boolean(imageLinks[i]?.trim());
+      const current = slotViewModes[i];
+      if (hasUpload && hasLink) {
+        next[i] = current ?? "upload";
+      } else if (hasLink && !hasUpload) {
+        next[i] = "link";
+      } else {
+        next[i] = "upload";
+      }
+      if (next[i] !== current) {
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      setSlotViewModes(next);
+    }
+  }
 
   const pushDebug = (info: Omit<DebugInfo, "timestamp">) => {
     setDebugInfo({
@@ -120,9 +152,6 @@ export default function ProductImageManager() {
     setImagesReordering(true);
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", String(index));
-    if (dragImageRef.current) {
-      e.dataTransfer.setDragImage(dragImageRef.current, 0, 0);
-    }
   };
 
   const handleDragEnd = (_e: React.DragEvent<HTMLDivElement>) => {
@@ -143,11 +172,20 @@ export default function ProductImageManager() {
   };
 
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    // Only clear drag over if we're actually leaving the element (not just moving to a child)
-    if (e.currentTarget.contains(e.relatedTarget as Node)) {
-      return;
+    // Only clear drag over if we're actually leaving the element
+    const rect = e.currentTarget.getBoundingClientRect();
+    const { clientX: x, clientY: y } = e;
+
+    // Check if the mouse is actually outside the element's bounds
+    // This is more reliable than relatedTarget for drag events
+    if (
+      x < rect.left ||
+      x >= rect.right ||
+      y < rect.top ||
+      y >= rect.bottom
+    ) {
+      setDragOverIndex(null);
     }
-    setDragOverIndex(null);
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>, toIndex: number) => {
@@ -177,45 +215,6 @@ export default function ProductImageManager() {
     setIsReordering(false);
     setImagesReordering(false);
   };
-
-  useEffect(() => {
-    if (!dragImageRef.current) {
-      const GlobalImage =
-        typeof window !== "undefined" && window.Image ? window.Image : null;
-      if (!GlobalImage) {
-        return;
-      }
-      const img = new GlobalImage();
-      img.src =
-        "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
-      dragImageRef.current = img;
-    }
-    // Skip slotViewModes recalculation during reordering to prevent flickering.
-    // The handleDrop function handles the view mode swap manually.
-    if (isReordering) {
-      return;
-    }
-    setSlotViewModes((prev) => {
-      const next = Array(imageSlots.length).fill("upload") as Array<
-        "upload" | "link"
-      >;
-      for (let i = 0; i < imageSlots.length; i += 1) {
-        const hasUpload = Boolean(imageSlots[i]);
-        const hasLink = Boolean(imageLinks[i]?.trim());
-        const current = prev[i];
-        if (hasUpload && hasLink) {
-          next[i] = current ?? "upload";
-          continue;
-        }
-        if (hasLink && !hasUpload) {
-          next[i] = "link";
-          continue;
-        }
-        next[i] = "upload";
-      }
-      return next;
-    });
-  }, [imageSlots, imageLinks, isReordering]);
 
   return (
     <div>
@@ -313,85 +312,87 @@ export default function ProductImageManager() {
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, index)}
                 className={`
-                  relative flex h-24 w-24 items-center justify-center rounded-md border bg-gray-800 transition-all
+                  relative flex h-24 w-24 items-center justify-center rounded-md border-2 bg-gray-800
+                  ${!isReordering ? "transition-all" : ""}
                   ${hasUpload ? "cursor-grab active:cursor-grabbing" : ""}
-                  ${isDragging ? "opacity-70 ring-2 ring-emerald-400/60 scale-[0.98]" : ""}
-                  ${isDragOver ? "border-emerald-500 border-2 bg-emerald-500/10" : "border-gray-700"}
+                  ${isDragging ? "opacity-70 ring-2 ring-emerald-400/60 scale-[0.98] border-emerald-400/40" : "border-gray-700"}
+                  ${isDragOver ? "border-emerald-500 bg-emerald-500/10" : ""}
                 `}
               >
-                {displayUrl ? (
-                  <>
-                    {hasUpload ? (
-                      <div className="absolute left-0 top-0 z-10 flex h-6 w-6 items-center justify-center rounded-br-md bg-gray-900/80 text-gray-400">
-                        <GripVertical className="h-3 w-3" />
+                <div className={`flex h-full w-full items-center justify-center ${isReordering ? "pointer-events-none" : ""}`}>
+                  {displayUrl ? (
+                    <>
+                      {hasUpload ? (
+                        <div className="absolute left-0 top-0 z-10 flex h-6 w-6 items-center justify-center rounded-br-md bg-gray-900/80 text-gray-400">
+                          <GripVertical className="h-3 w-3" />
+                        </div>
+                      ) : null}
+                      <NextImage
+                        src={displayUrl}
+                        alt={`Product Image ${index + 1}`}
+                        width={128}
+                        height={128}
+                        unoptimized
+                        className="rounded-md object-cover pointer-events-none"
+                        onError={() =>
+                          pushDebug({
+                            action: "image-load",
+                            message: "Failed to load preview",
+                            slotIndex: index,
+                          })
+                        }
+                      />
+                      {hasUpload ? (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute right-0 top-0 h-6 w-6 rounded-full"
+                          onClick={() => {
+                            handleSlotDisconnectImage(index).catch((error) => {
+                              pushDebug({
+                                action: "remove-image",
+                                message:
+                                  error instanceof Error
+                                    ? error.message
+                                    : "Failed to remove image",
+                                slotIndex: index,
+                              });
+                            });
+                          }}
+                          aria-label={`Remove image ${index + 1}`}
+                        >
+                          <XIcon className="h-4 w-4" />
+                        </Button>
+                      ) : null}
+                      <div className="absolute bottom-0 left-0 rounded-tr-md bg-gray-900/80 px-1.5 py-0.5 text-[10px] text-gray-400">
+                        {index + 1}
                       </div>
-                    ) : null}
-                    <NextImage
-                      src={displayUrl}
-                      alt={`Product Image ${index + 1}`}
-                      width={128}
-                      height={128}
-                      className="rounded-md object-cover pointer-events-none"
-                      onError={() =>
-                        pushDebug({
-                          action: "image-load",
-                          message: "Failed to load preview",
-                          slotIndex: index,
-                        })
-                      }
-                    />
-                    {hasUpload ? (
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-gray-500">
                       <Button
                         type="button"
-                        variant="destructive"
+                        variant="ghost"
                         size="icon"
-                        className="absolute right-0 top-0 h-6 w-6 rounded-full"
-                        onClick={() => {
-                          try {
-                            handleSlotDisconnectImage(index);
-                          } catch (error) {
-                            pushDebug({
-                              action: "remove-image",
-                              message:
-                                error instanceof Error
-                                  ? error.message
-                                  : "Failed to remove image",
-                              slotIndex: index,
-                            });
-                          }
-                        }}
-                        aria-label={`Remove image ${index + 1}`}
+                        onClick={() => triggerFileInput(index)}
+                        aria-label={`Upload image to slot ${index + 1}`}
                       >
-                        <XIcon className="h-4 w-4" />
+                        <PlusIcon className="h-6 w-6" />
                       </Button>
-                    ) : null}
-                    <div className="absolute bottom-0 left-0 rounded-tr-md bg-gray-900/80 px-1.5 py-0.5 text-[10px] text-gray-400">
-                      {index + 1}
+                      <span className="text-xs">Upload</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="text-xs"
+                        onClick={() => triggerFileManager(index)}
+                        aria-label={`Choose existing image for slot ${index + 1}`}
+                      >
+                        Choose Existing
+                      </Button>
                     </div>
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center justify-center text-gray-500">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => triggerFileInput(index)}
-                      aria-label={`Upload image to slot ${index + 1}`}
-                    >
-                      <PlusIcon className="h-6 w-6" />
-                    </Button>
-                    <span className="text-xs">Upload</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="text-xs"
-                      onClick={() => triggerFileManager(index)}
-                      aria-label={`Choose existing image for slot ${index + 1}`}
-                    >
-                      Choose Existing
-                    </Button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
               <Input
                 type="url"

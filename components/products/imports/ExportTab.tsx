@@ -338,7 +338,7 @@ export function ExportTab({
                         onChange={(event) => {
                           const raw = event.target.value;
                           updateImageRetryPreset(preset.id, {
-                            maxDimension: raw ? Number(raw) : (undefined as any),
+                            maxDimension: raw ? Number(raw) : undefined,
                           });
                         }}
                         className="mt-1 h-8"
@@ -356,7 +356,7 @@ export function ExportTab({
                         onChange={(event) => {
                           const raw = event.target.value;
                           updateImageRetryPreset(preset.id, {
-                            jpegQuality: raw ? Number(raw) : (undefined as any),
+                            jpegQuality: raw ? Number(raw) : undefined,
                           });
                         }}
                         className="mt-1 h-8"
@@ -420,7 +420,7 @@ export function ExportTab({
           </h3>
           <div className="flex flex-wrap gap-3">
             <Button
-              onClick={handleLoadInventories}
+              onClick={() => { void handleLoadInventories(); }}
               disabled={loadingInventories}
               variant="outline"
               size="sm"
@@ -429,7 +429,7 @@ export function ExportTab({
               {loadingInventories ? "Loading..." : "Load Inventories"}
             </Button>
             <Button
-              onClick={handleLoadWarehouses}
+              onClick={() => { void handleLoadWarehouses(); }}
               disabled={loadingWarehouses}
               variant="outline"
               size="sm"
@@ -438,7 +438,7 @@ export function ExportTab({
               {loadingWarehouses ? "Loading..." : "Load Warehouses"}
             </Button>
             <Button
-              onClick={handleDebugWarehouses}
+              onClick={() => { void handleDebugWarehouses(); }}
               disabled={loadingDebugWarehouses}
               variant="outline"
               size="sm"
@@ -457,7 +457,7 @@ export function ExportTab({
               </Label>
             </div>
             <Button
-              onClick={handleSaveExportSettings}
+              onClick={() => { void handleSaveExportSettings(); }}
               disabled={savingExportSettings}
               size="sm"
             >
@@ -505,15 +505,16 @@ export function ExportTab({
                     {(() => {
                       const payload = debugWarehouses.inventoriesRaw?.payload;
                       const inventories = payload
-                        ? (payload.inventories as unknown)
+                        ? payload["inventories"]
                         : null;
                       if (!Array.isArray(inventories)) return null;
-                      const match = inventories.find((inv) => {
+                      const match = (inventories as Array<Record<string, unknown>>).find((inv) => {
                         if (!inv || typeof inv !== "object") return false;
-                        const record = inv as Record<string, unknown>;
+                        const inventoryId = inv["inventory_id"];
                         return (
                           exportInventoryId &&
-                          String(record.inventory_id ?? "") === exportInventoryId
+                          (typeof inventoryId === "string" || typeof inventoryId === "number") &&
+                          String(inventoryId) === exportInventoryId
                         );
                       });
                       if (!match) {

@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { getAuthDataProvider } from "@/lib/services/auth-provider";
@@ -138,7 +139,7 @@ export const updateAuthSecurityProfile = async (
   if (!process.env.DATABASE_URL) return buildDefaultProfile(userId);
   await prisma.authSecurityProfile.upsert({
     where: { userId },
-    update: payload as any,
+    update: payload as Prisma.AuthSecurityProfileUpdateInput,
     create: {
       userId,
       mfaEnabled: Boolean(updates.mfaEnabled),

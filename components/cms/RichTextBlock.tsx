@@ -4,14 +4,16 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
+interface RichTextContent {
+  heading?: string;
+  text?: string;
+  buttonText?: string;
+  buttonLink?: string;
+}
+
 interface RichTextBlockProps {
-  content: {
-    heading?: string;
-    text?: string;
-    buttonText?: string;
-    buttonLink?: string;
-  };
-  onChange: (content: any) => void;
+  content: RichTextContent;
+  onChange: (content: RichTextContent) => void;
 }
 
 export default function RichTextBlock({ content, onChange }: RichTextBlockProps) {

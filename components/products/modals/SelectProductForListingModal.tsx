@@ -275,7 +275,11 @@ export default function SelectProductForListingModal({
       body: JSON.stringify(payload),
     });
 
-    const data = await res.json().catch(() => ({}));
+    const data = (await res.json().catch(() => ({}))) as { 
+      logs?: CapturedLog[]; 
+      skuExists?: boolean; 
+      error?: string 
+    };
     if (data.logs) {
       setExportLogs(data.logs);
     }

@@ -77,6 +77,8 @@ function AdminPageInner() {
     setCurrencyCode,
     currencyOptions,
     priceGroups,
+    languageOptions,
+    fallbackNameLocale,
   } = useCatalogSync(preferences.catalogFilter || "all");
 
   const {
@@ -109,6 +111,7 @@ function AdminPageInner() {
     preferencesLoaded: !preferencesLoading,
     currencyCode,
     priceGroups,
+    searchLanguage: preferences.nameLocale,
   });
 
   const {
@@ -185,6 +188,16 @@ function AdminPageInner() {
     setCatalogFilter(filter);
     updateCatalogFilter(filter);
   }, [setCatalogFilter, updateCatalogFilter]);
+
+  useEffect(() => {
+    if (!languageOptions.length) return;
+    const allowed = new Set(languageOptions.map((option) => option.value));
+    if (allowed.has(preferences.nameLocale)) return;
+    const nextLocale = allowed.has(fallbackNameLocale)
+      ? fallbackNameLocale
+      : languageOptions[0].value;
+    updateNameLocale(nextLocale);
+  }, [languageOptions, fallbackNameLocale, preferences.nameLocale, updateNameLocale]);
 
   // Load active drafts
   useEffect(() => {
@@ -316,6 +329,7 @@ function AdminPageInner() {
       if (startDate) params.append("startDate", startDate);
       if (endDate) params.append("endDate", endDate);
       if (catalogFilter && catalogFilter !== "all") params.append("catalogId", catalogFilter);
+      if (preferences.nameLocale) params.append("searchLanguage", preferences.nameLocale);
 
       const res = await fetch(`/api/products?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch all products");
@@ -338,7 +352,7 @@ function AdminPageInner() {
       }
       setLoadingGlobalSelection(false);
     }
-  }, [search, sku, minPrice, maxPrice, startDate, endDate, catalogFilter, toast, isDebugOpen]);
+  }, [search, sku, minPrice, maxPrice, startDate, endDate, catalogFilter, preferences.nameLocale, toast, isDebugOpen]);
 
   const handleMassDelete = useCallback(async () => {
     logger.log("Mass delete initiated.");
@@ -419,6 +433,7 @@ function AdminPageInner() {
         setPageSize={handleSetPageSize}
         nameLocale={preferences.nameLocale}
         setNameLocale={handleSetNameLocale}
+        languageOptions={languageOptions}
         currencyCode={currencyCode}
         setCurrencyCode={handleSetCurrencyCode}
         currencyOptions={currencyOptions}
@@ -512,6 +527,7 @@ type ProductListPanelProps = {
   setPageSize: (size: number) => void;
   nameLocale: "name_en" | "name_pl" | "name_de";
   setNameLocale: (locale: "name_en" | "name_pl" | "name_de") => void;
+  languageOptions: Array<{ value: "name_en" | "name_pl" | "name_de"; label: string }>;
   currencyCode: string;
   setCurrencyCode: (code: string) => void;
   currencyOptions: string[];
@@ -567,6 +583,7 @@ const ProductListPanel = memo(function ProductListPanel({
   setPageSize,
   nameLocale,
   setNameLocale,
+  languageOptions,
   currencyCode,
   setCurrencyCode,
   currencyOptions,
@@ -622,6 +639,7 @@ const ProductListPanel = memo(function ProductListPanel({
       setPageSize,
       nameLocale,
       setNameLocale,
+      languageOptions,
       currencyCode,
       setCurrencyCode,
       currencyOptions,
@@ -640,6 +658,7 @@ const ProductListPanel = memo(function ProductListPanel({
       setPageSize,
       nameLocale,
       setNameLocale,
+      languageOptions,
       currencyCode,
       setCurrencyCode,
       currencyOptions,

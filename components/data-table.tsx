@@ -25,12 +25,15 @@ import {
 
 export type PriceGroupForCalculation = {
   id: string;
+  groupId?: string;
   currencyId: string;
   type: string;
+  isDefault: boolean;
   sourceGroupId: string | null;
   priceMultiplier: number;
   addToPrice: number;
   currency: { code: string };
+  currencyCode?: string;
 };
 
 interface DataTableProps<TData> {
@@ -152,7 +155,7 @@ export const DataTable = memo(function DataTable<TData>({
   const table = useReactTable<TData>({
     data,
     columns,
-    getRowId: getRowId as any, // Cast to fix slight type mismatch with TanStack optional
+    getRowId: getRowId as (row: TData) => string,
     getCoreRowModel: getCoreRowModel(),
     onRowSelectionChange: onRowSelectionChange,
     getFilteredRowModel: getFilteredRowModel(),

@@ -132,7 +132,7 @@ const credentialsProvider = Credentials({
       console.log("[AUTH] Attempting to find user:", email);
       
       // findAuthUserByEmail uses getAuthDataProvider() internally to choose DB
-      let user = await findAuthUserByEmail(email);
+      const user = await findAuthUserByEmail(email);
 
       if (!user) {
         console.log("[AUTH] User not found");
@@ -281,29 +281,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
       callbacks: {
         ...(authConfig.callbacks ?? {}),
         async jwt({ token, user }) {
-          const userId = user?.id ?? (token as any).sub;
+          const userId = user?.id ?? token.sub;
           if (userId) {
             const access = await getAuthAccessForUser(userId);
-            (token as any).role = access.roleId;
-            (token as any).permissions = access.permissions;
-            (token as any).roleLevel = access.level;
-            (token as any).isElevated = access.isElevated;
+            token.role = access.roleId;
+            token.permissions = access.permissions;
+            token.roleLevel = access.level;
+            token.isElevated = access.isElevated;
             const security = await getAuthSecurityProfile(userId);
-            (token as any).accountDisabled = Boolean(security.disabledAt);
-            (token as any).accountBanned = Boolean(security.bannedAt);
+            token.accountDisabled = Boolean(security.disabledAt);
+            token.accountBanned = Boolean(security.bannedAt);
           }
           return token;
         },
-        async session({ session, token }) {
+        session({ session, token }) {
           if (session.user) {
-            const t = token as any;
-            session.user.id = t.sub ?? session.user.id;
-            session.user.role = t.role ?? null;
-            session.user.permissions = t.permissions ?? [];
-            session.user.roleLevel = t.roleLevel ?? null;
-            session.user.isElevated = t.isElevated ?? false;
-            session.user.accountDisabled = t.accountDisabled ?? false;
-            session.user.accountBanned = t.accountBanned ?? false;
+            session.user.id = token.sub ?? session.user.id;
+            session.user.role = token.role ?? null;
+            session.user.permissions = token.permissions ?? [];
+            session.user.roleLevel = token.roleLevel ?? null;
+            session.user.isElevated = token.isElevated ?? false;
+            session.user.accountDisabled = token.accountDisabled ?? false;
+            session.user.accountBanned = token.accountBanned ?? false;
           }
           return session;
         },

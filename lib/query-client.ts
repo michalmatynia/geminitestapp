@@ -1,6 +1,5 @@
 import {
   QueryClient,
-  DefaultError,
   QueryClientConfig,
 } from "@tanstack/react-query";
 

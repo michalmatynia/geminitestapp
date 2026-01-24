@@ -18,7 +18,7 @@ export function UserNav() {
 
   if (!session) {
     return (
-      <Button variant="ghost" onClick={() => signIn()}>
+      <Button variant="ghost" onClick={() => { void signIn(); }}>
         <LogIn className="mr-2 h-4 w-4" />
         Log In
       </Button>
@@ -45,7 +45,7 @@ export function UserNav() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => signOut()}>
+        <DropdownMenuItem onClick={() => { void signOut(); }}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>

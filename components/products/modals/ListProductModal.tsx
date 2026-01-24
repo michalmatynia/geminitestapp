@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ProductWithImages } from "@/types";
 import type {
-  BaseInventory,
   ImageRetryPreset,
   ImageTransformOptions,
 } from "@/types/product-imports";
@@ -124,7 +123,11 @@ export default function ListProductModal({
       body: JSON.stringify(payload),
     });
 
-    const data = await res.json().catch(() => ({}));
+    const data = (await res.json().catch(() => ({}))) as { 
+      logs?: CapturedLog[]; 
+      skuExists?: boolean; 
+      error?: string 
+    };
     if (data.logs) {
       setExportLogs(data.logs);
     }

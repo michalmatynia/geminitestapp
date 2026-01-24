@@ -1092,8 +1092,9 @@ export async function exportProductToBase(
 
     // Extract product ID from response
     // Baselinker API returns { status: "SUCCESS", product_id: "..." }
-    const productId = response.product_id
-      ? String(response.product_id)
+    const productIdValue = response.product_id;
+    const productId = (typeof productIdValue === "string" || typeof productIdValue === "number")
+      ? String(productIdValue)
       : null;
 
     return {
@@ -1143,8 +1144,9 @@ export async function exportProductImagesToBase(
     };
 
     const response = await callBaseApi(token, "updateInventoryProduct", apiParams);
-    const productId = response.product_id
-      ? String(response.product_id)
+    const productIdValue = response.product_id;
+    const productId = (typeof productIdValue === "string" || typeof productIdValue === "number")
+      ? String(productIdValue)
       : externalProductId;
 
     return {

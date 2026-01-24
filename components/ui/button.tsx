@@ -5,20 +5,20 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ring-offset-background",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg border border-transparent text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 ring-offset-background cursor-pointer",
   {
     variants: {
       variant: {
         default:
-          "border border-foreground/10 bg-foreground/8 text-foreground hover:bg-foreground/12",
+          "bg-transparent hover:bg-foreground/10",
         destructive:
-          "bg-destructive/90 text-destructive-foreground hover:bg-destructive",
+          "bg-destructive/15 text-destructive hover:bg-destructive/25",
         outline:
-          "border border-foreground/15 text-foreground/90 hover:bg-foreground/8",
+          "border-foreground/15 bg-transparent hover:bg-foreground/8",
         secondary:
-          "bg-muted text-foreground hover:bg-muted/80",
-        ghost: "text-foreground/80 hover:bg-foreground/8 hover:text-foreground",
-        link: "text-foreground underline-offset-4 hover:underline",
+          "bg-muted/30 hover:bg-muted/45",
+        ghost: "bg-transparent hover:bg-foreground/8",
+        link: "text-foreground/80 underline-offset-4 hover:underline hover:text-foreground",
       },
       size: {
         default: "h-9 px-3.5 py-2",

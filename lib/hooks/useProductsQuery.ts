@@ -2,7 +2,6 @@
 
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { getProducts, countProducts } from "@/lib/api";
-import { ProductWithImages } from "@/types";
 
 interface UseProductsFilters {
   search?: string | undefined;

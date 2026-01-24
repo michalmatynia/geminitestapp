@@ -31,7 +31,7 @@ export const setClientErrorBaseContext = (context: ClientErrorContext) => {
 const safeSerialize = (value: unknown) => {
   try {
     const seen = new WeakSet();
-    const json = JSON.stringify(value, (_key, val) => {
+    const json = JSON.stringify(value, (_key, val: unknown) => {
       if (_key && isSensitiveKey(_key)) return REDACTED_VALUE;
       if (typeof val === "object" && val !== null) {
         if (seen.has(val)) return "[Circular]";

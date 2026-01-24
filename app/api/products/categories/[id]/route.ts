@@ -337,7 +337,7 @@ async function DELETE_handler(
         );
       }
       const db = await getMongoDb();
-      const idsToDelete = await collectCategoryIds(db, params.id as string);
+      const idsToDelete = await collectCategoryIds(db, params.id);
       await db
         .collection("product_categories")
         .deleteMany({ id: { $in: idsToDelete } });
@@ -377,10 +377,10 @@ async function DELETE_handler(
 async function checkIsDescendant(categoryId: string, targetId: string): Promise<boolean> {
   if (categoryId === targetId) return true;
 
-  const children = await prisma.productCategory.findMany({
+  const children = (await prisma.productCategory.findMany({
     where: { parentId: categoryId },
     select: { id: true },
-  });
+  })) as Array<{ id: string }>;
 
   for (const child of children) {
     if (await checkIsDescendant(child.id, targetId)) {
@@ -397,11 +397,11 @@ async function checkIsDescendantMongo(
   targetId: string
 ): Promise<boolean> {
   if (categoryId === targetId) return true;
-  const children = await db
+  const children = (await db
     .collection<MongoCategory>("product_categories")
     .find({ parentId: categoryId })
     .project({ id: 1 })
-    .toArray();
+    .toArray()) as unknown as Array<{ id: string }>;
   for (const child of children) {
     if (await checkIsDescendantMongo(db, child.id, targetId)) {
       return true;
@@ -419,11 +419,11 @@ async function collectCategoryIds(
   while (queue.length > 0) {
     const current = queue.shift();
     if (!current) continue;
-    const children = await db
+    const children = (await db
       .collection<MongoCategory>("product_categories")
       .find({ parentId: current })
       .project({ id: 1 })
-      .toArray();
+      .toArray()) as unknown as Array<{ id: string }>;
     for (const child of children) {
       if (!ids.includes(child.id)) {
         ids.push(child.id);

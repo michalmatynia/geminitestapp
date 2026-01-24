@@ -4,10 +4,15 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import RichTextBlock from "./RichTextBlock";
 
+interface PageComponent {
+  type: string;
+  content: Record<string, unknown>;
+}
+
 interface Page {
   id: string;
   name: string;
-  components: any[];
+  components: PageComponent[];
 }
 
 interface CmsSideMenuProps {
@@ -17,7 +22,7 @@ interface CmsSideMenuProps {
 
 export default function CmsSideMenu({ page, setPage }: CmsSideMenuProps) {
   const addComponent = (type: string) => {
-    const newComponent = {
+    const newComponent: PageComponent = {
       type,
       content: {},
     };
@@ -31,7 +36,7 @@ export default function CmsSideMenu({ page, setPage }: CmsSideMenuProps) {
     });
   };
 
-  const handleContentChange = (index: number, content: any) => {
+  const handleContentChange = (index: number, content: Record<string, unknown>) => {
     setPage((prev) => {
       if (!prev) return prev;
       const nextComponents = [...(prev.components ?? [])];
@@ -78,8 +83,8 @@ export default function CmsSideMenu({ page, setPage }: CmsSideMenuProps) {
               return (
                 <RichTextBlock
                   key={index}
-                  content={component.content}
-                  onChange={(content) => handleContentChange(index, content)}
+                  content={component.content as Record<string, string | undefined>}
+                  onChange={(content) => handleContentChange(index, content as Record<string, unknown>)}
                 />
               );
             }

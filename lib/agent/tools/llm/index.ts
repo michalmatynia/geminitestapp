@@ -88,7 +88,7 @@ export const validateExtractionWithLLM = async (
     if (!response.ok) {
       throw new Error(`Extraction validation failed (${response.status}).`);
     }
-    const payload = await response.json();
+    const payload = (await response.json()) as unknown;
     const content = extractMessageContent(payload);
     const parsed = parseJsonObject(content) as {
       acceptedItems?: unknown;
@@ -181,7 +181,7 @@ export const normalizeExtractionItemsWithLLM = async (
     if (!response.ok) {
       throw new Error(`Output normalization failed (${response.status}).`);
     }
-    const payload = await response.json();
+    const payload = (await response.json()) as unknown;
     const content = extractMessageContent(payload).trim();
     const parsed = parseJsonObject(content) as { items?: unknown } | null;
     const cleaned = Array.isArray(parsed?.items)
@@ -231,7 +231,7 @@ export const inferSelectorsFromLLM = async (
     if (!response.ok) {
       throw new Error(`LLM selector inference failed (${response.status}).`);
     }
-    const json = await response.json();
+    const json = (await response.json()) as unknown;
     const content = extractMessageContent(json);
     const parsed = parseJsonObject(content) as { selectors?: unknown } | null;
     const selectors = Array.isArray(parsed?.selectors)
@@ -312,7 +312,7 @@ export const buildExtractionPlan = async (
     if (!response.ok) {
       throw new Error(`Extraction planner failed (${response.status}).`);
     }
-    const json = await response.json();
+    const json = (await response.json()) as unknown;
     const content = extractMessageContent(json);
     const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const primarySelectors = Array.isArray(parsed?.primarySelectors)
@@ -411,7 +411,7 @@ export const buildFailureRecoveryPlan = async (
     if (!response.ok) {
       throw new Error(`Failure recovery planner failed (${response.status}).`);
     }
-    const json = await response.json();
+    const json = (await response.json()) as unknown;
     const content = extractMessageContent(json);
     const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const selectors = Array.isArray(parsed?.selectors)
@@ -501,7 +501,7 @@ export const buildSearchQueryWithLLM = async (
     if (!response.ok) {
       throw new Error(`Search query inference failed (${response.status}).`);
     }
-    const payload = await response.json();
+    const payload = (await response.json()) as unknown;
     const content = extractMessageContent(payload);
     const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const query =
@@ -549,7 +549,7 @@ export const pickSearchResultWithLLM = async (
     if (!response.ok) {
       throw new Error(`Search result selection failed (${response.status}).`);
     }
-    const payload = await response.json();
+    const payload = (await response.json()) as unknown;
     const content = extractMessageContent(payload);
     const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const url = typeof parsed?.url === "string" ? parsed.url.trim() : "";
@@ -570,9 +570,9 @@ export const decideSearchFirstWithLLM = async (
   prompt: string,
   targetUrl: string | null,
   hasExplicitUrl: boolean,
-  memoryKey?: string | null,
-  memoryValidationModel?: string | null,
-  memorySummarizationModel?: string | null
+  _memoryKey?: string | null,
+  _memoryValidationModel?: string | null,
+  _memorySummarizationModel?: string | null
 ) => {
   const { runId, model, log, activeStepId } = context;
   if (!prompt || hasExplicitUrl) return null;
@@ -604,7 +604,7 @@ export const decideSearchFirstWithLLM = async (
     if (!response.ok) {
       throw new Error(`Tool selection failed (${response.status}).`);
     }
-    const payload = await response.json();
+    const payload = (await response.json()) as unknown;
     const content = extractMessageContent(payload);
     const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const useSearchFirst = Boolean(parsed?.useSearchFirst);

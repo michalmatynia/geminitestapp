@@ -19,6 +19,7 @@ import { logger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { ProductFormData } from "@/types";
 import { useToast } from "@/components/ui/toast";
+import type { ProductAiJob } from "@/types/product-jobs";
 
 export default function ProductFormGeneral() {
   const {
@@ -71,7 +72,7 @@ export default function ProductFormGeneral() {
           }),
         });
 
-        const enqueueData = await enqueueRes.json();
+        const enqueueData = (await enqueueRes.json()) as { error?: string; jobId?: string };
         if (!enqueueRes.ok) throw new Error(enqueueData.error || "Failed to enqueue generation job.");
         const jobId = enqueueData.jobId;
 
@@ -81,11 +82,13 @@ export default function ProductFormGeneral() {
           await new Promise(r => setTimeout(r, 2000));
           const statusRes = await fetch(`/api/products/ai-jobs/${jobId}`);
           if (!statusRes.ok) break;
-          const { job } = await statusRes.json();
+          const { job } = (await statusRes.json()) as { job: ProductAiJob };
 
           if (job.status === "completed") {
-            const { description } = job.result;
-            setValue("description_en", description);
+            const description = job.result?.description;
+            if (typeof description === "string") {
+              setValue("description_en", description);
+            }
             completed = true;
           } else if (job.status === "failed") {
             throw new Error(job.errorMessage || "Generation failed.");
@@ -114,6 +117,28 @@ export default function ProductFormGeneral() {
     }
   };
 
+  const handlePathGenerateDescription = () => {
+    if (!product?.id) {
+      toast("Save the product before running a path trigger.", {
+        variant: "error",
+      });
+      return;
+    }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("ai-path-trigger", {
+          detail: {
+            trigger: "path_generate_description",
+            productId: product.id,
+          },
+        })
+      );
+    }
+    toast("Path trigger sent. Configure AI Paths to handle it.", {
+      variant: "info",
+    });
+  };
+
   const handleTranslate = async () => {
     logger.log("Translating product...");
     setTranslating(true);
@@ -133,7 +158,7 @@ export default function ProductFormGeneral() {
         }),
       });
 
-      const enqueueData = await enqueueRes.json();
+      const enqueueData = (await enqueueRes.json()) as { error?: string; jobId?: string };
       if (!enqueueRes.ok) throw new Error(enqueueData.error || "Failed to enqueue translation job.");
 
       logger.log(`Translation job ${enqueueData.jobId} created successfully.`);
@@ -285,8 +310,19 @@ export default function ProductFormGeneral() {
                           disabled={generating}
                           aria-label="Generate product description"
                           aria-disabled={generating}
+                          className="border border-white/20 hover:border-white/40"
                         >
                           {generating ? "Generating..." : "Generate Description"}
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={handlePathGenerateDescription}
+                          disabled={!product?.id}
+                          aria-label="Generate description via AI Path"
+                          aria-disabled={!product?.id}
+                          className="border border-white/20 hover:border-white/40"
+                        >
+                          Path Generate Description
                         </Button>
                         <Button
                           type="button"

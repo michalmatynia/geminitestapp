@@ -173,7 +173,7 @@ export async function validateAgentLongTermMemory(params: {
     if (!response.ok) {
       throw new Error(`Memory validation failed (${response.status}).`);
     }
-    const payload = await response.json();
+    const payload: unknown = await response.json();
     const content = extractMessageContent(payload);
     const parsed = parseJsonObject(content) as {
       valid?: unknown;
@@ -244,7 +244,7 @@ export async function validateAndAddAgentLongTermMemory(params: {
         }),
       });
       if (response.ok) {
-        const payload = await response.json();
+        const payload: unknown = await response.json();
         const content = extractMessageContent(payload);
         const parsed = parseJsonObject(content) as {
           summary?: unknown;

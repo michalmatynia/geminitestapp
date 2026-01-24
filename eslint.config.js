@@ -20,6 +20,7 @@ const configFiles = [
   "prisma/seed.js",
   "server.cjs",
   "check-catalog.mjs",
+  "check-db-tables.mjs",
   "check-job.mjs",
   "debug-db.cjs",
   "debug-product.mjs",

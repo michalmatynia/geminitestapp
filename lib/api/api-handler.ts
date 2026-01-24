@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { resolveError } from "@/lib/errors/resolve-error";
 import { getErrorFingerprint, logSystemEvent } from "@/lib/services/system-logger";
+import { badRequestError } from "@/lib/errors/app-error";
 import type { SystemLogLevel } from "@/types";
 
 /**
@@ -270,7 +271,6 @@ export function getRequiredParam(
 ): string {
   const value = searchParams.get(name);
   if (!value) {
-    const { badRequestError } = require("@/lib/errors/app-error");
     throw badRequestError(`Missing required parameter: ${name}`);
   }
   return value;

@@ -56,7 +56,7 @@ interface ProductFormContextType {
   setShowFileManager: (show: boolean) => void;
   handleSlotImageChange: (file: File | null, index: number) => void;
   handleSlotFileSelect: (file: ImageFileSelection | null, index: number) => void;
-  handleSlotDisconnectImage: (index: number) => void;
+  handleSlotDisconnectImage: (index: number) => Promise<void>;
   handleMultiImageChange: (files: File[]) => void;
   handleMultiFileSelect: (files: ImageFileSelection[]) => void;
   swapImageSlots: (fromIndex: number, toIndex: number) => void;
@@ -154,7 +154,6 @@ export function ProductFormProvider({
   });
   const {
     register,
-    handleSubmit,
     formState: { errors },
     setValue,
     getValues,
@@ -227,7 +226,7 @@ export function ProductFormProvider({
 
   useEffect(() => {
     setParameterValues(normalizeParameterValues(product?.parameters ?? draft?.parameters ?? []));
-  }, [product?.id, draft?.id]);
+  }, [product?.id, draft?.id, product?.parameters, draft?.parameters]);
 
   useEffect(() => {
     return () => {
@@ -261,7 +260,7 @@ export function ProductFormProvider({
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
-        formData.append(key, String(value));
+        formData.append(key, typeof value === "object" ? JSON.stringify(value) : String(value));
       }
     });
     const normalizedLinks = imageLinks.map((link) => link.trim());

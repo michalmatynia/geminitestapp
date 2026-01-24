@@ -1,0 +1,258 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/app/api/marketplace/mappings/[id]/route.ts
+  24:18  error  Unexpected `await` of a non-Promise (non-"Thenable") value  @typescript-eslint/await-thenable
+  50:18  error  Unexpected `await` of a non-Promise (non-"Thenable") value  @typescript-eslint/await-thenable
+  83:18  error  Unexpected `await` of a non-Promise (non-"Thenable") value  @typescript-eslint/await-thenable
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/app/api/marketplace/mappings/bulk/route.ts
+  42:18  error  Unexpected `await` of a non-Promise (non-"Thenable") value  @typescript-eslint/await-thenable
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/app/api/marketplace/mappings/route.ts
+  31:18  error  Unexpected `await` of a non-Promise (non-"Thenable") value  @typescript-eslint/await-thenable
+  59:18  error  Unexpected `await` of a non-Promise (non-"Thenable") value  @typescript-eslint/await-thenable
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/components/products/ProductImageManager.tsx
+  360:29  error  Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator  @typescript-eslint/no-floating-promises
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/client/error-logger.ts
+  34:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/services/draft-repository.ts
+   86:10  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+  130:10  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+  204:7   error  Unsafe assignment of an `any` value                                                @typescript-eslint/no-unsafe-assignment
+  207:12  error  Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+  241:10  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+  293:5   error  Unsafe assignment of an `any` value                                                @typescript-eslint/no-unsafe-assignment
+  323:10  error  Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+  340:7   error  Unsafe assignment of an `any` value                                                @typescript-eslint/no-unsafe-assignment
+  340:22  error  Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/services/export-template-repository.ts
+    2:15  error  'Document' is defined but never used. Allowed unused vars must match /^_/u                                           @typescript-eslint/no-unused-vars
+    2:25  error  'Filter' is defined but never used. Allowed unused vars must match /^_/u                                             @typescript-eslint/no-unused-vars
+   53:11  error  Unsafe assignment of an `any` value                                                                                  @typescript-eslint/no-unsafe-assignment
+   75:26  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   76:16  error  Unsafe argument of type `any` assigned to a parameter of type `Filter<{ _id: any; key?: string; value?: string; }>`  @typescript-eslint/no-unsafe-argument
+   78:12  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  193:7   error  Unsafe argument of type `any` assigned to a parameter of type `Filter<Document>`                                     @typescript-eslint/no-unsafe-argument
+  193:66  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  219:7   error  Unsafe argument of type `any` assigned to a parameter of type `Filter<Document>`                                     @typescript-eslint/no-unsafe-argument
+  219:80  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  244:7   error  Unsafe argument of type `any` assigned to a parameter of type `Filter<Document>`                                     @typescript-eslint/no-unsafe-argument
+  244:84  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  269:7   error  Unsafe argument of type `any` assigned to a parameter of type `Filter<Document>`                                     @typescript-eslint/no-unsafe-argument
+  269:78  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  294:7   error  Unsafe argument of type `any` assigned to a parameter of type `Filter<Document>`                                     @typescript-eslint/no-unsafe-argument
+  294:86  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  319:7   error  Unsafe argument of type `any` assigned to a parameter of type `Filter<Document>`                                     @typescript-eslint/no-unsafe-argument
+  319:88  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  448:11  error  Unsafe assignment of an `any` value                                                                                  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/services/exports/base-exporter.ts
+  1096:16  error  'response.product_id' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+  1147:16  error  'response.product_id' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/services/exports/log-capture.ts
+  77:24  error  'firstArg' may use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/services/external-category-repository.ts
+  82:8  error  Async function 'getExternalCategoryRepository' has no 'await' expression  @typescript-eslint/require-await
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/services/import-template-repository.ts
+  54:11  error  Unsafe assignment of an `any` value                                                          @typescript-eslint/no-unsafe-assignment
+  74:11  error  Unsafe assignment of an `any` value                                                          @typescript-eslint/no-unsafe-assignment
+  87:24  error  'raw' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/services/imports/base-client.ts
+  624:39  error  Unexpected `await` of a non-Promise (non-"Thenable") value  @typescript-eslint/await-thenable
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/services/imports/base-mapper.ts
+  75:32  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/services/integration-provider.ts
+  6:7  error  'normalizeProvider' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/services/noteService/index.ts
+  67:18  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+  79:12  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/services/product-ai-job-repository/prisma-product-ai-job-repository.ts
+   8:22  error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+   9:3   error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
+   9:11  error  Unsafe member access .id on an `any` value            @typescript-eslint/no-unsafe-member-access
+  10:3   error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
+  10:18  error  Unsafe member access .productId on an `any` value     @typescript-eslint/no-unsafe-member-access
+  11:3   error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
+  11:15  error  Unsafe member access .status on an `any` value        @typescript-eslint/no-unsafe-member-access
+  12:3   error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
+  12:13  error  Unsafe member access .type on an `any` value          @typescript-eslint/no-unsafe-member-access
+  13:16  error  Unsafe member access .payload on an `any` value       @typescript-eslint/no-unsafe-member-access
+  14:15  error  Unsafe member access .result on an `any` value        @typescript-eslint/no-unsafe-member-access
+  15:3   error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
+  15:21  error  Unsafe member access .errorMessage on an `any` value  @typescript-eslint/no-unsafe-member-access
+  16:3   error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
+  16:18  error  Unsafe member access .createdAt on an `any` value     @typescript-eslint/no-unsafe-member-access
+  17:3   error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
+  17:18  error  Unsafe member access .startedAt on an `any` value     @typescript-eslint/no-unsafe-member-access
+  18:3   error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
+  18:19  error  Unsafe member access .finishedAt on an `any` value    @typescript-eslint/no-unsafe-member-access
+  27:9   error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
+  27:29  error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  79:7   error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
+  79:21  error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/services/product-provider.ts
+  6:7  error  'normalizeProvider' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/services/productAiQueue.ts
+   25:17  error  Unexpected any. Specify a different type                                                         @typescript-eslint/no-explicit-any
+   30:18  error  Unexpected any. Specify a different type                                                         @typescript-eslint/no-explicit-any
+   38:18  error  Unexpected any. Specify a different type                                                         @typescript-eslint/no-explicit-any
+   45:65  error  'rawId' will use Object's default stringification format ('[object Object]') when stringified    @typescript-eslint/no-base-to-string
+   46:80  error  'rawCode' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+   47:80  error  'rawName' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+   55:25  error  'value' will use Object's default stringification format ('[object Object]') when stringified    @typescript-eslint/no-base-to-string
+  218:47  error  Unexpected any. Specify a different type                                                         @typescript-eslint/no-explicit-any
+  218:65  error  Unexpected any. Specify a different type                                                         @typescript-eslint/no-explicit-any
+  218:78  error  Unsafe member access .imageFile on an `any` value                                                @typescript-eslint/no-unsafe-member-access
+  345:43  error  Unexpected any. Specify a different type                                                         @typescript-eslint/no-explicit-any
+  345:58  error  Unexpected any. Specify a different type                                                         @typescript-eslint/no-explicit-any
+  346:21  error  Unsafe member access .catalogId on an `any` value                                                @typescript-eslint/no-unsafe-member-access
+  346:48  error  Unsafe member access .id on an `any` value                                                       @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/services/productAiService.ts
+   7:95  error  Unexpected any. Specify a different type                                            @typescript-eslint/no-explicit-any
+  61:63  error  Unexpected any. Specify a different type                                            @typescript-eslint/no-explicit-any
+  63:41  error  Unsafe argument of type `any` assigned to a parameter of type `ProductAiJobUpdate`  @typescript-eslint/no-unsafe-argument
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/services/system-log-repository.ts
+   80:16   error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+   82:11   error  Unsafe member access .level on an `any` value                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-member-access
+   85:11   error  Unsafe member access .source on an `any` value                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-member-access
+   88:11   error  Unsafe member access .OR on an `any` value                                                                                                                                                                                                                                                    @typescript-eslint/no-unsafe-member-access
+   94:11   error  Unsafe member access .createdAt on an `any` value                                                                                                                                                                                                                                             @typescript-eslint/no-unsafe-member-access
+   99:3    error  Unsafe return of a value of type `any`                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-return
+  102:27   error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  102:39   error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  103:28   error  Unsafe argument of type `any` assigned to a parameter of type `{}`                                                                                                                                                                                                                            @typescript-eslint/no-unsafe-argument
+  104:5    error  Unsafe return of a value of type `any`                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-return
+  115:5    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  115:64   error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  124:5    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  127:10   error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  175:9    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  175:28   error  Unsafe member access .count on an `any` value                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-member-access
+  179:22   error  Unsafe member access ._id on an `any` value                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
+  181:7    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  181:25   error  Unsafe member access .count on an `any` value                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-member-access
+  185:24   error  Unsafe member access ._id on an `any` value                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
+  186:5    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  186:16   error  Unsafe member access .count on an `any` value                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-member-access
+  189:22   error  Unsafe member access ._id on an `any` value                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
+  190:5    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  190:16   error  Unsafe member access .count on an `any` value                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-member-access
+  192:9    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  193:29   error  Unsafe member access .count on an `any` value                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-member-access
+  195:9    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  196:27   error  Unsafe member access .count on an `any` value                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-member-access
+  200:5    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  202:5    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  203:5    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  232:7    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  232:26   error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  244:75   error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  244:103  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  265:9    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  265:28   error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  294:73   error  Unsafe argument of type `any` assigned to a parameter of type `{ _id?: string | ObjectId; id?: string; level?: string; message?: string; source?: string | null; context?: Record<string, unknown> | null; stack?: string | null; path?: string | null; ... 4 more ...; createdAt?: Date; }`  @typescript-eslint/no-unsafe-argument
+  294:80   error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  298:9    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  302:32   error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  304:9    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  311:33   error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  312:26   error  Unsafe argument of type `any` assigned to a parameter of type `SystemLogRecord`                                                                                                                                                                                                               @typescript-eslint/no-unsafe-argument
+  314:23   error  Unsafe member access .context on an `any` value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-member-access
+  334:46   error  Unsafe argument of type `any` assigned to a parameter of type `{ _id?: string | ObjectId; id?: string; level?: string; message?: string; source?: string | null; context?: Record<string, unknown> | null; stack?: string | null; path?: string | null; ... 4 more ...; createdAt?: Date; }`  @typescript-eslint/no-unsafe-argument
+  334:53   error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  353:9    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  366:32   error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  368:9    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  371:9    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/services/system-logger.ts
+  22:24  error  Unsafe argument of type `any` assigned to a parameter of type `WeakKey`            @typescript-eslint/no-unsafe-argument
+  23:20  error  Unsafe argument of type `any` assigned to a parameter of type `WeakKey`            @typescript-eslint/no-unsafe-argument
+  28:9   error  Unsafe return of a value of type `any`                                             @typescript-eslint/no-unsafe-return
+  43:21  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/services/transient-recovery-settings.ts
+  39:24  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  39:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/utils/retry.ts
+  84:9  error  Expected the Promise rejection reason to be an Error  @typescript-eslint/prefer-promise-reject-errors
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/utils/transient-recovery.ts
+  9:39  error  'unknown' overrides all other types in this union type  @typescript-eslint/no-redundant-type-constituents
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mocks/__tests__/handlers.test.ts
+    9:13  error  Unsafe assignment of an `any` value                @typescript-eslint/no-unsafe-assignment
+   12:19  error  Unsafe member access .data on an `any` value       @typescript-eslint/no-unsafe-member-access
+   13:19  error  Unsafe member access .total on an `any` value      @typescript-eslint/no-unsafe-member-access
+   14:33  error  Unsafe member access .data on an `any` value       @typescript-eslint/no-unsafe-member-access
+   19:13  error  Unsafe assignment of an `any` value                @typescript-eslint/no-unsafe-assignment
+   22:19  error  Unsafe member access .id on an `any` value         @typescript-eslint/no-unsafe-member-access
+   23:19  error  Unsafe member access .name_en on an `any` value    @typescript-eslint/no-unsafe-member-access
+   24:19  error  Unsafe member access .sku on an `any` value        @typescript-eslint/no-unsafe-member-access
+   49:13  error  Unsafe assignment of an `any` value                @typescript-eslint/no-unsafe-assignment
+   50:19  error  Unsafe member access .name_en on an `any` value    @typescript-eslint/no-unsafe-member-access
+   51:19  error  Unsafe member access .id on an `any` value         @typescript-eslint/no-unsafe-member-access
+   67:13  error  Unsafe assignment of an `any` value                @typescript-eslint/no-unsafe-assignment
+   68:19  error  Unsafe member access .name_en on an `any` value    @typescript-eslint/no-unsafe-member-access
+   69:19  error  Unsafe member access .price on an `any` value      @typescript-eslint/no-unsafe-member-access
+   78:13  error  Unsafe assignment of an `any` value                @typescript-eslint/no-unsafe-assignment
+   79:19  error  Unsafe member access .success on an `any` value    @typescript-eslint/no-unsafe-member-access
+   86:13  error  Unsafe assignment of an `any` value                @typescript-eslint/no-unsafe-assignment
+   89:19  error  Unsafe member access .data on an `any` value       @typescript-eslint/no-unsafe-member-access
+   90:19  error  Unsafe member access .total on an `any` value      @typescript-eslint/no-unsafe-member-access
+   95:13  error  Unsafe assignment of an `any` value                @typescript-eslint/no-unsafe-assignment
+   98:19  error  Unsafe member access .id on an `any` value         @typescript-eslint/no-unsafe-member-access
+   99:19  error  Unsafe member access .name on an `any` value       @typescript-eslint/no-unsafe-member-access
+  106:13  error  Unsafe assignment of an `any` value                @typescript-eslint/no-unsafe-assignment
+  109:19  error  Unsafe member access .data on an `any` value       @typescript-eslint/no-unsafe-member-access
+  110:33  error  Unsafe member access .data on an `any` value       @typescript-eslint/no-unsafe-member-access
+  115:13  error  Unsafe assignment of an `any` value                @typescript-eslint/no-unsafe-assignment
+  118:19  error  Unsafe member access .key on an `any` value        @typescript-eslint/no-unsafe-member-access
+  119:19  error  Unsafe member access .value on an `any` value      @typescript-eslint/no-unsafe-member-access
+  126:13  error  Unsafe assignment of an `any` value                @typescript-eslint/no-unsafe-assignment
+  129:19  error  Unsafe member access .status on an `any` value     @typescript-eslint/no-unsafe-member-access
+  130:19  error  Unsafe member access .timestamp on an `any` value  @typescript-eslint/no-unsafe-member-access
+  147:13  error  Unsafe assignment of an `any` value                @typescript-eslint/no-unsafe-assignment
+  149:19  error  Unsafe member access .data on an `any` value       @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mocks/handlers.ts
+   60:5   error  Unsafe return of a value of type `any`    @typescript-eslint/no-unsafe-return
+   60:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   93:5   error  Unsafe return of a value of type `any`    @typescript-eslint/no-unsafe-return
+   93:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  109:5   error  Unsafe return of a value of type `any`    @typescript-eslint/no-unsafe-return
+  109:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  124:5   error  Unsafe return of a value of type `any`    @typescript-eslint/no-unsafe-return
+  124:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/scripts/cleanup-db-provider-settings.ts
+  38:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/scripts/create-superuser.ts
+   91:15  error  Unsafe assignment of an `any` value                   @typescript-eslint/no-unsafe-assignment
+   91:52  error  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+   94:9   error  'userRoles' is never reassigned. Use 'const' instead  prefer-const
+  112:9   error  'userRoles' is never reassigned. Use 'const' instead  prefer-const
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/types/services/product-ai-job-repository.ts
+  14:12  error  'unknown' overrides all other types in this union type  @typescript-eslint/no-redundant-type-constituents
+
+✖ 196 problems (196 errors, 0 warnings)
+  9 errors and 0 warnings potentially fixable with the `--fix` option.
+

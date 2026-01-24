@@ -21,7 +21,7 @@ async function GET_handler(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
 
-    const repo = await getCategoryMappingRepository();
+    const repo = getCategoryMappingRepository();
     const mapping = await repo.getById(id);
 
     if (!mapping) {
@@ -47,7 +47,7 @@ async function PUT_handler(request: NextRequest, { params }: RouteParams) {
     const { id } = await params;
     const body = (await request.json()) as UpdateMappingRequest;
 
-    const repo = await getCategoryMappingRepository();
+    const repo = getCategoryMappingRepository();
 
     // Check if mapping exists
     const existing = await repo.getById(id);
@@ -80,7 +80,7 @@ async function DELETE_handler(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
 
-    const repo = await getCategoryMappingRepository();
+    const repo = getCategoryMappingRepository();
 
     // Check if mapping exists
     const existing = await repo.getById(id);

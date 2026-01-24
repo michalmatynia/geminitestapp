@@ -41,9 +41,11 @@ async function POST_handler(req: NextRequest) {
         .then(() => {
           console.log(`[api/products/ai-jobs/enqueue] Job ${job.id} processing initiated successfully`);
         })
-        .catch(err => {
+        .catch((err: unknown) => {
           console.error(`[api/products/ai-jobs/enqueue] Failed to process job ${job.id}:`, err);
-          console.error(`[api/products/ai-jobs/enqueue] Error stack:`, err.stack);
+          if (err instanceof Error) {
+            console.error(`[api/products/ai-jobs/enqueue] Error stack:`, err.stack);
+          }
         });
     } else {
       // Start the queue worker (for persistent servers)

@@ -79,7 +79,7 @@ function buildTree(
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export async function getExternalCategoryRepository(): Promise<ExternalCategoryRepository> {
+export function getExternalCategoryRepository(): ExternalCategoryRepository {
   return {
     async syncFromBase(connectionId: string, categories: BaseCategory[]): Promise<number> {
       // Build lookup map for path calculation

@@ -57,6 +57,7 @@ interface ProductListHeaderProps {
   setPageSize: (size: number) => void;
   nameLocale: "name_en" | "name_pl" | "name_de";
   setNameLocale: (locale: "name_en" | "name_pl" | "name_de") => void;
+  languageOptions: Array<{ value: "name_en" | "name_pl" | "name_de"; label: string }>;
   currencyCode: string;
   setCurrencyCode: (code: string) => void;
   currencyOptions: string[];
@@ -76,6 +77,7 @@ export const ProductListHeader = memo(function ProductListHeader({
   setPageSize,
   nameLocale,
   setNameLocale,
+  languageOptions,
   currencyCode,
   setCurrencyCode,
   currencyOptions,
@@ -90,7 +92,7 @@ export const ProductListHeader = memo(function ProductListHeader({
         <div className="flex flex-wrap items-center gap-2">
           <Button
             onClick={onCreateProduct}
-            className="h-14 w-14 rounded-full p-0"
+            className="h-14 w-14 rounded-full border border-white/20 p-0 hover:border-white/40"
             aria-label="Create new product"
           >
             <PlusIcon className="h-6 w-6" />
@@ -102,7 +104,7 @@ export const ProductListHeader = memo(function ProductListHeader({
                 <Button
                   key={draft.id}
                   onClick={() => onCreateFromDraft?.(draft.id)}
-                  className="h-8 w-8 rounded-full border border-transparent bg-transparent p-0 text-white hover:border-white/30 hover:bg-white/10"
+                  className="h-8 w-8 rounded-full border border-white/20 bg-transparent p-0 text-white hover:border-white/40 hover:bg-white/10"
                   aria-label={`Create product from ${draft.name}`}
                   title={draft.name}
                 >
@@ -173,7 +175,7 @@ export const ProductListHeader = memo(function ProductListHeader({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[12, 24, 48].map((size) => (
+              {[12, 24, 48, 96].map((size) => (
                 <SelectItem key={size} value={String(size)}>
                   {size} per page
                 </SelectItem>
@@ -197,9 +199,11 @@ export const ProductListHeader = memo(function ProductListHeader({
               <SelectValue placeholder="Language" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="name_en">English</SelectItem>
-              <SelectItem value="name_pl">Polish</SelectItem>
-              <SelectItem value="name_de">German</SelectItem>
+              {languageOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 

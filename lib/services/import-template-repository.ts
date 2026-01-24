@@ -51,7 +51,7 @@ const stripBasehostMappings = (mappings: TemplateMapping[]) =>
 const parseTemplates = (value: string | null): Template[] => {
   if (!value) return [];
   try {
-    const parsed = JSON.parse(value);
+    const parsed = JSON.parse(value) as unknown;
     if (!Array.isArray(parsed)) {
       console.warn("[ImportTemplateRepository] Parsed value is not an array:", parsed);
       return [];
@@ -71,7 +71,7 @@ const parseTemplates = (value: string | null): Template[] => {
 const parseExportWarehouseMap = (value: string | null): Record<string, string> => {
   if (!value) return {};
   try {
-    const parsed = JSON.parse(value);
+    const parsed = JSON.parse(value) as unknown;
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return {};
     }
@@ -83,7 +83,7 @@ const parseExportWarehouseMap = (value: string | null): Record<string, string> =
         const normalized =
           typeof raw === "string"
             ? raw.trim()
-            : raw !== null && raw !== undefined
+            : (typeof raw === "number" || typeof raw === "boolean")
               ? String(raw).trim()
               : "";
         if (normalized || normalized === EXPORT_WAREHOUSE_SKIP_VALUE) {

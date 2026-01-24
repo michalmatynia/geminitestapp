@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import FileManager from "@/components/files/FileManager";
 import ProductForm from "@/components/products/ProductForm";
 import { Button } from "@/components/ui/button";
@@ -32,28 +32,28 @@ function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>) {
 
 function EditProductForm() {
   const { showFileManager, handleMultiFileSelect, uploading, handleSubmit } = useProductFormContext();
+  const router = useRouter();
 
   return (
     <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
       <div className="mb-6 flex items-center gap-4 border-b border-gray-800 pb-4">
-        <Button 
-          onClick={handleSubmit} 
-          disabled={uploading} 
+        <Button
+          onClick={(e) => { void handleSubmit(e); }}
+          disabled={uploading}
           aria-disabled={uploading}
-          className="min-w-[100px]"
+          className="min-w-[100px] text-foreground"
         >
           {uploading ? "Saving..." : "Update"}
         </Button>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/admin/products"
-            className="text-white hover:text-gray-300"
-            aria-label="Back to products"
-          >
-            <ArrowLeftIcon className="size-6" />
-          </Link>
-          <h1 className="text-3xl font-bold text-white leading-none">Edit Product</h1>
-        </div>
+        <Button
+          onClick={() => router.push("/admin/products")}
+          className="min-w-[100px] text-foreground"
+          aria-label="Back to products"
+        >
+          <ArrowLeftIcon className="size-4 mr-2" />
+          Close
+        </Button>
+        <h1 className="text-3xl font-bold text-white leading-none">Edit Product</h1>
       </div>
       {showFileManager ? (
         <FileManager onSelectFile={handleMultiFileSelect} showFileManager={showFileManager} />

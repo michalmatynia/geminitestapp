@@ -51,7 +51,7 @@ interface UseProductMetadataProps {
 
 export function useProductMetadata({
   product,
-  initialCatalogId,
+  initialCatalogId: _initialCatalogId,
   initialCatalogIds,
   initialCategoryIds,
   initialTagIds,

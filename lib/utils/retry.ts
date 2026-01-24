@@ -3,6 +3,7 @@ import {
   getRetryDelay,
   externalServiceError,
   timeoutError,
+  wrapError,
 } from "@/lib/errors/app-error";
 import { logSystemEvent } from "@/lib/services/system-logger";
 
@@ -81,7 +82,7 @@ function withTimeout<T>(
       })
       .catch((error) => {
         clearTimeout(timer);
-        reject(error);
+        reject(wrapError(error));
       });
   });
 }

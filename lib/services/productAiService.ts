@@ -1,10 +1,11 @@
 import { productService } from "./productService";
 import { getProductAiJobRepository } from "@/lib/services/product-ai-job-repository";
 import { invalidStateError, notFoundError } from "@/lib/errors/app-error";
+import type { ProductAiJobUpdate } from "@/types/services/product-ai-job-repository";
 
 export type ProductAiJobType = "description_generation" | "translation";
 
-export async function enqueueProductAiJob(productId: string, type: ProductAiJobType, payload: any) {
+export async function enqueueProductAiJob(productId: string, type: ProductAiJobType, payload: unknown) {
   console.log(`[enqueueProductAiJob] Creating job for productId: ${productId}, type: ${type}`);
   const jobRepository = await getProductAiJobRepository();
   const job = await jobRepository.createJob(productId, type, payload);
@@ -58,7 +59,7 @@ export async function getProductAiJob(jobId: string) {
   };
 }
 
-export async function updateProductAiJob(jobId: string, data: any) {
+export async function updateProductAiJob(jobId: string, data: ProductAiJobUpdate) {
   const jobRepository = await getProductAiJobRepository();
   return jobRepository.updateJob(jobId, data);
 }

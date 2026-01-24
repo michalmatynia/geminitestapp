@@ -62,13 +62,13 @@ const populateRelations = <T extends NoteWithRelations | NoteWithRelations[] | n
         return data.map(note => ({
             ...note,
             relations: buildRelations(note)
-        })) as T;
+        }));
     }
-    const note = data as NoteWithRelations;
+    const note = data;
     return {
         ...note,
         relations: buildRelations(note)
-    } as T;
+    };
 };
 
 export const noteService: NoteRepository = {
@@ -76,7 +76,7 @@ export const noteService: NoteRepository = {
 
   getAll: async (...args) => {
     const notes = await repoCall("getAll", ...args);
-    return populateRelations(notes) as NoteWithRelations[];
+    return populateRelations(notes);
   },
 
   getById: async (...args) => {
@@ -86,7 +86,7 @@ export const noteService: NoteRepository = {
 
   create: async (...args) => {
     const note = await repoCall("create", ...args);
-    return populateRelations(note) as NoteWithRelations;
+    return populateRelations(note);
   },
 
   update: async (id, data) => {

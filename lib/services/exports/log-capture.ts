@@ -69,12 +69,12 @@ export class LogCapture {
           }
         }
       }
-    } else if (typeof firstArg === "object") {
+    } else if (typeof firstArg === "object" && firstArg !== null) {
       // If first argument is an object, use it as context
       message = "Log data";
-      context = firstArg as Record<string, unknown>;
+      context = firstArg;
     } else {
-      message = String(firstArg);
+      message = firstArg === null ? "null" : (typeof firstArg === "symbol" ? firstArg.toString() : String(firstArg as unknown));
     }
 
     this.logs.push({

@@ -30,7 +30,7 @@ export async function getSettingValue(key: string): Promise<string | null> {
   if (AI_SETTINGS_KEYS.has(key) && process.env.MONGODB_URI) {
     try {
       const mongo = await getMongoDb();
-      const doc = await mongo.collection("settings").findOne({ _id: key } as any) as { value: string } | null;
+      const doc = await mongo.collection("settings").findOne({ _id: key }) as { value: string } | null;
       if (doc && typeof doc.value === "string") {
         value = doc.value;
         return value; // Return immediately if found in MongoDB
@@ -43,14 +43,11 @@ export async function getSettingValue(key: string): Promise<string | null> {
   // Fall back to Prisma
   if (!value && process.env.DATABASE_URL) {
     try {
-      const db = prisma as any;
-      if (db.setting) {
-        const setting = await db.setting.findUnique({
-          where: { key },
-          select: { value: true },
-        }) as { value: string } | null;
-        if (setting) value = setting.value;
-      }
+      const setting = await prisma.setting.findUnique({
+        where: { key },
+        select: { value: true },
+      });
+      if (setting) value = setting.value;
     } catch (err) {
       console.warn(`Prisma setting fetch failed for ${key}:`, err);
     }
@@ -60,7 +57,7 @@ export async function getSettingValue(key: string): Promise<string | null> {
   if (!value && !AI_SETTINGS_KEYS.has(key) && process.env.MONGODB_URI) {
     try {
       const mongo = await getMongoDb();
-      const doc = await mongo.collection("settings").findOne({ _id: key } as any) as { value: string } | null;
+      const doc = await mongo.collection("settings").findOne({ _id: key }) as { value: string } | null;
       if (doc && typeof doc.value === "string") {
         value = doc.value;
       }
@@ -152,7 +149,8 @@ export async function generateProductDescription(params: {
         if (Object.prototype.hasOwnProperty.call(productData, key)) {
           const value = productData[key as keyof ProductFormData];
           if (value !== null && value !== undefined) {
-            processed = processed.replace(new RegExp(`\\[${key}\\]`, 'g'), String(value));
+            const stringValue = typeof value === "object" ? JSON.stringify(value) : String(value);
+            processed = processed.replace(new RegExp(`\\[${key}\\]`, 'g'), stringValue);
           }
         }
       }

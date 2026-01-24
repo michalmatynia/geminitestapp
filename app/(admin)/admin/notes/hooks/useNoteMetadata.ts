@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 // Why: Note metadata (title, color, status flags) has synchronized state:
 // - Title syncs when note changes
@@ -12,26 +12,17 @@ export function useNoteMetadata(note: { id?: string; title?: string; color?: str
   const [isArchived, setIsArchived] = useState(note?.isArchived || false);
   const [isFavorite, setIsFavorite] = useState(note?.isFavorite || false);
 
-  // Sync when note changes
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+  const [prevNoteId, setPrevNoteId] = useState(note?.id);
+
+  // Sync when note changes - adjusting state during render
+  if (note?.id !== prevNoteId) {
+    setPrevNoteId(note?.id);
     setTitle(note?.title || "");
-  }, [note?.id, note?.title]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setColor(note?.color?.toLowerCase().trim() || "#ffffff");
-  }, [note?.id, note?.color]);
-
-  // Sync status flags when note changes
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsPinned(note?.isPinned || false);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsArchived(note?.isArchived || false);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsFavorite(note?.isFavorite || false);
-  }, [note?.id, note?.isPinned, note?.isArchived, note?.isFavorite]);
+  }
 
   const getReadableTextColor = (hex: string) => {
     const normalized = hex.replace("#", "");

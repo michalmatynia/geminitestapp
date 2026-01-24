@@ -202,7 +202,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
         // Update localStorage cache
         try {
           const stored = window.localStorage.getItem(STORAGE_KEY);
-          const current = stored ? JSON.parse(stored) : {};
+          const current = (stored ? JSON.parse(stored) : {}) as Record<string, unknown>;
           window.localStorage.setItem(
             STORAGE_KEY,
             JSON.stringify({ ...current, selectedFolderId: dbFolderId })
@@ -221,7 +221,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
         previousNotebookIdRef.current = dbNotebookId;
         try {
           const stored = window.localStorage.getItem(STORAGE_KEY);
-          const current = stored ? JSON.parse(stored) : {};
+          const current = (stored ? JSON.parse(stored) : {}) as Record<string, unknown>;
           window.localStorage.setItem(
             STORAGE_KEY,
             JSON.stringify({ ...current, selectedNotebookId: dbNotebookId })
@@ -238,7 +238,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
         previousAutoformatRef.current = dbAutoformat;
         try {
           const stored = window.localStorage.getItem(STORAGE_KEY);
-          const current = stored ? JSON.parse(stored) : {};
+          const current = (stored ? JSON.parse(stored) : {}) as Record<string, unknown>;
           window.localStorage.setItem(
             STORAGE_KEY,
             JSON.stringify({ ...current, autoformatOnPaste: dbAutoformat })
@@ -255,7 +255,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }) {
         previousEditorModeRef.current = dbEditorMode;
         try {
           const stored = window.localStorage.getItem(STORAGE_KEY);
-          const current = stored ? JSON.parse(stored) : {};
+          const current = (stored ? JSON.parse(stored) : {}) as Record<string, unknown>;
           window.localStorage.setItem(
             STORAGE_KEY,
             JSON.stringify({ ...current, editorMode: dbEditorMode })

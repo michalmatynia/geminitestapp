@@ -26,7 +26,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<SettingRecord>("settings")
-    .findOne({ $or: [{ _id: key as any }, { key }] });
+    .findOne({ $or: [{ _id: key }, { key }] });
   return typeof doc?.value === "string" ? doc.value : null;
 };
 

@@ -21,7 +21,7 @@ async function GET_handler(request: NextRequest) {
       throw badRequestError("connectionId is required");
     }
 
-    const repo = await getExternalCategoryRepository();
+    const repo = getExternalCategoryRepository();
 
     if (tree) {
       const categories = await repo.getTreeByConnection(connectionId);

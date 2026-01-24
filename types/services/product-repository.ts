@@ -14,6 +14,7 @@ export type ProductFilters = {
   page?: string;
   pageSize?: string;
   catalogId?: string;
+  searchLanguage?: string; // "name_en" | "name_pl" | "name_de" - limits search to specific language
 };
 
 export type CreateProductInput = ProductCreateData;

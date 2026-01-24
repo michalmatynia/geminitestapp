@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCategoryMappingRepository } from "@/lib/services/category-mapping-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, validationError } from "@/lib/errors/app-error";
 
 type BulkMappingRequest = {
   connectionId: string;
@@ -20,25 +22,18 @@ export async function POST(request: NextRequest) {
     const { connectionId, catalogId, mappings } = body;
 
     if (!connectionId || !catalogId) {
-      return NextResponse.json(
-        { error: "connectionId and catalogId are required" },
-        { status: 400 }
-      );
+      throw badRequestError("connectionId and catalogId are required");
     }
 
     if (!Array.isArray(mappings) || mappings.length === 0) {
-      return NextResponse.json(
-        { error: "mappings array is required and must not be empty" },
-        { status: 400 }
-      );
+      throw validationError("mappings array is required and must not be empty");
     }
 
     // Validate each mapping
     for (const mapping of mappings) {
       if (!mapping.externalCategoryId || !mapping.internalCategoryId) {
-        return NextResponse.json(
-          { error: "Each mapping must have externalCategoryId and internalCategoryId" },
-          { status: 400 }
+        throw validationError(
+          "Each mapping must have externalCategoryId and internalCategoryId"
         );
       }
     }
@@ -52,9 +47,10 @@ export async function POST(request: NextRequest) {
       message: `Successfully saved ${upsertedCount} category mappings`,
     });
   } catch (error) {
-    console.error("[marketplace/mappings/bulk] POST error:", error);
-    const message =
-      error instanceof Error ? error.message : "Failed to bulk save category mappings";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return createErrorResponse(error, {
+      request,
+      source: "marketplace/mappings/bulk.POST",
+      fallbackMessage: "Failed to bulk save category mappings",
+    });
   }
 }

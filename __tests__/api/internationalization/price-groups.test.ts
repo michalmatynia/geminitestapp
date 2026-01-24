@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { GET, POST } from "../../../app/api/price-groups/route";
 import prisma from "@/lib/prisma";
 
@@ -24,7 +25,7 @@ describe("Price Groups API", () => {
 
   describe("GET /api/price-groups", () => {
     it("should return empty list initially", async () => {
-      const res = await GET();
+      const res = await GET(new NextRequest("http://localhost/api/price-groups"));
       const groups = (await res.json()) as PriceGroupResponse[];
       expect(res.status).toEqual(200);
       expect(groups).toEqual([]);
@@ -44,7 +45,7 @@ describe("Price Groups API", () => {
         },
       });
 
-      const res = await GET();
+      const res = await GET(new NextRequest("http://localhost/api/price-groups"));
       const groups = (await res.json()) as PriceGroupResponse[];
       expect(res.status).toEqual(200);
       expect(groups).toHaveLength(1);
@@ -69,7 +70,7 @@ describe("Price Groups API", () => {
         isDefault: true,
       };
 
-      const req = new Request("http://localhost/api/price-groups", {
+      const req = new NextRequest("http://localhost/api/price-groups", {
         method: "POST",
         body: JSON.stringify(newGroup),
       });
@@ -107,7 +108,7 @@ describe("Price Groups API", () => {
         addToPrice: 10,
       };
 
-      const req = new Request("http://localhost/api/price-groups", {
+      const req = new NextRequest("http://localhost/api/price-groups", {
         method: "POST",
         body: JSON.stringify(newGroup),
       });
@@ -136,7 +137,7 @@ describe("Price Groups API", () => {
         addToPrice: 10,
       };
 
-      const req = new Request("http://localhost/api/price-groups", {
+      const req = new NextRequest("http://localhost/api/price-groups", {
         method: "POST",
         body: JSON.stringify(newGroup),
       });

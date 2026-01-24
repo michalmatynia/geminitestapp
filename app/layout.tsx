@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
 import { QueryProvider } from "@/components/providers/QueryProvider";
+import ClientErrorReporter from "@/components/ClientErrorReporter";
 import { cn } from "@/lib/utils";
 
 import "./globals.css";
@@ -30,7 +31,10 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <ToastProvider>{children}</ToastProvider>
+            <ToastProvider>
+              <ClientErrorReporter />
+              {children}
+            </ToastProvider>
           </ThemeProvider>
         </QueryProvider>
       </body>

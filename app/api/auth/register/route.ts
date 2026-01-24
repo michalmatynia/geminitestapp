@@ -5,9 +5,11 @@ import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { getAuthDataProvider } from "@/lib/services/auth-provider";
 import { normalizeAuthEmail } from "@/lib/services/auth-user-repository";
+import { getAuthSecurityPolicy, validatePasswordStrength } from "@/lib/services/auth-security";
+import { getAuthUserPageSettings } from "@/lib/services/auth-settings";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
-import { conflictError, internalError } from "@/lib/errors/app-error";
+import { conflictError, internalError, validationError, forbiddenError } from "@/lib/errors/app-error";
 
 export const runtime = "nodejs";
 
@@ -37,6 +39,17 @@ export async function POST(req: Request) {
       return parsed.response;
     }
     const data = parsed.data;
+    const pageSettings = await getAuthUserPageSettings();
+    if (!pageSettings.allowSignup) {
+      throw forbiddenError("Registration is disabled.");
+    }
+    const policy = await getAuthSecurityPolicy();
+    const passwordCheck = validatePasswordStrength(data.password, policy);
+    if (!passwordCheck.ok) {
+      throw validationError("Password does not meet security policy.", {
+        issues: passwordCheck.errors,
+      });
+    }
     const email = normalizeAuthEmail(data.email);
     const passwordHash = await hash(data.password, 12);
 

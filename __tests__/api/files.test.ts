@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { GET } from "@/app/api/files/route";
 import { DELETE } from "@/app/api/files/[id]/route";
 import { createMockProduct } from "@/lib/utils/productUtils";
@@ -64,7 +65,7 @@ describe("Files API", () => {
 
   describe("GET /api/files", () => {
     it("should return all files", async () => {
-      const res = await GET(new Request("http://localhost/api/files"));
+      const res = await GET(new NextRequest("http://localhost/api/files"));
       const files = (await res.json()) as ImageFile[];
       expect(res.status).toBe(200);
       expect(files.length).toBe(2);
@@ -72,7 +73,7 @@ describe("Files API", () => {
 
     it("should filter files by filename", async () => {
       const res = await GET(
-        new Request("http://localhost/api/files?filename=test-image")
+        new NextRequest("http://localhost/api/files?filename=test-image")
       );
       const files = (await res.json()) as ImageFile[];
       expect(res.status).toBe(200);
@@ -82,7 +83,7 @@ describe("Files API", () => {
 
     it("should filter files by product ID", async () => {
       const res = await GET(
-        new Request(`http://localhost/api/files?productId=${product1.id}`)
+        new NextRequest(`http://localhost/api/files?productId=${product1.id}`)
       );
       const files = (await res.json()) as ImageFile[];
       expect(res.status).toBe(200);
@@ -92,7 +93,7 @@ describe("Files API", () => {
 
     it("should filter files by product name", async () => {
       const res = await GET(
-        new Request("http://localhost/api/files?productName=Product A")
+        new NextRequest("http://localhost/api/files?productName=Product A")
       );
       const files = (await res.json()) as ImageFile[];
       expect(res.status).toBe(200);
@@ -103,7 +104,7 @@ describe("Files API", () => {
 
   describe("DELETE /api/files/[id]", () => {
     it("should delete a file", async () => {
-      const res = await DELETE(new Request("http://localhost"), {
+      const res = await DELETE(new NextRequest("http://localhost"), {
         params: Promise.resolve({ id: imageFile2.id }),
       } as unknown as { params: Promise<{ id: string }> });
       expect(res.status).toBe(204);
@@ -115,7 +116,7 @@ describe("Files API", () => {
     });
 
     it("should return 404 for non-existent file", async () => {
-      const res = await DELETE(new Request("http://localhost"), {
+      const res = await DELETE(new NextRequest("http://localhost"), {
         params: Promise.resolve({ id: "non-existent-id" }),
       } as unknown as { params: Promise<{ id: string }> });
       expect(res.status).toBe(404);

@@ -1,8 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import {
+  badRequestError,
+  configurationError,
+  notFoundError,
+  duplicateEntryError,
+} from "@/lib/errors/app-error";
 
 type CurrencyDoc = {
   id: string;
@@ -37,7 +44,7 @@ const currencySchema = z.object({
  * Updates a currency.
  */
 export async function PUT(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -48,27 +55,18 @@ export async function PUT(
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw configurationError("MongoDB is not configured");
       }
       const db = await getMongoDb();
       const collection = db.collection<CurrencyDoc>(CURRENCIES_COLLECTION);
       const existing = await collection.findOne({ id });
       if (!existing) {
-        return NextResponse.json(
-          { error: "Currency not found." },
-          { status: 404 }
-        );
+        throw notFoundError("Currency not found");
       }
       if (data.code !== id) {
         const collision = await collection.findOne({ id: data.code });
         if (collision) {
-          return NextResponse.json(
-            { error: "Currency code already exists." },
-            { status: 400 }
-          );
+          throw duplicateEntryError("Currency code already exists");
         }
         const now = new Date();
         await db
@@ -109,20 +107,12 @@ export async function PUT(
       },
     });
     return NextResponse.json(currency);
-  } catch (error: unknown) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten() },
-        { status: 400 }
-      );
-    }
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-    return NextResponse.json(
-      { error: "An unknown error occurred" },
-      { status: 400 }
-    );
+  } catch (error) {
+    return createErrorResponse(error, {
+      request: req,
+      source: "currencies/[id].PUT",
+      fallbackMessage: "Failed to update currency",
+    });
   }
 }
 
@@ -131,7 +121,7 @@ export async function PUT(
  * Deletes a currency.
  */
 export async function DELETE(
-  _req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -140,10 +130,7 @@ export async function DELETE(
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw configurationError("MongoDB is not configured");
       }
       const db = await getMongoDb();
       const priceGroupCount = await db
@@ -153,10 +140,10 @@ export async function DELETE(
         .collection(COUNTRIES_COLLECTION)
         .countDocuments({ currencyIds: id });
       if (priceGroupCount > 0 || countryCount > 0) {
-        return NextResponse.json(
-          { error: "Currency is in use and cannot be deleted." },
-          { status: 400 }
-        );
+        throw badRequestError("Currency is in use and cannot be deleted", {
+          priceGroupCount,
+          countryCount,
+        });
       }
       await db.collection(CURRENCIES_COLLECTION).deleteOne({ id });
       return new Response(null, { status: 204 });
@@ -164,13 +151,11 @@ export async function DELETE(
 
     await prisma.currency.delete({ where: { id } });
     return new Response(null, { status: 204 });
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-    return NextResponse.json(
-      { error: "Failed to delete currency" },
-      { status: 500 }
-    );
+  } catch (error) {
+    return createErrorResponse(error, {
+      request: req,
+      source: "currencies/[id].DELETE",
+      fallbackMessage: "Failed to delete currency",
+    });
   }
 }

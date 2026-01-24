@@ -7,26 +7,16 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
 import { AUTH_SETTINGS_KEYS, parseJsonSetting, serializeSetting } from "@/lib/constants/auth-management";
-
-type UserPageSettings = {
-  allowSignup: boolean;
-  allowPasswordReset: boolean;
-  allowSocialLogin: boolean;
-  requireEmailVerification: boolean;
-  requireStrongPassword: boolean;
-};
-
-const DEFAULT_USER_PAGE_SETTINGS: UserPageSettings = {
-  allowSignup: true,
-  allowPasswordReset: true,
-  allowSocialLogin: true,
-  requireEmailVerification: false,
-  requireStrongPassword: true,
-};
+import {
+  DEFAULT_AUTH_USER_PAGE_SETTINGS,
+  type AuthUserPageSettings,
+} from "@/lib/constants/auth-user-pages";
 
 export default function AuthUserPagesPage() {
   const { toast } = useToast();
-  const [settings, setSettings] = useState<UserPageSettings>(DEFAULT_USER_PAGE_SETTINGS);
+  const [settings, setSettings] = useState<AuthUserPageSettings>(
+    DEFAULT_AUTH_USER_PAGE_SETTINGS
+  );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -40,9 +30,9 @@ export default function AuthUserPagesPage() {
         }
         const data = (await res.json()) as Array<{ key: string; value: string }>;
         const map = new Map(data.map((item) => [item.key, item.value]));
-        const stored = parseJsonSetting<UserPageSettings>(
+        const stored = parseJsonSetting<AuthUserPageSettings>(
           map.get(AUTH_SETTINGS_KEYS.userPages),
-          DEFAULT_USER_PAGE_SETTINGS
+          DEFAULT_AUTH_USER_PAGE_SETTINGS
         );
         setSettings(stored);
       } catch (error) {
@@ -106,7 +96,7 @@ export default function AuthUserPagesPage() {
         <CardHeader>
           <CardTitle className="text-white text-lg">Authentication Flows</CardTitle>
           <CardDescription className="text-gray-500">
-            Toggle each flow on/off. These settings can be wired into your public auth pages.
+            Toggle each flow on/off. Password strength rules live in Auth Settings.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -116,7 +106,6 @@ export default function AuthUserPagesPage() {
               ["allowPasswordReset", "Allow password reset", "Enable forgot-password flow."],
               ["allowSocialLogin", "Allow social login", "Show OAuth providers on login."],
               ["requireEmailVerification", "Require email verification", "Block access until email is verified."],
-              ["requireStrongPassword", "Require strong passwords", "Enforce stricter password rules."],
             ] as const
           ).map(([key, title, description]) => (
             <div

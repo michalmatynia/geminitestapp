@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { parseJsonBody } from "@/lib/api/parse-json";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { notFoundError } from "@/lib/errors/app-error";
 
 type Params = { id: string };
 type Ctx = { params: Promise<Params> } | { params: Params };
@@ -29,15 +31,16 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     });
 
     if (!slug) {
-      return NextResponse.json({ error: "Slug not found" }, { status: 404 });
+      throw notFoundError("Slug not found");
     }
 
     return NextResponse.json(slug);
-  } catch (_error) {
-    return NextResponse.json(
-      { error: "Failed to fetch slug" },
-      { status: 500 }
-    );
+  } catch (error) {
+    return createErrorResponse(error, {
+      request: req,
+      source: "cms/slugs/[id].GET",
+      fallbackMessage: "Failed to fetch slug",
+    });
   }
 }
 
@@ -54,11 +57,12 @@ export async function DELETE(req: NextRequest, ctx: Ctx) {
     });
 
     return new Response(null, { status: 204 });
-  } catch (_error) {
-    return NextResponse.json(
-      { error: "Failed to delete slug" },
-      { status: 500 }
-    );
+  } catch (error) {
+    return createErrorResponse(error, {
+      request: req,
+      source: "cms/slugs/[id].DELETE",
+      fallbackMessage: "Failed to delete slug",
+    });
   }
 }
 
@@ -94,10 +98,11 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
     });
 
     return NextResponse.json(updatedSlug);
-  } catch (_error) {
-    return NextResponse.json(
-      { error: "Failed to update slug" },
-      { status: 500 }
-    );
+  } catch (error) {
+    return createErrorResponse(error, {
+      request: req,
+      source: "cms/slugs/[id].PUT",
+      fallbackMessage: "Failed to update slug",
+    });
   }
 }

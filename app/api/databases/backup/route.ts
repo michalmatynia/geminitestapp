@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createMongoBackup, createPostgresBackup } from "@/lib/services/database-backup";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
 
 export const runtime = "nodejs";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const type = searchParams.get("type") || "postgresql";
@@ -16,8 +17,10 @@ export async function POST(req: Request) {
     const result = await createPostgresBackup();
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Failed to create backup:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return createErrorResponse(error, {
+      request: req,
+      source: "databases/backup.POST",
+      fallbackMessage: "Failed to create database backup",
+    });
   }
 }

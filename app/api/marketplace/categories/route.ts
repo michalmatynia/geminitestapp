@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getExternalCategoryRepository } from "@/lib/services/external-category-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError } from "@/lib/errors/app-error";
 
 /**
  * GET /api/marketplace/categories
@@ -15,10 +17,7 @@ export async function GET(request: NextRequest) {
     const tree = searchParams.get("tree") === "true";
 
     if (!connectionId) {
-      return NextResponse.json(
-        { error: "connectionId is required" },
-        { status: 400 }
-      );
+      throw badRequestError("connectionId is required");
     }
 
     const repo = await getExternalCategoryRepository();
@@ -31,10 +30,10 @@ export async function GET(request: NextRequest) {
     const categories = await repo.listByConnection(connectionId);
     return NextResponse.json(categories);
   } catch (error) {
-    console.error("[marketplace/categories] GET error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch external categories" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request,
+      source: "marketplace/categories.GET",
+      fallbackMessage: "Failed to fetch external categories",
+    });
   }
 }

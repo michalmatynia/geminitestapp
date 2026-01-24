@@ -1,9 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { fallbackCurrencies } from "@/lib/internationalizationFallback";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import {
+  badRequestError,
+  configurationError,
+  notFoundError,
+  duplicateEntryError,
+} from "@/lib/errors/app-error";
 
 const priceGroupSchema = z
   .object({
@@ -102,7 +109,7 @@ const resolveCurrency = (
  * Updates a price group and enforces a single default group.
  */
 export async function PUT(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -113,29 +120,20 @@ export async function PUT(
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw configurationError("MongoDB is not configured");
       }
       const db = await getMongoDb();
       const current = await db
         .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
         .findOne({ id });
       if (!current) {
-        return NextResponse.json(
-          { error: "Price group not found." },
-          { status: 404 }
-        );
+        throw notFoundError("Price group not found");
       }
       const existingGroupId = await db
         .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
         .findOne({ groupId: data.groupId, id: { $ne: id } });
       if (existingGroupId) {
-        return NextResponse.json(
-          { error: "A price group with this ID already exists." },
-          { status: 400 }
-        );
+        throw duplicateEntryError("A price group with this ID already exists");
       }
       if (data.isDefault) {
         await db
@@ -200,20 +198,12 @@ export async function PUT(
     });
 
     return NextResponse.json(result);
-  } catch (error: unknown) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten() },
-        { status: 400 }
-      );
-    }
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-    return NextResponse.json(
-      { error: "An unknown error occurred" },
-      { status: 400 }
-    );
+  } catch (error) {
+    return createErrorResponse(error, {
+      request: req,
+      source: "price-groups/[id].PUT",
+      fallbackMessage: "Failed to update price group",
+    });
   }
 }
 
@@ -222,7 +212,7 @@ export async function PUT(
  * Deletes a price group.
  */
 export async function DELETE(
-  _req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -230,20 +220,14 @@ export async function DELETE(
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw configurationError("MongoDB is not configured");
       }
       const db = await getMongoDb();
       const total = await db
         .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
         .countDocuments();
       if (total <= 1) {
-        return NextResponse.json(
-          { error: "At least one price group is required." },
-          { status: 400 }
-        );
+        throw badRequestError("At least one price group is required");
       }
       await db.collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION).deleteOne({ id });
       return new Response(null, { status: 204 });
@@ -251,20 +235,15 @@ export async function DELETE(
 
     const total = await prisma.priceGroup.count();
     if (total <= 1) {
-      return NextResponse.json(
-        { error: "At least one price group is required." },
-        { status: 400 }
-      );
+      throw badRequestError("At least one price group is required");
     }
     await prisma.priceGroup.delete({ where: { id } });
     return new Response(null, { status: 204 });
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-    return NextResponse.json(
-      { error: "Failed to delete price group" },
-      { status: 500 }
-    );
+  } catch (error) {
+    return createErrorResponse(error, {
+      request: req,
+      source: "price-groups/[id].DELETE",
+      fallbackMessage: "Failed to delete price group",
+    });
   }
 }

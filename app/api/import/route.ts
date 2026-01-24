@@ -3,6 +3,8 @@ import Papa from "papaparse";
 
 import { getProductRepository } from "@/lib/services/product-repository";
 import { productCreateSchema } from "@/lib/validations/product";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError } from "@/lib/errors/app-error";
 
 interface CsvRow {
   [key: string]: string;
@@ -14,7 +16,7 @@ export async function POST(req: NextRequest) {
     const file = formData.get("file") as File;
 
     if (!file) {
-      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+      throw badRequestError("No file uploaded");
     }
 
     const text = await file.text();
@@ -46,7 +48,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ message: "CSV imported successfully" });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Error importing CSV" }, { status: 500 });
+    return createErrorResponse(error, {
+      request: req,
+      source: "import.POST",
+      fallbackMessage: "Error importing CSV",
+    });
   }
 }

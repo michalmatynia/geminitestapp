@@ -160,7 +160,26 @@ export async function getExternalCategoryRepository(): Promise<ExternalCategoryR
     },
 
     async getTreeByConnection(connectionId: string): Promise<ExternalCategoryWithChildren[]> {
-      const categories = await this.listByConnection(connectionId);
+      const records = await prisma.externalCategory.findMany({
+        where: { connectionId },
+        orderBy: [{ depth: "asc" }, { name: "asc" }],
+      });
+
+      const categories: ExternalCategory[] = records.map((r) => ({
+        id: r.id,
+        connectionId: r.connectionId,
+        externalId: r.externalId,
+        name: r.name,
+        parentExternalId: r.parentExternalId,
+        path: r.path,
+        depth: r.depth,
+        isLeaf: r.isLeaf,
+        metadata: r.metadata as Record<string, unknown> | null,
+        fetchedAt: r.fetchedAt,
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+      }));
+
       return buildTree(categories, null);
     },
 

@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { GET, POST } from "../../../app/api/countries/route";
 import { PUT } from "../../../app/api/countries/[id]/route";
 import prisma from "@/lib/prisma";
@@ -25,7 +26,7 @@ describe("Countries API", () => {
 
   describe("GET /api/countries", () => {
     it("should seed default countries, currencies, and languages on first call", async () => {
-      const res = await GET();
+      const res = await GET(new NextRequest("http://localhost/api/countries"));
       const countries = (await res.json()) as CountryResponse[];
 
       expect(res.status).toEqual(200);
@@ -53,11 +54,11 @@ describe("Countries API", () => {
 
     it("should return existing countries without duplicating on subsequent calls", async () => {
       // First call to seed
-      await GET();
+      await GET(new NextRequest("http://localhost/api/countries"));
       const initialCount = await prisma.country.count();
 
       // Second call
-      const res = await GET();
+      const res = await GET(new NextRequest("http://localhost/api/countries"));
       const countries = (await res.json()) as CountryResponse[];
       const secondCount = await prisma.country.count();
 
@@ -79,7 +80,7 @@ describe("Countries API", () => {
         name: "Germany Custom",
       };
 
-      const req = new Request("http://localhost/api/countries", {
+      const req = new NextRequest("http://localhost/api/countries", {
         method: "POST",
         body: JSON.stringify(newCountry),
       });
@@ -104,7 +105,7 @@ describe("Countries API", () => {
         currencyIds: [currency.id]
       };
 
-      const req = new Request("http://localhost/api/countries", {
+      const req = new NextRequest("http://localhost/api/countries", {
         method: "POST",
         body: JSON.stringify(newCountry),
       });
@@ -123,7 +124,7 @@ describe("Countries API", () => {
         name: "Invalid",
       };
 
-      const req = new Request("http://localhost/api/countries", {
+      const req = new NextRequest("http://localhost/api/countries", {
         method: "POST",
         body: JSON.stringify(invalidCountry),
       });
@@ -142,7 +143,7 @@ describe("Countries API", () => {
         data: { code: "PLN", name: "Polish Zloty", symbol: "zł" },
       });
 
-      const req = new Request("http://localhost/api/countries/" + country.id, {
+      const req = new NextRequest("http://localhost/api/countries/" + country.id, {
         method: "PUT",
         body: JSON.stringify({
           code: "PL",

@@ -9,8 +9,19 @@ import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { getMongoClient } from "@/lib/db/mongo-client";
 import { getAuthDataProvider } from "@/lib/services/auth-provider";
-import { findAuthUserByEmail } from "@/lib/services/auth-user-repository";
+import { findAuthUserByEmail, findAuthUserById } from "@/lib/services/auth-user-repository";
 import { getAuthAccessForUser } from "@/lib/services/auth-access";
+import {
+  checkLoginAllowed,
+  extractClientIp,
+  recordLoginFailure,
+  recordLoginSuccess,
+} from "@/lib/services/auth-security";
+import { getAuthUserPageSettings } from "@/lib/services/auth-settings";
+import { getAuthSecurityProfile, updateAuthSecurityProfile } from "@/lib/services/auth-security-profile";
+import { consumeLoginChallenge } from "@/lib/services/auth-login-challenge";
+import { decryptAuthSecret } from "@/lib/utils/auth-encryption";
+import { hashRecoveryCode, verifyTotpToken } from "@/lib/services/totp";
 import { authConfig } from "./auth.config";
 
 const credentialsProvider = Credentials({
@@ -18,14 +29,104 @@ const credentialsProvider = Credentials({
   credentials: {
     email: { label: "Email", type: "email" },
     password: { label: "Password", type: "password" },
+    otp: { label: "One-time code", type: "text" },
+    recoveryCode: { label: "Recovery code", type: "text" },
+    challengeId: { label: "Challenge", type: "text" },
   },
-  async authorize(credentials) {
+  async authorize(credentials, request) {
     try {
       const email = credentials?.email?.toString() ?? "";
       const password = credentials?.password?.toString() ?? "";
+      const otp = credentials?.otp?.toString() ?? "";
+      const recoveryCode = credentials?.recoveryCode?.toString() ?? "";
+      const challengeId = credentials?.challengeId?.toString() ?? "";
       if (!email || !password) {
         console.log("[AUTH] Missing email or password");
         return null;
+      }
+      const ip = extractClientIp(request);
+      const allowed = await checkLoginAllowed({ email, ip });
+      if (!allowed.allowed) {
+        console.warn("[AUTH] Login blocked due to rate limits", {
+          email,
+          ip,
+          lockedUntil: allowed.lockedUntil?.toISOString(),
+        });
+        return null;
+      }
+
+      if (challengeId) {
+        const challenge = await consumeLoginChallenge({
+          id: challengeId,
+          email,
+          ip,
+        });
+        if (challenge) {
+          const user = await findAuthUserById(challenge.userId);
+          if (!user) {
+            await recordLoginFailure({ email, ip, request });
+            return null;
+          }
+
+          const security = await getAuthSecurityProfile(user.id);
+          const settings = await getAuthUserPageSettings();
+
+          if (security.bannedAt) {
+            await recordLoginFailure({ email, ip, request });
+            return null;
+          }
+          if (security.disabledAt) {
+            await recordLoginFailure({ email, ip, request });
+            return null;
+          }
+          if (
+            settings.requireEmailVerification &&
+            !user.emailVerified
+          ) {
+            await recordLoginFailure({ email, ip, request });
+            return null;
+          }
+          if (security.allowedIps.length > 0 && ip) {
+            const allowedSet = new Set(security.allowedIps);
+            if (!allowedSet.has(ip)) {
+              await recordLoginFailure({ email, ip, request });
+              return null;
+            }
+          }
+
+          if (security.mfaEnabled) {
+            const providedRecovery = recoveryCode.trim();
+            const providedOtp = otp.trim();
+            let mfaOk = false;
+            if (providedRecovery) {
+              const hashed = hashRecoveryCode(providedRecovery);
+              if (security.recoveryCodes.includes(hashed)) {
+                const nextCodes = security.recoveryCodes.filter(
+                  (code) => code !== hashed
+                );
+                await updateAuthSecurityProfile(user.id, {
+                  recoveryCodes: nextCodes,
+                });
+                mfaOk = true;
+              }
+            } else if (providedOtp && security.mfaSecret) {
+              const secret = decryptAuthSecret(security.mfaSecret);
+              mfaOk = verifyTotpToken(secret, providedOtp);
+            }
+            if (!mfaOk) {
+              await recordLoginFailure({ email, ip, request });
+              return null;
+            }
+          }
+
+          await recordLoginSuccess({ email, ip, request, userId: user.id });
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name ?? null,
+            image: user.image ?? null,
+          };
+        }
       }
 
       console.log("[AUTH] Attempting to find user:", email);
@@ -33,70 +134,38 @@ const credentialsProvider = Credentials({
       // findAuthUserByEmail uses getAuthDataProvider() internally to choose DB
       let user = await findAuthUserByEmail(email);
 
-      // Development bypass for easy access
-      if (process.env.NODE_ENV === "development" && password === "admin123") {
-         console.log("[AUTH] Checking development bypass for:", email);
-         
-         if (user) {
-             console.log("[AUTH] User found in DB. Bypassing password check (Development).");
-             return {
-                id: user.id,
-                email: user.email,
-                name: user.name ?? null,
-                image: user.image ?? null,
-             };
-         }
-         
-         if (email === "admin@example.com") {
-             console.log("[AUTH] Admin user NOT found in DB. Creating auto-admin for development...");
-             try {
-                const provider = await getAuthDataProvider();
-                const hashedPassword = await bcrypt.hash("admin123", 10);
-                
-                if (provider === "mongodb") {
-                   const { getMongoDb } = await import("@/lib/db/mongo-client");
-                   const db = await getMongoDb();
-                   const result = await db.collection("users").insertOne({
-                      email: "admin@example.com",
-                      name: "Admin User",
-                      passwordHash: hashedPassword,
-                      createdAt: new Date(),
-                      updatedAt: new Date()
-                   });
-                   return {
-                      id: result.insertedId.toString(),
-                      email: "admin@example.com",
-                      name: "Admin User",
-                      image: null
-                   };
-                } else {
-                   const newUser = await prisma.user.create({
-                      data: {
-                         email: "admin@example.com",
-                         name: "Admin User",
-                         passwordHash: hashedPassword
-                      }
-                   });
-                   return {
-                      id: newUser.id,
-                      email: newUser.email,
-                      name: newUser.name,
-                      image: newUser.image
-                   };
-                }
-             } catch (err) {
-                 console.error("[AUTH] Failed to create auto-admin:", err);
-             }
-         }
-      }
-
       if (!user) {
         console.log("[AUTH] User not found");
+        await recordLoginFailure({ email, ip, request });
         return null;
+      }
+
+      const security = await getAuthSecurityProfile(user.id);
+      const settings = await getAuthUserPageSettings();
+
+      if (security.bannedAt) {
+        await recordLoginFailure({ email, ip, request });
+        return null;
+      }
+      if (security.disabledAt) {
+        await recordLoginFailure({ email, ip, request });
+        return null;
+      }
+      if (settings.requireEmailVerification && !user.emailVerified) {
+        await recordLoginFailure({ email, ip, request });
+        return null;
+      }
+      if (security.allowedIps.length > 0 && ip) {
+        const allowedSet = new Set(security.allowedIps);
+        if (!allowedSet.has(ip)) {
+          await recordLoginFailure({ email, ip, request });
+          return null;
+        }
       }
       
       if (!user.passwordHash) {
         console.log("[AUTH] User has no password hash");
+        await recordLoginFailure({ email, ip, request });
         return null;
       }
 
@@ -104,7 +173,37 @@ const credentialsProvider = Credentials({
       const isValid = await bcrypt.compare(password, user.passwordHash);
       console.log("[AUTH] Password valid:", isValid);
       
-      if (!isValid) return null;
+      if (!isValid) {
+        await recordLoginFailure({ email, ip, request });
+        return null;
+      }
+
+      if (security.mfaEnabled) {
+        const providedRecovery = recoveryCode.trim();
+        const providedOtp = otp.trim();
+        let mfaOk = false;
+        if (providedRecovery) {
+          const hashed = hashRecoveryCode(providedRecovery);
+          if (security.recoveryCodes.includes(hashed)) {
+            const nextCodes = security.recoveryCodes.filter(
+              (code) => code !== hashed
+            );
+            await updateAuthSecurityProfile(user.id, {
+              recoveryCodes: nextCodes,
+            });
+            mfaOk = true;
+          }
+        } else if (providedOtp && security.mfaSecret) {
+          const secret = decryptAuthSecret(security.mfaSecret);
+          mfaOk = verifyTotpToken(secret, providedOtp);
+        }
+        if (!mfaOk) {
+          await recordLoginFailure({ email, ip, request });
+          return null;
+        }
+      }
+
+      await recordLoginSuccess({ email, ip, request, userId: user.id });
 
       return {
         id: user.id,
@@ -147,7 +246,7 @@ const buildProviders = () => {
   return providers;
 };
 
-export const { handlers, auth: originalAuth, signIn, signOut } = NextAuth(async () => {
+export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
   try {
     console.log("[AUTH] Starting configuration...");
     const provider = await getAuthDataProvider();
@@ -155,14 +254,19 @@ export const { handlers, auth: originalAuth, signIn, signOut } = NextAuth(async 
     const hasMongo = Boolean(process.env.MONGODB_URI);
     const hasPrisma = Boolean(process.env.DATABASE_URL);
 
-    const adapter =
-      provider === "mongodb" && hasMongo
-        ? MongoDBAdapter(getMongoClient(), {
-            databaseName: process.env.MONGODB_DB ?? "app",
-          })
-        : hasPrisma
-        ? PrismaAdapter(prisma)
-        : undefined;
+    let adapter;
+    if (provider === "mongodb" && hasMongo) {
+      adapter = MongoDBAdapter(getMongoClient(), {
+        databaseName: process.env.MONGODB_DB ?? "app",
+      });
+    } else if (provider === "mongodb" && !hasMongo && hasPrisma) {
+      console.warn("[AUTH] MongoDB provider selected but MONGODB_URI missing. Falling back to Prisma.");
+      adapter = PrismaAdapter(prisma);
+    } else if (hasPrisma) {
+      adapter = PrismaAdapter(prisma);
+    } else {
+      adapter = undefined;
+    }
 
     if (!adapter) {
       console.warn("[AUTH] No adapter configured. Environment:", { hasMongo, hasPrisma, provider });
@@ -182,6 +286,11 @@ export const { handlers, auth: originalAuth, signIn, signOut } = NextAuth(async 
             const access = await getAuthAccessForUser(userId);
             token.role = access.roleId;
             token.permissions = access.permissions;
+            token.roleLevel = access.level;
+            token.isElevated = access.isElevated;
+            const security = await getAuthSecurityProfile(userId);
+            token.accountDisabled = Boolean(security.disabledAt);
+            token.accountBanned = Boolean(security.bannedAt);
           }
           return token;
         },
@@ -190,6 +299,12 @@ export const { handlers, auth: originalAuth, signIn, signOut } = NextAuth(async 
             session.user.id = token.sub ?? session.user.id;
             session.user.role = token.role ?? null;
             session.user.permissions = token.permissions ?? [];
+            session.user.roleLevel = (token as { roleLevel?: number }).roleLevel ?? null;
+            session.user.isElevated = (token as { isElevated?: boolean }).isElevated ?? false;
+            session.user.accountDisabled =
+              (token as { accountDisabled?: boolean }).accountDisabled ?? false;
+            session.user.accountBanned =
+              (token as { accountBanned?: boolean }).accountBanned ?? false;
           }
           return session;
         },
@@ -201,40 +316,3 @@ export const { handlers, auth: originalAuth, signIn, signOut } = NextAuth(async 
     throw error;
   }
 });
-
-// Wrapper for auth to provide mock session in dev
-export const auth = async (...args: any[]) => {
-  const session = await originalAuth(...args);
-  
-  if (!session?.user && process.env.NODE_ENV === "development") {
-      console.log("[AUTH] Mocking Admin Session (Dev Mode)");
-      // Check if we can find a real admin user to use for the ID
-      // This is helpful if you want to attach data to a real user even in "no-auth" mode.
-      // But for "access as regular admin", a fixed mock is safer and faster.
-      return {
-          user: {
-              id: "admin-mock-id", // Use a fixed ID so data might not persist if reliant on real DB ID
-              name: "Admin User (Mock)",
-              email: "admin@example.com",
-              role: "admin",
-              permissions: [
-                "auth.users.write",
-                "auth.users.read",
-                "products.manage",
-                "notes.manage",
-                "chatbot.manage",
-                "settings.manage",
-                "drafts.manage",
-                "integrations.manage",
-                "files.manage",
-                "databases.manage",
-                "cms.manage"
-              ],
-              image: null
-          },
-          expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-      };
-  }
-  
-  return session;
-};

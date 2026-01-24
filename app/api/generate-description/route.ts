@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateProductDescription } from "@/lib/services/aiDescriptionService";
 import type { ProductFormData } from "@/types";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { validationError } from "@/lib/errors/app-error";
 
 /**
  * POST /api/generate-description
@@ -13,14 +15,14 @@ export async function POST(req: NextRequest) {
       visionOutputEnabled?: boolean;
       generationOutputEnabled?: boolean;
     };
-    
+
     const productData = body.productData;
     const imageUrls = Array.isArray(body.imageUrls)
       ? body.imageUrls.filter((item): item is string => typeof item === "string")
       : [];
 
     if (!productData?.name_en) {
-      return NextResponse.json({ error: "Product name is required" }, { status: 400 });
+      throw validationError("Product name is required", { field: "name_en" });
     }
 
     const result = await generateProductDescription({
@@ -33,7 +35,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(result);
 
   } catch (error) {
-    console.error("Generate Description Error:", error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to generate" }, { status: 500 });
+    return createErrorResponse(error, {
+      request: req,
+      source: "generate-description.POST",
+      fallbackMessage: "Failed to generate product description",
+    });
   }
 }

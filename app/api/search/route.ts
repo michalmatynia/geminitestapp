@@ -1,6 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { parseJsonBody } from "@/lib/api/parse-json";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import {
+  badRequestError,
+  configurationError,
+  externalServiceError,
+} from "@/lib/errors/app-error";
 
 type BraveSearchResult = {
   title?: string;
@@ -40,7 +46,7 @@ const GOOGLE_SEARCH_API_URL =
 const SERPAPI_API_KEY = process.env.SERPAPI_API_KEY;
 const SERPAPI_API_URL = process.env.SERPAPI_API_URL || "https://serpapi.com/search.json";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const parsed = await parseJsonBody(req, searchSchema, {
       logPrefix: "search",
@@ -53,15 +59,12 @@ export async function POST(req: Request) {
     const provider = parsed.data.provider?.toLowerCase() || "brave";
 
     if (!query) {
-      return NextResponse.json({ error: "Query is required." }, { status: 400 });
+      throw badRequestError("Query is required");
     }
 
     if (provider === "brave") {
       if (!BRAVE_SEARCH_API_KEY) {
-        return NextResponse.json(
-          { error: "Brave search API key not configured." },
-          { status: 400 }
-        );
+        throw configurationError("Brave search API key not configured");
       }
       const url = new URL(BRAVE_SEARCH_API_URL);
       url.searchParams.set("q", query);
@@ -76,9 +79,9 @@ export async function POST(req: Request) {
 
       if (!res.ok) {
         const errorText = await res.text();
-        return NextResponse.json(
-          { error: `Search provider error: ${errorText || res.statusText}` },
-          { status: 502 }
+        throw externalServiceError(
+          `Search provider error: ${errorText || res.statusText}`,
+          { provider: "brave", statusCode: res.status }
         );
       }
 
@@ -95,16 +98,10 @@ export async function POST(req: Request) {
 
     if (provider === "google") {
       if (!GOOGLE_SEARCH_API_KEY) {
-        return NextResponse.json(
-          { error: "Google search API key not configured." },
-          { status: 400 }
-        );
+        throw configurationError("Google search API key not configured");
       }
       if (!GOOGLE_SEARCH_ENGINE_ID) {
-        return NextResponse.json(
-          { error: "Google search engine ID not configured." },
-          { status: 400 }
-        );
+        throw configurationError("Google search engine ID not configured");
       }
       const url = new URL(GOOGLE_SEARCH_API_URL);
       url.searchParams.set("key", GOOGLE_SEARCH_API_KEY);
@@ -115,9 +112,9 @@ export async function POST(req: Request) {
       const res = await fetch(url.toString());
       if (!res.ok) {
         const errorText = await res.text();
-        return NextResponse.json(
-          { error: `Search provider error: ${errorText || res.statusText}` },
-          { status: 502 }
+        throw externalServiceError(
+          `Search provider error: ${errorText || res.statusText}`,
+          { provider: "google", statusCode: res.status }
         );
       }
 
@@ -134,10 +131,7 @@ export async function POST(req: Request) {
 
     if (provider === "serpapi") {
       if (!SERPAPI_API_KEY) {
-        return NextResponse.json(
-          { error: "SerpApi key not configured." },
-          { status: 400 }
-        );
+        throw configurationError("SerpApi key not configured");
       }
 
       const url = new URL(SERPAPI_API_URL);
@@ -149,9 +143,9 @@ export async function POST(req: Request) {
       const res = await fetch(url.toString());
       if (!res.ok) {
         const errorText = await res.text();
-        return NextResponse.json(
-          { error: `Search provider error: ${errorText || res.statusText}` },
-          { status: 502 }
+        throw externalServiceError(
+          `Search provider error: ${errorText || res.statusText}`,
+          { provider: "serpapi", statusCode: res.status }
         );
       }
 
@@ -173,13 +167,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ results });
     }
 
-    return NextResponse.json(
-      { error: "Unsupported search provider." },
-      { status: 400 }
-    );
+    throw badRequestError("Unsupported search provider", { provider });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to perform search.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return createErrorResponse(error, {
+      request: req,
+      source: "search.POST",
+      fallbackMessage: "Failed to perform search",
+    });
   }
 }

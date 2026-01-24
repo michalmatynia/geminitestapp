@@ -3,8 +3,9 @@ import type { ObjectId } from "mongodb";
 import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { getAuthDataProvider } from "@/lib/services/auth-provider";
+import { auth } from "@/lib/auth";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { internalError } from "@/lib/errors/app-error";
+import { authError, internalError } from "@/lib/errors/app-error";
 import type { AuthUserSummary } from "@/types/auth";
 
 export const runtime = "nodejs";
@@ -20,6 +21,13 @@ type MongoUserDoc = {
 
 export async function GET(req: Request) {
   try {
+    const session = await auth();
+    const hasAccess =
+      session?.user?.isElevated ||
+      session?.user?.permissions?.includes("auth.users.read");
+    if (!hasAccess) {
+      throw authError("Unauthorized.");
+    }
     const provider = await getAuthDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {

@@ -17,6 +17,7 @@ import {
   type AuthRole,
   type AuthUserRoleMap,
 } from "@/lib/constants/auth-management";
+import { DEFAULT_AUTH_SECURITY_POLICY } from "@/lib/constants/auth-security";
 import type { AuthUserSummary } from "@/types/auth";
 
 type AuthUsersResponse = {
@@ -41,6 +42,11 @@ export default function AuthUsersPage() {
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editVerified, setEditVerified] = useState(false);
+  const [editDisabled, setEditDisabled] = useState(false);
+  const [editBanned, setEditBanned] = useState(false);
+  const [editAllowedIps, setEditAllowedIps] = useState("");
+  const [editMfaEnabled, setEditMfaEnabled] = useState(false);
+  const [loadingSecurity, setLoadingSecurity] = useState(false);
   const [savingUser, setSavingUser] = useState(false);
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -150,6 +156,34 @@ export default function AuthUsersPage() {
     setEditName(user.name ?? "");
     setEditEmail(user.email ?? "");
     setEditVerified(Boolean(user.emailVerified));
+    setEditDisabled(false);
+    setEditBanned(false);
+    setEditAllowedIps("");
+    setEditMfaEnabled(false);
+    setLoadingSecurity(true);
+    void fetch(`/api/auth/users/${user.id}/security`)
+      .then(async (res) => {
+        if (!res.ok) return null;
+        return (await res.json()) as {
+          allowedIps?: string[];
+          disabledAt?: string | null;
+          bannedAt?: string | null;
+          mfaEnabled?: boolean;
+        };
+      })
+      .then((profile) => {
+        if (!profile) return;
+        setEditDisabled(Boolean(profile.disabledAt));
+        setEditBanned(Boolean(profile.bannedAt));
+        setEditAllowedIps((profile.allowedIps ?? []).join("\n"));
+        setEditMfaEnabled(Boolean(profile.mfaEnabled));
+      })
+      .catch((error) => {
+        console.error("Failed to load security profile:", error);
+      })
+      .finally(() => {
+        setLoadingSecurity(false);
+      });
   };
 
   const handleSaveUser = async () => {
@@ -178,6 +212,22 @@ export default function AuthUsersPage() {
         throw new Error("Failed to update user");
       }
       const updated = (await res.json()) as AuthUserSummary;
+      const securityPayload = {
+        disabled: editDisabled,
+        banned: editBanned,
+        allowedIps: editAllowedIps
+          .split(/\r?\n|,/)
+          .map((entry) => entry.trim())
+          .filter(Boolean),
+      };
+      const securityRes = await fetch(`/api/auth/users/${editingUser.id}/security`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(securityPayload),
+      });
+      if (!securityRes.ok) {
+        throw new Error("Failed to update security settings");
+      }
       setUsers((prev) =>
         prev.map((user) => (user.id === updated.id ? updated : user))
       );
@@ -191,13 +241,34 @@ export default function AuthUsersPage() {
     }
   };
 
+  const handleDisableMfa = async () => {
+    if (!editingUser) return;
+    try {
+      const res = await fetch(`/api/auth/users/${editingUser.id}/security`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ disableMfa: true }),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to disable MFA");
+      }
+      setEditMfaEnabled(false);
+      toast("MFA disabled for user", { variant: "success" });
+    } catch (error) {
+      console.error("Failed to disable MFA:", error);
+      toast("Failed to disable MFA", { variant: "error" });
+    }
+  };
+
   const handleCreateUser = async () => {
     if (!createForm.email.trim() || !createForm.password.trim()) {
       toast("Email and password are required", { variant: "error" });
       return;
     }
-    if (createForm.password.trim().length < 8) {
-      toast("Password must be at least 8 characters", { variant: "error" });
+    if (createForm.password.trim().length < DEFAULT_AUTH_SECURITY_POLICY.minPasswordLength) {
+      toast(`Password must be at least ${DEFAULT_AUTH_SECURITY_POLICY.minPasswordLength} characters`, {
+        variant: "error",
+      });
       return;
     }
     try {
@@ -212,7 +283,17 @@ export default function AuthUsersPage() {
         }),
       });
       if (!res.ok) {
-        throw new Error("Failed to create user");
+        const errorPayload = (await res.json().catch(() => null)) as
+          | { error?: string; details?: { issues?: string[] } }
+          | null;
+        const details = errorPayload?.details?.issues?.join(" ") ?? "";
+        toast(
+          errorPayload?.error
+            ? `${errorPayload.error}${details ? ` ${details}` : ""}`
+            : "Failed to create user",
+          { variant: "error" }
+        );
+        return;
       }
       const created = (await res.json()) as AuthUserSummary;
 
@@ -438,6 +519,63 @@ export default function AuthUsersPage() {
               <Label htmlFor="edit-verified" className="text-xs text-gray-300">
                 Email verified
               </Label>
+            </div>
+            <div className="rounded-md border border-gray-800 bg-gray-900/40 p-3 space-y-3">
+              <div className="text-xs font-semibold text-gray-300">
+                Security controls
+              </div>
+              {loadingSecurity ? (
+                <div className="text-xs text-gray-500">Loading security profile...</div>
+              ) : null}
+              <div className="flex items-center gap-2">
+                <input
+                  id="edit-disabled"
+                  type="checkbox"
+                  checked={editDisabled}
+                  onChange={(event) => setEditDisabled(event.target.checked)}
+                  className="h-4 w-4 rounded border-gray-700 bg-gray-900"
+                />
+                <Label htmlFor="edit-disabled" className="text-xs text-gray-300">
+                  Disable account
+                </Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  id="edit-banned"
+                  type="checkbox"
+                  checked={editBanned}
+                  onChange={(event) => setEditBanned(event.target.checked)}
+                  className="h-4 w-4 rounded border-gray-700 bg-gray-900"
+                />
+                <Label htmlFor="edit-banned" className="text-xs text-gray-300">
+                  Ban account
+                </Label>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-allowed-ips" className="text-xs text-gray-300">
+                  Allowed IPs (optional)
+                </Label>
+                <textarea
+                  id="edit-allowed-ips"
+                  value={editAllowedIps}
+                  onChange={(event) => setEditAllowedIps(event.target.value)}
+                  className="min-h-[80px] w-full rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white"
+                  placeholder="One IP per line or comma-separated"
+                />
+              </div>
+              <div className="text-xs text-gray-500">
+                MFA status: {editMfaEnabled ? "enabled" : "disabled"}
+              </div>
+              {editMfaEnabled ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleDisableMfa()}
+                >
+                  Disable MFA
+                </Button>
+              ) : null}
             </div>
           </div>
           <DialogFooter className="pt-4">

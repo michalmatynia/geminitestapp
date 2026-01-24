@@ -5,12 +5,17 @@ import mime from "mime-types";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getImageFileRepository } from "@/lib/services/image-file-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, notFoundError } from "@/lib/errors/app-error";
 
 export async function GET(req: NextRequest) {
   const fileId = req.nextUrl.searchParams.get("fileId");
 
   if (!fileId) {
-    return NextResponse.json({ error: "File ID is required" }, { status: 400 });
+    return createErrorResponse(badRequestError("File ID is required"), {
+      request: req,
+      source: "files/preview.GET",
+    });
   }
 
   try {
@@ -18,7 +23,7 @@ export async function GET(req: NextRequest) {
     const imageFile = await imageFileRepository.getImageFileById(fileId);
 
     if (!imageFile) {
-      return NextResponse.json({ error: "File not found" }, { status: 404 });
+      throw notFoundError("File not found");
     }
 
     // Remove leading slash from the stored path to ensure correct joining
@@ -28,11 +33,7 @@ export async function GET(req: NextRequest) {
     const filePath = path.join(process.cwd(), "public", relativePath);
 
     if (!fs.existsSync(filePath)) {
-      console.error(`File not found at constructed path: ${filePath}`);
-      return NextResponse.json(
-        { error: "File not found on disk" },
-        { status: 404 }
-      );
+      throw notFoundError("File not found on disk", { path: relativePath });
     }
 
     const fileBuffer = fs.readFileSync(filePath);
@@ -46,10 +47,10 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error fetching file preview:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch file preview" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "files/preview.GET",
+      fallbackMessage: "Failed to fetch file preview",
+    });
   }
 }

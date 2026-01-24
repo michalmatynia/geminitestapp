@@ -3,11 +3,9 @@ npx prisma migrate dev
 npx prisma generate
 /admin/system/logs
 
-In Product List, when All Catalogs are viewed currency is supposed to have PLN and EUR, but has additional code like  value that should not be there
+* When I create a user manually I should have the option to add their role, including the super user role, also , I should be able to verify them manually by clicking edit.
 
-When I create a user manually I should have the option to add their role, including the super user role, also , I should be able to verify them manually by clicking edit.
-
-I need to manage the Auth system create a super user and have the option to verify my super user , then restore proper authing system.
+* mock logging
 
 * In my Product Create / Edit modal, I can now see Price Groups overview with a Standard Group, PLN, EUR. Standard Group shouldn't be there, it's not a price group it's just a type of price group.
 
@@ -40,9 +38,14 @@ LATER - add other GEminiInstructions (especially for the use of tanstack query a
 centralized error handling
 Move on to remaining global APIs (countries, price groups, system logs, chatbot, drafts, settings, etc.).
 LATER - apply consistent error mapping and handling all across the application
-routes, services and client-side error handling
+routes, services 
 do Critical paths first, then comprehensive audit
 do a full test run  after
+Create client-side error handling utilities and implement on the client-side
+Add error metrics and statistics tracking
+Create critical error notification service
+Add error fingerprinting for grouping similar errors
+Create error recovery patterns for transient errors
 
 
 Note APP, simplified NoTE editing, which allows me to edit, delete text right in the note preview. Unless I want a deeper edit. Note Should Auto Save
@@ -64,6 +67,7 @@ Markdown TO Wysywig make it a dropdown and place it by Delete
 
 * Opening WYSYWIG Note fails in Edit Mode
 
+Analytics
 
 LATER - Post Production Studio -> Should have changeable options for relight etc. also an option to Generate, or add environemet. Also, each post-production work should be handled in one session, so it's easier to regenerate with an addidtional prompt (or prompt suggestions)
 

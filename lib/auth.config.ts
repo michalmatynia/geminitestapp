@@ -4,6 +4,7 @@ const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
 
 // Basic config that is edge-compatible
 const adminOnlyPrefixes = ["/admin/auth", "/admin/products"];
+const elevatedRoles = new Set(["admin", "super_admin", "superuser"]);
 
 const permissionRules: Array<{ prefix: string; permissions: string[] }> = [
   { prefix: "/admin/auth/permissions", permissions: ["auth.users.write"] },
@@ -42,18 +43,25 @@ export const authConfig = {
   session: { strategy: "jwt" },
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
-      // TEMP: Disable auth checks in development
-      if (process.env.NODE_ENV === "development") {
-        return true;
-      }
-
       const isLoggedIn = !!auth?.user;
       const isOnAdmin = nextUrl.pathname.startsWith("/admin");
       if (isOnAdmin) {
         if (!isLoggedIn) return false;
-        const role = (auth?.user as { role?: string })?.role ?? "unknown";
+        const authUser = auth?.user as {
+          role?: string;
+          isElevated?: boolean;
+          accountDisabled?: boolean;
+          accountBanned?: boolean;
+        };
+        const role = authUser?.role ?? "unknown";
+        const isElevated = authUser?.isElevated ?? elevatedRoles.has(role);
+        if (authUser?.accountBanned || authUser?.accountDisabled) {
+          const redirectUrl = new URL("/auth/signin", nextUrl);
+          redirectUrl.searchParams.set("error", "AccountDisabled");
+          return Response.redirect(redirectUrl);
+        }
         if (adminOnlyPrefixes.some((prefix) => nextUrl.pathname.startsWith(prefix))) {
-          if (role !== "admin") {
+          if (!isElevated) {
             const redirectUrl = new URL("/admin", nextUrl);
             redirectUrl.searchParams.set("denied", "1");
             return Response.redirect(redirectUrl);
@@ -65,7 +73,7 @@ export const authConfig = {
         if (requiredPermissions.length === 0) return true;
         const permissions = (auth?.user as { permissions?: string[] })?.permissions ?? [];
         const hasAccess =
-          role === "admin" ||
+          isElevated ||
           requiredPermissions.some((permission) => permissions.includes(permission));
         if (hasAccess) return true;
         const redirectUrl = new URL("/admin", nextUrl);
@@ -73,6 +81,21 @@ export const authConfig = {
         return Response.redirect(redirectUrl);
       }
       return true;
+    },
+    session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.sub ?? session.user.id;
+        session.user.role = (token as { role?: string }).role ?? null;
+        session.user.permissions =
+          (token as { permissions?: string[] }).permissions ?? [];
+        session.user.roleLevel = (token as { roleLevel?: number }).roleLevel ?? null;
+        session.user.isElevated = (token as { isElevated?: boolean }).isElevated ?? false;
+        session.user.accountDisabled =
+          (token as { accountDisabled?: boolean }).accountDisabled ?? false;
+        session.user.accountBanned =
+          (token as { accountBanned?: boolean }).accountBanned ?? false;
+      }
+      return session;
     },
   },
 } satisfies NextAuthConfig;

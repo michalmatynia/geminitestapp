@@ -1,8 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import {
+  configurationError,
+  notFoundError,
+  duplicateEntryError,
+} from "@/lib/errors/app-error";
 
 const countrySchema = z.object({
   code: z.enum(["PL", "DE", "GB", "US", "SE"]),
@@ -60,7 +66,7 @@ const normalizeCountryResponse = (
  * Updates a country.
  */
 export async function PUT(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -72,27 +78,18 @@ export async function PUT(
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw configurationError("MongoDB is not configured");
       }
       const db = await getMongoDb();
       const countries = db.collection<CountryDoc>(COUNTRIES_COLLECTION);
       const existing = await countries.findOne({ id });
       if (!existing) {
-        return NextResponse.json(
-          { error: "Country not found." },
-          { status: 404 }
-        );
+        throw notFoundError("Country not found");
       }
       if (countryData.code !== id) {
         const collision = await countries.findOne({ id: countryData.code });
         if (collision) {
-          return NextResponse.json(
-            { error: "Country code already exists." },
-            { status: 400 }
-          );
+          throw duplicateEntryError("Country code already exists");
         }
       }
       let nextCurrencyIds = existing.currencyIds ?? [];
@@ -168,20 +165,12 @@ export async function PUT(
       });
     });
     return NextResponse.json(country);
-  } catch (error: unknown) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten() },
-        { status: 400 }
-      );
-    }
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-    return NextResponse.json(
-      { error: "An unknown error occurred" },
-      { status: 400 }
-    );
+  } catch (error) {
+    return createErrorResponse(error, {
+      request: req,
+      source: "countries/[id].PUT",
+      fallbackMessage: "Failed to update country",
+    });
   }
 }
 
@@ -190,7 +179,7 @@ export async function PUT(
  * Deletes a country.
  */
 export async function DELETE(
-  _req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -199,10 +188,7 @@ export async function DELETE(
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
-        return NextResponse.json(
-          { error: "MongoDB is not configured." },
-          { status: 500 }
-        );
+        throw configurationError("MongoDB is not configured");
       }
       const db = await getMongoDb();
       await db.collection(COUNTRIES_COLLECTION).deleteOne({ id });
@@ -211,13 +197,11 @@ export async function DELETE(
 
     await prisma.country.delete({ where: { id } });
     return new Response(null, { status: 204 });
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-    return NextResponse.json(
-      { error: "Failed to delete country" },
-      { status: 500 }
-    );
+  } catch (error) {
+    return createErrorResponse(error, {
+      request: req,
+      source: "countries/[id].DELETE",
+      fallbackMessage: "Failed to delete country",
+    });
   }
 }

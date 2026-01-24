@@ -54,7 +54,7 @@ describe("Agent API", () => {
       },
     });
 
-    const res = await listRuns();
+    const res = await listRuns(new Request("http://localhost/api/chatbot/agent"));
     const data = (await res.json()) as {
       runs: (ChatbotAgentRun & {
         _count: { browserLogs: number; browserSnapshots: number };

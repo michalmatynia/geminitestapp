@@ -23,7 +23,7 @@ describe("Chatbot API", () => {
       )
     );
 
-    const res = await GET();
+    const res = await GET(new Request("http://localhost/api/chatbot"));
     const data = (await res.json()) as { models: string[] };
 
     expect(res.status).toBe(200);
@@ -35,7 +35,7 @@ describe("Chatbot API", () => {
       new Response("Provider down", { status: 502 })
     );
 
-    const res = await GET();
+    const res = await GET(new Request("http://localhost/api/chatbot"));
     const data = (await res.json()) as { error: string; errorId?: string };
 
     expect(res.status).toBe(502);

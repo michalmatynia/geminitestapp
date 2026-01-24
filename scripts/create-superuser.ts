@@ -80,7 +80,7 @@ async function main() {
   console.log(`User ensured with ID: ${userId} (${providerUsed})`);
 
   // 2. Assign Role
-  console.log("Assigning 'admin' role...");
+  console.log("Assigning 'super_admin' role...");
   
   if (providerUsed === "mongodb") {
     const db = await getMongoDb();
@@ -92,7 +92,7 @@ async function main() {
     });
     
     let userRoles = parseJsonSetting<Record<string, string>>(rolesDoc?.value as string, {});
-    userRoles[userId] = "admin";
+    userRoles[userId] = "super_admin";
     
     const value = serializeSetting(userRoles);
     
@@ -110,7 +110,7 @@ async function main() {
     });
     
     let userRoles = parseJsonSetting<Record<string, string>>(setting?.value, {});
-    userRoles[userId] = "admin";
+    userRoles[userId] = "super_admin";
     
     await prisma.setting.upsert({
       where: { key: AUTH_SETTINGS_KEYS.userRoles },

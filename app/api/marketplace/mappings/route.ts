@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCategoryMappingRepository } from "@/lib/services/category-mapping-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError } from "@/lib/errors/app-error";
 
 type CreateMappingRequest = {
   connectionId: string;
@@ -22,10 +24,7 @@ export async function GET(request: NextRequest) {
     const catalogId = searchParams.get("catalogId") ?? undefined;
 
     if (!connectionId) {
-      return NextResponse.json(
-        { error: "connectionId is required" },
-        { status: 400 }
-      );
+      throw badRequestError("connectionId is required");
     }
 
     const repo = await getCategoryMappingRepository();
@@ -33,11 +32,11 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(mappings);
   } catch (error) {
-    console.error("[marketplace/mappings] GET error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch category mappings" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request,
+      source: "marketplace/mappings.GET",
+      fallbackMessage: "Failed to fetch category mappings",
+    });
   }
 }
 
@@ -51,9 +50,8 @@ export async function POST(request: NextRequest) {
     const { connectionId, externalCategoryId, internalCategoryId, catalogId } = body;
 
     if (!connectionId || !externalCategoryId || !internalCategoryId || !catalogId) {
-      return NextResponse.json(
-        { error: "connectionId, externalCategoryId, internalCategoryId, and catalogId are required" },
-        { status: 400 }
+      throw badRequestError(
+        "connectionId, externalCategoryId, internalCategoryId, and catalogId are required"
       );
     }
 
@@ -82,9 +80,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(mapping, { status: 201 });
   } catch (error) {
-    console.error("[marketplace/mappings] POST error:", error);
-    const message =
-      error instanceof Error ? error.message : "Failed to create category mapping";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return createErrorResponse(error, {
+      request,
+      source: "marketplace/mappings.POST",
+      fallbackMessage: "Failed to create category mapping",
+    });
   }
 }

@@ -1,6 +1,6 @@
 import path from "path";
 import { promises as fs } from "fs";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import {
   backupsDir as pgBackupsDir,
@@ -10,15 +10,17 @@ import {
   backupsDir as mongoBackupsDir,
   assertValidBackupName as assertValidMongoBackupName,
 } from "../_utils-mongo";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError } from "@/lib/errors/app-error";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const { backupName, type } = (await req.json()) as {
       backupName: string;
       type?: "postgresql" | "mongodb";
     };
     if (!backupName) {
-      return NextResponse.json({ error: "Backup name is required" }, { status: 400 });
+      throw badRequestError("Backup name is required");
     }
 
     const dbType = type === "mongodb" ? "mongodb" : "postgresql";
@@ -34,10 +36,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ message: "Backup deleted" });
   } catch (error) {
-    console.error("Failed to delete backup:", error);
-    return NextResponse.json(
-      { error: "Failed to delete backup" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "databases/delete.POST",
+      fallbackMessage: "Failed to delete backup",
+    });
   }
 }

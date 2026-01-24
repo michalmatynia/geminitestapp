@@ -8,6 +8,7 @@ type AuthUserRecord = {
   name?: string | null;
   passwordHash?: string | null;
   image?: string | null;
+  emailVerified?: Date | null;
 };
 
 type MongoUserDoc = {
@@ -15,6 +16,7 @@ type MongoUserDoc = {
   name?: string | null;
   passwordHash?: string | null;
   image?: string | null;
+  emailVerified?: Date | null;
 };
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
@@ -45,6 +47,7 @@ export const findAuthUserByEmail = async (
       name: user.name ?? null,
       passwordHash: user.passwordHash ?? null,
       image: user.image ?? null,
+      emailVerified: user.emailVerified ?? null,
     };
   }
 
@@ -60,6 +63,7 @@ export const findAuthUserByEmail = async (
       name: true,
       passwordHash: true,
       image: true,
+      emailVerified: true,
     },
   });
   if (!user || !user.email) {
@@ -72,6 +76,53 @@ export const findAuthUserByEmail = async (
     name: user.name,
     passwordHash: user.passwordHash ?? null,
     image: user.image,
+    emailVerified: user.emailVerified ?? null,
+  };
+};
+
+export const findAuthUserById = async (
+  userId: string
+): Promise<AuthUserRecord | null> => {
+  const provider = await getAuthDataProvider();
+  if (provider === "mongodb") {
+    if (!process.env.MONGODB_URI) return null;
+    const db = await getMongoDb();
+    const { ObjectId } = await import("mongodb");
+    if (!ObjectId.isValid(userId)) return null;
+    const user = await db
+      .collection<MongoUserDoc>("users")
+      .findOne({ _id: new ObjectId(userId) });
+    if (!user || !user.email) return null;
+    return {
+      id: userId,
+      email: user.email,
+      name: user.name ?? null,
+      passwordHash: user.passwordHash ?? null,
+      image: user.image ?? null,
+      emailVerified: user.emailVerified ?? null,
+    };
+  }
+
+  if (!process.env.DATABASE_URL) return null;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      passwordHash: true,
+      image: true,
+      emailVerified: true,
+    },
+  });
+  if (!user || !user.email) return null;
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    passwordHash: user.passwordHash ?? null,
+    image: user.image ?? null,
+    emailVerified: user.emailVerified ?? null,
   };
 };
 

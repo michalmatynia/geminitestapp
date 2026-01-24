@@ -3,6 +3,8 @@ import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { Prisma } from "@prisma/client";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { notFoundError } from "@/lib/errors/app-error";
 
 type Params = { id: string };
 type Ctx = { params: Promise<Params> } | { params: Params };
@@ -48,15 +50,16 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     });
 
     if (!page) {
-      return NextResponse.json({ error: "Page not found" }, { status: 404 });
+      throw notFoundError("Page not found");
     }
 
     return NextResponse.json(page);
-  } catch (_error) {
-    return NextResponse.json(
-      { error: "Failed to fetch page" },
-      { status: 500 }
-    );
+  } catch (error) {
+    return createErrorResponse(error, {
+      request: req,
+      source: "cms/pages/[id].GET",
+      fallbackMessage: "Failed to fetch page",
+    });
   }
 }
 
@@ -100,11 +103,12 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
     });
 
     return NextResponse.json(updatedPage);
-  } catch (_error) {
-    return NextResponse.json(
-      { error: "Failed to update page" },
-      { status: 500 }
-    );
+  } catch (error) {
+    return createErrorResponse(error, {
+      request: req,
+      source: "cms/pages/[id].PUT",
+      fallbackMessage: "Failed to update page",
+    });
   }
 }
 
@@ -121,10 +125,11 @@ export async function DELETE(req: NextRequest, ctx: Ctx) {
     });
 
     return new Response(null, { status: 204 });
-  } catch (_error) {
-    return NextResponse.json(
-      { error: "Failed to delete page" },
-      { status: 500 }
-    );
+  } catch (error) {
+    return createErrorResponse(error, {
+      request: req,
+      source: "cms/pages/[id].DELETE",
+      fallbackMessage: "Failed to delete page",
+    });
   }
 }

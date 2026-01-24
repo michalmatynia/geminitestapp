@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMongoDb } from "@/lib/db/mongo-client";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { configurationError, notFoundError } from "@/lib/errors/app-error";
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,41 +10,47 @@ export async function POST(req: NextRequest) {
       // If no MongoDB, we just skip this part or return success if we don't want to block
       return NextResponse.json({ success: true, message: "MongoDB not configured, skipping." });
     }
-    
+
     const mongo = await getMongoDb();
     const collection = mongo.collection("ai_configurations");
-    
+
     const result = await collection.updateOne(
       { type: "description_config" },
-      { 
-        $set: { 
+      {
+        $set: {
           ...data,
           updatedAt: new Date()
-        } 
+        }
       },
       { upsert: true }
     );
 
     return NextResponse.json({ success: true, id: result.upsertedId });
   } catch (error) {
-    console.error("Failed to save AI configuration to MongoDB:", error);
-    return NextResponse.json({ error: "Failed to save to MongoDB" }, { status: 500 });
+    return createErrorResponse(error, {
+      request: req,
+      source: "ai-config.POST",
+      fallbackMessage: "Failed to save AI configuration",
+    });
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     if (!process.env.MONGODB_URI) {
-      return NextResponse.json({ error: "MongoDB not configured" }, { status: 404 });
+      throw configurationError("MongoDB not configured");
     }
     const mongo = await getMongoDb();
     const config = await mongo.collection("ai_configurations").findOne({ type: "description_config" });
     if (!config) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+      throw notFoundError("AI configuration not found");
     }
     return NextResponse.json(config);
   } catch (error) {
-    console.error("Failed to fetch AI configuration from MongoDB:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return createErrorResponse(error, {
+      request: req,
+      source: "ai-config.GET",
+      fallbackMessage: "Failed to fetch AI configuration",
+    });
   }
 }

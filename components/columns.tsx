@@ -308,11 +308,12 @@ export const columns: ColumnDef<ProductWithImages>[] = [
             <div className="flex items-center gap-1.5 text-sm text-gray-500">
               <span>{product.sku}</span>
               {isImported && (
-                <Download
-                  className="size-3 text-blue-400"
-                  title="Imported product"
-                  aria-label="Imported product"
-                />
+                <span title="Imported product">
+                  <Download
+                    className="size-3 text-blue-400"
+                    aria-label="Imported product"
+                  />
+                </span>
               )}
             </div>
           )}

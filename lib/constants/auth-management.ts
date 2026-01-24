@@ -9,6 +9,8 @@ export type AuthRole = {
   name: string;
   description?: string;
   permissions: string[];
+  deniedPermissions?: string[];
+  level?: number;
 };
 
 export type AuthUserRoleMap = Record<string, string>;
@@ -18,6 +20,8 @@ export const AUTH_SETTINGS_KEYS = {
   permissions: "auth_permissions",
   userRoles: "auth_user_roles",
   userPages: "auth_user_pages",
+  defaultRole: "auth_default_role",
+  securityPolicy: "auth_security_policy",
 } as const;
 
 export const DEFAULT_AUTH_PERMISSIONS: AuthPermission[] = [
@@ -59,18 +63,24 @@ export const DEFAULT_AUTH_ROLES: AuthRole[] = [
     name: "Super Admin",
     description: "Full access to everything.",
     permissions: DEFAULT_AUTH_PERMISSIONS.map((permission) => permission.id),
+    deniedPermissions: [],
+    level: 100,
   },
   {
     id: "superuser",
     name: "Super User",
     description: "Full access including system-level settings.",
     permissions: DEFAULT_AUTH_PERMISSIONS.map((permission) => permission.id),
+    deniedPermissions: [],
+    level: 95,
   },
   {
     id: "admin",
     name: "Admin",
     description: "Full access to all apps and settings.",
     permissions: DEFAULT_AUTH_PERMISSIONS.map((permission) => permission.id),
+    deniedPermissions: [],
+    level: 90,
   },
   {
     id: "manager",
@@ -82,12 +92,16 @@ export const DEFAULT_AUTH_ROLES: AuthRole[] = [
       "notes.manage",
       "chatbot.manage",
     ],
+    deniedPermissions: [],
+    level: 60,
   },
   {
     id: "viewer",
     name: "Viewer",
     description: "Read-only access to user directory.",
     permissions: ["auth.users.read"],
+    deniedPermissions: [],
+    level: 10,
   },
 ];
 
@@ -104,8 +118,22 @@ export const serializeSetting = (value: unknown) => JSON.stringify(value ?? null
 
 export const mergeDefaultRoles = (roles: AuthRole[] | null | undefined): AuthRole[] => {
   const incoming = Array.isArray(roles) ? roles : [];
-  const known = new Set(incoming.map((role) => role.id));
-  const merged = [...incoming];
+  const defaults = new Map(DEFAULT_AUTH_ROLES.map((role) => [role.id, role]));
+  const merged = incoming.map((role) => {
+    const fallback = defaults.get(role.id);
+    if (!fallback) return role;
+    return {
+      ...fallback,
+      ...role,
+      permissions: Array.isArray(role.permissions) ? role.permissions : fallback.permissions,
+      deniedPermissions: Array.isArray(role.deniedPermissions)
+        ? role.deniedPermissions
+        : fallback.deniedPermissions ?? [],
+      level: typeof role.level === "number" ? role.level : fallback.level,
+    };
+  });
+
+  const known = new Set(merged.map((role) => role.id));
   for (const role of DEFAULT_AUTH_ROLES) {
     if (!known.has(role.id)) {
       merged.push(role);
@@ -113,3 +141,5 @@ export const mergeDefaultRoles = (roles: AuthRole[] | null | undefined): AuthRol
   }
   return merged;
 };
+
+export const ROLE_ELEVATION_THRESHOLD = 90;

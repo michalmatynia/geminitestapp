@@ -142,6 +142,8 @@ export default function AuthPermissionsPage() {
         name: newRoleName.trim(),
         description: newRoleDescription.trim() || undefined,
         permissions: [],
+        deniedPermissions: [],
+        level: 10,
       },
     ]);
     setNewRoleName("");
@@ -158,10 +160,24 @@ export default function AuthPermissionsPage() {
     setDirty(true);
   };
 
-  const handleRoleFieldChange = (roleId: string, field: "name" | "description", value: string) => {
+  const handleRoleFieldChange = (
+    roleId: string,
+    field: "name" | "description" | "level",
+    value: string
+  ) => {
     setRoles((prev) =>
       prev.map((role) =>
-        role.id === roleId ? { ...role, [field]: value } : role
+        role.id === roleId
+          ? {
+              ...role,
+              [field]:
+                field === "level"
+                  ? Number.isNaN(Number(value))
+                    ? role.level ?? 0
+                    : Number(value)
+                  : value,
+            }
+          : role
       )
     );
     setDirty(true);
@@ -338,6 +354,20 @@ export default function AuthPermissionsPage() {
                       }
                       className="bg-gray-900 border-gray-700 text-white"
                     />
+                    <Label className="text-xs text-gray-400">Role level</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={role.level ?? 0}
+                      onChange={(event) =>
+                        handleRoleFieldChange(role.id, "level", event.target.value)
+                      }
+                      className="bg-gray-900 border-gray-700 text-white"
+                    />
+                    <div className="text-xs text-gray-500">
+                      Levels ≥ 90 are treated as elevated access.
+                    </div>
                     <div className="text-xs text-gray-500">ID: {role.id}</div>
                   </div>
                   <Button

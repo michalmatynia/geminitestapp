@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCategoryMappingRepository } from "@/lib/services/category-mapping-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { notFoundError } from "@/lib/errors/app-error";
 
 type UpdateMappingRequest = {
   internalCategoryId?: string;
@@ -22,19 +24,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const mapping = await repo.getById(id);
 
     if (!mapping) {
-      return NextResponse.json(
-        { error: "Mapping not found" },
-        { status: 404 }
-      );
+      throw notFoundError("Mapping not found");
     }
 
     return NextResponse.json(mapping);
   } catch (error) {
-    console.error("[marketplace/mappings/[id]] GET error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch category mapping" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request,
+      source: "marketplace/mappings/[id].GET",
+      fallbackMessage: "Failed to fetch category mapping",
+    });
   }
 }
 
@@ -52,10 +51,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     // Check if mapping exists
     const existing = await repo.getById(id);
     if (!existing) {
-      return NextResponse.json(
-        { error: "Mapping not found" },
-        { status: 404 }
-      );
+      throw notFoundError("Mapping not found");
     }
 
     const updated = await repo.update(id, {
@@ -67,10 +63,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(updated);
   } catch (error) {
-    console.error("[marketplace/mappings/[id]] PUT error:", error);
-    const message =
-      error instanceof Error ? error.message : "Failed to update category mapping";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return createErrorResponse(error, {
+      request,
+      source: "marketplace/mappings/[id].PUT",
+      fallbackMessage: "Failed to update category mapping",
+    });
   }
 }
 
@@ -87,19 +84,17 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     // Check if mapping exists
     const existing = await repo.getById(id);
     if (!existing) {
-      return NextResponse.json(
-        { error: "Mapping not found" },
-        { status: 404 }
-      );
+      throw notFoundError("Mapping not found");
     }
 
     await repo.delete(id);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[marketplace/mappings/[id]] DELETE error:", error);
-    const message =
-      error instanceof Error ? error.message : "Failed to delete category mapping";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return createErrorResponse(error, {
+      request,
+      source: "marketplace/mappings/[id].DELETE",
+      fallbackMessage: "Failed to delete category mapping",
+    });
   }
 }

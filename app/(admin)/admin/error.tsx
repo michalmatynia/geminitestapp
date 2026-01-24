@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { logClientError } from "@/lib/client/error-logger";
 
 export default function AdminError({
   error,
@@ -13,6 +14,7 @@ export default function AdminError({
 }) {
   useEffect(() => {
     console.error(error);
+    logClientError(error, { digest: error.digest });
   }, [error]);
 
   return (

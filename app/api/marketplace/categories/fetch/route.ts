@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { fetchBaseCategories } from "@/lib/services/imports/base-client";
 import { getExternalCategoryRepository } from "@/lib/services/external-category-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, notFoundError } from "@/lib/errors/app-error";
 
 type FetchCategoriesRequest = {
   connectionId: string;
@@ -18,10 +20,7 @@ export async function POST(request: NextRequest) {
     const { connectionId } = body;
 
     if (!connectionId) {
-      return NextResponse.json(
-        { error: "connectionId is required" },
-        { status: 400 }
-      );
+      throw badRequestError("connectionId is required");
     }
 
     // Get the connection to retrieve the API token
@@ -31,28 +30,19 @@ export async function POST(request: NextRequest) {
     });
 
     if (!connection) {
-      return NextResponse.json(
-        { error: "Connection not found" },
-        { status: 404 }
-      );
+      throw notFoundError("Connection not found");
     }
 
     // Check if this is a Base.com connection
     const integrationSlug = connection.integration?.slug?.toLowerCase();
     if (integrationSlug !== "baselinker" && integrationSlug !== "base") {
-      return NextResponse.json(
-        { error: "Only Base.com connections are supported for category fetch" },
-        { status: 400 }
-      );
+      throw badRequestError("Only Base.com connections are supported for category fetch");
     }
 
     // Get the API token
     const token = connection.baseApiToken;
     if (!token) {
-      return NextResponse.json(
-        { error: "Base.com API token not configured for this connection" },
-        { status: 400 }
-      );
+      throw badRequestError("Base.com API token not configured for this connection");
     }
 
     // Fetch categories from Base.com API
@@ -76,9 +66,10 @@ export async function POST(request: NextRequest) {
       message: `Successfully synced ${syncedCount} categories from Base.com`,
     });
   } catch (error) {
-    console.error("[marketplace/categories/fetch] POST error:", error);
-    const message =
-      error instanceof Error ? error.message : "Failed to fetch categories";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return createErrorResponse(error, {
+      request,
+      source: "marketplace/categories/fetch.POST",
+      fallbackMessage: "Failed to fetch categories from marketplace",
+    });
   }
 }

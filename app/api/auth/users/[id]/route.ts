@@ -5,9 +5,10 @@ import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { getAuthDataProvider } from "@/lib/services/auth-provider";
 import { normalizeAuthEmail } from "@/lib/services/auth-user-repository";
+import { auth } from "@/lib/auth";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { conflictError, internalError, notFoundError } from "@/lib/errors/app-error";
+import { authError, conflictError, internalError, notFoundError } from "@/lib/errors/app-error";
 import type { AuthUserSummary } from "@/types/auth";
 
 export const runtime = "nodejs";
@@ -32,6 +33,13 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    const hasAccess =
+      session?.user?.isElevated ||
+      session?.user?.permissions?.includes("auth.users.write");
+    if (!hasAccess) {
+      throw authError("Unauthorized.");
+    }
     const parsed = await parseJsonBody(req, updateSchema, {
       logPrefix: "auth.users.PATCH",
     });

@@ -1,11 +1,13 @@
 import fs from "fs/promises";
-import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 import { getDiskPathFromPublicPath } from "@/lib/utils/fileUploader";
 import { getImageFileRepository } from "@/lib/services/image-file-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { notFoundError } from "@/lib/errors/app-error";
 
 export async function DELETE(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -15,7 +17,7 @@ export async function DELETE(
     const imageFile = await imageFileRepository.getImageFileById(id);
 
     if (!imageFile) {
-      return NextResponse.json({ error: "File not found" }, { status: 404 });
+      throw notFoundError("File not found");
     }
 
     // Physical file deletion
@@ -28,15 +30,15 @@ export async function DELETE(
         }
       }
     }
-    
+
     await imageFileRepository.deleteImageFile(id);
 
     return new Response(null, { status: 204 });
   } catch (error) {
-    console.error(`Error deleting file ${id}:`, error);
-    return NextResponse.json(
-      { error: "Failed to delete file" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "files/[id].DELETE",
+      fallbackMessage: "Failed to delete file",
+    });
   }
 }

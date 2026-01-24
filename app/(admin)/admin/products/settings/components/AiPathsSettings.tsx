@@ -40,6 +40,7 @@ type NodeType =
   | "router"
   | "delay"
   | "http"
+  | "db_query"
   | "prompt"
   | "model"
   | "updater"
@@ -49,6 +50,12 @@ type NodeType =
 
 type ParserConfig = {
   mappings: Record<string, string>;
+  outputMode?: "individual" | "bundle";
+  presetId?: string;
+};
+
+type PromptConfig = {
+  template: string;
 };
 
 type ModelConfig = {
@@ -58,10 +65,18 @@ type ModelConfig = {
   vision: boolean;
 };
 
+type UpdaterMapping = {
+  targetPath: string;
+  sourcePort: string;
+  sourcePath?: string;
+};
+
 type UpdaterConfig = {
-  targetField: string;
+  entityType?: string;
+  targetField?: string;
   idField: string;
   mode: "replace" | "append";
+  mappings?: UpdaterMapping[];
 };
 
 type TriggerConfig = {
@@ -168,6 +183,20 @@ type HttpConfig = {
   responsePath: string;
 };
 
+type DbQueryConfig = {
+  provider: "auto" | "mongodb";
+  collection: string;
+  mode: "preset" | "custom";
+  preset: "by_id" | "by_productId" | "by_entityId" | "by_field";
+  field: string;
+  idType: "string" | "objectId";
+  queryTemplate: string;
+  limit: number;
+  sort: string;
+  projection: string;
+  single: boolean;
+};
+
 type NodeConfig = {
   trigger?: TriggerConfig;
   simulation?: SimulationConfig;
@@ -185,8 +214,10 @@ type NodeConfig = {
   router?: RouterConfig;
   delay?: DelayConfig;
   http?: HttpConfig;
+  dbQuery?: DbQueryConfig;
   description?: DescriptionConfig;
   parser?: ParserConfig;
+  prompt?: PromptConfig;
   model?: ModelConfig;
   updater?: UpdaterConfig;
 };
@@ -229,7 +260,7 @@ const MAX_SCALE = 1.6;
 const VIEW_MARGIN = 40;
 const PORT_GAP = 18;
 const PORT_SIZE = 10;
-const DEFAULT_CONTEXT_ROLE = "product";
+const DEFAULT_CONTEXT_ROLE = "entity";
 const TRIGGER_INPUT_PORTS = ["role", "simulation"];
 const TRIGGER_OUTPUT_PORTS = ["trigger", "context", "meta", "entityId", "entityType"];
 const CONTEXT_OUTPUT_PORTS = ["role", "context", "entityId", "entityType", "entityJson"];
@@ -290,6 +321,213 @@ const HTTP_INPUT_PORTS = [
   "value",
   "entityId",
   "entityType",
+];
+const DB_QUERY_INPUT_PORTS = ["query", "value", "entityId", "entityType"];
+
+const DB_COLLECTION_OPTIONS = [
+  { value: "products", label: "Products" },
+  { value: "product_drafts", label: "Product Drafts" },
+  { value: "product_categories", label: "Product Categories" },
+  { value: "product_tags", label: "Product Tags" },
+  { value: "catalogs", label: "Catalogs" },
+  { value: "image_files", label: "Image Files" },
+  { value: "product_listings", label: "Product Listings" },
+  { value: "product_ai_jobs", label: "Product AI Jobs" },
+  { value: "integrations", label: "Integrations" },
+  { value: "integration_connections", label: "Integration Connections" },
+  { value: "settings", label: "Settings" },
+  { value: "users", label: "Users" },
+  { value: "user_preferences", label: "User Preferences" },
+  { value: "languages", label: "Languages" },
+  { value: "system_logs", label: "System Logs" },
+  { value: "notes", label: "Notes" },
+  { value: "tags", label: "Note Tags" },
+  { value: "categories", label: "Note Categories" },
+  { value: "notebooks", label: "Note Notebooks" },
+  { value: "noteFiles", label: "Note Files" },
+  { value: "themes", label: "Note Themes" },
+  { value: "chatbot_sessions", label: "Chatbot Sessions" },
+  { value: "auth_security_attempts", label: "Auth Security Attempts" },
+  { value: "auth_security_profiles", label: "Auth Security Profiles" },
+  { value: "auth_login_challenges", label: "Auth Login Challenges" },
+  { value: "custom", label: "Custom (allowlisted only)" },
+];
+
+const CONTEXT_PRESET_FIELDS: Record<
+  string,
+  { light: string[]; medium: string[]; full: string[]; suggested: string[] }
+> = {
+  product: {
+    light: ["id", "sku", "name_en", "name_pl", "name_de", "price", "stock", "imageLinks"],
+    medium: [
+      "id",
+      "sku",
+      "name_en",
+      "name_pl",
+      "name_de",
+      "price",
+      "stock",
+      "imageLinks",
+      "description_en",
+      "description_pl",
+      "description_de",
+      "catalogs",
+      "parameters",
+      "supplierName",
+      "supplierLink",
+      "createdAt",
+      "updatedAt",
+    ],
+    full: [],
+    suggested: [
+      "id",
+      "sku",
+      "name_en",
+      "name_pl",
+      "name_de",
+      "description_en",
+      "price",
+      "stock",
+      "imageLinks",
+      "catalogs",
+      "parameters",
+      "supplierName",
+      "supplierLink",
+      "createdAt",
+      "updatedAt",
+    ],
+  },
+  note: {
+    light: ["id", "title", "content", "notebookId", "isPinned", "isFavorite", "updatedAt"],
+    medium: [
+      "id",
+      "title",
+      "content",
+      "notebookId",
+      "isPinned",
+      "isFavorite",
+      "isArchived",
+      "editorType",
+      "color",
+      "tags",
+      "categories",
+      "createdAt",
+      "updatedAt",
+    ],
+    full: [],
+    suggested: [
+      "id",
+      "title",
+      "content",
+      "notebookId",
+      "tags",
+      "categories",
+      "relationsFrom",
+      "relationsTo",
+      "isPinned",
+      "isFavorite",
+      "isArchived",
+      "editorType",
+      "color",
+      "createdAt",
+      "updatedAt",
+    ],
+  },
+  default: {
+    light: ["id", "name", "title", "status", "updatedAt"],
+    medium: ["id", "name", "title", "status", "createdAt", "updatedAt", "meta"],
+    full: [],
+    suggested: ["id", "name", "title", "status", "createdAt", "updatedAt", "meta"],
+  },
+};
+
+const PARSER_PRESETS = [
+  {
+    id: "product_core",
+    label: "Product: Core",
+    description: "id, title, images, content_en, sku, price, stock",
+    mappings: {
+      productId: "$.id",
+      title: "$.title",
+      images: "$.images",
+      content_en: "$.content_en",
+      sku: "$.sku",
+      price: "$.price",
+      stock: "$.stock",
+    },
+  },
+  {
+    id: "product_media",
+    label: "Product: Media",
+    description: "imageLinks, gallery, videos",
+    mappings: {
+      images: "$.imageLinks",
+      gallery: "$.gallery",
+      videos: "$.videos",
+    },
+  },
+  {
+    id: "note_core",
+    label: "Note: Core",
+    description: "id, title, content, tags, updatedAt",
+    mappings: {
+      noteId: "$.id",
+      title: "$.title",
+      content: "$.content",
+      tags: "$.tags",
+      updatedAt: "$.updatedAt",
+    },
+  },
+  {
+    id: "chat_message",
+    label: "Chat: Message",
+    description: "id, role, content, createdAt",
+    mappings: {
+      messageId: "$.id",
+      role: "$.role",
+      content: "$.content",
+      createdAt: "$.createdAt",
+    },
+  },
+  {
+    id: "generic_audit",
+    label: "Generic: Audit",
+    description: "id, name, title, status, createdAt, updatedAt",
+    mappings: {
+      id: "$.id",
+      name: "$.name",
+      title: "$.title",
+      status: "$.status",
+      createdAt: "$.createdAt",
+      updatedAt: "$.updatedAt",
+    },
+  },
+];
+
+const PARSER_PATH_OPTIONS = [
+  { label: "Common: id", value: "$.id" },
+  { label: "Common: title", value: "$.title" },
+  { label: "Common: name", value: "$.name" },
+  { label: "Common: status", value: "$.status" },
+  { label: "Common: createdAt", value: "$.createdAt" },
+  { label: "Common: updatedAt", value: "$.updatedAt" },
+  { label: "Product: sku", value: "$.sku" },
+  { label: "Product: price", value: "$.price" },
+  { label: "Product: stock", value: "$.stock" },
+  { label: "Product: content_en", value: "$.content_en" },
+  { label: "Product: name_en", value: "$.name_en" },
+  { label: "Product: name_pl", value: "$.name_pl" },
+  { label: "Product: imageLinks", value: "$.imageLinks" },
+  { label: "Product: images", value: "$.images" },
+  { label: "Product: media", value: "$.media" },
+  { label: "Product: gallery", value: "$.gallery" },
+  { label: "Product: supplierName", value: "$.supplierName" },
+  { label: "Product: catalogs", value: "$.catalogs" },
+  { label: "Note: content", value: "$.content" },
+  { label: "Note: tags", value: "$.tags" },
+  { label: "Note: notebookId", value: "$.notebookId" },
+  { label: "Chat: role", value: "$.role" },
+  { label: "Chat: messages[0].content", value: "$.messages[0].content" },
 ];
 const VIEWER_INPUT_PORTS = [
   "result",
@@ -356,7 +594,7 @@ const palette: NodeDefinition[] = [
     type: "ai_description",
     title: "AI Description Generator",
     description: "Runs the AI Description pipeline to produce description_en.",
-    inputs: ["productJson", "images", "title"],
+    inputs: ["entityJson", "images", "title"],
     outputs: DESCRIPTION_OUTPUT_PORTS,
   },
   {
@@ -369,15 +607,15 @@ const palette: NodeDefinition[] = [
   {
     type: "context",
     title: "Context Grabber",
-    description: "Collects live context (Product, Note, Chat, Log).",
+    description: "Collects live entity context (Product, Note, Chat, Log).",
     inputs: [],
-    outputs: ["role", "context", "entityId", "entityType", "entityJson", "productJson"],
+    outputs: ["role", "context", "entityId", "entityType", "entityJson"],
   },
   {
     type: "parser",
     title: "JSON Parser",
-    description: "Extracts fields into typed outputs.",
-    inputs: ["productJson", "entityJson"],
+    description: "Extract fields into outputs or a single bundle.",
+    inputs: ["entityJson"],
     outputs: ["productId", "title", "images", "content_en"],
   },
   {
@@ -430,6 +668,13 @@ const palette: NodeDefinition[] = [
     outputs: ["value", "bundle"],
   },
   {
+    type: "db_query",
+    title: "Database Query",
+    description: "Query MongoDB collections and return JSON.",
+    inputs: DB_QUERY_INPUT_PORTS,
+    outputs: ["result", "bundle"],
+  },
+  {
     type: "constant",
     title: "Constant",
     description: "Emit a constant value as a signal.",
@@ -468,7 +713,7 @@ const palette: NodeDefinition[] = [
     type: "prompt",
     title: "Prompt",
     description: "Formats text with placeholders.",
-    inputs: ["title", "images", "result"],
+    inputs: ["bundle", "title", "images", "result"],
     outputs: ["prompt"],
   },
   {
@@ -481,9 +726,9 @@ const palette: NodeDefinition[] = [
   {
     type: "updater",
     title: "Updater",
-    description: "Writes result to target field.",
-    inputs: ["productId", "content_en", "result"],
-    outputs: ["content_en"],
+    description: "Maps inputs to entity fields and prepares update payloads.",
+    inputs: ["productId", "content_en", "result", "bundle"],
+    outputs: ["content_en", "bundle"],
   },
 ];
 
@@ -537,9 +782,12 @@ const createViewerOutputs = (inputs: string[]) =>
     return acc;
   }, {});
 
+const normalizePortName = (port: string) =>
+  port === "productJson" ? "entityJson" : port;
+
 const ensureUniquePorts = (ports: string[], add: string[]) => {
-  const set = new Set(ports);
-  add.forEach((port) => set.add(port));
+  const set = new Set(ports.map(normalizePortName));
+  add.forEach((port) => set.add(normalizePortName(port)));
   return Array.from(set);
 };
 
@@ -549,15 +797,12 @@ const ensureUniquePorts = (ports: string[], add: string[]) => {
       const contextConfig = node.config?.context;
       return {
         ...node,
-        outputs: ensureUniquePorts(node.outputs, [
-          ...CONTEXT_OUTPUT_PORTS,
-          "productJson",
-        ]),
+        outputs: ensureUniquePorts(node.outputs, CONTEXT_OUTPUT_PORTS),
         config: {
           ...node.config,
           context: {
             role: contextConfig?.role ?? DEFAULT_CONTEXT_ROLE,
-            entityType: contextConfig?.entityType ?? "product",
+            entityType: contextConfig?.entityType ?? "auto",
             entityIdSource: contextConfig?.entityIdSource ?? "simulation",
             entityId: contextConfig?.entityId ?? "",
             scopeMode: contextConfig?.scopeMode ?? "full",
@@ -588,13 +833,25 @@ const ensureUniquePorts = (ports: string[], add: string[]) => {
       };
     }
     if (node.type === "parser") {
+      const parserConfig = node.config?.parser;
+      const mappings =
+        parserConfig?.mappings ?? createParserMappings(node.outputs);
+      const outputMode = parserConfig?.outputMode ?? "individual";
+      const presetId = parserConfig?.presetId;
+      const outputKeys = Object.keys(mappings)
+        .map((key) => key.trim())
+        .filter(Boolean);
+      const outputs = outputMode === "bundle" ? ["bundle"] : outputKeys;
       return {
         ...node,
-        inputs: ensureUniquePorts(node.inputs, ["productJson", "entityJson"]),
+        inputs: ensureUniquePorts(node.inputs, ["entityJson"]),
+        outputs: outputs.length > 0 ? outputs : node.outputs,
         config: {
           ...node.config,
           parser: {
-            mappings: node.config?.parser?.mappings ?? createParserMappings(node.outputs),
+            mappings,
+            outputMode,
+            presetId,
           },
         },
       };
@@ -661,6 +918,19 @@ const ensureUniquePorts = (ports: string[], add: string[]) => {
           ...node.config,
           template: {
             template: node.config?.template?.template ?? "Write a summary for {{context.entity.title}}",
+          },
+        },
+      };
+    }
+    if (node.type === "prompt") {
+      return {
+        ...node,
+        inputs: ensureUniquePorts(node.inputs, ["bundle"]),
+        outputs: ensureUniquePorts(node.outputs, ["prompt"]),
+        config: {
+          ...node.config,
+          prompt: {
+            template: node.config?.prompt?.template ?? "",
           },
         },
       };
@@ -754,9 +1024,33 @@ const ensureUniquePorts = (ports: string[], add: string[]) => {
         },
       };
     }
+    if (node.type === "db_query") {
+      return {
+        ...node,
+        inputs: ensureUniquePorts(node.inputs, DB_QUERY_INPUT_PORTS),
+        outputs: ensureUniquePorts(node.outputs, ["result", "bundle"]),
+        config: {
+          ...node.config,
+          dbQuery: {
+            provider: node.config?.dbQuery?.provider ?? "auto",
+            collection: node.config?.dbQuery?.collection ?? "products",
+            mode: node.config?.dbQuery?.mode ?? "preset",
+            preset: node.config?.dbQuery?.preset ?? "by_id",
+            field: node.config?.dbQuery?.field ?? "_id",
+            idType: node.config?.dbQuery?.idType ?? "string",
+            queryTemplate: node.config?.dbQuery?.queryTemplate ?? "{\n  \"_id\": \"{{value}}\"\n}",
+            limit: node.config?.dbQuery?.limit ?? 20,
+            sort: node.config?.dbQuery?.sort ?? "",
+            projection: node.config?.dbQuery?.projection ?? "",
+            single: node.config?.dbQuery?.single ?? false,
+          },
+        },
+      };
+    }
     if (node.type === "ai_description") {
       return {
         ...node,
+        inputs: ensureUniquePorts(node.inputs, ["entityJson", "images", "title"]),
         outputs: ensureUniquePorts(node.outputs, DESCRIPTION_OUTPUT_PORTS),
         config: {
           ...node.config,
@@ -771,6 +1065,34 @@ const ensureUniquePorts = (ports: string[], add: string[]) => {
       return {
         ...node,
         outputs: ensureUniquePorts(node.outputs, ["description_en"]),
+      };
+    }
+    if (node.type === "updater") {
+      const updaterConfig = node.config?.updater ?? {};
+      const legacyTarget = updaterConfig.targetField ?? node.outputs[0] ?? "content_en";
+      const legacyMappings =
+        updaterConfig.mappings && updaterConfig.mappings.length > 0
+          ? updaterConfig.mappings
+          : [
+              {
+                targetPath: legacyTarget,
+                sourcePort: node.inputs.includes("result") ? "result" : legacyTarget,
+              },
+            ];
+      return {
+        ...node,
+        inputs: ensureUniquePorts(node.inputs, ["productId", "content_en", "result", "bundle"]),
+        outputs: ensureUniquePorts(node.outputs, ["content_en", "bundle"]),
+        config: {
+          ...node.config,
+          updater: {
+            entityType: updaterConfig.entityType ?? "product",
+            targetField: legacyTarget,
+            idField: updaterConfig.idField ?? "productId",
+            mode: updaterConfig.mode ?? "replace",
+            mappings: legacyMappings,
+          },
+        },
       };
     }
       if (node.type === "viewer") {
@@ -839,7 +1161,7 @@ const getDefaultConfigForType = (
     return {
       context: {
         role: DEFAULT_CONTEXT_ROLE,
-        entityType: "product",
+        entityType: "auto",
         entityIdSource: "simulation",
         entityId: "",
         scopeMode: "full",
@@ -948,6 +1270,23 @@ const getDefaultConfigForType = (
       },
     };
   }
+  if (type === "db_query") {
+    return {
+      dbQuery: {
+        provider: "auto",
+        collection: "products",
+        mode: "preset",
+        preset: "by_id",
+        field: "_id",
+        idType: "string",
+        queryTemplate: "{\n  \"_id\": \"{{value}}\"\n}",
+        limit: 20,
+        sort: "",
+        projection: "",
+        single: false,
+      },
+    };
+  }
   if (type === "ai_description") {
     return {
       description: {
@@ -957,7 +1296,16 @@ const getDefaultConfigForType = (
     };
   }
   if (type === "parser") {
-    return { parser: { mappings: createParserMappings(outputs) } };
+    return {
+      parser: {
+        mappings: createParserMappings(outputs),
+        outputMode: "individual",
+        presetId: PARSER_PRESETS[0]?.id ?? "custom",
+      },
+    };
+  }
+  if (type === "prompt") {
+    return { prompt: { template: "" } };
   }
   if (type === "model") {
     return {
@@ -972,9 +1320,16 @@ const getDefaultConfigForType = (
   if (type === "updater") {
     return {
       updater: {
+        entityType: "product",
         targetField: outputs[0] ?? "content_en",
         idField: "productId",
         mode: "replace",
+        mappings: [
+          {
+            targetPath: outputs[0] ?? "content_en",
+            sourcePort: inputs.includes("result") ? "result" : outputs[0] ?? "content_en",
+          },
+        ],
       },
     };
   }
@@ -1010,6 +1365,169 @@ const parsePathList = (value: string) =>
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
+
+const safeParseJson = (value: string) => {
+  if (!value.trim()) return { value: null as unknown, error: "" };
+  try {
+    return { value: JSON.parse(value) as unknown, error: "" };
+  } catch {
+    return { value: null as unknown, error: "Invalid JSON" };
+  }
+};
+
+type JsonPathEntry = {
+  path: string;
+  type: "object" | "array" | "value";
+};
+
+const extractJsonPathEntries = (value: unknown, maxDepth = 2) => {
+  const entries: JsonPathEntry[] = [];
+  const walk = (node: unknown, prefix: string, depth: number) => {
+    if (node === null || node === undefined || depth < 0) return;
+    const isArray = Array.isArray(node);
+    const isObject = !isArray && typeof node === "object";
+    if (prefix) {
+      entries.push({
+        path: prefix,
+        type: isArray ? "array" : isObject ? "object" : "value",
+      });
+    }
+    if (isArray) {
+      if ((node as unknown[]).length === 0) return;
+      const arrayPrefix = prefix ? `${prefix}[0]` : "[0]";
+      walk((node as unknown[])[0], arrayPrefix, depth - 1);
+      return;
+    }
+    if (!isObject) return;
+    Object.entries(node as Record<string, unknown>).forEach(([key, child]) => {
+      const nextPrefix = prefix ? `${prefix}.${key}` : key;
+      walk(child, nextPrefix, depth - 1);
+    });
+  };
+  walk(value, "", maxDepth);
+  return entries;
+};
+
+const extractJsonPaths = (value: unknown, maxDepth = 2) => {
+  return extractJsonPathEntries(value, maxDepth).map((entry) => entry.path);
+};
+
+const buildTopLevelMappings = (value: unknown) => {
+  if (!value) return {} as Record<string, string>;
+  let root: unknown = value;
+  let prefix = "$.";
+  if (Array.isArray(value)) {
+    root = value[0];
+    prefix = "$[0].";
+  }
+  if (!root || typeof root !== "object") return {} as Record<string, string>;
+  return Object.keys(root as Record<string, unknown>).reduce<Record<string, string>>(
+    (acc, key) => {
+      acc[key] = `${prefix}${key}`;
+      return acc;
+    },
+    {}
+  );
+};
+
+const buildFlattenedMappings = (
+  value: unknown,
+  depth: number,
+  keyStyle: "path" | "leaf",
+  includeContainers: boolean
+) => {
+  const entries = extractJsonPathEntries(value, depth).filter((entry) => {
+    if (includeContainers) return true;
+    return entry.type === "value" || entry.type === "array";
+  });
+  const mappings: Record<string, string> = {};
+  const used = new Set<string>();
+  entries.forEach((entry) => {
+    const path = entry.path;
+    const jsonPath = path.startsWith("[") ? `$${path}` : `$.${path}`;
+    const tokens = parsePathTokens(path);
+    if (tokens.length === 0) return;
+    const pathKey = tokens
+      .map((token) => (typeof token === "number" ? String(token) : token))
+      .join("_");
+    let leafKey = "";
+    for (let index = tokens.length - 1; index >= 0; index -= 1) {
+      const token = tokens[index];
+      if (typeof token === "string") {
+        leafKey = token;
+        break;
+      }
+    }
+    const lastToken = tokens[tokens.length - 1];
+    if (leafKey && typeof lastToken === "number") {
+      leafKey = `${leafKey}_${lastToken}`;
+    }
+    let keyBase = keyStyle === "leaf" ? leafKey || pathKey : pathKey;
+    keyBase = keyBase.replace(/[^a-zA-Z0-9_]+/g, "_").replace(/^_+|_+$/g, "");
+    if (!keyBase) keyBase = "field";
+    if (/^\d/.test(keyBase)) {
+      keyBase = `field_${keyBase}`;
+    }
+    let uniqueKey = keyBase;
+    let counter = 1;
+    while (used.has(uniqueKey)) {
+      counter += 1;
+      uniqueKey = `${keyBase}_${counter}`;
+    }
+    used.add(uniqueKey);
+    mappings[uniqueKey] = jsonPath;
+  });
+  return mappings;
+};
+
+const looksLikeImageUrl = (value: string) =>
+  /(\.png|\.jpe?g|\.webp|\.gif|\/uploads\/|^https?:\/\/)/i.test(value);
+
+const isImageLikeValue = (value: unknown): boolean => {
+  if (!value) return false;
+  if (typeof value === "string") {
+    return looksLikeImageUrl(value);
+  }
+  if (Array.isArray(value)) {
+    return value.some((item) => isImageLikeValue(item));
+  }
+  if (typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    const candidates = ["url", "src", "thumbnail", "thumb", "imageUrl", "image"];
+    return candidates.some((key) => {
+      const val = record[key];
+      return typeof val === "string" ? looksLikeImageUrl(val) : isImageLikeValue(val);
+    });
+  }
+  return false;
+};
+
+const inferImageMappingPath = (value: unknown, depth: number) => {
+  if (!value) return null;
+  const entries = extractJsonPathEntries(value, depth);
+  const keyword = /(image|img|photo|picture|media|gallery)/i;
+  const candidates = entries.filter((entry) => keyword.test(entry.path));
+  const checkEntry = (entry: JsonPathEntry) => {
+    const jsonPath = entry.path.startsWith("[") ? `$${entry.path}` : `$.${entry.path}`;
+    const resolved = getValueAtMappingPath(value, jsonPath);
+    if (isImageLikeValue(resolved)) return jsonPath;
+    return null;
+  };
+  for (const entry of candidates) {
+    const match = checkEntry(entry);
+    if (match) return match;
+  }
+  for (const entry of entries) {
+    const match = checkEntry(entry);
+    if (match) return match;
+  }
+  return null;
+};
+
+const getContextPresetSet = (entityType?: string) => {
+  const key = entityType === "auto" ? "" : entityType ?? "";
+  return CONTEXT_PRESET_FIELDS[key] ?? CONTEXT_PRESET_FIELDS.default;
+};
 
 const cloneValue = <T,>(value: T): T => {
   if (typeof structuredClone === "function") {
@@ -1077,6 +1595,15 @@ const getValueAtMappingPath = (obj: unknown, path: string) => {
     current = (current as Record<string, unknown>)[token];
   }
   return current;
+};
+
+const parseJsonSafe = (value: string) => {
+  if (!value.trim()) return undefined;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return undefined;
+  }
 };
 
 const coerceInput = <T,>(value: T | T[] | undefined) =>
@@ -1215,20 +1742,29 @@ const isValidConnection = (
   return fromPort === toPort;
 };
 
-const sanitizeEdges = (nodes: AiNode[], edges: Edge[]) => {
+const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
   const nodeMap = new Map(nodes.map((node) => [node.id, node]));
   return edges.flatMap((edge) => {
     if (!edge.from || !edge.to) return [];
     const from = nodeMap.get(edge.from);
     const to = nodeMap.get(edge.to);
     if (!from || !to) return [];
-    if (edge.fromPort && edge.toPort) {
-      if (!isValidConnection(from, to, edge.fromPort, edge.toPort)) return [];
-      return [edge];
+    const fromPort = edge.fromPort ? normalizePortName(edge.fromPort) : undefined;
+    const toPort = edge.toPort ? normalizePortName(edge.toPort) : undefined;
+    if (fromPort && toPort) {
+      if (!isValidConnection(from, to, fromPort, toPort)) return [];
+      return [
+        {
+          ...edge,
+          fromPort,
+          toPort,
+        },
+      ];
     }
     const matches = from.outputs.filter((output) => to.inputs.includes(output));
     if (matches.length !== 1) return [];
     const port = matches[0];
+    if (!port) return [];
     return [
       {
         ...edge,
@@ -1247,7 +1783,6 @@ type ConnectionValidation = {
 // Strict port compatibility: output port must match input port
 const PORT_COMPATIBILITY: Record<string, string[]> = {
   role: ["role"],
-  productJson: ["productJson"],
   entityJson: ["entityJson"],
   productId: ["productId"],
   entityId: ["entityId"],
@@ -1263,6 +1798,7 @@ const PORT_COMPATIBILITY: Record<string, string[]> = {
   meta: ["meta"],
   bundle: ["bundle"],
   value: ["value"],
+  query: ["query"],
   description_en: ["description_en"],
   valid: ["valid"],
   errors: ["errors"],
@@ -1283,8 +1819,9 @@ const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     "router",
     "delay",
     "http",
+    "db_query",
   ],
-  trigger: ["viewer", "mapper", "mutator", "validator", "bundle", "template", "router", "delay"],
+  trigger: ["viewer", "mapper", "mutator", "validator", "bundle", "template", "router", "delay", "db_query"],
   simulation: ["trigger"],
   parser: [
     "prompt",
@@ -1299,6 +1836,7 @@ const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     "template",
     "router",
     "delay",
+    "db_query",
   ],
   mapper: [
     "prompt",
@@ -1311,6 +1849,8 @@ const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     "template",
     "router",
     "delay",
+    "db_query",
+    "trigger",
   ],
   mutator: [
     "validator",
@@ -1322,6 +1862,7 @@ const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     "template",
     "router",
     "delay",
+    "db_query",
   ],
   validator: [
     "viewer",
@@ -1333,16 +1874,18 @@ const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     "template",
     "router",
     "delay",
+    "db_query",
   ],
-  constant: ["math", "template", "viewer", "bundle", "compare", "router", "delay", "http"],
-  math: ["template", "viewer", "bundle", "compare", "router", "delay", "http"],
-  compare: ["gate", "router", "viewer", "bundle", "template"],
+  constant: ["math", "template", "viewer", "bundle", "compare", "router", "delay", "http", "db_query"],
+  math: ["template", "viewer", "bundle", "compare", "router", "delay", "http", "db_query"],
+  compare: ["gate", "router", "viewer", "bundle", "template", "db_query"],
   gate: ["validator", "viewer", "prompt", "ai_description", "description_updater", "bundle", "template", "router", "delay"],
-  router: ["viewer", "bundle", "template", "prompt", "model", "delay"],
-  delay: ["viewer", "bundle", "template", "prompt", "model", "validator", "gate"],
-  http: ["viewer", "bundle", "template", "prompt", "math", "compare"],
-  bundle: ["viewer", "template", "prompt"],
-  template: ["model", "viewer", "bundle", "prompt"],
+  router: ["viewer", "bundle", "template", "prompt", "model", "delay", "updater"],
+  delay: ["viewer", "bundle", "template", "prompt", "model", "validator", "gate", "updater"],
+  http: ["viewer", "bundle", "template", "prompt", "math", "compare", "db_query", "updater"],
+  db_query: ["viewer", "bundle", "template", "prompt", "mapper", "validator", "updater"],
+  bundle: ["viewer", "template", "prompt", "updater"],
+  template: ["model", "viewer", "bundle", "prompt", "updater"],
   prompt: ["model", "viewer", "bundle", "template"],
   model: ["prompt", "updater", "viewer", "description_updater", "bundle"],
   updater: ["viewer", "bundle"],
@@ -1413,15 +1956,7 @@ const validateConnection = (
     };
   }
 
-  // Rule 9: Trigger role input must come from Context role
-  if (toNode.type === "trigger" && toPort === "role") {
-    if (fromNode.type !== "context" || fromPort !== "role") {
-      return {
-        valid: false,
-        message: "Trigger 'role' input must connect from Context 'role'.",
-      };
-    }
-  }
+  // Rule 9: Trigger role input is optional and can come from any matching role output.
 
   // Rule 10: Trigger simulation input must come from Simulation simulation
   if (toNode.type === "trigger" && toPort === "simulation") {
@@ -1433,15 +1968,6 @@ const validateConnection = (
     }
   }
 
-  // Rule 11: Parser productJson must come from Context productJson
-  if (toNode.type === "parser" && toPort === "productJson") {
-    if (fromNode.type !== "context" || fromPort !== "productJson") {
-      return {
-        valid: false,
-        message: "Parser 'productJson' must connect from Context 'productJson'.",
-      };
-    }
-  }
   if (toNode.type === "parser" && toPort === "entityJson") {
     if (fromNode.type !== "context" || fromPort !== "entityJson") {
       return {
@@ -1462,11 +1988,11 @@ const validateConnection = (
   }
 
   // Rule 13: AI Description inputs must come from Context/Parser
-  if (toNode.type === "ai_description" && toPort === "productJson") {
-    if (fromNode.type !== "context" || fromPort !== "productJson") {
+  if (toNode.type === "ai_description" && toPort === "entityJson") {
+    if (fromNode.type !== "context" || fromPort !== "entityJson") {
       return {
         valid: false,
-        message: "AI Description 'productJson' must connect from Context 'productJson'.",
+        message: "AI Description 'entityJson' must connect from Context 'entityJson'.",
       };
     }
   }
@@ -1574,7 +2100,7 @@ const initialNodes: AiNode[] = [
     title: "Context Grabber",
     description: "Active on Product modal button.",
     inputs: [],
-    outputs: ["role", "context", "productJson"],
+    outputs: ["role", "context", "entityJson"],
     position: { x: 48, y: 120 },
     config: {
       context: {
@@ -1587,7 +2113,7 @@ const initialNodes: AiNode[] = [
     type: "parser",
     title: "JSON Parser",
     description: "Extract [images], [title], [productId], [content_en].",
-    inputs: ["productJson"],
+    inputs: ["entityJson"],
     outputs: ["images", "title", "productId", "content_en"],
     position: { x: 340, y: 120 },
     config: {
@@ -1658,21 +2184,28 @@ const initialNodes: AiNode[] = [
     type: "updater",
     title: "Updater",
     description: "Write to [content_en].",
-    inputs: ["productId", "content_en", "result"],
-    outputs: ["content_en"],
+    inputs: ["productId", "content_en", "result", "bundle"],
+    outputs: ["content_en", "bundle"],
     position: { x: 1200, y: 130 },
     config: {
       updater: {
+        entityType: "product",
         targetField: "content_en",
         idField: "productId",
         mode: "replace",
+        mappings: [
+          {
+            targetPath: "content_en",
+            sourcePort: "result",
+          },
+        ],
       },
     },
   },
 ];
 
 const initialEdges: Edge[] = [
-  { id: "edge-1", from: "node-context", to: "node-parser", fromPort: "productJson", toPort: "productJson" },
+  { id: "edge-1", from: "node-context", to: "node-parser", fromPort: "entityJson", toPort: "entityJson" },
   { id: "edge-2", from: "node-parser", to: "node-vision-prompt", fromPort: "images", toPort: "images" },
   { id: "edge-3", from: "node-parser", to: "node-vision-prompt", fromPort: "title", toPort: "title" },
   { id: "edge-4", from: "node-vision-prompt", to: "node-vision-model", fromPort: "prompt", toPort: "prompt" },
@@ -1719,7 +2252,7 @@ const createAiDescriptionPath = (id: string): PathConfig => {
       title: "Context Grabber",
       description: "Collect product context.",
       inputs: [],
-      outputs: ["role", "context", "productJson"],
+      outputs: ["role", "context", "entityJson"],
       position: { x: 80, y: 140 },
       config: {
         context: {
@@ -1735,7 +2268,7 @@ const createAiDescriptionPath = (id: string): PathConfig => {
       type: "parser",
       title: "JSON Parser",
       description: "Extract [images], [title], [productId], [content_en].",
-      inputs: ["productJson"],
+      inputs: ["entityJson"],
       outputs: ["images", "title", "productId", "content_en"],
       position: { x: 380, y: 140 },
       config: {
@@ -1754,7 +2287,7 @@ const createAiDescriptionPath = (id: string): PathConfig => {
       type: "ai_description",
       title: "AI Description Generator",
       description: "Generate description_en from product context.",
-      inputs: ["productJson", "images", "title"],
+      inputs: ["entityJson", "images", "title"],
       outputs: ["description_en"],
       position: { x: 700, y: 120 },
       config: {
@@ -1800,8 +2333,8 @@ const createAiDescriptionPath = (id: string): PathConfig => {
       id: "edge-1",
       from: "node-context",
       to: "node-parser",
-      fromPort: "productJson",
-      toPort: "productJson",
+      fromPort: "entityJson",
+      toPort: "entityJson",
     },
     {
       id: "edge-2",
@@ -1821,8 +2354,8 @@ const createAiDescriptionPath = (id: string): PathConfig => {
       id: "edge-4",
       from: "node-context",
       to: "node-ai-desc",
-      fromPort: "productJson",
-      toPort: "productJson",
+      fromPort: "entityJson",
+      toPort: "entityJson",
     },
     {
       id: "edge-5",
@@ -1876,6 +2409,7 @@ const typeStyles: Record<NodeType, { border: string; glow: string }> = {
   router: { border: "border-pink-500/40", glow: "shadow-pink-500/20" },
   delay: { border: "border-indigo-400/40", glow: "shadow-indigo-400/20" },
   http: { border: "border-sky-400/40", glow: "shadow-sky-400/20" },
+  db_query: { border: "border-emerald-400/40", glow: "shadow-emerald-400/20" },
   prompt: { border: "border-amber-500/40", glow: "shadow-amber-500/20" },
   model: { border: "border-fuchsia-500/40", glow: "shadow-fuchsia-500/20" },
   updater: { border: "border-rose-500/40", glow: "shadow-rose-500/20" },
@@ -1906,7 +2440,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     "Trigger.trigger → ResultViewer.trigger",
   ].join("\n");
   const docsDescriptionSnippet = [
-    "Context.productJson → Parser.productJson",
+    "Context.entityJson → Parser.entityJson",
     "Parser.title → AI Description Generator.title",
     "Parser.images → AI Description Generator.images",
     "AI Description Generator.description_en → Description Updater.description_en",
@@ -1948,6 +2482,35 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     offsetX: number;
     offsetY: number;
   } | null>(null);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+  const [parserSamples, setParserSamples] = useState<
+    Record<
+      string,
+      {
+        entityType: string;
+        entityId: string;
+        json: string;
+        mappingMode: "top" | "flatten";
+        depth: number;
+        keyStyle: "path" | "leaf";
+        includeContainers: boolean;
+      }
+    >
+  >({});
+  const [parserSampleLoading, setParserSampleLoading] = useState(false);
+  const [updaterSamples, setUpdaterSamples] = useState<
+    Record<
+      string,
+      {
+        entityType: string;
+        entityId: string;
+        json: string;
+        depth: number;
+        includeContainers: boolean;
+      }
+    >
+  >({});
+  const [updaterSampleLoading, setUpdaterSampleLoading] = useState(false);
   const [panState, setPanState] = useState<{
     startX: number;
     startY: number;
@@ -1972,6 +2535,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     bundlePorts: "context\nmeta\ntrigger\nentityJson\nentityId\nentityType\nresult",
     template: "Write a summary for {{context.entity.title}}",
   });
+  const [presetsModalOpen, setPresetsModalOpen] = useState(false);
+  const [presetsJson, setPresetsJson] = useState("");
   const [expandedPaletteGroups, setExpandedPaletteGroups] = useState<Set<string>>(
     new Set(["Triggers"])
   );
@@ -2012,6 +2577,20 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       reportAiPathsError(error, { action: "saveClusterPresets" }, "Failed to save presets:");
       toast("Failed to save cluster presets.", { variant: "error" });
     }
+  };
+
+  const normalizePreset = (raw: Partial<ClusterPreset>): ClusterPreset => {
+    const now = new Date().toISOString();
+    const bundlePorts = Array.isArray(raw.bundlePorts) ? raw.bundlePorts : [];
+    return {
+      id: raw.id && typeof raw.id === "string" ? raw.id : createPresetId(),
+      name: typeof raw.name === "string" && raw.name.trim() ? raw.name.trim() : "Cluster Preset",
+      description: typeof raw.description === "string" ? raw.description : "",
+      bundlePorts,
+      template: typeof raw.template === "string" ? raw.template : "",
+      createdAt: raw.createdAt ?? now,
+      updatedAt: raw.updatedAt ?? now,
+    };
   };
 
   const togglePaletteGroup = (title: string) => {
@@ -2213,8 +2792,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null;
       if (target?.closest("[data-port]")) return;
+      if (target?.closest("path")) return;
       setConnecting(null);
       setConnectingPos(null);
+      setSelectedEdgeId(null);
     };
     window.addEventListener("pointerdown", handlePointerDown);
     return () => window.removeEventListener("pointerdown", handlePointerDown);
@@ -2225,11 +2806,18 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       if (event.key === "Escape") {
         setConnecting(null);
         setConnectingPos(null);
+        setSelectedEdgeId(null);
+      }
+      if (event.key === "Backspace" || event.key === "Delete") {
+        if (selectedEdgeId) {
+          event.preventDefault();
+          handleRemoveEdge(selectedEdgeId);
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [selectedEdgeId, handleRemoveEdge]);
 
   useEffect(() => {
     setEdges((prev) => sanitizeEdges(nodes, prev));
@@ -2474,11 +3062,12 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       Math.max(localY - NODE_MIN_HEIGHT / 2, 16),
       CANVAS_HEIGHT - NODE_MIN_HEIGHT - 16
     );
+    const config = getDefaultConfigForType(payload.type, payload.outputs, payload.inputs);
     const newNode: AiNode = {
       ...payload,
       id: `node-${Math.random().toString(36).slice(2, 8)}`,
       position: { x: nextX, y: nextY },
-      config: getDefaultConfigForType(payload.type, payload.outputs, payload.inputs),
+      ...(config ? { config } : {}),
     };
     setSelectedNodeId(newNode.id);
     setNodes((prev) => [...prev, newNode]);
@@ -2690,6 +3279,78 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     return null;
   };
 
+  const handleFetchParserSample = async (
+    nodeId: string,
+    entityType: string,
+    entityId: string
+  ) => {
+    if (!entityId.trim()) {
+      toast("Enter an entity ID to load a sample.", { variant: "error" });
+      return;
+    }
+    if (entityType === "custom") {
+      toast("Use pasted JSON for custom samples.", { variant: "error" });
+      return;
+    }
+    setParserSampleLoading(true);
+    try {
+      const sample = await fetchEntityByType(entityType, entityId);
+      if (!sample) {
+        toast("No sample found for that ID.", { variant: "error" });
+        return;
+      }
+      setParserSamples((prev) => ({
+        ...prev,
+        [nodeId]: {
+          entityType,
+          entityId,
+          json: JSON.stringify(sample, null, 2),
+          mappingMode: prev[nodeId]?.mappingMode ?? "top",
+          depth: prev[nodeId]?.depth ?? 2,
+          keyStyle: prev[nodeId]?.keyStyle ?? "path",
+          includeContainers: prev[nodeId]?.includeContainers ?? false,
+        },
+      }));
+    } finally {
+      setParserSampleLoading(false);
+    }
+  };
+
+  const handleFetchUpdaterSample = async (
+    nodeId: string,
+    entityType: string,
+    entityId: string
+  ) => {
+    if (!entityId.trim()) {
+      toast("Enter an entity ID to load a sample.", { variant: "error" });
+      return;
+    }
+    if (entityType === "custom") {
+      toast("Use pasted JSON for custom samples.", { variant: "error" });
+      return;
+    }
+    setUpdaterSampleLoading(true);
+    try {
+      const sample = await fetchEntityByType(entityType, entityId);
+      if (!sample) {
+        toast("No sample found for that ID.", { variant: "error" });
+        return;
+      }
+      setUpdaterSamples((prev) => ({
+        ...prev,
+        [nodeId]: {
+          entityType,
+          entityId,
+          json: JSON.stringify(sample, null, 2),
+          depth: prev[nodeId]?.depth ?? 2,
+          includeContainers: prev[nodeId]?.includeContainers ?? false,
+        },
+      }));
+    } finally {
+      setUpdaterSampleLoading(false);
+    }
+  };
+
   const evaluateGraph = async (
     triggerNodeId?: string,
     triggerEvent?: string
@@ -2736,7 +3397,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     const defaultContextConfig =
       nodes.find((node) => node.type === "context")?.config?.context ?? {
         role: DEFAULT_CONTEXT_ROLE,
-        entityType: "product",
+        entityType: "auto",
         entityIdSource: "simulation",
         entityId: "",
         scopeMode: "full",
@@ -2767,8 +3428,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     const resolveContextPayload = async (config?: ContextConfig) => {
       const contextConfig = config ?? defaultContextConfig;
       const role = contextConfig.role ?? DEFAULT_CONTEXT_ROLE;
+      const rawEntityType = contextConfig.entityType?.trim() || "auto";
       const entityType =
-        contextConfig.entityType?.trim() || simulationEntityType || "product";
+        rawEntityType === "auto"
+          ? simulationEntityType ?? "entity"
+          : rawEntityType || simulationEntityType || "entity";
       const manualId = contextConfig.entityId?.trim() || null;
       const entityId =
         contextConfig.entityIdSource === "manual"
@@ -2799,7 +3463,6 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           entityId: payload.entityId,
           entityType: payload.entityType,
           entityJson: payload.scopedEntity,
-          productJson: payload.entityType === "product" ? payload.rawEntity : undefined,
         };
       }
       if (node.type === "simulation") {
@@ -2847,7 +3510,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       });
 
       let changed = false;
-      nodes.forEach((node) => {
+      for (const node of nodes) {
         const nodeInputs = nextInputs[node.id] ?? {};
         const prevOutputs = outputs[node.id] ?? {};
         let nextOutputs: RuntimePortValues = prevOutputs;
@@ -2914,24 +3577,29 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           case "parser": {
             const source =
               (coerceInput(nodeInputs.entityJson) as Record<string, unknown> | undefined) ??
-              (coerceInput(nodeInputs.productJson) as Record<string, unknown> | undefined);
+              undefined;
             if (!source) {
               nextOutputs = {};
               break;
             }
+            const parserConfig = node.config?.parser;
             const mappings =
-              node.config?.parser?.mappings ?? createParserMappings(node.outputs);
+              parserConfig?.mappings ?? createParserMappings(node.outputs);
+            const outputMode = parserConfig?.outputMode ?? "individual";
             const parsed: RuntimePortValues = {};
-            node.outputs.forEach((output) => {
+            Object.keys(mappings).forEach((output) => {
+              const key = output.trim();
+              if (!key) return;
               const mapping = mappings[output]?.trim() ?? "";
               const value = mapping
                 ? getValueAtMappingPath(source, mapping)
-                : (source as Record<string, unknown>)[output];
+                : (source as Record<string, unknown>)[key];
               if (value !== undefined) {
-                parsed[output] = value;
+                parsed[key] = value;
               }
             });
-            nextOutputs = parsed;
+            nextOutputs =
+              outputMode === "bundle" ? { bundle: parsed } : parsed;
             break;
           }
           case "mapper": {
@@ -3021,6 +3689,25 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
             break;
           }
           case "prompt": {
+            const promptConfig = node.config?.prompt ?? { template: "" };
+            const bundleInput = coerceInput(nodeInputs.bundle);
+            const bundleValue =
+              bundleInput && typeof bundleInput === "object"
+                ? (bundleInput as Record<string, unknown>)
+                : null;
+            const data = bundleValue ? { ...nodeInputs, ...bundleValue } : nodeInputs;
+            const template = promptConfig.template?.trim();
+            if (template) {
+              const rendered = renderTemplate(
+                template,
+                data as Record<string, unknown>,
+                coerceInput(nodeInputs.value)
+              );
+              nextOutputs = {
+                prompt: rendered || "Prompt: (empty template)",
+              };
+              break;
+            }
             const entries = Object.entries(nodeInputs)
               .map(([key, value]) => `${key}: ${formatRuntimeValue(value)}`)
               .join("\n");
@@ -3102,7 +3789,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                   return value;
               }
             };
-            const nextValue = values.length === 1 ? applyOp(values[0]) : values.map(applyOp);
+            const firstValue = values[0];
+            const nextValue =
+              values.length === 1 && firstValue !== undefined
+                ? applyOp(firstValue)
+                : values.map(applyOp);
             nextOutputs = { value: nextValue };
             break;
           }
@@ -3312,12 +4003,15 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 }
               }
             }
+            const fetchInit: RequestInit = {
+              method: httpConfig.method,
+              headers,
+            };
+            if (body !== undefined) {
+              fetchInit.body = body;
+            }
             try {
-              const res = await fetch(resolvedUrl, {
-                method: httpConfig.method,
-                headers,
-                body,
-              });
+              const res = await fetch(resolvedUrl, fetchInit);
               let data: unknown = null;
               if (httpConfig.responseMode === "status") {
                 data = res.status;
@@ -3358,6 +4052,107 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                   status: 0,
                   url: resolvedUrl,
                   error: "Fetch failed",
+                },
+              };
+            }
+            break;
+          }
+          case "db_query": {
+            const dbConfig = node.config?.dbQuery ?? {
+              provider: "auto",
+              collection: "products",
+              mode: "preset",
+              preset: "by_id",
+              field: "_id",
+              idType: "string",
+              queryTemplate: "{\n  \"_id\": \"{{value}}\"\n}",
+              limit: 20,
+              sort: "",
+              projection: "",
+              single: false,
+            };
+            const inputQuery = coerceInput(nodeInputs.query);
+            const inputValue = coerceInput(nodeInputs.value);
+            const entityId = coerceInput(nodeInputs.entityId) ?? inputValue;
+            let query: Record<string, unknown> = {};
+            if (dbConfig.mode === "preset") {
+              const presetValue =
+                dbConfig.preset === "by_entityId" ? entityId : inputValue ?? entityId;
+              if (presetValue !== undefined) {
+                const field =
+                  dbConfig.preset === "by_productId"
+                    ? "productId"
+                    : dbConfig.preset === "by_entityId"
+                      ? "entityId"
+                      : dbConfig.preset === "by_field"
+                        ? dbConfig.field || "id"
+                        : "_id";
+                query = { [field]: presetValue };
+              }
+            } else if (inputQuery && typeof inputQuery === "object") {
+              query = inputQuery as Record<string, unknown>;
+            } else {
+              const rendered = renderTemplate(
+                dbConfig.queryTemplate ?? "{}",
+                nodeInputs as Record<string, unknown>,
+                inputValue ?? ""
+              );
+              const parsed = parseJsonSafe(rendered);
+              if (parsed && typeof parsed === "object") {
+                query = parsed as Record<string, unknown>;
+              }
+            }
+            const projection = parseJsonSafe(dbConfig.projection ?? "") as
+              | Record<string, unknown>
+              | undefined;
+            const sort = parseJsonSafe(dbConfig.sort ?? "") as
+              | Record<string, unknown>
+              | undefined;
+            try {
+              const res = await fetch("/api/ai-paths/db-query", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  provider: dbConfig.provider,
+                  collection: dbConfig.collection,
+                  query,
+                  projection,
+                  sort,
+                  limit: dbConfig.limit,
+                  single: dbConfig.single,
+                  idType: dbConfig.idType,
+                }),
+              });
+              if (!res.ok) {
+                throw new Error("Database query failed.");
+              }
+              const data = (await res.json()) as {
+                items?: unknown[];
+                item?: unknown;
+                count?: number;
+              };
+              const result = dbConfig.single ? data.item ?? null : data.items ?? [];
+              nextOutputs = {
+                result,
+                bundle: {
+                  count: data.count ?? (Array.isArray(result) ? result.length : result ? 1 : 0),
+                  query,
+                  collection: dbConfig.collection,
+                },
+              };
+            } catch (error) {
+              reportAiPathsError(
+                error,
+                { action: "dbQuery", collection: dbConfig.collection, query },
+                "Database query failed:"
+              );
+              nextOutputs = {
+                result: null,
+                bundle: {
+                  count: 0,
+                  query,
+                  collection: dbConfig.collection,
+                  error: "Query failed",
                 },
               };
             }
@@ -3417,27 +4212,126 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
             break;
           }
           case "updater": {
+            const updaterConfig = node.config?.updater ?? {};
+            const fallbackTarget =
+              updaterConfig.targetField ?? node.outputs[0] ?? "content_en";
+            const mappings =
+              updaterConfig.mappings && updaterConfig.mappings.length > 0
+                ? updaterConfig.mappings
+                : [
+                    {
+                      targetPath: fallbackTarget,
+                      sourcePort: nodeInputs.result ? "result" : "content_en",
+                    },
+                  ];
+            const updates: Record<string, unknown> = {};
+            mappings.forEach((mapping) => {
+              const sourcePort = mapping.sourcePort;
+              if (!sourcePort) return;
+              const sourceValue = nodeInputs[sourcePort];
+              if (sourceValue === undefined) return;
+              let value = coerceInput(sourceValue);
+              if (sourcePort === "bundle") {
+                const bundleValue = coerceInput(sourceValue);
+                if (
+                  bundleValue &&
+                  typeof bundleValue === "object" &&
+                  mapping.sourcePath
+                ) {
+                  const resolved = getValueAtMappingPath(
+                    bundleValue,
+                    mapping.sourcePath
+                  );
+                  if (resolved !== undefined) {
+                    value = resolved;
+                  }
+                }
+              }
+              if (mapping.targetPath) {
+                updates[mapping.targetPath] = value;
+              }
+            });
+            const entityType = (updaterConfig.entityType ?? "product").trim().toLowerCase();
+            const idField = updaterConfig.idField ?? "productId";
+            const rawEntityId =
+              coerceInput(nodeInputs[idField]) ??
+              coerceInput(nodeInputs.entityId) ??
+              coerceInput(nodeInputs.productId);
+            const entityId =
+              typeof rawEntityId === "string" || typeof rawEntityId === "number"
+                ? String(rawEntityId).trim()
+                : "";
+            const canAttemptUpdate =
+              entityType !== "custom" && Object.keys(updates).length > 0;
+            if (canAttemptUpdate && !entityId && !updaterExecuted.has(node.id)) {
+              reportAiPathsError(
+                new Error("Updater missing entity id"),
+                { action: "updateEntity", nodeId: node.id },
+                "Updater missing entity id:"
+              );
+              toast("Updater node needs an entity ID input.", { variant: "error" });
+              updaterExecuted.add(node.id);
+            }
+            if (
+              canAttemptUpdate &&
+              entityId &&
+              !updaterExecuted.has(node.id)
+            ) {
+              try {
+                const res = await fetch("/api/ai-paths/update", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    entityType,
+                    entityId,
+                    updates,
+                    mode: updaterConfig.mode ?? "replace",
+                  }),
+                });
+                if (!res.ok) {
+                  throw new Error("Failed to update entity.");
+                }
+                updaterExecuted.add(node.id);
+                toast(`Updated ${entityType} ${entityId}`, { variant: "success" });
+              } catch (error) {
+                reportAiPathsError(
+                  error,
+                  { action: "updateEntity", entityType, entityId, nodeId: node.id },
+                  "Updater failed:"
+                );
+                toast(`Failed to update ${entityType}.`, { variant: "error" });
+                updaterExecuted.add(node.id);
+              }
+            }
+            const primaryValue = updates[fallbackTarget];
             nextOutputs = {
               content_en:
-                (nodeInputs.result
-                  ? formatRuntimeValue(coerceInput(nodeInputs.result))
-                  : nodeInputs.content_en) ?? "",
+                fallbackTarget === "content_en"
+                  ? (primaryValue as string | undefined) ??
+                    (nodeInputs.result
+                      ? formatRuntimeValue(coerceInput(nodeInputs.result))
+                      : nodeInputs.content_en) ??
+                    ""
+                  : (nodeInputs.result
+                      ? formatRuntimeValue(coerceInput(nodeInputs.result))
+                      : nodeInputs.content_en) ?? "",
+              bundle: updates,
             };
             break;
           }
           case "ai_description": {
             if (aiExecuted.has(node.id)) break;
-            const productJson = coerceInput(nodeInputs.productJson) as
+            const entityJson = coerceInput(nodeInputs.entityJson) as
               | Record<string, unknown>
               | undefined;
-            if (!productJson) {
+            if (!entityJson) {
               nextOutputs = {};
               break;
             }
             const rawImages =
               (coerceInput(nodeInputs.images) as unknown[] | undefined) ??
-              (productJson.imageLinks as unknown[] | undefined) ??
-              (productJson.images as unknown[] | undefined) ??
+              (entityJson.imageLinks as unknown[] | undefined) ??
+              (entityJson.images as unknown[] | undefined) ??
               [];
             const imageUrls = rawImages
               .map((item) => {
@@ -3450,7 +4344,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               })
               .filter((item): item is string => Boolean(item));
             const body = {
-              productData: productJson,
+              productData: entityJson,
               imageUrls,
               visionOutputEnabled: node.config?.description?.visionOutputEnabled,
               generationOutputEnabled: node.config?.description?.generationOutputEnabled,
@@ -3520,7 +4414,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           outputs[node.id] = nextOutputs;
           changed = true;
         }
-      });
+      }
 
       inputs = nextInputs;
       if (!changed) break;
@@ -3537,20 +4431,26 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   };
 
   const getTriggerContextInfo = (triggerId: string) => {
-    const contextNodes = edges
+    const roleEdges = edges
       .filter((edge) => edge.to === triggerId)
       .filter(
         (edge) =>
           (!edge.toPort || edge.toPort === "role") &&
           (!edge.fromPort || edge.fromPort === "role")
       )
-      .map((edge) => nodes.find((node) => node.id === edge.from && node.type === "context"))
+      .map((edge) => nodes.find((node) => node.id === edge.from))
       .filter(Boolean) as AiNode[];
+    const contextNodes = roleEdges.filter((node) => node.type === "context");
     const contextNodeIds = contextNodes.map((node) => node.id);
     const roles = Array.from(
       new Set(
-        contextNodes
-          .map((node) => node.config?.context?.role?.trim() || node.title)
+        roleEdges
+          .map((node) => {
+            if (node.type === "context") {
+              return node.config?.context?.role?.trim() || node.title;
+            }
+            return node.title;
+          })
           .filter(Boolean)
       )
     );
@@ -3656,6 +4556,282 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       prev.filter((edge) => edge.from !== selectedNodeId && edge.to !== selectedNodeId)
     );
     setSelectedNodeId(null);
+  };
+
+  function handleRemoveEdge(edgeId: string) {
+    setEdges((prev) => prev.filter((edge) => edge.id !== edgeId));
+    if (selectedEdgeId === edgeId) {
+      setSelectedEdgeId(null);
+    }
+  }
+
+  const getCanvasCenterPosition = () => {
+    const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
+    if (!viewport) return { x: VIEW_MARGIN, y: VIEW_MARGIN };
+    const centerX = (viewport.width / 2 - view.x) / view.scale;
+    const centerY = (viewport.height / 2 - view.y) / view.scale;
+    const nextX = Math.min(
+      Math.max(centerX - NODE_WIDTH / 2, 16),
+      CANVAS_WIDTH - NODE_WIDTH - 16
+    );
+    const nextY = Math.min(
+      Math.max(centerY - NODE_MIN_HEIGHT / 2, 16),
+      CANVAS_HEIGHT - NODE_MIN_HEIGHT - 16
+    );
+    return { x: nextX, y: nextY };
+  };
+
+  const handleSavePreset = async () => {
+    const name = presetDraft.name.trim();
+    if (!name) {
+      toast("Preset name is required.", { variant: "error" });
+      return;
+    }
+    const now = new Date().toISOString();
+    const bundlePorts = parsePathList(presetDraft.bundlePorts);
+    const template = presetDraft.template.trim();
+    const nextPresets = [...clusterPresets];
+    if (editingPresetId) {
+      const index = nextPresets.findIndex((preset) => preset.id === editingPresetId);
+      const existing = nextPresets[index];
+      if (index >= 0 && existing) {
+        nextPresets[index] = {
+          ...existing,
+          name,
+          description: presetDraft.description.trim(),
+          bundlePorts,
+          template,
+          updatedAt: now,
+        };
+      }
+    } else {
+      nextPresets.push({
+        id: createPresetId(),
+        name,
+        description: presetDraft.description.trim(),
+        bundlePorts,
+        template,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+    setClusterPresets(nextPresets);
+    await saveClusterPresets(nextPresets);
+    setEditingPresetId(null);
+    toast("Cluster preset saved.", { variant: "success" });
+  };
+
+  const handleLoadPreset = (preset: ClusterPreset) => {
+    setEditingPresetId(preset.id);
+    setPresetDraft({
+      name: preset.name,
+      description: preset.description ?? "",
+      bundlePorts: preset.bundlePorts.join("\n"),
+      template: preset.template ?? "",
+    });
+  };
+
+  const handleDeletePreset = async (presetId: string) => {
+    const target = clusterPresets.find((preset) => preset.id === presetId);
+    if (!target) return;
+    const confirmed = window.confirm(`Delete preset "${target.name}"?`);
+    if (!confirmed) return;
+    const nextPresets = clusterPresets.filter((preset) => preset.id !== presetId);
+    setClusterPresets(nextPresets);
+    await saveClusterPresets(nextPresets);
+    if (editingPresetId === presetId) {
+      setEditingPresetId(null);
+      setPresetDraft({
+        name: "",
+        description: "",
+        bundlePorts: "context\nmeta\ntrigger\nentityJson\nentityId\nentityType\nresult",
+        template: "Write a summary for {{context.entity.title}}",
+      });
+    }
+  };
+
+  const handleApplyPreset = (preset: ClusterPreset) => {
+    const base = getCanvasCenterPosition();
+    const bundleNode: AiNode = {
+      id: `node-${Math.random().toString(36).slice(2, 8)}`,
+      type: "bundle",
+      title: `${preset.name} Bundle`,
+      description: preset.description || "Cluster preset bundle.",
+      inputs: BUNDLE_INPUT_PORTS,
+      outputs: ["bundle"],
+      position: { x: base.x, y: base.y },
+      config: {
+        bundle: {
+          includePorts: preset.bundlePorts ?? [],
+        },
+      },
+    };
+    const templateNode: AiNode = {
+      id: `node-${Math.random().toString(36).slice(2, 8)}`,
+      type: "template",
+      title: `${preset.name} Template`,
+      description: "Preset template prompt.",
+      inputs: TEMPLATE_INPUT_PORTS,
+      outputs: ["prompt"],
+      position: { x: base.x + 320, y: base.y },
+      config: {
+        template: {
+          template: preset.template ?? "",
+        },
+      },
+    };
+    const edge: Edge = {
+      id: `edge-${Math.random().toString(36).slice(2, 8)}`,
+      from: bundleNode.id,
+      to: templateNode.id,
+      fromPort: "bundle",
+      toPort: "bundle",
+    };
+    setNodes((prev) => [...prev, bundleNode, templateNode]);
+    setEdges((prev) => [...prev, edge]);
+    setSelectedNodeId(templateNode.id);
+    ensureNodeVisible(templateNode);
+    toast(`Preset applied: ${preset.name}`, { variant: "success" });
+  };
+
+  const handleExportPresets = () => {
+    const payload = JSON.stringify(clusterPresets, null, 2);
+    setPresetsJson(payload);
+    setPresetsModalOpen(true);
+  };
+
+  const handleImportPresets = async (mode: "merge" | "replace") => {
+    if (!presetsJson.trim()) {
+      toast("Paste presets JSON to import.", { variant: "error" });
+      return;
+    }
+    if (mode === "replace") {
+      const confirmed = window.confirm("Replace existing presets? This cannot be undone.");
+      if (!confirmed) return;
+    }
+    try {
+      const parsed = JSON.parse(presetsJson);
+      const list = Array.isArray(parsed)
+        ? parsed
+        : Array.isArray(parsed?.presets)
+          ? parsed.presets
+          : null;
+      if (!list) {
+        toast("Invalid presets JSON. Expected an array.", { variant: "error" });
+        return;
+      }
+      const normalized = list.map((item: Partial<ClusterPreset>) => normalizePreset(item));
+      let nextPresets = mode === "replace" ? [] : [...clusterPresets];
+      const existingIds = new Set(nextPresets.map((preset) => preset.id));
+      const merged = normalized.map((preset) => {
+        if (existingIds.has(preset.id)) {
+          return { ...preset, id: createPresetId(), updatedAt: new Date().toISOString() };
+        }
+        return preset;
+      });
+      nextPresets = [...nextPresets, ...merged];
+      setClusterPresets(nextPresets);
+      await saveClusterPresets(nextPresets);
+      toast("Presets imported.", { variant: "success" });
+    } catch (error) {
+      reportAiPathsError(error, { action: "importPresets" }, "Failed to import presets:");
+      toast("Failed to import presets. Check JSON format.", { variant: "error" });
+    }
+  };
+
+  const handlePresetFromSelection = () => {
+    const selectedTemplate = selectedNode?.type === "template" ? selectedNode : null;
+    const selectedBundle = selectedNode?.type === "bundle" ? selectedNode : null;
+
+    const findBundleForTemplate = (template: AiNode) => {
+      const bundleEdges = edges.filter(
+        (edge) => edge.to === template.id && edge.toPort === "bundle"
+      );
+      const bundleNodes = bundleEdges
+        .map((edge) => nodes.find((node) => node.id === edge.from))
+        .filter((node): node is AiNode => Boolean(node && node.type === "bundle"));
+      return bundleNodes;
+    };
+
+    const findTemplateForBundle = (bundle: AiNode) => {
+      const templateEdges = edges.filter(
+        (edge) => edge.from === bundle.id && edge.fromPort === "bundle"
+      );
+      const templateNodes = templateEdges
+        .map((edge) => nodes.find((node) => node.id === edge.to))
+        .filter((node): node is AiNode => Boolean(node && node.type === "template"));
+      return templateNodes;
+    };
+
+    let templateNode: AiNode | null = selectedTemplate;
+    let bundleNode: AiNode | null = selectedBundle;
+
+    if (selectedTemplate && !bundleNode) {
+      const bundles = findBundleForTemplate(selectedTemplate);
+      if (bundles.length > 1) {
+        toast("Multiple bundles connected. Using the first one.", { variant: "info" });
+      }
+      bundleNode = bundles[0] ?? null;
+    }
+
+    if (selectedBundle && !templateNode) {
+      const templates = findTemplateForBundle(selectedBundle);
+      if (templates.length > 1) {
+        toast("Multiple templates connected. Using the first one.", { variant: "info" });
+      }
+      templateNode = templates[0] ?? null;
+    }
+
+    if (!templateNode || !bundleNode) {
+      toast("Select a connected Bundle + Template pair.", { variant: "error" });
+      return;
+    }
+
+    const presetName = templateNode.title.replace(/template/i, "").trim() || "Cluster Preset";
+    setEditingPresetId(null);
+    setPresetDraft({
+      name: presetName,
+      description: bundleNode.description ?? "",
+      bundlePorts: (bundleNode.config?.bundle?.includePorts ?? bundleNode.inputs).join("\n"),
+      template: templateNode.config?.template?.template ?? "",
+    });
+    toast("Preset draft loaded from selection.", { variant: "success" });
+  };
+
+  const applyContextPreset = (
+    current: ContextConfig,
+    preset: "light" | "medium" | "full"
+  ) => {
+    const presetSet = getContextPresetSet(current.entityType);
+    if (preset === "full") {
+      return {
+        ...current,
+        scopeMode: "full" as const,
+        includePaths: [],
+        excludePaths: [],
+      };
+    }
+    return {
+      ...current,
+      scopeMode: "include" as const,
+      includePaths: presetSet[preset],
+      excludePaths: [],
+    };
+  };
+
+  const toggleContextTarget = (current: ContextConfig, field: string) => {
+    const include = new Set(current.includePaths ?? []);
+    if (include.has(field)) {
+      include.delete(field);
+    } else {
+      include.add(field);
+    }
+    return {
+      ...current,
+      scopeMode: "include" as const,
+      includePaths: Array.from(include),
+      excludePaths: [],
+    };
   };
 
   const updateActivePathMeta = (name: string) => {
@@ -4028,7 +5204,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                   icon: "🧪",
                 },
                 { title: "Bundles + Templates", types: ["bundle", "template"], icon: "🧩" },
-                { title: "IO + Fetch", types: ["http"], icon: "🌐" },
+                { title: "IO + Fetch", types: ["http", "db_query"], icon: "🌐" },
                 { title: "Prompts + Models", types: ["prompt", "model", "ai_description"], icon: "🤖" },
                 { title: "Updaters", types: ["updater"], icon: "💾" },
                 { title: "Description", types: ["description_updater"], icon: "✍️" },
@@ -4140,6 +5316,67 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                   Inputs: {selectedNode.inputs.join(", ") || "None"} <br />
                   Outputs: {selectedNode.outputs.join(", ") || "None"}
                 </div>
+                {selectedNode.type === "prompt" && (() => {
+                  const incomingEdges = edges.filter((edge) => edge.to === selectedNode.id);
+                  const inputPorts = incomingEdges
+                    .map((edge) => edge.toPort)
+                    .filter((port): port is string => Boolean(port));
+                  const bundleKeys = new Set<string>();
+                  incomingEdges.forEach((edge) => {
+                    if (edge.toPort !== "bundle") return;
+                    const fromNode = nodes.find((node) => node.id === edge.from);
+                    if (!fromNode) return;
+                    if (fromNode.type === "parser") {
+                      const mappings =
+                        fromNode.config?.parser?.mappings ??
+                        createParserMappings(fromNode.outputs);
+                      Object.keys(mappings).forEach((key) => {
+                        const trimmed = key.trim();
+                        if (trimmed) bundleKeys.add(trimmed);
+                      });
+                      return;
+                    }
+                    if (fromNode.type === "bundle") {
+                      fromNode.inputs.forEach((port) => {
+                        const trimmed = port.trim();
+                        if (trimmed) bundleKeys.add(trimmed);
+                      });
+                    }
+                    if (fromNode.type === "mapper") {
+                      const mapperOutputs =
+                        fromNode.config?.mapper?.outputs ?? fromNode.outputs;
+                      mapperOutputs.forEach((output) => {
+                        const trimmed = output.trim();
+                        if (trimmed) bundleKeys.add(trimmed);
+                      });
+                    }
+                  });
+                  const directPlaceholders = inputPorts.filter((port) => port !== "bundle");
+                  if (bundleKeys.size === 0 && directPlaceholders.length === 0) return null;
+                  return (
+                    <div className="rounded-md border border-gray-800 bg-gray-900/50 p-3 text-[11px] text-gray-400">
+                      <div className="text-gray-300">Prompt placeholders</div>
+                      {bundleKeys.size > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {Array.from(bundleKeys).map((key) => (
+                            <span
+                              key={key}
+                              className="rounded-full border border-gray-700 px-2 py-0.5 text-[10px] text-gray-200"
+                            >
+                              {`{{${key}}}`}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {directPlaceholders.length > 0 && (
+                        <div className="mt-2 text-[11px] text-gray-500">
+                          Direct inputs:{" "}
+                          {directPlaceholders.map((port) => `{{${port}}}`).join(", ")}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
                 <Button
                   className="w-full rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
                   onClick={() => setConfigOpen(true)}
@@ -4165,12 +5402,195 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
             <div className="mb-3 text-sm font-semibold text-white">Connections</div>
             <div className="space-y-2 text-xs text-gray-400">
               <div>Active wires: {edges.length}</div>
+              {selectedEdgeId ? (
+                <Button
+                  className="w-full rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10"
+                  type="button"
+                  onClick={() => handleRemoveEdge(selectedEdgeId)}
+                >
+                  Remove Selected Wire
+                </Button>
+              ) : (
+                <div className="text-[11px] text-gray-500">
+                  Click a wire to select it.
+                </div>
+              )}
               <Button
                 className="w-full rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10"
                 type="button"
                 onClick={() => void handleClearWires()}
               >
                 Clear All Wires
+              </Button>
+            </div>
+            {edges.length > 0 && (
+              <div className="mt-3 space-y-2 text-[11px] text-gray-500">
+                {edges.map((edge) => {
+                  const fromNode = nodes.find((node) => node.id === edge.from);
+                  const toNode = nodes.find((node) => node.id === edge.to);
+                  const label = `${fromNode?.title ?? edge.from}.${edge.fromPort ?? "?"} → ${toNode?.title ?? edge.to}.${edge.toPort ?? "?"}`;
+                  const isSelected = edge.id === selectedEdgeId;
+                  return (
+                    <div
+                      key={edge.id}
+                      className={`flex items-center justify-between gap-2 rounded-md border px-2 py-1 ${
+                        isSelected
+                          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+                          : "border-gray-800 bg-gray-900/40"
+                      }`}
+                    >
+                      <span className="truncate">{label}</span>
+                      <Button
+                        type="button"
+                        className="rounded-md border border-rose-500/40 px-2 py-0.5 text-[10px] text-rose-200 hover:bg-rose-500/10"
+                        onClick={() => handleRemoveEdge(edge.id)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-4">
+            <div className="mb-3 flex items-center justify-between text-sm font-semibold text-white">
+              <span>Cluster Presets</span>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                  onClick={() => handlePresetFromSelection()}
+                >
+                  From Selection
+                </Button>
+                {editingPresetId && (
+                  <Button
+                    type="button"
+                    className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                    onClick={() => {
+                      setEditingPresetId(null);
+                      setPresetDraft({
+                        name: "",
+                        description: "",
+                        bundlePorts: "context\nmeta\ntrigger\nentityJson\nentityId\nentityType\nresult",
+                        template: "Write a summary for {{context.entity.title}}",
+                      });
+                    }}
+                  >
+                    New
+                  </Button>
+                )}
+              </div>
+            </div>
+            <div className="space-y-3 text-xs text-gray-300">
+              <div>
+                <Label className="text-[10px] uppercase text-gray-500">Name</Label>
+                <Input
+                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 px-3 py-2 text-xs text-white"
+                  value={presetDraft.name}
+                  onChange={(event) =>
+                    setPresetDraft((prev) => ({ ...prev, name: event.target.value }))
+                  }
+                />
+              </div>
+              <div>
+                <Label className="text-[10px] uppercase text-gray-500">Description</Label>
+                <Textarea
+                  className="mt-2 min-h-[64px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-xs text-white"
+                  value={presetDraft.description}
+                  onChange={(event) =>
+                    setPresetDraft((prev) => ({ ...prev, description: event.target.value }))
+                  }
+                />
+              </div>
+              <div>
+                <Label className="text-[10px] uppercase text-gray-500">
+                  Bundle Ports (one per line)
+                </Label>
+                <Textarea
+                  className="mt-2 min-h-[90px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-xs text-white"
+                  value={presetDraft.bundlePorts}
+                  onChange={(event) =>
+                    setPresetDraft((prev) => ({ ...prev, bundlePorts: event.target.value }))
+                  }
+                />
+              </div>
+              <div>
+                <Label className="text-[10px] uppercase text-gray-500">Template</Label>
+                <Textarea
+                  className="mt-2 min-h-[90px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-xs text-white"
+                  value={presetDraft.template}
+                  onChange={(event) =>
+                    setPresetDraft((prev) => ({ ...prev, template: event.target.value }))
+                  }
+                />
+              </div>
+              <Button
+                className="w-full rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10"
+                type="button"
+                onClick={() => void handleSavePreset()}
+              >
+                {editingPresetId ? "Update Preset" : "Save Preset"}
+              </Button>
+            </div>
+            <div className="mt-4 space-y-2 text-xs text-gray-400">
+              <div className="text-[11px] uppercase text-gray-500">Library</div>
+              {clusterPresets.length === 0 && (
+                <div className="rounded-md border border-gray-800 bg-gray-900/50 p-3 text-[11px] text-gray-500">
+                  No presets yet. Save a bundle + template pair to reuse across apps.
+                </div>
+              )}
+              {clusterPresets.map((preset) => (
+                <div
+                  key={preset.id}
+                  className="rounded-md border border-gray-800 bg-gray-900/50 p-3"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <div className="text-xs font-semibold text-white">{preset.name}</div>
+                      {preset.description && (
+                        <div className="text-[11px] text-gray-500">
+                          {preset.description}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                        onClick={() => handleLoadPreset(preset)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        type="button"
+                        className="rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/10"
+                        onClick={() => handleApplyPreset(preset)}
+                      >
+                        Apply
+                      </Button>
+                      <Button
+                        type="button"
+                        className="rounded-md border border-rose-500/40 px-2 py-1 text-[10px] text-rose-200 hover:bg-rose-500/10"
+                        onClick={() => void handleDeletePreset(preset.id)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-[10px] text-gray-500">
+                    Updated: {new Date(preset.updatedAt).toLocaleString()}
+                  </div>
+                </div>
+              ))}
+              <Button
+                type="button"
+                className="w-full rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
+                onClick={handleExportPresets}
+              >
+                Export / Import
               </Button>
             </div>
           </div>
@@ -4268,9 +5688,14 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                   fill="none"
                   onContextMenu={(event) => {
                     event.preventDefault();
-                    setEdges((prev) => prev.filter((item) => item.id !== edge.id));
+                    handleRemoveEdge(edge.id);
                   }}
-                  style={{ pointerEvents: "stroke" }}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setSelectedEdgeId(edge.id);
+                  }}
+                  style={{ pointerEvents: "stroke", cursor: "pointer" }}
                 />
               ))}
               {connecting && connectingPos ? (() => {
@@ -4393,7 +5818,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                     <p className="text-[11px] text-gray-400">{node.description}</p>
                     {node.type === "context" && (
                       <span className="text-[10px] uppercase text-emerald-300/80">
-                        Connect role → Trigger
+                        Role output can feed any Trigger
                       </span>
                     )}
                     {node.type === "simulation" && (
@@ -4572,7 +5997,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 <li>Ports must match exactly (e.g. result → result).</li>
                 <li>Context and Simulation nodes are sources (no inputs).</li>
                 <li>Viewer is terminal (no outputs).</li>
-                <li>Trigger inputs only accept role from Context and simulation from Simulation.</li>
+                <li>Trigger role input can come from any node that outputs role.</li>
+                <li>Trigger simulation input only accepts simulation from Simulation.</li>
                 <li>Multiple wires into the same input are collected as arrays.</li>
                 <li>Gate expects valid from a Validator node.</li>
               </ul>
@@ -4580,14 +6006,36 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           </div>
 
           <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+            <h3 className="text-base font-semibold text-white">Context Presets</h3>
+            <p className="mt-2 text-gray-400">
+              Use Light/Medium/Full presets on Context nodes to quickly scope the entity
+              payload. Target Fields lets you toggle exact fields to include.
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
             <h3 className="text-base font-semibold text-white">AI Description Flow</h3>
             <ol className="mt-3 space-y-2 text-gray-400">
-              <li>Context.productJson → Parser.productJson</li>
+              <li>Context.entityJson → Parser.entityJson</li>
               <li>Parser.title/images → AI Description Generator</li>
               <li>AI Description Generator.description_en → Description Updater.description_en</li>
               <li>Parser.productId → Description Updater.productId</li>
               <li>(Optional) Description Updater → Result Viewer</li>
             </ol>
+          </div>
+
+          <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+            <h3 className="text-base font-semibold text-white">Cluster Presets</h3>
+            <p className="mt-2 text-gray-400">
+              Use Cluster Presets to save reusable Bundle + Template pairs. Apply them to
+              any canvas to bootstrap repeatable data clusters across apps.
+            </p>
+            <ul className="mt-3 space-y-2 text-gray-400">
+              <li>Define bundle ports (context/meta/value/etc) to capture shared signals.</li>
+              <li>Write a template prompt with placeholders to standardize outputs.</li>
+              <li>Apply the preset to drop a Bundle + Template pair onto the canvas.</li>
+              <li>Select a Template or Bundle node connected together and click “From Selection”.</li>
+            </ul>
           </div>
 
           <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
@@ -4708,6 +6156,12 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 </p>
               </div>
               <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+                <h4 className="text-sm font-semibold text-white">Database Query</h4>
+                <p className="mt-2 text-gray-400">
+                  Queries MongoDB collections using preset or custom filters and returns JSON.
+                </p>
+              </div>
+              <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
                 <h4 className="text-sm font-semibold text-white">Bundle</h4>
                 <p className="mt-2 text-gray-400">
                   Clusters multiple inputs into a single bundle object for downstream
@@ -4755,31 +6209,572 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
             </DialogHeader>
 
             {selectedNode.type === "parser" && (() => {
+              const parserConfig = selectedNode.config?.parser ?? {
+                mappings: createParserMappings(selectedNode.outputs),
+                outputMode: "individual",
+                presetId: PARSER_PRESETS[0]?.id ?? "custom",
+              };
               const mappings =
-                selectedNode.config?.parser?.mappings ??
-                createParserMappings(selectedNode.outputs);
+                parserConfig.mappings ?? createParserMappings(selectedNode.outputs);
+              const outputMode = parserConfig.outputMode ?? "individual";
+              const presetId =
+                parserConfig.presetId ?? PARSER_PRESETS[0]?.id ?? "custom";
+              const presetOptions = [
+                ...PARSER_PRESETS,
+                {
+                  id: "custom",
+                  label: "Custom",
+                  description: "Use manual mappings.",
+                  mappings: {},
+                },
+              ];
+              const activePreset =
+                presetOptions.find((preset) => preset.id === presetId) ?? null;
+              const sampleState =
+                parserSamples[selectedNode.id] ?? {
+                  entityType: "product",
+                  entityId: "",
+                  json: "",
+                  mappingMode: "top",
+                  depth: 2,
+                  keyStyle: "path",
+                  includeContainers: false,
+                };
+              const parsedSample = safeParseJson(sampleState.json);
+              const sampleValue = parsedSample.value;
+              const sampleMappings = sampleValue
+                ? sampleState.mappingMode === "flatten"
+                  ? buildFlattenedMappings(
+                      sampleValue,
+                      sampleState.depth ?? 2,
+                      sampleState.keyStyle ?? "path",
+                      sampleState.includeContainers ?? false
+                    )
+                  : buildTopLevelMappings(sampleValue)
+                : {};
+              const sampleEntries = sampleValue
+                ? extractJsonPathEntries(sampleValue, sampleState.depth ?? 2)
+                : [];
+              const samplePaths = sampleEntries
+                .filter((entry) => {
+                  if (sampleState.includeContainers) return true;
+                  return entry.type === "value" || entry.type === "array";
+                })
+                .map((entry) => entry.path);
+              const samplePathOptions = samplePaths.map((path) => {
+                const value = path.startsWith("[") ? `$${path}` : `$.${path}`;
+                return { label: `Sample: ${path}`, value };
+              });
+              const suggestedPathOptions = samplePathOptions.length
+                ? [...samplePathOptions, ...PARSER_PATH_OPTIONS]
+                : PARSER_PATH_OPTIONS;
+              const entries = Object.entries(mappings);
+              const commitMappings = (
+                nextMappings: Record<string, string>,
+                nextMode: "individual" | "bundle" = outputMode,
+                nextPresetId: string = presetId
+              ) => {
+                const keys = Object.keys(nextMappings)
+                  .map((key) => key.trim())
+                  .filter(Boolean);
+                const nextOutputs = nextMode === "bundle" ? ["bundle"] : keys;
+                updateSelectedNode({
+                  outputs: nextOutputs.length ? nextOutputs : selectedNode.outputs,
+                  config: {
+                    ...selectedNode.config,
+                    parser: {
+                      mappings: nextMappings,
+                      outputMode: nextMode,
+                      presetId: nextPresetId,
+                    },
+                  },
+                });
+              };
+              const addMapping = (baseKey: string, defaultPath: string) => {
+                let nextKey = baseKey;
+                let counter = 1;
+                while (mappings[nextKey]) {
+                  counter += 1;
+                  nextKey = `${baseKey}_${counter}`;
+                }
+                commitMappings({ ...mappings, [nextKey]: defaultPath });
+              };
+              const updateMappingKey = (index: number, value: string) => {
+                const nextEntries = entries.map((entry, idx) => {
+                  if (idx !== index) return entry;
+                  const nextKey = value.trim() || entry[0];
+                  return [nextKey, entry[1]] as [string, string];
+                });
+                const nextMappings: Record<string, string> = {};
+                nextEntries.forEach(([key, path]) => {
+                  if (!key.trim()) return;
+                  nextMappings[key.trim()] = path;
+                });
+                commitMappings(nextMappings);
+              };
+              const updateMappingPath = (index: number, value: string) => {
+                const nextEntries = entries.map((entry, idx) =>
+                  idx === index ? [entry[0], value] : entry
+                );
+                const nextMappings: Record<string, string> = {};
+                nextEntries.forEach(([key, path]) => {
+                  if (!key.trim()) return;
+                  nextMappings[key.trim()] = path;
+                });
+                commitMappings(nextMappings);
+              };
+              const removeMapping = (index: number) => {
+                if (entries.length <= 1) return;
+                const nextEntries = entries.filter((_, idx) => idx !== index);
+                const nextMappings: Record<string, string> = {};
+                nextEntries.forEach(([key, path]) => {
+                  if (!key.trim()) return;
+                  nextMappings[key.trim()] = path;
+                });
+                commitMappings(nextMappings);
+              };
+              const applyPreset = (mode: "replace" | "merge") => {
+                if (!activePreset || activePreset.id === "custom") return;
+                if (mode === "replace") {
+                  commitMappings(activePreset.mappings, outputMode, activePreset.id);
+                  return;
+                }
+                const merged: Record<string, string> = { ...mappings };
+                Object.entries(activePreset.mappings).forEach(([key, value]) => {
+                  if (!(key in merged)) {
+                    merged[key] = value;
+                  }
+                });
+                commitMappings(merged, outputMode, activePreset.id);
+              };
+              const applySampleMappings = (mode: "replace" | "merge") => {
+                const keys = Object.keys(sampleMappings);
+                if (keys.length === 0) return;
+                if (mode === "replace") {
+                  commitMappings(sampleMappings, outputMode, "custom");
+                  return;
+                }
+                const merged: Record<string, string> = { ...mappings };
+                keys.forEach((key) => {
+                  if (!(key in merged)) {
+                    merged[key] = sampleMappings[key] ?? "";
+                  }
+                });
+                commitMappings(merged, outputMode, "custom");
+              };
+              const handleDetectImages = () => {
+                if (!sampleValue) {
+                  toast("Provide sample JSON to detect image fields.", { variant: "error" });
+                  return;
+                }
+                const detected = inferImageMappingPath(
+                  sampleValue,
+                  sampleState.depth ?? 2
+                );
+                if (!detected) {
+                  toast("No image-like field detected in the sample.", { variant: "error" });
+                  return;
+                }
+                if (imageEntryIndex >= 0) {
+                  updateMappingPath(imageEntryIndex, detected);
+                  return;
+                }
+                addMapping("images", detected);
+              };
+              const imageEntryIndex = entries.findIndex(([key]) =>
+                key.toLowerCase().includes("image")
+              );
               return (
                 <div className="space-y-4">
-                  {selectedNode.outputs.map((output) => (
-                    <div key={output}>
-                      <Label className="text-xs text-gray-400">
-                        {output} JSON Path
-                      </Label>
-                      <Input
-                        className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
-                        value={mappings[output] ?? ""}
-                        onChange={(event) => {
-                          const nextMappings = {
-                            ...mappings,
-                            [output]: event.target.value,
-                          };
-                          updateSelectedNodeConfig({
-                            parser: { mappings: nextMappings },
-                          });
-                        }}
-                      />
+                  <div>
+                    <Label className="text-xs text-gray-400">Preset</Label>
+                    <Select
+                      value={presetId}
+                      onValueChange={(value) =>
+                        commitMappings(mappings, outputMode, value)
+                      }
+                    >
+                      <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                        <SelectValue placeholder="Select preset" />
+                      </SelectTrigger>
+                      <SelectContent className="border-gray-800 bg-gray-900">
+                        {presetOptions.map((preset) => (
+                          <SelectItem key={preset.id} value={preset.id}>
+                            {preset.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {activePreset && (
+                      <p className="mt-2 text-[11px] text-gray-500">
+                        {activePreset.description}
+                      </p>
+                    )}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                        onClick={() => applyPreset("replace")}
+                      >
+                        Replace mappings
+                      </Button>
+                      <Button
+                        type="button"
+                        className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                        onClick={() => applyPreset("merge")}
+                      >
+                        Add missing fields
+                      </Button>
                     </div>
-                  ))}
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-gray-400">Sample JSON</Label>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-center">
+                      <Select
+                        value={sampleState.entityType}
+                        onValueChange={(value) =>
+                          setParserSamples((prev) => ({
+                            ...prev,
+                            [selectedNode.id]: {
+                              ...sampleState,
+                              entityType: value,
+                            },
+                          }))
+                        }
+                      >
+                        <SelectTrigger className="border-gray-800 bg-gray-950/70 text-sm text-white">
+                          <SelectValue placeholder="Entity type" />
+                        </SelectTrigger>
+                        <SelectContent className="border-gray-800 bg-gray-900">
+                          <SelectItem value="product">Product</SelectItem>
+                          <SelectItem value="note">Note</SelectItem>
+                          <SelectItem value="custom">Custom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        className="w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                        value={sampleState.entityId}
+                        onChange={(event) =>
+                          setParserSamples((prev) => ({
+                            ...prev,
+                            [selectedNode.id]: {
+                              ...sampleState,
+                              entityId: event.target.value,
+                            },
+                          }))
+                        }
+                        placeholder="Entity ID"
+                      />
+                      <Button
+                        type="button"
+                        className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                        disabled={parserSampleLoading}
+                        onClick={() =>
+                          void handleFetchParserSample(
+                            selectedNode.id,
+                            sampleState.entityType,
+                            sampleState.entityId
+                          )
+                        }
+                      >
+                        {parserSampleLoading ? "Loading..." : "Fetch sample"}
+                      </Button>
+                    </div>
+                    <Textarea
+                      className="mt-2 min-h-[120px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                      value={sampleState.json}
+                      onChange={(event) =>
+                        setParserSamples((prev) => ({
+                          ...prev,
+                          [selectedNode.id]: {
+                            ...sampleState,
+                            json: event.target.value,
+                          },
+                        }))
+                      }
+                      placeholder="{ \"id\": \"123\", \"title\": \"Sample\" }"
+                    />
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <Select
+                        value={sampleState.mappingMode}
+                        onValueChange={(value) =>
+                          setParserSamples((prev) => ({
+                            ...prev,
+                            [selectedNode.id]: {
+                              ...sampleState,
+                              mappingMode: value as "top" | "flatten",
+                            },
+                          }))
+                        }
+                      >
+                        <SelectTrigger className="w-[180px] border-gray-800 bg-gray-950/70 text-sm text-white">
+                          <SelectValue placeholder="Mapping mode" />
+                        </SelectTrigger>
+                        <SelectContent className="border-gray-800 bg-gray-900">
+                          <SelectItem value="top">Top-level fields</SelectItem>
+                          <SelectItem value="flatten">Flatten nested</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        value={String(sampleState.depth)}
+                        onValueChange={(value) =>
+                          setParserSamples((prev) => ({
+                            ...prev,
+                            [selectedNode.id]: {
+                              ...sampleState,
+                              depth: Number(value),
+                            },
+                          }))
+                        }
+                      >
+                        <SelectTrigger className="w-[160px] border-gray-800 bg-gray-950/70 text-sm text-white">
+                          <SelectValue placeholder="Depth" />
+                        </SelectTrigger>
+                        <SelectContent className="border-gray-800 bg-gray-900">
+                          {[1, 2, 3, 4].map((depth) => (
+                            <SelectItem key={depth} value={String(depth)}>
+                              Depth {depth}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        className={`rounded-md border border-gray-700 px-3 text-[10px] ${
+                          sampleState.includeContainers
+                            ? "text-emerald-200 hover:bg-emerald-500/10"
+                            : "text-gray-300 hover:bg-gray-900/80"
+                        }`}
+                        onClick={() =>
+                          setParserSamples((prev) => ({
+                            ...prev,
+                            [selectedNode.id]: {
+                              ...sampleState,
+                              includeContainers: !sampleState.includeContainers,
+                            },
+                          }))
+                        }
+                      >
+                        {sampleState.includeContainers ? "Containers: On" : "Containers: Off"}
+                      </Button>
+                      {sampleState.mappingMode === "flatten" && (
+                        <Select
+                          value={sampleState.keyStyle}
+                          onValueChange={(value) =>
+                            setParserSamples((prev) => ({
+                              ...prev,
+                              [selectedNode.id]: {
+                                ...sampleState,
+                                keyStyle: value as "path" | "leaf",
+                              },
+                            }))
+                          }
+                        >
+                          <SelectTrigger className="w-[170px] border-gray-800 bg-gray-950/70 text-sm text-white">
+                            <SelectValue placeholder="Key style" />
+                          </SelectTrigger>
+                          <SelectContent className="border-gray-800 bg-gray-900">
+                            <SelectItem value="path">Path keys</SelectItem>
+                            <SelectItem value="leaf">Leaf keys</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                    {parsedSample.error ? (
+                      <p className="mt-2 text-[11px] text-rose-300">
+                        {parsedSample.error}
+                      </p>
+                    ) : null}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {Object.keys(sampleMappings).length > 0 && (
+                        <>
+                          <Button
+                            type="button"
+                            className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                            onClick={() => applySampleMappings("replace")}
+                          >
+                            Generate from sample
+                          </Button>
+                          <Button
+                            type="button"
+                            className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                            onClick={() => applySampleMappings("merge")}
+                          >
+                            Add missing from sample
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        type="button"
+                        className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                        onClick={handleDetectImages}
+                      >
+                        Detect images
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-gray-400">Output Mode</Label>
+                    <Select
+                      value={outputMode}
+                      onValueChange={(value) =>
+                        commitMappings(
+                          mappings,
+                          value as "individual" | "bundle"
+                        )
+                      }
+                    >
+                      <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                        <SelectValue placeholder="Select output mode" />
+                      </SelectTrigger>
+                      <SelectContent className="border-gray-800 bg-gray-900">
+                        <SelectItem value="individual">Individual outputs</SelectItem>
+                        <SelectItem value="bundle">Single bundle output</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="mt-2 text-[11px] text-gray-500">
+                      Bundle mode emits a single <span className="text-gray-300">bundle</span>{" "}
+                      port and uses mapping keys as placeholders for Prompt templates.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                      onClick={() => addMapping("title", "$.title")}
+                    >
+                      Add title
+                    </Button>
+                    <Button
+                      type="button"
+                      className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                      onClick={() => addMapping("images", "$.images")}
+                    >
+                      Add images
+                    </Button>
+                    <Button
+                      type="button"
+                      className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                      onClick={() => addMapping("productId", "$.id")}
+                    >
+                      Add id
+                    </Button>
+                    <Button
+                      type="button"
+                      className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                      onClick={() => addMapping("sku", "$.sku")}
+                    >
+                      Add sku
+                    </Button>
+                    <Button
+                      type="button"
+                      className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                      onClick={() => addMapping("price", "$.price")}
+                    >
+                      Add price
+                    </Button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {entries.map(([key, path], index) => (
+                      <div
+                        key={`${key}-${index}`}
+                        className="grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-start"
+                      >
+                        <Input
+                          className="w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                          value={key}
+                          onChange={(event) =>
+                            updateMappingKey(index, event.target.value)
+                          }
+                          placeholder="output key"
+                        />
+                        <div className="space-y-2">
+                          <Input
+                            className="w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                            value={path}
+                            onChange={(event) =>
+                              updateMappingPath(index, event.target.value)
+                            }
+                            placeholder="$.path.to.value"
+                          />
+                          <Select onValueChange={(value) => updateMappingPath(index, value)}>
+                            <SelectTrigger className="border-gray-800 bg-gray-950/70 text-[10px] text-gray-200">
+                              <SelectValue placeholder="Pick a suggested path" />
+                            </SelectTrigger>
+                            <SelectContent className="border-gray-800 bg-gray-900">
+                              {suggestedPathOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button
+                          type="button"
+                          disabled={entries.length <= 1}
+                          className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80 disabled:cursor-not-allowed disabled:opacity-50"
+                          onClick={() => removeMapping(index)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Button
+                    type="button"
+                    className="w-full rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
+                    onClick={() =>
+                      addMapping(`field_${entries.length + 1}`, "")
+                    }
+                  >
+                    Add mapping
+                  </Button>
+                  {imageEntryIndex >= 0 && (
+                    <div className="rounded-md border border-gray-800 bg-gray-900/50 p-3 text-[11px] text-gray-400">
+                      <div className="text-gray-300">Image helpers</div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                          onClick={() =>
+                            updateMappingPath(imageEntryIndex, "$.images")
+                          }
+                        >
+                          Use $.images
+                        </Button>
+                        <Button
+                          type="button"
+                          className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                          onClick={() =>
+                            updateMappingPath(imageEntryIndex, "$.imageLinks")
+                          }
+                        >
+                          Use $.imageLinks
+                        </Button>
+                        <Button
+                          type="button"
+                          className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                          onClick={() =>
+                            updateMappingPath(imageEntryIndex, "$.media")
+                          }
+                        >
+                          Use $.media
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-[11px] text-gray-500">
+                    Use JSON paths like{" "}
+                    <span className="text-gray-300">{`$.images`}</span>,{" "}
+                    <span className="text-gray-300">{`$.imageLinks`}</span>, or{" "}
+                    <span className="text-gray-300">{`$.media`}</span> for image arrays.
+                  </p>
                 </div>
               );
             })()}
@@ -5373,6 +7368,263 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               );
             })()}
 
+            {selectedNode.type === "db_query" && (() => {
+              const dbConfig = selectedNode.config?.dbQuery ?? {
+                provider: "auto",
+                collection: "products",
+                mode: "preset",
+                preset: "by_id",
+                field: "_id",
+                idType: "string",
+                queryTemplate: "{\n  \"_id\": \"{{value}}\"\n}",
+                limit: 20,
+                sort: "",
+                projection: "",
+                single: false,
+              };
+              const collectionOption = DB_COLLECTION_OPTIONS.some(
+                (option) => option.value === dbConfig.collection
+              )
+                ? dbConfig.collection
+                : "custom";
+              return (
+                <div className="space-y-4">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <Label className="text-xs text-gray-400">Provider</Label>
+                      <Select
+                        value={dbConfig.provider}
+                        onValueChange={(value) =>
+                          updateSelectedNodeConfig({
+                            dbQuery: {
+                              ...dbConfig,
+                              provider: value as DbQueryConfig["provider"],
+                            },
+                          })
+                        }
+                      >
+                        <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                          <SelectValue placeholder="Select provider" />
+                        </SelectTrigger>
+                        <SelectContent className="border-gray-800 bg-gray-900">
+                          <SelectItem value="auto">Auto</SelectItem>
+                          <SelectItem value="mongodb">MongoDB</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-400">Collection</Label>
+                      <Select
+                        value={collectionOption}
+                        onValueChange={(value) => {
+                          updateSelectedNodeConfig({
+                            dbQuery: {
+                              ...dbConfig,
+                              collection:
+                                value === "custom" ? dbConfig.collection : value,
+                            },
+                          });
+                        }}
+                      >
+                        <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                          <SelectValue placeholder="Select collection" />
+                        </SelectTrigger>
+                        <SelectContent className="border-gray-800 bg-gray-900">
+                          {DB_COLLECTION_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {collectionOption === "custom" && (
+                        <Input
+                          className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                          value={dbConfig.collection}
+                          onChange={(event) =>
+                            updateSelectedNodeConfig({
+                              dbQuery: { ...dbConfig, collection: event.target.value },
+                            })
+                          }
+                          placeholder="collection_name"
+                        />
+                      )}
+                    </div>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <Label className="text-xs text-gray-400">Mode</Label>
+                      <Select
+                        value={dbConfig.mode}
+                        onValueChange={(value) =>
+                          updateSelectedNodeConfig({
+                            dbQuery: { ...dbConfig, mode: value as DbQueryConfig["mode"] },
+                          })
+                        }
+                      >
+                        <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                          <SelectValue placeholder="Select mode" />
+                        </SelectTrigger>
+                        <SelectContent className="border-gray-800 bg-gray-900">
+                          <SelectItem value="preset">Preset</SelectItem>
+                          <SelectItem value="custom">Custom JSON</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-400">Limit</Label>
+                      <Input
+                        type="number"
+                        step="1"
+                        className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                        value={dbConfig.limit}
+                        onChange={(event) =>
+                          updateSelectedNodeConfig({
+                            dbQuery: {
+                              ...dbConfig,
+                              limit: toNumber(event.target.value, dbConfig.limit),
+                            },
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                  {dbConfig.mode === "preset" && (
+                    <div className="space-y-3">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <Label className="text-xs text-gray-400">Preset</Label>
+                          <Select
+                            value={dbConfig.preset}
+                            onValueChange={(value) =>
+                              updateSelectedNodeConfig({
+                                dbQuery: {
+                                  ...dbConfig,
+                                  preset: value as DbQueryConfig["preset"],
+                                },
+                              })
+                            }
+                          >
+                            <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                              <SelectValue placeholder="Select preset" />
+                            </SelectTrigger>
+                            <SelectContent className="border-gray-800 bg-gray-900">
+                              <SelectItem value="by_id">By ID (_id)</SelectItem>
+                              <SelectItem value="by_productId">By productId</SelectItem>
+                              <SelectItem value="by_entityId">By entityId</SelectItem>
+                              <SelectItem value="by_field">By custom field</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-gray-400">ID Type</Label>
+                          <Select
+                            value={dbConfig.idType}
+                            onValueChange={(value) =>
+                              updateSelectedNodeConfig({
+                                dbQuery: {
+                                  ...dbConfig,
+                                  idType: value as DbQueryConfig["idType"],
+                                },
+                              })
+                            }
+                          >
+                            <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                              <SelectValue placeholder="Select id type" />
+                            </SelectTrigger>
+                            <SelectContent className="border-gray-800 bg-gray-900">
+                              <SelectItem value="string">String</SelectItem>
+                              <SelectItem value="objectId">ObjectId</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      {dbConfig.preset === "by_field" && (
+                        <div>
+                          <Label className="text-xs text-gray-400">Field</Label>
+                          <Input
+                            className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                            value={dbConfig.field}
+                            onChange={(event) =>
+                              updateSelectedNodeConfig({
+                                dbQuery: { ...dbConfig, field: event.target.value },
+                              })
+                            }
+                            placeholder="fieldName"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {dbConfig.mode === "custom" && (
+                    <div>
+                      <Label className="text-xs text-gray-400">Query Template</Label>
+                      <Textarea
+                        className="mt-2 min-h-[140px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                        value={dbConfig.queryTemplate}
+                        onChange={(event) =>
+                          updateSelectedNodeConfig({
+                            dbQuery: { ...dbConfig, queryTemplate: event.target.value },
+                          })
+                        }
+                      />
+                      <p className="mt-2 text-[11px] text-gray-500">
+                        Use placeholders like <span className="text-gray-300">{`{{value}}`}</span>{" "}
+                        or <span className="text-gray-300">{`{{entityId}}`}</span>.
+                      </p>
+                    </div>
+                  )}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <Label className="text-xs text-gray-400">Sort (JSON)</Label>
+                      <Textarea
+                        className="mt-2 min-h-[80px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                        value={dbConfig.sort}
+                        onChange={(event) =>
+                          updateSelectedNodeConfig({
+                            dbQuery: { ...dbConfig, sort: event.target.value },
+                          })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-400">Projection (JSON)</Label>
+                      <Textarea
+                        className="mt-2 min-h-[80px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                        value={dbConfig.projection}
+                        onChange={(event) =>
+                          updateSelectedNodeConfig({
+                            dbQuery: { ...dbConfig, projection: event.target.value },
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-900/50 px-3 py-2 text-xs text-gray-300">
+                    <span>Single result</span>
+                    <Button
+                      type="button"
+                      className={`rounded border border-gray-700 px-3 py-1 text-xs ${
+                        dbConfig.single
+                          ? "text-emerald-200 hover:bg-emerald-500/10"
+                          : "text-gray-300 hover:bg-gray-800"
+                      }`}
+                      onClick={() =>
+                        updateSelectedNodeConfig({
+                          dbQuery: { ...dbConfig, single: !dbConfig.single },
+                        })
+                      }
+                    >
+                      {dbConfig.single ? "Enabled" : "Disabled"}
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-gray-500">
+                    Collections are allowlisted on the server for safety.
+                  </p>
+                </div>
+              );
+            })()}
+
             {selectedNode.type === "gate" && (() => {
               const gateConfig = selectedNode.config?.gate ?? {
                 mode: "block",
@@ -5484,6 +7736,88 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               );
             })()}
 
+            {selectedNode.type === "prompt" && (() => {
+              const promptConfig = selectedNode.config?.prompt ?? { template: "" };
+              const incomingEdges = edges.filter((edge) => edge.to === selectedNode.id);
+              const inputPorts = incomingEdges
+                .map((edge) => edge.toPort)
+                .filter((port): port is string => Boolean(port));
+              const bundleKeys = new Set<string>();
+              incomingEdges.forEach((edge) => {
+                if (edge.toPort !== "bundle") return;
+                const fromNode = nodes.find((node) => node.id === edge.from);
+                if (!fromNode) return;
+                if (fromNode.type === "parser") {
+                  const mappings =
+                    fromNode.config?.parser?.mappings ??
+                    createParserMappings(fromNode.outputs);
+                  Object.keys(mappings).forEach((key) => {
+                    const trimmed = key.trim();
+                    if (trimmed) bundleKeys.add(trimmed);
+                  });
+                  return;
+                }
+                if (fromNode.type === "bundle") {
+                  fromNode.inputs.forEach((port) => {
+                    const trimmed = port.trim();
+                    if (trimmed) bundleKeys.add(trimmed);
+                  });
+                }
+                if (fromNode.type === "mapper") {
+                  const mapperOutputs =
+                    fromNode.config?.mapper?.outputs ?? fromNode.outputs;
+                  mapperOutputs.forEach((output) => {
+                    const trimmed = output.trim();
+                    if (trimmed) bundleKeys.add(trimmed);
+                  });
+                }
+              });
+              const directPlaceholders = inputPorts.filter((port) => port !== "bundle");
+              return (
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-xs text-gray-400">Prompt Template</Label>
+                    <Textarea
+                      className="mt-2 min-h-[140px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                      value={promptConfig.template}
+                      onChange={(event) =>
+                        updateSelectedNodeConfig({
+                          prompt: { template: event.target.value },
+                        })
+                      }
+                      placeholder="Describe the product: {{title}}"
+                    />
+                  </div>
+                  <div className="rounded-md border border-gray-800 bg-gray-900/50 p-3 text-[11px] text-gray-400">
+                    <div className="text-gray-300">Available placeholders</div>
+                    {bundleKeys.size > 0 ? (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {Array.from(bundleKeys).map((key) => (
+                          <span
+                            key={key}
+                            className="rounded-full border border-gray-700 px-2 py-0.5 text-[10px] text-gray-200"
+                          >
+                            {`{{${key}}}`}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mt-2 text-[11px] text-gray-500">
+                        Connect a Parser or Bundle node to the bundle input to surface
+                        placeholder hints.
+                      </div>
+                    )}
+                    {directPlaceholders.length > 0 && (
+                      <div className="mt-3 text-[11px] text-gray-500">
+                        Direct inputs:{" "}
+                        {directPlaceholders.map((port) => `{{${port}}}`).join(", ")}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
             {selectedNode.type === "model" && (() => {
               const modelConfig =
                 selectedNode.config?.model ?? {
@@ -5590,6 +7924,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 includePaths: [],
                 excludePaths: [],
               };
+              const presetSet = getContextPresetSet(contextConfig.entityType);
               return (
                 <div className="space-y-4">
                   <div>
@@ -5608,11 +7943,49 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                       trigger should execute.
                     </p>
                   </div>
+                  <div>
+                    <Label className="text-xs text-gray-400">Context Presets</Label>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {(["light", "medium", "full"] as const).map((preset) => (
+                        <Button
+                          key={preset}
+                          type="button"
+                          className="rounded-md border border-gray-700 px-3 py-1 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                          onClick={() =>
+                            updateSelectedNodeConfig({
+                              context: applyContextPreset(contextConfig, preset),
+                            })
+                          }
+                        >
+                          {preset.toUpperCase()}
+                        </Button>
+                      ))}
+                      <Button
+                        type="button"
+                        className="rounded-md border border-gray-700 px-3 py-1 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                        onClick={() =>
+                          updateSelectedNodeConfig({
+                            context: {
+                              ...contextConfig,
+                              scopeMode: "full",
+                              includePaths: [],
+                              excludePaths: [],
+                            },
+                          })
+                        }
+                      >
+                        RESET
+                      </Button>
+                    </div>
+                    <p className="mt-2 text-[11px] text-gray-500">
+                      Presets adjust scope to include curated fields for the selected entity (or a generic set when auto).
+                    </p>
+                  </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
                       <Label className="text-xs text-gray-400">Entity Type</Label>
-                      <Select
-                        value={contextConfig.entityType ?? "product"}
+                    <Select
+                        value={contextConfig.entityType ?? "auto"}
                         onValueChange={(value) =>
                           updateSelectedNodeConfig({
                             context: { ...contextConfig, entityType: value },
@@ -5623,6 +7996,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                           <SelectValue placeholder="Select entity" />
                         </SelectTrigger>
                         <SelectContent className="border-gray-800 bg-gray-900">
+                          <SelectItem value="auto">Auto (use trigger)</SelectItem>
                           <SelectItem value="product">Product</SelectItem>
                           <SelectItem value="note">Note</SelectItem>
                           <SelectItem value="chat">Chat</SelectItem>
@@ -5638,7 +8012,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                           updateSelectedNodeConfig({
                             context: {
                               ...contextConfig,
-                              entityIdSource: value as ContextConfig["entityIdSource"],
+                              entityIdSource: value as "simulation" | "manual",
                             },
                           })
                         }
@@ -5652,6 +8026,51 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                         </SelectContent>
                       </Select>
                     </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-400">Target Fields</Label>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {presetSet.suggested.map((field) => {
+                        const active = contextConfig.includePaths?.includes(field);
+                        return (
+                          <button
+                            key={field}
+                            type="button"
+                            onClick={() =>
+                              updateSelectedNodeConfig({
+                                context: toggleContextTarget(contextConfig, field),
+                              })
+                            }
+                            className={`rounded-full border px-2 py-1 text-[10px] transition ${
+                              active
+                                ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-200"
+                                : "border-gray-700 text-gray-300 hover:bg-gray-900/70"
+                            }`}
+                          >
+                            {field}
+                          </button>
+                        );
+                      })}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateSelectedNodeConfig({
+                            context: {
+                              ...contextConfig,
+                              scopeMode: "include",
+                              includePaths: [],
+                              excludePaths: [],
+                            },
+                          })
+                        }
+                        className="rounded-full border border-gray-700 px-2 py-1 text-[10px] text-gray-300 hover:bg-gray-900/70"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                    <p className="mt-2 text-[11px] text-gray-500">
+                      Click to toggle fields. This switches scope to include mode.
+                    </p>
                   </div>
                   {contextConfig.entityIdSource === "manual" && (
                     <div>
@@ -5667,16 +8086,20 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                       />
                     </div>
                   )}
-                  <div>
-                    <Label className="text-xs text-gray-400">Context Scope</Label>
-                    <Select
-                      value={contextConfig.scopeMode ?? "full"}
-                      onValueChange={(value) =>
-                        updateSelectedNodeConfig({
-                          context: { ...contextConfig, scopeMode: value as ContextConfig["scopeMode"] },
-                        })
-                      }
-                    >
+                    <div>
+                      <Label className="text-xs text-gray-400">Data Scope</Label>
+                      <Select
+                        value={contextConfig.scopeMode ?? "full"}
+                        onValueChange={(value) =>
+                          updateSelectedNodeConfig({
+                            context: {
+                              ...contextConfig,
+                              scopeMode: value as "full" | "include" | "exclude",
+                            },
+                          })
+                        }
+                      >
+
                       <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
                         <SelectValue placeholder="Select scope" />
                       </SelectTrigger>
@@ -5964,41 +8387,204 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
             {selectedNode.type === "updater" && (() => {
               const updaterConfig =
                 selectedNode.config?.updater ?? {
+                  entityType: "product",
                   targetField: selectedNode.outputs[0] ?? "content_en",
                   idField: "productId",
                   mode: "replace" as const,
+                  mappings: [
+                    {
+                      targetPath: selectedNode.outputs[0] ?? "content_en",
+                      sourcePort: "result",
+                    },
+                  ],
                 };
+              const incomingEdges = edges.filter((edge) => edge.to === selectedNode.id);
+              const incomingPorts = Array.from(
+                new Set(
+                  incomingEdges
+                    .map((edge) => edge.toPort)
+                    .filter((port): port is string => Boolean(port))
+                )
+              );
+              const availablePorts = incomingPorts.length
+                ? incomingPorts
+                : selectedNode.inputs;
+              const bundleKeys = new Set<string>();
+              incomingEdges.forEach((edge) => {
+                if (edge.toPort !== "bundle") return;
+                const fromNode = nodes.find((node) => node.id === edge.from);
+                if (!fromNode) return;
+                if (fromNode.type === "parser") {
+                  const mappings =
+                    fromNode.config?.parser?.mappings ??
+                    createParserMappings(fromNode.outputs);
+                  Object.keys(mappings).forEach((key) => {
+                    const trimmed = key.trim();
+                    if (trimmed) bundleKeys.add(trimmed);
+                  });
+                  return;
+                }
+                if (fromNode.type === "bundle") {
+                  fromNode.inputs.forEach((port) => {
+                    const trimmed = port.trim();
+                    if (trimmed) bundleKeys.add(trimmed);
+                  });
+                }
+                if (fromNode.type === "mapper") {
+                  const mapperOutputs =
+                    fromNode.config?.mapper?.outputs ?? fromNode.outputs;
+                  mapperOutputs.forEach((output) => {
+                    const trimmed = output.trim();
+                    if (trimmed) bundleKeys.add(trimmed);
+                  });
+                }
+              });
+              const mappings =
+                updaterConfig.mappings && updaterConfig.mappings.length > 0
+                  ? updaterConfig.mappings
+                  : [
+                      {
+                        targetPath:
+                          updaterConfig.targetField ?? selectedNode.outputs[0] ?? "content_en",
+                        sourcePort: availablePorts.find((port) => port !== updaterConfig.idField) ?? "result",
+                      },
+                    ];
+              const sampleState =
+                updaterSamples[selectedNode.id] ?? {
+                  entityType: updaterConfig.entityType ?? "product",
+                  entityId: "",
+                  json: "",
+                  depth: 2,
+                  includeContainers: false,
+                };
+              const parsedSample = safeParseJson(sampleState.json);
+              const sampleValue = parsedSample.value;
+              const sampleEntries = sampleValue
+                ? extractJsonPathEntries(sampleValue, sampleState.depth ?? 2)
+                : [];
+              const targetPaths = sampleEntries
+                .filter((entry) => {
+                  if (sampleState.includeContainers) return true;
+                  return entry.type === "value" || entry.type === "array";
+                })
+                .map((entry) => entry.path);
+              const targetPathOptions = targetPaths.map((path) => ({
+                label: path,
+                value: path,
+              }));
+              const findMatchingTargetPath = (port: string) => {
+                const normalized = port.toLowerCase();
+                const endsWith = targetPaths.find((path) =>
+                  path.toLowerCase().endsWith(normalized)
+                );
+                if (endsWith) return endsWith;
+                const includes = targetPaths.find((path) =>
+                  path.toLowerCase().includes(normalized)
+                );
+                return includes ?? port;
+              };
+              const updateMappings = (nextMappings: UpdaterMapping[]) => {
+                const primaryTarget =
+                  nextMappings.find((mapping) => mapping.targetPath)?.targetPath ??
+                  updaterConfig.targetField;
+                updateSelectedNodeConfig({
+                  updater: {
+                    ...updaterConfig,
+                    targetField: primaryTarget,
+                    mappings: nextMappings,
+                  },
+                });
+              };
+              const updateMapping = (
+                index: number,
+                patch: Partial<UpdaterMapping>
+              ) => {
+                const nextMappings = mappings.map((mapping, idx) =>
+                  idx === index ? { ...mapping, ...patch } : mapping
+                );
+                updateMappings(nextMappings);
+              };
+              const addMapping = () => {
+                updateMappings([
+                  ...mappings,
+                  {
+                    targetPath: "",
+                    sourcePort: availablePorts[0] ?? "result",
+                    sourcePath: "",
+                  },
+                ]);
+              };
+              const removeMapping = (index: number) => {
+                if (mappings.length <= 1) return;
+                updateMappings(mappings.filter((_, idx) => idx !== index));
+              };
+              const mapInputsToTargets = () => {
+                const nextMappings: UpdaterMapping[] = [];
+                availablePorts.forEach((port) => {
+                  if (port === updaterConfig.idField) return;
+                  if (port === "bundle") {
+                    if (bundleKeys.size === 0) return;
+                    Array.from(bundleKeys).forEach((key) => {
+                      nextMappings.push({
+                        targetPath: key,
+                        sourcePort: "bundle",
+                        sourcePath: key,
+                      });
+                    });
+                    return;
+                  }
+                  nextMappings.push({
+                    targetPath: findMatchingTargetPath(port),
+                    sourcePort: port,
+                  });
+                });
+                if (nextMappings.length > 0) {
+                  updateMappings(nextMappings);
+                }
+              };
               return (
                 <div className="space-y-4">
                   <div>
-                    <Label className="text-xs text-gray-400">Target Field</Label>
-                    <Input
-                      className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
-                      value={updaterConfig.targetField}
-                      onChange={(event) =>
+                    <Label className="text-xs text-gray-400">Entity Type</Label>
+                    <Select
+                      value={updaterConfig.entityType ?? "product"}
+                      onValueChange={(value) =>
                         updateSelectedNodeConfig({
-                          updater: {
-                            ...updaterConfig,
-                            targetField: event.target.value,
-                          },
+                          updater: { ...updaterConfig, entityType: value },
                         })
                       }
-                    />
+                    >
+                      <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                        <SelectValue placeholder="Entity type" />
+                      </SelectTrigger>
+                      <SelectContent className="border-gray-800 bg-gray-900">
+                        <SelectItem value="product">Product</SelectItem>
+                        <SelectItem value="note">Note</SelectItem>
+                        <SelectItem value="custom">Custom</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label className="text-xs text-gray-400">ID Field</Label>
-                    <Input
-                      className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                    <Select
                       value={updaterConfig.idField}
-                      onChange={(event) =>
+                      onValueChange={(value) =>
                         updateSelectedNodeConfig({
-                          updater: {
-                            ...updaterConfig,
-                            idField: event.target.value,
-                          },
+                          updater: { ...updaterConfig, idField: value },
                         })
                       }
-                    />
+                    >
+                      <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                        <SelectValue placeholder="Select ID input" />
+                      </SelectTrigger>
+                      <SelectContent className="border-gray-800 bg-gray-900">
+                        {availablePorts.map((port) => (
+                          <SelectItem key={port} value={port}>
+                            {port}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label className="text-xs text-gray-400">Write Mode</Label>
@@ -6022,6 +8608,245 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                       </SelectContent>
                     </Select>
                   </div>
+
+                  <div>
+                    <Label className="text-xs text-gray-400">Sample JSON</Label>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-center">
+                      <Select
+                        value={sampleState.entityType}
+                        onValueChange={(value) =>
+                          setUpdaterSamples((prev) => ({
+                            ...prev,
+                            [selectedNode.id]: {
+                              ...sampleState,
+                              entityType: value,
+                            },
+                          }))
+                        }
+                      >
+                        <SelectTrigger className="border-gray-800 bg-gray-950/70 text-sm text-white">
+                          <SelectValue placeholder="Entity type" />
+                        </SelectTrigger>
+                        <SelectContent className="border-gray-800 bg-gray-900">
+                          <SelectItem value="product">Product</SelectItem>
+                          <SelectItem value="note">Note</SelectItem>
+                          <SelectItem value="custom">Custom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        className="w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                        value={sampleState.entityId}
+                        onChange={(event) =>
+                          setUpdaterSamples((prev) => ({
+                            ...prev,
+                            [selectedNode.id]: {
+                              ...sampleState,
+                              entityId: event.target.value,
+                            },
+                          }))
+                        }
+                        placeholder="Entity ID"
+                      />
+                      <Button
+                        type="button"
+                        className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                        disabled={updaterSampleLoading}
+                        onClick={() =>
+                          void handleFetchUpdaterSample(
+                            selectedNode.id,
+                            sampleState.entityType,
+                            sampleState.entityId
+                          )
+                        }
+                      >
+                        {updaterSampleLoading ? "Loading..." : "Fetch sample"}
+                      </Button>
+                    </div>
+                    <Textarea
+                      className="mt-2 min-h-[120px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                      value={sampleState.json}
+                      onChange={(event) =>
+                        setUpdaterSamples((prev) => ({
+                          ...prev,
+                          [selectedNode.id]: {
+                            ...sampleState,
+                            json: event.target.value,
+                          },
+                        }))
+                      }
+                      placeholder="{ \"id\": \"123\", \"title\": \"Sample\" }"
+                    />
+                    {parsedSample.error ? (
+                      <p className="mt-2 text-[11px] text-rose-300">
+                        {parsedSample.error}
+                      </p>
+                    ) : null}
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <Select
+                        value={String(sampleState.depth)}
+                        onValueChange={(value) =>
+                          setUpdaterSamples((prev) => ({
+                            ...prev,
+                            [selectedNode.id]: {
+                              ...sampleState,
+                              depth: Number(value),
+                            },
+                          }))
+                        }
+                      >
+                        <SelectTrigger className="w-[150px] border-gray-800 bg-gray-950/70 text-sm text-white">
+                          <SelectValue placeholder="Depth" />
+                        </SelectTrigger>
+                        <SelectContent className="border-gray-800 bg-gray-900">
+                          {[1, 2, 3, 4].map((depth) => (
+                            <SelectItem key={depth} value={String(depth)}>
+                              Depth {depth}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        className={`rounded-md border border-gray-700 px-3 text-[10px] ${
+                          sampleState.includeContainers
+                            ? "text-emerald-200 hover:bg-emerald-500/10"
+                            : "text-gray-300 hover:bg-gray-900/80"
+                        }`}
+                        onClick={() =>
+                          setUpdaterSamples((prev) => ({
+                            ...prev,
+                            [selectedNode.id]: {
+                              ...sampleState,
+                              includeContainers: !sampleState.includeContainers,
+                            },
+                          }))
+                        }
+                      >
+                        {sampleState.includeContainers ? "Containers: On" : "Containers: Off"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                      onClick={mapInputsToTargets}
+                    >
+                      Auto-map inputs
+                    </Button>
+                    {bundleKeys.size > 0 && (
+                      <span className="text-[11px] text-gray-500">
+                        Bundle keys: {Array.from(bundleKeys).join(", ")}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    {mappings.map((mapping, index) => {
+                      const targetValue = mapping.targetPath ?? "";
+                      return (
+                        <div
+                          key={`${mapping.targetPath}-${index}`}
+                          className="grid gap-2 sm:grid-cols-[1fr_140px_auto] sm:items-start"
+                        >
+                          <div className="space-y-2">
+                            <Input
+                              className="w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                              value={targetValue}
+                              onChange={(event) =>
+                                updateMapping(index, {
+                                  targetPath: event.target.value,
+                                })
+                              }
+                              placeholder="Target field path"
+                            />
+                            <Select
+                              onValueChange={(value) =>
+                                updateMapping(index, { targetPath: value })
+                              }
+                            >
+                              <SelectTrigger className="border-gray-800 bg-gray-950/70 text-[10px] text-gray-200">
+                                <SelectValue placeholder="Pick target field" />
+                              </SelectTrigger>
+                              <SelectContent className="border-gray-800 bg-gray-900">
+                                {targetPathOptions.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Select
+                              value={mapping.sourcePort}
+                              onValueChange={(value) =>
+                                updateMapping(index, { sourcePort: value })
+                              }
+                            >
+                              <SelectTrigger className="border-gray-800 bg-gray-950/70 text-[10px] text-gray-200">
+                                <SelectValue placeholder="Input" />
+                              </SelectTrigger>
+                              <SelectContent className="border-gray-800 bg-gray-900">
+                                {availablePorts.map((port) => (
+                                  <SelectItem key={port} value={port}>
+                                    {port}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {mapping.sourcePort === "bundle" && (
+                              <>
+                                <Input
+                                  className="w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                                  value={mapping.sourcePath ?? ""}
+                                  onChange={(event) =>
+                                    updateMapping(index, {
+                                      sourcePath: event.target.value,
+                                    })
+                                  }
+                                  placeholder="Bundle path"
+                                />
+                                <Select
+                                  onValueChange={(value) =>
+                                    updateMapping(index, { sourcePath: value })
+                                  }
+                                >
+                                  <SelectTrigger className="border-gray-800 bg-gray-950/70 text-[10px] text-gray-200">
+                                    <SelectValue placeholder="Pick bundle key" />
+                                  </SelectTrigger>
+                                  <SelectContent className="border-gray-800 bg-gray-900">
+                                    {Array.from(bundleKeys).map((key) => (
+                                      <SelectItem key={key} value={key}>
+                                        {key}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </>
+                            )}
+                          </div>
+                          <Button
+                            type="button"
+                            className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                            disabled={mappings.length <= 1}
+                            onClick={() => removeMapping(index)}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <Button
+                    type="button"
+                    className="w-full rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
+                    onClick={addMapping}
+                  >
+                    Add mapping
+                  </Button>
                 </div>
               );
             })()}
@@ -6044,6 +8869,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               selectedNode.type !== "router" &&
               selectedNode.type !== "delay" &&
               selectedNode.type !== "http" &&
+              selectedNode.type !== "db_query" &&
               selectedNode.type !== "viewer" &&
               selectedNode.type !== "ai_description" &&
               selectedNode.type !== "description_updater" && (
@@ -6054,6 +8880,63 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           </DialogContent>
         </Dialog>
       ) : null}
+
+      <Dialog open={presetsModalOpen} onOpenChange={setPresetsModalOpen}>
+        <DialogContent className="max-w-2xl border border-gray-800 bg-gray-950 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg">Export / Import Presets</DialogTitle>
+            <DialogDescription className="text-sm text-gray-400">
+              Share Cluster Presets as JSON across projects.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              className="min-h-[240px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+              value={presetsJson}
+              onChange={(event) => setPresetsJson(event.target.value)}
+            />
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                className="rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
+                onClick={() => setPresetsJson(JSON.stringify(clusterPresets, null, 2))}
+              >
+                Load Export
+              </Button>
+              <Button
+                type="button"
+                className="rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10"
+                onClick={() => void handleImportPresets("merge")}
+              >
+                Import (Merge)
+              </Button>
+              <Button
+                type="button"
+                className="rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10"
+                onClick={() => void handleImportPresets("replace")}
+              >
+                Replace Existing
+              </Button>
+              <Button
+                type="button"
+                className="rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
+                onClick={() => {
+                  const value = presetsJson || JSON.stringify(clusterPresets, null, 2);
+                  navigator.clipboard
+                    .writeText(value)
+                    .then(() => toast("Presets copied to clipboard.", { variant: "success" }))
+                    .catch((error) => {
+                      reportAiPathsError(error, { action: "copyPresets" }, "Failed to copy presets:");
+                      toast("Failed to copy presets.", { variant: "error" });
+                    });
+                }}
+              >
+                Copy JSON
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {simulationOpenNodeId ? (
         <Dialog

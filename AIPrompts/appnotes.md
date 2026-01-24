@@ -11,54 +11,32 @@ When I enter the product ID in my simulation product modal it should automatical
 
 Context grabber inputs Context
 
-AI Jobs needs to be moved
-
-I want context grab presets (e.g. “Light / Medium / Full”)
-
-
-Using only my AI Paths node system, come up with a solution to Generate a description using AI just like it is done in AI Description, but use only the AI Paths system and nodes. You can come up with new node types, change wiring, inputs and outputs of particular node and do whatever is required within the node system to achieve the result as it is in AI Description feature that generates Product description with a press of a button by feeding the Product context into prompts using placeholders and then into AI models. I'm only interested in Generic modular solutions
-
-* When I add a Context Grabber node, it has two outputs, but I don't know which is which, outputs should be named
-with a tiny tag beside each output, the same goes for inputs.
---
-COOL - 
-
-In AI Paths, which mirrors the philosophy of AI Paths used in AI Description, but takes it to the next level. The AI Inference Page is a more modular solution to how the data travels around the page and how it can be transformed in between by different AI models, transformations, modulations etc.
-Example of how it should work mirroring current AI Description functionality, but in a more detailed and modular way.
-I open a modal Product Page, in which I have a button (Context Grabber) that I click on. Upon click, the action goes into my AI Paths and selects the ones that have this specific context grabber in them. Context grabber Collects all the Data about the context that it is in (in this case, a Product) and sends this information along the path to the next object, a JSON Parser. The Parser takes an Input as a JSON object (in this case, the Product JSON information from the context grabber) and Parses this information in accordance with user preference, for example, to extract Product ID only as one Output, which will be available as placeholder result in the Target Box. The same parser can carry another action and extract a different information, for example a Product Title and make it available as another placeholder result / Output ready to be connected to a different Target and so on. So in our case if we want to follow the AI Description functionality, we need to extract the Images from Product and a Title Field as well as the ProductID. These are extracted, the [images] [title] [productid] [content_en] outputs become available and can be connected further along the path into Text Field Object (Prompt) as Inputs. The Prompt can then be connected to another object which is a model selector (just like the one in AI Description) which will process the prompt and extract the result. For example, the model Gemma does visual analysis of the images as well as the title. The result of AI model Analysis is now available as Output and can be connected to another Text Field Prompt object as [result] which will in turn be connected to a as output to another AI model object which will formulate a reply. The reply is then sent into a Updater object, which will take the [productid] and [content_en] fields parsed previously and update the Product with  [productid] on a field / key [content_en] with the [result] that is the generated product description.
-
----
-
-The things that can be added to the mind map are divided into different categories. The first thing to be added is:
-1. Context Grabber - Context Grabbers can be buttons (that require user click) or markers (which don't require any user interaction) which grab the context of wherever they are placed in. For example, if a button Infer is placed in the Product Modal and the button has a specific ID, Name and is signified as Context Grabber, in AI Paths PAge, this button can be now selected and dragged into the mind map. Upon clicking, this button should Grab all the information about the product that it was clicked from. When I drag the button into the Paths Mind Map, I want to have the dropdown option to set withing the Context Grabber box whether I want the Context to be grabbed from wherever the button is placed in or whether I want to manually enter ID and object (Note or Product) where the information is grabber from (all for testing purposes)
-
-Prepare a scaffolding for that functionality
-
-2. JSON Parser - maybe using zod / io-ts / runtypes , or REGEX, Decode into a type (TS interface + runtime validator, Python pydantic, Go struct, Java class), Then access model.user.profile.email. Parser is an object that takes the JSON output (it's input can only be connected to JSON object) and filters / parses the information to extract data, the output is a JSON output, which, when connected, provides a Placeholder in the Target Box that can be referenced (for example via a prompt)
-
-3. Regex Parser - for extracting information from Strings
-
---
-
-Example of how it should work mirroring current AI Description functionality, but in a more detailed and modular way.
-I open a modal Product Page, in which I have a button (Context Grabber) that I click on. Upon click, the action goes into my AI Paths and selects the ones that have this specific context grabber in them. Context grabber Collects all the Data about the context that it is in (in this case, a Product) and sends this information along the path to the next object, a JSON Parser. The Parser takes an Input as a JSON object (in this case, the Product JSON information from the context grabber) and Parses this information in accordance with user preference, for example, to extract Product ID only as one Output, which will be available as placeholder result in the Target Box. The same parser can carry another action and extract a different information, for example a Product Title and make it available as another placeholder result / Output ready to be connected to a different Target and so on. So in our case if we want to follow the AI Description functionality, we need to extract the Images from Product and a Title Field as well as the ProductID. These are extracted, the [images] [title] [productid] [content_en] outputs become available and can be connected further along the path into Text Field Object (Prompt) as Inputs. The Prompt can then be connected to another object which is a model selector (just like the one in AI Description) which will process the prompt and extract the result. For example, the model Gemma does visual analysis of the images as well as the title. The result of AI model Analysis is now available as Output and can be connected to another Text Field Prompt object as [result] which will in turn be connected to a as output to another AI model object which will formulate a reply. The reply is then sent into a Updater object, which will take the [productid] and [content_en] fields parsed previously and update the Product with  [productid] on a field / key [content_en] with the [result] that is the generated product description.
-
-
-Result simulation.
+Move AI Jobs page into AI Paths and create a link in the main menu
 Each AI job should be logged Separately and the AI path should wait for it's result to be Completed, the AI Path job is logged separately
 
+I want context grab presets (e.g. “Light / Medium / Full”) and also the ability to tweak my context grabbers to target specific data I want to have grabbed.
 
+* I want a Database Query module where I can choose Database Tables to be queries with specific requests (either custom mongoDB) or preset request for a specific data type, like id, productID etc. the Database Query module Returns JSON as output, and input can be object query
 
-In Product Settings I need another page for and AI Path for AI Category and Parameter Inference. You can AI Inference. It should mirror the AI Description Path, but this time, The Placeholders of title and images will be inserted into INPUT prompt and the AI model will Infer what other Product fields like Parameters, Size, Material and Category should be filled with. For Example I want the English Title, like for example "Stationary Guard | 4 cm | Pin | Attack On Titan" to be feed into the prompt as well as the images , and with the appropriate prompt the AI will infer different information about the product, then at another signal path the model will take the result and it will check check the current Category tree and choose the most fitting category for the product. It will also check the Size and fill that in automatically. 
-WAIT, the Image recognition Inference IS NOT REQUIRED HERE, cause the results are readily available, I should Take the results from AI JOB Generate description AS wELL as the actual decsription and Feed it into the model for inference. The model need to grab the category tree for a catalog that is selected for that product and choose the most fitting one to the data provided. Then the app is autofilled, if not catalog selected, you can skip that step. Then it should do the same for Size, Paramters, Like Material parameter. I want this to look like a Mind map, with draggable Input and Output field that can be connected to one another. 
-Ok I need a separate PAge for that, Remove empty space in Settings.
-I need On Action, a button that can be placed,
-Button is a context grabber, grabs all the information about the context that it is currently in (For example, a Product, a Note)
-click the Inference button, this will gather the product information (including ID), find the related AIJOB by PRoduct Description and Gather the results, If you find more than one, gather results from all of them, refresh and show respective placeholders
+MAYBE NOT-I want a node creator option, to be able to create my owncustom nodes, for example I want to have the ability to create my own context grabbers with specific data I want to have grabbed, or very specific Data Parsers, that will parse the JSON data, but could also parse strings through Regex, etc.
 
- Assign variables or placeholders to results, so that I can Identify them. Then add a Text field (Prompt Field) then Add a model and feed the prompt into a model. The model should receive the information about which catalog the PRoduct belongs to. The model should also receive a complete Category tree for that catalog. Based on the fed information it should infer which category fits the product best. Also, based on the Parameter tree, fill in the PArameter values automatically. Also, prepare the size values (if known). The result should be send to another model for formatting and validation before the information is feed back to respective product fields.
-It should then extract the information about the size and the formatted size information should be fed in the size fields.
+continue working on AI Paths a modular node system for data paths and signal paths for a multiapp platform, extend it with new functionalities better validations, better information clusters, be inventive and creative, there's no limit to how the data can travel or be changed along these paths. The only limitations is that it has to work within the AI Paths Node Modular system.
 
+* Build a “Cluster Presets” library for reusable bundles/prompts across apps.
+
+* Add an “Export/Import presets” JSON modal for sharing across projects.
+
+JSON Parser mappings I should be able to add my own mappings, be wary,  images too
+
+Develop the updater node to reflect the complexity and level of control of the parser node. For example, for an updater node, I give it entity Type, it is able to fetch Fields on the fly, so that I can with precision and using dropdown signify which fields are to be updated with which data (which is also received in Input). Like the parser node, it should also have the capability to auto-detect paths from incoming inputs and infer structure of the incoming entitites. Also, to map with precision the data structures from Entity Types for a given entity type, to make the whole update planning as smooth as possible.
+
+When I run the simulation path using simulation node, the parser node should be capable of infering the whole structure (I can set it in the Infer structure mode) which will make it easier to construct mappings from incoming Entity inputs.
+
+LATER - Move the whole Agentic AI configuration into AI Paths, there I want to create specific agents (model sets that will carry out different tasks, like planning, validating formatting etc) that can be used all across platform.
+
+ LATER - add a deep research node, which is a refelection of my ChatBot Agent that has a complex reasoning scheme that is handled by multiple AIs carrying out multiple tasks (planning, validations etc.) exactly as it was configured in the Chatbot Agent. This deep research node should be fully configurable like a chatbot agent, and I should also be able to save different presets of this chabot deep research node, or at least create different instances of it.
+
+segment the files 
 
 * In Products, When I enter Marketplaces I need Category Mapper page for each marketplace. It is a page Where I can Set up category Mappings from my platfrom to an external pages for proper Export and Import (in the case of Base.com cause it's an integrator). The first Page will be Base.com but there will be others. I need a page within Category Mapper - Base.com where I can download current category list for a given catalog through API. Then, I can select which categories (or maybe all of them) I want to consider during my mappings, finally, I need a mapping engine, where I can one by one map each Base.com Category to a Category in my Catalog.
 

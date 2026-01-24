@@ -1,174 +1,177 @@
-__tests__/api/internationalization/currencies.test.ts(23,29): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/internationalization/currencies.test.ts(57,30): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/internationalization/currencies.test.ts(76,30): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/internationalization/languages.test.ts(26,29): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/internationalization/languages.test.ts(57,30): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/internationalization/languages.test.ts(82,32): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/internationalization/languages.test.ts(100,30): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/internationalization/languages.test.ts(124,29): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/internationalization/languages.test.ts(153,32): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/notes/categories.test.ts(47,7): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/notes/categories.test.ts(57,7): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/notes/categories.test.ts(69,7): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/notes/categories.test.ts(83,7): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/notes/categories.test.ts(102,7): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/notes/categories.test.ts(121,7): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/notes/notes.test.ts(82,33): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/notes/notes.test.ts(96,7): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/notes/notes.test.ts(119,7): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/notes/notes.test.ts(135,7): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/notes/notes.test.ts(155,7): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/notes/notes.test.ts(168,32): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/notes/notes.test.ts(176,36): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/notes/notes.test.ts(199,7): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/notes/notes.test.ts(224,7): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/notes/tags.test.ts(29,7): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/notes/tags.test.ts(40,7): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/notes/tags.test.ts(54,7): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/notes/tags.test.ts(68,7): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/notes/tags.test.ts(85,7): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/pagination.test.ts(24,35): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/pagination.test.ts(35,35): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/pagination.test.ts(49,34): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/pagination.test.ts(64,35): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/pagination.test.ts(67,35): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(27,34): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(34,34): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(44,9): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(56,9): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(68,9): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(80,9): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(92,9): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(104,9): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(116,9): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(127,9): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(140,9): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(153,9): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(164,9): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(177,9): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(198,34): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(239,30): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(261,30): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(297,29): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(325,29): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(359,29): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(384,32): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(416,19): error TS2353: Object literal may only specify known properties, and 'id' does not exist in type 'Promise<any>'.
-__tests__/api/products/products.test.ts(434,36): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(445,36): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(461,40): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(476,40): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(492,40): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-__tests__/api/products/products.test.ts(526,40): error TS2345: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'.
-  Type 'Request' is missing the following properties from type 'NextRequest': cookies, nextUrl, page, ua
-lib/services/draft-repository.ts(108,14): error TS2304: Cannot find name 'randomUUID'.
-lib/services/product-ai-job-repository/mongo-product-ai-job-repository.ts(103,28): error TS2339: Property 'value' does not exist on type 'WithId<JobDocument>'.
-lib/services/product-ai-job-repository/mongo-product-ai-job-repository.ts(104,28): error TS2339: Property 'value' does not exist on type 'WithId<JobDocument>'.
-lib/services/product-ai-job-repository/mongo-product-ai-job-repository.ts(129,10): error TS18047: 'result' is possibly 'null'.
-lib/services/product-ai-job-repository/mongo-product-ai-job-repository.ts(129,17): error TS2339: Property 'value' does not exist on type 'WithId<JobDocument>'.
-lib/services/product-ai-job-repository/mongo-product-ai-job-repository.ts(141,13): error TS18047: 'retry' is possibly 'null'.
-lib/services/product-ai-job-repository/mongo-product-ai-job-repository.ts(141,19): error TS2339: Property 'value' does not exist on type 'WithId<JobDocument>'.
-lib/services/product-ai-job-repository/mongo-product-ai-job-repository.ts(142,27): error TS18047: 'retry' is possibly 'null'.
-lib/services/product-ai-job-repository/mongo-product-ai-job-repository.ts(142,33): error TS2339: Property 'value' does not exist on type 'WithId<JobDocument>'.
-lib/services/product-ai-job-repository/mongo-product-ai-job-repository.ts(164,13): error TS2375: Type '{ _id: string; id: string | undefined; productId: string; type: string; payload: unknown; createdAt: Date; }' is not assignable to type 'MatchKeysAndValues<JobDocument>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Type '{ _id: string; id: string | undefined; productId: string; type: string; payload: unknown; createdAt: Date; }' is not assignable to type 'Readonly<Partial<JobDocument>>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-    Types of property 'id' are incompatible.
-      Type 'string | undefined' is not assignable to type 'string'.
-        Type 'undefined' is not assignable to type 'string'.
-lib/services/product-ai-job-repository/mongo-product-ai-job-repository.ts(185,21): error TS18047: 'result' is possibly 'null'.
-lib/services/product-ai-job-repository/mongo-product-ai-job-repository.ts(185,28): error TS2339: Property 'value' does not exist on type 'WithId<JobDocument>'.
-lib/services/product-ai-job-repository/prisma-product-ai-job-repository.ts(27,9): error TS2322: Type 'unknown' is not assignable to type 'InputJsonValue | JsonNull'.
-lib/services/product-ai-job-repository/prisma-product-ai-job-repository.ts(79,7): error TS2375: Type 'ProductAiJobUpdate' is not assignable to type '(Without<ProductAiJobUpdateInput, ProductAiJobUncheckedUpdateInput> & ProductAiJobUncheckedUpdateInput) | (Without<...> & ProductAiJobUpdateInput)' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Type 'ProductAiJobUpdate' is not assignable to type 'Without<ProductAiJobUncheckedUpdateInput, ProductAiJobUpdateInput> & ProductAiJobUpdateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-    Type 'ProductAiJobUpdate' is not assignable to type 'ProductAiJobUpdateInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-      Types of property 'payload' are incompatible.
-        Type 'unknown' is not assignable to type 'InputJsonValue | JsonNull'.
-lib/services/product-repository/mongo-product-repository.ts(237,7): error TS2322: Type '{ parameterId: string; value?: string | null | undefined; }[]' is not assignable to type 'ProductParameterValue[]'.
-  Type '{ parameterId: string; value?: string | null | undefined; }' is not assignable to type 'ProductParameterValue'.
-    Types of property 'value' are incompatible.
-      Type 'string | null | undefined' is not assignable to type 'string'.
-        Type 'undefined' is not assignable to type 'string'.
-lib/services/product-repository/mongo-product-repository.ts(252,11): error TS2375: Type '{ imageLinks?: string[]; parameters?: { parameterId: string; value?: string | null | undefined; }[]; length?: number | null; weight?: number | null; sizeWidth?: number | null; sizeLength?: number | null; ... 17 more ...; updatedAt: Date; }' is not assignable to type 'Partial<ProductDocument>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'parameters' are incompatible.
-    Type '{ parameterId: string; value?: string | null | undefined; }[]' is not assignable to type 'ProductParameterValue[]'.
-      Type '{ parameterId: string; value?: string | null | undefined; }' is not assignable to type 'ProductParameterValue'.
-        Types of property 'value' are incompatible.
-          Type 'string | null | undefined' is not assignable to type 'string'.
-            Type 'undefined' is not assignable to type 'string'.
-lib/services/product-repository/prisma-product-repository.ts(177,3): error TS2322: Type 'JsonArray' is not assignable to type 'ProductParameterValue[]'.
-  Type 'JsonValue' is not assignable to type 'ProductParameterValue'.
-    Type 'null' is not assignable to type 'ProductParameterValue'.
-lib/services/system-log-repository.ts(384,30): error TS2322: Type '{ _count: { _all: string; }; }' is not assignable to type 'SystemLogOrderByWithAggregationInput | SystemLogOrderByWithAggregationInput[] | undefined'.
-  Types of property '_count' are incompatible.
-    Object literal may only specify known properties, and '_all' does not exist in type 'SystemLogCountOrderByAggregateInput'.
-lib/services/system-log-repository.ts(393,30): error TS2322: Type '{ _count: { _all: string; }; }' is not assignable to type 'SystemLogOrderByWithAggregationInput | SystemLogOrderByWithAggregationInput[] | undefined'.
-  Types of property '_count' are incompatible.
-    Object literal may only specify known properties, and '_all' does not exist in type 'SystemLogCountOrderByAggregateInput'.
-lib/services/totp.ts(62,18): error TS2532: Object is possibly 'undefined'.
-lib/services/totp.ts(64,7): error TS2532: Object is possibly 'undefined'.
-lib/services/totp.ts(65,7): error TS2532: Object is possibly 'undefined'.
-lib/services/totp.ts(66,7): error TS2532: Object is possibly 'undefined'.
-lib/services/totp.ts(67,6): error TS2532: Object is possibly 'undefined'.
+__tests__/api/databases.test.ts(62,28): error TS2345: Argument of type 'Dirent<string>[]' is not assignable to parameter of type 'Dirent<NonSharedBuffer>[]'.
+  Type 'Dirent<string>' is not assignable to type 'Dirent<NonSharedBuffer>'.
+    Type 'string' is not assignable to type 'NonSharedBuffer'.
+__tests__/ui/product-list-header.test.tsx(45,13): error TS2741: Property 'languageOptions' is missing in type '{ onCreateProduct: Mock<Procedure>; page: number; totalPages: number; setPage: Mock<Procedure>; pageSize: number; setPageSize: Mock<Procedure>; ... 7 more ...; catalogs: { ...; }[]; }' but required in type 'ProductListHeaderProps'.
+__tests__/ui/product-list-header.test.tsx(52,13): error TS2741: Property 'languageOptions' is missing in type '{ onCreateProduct: Mock<Procedure>; page: number; totalPages: number; setPage: Mock<Procedure>; pageSize: number; setPageSize: Mock<Procedure>; ... 7 more ...; catalogs: { ...; }[]; }' but required in type 'ProductListHeaderProps'.
+__tests__/ui/product-list-header.test.tsx(58,13): error TS2741: Property 'languageOptions' is missing in type '{ onCreateProduct: Mock<Procedure>; page: number; totalPages: number; setPage: Mock<Procedure>; pageSize: number; setPageSize: Mock<Procedure>; ... 7 more ...; catalogs: { ...; }[]; }' but required in type 'ProductListHeaderProps'.
+__tests__/ui/product-list-header.test.tsx(63,13): error TS2741: Property 'languageOptions' is missing in type '{ page: number; onCreateProduct: Mock<Procedure>; totalPages: number; setPage: Mock<Procedure>; pageSize: number; setPageSize: Mock<Procedure>; ... 7 more ...; catalogs: { ...; }[]; }' but required in type 'ProductListHeaderProps'.
+app/(admin)/admin/cms/pages/[id]/edit/layout.tsx(23,22): error TS2719: Type 'Page | null' is not assignable to type 'Page | null'. Two different types with this name exist, but they are unrelated.
+  Type 'Page' is not assignable to type 'Page'. Two different types with this name exist, but they are unrelated.
+    Types of property 'components' are incompatible.
+      Type 'unknown[]' is not assignable to type 'PageComponent[]'.
+        Type 'unknown' is not assignable to type 'PageComponent'.
+app/(admin)/admin/cms/pages/[id]/edit/layout.tsx(23,34): error TS2719: Type 'React.Dispatch<React.SetStateAction<Page | null>>' is not assignable to type 'React.Dispatch<React.SetStateAction<Page | null>>'. Two different types with this name exist, but they are unrelated.
+  Type 'React.SetStateAction<Page | null>' is not assignable to type 'React.SetStateAction<Page | null>'. Two different types with this name exist, but they are unrelated.
+    Type '(prevState: Page | null) => Page | null' is not assignable to type 'SetStateAction<Page | null>'.
+      Type '(prevState: Page | null) => Page | null' is not assignable to type '(prevState: Page | null) => Page | null'. Two different types with this name exist, but they are unrelated.
+        Types of parameters 'prevState' and 'prevState' are incompatible.
+          Type 'Page | null' is not assignable to type 'Page | null'. Two different types with this name exist, but they are unrelated.
+            Type 'Page' is not assignable to type 'Page'. Two different types with this name exist, but they are unrelated.
+              Types of property 'components' are incompatible.
+                Type 'unknown[]' is not assignable to type 'PageComponent[]'.
+                  Type 'unknown' is not assignable to type 'PageComponent'.
+app/(admin)/admin/products/hooks/useCatalogSync.ts(197,20): error TS2345: Argument of type 'LanguageOption | undefined' is not assignable to parameter of type 'LanguageOption'.
+  Type 'undefined' is not assignable to type 'LanguageOption'.
+app/(admin)/admin/products/hooks/useCatalogSync.ts(198,20): error TS2345: Argument of type 'LanguageOption | undefined' is not assignable to parameter of type 'LanguageOption'.
+  Type 'undefined' is not assignable to type 'LanguageOption'.
+app/(admin)/admin/products/hooks/useCatalogSync.ts(199,20): error TS2345: Argument of type 'LanguageOption | undefined' is not assignable to parameter of type 'LanguageOption'.
+  Type 'undefined' is not assignable to type 'LanguageOption'.
+app/(admin)/admin/products/hooks/useCatalogSync.ts(209,56): error TS2532: Object is possibly 'undefined'.
+app/(admin)/admin/products/page.tsx(198,9): error TS2532: Object is possibly 'undefined'.
+app/(admin)/admin/products/settings/components/AiPathsSettings.tsx(1220,24): error TS2345: Argument of type '(this: undefined, edge: Edge) => Edge[] | { fromPort: string | undefined; toPort: string | undefined; id: string; from: string; to: string; label?: string; }[]' is not assignable to parameter of type '(this: undefined, value: Edge, index: number, array: Edge[]) => Edge | readonly Edge[]'.
+  Type 'Edge[] | { fromPort: string | undefined; toPort: string | undefined; id: string; from: string; to: string; label?: string; }[]' is not assignable to type 'Edge | readonly Edge[]'.
+    Type '{ fromPort: string | undefined; toPort: string | undefined; id: string; from: string; to: string; label?: string; }[]' is not assignable to type 'Edge | readonly Edge[]'.
+      Type '{ fromPort: string | undefined; toPort: string | undefined; id: string; from: string; to: string; label?: string; }[]' is not assignable to type 'readonly Edge[]'.
+        Type '{ fromPort: string | undefined; toPort: string | undefined; id: string; from: string; to: string; label?: string; }' is not assignable to type 'Edge' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+          Types of property 'fromPort' are incompatible.
+            Type 'string | undefined' is not assignable to type 'string'.
+              Type 'undefined' is not assignable to type 'string'.
+app/(admin)/admin/products/settings/components/AiPathsSettings.tsx(2170,18): error TS2345: Argument of type 'unknown[]' is not assignable to parameter of type 'SetStateAction<Edge[]>'.
+  Type 'unknown[]' is not assignable to type 'Edge[]'.
+    Type 'unknown' is not assignable to type 'Edge'.
+app/(admin)/admin/products/settings/components/AiPathsSettings.tsx(2235,14): error TS2345: Argument of type '(prev: Edge[]) => unknown[]' is not assignable to parameter of type 'SetStateAction<Edge[]>'.
+  Type '(prev: Edge[]) => unknown[]' is not assignable to type '(prevState: Edge[]) => Edge[]'.
+    Type 'unknown[]' is not assignable to type 'Edge[]'.
+      Type 'unknown' is not assignable to type 'Edge'.
+app/(admin)/admin/products/settings/components/AiPathsSettings.tsx(2477,11): error TS2375: Type '{ id: string; position: { x: number; y: number; }; config: NodeConfig | undefined; type: NodeType; title: string; description: string; inputs: string[]; outputs: string[]; }' is not assignable to type 'AiNode' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ id: string; position: { x: number; y: number; }; config: NodeConfig | undefined; type: NodeType; title: string; description: string; inputs: string[]; outputs: string[]; }' is not assignable to type '{ id: string; position: { x: number; y: number; }; config?: NodeConfig; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'config' are incompatible.
+      Type 'NodeConfig | undefined' is not assignable to type 'NodeConfig'.
+        Type 'undefined' is not assignable to type 'NodeConfig'.
+app/(admin)/admin/products/settings/components/AiPathsSettings.tsx(3105,61): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+app/(admin)/admin/products/settings/components/AiPathsSettings.tsx(3316,52): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(input: string | URL | Request, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Argument of type '{ method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; headers: Record<string, string>; body: string | undefined; }' is not assignable to parameter of type 'RequestInit' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'body' are incompatible.
+        Type 'string | undefined' is not assignable to type 'BodyInit | null'.
+          Type 'undefined' is not assignable to type 'BodyInit | null'.
+  Overload 2 of 2, '(input: URL | RequestInfo, init?: RequestInit | undefined): Promise<Response>', gave the following error.
+    Argument of type '{ method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; headers: Record<string, string>; body: string | undefined; }' is not assignable to parameter of type 'RequestInit' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'body' are incompatible.
+        Type 'string | undefined' is not assignable to type 'BodyInit | null'.
+          Type 'undefined' is not assignable to type 'BodyInit | null'.
+app/(admin)/admin/products/settings/components/AiPathsSettings.tsx(3690,9): error TS2322: Type '{ name: string; description: string; bundlePorts: string[]; template: string; updatedAt: string; id?: string; createdAt?: string; }' is not assignable to type 'ClusterPreset'.
+  Property 'id' is optional in type '{ name: string; description: string; bundlePorts: string[]; template: string; updatedAt: string; id?: string; createdAt?: string; }' but required in type 'ClusterPreset'.
+app/(admin)/admin/products/settings/components/AiPathsSettings.tsx(3885,14): error TS2345: Argument of type 'unknown[]' is not assignable to parameter of type 'SetStateAction<Edge[]>'.
+  Type 'unknown[]' is not assignable to type 'Edge[]'.
+    Type 'unknown' is not assignable to type 'Edge'.
+app/(admin)/admin/products/settings/components/AiPathsSettings.tsx(3940,14): error TS2345: Argument of type 'unknown[]' is not assignable to parameter of type 'SetStateAction<Edge[]>'.
+  Type 'unknown[]' is not assignable to type 'Edge[]'.
+    Type 'unknown' is not assignable to type 'Edge'.
+app/(admin)/admin/products/settings/components/AiPathsSettings.tsx(3961,16): error TS2345: Argument of type 'unknown[]' is not assignable to parameter of type 'SetStateAction<Edge[]>'.
+  Type 'unknown[]' is not assignable to type 'Edge[]'.
+    Type 'unknown' is not assignable to type 'Edge'.
+app/(admin)/admin/products/settings/components/AiPathsSettings.tsx(3983,16): error TS2345: Argument of type 'unknown[]' is not assignable to parameter of type 'SetStateAction<Edge[]>'.
+  Type 'unknown[]' is not assignable to type 'Edge[]'.
+    Type 'unknown' is not assignable to type 'Edge'.
+app/(admin)/admin/products/settings/components/AiPathsSettings.tsx(4016,14): error TS2345: Argument of type 'unknown[]' is not assignable to parameter of type 'SetStateAction<Edge[]>'.
+  Type 'unknown[]' is not assignable to type 'Edge[]'.
+    Type 'unknown' is not assignable to type 'Edge'.
+app/(admin)/admin/products/settings/components/AiPathsSettings.tsx(5944,29): error TS2375: Type '{ entityIdSource: ContextConfig["entityIdSource"]; role: string; entityType?: string; entityId?: string; scopeMode?: "full" | "include" | "exclude"; includePaths?: string[]; excludePaths?: string[]; }' is not assignable to type 'ContextConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'entityIdSource' are incompatible.
+    Type '"simulation" | "manual" | undefined' is not assignable to type '"simulation" | "manual"'.
+      Type 'undefined' is not assignable to type '"simulation" | "manual"'.
+app/(admin)/admin/products/settings/components/AiPathsSettings.tsx(5981,27): error TS2375: Type '{ scopeMode: ContextConfig["scopeMode"]; role: string; entityType?: string; entityIdSource?: "simulation" | "manual"; entityId?: string; includePaths?: string[]; excludePaths?: string[]; }' is not assignable to type 'ContextConfig' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'scopeMode' are incompatible.
+    Type '"full" | "include" | "exclude" | undefined' is not assignable to type '"full" | "include" | "exclude"'.
+      Type 'undefined' is not assignable to type '"full" | "include" | "exclude"'.
+app/api/languages/[id]/route.ts(215,11): error TS2322: Type '{ languageIds: string; }' is not assignable to type 'PullOperator<Document>'.
+  Type '{ languageIds: string; }' is not assignable to type '{ readonly [x: string]: FilterOperators<any> | Partial<any> | { [x: string]: FilterOperators<any> | undefined; } | undefined; }'.
+    Property 'languageIds' is incompatible with index signature.
+      Type 'string' is not assignable to type 'FilterOperators<any> | Partial<any> | { [x: string]: FilterOperators<any> | undefined; } | undefined'.
+components/products/imports/ExportTab.tsx(340,61): error TS2379: Argument of type '{ maxDimension: number | undefined; }' is not assignable to parameter of type 'Partial<ImageTransformOptions>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'maxDimension' are incompatible.
+    Type 'number | undefined' is not assignable to type 'number'.
+      Type 'undefined' is not assignable to type 'number'.
+components/products/imports/ExportTab.tsx(358,61): error TS2379: Argument of type '{ jpegQuality: number | undefined; }' is not assignable to parameter of type 'Partial<ImageTransformOptions>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'jpegQuality' are incompatible.
+    Type 'number | undefined' is not assignable to type 'number'.
+      Type 'undefined' is not assignable to type 'number'.
+lib/auth.ts(300,13): error TS2322: Type '{} | null' is not assignable to type 'string | null'.
+  Type '{}' is not assignable to type 'string'.
+lib/auth.ts(301,13): error TS2740: Type '{}' is missing the following properties from type 'string[]': length, pop, push, concat, and 35 more.
+lib/auth.ts(302,13): error TS2322: Type '{} | null' is not assignable to type 'number | null'.
+  Type '{}' is not assignable to type 'number'.
+lib/auth.ts(303,13): error TS2322: Type '{}' is not assignable to type 'boolean'.
+lib/auth.ts(304,13): error TS2322: Type '{}' is not assignable to type 'boolean'.
+lib/auth.ts(305,13): error TS2322: Type '{}' is not assignable to type 'boolean'.
+lib/services/aiDescriptionService.ts(33,64): error TS2769: No overload matches this call.
+  Overload 1 of 6, '(filter: Filter<Document>): Promise<WithId<Document> | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+  Overload 2 of 6, '(filter: Filter<Document>): Promise<{ value: string; } | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+  Overload 3 of 6, '(filter: Filter<Document>, options?: (Omit<FindOneOptions, "timeoutMode"> & Abortable) | undefined): Promise<{ value: string; } | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+lib/services/aiDescriptionService.ts(60,64): error TS2769: No overload matches this call.
+  Overload 1 of 6, '(filter: Filter<Document>): Promise<WithId<Document> | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+  Overload 2 of 6, '(filter: Filter<Document>): Promise<{ value: string; } | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+  Overload 3 of 6, '(filter: Filter<Document>, options?: (Omit<FindOneOptions, "timeoutMode"> & Abortable) | undefined): Promise<{ value: string; } | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+lib/services/auth-access.ts(35,24): error TS2769: No overload matches this call.
+  Overload 1 of 6, '(filter: Filter<SettingRecord>): Promise<WithId<SettingRecord> | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+  Overload 2 of 6, '(filter: Filter<SettingRecord>): Promise<SettingRecord | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+  Overload 3 of 6, '(filter: Filter<SettingRecord>, options?: (Omit<FindOneOptions, "timeoutMode"> & Abortable) | undefined): Promise<SettingRecord | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+lib/services/auth-security.ts(63,24): error TS2769: No overload matches this call.
+  Overload 1 of 6, '(filter: Filter<SettingRecord>): Promise<WithId<SettingRecord> | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+  Overload 2 of 6, '(filter: Filter<SettingRecord>): Promise<SettingRecord | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+  Overload 3 of 6, '(filter: Filter<SettingRecord>, options?: (Omit<FindOneOptions, "timeoutMode"> & Abortable) | undefined): Promise<SettingRecord | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+lib/services/auth-settings.ts(29,24): error TS2769: No overload matches this call.
+  Overload 1 of 6, '(filter: Filter<SettingRecord>): Promise<WithId<SettingRecord> | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+  Overload 2 of 6, '(filter: Filter<SettingRecord>): Promise<SettingRecord | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+  Overload 3 of 6, '(filter: Filter<SettingRecord>, options?: (Omit<FindOneOptions, "timeoutMode"> & Abortable) | undefined): Promise<SettingRecord | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+lib/services/critical-error-notifier.ts(45,24): error TS2769: No overload matches this call.
+  Overload 1 of 6, '(filter: Filter<SettingRecord>): Promise<WithId<SettingRecord> | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+  Overload 2 of 6, '(filter: Filter<SettingRecord>): Promise<SettingRecord | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+  Overload 3 of 6, '(filter: Filter<SettingRecord>, options?: (Omit<FindOneOptions, "timeoutMode"> & Abortable) | undefined): Promise<SettingRecord | null>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId>'.
+lib/services/draft-repository.ts(147,9): error TS2375: Type '{ catalogIds: string[]; categoryIds: string[]; tagIds: string[]; parameters: ProductParameterValue[]; imageLinks: string[]; active: boolean; createdAt: Date; updatedAt: Date; ... 24 more ...; _id: `${string}-${string}-${string}-${string}-${string}`; }' is not assignable to type 'MongoDraftDoc' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'description' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+lib/services/draft-repository.ts(160,54): error TS2345: Argument of type 'MongoDraftDoc' is not assignable to parameter of type 'OptionalId<Document>'.
+  Type 'MongoDraftDoc' is not assignable to type '{ _id?: ObjectId; }'.
+    Types of property '_id' are incompatible.
+      Type 'string' is not assignable to type 'ObjectId'.
+lib/services/draft-repository.ts(262,71): error TS2322: Type 'string' is not assignable to type 'Condition<ObjectId> | undefined'.
+lib/services/export-template-repository.ts(194,17): error TS2322: Type 'string' is not assignable to type 'Condition<ObjectId>'.
+lib/services/export-template-repository.ts(220,17): error TS2322: Type 'string' is not assignable to type 'Condition<ObjectId>'.
+lib/services/export-template-repository.ts(245,17): error TS2322: Type 'string' is not assignable to type 'Condition<ObjectId>'.
+lib/services/export-template-repository.ts(270,17): error TS2322: Type 'string' is not assignable to type 'Condition<ObjectId>'.
+lib/services/export-template-repository.ts(295,17): error TS2322: Type 'string' is not assignable to type 'Condition<ObjectId>'.
+lib/services/export-template-repository.ts(320,17): error TS2322: Type 'string' is not assignable to type 'Condition<ObjectId>'.
+lib/services/exports/log-capture.ts(75,7): error TS2322: Type 'object' is not assignable to type 'Record<string, unknown>'.
+  Index signature for type 'string' is missing in type '{}'.
+lib/services/noteService/index.ts(62,9): error TS2322: Type '{ relations: RelatedNote[]; id: string; createdAt: Date; updatedAt: Date; color: string | null; content: string; title: string; editorType: string; isPinned: boolean; ... 7 more ...; files?: NoteFileRecord[]; }[]' is not assignable to type 'T'.
+  '{ relations: RelatedNote[]; id: string; createdAt: Date; updatedAt: Date; color: string | null; content: string; title: string; editorType: string; isPinned: boolean; ... 7 more ...; files?: NoteFileRecord[]; }[]' is assignable to the constraint of type 'T', but 'T' could be instantiated with a different subtype of constraint 'NoteWithRelations | NoteWithRelations[] | null'.
+lib/services/noteService/index.ts(70,35): error TS2345: Argument of type 'NoteWithRelations[] | ({ id: string; createdAt: Date; updatedAt: Date; color: string | null; content: string; title: string; editorType: string; isPinned: boolean; isArchived: boolean; isFavorite: boolean; notebookId: string | null; } & { ...; })' is not assignable to parameter of type 'NoteWithRelations'.
+  Type 'NoteWithRelations[]' is not assignable to type 'NoteWithRelations'.
+    Type 'NoteWithRelations[]' is missing the following properties from type '{ id: string; createdAt: Date; updatedAt: Date; color: string | null; content: string; title: string; editorType: string; isPinned: boolean; isArchived: boolean; isFavorite: boolean; notebookId: string | null; }': id, createdAt, updatedAt, color, and 7 more.
+lib/services/system-log-repository.ts(263,7): error TS2322: Type '`${string}-${string}-${string}-${string}-${string}`' is not assignable to type 'ObjectId'.
+lib/services/system-log-repository.ts(296,9): error TS2322: Type '`${string}-${string}-${string}-${string}-${string}`' is not assignable to type 'ObjectId'.
 lib/services/transient-recovery-settings.ts(39,24): error TS2769: No overload matches this call.
   Overload 1 of 6, '(filter: Filter<SettingRecord>): Promise<WithId<SettingRecord> | null>', gave the following error.
     Type 'string' is not assignable to type 'Condition<ObjectId>'.
@@ -176,10 +179,8 @@ lib/services/transient-recovery-settings.ts(39,24): error TS2769: No overload ma
     Type 'string' is not assignable to type 'Condition<ObjectId>'.
   Overload 3 of 6, '(filter: Filter<SettingRecord>, options?: (Omit<FindOneOptions, "timeoutMode"> & Abortable) | undefined): Promise<SettingRecord | null>', gave the following error.
     Type 'string' is not assignable to type 'Condition<ObjectId>'.
-lib/services/user-preferences-repository.ts(159,10): error TS18047: 'result' is possibly 'null'.
-lib/services/user-preferences-repository.ts(159,17): error TS2339: Property 'value' does not exist on type 'WithId<UserPreferencesDocument>'.
-lib/services/user-preferences-repository.ts(163,30): error TS18047: 'result' is possibly 'null'.
-lib/services/user-preferences-repository.ts(163,37): error TS2339: Property 'value' does not exist on type 'WithId<UserPreferencesDocument>'.
+lib/services/user-preferences-repository.ts(166,17): error TS2339: Property 'value' does not exist on type 'WithId<UserPreferencesDocument>'.
+lib/services/user-preferences-repository.ts(167,39): error TS2339: Property 'value' does not exist on type 'WithId<UserPreferencesDocument>'.
 scripts/cleanup-db-provider-settings.ts(38,20): error TS2322: Type 'string[]' is not assignable to type 'readonly ObjectId[]'.
   Type 'string' is not assignable to type 'ObjectId'.
 scripts/create-superuser.ts(91,15): error TS2769: No overload matches this call.

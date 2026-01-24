@@ -5,7 +5,9 @@ import { AiPathsSettings } from "../products/settings/components/AiPathsSettings
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AiPathsPage() {
-  const [activeTab, setActiveTab] = useState<"canvas" | "paths">("canvas");
+  const [activeTab, setActiveTab] = useState<"canvas" | "paths" | "docs">(
+    "canvas"
+  );
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -18,11 +20,14 @@ export default function AiPathsPage() {
         {mounted ? (
           <Tabs
             value={activeTab}
-            onValueChange={(value) => setActiveTab(value as "canvas" | "paths")}
+            onValueChange={(value) =>
+              setActiveTab(value as "canvas" | "paths" | "docs")
+            }
           >
             <TabsList className="bg-gray-950/70">
               <TabsTrigger value="canvas">Canvas</TabsTrigger>
               <TabsTrigger value="paths">Paths</TabsTrigger>
+              <TabsTrigger value="docs">Docs</TabsTrigger>
             </TabsList>
           </Tabs>
         ) : (

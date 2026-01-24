@@ -6,6 +6,20 @@
 
 * I need another node called result viewer, where I can see the output results coming from different nodes
 
+When I enter the product ID in my simulation product modal it should automatically fetch simulation data that I can check in the inspector
+
+
+Context grabber inputs Context
+
+AI Jobs needs to be moved
+
+I want context grab presets (e.g. “Light / Medium / Full”)
+
+
+Using only my AI Paths node system, come up with a solution to Generate a description using AI just like it is done in AI Description, but use only the AI Paths system and nodes. You can come up with new node types, change wiring, inputs and outputs of particular node and do whatever is required within the node system to achieve the result as it is in AI Description feature that generates Product description with a press of a button by feeding the Product context into prompts using placeholders and then into AI models. I'm only interested in Generic modular solutions
+
+* When I add a Context Grabber node, it has two outputs, but I don't know which is which, outputs should be named
+with a tiny tag beside each output, the same goes for inputs.
 --
 COOL - 
 

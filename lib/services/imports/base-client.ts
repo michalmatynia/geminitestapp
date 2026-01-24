@@ -1,3 +1,6 @@
+import { externalServiceError } from "@/lib/errors/app-error";
+import { withTransientRecovery } from "@/lib/utils/transient-recovery";
+
 type BaseApiResponse = {
   status?: string;
   error_code?: string;
@@ -194,14 +197,39 @@ export async function callBaseApi(
     method,
     parameters: JSON.stringify(parameters),
   });
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
-  });
-  if (!response.ok) {
-    throw new Error(`Base API request failed (${response.status}).`);
-  }
+  const response = await withTransientRecovery(
+    async () => {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body,
+      });
+      if (!res.ok) {
+        const retryable = res.status >= 500 || res.status === 408 || res.status === 429;
+        const retryAfterHeader = res.headers.get("retry-after");
+        const retryAfterMs = retryAfterHeader ? Number(retryAfterHeader) * 1000 : undefined;
+        throw externalServiceError(
+          `Base API request failed (${res.status}).`,
+          { status: res.status, method },
+          {
+            retryable,
+            ...(retryAfterMs && Number.isFinite(retryAfterMs) ? { retryAfterMs } : {}),
+          }
+        );
+      }
+      return res;
+    },
+    {
+      source: "base-api",
+      circuitId: "base-api",
+      retry: {
+        maxAttempts: 3,
+        initialDelayMs: 800,
+        maxDelayMs: 8000,
+        timeoutMs: 12000,
+      },
+    }
+  );
   const payload = (await response.json()) as BaseApiResponse;
   if (payload.status === "ERROR") {
     const message =

@@ -9,6 +9,7 @@ import {
   notFoundError,
   duplicateEntryError,
 } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const countrySchema = z.object({
   code: z.enum(["PL", "DE", "GB", "US", "SE"]),
@@ -65,7 +66,7 @@ const normalizeCountryResponse = (
  * PUT /api/countries/[id]
  * Updates a country.
  */
-export async function PUT(
+async function PUT_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -178,7 +179,7 @@ export async function PUT(
  * DELETE /api/countries/[id]
  * Deletes a country.
  */
-export async function DELETE(
+async function DELETE_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -205,3 +206,6 @@ export async function DELETE(
     });
   }
 }
+
+export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "countries.[id].PUT" });
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "countries.[id].DELETE" });

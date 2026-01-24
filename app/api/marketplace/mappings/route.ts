@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCategoryMappingRepository } from "@/lib/services/category-mapping-repository";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 type CreateMappingRequest = {
   connectionId: string;
@@ -17,7 +18,7 @@ type CreateMappingRequest = {
  *   - connectionId (required): The integration connection ID
  *   - catalogId (optional): Filter by catalog ID
  */
-export async function GET(request: NextRequest) {
+async function GET_handler(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const connectionId = searchParams.get("connectionId");
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
  * POST /api/marketplace/mappings
  * Creates a new category mapping.
  */
-export async function POST(request: NextRequest) {
+async function POST_handler(request: NextRequest) {
   try {
     const body = (await request.json()) as CreateMappingRequest;
     const { connectionId, externalCategoryId, internalCategoryId, catalogId } = body;
@@ -87,3 +88,6 @@ export async function POST(request: NextRequest) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "marketplace.mappings.GET" });
+export const POST = apiHandler(POST_handler, { source: "marketplace.mappings.POST" });

@@ -5,12 +5,13 @@ import { tagUpdateSchema } from "@/lib/validations/notes";
 import { removeUndefined } from "@/lib/utils";
 import type { TagUpdateInput } from "@/types/notes";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 /**
  * PATCH /api/notes/tags/[id]
  * Updates a tag.
  */
-export async function PATCH(
+async function PATCH_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -41,7 +42,7 @@ export async function PATCH(
  * DELETE /api/notes/tags/[id]
  * Deletes a tag.
  */
-export async function DELETE(
+async function DELETE_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -57,3 +58,6 @@ export async function DELETE(
     });
   }
 }
+
+export const PATCH = apiHandlerWithParams<any>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "notes.tags.[id].PATCH" });
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.tags.[id].DELETE" });

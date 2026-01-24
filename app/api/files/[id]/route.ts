@@ -5,8 +5,9 @@ import { getDiskPathFromPublicPath } from "@/lib/utils/fileUploader";
 import { getImageFileRepository } from "@/lib/services/image-file-repository";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
-export async function DELETE(
+async function DELETE_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -42,3 +43,5 @@ export async function DELETE(
     });
   }
 }
+
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "files.[id].DELETE" });

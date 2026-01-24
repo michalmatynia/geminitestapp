@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCategoryMappingRepository } from "@/lib/services/category-mapping-repository";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError, validationError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 type BulkMappingRequest = {
   connectionId: string;
@@ -16,7 +17,7 @@ type BulkMappingRequest = {
  * POST /api/marketplace/mappings/bulk
  * Creates or updates multiple category mappings at once.
  */
-export async function POST(request: NextRequest) {
+async function POST_handler(request: NextRequest) {
   try {
     const body = (await request.json()) as BulkMappingRequest;
     const { connectionId, catalogId, mappings } = body;
@@ -54,3 +55,5 @@ export async function POST(request: NextRequest) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "marketplace.mappings.bulk.POST" });

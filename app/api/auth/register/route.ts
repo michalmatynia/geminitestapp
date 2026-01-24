@@ -10,6 +10,7 @@ import { getAuthUserPageSettings } from "@/lib/services/auth-settings";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { conflictError, internalError, validationError, forbiddenError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -30,7 +31,7 @@ type MongoUserDoc = {
   updatedAt: Date;
 };
 
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, registerSchema, {
       logPrefix: "auth.register.POST",
@@ -112,3 +113,5 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "auth.register.POST" });

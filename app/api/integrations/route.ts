@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
+import { apiHandler } from "@/lib/api/api-handler";
 
 const integrationSchema = z.object({
   name: z.string().trim().min(1),
@@ -13,7 +14,7 @@ const integrationSchema = z.object({
  * GET /api/integrations
  * Fetches all integrations.
  */
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   try {
     const repo = await getIntegrationRepository();
     const integrations = await repo.listIntegrations();
@@ -31,7 +32,7 @@ export async function GET(req: Request) {
  * POST /api/integrations
  * Creates an integration.
  */
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, integrationSchema, {
       logPrefix: "integrations.POST",
@@ -51,3 +52,6 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "integrations.GET" });
+export const POST = apiHandler(POST_handler, { source: "integrations.POST" });

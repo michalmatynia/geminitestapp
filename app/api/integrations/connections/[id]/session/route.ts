@@ -3,12 +3,13 @@ import { getIntegrationRepository } from "@/lib/services/integration-repository"
 import { decryptSecret } from "@/lib/utils/encryption";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 /**
  * GET /api/integrations/connections/[id]/session
  * Returns stored Playwright session cookies for a connection.
  */
-export async function GET(
+async function GET_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -52,3 +53,5 @@ export async function GET(
     });
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.connections.[id].session.GET" });

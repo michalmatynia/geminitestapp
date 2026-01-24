@@ -5,12 +5,13 @@ import { themeCreateSchema } from "@/lib/validations/notes";
 import type { ThemeCreateInput } from "@/types/notes";
 import { removeUndefined } from "@/lib/utils";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 /**
  * GET /api/notes/themes
  * Fetches themes for a notebook.
  */
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   const { searchParams } = new URL(req.url);
   const notebookIdParam = searchParams.get("notebookId");
   try {
@@ -32,7 +33,7 @@ export async function GET(req: Request) {
  * POST /api/notes/themes
  * Creates a new theme.
  */
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, themeCreateSchema, {
       logPrefix: "themes.POST",
@@ -55,3 +56,6 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "notes.themes.GET" });
+export const POST = apiHandler(POST_handler, { source: "notes.themes.POST" });

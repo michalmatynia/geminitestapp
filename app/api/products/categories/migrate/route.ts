@@ -3,12 +3,13 @@ import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 /**
  * POST /api/products/categories/migrate
  * Copies product categories from Postgres (Prisma) to MongoDB.
  */
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     if (!process.env.DATABASE_URL) {
       throw badRequestError("Postgres is not configured.");
@@ -58,3 +59,5 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "products.categories.migrate.POST" });

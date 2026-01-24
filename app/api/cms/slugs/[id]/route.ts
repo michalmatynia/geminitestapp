@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 type Params = { id: string };
 type Ctx = { params: Promise<Params> } | { params: Params };
@@ -22,7 +23,7 @@ const slugUpdateSchema = z.object({
  * GET /api/cms/slugs/[id]
  * Fetches a single slug by its ID.
  */
-export async function GET(req: NextRequest, ctx: Ctx) {
+async function GET_handler(req: NextRequest, ctx: Ctx) {
   try {
     const id = await getId(ctx);
 
@@ -48,7 +49,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
  * DELETE /api/cms/slugs/[id]
  * Deletes a slug.
  */
-export async function DELETE(req: NextRequest, ctx: Ctx) {
+async function DELETE_handler(req: NextRequest, ctx: Ctx) {
   try {
     const id = await getId(ctx);
 
@@ -70,7 +71,7 @@ export async function DELETE(req: NextRequest, ctx: Ctx) {
  * PUT /api/cms/slugs/[id]
  * Updates a slug.
  */
-export async function PUT(req: NextRequest, ctx: Ctx) {
+async function PUT_handler(req: NextRequest, ctx: Ctx) {
   try {
     const id = await getId(ctx);
 
@@ -106,3 +107,7 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
     });
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "cms.slugs.[id].GET" });
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "cms.slugs.[id].DELETE" });
+export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "cms.slugs.[id].PUT" });

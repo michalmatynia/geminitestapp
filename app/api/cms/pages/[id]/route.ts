@@ -5,6 +5,7 @@ import { parseJsonBody } from "@/lib/api/parse-json";
 import { Prisma } from "@prisma/client";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 type Params = { id: string };
 type Ctx = { params: Promise<Params> } | { params: Params };
@@ -29,7 +30,7 @@ const pageUpdateSchema = z.object({
  * GET /api/cms/pages/[id]
  * Fetches a single page by its ID.
  */
-export async function GET(req: NextRequest, ctx: Ctx) {
+async function GET_handler(req: NextRequest, ctx: Ctx) {
   try {
     const id = await getId(ctx);
 
@@ -67,7 +68,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
  * PUT /api/cms/pages/[id]
  * Updates a page.
  */
-export async function PUT(req: NextRequest, ctx: Ctx) {
+async function PUT_handler(req: NextRequest, ctx: Ctx) {
   try {
     const id = await getId(ctx);
 
@@ -116,7 +117,7 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
  * DELETE /api/cms/pages/[id]
  * Deletes a page.
  */
-export async function DELETE(req: NextRequest, ctx: Ctx) {
+async function DELETE_handler(req: NextRequest, ctx: Ctx) {
   try {
     const id = await getId(ctx);
 
@@ -133,3 +134,7 @@ export async function DELETE(req: NextRequest, ctx: Ctx) {
     });
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "cms.pages.[id].GET" });
+export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "cms.pages.[id].PUT" });
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "cms.pages.[id].DELETE" });

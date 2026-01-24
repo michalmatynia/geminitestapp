@@ -8,6 +8,7 @@ import {
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import type { SystemLogLevel } from "@/types";
+import { apiHandler } from "@/lib/api/api-handler";
 
 const levelSchema = z.enum(["info", "warn", "error"]);
 
@@ -38,7 +39,7 @@ const clearSchema = z.object({
   before: z.string().datetime().optional(),
 });
 
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   try {
     const url = new URL(req.url);
     const parsed = listSchema.parse(Object.fromEntries(url.searchParams.entries()));
@@ -61,7 +62,7 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, createSchema, {
       logPrefix: "systemLogs.POST",
@@ -92,7 +93,7 @@ export async function POST(req: Request) {
   }
 }
 
-export async function DELETE(req: Request) {
+async function DELETE_handler(req: Request) {
   try {
     const url = new URL(req.url);
     const parsed = clearSchema.parse(Object.fromEntries(url.searchParams.entries()));
@@ -107,3 +108,7 @@ export async function DELETE(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "system.logs.GET" });
+export const POST = apiHandler(POST_handler, { source: "system.logs.POST" });
+export const DELETE = apiHandler(DELETE_handler, { source: "system.logs.DELETE" });

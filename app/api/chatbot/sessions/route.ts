@@ -5,6 +5,7 @@ import type { ChatSession } from "@/types/chatbot";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { notFoundError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -37,7 +38,7 @@ const deleteSessionSchema = z.object({
 });
 
 // POST /api/chatbot/sessions - Create new session
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   const requestStart = Date.now();
   try {
     const parsed = await parseJsonBody(req, createSessionSchema, {
@@ -77,7 +78,7 @@ export async function POST(req: Request) {
 }
 
 // GET /api/chatbot/sessions - List all sessions
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   const requestStart = Date.now();
   try {
     const sessions = await chatbotSessionRepository.findAll();
@@ -100,7 +101,7 @@ export async function GET(req: Request) {
 }
 
 // PATCH /api/chatbot/sessions - Update session (title)
-export async function PATCH(req: Request) {
+async function PATCH_handler(req: Request) {
   const requestStart = Date.now();
   try {
     const parsed = await parseJsonBody(req, updateSessionSchema, {
@@ -147,7 +148,7 @@ export async function PATCH(req: Request) {
 }
 
 // DELETE /api/chatbot/sessions - Delete session
-export async function DELETE(req: Request) {
+async function DELETE_handler(req: Request) {
   const requestStart = Date.now();
   try {
     const parsed = await parseJsonBody(req, deleteSessionSchema, {
@@ -189,3 +190,8 @@ export async function DELETE(req: Request) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "chatbot.sessions.POST" });
+export const GET = apiHandler(GET_handler, { source: "chatbot.sessions.GET" });
+export const PATCH = apiHandler(PATCH_handler, { source: "chatbot.sessions.PATCH" });
+export const DELETE = apiHandler(DELETE_handler, { source: "chatbot.sessions.DELETE" });

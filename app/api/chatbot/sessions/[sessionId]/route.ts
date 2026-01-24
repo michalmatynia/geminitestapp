@@ -1,22 +1,25 @@
 import { NextResponse } from "next/server";
 import { chatbotSessionRepository } from "@/lib/services/chatbot-session-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
 // GET /api/chatbot/sessions/[sessionId] - Get session by ID
-export async function GET(
+async function GET_handler(
   req: Request,
   props: { params: Promise<{ sessionId: string }> }
 ) {
-  const params = await props.params;
   try {
+    const params = await props.params;
     const session = await chatbotSessionRepository.findById(params.sessionId);
 
     if (!session) {
-      return NextResponse.json(
-        { error: "Session not found." },
-        { status: 404 }
-      );
+      return createErrorResponse(notFoundError("Session not found."), {
+        request: req,
+        source: "chatbot.sessions.session.GET",
+      });
     }
 
     if (DEBUG_CHATBOT) {
@@ -29,9 +32,12 @@ export async function GET(
     return NextResponse.json({ session });
   } catch (error) {
     console.error("[chatbot][sessions][GET:sessionId] Failed", error);
-    return NextResponse.json(
-      { error: "Failed to fetch session." },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.sessions.session.GET",
+      fallbackMessage: "Failed to fetch session.",
+    });
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.sessions.[sessionId].GET" });

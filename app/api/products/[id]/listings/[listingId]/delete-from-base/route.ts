@@ -7,12 +7,13 @@ import { decryptSecret } from "@/lib/utils/encryption";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { badRequestError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const deleteSchema = z.object({
   inventoryId: z.string().min(1).optional(),
 });
 
-export async function POST(
+async function POST_handler(
   req: Request,
   { params }: { params: Promise<{ id: string; listingId: string }> }
 ) {
@@ -129,3 +130,5 @@ export async function POST(
     });
   }
 }
+
+export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].listings.[listingId].delete-from-base.POST" });

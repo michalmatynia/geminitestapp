@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getIntegrationsWithConnections } from "@/lib/services/product-listing-repository";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 /**
  * GET /api/integrations/with-connections
@@ -8,7 +9,7 @@ import { createErrorResponse } from "@/lib/api/handle-api-error";
  * Used for the product listing dropdown selection.
  * Supports both MongoDB and Prisma based on provider settings.
  */
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   try {
     const integrations = await getIntegrationsWithConnections();
     return NextResponse.json(integrations);
@@ -20,3 +21,5 @@ export async function GET(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "integrations.with-connections.GET" });

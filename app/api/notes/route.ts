@@ -4,12 +4,13 @@ import { parseJsonBody } from "@/lib/api/parse-json";
 import { noteCreateSchema } from "@/lib/validations/notes";
 import type { NoteFilters } from "@/types/notes";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 /**
  * GET /api/notes
  * Fetches a list of notes with optional filters.
  */
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   const { searchParams } = new URL(req.url);
 
   const filters: NoteFilters = {
@@ -70,7 +71,7 @@ export async function GET(req: Request) {
  * POST /api/notes
  * Creates a new note.
  */
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, noteCreateSchema, {
       logPrefix: "notes.POST",
@@ -94,3 +95,6 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "notes.GET" });
+export const POST = apiHandler(POST_handler, { source: "notes.POST" });

@@ -14,7 +14,9 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     console.error(error);
-    logClientError(error, { digest: error.digest });
+    logClientError(error, {
+      ...(error.digest ? { digest: error.digest } : {}),
+    });
   }, [error]);
 
   return (

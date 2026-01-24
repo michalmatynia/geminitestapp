@@ -5,6 +5,7 @@ import { decryptSecret, encryptSecret } from "@/lib/utils/encryption";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { badRequestError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const requestSchema = z.object({
   method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).default("GET"),
@@ -26,7 +27,7 @@ const SANDBOX_TOKEN_URL =
  * POST /api/integrations/[id]/connections/[connectionId]/allegro/request
  * Proxy Allegro API requests using the stored access token.
  */
-export async function POST(
+async function POST_handler(
   req: Request,
   { params }: { params: Promise<{ id: string; connectionId: string }> }
 ) {
@@ -162,19 +163,19 @@ export async function POST(
     }
     const contentType = response.headers.get("content-type") ?? "";
     const raw = await response.text();
-    let parsed: unknown = raw;
+    let apiResponseData: unknown = raw;
     if (contentType.includes("application/json") && raw) {
       try {
-        parsed = JSON.parse(raw) as unknown;
+        apiResponseData = JSON.parse(raw) as unknown;
       } catch {
-        parsed = raw;
+        apiResponseData = raw;
       }
     }
 
     return NextResponse.json({
       status: response.status,
       statusText: response.statusText,
-      data: parsed,
+      data: apiResponseData,
       refreshed,
     });
   } catch (error: unknown) {
@@ -185,3 +186,5 @@ export async function POST(
     });
   }
 }
+
+export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.request.POST" });

@@ -6,6 +6,7 @@ import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError, conflictError, internalError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const productTagUpdateSchema = z.object({
   name: z.string().min(1).optional(),
@@ -17,7 +18,7 @@ const productTagUpdateSchema = z.object({
  * PUT /api/products/tags/[id]
  * Updates a product tag.
  */
-export async function PUT(
+async function PUT_handler(
   req: Request,
   props: { params: Promise<{ id: string }> }
 ) {
@@ -134,7 +135,7 @@ export async function PUT(
  * DELETE /api/products/tags/[id]
  * Deletes a product tag.
  */
-export async function DELETE(
+async function DELETE_handler(
   req: Request,
   props: { params: Promise<{ id: string }> }
 ) {
@@ -168,3 +169,6 @@ export async function DELETE(
     });
   }
 }
+
+export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "products.tags.[id].PUT" });
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.tags.[id].DELETE" });

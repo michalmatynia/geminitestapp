@@ -5,13 +5,14 @@ import { startProductAiJobQueue } from "@/lib/services/productAiQueue";
 import { getProductRepository } from "@/lib/services/product-repository";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
+import { apiHandler } from "@/lib/api/api-handler";
 
 const bulkJobSchema = z.object({
   type: z.string().trim().min(1),
   config: z.unknown().optional(),
 });
 
-export async function POST(req: NextRequest) {
+async function POST_handler(req: NextRequest) {
   try {
     const parsed = await parseJsonBody(req, bulkJobSchema, {
       logPrefix: "products.ai-jobs.bulk.POST",
@@ -59,3 +60,5 @@ export async function POST(req: NextRequest) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "products.ai-jobs.bulk.POST" });

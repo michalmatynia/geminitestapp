@@ -105,7 +105,7 @@ export default function AuthPermissionsPage() {
       {
         id,
         name: newPermissionName.trim(),
-        description: newPermissionDescription.trim() || undefined,
+        ...(newPermissionDescription.trim() ? { description: newPermissionDescription.trim() } : {}),
       },
     ]);
     setNewPermissionId("");
@@ -140,7 +140,7 @@ export default function AuthPermissionsPage() {
       {
         id,
         name: newRoleName.trim(),
-        description: newRoleDescription.trim() || undefined,
+        ...(newRoleDescription.trim() ? { description: newRoleDescription.trim() } : {}),
         permissions: [],
         deniedPermissions: [],
         level: 10,

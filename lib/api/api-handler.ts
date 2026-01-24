@@ -38,7 +38,7 @@ export type ApiHandlerContext = {
 export type ApiRouteHandler = (
   request: NextRequest,
   context: ApiHandlerContext
-) => Promise<NextResponse>;
+) => Promise<Response>;
 
 /**
  * Type for dynamic route handler with params.
@@ -47,7 +47,7 @@ export type ApiRouteHandlerWithParams<P extends Record<string, string>> = (
   request: NextRequest,
   context: ApiHandlerContext,
   params: P
-) => Promise<NextResponse>;
+) => Promise<Response>;
 
 /**
  * Wraps an API route handler with automatic error handling, logging, and request tracking.
@@ -73,7 +73,7 @@ export type ApiRouteHandlerWithParams<P extends Record<string, string>> = (
 export function apiHandler(
   handler: ApiRouteHandler,
   options: ApiHandlerOptions
-): (request: NextRequest) => Promise<NextResponse> {
+): (request: NextRequest) => Promise<Response> {
   return async (request: NextRequest) => {
     const requestId = request.headers.get("x-request-id") ?? randomUUID();
     const startTime = performance.now();
@@ -131,7 +131,7 @@ export function apiHandlerWithParams<P extends Record<string, string>>(
 ): (
   request: NextRequest,
   context: { params: Promise<P> }
-) => Promise<NextResponse> {
+) => Promise<Response> {
   return async (request: NextRequest, routeContext: { params: Promise<P> }) => {
     const requestId = request.headers.get("x-request-id") ?? randomUUID();
     const startTime = performance.now();
@@ -182,7 +182,7 @@ function createErrorResponseWithTiming(
   request: NextRequest,
   context: ApiHandlerContext,
   options: ApiHandlerOptions
-): NextResponse {
+): Response {
   const resolved = resolveError(error, {
     ...(options.fallbackMessage !== undefined && { fallbackMessage: options.fallbackMessage }),
   });

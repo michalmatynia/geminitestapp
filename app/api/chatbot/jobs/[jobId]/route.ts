@@ -9,6 +9,7 @@ import {
   internalError,
   notFoundError,
 } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -16,7 +17,7 @@ const jobActionSchema = z.object({
   action: z.string().trim().optional(),
 });
 
-export async function GET(
+async function GET_handler(
   req: Request,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
@@ -47,7 +48,7 @@ export async function GET(
   }
 }
 
-export async function POST(
+async function POST_handler(
   req: Request,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
@@ -100,7 +101,7 @@ export async function POST(
   }
 }
 
-export async function DELETE(
+async function DELETE_handler(
   req: Request,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
@@ -148,3 +149,7 @@ export async function DELETE(
     });
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.jobs.[jobId].GET" });
+export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.jobs.[jobId].POST" });
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.jobs.[jobId].DELETE" });

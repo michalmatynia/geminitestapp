@@ -98,7 +98,7 @@ export function useProductMetadata({
     if (selectedCatalogIds.length > 0) return;
     if (catalogs.length === 0) return;
     const defaultCatalog = catalogs.find((catalog) => catalog.isDefault);
-    setSelectedCatalogIds([defaultCatalog?.id ?? catalogs[0].id]);
+    setSelectedCatalogIds([defaultCatalog?.id ?? catalogs[0]!.id]);
   }, [product, selectedCatalogIds.length, catalogs]);
 
   // Auto-set defaultPriceGroupId when catalog is selected for new products

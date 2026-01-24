@@ -5,12 +5,13 @@ import { notebookCreateSchema } from "@/lib/validations/notes";
 import { removeUndefined } from "@/lib/utils";
 import type { NotebookCreateInput } from "@/types/notes";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 /**
  * GET /api/notes/notebooks
  * Fetches all notebooks (creates a default if none exist).
  */
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   try {
     const notebooks = await noteService.getAllNotebooks();
     return NextResponse.json(notebooks);
@@ -27,7 +28,7 @@ export async function GET(req: Request) {
  * POST /api/notes/notebooks
  * Creates a notebook.
  */
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, notebookCreateSchema, {
       logPrefix: "notebooks.POST",
@@ -45,3 +46,6 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "notes.notebooks.GET" });
+export const POST = apiHandler(POST_handler, { source: "notes.notebooks.POST" });

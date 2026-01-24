@@ -7,6 +7,7 @@ import { conflictError, authError, validationError } from "@/lib/errors/app-erro
 import { getAuthSecurityProfile, updateAuthSecurityProfile } from "@/lib/services/auth-security-profile";
 import { decryptAuthSecret } from "@/lib/utils/auth-encryption";
 import { generateRecoveryCodes, hashRecoveryCode, verifyTotpToken } from "@/lib/services/totp";
+import { apiHandler } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -14,7 +15,7 @@ const payloadSchema = z.object({
   token: z.string().trim().min(4),
 });
 
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const session = await auth();
     const userId = session?.user?.id;
@@ -60,3 +61,5 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "auth.mfa.verify.POST" });

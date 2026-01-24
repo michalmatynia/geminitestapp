@@ -6,6 +6,7 @@ import { callBaseApi, fetchBaseProducts } from "@/lib/services/imports/base-clie
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { badRequestError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const normalizeParameters = (value: unknown): Record<string, unknown> => {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -25,7 +26,7 @@ const requestSchema = z
  * POST /api/integrations/[id]/connections/[connectionId]/base/request
  * Proxy Base.com API requests using the stored token.
  */
-export async function POST(
+async function POST_handler(
   req: Request,
   { params }: { params: Promise<{ id: string; connectionId: string }> }
 ) {
@@ -187,3 +188,5 @@ export async function POST(
     });
   }
 }
+
+export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].base.request.POST" });

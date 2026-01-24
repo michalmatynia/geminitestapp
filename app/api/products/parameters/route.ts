@@ -7,6 +7,7 @@ import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError, conflictError, internalError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 const productParameterCreateSchema = z.object({
   name_en: z.string().min(1, "English name is required"),
@@ -21,7 +22,7 @@ const productParameterCreateSchema = z.object({
  * Query params:
  * - catalogId: Filter by catalog (required)
  */
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const catalogId = searchParams.get("catalogId");
@@ -77,7 +78,7 @@ export async function GET(req: Request) {
  * POST /api/products/parameters
  * Creates a new product parameter.
  */
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const provider = await getProductDataProvider();
     const parsed = await parseJsonBody(req, productParameterCreateSchema, {
@@ -150,3 +151,6 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "products.parameters.GET" });
+export const POST = apiHandler(POST_handler, { source: "products.parameters.POST" });

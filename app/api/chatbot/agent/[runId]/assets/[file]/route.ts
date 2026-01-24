@@ -3,6 +3,7 @@ import path from "path";
 import { promises as fs } from "fs";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -13,7 +14,7 @@ const getContentType = (filename: string) => {
   return "application/octet-stream";
 };
 
-export async function GET(
+async function GET_handler(
   req: Request,
   { params }: { params: Promise<{ runId: string; file: string }> }
 ) {
@@ -45,3 +46,5 @@ export async function GET(
     });
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].assets.[file].GET" });

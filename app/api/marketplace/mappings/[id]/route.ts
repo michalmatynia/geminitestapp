@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCategoryMappingRepository } from "@/lib/services/category-mapping-repository";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 type UpdateMappingRequest = {
   internalCategoryId?: string;
@@ -16,7 +17,7 @@ type RouteParams = {
  * GET /api/marketplace/mappings/[id]
  * Gets a specific category mapping by ID.
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
+async function GET_handler(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
 
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  * PUT /api/marketplace/mappings/[id]
  * Updates a category mapping.
  */
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+async function PUT_handler(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
     const body = (await request.json()) as UpdateMappingRequest;
@@ -75,7 +76,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
  * DELETE /api/marketplace/mappings/[id]
  * Deletes a category mapping.
  */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+async function DELETE_handler(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
 
@@ -98,3 +99,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "marketplace.mappings.[id].GET" });
+export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "marketplace.mappings.[id].PUT" });
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "marketplace.mappings.[id].DELETE" });

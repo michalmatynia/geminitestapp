@@ -5,6 +5,7 @@ import { encryptSecret } from "@/lib/utils/encryption";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { badRequestError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const connectionSchema = z.object({
   name: z.string().trim().min(1),
@@ -35,7 +36,7 @@ const connectionSchema = z.object({
  * PUT /api/integrations/connections/[id]
  * Updates an integration connection.
  */
-export async function PUT(
+async function PUT_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -171,7 +172,7 @@ export async function PUT(
  * DELETE /api/integrations/connections/[id]
  * Deletes an integration connection.
  */
-export async function DELETE(
+async function DELETE_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -196,3 +197,6 @@ export async function DELETE(
     });
   }
 }
+
+export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "integrations.connections.[id].PUT" });
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "integrations.connections.[id].DELETE" });

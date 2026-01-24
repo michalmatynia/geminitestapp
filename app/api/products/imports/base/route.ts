@@ -11,6 +11,7 @@ import { getProductRepository } from "@/lib/services/product-repository";
 import { getImportTemplate } from "@/lib/services/import-template-repository";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { decryptSecret } from "@/lib/utils/encryption";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
 import {
   fetchBaseAllWarehouses,
   fetchBaseAllWarehousesDebug,
@@ -24,6 +25,7 @@ import {
 } from "@/lib/services/imports/base-client";
 import { extractBaseImageUrls, mapBaseProduct } from "@/lib/services/imports/base-mapper";
 import { productCreateSchema } from "@/lib/validations/product";
+import { apiHandler } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -42,7 +44,7 @@ const requestSchema = z.object({
   selectedIds: z.array(z.string().trim().min(1)).optional(),
 });
 
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const body = await req.json();
     const data = requestSchema.parse(body);
@@ -577,18 +579,12 @@ export async function POST(req: Request) {
       total: productsToImport.length,
     });
   } catch (error: unknown) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid payload", details: error.flatten() },
-        { status: 400 }
-      );
-    }
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-    return NextResponse.json(
-      { error: "An unknown error occurred" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "products.imports.base.POST",
+      fallbackMessage: "Failed to import from Base.com",
+    });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "products.imports.base.POST" });

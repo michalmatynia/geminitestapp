@@ -6,6 +6,7 @@ import {
 } from "@/lib/services/export-template-repository";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
+import { apiHandler } from "@/lib/api/api-handler";
 
 const postSchema = z.object({
   connectionId: z.string().nullable(),
@@ -15,7 +16,7 @@ const postSchema = z.object({
  * GET /api/products/exports/base/default-connection
  * Returns the default Base.com connection ID for exports
  */
-export async function GET(req: NextRequest) {
+async function GET_handler(req: NextRequest) {
   try {
     const connectionId = await getExportDefaultConnectionId();
     return NextResponse.json({ connectionId });
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest) {
  * POST /api/products/exports/base/default-connection
  * Sets the default Base.com connection ID for exports
  */
-export async function POST(req: NextRequest) {
+async function POST_handler(req: NextRequest) {
   try {
     const parsed = await parseJsonBody(req, postSchema, {
       logPrefix: "exports.base.default-connection.POST",
@@ -51,3 +52,6 @@ export async function POST(req: NextRequest) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "products.exports.base.default-connection.GET" });
+export const POST = apiHandler(POST_handler, { source: "products.exports.base.default-connection.POST" });

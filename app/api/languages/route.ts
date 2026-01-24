@@ -10,6 +10,7 @@ import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { conflictError, internalError } from "@/lib/errors/app-error";
 import { logSystemEvent } from "@/lib/services/system-logger";
+import { apiHandler } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -95,7 +96,7 @@ const seedMongoLanguages = async (db: Awaited<ReturnType<typeof getMongoDb>>) =>
  * GET /api/languages
  * Fetches available languages (seeds defaults if empty).
  */
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   try {
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
@@ -148,7 +149,7 @@ export async function GET(req: Request) {
  * POST /api/languages
  * Creates a language with optional country assignments.
  */
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, languageCreateSchema, {
       logPrefix: "languages.POST",
@@ -255,3 +256,6 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "languages.GET" });
+export const POST = apiHandler(POST_handler, { source: "languages.POST" });

@@ -60,7 +60,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<SettingRecord>("settings")
-    .findOne({ $or: [{ _id: key }, { key }] });
+    .findOne({ $or: [{ _id: key as any }, { key }] });
   return typeof doc?.value === "string" ? doc.value : null;
 };
 
@@ -319,7 +319,7 @@ export const recordLoginFailure = async (input: {
           lockedUntil: result.lockedUntil.toISOString(),
           attempts: result.count,
         },
-        request: input.request,
+        ...(input.request ? { request: input.request } : {}),
       });
     }
   }
@@ -342,7 +342,7 @@ export const recordLoginFailure = async (input: {
           lockedUntil: result.lockedUntil.toISOString(),
           attempts: result.count,
         },
-        request: input.request,
+        ...(input.request ? { request: input.request } : {}),
       });
     }
   }
@@ -368,7 +368,7 @@ export const recordLoginSuccess = async (input: {
       email: emailKey || null,
       ip: ipKey || null,
     },
-    request: input.request,
+    ...(input.request ? { request: input.request } : {}),
     userId: input.userId ?? null,
   });
 };

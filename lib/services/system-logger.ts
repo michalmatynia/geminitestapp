@@ -1,5 +1,7 @@
+import { createHash } from "crypto";
 import type { SystemLogLevel } from "@/types";
 import { createSystemLog } from "@/lib/services/system-log-repository";
+import { notifyCriticalError } from "@/lib/services/critical-error-notifier";
 
 const MAX_CONTEXT_SIZE = 12000;
 
@@ -64,6 +66,32 @@ const extractRequestInfo = (request?: Request) => {
   }
 };
 
+const buildFingerprint = (input: {
+  message: string;
+  source?: string | null;
+  path?: string | null;
+  statusCode?: number | null;
+  errorInfo?: { message?: string; stack?: string | undefined | null; name?: string } | null;
+}) => {
+  const hash = createHash("sha256");
+  hash.update(input.message ?? "");
+  hash.update(String(input.source ?? ""));
+  hash.update(String(input.path ?? ""));
+  hash.update(String(input.statusCode ?? ""));
+  if (input.errorInfo) {
+    hash.update(String(input.errorInfo.name ?? ""));
+    hash.update(String(input.errorInfo.message ?? ""));
+    const stack = input.errorInfo.stack ?? "";
+    const normalizedStack = stack
+      .split("\n")
+      .slice(0, 6)
+      .map((line) => line.replace(/\s+at\s+/g, " at ").trim())
+      .join("\n");
+    hash.update(normalizedStack);
+  }
+  return hash.digest("hex").slice(0, 16);
+};
+
 export type SystemLogInput = {
   level?: SystemLogLevel;
   message: string;
@@ -74,17 +102,29 @@ export type SystemLogInput = {
   statusCode?: number;
   userId?: string | null;
   requestId?: string | null;
+  critical?: boolean;
 };
 
 export async function logSystemEvent(input: SystemLogInput) {
   try {
     const errorInfo = input.error ? normalizeError(input.error) : null;
     const requestInfo = extractRequestInfo(input.request);
+    const fingerprint =
+      input.level === "error" || input.level === "warn" || errorInfo
+        ? buildFingerprint({
+            message: input.message,
+            source: input.source ?? null,
+            path: input.request?.url ? requestInfo.path ?? null : null,
+            statusCode: input.statusCode ?? null,
+            errorInfo,
+          })
+        : null;
     const context = {
       ...(input.context ?? {}),
       ...(errorInfo ? { error: errorInfo } : {}),
+      ...(fingerprint ? { fingerprint } : {}),
     };
-    await createSystemLog({
+    const created = await createSystemLog({
       level: input.level ?? "info",
       message: input.message,
       source: input.source ?? null,
@@ -96,6 +136,17 @@ export async function logSystemEvent(input: SystemLogInput) {
       requestId: input.requestId ?? requestInfo.requestId ?? null,
       userId: input.userId ?? null,
     });
+
+    const critical =
+      typeof input.critical === "boolean"
+        ? input.critical
+        : typeof input.context?.critical === "boolean"
+          ? Boolean(input.context?.critical)
+          : false;
+
+    if (critical) {
+      await notifyCriticalError(created, critical);
+    }
   } catch (error) {
     console.error("[system-logger] Failed to write system log", error);
   }

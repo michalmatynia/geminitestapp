@@ -3,6 +3,7 @@ import { z } from "zod";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { logSystemEvent } from "@/lib/services/system-logger";
+import { apiHandler } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -18,7 +19,7 @@ const payloadSchema = z.object({
   timestamp: z.string().optional(),
 });
 
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, payloadSchema, {
       logPrefix: "client-errors.POST",
@@ -51,3 +52,5 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "client-errors.POST" });

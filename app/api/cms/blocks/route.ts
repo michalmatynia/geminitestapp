@@ -3,6 +3,8 @@ import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { Prisma } from "@prisma/client";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 const blockSchema = z.object({
   name: z.string().trim().min(1),
@@ -13,7 +15,7 @@ const blockSchema = z.object({
  * GET /api/cms/blocks
  * Fetches a list of all blocks.
  */
-export async function GET() {
+async function GET_handler() {
   try {
     console.log("--- [Debug] GET /api/cms/blocks: Fetching blocks from DB ---");
     const blocks = await prisma.block.findMany({
@@ -25,10 +27,10 @@ export async function GET() {
     return NextResponse.json(blocks);
   } catch (error) {
     console.error("--- [Debug] GET /api/cms/blocks: Error fetching blocks ---", error);
-    return NextResponse.json(
-      { error: "Failed to fetch blocks" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      source: "cms.blocks.GET",
+      fallbackMessage: "Failed to fetch blocks",
+    });
   }
 }
 
@@ -36,7 +38,7 @@ export async function GET() {
  * POST /api/cms/blocks
  * Creates a new block.
  */
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, blockSchema, {
       logPrefix: "cms-blocks",
@@ -56,9 +58,12 @@ export async function POST(req: Request) {
     return NextResponse.json(newBlock);
   } catch (error) {
     console.error("Full error object:", error);
-    return NextResponse.json(
-      { error: "Failed to create block" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      source: "cms.blocks.POST",
+      fallbackMessage: "Failed to create block",
+    });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "cms.blocks.GET" });
+export const POST = apiHandler(POST_handler, { source: "cms.blocks.POST" });

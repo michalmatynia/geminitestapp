@@ -7,6 +7,7 @@ import { APP_DB_PROVIDER_SETTING_KEY, getAppDbProvider } from "@/lib/services/ap
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { internalError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 const shouldLog = () => process.env.DEBUG_SETTINGS === "true";
 
@@ -72,7 +73,7 @@ const upsertMongoSetting = async (
   return { key, value };
 };
 
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   if (shouldLog()) {
     console.log("[settings] GET /api/settings");
   }
@@ -120,7 +121,7 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   if (shouldLog()) {
     console.log("[settings] POST /api/settings");
   }
@@ -169,3 +170,6 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "settings.GET" });
+export const POST = apiHandler(POST_handler, { source: "settings.POST" });

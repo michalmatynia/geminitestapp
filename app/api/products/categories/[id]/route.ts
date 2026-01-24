@@ -12,6 +12,7 @@ import {
   internalError,
   notFoundError,
 } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 interface MongoCategory {
   id: string;
@@ -34,7 +35,7 @@ const productCategoryUpdateSchema = z.object({
  * GET /api/products/categories/[id]
  * Fetches a single product category by ID.
  */
-export async function GET(
+async function GET_handler(
   req: Request,
   props: { params: Promise<{ id: string }> }
 ) {
@@ -119,7 +120,7 @@ export async function GET(
  * PUT /api/products/categories/[id]
  * Updates a product category.
  */
-export async function PUT(
+async function PUT_handler(
   req: Request,
   props: { params: Promise<{ id: string }> }
 ) {
@@ -318,7 +319,7 @@ export async function PUT(
  * DELETE /api/products/categories/[id]
  * Deletes a product category and all its children (cascade).
  */
-export async function DELETE(
+async function DELETE_handler(
   req: Request,
   props: { params: Promise<{ id: string }> }
 ) {
@@ -432,3 +433,7 @@ async function collectCategoryIds(
   }
   return ids;
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.categories.[id].GET" });
+export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "products.categories.[id].PUT" });
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.categories.[id].DELETE" });

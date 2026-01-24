@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { internalError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
-export async function GET(
+async function GET_handler(
   req: Request,
   { params }: { params: Promise<{ snapshotId: string }> }
 ) {
@@ -44,3 +45,5 @@ export async function GET(
     });
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.snapshots.[snapshotId].GET" });

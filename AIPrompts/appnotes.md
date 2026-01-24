@@ -3,6 +3,8 @@ npx prisma migrate dev
 npx prisma generate
 /admin/system/logs
 
+Resorting images during product create from draft still causes image flickering 
+
 * When I create a user manually I should have the option to add their role, including the super user role, also , I should be able to verify them manually by clicking edit.
 
 * mock logging
@@ -35,18 +37,20 @@ In Product List - Operations - I need an Option to Mass Export Products to Base.
 
 LATER - add other GEminiInstructions (especially for the use of tanstack query and schadcn/ui all across application)
 
-centralized error handling
-Move on to remaining global APIs (countries, price groups, system logs, chatbot, drafts, settings, etc.).
+add a centralized error handling and logging to all global APIs (countries, price groups, system logs, chatbot, drafts, settings, etc.).
 LATER - apply consistent error mapping and handling all across the application
-routes, services 
-do Critical paths first, then comprehensive audit
-do a full test run  after
-Create client-side error handling utilities and implement on the client-side
-Add error metrics and statistics tracking
-Create critical error notification service
-Add error fingerprinting for grouping similar errors
-Create error recovery patterns for transient errors
-
+routes and services 
+standardize the internal createErrorResponse sources to match the new wrapper sources
+* Convert all API routes to use centralized apiHandler/createErrorResponse,
+* Add a shared error mapping helper and wire it into all routes
+Add a shared error mapping helper and wire it into key services
+* Create client-side error handling utilities and implement on the client-side
+* Add error metrics and statistics tracking
+* Create critical error notification service
+* Add error fingerprinting for grouping similar errors
+* Create error recovery patterns for transient errors
+enhance the centralized error handling and logging system
+apply consistent centralized error handling and logging system
 
 Note APP, simplified NoTE editing, which allows me to edit, delete text right in the note preview. Unless I want a deeper edit. Note Should Auto Save
 

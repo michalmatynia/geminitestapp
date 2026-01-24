@@ -4,6 +4,7 @@ import { getProductListingRepository } from "@/lib/services/product-listing-repo
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { badRequestError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const updateListingSchema = z.object({
   inventoryId: z.string().trim().min(1).nullable(),
@@ -13,7 +14,7 @@ const updateListingSchema = z.object({
  * DELETE /api/products/[id]/listings/[listingId]
  * Marks a listing as removed from a marketplace.
  */
-export async function DELETE(
+async function DELETE_handler(
   req: Request,
   { params }: { params: Promise<{ id: string; listingId: string }> }
 ) {
@@ -53,7 +54,7 @@ export async function DELETE(
  * PATCH /api/products/[id]/listings/[listingId]
  * Updates listing metadata (e.g., inventoryId).
  */
-export async function PATCH(
+async function PATCH_handler(
   req: Request,
   { params }: { params: Promise<{ id: string; listingId: string }> }
 ) {
@@ -86,3 +87,6 @@ export async function PATCH(
     });
   }
 }
+
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].listings.[listingId].DELETE" });
+export const PATCH = apiHandlerWithParams<any>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].listings.[listingId].PATCH" });

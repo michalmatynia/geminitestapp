@@ -3,6 +3,7 @@ import { z } from "zod";
 import { noteService } from "@/lib/services/noteService";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 interface FolderNode {
   name: string;
@@ -90,7 +91,7 @@ async function createFolderStructure(
   }
 }
 
-export async function POST(req: NextRequest) {
+async function POST_handler(req: NextRequest) {
   try {
     const parsed = await parseJsonBody(req, importSchema, {
       logPrefix: "notes.import-folder",
@@ -136,3 +137,5 @@ export async function POST(req: NextRequest) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "notes.import-folder.POST" });

@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { getProductListingRepository } from "@/lib/services/product-listing-repository";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 /**
  * GET /api/products/listings
  * Returns a map of product IDs to their most relevant listing status.
  */
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   try {
     const repo = await getProductListingRepository();
     const listings = await repo.listAllListings();
@@ -41,3 +42,5 @@ export async function GET(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "products.listings.GET" });

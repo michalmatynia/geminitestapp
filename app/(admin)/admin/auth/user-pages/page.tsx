@@ -46,7 +46,7 @@ export default function AuthUserPagesPage() {
     void load();
   }, [toast]);
 
-  const handleToggle = (key: keyof UserPageSettings) => {
+  const handleToggle = (key: keyof AuthUserPageSettings) => {
     setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
     setDirty(true);
   };

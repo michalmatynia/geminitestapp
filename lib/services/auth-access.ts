@@ -32,7 +32,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   const mongo = await getMongoDb();
   const doc = await mongo
     .collection<SettingRecord>("settings")
-    .findOne({ $or: [{ _id: key }, { key }] });
+    .findOne({ $or: [{ _id: key as any }, { key }] });
   return typeof doc?.value === "string" ? doc.value : null;
 };
 
@@ -102,10 +102,10 @@ export const getAuthAccessForUser = async (userId: string): Promise<AuthUserAcce
   const role =
     roleList.find((item) => item.id === effectiveRoleId) ??
     roleList[0] ??
-    DEFAULT_AUTH_ROLES[0];
+    DEFAULT_AUTH_ROLES[0]!;
 
-  const roleLevel = typeof role.level === "number" ? role.level : 0;
-  const denied = Array.isArray(role.deniedPermissions) ? role.deniedPermissions : [];
+  const roleLevel = role.level ?? 0;
+  const denied = role.deniedPermissions ?? [];
   const permissions = (role.permissions ?? []).filter(
     (permission) => !denied.includes(permission)
   );

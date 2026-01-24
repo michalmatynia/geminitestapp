@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { internalError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   const requestStart = Date.now();
   try {
     if (!("agentLongTermMemory" in prisma)) {
@@ -59,3 +60,5 @@ export async function GET(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "chatbot.memory.GET" });

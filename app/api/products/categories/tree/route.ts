@@ -5,6 +5,7 @@ import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError, internalError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 type CategoryFromDb = {
   id: string;
@@ -23,7 +24,7 @@ type CategoryFromDb = {
  * Query params:
  * - catalogId: Filter by catalog (required)
  */
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const catalogId = searchParams.get("catalogId");
@@ -85,3 +86,5 @@ export async function GET(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "products.categories.tree.GET" });

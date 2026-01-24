@@ -1,4 +1,5 @@
 import { vi, MockInstance } from "vitest";
+import { NextRequest } from "next/server";
 import { GET, POST } from "@/app/api/chatbot/route";
 
 describe("Chatbot API", () => {
@@ -23,7 +24,7 @@ describe("Chatbot API", () => {
       )
     );
 
-    const res = await GET(new Request("http://localhost/api/chatbot"));
+    const res = await GET(new NextRequest("http://localhost/api/chatbot"));
     const data = (await res.json()) as { models: string[] };
 
     expect(res.status).toBe(200);
@@ -35,7 +36,7 @@ describe("Chatbot API", () => {
       new Response("Provider down", { status: 502 })
     );
 
-    const res = await GET(new Request("http://localhost/api/chatbot"));
+    const res = await GET(new NextRequest("http://localhost/api/chatbot"));
     const data = (await res.json()) as { error: string; errorId?: string };
 
     expect(res.status).toBe(502);
@@ -45,7 +46,7 @@ describe("Chatbot API", () => {
   });
 
   it("should reject invalid chat payloads", async () => {
-    const req = new Request("http://localhost/api/chatbot", {
+    const req = new NextRequest("http://localhost/api/chatbot", {
       method: "POST",
       body: JSON.stringify({ messages: [] }),
     });
@@ -64,7 +65,7 @@ describe("Chatbot API", () => {
       )
     );
 
-    const req = new Request("http://localhost/api/chatbot", {
+    const req = new NextRequest("http://localhost/api/chatbot", {
       method: "POST",
       body: JSON.stringify({
         model: "test-model",
@@ -90,7 +91,7 @@ describe("Chatbot API", () => {
       new Response("Model unavailable", { status: 502 })
     );
 
-    const req = new Request("http://localhost/api/chatbot", {
+    const req = new NextRequest("http://localhost/api/chatbot", {
       method: "POST",
       body: JSON.stringify({
         model: "test-model",
@@ -110,7 +111,7 @@ describe("Chatbot API", () => {
   it("should return a debug errorId on unexpected chat errors", async () => {
     (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error("Network down"));
 
-    const req = new Request("http://localhost/api/chatbot", {
+    const req = new NextRequest("http://localhost/api/chatbot", {
       method: "POST",
       body: JSON.stringify({
         model: "test-model",

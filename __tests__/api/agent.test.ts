@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { ChatbotAgentRun, AgentBrowserLog, AgentAuditLog } from "@prisma/client";
 import { GET as listRuns, POST as createRun } from "@/app/api/chatbot/agent/route";
@@ -18,7 +19,7 @@ describe("Agent API", () => {
   });
 
   it("should reject missing prompt when creating a run", async () => {
-    const req = new Request("http://localhost/api/chatbot/agent", {
+    const req = new NextRequest("http://localhost/api/chatbot/agent", {
       method: "POST",
       body: JSON.stringify({}),
     });
@@ -54,7 +55,7 @@ describe("Agent API", () => {
       },
     });
 
-    const res = await listRuns(new Request("http://localhost/api/chatbot/agent"));
+    const res = await listRuns(new NextRequest("http://localhost/api/chatbot/agent"));
     const data = (await res.json()) as {
       runs: (ChatbotAgentRun & {
         _count: { browserLogs: number; browserSnapshots: number };
@@ -79,7 +80,7 @@ describe("Agent API", () => {
       },
     });
 
-    const res = await getLogs(new Request("http://localhost"), {
+    const res = await getLogs(new NextRequest("http://localhost"), {
       params: Promise.resolve({ runId: run.id }),
     });
     const data = (await res.json()) as { logs: AgentBrowserLog[] };
@@ -102,7 +103,7 @@ describe("Agent API", () => {
       },
     });
 
-    const res = await getAudits(new Request("http://localhost"), {
+    const res = await getAudits(new NextRequest("http://localhost"), {
       params: Promise.resolve({ runId: run.id }),
     });
     const data = (await res.json()) as { audits: AgentAuditLog[] };

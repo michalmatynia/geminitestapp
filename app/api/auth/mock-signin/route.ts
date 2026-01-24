@@ -15,6 +15,7 @@ import { getAuthUserPageSettings } from "@/lib/services/auth-settings";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { internalError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -24,13 +25,12 @@ const payloadSchema = z.object({
 });
 
 type MongoUserDoc = {
-  _id: unknown;
   email?: string | null;
   passwordHash?: string | null;
   emailVerified?: Date | null;
 };
 
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const session = await auth();
     const hasAccess =
@@ -124,3 +124,5 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "auth.mock-signin.POST" });

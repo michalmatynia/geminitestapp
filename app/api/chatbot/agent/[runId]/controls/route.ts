@@ -3,10 +3,11 @@ import prisma from "@/lib/prisma";
 import { runAgentBrowserControl } from "@/lib/agent/tools";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError, internalError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
-export async function POST(
+async function POST_handler(
   req: Request,
   { params }: { params: Promise<{ runId: string }> }
 ) {
@@ -84,3 +85,5 @@ export async function POST(
     });
   }
 }
+
+export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].controls.POST" });

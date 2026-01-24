@@ -10,6 +10,7 @@ import { parseJsonBody } from "@/lib/api/parse-json";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { authError, conflictError, internalError, notFoundError } from "@/lib/errors/app-error";
 import type { AuthUserSummary } from "@/types/auth";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -28,7 +29,7 @@ type MongoUserDoc = {
   updatedAt?: Date | null;
 };
 
-export async function PATCH(
+async function PATCH_handler(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
@@ -173,3 +174,5 @@ export async function PATCH(
     });
   }
 }
+
+export const PATCH = apiHandlerWithParams<any>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "auth.users.[id].PATCH" });

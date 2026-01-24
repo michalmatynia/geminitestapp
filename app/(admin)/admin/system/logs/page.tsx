@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
 import { RefreshCcw, Trash2, Download } from "lucide-react";
-import type { SystemLogRecord, SystemLogLevel } from "@/types";
+import type { SystemLogMetrics, SystemLogRecord, SystemLogLevel } from "@/types";
 
 const levelOptions: Array<{ value: SystemLogLevel | "all"; label: string }> = [
   { value: "all", label: "All levels" },
@@ -40,6 +40,8 @@ export default function SystemLogsPage() {
   const [logs, setLogs] = useState<SystemLogRecord[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [metrics, setMetrics] = useState<SystemLogMetrics | null>(null);
+  const [metricsLoading, setMetricsLoading] = useState(true);
   const [level, setLevel] = useState<SystemLogLevel | "all">("all");
   const [query, setQuery] = useState("");
   const [source, setSource] = useState("");
@@ -85,9 +87,37 @@ export default function SystemLogsPage() {
     }
   }, [level, page, pageSize, query, source, fromDate, toDate, toast]);
 
+  const loadMetrics = useCallback(async () => {
+    setMetricsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (level !== "all") params.set("level", level);
+      if (query.trim()) params.set("query", query.trim());
+      if (source.trim()) params.set("source", source.trim());
+      const from = formatDateParam(fromDate);
+      const to = formatDateParam(toDate, true);
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
+
+      const res = await fetch(`/api/system/logs/metrics?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to load system log metrics.");
+      const data = (await res.json()) as { metrics?: SystemLogMetrics };
+      setMetrics(data.metrics ?? null);
+    } catch (error) {
+      toast(
+        error instanceof Error ? error.message : "Failed to load system log metrics.",
+        { variant: "error" }
+      );
+    } finally {
+      setMetricsLoading(false);
+    }
+  }, [level, query, source, fromDate, toDate, toast]);
+
   useEffect(() => {
     void loadLogs();
-  }, [loadLogs]);
+    void loadMetrics();
+  }, [loadLogs, loadMetrics]);
+
 
   const clearLogs = async () => {
     if (!window.confirm("Clear all system logs?")) return;
@@ -96,6 +126,7 @@ export default function SystemLogsPage() {
       if (!res.ok) throw new Error("Failed to clear logs.");
       toast("System logs cleared.", { variant: "success" });
       await loadLogs();
+      await loadMetrics();
     } catch (error) {
       toast(error instanceof Error ? error.message : "Failed to clear logs.", {
         variant: "error",
@@ -119,6 +150,16 @@ export default function SystemLogsPage() {
     info: "border-blue-500/40 text-blue-300 bg-blue-500/10",
   };
 
+  const getContextValue = (context: unknown, path: string) => {
+    if (!context || typeof context !== "object") return null;
+    return path.split(".").reduce<unknown>((acc, key) => {
+      if (!acc || typeof acc !== "object") return null;
+      return (acc as Record<string, unknown>)[key] ?? null;
+    }, context);
+  };
+
+  const levels = metrics?.levels ?? { error: 0, warn: 0, info: 0 };
+
   return (
     <div className="container mx-auto py-10">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
@@ -132,9 +173,20 @@ export default function SystemLogsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => void loadLogs()}
+            onClick={() => window.location.assign("/admin/settings/logging")}
             className="border-gray-700"
-            disabled={loading}
+          >
+            Client Logging Settings
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              void loadLogs();
+              void loadMetrics();
+            }}
+            className="border-gray-700"
+            disabled={loading || metricsLoading}
           >
             <RefreshCcw className="mr-2 h-4 w-4" />
             Refresh
@@ -238,6 +290,74 @@ export default function SystemLogsPage() {
         </div>
       </div>
 
+      <div className="mt-6 rounded-md border border-gray-800 bg-gray-950/60 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-white">Metrics</h2>
+            <p className="text-xs text-gray-400">
+              Metrics reflect the current filters.
+            </p>
+          </div>
+          <div className="text-xs text-gray-500">
+            {metrics?.generatedAt ? `Updated ${formatTimestamp(metrics.generatedAt)}` : "—"}
+          </div>
+        </div>
+        {metricsLoading ? (
+          <div className="mt-4 text-sm text-gray-400">Loading metrics...</div>
+        ) : !metrics ? (
+          <div className="mt-4 text-sm text-gray-400">
+            No metrics available yet.
+          </div>
+        ) : (
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
+            <div className="rounded-md border border-gray-800 bg-gray-950 p-3">
+              <div className="text-xs text-gray-400">Totals</div>
+              <div className="mt-2 space-y-1 text-sm text-gray-200">
+                <div>Total: {metrics.total}</div>
+                <div>Last 24h: {metrics.last24Hours}</div>
+                <div>Last 7d: {metrics.last7Days}</div>
+              </div>
+            </div>
+            <div className="rounded-md border border-gray-800 bg-gray-950 p-3">
+              <div className="text-xs text-gray-400">By level</div>
+              <div className="mt-2 space-y-1 text-sm text-gray-200">
+                <div className="text-red-300">Errors: {levels.error}</div>
+                <div className="text-yellow-300">Warnings: {levels.warn}</div>
+                <div className="text-blue-300">Info: {levels.info}</div>
+              </div>
+            </div>
+            <div className="rounded-md border border-gray-800 bg-gray-950 p-3">
+              <div className="text-xs text-gray-400">Top sources</div>
+              {metrics.topSources.length === 0 ? (
+                <div className="mt-2 text-xs text-gray-500">No sources yet.</div>
+              ) : (
+                <div className="mt-2 space-y-1 text-xs text-gray-300">
+                  {metrics.topSources.map((item) => (
+                    <div key={item.source} className="flex items-center justify-between gap-2">
+                      <span className="truncate">{item.source}</span>
+                      <span className="text-gray-500">{item.count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="mt-3 text-xs text-gray-400">Top paths</div>
+              {metrics.topPaths.length === 0 ? (
+                <div className="mt-2 text-xs text-gray-500">No paths yet.</div>
+              ) : (
+                <div className="mt-2 space-y-1 text-xs text-gray-300">
+                  {metrics.topPaths.map((item) => (
+                    <div key={item.path} className="flex items-center justify-between gap-2">
+                      <span className="truncate">{item.path}</span>
+                      <span className="text-gray-500">{item.count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="mt-6 rounded-md border border-gray-800 bg-gray-950/50">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-800 px-4 py-3 text-xs text-gray-400">
           <span>
@@ -280,11 +400,58 @@ export default function SystemLogsPage() {
                     {log.statusCode ? ` • ${log.statusCode}` : ""}
                   </div>
                 )}
+                {log.context && getContextValue(log.context, "fingerprint") ? (
+                  <div className="mt-2 text-xs text-gray-500">
+                    Fingerprint:{" "}
+                    <span className="font-mono text-gray-300">
+                      {String(getContextValue(log.context, "fingerprint"))}
+                    </span>
+                  </div>
+                ) : null}
                 {(log.context || log.stack) && (
                   <details className="mt-2 text-xs text-gray-400">
                     <summary className="cursor-pointer hover:text-gray-200">
                       Details
                     </summary>
+                    {log.source === "client" && log.context ? (
+                      <div className="mt-2 rounded border border-gray-800 bg-gray-950 p-2 text-[11px] text-gray-300">
+                        <div className="font-semibold text-gray-200">Client context</div>
+                        <div className="mt-2 grid gap-2 md:grid-cols-2">
+                          <div>
+                            <div className="text-gray-500">App</div>
+                            <div>{String(getContextValue(log.context, "app.version") ?? "—")}</div>
+                            <div className="text-gray-500">Build</div>
+                            <div>{String(getContextValue(log.context, "app.buildId") ?? "—")}</div>
+                            <div className="text-gray-500">Release</div>
+                            <div>{String(getContextValue(log.context, "app.releaseChannel") ?? "—")}</div>
+                          </div>
+                          <div>
+                            <div className="text-gray-500">User</div>
+                            <div>{String(getContextValue(log.context, "user.email") ?? "—")}</div>
+                            <div className="text-gray-500">Role</div>
+                            <div>{String(getContextValue(log.context, "user.role") ?? "—")}</div>
+                            <div className="text-gray-500">Route</div>
+                            <div>{String(getContextValue(log.context, "route") ?? "—")}</div>
+                          </div>
+                          <div>
+                            <div className="text-gray-500">Device</div>
+                            <div>{String(getContextValue(log.context, "device.platform") ?? "—")}</div>
+                            <div className="text-gray-500">Memory</div>
+                            <div>{String(getContextValue(log.context, "device.deviceMemory") ?? "—")}</div>
+                            <div className="text-gray-500">Cores</div>
+                            <div>{String(getContextValue(log.context, "device.hardwareConcurrency") ?? "—")}</div>
+                          </div>
+                          <div>
+                            <div className="text-gray-500">Network</div>
+                            <div>{String(getContextValue(log.context, "network.effectiveType") ?? "—")}</div>
+                            <div className="text-gray-500">Downlink</div>
+                            <div>{String(getContextValue(log.context, "network.downlink") ?? "—")}</div>
+                            <div className="text-gray-500">RTT</div>
+                            <div>{String(getContextValue(log.context, "network.rtt") ?? "—")}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
                     {log.stack && (
                       <pre className="mt-2 whitespace-pre-wrap rounded border border-gray-800 bg-gray-950 p-2 text-[11px] text-gray-300">
                         {log.stack}

@@ -7,10 +7,11 @@ import path from "path";
 import { AgentRunStatus } from "@prisma/client";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError, internalError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   const requestStart = Date.now();
   try {
     startAgentQueue();
@@ -63,7 +64,7 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   const requestStart = Date.now();
   try {
     if (!("chatbotAgentRun" in prisma)) {
@@ -271,7 +272,7 @@ export async function POST(req: Request) {
   }
 }
 
-export async function DELETE(req: Request) {
+async function DELETE_handler(req: Request) {
   const requestStart = Date.now();
   try {
     if (!("chatbotAgentRun" in prisma)) {
@@ -330,3 +331,7 @@ export async function DELETE(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "chatbot.agent.GET" });
+export const POST = apiHandler(POST_handler, { source: "chatbot.agent.POST" });
+export const DELETE = apiHandler(DELETE_handler, { source: "chatbot.agent.DELETE" });

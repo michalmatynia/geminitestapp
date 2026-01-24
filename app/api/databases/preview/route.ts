@@ -11,8 +11,9 @@ import {
   getPgRestoreCommand,
   execFileAsync,
 } from "../_utils";
+import { apiHandler } from "@/lib/api/api-handler";
 
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   let stage = "parse";
   let backupName: string | undefined;
   let previewMode: "backup" | "current" = "backup";
@@ -260,3 +261,5 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "databases.preview.POST" });

@@ -25,7 +25,7 @@ export default function ProductConstructorPage() {
         setCatalogs(data);
         if (!selectedCatalogId && data.length > 0) {
           const defaultCatalog = data.find((catalog) => catalog.isDefault);
-          setSelectedCatalogId(defaultCatalog?.id ?? data[0].id);
+          setSelectedCatalogId(defaultCatalog?.id ?? data[0]!.id);
         }
       } catch (error) {
         toast(

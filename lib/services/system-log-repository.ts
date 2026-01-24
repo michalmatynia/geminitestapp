@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { getProductDataProvider } from "@/lib/services/product-provider";
-import type { SystemLogLevel, SystemLogRecord } from "@/types";
+import type { SystemLogLevel, SystemLogMetrics, SystemLogRecord } from "@/types";
 
 export type CreateSystemLogInput = {
   level?: SystemLogLevel | undefined;
@@ -76,6 +76,36 @@ const toSystemLogRecord = (doc: {
   createdAt: doc.createdAt ?? new Date(),
 });
 
+const buildPrismaWhere = (input: ListSystemLogsInput) => {
+  const where: any = {};
+  if (input.level) {
+    where.level = input.level;
+  }
+  if (input.source) {
+    where.source = { contains: input.source, mode: "insensitive" };
+  }
+  if (input.query) {
+    where.OR = [
+      { message: { contains: input.query, mode: "insensitive" } },
+      { source: { contains: input.query, mode: "insensitive" } },
+    ];
+  }
+  if (input.from || input.to) {
+    where.createdAt = {
+      ...(input.from ? { gte: input.from } : {}),
+      ...(input.to ? { lte: input.to } : {}),
+    };
+  }
+  return where;
+};
+
+const mergeWhere = (base: any, extra: any) => {
+  if (!base || Object.keys(base).length === 0) {
+    return extra;
+  }
+  return { AND: [base, extra] };
+};
+
 const buildMongoFilter = (input: ListSystemLogsInput): Filter<Document> => {
   const filter: Filter<Document> = {};
   if (input.level) {
@@ -97,6 +127,84 @@ const buildMongoFilter = (input: ListSystemLogsInput): Filter<Document> => {
     } as any;
   }
   return filter;
+};
+
+const getMongoSystemLogMetrics = async (filter: Filter<Document>): Promise<SystemLogMetrics> => {
+  const mongo = await getMongoDb();
+  const now = new Date();
+  const last24 = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const last7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const result = await mongo
+    .collection(SYSTEM_LOGS_COLLECTION)
+    .aggregate([
+      { $match: filter },
+      {
+        $facet: {
+          totals: [{ $count: "count" }],
+          levels: [
+            { $group: { _id: "$level", count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+          ],
+          sources: [
+            { $match: { source: { $nin: [null, ""] } } },
+            { $group: { _id: "$source", count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 5 },
+          ],
+          paths: [
+            { $match: { path: { $nin: [null, ""] } } },
+            { $group: { _id: "$path", count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 5 },
+          ],
+          last24Hours: [
+            { $match: { createdAt: { $gte: last24 } } },
+            { $count: "count" },
+          ],
+          last7Days: [
+            { $match: { createdAt: { $gte: last7 } } },
+            { $count: "count" },
+          ],
+        },
+      },
+    ])
+    .toArray();
+
+  const first = result[0] ?? {};
+  const totals = Array.isArray(first.totals) ? first.totals : [];
+  const total = totals[0]?.count ?? 0;
+  const levels = { info: 0, warn: 0, error: 0 } as Record<SystemLogLevel, number>;
+  const levelRows = Array.isArray(first.levels) ? first.levels : [];
+  for (const row of levelRows) {
+    const key = row?._id as SystemLogLevel;
+    if (key && key in levels) {
+      levels[key] = row.count ?? 0;
+    }
+  }
+  const topSources = (Array.isArray(first.sources) ? first.sources : []).map((row) => ({
+    source: String(row._id ?? ""),
+    count: row.count ?? 0,
+  }));
+  const topPaths = (Array.isArray(first.paths) ? first.paths : []).map((row) => ({
+    path: String(row._id ?? ""),
+    count: row.count ?? 0,
+  }));
+  const last24Hours = Array.isArray(first.last24Hours)
+    ? first.last24Hours[0]?.count ?? 0
+    : 0;
+  const last7Days = Array.isArray(first.last7Days)
+    ? first.last7Days[0]?.count ?? 0
+    : 0;
+
+  return {
+    total,
+    levels,
+    last24Hours,
+    last7Days,
+    topSources,
+    topPaths,
+    generatedAt: now,
+  };
 };
 
 export async function createSystemLog(
@@ -187,25 +295,7 @@ export async function listSystemLogs(
     return { logs, total, page, pageSize };
   }
 
-  const where: any = {};
-  if (input.level) {
-    where.level = input.level;
-  }
-  if (input.source) {
-    where.source = { contains: input.source, mode: "insensitive" };
-  }
-  if (input.query) {
-    where.OR = [
-      { message: { contains: input.query, mode: "insensitive" } },
-      { source: { contains: input.query, mode: "insensitive" } },
-    ];
-  }
-  if (input.from || input.to) {
-    where.createdAt = {
-      ...(input.from ? { gte: input.from } : {}),
-      ...(input.to ? { lte: input.to } : {}),
-    };
-  }
+  const where = buildPrismaWhere(input);
 
   try {
     const [total, rows] = await Promise.all([
@@ -244,6 +334,94 @@ export async function listSystemLogs(
         normalizeLogRecord(toSystemLogRecord(doc as any))
       );
       return { logs, total, page, pageSize };
+    }
+    throw error;
+  }
+}
+
+export async function getSystemLogMetrics(
+  input: ListSystemLogsInput
+): Promise<SystemLogMetrics> {
+  const provider = await getProductDataProvider();
+  const now = new Date();
+
+  if (provider === "mongodb") {
+    const filter = buildMongoFilter(input);
+    return getMongoSystemLogMetrics(filter);
+  }
+
+  const where = buildPrismaWhere(input);
+  const last24 = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const last7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  try {
+    const [
+      total,
+      last24Hours,
+      last7Days,
+      levelGroups,
+      sourceGroups,
+      pathGroups,
+    ] = await Promise.all([
+      prisma.systemLog.count({ where }),
+      prisma.systemLog.count({
+        where: mergeWhere(where, { createdAt: { gte: last24 } }),
+      }),
+      prisma.systemLog.count({
+        where: mergeWhere(where, { createdAt: { gte: last7 } }),
+      }),
+      prisma.systemLog.groupBy({
+        by: ["level"],
+        _count: { _all: true },
+        where,
+      }),
+      prisma.systemLog.groupBy({
+        by: ["source"],
+        _count: { _all: true },
+        where: mergeWhere(where, {
+          AND: [{ source: { not: null } }, { source: { not: "" } }],
+        }),
+        orderBy: { _count: { _all: "desc" } },
+        take: 5,
+      }),
+      prisma.systemLog.groupBy({
+        by: ["path"],
+        _count: { _all: true },
+        where: mergeWhere(where, {
+          AND: [{ path: { not: null } }, { path: { not: "" } }],
+        }),
+        orderBy: { _count: { _all: "desc" } },
+        take: 5,
+      }),
+    ]);
+
+    const levels = { info: 0, warn: 0, error: 0 } as Record<SystemLogLevel, number>;
+    for (const row of levelGroups as Array<{ level: SystemLogLevel; _count: { _all: number } }>) {
+      if (row.level in levels) {
+        levels[row.level] = row._count._all ?? 0;
+      }
+    }
+
+    const topSources = (sourceGroups as Array<{ source: string | null; _count: { _all: number } }>)
+      .filter((row) => row.source)
+      .map((row) => ({ source: row.source as string, count: row._count._all ?? 0 }));
+    const topPaths = (pathGroups as Array<{ path: string | null; _count: { _all: number } }>)
+      .filter((row) => row.path)
+      .map((row) => ({ path: row.path as string, count: row._count._all ?? 0 }));
+
+    return {
+      total,
+      levels,
+      last24Hours,
+      last7Days,
+      topSources,
+      topPaths,
+      generatedAt: now,
+    };
+  } catch (error) {
+    if (isMissingPrismaTable(error) && process.env.MONGODB_URI) {
+      const filter = buildMongoFilter(input);
+      return getMongoSystemLogMetrics(filter);
     }
     throw error;
   }

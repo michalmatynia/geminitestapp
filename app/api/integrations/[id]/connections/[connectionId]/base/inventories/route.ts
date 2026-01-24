@@ -4,12 +4,13 @@ import { decryptSecret } from "@/lib/utils/encryption";
 import { fetchBaseInventories } from "@/lib/services/imports/base-client";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 /**
  * GET /api/integrations/[id]/connections/[connectionId]/base/inventories
  * Fetches available inventories from Base.com/Baselinker API.
  */
-export async function GET(
+async function GET_handler(
   req: Request,
   { params }: { params: Promise<{ id: string; connectionId: string }> }
 ) {
@@ -64,3 +65,5 @@ export async function GET(
     });
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].base.inventories.GET" });

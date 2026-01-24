@@ -5,10 +5,11 @@ import { buildOtpAuthUrl, generateTotpSecret } from "@/lib/services/totp";
 import { encryptAuthSecret } from "@/lib/utils/auth-encryption";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { conflictError, authError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const session = await auth();
     const userId = session?.user?.id;
@@ -54,3 +55,5 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "auth.mfa.setup.POST" });

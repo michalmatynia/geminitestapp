@@ -1,5 +1,5 @@
-import { randomUUID } from "crypto";
 import type { ProductDraft, CreateProductDraftInput, UpdateProductDraftInput } from "@/types/drafts";
+import type { ProductParameterValue } from "@/types/products";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import prisma from "@/lib/prisma";
@@ -46,7 +46,9 @@ const listDrafts_Mongo = async (): Promise<ProductDraft[]> => {
     catalogIds: Array.isArray(draft.catalogIds) ? draft.catalogIds : [],
     categoryIds: Array.isArray(draft.categoryIds) ? draft.categoryIds : [],
     tagIds: Array.isArray(draft.tagIds) ? draft.tagIds : [],
-    parameters: Array.isArray(draft.parameters) ? draft.parameters : [],
+    parameters: Array.isArray(draft.parameters)
+      ? (draft.parameters as ProductParameterValue[])
+      : [],
     defaultPriceGroupId: draft.defaultPriceGroupId || null,
     active: draft.active ?? true,
     imageLinks: Array.isArray(draft.imageLinks) ? draft.imageLinks : [],
@@ -88,7 +90,9 @@ const getDraft_Mongo = async (id: string): Promise<ProductDraft | null> => {
     catalogIds: Array.isArray(draft.catalogIds) ? draft.catalogIds : [],
     categoryIds: Array.isArray(draft.categoryIds) ? draft.categoryIds : [],
     tagIds: Array.isArray(draft.tagIds) ? draft.tagIds : [],
-    parameters: Array.isArray(draft.parameters) ? draft.parameters : [],
+    parameters: Array.isArray(draft.parameters)
+      ? (draft.parameters as ProductParameterValue[])
+      : [],
     defaultPriceGroupId: draft.defaultPriceGroupId || null,
     active: draft.active ?? true,
     imageLinks: Array.isArray(draft.imageLinks) ? draft.imageLinks : [],
@@ -197,7 +201,9 @@ const updateDraft_Mongo = async (id: string, input: UpdateProductDraftInput): Pr
     catalogIds: Array.isArray(result.catalogIds) ? result.catalogIds : [],
     categoryIds: Array.isArray(result.categoryIds) ? result.categoryIds : [],
     tagIds: Array.isArray(result.tagIds) ? result.tagIds : [],
-    parameters: Array.isArray(result.parameters) ? result.parameters : [],
+    parameters: Array.isArray(result.parameters)
+      ? (result.parameters as ProductParameterValue[])
+      : [],
     defaultPriceGroupId: result.defaultPriceGroupId || null,
     active: result.active ?? true,
     imageLinks: Array.isArray(result.imageLinks) ? result.imageLinks : [],
@@ -224,7 +230,7 @@ const listDrafts_Prisma = async (): Promise<ProductDraft[]> => {
     catalogIds: draft.catalogIds as string[],
     categoryIds: draft.categoryIds as string[],
     tagIds: draft.tagIds as string[],
-    parameters: draft.parameters as unknown[],
+    parameters: draft.parameters as ProductParameterValue[],
     imageLinks: draft.imageLinks as string[],
   }));
 };
@@ -241,7 +247,7 @@ const getDraft_Prisma = async (id: string): Promise<ProductDraft | null> => {
     catalogIds: draft.catalogIds as string[],
     categoryIds: draft.categoryIds as string[],
     tagIds: draft.tagIds as string[],
-    parameters: draft.parameters as unknown[],
+    parameters: draft.parameters as ProductParameterValue[],
     imageLinks: draft.imageLinks as string[],
   };
 };
@@ -286,7 +292,7 @@ const createDraft_Prisma = async (input: CreateProductDraftInput): Promise<Produ
     catalogIds: draft.catalogIds as string[],
     categoryIds: draft.categoryIds as string[],
     tagIds: draft.tagIds as string[],
-    parameters: draft.parameters as unknown[],
+    parameters: draft.parameters as ProductParameterValue[],
     imageLinks: draft.imageLinks as string[],
   };
 };
@@ -303,7 +309,7 @@ const updateDraft_Prisma = async (id: string, input: UpdateProductDraftInput): P
       catalogIds: draft.catalogIds as string[],
       categoryIds: draft.categoryIds as string[],
       tagIds: draft.tagIds as string[],
-      parameters: draft.parameters as unknown[],
+      parameters: draft.parameters as ProductParameterValue[],
       imageLinks: draft.imageLinks as string[],
     };
   } catch {

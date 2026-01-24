@@ -1,14 +1,35 @@
 import { handlers } from "@/lib/auth";
 import { NextRequest } from "next/server";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
-export const GET = async (req: NextRequest) => {
+async function GET_handler(req: NextRequest) {
   console.log("[AUTH-API] GET request", req.url);
-  return handlers.GET(req);
-};
+  try {
+    return await handlers.GET(req);
+  } catch (error) {
+    return createErrorResponse(error, {
+      request: req,
+      source: "auth.nextauth.GET",
+      fallbackMessage: "Failed to process auth request",
+    });
+  }
+}
 
-export const POST = async (req: NextRequest) => {
+async function POST_handler(req: NextRequest) {
   console.log("[AUTH-API] POST request", req.url);
-  return handlers.POST(req);
-};
+  try {
+    return await handlers.POST(req);
+  } catch (error) {
+    return createErrorResponse(error, {
+      request: req,
+      source: "auth.nextauth.POST",
+      fallbackMessage: "Failed to process auth request",
+    });
+  }
+}
+
+export const GET = apiHandler(GET_handler, { source: "auth.[...nextauth].GET" });
+export const POST = apiHandler(POST_handler, { source: "auth.[...nextauth].POST" });

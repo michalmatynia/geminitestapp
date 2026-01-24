@@ -3,8 +3,9 @@ import { getProductAiJobs, deleteTerminalProductAiJobs, deleteAllProductAiJobs, 
 import { startProductAiJobQueue, getQueueStatus } from "@/lib/services/productAiQueue";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
-export async function GET(req: NextRequest) {
+async function GET_handler(req: NextRequest) {
   try {
     const staleResult = await cleanupStaleRunningProductAiJobs(1000 * 60 * 10);
     if (staleResult.count > 0) {
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function DELETE(req: NextRequest) {
+async function DELETE_handler(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const scope = searchParams.get("scope");
@@ -56,3 +57,6 @@ export async function DELETE(req: NextRequest) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "products.ai-jobs.GET" });
+export const DELETE = apiHandler(DELETE_handler, { source: "products.ai-jobs.DELETE" });

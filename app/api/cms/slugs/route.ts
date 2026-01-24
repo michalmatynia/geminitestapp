@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { parseJsonBody } from "@/lib/api/parse-json";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 const slugSchema = z.object({
   slug: z.string().trim().min(1),
@@ -11,7 +13,7 @@ const slugSchema = z.object({
  * GET /api/cms/slugs
  * Fetches a list of all slugs.
  */
-export async function GET() {
+async function GET_handler() {
   try {
     const slugs = await prisma.slug.findMany({
       orderBy: {
@@ -20,10 +22,10 @@ export async function GET() {
     });
     return NextResponse.json(slugs);
   } catch (_error) {
-    return NextResponse.json(
-      { error: "Failed to fetch slugs" },
-      { status: 500 }
-    );
+    return createErrorResponse(_error, {
+      source: "cms.slugs.GET",
+      fallbackMessage: "Failed to fetch slugs",
+    });
   }
 }
 
@@ -31,7 +33,7 @@ export async function GET() {
  * POST /api/cms/slugs
  * Creates a new slug.
  */
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, slugSchema, {
       logPrefix: "cms-slugs",
@@ -45,15 +47,12 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(newSlug);
   } catch (error) {
-    if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
-      return NextResponse.json(
-        { error: "Slug already exists." },
-        { status: 409 }
-      );
-    }
-    return NextResponse.json(
-      { error: "Failed to create slug" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      source: "cms.slugs.POST",
+      fallbackMessage: "Failed to create slug",
+    });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "cms.slugs.GET" });
+export const POST = apiHandler(POST_handler, { source: "cms.slugs.POST" });

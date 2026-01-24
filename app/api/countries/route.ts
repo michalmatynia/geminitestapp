@@ -15,6 +15,7 @@ import { parseJsonBody } from "@/lib/api/parse-json";
 import { conflictError, internalError } from "@/lib/errors/app-error";
 import { logSystemEvent } from "@/lib/services/system-logger";
 import type { CountryCode } from "@prisma/client";
+import { apiHandler } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -127,7 +128,7 @@ const normalizeCountryResponse = (
  * GET /api/countries
  * Fetches all countries (and ensures defaults exist).
  */
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   try {
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
@@ -195,7 +196,7 @@ export async function GET(req: Request) {
  * POST /api/countries
  * Creates a country.
  */
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, countrySchema, {
       logPrefix: "countries.POST",
@@ -285,3 +286,6 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "countries.GET" });
+export const POST = apiHandler(POST_handler, { source: "countries.POST" });

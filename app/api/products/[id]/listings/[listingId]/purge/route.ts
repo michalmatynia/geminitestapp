@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { getProductListingRepository } from "@/lib/services/product-listing-repository";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
-export async function DELETE(
+async function DELETE_handler(
   req: Request,
   { params }: { params: Promise<{ id: string; listingId: string }> }
 ) {
@@ -29,3 +30,5 @@ export async function DELETE(
     });
   }
 }
+
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].listings.[listingId].purge.DELETE" });

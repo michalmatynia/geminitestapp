@@ -10,6 +10,7 @@ import {
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { badRequestError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 const optionalIdSchema = z.preprocess(
   (value) => {
@@ -253,7 +254,7 @@ const collectParameterKeys = (product: Record<string, unknown>) => {
   return { keys: sortedKeys, values };
 };
 
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, requestSchema, {
       logPrefix: "imports.base.parameters.POST",
@@ -342,7 +343,7 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   try {
     const cache = await getImportParameterCache();
     return NextResponse.json(
@@ -363,3 +364,6 @@ export async function GET(req: Request) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "products.imports.base.parameters.POST" });
+export const GET = apiHandler(GET_handler, { source: "products.imports.base.parameters.GET" });

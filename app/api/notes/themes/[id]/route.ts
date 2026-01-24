@@ -6,12 +6,13 @@ import { removeUndefined } from "@/lib/utils";
 import type { ThemeUpdateInput } from "@/types/notes";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 /**
  * GET /api/notes/themes/[id]
  * Fetches a single theme by ID.
  */
-export async function GET(
+async function GET_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -35,7 +36,7 @@ export async function GET(
  * PATCH /api/notes/themes/[id]
  * Updates a theme.
  */
-export async function PATCH(
+async function PATCH_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -68,7 +69,7 @@ export async function PATCH(
  * DELETE /api/notes/themes/[id]
  * Deletes a theme.
  */
-export async function DELETE(
+async function DELETE_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -87,3 +88,7 @@ export async function DELETE(
     });
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "notes.themes.[id].GET" });
+export const PATCH = apiHandlerWithParams<any>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "notes.themes.[id].PATCH" });
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.themes.[id].DELETE" });

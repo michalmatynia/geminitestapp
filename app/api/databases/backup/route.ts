@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createMongoBackup, createPostgresBackup } from "@/lib/services/database-backup";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
-export async function POST(req: NextRequest) {
+async function POST_handler(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const type = searchParams.get("type") || "postgresql";
@@ -24,3 +25,5 @@ export async function POST(req: NextRequest) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "databases.backup.POST" });

@@ -122,6 +122,7 @@ export const mergeDefaultRoles = (roles: AuthRole[] | null | undefined): AuthRol
   const merged = incoming.map((role) => {
     const fallback = defaults.get(role.id);
     if (!fallback) return role;
+    const level = typeof role.level === "number" ? role.level : fallback.level;
     return {
       ...fallback,
       ...role,
@@ -129,7 +130,7 @@ export const mergeDefaultRoles = (roles: AuthRole[] | null | undefined): AuthRol
       deniedPermissions: Array.isArray(role.deniedPermissions)
         ? role.deniedPermissions
         : fallback.deniedPermissions ?? [],
-      level: typeof role.level === "number" ? role.level : fallback.level,
+      ...(typeof level === "number" ? { level } : {}),
     };
   });
 

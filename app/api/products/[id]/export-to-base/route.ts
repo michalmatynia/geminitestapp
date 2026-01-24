@@ -33,6 +33,7 @@ import {
   externalServiceError,
   notFoundError,
 } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const exportSchema = z.object({
   connectionId: z.string().min(1),
@@ -120,7 +121,7 @@ const logImageDiagnostics = async ({
  * POST /api/products/[id]/export-to-base
  * Exports a product to Base.com using optional template
  */
-export async function POST(
+async function POST_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -473,15 +474,15 @@ export async function POST(
         stockWarehouseAliases =
           Object.keys(warehouseAliases).length > 0 ? warehouseAliases : null;
         validWarehouseIds = warehouseIdSet;
-        if (warehouseId && stockWarehouseAliases?.[warehouseId]) {
-          warehouseId = stockWarehouseAliases[warehouseId];
+        if (warehouseId && stockWarehouseAliases && stockWarehouseAliases[warehouseId]) {
+          warehouseId = stockWarehouseAliases[warehouseId] ?? null;
         } else if (warehouseId) {
           const match = warehouses.find(
             (warehouse) =>
               warehouse.id === warehouseId || warehouse.typedId === warehouseId
           );
           if (match?.typedId) {
-            warehouseId = match.typedId;
+            warehouseId = match.typedId ?? null;
           }
         }
         if (warehouseId) {
@@ -864,3 +865,5 @@ export async function POST(
     });
   }
 }
+
+export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].export-to-base.POST" });

@@ -4,12 +4,13 @@ import { getProductAiJob, cancelProductAiJob, deleteProductAiJob } from "@/lib/s
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { badRequestError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const actionSchema = z.object({
   action: z.string().trim().min(1),
 });
 
-export async function GET(
+async function GET_handler(
   req: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
@@ -32,7 +33,7 @@ export async function GET(
   }
 }
 
-export async function POST(
+async function POST_handler(
   req: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
@@ -62,7 +63,7 @@ export async function POST(
   }
 }
 
-export async function DELETE(
+async function DELETE_handler(
   req: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
@@ -81,3 +82,7 @@ export async function DELETE(
     });
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.ai-jobs.[jobId].GET" });
+export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.ai-jobs.[jobId].POST" });
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.ai-jobs.[jobId].DELETE" });

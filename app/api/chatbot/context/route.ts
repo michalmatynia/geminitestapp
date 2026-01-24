@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { badRequestError, configurationError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 const chunkText = (text: string, maxChars: number) => {
   const chunks: string[] = [];
@@ -13,22 +16,22 @@ const chunkText = (text: string, maxChars: number) => {
   return chunks.filter(Boolean);
 };
 
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const formData = await req.formData();
     const file = formData.get("file");
     if (!(file instanceof File)) {
-      return NextResponse.json(
-        { error: "Missing PDF file." },
-        { status: 400 }
-      );
+      return createErrorResponse(badRequestError("Missing PDF file."), {
+        request: req,
+        source: "chatbot.context.POST",
+      });
     }
 
     if (file.type !== "application/pdf") {
-      return NextResponse.json(
-        { error: "Only PDF files are supported." },
-        { status: 400 }
-      );
+      return createErrorResponse(badRequestError("Only PDF files are supported."), {
+        request: req,
+        source: "chatbot.context.POST",
+      });
     }
 
     let pdfParse: ((buffer: Buffer) => Promise<{ text: string }>) | null = null;
@@ -36,9 +39,12 @@ export async function POST(req: Request) {
       const pdfModule = await import("pdf-parse");
       pdfParse = pdfModule.default;
     } catch {
-      return NextResponse.json(
-        { error: "PDF parser not installed. Run `npm install pdf-parse`." },
-        { status: 500 }
+      return createErrorResponse(
+        configurationError("PDF parser not installed. Run `npm install pdf-parse`."),
+        {
+          request: req,
+          source: "chatbot.context.POST",
+        }
       );
     }
 
@@ -79,8 +85,12 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ segments });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to parse PDF.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return createErrorResponse(error, {
+      request: req,
+      source: "chatbot.context.POST",
+      fallbackMessage: "Failed to parse PDF.",
+    });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "chatbot.context.POST" });

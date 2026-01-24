@@ -7,6 +7,7 @@ import { authError, validationError } from "@/lib/errors/app-error";
 import { getAuthSecurityProfile, updateAuthSecurityProfile } from "@/lib/services/auth-security-profile";
 import { decryptAuthSecret } from "@/lib/utils/auth-encryption";
 import { hashRecoveryCode, verifyTotpToken } from "@/lib/services/totp";
+import { apiHandler } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -15,7 +16,7 @@ const payloadSchema = z.object({
   recoveryCode: z.string().trim().optional(),
 });
 
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const session = await auth();
     const userId = session?.user?.id;
@@ -68,3 +69,5 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "auth.mfa.disable.POST" });

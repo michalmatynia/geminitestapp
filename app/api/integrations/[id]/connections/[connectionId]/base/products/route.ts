@@ -6,6 +6,7 @@ import { fetchBaseProducts } from "@/lib/services/imports/base-client";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { badRequestError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const requestSchema = z.object({
   inventoryId: z.string().trim().min(1),
@@ -16,7 +17,7 @@ const requestSchema = z.object({
  * POST /api/integrations/[id]/connections/[connectionId]/base/products
  * Fetches products from a specific inventory in Base.com/Baselinker.
  */
-export async function POST(
+async function POST_handler(
   req: Request,
   { params }: { params: Promise<{ id: string; connectionId: string }> }
 ) {
@@ -86,3 +87,5 @@ export async function POST(
     });
   }
 }
+
+export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].base.products.POST" });

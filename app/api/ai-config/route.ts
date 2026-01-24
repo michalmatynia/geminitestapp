@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { configurationError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
-export async function POST(req: NextRequest) {
+async function POST_handler(req: NextRequest) {
   try {
     const data = (await req.json()) as Record<string, unknown>;
     if (!process.env.MONGODB_URI) {
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET(req: NextRequest) {
+async function GET_handler(req: NextRequest) {
   try {
     if (!process.env.MONGODB_URI) {
       throw configurationError("MongoDB not configured");
@@ -54,3 +55,6 @@ export async function GET(req: NextRequest) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "ai-config.POST" });
+export const GET = apiHandler(GET_handler, { source: "ai-config.GET" });

@@ -5,12 +5,13 @@ import { categoryCreateSchema } from "@/lib/validations/notes";
 import { removeUndefined } from "@/lib/utils";
 import type { CategoryCreateInput } from "@/types/notes";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 /**
  * GET /api/notes/categories
  * Fetches all categories.
  */
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const notebookIdParam = searchParams.get("notebookId");
@@ -32,7 +33,7 @@ export async function GET(req: Request) {
  * POST /api/notes/categories
  * Creates a new category.
  */
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, categoryCreateSchema, {
       logPrefix: "categories.POST",
@@ -56,3 +57,6 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "notes.categories.GET" });
+export const POST = apiHandler(POST_handler, { source: "notes.categories.POST" });

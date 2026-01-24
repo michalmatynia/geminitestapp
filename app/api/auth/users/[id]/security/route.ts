@@ -5,6 +5,7 @@ import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { updateAuthSecurityProfile, getAuthSecurityProfile } from "@/lib/services/auth-security-profile";
 import { internalError, authError } from "@/lib/errors/app-error";
 import { auth } from "@/lib/auth";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -15,7 +16,7 @@ const updateSchema = z.object({
   disableMfa: z.boolean().optional(),
 });
 
-export async function GET(_req: Request, context: { params: Promise<{ id: string }> }) {
+async function GET_handler(_req: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     const hasAccess =
@@ -44,7 +45,7 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
   }
 }
 
-export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
+async function PATCH_handler(req: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     const hasAccess =
@@ -96,3 +97,6 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     });
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "auth.users.[id].security.GET" });
+export const PATCH = apiHandlerWithParams<any>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "auth.users.[id].security.PATCH" });

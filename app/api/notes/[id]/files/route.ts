@@ -3,6 +3,7 @@ import { uploadNoteFile } from "@/lib/utils/fileUploader";
 import { noteService } from "@/lib/services/noteService";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError, conflictError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_SLOT_INDEX = 9;
@@ -11,7 +12,7 @@ const MAX_SLOT_INDEX = 9;
  * GET /api/notes/[id]/files
  * Get all files for a note
  */
-export async function GET(
+async function GET_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -32,7 +33,7 @@ export async function GET(
  * POST /api/notes/[id]/files
  * Upload a file to a specific slot
  */
-export async function POST(
+async function POST_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -97,3 +98,6 @@ export async function POST(
     });
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].files.GET" });
+export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].files.POST" });

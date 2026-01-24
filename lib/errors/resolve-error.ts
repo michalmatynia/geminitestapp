@@ -6,6 +6,7 @@ import {
   isAppError,
   type AppErrorCode,
 } from "@/lib/errors/app-error";
+import { mapErrorToAppError } from "@/lib/errors/error-mapper";
 
 export type ResolvedError = {
   errorId: string;
@@ -34,19 +35,36 @@ export const resolveError = (
 ): ResolvedError => {
   const errorId = randomUUID();
 
+  const toResolved = (appError: {
+    message: string;
+    code: AppErrorCode;
+    httpStatus: number;
+    expected: boolean;
+    critical: boolean;
+    retryable: boolean;
+    retryAfterMs?: number;
+    meta?: Record<string, unknown> | undefined;
+    cause?: unknown;
+  }): ResolvedError => ({
+    errorId,
+    message: appError.message,
+    code: appError.code,
+    httpStatus: appError.httpStatus,
+    expected: appError.expected,
+    critical: appError.critical,
+    retryable: appError.retryable,
+    ...(typeof appError.retryAfterMs === "number" ? { retryAfterMs: appError.retryAfterMs } : {}),
+    ...(appError.meta ? { meta: appError.meta } : {}),
+    cause: appError.cause,
+  });
+
   if (isAppError(error)) {
-    return {
-      errorId,
-      message: error.message,
-      code: error.code,
-      httpStatus: error.httpStatus,
-      expected: error.expected,
-      critical: error.critical,
-      retryable: error.retryable,
-      retryAfterMs: error.retryAfterMs,
-      meta: error.meta,
-      cause: error.cause,
-    };
+    return toResolved(error);
+  }
+
+  const mapped = mapErrorToAppError(error, options?.fallbackMessage);
+  if (mapped) {
+    return toResolved(mapped);
   }
 
   if (error instanceof z.ZodError) {
@@ -92,7 +110,7 @@ export const resolveError = (
     expected: internal.expected,
     critical: internal.critical,
     retryable: internal.retryable,
-    meta: internal.meta,
+    ...(internal.meta ? { meta: internal.meta } : {}),
     cause: error,
   };
 };
@@ -205,7 +223,7 @@ function resolvePrismaError(
     expected: false,
     critical: true,
     retryable: false,
-    meta: { prismaCode: code },
+    ...(code ? { meta: { prismaCode: code } } : {}),
     cause: error,
   };
 }

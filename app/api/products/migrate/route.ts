@@ -10,6 +10,7 @@ import { parseJsonBody } from "@/lib/api/parse-json";
 import { removeUndefined } from "@/lib/utils";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -22,7 +23,7 @@ const migrationSchema = z.object({
   batchSize: z.coerce.number().int().positive().optional(),
 });
 
-export async function GET(req: NextRequest) {
+async function GET_handler(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const parsedDirection = migrationDirectionSchema.safeParse(
@@ -42,7 +43,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+async function POST_handler(req: NextRequest) {
   try {
     const parsed = await parseJsonBody(req, migrationSchema, {
       logPrefix: "products.migrate.POST",
@@ -73,3 +74,6 @@ export async function POST(req: NextRequest) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "products.migrate.GET" });
+export const POST = apiHandler(POST_handler, { source: "products.migrate.POST" });

@@ -6,6 +6,7 @@ import { ChatbotJobStatus } from "@prisma/client";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError, internalError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -26,7 +27,7 @@ const enqueueJobSchema = z.object({
   userMessage: z.string().trim().optional(),
 });
 
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   try {
     if (!("chatbotJob" in prisma)) {
       return createErrorResponse(
@@ -56,7 +57,7 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     if (!("chatbotJob" in prisma) || !("chatbotSession" in prisma)) {
       return createErrorResponse(
@@ -144,7 +145,7 @@ export async function POST(req: Request) {
   }
 }
 
-export async function DELETE(req: Request) {
+async function DELETE_handler(req: Request) {
   try {
     if (!("chatbotJob" in prisma)) {
       return createErrorResponse(
@@ -189,3 +190,7 @@ export async function DELETE(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "chatbot.jobs.GET" });
+export const POST = apiHandler(POST_handler, { source: "chatbot.jobs.POST" });
+export const DELETE = apiHandler(DELETE_handler, { source: "chatbot.jobs.DELETE" });

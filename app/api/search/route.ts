@@ -7,6 +7,7 @@ import {
   configurationError,
   externalServiceError,
 } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 type BraveSearchResult = {
   title?: string;
@@ -46,7 +47,7 @@ const GOOGLE_SEARCH_API_URL =
 const SERPAPI_API_KEY = process.env.SERPAPI_API_KEY;
 const SERPAPI_API_URL = process.env.SERPAPI_API_URL || "https://serpapi.com/search.json";
 
-export async function POST(req: NextRequest) {
+async function POST_handler(req: NextRequest) {
   try {
     const parsed = await parseJsonBody(req, searchSchema, {
       logPrefix: "search",
@@ -176,3 +177,5 @@ export async function POST(req: NextRequest) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "search.POST" });

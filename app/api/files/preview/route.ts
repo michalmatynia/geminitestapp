@@ -7,8 +7,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getImageFileRepository } from "@/lib/services/image-file-repository";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
-export async function GET(req: NextRequest) {
+async function GET_handler(req: NextRequest) {
   const fileId = req.nextUrl.searchParams.get("fileId");
 
   if (!fileId) {
@@ -54,3 +55,5 @@ export async function GET(req: NextRequest) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "files.preview.GET" });

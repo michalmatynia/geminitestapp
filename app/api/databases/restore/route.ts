@@ -24,6 +24,7 @@ import {
   getMongoRestoreCommand,
   execFileAsync as mongoExecFileAsync,
 } from "../_utils-mongo";
+import { apiHandler } from "@/lib/api/api-handler";
 
 type ExecOutputishError = {
   stdout?: string;
@@ -34,7 +35,7 @@ type ExecOutputishError = {
   };
 };
 
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   let stage = "parse";
   let backupName: string | null = null;
   let truncateBeforeRestore = false;
@@ -308,3 +309,5 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "databases.restore.POST" });

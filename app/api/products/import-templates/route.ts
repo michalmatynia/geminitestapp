@@ -6,6 +6,7 @@ import {
 } from "@/lib/services/import-template-repository";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
+import { apiHandler } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,7 +22,7 @@ const templateSchema = z.object({
   mappings: z.array(mappingSchema).default([]),
 });
 
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   try {
     const templates = await listImportTemplates();
     return NextResponse.json(templates);
@@ -34,7 +35,7 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, templateSchema, {
       logPrefix: "import-templates.POST",
@@ -57,3 +58,6 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "products.import-templates.GET" });
+export const POST = apiHandler(POST_handler, { source: "products.import-templates.POST" });

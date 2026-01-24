@@ -6,6 +6,7 @@ import { getIntegrationRepository } from "@/lib/services/integration-repository"
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { badRequestError, conflictError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const createListingSchema = z.object({
   integrationId: z.string().min(1),
@@ -16,7 +17,7 @@ const createListingSchema = z.object({
  * GET /api/products/[id]/listings
  * Fetches all listings for a specific product.
  */
-export async function GET(
+async function GET_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -41,7 +42,7 @@ export async function GET(
  * POST /api/products/[id]/listings
  * Creates a new listing for a product on a marketplace.
  */
-export async function POST(
+async function POST_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -112,3 +113,6 @@ export async function POST(
     });
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].listings.GET" });
+export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].listings.POST" });

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { parseJsonBody } from "@/lib/api/parse-json";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 const pageCreateSchema = z.object({
   name: z.string().trim().min(1),
@@ -12,7 +14,7 @@ const pageCreateSchema = z.object({
  * GET /api/cms/pages
  * Fetches a list of all pages.
  */
-export async function GET() {
+async function GET_handler() {
   try {
     const pages = await prisma.page.findMany({
       include: {
@@ -28,10 +30,10 @@ export async function GET() {
     });
     return NextResponse.json(pages);
   } catch (_error) {
-    return NextResponse.json(
-      { error: "Failed to fetch pages" },
-      { status: 500 }
-    );
+    return createErrorResponse(_error, {
+      source: "cms.pages.GET",
+      fallbackMessage: "Failed to fetch pages",
+    });
   }
 }
 
@@ -39,7 +41,7 @@ export async function GET() {
  * POST /api/cms/pages
  * Creates a new page.
  */
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, pageCreateSchema, {
       logPrefix: "cms-pages",
@@ -62,9 +64,12 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(newPage);
   } catch (_error) {
-    return NextResponse.json(
-      { error: "Failed to create page" },
-      { status: 500 }
-    );
+    return createErrorResponse(_error, {
+      source: "cms.pages.POST",
+      fallbackMessage: "Failed to create page",
+    });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "cms.pages.GET" });
+export const POST = apiHandler(POST_handler, { source: "cms.pages.POST" });

@@ -2,14 +2,9 @@ import { NextResponse } from "next/server";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { decryptSecret, encryptSecret } from "@/lib/utils/encryption";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
-import {
-  AppErrorCodes,
-  authError,
-  conflictError,
-  createAppError,
-  forbiddenError,
-  notFoundError,
-} from "@/lib/errors/app-error";
+import { AppErrorCodes, createAppError } from "@/lib/errors/app-error";
+import { mapStatusToAppError } from "@/lib/errors/error-mapper";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 type TestLogEntry = {
   step: string;
@@ -32,7 +27,7 @@ const SANDBOX_TOKEN_URL =
  * POST /api/integrations/[id]/connections/[connectionId]/allegro/test
  * Tests Allegro API access using stored credentials.
  */
-export async function POST(
+async function POST_handler(
   req: Request,
   { params }: { params: Promise<{ id: string; connectionId: string }> }
 ) {
@@ -53,43 +48,10 @@ export async function POST(
     });
   };
 
-  const toAppError = (message: string, status: number) => {
-    if (status === 401) return authError(message);
-    if (status === 403) return forbiddenError(message);
-    if (status === 404) return notFoundError(message);
-    if (status === 409) return conflictError(message);
-    if (status === 429) {
-      return createAppError(message, {
-        code: AppErrorCodes.rateLimited,
-        httpStatus: status,
-        expected: true,
-      });
-    }
-    if (status >= 500) {
-      return createAppError(message, {
-        code: AppErrorCodes.externalService,
-        httpStatus: status,
-        expected: false,
-      });
-    }
-    if (status >= 400) {
-      return createAppError(message, {
-        code: AppErrorCodes.badRequest,
-        httpStatus: status,
-        expected: true,
-      });
-    }
-    return createAppError(message, {
-      code: AppErrorCodes.internal,
-      httpStatus: 500,
-      expected: false,
-    });
-  };
-
   const fail = (step: string, detail: string, status = 400) => {
     const safeDetail = detail?.trim() ? detail : "Unknown error";
     pushStep(step, "failed", safeDetail);
-    return createErrorResponse(toAppError(safeDetail, status), {
+    return createErrorResponse(mapStatusToAppError(safeDetail, status), {
       request: req,
       source: "integrations.allegro.test.POST",
       fallbackMessage: safeDetail,
@@ -292,3 +254,5 @@ export async function POST(
     });
   }
 }
+
+export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.test.POST" });

@@ -12,6 +12,7 @@ import {
 } from "@/lib/services/auth-security";
 import { getAuthUserPageSettings } from "@/lib/services/auth-settings";
 import { createLoginChallenge } from "@/lib/services/auth-login-challenge";
+import { apiHandler } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -20,7 +21,7 @@ const payloadSchema = z.object({
   password: z.string().min(1),
 });
 
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, payloadSchema, {
       logPrefix: "auth.verify.POST",
@@ -124,3 +125,5 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "auth.verify-credentials.POST" });

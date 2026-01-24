@@ -5,6 +5,7 @@ import { encryptSecret } from "@/lib/utils/encryption";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { badRequestError, conflictError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const createConnectionSchema = z
   .object({
@@ -18,7 +19,7 @@ const createConnectionSchema = z
  * GET /api/integrations/[id]/connections
  * Fetch connections for an integration.
  */
-export async function GET(
+async function GET_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -89,7 +90,7 @@ export async function GET(
  * POST /api/integrations/[id]/connections
  * Create a new connection for an integration.
  */
-export async function POST(
+async function POST_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -168,3 +169,6 @@ export async function POST(
     });
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.GET" });
+export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.POST" });

@@ -17,7 +17,7 @@ import { ProductModals } from "./components/ProductModals";
 import { ProductWithImages } from "@/types";
 import { useToast } from "@/components/ui/toast";
 import { logger } from "@/lib/logger";
-import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
+import type { ColumnDef, RowSelectionState, OnChangeFn } from "@tanstack/react-table";
 import type { ProductDraft } from "@/types/drafts";
 import type { Catalog } from "@/types/products";
 import type { PriceGroupWithDetails } from "@/types";
@@ -337,41 +337,38 @@ function AdminPageInner() {
     }
   }, [search, sku, minPrice, maxPrice, startDate, endDate, catalogFilter, toast, isDebugOpen]);
 
-  const handleMassDelete = useCallback(() => {
-    const run = async () => {
-      logger.log("Mass delete initiated.");
-      const selectedProductIds = Object.keys(rowSelection).filter(
-        (id) => rowSelection[id]
-      );
+  const handleMassDelete = useCallback(async () => {
+    logger.log("Mass delete initiated.");
+    const selectedProductIds = Object.keys(rowSelection).filter(
+      (id) => rowSelection[id]
+    );
 
-      if (selectedProductIds.length === 0) return;
+    if (selectedProductIds.length === 0) return;
 
-      if (
-        window.confirm(
-          `Are you sure you want to delete ${selectedProductIds.length} selected products?`
-        )
-      ) {
-        try {
-          const deletePromises = selectedProductIds.map((id) =>
-            fetch(`/api/products/${id}`, { method: "DELETE" })
-          );
-          const results = await Promise.all(deletePromises);
-          const failedDeletions = results.filter((res) => !res.ok);
+    if (
+      window.confirm(
+        `Are you sure you want to delete ${selectedProductIds.length} selected products?`
+      )
+    ) {
+      try {
+        const deletePromises = selectedProductIds.map((id) =>
+          fetch(`/api/products/${id}`, { method: "DELETE" })
+        );
+        const results = await Promise.all(deletePromises);
+        const failedDeletions = results.filter((res) => !res.ok);
 
-          if (failedDeletions.length > 0) {
-            setActionError("Some products could not be deleted.");
-          } else {
-            toast("Selected products deleted successfully.", { variant: "success" });
-          }
-          setRowSelection({});
-          setRefreshTrigger((prev) => prev + 1);
-        } catch (error) {
-          logger.error("Error during mass deletion:", error);
-          setActionError("An error occurred during deletion.");
+        if (failedDeletions.length > 0) {
+          setActionError("Some products could not be deleted.");
+        } else {
+          toast("Selected products deleted successfully.", { variant: "success" });
         }
+        setRowSelection({});
+        setRefreshTrigger((prev) => prev + 1);
+      } catch (error) {
+        logger.error("Error during mass deletion:", error);
+        setActionError("An error occurred during deletion.");
       }
-    };
-    void run();
+    }
   }, [rowSelection, setActionError, toast]);
 
   useEffect(() => {
@@ -445,7 +442,7 @@ function AdminPageInner() {
         setRowSelection={setRowSelection}
         onSelectAllGlobal={handleSelectAllGlobal}
         loadingGlobal={loadingGlobalSelection}
-        onDeleteSelected={() => void handleMassDelete()}
+        onDeleteSelected={handleMassDelete}
         onAddToMarketplace={handleAddToMarketplace}
         handleProductsTableRender={handleProductsTableRender}
         tableColumns={columns}
@@ -535,10 +532,10 @@ type ProductListPanelProps = {
   setEndDate: (value: string) => void;
   data: ProductWithImages[];
   rowSelection: RowSelectionState;
-  setRowSelection: (value: RowSelectionState) => void;
-  onSelectAllGlobal: () => void;
+  setRowSelection: OnChangeFn<RowSelectionState>;
+  onSelectAllGlobal: () => Promise<void>;
   loadingGlobal: boolean;
-  onDeleteSelected: () => void;
+  onDeleteSelected: () => Promise<void>;
   onAddToMarketplace: () => void;
   handleProductsTableRender: ProfilerOnRenderCallback;
   tableColumns: ColumnDef<ProductWithImages>[];

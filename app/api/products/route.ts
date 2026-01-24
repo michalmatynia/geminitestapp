@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 import { productService } from "@/lib/services/productService";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 /**
  * GET /api/products
  * Fetches a list of products with optional filters.
  */
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   const { searchParams } = new URL(req.url);
   const filters = Object.fromEntries(searchParams.entries());
 
@@ -27,7 +28,7 @@ export async function GET(req: Request) {
  * POST /api/products
  * Creates a new product.
  */
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     let formData: FormData;
     try {
@@ -55,3 +56,6 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "products.GET" });
+export const POST = apiHandler(POST_handler, { source: "products.POST" });

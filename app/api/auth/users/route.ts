@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { authError, internalError } from "@/lib/errors/app-error";
 import type { AuthUserSummary } from "@/types/auth";
+import { apiHandler } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -19,7 +20,7 @@ type MongoUserDoc = {
   createdAt?: Date | null;
 };
 
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   try {
     const session = await auth();
     const hasAccess =
@@ -90,3 +91,5 @@ export async function GET(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "auth.users.GET" });

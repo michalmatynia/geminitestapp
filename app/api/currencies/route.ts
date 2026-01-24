@@ -10,6 +10,7 @@ import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { conflictError, internalError } from "@/lib/errors/app-error";
 import { logSystemEvent } from "@/lib/services/system-logger";
+import { apiHandler } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -57,7 +58,7 @@ const seedMongoCurrencies = async (db: Awaited<ReturnType<typeof getMongoDb>>) =
  * GET /api/currencies
  * Fetches all currencies (and ensures defaults exist).
  */
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   try {
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
@@ -105,7 +106,7 @@ export async function GET(req: Request) {
  * POST /api/currencies
  * Creates a currency.
  */
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, currencySchema, {
       logPrefix: "currencies.POST",
@@ -166,3 +167,6 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "currencies.GET" });
+export const POST = apiHandler(POST_handler, { source: "currencies.POST" });

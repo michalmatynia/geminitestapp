@@ -5,12 +5,13 @@ import { tagCreateSchema } from "@/lib/validations/notes";
 import { removeUndefined } from "@/lib/utils";
 import type { TagCreateInput } from "@/types/notes";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 /**
  * GET /api/notes/tags
  * Fetches all tags.
  */
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const notebookIdParam = searchParams.get("notebookId");
@@ -32,7 +33,7 @@ export async function GET(req: Request) {
  * POST /api/notes/tags
  * Creates a new tag.
  */
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, tagCreateSchema, {
       logPrefix: "tags.POST",
@@ -56,3 +57,6 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "notes.tags.GET" });
+export const POST = apiHandler(POST_handler, { source: "notes.tags.POST" });

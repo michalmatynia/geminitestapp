@@ -10,6 +10,7 @@ import {
   notFoundError,
   duplicateEntryError,
 } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 type CurrencyDoc = {
   id: string;
@@ -43,7 +44,7 @@ const currencySchema = z.object({
  * PUT /api/currencies/[id]
  * Updates a currency.
  */
-export async function PUT(
+async function PUT_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -120,7 +121,7 @@ export async function PUT(
  * DELETE /api/currencies/[id]
  * Deletes a currency.
  */
-export async function DELETE(
+async function DELETE_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -159,3 +160,6 @@ export async function DELETE(
     });
   }
 }
+
+export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "currencies.[id].PUT" });
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "currencies.[id].DELETE" });

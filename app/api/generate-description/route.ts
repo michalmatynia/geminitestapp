@@ -3,11 +3,12 @@ import { generateProductDescription } from "@/lib/services/aiDescriptionService"
 import type { ProductFormData } from "@/types";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { validationError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 /**
  * POST /api/generate-description
  */
-export async function POST(req: NextRequest) {
+async function POST_handler(req: NextRequest) {
   try {
     const body = (await req.json()) as {
       productData?: ProductFormData;
@@ -42,3 +43,5 @@ export async function POST(req: NextRequest) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "generate-description.POST" });

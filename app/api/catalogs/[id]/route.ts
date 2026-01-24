@@ -5,6 +5,7 @@ import { removeUndefined } from "@/lib/utils";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { badRequestError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const catalogUpdateSchema = z.object({
   name: z.string().trim().min(1).optional(),
@@ -20,7 +21,7 @@ const catalogUpdateSchema = z.object({
  * PUT /api/catalogs/[id]
  * Updates a catalog.
  */
-export async function PUT(
+async function PUT_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -91,7 +92,7 @@ export async function PUT(
  * DELETE /api/catalogs/[id]
  * Deletes a catalog.
  */
-export async function DELETE(
+async function DELETE_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -114,3 +115,6 @@ export async function DELETE(
     });
   }
 }
+
+export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "catalogs.[id].PUT" });
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "catalogs.[id].DELETE" });

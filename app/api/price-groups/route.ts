@@ -8,6 +8,7 @@ import { fallbackCurrencies } from "@/lib/internationalizationFallback";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { conflictError, internalError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 const priceGroupSchema = z
   .object({
@@ -105,7 +106,7 @@ const resolveCurrency = (
  * GET /api/price-groups
  * Fetches all price groups with currency details.
  */
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   try {
     const provider = await getProductDataProvider();
     if (provider === "mongodb") {
@@ -227,7 +228,7 @@ export async function GET(req: Request) {
  * POST /api/price-groups
  * Creates a price group and enforces a single default group.
  */
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, priceGroupSchema, {
       logPrefix: "priceGroups.POST",
@@ -316,3 +317,6 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "price-groups.GET" });
+export const POST = apiHandler(POST_handler, { source: "price-groups.POST" });

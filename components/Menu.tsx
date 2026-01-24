@@ -243,6 +243,18 @@ export default function Menu() {
           Notifications
         </Link>
         <Link
+          href="/admin/settings/logging"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Logging
+        </Link>
+        <Link
+          href="/admin/settings/recovery"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Transient Recovery
+        </Link>
+        <Link
           href="/admin/settings/database"
           className="block hover:bg-gray-700 p-2 rounded"
         >

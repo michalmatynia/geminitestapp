@@ -9,6 +9,7 @@ import {
   externalServiceError,
   internalError,
 } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -70,7 +71,7 @@ const cleanupChatbotTemp = async () => {
   }
 };
 
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   const requestStart = Date.now();
 
   try {
@@ -112,7 +113,7 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   const tempFiles: string[] = [];
   const tempDirs: string[] = [];
   const requestStart = Date.now(); // total request timer
@@ -414,3 +415,6 @@ export async function POST(req: Request) {
     }
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "chatbot.GET" });
+export const POST = apiHandler(POST_handler, { source: "chatbot.POST" });

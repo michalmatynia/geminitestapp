@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { productService } from "@/lib/services/productService";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 /**
  * GET /api/public/products/[id]
  * Fetches a single product by its ID for public consumption.
  */
-export async function GET(
+async function GET_handler(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -13,16 +16,17 @@ export async function GET(
     const { id } = await params;
     const product = await productService.getProductById(id);
     if (!product) {
-      return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 }
-      );
+      return createErrorResponse(notFoundError("Product not found"), {
+        source: "public.products.GET",
+      });
     }
     return NextResponse.json(product);
   } catch (_error) {
-    return NextResponse.json(
-      { error: "Failed to fetch product" },
-      { status: 500 }
-    );
+    return createErrorResponse(_error, {
+      source: "public.products.GET",
+      fallbackMessage: "Failed to fetch product",
+    });
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "public.products.[id].GET" });

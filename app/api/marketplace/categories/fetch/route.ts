@@ -4,6 +4,7 @@ import { fetchBaseCategories } from "@/lib/services/imports/base-client";
 import { getExternalCategoryRepository } from "@/lib/services/external-category-repository";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 type FetchCategoriesRequest = {
   connectionId: string;
@@ -14,7 +15,7 @@ type FetchCategoriesRequest = {
  * Fetches categories from the marketplace API and stores them locally.
  * Currently supports Base.com (BaseLinker).
  */
-export async function POST(request: NextRequest) {
+async function POST_handler(request: NextRequest) {
   try {
     const body = (await request.json()) as FetchCategoriesRequest;
     const { connectionId } = body;
@@ -73,3 +74,5 @@ export async function POST(request: NextRequest) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "marketplace.categories.fetch.POST" });

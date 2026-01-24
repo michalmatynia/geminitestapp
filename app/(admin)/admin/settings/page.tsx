@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BellIcon, SparklesIcon, ArrowRightIcon, Database } from "lucide-react";
+import { BellIcon, SparklesIcon, ArrowRightIcon, Database, Radar, Activity } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -43,6 +43,24 @@ const settings: SettingsOption[] = [
     color: "amber",
     bgColor: "bg-amber-500/10",
   },
+  {
+    id: "logging",
+    href: "/admin/settings/logging",
+    icon: Radar,
+    title: "Logging",
+    description: "Configure client logging context and tags.",
+    color: "violet",
+    bgColor: "bg-violet-500/10",
+  },
+  {
+    id: "recovery",
+    href: "/admin/settings/recovery",
+    icon: Activity,
+    title: "Transient Recovery",
+    description: "Control retry and circuit-breaker thresholds.",
+    color: "cyan",
+    bgColor: "bg-cyan-500/10",
+  },
 ];
 
 const colorClasses: Record<string, { border: string; text: string }> = {
@@ -57,6 +75,14 @@ const colorClasses: Record<string, { border: string; text: string }> = {
   amber: {
     border: "group-hover:border-amber-500/50",
     text: "text-amber-400",
+  },
+  violet: {
+    border: "group-hover:border-violet-500/50",
+    text: "text-violet-400",
+  },
+  cyan: {
+    border: "group-hover:border-cyan-500/50",
+    text: "text-cyan-400",
   },
 };
 

@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { productService } from "@/lib/services/productService";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 /**
  * GET /api/products/count
  * Returns the total number of products based on filters.
  */
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   const { searchParams } = new URL(req.url);
   const filters = Object.fromEntries(searchParams.entries());
 
@@ -21,3 +22,5 @@ export async function GET(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "products.count.GET" });

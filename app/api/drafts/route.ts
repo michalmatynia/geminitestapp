@@ -4,6 +4,7 @@ import { listDrafts, createDraft } from "@/lib/services/draft-repository";
 import type { CreateProductDraftInput } from "@/types/drafts";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
+import { apiHandler } from "@/lib/api/api-handler";
 
 const createDraftSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -49,7 +50,7 @@ const createDraftSchema = z.object({
  * GET /api/drafts
  * List all product drafts
  */
-export async function GET(req: NextRequest) {
+async function GET_handler(req: NextRequest) {
   try {
     const drafts = await listDrafts();
     return NextResponse.json(drafts);
@@ -66,7 +67,7 @@ export async function GET(req: NextRequest) {
  * POST /api/drafts
  * Create a new product draft
  */
-export async function POST(req: NextRequest) {
+async function POST_handler(req: NextRequest) {
   try {
     const parsed = await parseJsonBody(req, createDraftSchema, {
       logPrefix: "drafts.POST",
@@ -85,3 +86,6 @@ export async function POST(req: NextRequest) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "drafts.GET" });
+export const POST = apiHandler(POST_handler, { source: "drafts.POST" });

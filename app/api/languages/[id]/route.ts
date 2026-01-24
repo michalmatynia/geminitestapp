@@ -7,6 +7,7 @@ import { getMongoDb } from "@/lib/db/mongo-client";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { badRequestError, internalError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -42,7 +43,7 @@ const LANGUAGES_COLLECTION = "languages";
  * PUT /api/languages/[id]
  * Updates language country assignments.
  */
-export async function PUT(
+async function PUT_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -192,7 +193,7 @@ export async function PUT(
  * DELETE /api/languages/[id]
  * Deletes a language and its assignments.
  */
-export async function DELETE(
+async function DELETE_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -212,7 +213,7 @@ export async function DELETE(
       // Remove language from any catalogs that reference it
       await mongo.collection("catalogs").updateMany(
         { languageIds: id },
-        { $pull: { languageIds: id } } as UpdateFilter<Document>
+        { $pull: { languageIds: id } } as any
       );
 
       // Delete the language
@@ -249,3 +250,6 @@ export async function DELETE(
     });
   }
 }
+
+export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "languages.[id].PUT" });
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "languages.[id].DELETE" });

@@ -11,6 +11,7 @@ import {
   notFoundError,
   duplicateEntryError,
 } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const priceGroupSchema = z
   .object({
@@ -108,7 +109,7 @@ const resolveCurrency = (
  * PUT /api/price-groups/[id]
  * Updates a price group and enforces a single default group.
  */
-export async function PUT(
+async function PUT_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -211,7 +212,7 @@ export async function PUT(
  * DELETE /api/price-groups/[id]
  * Deletes a price group.
  */
-export async function DELETE(
+async function DELETE_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -247,3 +248,6 @@ export async function DELETE(
     });
   }
 }
+
+export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "price-groups.[id].PUT" });
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "price-groups.[id].DELETE" });

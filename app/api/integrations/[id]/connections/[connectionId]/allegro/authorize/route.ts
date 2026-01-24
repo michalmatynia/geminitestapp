@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const PROD_AUTH_URL =
   process.env.ALLEGRO_AUTH_URL ?? "https://allegro.pl/auth/oauth/authorize";
@@ -10,7 +11,7 @@ const SANDBOX_AUTH_URL =
   process.env.ALLEGRO_SANDBOX_AUTH_URL ??
   "https://allegro.pl.allegrosandbox.pl/auth/oauth/authorize";
 
-export async function GET(
+async function GET_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; connectionId: string }> }
 ) {
@@ -81,3 +82,5 @@ export async function GET(
     });
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.authorize.GET" });

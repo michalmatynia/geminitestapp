@@ -3,6 +3,7 @@ import { deleteNoteFile } from "@/lib/utils/fileUploader";
 import { noteService } from "@/lib/services/noteService";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError, internalError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const MAX_SLOT_INDEX = 9;
 
@@ -10,7 +11,7 @@ const MAX_SLOT_INDEX = 9;
  * DELETE /api/notes/[id]/files/[slotIndex]
  * Delete a file from a specific slot
  */
-export async function DELETE(
+async function DELETE_handler(
   req: Request,
   { params }: { params: Promise<{ id: string; slotIndex: string }> }
 ) {
@@ -46,3 +47,5 @@ export async function DELETE(
     });
   }
 }
+
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].files.[slotIndex].DELETE" });

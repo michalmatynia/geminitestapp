@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { productService } from "@/lib/services/productService";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 type Params = { id: string; imageFileId: string };
 type Ctx = { params: Params | Promise<Params> };
@@ -14,7 +15,7 @@ async function getParams(ctx: Ctx): Promise<Params> {
  * DELETE /api/products/[id]/images/[imageFileId]
  * Unlinks an image from a product.
  */
-export async function DELETE(req: NextRequest, ctx: Ctx) {
+async function DELETE_handler(req: NextRequest, ctx: Ctx) {
   let productId: string | undefined;
   let imageFileId: string | undefined;
 
@@ -41,3 +42,5 @@ export async function DELETE(req: NextRequest, ctx: Ctx) {
     });
   }
 }
+
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].images.[imageFileId].DELETE" });

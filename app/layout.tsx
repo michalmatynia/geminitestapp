@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import ClientErrorReporter from "@/components/ClientErrorReporter";
+import { SessionProvider } from "next-auth/react";
 import { cn } from "@/lib/utils";
 
 import "./globals.css";
@@ -25,17 +26,19 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={cn(inter.className)}>
         <QueryProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <ToastProvider>
-              <ClientErrorReporter />
-              {children}
-            </ToastProvider>
-          </ThemeProvider>
+          <SessionProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <ToastProvider>
+                <ClientErrorReporter />
+                {children}
+              </ToastProvider>
+            </ThemeProvider>
+          </SessionProvider>
         </QueryProvider>
       </body>
     </html>

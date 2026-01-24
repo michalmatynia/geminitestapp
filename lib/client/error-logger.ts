@@ -54,6 +54,11 @@ const buildPayload = (
   const payload: ClientErrorPayload = {
     message: "Unknown client error",
     timestamp: new Date().toISOString(),
+    ...(typeof window !== "undefined"
+      ? { url: window.location.href, userAgent: navigator.userAgent }
+      : {}),
+    ...(extra?.digest ? { digest: extra.digest } : {}),
+    ...(extra?.componentStack ? { componentStack: extra.componentStack } : {}),
   };
 
   if (error instanceof Error) {
@@ -63,23 +68,19 @@ const buildPayload = (
   } else if (typeof error === "string") {
     payload.message = error;
   } else if (error && typeof error === "object") {
-    payload.message = (error as { message?: string }).message ?? "Unknown client error";
-    payload.name = (error as { name?: string }).name;
+    payload.message =
+      (error as { message?: string }).message ?? "Unknown client error";
+    const errorName = (error as { name?: string }).name;
+    if (errorName) payload.name = errorName;
   }
 
-  if (typeof window !== "undefined") {
-    payload.url = window.location.href;
-    payload.userAgent = navigator.userAgent;
-  }
-
-  if (extra?.digest) payload.digest = extra.digest;
-  if (extra?.componentStack) payload.componentStack = extra.componentStack;
   const mergedContext =
     extra?.context || Object.keys(baseContext).length > 0
       ? { ...baseContext, ...(extra?.context ?? {}) }
       : null;
   if (mergedContext) {
-    payload.context = safeSerialize(mergedContext);
+    const serialized = safeSerialize(mergedContext);
+    if (serialized) payload.context = serialized as ClientErrorContext;
   }
 
   return payload;

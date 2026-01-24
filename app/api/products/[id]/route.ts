@@ -4,12 +4,13 @@ import { z } from "zod";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/lib/errors/app-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 /**
  * GET /api/products/[id]
  * Fetches a single product by its ID.
  */
-export async function GET(
+async function GET_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -38,7 +39,7 @@ export async function GET(
  * PUT /api/products/[id]
  * Updates an existing product.
  */
-export async function PUT(
+async function PUT_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -81,7 +82,7 @@ const patchProductSchema = z.object({
  * PATCH /api/products/[id]
  * Partially updates a product (for quick field edits like price/stock).
  */
-export async function PATCH(
+async function PATCH_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -129,7 +130,7 @@ export async function PATCH(
  * DELETE /api/products/[id]
  * Deletes a product.
  */
-export async function DELETE(
+async function DELETE_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -153,3 +154,8 @@ export async function DELETE(
     });
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].GET" });
+export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].PUT" });
+export const PATCH = apiHandlerWithParams<any>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].PATCH" });
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].DELETE" });

@@ -2,6 +2,7 @@ import path from "path";
 import { promises as fs } from "fs";
 import { NextResponse } from "next/server";
 import { DatabaseInfo } from "@/components/database-columns";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
 
 import {
   backupsDir as pgBackupsDir,
@@ -11,6 +12,7 @@ import {
   backupsDir as mongoBackupsDir,
   ensureBackupsDir as ensureMongoBackupsDir,
 } from "../_utils-mongo";
+import { apiHandler } from "@/lib/api/api-handler";
 
 async function getBackups(type: "postgresql" | "mongodb"): Promise<DatabaseInfo[]> {
   const backupsDir = type === "mongodb" ? mongoBackupsDir : pgBackupsDir;
@@ -53,7 +55,7 @@ async function getBackups(type: "postgresql" | "mongodb"): Promise<DatabaseInfo[
   return backups;
 }
 
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const type = (searchParams.get("type") as "postgresql" | "mongodb") || "postgresql";
@@ -62,9 +64,12 @@ export async function GET(req: Request) {
     return NextResponse.json(backups);
   } catch (error) {
     console.error("Failed to list backups:", error);
-    return NextResponse.json(
-      { error: "Failed to list backups" },
-      { status: 500 }
-    );
+    return createErrorResponse(error, {
+      request: req,
+      source: "databases.backups.GET",
+      fallbackMessage: "Failed to list backups",
+    });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "databases.backups.GET" });

@@ -5,6 +5,7 @@ import { parseJsonBody } from "@/lib/api/parse-json";
 import { Prisma } from "@prisma/client";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 type Params = { id: string };
 type Ctx = { params: Params | Promise<Params> };
@@ -23,7 +24,7 @@ const blockUpdateSchema = z.object({
  * GET /api/cms/blocks/[id]
  * Fetches a single block by its ID.
  */
-export async function GET(req: NextRequest, ctx: Ctx) {
+async function GET_handler(req: NextRequest, ctx: Ctx) {
   try {
     const { id } = await getParams(ctx);
 
@@ -49,7 +50,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
  * PUT /api/cms/blocks/[id]
  * Updates a block.
  */
-export async function PUT(req: NextRequest, ctx: Ctx) {
+async function PUT_handler(req: NextRequest, ctx: Ctx) {
   try {
     const { id } = await getParams(ctx);
 
@@ -83,7 +84,7 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
  * DELETE /api/cms/blocks/[id]
  * Deletes a block.
  */
-export async function DELETE(req: NextRequest, ctx: Ctx) {
+async function DELETE_handler(req: NextRequest, ctx: Ctx) {
   try {
     const { id } = await getParams(ctx);
 
@@ -100,3 +101,7 @@ export async function DELETE(req: NextRequest, ctx: Ctx) {
     });
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "cms.blocks.[id].GET" });
+export const PUT = apiHandlerWithParams<any>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "cms.blocks.[id].PUT" });
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "cms.blocks.[id].DELETE" });

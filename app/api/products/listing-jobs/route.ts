@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 import { getProductListingRepository } from "@/lib/services/product-listing-repository";
 import { getProductRepository } from "@/lib/services/product-repository";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 /**
  * GET /api/products/listing-jobs
  * Fetches all product listing jobs with product details
  */
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   try {
     const listingRepo = await getProductListingRepository();
     const productRepo = await getProductRepository();
@@ -59,3 +60,5 @@ export async function GET(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "products.listing-jobs.GET" });

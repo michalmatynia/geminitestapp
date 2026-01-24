@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getIntegrationRepository } from "@/lib/services/integration-repository";
 import { decryptSecret, encryptSecret } from "@/lib/utils/encryption";
 import { logSystemEvent } from "@/lib/services/system-logger";
+import { mapErrorToAppError } from "@/lib/errors/error-mapper";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const PROD_TOKEN_URL =
   process.env.ALLEGRO_TOKEN_URL ?? "https://allegro.pl/auth/oauth/token";
@@ -26,7 +28,7 @@ const toErrorRedirect = (origin: string, reason: string) => {
   return url.toString();
 };
 
-export async function GET(
+async function GET_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; connectionId: string }> }
 ) {
@@ -144,19 +146,32 @@ export async function GET(
 
     return response;
   } catch (error) {
+    const mapped = mapErrorToAppError(error, "Allegro authorization failed.");
+    const message = mapped?.message ?? "Allegro OAuth callback failed";
     void logSystemEvent({
-      level: "error",
-      message: "Allegro OAuth callback failed",
+      level: mapped?.expected ? "warn" : "error",
+      message,
       source: "integrations.allegro.callback.GET",
       error,
       request: req,
       context: {
         integrationId,
         connectionId,
+        ...(mapped
+          ? {
+              code: mapped.code,
+              httpStatus: mapped.httpStatus,
+              expected: mapped.expected,
+              critical: mapped.critical,
+              retryable: mapped.retryable,
+            }
+          : {}),
       },
     });
     return NextResponse.redirect(
-      toErrorRedirect(requestUrl.origin, "Allegro authorization failed.")
+      toErrorRedirect(requestUrl.origin, message)
     );
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.callback.GET" });

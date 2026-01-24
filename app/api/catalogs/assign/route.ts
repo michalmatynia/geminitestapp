@@ -5,6 +5,7 @@ import { getProductRepository } from "@/lib/services/product-repository";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { badRequestError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 const assignSchema = z.object({
   productIds: z.array(z.string().trim().min(1)).min(1),
@@ -16,7 +17,7 @@ const assignSchema = z.object({
  * POST /api/catalogs/assign
  * Bulk assigns catalogs to products.
  */
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, assignSchema, {
       logPrefix: "catalogs.ASSIGN",
@@ -78,3 +79,5 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "catalogs.assign.POST" });

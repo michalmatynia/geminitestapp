@@ -4,6 +4,7 @@ import { productService } from "@/lib/services/productService";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const duplicateSchema = z.object({
   sku: z.string().trim().optional(),
@@ -13,7 +14,7 @@ const duplicateSchema = z.object({
  * POST /api/products/[id]/duplicate
  * Duplicates a product with a new SKU.
  */
-export async function POST(
+async function POST_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -45,3 +46,5 @@ export async function POST(
     });
   }
 }
+
+export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].duplicate.POST" });

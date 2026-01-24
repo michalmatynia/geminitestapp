@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { badRequestError, internalError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -12,7 +13,7 @@ const messageSchema = z.object({
   content: z.string().trim().min(1),
 });
 
-export async function GET(
+async function GET_handler(
   req: Request,
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
@@ -58,7 +59,7 @@ export async function GET(
   }
 }
 
-export async function POST(
+async function POST_handler(
   req: Request,
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
@@ -130,3 +131,6 @@ export async function POST(
     });
   }
 }
+
+export const GET = apiHandlerWithParams<any>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.sessions.[sessionId].messages.GET" });
+export const POST = apiHandlerWithParams<any>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.sessions.[sessionId].messages.POST" });

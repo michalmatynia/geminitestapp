@@ -5,12 +5,13 @@ import { getProductRepository } from "@/lib/services/product-repository";
 import { productCreateSchema } from "@/lib/validations/product";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
 interface CsvRow {
   [key: string]: string;
 }
 
-export async function POST(req: NextRequest) {
+async function POST_handler(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File;
@@ -55,3 +56,5 @@ export async function POST(req: NextRequest) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "import.POST" });

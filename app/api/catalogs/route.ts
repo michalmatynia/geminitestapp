@@ -8,6 +8,7 @@ import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { badRequestError } from "@/lib/errors/app-error";
 import { logSystemEvent } from "@/lib/services/system-logger";
+import { apiHandler } from "@/lib/api/api-handler";
 
 const catalogSchema = z.object({
   name: z.string().trim().min(1),
@@ -23,7 +24,7 @@ const catalogSchema = z.object({
  * GET /api/catalogs
  * Fetches all catalogs.
  */
-export async function GET(req: Request) {
+async function GET_handler(req: Request) {
   try {
     const catalogRepository = await getCatalogRepository();
     let catalogs = await catalogRepository.listCatalogs();
@@ -146,7 +147,7 @@ export async function GET(req: Request) {
  * POST /api/catalogs
  * Creates a catalog.
  */
-export async function POST(req: Request) {
+async function POST_handler(req: Request) {
   try {
     const parsed = await parseJsonBody(req, catalogSchema, {
       logPrefix: "catalogs.POST",
@@ -205,3 +206,6 @@ export async function POST(req: Request) {
     });
   }
 }
+
+export const GET = apiHandler(GET_handler, { source: "catalogs.GET" });
+export const POST = apiHandler(POST_handler, { source: "catalogs.POST" });

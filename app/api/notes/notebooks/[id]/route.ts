@@ -4,12 +4,13 @@ import { parseJsonBody } from "@/lib/api/parse-json";
 import { notebookUpdateSchema } from "@/lib/validations/notes";
 import { removeUndefined } from "@/lib/utils";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
 
 /**
  * PATCH /api/notes/notebooks/[id]
  * Updates a notebook.
  */
-export async function PATCH(
+async function PATCH_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -37,7 +38,7 @@ export async function PATCH(
  * DELETE /api/notes/notebooks/[id]
  * Deletes a notebook (and its notes/tags/categories).
  */
-export async function DELETE(
+async function DELETE_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -53,3 +54,6 @@ export async function DELETE(
     });
   }
 }
+
+export const PATCH = apiHandlerWithParams<any>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "notes.notebooks.[id].PATCH" });
+export const DELETE = apiHandlerWithParams<any>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.notebooks.[id].DELETE" });

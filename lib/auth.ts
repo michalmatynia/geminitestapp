@@ -281,30 +281,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
       callbacks: {
         ...(authConfig.callbacks ?? {}),
         async jwt({ token, user }) {
-          const userId = user?.id ?? token.sub;
+          const userId = user?.id ?? (token as any).sub;
           if (userId) {
             const access = await getAuthAccessForUser(userId);
-            token.role = access.roleId;
-            token.permissions = access.permissions;
-            token.roleLevel = access.level;
-            token.isElevated = access.isElevated;
+            (token as any).role = access.roleId;
+            (token as any).permissions = access.permissions;
+            (token as any).roleLevel = access.level;
+            (token as any).isElevated = access.isElevated;
             const security = await getAuthSecurityProfile(userId);
-            token.accountDisabled = Boolean(security.disabledAt);
-            token.accountBanned = Boolean(security.bannedAt);
+            (token as any).accountDisabled = Boolean(security.disabledAt);
+            (token as any).accountBanned = Boolean(security.bannedAt);
           }
           return token;
         },
         async session({ session, token }) {
           if (session.user) {
-            session.user.id = token.sub ?? session.user.id;
-            session.user.role = token.role ?? null;
-            session.user.permissions = token.permissions ?? [];
-            session.user.roleLevel = (token as { roleLevel?: number }).roleLevel ?? null;
-            session.user.isElevated = (token as { isElevated?: boolean }).isElevated ?? false;
-            session.user.accountDisabled =
-              (token as { accountDisabled?: boolean }).accountDisabled ?? false;
-            session.user.accountBanned =
-              (token as { accountBanned?: boolean }).accountBanned ?? false;
+            const t = token as any;
+            session.user.id = t.sub ?? session.user.id;
+            session.user.role = t.role ?? null;
+            session.user.permissions = t.permissions ?? [];
+            session.user.roleLevel = t.roleLevel ?? null;
+            session.user.isElevated = t.isElevated ?? false;
+            session.user.accountDisabled = t.accountDisabled ?? false;
+            session.user.accountBanned = t.accountBanned ?? false;
           }
           return session;
         },

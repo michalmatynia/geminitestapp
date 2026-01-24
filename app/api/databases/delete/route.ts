@@ -12,8 +12,9 @@ import {
 } from "../_utils-mongo";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError } from "@/lib/errors/app-error";
+import { apiHandler } from "@/lib/api/api-handler";
 
-export async function POST(req: NextRequest) {
+async function POST_handler(req: NextRequest) {
   try {
     const { backupName, type } = (await req.json()) as {
       backupName: string;
@@ -43,3 +44,5 @@ export async function POST(req: NextRequest) {
     });
   }
 }
+
+export const POST = apiHandler(POST_handler, { source: "databases.delete.POST" });

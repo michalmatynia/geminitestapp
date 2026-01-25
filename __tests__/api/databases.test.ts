@@ -11,7 +11,7 @@ import { POST as POST_UPLOAD } from "@/app/api/databases/upload/route";
 import { POST as POST_DELETE } from "@/app/api/databases/delete/route";
 import fs from "fs/promises";
 import { execFileAsync } from "@/app/api/databases/_utils";
-import { Stats, Dirent } from "fs";
+import { Stats } from "fs";
 
 vi.mock("@/app/api/databases/_utils", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/app/api/databases/_utils")>();

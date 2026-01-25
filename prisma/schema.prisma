@@ -848,6 +848,12 @@ model ProductAiJob {
   createdAt    DateTime           @default(now())
   startedAt    DateTime?
   finishedAt   DateTime?
+
+  // Performance indexes for common query patterns
+  @@index([productId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([status, createdAt]) // Compound index for finding next pending job
 }
 
 model ProductDraft {

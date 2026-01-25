@@ -17,27 +17,35 @@ export async function getProductAiJobs(productId?: string) {
   const jobRepository = await getProductAiJobRepository();
   const jobs = await jobRepository.findJobs(productId);
 
-  // Manually enrich with product data
-  const enrichedJobs = await Promise.all(jobs.map(async (job) => {
-    try {
-      const product = await productService.getProductById(job.productId);
-      return {
-        ...job,
-        product: product ? {
-          name_en: product.name_en,
-          sku: product.sku
-        } : null
-      };
-    } catch (error) {
-      console.error(`[getProductAiJobs] Failed to fetch product ${job.productId}:`, error);
-      return {
-        ...job,
-        product: null
-      };
-    }
-  }));
+  // Batch fetch products - deduplicate IDs to avoid redundant queries
+  const uniqueProductIds = [...new Set(jobs.map((j) => j.productId))];
 
-  return enrichedJobs;
+  // Fetch all unique products in parallel
+  const productResults = await Promise.all(
+    uniqueProductIds.map(async (id) => {
+      try {
+        const product = await productService.getProductById(id);
+        return { id, product };
+      } catch (error) {
+        console.error(`[getProductAiJobs] Failed to fetch product ${id}:`, error);
+        return { id, product: null };
+      }
+    })
+  );
+
+  // Create lookup map for O(1) access
+  const productMap = new Map(
+    productResults.map(({ id, product }) => [
+      id,
+      product ? { name_en: product.name_en, sku: product.sku } : null,
+    ])
+  );
+
+  // Enrich jobs with product data from map
+  return jobs.map((job) => ({
+    ...job,
+    product: productMap.get(job.productId) ?? null,
+  }));
 }
 
 export async function getProductAiJob(jobId: string) {

@@ -18,12 +18,15 @@ const updateSchema = z.object({
   mode: z.enum(["replace", "append"]).optional(),
 });
 
-const mergeAppendValue = (current: unknown, next: unknown) => {
+const mergeAppendValue = (current: unknown, next: unknown): unknown => {
   if (next === undefined) return undefined;
   if (current === undefined || current === null) return next;
   if (Array.isArray(current)) {
-    if (Array.isArray(next)) return [...current, ...next];
-    return [...current, next];
+    const currentArr = current as unknown[];
+    if (Array.isArray(next)) {
+      return [...currentArr, ...(next as unknown[])];
+    }
+    return [...currentArr, next];
   }
   if (typeof current === "string" && typeof next === "string") {
     if (!current) return next;

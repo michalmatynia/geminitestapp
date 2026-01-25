@@ -26,17 +26,31 @@ continue working on AI Paths a modular node system for data paths and signal pat
 
 * Add an “Export/Import presets” JSON modal for sharing across projects.
 
-JSON Parser mappings I should be able to add my own mappings, be wary,  images too
-
-Develop the updater node to reflect the complexity and level of control of the parser node. For example, for an updater node, I give it entity Type, it is able to fetch Fields on the fly, so that I can with precision and using dropdown signify which fields are to be updated with which data (which is also received in Input). Like the parser node, it should also have the capability to auto-detect paths from incoming inputs and infer structure of the incoming entitites. Also, to map with precision the data structures from Entity Types for a given entity type, to make the whole update planning as smooth as possible.
-
-When I run the simulation path using simulation node, the parser node should be capable of infering the whole structure (I can set it in the Infer structure mode) which will make it easier to construct mappings from incoming Entity inputs.
-
 LATER - Move the whole Agentic AI configuration into AI Paths, there I want to create specific agents (model sets that will carry out different tasks, like planning, validating formatting etc) that can be used all across platform.
 
  LATER - add a deep research node, which is a refelection of my ChatBot Agent that has a complex reasoning scheme that is handled by multiple AIs carrying out multiple tasks (planning, validations etc.) exactly as it was configured in the Chatbot Agent. This deep research node should be fully configurable like a chatbot agent, and I should also be able to save different presets of this chabot deep research node, or at least create different instances of it.
 
 segment the files 
+
+Implement Y-axis scroller in node modals and make them wider, for example the parser node height is too great and it's overflowing the screen
+
+AI Paths connect to centralized error logging and handling
+
+In AI Paths, when I click on the connector output to grab a connector wire, all the input that I can wire the cable into should highlight.
+
+Node pallete Menu should be collapsible, The current state of menus (which ones are collapsed as well as the current state of project, which is the AI Path project that I am currently on should be saved to my user for persistance, so that when I redirect and go back to AI PAths Page I can still continue working where I left off)
+
+Double clicking the node should open node config
+
+In my Prompt Node, I dont' see the bundle input that I can connect my bundle output from the Parser
+in Parser node, when a simulation is connected, show in Entity ID Dropodown Simulation id and fetch Entity ID from simulation node
+
+
+! - remove legacy nodes (updater node and db_query node). Develop the new  database node even further.
+
+Nodes: evaluator
+
+Looper Node ? stop conditions / iteration limits
 
 * In Products, When I enter Marketplaces I need Category Mapper page for each marketplace. It is a page Where I can Set up category Mappings from my platfrom to an external pages for proper Export and Import (in the case of Base.com cause it's an integrator). The first Page will be Base.com but there will be others. I need a page within Category Mapper - Base.com where I can download current category list for a given catalog through API. Then, I can select which categories (or maybe all of them) I want to consider during my mappings, finally, I need a mapping engine, where I can one by one map each Base.com Category to a Category in my Catalog.
 

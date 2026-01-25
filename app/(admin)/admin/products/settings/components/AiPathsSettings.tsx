@@ -37,10 +37,12 @@ import type {
   Edge,
   NodeConfig,
   NodeDefinition,
+  ParserSampleState,
   PathConfig,
   PathMeta,
   RuntimeState,
   UpdaterMapping,
+  UpdaterSampleState,
 } from "./ai-paths/types";
 import {
   AI_PATHS_LAST_ERROR_KEY,
@@ -73,6 +75,10 @@ import {
   createPathMeta,
   createPresetId,
   createViewerOutputs,
+  coerceInput,
+  getValueAtMappingPath,
+  parseJsonSafe,
+  renderTemplate,
   extractJsonPathEntries,
   formatRuntimeValue,
   getContextPresetSet,
@@ -96,6 +102,20 @@ type AiPathsSettingsProps = {
   activeTab: "canvas" | "paths" | "docs";
   renderActions?: (actions: React.ReactNode) => React.ReactNode;
   onTabChange?: (tab: "canvas" | "paths" | "docs") => void;
+};
+
+const DEFAULT_DB_QUERY: DbQueryConfig = {
+  provider: "auto",
+  collection: "products",
+  mode: "preset",
+  preset: "by_id",
+  field: "_id",
+  idType: "string",
+  queryTemplate: "{\n  \"_id\": \"{{value}}\"\n}",
+  limit: 20,
+  sort: "",
+  projection: "",
+  single: false,
 };
 
 export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPathsSettingsProps) {
@@ -168,33 +188,13 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     offsetY: number;
   } | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
-  const [parserSamples, setParserSamples] = useState<
-    Record<
-      string,
-      {
-        entityType: string;
-        entityId: string;
-        json: string;
-        mappingMode: "top" | "flatten";
-        depth: number;
-        keyStyle: "path" | "leaf";
-        includeContainers: boolean;
-      }
-    >
-  >({});
+  const [parserSamples, setParserSamples] = useState<Record<string, ParserSampleState>>(
+    {}
+  );
   const [parserSampleLoading, setParserSampleLoading] = useState(false);
-  const [updaterSamples, setUpdaterSamples] = useState<
-    Record<
-      string,
-      {
-        entityType: string;
-        entityId: string;
-        json: string;
-        depth: number;
-        includeContainers: boolean;
-      }
-    >
-  >({});
+  const [updaterSamples, setUpdaterSamples] = useState<Record<string, UpdaterSampleState>>(
+    {}
+  );
   const [updaterSampleLoading, setUpdaterSampleLoading] = useState(false);
   const [panState, setPanState] = useState<{
     startX: number;
@@ -220,6 +220,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     bundlePorts: "context\nmeta\ntrigger\nentityJson\nentityId\nentityType\nresult",
     template: "Write a summary for {{context.entity.title}}",
   });
+  const lastSavedSnapshotRef = useRef<string | null>(null);
+  const autoSaveTimerRef = useRef<number | null>(null);
+  const autoSaveInFlightRef = useRef(false);
   const lastGraphModelPayload = useMemo(() => {
     for (let index = nodes.length - 1; index >= 0; index -= 1) {
       const node = nodes[index];
@@ -242,6 +245,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const [prefsLoaded, setPrefsLoaded] = useState(false);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLDivElement | null>(null);
+  const pollInFlightRef = useRef<Set<string>>(new Set());
+  const lastTriggerNodeIdRef = useRef<string | null>(null);
+  const runtimeStateRef = useRef<RuntimeState>({ inputs: {}, outputs: {} });
 
   // RAF throttling refs for drag performance
   const pendingDragRef = useRef<{ nodeId: string; x: number; y: number } | null>(null);
@@ -356,6 +362,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         const data = (await settingsRes.json()) as Array<{ key: string; value: string }>;
         let preferredPathId: string | null = null;
         let preferredGroups: string[] | null = null;
+        let preferredPathIndex: PathMeta[] | null = null;
+        let preferredPathConfigs: Record<string, PathConfig> | null = null;
         try {
           const prefsRes = await fetch("/api/user/preferences");
           if (prefsRes.ok) {
@@ -363,6 +371,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               aiPathsActivePathId?: string | null;
               aiPathsExpandedGroups?: string[] | null;
               aiPathsPaletteCollapsed?: boolean | null;
+              aiPathsPathIndex?: PathMeta[] | null;
+              aiPathsPathConfigs?: Record<string, PathConfig> | null;
             };
             preferredPathId =
               typeof prefs.aiPathsActivePathId === "string"
@@ -371,6 +381,14 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
             preferredGroups = Array.isArray(prefs.aiPathsExpandedGroups)
               ? prefs.aiPathsExpandedGroups
               : null;
+            preferredPathIndex =
+              Array.isArray(prefs.aiPathsPathIndex) && prefs.aiPathsPathIndex.length > 0
+                ? prefs.aiPathsPathIndex
+                : null;
+            preferredPathConfigs =
+              prefs.aiPathsPathConfigs && typeof prefs.aiPathsPathConfigs === "object"
+                ? (prefs.aiPathsPathConfigs as Record<string, PathConfig>)
+                : null;
             if (typeof prefs.aiPathsPaletteCollapsed === "boolean") {
               setPaletteCollapsed(prefs.aiPathsPaletteCollapsed);
             }
@@ -419,7 +437,28 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           }
         }
 
-        if (metas.length > 0) {
+        if (preferredPathConfigs && Object.keys(preferredPathConfigs).length > 0) {
+          Object.entries(preferredPathConfigs).forEach(([id, config]) => {
+            const fallback = createDefaultPathConfig(id);
+            configs[id] = {
+              ...fallback,
+              ...config,
+              id,
+              name: config?.name || fallback.name,
+              nodes: Array.isArray(config?.nodes) ? config.nodes : fallback.nodes,
+              edges: Array.isArray(config?.edges) ? config.edges : fallback.edges,
+              parserSamples: config?.parserSamples ?? fallback.parserSamples ?? {},
+              updaterSamples: config?.updaterSamples ?? fallback.updaterSamples ?? {},
+              runtimeState: config?.runtimeState ?? fallback.runtimeState ?? { inputs: {}, outputs: {} },
+              lastRunAt: config?.lastRunAt ?? fallback.lastRunAt ?? null,
+              updatedAt: config?.updatedAt ?? fallback.updatedAt,
+            };
+          });
+          metas =
+            preferredPathIndex && preferredPathIndex.length > 0
+              ? preferredPathIndex.filter((meta) => configs[meta.id])
+              : Object.values(configs).map(createPathMeta);
+        } else if (metas.length > 0) {
           metas.forEach((meta) => {
             const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
             if (configRaw) {
@@ -457,6 +496,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               nodes: Array.isArray(parsed.nodes) ? parsed.nodes : initialNodes,
               edges: Array.isArray(parsed.edges) ? parsed.edges : initialEdges,
               updatedAt: new Date().toISOString(),
+              runtimeState: { inputs: {}, outputs: {} },
+              lastRunAt: null,
             };
             configs[legacyConfig.id] = legacyConfig;
             metas = [createPathMeta(legacyConfig)];
@@ -485,6 +526,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         setPathName(activeConfig.name);
         setPathDescription(activeConfig.description);
         setActiveTrigger(activeConfig.trigger);
+        setParserSamples(activeConfig.parserSamples ?? {});
+        setUpdaterSamples(activeConfig.updaterSamples ?? {});
+        setRuntimeState(activeConfig.runtimeState ?? { inputs: {}, outputs: {} });
+        setLastRunAt(activeConfig.lastRunAt ?? null);
         setSelectedNodeId(normalizedNodes[0]?.id ?? null);
         setPrefsLoaded(true);
       } catch (error) {
@@ -542,6 +587,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     window.addEventListener("pointerup", handlePointerUp);
     return () => window.removeEventListener("pointerup", handlePointerUp);
   }, []);
+
+  useEffect(() => {
+    runtimeStateRef.current = runtimeState;
+  }, [runtimeState]);
 
   // Cleanup RAF on unmount
   useEffect(() => {
@@ -902,16 +951,21 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       nodes,
       edges: [],
       updatedAt,
+      parserSamples,
+      updaterSamples,
+      runtimeState,
+      lastRunAt,
     };
     setEdges([]);
-    setPathConfigs((prev) => ({ ...prev, [activePathId]: config }));
+    const nextConfigs = { ...pathConfigs, [activePathId]: config };
+    setPathConfigs(nextConfigs);
     try {
-      const res = await fetch("/api/settings", {
-        method: "POST",
+      const res = await fetch("/api/user/preferences", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          key: `${PATH_CONFIG_PREFIX}${activePathId}`,
-          value: JSON.stringify(config),
+          aiPathsPathIndex: paths,
+          aiPathsPathConfigs: nextConfigs,
         }),
       });
       if (!res.ok) {
@@ -987,7 +1041,15 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
 
   const handlePanStart = (event: React.PointerEvent<HTMLDivElement>) => {
     const canvasEl = canvasRef.current;
-    if (event.target !== event.currentTarget && event.target !== canvasEl) return;
+    const targetEl = event.target as Element | null;
+    if (targetEl?.closest("path")) return;
+    if (
+      event.target !== event.currentTarget &&
+      event.target !== canvasEl &&
+      targetEl?.tagName?.toLowerCase() !== "svg"
+    ) {
+      return;
+    }
     if (connecting) {
       setConnecting(null);
       setConnectingPos(null);
@@ -1162,19 +1224,354 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
 
   const runGraphForTrigger = async (triggerNode: AiNode) => {
     const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
+    lastTriggerNodeIdRef.current = triggerNode.id;
     const result = await evaluateGraph({
       nodes,
       edges,
       activePathId,
       triggerNodeId: triggerNode.id,
       triggerEvent,
+      deferPoll: true,
       fetchEntityByType,
       reportAiPathsError,
       toast,
     });
+    const runAt = new Date().toISOString();
     setRuntimeState(result);
-    setLastRunAt(new Date().toISOString());
+    setLastRunAt(runAt);
+    if (activePathId) {
+      setPathConfigs((prev) => ({
+        ...prev,
+        [activePathId]: {
+          ...(prev[activePathId] ?? buildActivePathConfig(runAt)),
+          runtimeState: result,
+          lastRunAt: runAt,
+        },
+      }));
+    }
   };
+
+  const buildDbQueryPayload = (
+    nodeInputs: RuntimePortValues,
+    queryConfig: DbQueryConfig
+  ) => {
+    const inputQuery = coerceInput(nodeInputs.query);
+    const inputValue = coerceInput(nodeInputs.value) ?? coerceInput(nodeInputs.jobId);
+    const entityIdInput = coerceInput(nodeInputs.entityId);
+    const productIdInput = coerceInput(nodeInputs.productId);
+    let query: Record<string, unknown> = {};
+    if (queryConfig.mode === "preset") {
+      const presetValue =
+        queryConfig.preset === "by_productId"
+          ? productIdInput ?? inputValue ?? entityIdInput
+          : queryConfig.preset === "by_entityId"
+            ? entityIdInput ?? inputValue ?? productIdInput
+            : inputValue ?? entityIdInput ?? productIdInput;
+      if (presetValue !== undefined) {
+        const field =
+          queryConfig.preset === "by_productId"
+            ? "productId"
+            : queryConfig.preset === "by_entityId"
+              ? "entityId"
+              : queryConfig.preset === "by_field"
+                ? queryConfig.field || "id"
+                : "_id";
+        query = { [field]: presetValue };
+      }
+    } else if (inputQuery && typeof inputQuery === "object") {
+      query = inputQuery as Record<string, unknown>;
+    } else {
+      const rendered = renderTemplate(
+        queryConfig.queryTemplate ?? "{}",
+        nodeInputs as Record<string, unknown>,
+        inputValue ?? ""
+      );
+      const parsed = parseJsonSafe(rendered);
+      if (parsed && typeof parsed === "object") {
+        query = parsed as Record<string, unknown>;
+      }
+    }
+    const projection = parseJsonSafe(queryConfig.projection ?? "") as
+      | Record<string, unknown>
+      | undefined;
+    const sort = parseJsonSafe(queryConfig.sort ?? "") as
+      | Record<string, unknown>
+      | undefined;
+    return {
+      query,
+      projection,
+      sort,
+      provider: queryConfig.provider,
+      collection: queryConfig.collection,
+      limit: queryConfig.limit,
+      single: queryConfig.single,
+      idType: queryConfig.idType,
+    };
+  };
+
+  const pollDatabaseQuery = async (
+    nodeInputs: RuntimePortValues,
+    config: {
+      intervalMs: number;
+      maxAttempts: number;
+      dbQuery: DbQueryConfig;
+      successPath: string;
+      successOperator: "truthy" | "equals" | "contains" | "notEquals";
+      successValue: string;
+      resultPath: string;
+    }
+  ) => {
+    const maxAttempts = config.maxAttempts;
+    const intervalMs = config.intervalMs;
+    const successPath = config.successPath || "status";
+    const successOperator = config.successOperator || "equals";
+    const successValue = config.successValue ?? "completed";
+    const resultPath = config.resultPath || "";
+    let lastBundle: Record<string, unknown> | null = null;
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const payload = buildDbQueryPayload(nodeInputs, config.dbQuery);
+      const res = await fetch("/api/ai-paths/db-query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to execute database query.");
+      }
+      const data = (await res.json()) as { item?: unknown; items?: unknown[] };
+      const resultCandidate = payload.single ? data.item : data.items;
+      lastBundle = {
+        ...(payload.single ? { item: data.item } : { items: data.items }),
+      };
+      const resolvedStatus = successPath
+        ? getValueAtMappingPath(resultCandidate, successPath)
+        : resultCandidate;
+      const asString =
+        resolvedStatus === undefined || resolvedStatus === null
+          ? ""
+          : String(resolvedStatus);
+      let success = false;
+      switch (successOperator) {
+        case "truthy":
+          success = Boolean(resolvedStatus);
+          break;
+        case "notEquals":
+          success = asString !== String(successValue);
+          break;
+        case "contains":
+          success = asString.includes(String(successValue));
+          break;
+        case "equals":
+        default:
+          success = asString === String(successValue);
+      }
+      if (success) {
+        const result = resultPath
+          ? getValueAtMappingPath(resultCandidate, resultPath)
+          : resultCandidate;
+        return {
+          result,
+          status: "completed",
+          bundle: lastBundle ?? {},
+        };
+      }
+      if (attempt < maxAttempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, Math.max(0, intervalMs)));
+      }
+    }
+    return {
+      result: null,
+      status: "timeout",
+      bundle: lastBundle ?? {},
+    };
+  };
+
+  const pollGraphJob = async (
+    jobId: string,
+    options?: { intervalMs?: number; maxAttempts?: number }
+  ) => {
+    const maxAttempts = options?.maxAttempts ?? 60;
+    const intervalMs = options?.intervalMs ?? 2000;
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const statusRes = await fetch(`/api/products/ai-jobs/${jobId}`);
+      if (!statusRes.ok) {
+        throw new Error("Failed to fetch job status.");
+      }
+      const payload = (await statusRes.json()) as {
+        job?: { status?: string; result?: unknown; errorMessage?: string | null };
+      };
+      const job = payload.job;
+      if (!job) continue;
+      if (job.status === "completed") {
+        const result = job.result as
+          | { result?: string }
+          | string
+          | null
+          | undefined;
+        if (result && typeof result === "object" && "result" in result) {
+          return (result as { result?: string }).result ?? "";
+        }
+        return typeof result === "string" ? result : JSON.stringify(result ?? "");
+      }
+      if (job.status === "failed") {
+        throw new Error(job.errorMessage || "AI job failed.");
+      }
+      if (job.status === "canceled") {
+        throw new Error("AI job was canceled.");
+      }
+      if (attempt < maxAttempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, Math.max(0, intervalMs)));
+      }
+    }
+    throw new Error("AI job timed out.");
+  };
+
+  const runPollUpdate = async (
+    node: AiNode,
+    options: {
+      jobId?: string;
+      nodeInputs: RuntimePortValues;
+    }
+  ) => {
+    const pollKey = `${node.id}:${options.jobId ?? "db"}`;
+    if (pollInFlightRef.current.has(pollKey)) return;
+    pollInFlightRef.current.add(pollKey);
+    try {
+      const pollConfig = node.config?.poll ?? {};
+      const pollMode = pollConfig.mode ?? "job";
+      let pollOutput: RuntimePortValues | null = null;
+      if (pollMode === "database") {
+        const queryConfig = {
+          ...DEFAULT_DB_QUERY,
+          ...(pollConfig.dbQuery ?? {}),
+        };
+        const response = await pollDatabaseQuery(options.nodeInputs, {
+          intervalMs: pollConfig.intervalMs ?? 2000,
+          maxAttempts: pollConfig.maxAttempts ?? 30,
+          dbQuery: queryConfig,
+          successPath: pollConfig.successPath ?? "status",
+          successOperator: pollConfig.successOperator ?? "equals",
+          successValue: pollConfig.successValue ?? "completed",
+          resultPath: pollConfig.resultPath ?? "result",
+        });
+        pollOutput = {
+          result: response.result,
+          status: response.status,
+          bundle: response.bundle,
+        };
+        setRuntimeState((prev) => ({
+          ...prev,
+          outputs: {
+            ...prev.outputs,
+            [node.id]: pollOutput,
+          },
+        }));
+      } else {
+        const jobId = options.jobId ?? "";
+        if (!jobId) {
+          return;
+        }
+        const result = await pollGraphJob(jobId, {
+          intervalMs: pollConfig.intervalMs,
+          maxAttempts: pollConfig.maxAttempts,
+        });
+        pollOutput = {
+          result,
+          status: "completed",
+          jobId,
+          bundle: { jobId, status: "completed", result },
+        };
+        setRuntimeState((prev) => ({
+          ...prev,
+          outputs: {
+            ...prev.outputs,
+            [node.id]: pollOutput,
+          },
+        }));
+      }
+      const triggerNodeId = lastTriggerNodeIdRef.current ?? undefined;
+      const seededOutputs = {
+        ...runtimeStateRef.current.outputs,
+        [node.id]: pollOutput ?? runtimeStateRef.current.outputs[node.id] ?? {},
+      };
+      const downstreamState = await evaluateGraph({
+        nodes,
+        edges,
+        activePathId,
+        triggerNodeId,
+        deferPoll: true,
+        skipAiJobs: true,
+        seedOutputs: seededOutputs,
+        fetchEntityByType,
+        reportAiPathsError,
+        toast,
+      });
+      const runAt = new Date().toISOString();
+      setRuntimeState(downstreamState);
+      setLastRunAt(runAt);
+      if (activePathId) {
+        setPathConfigs((prev) => ({
+          ...prev,
+          [activePathId]: {
+            ...(prev[activePathId] ?? buildActivePathConfig(runAt)),
+            runtimeState: downstreamState,
+            lastRunAt: runAt,
+          },
+        }));
+      }
+    } catch (error) {
+      reportAiPathsError(
+        error,
+        { action: "pollJob", nodeId: node.id, jobId },
+        "AI job polling failed:"
+      );
+      setRuntimeState((prev) => ({
+        ...prev,
+        outputs: {
+          ...prev.outputs,
+          [node.id]: {
+            result: null,
+            status: "failed",
+            jobId,
+            bundle: {
+              jobId,
+              status: "failed",
+              error: error instanceof Error ? error.message : "Polling failed",
+            },
+          },
+        },
+      }));
+    } finally {
+      pollInFlightRef.current.delete(pollKey);
+    }
+  };
+
+  const startPendingPolls = (state: RuntimeState) => {
+    nodes
+      .filter((node) => node.type === "poll")
+      .forEach((node) => {
+        const pollConfig = node.config?.poll;
+        const output = state.outputs[node.id] as
+          | { status?: string; jobId?: string }
+          | undefined;
+        const nodeInputs = state.inputs[node.id] ?? {};
+        const inputJobId = coerceInput(nodeInputs.jobId);
+        const jobId =
+          output?.jobId ??
+          (typeof inputJobId === "string" || typeof inputJobId === "number"
+            ? String(inputJobId).trim()
+            : "");
+        const status = output?.status ?? "polling";
+        if (status === "completed" || status === "failed") return;
+        if (pollConfig?.mode !== "database" && !jobId) return;
+        void runPollUpdate(node, { jobId, nodeInputs });
+      });
+  };
+
+  useEffect(() => {
+    if (!runtimeState || nodes.length === 0) return;
+    startPendingPolls(runtimeState);
+  }, [nodes, runtimeState]);
 
   const getTriggerContextInfo = (triggerId: string) => {
     const roleEdges = edges
@@ -1302,6 +1699,13 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       prev.filter((edge) => edge.from !== selectedNodeId && edge.to !== selectedNodeId)
     );
     setSelectedNodeId(null);
+  };
+
+  const handleSelectEdge = (edgeId: string | null) => {
+    setSelectedEdgeId(edgeId);
+    if (edgeId) {
+      setSelectedNodeId(null);
+    }
   };
 
   function handleRemoveEdge(edgeId: string) {
@@ -1590,57 +1994,123 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     );
   };
 
-  const handleSave = async () => {
+  const buildActivePathConfig = (updatedAt: string): PathConfig => ({
+    id: activePathId ?? "default",
+    version: STORAGE_VERSION,
+    name: pathName,
+    description: pathDescription,
+    trigger: activeTrigger,
+    nodes,
+    edges,
+    updatedAt,
+    parserSamples,
+    updaterSamples,
+    runtimeState,
+    lastRunAt,
+  });
+
+  const buildPathSnapshot = () =>
+    JSON.stringify({
+      activePathId,
+      name: pathName,
+      description: pathDescription,
+      trigger: activeTrigger,
+      nodes,
+      edges,
+      parserSamples,
+      updaterSamples,
+      runtimeState,
+      lastRunAt,
+    });
+
+  const persistPathConfig = async (options?: { silent?: boolean }) => {
     if (!activePathId) return;
-    setSaving(true);
+    const silent = options?.silent ?? false;
+    if (!silent) setSaving(true);
     try {
       const updatedAt = new Date().toISOString();
-      const config: PathConfig = {
-        id: activePathId,
-        version: STORAGE_VERSION,
-        name: pathName,
-        description: pathDescription,
-        trigger: activeTrigger,
-        nodes,
-        edges,
-        updatedAt,
-      };
+      const config = buildActivePathConfig(updatedAt);
       const nextPaths = paths.map((path) =>
         path.id === activePathId ? { ...path, name: pathName, updatedAt } : path
       );
-      setPathConfigs((prev) => ({ ...prev, [activePathId]: config }));
+      const nextConfigs = { ...pathConfigs, [activePathId]: config };
+      setPathConfigs(nextConfigs);
       setPaths(nextPaths);
-      const [configRes, indexRes] = await Promise.all([
-        fetch("/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            key: `${PATH_CONFIG_PREFIX}${activePathId}`,
-            value: JSON.stringify(config),
-          }),
+      const prefsRes = await fetch("/api/user/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          aiPathsPathIndex: nextPaths,
+          aiPathsPathConfigs: nextConfigs,
         }),
-        fetch("/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            key: PATH_INDEX_KEY,
-            value: JSON.stringify(nextPaths),
-          }),
-        }),
-      ]);
-      if (!configRes.ok || !indexRes.ok) {
+      });
+      if (!prefsRes.ok) {
         throw new Error("Failed to save AI Path settings.");
       }
       setLastError(null);
       void persistLastError(null);
-      toast("AI Paths saved.", { variant: "success" });
+      lastSavedSnapshotRef.current = buildPathSnapshot();
+      if (!silent) {
+        toast("AI Paths saved.", { variant: "success" });
+      }
     } catch (error) {
-      reportAiPathsError(error, { action: "savePath", pathId: activePathId }, "Failed to save AI Paths settings:");
-      toast("Failed to save AI Paths settings.", { variant: "error" });
+      reportAiPathsError(error, { action: silent ? "autoSavePath" : "savePath", pathId: activePathId }, "Failed to save AI Paths settings:");
+      if (!silent) {
+        toast("Failed to save AI Paths settings.", { variant: "error" });
+      }
     } finally {
-      setSaving(false);
+      if (!silent) setSaving(false);
     }
   };
+
+  const handleSave = async () => {
+    await persistPathConfig();
+  };
+
+  useEffect(() => {
+    if (loading || !activePathId) return;
+    lastSavedSnapshotRef.current = buildPathSnapshot();
+  }, [activePathId, loading]);
+
+  useEffect(() => {
+    if (loading || !activePathId) return;
+    if (saving || autoSaveInFlightRef.current) return;
+    const snapshot = buildPathSnapshot();
+    if (!lastSavedSnapshotRef.current) {
+      lastSavedSnapshotRef.current = snapshot;
+      return;
+    }
+    if (snapshot === lastSavedSnapshotRef.current) return;
+    if (autoSaveTimerRef.current) {
+      window.clearTimeout(autoSaveTimerRef.current);
+    }
+    autoSaveTimerRef.current = window.setTimeout(() => {
+      if (autoSaveInFlightRef.current) return;
+      autoSaveInFlightRef.current = true;
+      void persistPathConfig({ silent: true }).finally(() => {
+        autoSaveInFlightRef.current = false;
+      });
+    }, 800);
+    return () => {
+      if (autoSaveTimerRef.current) {
+        window.clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = null;
+      }
+    };
+  }, [
+    activePathId,
+    activeTrigger,
+    edges,
+    loading,
+    nodes,
+    parserSamples,
+    pathDescription,
+    pathName,
+    runtimeState,
+    lastRunAt,
+    saving,
+    updaterSamples,
+  ]);
 
   const handleReset = () => {
     if (!activePathId) return;
@@ -1652,6 +2122,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setPathName(resetConfig.name);
     setPathDescription(resetConfig.description);
     setActiveTrigger(resetConfig.trigger);
+    setParserSamples(resetConfig.parserSamples ?? {});
+    setUpdaterSamples(resetConfig.updaterSamples ?? {});
     setPathConfigs((prev) => ({ ...prev, [activePathId]: resetConfig }));
     updateActivePathMeta(resetConfig.name);
   };
@@ -1669,6 +2141,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       nodes: [],
       edges: [],
       updatedAt: now,
+      parserSamples: {},
+      updaterSamples: {},
+      runtimeState: { inputs: {}, outputs: {} },
+      lastRunAt: null,
     };
     const meta: PathMeta = {
       id,
@@ -1684,6 +2160,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setPathName(name);
     setPathDescription("");
     setActiveTrigger(config.trigger);
+    setParserSamples({});
+    setUpdaterSamples({});
+    setRuntimeState({ inputs: {}, outputs: {} });
+    setLastRunAt(null);
     setSelectedNodeId(null);
   };
 
@@ -1706,6 +2186,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setPathName(config.name);
     setPathDescription(config.description);
     setActiveTrigger(config.trigger);
+    setParserSamples(config.parserSamples ?? {});
+    setUpdaterSamples(config.updaterSamples ?? {});
+    setRuntimeState(config.runtimeState ?? { inputs: {}, outputs: {} });
+    setLastRunAt(config.lastRunAt ?? null);
     setSelectedNodeId(normalizedNodes[0]?.id ?? null);
     toast("AI Description Path created.", { variant: "success" });
   };
@@ -1727,6 +2211,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       setPathName(fallback.name);
       setPathDescription(fallback.description);
       setActiveTrigger(fallback.trigger);
+      setParserSamples(fallback.parserSamples ?? {});
+      setUpdaterSamples(fallback.updaterSamples ?? {});
+      setRuntimeState(fallback.runtimeState ?? { inputs: {}, outputs: {} });
+      setLastRunAt(fallback.lastRunAt ?? null);
       setSelectedNodeId(normalizedNodes[0]?.id ?? null);
       toast("Cannot delete the last path. Reset to default instead.", {
         variant: "info",
@@ -1735,11 +2223,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
     const nextId = nextPaths[0]?.id ?? null;
     setPaths(nextPaths);
-    setPathConfigs((prev) => {
-      const copy = { ...prev };
-      delete copy[targetId];
-      return copy;
-    });
+    const nextConfigs = { ...pathConfigs };
+    delete nextConfigs[targetId];
+    setPathConfigs(nextConfigs);
     if (nextId) {
       const nextConfig = pathConfigs[nextId] ?? createDefaultPathConfig(nextId);
       setActivePathId(nextId);
@@ -1749,17 +2235,21 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       setPathName(nextConfig.name);
       setPathDescription(nextConfig.description);
       setActiveTrigger(nextConfig.trigger);
+      setParserSamples(nextConfig.parserSamples ?? {});
+      setUpdaterSamples(nextConfig.updaterSamples ?? {});
+      setRuntimeState(nextConfig.runtimeState ?? { inputs: {}, outputs: {} });
+      setLastRunAt(nextConfig.lastRunAt ?? null);
       setSelectedNodeId(normalizedNodes[0]?.id ?? null);
     } else {
       setActivePathId(null);
     }
     try {
-      const res = await fetch("/api/settings", {
-        method: "POST",
+      const res = await fetch("/api/user/preferences", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          key: PATH_INDEX_KEY,
-          value: JSON.stringify(nextPaths),
+          aiPathsPathIndex: nextPaths,
+          aiPathsPathConfigs: nextConfigs,
         }),
       });
       if (!res.ok) {
@@ -1782,17 +2272,21 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setPathName(config.name);
     setPathDescription(config.description);
     setActiveTrigger(config.trigger);
+    setParserSamples(config.parserSamples ?? {});
+    setUpdaterSamples(config.updaterSamples ?? {});
+    setRuntimeState(config.runtimeState ?? { inputs: {}, outputs: {} });
+    setLastRunAt(config.lastRunAt ?? null);
     setSelectedNodeId(normalizedNodes[0]?.id ?? null);
   };
 
   const savePathIndex = async (nextPaths: PathMeta[]) => {
     try {
-      const res = await fetch("/api/settings", {
-        method: "POST",
+      const res = await fetch("/api/user/preferences", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          key: PATH_INDEX_KEY,
-          value: JSON.stringify(nextPaths),
+          aiPathsPathIndex: nextPaths,
+          aiPathsPathConfigs: pathConfigs,
         }),
       });
       if (!res.ok) {
@@ -1957,7 +2451,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 nodes={nodes}
                 edges={edges}
                 selectedEdgeId={selectedEdgeId}
-                onSelectEdge={setSelectedEdgeId}
+                onSelectEdge={handleSelectEdge}
                 onFireTrigger={handleFireTrigger}
                 onOpenSimulation={setSimulationOpenNodeId}
                 onUpdateSelectedNode={updateSelectedNode}
@@ -2134,7 +2628,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           selectedNodeId={selectedNodeId}
           draggingNodeId={dragState?.nodeId ?? null}
           selectedEdgeId={selectedEdgeId}
-          onSelectEdgeId={setSelectedEdgeId}
+          onSelectEdgeId={handleSelectEdge}
           onRemoveEdge={handleRemoveEdge}
           onSelectNode={setSelectedNodeId}
           onOpenNodeConfig={() => setConfigOpen(true)}

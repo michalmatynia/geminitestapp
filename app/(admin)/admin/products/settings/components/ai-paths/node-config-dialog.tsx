@@ -29,9 +29,11 @@ import type {
   Edge,
   MathConfig,
   NodeConfig,
+  ParserSampleState,
   RouterConfig,
   RuntimeState,
   TemplateConfig,
+  UpdaterSampleState,
 } from "./types";
 import {
   BUNDLE_INPUT_PORTS,
@@ -55,25 +57,6 @@ import {
   toNumber,
 } from "./helpers";
 import { extractImageUrls, formatPortLabel, formatPlaceholderLabel } from "./ui-utils";
-
-
-type ParserSampleState = {
-  entityType: string;
-  entityId: string;
-  json: string;
-  mappingMode: "top" | "flatten";
-  depth: number;
-  keyStyle: "path" | "leaf";
-  includeContainers: boolean;
-};
-
-type UpdaterSampleState = {
-  entityType: string;
-  entityId: string;
-  json: string;
-  depth: number;
-  includeContainers: boolean;
-};
 
 type NodeConfigDialogProps = {
   configOpen: boolean;
@@ -158,6 +141,7 @@ export function NodeConfigDialog({
                 parserSamples[selectedNode.id] ?? {
                   entityType: "product",
                   entityId: "",
+                  simulationId: "",
                   json: "",
                   mappingMode: "top",
                   depth: 2,
@@ -414,6 +398,7 @@ export function NodeConfigDialog({
                               [selectedNode.id]: {
                                 ...sampleState,
                                 entityId: event.target.value,
+                                simulationId: "",
                               },
                             }))
                           }
@@ -421,6 +406,7 @@ export function NodeConfigDialog({
                         />
                         {simulationOptions.length > 0 && (
                           <Select
+                            value={sampleState.simulationId ?? ""}
                             onValueChange={(value) => {
                               const option = simulationOptions.find(
                                 (item) => item.id === value
@@ -432,6 +418,7 @@ export function NodeConfigDialog({
                                   ...sampleState,
                                   entityType: option.entityType,
                                   entityId: option.entityId,
+                                  simulationId: option.id,
                                 },
                               }));
                             }}
@@ -2962,7 +2949,7 @@ export function NodeConfigDialog({
                   temperature: 0.7,
                   maxTokens: 800,
                   vision: selectedNode.inputs.includes("images"),
-                  waitForResult: true,
+                  waitForResult: false,
                 };
               return (
                 <div className="space-y-4">
@@ -3420,6 +3407,35 @@ export function NodeConfigDialog({
               };
               const showImagesAsJson = viewerConfig.showImagesAsJson ?? false;
               const connections = edges.filter((edge) => edge.to === selectedNode.id);
+              const isConnectedToTrigger = (() => {
+                const triggerIds = nodes.filter((node) => node.type === "trigger").map((node) => node.id);
+                if (triggerIds.length === 0) return false;
+                const adjacency = new Map<string, Set<string>>();
+                edges.forEach((edge) => {
+                  if (!edge.from || !edge.to) return;
+                  const fromSet = adjacency.get(edge.from) ?? new Set<string>();
+                  fromSet.add(edge.to);
+                  adjacency.set(edge.from, fromSet);
+                  const toSet = adjacency.get(edge.to) ?? new Set<string>();
+                  toSet.add(edge.from);
+                  adjacency.set(edge.to, toSet);
+                });
+                const visited = new Set<string>();
+                const queue = [...triggerIds];
+                triggerIds.forEach((id) => visited.add(id));
+                while (queue.length) {
+                  const current = queue.shift();
+                  if (!current) continue;
+                  const neighbors = adjacency.get(current);
+                  if (!neighbors) continue;
+                  neighbors.forEach((neighbor) => {
+                    if (visited.has(neighbor)) return;
+                    visited.add(neighbor);
+                    queue.push(neighbor);
+                  });
+                }
+                return visited.has(selectedNode.id);
+              })();
               const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
               const resolvedRuntimeInputs = selectedNode.inputs.reduce<Record<string, unknown>>(
                 (acc, input) => {
@@ -3488,6 +3504,12 @@ export function NodeConfigDialog({
                       {showImagesAsJson ? "Images: JSON" : "Images: Thumbnails"}
                     </Button>
                   </div>
+                  {!isConnectedToTrigger && (
+                    <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
+                      This Result Viewer is not connected to a Trigger path, so it will not update when you fire triggers.
+                      Connect it to the same path as a Trigger (directly or through other nodes).
+                    </div>
+                  )}
                   {selectedNode.inputs.map((input) => {
                     const connectedSources = connections
                       .filter((edge) => !edge.toPort || edge.toPort === input)

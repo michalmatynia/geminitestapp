@@ -21,6 +21,8 @@ const updatePreferencesSchema = z.object({
   aiPathsActivePathId: z.string().optional().nullable(),
   aiPathsExpandedGroups: z.array(z.string()).optional().nullable(),
   aiPathsPaletteCollapsed: z.boolean().optional().nullable(),
+  aiPathsPathIndex: z.array(z.unknown()).optional().nullable(),
+  aiPathsPathConfigs: z.record(z.unknown()).optional().nullable(),
 });
 
 /**
@@ -41,6 +43,8 @@ async function GET_handler() {
         aiPathsActivePathId: null,
         aiPathsExpandedGroups: ["Triggers"],
         aiPathsPaletteCollapsed: false,
+        aiPathsPathIndex: null,
+        aiPathsPathConfigs: null,
       });
     }
     const preferences = await getUserPreferences(userId);
@@ -57,6 +61,8 @@ async function GET_handler() {
         aiPathsActivePathId: null,
         aiPathsExpandedGroups: ["Triggers"],
         aiPathsPaletteCollapsed: false,
+        aiPathsPathIndex: null,
+        aiPathsPathConfigs: null,
       });
     }
     console.error("[user/preferences][GET] Error:", {
@@ -93,6 +99,8 @@ async function PATCH_handler(req: NextRequest) {
       ...(parsed.aiPathsActivePathId !== undefined && { aiPathsActivePathId: parsed.aiPathsActivePathId }),
       ...(parsed.aiPathsExpandedGroups !== undefined && { aiPathsExpandedGroups: parsed.aiPathsExpandedGroups }),
       ...(parsed.aiPathsPaletteCollapsed !== undefined && { aiPathsPaletteCollapsed: parsed.aiPathsPaletteCollapsed }),
+      ...(parsed.aiPathsPathIndex !== undefined && { aiPathsPathIndex: parsed.aiPathsPathIndex }),
+      ...(parsed.aiPathsPathConfigs !== undefined && { aiPathsPathConfigs: parsed.aiPathsPathConfigs }),
     };
 
     if (!isDatabaseConfigured) {

@@ -1,4 +1,4 @@
-import { logger } from "@/lib/logger";
+import { ErrorSystem } from "@/lib/error-system";
 // This service encapsulates all business logic for managing products.
 
 import fs from "fs/promises";
@@ -93,12 +93,12 @@ async function getProductBySku(sku: string) {
  * @returns The newly created product.
  */
 async function createProduct(formData: FormData) {
-  logger.log("Creating product...");
+  await ErrorSystem.logInfo("Creating product...");
   try {
     const validatedData = productCreateSchema.parse(
       Object.fromEntries(formData.entries())
     );
-    logger.log("Validated data:", validatedData);
+    await ErrorSystem.logInfo("Validated data", { validatedData });
     const productRepository = await resolveProductRepository();
     const product = await productRepository.createProduct(validatedData);
 
@@ -119,7 +119,10 @@ async function createProduct(formData: FormData) {
 
     return await getProductById(product.id);
   } catch (error) {
-    logger.error("Error creating product:", error);
+    await ErrorSystem.captureException(error, {
+      service: "productService",
+      action: "createProduct",
+    });
     throw error;
   }
 }
@@ -131,12 +134,12 @@ async function createProduct(formData: FormData) {
  * @returns The updated product, or null if not found.
  */
 async function updateProduct(id: string, formData: FormData) {
-  logger.log(`Updating product ${id}...`);
+  await ErrorSystem.logInfo(`Updating product ${id}...`);
   try {
     const validatedData = productUpdateSchema.parse(
       Object.fromEntries(formData.entries())
     );
-    logger.log("Validated data:", validatedData);
+    await ErrorSystem.logInfo("Validated data", { validatedData });
     const productRepository = await resolveProductRepository();
     const updatedProduct = await productRepository.updateProduct(
       id,
@@ -167,7 +170,11 @@ async function updateProduct(id: string, formData: FormData) {
 
     return await getProductById(updatedProduct.id);
   } catch (error) {
-    logger.error("Error updating product:", error);
+    await ErrorSystem.captureException(error, {
+      service: "productService",
+      action: "updateProduct",
+      productId: id,
+    });
     throw error;
   }
 }
@@ -178,12 +185,16 @@ async function updateProduct(id: string, formData: FormData) {
  * @returns The deleted product, or null if not found.
  */
 async function deleteProduct(id: string) {
-  logger.log(`Deleting product ${id}...`);
+  await ErrorSystem.logInfo(`Deleting product ${id}...`);
   try {
     const productRepository = await resolveProductRepository();
     return await productRepository.deleteProduct(id);
   } catch (error) {
-    logger.error("Error deleting product:", error);
+    await ErrorSystem.captureException(error, {
+      service: "productService",
+      action: "deleteProduct",
+      productId: id,
+    });
     throw error;
   }
 }
@@ -195,7 +206,7 @@ async function deleteProduct(id: string) {
  * @returns The duplicated product, or null if not found.
  */
 async function duplicateProduct(id: string, sku: string) {
-  logger.log(`Duplicating product ${id} with new SKU ${sku}...`);
+  await ErrorSystem.logInfo(`Duplicating product ${id} with new SKU ${sku}...`);
   try {
     const trimmedSku = sku.trim();
     const skuPattern = /^[A-Z0-9]+$/;
@@ -217,7 +228,12 @@ async function duplicateProduct(id: string, sku: string) {
     if (!duplicatedProduct) return null;
     return await getProductById(duplicatedProduct.id);
   } catch (error) {
-    logger.error("Error duplicating product:", error);
+    await ErrorSystem.captureException(error, {
+      service: "productService",
+      action: "duplicateProduct",
+      productId: id,
+      newSku: sku,
+    });
     throw error;
   }
 }

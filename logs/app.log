@@ -1,0 +1,3 @@
+[2026-01-25T11:50:38.575Z] [INFO] [test-script] This is a test info message {"service":"test-script"}
+[2026-01-25T11:50:38.576Z] [WARN] [test-script] This is a test warning {"service":"test-script","value":123}
+[2026-01-25T11:50:38.576Z] [ERROR] [test-script] Test error exception {"service":"test-script","runId":"test-run-1","extra":"metadata","stack":"Error: Test error exception\n    at test (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/test-logging.ts:10:38)"}

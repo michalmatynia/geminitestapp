@@ -148,7 +148,11 @@ export function CanvasSidebar({
 
       <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-4">
         <div className="mb-3 text-sm font-semibold text-white">Inspector</div>
-        {selectedNode ? (
+        {selectedEdgeId ? (
+          <div className="text-xs text-gray-500">
+            Wire selected. Node inspector is hidden.
+          </div>
+        ) : selectedNode ? (
           <div className="space-y-3 text-xs text-gray-300">
             {selectedNode.type === "trigger" && (
               <Button

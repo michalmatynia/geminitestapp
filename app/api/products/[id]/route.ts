@@ -5,6 +5,7 @@ import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/lib/errors/app-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { ErrorSystem } from "@/lib/error-system";
 
 /**
  * GET /api/products/[id]
@@ -27,6 +28,10 @@ async function GET_handler(
 
     return NextResponse.json(product);
   } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: "api/products/[id]",
+      method: "GET",
+    });
     return createErrorResponse(error, {
       request: req,
       source: "products.[id].GET",
@@ -63,6 +68,10 @@ async function PUT_handler(
     }
     return NextResponse.json(product);
   } catch (error: unknown) {
+    await ErrorSystem.captureException(error, {
+      service: "api/products/[id]",
+      method: "PUT",
+    });
     return createErrorResponse(error, {
       request: req,
       source: "products.[id].PUT",
@@ -114,6 +123,10 @@ async function PATCH_handler(
 
     return NextResponse.json(product);
   } catch (error: unknown) {
+    await ErrorSystem.captureException(error, {
+      service: "api/products/[id]",
+      method: "PATCH",
+    });
     return createErrorResponse(error, {
       request: req,
       source: "products.[id].PATCH",
@@ -141,6 +154,10 @@ async function DELETE_handler(
     }
     return new Response(null, { status: 204 });
   } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: "api/products/[id]",
+      method: "DELETE",
+    });
     return createErrorResponse(error, {
       request: req,
       source: "products.[id].DELETE",

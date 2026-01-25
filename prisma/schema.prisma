@@ -790,6 +790,8 @@ model UserPreferences {
   aiPathsActivePathId    String?
   aiPathsExpandedGroups  String[] @default([])
   aiPathsPaletteCollapsed Boolean? @default(false)
+  aiPathsPathIndex       Json?
+  aiPathsPathConfigs     Json?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

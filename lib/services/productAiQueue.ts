@@ -20,6 +20,7 @@ import {
   notFoundError,
   operationFailedError,
 } from "@/lib/errors/app-error";
+import { ErrorSystem } from "@/lib/error-system";
 
 type LanguageRecord = {
   id: string;
@@ -654,7 +655,14 @@ const pollQueue = async () => {
       console.log(`[productAiQueue] Job ${nextJob.id} marked as completed`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Job failed.";
-      console.error(`[productAiQueue] Job ${nextJob.id} failed:`, message);
+      
+      await ErrorSystem.captureException(error, {
+        service: "product-ai-queue",
+        jobId: nextJob.id,
+        productId: nextJob.productId,
+        jobType: nextJob.type
+      });
+
       await jobRepository.updateJob(nextJob.id, {
         status: "failed",
         finishedAt: new Date(),
@@ -777,7 +785,14 @@ export const processSingleJob = async (jobId: string) => {
     console.log(`[processSingleJob] Job ${job.id} marked as completed`);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Job failed.";
-    console.error(`[processSingleJob] Job ${job.id} failed:`, message);
+    
+    await ErrorSystem.captureException(error, {
+        service: "product-ai-queue-single",
+        jobId: job.id,
+        productId: job.productId,
+        jobType: job.type
+    });
+
     await jobRepository.updateJob(job.id, {
       status: "failed",
       finishedAt: new Date(),

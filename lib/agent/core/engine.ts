@@ -33,6 +33,7 @@ import { prepareRunContext } from "@/lib/agent/execution/context";
 import { initializePlanState } from "@/lib/agent/execution/plan";
 import { runPlanStepLoop } from "@/lib/agent/execution/step-runner";
 import { finalizeAgentRun } from "@/lib/agent/execution/finalize";
+import { ErrorSystem } from "@/lib/error-system";
 
 export async function runAgentControlLoop(runId: string) {
   let sharedBrowser: Browser | null = null;
@@ -455,18 +456,15 @@ export async function runAgentControlLoop(runId: string) {
   } catch (error) {
     const errorId = randomUUID();
     const message = error instanceof Error ? error.message : "Unknown error";
-    if (DEBUG_CHATBOT) {
-      console.error("[chatbot][agent][engine] Failed", {
-        runId,
-        errorId,
-        error,
-      });
-    }
+    
+    // Use centralized error system
+    await ErrorSystem.captureException(error, {
+      service: "agent-engine",
+      runId,
+      errorId,
+    });
+
     try {
-      await logAgentAudit(runId, "error", "Agent loop failed.", {
-        errorId,
-        message,
-      });
       if ("chatbotAgentRun" in prisma) {
         await prisma.chatbotAgentRun.update({
           where: { id: runId },

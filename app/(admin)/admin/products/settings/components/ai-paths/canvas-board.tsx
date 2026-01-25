@@ -91,6 +91,36 @@ export function CanvasBoard({
   onFitToNodes,
   onResetView,
 }: CanvasBoardProps) {
+  const triggerConnected = React.useMemo(() => {
+    const triggerIds = nodes.filter((node) => node.type === "trigger").map((node) => node.id);
+    if (triggerIds.length === 0) return new Set<string>();
+    const adjacency = new Map<string, Set<string>>();
+    edges.forEach((edge) => {
+      if (!edge.from || !edge.to) return;
+      const fromSet = adjacency.get(edge.from) ?? new Set<string>();
+      fromSet.add(edge.to);
+      adjacency.set(edge.from, fromSet);
+      const toSet = adjacency.get(edge.to) ?? new Set<string>();
+      toSet.add(edge.from);
+      adjacency.set(edge.to, toSet);
+    });
+    const visited = new Set<string>();
+    const queue = [...triggerIds];
+    triggerIds.forEach((id) => visited.add(id));
+    while (queue.length) {
+      const current = queue.shift();
+      if (!current) continue;
+      const neighbors = adjacency.get(current);
+      if (!neighbors) continue;
+      neighbors.forEach((neighbor) => {
+        if (visited.has(neighbor)) return;
+        visited.add(neighbor);
+        queue.push(neighbor);
+      });
+    }
+    return visited;
+  }, [nodes, edges]);
+
   return (
     <div
       ref={viewportRef}
@@ -174,7 +204,7 @@ export function CanvasBoard({
           className="absolute inset-0"
           width={CANVAS_WIDTH}
           height={CANVAS_HEIGHT}
-          style={{ pointerEvents: "none" }}
+          style={{ pointerEvents: "auto" }}
         >
           {edgePaths.map((edge) => {
             const isSelected = selectedEdgeId === edge.id;
@@ -294,6 +324,9 @@ export function CanvasBoard({
                             onPointerDown={(event) =>
                               onCompleteConnection(event, node, input)
                             }
+                            onPointerUp={(event) =>
+                              onCompleteConnection(event, node, input)
+                            }
                             aria-label={`Connect to ${formatPortLabel(input)}`}
                             title={`Input: ${formatPortLabel(input)}`}
                           />
@@ -345,6 +378,11 @@ export function CanvasBoard({
                     {node.type}
                   </span>
                 </div>
+                {node.type === "viewer" && !triggerConnected.has(node.id) && (
+                  <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[9px] text-amber-200">
+                    Not wired to a Trigger
+                  </div>
+                )}
                 {node.type === "trigger" && (
                   <Button
                     className="self-start rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/10"

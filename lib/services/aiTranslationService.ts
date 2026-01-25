@@ -5,6 +5,7 @@ import {
   configurationError,
   operationFailedError,
 } from "@/lib/errors/app-error";
+import { ErrorSystem } from "@/lib/error-system";
 
 interface TranslateProductParams {
   productId: string;
@@ -130,7 +131,12 @@ Important:
 
       console.log(`[aiTranslationService] Successfully translated to ${targetLang}`);
     } catch (error) {
-      console.error(`[aiTranslationService] Failed to translate to ${targetLang}:`, error);
+      await ErrorSystem.captureException(error, {
+        service: "ai-translation-service",
+        targetLanguage: targetLang,
+        productName
+      });
+      
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
       // If this is an API key error, throw it to fail the entire job

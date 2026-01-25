@@ -9,18 +9,29 @@ LATER - Move the whole Agentic AI configuration into AI Paths, there I want to c
  LATER - add a deep research node, which is a refelection of my ChatBot Agent that has a complex reasoning scheme that is handled by multiple AIs carrying out multiple tasks (planning, validations etc.) exactly as it was configured in the Chatbot Agent. This deep research node should be fully configurable like a chatbot agent, and I should also be able to save different presets of this chabot deep research node, or at least create different instances of it.
 
 segment the files 
-make as many components as possible reusable
+make as many components as possible reusable in my AI Paths section
 
  connect AI Paths to centralized error logging and handling
 
+ * The Results on the path in Result Viewer connected along the path to Parser, Prompt Note and Trigger appear as long as the prompt node is not connected to Poll Node 
+
+ * the results in node Result Viewer as well as settings and configurations in all of the nodes should be saved in the database. So that when I go to other page and go back, I can see everything in nodes as I left it.
+
+Also when I trigger the AI Path and the AI path has a poll node that needs to finish within a given time interval, when I redirect to another page and go back, I want to see the result from that poll node in my result viewer. 
+
+When I connect the Poll Node, suddenly the Outputs connected to Result Viewers from All the nodes pre-Poll node disappear. They should be available instantly, like before. They are not polling dependent.
+
+When I select a node and then select wire, the node deselects, which is correct, but then when I click on teh node again, both the wire and the node are selected.
+
+converter node that converts imageURLs into base64 images
+make AI Jobs entity agnostic (don't run it as if it was run only for a product). Provide all the information
 
 * also, when the jobs finish, I can  see the result in AI jobs details, I don't see the result in AI Paths Node Result Viewer.
 
-
-
 Result is not showing in the 
 
-I cannot attach the Result Viewer node to a parser now. 
+I want a visible “Auto‑saved” indicator in my Node modular system
+
 
 * I want the state of nodes to be saved within the project, so when I redirect the page and go back to the AI Paths project, I don't have to choose simulation signal in Parser all the time.
 

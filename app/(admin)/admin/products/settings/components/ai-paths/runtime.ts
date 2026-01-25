@@ -46,6 +46,9 @@ export type EvaluateGraphOptions = {
   activePathId: string | null;
   triggerNodeId?: string;
   triggerEvent?: string;
+  deferPoll?: boolean;
+  skipAiJobs?: boolean;
+  seedOutputs?: Record<string, RuntimePortValues>;
   fetchEntityByType: (
     entityType: string,
     entityId: string
@@ -119,7 +122,11 @@ export async function evaluateGraph({
   reportAiPathsError,
   toast,
 }: EvaluateGraphOptions): Promise<RuntimeState> {
-  const outputs: Record<string, RuntimePortValues> = {};
+  const outputs: Record<string, RuntimePortValues> = seedOutputs
+    ? Object.fromEntries(
+        Object.entries(seedOutputs).map(([key, value]) => [key, cloneValue(value)])
+      )
+    : {};
   let inputs: Record<string, RuntimePortValues> = {};
   const now = new Date().toISOString();
   const entityCache = new Map<string, Record<string, unknown> | null>();
@@ -150,8 +157,11 @@ export async function evaluateGraph({
       });
     }
   }
+  const alwaysActiveTypes = new Set(["parser", "prompt", "viewer"]);
   const isActiveNode = (node: AiNode) =>
-    !triggerNodeId || activeNodeIds.has(node.id);
+    !triggerNodeId ||
+    activeNodeIds.has(node.id) ||
+    alwaysActiveTypes.has(node.type);
 
   const fetchEntityCached = async (entityType: string, entityId: string) => {
     if (!entityType || !entityId) return null;
@@ -231,6 +241,37 @@ export async function evaluateGraph({
       return value as Record<string, unknown>;
     }
     return null;
+  };
+
+  const buildPromptOutput = (
+    promptConfig: { template?: string } | undefined,
+    nodeInputs: RuntimePortValues
+  ) => {
+    const resolvedConfig = promptConfig ?? { template: "" };
+    const bundleValue = coerceInput(nodeInputs.bundle);
+    const bundleContext =
+      bundleValue && typeof bundleValue === "object" && !Array.isArray(bundleValue)
+        ? (bundleValue as Record<string, unknown>)
+        : {};
+    const data = { ...nodeInputs, ...bundleContext, bundle: bundleContext };
+    const currentValue =
+      coerceInput(nodeInputs.result) ?? coerceInput(nodeInputs.value) ?? "";
+    const prompt = resolvedConfig.template
+      ? renderTemplate(
+          resolvedConfig.template,
+          data as Record<string, unknown>,
+          currentValue
+        )
+      : Object.entries(data)
+          .map(([key, value]) => `${key}: ${formatRuntimeValue(value)}`)
+          .join("\n");
+    const imagesValue =
+      nodeInputs.images !== undefined
+        ? nodeInputs.images
+        : bundleContext.images !== undefined
+          ? bundleContext.images
+          : undefined;
+    return { promptOutput: prompt || "Prompt: (no template)", imagesValue };
   };
 
   const resolveJobProductId = (nodeInputs: RuntimePortValues) => {
@@ -585,6 +626,7 @@ export async function evaluateGraph({
   const updaterExecuted = new Set<string>();
   const httpExecuted = new Set<string>();
   const delayExecuted = new Set<string>();
+  const pollExecuted = new Set<string>();
 
   for (let iteration = 0; iteration < maxIterations; iteration += 1) {
     const nextInputs: Record<string, RuntimePortValues> = {};
@@ -672,7 +714,8 @@ export async function evaluateGraph({
         case "parser": {
           const source =
             (coerceInput(nodeInputs.entityJson) as Record<string, unknown> | undefined) ??
-            undefined;
+            (resolvedEntity ?? undefined) ??
+            (simulationEntityId ? buildFallbackEntity(simulationEntityId) : undefined);
           if (!source) {
             nextOutputs = {};
             break;
@@ -681,6 +724,56 @@ export async function evaluateGraph({
           const mappings =
             parserConfig?.mappings ?? {};
           const outputMode = parserConfig?.outputMode ?? "individual";
+          const hasMappings = Object.keys(mappings).some((key) => key.trim());
+          const isEmptyValue = (value: unknown) =>
+            value === undefined ||
+            value === null ||
+            (typeof value === "string" && value.trim() === "") ||
+            (Array.isArray(value) && value.length === 0);
+          const fallbackForKey = (key: string) => {
+            const normalized = key.trim().toLowerCase();
+            if (normalized === "title" || normalized === "name") {
+              return (
+                (source.title as unknown) ??
+                (source.name as unknown) ??
+                (source.name_en as unknown) ??
+                (source.name_pl as unknown) ??
+                (source.label as unknown) ??
+                (source.productName as unknown)
+              );
+            }
+            if (normalized === "images" || normalized === "imageurls") {
+              return (
+                (source.images as unknown) ??
+                (source.imageLinks as unknown) ??
+                (source.media as unknown) ??
+                (source.gallery as unknown) ??
+                (source.imageFiles as unknown) ??
+                (source.photos as unknown)
+              );
+            }
+            if (
+              normalized === "productid" ||
+              normalized === "entityid" ||
+              normalized === "id"
+            ) {
+              return (
+                (source.id as unknown) ??
+                (source._id as unknown) ??
+                (source.productId as unknown) ??
+                (source.entityId as unknown)
+              );
+            }
+            if (normalized === "content_en" || normalized === "description_en") {
+              return (
+                (source.content_en as unknown) ??
+                (source.description_en as unknown) ??
+                (source.description as unknown) ??
+                (source.content as unknown)
+              );
+            }
+            return undefined;
+          };
           const parsed: RuntimePortValues = {};
           Object.keys(mappings).forEach((output) => {
             const key = output.trim();
@@ -689,11 +782,19 @@ export async function evaluateGraph({
             const value = mapping
               ? getValueAtMappingPath(source, mapping)
               : (source as Record<string, unknown>)[key];
-            if (value !== undefined) {
-              parsed[key] = value;
+            const resolved =
+              isEmptyValue(value) ? fallbackForKey(key) ?? value : value;
+            if (resolved !== undefined) {
+              parsed[key] = resolved;
             }
           });
           if (outputMode === "bundle") {
+            if (!hasMappings || Object.keys(parsed).length === 0) {
+              const fullBundle =
+                typeof source === "object" && source !== null ? source : {};
+              nextOutputs = { bundle: fullBundle };
+              break;
+            }
             const extraOutputs = node.outputs.reduce<Record<string, unknown>>((acc, output) => {
               if (output !== "bundle" && parsed[output] !== undefined) {
                 acc[output] = parsed[output];
@@ -963,6 +1064,37 @@ export async function evaluateGraph({
           break;
         }
         case "poll": {
+          if (deferPoll) {
+            const existingStatus =
+              typeof prevOutputs.status === "string" ? prevOutputs.status : null;
+            if (existingStatus === "completed" || existingStatus === "failed") {
+              nextOutputs = prevOutputs;
+              break;
+            }
+            const rawJobId = coerceInput(nodeInputs.jobId);
+            const jobId =
+              typeof rawJobId === "string" || typeof rawJobId === "number"
+                ? String(rawJobId).trim()
+                : "";
+            if (!jobId) {
+              nextOutputs = prevOutputs;
+              break;
+            }
+            const existingResult =
+              prevOutputs.result !== undefined ? prevOutputs.result : null;
+            nextOutputs = {
+              result: existingResult,
+              status: "polling",
+              jobId,
+              bundle: {
+                jobId,
+                status: "polling",
+                result: existingResult,
+              },
+            };
+            pollExecuted.add(node.id);
+            break;
+          }
           const pollConfig = node.config?.poll ?? {
             intervalMs: 2000,
             maxAttempts: 30,
@@ -1611,31 +1743,10 @@ export async function evaluateGraph({
           break;
         }
         case "prompt": {
-          const promptConfig = node.config?.prompt ?? { template: "" };
-          const bundleValue = coerceInput(nodeInputs.bundle);
-          const bundleContext =
-            bundleValue && typeof bundleValue === "object" && !Array.isArray(bundleValue)
-              ? (bundleValue as Record<string, unknown>)
-              : {};
-          const data = { ...nodeInputs, ...bundleContext };
-          const currentValue =
-            coerceInput(nodeInputs.result) ?? coerceInput(nodeInputs.value) ?? "";
-          const prompt = promptConfig.template
-            ? renderTemplate(
-                promptConfig.template,
-                data as Record<string, unknown>,
-                currentValue
-              )
-            : Object.entries(data)
-                .map(([key, value]) => `${key}: ${formatRuntimeValue(value)}`)
-                .join("\n");
-          const imagesValue =
-            nodeInputs.images !== undefined
-              ? nodeInputs.images
-              : bundleContext.images !== undefined
-                ? bundleContext.images
-                : undefined;
-          const promptOutput = prompt || "Prompt: (no template)";
+          const { promptOutput, imagesValue } = buildPromptOutput(
+            node.config?.prompt,
+            nodeInputs
+          );
           nextOutputs =
             imagesValue !== undefined
               ? { prompt: promptOutput, images: imagesValue }
@@ -1643,14 +1754,65 @@ export async function evaluateGraph({
           break;
         }
         case "model": {
+          if (skipAiJobs) {
+            nextOutputs = prevOutputs;
+            break;
+          }
           const promptInputs = coerceInputArray(nodeInputs.prompt);
-          const promptInput = [...promptInputs]
-            .reverse()
-            .find((value) => {
-              if (value === undefined || value === null) return false;
-              if (typeof value === "string") return Boolean(value.trim());
-              return true;
-            });
+          const promptCandidates = edges
+            .filter((edge) => edge.to === node.id && edge.toPort === "prompt")
+            .map((edge) => ({
+              edge,
+              fromNode: nodes.find((item) => item.id === edge.from),
+              value: outputs[edge.from]?.[edge.fromPort ?? "prompt"],
+            }))
+            .filter((entry) => entry.fromNode?.type === "prompt");
+          const promptEdge = promptCandidates.find(
+            (entry) =>
+              entry.value !== undefined &&
+              entry.value !== null &&
+              (typeof entry.value !== "string" || entry.value.trim() !== "")
+          );
+          const promptSourceNode = promptCandidates[0]?.fromNode ?? null;
+          const hasMeaningfulValue = (value: unknown) => {
+            if (value === undefined || value === null) return false;
+            if (typeof value === "string") return value.trim().length > 0;
+            if (Array.isArray(value)) return value.length > 0;
+            if (typeof value === "object") return Object.keys(value).length > 0;
+            return true;
+          };
+          if (promptSourceNode) {
+            const upstreamEdges = edges.filter((edge) => edge.to === promptSourceNode.id);
+            if (upstreamEdges.length > 0) {
+              const promptSourceInputs = nextInputs[promptSourceNode.id] ?? {};
+              const hasInputValue = Object.values(promptSourceInputs).some(
+                hasMeaningfulValue
+              );
+              if (!hasInputValue) {
+                nextOutputs = prevOutputs;
+                break;
+              }
+            }
+          }
+          const promptSourceInputs = promptSourceNode
+            ? (nextInputs[promptSourceNode.id] ?? {})
+            : {};
+          const derivedPrompt = promptSourceNode
+            ? buildPromptOutput(promptSourceNode.config?.prompt, promptSourceInputs)
+            : null;
+          const promptSourceOutput = promptSourceNode
+            ? derivedPrompt?.promptOutput ?? outputs[promptSourceNode.id]?.prompt
+            : undefined;
+          const promptInput =
+            promptSourceOutput ??
+            promptEdge?.value ??
+            [...promptInputs]
+              .reverse()
+              .find((value) => {
+                if (value === undefined || value === null) return false;
+                if (typeof value === "string") return Boolean(value.trim());
+                return true;
+              });
           if (promptInput === undefined || promptInput === null) {
             nextOutputs = prevOutputs;
             break;
@@ -1661,7 +1823,7 @@ export async function evaluateGraph({
             temperature: 0.7,
             maxTokens: 800,
             vision: node.inputs.includes("images"),
-            waitForResult: true,
+            waitForResult: false,
           };
           const hasResultConsumers = edges.some(
             (edge) =>
@@ -1676,8 +1838,8 @@ export async function evaluateGraph({
             return targetNode?.type === "poll";
           });
           const shouldWait =
-            hasResultConsumers ||
-            (modelConfig.waitForResult !== false && !hasPollConsumer);
+            !hasPollConsumer &&
+            (modelConfig.waitForResult ?? hasResultConsumers);
           const prompt =
             typeof promptInput === "string"
               ? promptInput.trim()
@@ -1686,7 +1848,26 @@ export async function evaluateGraph({
             nextOutputs = prevOutputs;
             break;
           }
+          const imageEdge = edges
+            .filter((edge) => edge.to === node.id && edge.toPort === "images")
+            .map((edge) => ({
+              edge,
+              fromNode: nodes.find((item) => item.id === edge.from),
+              value: outputs[edge.from]?.[edge.fromPort ?? "images"],
+            }))
+            .find(
+              (entry) =>
+                entry.fromNode?.type === "prompt" &&
+                entry.value !== undefined &&
+                entry.value !== null
+            );
+          const promptImageOutput =
+            promptSourceNode?.id
+              ? derivedPrompt?.imagesValue ?? outputs[promptSourceNode.id]?.images
+              : undefined;
           const imageSource =
+            promptImageOutput ??
+            imageEdge?.value ??
             nodeInputs.images ??
             nodeInputs.bundle ??
             nodeInputs.context ??

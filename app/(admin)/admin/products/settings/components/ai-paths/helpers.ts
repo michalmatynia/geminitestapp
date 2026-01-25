@@ -610,6 +610,36 @@ const normalizeNodes = (items: AiNode[]) =>
         },
       };
     }
+    if (node.type === "parser") {
+      const parserConfig = node.config?.parser;
+      const baseMappings =
+        parserConfig?.mappings ??
+        (node.outputs.length > 0 ? createParserMappings(node.outputs) : {});
+      const mappingKeys = Object.keys(baseMappings)
+        .map((key) => key.trim())
+        .filter(Boolean);
+      const outputsFromMappings = mappingKeys.length > 0 ? mappingKeys : node.outputs;
+      const outputMode = parserConfig?.outputMode ?? "individual";
+      const hasImagesOutput = outputsFromMappings.some(
+        (key) => key.toLowerCase() === "images"
+      );
+      const outputs =
+        outputMode === "bundle"
+          ? ["bundle", ...(hasImagesOutput ? ["images"] : [])]
+          : outputsFromMappings;
+      return {
+        ...node,
+        outputs,
+        config: {
+          ...node.config,
+          parser: {
+            mappings: baseMappings,
+            outputMode,
+            presetId: parserConfig?.presetId ?? PARSER_PRESETS[0]?.id ?? "custom",
+          },
+        },
+      };
+    }
     if (node.type === "mutator") {
       return {
         ...node,
@@ -894,6 +924,18 @@ const normalizeNodes = (items: AiNode[]) =>
       return {
         ...node,
         outputs: ensureUniquePorts(node.outputs, MODEL_OUTPUT_PORTS),
+        config: {
+          ...node.config,
+          model: {
+            modelId: node.config?.model?.modelId ?? DEFAULT_MODELS[0] ?? "gpt-4o",
+            temperature: node.config?.model?.temperature ?? 0.7,
+            maxTokens: node.config?.model?.maxTokens ?? 800,
+            vision:
+              node.config?.model?.vision ??
+              node.inputs.includes("images"),
+            waitForResult: node.config?.model?.waitForResult ?? false,
+          },
+        },
       };
     }
     if (nodeType === "updater") {
@@ -1163,7 +1205,7 @@ const getDefaultConfigForType = (
         temperature: 0.7,
         maxTokens: 800,
         vision: inputs.includes("images"),
-        waitForResult: true,
+        waitForResult: false,
       },
     };
   }
@@ -2112,6 +2154,10 @@ const createDefaultPathConfig = (id: string): PathConfig => {
     nodes: initialNodes,
     edges: initialEdges,
     updatedAt: now,
+    parserSamples: {},
+    updaterSamples: {},
+    runtimeState: { inputs: {}, outputs: {} },
+    lastRunAt: null,
   };
 };
 
@@ -2274,6 +2320,10 @@ const createAiDescriptionPath = (id: string): PathConfig => {
     nodes,
     edges,
     updatedAt: now,
+    parserSamples: {},
+    updaterSamples: {},
+    runtimeState: { inputs: {}, outputs: {} },
+    lastRunAt: null,
   };
 };
 

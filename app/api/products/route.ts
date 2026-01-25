@@ -3,6 +3,7 @@ import { productService } from "@/lib/services/productService";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError } from "@/lib/errors/app-error";
 import { apiHandler } from "@/lib/api/api-handler";
+import { ErrorSystem } from "@/lib/error-system";
 
 /**
  * GET /api/products
@@ -16,6 +17,11 @@ async function GET_handler(req: Request) {
     const products = await productService.getProducts(filters);
     return NextResponse.json(products);
   } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: "api/products",
+      method: "GET",
+      filters,
+    });
     return createErrorResponse(error, {
       request: req,
       source: "products.GET",
@@ -49,6 +55,10 @@ async function POST_handler(req: Request) {
     const product = await productService.createProduct(formData);
     return NextResponse.json(product);
   } catch (error: unknown) {
+    await ErrorSystem.captureException(error, {
+      service: "api/products",
+      method: "POST",
+    });
     return createErrorResponse(error, {
       request: req,
       source: "products.POST",

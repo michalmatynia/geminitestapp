@@ -29,6 +29,17 @@ export type ParserConfig = {
   presetId?: string;
 };
 
+export type ParserSampleState = {
+  entityType: string;
+  entityId: string;
+  simulationId?: string;
+  json: string;
+  mappingMode: "top" | "flatten";
+  depth: number;
+  keyStyle: "path" | "leaf";
+  includeContainers: boolean;
+};
+
 export type PromptConfig = {
   template: string;
 };
@@ -59,6 +70,14 @@ export type DatabaseConfig = {
   writeSource?: string;
   writeSourcePath?: string;
   dryRun?: boolean;
+};
+
+export type UpdaterSampleState = {
+  entityType: string;
+  entityId: string;
+  json: string;
+  depth: number;
+  includeContainers: boolean;
 };
 
 export type TriggerConfig = {
@@ -262,6 +281,10 @@ export type PathConfig = {
   nodes: AiNode[];
   edges: Edge[];
   updatedAt: string;
+  parserSamples?: Record<string, ParserSampleState>;
+  updaterSamples?: Record<string, UpdaterSampleState>;
+  runtimeState?: RuntimeState;
+  lastRunAt?: string | null;
 };
 
 export type ClusterPreset = {

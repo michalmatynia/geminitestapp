@@ -12,6 +12,8 @@ export type UserPreferencesData = {
   aiPathsActivePathId?: string | null;
   aiPathsExpandedGroups?: string[] | null;
   aiPathsPaletteCollapsed?: boolean | null;
+  aiPathsPathIndex?: Prisma.JsonValue | null;
+  aiPathsPathConfigs?: Prisma.JsonValue | null;
 };
 
 export type UserPreferences = {
@@ -24,6 +26,8 @@ export type UserPreferences = {
   aiPathsActivePathId: string | null;
   aiPathsExpandedGroups: string[] | null;
   aiPathsPaletteCollapsed: boolean | null;
+  aiPathsPathIndex: Prisma.JsonValue | null;
+  aiPathsPathConfigs: Prisma.JsonValue | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -38,6 +42,8 @@ type UserPreferencesDocument = {
   aiPathsActivePathId: string | null;
   aiPathsExpandedGroups: string[] | null;
   aiPathsPaletteCollapsed: boolean | null;
+  aiPathsPathIndex: Prisma.JsonValue | null;
+  aiPathsPathConfigs: Prisma.JsonValue | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -54,6 +60,8 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferences => ({
   aiPathsActivePathId: doc.aiPathsActivePathId ?? null,
   aiPathsExpandedGroups: doc.aiPathsExpandedGroups ?? null,
   aiPathsPaletteCollapsed: doc.aiPathsPaletteCollapsed ?? false,
+  aiPathsPathIndex: doc.aiPathsPathIndex ?? null,
+  aiPathsPathConfigs: doc.aiPathsPathConfigs ?? null,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
 });
@@ -73,6 +81,8 @@ const defaultPreferences = (userId: string) => ({
   aiPathsActivePathId: null,
   aiPathsExpandedGroups: ["Triggers"],
   aiPathsPaletteCollapsed: false,
+  aiPathsPathIndex: null,
+  aiPathsPathConfigs: null,
 });
 
 /**
@@ -142,6 +152,8 @@ export async function getUserPreferences(userId: string): Promise<UserPreference
       aiPathsActivePathId: null,
       aiPathsExpandedGroups: ["Triggers"],
       aiPathsPaletteCollapsed: false,
+      aiPathsPathIndex: null,
+      aiPathsPathConfigs: null,
     },
   });
 }

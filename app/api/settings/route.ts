@@ -8,6 +8,7 @@ import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { internalError } from "@/lib/errors/app-error";
 import { apiHandler } from "@/lib/api/api-handler";
+import { ErrorSystem } from "@/lib/error-system";
 
 const shouldLog = () => process.env.DEBUG_SETTINGS === "true";
 
@@ -77,7 +78,7 @@ const upsertMongoSetting = async (
 
 async function GET_handler(req: Request) {
   if (shouldLog()) {
-    console.log("[settings] GET /api/settings");
+    await ErrorSystem.logInfo("[settings] GET /api/settings", { service: "api/settings" });
   }
   try {
     const provider = await getAppDbProvider();
@@ -108,13 +109,18 @@ async function GET_handler(req: Request) {
     }
     const settings = Array.from(settingsMap.values());
     if (shouldLog()) {
-      console.log("[settings] fetched", {
+      await ErrorSystem.logInfo("[settings] fetched", {
+        service: "api/settings",
         count: settings.length,
         keys: settings.map((setting) => setting.key),
       });
     }
     return NextResponse.json(settings);
   } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: "api/settings",
+      method: "GET",
+    });
     return createErrorResponse(error, {
       request: req,
       source: "settings.GET",
@@ -125,7 +131,7 @@ async function GET_handler(req: Request) {
 
 async function POST_handler(req: Request) {
   if (shouldLog()) {
-    console.log("[settings] POST /api/settings");
+    await ErrorSystem.logInfo("[settings] POST /api/settings", { service: "api/settings" });
   }
   try {
     const parsed = await parseJsonBody(req, settingSchema, {
@@ -136,7 +142,7 @@ async function POST_handler(req: Request) {
     }
     const { key, value } = parsed.data;
     if (shouldLog()) {
-      console.log("[settings] upserting", { key, valuePreview: value.slice(0, 40) });
+      await ErrorSystem.logInfo("[settings] upserting", { service: "api/settings", key, valuePreview: value.slice(0, 40) });
     }
     const provider = await getAppDbProvider();
     const shouldWriteMongo =
@@ -161,10 +167,14 @@ async function POST_handler(req: Request) {
       );
     }
     if (shouldLog()) {
-      console.log("[settings] saved", { key: setting.key });
+      await ErrorSystem.logInfo("[settings] saved", { service: "api/settings", key: setting.key });
     }
     return NextResponse.json(setting);
   } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: "api/settings",
+      method: "POST",
+    });
     return createErrorResponse(error, {
       request: req,
       source: "settings.POST",

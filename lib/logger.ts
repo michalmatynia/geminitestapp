@@ -1,33 +1,59 @@
-import fs from 'fs';
-import path from 'path';
-
 export type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 
-const LOG_DIR = path.join(process.cwd(), 'logs');
-const LOG_FILE = path.join(LOG_DIR, 'app.log');
+const isServer = typeof window === "undefined";
+let fsModule: typeof import("fs") | null = null;
+let pathModule: typeof import("path") | null = null;
+let logFilePath: string | null = null;
 
-// Ensure log directory exists
-if (!fs.existsSync(LOG_DIR)) {
-  try {
-    fs.mkdirSync(LOG_DIR, { recursive: true });
-  } catch (err) {
-    console.error('Failed to create log directory:', err);
+const ensureServerLogger = () => {
+  if (!isServer) return false;
+  if (!fsModule || !pathModule) {
+    try {
+      // Avoid bundling fs/path in the client.
+      const req = (0, eval)("require") as NodeRequire;
+      fsModule = req("fs");
+      pathModule = req("path");
+    } catch {
+      return false;
+    }
   }
-}
+  if (!logFilePath) {
+    const logDir = pathModule.join(process.cwd(), "logs");
+    logFilePath = pathModule.join(logDir, "app.log");
+    if (!fsModule.existsSync(logDir)) {
+      try {
+        fsModule.mkdirSync(logDir, { recursive: true });
+      } catch (err) {
+        console.error("Failed to create log directory:", err);
+      }
+    }
+  }
+  return true;
+};
 
 function formatMessage(level: LogLevel, args: unknown[]): string {
   const timestamp = new Date().toISOString();
-  const message = args.map(arg => 
-    typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-  ).join(' ');
+  const message = args.map(arg => {
+    if (arg === null) return 'null';
+    if (arg === undefined) return 'undefined';
+    if (typeof arg === 'object') {
+      try {
+        return JSON.stringify(arg);
+      } catch {
+        return '[Complex Object]';
+      }
+    }
+    return String(arg);
+  }).join(' ');
   return `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
 }
 
 function writeToFile(message: string) {
+  if (!ensureServerLogger()) return;
   try {
-    fs.appendFileSync(LOG_FILE, message);
+    fsModule?.appendFileSync(logFilePath as string, message);
   } catch (err) {
-    console.error('Failed to write to log file:', err);
+    console.error("Failed to write to log file:", err);
   }
 }
 

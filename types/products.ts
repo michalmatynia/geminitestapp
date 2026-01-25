@@ -101,7 +101,7 @@ export type UserPreferences = {
   aiPathsExpandedGroups?: string[] | null;
   aiPathsPaletteCollapsed?: boolean | null;
   aiPathsPathIndex?: unknown[] | null;
-  aiPathsPathConfigs?: Record<string, unknown> | null;
+  aiPathsPathConfigs?: Record<string, unknown> | string | null;
 };
 
 export type IntegrationDbProvider = "prisma" | "mongodb";

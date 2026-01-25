@@ -1,6 +1,6 @@
 
 
-continue working on AI Paths a modular node system for data paths and signal paths for a multiapp platform, extend it with new functionalities better validations, better information clusters, be inventive and creative, there's no limit to how the data can travel or be changed along these paths. The only limitations is that it has to work within the AI Paths Node Modular system.
+continue working on AI Paths a modular node system for data paths and signal paths for a multiapp platform, extend it with new functionalities better validations, better information clusters, more developed nodes, be inventive and creative, there's no limit to how the data can travel or be changed along these paths. The only limitations is that it has to work within the AI Paths Node Modular system.
 
 MAAYBE - Save nodes
 
@@ -17,11 +17,15 @@ make as many components as possible reusable in my AI Paths section
 
  * the results in node Result Viewer as well as settings and configurations in all of the nodes should be saved in the database. So that when I go to other page and go back, I can see everything in nodes as I left it.
 
-Also when I trigger the AI Path and the AI path has a poll node that needs to finish within a given time interval, when I redirect to another page and go back, I want to see the result from that poll node in my result viewer. 
+IS IT DONE ALREAY ? - Also when I trigger the AI Path and the AI path has a poll node that needs to finish within a given time interval, when I redirect to another page and go back, I want to see the result from that poll node in my result viewer. 
 
-When I connect the Poll Node, suddenly the Outputs connected to Result Viewers from All the nodes pre-Poll node disappear. They should be available instantly, like before. They are not polling dependent.
+* When I connect the Poll Node, suddenly the Outputs connected to Result Viewers from All the nodes pre-Poll node disappear. They should be available instantly, like before. They are not polling dependent.
 
-When I select a node and then select wire, the node deselects, which is correct, but then when I click on teh node again, both the wire and the node are selected.
+
+ I want a visible “Auto‑saved” indicator in my Node modular system
+
+
+* When I select a node and then select wire, the node deselects, which is correct, but then when I click on teh node again, both the wire and the node are selected.
 
 converter node that converts imageURLs into base64 images
 make AI Jobs entity agnostic (don't run it as if it was run only for a product). Provide all the information
@@ -30,7 +34,6 @@ make AI Jobs entity agnostic (don't run it as if it was run only for a product).
 
 Result is not showing in the 
 
-I want a visible “Auto‑saved” indicator in my Node modular system
 
 
 * I want the state of nodes to be saved within the project, so when I redirect the page and go back to the AI Paths project, I don't have to choose simulation signal in Parser all the time.
@@ -59,12 +62,20 @@ In Product List - Operations - I need an Option to Mass Export Products to Base.
 * Import table should have a search field and should have checkmarks so that I can select which products are to be imported
 
 
+
+* In Nodes AI Paths, in my TLS Path, the Poll Node went to completed, However The pill in  model Node stays on QUEUED
+
+* When I drop Toast Notification Node, I get Cannot read properties of undefined (reading 'border')
+
+
+
 LATER - add other GEminiInstructions (especially for the use of tanstack query and schadcn/ui all across application) 
 
 Note APP, simplified NoTE editing, which allows me to edit, delete text right in the note preview. Unless I want a deeper edit. Note Should Auto Save
 
 Draft list should be reordered the same way as mapping parameters
 
+My paths are disappearing after patches, are they beings reseeded in some way ?
 
 Link Note to Product? Why not, a special kind of Theme that has this linking field
 

@@ -19,8 +19,8 @@ const extractImageUrls = (value: unknown, seen = new Set<object>()): string[] =>
     return Array.from(new Set(value.flatMap((item) => extractImageUrls(item, seen))));
   }
   if (typeof value === "object") {
-    if (seen.has(value as object)) return [];
-    seen.add(value as object);
+    if (seen.has(value)) return [];
+    seen.add(value);
     const record = value as Record<string, unknown>;
     const candidates = [
       "url",

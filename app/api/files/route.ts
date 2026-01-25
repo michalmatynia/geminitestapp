@@ -4,6 +4,7 @@ import { getProductRepository } from "@/lib/services/product-repository";
 import type { ProductWithImages } from "@/types";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { apiHandler } from "@/lib/api/api-handler";
+import { ErrorSystem } from "@/lib/error-system";
 
 async function GET_handler(req: Request) {
   try {
@@ -59,6 +60,10 @@ async function GET_handler(req: Request) {
 
     return NextResponse.json(result);
   } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: "api/files",
+      method: "GET",
+    });
     return createErrorResponse(error, {
       request: req,
       source: "files.GET",

@@ -4,6 +4,7 @@ import path from "path";
 import { getImageFileRepository } from "@/lib/services/image-file-repository";
 import { noteService } from "@/lib/services/noteService";
 import type { NoteFileRecord } from "@/types/notes";
+import { ErrorSystem } from "@/lib/error-system";
 
 const uploadsRoot = path.join(process.cwd(), "public", "uploads");
 const productsRoot = path.join(uploadsRoot, "products");
@@ -56,18 +57,28 @@ export async function uploadFile(
   });
   const filepath = path.join(diskDir, filename);
 
-  await fs.mkdir(diskDir, { recursive: true });
-  await fs.writeFile(filepath, fileBuffer);
+  try {
+    await fs.mkdir(diskDir, { recursive: true });
+    await fs.writeFile(filepath, fileBuffer);
 
-  const imageFileRepository = await getImageFileRepository();
-  const imageFile = await imageFileRepository.createImageFile({
-    filename,
-    filepath: `${publicDir}/${filename}`,
-    mimetype: file.type,
-    size: file.size,
-  });
+    const imageFileRepository = await getImageFileRepository();
+    const imageFile = await imageFileRepository.createImageFile({
+      filename,
+      filepath: `${publicDir}/${filename}`,
+      mimetype: file.type,
+      size: file.size,
+    });
 
-  return imageFile;
+    return imageFile;
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: "fileUploader",
+      action: "uploadFile",
+      filename,
+      diskDir,
+    });
+    throw error;
+  }
 }
 
 export async function uploadNoteFile(
@@ -81,19 +92,29 @@ export async function uploadNoteFile(
   const publicDir = `/uploads/notes/${noteId}`;
   const filepath = path.join(diskDir, filename);
 
-  await fs.mkdir(diskDir, { recursive: true });
-  await fs.writeFile(filepath, fileBuffer);
+  try {
+    await fs.mkdir(diskDir, { recursive: true });
+    await fs.writeFile(filepath, fileBuffer);
 
-  const noteFile = await noteService.createNoteFile({
-    noteId,
-    slotIndex,
-    filename,
-    filepath: `${publicDir}/${filename}`,
-    mimetype: file.type,
-    size: file.size,
-  });
+    const noteFile = await noteService.createNoteFile({
+      noteId,
+      slotIndex,
+      filename,
+      filepath: `${publicDir}/${filename}`,
+      mimetype: file.type,
+      size: file.size,
+    });
 
-  return noteFile;
+    return noteFile;
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: "fileUploader",
+      action: "uploadNoteFile",
+      filename,
+      noteId,
+    });
+    throw error;
+  }
 }
 
 export async function deleteNoteFile(
@@ -114,7 +135,13 @@ export async function deleteNoteFile(
       // ignore cleanup errors
     }
     return await noteService.deleteNoteFile(noteId, slotIndex);
-  } catch {
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+        service: "fileUploader",
+        action: "deleteNoteFile",
+        noteId,
+        filepath
+    });
     return false;
   }
 }

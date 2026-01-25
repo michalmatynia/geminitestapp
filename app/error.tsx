@@ -13,7 +13,6 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
     logClientError(error, {
       ...(error.digest ? { digest: error.digest } : {}),
     });

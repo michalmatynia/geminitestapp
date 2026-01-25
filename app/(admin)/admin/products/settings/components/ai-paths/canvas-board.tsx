@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import type { AiNode, Edge } from "./types";
+import type { AiNode, Edge, RuntimeState } from "./types";
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
@@ -19,6 +19,7 @@ type CanvasBoardProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
   nodes: AiNode[];
   edges: Edge[];
+  runtimeState: RuntimeState;
   edgePaths: EdgePath[];
   view: { x: number; y: number; scale: number };
   panState: { startX: number; startY: number; originX: number; originY: number } | null;
@@ -33,7 +34,7 @@ type CanvasBoardProps = {
   onRemoveEdge: (edgeId: string) => void;
   onSelectNode: (nodeId: string) => void;
   onOpenNodeConfig: (nodeId: string) => void;
-  onFireTrigger: (node: AiNode) => void;
+  onFireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
   onPointerDownNode: (event: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
   onPointerMoveNode: (event: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
   onPointerUpNode: (event: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
@@ -62,6 +63,7 @@ export function CanvasBoard({
   canvasRef,
   nodes,
   edges,
+  runtimeState,
   edgePaths,
   view,
   panState,
@@ -192,13 +194,16 @@ export function CanvasBoard({
       >
         {lastDrop ? (
           <div
-            className="absolute rounded-full border border-red-400 bg-red-500/30"
+            className="absolute"
             style={{
               width: 10,
               height: 10,
               transform: `translate(${lastDrop.x}px, ${lastDrop.y}px)`,
             }}
-          />
+          >
+            <span className="absolute inset-0 rounded-full bg-sky-400/40 animate-ping" />
+            <span className="absolute inset-0 rounded-full border border-sky-300/70 bg-sky-500/60" />
+          </div>
         ) : null}
         <svg
           className="absolute inset-0"
@@ -262,6 +267,48 @@ export function CanvasBoard({
         {nodes.map((node) => {
           const isSelected = node.id === selectedNodeId;
           const style = typeStyles[node.type];
+          const modelStatus =
+            node.type === "model"
+              ? (runtimeState.outputs[node.id]?.status as string | undefined)
+              : undefined;
+          const modelStatusLabel =
+            modelStatus === "completed"
+              ? "Completed"
+              : modelStatus === "failed"
+                ? "Failed"
+                : modelStatus === "queued"
+                  ? "Queued"
+                  : modelStatus
+                    ? "Pending"
+                    : null;
+          const modelStatusClasses =
+            modelStatus === "completed"
+              ? "border-emerald-400/60 bg-emerald-500/15 text-emerald-200"
+              : modelStatus === "failed"
+                ? "border-rose-500/60 bg-rose-500/15 text-rose-200"
+                : "border-sky-500/60 bg-sky-500/15 text-sky-200";
+          const pollStatus =
+            node.type === "poll"
+              ? (runtimeState.outputs[node.id]?.status as string | undefined)
+              : undefined;
+          const pollStatusLabel =
+            pollStatus === "completed"
+              ? "Completed"
+              : pollStatus === "failed"
+                ? "Failed"
+                : pollStatus === "timeout"
+                  ? "Timed Out"
+                  : pollStatus === "polling"
+                    ? "Polling"
+                    : pollStatus
+                      ? "Pending"
+                      : null;
+          const pollStatusClasses =
+            pollStatus === "completed"
+              ? "border-emerald-400/60 bg-emerald-500/15 text-emerald-200"
+              : pollStatus === "failed" || pollStatus === "timeout"
+                ? "border-rose-500/60 bg-rose-500/15 text-rose-200"
+                : "border-sky-500/60 bg-sky-500/15 text-sky-200";
           return (
             <div
               key={node.id}
@@ -378,6 +425,20 @@ export function CanvasBoard({
                     {node.type}
                   </span>
                 </div>
+                {node.type === "model" && modelStatusLabel && (
+                  <div
+                    className={`inline-flex w-fit items-center gap-1 rounded-full border px-2 py-[2px] text-[9px] uppercase tracking-wide ${modelStatusClasses}`}
+                  >
+                    {modelStatusLabel}
+                  </div>
+                )}
+                {node.type === "poll" && pollStatusLabel && (
+                  <div
+                    className={`inline-flex w-fit items-center gap-1 rounded-full border px-2 py-[2px] text-[9px] uppercase tracking-wide ${pollStatusClasses}`}
+                  >
+                    {pollStatusLabel}
+                  </div>
+                )}
                 {node.type === "viewer" && !triggerConnected.has(node.id) && (
                   <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[9px] text-amber-200">
                     Not wired to a Trigger
@@ -388,14 +449,14 @@ export function CanvasBoard({
                     className="self-start rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/10"
                     type="button"
                     onPointerDown={(event) => event.stopPropagation()}
-                    onClick={() => onFireTrigger(node)}
+                    onClick={(event) => onFireTrigger(node, event)}
                   >
                     Fire Trigger
                   </Button>
                 )}
                 {node.type === "trigger" && (
                   <div className="text-[10px] uppercase text-lime-200/80">
-                    Accepts role + simulation inputs
+                    Accepts simulation input
                   </div>
                 )}
                 {node.type === "context" && (

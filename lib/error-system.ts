@@ -69,8 +69,9 @@ export const ErrorSystem = {
   /**
    * Log an operational info event.
    */
-  logInfo: async (message: string, context: ErrorContext = {}) => {
+  logInfo: (message: string, context: ErrorContext = {}) => {
      const service = context.service || "unknown";
      logger.info(`[${service}] ${message}`, context);
+     return Promise.resolve();
   }
 };

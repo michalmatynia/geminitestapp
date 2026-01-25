@@ -20,6 +20,7 @@ export type NodeType =
   | "model"
   | "database"
   | "viewer"
+  | "notification"
   | "ai_description"
   | "description_updater";
 
@@ -101,6 +102,7 @@ export type ContextConfig = {
   entityIdSource?: "simulation" | "manual";
   entityId?: string;
   scopeMode?: "full" | "include" | "exclude";
+  scopeTarget?: "entity" | "context";
   includePaths?: string[];
   excludePaths?: string[];
 };
@@ -283,7 +285,7 @@ export type PathConfig = {
   updatedAt: string;
   parserSamples?: Record<string, ParserSampleState>;
   updaterSamples?: Record<string, UpdaterSampleState>;
-  runtimeState?: RuntimeState;
+  runtimeState?: RuntimeState | string | null;
   lastRunAt?: string | null;
 };
 

@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { apiHandler } from "@/lib/api/api-handler";
+import { ErrorSystem } from "@/lib/error-system";
 
 const pageCreateSchema = z.object({
   name: z.string().trim().min(1),
@@ -30,6 +31,10 @@ async function GET_handler() {
     });
     return NextResponse.json(pages);
   } catch (_error) {
+    await ErrorSystem.captureException(_error, {
+      service: "api/cms/pages",
+      method: "GET",
+    });
     return createErrorResponse(_error, {
       source: "cms.pages.GET",
       fallbackMessage: "Failed to fetch pages",
@@ -64,6 +69,10 @@ async function POST_handler(req: Request) {
     });
     return NextResponse.json(newPage);
   } catch (_error) {
+    await ErrorSystem.captureException(_error, {
+      service: "api/cms/pages",
+      method: "POST",
+    });
     return createErrorResponse(_error, {
       source: "cms.pages.POST",
       fallbackMessage: "Failed to create page",

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { parseJsonBody } from "@/lib/api/parse-json";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { logSystemEvent } from "@/lib/services/system-logger";
+import { ErrorSystem } from "@/lib/error-system";
 import { apiHandler } from "@/lib/api/api-handler";
 
 export const runtime = "nodejs";
@@ -27,24 +27,26 @@ async function POST_handler(req: Request) {
     if (!parsed.ok) return parsed.response;
 
     const data = parsed.data;
-    await logSystemEvent({
-      level: "error",
-      message: data.message,
-      source: "client",
-      request: req,
-      context: {
-        name: data.name,
-        digest: data.digest,
-        url: data.url,
-        userAgent: data.userAgent,
-        componentStack: data.componentStack,
-        timestamp: data.timestamp,
-        extra: data.context ?? null,
-      },
+    
+    // Log as a client error using the centralized ErrorSystem
+    await ErrorSystem.captureException(new Error(data.message), {
+      service: "client-error-reporter",
+      name: data.name,
+      stack: data.stack || undefined,
+      digest: data.digest,
+      url: data.url,
+      userAgent: data.userAgent,
+      componentStack: data.componentStack,
+      clientTimestamp: data.timestamp,
+      extra: data.context ?? null,
     });
 
     return NextResponse.json({ ok: true });
   } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: "api/client-errors",
+      method: "POST",
+    });
     return createErrorResponse(error, {
       request: req,
       source: "client-errors.POST",

@@ -21,6 +21,7 @@ import {
   parseJsonSafe,
   pickByPaths,
   renderTemplate,
+  safeStringify,
   setValueAtMappingPath,
 } from "./helpers";
 
@@ -46,6 +47,7 @@ export type EvaluateGraphOptions = {
   activePathId: string | null;
   triggerNodeId?: string;
   triggerEvent?: string;
+  triggerContext?: Record<string, unknown> | null;
   deferPoll?: boolean;
   skipAiJobs?: boolean;
   seedOutputs?: Record<string, RuntimePortValues>;
@@ -84,8 +86,8 @@ const extractImageUrls = (value: unknown, seen = new Set<object>()): string[] =>
     );
   }
   if (typeof value === "object") {
-    if (seen.has(value as object)) return [];
-    seen.add(value as object);
+    if (seen.has(value)) return [];
+    seen.add(value);
     const record = value as Record<string, unknown>;
     const candidates = [
       "url",
@@ -118,6 +120,10 @@ export async function evaluateGraph({
   activePathId,
   triggerNodeId,
   triggerEvent,
+  triggerContext,
+  deferPoll,
+  skipAiJobs,
+  seedOutputs,
   fetchEntityByType,
   reportAiPathsError,
   toast,
@@ -204,6 +210,7 @@ export async function evaluateGraph({
       entityIdSource: "simulation",
       entityId: "",
       scopeMode: "full",
+      scopeTarget: "entity",
       includePaths: [],
       excludePaths: [],
     };
@@ -349,7 +356,7 @@ export async function evaluateGraph({
       if (!statusRes.ok) {
         throw new Error("Failed to fetch job status.");
       }
-      const payload = (await statusRes.json()) as {
+      const payload = (await statusRes.json() as unknown) as {
         job?: { status?: string; result?: unknown; errorMessage?: string | null };
       };
       const job = payload.job;
@@ -451,17 +458,37 @@ export async function evaluateGraph({
     const evaluateMatch = (value: unknown) => {
       if (config.successOperator === "truthy") return Boolean(value);
       const compareTarget = config.successValue ?? "";
+      const valStr =
+        value === undefined || value === null
+          ? ""
+          : typeof value === "string"
+            ? value
+            : typeof value === "object"
+              ? JSON.stringify(value)
+              : String(value);
+      const targetStr = String(compareTarget);
+
       if (config.successOperator === "equals") {
-        return String(value ?? "") === String(compareTarget);
+        return valStr === targetStr;
       }
       if (config.successOperator === "notEquals") {
-        return String(value ?? "") !== String(compareTarget);
+        return valStr !== targetStr;
       }
       if (config.successOperator === "contains") {
         if (Array.isArray(value)) {
-          return value.map((entry) => String(entry)).includes(String(compareTarget));
+          return value
+            .map((entry) =>
+              entry === undefined || entry === null
+                ? ""
+                : typeof entry === "string"
+                  ? entry
+                  : typeof entry === "object"
+                    ? JSON.stringify(entry)
+                    : String(entry)
+            )
+            .includes(targetStr);
         }
-        return String(value ?? "").includes(String(compareTarget));
+        return valStr.includes(targetStr);
       }
       return Boolean(value);
     };
@@ -478,7 +505,7 @@ export async function evaluateGraph({
       if (!res.ok) {
         throw new Error("Database poll query failed.");
       }
-      const data = (await res.json()) as {
+      const data = (await res.json() as unknown) as {
         items?: unknown[];
         item?: unknown;
         count?: number;
@@ -545,57 +572,87 @@ export async function evaluateGraph({
     const formData = new FormData();
     Object.entries(payload).forEach(([key, value]) => {
       if (value === undefined || value === null) return;
-      if (typeof value === "object") {
-        formData.append(key, JSON.stringify(value));
-        return;
-      }
-      formData.append(key, String(value));
+      formData.append(key, safeStringify(value));
     });
     return formData;
   };
 
-  const resolveContextPayload = async (config?: ContextConfig) => {
+  const resolveContextPayload = async (
+    config?: ContextConfig,
+    baseContext?: Record<string, unknown> | null
+  ) => {
     const contextConfig = config ?? defaultContextConfig;
-    const role = contextConfig.role ?? DEFAULT_CONTEXT_ROLE;
+    const fallbackRole = contextConfig.role ?? DEFAULT_CONTEXT_ROLE;
+    const baseRole =
+      baseContext && typeof baseContext.role === "string" ? baseContext.role : null;
+    const role = baseRole ?? fallbackRole;
     const rawEntityType = contextConfig.entityType?.trim() || "auto";
+    const baseEntityType =
+      baseContext && typeof baseContext.entityType === "string"
+        ? baseContext.entityType
+        : null;
     const entityType =
       rawEntityType === "auto"
-        ? simulationEntityType ?? "entity"
-        : rawEntityType || simulationEntityType || "entity";
+        ? baseEntityType ?? simulationEntityType ?? "entity"
+        : rawEntityType || baseEntityType || simulationEntityType || "entity";
     const manualId = contextConfig.entityId?.trim() || null;
+    const baseEntityId =
+      baseContext && typeof baseContext.entityId === "string"
+        ? baseContext.entityId
+        : null;
     const entityId =
       contextConfig.entityIdSource === "manual"
         ? manualId
-        : simulationEntityId ?? manualId ?? null;
+        : baseEntityId ?? simulationEntityId ?? manualId ?? null;
+    const baseEntity =
+      (baseContext?.entity as Record<string, unknown> | undefined) ??
+      (baseContext?.entityJson as Record<string, unknown> | undefined) ??
+      (baseContext?.product as Record<string, unknown> | undefined) ??
+      null;
     const fetched =
-      entityId && entityType ? await fetchEntityCached(entityType, entityId) : null;
+      baseEntity ?? (entityId && entityType ? await fetchEntityCached(entityType, entityId) : null);
     const rawEntity = fetched ?? buildFallbackEntity(entityId);
-    const scopedEntity = applyContextScope(rawEntity, contextConfig);
-    return { role, entityType, entityId, rawEntity, scopedEntity };
+    const scopeTarget = contextConfig.scopeTarget ?? "entity";
+    const scopedEntity =
+      scopeTarget === "entity" ? applyContextScope(rawEntity, contextConfig) : rawEntity;
+    const entityForContext = scopeTarget === "context" ? rawEntity : scopedEntity;
+    const context = {
+      ...(baseContext ?? {}),
+      role,
+      entityType,
+      entityId,
+      source: (baseContext?.source as string | undefined) ?? "context-filter",
+      timestamp: (baseContext?.timestamp as string | undefined) ?? now,
+      entity: entityForContext,
+      productId:
+        entityType === "product"
+          ? entityId
+          : (baseContext?.productId as string | undefined),
+      product:
+        entityType === "product"
+          ? entityForContext
+          : (baseContext?.product as Record<string, unknown> | undefined),
+    };
+    const scopedContext =
+      scopeTarget === "context" ? applyContextScope(context, contextConfig) : context;
+    const scopedContextEntity =
+      scopeTarget === "context"
+        ? ((scopedContext?.entity as Record<string, unknown> | undefined) ??
+            entityForContext)
+        : scopedEntity;
+    return {
+      role,
+      entityType,
+      entityId,
+      rawEntity,
+      scopedEntity: scopedContextEntity,
+      context: scopedContext,
+    };
   };
 
   for (const node of nodes) {
     if (!isActiveNode(node)) {
       continue;
-    }
-    if (node.type === "context") {
-      const payload = await resolveContextPayload(node.config?.context);
-      outputs[node.id] = {
-        role: payload.role,
-        context: {
-          role: payload.role,
-          entityType: payload.entityType,
-          entityId: payload.entityId,
-          source: node.title,
-          timestamp: now,
-          entity: payload.scopedEntity,
-          productId: payload.entityType === "product" ? payload.entityId : undefined,
-          product: payload.entityType === "product" ? payload.scopedEntity : undefined,
-        },
-        entityId: payload.entityId,
-        entityType: payload.entityType,
-        entityJson: payload.scopedEntity,
-      };
     }
     if (node.type === "simulation") {
       const entityType =
@@ -627,6 +684,7 @@ export async function evaluateGraph({
   const httpExecuted = new Set<string>();
   const delayExecuted = new Set<string>();
   const pollExecuted = new Set<string>();
+  const notificationExecuted = new Set<string>();
 
   for (let iteration = 0; iteration < maxIterations; iteration += 1) {
     const nextInputs: Record<string, RuntimePortValues> = {};
@@ -653,6 +711,55 @@ export async function evaluateGraph({
       let nextOutputs: RuntimePortValues = prevOutputs;
 
       switch (node.type) {
+        case "notification": {
+          if (notificationExecuted.has(node.id)) break;
+          const messageSource =
+            coerceInput(nodeInputs.result) ??
+            coerceInput(nodeInputs.prompt) ??
+            coerceInput(nodeInputs.value) ??
+            coerceInput(nodeInputs.bundle) ??
+            coerceInput(nodeInputs.context) ??
+            coerceInput(nodeInputs.trigger) ??
+            coerceInput(nodeInputs.meta);
+          if (messageSource === undefined) {
+            nextOutputs = prevOutputs;
+            break;
+          }
+          const message = formatRuntimeValue(messageSource);
+          const trimmed = message.trim();
+          if (!trimmed) {
+            nextOutputs = prevOutputs;
+            break;
+          }
+          toast(trimmed, { variant: "success" });
+          notificationExecuted.add(node.id);
+          nextOutputs = prevOutputs;
+          break;
+        }
+        case "context": {
+          const rawContext = coerceInput(nodeInputs.context);
+          const inputContext =
+            rawContext && typeof rawContext === "object"
+              ? (rawContext as Record<string, unknown>)
+              : null;
+          const payload = await resolveContextPayload(
+            node.config?.context,
+            inputContext
+          );
+          const resolvedContext = {
+            ...payload.context,
+            source:
+              (payload.context?.source as string | undefined) ?? node.title,
+          };
+          nextOutputs = {
+            role: payload.role,
+            context: resolvedContext,
+            entityId: payload.entityId,
+            entityType: payload.entityType,
+            entityJson: payload.scopedEntity,
+          };
+          break;
+        }
         case "trigger": {
           if (triggerNodeId && node.id !== triggerNodeId) {
             nextOutputs = {};
@@ -660,7 +767,6 @@ export async function evaluateGraph({
           }
           const eventName =
             triggerEvent ?? node.config?.trigger?.event ?? "path_generate_description";
-          const role = coerceInput(nodeInputs.role) ?? null;
           const simulation = coerceInput(nodeInputs.simulation) as
             | { entityId?: string; entityType?: string; productId?: string }
             | undefined;
@@ -668,44 +774,42 @@ export async function evaluateGraph({
             simulation?.entityId ?? simulation?.productId ?? null;
           const simulationInputType =
             simulation?.entityType ?? simulationEntityType ?? null;
-          const contextEdge = edges.find(
-            (edge) => edge.to === node.id && edge.toPort === "role"
-          );
-          const contextNode = contextEdge
-            ? nodes.find((item) => item.id === contextEdge.from)
-            : null;
-          const contextOutput = contextNode ? outputs[contextNode.id] : null;
-          const resolvedEntityId =
-            (contextOutput?.entityId as string | undefined) ??
-            simulationInputId ??
-            null;
-          const resolvedEntityType =
-            (contextOutput?.entityType as string | undefined) ??
-            simulationInputType ??
-            null;
-          const resolvedContext =
-            (contextOutput?.context as Record<string, unknown> | undefined) ?? {
-              role,
-              entityType: resolvedEntityType,
-              entityId: resolvedEntityId,
-              source: node.title,
-              timestamp: now,
-              entity:
-                (contextOutput?.entityJson as Record<string, unknown> | undefined) ??
-                resolvedEntity ??
-                buildFallbackEntity(resolvedEntityId),
-            };
+          const resolvedEntityId = simulationInputId ?? null;
+          const resolvedEntityType = simulationInputType ?? null;
+          const resolvedContext = {
+            entityType: resolvedEntityType,
+            entityId: resolvedEntityId,
+            source: node.title,
+            timestamp: now,
+            entity: resolvedEntity ?? buildFallbackEntity(resolvedEntityId),
+          };
+          const triggerExtras = triggerContext ?? {};
           nextOutputs = {
             trigger: eventName,
             meta: {
               firedAt: now,
               trigger: eventName,
               pathId: activePathId,
-              role,
               entityId: resolvedEntityId,
               entityType: resolvedEntityType,
+              ui: triggerExtras.ui ?? null,
+              location: triggerExtras.location ?? null,
+              source: triggerExtras.source ?? null,
+              user: triggerExtras.user ?? null,
+              event: triggerExtras.event ?? null,
+              extras: triggerExtras.extras ?? null,
             },
-            context: resolvedContext,
+            context: {
+              ...resolvedContext,
+              ui: triggerExtras.ui ?? resolvedContext.ui,
+              location: triggerExtras.location ?? resolvedContext.location,
+              source: triggerExtras.source ?? resolvedContext.source ?? node.title,
+              user: triggerExtras.user ?? resolvedContext.user,
+              event: triggerExtras.event ?? resolvedContext.event,
+              extras: triggerExtras.extras ?? resolvedContext.extras,
+              trigger: eventName,
+              pathId: activePathId,
+            },
             entityId: resolvedEntityId,
             entityType: resolvedEntityType,
           };
@@ -734,7 +838,7 @@ export async function evaluateGraph({
             const normalized = key.trim().toLowerCase();
             if (normalized === "title" || normalized === "name") {
               return (
-                (source.title as unknown) ??
+                (source.title) ??
                 (source.name as unknown) ??
                 (source.name_en as unknown) ??
                 (source.name_pl as unknown) ??
@@ -744,7 +848,7 @@ export async function evaluateGraph({
             }
             if (normalized === "images" || normalized === "imageurls") {
               return (
-                (source.images as unknown) ??
+                (source.images) ??
                 (source.imageLinks as unknown) ??
                 (source.media as unknown) ??
                 (source.gallery as unknown) ??
@@ -758,7 +862,7 @@ export async function evaluateGraph({
               normalized === "id"
             ) {
               return (
-                (source.id as unknown) ??
+                (source.id) ??
                 (source._id as unknown) ??
                 (source.productId as unknown) ??
                 (source.entityId as unknown)
@@ -766,7 +870,7 @@ export async function evaluateGraph({
             }
             if (normalized === "content_en" || normalized === "description_en") {
               return (
-                (source.content_en as unknown) ??
+                (source.content_en) ??
                 (source.description_en as unknown) ??
                 (source.description as unknown) ??
                 (source.content as unknown)
@@ -855,7 +959,7 @@ export async function evaluateGraph({
             contextValue,
             currentValue
           );
-          const updated = cloneValue(contextValue) as Record<string, unknown>;
+          const updated = cloneValue(contextValue);
           setValueAtMappingPath(updated, targetPath, rendered);
           nextOutputs = { context: updated };
           break;
@@ -955,7 +1059,7 @@ export async function evaluateGraph({
           };
           const currentValue = coerceInput(nodeInputs.value);
           const compareTo = compareConfig.compareTo ?? "";
-          const base = currentValue === undefined || currentValue === null ? "" : String(currentValue);
+          const base = safeStringify(currentValue);
           const target = String(compareTo ?? "");
           const value = compareConfig.caseSensitive ? base : base.toLowerCase();
           const targetValue = compareConfig.caseSensitive ? target : target.toLowerCase();
@@ -1013,9 +1117,7 @@ export async function evaluateGraph({
           const valueCandidate =
             config.mode === "valid" ? coerceInput(nodeInputs.valid) : coerceInput(nodeInputs.value);
           const compareTarget = config.compareTo ?? "";
-          const asString = valueCandidate === undefined || valueCandidate === null
-            ? ""
-            : String(valueCandidate);
+          const asString = safeStringify(valueCandidate);
           let shouldPass = false;
           switch (config.matchMode) {
             case "truthy":
@@ -1254,7 +1356,7 @@ export async function evaluateGraph({
               data = await res.text();
             } else {
               try {
-                data = await res.json();
+                data = await res.json() as unknown;
               } catch {
                 data = await res.text();
               }
@@ -1382,7 +1484,7 @@ export async function evaluateGraph({
               if (!res.ok) {
                 throw new Error("Database query failed.");
               }
-              const data = (await res.json()) as {
+              const data = (await res.json() as unknown) as {
                 items?: unknown[];
                 item?: unknown;
                 count?: number;
@@ -1493,7 +1595,7 @@ export async function evaluateGraph({
                   if (!res.ok) {
                     throw new Error("Failed to update entity.");
                   }
-                  updateResult = await res.json().catch(() => updates);
+                  updateResult = await (res.json() as Promise<unknown>).catch(() => updates);
                   updaterExecuted.add(node.id);
                   const suffix = entityId ? ` ${entityId}` : "";
                   toast(`Updated ${entityType}${suffix}`, { variant: "success" });
@@ -1593,7 +1695,7 @@ export async function evaluateGraph({
                   if (!res.ok) {
                     throw new Error("Failed to insert entity.");
                   }
-                  insertResult = await res.json().catch(() => payload);
+                  insertResult = await (res.json() as Promise<unknown>).catch(() => payload);
                   updaterExecuted.add(node.id);
                   toast(`Inserted ${entityType}`, { variant: "success" });
                 } catch (error) {
@@ -1901,7 +2003,7 @@ export async function evaluateGraph({
                 payload,
               }),
             });
-            const enqueueData = (await enqueueRes.json()) as {
+            const enqueueData = (await enqueueRes.json() as unknown) as {
               error?: string;
               jobId?: string;
             };
@@ -1911,12 +2013,21 @@ export async function evaluateGraph({
             enqueuedJobId = enqueueData.jobId;
             toast("AI model job queued.", { variant: "success" });
             if (!shouldWait) {
-              nextOutputs = { jobId: enqueueData.jobId, debugPayload: payload };
+              nextOutputs = {
+                jobId: enqueueData.jobId,
+                status: "queued",
+                debugPayload: payload,
+              };
               aiExecuted.add(node.id);
               break;
             }
             const result = await pollGraphJob(enqueueData.jobId);
-            nextOutputs = { result, jobId: enqueueData.jobId, debugPayload: payload };
+            nextOutputs = {
+              result,
+              jobId: enqueueData.jobId,
+              status: "completed",
+              debugPayload: payload,
+            };
             aiExecuted.add(node.id);
           } catch (error) {
             reportAiPathsError(
@@ -1925,7 +2036,12 @@ export async function evaluateGraph({
               "AI model job failed:"
             );
             toast("AI model job failed.", { variant: "error" });
-            nextOutputs = { result: "", jobId: enqueuedJobId, debugPayload: payload };
+            nextOutputs = {
+              result: "",
+              jobId: enqueuedJobId,
+              status: "failed",
+              debugPayload: payload,
+            };
             aiExecuted.add(node.id);
           }
           break;
@@ -1969,7 +2085,7 @@ export async function evaluateGraph({
             if (!res.ok) {
               throw new Error("AI description generation failed.");
             }
-            const data = (await res.json()) as { description?: string };
+            const data = (await res.json() as unknown) as { description?: string };
             nextOutputs = {
               description_en: data.description ?? "",
             };

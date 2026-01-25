@@ -1,6 +1,7 @@
 import type {
   AiNode,
   ConnectionValidation,
+  ContextConfig,
   Edge,
   JsonPathEntry,
   NodeConfig,
@@ -32,8 +33,9 @@ const VIEW_MARGIN = 40;
 const PORT_GAP = 18;
 const PORT_SIZE = 10;
 const DEFAULT_CONTEXT_ROLE = "entity";
-const TRIGGER_INPUT_PORTS = ["role", "simulation"];
+const TRIGGER_INPUT_PORTS = ["simulation"];
 const TRIGGER_OUTPUT_PORTS = ["trigger", "context", "meta", "entityId", "entityType"];
+const CONTEXT_INPUT_PORTS = ["context"];
 const CONTEXT_OUTPUT_PORTS = ["role", "context", "entityId", "entityType", "entityJson"];
 const SIMULATION_OUTPUT_PORTS = ["simulation", "entityId", "entityType", "productId"];
 const DESCRIPTION_OUTPUT_PORTS = ["description_en"];
@@ -351,12 +353,13 @@ const PROMPT_OUTPUT_PORTS = ["prompt", "images"];
 const POLL_INPUT_PORTS = ["jobId", "query", "value", "entityId", "productId", "bundle"];
 const POLL_OUTPUT_PORTS = ["result", "status", "jobId", "bundle"];
 const MODEL_OUTPUT_PORTS = ["result", "jobId"];
+const NOTIFICATION_INPUT_PORTS = ["result", "prompt", "value", "bundle", "context", "meta", "trigger"];
 
 const palette: NodeDefinition[] = [
   {
     type: "trigger",
     title: "Trigger: Product Modal",
-    description: "Runs when Context Grabber is clicked inside Product modal.",
+    description: "Runs when Context Filter is clicked inside Product modal.",
     inputs: TRIGGER_INPUT_PORTS,
     outputs: TRIGGER_OUTPUT_PORTS,
   },
@@ -396,6 +399,13 @@ const palette: NodeDefinition[] = [
     outputs: [],
   },
   {
+    type: "notification",
+    title: "Toast Notification",
+    description: "Display an instant toast from incoming results.",
+    inputs: NOTIFICATION_INPUT_PORTS,
+    outputs: [],
+  },
+  {
     type: "ai_description",
     title: "AI Description Generator",
     description: "Runs the AI Description pipeline to produce description_en.",
@@ -411,9 +421,9 @@ const palette: NodeDefinition[] = [
   },
   {
     type: "context",
-    title: "Context Grabber",
-    description: "Collects live entity context (Product, Note, Chat, Log).",
-    inputs: [],
+    title: "Context Filter",
+    description: "Filter incoming context payloads into scoped entity data.",
+    inputs: CONTEXT_INPUT_PORTS,
     outputs: ["role", "context", "entityId", "entityType", "entityJson"],
   },
   {
@@ -575,6 +585,8 @@ const normalizeNodes = (items: AiNode[]) =>
       const contextConfig = node.config?.context;
       return {
         ...node,
+        title: node.title === "Context Grabber" ? "Context Filter" : node.title,
+        inputs: ensureUniquePorts(node.inputs ?? [], CONTEXT_INPUT_PORTS),
         outputs: ensureUniquePorts(node.outputs, CONTEXT_OUTPUT_PORTS),
         config: {
           ...node.config,
@@ -584,8 +596,22 @@ const normalizeNodes = (items: AiNode[]) =>
             entityIdSource: contextConfig?.entityIdSource ?? "simulation",
             entityId: contextConfig?.entityId ?? "",
             scopeMode: contextConfig?.scopeMode ?? "full",
+            scopeTarget: contextConfig?.scopeTarget ?? "entity",
             includePaths: contextConfig?.includePaths ?? [],
             excludePaths: contextConfig?.excludePaths ?? [],
+          },
+        },
+      };
+    }
+    if (node.type === "trigger") {
+      return {
+        ...node,
+        inputs: TRIGGER_INPUT_PORTS,
+        outputs: TRIGGER_OUTPUT_PORTS,
+        config: {
+          ...node.config,
+          trigger: {
+            event: node.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id ?? "path_generate_description",
           },
         },
       };
@@ -1255,6 +1281,20 @@ const getPortOffsetY = (index: number, totalPorts: number) => {
   return startY + index * PORT_GAP;
 };
 
+export const safeStringify = (value: unknown): string => {
+  if (value === undefined || value === null) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (typeof value === "object") {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return "[Complex Object]";
+    }
+  }
+  return String(value);
+};
+
 const formatRuntimeValue = (value: unknown) => {
   if (value === null || value === undefined) return "—";
   if (typeof value === "string") return value.trim() || "—";
@@ -1264,7 +1304,7 @@ const formatRuntimeValue = (value: unknown) => {
     if (json.length > 400) return `${json.slice(0, 400)}…`;
     return json;
   } catch {
-    return String(value);
+    return "[Complex Object]";
   }
 };
 
@@ -1484,9 +1524,45 @@ const inferImageMappingPath = (value: unknown, depth: number) => {
   return null;
 };
 
-const getContextPresetSet = (entityType?: string) => {
+export const getContextPresetSet = (entityType?: string) => {
   const key = entityType === "auto" ? "" : entityType ?? "";
   return CONTEXT_PRESET_FIELDS[key] ?? CONTEXT_PRESET_FIELDS.default;
+};
+
+export const applyContextPreset = (
+  current: ContextConfig,
+  preset: "light" | "medium" | "full" | "suggested"
+): ContextConfig => {
+  const set = getContextPresetSet(current.entityType);
+  const paths = set[preset] ?? [];
+  if (paths.length === 0) return { ...current, scopeMode: "full" };
+  return {
+    ...current,
+    scopeMode: "include",
+    includePaths: paths,
+    excludePaths: [],
+  };
+};
+
+export const toggleContextTarget = (current: ContextConfig, field: string) => {
+  const isIncluded = (current.includePaths ?? []).includes(field);
+  const isExcluded = (current.excludePaths ?? []).includes(field);
+  if (current.scopeMode === "include") {
+    const includePaths = current.includePaths ?? [];
+    return {
+      ...current,
+      includePaths: isIncluded
+        ? includePaths.filter((p: string) => p !== field)
+        : [...includePaths, field],
+    };
+  }
+  const excludePaths = current.excludePaths ?? [];
+  return {
+    ...current,
+    excludePaths: isExcluded
+      ? excludePaths.filter((p) => p !== field)
+      : [...excludePaths, field],
+  };
 };
 
 const cloneValue = <T,>(value: T): T => {
@@ -1586,13 +1662,10 @@ const renderTemplate = (
   template.replace(/{{\s*([^}]+)\s*}}/g, (_match, token) => {
     const key = String(token).trim();
     if (key === "value" || key === "current") {
-      return currentValue === undefined || currentValue === null
-        ? ""
-        : String(currentValue);
+      return safeStringify(currentValue);
     }
     const resolved = getValueAtMappingPath(context, key);
-    if (resolved === undefined || resolved === null) return "";
-    return String(resolved);
+    return safeStringify(resolved);
   });
 
 const setValueAtPath = (obj: Record<string, unknown>, path: string, value: unknown) => {
@@ -1618,8 +1691,8 @@ const setValueAtMappingPath = (
   const normalized = normalizeMappingPath(path, obj);
   if (!normalized) return;
   const tokens = parsePathTokens(normalized);
-  let current: any = obj;
-  let parent: any = null;
+  let current: Record<string, unknown> | unknown[] = obj;
+  let parent: Record<string, unknown> | unknown[] | null = null;
   let parentKey: string | number | null = null;
   tokens.forEach((token, index) => {
     const isLast = index === tokens.length - 1;
@@ -1627,12 +1700,18 @@ const setValueAtMappingPath = (
       if (typeof token === "number") {
         if (!Array.isArray(current)) {
           const nextArray: unknown[] = [];
-          if (parent && parentKey !== null) parent[parentKey] = nextArray;
+          if (parent && parentKey !== null) {
+            if (Array.isArray(parent)) {
+              (parent)[Number(parentKey)] = nextArray;
+            } else {
+              (parent)[String(parentKey)] = nextArray;
+            }
+          }
           current = nextArray;
         }
-        current[token] = value;
+        (current)[token] = value;
       } else {
-        current[token] = value;
+        (current as Record<string, unknown>)[token] = value;
       }
       return;
     }
@@ -1640,23 +1719,31 @@ const setValueAtMappingPath = (
     if (typeof token === "number") {
       if (!Array.isArray(current)) {
         const nextArray: unknown[] = [];
-        if (parent && parentKey !== null) parent[parentKey] = nextArray;
+        if (parent && parentKey !== null) {
+          if (Array.isArray(parent)) {
+            (parent)[Number(parentKey)] = nextArray;
+          } else {
+            (parent)[String(parentKey)] = nextArray;
+          }
+        }
         current = nextArray;
       }
-      if (current[token] == null || typeof current[token] !== "object") {
-        current[token] = typeof nextToken === "number" ? [] : {};
+      const curArr = current;
+      if (curArr[token] == null || typeof curArr[token] !== "object") {
+        curArr[token] = typeof nextToken === "number" ? [] : {};
       }
       parent = current;
       parentKey = token;
-      current = current[token];
+      current = curArr[token] as Record<string, unknown> | unknown[];
       return;
     }
-    if (current[token] == null || typeof current[token] !== "object") {
-      current[token] = typeof nextToken === "number" ? [] : {};
+    const curObj = current as Record<string, unknown>;
+    if (curObj[token] == null || typeof curObj[token] !== "object") {
+      curObj[token] = typeof nextToken === "number" ? [] : {};
     }
     parent = current;
     parentKey = token;
-    current = current[token];
+    current = curObj[token] as Record<string, unknown> | unknown[];
   });
 };
 
@@ -1686,7 +1773,7 @@ const deletePath = (obj: Record<string, unknown>, path: string) => {
 
 const omitByPaths = (obj: Record<string, unknown>, paths: string[]) => {
   const clone = cloneValue(obj);
-  paths.forEach((path) => deletePath(clone as Record<string, unknown>, path));
+  paths.forEach((path) => deletePath(clone, path));
   return clone;
 };
 
@@ -1767,6 +1854,7 @@ const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     "trigger",
     "parser",
     "viewer",
+    "notification",
     "ai_description",
     "mapper",
     "mutator",
@@ -1779,12 +1867,26 @@ const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     "http",
     "database",
   ],
-  trigger: ["viewer", "mapper", "mutator", "validator", "bundle", "template", "router", "delay", "poll", "database"],
-  simulation: ["trigger"],
+  trigger: [
+    "context",
+    "viewer",
+    "notification",
+    "mapper",
+    "mutator",
+    "validator",
+    "bundle",
+    "template",
+    "router",
+    "delay",
+    "poll",
+    "database",
+  ],
+  simulation: ["trigger", "notification"],
   parser: [
     "prompt",
     "database",
     "viewer",
+    "notification",
     "ai_description",
     "description_updater",
     "mapper",
@@ -1888,17 +1990,7 @@ const validateConnection = (
     };
   }
 
-  // Rule 9: Trigger role input can come from Context role output
-  if (toNode.type === "trigger" && toPort === "role") {
-    if (fromNode.type !== "context" || fromPort !== "role") {
-      return {
-        valid: false,
-        message: "Trigger 'role' input must connect from Context 'role'.",
-      };
-    }
-  }
-
-  // Rule 10: Trigger simulation input must come from Simulation simulation
+  // Rule 9: Trigger simulation input must come from Simulation simulation
   if (toNode.type === "trigger" && toPort === "simulation") {
     if (fromNode.type !== "simulation" || fromPort !== "simulation") {
       return {
@@ -2010,10 +2102,10 @@ const initialNodes: AiNode[] = [
   {
     id: "node-context",
     type: "context",
-    title: "Context Grabber",
-    description: "Active on Product modal button.",
-    inputs: [],
-    outputs: ["role", "context", "entityJson"],
+    title: "Context Filter",
+    description: "Filter Product modal context into scoped fields.",
+    inputs: CONTEXT_INPUT_PORTS,
+    outputs: CONTEXT_OUTPUT_PORTS,
     position: { x: 520, y: 590 },
     config: {
       context: {
@@ -2150,7 +2242,7 @@ const createDefaultPathConfig = (id: string): PathConfig => {
     version: STORAGE_VERSION,
     name: "AI Description Path",
     description: "Visual analysis + description generation with structured updates.",
-    trigger: triggers[0] ?? "Product Modal - Context Grabber",
+    trigger: triggers[0] ?? "Product Modal - Context Filter",
     nodes: initialNodes,
     edges: initialEdges,
     updatedAt: now,
@@ -2180,15 +2272,16 @@ const createAiDescriptionPath = (id: string): PathConfig => {
     {
       id: "node-context",
       type: "context",
-      title: "Context Grabber",
-      description: "Collect product context.",
-      inputs: [],
-      outputs: ["role", "context", "entityJson"],
+      title: "Context Filter",
+      description: "Filter product context.",
+      inputs: CONTEXT_INPUT_PORTS,
+      outputs: CONTEXT_OUTPUT_PORTS,
       position: { x: 470, y: 600 },
       config: {
         context: {
           role: DEFAULT_CONTEXT_ROLE,
           scopeMode: "full",
+          scopeTarget: "entity",
           includePaths: [],
           excludePaths: [],
         },
@@ -2316,7 +2409,7 @@ const createAiDescriptionPath = (id: string): PathConfig => {
     version: STORAGE_VERSION,
     name: "AI Description Path",
     description: "Generates product descriptions via AI and updates the product.",
-    trigger: triggers[0] ?? "Product Modal - Context Grabber",
+    trigger: triggers[0] ?? "Product Modal - Context Filter",
     nodes,
     edges,
     updatedAt: now,
@@ -2349,12 +2442,13 @@ const typeStyles: Record<NodeType, { border: string; glow: string }> = {
   prompt: { border: "border-amber-500/40", glow: "shadow-amber-500/20" },
   model: { border: "border-fuchsia-500/40", glow: "shadow-fuchsia-500/20" },
   viewer: { border: "border-violet-500/40", glow: "shadow-violet-500/20" },
+  notification: { border: "border-amber-400/40", glow: "shadow-amber-500/20" },
   ai_description: { border: "border-indigo-500/40", glow: "shadow-indigo-500/20" },
   description_updater: { border: "border-rose-400/40", glow: "shadow-rose-400/20" },
 };
 
 const triggers = [
-  "Product Modal - Context Grabber",
+  "Product Modal - Context Filter",
   "Bulk Action - Generate Descriptions",
   "On Product Save",
 ];
@@ -2365,6 +2459,7 @@ export {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
   CLUSTER_PRESETS_KEY,
+  CONTEXT_INPUT_PORTS,
   CONTEXT_OUTPUT_PORTS,
   DB_COLLECTION_OPTIONS,
   DEFAULT_CONTEXT_ROLE,
@@ -2378,6 +2473,7 @@ export {
   NODE_MIN_HEIGHT,
   NODE_TYPE_COMPATIBILITY,
   NODE_WIDTH,
+  NOTIFICATION_INPUT_PORTS,
   PARSER_PATH_OPTIONS,
   PARSER_PRESETS,
   PATH_CONFIG_PREFIX,

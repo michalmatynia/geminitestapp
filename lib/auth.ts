@@ -1,3 +1,4 @@
+import { ErrorSystem } from "@/lib/error-system";
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
@@ -47,7 +48,8 @@ const credentialsProvider = Credentials({
       const ip = extractClientIp(request);
       const allowed = await checkLoginAllowed({ email, ip });
       if (!allowed.allowed) {
-        console.warn("[AUTH] Login blocked due to rate limits", {
+        await ErrorSystem.logWarning("[AUTH] Login blocked due to rate limits", {
+          service: "auth",
           email,
           ip,
           lockedUntil: allowed.lockedUntil?.toISOString(),
@@ -129,13 +131,13 @@ const credentialsProvider = Credentials({
         }
       }
 
-      console.log("[AUTH] Attempting to find user:", email);
+      await ErrorSystem.logInfo("[AUTH] Attempting to find user", { service: "auth", email });
       
       // findAuthUserByEmail uses getAuthDataProvider() internally to choose DB
       const user = await findAuthUserByEmail(email);
 
       if (!user) {
-        console.log("[AUTH] User not found");
+        await ErrorSystem.logInfo("[AUTH] User not found", { service: "auth", email });
         await recordLoginFailure({ email, ip, request });
         return null;
       }
@@ -212,7 +214,10 @@ const credentialsProvider = Credentials({
         image: user.image ?? null,
       };
     } catch (error) {
-      console.error("[AUTH] Authorize error:", error);
+      await ErrorSystem.captureException(error, {
+        service: "auth",
+        action: "authorize",
+      });
       return null;
     }
   },
@@ -229,6 +234,8 @@ const buildProviders = () => {
       })
     );
   } else {
+    // Non-critical warning, log to system but don't spam if not configured
+    // We can use console.warn or ErrorSystem.logWarning
     console.warn("[AUTH] Google Client ID/Secret not found. Google login will be unavailable.");
   }
 
@@ -248,7 +255,7 @@ const buildProviders = () => {
 
 export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
   try {
-    console.log("[AUTH] Starting configuration...");
+    await ErrorSystem.logInfo("[AUTH] Starting configuration...", { service: "auth" });
     const provider = await getAuthDataProvider();
     console.log("[AUTH] Provider determined:", provider);
     const hasMongo = Boolean(process.env.MONGODB_URI);
@@ -309,8 +316,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
       },
       debug: true,
     };
-  } catch (error) {
-    console.error("[AUTH] Configuration error:", error);
-    throw error;
-  }
-});
+      } catch (error) {
+      await ErrorSystem.captureException(error, {
+        service: "auth",
+        action: "configuration",
+      });
+      throw error;
+    }
+  });
+  

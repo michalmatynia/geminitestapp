@@ -19,7 +19,7 @@ type CanvasSidebarProps = {
   edges: Edge[];
   selectedEdgeId: string | null;
   onSelectEdge: (edgeId: string | null) => void;
-  onFireTrigger: (node: AiNode) => void;
+  onFireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
   onOpenSimulation: (nodeId: string) => void;
   onUpdateSelectedNode: (patch: Partial<AiNode>) => void;
   onOpenNodeConfig: () => void;
@@ -50,7 +50,10 @@ export function CanvasSidebar({
 }: CanvasSidebarProps) {
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-4">
+      <div
+        className="rounded-lg border border-gray-800 bg-gray-950/60 p-4"
+        data-edge-panel
+      >
         <div className="mb-3 flex items-center justify-between">
           <span className="text-sm font-semibold text-white">Node Palette</span>
           <button
@@ -85,7 +88,7 @@ export function CanvasSidebar({
                 icon: "🤖",
               },
               { title: "Description", types: ["description_updater"], icon: "✍️" },
-              { title: "Viewers", types: ["viewer"], icon: "👁" },
+              { title: "Viewers", types: ["viewer", "notification"], icon: "👁" },
             ].map((group) => {
               const items = palette.filter((node) => group.types.includes(node.type));
               if (items.length === 0) return null;
@@ -146,142 +149,140 @@ export function CanvasSidebar({
         )}
       </div>
 
-      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-4">
-        <div className="mb-3 text-sm font-semibold text-white">Inspector</div>
-        {selectedEdgeId ? (
-          <div className="text-xs text-gray-500">
-            Wire selected. Node inspector is hidden.
-          </div>
-        ) : selectedNode ? (
-          <div className="space-y-3 text-xs text-gray-300">
-            {selectedNode.type === "trigger" && (
+      {!selectedEdgeId && (
+        <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-4">
+          <div className="mb-3 text-sm font-semibold text-white">Inspector</div>
+          {selectedNode ? (
+            <div className="space-y-3 text-xs text-gray-300">
+              {selectedNode.type === "trigger" && (
+                <Button
+                  className="w-full rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10"
+                  type="button"
+                  onClick={(event) => onFireTrigger(selectedNode, event)}
+                >
+                  Fire Trigger
+                </Button>
+              )}
+              {selectedNode.type === "simulation" && (
+                <Button
+                  className="w-full rounded-md border border-cyan-500/40 text-xs text-cyan-200 hover:bg-cyan-500/10"
+                  type="button"
+                  onClick={() => onOpenSimulation(selectedNode.id)}
+                >
+                  Open Simulation
+                </Button>
+              )}
+              <div>
+                <Label className="text-[10px] uppercase text-gray-500">Title</Label>
+                <Input
+                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 px-3 py-2 text-xs text-white"
+                  value={selectedNode.title}
+                  onChange={(event) => onUpdateSelectedNode({ title: event.target.value })}
+                />
+              </div>
+              <div>
+                <Label className="text-[10px] uppercase text-gray-500">Description</Label>
+                <Textarea
+                  className="mt-2 min-h-[64px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-xs text-white"
+                  value={selectedNode.description}
+                  onChange={(event) =>
+                    onUpdateSelectedNode({ description: event.target.value })
+                  }
+                />
+              </div>
+              <div className="rounded-md border border-gray-800 bg-gray-900/50 p-3 text-[11px] text-gray-400">
+                Inputs:{" "}
+                {selectedNode.inputs.map((port) => formatPortLabel(port)).join(", ") ||
+                  "None"}{" "}
+                <br />
+                Outputs:{" "}
+                {selectedNode.outputs.map((port) => formatPortLabel(port)).join(", ") ||
+                  "None"}
+              </div>
+              {selectedNode.type === "prompt" && (() => {
+                const incomingEdges = edges.filter((edge) => edge.to === selectedNode.id);
+                const inputPorts = incomingEdges
+                  .map((edge) => edge.toPort)
+                  .filter((port): port is string => Boolean(port));
+                const bundleKeys = new Set<string>();
+                incomingEdges.forEach((edge) => {
+                  if (edge.toPort !== "bundle") return;
+                  const fromNode = nodes.find((node) => node.id === edge.from);
+                  if (!fromNode) return;
+                  if (fromNode.type === "parser") {
+                    const mappings =
+                      fromNode.config?.parser?.mappings ??
+                      createParserMappings(fromNode.outputs);
+                    Object.keys(mappings).forEach((key) => {
+                      const trimmed = key.trim();
+                      if (trimmed) bundleKeys.add(trimmed);
+                    });
+                    return;
+                  }
+                  if (fromNode.type === "bundle") {
+                    fromNode.inputs.forEach((port) => {
+                      const trimmed = port.trim();
+                      if (trimmed) bundleKeys.add(trimmed);
+                    });
+                  }
+                  if (fromNode.type === "mapper") {
+                    const mapperOutputs =
+                      fromNode.config?.mapper?.outputs ?? fromNode.outputs;
+                    mapperOutputs.forEach((output) => {
+                      const trimmed = output.trim();
+                      if (trimmed) bundleKeys.add(trimmed);
+                    });
+                  }
+                });
+                const directPlaceholders = inputPorts.filter((port) => port !== "bundle");
+                if (bundleKeys.size === 0 && directPlaceholders.length === 0) return null;
+                return (
+                  <div className="rounded-md border border-gray-800 bg-gray-900/50 p-3 text-[11px] text-gray-400">
+                    <div className="text-gray-300">Prompt placeholders</div>
+                    {bundleKeys.size > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {Array.from(bundleKeys).map((key) => (
+                          <span
+                            key={key}
+                            className="rounded-full border border-gray-700 px-2 py-0.5 text-[10px] text-gray-200"
+                          >
+                            {formatPlaceholderLabel(key)}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {directPlaceholders.length > 0 && (
+                      <div className="mt-2 text-[11px] text-gray-500">
+                        Direct inputs:{" "}
+                        {directPlaceholders
+                          .map((port) => formatPlaceholderLabel(port))
+                          .join(", ")}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
               <Button
-                className="w-full rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10"
-                type="button"
-                onClick={() => onFireTrigger(selectedNode)}
+                className="w-full rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
+                onClick={onOpenNodeConfig}
               >
-                Fire Trigger
+                Open Node Config
               </Button>
-            )}
-            {selectedNode.type === "simulation" && (
               <Button
-                className="w-full rounded-md border border-cyan-500/40 text-xs text-cyan-200 hover:bg-cyan-500/10"
+                className="w-full rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10"
                 type="button"
-                onClick={() => onOpenSimulation(selectedNode.id)}
+                onClick={onDeleteSelectedNode}
               >
-                Open Simulation
+                Remove Node
               </Button>
-            )}
-            <div>
-              <Label className="text-[10px] uppercase text-gray-500">Title</Label>
-              <Input
-                className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 px-3 py-2 text-xs text-white"
-                value={selectedNode.title}
-                onChange={(event) => onUpdateSelectedNode({ title: event.target.value })}
-              />
             </div>
-            <div>
-              <Label className="text-[10px] uppercase text-gray-500">Description</Label>
-              <Textarea
-                className="mt-2 min-h-[64px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-xs text-white"
-                value={selectedNode.description}
-                onChange={(event) =>
-                  onUpdateSelectedNode({ description: event.target.value })
-                }
-              />
+          ) : (
+            <div className="text-xs text-gray-500">
+              Select a node to inspect inputs, outputs, and configuration.
             </div>
-            <div className="rounded-md border border-gray-800 bg-gray-900/50 p-3 text-[11px] text-gray-400">
-              Inputs:{" "}
-              {selectedNode.inputs.map((port) => formatPortLabel(port)).join(", ") ||
-                "None"}{" "}
-              <br />
-              Outputs:{" "}
-              {selectedNode.outputs.map((port) => formatPortLabel(port)).join(", ") ||
-                "None"}
-            </div>
-            {selectedNode.type === "prompt" && (() => {
-              const incomingEdges = edges.filter((edge) => edge.to === selectedNode.id);
-              const inputPorts = incomingEdges
-                .map((edge) => edge.toPort)
-                .filter((port): port is string => Boolean(port));
-              const bundleKeys = new Set<string>();
-              incomingEdges.forEach((edge) => {
-                if (edge.toPort !== "bundle") return;
-                const fromNode = nodes.find((node) => node.id === edge.from);
-                if (!fromNode) return;
-                if (fromNode.type === "parser") {
-                  const mappings =
-                    fromNode.config?.parser?.mappings ??
-                    createParserMappings(fromNode.outputs);
-                  Object.keys(mappings).forEach((key) => {
-                    const trimmed = key.trim();
-                    if (trimmed) bundleKeys.add(trimmed);
-                  });
-                  return;
-                }
-                if (fromNode.type === "bundle") {
-                  fromNode.inputs.forEach((port) => {
-                    const trimmed = port.trim();
-                    if (trimmed) bundleKeys.add(trimmed);
-                  });
-                }
-                if (fromNode.type === "mapper") {
-                  const mapperOutputs =
-                    fromNode.config?.mapper?.outputs ?? fromNode.outputs;
-                  mapperOutputs.forEach((output) => {
-                    const trimmed = output.trim();
-                    if (trimmed) bundleKeys.add(trimmed);
-                  });
-                }
-              });
-              const directPlaceholders = inputPorts.filter((port) => port !== "bundle");
-              if (bundleKeys.size === 0 && directPlaceholders.length === 0) return null;
-              return (
-                <div className="rounded-md border border-gray-800 bg-gray-900/50 p-3 text-[11px] text-gray-400">
-                  <div className="text-gray-300">Prompt placeholders</div>
-                  {bundleKeys.size > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {Array.from(bundleKeys).map((key) => (
-                        <span
-                          key={key}
-                          className="rounded-full border border-gray-700 px-2 py-0.5 text-[10px] text-gray-200"
-                        >
-                          {formatPlaceholderLabel(key)}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {directPlaceholders.length > 0 && (
-                    <div className="mt-2 text-[11px] text-gray-500">
-                      Direct inputs:{" "}
-                      {directPlaceholders
-                        .map((port) => formatPlaceholderLabel(port))
-                        .join(", ")}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-            <Button
-              className="w-full rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
-              onClick={onOpenNodeConfig}
-            >
-              Open Node Config
-            </Button>
-            <Button
-              className="w-full rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10"
-              type="button"
-              onClick={onDeleteSelectedNode}
-            >
-              Remove Node
-            </Button>
-          </div>
-        ) : (
-          <div className="text-xs text-gray-500">
-            Select a node to inspect inputs, outputs, and configuration.
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-4">
         <div className="mb-3 text-sm font-semibold text-white">Connections</div>

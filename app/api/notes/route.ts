@@ -5,6 +5,7 @@ import { noteCreateSchema } from "@/lib/validations/notes";
 import type { NoteFilters } from "@/types/notes";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { apiHandler } from "@/lib/api/api-handler";
+import { ErrorSystem } from "@/lib/error-system";
 
 /**
  * GET /api/notes
@@ -59,6 +60,11 @@ async function GET_handler(req: Request) {
     const notes = await noteService.getAll(filters);
     return NextResponse.json(notes);
   } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: "api/notes",
+      method: "GET",
+      filters,
+    });
     return createErrorResponse(error, {
       request: req,
       source: "notes.GET",
@@ -88,6 +94,10 @@ async function POST_handler(req: Request) {
     });
     return NextResponse.json(note, { status: 201 });
   } catch (error: unknown) {
+    await ErrorSystem.captureException(error, {
+      service: "api/notes",
+      method: "POST",
+    });
     return createErrorResponse(error, {
       request: req,
       source: "notes.POST",

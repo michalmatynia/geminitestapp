@@ -1,18 +1,11 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
 import {
   Dialog,
@@ -30,9 +23,6 @@ import { NodeConfigDialog } from "./ai-paths/node-config-dialog";
 import type {
   AiNode,
   ClusterPreset,
-  ContextConfig,
-  DatabaseConfig,
-  DatabaseOperation,
   DbQueryConfig,
   Edge,
   NodeConfig,
@@ -40,8 +30,8 @@ import type {
   ParserSampleState,
   PathConfig,
   PathMeta,
+  RuntimePortValues,
   RuntimeState,
-  UpdaterMapping,
   UpdaterSampleState,
 } from "./ai-paths/types";
 import {
@@ -50,51 +40,37 @@ import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
   CLUSTER_PRESETS_KEY,
-  DB_COLLECTION_OPTIONS,
-  DEFAULT_CONTEXT_ROLE,
   DEFAULT_MODELS,
   NODE_MIN_HEIGHT,
   NODE_WIDTH,
-  PARSER_PATH_OPTIONS,
-  PARSER_PRESETS,
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
-  PORT_SIZE,
   STORAGE_VERSION,
   TEMPLATE_INPUT_PORTS,
   TRIGGER_EVENTS,
   VIEW_MARGIN,
-  buildFlattenedMappings,
-  buildTopLevelMappings,
   clampScale,
   clampTranslate,
   createAiDescriptionPath,
   createDefaultPathConfig,
-  createParserMappings,
   createPathId,
   createPathMeta,
   createPresetId,
-  createViewerOutputs,
   coerceInput,
   getValueAtMappingPath,
   parseJsonSafe,
   renderTemplate,
-  extractJsonPathEntries,
-  formatRuntimeValue,
-  getContextPresetSet,
   getDefaultConfigForType,
   getPortOffsetY,
-  inferImageMappingPath,
   initialEdges,
   initialNodes,
   normalizeNodes,
   palette,
   parsePathList,
   safeParseJson,
+  safeStringify,
   sanitizeEdges,
-  toNumber,
   triggers,
-  typeStyles,
   validateConnection,
 } from "./ai-paths/helpers";
 
@@ -120,15 +96,20 @@ const DEFAULT_DB_QUERY: DbQueryConfig = {
 
 export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPathsSettingsProps) {
   const { toast } = useToast();
+  const normalizeTriggerLabel = (value?: string | null) =>
+    value === "Product Modal - Context Grabber"
+      ? "Product Modal - Context Filter"
+      : value ?? (triggers[0] ?? "Product Modal - Context Filter");
   const docsWiringSnippet = [
     "Simulation.simulation → Trigger.simulation",
-    "Context.role → Trigger.role",
+    "Trigger.context → ContextFilter.context",
+    "ContextFilter.entityJson → Parser.entityJson",
     "Trigger.context → ResultViewer.context",
     "Trigger.meta → ResultViewer.meta",
     "Trigger.trigger → ResultViewer.trigger",
   ].join("\n");
   const docsDescriptionSnippet = [
-    "Context.entityJson → Parser.entityJson",
+    "ContextFilter.entityJson → Parser.entityJson",
     "Parser.title → AI Description Generator.title",
     "Parser.images → AI Description Generator.images",
     "AI Description Generator.description_en → Description Updater.description_en",
@@ -161,6 +142,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const [autoSaveAt, setAutoSaveAt] = useState<string | null>(null);
   const [configOpen, setConfigOpen] = useState(false);
   const [modelOptions, setModelOptions] = useState<string[]>(DEFAULT_MODELS);
   // Initial view centered on the middle of the canvas where nodes are placed
@@ -196,6 +181,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     {}
   );
   const [updaterSampleLoading, setUpdaterSampleLoading] = useState(false);
+  const [sessionUser, setSessionUser] = useState<{
+    id?: string;
+    name?: string | null;
+    email?: string | null;
+  } | null>(null);
   const [panState, setPanState] = useState<{
     startX: number;
     startY: number;
@@ -247,7 +237,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const pollInFlightRef = useRef<Set<string>>(new Set());
   const lastTriggerNodeIdRef = useRef<string | null>(null);
+  const triggerContextRef = useRef<Record<string, unknown> | null>(null);
   const runtimeStateRef = useRef<RuntimeState>({ inputs: {}, outputs: {} });
+  const lastDropTimerRef = useRef<number | null>(null);
 
   // RAF throttling refs for drag performance
   const pendingDragRef = useRef<{ nodeId: string; x: number; y: number } | null>(null);
@@ -320,8 +312,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     context: Record<string, unknown>,
     fallbackMessage?: string
   ) => {
-    const rawMessage =
-      error instanceof Error ? error.message : String(error ?? "Unknown error");
+    const rawMessage = error instanceof Error ? error.message : safeStringify(error);
     const summary = (fallbackMessage ?? rawMessage).replace(/:$/, "");
     const logMessage = `[AI Paths] ${summary}`;
     const logError = new Error(logMessage);
@@ -359,7 +350,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         if (!settingsRes.ok) {
           throw new Error("Failed to load AI Paths settings.");
         }
-        const data = (await settingsRes.json()) as Array<{ key: string; value: string }>;
+        const data = (await settingsRes.json() as unknown) as Array<{ key: string; value: string }>;
         let preferredPathId: string | null = null;
         let preferredGroups: string[] | null = null;
         let preferredPathIndex: PathMeta[] | null = null;
@@ -367,12 +358,12 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         try {
           const prefsRes = await fetch("/api/user/preferences");
           if (prefsRes.ok) {
-            const prefs = (await prefsRes.json()) as {
+            const prefs = (await prefsRes.json() as unknown) as {
               aiPathsActivePathId?: string | null;
               aiPathsExpandedGroups?: string[] | null;
               aiPathsPaletteCollapsed?: boolean | null;
               aiPathsPathIndex?: PathMeta[] | null;
-              aiPathsPathConfigs?: Record<string, PathConfig> | null;
+              aiPathsPathConfigs?: Record<string, PathConfig> | string | null;
             };
             preferredPathId =
               typeof prefs.aiPathsActivePathId === "string"
@@ -385,10 +376,20 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               Array.isArray(prefs.aiPathsPathIndex) && prefs.aiPathsPathIndex.length > 0
                 ? prefs.aiPathsPathIndex
                 : null;
-            preferredPathConfigs =
-              prefs.aiPathsPathConfigs && typeof prefs.aiPathsPathConfigs === "object"
-                ? (prefs.aiPathsPathConfigs as Record<string, PathConfig>)
-                : null;
+            if (typeof prefs.aiPathsPathConfigs === "string") {
+              const parsedConfigs = safeParseJson(prefs.aiPathsPathConfigs).value;
+              preferredPathConfigs =
+                parsedConfigs && typeof parsedConfigs === "object"
+                  ? (parsedConfigs as Record<string, PathConfig>)
+                  : null;
+            } else if (
+              prefs.aiPathsPathConfigs &&
+              typeof prefs.aiPathsPathConfigs === "object"
+            ) {
+              preferredPathConfigs = prefs.aiPathsPathConfigs;
+            } else {
+              preferredPathConfigs = null;
+            }
             if (typeof prefs.aiPathsPaletteCollapsed === "boolean") {
               setPaletteCollapsed(prefs.aiPathsPaletteCollapsed);
             }
@@ -449,7 +450,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               edges: Array.isArray(config?.edges) ? config.edges : fallback.edges,
               parserSamples: config?.parserSamples ?? fallback.parserSamples ?? {},
               updaterSamples: config?.updaterSamples ?? fallback.updaterSamples ?? {},
-              runtimeState: config?.runtimeState ?? fallback.runtimeState ?? { inputs: {}, outputs: {} },
+              runtimeState: parseRuntimeState(config?.runtimeState ?? fallback.runtimeState),
               lastRunAt: config?.lastRunAt ?? fallback.lastRunAt ?? null,
               updatedAt: config?.updatedAt ?? fallback.updatedAt,
             };
@@ -492,7 +493,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               version: parsed.version ?? STORAGE_VERSION,
               name: parsed.pathName ?? "AI Description Path",
               description: parsed.description ?? "",
-              trigger: parsed.trigger ?? (triggers[0] ?? "Product Modal - Context Grabber"),
+              trigger: parsed.trigger ?? (triggers[0] ?? "Product Modal - Context Filter"),
               nodes: Array.isArray(parsed.nodes) ? parsed.nodes : initialNodes,
               edges: Array.isArray(parsed.edges) ? parsed.edges : initialEdges,
               updatedAt: new Date().toISOString(),
@@ -525,10 +526,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         setEdges(sanitizeEdges(normalizedNodes, activeConfig.edges));
         setPathName(activeConfig.name);
         setPathDescription(activeConfig.description);
-        setActiveTrigger(activeConfig.trigger);
+        setActiveTrigger(normalizeTriggerLabel(activeConfig.trigger));
         setParserSamples(activeConfig.parserSamples ?? {});
         setUpdaterSamples(activeConfig.updaterSamples ?? {});
-        setRuntimeState(activeConfig.runtimeState ?? { inputs: {}, outputs: {} });
+        setRuntimeState(parseRuntimeState(activeConfig.runtimeState));
         setLastRunAt(activeConfig.lastRunAt ?? null);
         setSelectedNodeId(normalizedNodes[0]?.id ?? null);
         setPrefsLoaded(true);
@@ -566,7 +567,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       try {
         const res = await fetch("/api/chatbot");
         if (!res.ok) return;
-        const data = (await res.json()) as { models?: string[] };
+        const data = (await res.json() as unknown) as { models?: string[] };
         if (Array.isArray(data.models)) {
           const merged = Array.from(new Set([...DEFAULT_MODELS, ...data.models]));
           setModelOptions(merged);
@@ -577,6 +578,28 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       }
     };
     void loadModels();
+  }, []);
+
+  useEffect(() => {
+    const loadSession = async () => {
+      try {
+        const res = await fetch("/api/auth/session", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          user?: { id?: string; name?: string | null; email?: string | null };
+        };
+        if (data?.user) {
+          setSessionUser({
+            id: data.user.id,
+            name: data.user.name ?? null,
+            email: data.user.email ?? null,
+          });
+        }
+      } catch {
+        // ignore session load failures
+      }
+    };
+    void loadSession();
   }, []);
 
   useEffect(() => {
@@ -592,6 +615,23 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     runtimeStateRef.current = runtimeState;
   }, [runtimeState]);
 
+  useEffect(() => {
+    if (!lastDrop) return;
+    if (lastDropTimerRef.current) {
+      window.clearTimeout(lastDropTimerRef.current);
+    }
+    lastDropTimerRef.current = window.setTimeout(() => {
+      setLastDrop(null);
+      lastDropTimerRef.current = null;
+    }, 1600);
+    return () => {
+      if (lastDropTimerRef.current) {
+        window.clearTimeout(lastDropTimerRef.current);
+        lastDropTimerRef.current = null;
+      }
+    };
+  }, [lastDrop]);
+
   // Cleanup RAF on unmount
   useEffect(() => {
     return () => {
@@ -606,6 +646,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       const target = event.target as HTMLElement | null;
       if (target?.closest("[data-port]")) return;
       if (target?.closest("path")) return;
+      if (target?.closest("[data-edge-panel]")) return;
       setConnecting(null);
       setConnectingPos(null);
       setSelectedEdgeId(null);
@@ -613,6 +654,16 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     window.addEventListener("pointerdown", handlePointerDown);
     return () => window.removeEventListener("pointerdown", handlePointerDown);
   }, []);
+
+  const handleRemoveEdge = useCallback(
+    (edgeId: string) => {
+      setEdges((prev) => prev.filter((edge) => edge.id !== edgeId));
+      if (selectedEdgeId === edgeId) {
+        setSelectedEdgeId(null);
+      }
+    },
+    [selectedEdgeId]
+  );
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -708,14 +759,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setViewClamped({ x: VIEW_MARGIN, y: VIEW_MARGIN, scale: 1 });
   };
 
-  const centerOnPoint = (x: number, y: number) => {
-    const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
-    if (!viewport) return;
-    const nextX = viewport.width / 2 - x * view.scale;
-    const nextY = viewport.height / 2 - y * view.scale;
-    const clamped = clampTranslate(nextX, nextY, view.scale, viewport);
-    setView({ x: clamped.x, y: clamped.y, scale: view.scale });
-  };
+
 
   const ensureNodeVisible = (node: AiNode) => {
     const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
@@ -960,12 +1004,13 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     const nextConfigs = { ...pathConfigs, [activePathId]: config };
     setPathConfigs(nextConfigs);
     try {
+      const safeConfigs = serializePathConfigs(nextConfigs);
       const res = await fetch("/api/user/preferences", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           aiPathsPathIndex: paths,
-          aiPathsPathConfigs: nextConfigs,
+          aiPathsPathConfigs: safeConfigs,
         }),
       });
       if (!res.ok) {
@@ -1118,7 +1163,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         cache: "no-store",
       });
       if (!res.ok) return null;
-      return (await res.json()) as Record<string, unknown>;
+      return (await res.json() as unknown) as Record<string, unknown>;
     } catch (error) {
       reportAiPathsError(error, { action: "fetchProduct", productId }, "Failed to fetch product:");
       return null;
@@ -1131,7 +1176,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         cache: "no-store",
       });
       if (!res.ok) return null;
-      return (await res.json()) as Record<string, unknown>;
+      return (await res.json() as unknown) as Record<string, unknown>;
     } catch (error) {
       reportAiPathsError(error, { action: "fetchNote", noteId }, "Failed to fetch note:");
       return null;
@@ -1222,15 +1267,187 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
   };
 
-  const runGraphForTrigger = async (triggerNode: AiNode) => {
+  const getDomSelector = (element: Element | null) => {
+    if (!element) return null;
+    const selectorEscape = (val: string) => {
+      if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
+        return CSS.escape(val);
+      }
+      return val.replace(/[^\w-]/g, "\\$&");
+    };
+    const dataSelector =
+      element.getAttribute("data-component") ||
+      element.getAttribute("data-testid") ||
+      element.getAttribute("data-node");
+    if (dataSelector) {
+      const attr =
+        element.getAttribute("data-component") !== null
+          ? "data-component"
+          : element.getAttribute("data-testid") !== null
+            ? "data-testid"
+            : "data-node";
+      return `${element.tagName.toLowerCase()}[${attr}="${selectorEscape(
+        dataSelector
+      )}"]`;
+    }
+    if (element.id) {
+      return `#${selectorEscape(element.id)}`;
+    }
+    const segments: string[] = [];
+    let current: Element | null = element;
+    while (current && current.tagName.toLowerCase() !== "html" && segments.length < 5) {
+      const tagName = current.tagName.toLowerCase();
+      const parent = current.parentElement;
+      if (!parent) break;
+      const siblings = Array.from(parent.children).filter(
+        (child) => child.tagName === current?.tagName
+      );
+      const index = siblings.indexOf(current) + 1;
+      segments.unshift(`${tagName}:nth-of-type(${index})`);
+      if (parent.id) {
+        segments.unshift(`#${selectorEscape(parent.id)}`);
+        break;
+      }
+      current = parent;
+    }
+    return segments.length ? segments.join(" > ") : element.tagName.toLowerCase();
+  };
+
+  const getTargetInfo = (event?: React.MouseEvent) => {
+    const target = event?.target as Element | null;
+    if (!target) return null;
+    const element =
+      (target.closest(
+        "[data-component],[data-testid],[data-node],button,a,[role='button']"
+      ) as Element | null) ?? target;
+    const rect = element.getBoundingClientRect();
+    const dataset = element instanceof HTMLElement ? element.dataset : undefined;
+    return {
+      tagName: element.tagName.toLowerCase(),
+      id: element.id || undefined,
+      className: element.getAttribute("class") || undefined,
+      name: element.getAttribute("name") || undefined,
+      type: element.getAttribute("type") || undefined,
+      role: element.getAttribute("role") || undefined,
+      ariaLabel: element.getAttribute("aria-label") || undefined,
+      dataComponent: element.getAttribute("data-component") || undefined,
+      dataTestId: element.getAttribute("data-testid") || undefined,
+      dataNode: element.getAttribute("data-node") || undefined,
+      selector: getDomSelector(element),
+      boundingClientRect: {
+        x: rect.x,
+        y: rect.y,
+        width: rect.width,
+        height: rect.height,
+        top: rect.top,
+        left: rect.left,
+        right: rect.right,
+        bottom: rect.bottom,
+      },
+      dataset: dataset ? { ...dataset } : undefined,
+    };
+  };
+
+  const buildTriggerContext = (
+    triggerNode: AiNode,
+    triggerEvent: string,
+    event?: React.MouseEvent
+  ) => {
+    const timestamp = new Date().toISOString();
+    const nativeEvent = event?.nativeEvent as MouseEvent | undefined;
+    const pointer = nativeEvent
+      ? {
+          clientX: nativeEvent.clientX,
+          clientY: nativeEvent.clientY,
+          pageX: nativeEvent.pageX,
+          pageY: nativeEvent.pageY,
+          screenX: nativeEvent.screenX,
+          screenY: nativeEvent.screenY,
+          offsetX: "offsetX" in nativeEvent ? (nativeEvent as MouseEvent).offsetX : undefined,
+          offsetY: "offsetY" in nativeEvent ? (nativeEvent as MouseEvent).offsetY : undefined,
+          button: nativeEvent.button,
+          buttons: nativeEvent.buttons,
+          altKey: nativeEvent.altKey,
+          ctrlKey: nativeEvent.ctrlKey,
+          shiftKey: nativeEvent.shiftKey,
+          metaKey: nativeEvent.metaKey,
+        }
+      : undefined;
+    const targetInfo = getTargetInfo(event);
+    const location =
+      typeof window !== "undefined"
+        ? {
+            href: window.location.href,
+            origin: window.location.origin,
+            pathname: window.location.pathname,
+            search: window.location.search,
+            hash: window.location.hash,
+            referrer: document.referrer || undefined,
+          }
+        : {};
+    const ui =
+      typeof window !== "undefined"
+        ? {
+            viewport: {
+              width: window.innerWidth,
+              height: window.innerHeight,
+              devicePixelRatio: window.devicePixelRatio,
+            },
+            screen: {
+              width: window.screen?.width,
+              height: window.screen?.height,
+              availWidth: window.screen?.availWidth,
+              availHeight: window.screen?.availHeight,
+            },
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            language: navigator.language,
+            languages: navigator.languages,
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            documentTitle: document.title,
+            visibilityState: document.visibilityState,
+            scroll: {
+              x: window.scrollX,
+              y: window.scrollY,
+            },
+          }
+        : {};
+    return {
+      timestamp,
+      location,
+      ui,
+      user: sessionUser,
+      event: {
+        id: triggerEvent,
+        nodeId: triggerNode.id,
+        nodeTitle: triggerNode.title,
+        type: event?.type,
+        pointer,
+        target: targetInfo,
+      },
+      source: {
+        pathId: activePathId,
+        pathName,
+        tab: activeTab,
+      },
+      extras: {
+        triggerLabel: activeTrigger,
+      },
+    };
+  };
+
+  const runGraphForTrigger = async (triggerNode: AiNode, event?: React.MouseEvent) => {
     const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
     lastTriggerNodeIdRef.current = triggerNode.id;
+    const triggerContext = buildTriggerContext(triggerNode, triggerEvent, event);
+    triggerContextRef.current = triggerContext;
     const result = await evaluateGraph({
       nodes,
       edges,
       activePathId,
       triggerNodeId: triggerNode.id,
       triggerEvent,
+      triggerContext,
       deferPoll: true,
       fetchEntityByType,
       reportAiPathsError,
@@ -1338,7 +1555,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       if (!res.ok) {
         throw new Error("Failed to execute database query.");
       }
-      const data = (await res.json()) as { item?: unknown; items?: unknown[] };
+      const data = (await res.json() as unknown) as { item?: unknown; items?: unknown[] };
       const resultCandidate = payload.single ? data.item : data.items;
       lastBundle = {
         ...(payload.single ? { item: data.item } : { items: data.items }),
@@ -1346,10 +1563,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       const resolvedStatus = successPath
         ? getValueAtMappingPath(resultCandidate, successPath)
         : resultCandidate;
-      const asString =
-        resolvedStatus === undefined || resolvedStatus === null
-          ? ""
-          : String(resolvedStatus);
+      const asString = safeStringify(resolvedStatus);
       let success = false;
       switch (successOperator) {
         case "truthy":
@@ -1397,7 +1611,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       if (!statusRes.ok) {
         throw new Error("Failed to fetch job status.");
       }
-      const payload = (await statusRes.json()) as {
+      const payload = (await statusRes.json() as unknown) as {
         job?: { status?: string; result?: unknown; errorMessage?: string | null };
       };
       const job = payload.job;
@@ -1433,6 +1647,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       nodeInputs: RuntimePortValues;
     }
   ) => {
+    const fallbackJobId = options.jobId;
     const pollKey = `${node.id}:${options.jobId ?? "db"}`;
     if (pollInFlightRef.current.has(pollKey)) return;
     pollInFlightRef.current.add(pollKey);
@@ -1459,13 +1674,6 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           status: response.status,
           bundle: response.bundle,
         };
-        setRuntimeState((prev) => ({
-          ...prev,
-          outputs: {
-            ...prev.outputs,
-            [node.id]: pollOutput,
-          },
-        }));
       } else {
         const jobId = options.jobId ?? "";
         if (!jobId) {
@@ -1481,24 +1689,41 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           jobId,
           bundle: { jobId, status: "completed", result },
         };
-        setRuntimeState((prev) => ({
-          ...prev,
-          outputs: {
-            ...prev.outputs,
-            [node.id]: pollOutput,
-          },
-        }));
       }
-      const triggerNodeId = lastTriggerNodeIdRef.current ?? undefined;
-      const seededOutputs = {
+      const resolvedJobId =
+        typeof pollOutput?.jobId === "string" ? pollOutput.jobId : fallbackJobId;
+      const updatedOutputs: Record<string, RuntimePortValues> = {
         ...runtimeStateRef.current.outputs,
         [node.id]: pollOutput ?? runtimeStateRef.current.outputs[node.id] ?? {},
       };
+      if (resolvedJobId) {
+        nodes
+          .filter((item) => item.type === "model")
+          .forEach((modelNode) => {
+            const modelOutput = updatedOutputs[modelNode.id] as
+              | { jobId?: string; status?: string; result?: unknown; debugPayload?: unknown }
+              | undefined;
+            if (!modelOutput || modelOutput.jobId !== resolvedJobId) return;
+            updatedOutputs[modelNode.id] = {
+              ...modelOutput,
+              status: pollOutput?.status ?? "completed",
+              result:
+                pollOutput?.result !== undefined ? pollOutput.result : modelOutput.result,
+            };
+          });
+      }
+      setRuntimeState((prev) => ({
+        ...prev,
+        outputs: updatedOutputs,
+      }));
+      const triggerNodeId = lastTriggerNodeIdRef.current ?? undefined;
+      const seededOutputs = updatedOutputs;
       const downstreamState = await evaluateGraph({
         nodes,
         edges,
         activePathId,
         triggerNodeId,
+        triggerContext: triggerContextRef.current,
         deferPoll: true,
         skipAiJobs: true,
         seedOutputs: seededOutputs,
@@ -1522,7 +1747,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     } catch (error) {
       reportAiPathsError(
         error,
-        { action: "pollJob", nodeId: node.id, jobId },
+        { action: "pollJob", nodeId: node.id, jobId: fallbackJobId },
         "AI job polling failed:"
       );
       setRuntimeState((prev) => ({
@@ -1532,9 +1757,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           [node.id]: {
             result: null,
             status: "failed",
-            jobId,
+            jobId: fallbackJobId,
             bundle: {
-              jobId,
+              jobId: fallbackJobId,
               status: "failed",
               error: error instanceof Error ? error.message : "Polling failed",
             },
@@ -1573,38 +1798,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     startPendingPolls(runtimeState);
   }, [nodes, runtimeState]);
 
-  const getTriggerContextInfo = (triggerId: string) => {
-    const roleEdges = edges
-      .filter((edge) => edge.to === triggerId)
-      .filter(
-        (edge) =>
-          (!edge.toPort || edge.toPort === "role") &&
-          (!edge.fromPort || edge.fromPort === "role")
-      )
-      .map((edge) => nodes.find((node) => node.id === edge.from))
-      .filter(Boolean) as AiNode[];
-    const contextNodes = roleEdges.filter((node) => node.type === "context");
-    const contextNodeIds = contextNodes.map((node) => node.id);
-    const roles = Array.from(
-      new Set(
-        roleEdges
-          .map((node) => {
-            if (node.type === "context") {
-              return node.config?.context?.role?.trim() || node.title;
-            }
-            return node.title;
-          })
-          .filter(Boolean)
-      )
-    );
-    return { contextNodeIds, roles };
-  };
-
   const dispatchTrigger = (
     eventName: string,
     entityId: string,
-    contextNodeIds: string[] = [],
-    roles: string[] = [],
     entityType?: string
   ) => {
     if (typeof window === "undefined") return;
@@ -1615,8 +1811,6 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           productId: entityId,
           entityId,
           entityType: entityType ?? "product",
-          contextNodeIds,
-          roles,
         },
       })
     );
@@ -1624,9 +1818,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
 
   const handleRunSimulation = (
     simulationNode: AiNode,
-    triggerEvent?: string,
-    contextNodeIds?: string[],
-    roles?: string[]
+    triggerEvent?: string
   ) => {
     const entityId =
       simulationNode.config?.simulation?.entityId?.trim() ||
@@ -1637,8 +1829,6 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       return;
     }
     let eventName = triggerEvent ?? TRIGGER_EVENTS[0]?.id ?? "path_generate_description";
-    let resolvedContextIds = contextNodeIds ?? [];
-    let resolvedRoles = roles ?? [];
     if (!triggerEvent) {
       const connectedTriggerIds = edges
         .filter(
@@ -1652,21 +1842,17 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       );
       if (triggerNode) {
         eventName = triggerNode.config?.trigger?.event ?? eventName;
-        const triggerContext = getTriggerContextInfo(triggerNode.id);
-        resolvedContextIds = triggerContext.contextNodeIds;
-        resolvedRoles = triggerContext.roles;
         void runGraphForTrigger(triggerNode);
       }
     }
-    dispatchTrigger(eventName, entityId, resolvedContextIds, resolvedRoles, entityType);
+    dispatchTrigger(eventName, entityId, entityType);
     toast(`Simulated ${eventName} for ${entityType} ${entityId}`, {
       variant: "success",
     });
   };
 
-  const handleFireTrigger = (triggerNode: AiNode) => {
+  const handleFireTrigger = (triggerNode: AiNode, event?: React.MouseEvent) => {
     const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
-    const { contextNodeIds, roles } = getTriggerContextInfo(triggerNode.id);
     const connectedSimulationIds = edges
       .filter((edge) => edge.to === triggerNode.id)
       .filter(
@@ -1682,10 +1868,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       toast("Connect a Simulation node to the Trigger simulation input.", { variant: "error" });
       return;
     }
-    simulationNodes.forEach((node) =>
-      handleRunSimulation(node, triggerEvent, contextNodeIds, roles)
-    );
-    void runGraphForTrigger(triggerNode);
+    simulationNodes.forEach((node) => handleRunSimulation(node, triggerEvent));
+    void runGraphForTrigger(triggerNode, event);
   };
 
   const handleDeleteSelectedNode = () => {
@@ -1708,12 +1892,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
   };
 
-  function handleRemoveEdge(edgeId: string) {
-    setEdges((prev) => prev.filter((edge) => edge.id !== edgeId));
-    if (selectedEdgeId === edgeId) {
-      setSelectedEdgeId(null);
-    }
-  }
+  const handleSelectNode = (nodeId: string) => {
+    setSelectedEdgeId(null);
+    setSelectedNodeId(nodeId);
+  };
 
   const getCanvasCenterPosition = () => {
     const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
@@ -1948,41 +2130,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     toast("Preset draft loaded from selection.", { variant: "success" });
   };
 
-  const applyContextPreset = (
-    current: ContextConfig,
-    preset: "light" | "medium" | "full"
-  ) => {
-    const presetSet = getContextPresetSet(current.entityType);
-    if (preset === "full") {
-      return {
-        ...current,
-        scopeMode: "full" as const,
-        includePaths: [],
-        excludePaths: [],
-      };
-    }
-    return {
-      ...current,
-      scopeMode: "include" as const,
-      includePaths: presetSet[preset],
-      excludePaths: [],
-    };
-  };
 
-  const toggleContextTarget = (current: ContextConfig, field: string) => {
-    const include = new Set(current.includePaths ?? []);
-    if (include.has(field)) {
-      include.delete(field);
-    } else {
-      include.add(field);
-    }
-    return {
-      ...current,
-      scopeMode: "include" as const,
-      includePaths: Array.from(include),
-      excludePaths: [],
-    };
-  };
 
   const updateActivePathMeta = (name: string) => {
     if (!activePathId) return;
@@ -1993,6 +2141,81 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       )
     );
   };
+
+  const toJsonSafe = (value: unknown) => {
+    const replacer = (_key: string, val: unknown) => {
+      if (typeof val === "bigint") return val.toString();
+      if (val instanceof Date) return val.toISOString();
+      if (val instanceof Set) return Array.from(val.values());
+      if (val instanceof Map) return Object.fromEntries(val.entries());
+      if (typeof val === "function" || typeof val === "symbol") return undefined;
+      return val;
+    };
+    try {
+      return JSON.parse(JSON.stringify(value, replacer));
+    } catch {
+      return null;
+    }
+  };
+
+  const parseRuntimeState = (value: unknown): RuntimeState => {
+    if (!value) return { inputs: {}, outputs: {} };
+    if (typeof value === "string") {
+      const parsed = safeParseJson(value).value;
+      if (parsed && typeof parsed === "object") {
+        return parsed as RuntimeState;
+      }
+      return { inputs: {}, outputs: {} };
+    }
+    if (typeof value === "object") {
+      return value as RuntimeState;
+    }
+    return { inputs: {}, outputs: {} };
+  };
+
+  const buildPersistedRuntimeState = (
+    state: RuntimeState,
+    graphNodes: AiNode[]
+  ): string => {
+    const viewerIds = new Set(
+      graphNodes.filter((node) => node.type === "viewer").map((node) => node.id)
+    );
+    const outputIds = new Set(
+      graphNodes
+        .filter((node) => ["viewer", "poll", "model"].includes(node.type))
+        .map((node) => node.id)
+    );
+    const inputs: Record<string, RuntimePortValues> = {};
+    const outputs: Record<string, RuntimePortValues> = {};
+    Object.entries(state.inputs ?? {}).forEach(([key, value]) => {
+      if (viewerIds.has(key)) {
+        inputs[key] = value;
+      }
+    });
+    Object.entries(state.outputs ?? {}).forEach(([key, value]) => {
+      if (outputIds.has(key)) {
+        outputs[key] = value;
+      }
+    });
+    const safe = toJsonSafe({ inputs, outputs });
+    return safe ? JSON.stringify(safe) : "";
+  };
+
+  const sanitizePathConfig = (config: PathConfig): PathConfig => ({
+    ...config,
+    runtimeState: buildPersistedRuntimeState(
+      parseRuntimeState(config.runtimeState),
+      config.nodes
+    ),
+  });
+
+  const sanitizePathConfigs = (configs: Record<string, PathConfig>) =>
+    Object.fromEntries(
+      Object.entries(configs).map(([key, value]) => [key, sanitizePathConfig(value)])
+    );
+
+  const serializePathConfigs = (configs: Record<string, PathConfig>) =>
+    JSON.stringify(sanitizePathConfigs(configs));
 
   const buildActivePathConfig = (updatedAt: string): PathConfig => ({
     id: activePathId ?? "default",
@@ -2036,12 +2259,13 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       const nextConfigs = { ...pathConfigs, [activePathId]: config };
       setPathConfigs(nextConfigs);
       setPaths(nextPaths);
+      const safeConfigs = serializePathConfigs(nextConfigs);
       const prefsRes = await fetch("/api/user/preferences", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           aiPathsPathIndex: nextPaths,
-          aiPathsPathConfigs: nextConfigs,
+          aiPathsPathConfigs: safeConfigs,
         }),
       });
       if (!prefsRes.ok) {
@@ -2053,18 +2277,26 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       if (!silent) {
         toast("AI Paths saved.", { variant: "success" });
       }
+      return true;
     } catch (error) {
       reportAiPathsError(error, { action: silent ? "autoSavePath" : "savePath", pathId: activePathId }, "Failed to save AI Paths settings:");
       if (!silent) {
         toast("Failed to save AI Paths settings.", { variant: "error" });
       }
+      return false;
     } finally {
       if (!silent) setSaving(false);
     }
   };
 
   const handleSave = async () => {
-    await persistPathConfig();
+    const ok = await persistPathConfig();
+    if (ok) {
+      setAutoSaveStatus("saved");
+      setAutoSaveAt(new Date().toISOString());
+    } else {
+      setAutoSaveStatus("error");
+    }
   };
 
   useEffect(() => {
@@ -2087,9 +2319,19 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     autoSaveTimerRef.current = window.setTimeout(() => {
       if (autoSaveInFlightRef.current) return;
       autoSaveInFlightRef.current = true;
-      void persistPathConfig({ silent: true }).finally(() => {
-        autoSaveInFlightRef.current = false;
-      });
+      setAutoSaveStatus("saving");
+      void persistPathConfig({ silent: true })
+        .then((ok) => {
+          if (ok) {
+            setAutoSaveStatus("saved");
+            setAutoSaveAt(new Date().toISOString());
+          } else {
+            setAutoSaveStatus("error");
+          }
+        })
+        .finally(() => {
+          autoSaveInFlightRef.current = false;
+        });
     }, 800);
     return () => {
       if (autoSaveTimerRef.current) {
@@ -2121,7 +2363,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setSelectedNodeId(normalizedNodes[0]?.id ?? null);
     setPathName(resetConfig.name);
     setPathDescription(resetConfig.description);
-    setActiveTrigger(resetConfig.trigger);
+    setActiveTrigger(normalizeTriggerLabel(resetConfig.trigger));
     setParserSamples(resetConfig.parserSamples ?? {});
     setUpdaterSamples(resetConfig.updaterSamples ?? {});
     setPathConfigs((prev) => ({ ...prev, [activePathId]: resetConfig }));
@@ -2137,7 +2379,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       version: STORAGE_VERSION,
       name,
       description: "",
-      trigger: triggers[0] ?? "Product Modal - Context Grabber",
+      trigger: triggers[0] ?? "Product Modal - Context Filter",
       nodes: [],
       edges: [],
       updatedAt: now,
@@ -2159,7 +2401,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setEdges([]);
     setPathName(name);
     setPathDescription("");
-    setActiveTrigger(config.trigger);
+    setActiveTrigger(normalizeTriggerLabel(config.trigger));
     setParserSamples({});
     setUpdaterSamples({});
     setRuntimeState({ inputs: {}, outputs: {} });
@@ -2185,10 +2427,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setEdges(sanitizeEdges(normalizedNodes, config.edges));
     setPathName(config.name);
     setPathDescription(config.description);
-    setActiveTrigger(config.trigger);
+    setActiveTrigger(normalizeTriggerLabel(config.trigger));
     setParserSamples(config.parserSamples ?? {});
     setUpdaterSamples(config.updaterSamples ?? {});
-    setRuntimeState(config.runtimeState ?? { inputs: {}, outputs: {} });
+    setRuntimeState(parseRuntimeState(config.runtimeState));
     setLastRunAt(config.lastRunAt ?? null);
     setSelectedNodeId(normalizedNodes[0]?.id ?? null);
     toast("AI Description Path created.", { variant: "success" });
@@ -2210,10 +2452,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       setEdges(sanitizeEdges(normalizedNodes, fallback.edges));
       setPathName(fallback.name);
       setPathDescription(fallback.description);
-      setActiveTrigger(fallback.trigger);
+      setActiveTrigger(normalizeTriggerLabel(fallback.trigger));
       setParserSamples(fallback.parserSamples ?? {});
       setUpdaterSamples(fallback.updaterSamples ?? {});
-      setRuntimeState(fallback.runtimeState ?? { inputs: {}, outputs: {} });
+      setRuntimeState(parseRuntimeState(fallback.runtimeState));
       setLastRunAt(fallback.lastRunAt ?? null);
       setSelectedNodeId(normalizedNodes[0]?.id ?? null);
       toast("Cannot delete the last path. Reset to default instead.", {
@@ -2234,22 +2476,23 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       setEdges(sanitizeEdges(normalizedNodes, nextConfig.edges));
       setPathName(nextConfig.name);
       setPathDescription(nextConfig.description);
-      setActiveTrigger(nextConfig.trigger);
+      setActiveTrigger(normalizeTriggerLabel(nextConfig.trigger));
       setParserSamples(nextConfig.parserSamples ?? {});
       setUpdaterSamples(nextConfig.updaterSamples ?? {});
-      setRuntimeState(nextConfig.runtimeState ?? { inputs: {}, outputs: {} });
+      setRuntimeState(parseRuntimeState(nextConfig.runtimeState));
       setLastRunAt(nextConfig.lastRunAt ?? null);
       setSelectedNodeId(normalizedNodes[0]?.id ?? null);
     } else {
       setActivePathId(null);
     }
     try {
+      const safeConfigs = serializePathConfigs(nextConfigs);
       const res = await fetch("/api/user/preferences", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           aiPathsPathIndex: nextPaths,
-          aiPathsPathConfigs: nextConfigs,
+          aiPathsPathConfigs: safeConfigs,
         }),
       });
       if (!res.ok) {
@@ -2271,22 +2514,23 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setEdges(sanitizeEdges(normalizedNodes, config.edges));
     setPathName(config.name);
     setPathDescription(config.description);
-    setActiveTrigger(config.trigger);
+    setActiveTrigger(normalizeTriggerLabel(config.trigger));
     setParserSamples(config.parserSamples ?? {});
     setUpdaterSamples(config.updaterSamples ?? {});
-    setRuntimeState(config.runtimeState ?? { inputs: {}, outputs: {} });
+    setRuntimeState(parseRuntimeState(config.runtimeState));
     setLastRunAt(config.lastRunAt ?? null);
     setSelectedNodeId(normalizedNodes[0]?.id ?? null);
   };
 
   const savePathIndex = async (nextPaths: PathMeta[]) => {
     try {
+      const safeConfigs = serializePathConfigs(pathConfigs);
       const res = await fetch("/api/user/preferences", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           aiPathsPathIndex: nextPaths,
-          aiPathsPathConfigs: pathConfigs,
+          aiPathsPathConfigs: safeConfigs,
         }),
       });
       if (!res.ok) {
@@ -2332,6 +2576,23 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   if (loading) {
     return <div className="text-sm text-gray-400">Loading AI Paths...</div>;
   }
+
+  const autoSaveLabel =
+    autoSaveStatus === "saving"
+      ? "Auto-saving..."
+      : autoSaveStatus === "saved"
+        ? `Auto-saved${autoSaveAt ? ` at ${new Date(autoSaveAt).toLocaleTimeString()}` : ""}`
+        : autoSaveStatus === "error"
+          ? "Auto-save failed"
+          : "Auto-save ready";
+  const autoSaveClasses =
+    autoSaveStatus === "saved"
+      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+      : autoSaveStatus === "error"
+        ? "border-rose-500/40 bg-rose-500/10 text-rose-200"
+        : autoSaveStatus === "saving"
+          ? "border-sky-500/40 bg-sky-500/10 text-sky-200"
+          : "border-gray-700 bg-gray-900/60 text-gray-300";
 
   return (
     <div className="space-y-6">
@@ -2407,11 +2668,6 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                         </Button>
                       </div>
                     )}
-                    {lastRunAt && (
-                      <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[10px] text-emerald-200">
-                        Last run: {new Date(lastRunAt).toLocaleTimeString()}
-                      </div>
-                    )}
                   </div>
                 ),
                 document.getElementById("ai-paths-actions") ?? document.body
@@ -2419,16 +2675,28 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
             : null}
           {typeof document !== "undefined" && activePathId
             ? createPortal(
-                <Input
-                  className="h-9 w-[260px] rounded-md border border-gray-800 bg-gray-950/60 px-3 text-sm text-white"
-                  value={pathName}
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    setPathName(value);
-                    updateActivePathMeta(value);
-                  }}
-                  placeholder="Path name"
-                />,
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`rounded-md border px-2 py-1 text-[10px] ${autoSaveClasses}`}
+                  >
+                    {autoSaveLabel}
+                  </div>
+                  {lastRunAt && (
+                    <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-200">
+                      Last run: {new Date(lastRunAt).toLocaleTimeString()}
+                    </div>
+                  )}
+                  <Input
+                    className="h-9 w-[260px] rounded-md border border-gray-800 bg-gray-950/60 px-3 text-sm text-white"
+                    value={pathName}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setPathName(value);
+                      updateActivePathMeta(value);
+                    }}
+                    placeholder="Path name"
+                  />
+                </div>,
                 document.getElementById("ai-paths-name") ?? document.body
               )
             : null}
@@ -2618,6 +2886,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           canvasRef={canvasRef}
           nodes={nodes}
           edges={edges}
+          runtimeState={runtimeState}
           edgePaths={edgePaths}
           view={view}
           panState={panState}
@@ -2630,7 +2899,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           selectedEdgeId={selectedEdgeId}
           onSelectEdgeId={handleSelectEdge}
           onRemoveEdge={handleRemoveEdge}
-          onSelectNode={setSelectedNodeId}
+          onSelectNode={handleSelectNode}
           onOpenNodeConfig={() => setConfigOpen(true)}
           onFireTrigger={handleFireTrigger}
           onPointerDownNode={handlePointerDown}

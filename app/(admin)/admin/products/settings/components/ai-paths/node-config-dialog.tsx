@@ -3072,14 +3072,20 @@ export function NodeConfigDialog({
                 entityIdSource: "simulation",
                 entityId: "",
                 scopeMode: "full",
+                scopeTarget: "entity",
                 includePaths: [],
                 excludePaths: [],
               };
               const presetSet = getContextPresetSet(contextConfig.entityType);
               return (
                 <div className="space-y-4">
+                  <p className="text-[11px] text-gray-500">
+                    Connect Trigger <span className="text-gray-300">context</span> into this
+                    node to filter it. If left unconnected, the filter will fetch an
+                    entity based on the settings below.
+                  </p>
                   <div>
-                    <Label className="text-xs text-gray-400">Context Role</Label>
+                    <Label className="text-xs text-gray-400">Filter Role</Label>
                     <Input
                       className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
                       value={contextConfig.role}
@@ -3090,12 +3096,11 @@ export function NodeConfigDialog({
                       }
                     />
                     <p className="mt-2 text-[11px] text-gray-500">
-                      Connect this role output into a Trigger input to define what the
-                      trigger should execute.
+                      Optional label attached to the filtered context output.
                     </p>
                   </div>
                   <div>
-                    <Label className="text-xs text-gray-400">Context Presets</Label>
+                    <Label className="text-xs text-gray-400">Context Scope Presets</Label>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {(["light", "medium", "full"] as const).map((preset) => (
                         <Button
@@ -3154,6 +3159,32 @@ export function NodeConfigDialog({
                           <SelectItem value="log">Log Entry</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-400">Scope Target</Label>
+                      <Select
+                        value={contextConfig.scopeTarget ?? "entity"}
+                        onValueChange={(value) =>
+                          updateSelectedNodeConfig({
+                            context: {
+                              ...contextConfig,
+                              scopeTarget: value as "entity" | "context",
+                            },
+                          })
+                        }
+                      >
+                        <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                          <SelectValue placeholder="Select target" />
+                        </SelectTrigger>
+                        <SelectContent className="border-gray-800 bg-gray-900">
+                          <SelectItem value="entity">Entity only</SelectItem>
+                          <SelectItem value="context">Full context</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="mt-2 text-[11px] text-gray-500">
+                        Choose whether scope filters apply to the entity payload or the
+                        full context object.
+                      </p>
                     </div>
                     <div>
                       <Label className="text-xs text-gray-400">Entity ID Source</Label>

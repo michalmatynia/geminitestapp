@@ -195,9 +195,9 @@ export function DocsTabPanel({
           <h3 className="text-base font-semibold text-white">Core Flow</h3>
           <ul className="mt-3 space-y-2 text-gray-400">
             <li>
-              <span className="text-white">Context → Trigger:</span> Connect
-              <span className="text-emerald-200"> role</span> from Context to Trigger
-              <span className="text-emerald-200"> role</span>.
+              <span className="text-white">Trigger → Context Filter:</span> Connect
+              <span className="text-emerald-200"> context</span> from Trigger to Context Filter
+              <span className="text-emerald-200"> context</span>.
             </li>
             <li>
               <span className="text-white">Simulation → Trigger:</span> Connect
@@ -217,9 +217,8 @@ export function DocsTabPanel({
           <h3 className="text-base font-semibold text-white">Port Rules</h3>
           <ul className="mt-3 space-y-2 text-gray-400">
             <li>Ports must match exactly (e.g. result → result).</li>
-            <li>Context and Simulation nodes are sources (no inputs).</li>
+            <li>Context Filter accepts context input or can fetch context if left unconnected.</li>
             <li>Viewer is terminal (no outputs).</li>
-            <li>Trigger role input can come from any node that outputs role.</li>
             <li>Trigger simulation input only accepts simulation from Simulation.</li>
             <li>Multiple wires into the same input are collected as arrays.</li>
             <li>Gate expects valid from a Validator node.</li>
@@ -230,7 +229,7 @@ export function DocsTabPanel({
       <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
         <h3 className="text-base font-semibold text-white">Context Presets</h3>
         <p className="mt-2 text-gray-400">
-          Use Light/Medium/Full presets on Context nodes to quickly scope the entity
+          Use Light/Medium/Full presets on Context Filter nodes to quickly scope the entity
           payload. Target Fields lets you toggle exact fields to include.
         </p>
       </div>
@@ -238,7 +237,7 @@ export function DocsTabPanel({
       <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
         <h3 className="text-base font-semibold text-white">AI Description Flow</h3>
         <ol className="mt-3 space-y-2 text-gray-400">
-          <li>Context.entityJson → Parser.entityJson</li>
+          <li>Context Filter.entityJson → Parser.entityJson</li>
           <li>Parser.title/images → AI Description Generator</li>
           <li>AI Description Generator.description_en → Description Updater.description_en</li>
           <li>Parser.productId → Description Updater.productId</li>
@@ -332,17 +331,17 @@ export function DocsTabPanel({
         <h3 className="text-base font-semibold text-white">Node Reference</h3>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
-            <h4 className="text-sm font-semibold text-white">Context Grabber</h4>
+            <h4 className="text-sm font-semibold text-white">Context Filter</h4>
             <p className="mt-2 text-gray-400">
-              Outputs live context for the selected role. Use its{" "}
-              <span className="text-emerald-200">role</span> output to tell the Trigger what
-              to execute.
+              Filters a context payload into scoped entity data. Feed it Trigger{" "}
+              <span className="text-emerald-200">context</span> and pass its{" "}
+              <span className="text-emerald-200">entityJson</span> to Parser.
             </p>
           </div>
           <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
             <h4 className="text-sm font-semibold text-white">Trigger</h4>
             <p className="mt-2 text-gray-400">
-              The execution hub. Accepts role + simulation inputs and emits trigger,
+              The execution hub. Accepts simulation input and emits trigger,
               context, and meta outputs.
             </p>
           </div>

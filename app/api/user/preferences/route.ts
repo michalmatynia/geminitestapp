@@ -22,7 +22,7 @@ const updatePreferencesSchema = z.object({
   aiPathsExpandedGroups: z.array(z.string()).optional().nullable(),
   aiPathsPaletteCollapsed: z.boolean().optional().nullable(),
   aiPathsPathIndex: z.array(z.unknown()).optional().nullable(),
-  aiPathsPathConfigs: z.record(z.unknown()).optional().nullable(),
+  aiPathsPathConfigs: z.union([z.record(z.unknown()), z.string()]).optional().nullable(),
 });
 
 /**

@@ -362,6 +362,58 @@ export default function ProductAiJobsPanel({
                   </div>
                 )}
 
+                {selectedJob.type === "graph_model" && (
+                  <div className="rounded-md border border-gray-800 bg-gray-900/40 p-4">
+                    <div className="text-gray-400 font-bold text-xs uppercase mb-3">
+                      Graph Model Inputs
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <div className="text-[10px] uppercase text-gray-500 font-bold">Model</div>
+                        <div className="text-white text-sm font-mono">
+                          {(selectedJob.payload as { modelId?: string } | null)?.modelId ||
+                            "Unknown"}
+                        </div>
+                        <div className="text-[10px] uppercase text-gray-500 font-bold mt-2">
+                          Vision Enabled
+                        </div>
+                        <div className="text-white text-sm">
+                          {(selectedJob.payload as { vision?: boolean } | null)?.vision
+                            ? "Yes"
+                            : "No"}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="text-[10px] uppercase text-gray-500 font-bold">Image URLs</div>
+                        {Array.isArray(
+                          (selectedJob.payload as { imageUrls?: string[] } | null)?.imageUrls
+                        ) &&
+                        (selectedJob.payload as { imageUrls?: string[] } | null)?.imageUrls
+                          ?.length ? (
+                          <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-gray-800 max-h-40 overflow-auto">
+                            {(selectedJob.payload as { imageUrls?: string[] } | null)?.imageUrls?.map(
+                              (url, index) => (
+                                <div key={`${url}-${index}`} className="truncate">
+                                  {url}
+                                </div>
+                              )
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-[11px] text-gray-500">No image URLs in payload.</div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      <div className="text-[10px] uppercase text-gray-500 font-bold">Prompt</div>
+                      <pre className="max-h-60 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-gray-800 whitespace-pre-wrap">
+                        {(selectedJob.payload as { prompt?: string } | null)?.prompt ||
+                          "No prompt provided."}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+
                 {selectedJob.result && typeof selectedJob.result === 'object' && 'analysisInitial' in (selectedJob.result as object) ? (
                   <div className="space-y-4">
                     <div className="text-gray-400 font-bold text-xs uppercase mb-2">AI Processing Results</div>

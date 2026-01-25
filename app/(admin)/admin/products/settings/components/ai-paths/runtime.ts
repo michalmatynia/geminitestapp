@@ -1643,12 +1643,15 @@ export async function evaluateGraph({
           break;
         }
         case "model": {
-          const promptInput = coerceInput(nodeInputs.prompt);
-          if (
-            promptInput === undefined ||
-            promptInput === null ||
-            (typeof promptInput === "string" && !promptInput.trim())
-          ) {
+          const promptInputs = coerceInputArray(nodeInputs.prompt);
+          const promptInput = [...promptInputs]
+            .reverse()
+            .find((value) => {
+              if (value === undefined || value === null) return false;
+              if (typeof value === "string") return Boolean(value.trim());
+              return true;
+            });
+          if (promptInput === undefined || promptInput === null) {
             nextOutputs = prevOutputs;
             break;
           }
@@ -1673,8 +1676,8 @@ export async function evaluateGraph({
             return targetNode?.type === "poll";
           });
           const shouldWait =
-            (modelConfig.waitForResult !== false || hasResultConsumers) &&
-            !hasPollConsumer;
+            hasResultConsumers ||
+            (modelConfig.waitForResult !== false && !hasPollConsumer);
           const prompt =
             typeof promptInput === "string"
               ? promptInput.trim()
@@ -1683,7 +1686,14 @@ export async function evaluateGraph({
             nextOutputs = prevOutputs;
             break;
           }
-          const imageUrls = extractImageUrls(nodeInputs.images);
+          const imageSource =
+            nodeInputs.images ??
+            nodeInputs.bundle ??
+            nodeInputs.context ??
+            nodeInputs.entityJson ??
+            nodeInputs.value ??
+            nodeInputs.result;
+          const imageUrls = extractImageUrls(imageSource);
           const payload = {
             prompt,
             imageUrls,
@@ -1720,12 +1730,12 @@ export async function evaluateGraph({
             enqueuedJobId = enqueueData.jobId;
             toast("AI model job queued.", { variant: "success" });
             if (!shouldWait) {
-              nextOutputs = { jobId: enqueueData.jobId };
+              nextOutputs = { jobId: enqueueData.jobId, debugPayload: payload };
               aiExecuted.add(node.id);
               break;
             }
             const result = await pollGraphJob(enqueueData.jobId);
-            nextOutputs = { result, jobId: enqueueData.jobId };
+            nextOutputs = { result, jobId: enqueueData.jobId, debugPayload: payload };
             aiExecuted.add(node.id);
           } catch (error) {
             reportAiPathsError(
@@ -1734,7 +1744,7 @@ export async function evaluateGraph({
               "AI model job failed:"
             );
             toast("AI model job failed.", { variant: "error" });
-            nextOutputs = { result: "", jobId: enqueuedJobId };
+            nextOutputs = { result: "", jobId: enqueuedJobId, debugPayload: payload };
             aiExecuted.add(node.id);
           }
           break;

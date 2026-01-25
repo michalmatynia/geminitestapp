@@ -9,14 +9,20 @@ LATER - Move the whole Agentic AI configuration into AI Paths, there I want to c
  LATER - add a deep research node, which is a refelection of my ChatBot Agent that has a complex reasoning scheme that is handled by multiple AIs carrying out multiple tasks (planning, validations etc.) exactly as it was configured in the Chatbot Agent. This deep research node should be fully configurable like a chatbot agent, and I should also be able to save different presets of this chabot deep research node, or at least create different instances of it.
 
 segment the files 
+make as many components as possible reusable
 
-AI Paths connect to centralized error logging and handling
+ connect AI Paths to centralized error logging and handling
 
-* The whole Node pallete Menu should be collapsible
 
 * also, when the jobs finish, I can  see the result in AI jobs details, I don't see the result in AI Paths Node Result Viewer.
 
-I want the state of nodes to be saved within the project, so when I redirect the page and go back to the AI Paths project, I don't have to choose simulation signal in Parser all the time.
+
+
+Result is not showing in the 
+
+I cannot attach the Result Viewer node to a parser now. 
+
+* I want the state of nodes to be saved within the project, so when I redirect the page and go back to the AI Paths project, I don't have to choose simulation signal in Parser all the time.
 
 Nodes: evaluator
 

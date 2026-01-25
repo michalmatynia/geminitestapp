@@ -564,6 +564,8 @@ const PATH_INDEX_KEY = "ai_paths_index";
 const AI_PATHS_LAST_ERROR_KEY = "ai_paths_last_error";
 const PATH_CONFIG_PREFIX = "ai_paths_config_";
 const CLUSTER_PRESETS_KEY = "ai_paths_cluster_presets";
+const DB_QUERY_PRESETS_KEY = "ai_paths_db_query_presets";
+const DB_NODE_PRESETS_KEY = "ai_paths_db_node_presets";
 const STORAGE_VERSION = 1;
 const DEFAULT_MODELS = ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"];
 const TRIGGER_EVENTS = [
@@ -1280,7 +1282,7 @@ const getPortOffsetY = (index: number, totalPorts: number) => {
   return startY + index * PORT_GAP;
 };
 
-export function safeStringify(value: unknown): string {
+function safeStringify(value: unknown): string {
   if (value === undefined || value === null) return "";
   if (typeof value === "string") return value;
   if (typeof value === "number" || typeof value === "boolean") return String(value);
@@ -2491,6 +2493,8 @@ export {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
   CLUSTER_PRESETS_KEY,
+  DB_QUERY_PRESETS_KEY,
+  DB_NODE_PRESETS_KEY,
   CONTEXT_INPUT_PORTS,
   CONTEXT_OUTPUT_PORTS,
   DB_COLLECTION_OPTIONS,

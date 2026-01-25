@@ -24,6 +24,8 @@ import type {
   AiNode,
   ClusterPreset,
   DbQueryConfig,
+  DbQueryPreset,
+  DbNodePreset,
   Edge,
   NodeConfig,
   NodeDefinition,
@@ -40,6 +42,8 @@ import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
   CLUSTER_PRESETS_KEY,
+  DB_QUERY_PRESETS_KEY,
+  DB_NODE_PRESETS_KEY,
   DEFAULT_MODELS,
   NODE_MIN_HEIGHT,
   NODE_WIDTH,
@@ -204,6 +208,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     pathId?: string | null;
   } | null>(null);
   const [clusterPresets, setClusterPresets] = useState<ClusterPreset[]>([]);
+  const [dbQueryPresets, setDbQueryPresets] = useState<DbQueryPreset[]>([]);
+  const [dbNodePresets, setDbNodePresets] = useState<DbNodePreset[]>([]);
   const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
   const [presetDraft, setPresetDraft] = useState({
     name: "",
@@ -288,6 +294,44 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
   };
 
+  const saveDbQueryPresets = async (nextPresets: DbQueryPreset[]) => {
+    try {
+      const res = await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          key: DB_QUERY_PRESETS_KEY,
+          value: JSON.stringify(nextPresets),
+        }),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to save query presets.");
+      }
+    } catch (error) {
+      reportAiPathsError(error, { action: "saveDbQueryPresets" }, "Failed to save query presets:");
+      toast("Failed to save query presets.", { variant: "error" });
+    }
+  };
+
+  const saveDbNodePresets = async (nextPresets: DbNodePreset[]) => {
+    try {
+      const res = await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          key: DB_NODE_PRESETS_KEY,
+          value: JSON.stringify(nextPresets),
+        }),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to save database presets.");
+      }
+    } catch (error) {
+      reportAiPathsError(error, { action: "saveDbNodePresets" }, "Failed to save database presets:");
+      toast("Failed to save database presets.", { variant: "error" });
+    }
+  };
+
   const normalizePreset = (raw: Partial<ClusterPreset>): ClusterPreset => {
     const now = new Date().toISOString();
     const bundlePorts = Array.isArray(raw.bundlePorts) ? raw.bundlePorts : [];
@@ -297,6 +341,32 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       description: typeof raw.description === "string" ? raw.description : "",
       bundlePorts,
       template: typeof raw.template === "string" ? raw.template : "",
+      createdAt: raw.createdAt ?? now,
+      updatedAt: raw.updatedAt ?? now,
+    };
+  };
+
+  const normalizeDbQueryPreset = (raw: Partial<DbQueryPreset>): DbQueryPreset => {
+    const now = new Date().toISOString();
+    return {
+      id: raw.id && typeof raw.id === "string" ? raw.id : createPresetId(),
+      name: typeof raw.name === "string" && raw.name.trim() ? raw.name.trim() : "Query Preset",
+      queryTemplate:
+        typeof raw.queryTemplate === "string" && raw.queryTemplate.trim()
+          ? raw.queryTemplate
+          : "{\n  \"_id\": \"{{value}}\"\n}",
+      createdAt: raw.createdAt ?? now,
+      updatedAt: raw.updatedAt ?? now,
+    };
+  };
+
+  const normalizeDbNodePreset = (raw: Partial<DbNodePreset>): DbNodePreset => {
+    const now = new Date().toISOString();
+    return {
+      id: raw.id && typeof raw.id === "string" ? raw.id : createPresetId(),
+      name: typeof raw.name === "string" && raw.name.trim() ? raw.name.trim() : "Database Preset",
+      description: typeof raw.description === "string" ? raw.description : "",
+      config: raw.config && typeof raw.config === "object" ? raw.config : ({ operation: "query" } as DbNodePreset["config"]),
       createdAt: raw.createdAt ?? now,
       updatedAt: raw.updatedAt ?? now,
     };
@@ -416,6 +486,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         const indexRaw = map.get(PATH_INDEX_KEY);
         const lastErrorRaw = map.get(AI_PATHS_LAST_ERROR_KEY);
         const presetsRaw = map.get(CLUSTER_PRESETS_KEY);
+        const queryPresetsRaw = map.get(DB_QUERY_PRESETS_KEY);
+        const dbNodePresetsRaw = map.get(DB_NODE_PRESETS_KEY);
         const configs: Record<string, PathConfig> = {};
         let metas: PathMeta[] = [];
         let loadedLastError: { message: string; time: string; pathId?: string | null } | null = null;
@@ -446,6 +518,28 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
             }
           } catch (error) {
             reportAiPathsError(error, { action: "parsePresets" }, "Failed to parse presets:");
+          }
+        }
+        if (queryPresetsRaw) {
+          try {
+            const parsed = JSON.parse(queryPresetsRaw) as DbQueryPreset[];
+            if (Array.isArray(parsed)) {
+              const normalized = parsed.map((item) => normalizeDbQueryPreset(item));
+              setDbQueryPresets(normalized);
+            }
+          } catch (error) {
+            reportAiPathsError(error, { action: "parseQueryPresets" }, "Failed to parse query presets:");
+          }
+        }
+        if (dbNodePresetsRaw) {
+          try {
+            const parsed = JSON.parse(dbNodePresetsRaw) as DbNodePreset[];
+            if (Array.isArray(parsed)) {
+              const normalized = parsed.map((item) => normalizeDbNodePreset(item));
+              setDbNodePresets(normalized);
+            }
+          } catch (error) {
+            reportAiPathsError(error, { action: "parseDbNodePresets" }, "Failed to parse database presets:");
           }
         }
         if (indexRaw) {
@@ -3015,6 +3109,12 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         handleFetchUpdaterSample={handleFetchUpdaterSample}
         handleRunSimulation={handleRunSimulation}
         clearRuntimeForNode={clearRuntimeForNode}
+        dbQueryPresets={dbQueryPresets}
+        setDbQueryPresets={setDbQueryPresets}
+        saveDbQueryPresets={saveDbQueryPresets}
+        dbNodePresets={dbNodePresets}
+        setDbNodePresets={setDbNodePresets}
+        saveDbNodePresets={saveDbNodePresets}
         toast={toast}
       />
       <Dialog open={presetsModalOpen} onOpenChange={setPresetsModalOpen}>

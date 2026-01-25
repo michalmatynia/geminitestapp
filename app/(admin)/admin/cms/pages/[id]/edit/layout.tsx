@@ -2,13 +2,7 @@
 
 import React, { useState } from "react";
 import AdminLayout from "@/app/(admin)/layout";
-import CmsSideMenu from "@/components/cms/CmsSideMenu";
-
-interface Page {
-  id: string;
-  name: string;
-  components: unknown[];
-}
+import CmsSideMenu, { Page } from "@/components/cms/CmsSideMenu";
 
 export default function CmsLayout({
   children,

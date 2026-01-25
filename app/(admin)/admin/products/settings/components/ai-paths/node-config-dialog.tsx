@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type {
   AiNode,
   ConstantConfig,
@@ -27,6 +28,8 @@ import type {
   DatabaseConfig,
   DatabaseOperation,
   DbQueryConfig,
+  DbQueryPreset,
+  DbNodePreset,
   HttpConfig,
   Edge,
   MathConfig,
@@ -52,6 +55,7 @@ import {
   applyContextPreset,
   buildFlattenedMappings,
   buildTopLevelMappings,
+  createPresetId,
   createParserMappings,
   createViewerOutputs,
   extractJsonPathEntries,
@@ -141,6 +145,26 @@ const PROJECTION_PRESETS = [
   },
 ];
 
+const buildPresetQueryTemplate = (queryConfig: DbQueryConfig) => {
+  const preset = queryConfig.preset;
+  let field = "_id";
+  let valuePlaceholder = "{{value}}";
+  if (preset === "by_productId") {
+    field = "productId";
+    valuePlaceholder = "{{productId}}";
+  } else if (preset === "by_entityId") {
+    field = "entityId";
+    valuePlaceholder = "{{entityId}}";
+  } else if (preset === "by_field") {
+    field = queryConfig.field?.trim() || "field";
+    valuePlaceholder = "{{value}}";
+  } else if (preset === "by_id") {
+    field = queryConfig.idType === "objectId" ? "_id" : "id";
+    valuePlaceholder = "{{value}}";
+  }
+  return `{\n  \"${field}\": \"${valuePlaceholder}\"\n}`;
+};
+
 function pruneLargeFields(value: unknown, seen = new Set<object>()): unknown {
   if (!value || typeof value !== "object") return value;
   if (seen.has(value)) return "[Circular]";
@@ -183,6 +207,12 @@ type NodeConfigDialogProps = {
   handleFetchUpdaterSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
   handleRunSimulation: (node: AiNode) => void;
   clearRuntimeForNode?: (nodeId: string) => void;
+  dbQueryPresets: DbQueryPreset[];
+  setDbQueryPresets: React.Dispatch<React.SetStateAction<DbQueryPreset[]>>;
+  saveDbQueryPresets: (nextPresets: DbQueryPreset[]) => Promise<void>;
+  dbNodePresets: DbNodePreset[];
+  setDbNodePresets: React.Dispatch<React.SetStateAction<DbNodePreset[]>>;
+  saveDbNodePresets: (nextPresets: DbNodePreset[]) => Promise<void>;
   toast: (message: string, options?: { variant?: "success" | "error" }) => void;
 };
 
@@ -206,6 +236,12 @@ export function NodeConfigDialog({
   handleFetchUpdaterSample,
   handleRunSimulation,
   clearRuntimeForNode,
+  dbQueryPresets,
+  setDbQueryPresets,
+  saveDbQueryPresets,
+  dbNodePresets,
+  setDbNodePresets,
+  saveDbNodePresets,
   toast,
 }: NodeConfigDialogProps) {
   const [hideLargeFields, setHideLargeFields] = React.useState(true);
@@ -216,6 +252,13 @@ export function NodeConfigDialog({
   );
   const [parserDraftNodeId, setParserDraftNodeId] = React.useState<string | null>(null);
   const parserDraftTimerRef = React.useRef<number | null>(null);
+  const [selectedQueryPresetId, setSelectedQueryPresetId] = React.useState<string>("");
+  const [queryPresetName, setQueryPresetName] = React.useState<string>("");
+  const [selectedDbPresetId, setSelectedDbPresetId] = React.useState<string>("");
+  const [dbPresetName, setDbPresetName] = React.useState<string>("");
+  const [dbPresetDescription, setDbPresetDescription] = React.useState<string>("");
+  const [databaseTab, setDatabaseTab] = React.useState<"settings" | "presets">("settings");
+  const queryTemplateRef = React.useRef<HTMLTextAreaElement | null>(null);
   React.useEffect(() => {
     if (!selectedNode || selectedNode.type !== "parser") return;
     const nextMappings =
@@ -230,6 +273,29 @@ export function NodeConfigDialog({
       }
     };
   }, [selectedNode?.id, selectedNode?.type]);
+  React.useEffect(() => {
+    setSelectedQueryPresetId("");
+    setQueryPresetName("");
+    setSelectedDbPresetId("");
+    setDbPresetName("");
+    setDbPresetDescription("");
+    setDatabaseTab("settings");
+  }, [selectedNode?.id]);
+  React.useEffect(() => {
+    if (!selectedQueryPresetId) return;
+    const preset = dbQueryPresets.find((item) => item.id === selectedQueryPresetId);
+    if (preset) {
+      setQueryPresetName(preset.name);
+    }
+  }, [selectedQueryPresetId, dbQueryPresets]);
+  React.useEffect(() => {
+    if (!selectedDbPresetId) return;
+    const preset = dbNodePresets.find((item) => item.id === selectedDbPresetId);
+    if (preset) {
+      setDbPresetName(preset.name);
+      setDbPresetDescription(preset.description ?? "");
+    }
+  }, [selectedDbPresetId, dbNodePresets]);
 
   if (!selectedNode) return null;
   return (
@@ -413,23 +479,23 @@ export function NodeConfigDialog({
               const updateMappingKey = (index: number, value: string) => {
                 const nextEntries = entries.map((entry, idx) => {
                   if (idx !== index) return entry;
-                  const nextKey = value.trim() || entry[0];
-                  return [nextKey, entry[1]] as [string, string];
+                  const nextKey = value.trim() || entry[0]!;
+                  return [nextKey, entry[1]!] as [string, string];
                 });
                 const nextMappings: Record<string, string> = {};
-                nextEntries.forEach(([key, path]) => {
-                  if (!key.trim()) return;
+                (nextEntries as [string, string][]).forEach(([key, path]) => {
+                  if (!key || !key.trim()) return;
                   nextMappings[key.trim()] = path;
                 });
                 commitMappingsDebounced(nextMappings);
               };
               const updateMappingPath = (index: number, value: string) => {
                 const nextEntries = entries.map((entry, idx) =>
-                  idx === index ? [entry[0], value] : entry
+                  idx === index ? [entry[0]!, value] : entry
                 );
                 const nextMappings: Record<string, string> = {};
-                nextEntries.forEach(([key, path]) => {
-                  if (!key.trim()) return;
+                (nextEntries as [string, string][]).forEach(([key, path]) => {
+                  if (!key || !key.trim()) return;
                   nextMappings[key.trim()] = path;
                 });
                 commitMappingsDebounced(nextMappings);
@@ -438,8 +504,8 @@ export function NodeConfigDialog({
                 if (entries.length <= 1) return;
                 const nextEntries = entries.filter((_, idx) => idx !== index);
                 const nextMappings: Record<string, string> = {};
-                nextEntries.forEach(([key, path]) => {
-                  if (!key.trim()) return;
+                (nextEntries as [string, string][]).forEach(([key, path]) => {
+                  if (!key || !key.trim()) return;
                   nextMappings[key.trim()] = path;
                 });
                 commitMappingsImmediate(nextMappings);
@@ -448,14 +514,14 @@ export function NodeConfigDialog({
                 if (!activePreset || activePreset.id === "custom") return;
                 if (mode === "replace") {
                   commitMappingsImmediate(
-                    activePreset.mappings,
+                    activePreset.mappings as Record<string, string>,
                     outputMode,
                     activePreset.id
                   );
                   return;
                 }
                 const merged: Record<string, string> = { ...draftMappings };
-                Object.entries(activePreset.mappings).forEach(([key, value]) => {
+                Object.entries(activePreset.mappings as Record<string, string>).forEach(([key, value]) => {
                   if (!(key in merged)) {
                     merged[key] = value;
                   }
@@ -492,11 +558,11 @@ export function NodeConfigDialog({
                 }
                 if (imageEntryIndex >= 0) {
                   const nextEntries = entries.map((entry, idx) =>
-                    idx === imageEntryIndex ? [entry[0], detected] : entry
+                    idx === imageEntryIndex ? [entry[0]!, detected] : entry
                   );
                   const nextMappings: Record<string, string> = {};
-                  nextEntries.forEach(([key, path]) => {
-                    if (!key.trim()) return;
+                  (nextEntries as [string, string][]).forEach(([key, path]) => {
+                    if (!key || !key.trim()) return;
                     nextMappings[key.trim()] = path;
                   });
                   commitMappingsImmediate(nextMappings);
@@ -1464,7 +1530,7 @@ export function NodeConfigDialog({
                 successValue: pollConfig?.successValue ?? "completed",
                 resultPath: pollConfig?.resultPath ?? "result",
               };
-              const queryConfig = resolvedPollConfig.dbQuery;
+              const queryConfig = resolvedPollConfig.dbQuery!;
               const collectionOption = DB_COLLECTION_OPTIONS.some(
                 (option) => option.value === queryConfig.collection
               )
@@ -1482,7 +1548,7 @@ export function NodeConfigDialog({
                   <div>
                     <Label className="text-xs text-gray-400">Mode</Label>
                     <Select
-                      value={resolvedPollConfig.mode}
+                      value={resolvedPollConfig.mode!}
                       onValueChange={(value) =>
                         updatePollConfig({ mode: value as "job" | "database" })
                       }
@@ -2188,6 +2254,12 @@ export function NodeConfigDialog({
                   description: "Preset query using the connected productId input.",
                 },
                 {
+                  id: "query_by_id",
+                  label: "Query product by id (flexible)",
+                  description:
+                    "Uses by_id preset so UUIDs resolve against id and ObjectIds use _id.",
+                },
+                {
                   id: "query_recent_products",
                   label: "Query recent products",
                   description: "Fetches newest products sorted by createdAt desc.",
@@ -2229,14 +2301,26 @@ export function NodeConfigDialog({
                 },
                 {
                   id: "update_description_from_model",
-                  label: "Update description from model result",
-                  description: "Writes model result into content_en for the product.",
+                  label: "Update description_en from model result",
+                  description: "Writes model result into description_en for the product.",
                 },
                 {
                   id: "update_content_en_from_result",
                   label: "Update content_en from result (entityId)",
                   description:
                     "Updates product content_en using the incoming result and the connected entityId.",
+                },
+                {
+                  id: "update_description_en_from_result",
+                  label: "Update description_en from result",
+                  description:
+                    "Updates product description_en using the incoming result and any connected id.",
+                },
+                {
+                  id: "update_description_en_from_result_by_entity",
+                  label: "Update description_en from result (entityId)",
+                  description:
+                    "Updates product description_en using the incoming result and the connected entityId.",
                 },
                 {
                   id: "append_description_from_result",
@@ -2305,6 +2389,24 @@ export function NodeConfigDialog({
                         ...(databaseConfig.query ?? {}),
                         mode: "preset",
                         preset: "by_productId",
+                      },
+                    },
+                  });
+                  return;
+                }
+                if (presetId === "query_by_id") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                      operation: "query",
+                      entityType: "product",
+                      query: {
+                        ...defaultQuery,
+                        collection: "products",
+                        mode: "preset",
+                        preset: "by_id",
+                        idType: "string",
                       },
                     },
                   });
@@ -2461,14 +2563,14 @@ export function NodeConfigDialog({
                       presetId,
                       operation: "update",
                       entityType: "product",
-                      idField: "entityId",
+                      idField: "productId",
                       mode: "replace",
                       mappings: [
                         {
-                          targetPath: "content_en",
+                          targetPath: "description_en",
                           sourcePort: selectedNode.inputs.includes("result")
                             ? "result"
-                            : "content_en",
+                            : "description_en",
                           sourcePath: "",
                         },
                       ],
@@ -2493,6 +2595,54 @@ export function NodeConfigDialog({
                           sourcePort: selectedNode.inputs.includes("result")
                             ? "result"
                             : "content_en",
+                          sourcePath: "",
+                        },
+                      ],
+                      writeSource: databaseConfig.writeSource ?? "bundle",
+                      writeSourcePath: databaseConfig.writeSourcePath ?? "",
+                    },
+                  });
+                  return;
+                }
+                if (presetId === "update_description_en_from_result") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                      operation: "update",
+                      entityType: "product",
+                      idField: "productId",
+                      mode: "replace",
+                      mappings: [
+                        {
+                          targetPath: "description_en",
+                          sourcePort: selectedNode.inputs.includes("result")
+                            ? "result"
+                            : "description_en",
+                          sourcePath: "",
+                        },
+                      ],
+                      writeSource: databaseConfig.writeSource ?? "bundle",
+                      writeSourcePath: databaseConfig.writeSourcePath ?? "",
+                    },
+                  });
+                  return;
+                }
+                if (presetId === "update_description_en_from_result_by_entity") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                      operation: "update",
+                      entityType: "product",
+                      idField: "entityId",
+                      mode: "replace",
+                      mappings: [
+                        {
+                          targetPath: "description_en",
+                          sourcePort: selectedNode.inputs.includes("result")
+                            ? "result"
+                            : "description_en",
                           sourcePath: "",
                         },
                       ],
@@ -2616,9 +2766,157 @@ export function NodeConfigDialog({
                     normalizePresetValue(queryConfig.projection)
                 )?.id ??
                 "custom";
+              const presetQueryTemplate = buildPresetQueryTemplate(queryConfig);
+              const selectedDbPreset = dbNodePresets.find(
+                (preset) => preset.id === selectedDbPresetId
+              );
+              const handleApplyDbPreset = (preset: DbNodePreset) => {
+                updateSelectedNodeConfig({
+                  database: {
+                    ...databaseConfig,
+                    ...preset.config,
+                    mappings:
+                      preset.config.mappings && preset.config.mappings.length > 0
+                        ? preset.config.mappings
+                        : mappings,
+                    query: preset.config.query ?? queryConfig,
+                  },
+                });
+              };
+              const handleSaveDbPreset = async () => {
+                const name = dbPresetName.trim();
+                if (!name) {
+                  toast("Preset name is required.", { variant: "error" });
+                  return;
+                }
+                const now = new Date().toISOString();
+                const payload: DatabaseConfig = {
+                  operation: databaseConfig.operation ?? "query",
+                  entityType: databaseConfig.entityType ?? "product",
+                  idField: databaseConfig.idField ?? "entityId",
+                  mode: databaseConfig.mode ?? "replace",
+                  mappings,
+                  query: queryConfig,
+                  writeSource: databaseConfig.writeSource ?? "bundle",
+                  writeSourcePath: databaseConfig.writeSourcePath ?? "",
+                  dryRun: databaseConfig.dryRun ?? false,
+                  presetId: databaseConfig.presetId,
+                  skipEmpty: databaseConfig.skipEmpty ?? false,
+                  trimStrings: databaseConfig.trimStrings ?? false,
+                };
+                let nextPresets = [...dbNodePresets];
+                const existingIndex = nextPresets.findIndex(
+                  (preset) => preset.id === selectedDbPresetId
+                );
+                if (existingIndex >= 0) {
+                  nextPresets[existingIndex] = {
+                    ...nextPresets[existingIndex],
+                    name,
+                    description: dbPresetDescription.trim(),
+                    config: payload,
+                    updatedAt: now,
+                  };
+                } else {
+                  const newPreset: DbNodePreset = {
+                    id: createPresetId(),
+                    name,
+                    description: dbPresetDescription.trim(),
+                    config: payload,
+                    createdAt: now,
+                    updatedAt: now,
+                  };
+                  nextPresets = [...nextPresets, newPreset];
+                  setSelectedDbPresetId(newPreset.id);
+                }
+                setDbNodePresets(nextPresets);
+                await saveDbNodePresets(nextPresets);
+                toast("Database preset saved.", { variant: "success" });
+              };
+              const handleDeleteDbPreset = async () => {
+                if (!selectedDbPreset) return;
+                const confirmed = window.confirm(
+                  `Delete database preset \"${selectedDbPreset.name}\"?`
+                );
+                if (!confirmed) return;
+                const nextPresets = dbNodePresets.filter(
+                  (preset) => preset.id !== selectedDbPreset.id
+                );
+                setDbNodePresets(nextPresets);
+                await saveDbNodePresets(nextPresets);
+                setSelectedDbPresetId("");
+                setDbPresetName("");
+                setDbPresetDescription("");
+                toast("Database preset deleted.", { variant: "success" });
+              };
+              const selectedQueryPreset = dbQueryPresets.find(
+                (preset) => preset.id === selectedQueryPresetId
+              );
+              const handleSaveQueryPreset = async () => {
+                const name = queryPresetName.trim();
+                const template = (queryConfig.queryTemplate ?? "").trim();
+                if (!name) {
+                  toast("Query preset name is required.", { variant: "error" });
+                  return;
+                }
+                if (!template) {
+                  toast("Query template is empty.", { variant: "error" });
+                  return;
+                }
+                const now = new Date().toISOString();
+                let nextPresets = [...dbQueryPresets];
+                const existingIndex = nextPresets.findIndex(
+                  (preset) => preset.id === selectedQueryPresetId
+                );
+                if (existingIndex >= 0) {
+                  nextPresets[existingIndex] = {
+                    ...nextPresets[existingIndex],
+                    name,
+                    queryTemplate: template,
+                    updatedAt: now,
+                  };
+                } else {
+                  const newPreset: DbQueryPreset = {
+                    id: createPresetId(),
+                    name,
+                    queryTemplate: template,
+                    createdAt: now,
+                    updatedAt: now,
+                  };
+                  nextPresets = [...nextPresets, newPreset];
+                  setSelectedQueryPresetId(newPreset.id);
+                }
+                setDbQueryPresets(nextPresets);
+                await saveDbQueryPresets(nextPresets);
+                toast("Query preset saved.", { variant: "success" });
+              };
+              const handleDeleteQueryPreset = async () => {
+                if (!selectedQueryPreset) return;
+                const confirmed = window.confirm(
+                  `Delete query preset \"${selectedQueryPreset.name}\"?`
+                );
+                if (!confirmed) return;
+                const nextPresets = dbQueryPresets.filter(
+                  (preset) => preset.id !== selectedQueryPreset.id
+                );
+                setDbQueryPresets(nextPresets);
+                await saveDbQueryPresets(nextPresets);
+                setSelectedQueryPresetId("");
+                setQueryPresetName("");
+                toast("Query preset deleted.", { variant: "success" });
+              };
 
               return (
-                <div className="space-y-4">
+                <Tabs
+                  value={databaseTab}
+                  onValueChange={(value) => setDatabaseTab(value as "settings" | "presets")}
+                  className="space-y-4"
+                >
+                  <TabsList className="w-full justify-start border border-gray-800 bg-gray-950/60">
+                    <TabsTrigger value="settings">Settings</TabsTrigger>
+                    <TabsTrigger value="presets">Presets</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="settings">
+                    <div className="space-y-4">
                   <div>
                     <Label className="text-xs text-gray-400">Preset</Label>
                     <Select
@@ -2904,32 +3202,73 @@ export function NodeConfigDialog({
                       {queryConfig.mode === "preset" && (
                         <div className="space-y-3">
                           <div className="grid gap-3 sm:grid-cols-2">
-                            <div>
-                              <Label className="text-xs text-gray-400">Query preset</Label>
-                              <Select
-                                value={queryConfig.preset}
-                                onValueChange={(value) =>
-                                  updateSelectedNodeConfig({
-                                    database: {
-                                      ...databaseConfig,
-                                      query: {
-                                        ...queryConfig,
-                                        preset: value as DbQueryConfig["preset"],
+                            <div className="space-y-2">
+                              <div>
+                                <Label className="text-xs text-gray-400">Query preset</Label>
+                                <Select
+                                  value={queryConfig.preset}
+                                  onValueChange={(value) =>
+                                    updateSelectedNodeConfig({
+                                      database: {
+                                        ...databaseConfig,
+                                        query: {
+                                          ...queryConfig,
+                                          preset: value as DbQueryConfig["preset"],
+                                        },
                                       },
-                                    },
-                                  })
-                                }
-                              >
-                                <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
-                                  <SelectValue placeholder="Select preset" />
-                                </SelectTrigger>
-                                <SelectContent className="border-gray-800 bg-gray-900">
-                                  <SelectItem value="by_id">By ID (_id)</SelectItem>
-                                  <SelectItem value="by_productId">By productId</SelectItem>
-                                  <SelectItem value="by_entityId">By entityId</SelectItem>
-                                  <SelectItem value="by_field">By custom field</SelectItem>
-                                </SelectContent>
-                              </Select>
+                                    })
+                                  }
+                                >
+                                  <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                                    <SelectValue placeholder="Select preset" />
+                                  </SelectTrigger>
+                                  <SelectContent className="border-gray-800 bg-gray-900">
+                                    <SelectItem value="by_id">By ID (_id)</SelectItem>
+                                    <SelectItem value="by_productId">By productId</SelectItem>
+                                    <SelectItem value="by_entityId">By entityId</SelectItem>
+                                    <SelectItem value="by_field">By custom field</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div>
+                                <Label className="text-xs text-gray-400">Query preview</Label>
+                                <Textarea
+                                  readOnly
+                                  className="mt-2 min-h-[90px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                                  value={presetQueryTemplate}
+                                />
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                  <Button
+                                    type="button"
+                                    className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                                    onClick={() =>
+                                      updateSelectedNodeConfig({
+                                        database: {
+                                          ...databaseConfig,
+                                          query: {
+                                            ...queryConfig,
+                                            mode: "custom",
+                                            queryTemplate: presetQueryTemplate,
+                                          },
+                                        },
+                                      })
+                                    }
+                                  >
+                                    Edit as custom
+                                  </Button>
+                                </div>
+                                <p className="mt-2 text-[11px] text-gray-500">
+                                  Preset queries use the connected ID input and fall back to{" "}
+                                  <span className="text-gray-300">{`{{value}}`}</span>.
+                                </p>
+                                <p className="mt-1 text-[11px] text-gray-500">
+                                  Use dot paths for nested keys, e.g.{" "}
+                                  <span className="text-gray-300">{`{{bundle.key}}`}</span> or{" "}
+                                  <span className="text-gray-300">{`{{context.entity.title}}`}</span>.
+                                  Arrays support indexes like{" "}
+                                  <span className="text-gray-300">{`{{bundle.items[0].sku}}`}</span>.
+                                </p>
+                              </div>
                             </div>
                             <div>
                               <Label className="text-xs text-gray-400">ID Type</Label>
@@ -2981,6 +3320,7 @@ export function NodeConfigDialog({
                         <div>
                           <Label className="text-xs text-gray-400">Query Template</Label>
                           <Textarea
+                            ref={queryTemplateRef}
                             className="mt-2 min-h-[140px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
                             value={queryConfig.queryTemplate}
                             onChange={(event) =>
@@ -3246,6 +3586,50 @@ export function NodeConfigDialog({
                           </SelectContent>
                         </Select>
                       </div>
+                      {(() => {
+                        const idField = databaseConfig.idField ?? "entityId";
+                        const updatesPreview: Record<string, string> = {};
+                        mappings.forEach((mapping) => {
+                          const target = mapping.targetPath?.trim();
+                          if (!target) return;
+                          const sourcePort = mapping.sourcePort?.trim() || "result";
+                          const sourcePath = mapping.sourcePath?.trim();
+                          const placeholder = sourcePath
+                            ? `{{${sourcePort}.${sourcePath}}}`
+                            : `{{${sourcePort}}}`;
+                          updatesPreview[target] = placeholder;
+                        });
+                        const mode = databaseConfig.mode ?? "replace";
+                        const previewPayload = {
+                          entityType: databaseConfig.entityType ?? "product",
+                          where: { [idField]: `{{${idField}}}` },
+                          mode,
+                          updates: updatesPreview,
+                          ...(mode === "append"
+                            ? {
+                                appendBehavior: {
+                                  strings: "append with newline",
+                                  arrays: "concatenate",
+                                  objects: "shallow merge",
+                                  other: "replace",
+                                },
+                              }
+                            : {}),
+                        };
+                        return (
+                          <div>
+                            <Label className="text-xs text-gray-400">Update preview</Label>
+                            <Textarea
+                              readOnly
+                              className="mt-2 min-h-[140px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                              value={JSON.stringify(previewPayload, null, 2)}
+                            />
+                            <p className="mt-2 text-[11px] text-gray-500">
+                              Preview shows the selector + updates using input placeholders.
+                            </p>
+                          </div>
+                        );
+                      })()}
 
                       <div>
                         <Label className="text-xs text-gray-400">Sample JSON</Label>
@@ -3634,6 +4018,199 @@ export function NodeConfigDialog({
                     </div>
                   )}
                 </div>
+              </TabsContent>
+              <TabsContent value="presets">
+                <div className="space-y-4">
+                  <div className="rounded-md border border-gray-800 bg-gray-950/50 p-3">
+                    <div className="space-y-3">
+                      <Label className="text-xs text-gray-400">Database presets</Label>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <Label className="text-xs text-gray-400">Saved presets</Label>
+                          <Select
+                            value={selectedDbPresetId || "none"}
+                            onValueChange={(value) => {
+                              const nextId = value === "none" ? "" : value;
+                              setSelectedDbPresetId(nextId);
+                              if (!nextId) {
+                                setDbPresetName("");
+                                setDbPresetDescription("");
+                                return;
+                              }
+                              const preset = dbNodePresets.find((item) => item.id === nextId);
+                              if (preset) {
+                                setDbPresetName(preset.name);
+                                setDbPresetDescription(preset.description ?? "");
+                                handleApplyDbPreset(preset);
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                              <SelectValue placeholder="Select preset" />
+                            </SelectTrigger>
+                            <SelectContent className="border-gray-800 bg-gray-900">
+                              <SelectItem value="none">None</SelectItem>
+                              {dbNodePresets.map((preset) => (
+                                <SelectItem key={preset.id} value={preset.id}>
+                                  {preset.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-gray-400">Preset name</Label>
+                          <Input
+                            className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                            value={dbPresetName}
+                            onChange={(event) => setDbPresetName(event.target.value)}
+                            placeholder="My database preset"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-400">Description</Label>
+                        <Input
+                          className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                          value={dbPresetDescription}
+                          onChange={(event) => setDbPresetDescription(event.target.value)}
+                          placeholder="Optional"
+                        />
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          className="rounded-md border border-emerald-500/40 text-[10px] text-emerald-200 hover:bg-emerald-500/10"
+                          onClick={() => void handleSaveDbPreset()}
+                        >
+                          {selectedDbPreset ? "Update preset" : "Save preset"}
+                        </Button>
+                        {selectedDbPreset ? (
+                          <Button
+                            type="button"
+                            className="rounded-md border border-rose-500/40 text-[10px] text-rose-200 hover:bg-rose-500/10"
+                            onClick={() => void handleDeleteDbPreset()}
+                          >
+                            Delete preset
+                          </Button>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-md border border-gray-800 bg-gray-950/50 p-3">
+                    <div className="space-y-3">
+                      <Label className="text-xs text-gray-400">Query presets</Label>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <div>
+                            <Label className="text-xs text-gray-400">Saved query presets</Label>
+                            <Select
+                              value={selectedQueryPresetId || "none"}
+                              onValueChange={(value) => {
+                                const nextId = value === "none" ? "" : value;
+                                setSelectedQueryPresetId(nextId);
+                                if (!nextId) {
+                                  setQueryPresetName("");
+                                  return;
+                                }
+                                const preset = dbQueryPresets.find((item) => item.id === nextId);
+                                if (preset) {
+                                  updateSelectedNodeConfig({
+                                    database: {
+                                      ...databaseConfig,
+                                      query: {
+                                        ...queryConfig,
+                                        queryTemplate: preset.queryTemplate,
+                                        mode: "custom",
+                                      },
+                                    },
+                                  });
+                                }
+                              }}
+                            >
+                              <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                                <SelectValue placeholder="Select preset" />
+                              </SelectTrigger>
+                              <SelectContent className="border-gray-800 bg-gray-900">
+                                <SelectItem value="none">None</SelectItem>
+                                {dbQueryPresets.map((preset) => (
+                                  <SelectItem key={preset.id} value={preset.id}>
+                                    {preset.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label className="text-xs text-gray-400">Query preview</Label>
+                            <Textarea
+                              readOnly
+                              className="mt-2 min-h-[90px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                              value={queryConfig.queryTemplate ?? ""}
+                            />
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <Button
+                                type="button"
+                                className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                                onClick={() => {
+                                  setDatabaseTab("settings");
+                                  updateSelectedNodeConfig({
+                                    database: {
+                                      ...databaseConfig,
+                                      query: {
+                                        ...queryConfig,
+                                        mode: "custom",
+                                      },
+                                    },
+                                  });
+                                  window.setTimeout(() => queryTemplateRef.current?.focus(), 0);
+                                }}
+                              >
+                                Edit in settings
+                              </Button>
+                            </div>
+                            <p className="mt-2 text-[11px] text-gray-500">
+                              Use dot paths for nested keys, e.g.{" "}
+                              <span className="text-gray-300">{`{{bundle.key}}`}</span> or{" "}
+                              <span className="text-gray-300">{`{{context.entity.title}}`}</span>.
+                              Arrays support indexes like{" "}
+                              <span className="text-gray-300">{`{{bundle.items[0].sku}}`}</span>.
+                            </p>
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-gray-400">Preset name</Label>
+                          <Input
+                            className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                            value={queryPresetName}
+                            onChange={(event) => setQueryPresetName(event.target.value)}
+                            placeholder="My product lookup"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          className="rounded-md border border-emerald-500/40 text-[10px] text-emerald-200 hover:bg-emerald-500/10"
+                          onClick={() => void handleSaveQueryPreset()}
+                        >
+                          {selectedQueryPreset ? "Update preset" : "Save preset"}
+                        </Button>
+                        {selectedQueryPreset ? (
+                          <Button
+                            type="button"
+                            className="rounded-md border border-rose-500/40 text-[10px] text-rose-200 hover:bg-rose-500/10"
+                            onClick={() => void handleDeleteQueryPreset()}
+                          >
+                            Delete preset
+                          </Button>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
               );
             })()}
             {selectedNode.type === "gate" && (() => {

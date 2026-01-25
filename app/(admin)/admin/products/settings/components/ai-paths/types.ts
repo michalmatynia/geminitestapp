@@ -304,6 +304,23 @@ export type ClusterPreset = {
   updatedAt: string;
 };
 
+export type DbQueryPreset = {
+  id: string;
+  name: string;
+  queryTemplate: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DbNodePreset = {
+  id: string;
+  name: string;
+  description: string;
+  config: DatabaseConfig;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type JsonPathEntry = {
   path: string;
   type: "object" | "array" | "value";

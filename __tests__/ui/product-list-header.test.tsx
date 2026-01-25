@@ -12,6 +12,11 @@ describe("ProductListHeader Component", () => {
     setPageSize: vi.fn(),
     nameLocale: "name_en" as const,
     setNameLocale: vi.fn(),
+    languageOptions: [
+      { value: "name_en" as const, label: "English" },
+      { value: "name_pl" as const, label: "Polish" },
+      { value: "name_de" as const, label: "German" },
+    ],
     currencyCode: "USD",
     setCurrencyCode: vi.fn(),
     currencyOptions: ["USD", "PLN", "EUR"],

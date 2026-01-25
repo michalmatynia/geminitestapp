@@ -348,8 +348,7 @@ export function CanvasBoard({
                             connectingFromNode as AiNode,
                             node,
                             connecting?.fromPort ?? "",
-                            input,
-                            edges
+                            input
                           ).valid
                         : false;
                       return (

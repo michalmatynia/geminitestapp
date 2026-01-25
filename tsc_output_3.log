@@ -1,6 +1,11 @@
-app/api/products/[id]/export-to-base/route.ts(221,38): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
-lib/context/ProductFormContext.tsx(189,26): error TS2379: Argument of type '{ product: ProductWithImages | undefined; initialCatalogId: string | undefined; setValue: UseFormSetValue<{ baseProductId?: string | null | undefined; defaultPriceGroupId?: string | ... 1 more ... | undefined; ... 19 more ...; sku?: string | undefined; }>; getValues: UseFormGetValues<...>; }' is not assignable to parameter of type 'UseProductMetadataProps' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-  Types of property 'initialCatalogId' are incompatible.
-    Type 'string | undefined' is not assignable to type 'string'.
-      Type 'undefined' is not assignable to type 'string'.
+app/(admin)/admin/products/settings/components/ai-paths/node-config-dialog.tsx(302,2): error TS17008: JSX element 'Dialog' has no corresponding closing tag.
+app/(admin)/admin/products/settings/components/ai-paths/node-config-dialog.tsx(303,12): error TS17008: JSX element 'DialogContent' has no corresponding closing tag.
+app/(admin)/admin/products/settings/components/ai-paths/node-config-dialog.tsx(1037,13): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/(admin)/admin/products/settings/components/ai-paths/node-config-dialog.tsx(1037,17): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/(admin)/admin/products/settings/components/ai-paths/node-config-dialog.tsx(5223,15): error TS1003: Identifier expected.
+app/(admin)/admin/products/settings/components/ai-paths/node-config-dialog.tsx(5224,13): error TS17002: Expected corresponding JSX closing tag for 'Tabs'.
+app/(admin)/admin/products/settings/components/ai-paths/node-config-dialog.tsx(5225,9): error TS1005: ')' expected.
+app/(admin)/admin/products/settings/components/ai-paths/node-config-dialog.tsx(5225,11): error TS17015: Expected corresponding closing tag for JSX fragment.
+app/(admin)/admin/products/settings/components/ai-paths/node-config-dialog.tsx(5225,17): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/(admin)/admin/products/settings/components/ai-paths/node-config-dialog.tsx(5228,1): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/(admin)/admin/products/settings/components/ai-paths/node-config-dialog.tsx(5229,1): error TS1005: '</' expected.

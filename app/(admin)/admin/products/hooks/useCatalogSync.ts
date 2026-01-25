@@ -194,9 +194,9 @@ export function useCatalogSync(catalogFilter: string) {
     });
 
     if (options.length === 0) {
-      options.push(supportedLanguageMap.EN);
-      options.push(supportedLanguageMap.PL);
-      options.push(supportedLanguageMap.DE);
+      options.push(supportedLanguageMap.EN!);
+      options.push(supportedLanguageMap.PL!);
+      options.push(supportedLanguageMap.DE!);
     }
 
     const defaultLanguageId = catalog?.defaultLanguageId ?? null;
@@ -204,9 +204,9 @@ export function useCatalogSync(catalogFilter: string) {
       ? languages.find((lang) => lang.id === defaultLanguageId)
       : null;
     const defaultOption = defaultLang
-      ? supportedLanguageMap[defaultLang.code?.trim().toUpperCase()]
+      ? supportedLanguageMap[defaultLang.code?.trim().toUpperCase() || ""]
       : undefined;
-    const fallbackNameLocale = defaultOption?.value ?? options[0].value;
+    const fallbackNameLocale = defaultOption?.value ?? options[0]!.value;
 
     return { languageOptions: options, fallbackNameLocale };
   }, [catalogFilter, catalogs, languages]);

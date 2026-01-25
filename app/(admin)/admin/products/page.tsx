@@ -195,7 +195,7 @@ function AdminPageInner() {
     if (allowed.has(preferences.nameLocale)) return;
     const nextLocale = allowed.has(fallbackNameLocale)
       ? fallbackNameLocale
-      : languageOptions[0].value;
+      : languageOptions[0]!.value;
     updateNameLocale(nextLocale);
   }, [languageOptions, fallbackNameLocale, preferences.nameLocale, updateNameLocale]);
 

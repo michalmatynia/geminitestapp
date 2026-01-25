@@ -1,6 +1,5 @@
 
-segment 
- the files 
+segment the files and create meaningful file folder structure that follows my current convention
 
 make as many components as possible reusable in my AI Paths section
 

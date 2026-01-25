@@ -58,11 +58,10 @@ describe("Databases API", () => {
 
   describe("GET /api/databases/backups", () => {
     it("should return a list of backups", async () => {
-      vi.spyOn(fs, "readdir")
-        .mockResolvedValue([
-          { name: "stardb-backup-123.dump", isDirectory: () => false },
-          { name: "restore-log.json", isDirectory: () => false },
-        ] as unknown as Dirent[]);
+      vi.spyOn(fs, "readdir").mockResolvedValue([
+        "stardb-backup-123.dump",
+        "restore-log.json",
+      ] as any);
       vi.spyOn(fs, "readFile").mockResolvedValue("{}");
       vi.spyOn(fs, "stat").mockResolvedValue({
         size: 1024,

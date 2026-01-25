@@ -4,12 +4,12 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import RichTextBlock from "./RichTextBlock";
 
-interface PageComponent {
+export interface PageComponent {
   type: string;
   content: Record<string, unknown>;
 }
 
-interface Page {
+export interface Page {
   id: string;
   name: string;
   components: PageComponent[];

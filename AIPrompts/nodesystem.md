@@ -18,3 +18,36 @@ Looper Node ? stop conditions / iteration limits
 Infer Categories and size , material, Lore Tag Automatically
 
 node callbacks for when for example the process has finished conditionally and can loop another attampt
+
+
+## AI PATHS
+
+Signal paths for different ai tasks
+# Agentic AI
+Enhance functionality of
+1. Planner/replanner vs. executor (already split for you) V
+2. Self‑questioning/critique (already split for you) V
+* Enhance agentic per step * 3. Extraction/validation model (evidence checking, schema validation, de‑duplication) V
+4. Memory validation + summarization (fast model to filter, stronger model to write) V
+5. Tool selection & fallback strategy (small model for routing)
+6. Loop detection + recovery (fast heuristic + LLM guard) V
+7. Safety/approval gate checks (separate policy model) V
+8. DOM/selector inference (cheap model good at pattern matching) V
+9. Result formatting/normalization (small model to clean outputs) V
+
+when planning or replanning of Agent Job was done by a specific model, stamp the model signature and make it visible Job details
+ETC.
+
+segment agent engine.ts and make it modular
+disassociate types models
+increase type safety
+
+Parser node should take data (result of translation node a single string) and parses it into object, then the data is passed into database and updates are made by object keys. 
+
+I need the ability to take control and log in to the website and give back control. I need a mini website viewer
+
+
+Sending another prompt during an agent work means I am adjusting, so at this point stop running, do a replan taking the last prompt into consideration and adjust behavior
+
+Connect GPT API to my Agentic Framework
+---

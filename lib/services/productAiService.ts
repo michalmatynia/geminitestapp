@@ -17,8 +17,28 @@ export async function getProductAiJobs(productId?: string) {
   const jobRepository = await getProductAiJobRepository();
   const jobs = await jobRepository.findJobs(productId);
 
+  const shouldFetchProduct = (job: { productId: string; payload: unknown }) => {
+    const payload =
+      job.payload && typeof job.payload === "object"
+        ? (job.payload as Record<string, unknown>)
+        : null;
+    const entityType =
+      (payload?.entityType as string | undefined) ??
+      ((payload?.context as Record<string, unknown> | undefined)?.entityType as
+        | string
+        | undefined);
+    const source = payload?.source as string | undefined;
+    const graph = payload?.graph as Record<string, unknown> | undefined;
+    if (entityType && entityType !== "product") return false;
+    if (source === "ai_paths" && graph) return false;
+    if (job.productId.startsWith("path_")) return false;
+    return true;
+  };
+
   // Batch fetch products - deduplicate IDs to avoid redundant queries
-  const uniqueProductIds = [...new Set(jobs.map((j) => j.productId))];
+  const uniqueProductIds = [
+    ...new Set(jobs.filter(shouldFetchProduct).map((j) => j.productId)),
+  ];
 
   // Fetch all unique products in parallel
   const productResults = await Promise.all(
@@ -54,11 +74,31 @@ export async function getProductAiJob(jobId: string) {
   if (!job) return null;
 
   let product = null;
-  try {
-    product = await productService.getProductById(job.productId);
-  } catch (error) {
-    console.error(`[getProductAiJob] Failed to fetch product ${job.productId}:`, error);
-    // Continue without product details if it fails
+  const payload =
+    job.payload && typeof job.payload === "object"
+      ? (job.payload as Record<string, unknown>)
+      : null;
+  const entityType =
+    (payload?.entityType as string | undefined) ??
+    ((payload?.context as Record<string, unknown> | undefined)?.entityType as
+      | string
+      | undefined);
+  const source = payload?.source as string | undefined;
+  const graph = payload?.graph as Record<string, unknown> | undefined;
+  const shouldFetch =
+    !job.productId.startsWith("path_") &&
+    entityType !== "note" &&
+    entityType !== "user" &&
+    entityType !== "system" &&
+    !(source === "ai_paths" && graph) &&
+    (entityType ? entityType === "product" : true);
+  if (shouldFetch) {
+    try {
+      product = await productService.getProductById(job.productId);
+    } catch (error) {
+      console.error(`[getProductAiJob] Failed to fetch product ${job.productId}:`, error);
+      // Continue without product details if it fails
+    }
   }
 
   return {

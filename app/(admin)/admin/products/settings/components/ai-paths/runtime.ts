@@ -37,7 +37,9 @@ const DEFAULT_DB_QUERY: DbQueryConfig = {
   queryTemplate: "{\n  \"_id\": \"{{value}}\"\n}",
   limit: 20,
   sort: "",
+  sortPresetId: "custom",
   projection: "",
+  projectionPresetId: "custom",
   single: false,
 };
 
@@ -65,6 +67,9 @@ export type EvaluateGraphOptions = {
 
 const looksLikeImageUrl = (value: string) =>
   /(\.png|\.jpe?g|\.webp|\.gif|\.svg|\/uploads\/|^https?:\/\/)/i.test(value);
+
+const looksLikeObjectId = (value: unknown) =>
+  typeof value === "string" && /^[0-9a-fA-F]{24}$/.test(value);
 
 const extractImageUrls = (value: unknown, seen = new Set<object>()): string[] => {
   if (!value) return [];
@@ -163,7 +168,7 @@ export async function evaluateGraph({
       });
     }
   }
-  const alwaysActiveTypes = new Set(["parser", "prompt", "viewer"]);
+  const alwaysActiveTypes = new Set(["parser", "prompt", "viewer", "database"]);
   const isActiveNode = (node: AiNode) =>
     !triggerNodeId ||
     activeNodeIds.has(node.id) ||
@@ -443,12 +448,12 @@ export async function evaluateGraph({
     if (queryConfig.mode === "preset") {
       const presetValue =
         queryConfig.preset === "by_productId"
-          ? productIdInput ?? inputValue ?? entityIdInput
+          ? productIdInput ?? inputValue
           : queryConfig.preset === "by_entityId"
-            ? entityIdInput ?? inputValue ?? productIdInput
+            ? entityIdInput ?? inputValue
             : inputValue ?? entityIdInput ?? productIdInput;
       if (presetValue !== undefined) {
-        const field =
+        let field =
           queryConfig.preset === "by_productId"
             ? "productId"
             : queryConfig.preset === "by_entityId"
@@ -456,6 +461,9 @@ export async function evaluateGraph({
               : queryConfig.preset === "by_field"
                 ? queryConfig.field || "id"
                 : "_id";
+        if (queryConfig.preset === "by_id" && field === "_id" && !looksLikeObjectId(presetValue)) {
+          field = "id";
+        }
         query = { [field]: presetValue };
       }
     } else if (inputQuery && typeof inputQuery === "object") {
@@ -549,44 +557,44 @@ export async function evaluateGraph({
         item?: unknown;
         count?: number;
       };
-      const result = config.dbQuery.single ? data.item ?? null : data.items ?? [];
-      const bundle = {
-        count: data.count ?? (Array.isArray(result) ? result.length : result ? 1 : 0),
-        query: payload.query,
-        collection: payload.collection,
-        attempt: attempt + 1,
-      };
-      lastResult = result;
-      lastBundle = bundle;
-      const successPath = config.successPath?.trim() ?? "";
-      const matchedItem = Array.isArray(result)
-        ? result.find((item) =>
-            evaluateMatch(getValueAtMappingPath(item, successPath))
-          )
-        : null;
-      const candidate = successPath
-        ? Array.isArray(result)
-          ? matchedItem
-          : getValueAtMappingPath(result, successPath)
-        : result;
-      const isMatch = Array.isArray(result)
-        ? Boolean(matchedItem) ||
-          result.some((item) =>
-            evaluateMatch(
-              successPath ? getValueAtMappingPath(item, successPath) : item
-            )
-          )
-        : evaluateMatch(candidate);
-      if (isMatch) {
-        let resolvedResult = config.resultPath?.trim()
-          ? getValueAtMappingPath(result, config.resultPath)
-          : result;
-        if (resolvedResult === undefined && Array.isArray(result)) {
-          const fallbackSource = matchedItem ?? result[0];
-          resolvedResult = config.resultPath?.trim()
-            ? getValueAtMappingPath(fallbackSource, config.resultPath)
-            : fallbackSource;
-        }
+                      const result: unknown = config.dbQuery.single ? data.item ?? null : data.items ?? [];
+                      const bundle = {
+                        count: data.count ?? (Array.isArray(result) ? result.length : result ? 1 : 0),
+                        query: payload.query,
+                        collection: payload.collection,
+                        attempt: attempt + 1,
+                      };
+                      lastResult = result;
+                      lastBundle = bundle;
+                      const successPath = config.successPath?.trim() ?? "";
+                      const matchedItem: unknown = Array.isArray(result)
+                        ? result.find((item: unknown) =>
+                            evaluateMatch(getValueAtMappingPath(item, successPath))
+                          )
+                        : null;
+                      const candidate: unknown = successPath
+                        ? Array.isArray(result)
+                          ? matchedItem
+                          : getValueAtMappingPath(result, successPath)
+                        : result;
+                      const isMatch = Array.isArray(result)
+                        ? Boolean(matchedItem) ||
+                          result.some((item: unknown) =>
+                            evaluateMatch(
+                              successPath ? getValueAtMappingPath(item, successPath) : item
+                            )
+                          )
+                        : evaluateMatch(candidate);
+                      if (isMatch) {
+                        let resolvedResult: unknown = config.resultPath?.trim()
+                          ? getValueAtMappingPath(result, config.resultPath)
+                          : result;
+                        if (resolvedResult === undefined && Array.isArray(result)) {
+                          const fallbackSource = (matchedItem ?? result[0]) as unknown;
+                          resolvedResult = config.resultPath?.trim()
+                            ? getValueAtMappingPath(fallbackSource, config.resultPath)
+                            : fallbackSource;
+                        }
         return {
           result: resolvedResult ?? result,
           status: "completed",
@@ -857,58 +865,57 @@ export async function evaluateGraph({
             simulation?.entityType ?? simulationEntityType ?? null;
           const resolvedEntityId = simulationInputId ?? null;
           const resolvedEntityType = simulationInputType ?? null;
-          const triggerExtras = (triggerContext ?? {}) as Record<string, unknown>;
-          const triggerEntityId =
-            typeof triggerExtras.entityId === "string"
-              ? triggerExtras.entityId
-              : typeof triggerExtras.productId === "string"
-                ? triggerExtras.productId
-                : null;
-          const triggerEntityType =
-            typeof triggerExtras.entityType === "string"
-              ? triggerExtras.entityType
-              : null;
-          const effectiveEntityId = resolvedEntityId ?? triggerEntityId ?? null;
-          const effectiveEntityType = resolvedEntityType ?? triggerEntityType ?? null;
-          const resolvedContext = {
-            entityType: resolvedEntityType ?? triggerEntityType,
-            entityId: resolvedEntityId ?? triggerEntityId,
-            source: node.title,
-            timestamp: now,
-            entity: resolvedEntity ?? buildFallbackEntity(effectiveEntityId ?? fallbackEntityId),
-          };
-          nextOutputs = {
-            trigger: eventName,
-            meta: {
-              firedAt: now,
-              trigger: eventName,
-              pathId: activePathId,
-              entityId: effectiveEntityId,
-              entityType: effectiveEntityType,
-              ui: triggerExtras.ui ?? null,
-              location: triggerExtras.location ?? null,
-              source: triggerExtras.source ?? null,
-              user: triggerExtras.user ?? null,
-              event: triggerExtras.event ?? null,
-              extras: triggerExtras.extras ?? null,
-            },
-            context: {
-              ...resolvedContext,
-              entityId: effectiveEntityId ?? resolvedContext.entityId,
-              entityType: effectiveEntityType ?? resolvedContext.entityType,
-              ui: triggerExtras.ui ?? resolvedContext.ui,
-              location: triggerExtras.location ?? resolvedContext.location,
-              source: triggerExtras.source ?? resolvedContext.source ?? node.title,
-              user: triggerExtras.user ?? resolvedContext.user,
-              event: triggerExtras.event ?? resolvedContext.event,
-              extras: triggerExtras.extras ?? resolvedContext.extras,
-              trigger: eventName,
-              pathId: activePathId,
-            },
-            entityId: effectiveEntityId,
-            entityType: effectiveEntityType,
-          };
-          break;
+                      const triggerExtras = (triggerContext ?? {});
+                      const triggerEntityId =
+                        typeof triggerExtras.entityId === "string"
+                          ? triggerExtras.entityId
+                          : typeof triggerExtras.productId === "string"
+                            ? triggerExtras.productId
+                            : null;
+                      const triggerEntityType =
+                        typeof triggerExtras.entityType === "string"
+                          ? triggerExtras.entityType
+                          : null;
+                      const effectiveEntityId = resolvedEntityId ?? triggerEntityId ?? null;
+                      const effectiveEntityType = resolvedEntityType ?? triggerEntityType ?? null;
+                      const resolvedContext: Record<string, unknown> = {
+                        entityType: resolvedEntityType ?? triggerEntityType,
+                        entityId: resolvedEntityId ?? triggerEntityId,
+                        source: node.title,
+                        timestamp: now,
+                        entity: resolvedEntity ?? buildFallbackEntity(effectiveEntityId ?? fallbackEntityId),
+                      };
+                      nextOutputs = {
+                        trigger: eventName,
+                        meta: {
+                          firedAt: now,
+                          trigger: eventName,
+                          pathId: activePathId,
+                          entityId: effectiveEntityId,
+                          entityType: effectiveEntityType,
+                          ui: triggerExtras.ui ?? null,
+                          location: triggerExtras.location ?? null,
+                          source: triggerExtras.source ?? null,
+                          user: triggerExtras.user ?? null,
+                          event: triggerExtras.event ?? null,
+                          extras: triggerExtras.extras ?? null,
+                        },
+                        context: {
+                          ...resolvedContext,
+                          entityId: effectiveEntityId ?? (resolvedContext.entityId as string | null),
+                          entityType: effectiveEntityType ?? (resolvedContext.entityType as string | null),
+                          ui: triggerExtras.ui ?? (resolvedContext.ui),
+                          location: triggerExtras.location ?? (resolvedContext.location),
+                          source: triggerExtras.source ?? (resolvedContext.source as string | null) ?? node.title,
+                          user: triggerExtras.user ?? (resolvedContext.user),
+                          event: triggerExtras.event ?? (resolvedContext.event),
+                          extras: triggerExtras.extras ?? (resolvedContext.extras),
+                          trigger: eventName,
+                          pathId: activePathId,
+                        },
+                        entityId: effectiveEntityId,
+                        entityType: effectiveEntityType,
+                      };          break;
         }
         case "parser": {
           const contextInput = coerceInput(nodeInputs.context);
@@ -1523,14 +1530,21 @@ export async function evaluateGraph({
 
           if (operation === "query") {
             const inputQuery = coerceInput(nodeInputs.query);
+            const resolvedEntityId = resolveEntityIdFromInputs(nodeInputs);
             const inputValue = coerceInput(nodeInputs.value);
-            const entityId = coerceInput(nodeInputs.entityId) ?? inputValue;
+            const entityIdInput = coerceInput(nodeInputs.entityId);
+            const productIdInput = coerceInput(nodeInputs.productId);
+            const entityId = entityIdInput ?? resolvedEntityId;
             let query: Record<string, unknown> = {};
             if (queryConfig.mode === "preset") {
               const presetValue =
-                queryConfig.preset === "by_entityId" ? entityId : inputValue ?? entityId;
+                queryConfig.preset === "by_productId"
+                  ? productIdInput ?? inputValue
+                  : queryConfig.preset === "by_entityId"
+                    ? entityIdInput ?? inputValue ?? resolvedEntityId
+                    : inputValue ?? resolvedEntityId ?? entityIdInput ?? productIdInput;
               if (presetValue !== undefined) {
-                const field =
+                let field =
                   queryConfig.preset === "by_productId"
                     ? "productId"
                     : queryConfig.preset === "by_entityId"
@@ -1538,7 +1552,26 @@ export async function evaluateGraph({
                       : queryConfig.preset === "by_field"
                         ? queryConfig.field || "id"
                         : "_id";
+                if (
+                  queryConfig.preset === "by_id" &&
+                  field === "_id" &&
+                  !looksLikeObjectId(presetValue)
+                ) {
+                  field = "id";
+                }
                 query = { [field]: presetValue };
+              } else {
+                toast("Database query needs an ID/value input.", { variant: "error" });
+                nextOutputs = {
+                  result: null,
+                  bundle: {
+                    count: 0,
+                    query: {},
+                    collection: queryConfig.collection,
+                    error: "Missing query value",
+                  },
+                };
+                break;
               }
             } else if (inputQuery && typeof inputQuery === "object") {
               query = inputQuery as Record<string, unknown>;
@@ -1638,6 +1671,13 @@ export async function evaluateGraph({
                       sourcePort: nodeInputs.result ? "result" : "content_en",
                     },
                   ];
+            const trimStrings = dbConfig.trimStrings ?? false;
+            const skipEmpty = dbConfig.skipEmpty ?? false;
+            const isEmptyValue = (value: unknown) =>
+              value === undefined ||
+              value === null ||
+              (typeof value === "string" && value.trim() === "") ||
+              (Array.isArray(value) && value.length === 0);
             const updates: Record<string, unknown> = {};
             mappings.forEach((mapping) => {
               const sourcePort = mapping.sourcePort;
@@ -1645,18 +1685,32 @@ export async function evaluateGraph({
               const sourceValue = nodeInputs[sourcePort];
               if (sourceValue === undefined) return;
               let value = coerceInput(sourceValue);
-              if (sourcePort === "bundle") {
-                const bundleValue = coerceInput(sourceValue);
-                if (
-                  bundleValue &&
-                  typeof bundleValue === "object" &&
-                  mapping.sourcePath
-                ) {
-                  const resolved = getValueAtMappingPath(bundleValue, mapping.sourcePath);
-                  if (resolved !== undefined) {
-                    value = resolved;
-                  }
+              if (value && typeof value === "object" && mapping.sourcePath) {
+                const resolved = getValueAtMappingPath(value, mapping.sourcePath);
+                if (resolved !== undefined) {
+                  value = resolved;
                 }
+              }
+              if (
+                sourcePort === "result" &&
+                value &&
+                typeof value === "object" &&
+                !mapping.sourcePath
+              ) {
+                const resultValue = (value as Record<string, unknown>).result;
+                const descriptionValue = (value as Record<string, unknown>).description;
+                const contentValue = (value as Record<string, unknown>).content_en;
+                value =
+                  resultValue ??
+                  descriptionValue ??
+                  contentValue ??
+                  value;
+              }
+              if (typeof value === "string" && trimStrings) {
+                value = value.trim();
+              }
+              if (skipEmpty && isEmptyValue(value)) {
+                return;
               }
               if (mapping.targetPath) {
                 updates[mapping.targetPath] = value;

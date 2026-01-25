@@ -71,6 +71,9 @@ export type DatabaseConfig = {
   writeSource?: string;
   writeSourcePath?: string;
   dryRun?: boolean;
+  presetId?: string;
+  skipEmpty?: boolean;
+  trimStrings?: boolean;
 };
 
 export type UpdaterSampleState = {
@@ -197,7 +200,9 @@ export type DbQueryConfig = {
   queryTemplate: string;
   limit: number;
   sort: string;
+  sortPresetId?: string;
   projection: string;
+  projectionPresetId?: string;
   single: boolean;
 };
 

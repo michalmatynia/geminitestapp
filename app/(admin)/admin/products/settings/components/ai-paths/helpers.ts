@@ -2,6 +2,7 @@ import type {
   AiNode,
   ConnectionValidation,
   ContextConfig,
+  DbQueryConfig,
   Edge,
   JsonPathEntry,
   NodeConfig,
@@ -99,6 +100,7 @@ const DATABASE_INPUT_PORTS = [
   "entityId",
   "entityType",
   "productId",
+  "context",
   "query",
   "value",
   "bundle",
@@ -115,7 +117,9 @@ const DEFAULT_DB_QUERY: DbQueryConfig = {
   queryTemplate: "{\n  \"_id\": \"{{value}}\"\n}",
   limit: 20,
   sort: "",
+  sortPresetId: "custom",
   projection: "",
+  projectionPresetId: "custom",
   single: false,
 };
 
@@ -891,6 +895,8 @@ const normalizeNodes = (items: AiNode[]) =>
             writeSource: node.config?.database?.writeSource ?? "bundle",
             writeSourcePath: node.config?.database?.writeSourcePath ?? "",
             dryRun: node.config?.database?.dryRun ?? false,
+            skipEmpty: node.config?.database?.skipEmpty ?? false,
+            trimStrings: node.config?.database?.trimStrings ?? false,
           },
         },
       };
@@ -927,6 +933,8 @@ const normalizeNodes = (items: AiNode[]) =>
             writeSource: node.config?.database?.writeSource ?? "bundle",
             writeSourcePath: node.config?.database?.writeSourcePath ?? "",
             dryRun: node.config?.database?.dryRun ?? false,
+            skipEmpty: node.config?.database?.skipEmpty ?? false,
+            trimStrings: node.config?.database?.trimStrings ?? false,
           },
         },
       };
@@ -1272,7 +1280,7 @@ const getPortOffsetY = (index: number, totalPorts: number) => {
   return startY + index * PORT_GAP;
 };
 
-export const safeStringify = (value: unknown): string => {
+export function safeStringify(value: unknown): string {
   if (value === undefined || value === null) return "";
   if (typeof value === "string") return value;
   if (typeof value === "number" || typeof value === "boolean") return String(value);
@@ -1289,7 +1297,7 @@ export const safeStringify = (value: unknown): string => {
   return String(value as string);
 };
 
-const formatRuntimeValue = (value: unknown) => {
+const formatRuntimeValue = (value: unknown): string => {
   if (value === null || value === undefined) return "—";
   if (typeof value === "string") return value.trim() || "—";
   if (typeof value === "number" || typeof value === "boolean") return String(value);
@@ -1971,7 +1979,7 @@ const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
   delay: ["viewer", "bundle", "template", "prompt", "model", "validator", "gate", "poll", "database"],
   poll: ["viewer", "notification", "bundle", "template", "prompt", "model", "delay", "database"],
   http: ["viewer", "bundle", "template", "prompt", "math", "compare", "poll", "database"],
-  database: ["viewer", "bundle", "template", "prompt", "mapper", "validator", "poll"],
+  database: ["viewer", "bundle", "template", "prompt", "mapper", "validator", "poll", "notification"],
   bundle: ["viewer", "template", "prompt", "poll", "database"],
   template: ["model", "viewer", "bundle", "prompt", "poll", "database"],
   prompt: ["model", "viewer", "bundle", "template", "poll", "notification"],
@@ -2558,6 +2566,7 @@ export {
   pickByPaths,
   renderTemplate,
   safeParseJson,
+  safeStringify,
   sanitizeEdges,
   setValueAtMappingPath,
   setValueAtPath,

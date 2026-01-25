@@ -19,8 +19,8 @@ export type ProductAiJobsPanelProps = {
 };
 
 export default function ProductAiJobsPanel({
-  title = "Product Jobs",
-  description = "Monitor AI, import, and export jobs for your products.",
+  title = "AI Jobs",
+  description = "Monitor AI, import, and export jobs across the platform.",
   showTabs = true,
 }: ProductAiJobsPanelProps) {
   const { toast } = useToast();
@@ -32,6 +32,60 @@ export default function ProductAiJobsPanel({
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [bulkDeletingAll, setBulkDeletingAll] = useState(false);
   const [selectedJob, setSelectedJob] = useState<ProductAiJob | null>(null);
+
+  const getPayload = (job: ProductAiJob) => {
+    return job.payload && typeof job.payload === "object"
+      ? (job.payload as Record<string, unknown>)
+      : null;
+  };
+
+  const getJobMeta = (job: ProductAiJob) => {
+    const payload = getPayload(job);
+    const graph = payload?.graph as Record<string, unknown> | undefined;
+    const context = payload?.context as Record<string, unknown> | undefined;
+    const entityType =
+      (payload?.entityType as string | undefined) ??
+      (context?.entityType as string | undefined) ??
+      (graph?.entityType as string | undefined);
+    const entityId =
+      (payload?.entityId as string | undefined) ??
+      (context?.entityId as string | undefined) ??
+      (payload?.productId as string | undefined) ??
+      job.productId;
+    const pathName = (graph?.pathName as string | undefined) ?? undefined;
+    const pathId = (graph?.pathId as string | undefined) ?? undefined;
+    const nodeTitle = (graph?.nodeTitle as string | undefined) ?? undefined;
+    const source = (payload?.source as string | undefined) ?? undefined;
+    const displayEntity =
+      job.product?.name_en || job.product?.sku
+        ? `${job.product?.name_en || "Untitled"} (${job.product?.sku || "N/A"})`
+        : entityType || entityId
+          ? `${entityType ?? "entity"} · ${entityId ?? "unknown"}`
+          : "N/A";
+    const subEntity = job.product?.sku
+      ? `SKU: ${job.product.sku}`
+      : pathName || pathId
+        ? `Path: ${pathName ?? pathId}`
+        : entityId
+          ? `ID: ${entityId}`
+          : source
+            ? `Source: ${source}`
+            : undefined;
+
+    return {
+      payload,
+      graph,
+      context,
+      entityType,
+      entityId,
+      pathName,
+      pathId,
+      nodeTitle,
+      source,
+      displayEntity,
+      subEntity,
+    };
+  };
 
   const defaultTab = useMemo(() => {
     if (!showTabs) return "ai";
@@ -135,16 +189,28 @@ export default function ProductAiJobsPanel({
     }
   };
 
-  const filteredJobs = jobs.filter(job => 
-    [job.id, job.status, job.product?.name_en, job.product?.sku]
-      .some(val => val?.toLowerCase().includes(query.toLowerCase()))
-  );
+  const filteredJobs = jobs.filter((job) => {
+    const meta = getJobMeta(job);
+    return [
+      job.id,
+      job.status,
+      job.type,
+      meta.entityType,
+      meta.entityId,
+      meta.pathName,
+      meta.pathId,
+      meta.nodeTitle,
+      meta.source,
+      job.product?.name_en,
+      job.product?.sku,
+    ].some((val) => val?.toLowerCase().includes(query.toLowerCase()));
+  });
 
   const aiContent = (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Input
-          placeholder="Search by ID, SKU, or name..."
+          placeholder="Search by ID, entity, path, or model..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="max-w-md bg-gray-900 border-gray-800 text-white"
@@ -169,7 +235,7 @@ export default function ProductAiJobsPanel({
         <table className="w-full text-left text-sm text-gray-300">
           <thead className="bg-gray-900 text-xs uppercase text-gray-500">
             <tr>
-              <th className="px-4 py-3">Product</th>
+              <th className="px-4 py-3">Entity</th>
               <th className="px-4 py-3">Type / ID</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Timing</th>
@@ -184,11 +250,15 @@ export default function ProductAiJobsPanel({
                 </td>
               </tr>
             ) : (
-              filteredJobs.map((job) => (
-                <tr key={job.id} className="hover:bg-gray-900/50">
+              filteredJobs.map((job) => {
+                const meta = getJobMeta(job);
+                return (
+                  <tr key={job.id} className="hover:bg-gray-900/50">
                   <td className="px-4 py-4">
-                    <div className="font-medium text-white">{job.product?.name_en || "N/A"}</div>
-                    <div className="text-xs text-gray-500">SKU: {job.product?.sku || "N/A"}</div>
+                    <div className="font-medium text-white">{meta.displayEntity}</div>
+                    {meta.subEntity && (
+                      <div className="text-xs text-gray-500">{meta.subEntity}</div>
+                    )}
                   </td>
                   <td className="px-4 py-4">
                     <div className="text-xs font-mono">{job.type}</div>
@@ -248,7 +318,8 @@ export default function ProductAiJobsPanel({
                     </div>
                   </td>
                 </tr>
-              ))
+                );
+              })
             )}
           </tbody>
         </table>
@@ -316,13 +387,94 @@ export default function ProductAiJobsPanel({
                     <div className="text-white font-medium">{selectedJob.type}</div>
                   </div>
                   <div>
-                    <div className="text-gray-500 uppercase text-[10px] font-bold">Product</div>
-                    <div className="text-white font-medium">{selectedJob.product?.name_en || "N/A"} ({selectedJob.product?.sku || "N/A"})</div>
+                    <div className="text-gray-500 uppercase text-[10px] font-bold">Entity</div>
+                    <div className="text-white font-medium">
+                      {getJobMeta(selectedJob).displayEntity}
+                    </div>
                   </div>
                   <div>
                     <div className="text-gray-500 uppercase text-[10px] font-bold">Job ID</div>
                     <div className="text-white font-mono text-xs">{selectedJob.id}</div>
                   </div>
+                </div>
+
+                <div className="rounded-md border border-gray-800 bg-gray-900/40 p-4">
+                  <div className="text-gray-400 font-bold text-xs uppercase mb-3">
+                    Run Metadata
+                  </div>
+                  {(() => {
+                    const meta = getJobMeta(selectedJob);
+                    const payload = meta.payload ?? {};
+                    const modelId = (payload as { modelId?: string }).modelId;
+                    const temperature = (payload as { temperature?: number }).temperature;
+                    const maxTokens = (payload as { maxTokens?: number }).maxTokens;
+                    const vision = (payload as { vision?: boolean }).vision;
+                    const imageUrls = (payload as { imageUrls?: string[] }).imageUrls;
+                    return (
+                      <div className="grid grid-cols-1 gap-3 text-xs md:grid-cols-2">
+                        <div>
+                          <div className="text-[10px] uppercase text-gray-500 font-bold">
+                            Source
+                          </div>
+                          <div className="text-white">
+                            {meta.source ?? "unknown"}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] uppercase text-gray-500 font-bold">
+                            Entity
+                          </div>
+                          <div className="text-white">
+                            {meta.entityType ?? "unknown"} · {meta.entityId ?? "n/a"}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] uppercase text-gray-500 font-bold">
+                            Path
+                          </div>
+                          <div className="text-white">
+                            {meta.pathName ?? meta.pathId ?? "n/a"}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] uppercase text-gray-500 font-bold">
+                            Node
+                          </div>
+                          <div className="text-white">
+                            {meta.nodeTitle ?? "n/a"}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] uppercase text-gray-500 font-bold">
+                            Model
+                          </div>
+                          <div className="text-white font-mono">{modelId ?? "n/a"}</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] uppercase text-gray-500 font-bold">
+                            Tokens / Temp
+                          </div>
+                          <div className="text-white">
+                            {maxTokens ?? "n/a"} / {temperature ?? "n/a"}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] uppercase text-gray-500 font-bold">
+                            Vision
+                          </div>
+                          <div className="text-white">{vision ? "Yes" : "No"}</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] uppercase text-gray-500 font-bold">
+                            Images
+                          </div>
+                          <div className="text-white">
+                            {Array.isArray(imageUrls) ? imageUrls.length : 0}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {selectedJob.result && (selectedJob.result.visionModel || selectedJob.result.generationModel) && (

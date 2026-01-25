@@ -2,15 +2,13 @@
 
 import Link from "next/link";
 import { ChevronLeftIcon } from "lucide-react";
-import dynamic from "next/dynamic";
 import { AdminLayoutProvider, useAdminLayout } from "@/lib/context/AdminLayoutContext";
 import { NoteSettingsProvider } from "@/lib/context/NoteSettingsContext";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { UserNav } from "@/components/UserNav";
 import { Button } from "@/components/ui/button";
-
-const Menu = dynamic(() => import("@/components/Menu"), { ssr: false });
+import Menu from "@/components/Menu";
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const { isMenuCollapsed, setIsMenuCollapsed, isProgrammaticallyCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayout();

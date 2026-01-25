@@ -41,12 +41,12 @@ export default function ProductFormGeneral() {
     const replacer = (_key: string, val: unknown) => {
       if (typeof val === "bigint") return val.toString();
       if (val instanceof Date) return val.toISOString();
-      if (val instanceof Set) return Array.from(val.values());
-      if (val instanceof Map) return Object.fromEntries(val.entries());
+      if (val instanceof Set) return Array.from(val.values()) as unknown[];
+      if (val instanceof Map) return Object.fromEntries(val.entries()) as Record<string, unknown>;
       if (typeof val === "function" || typeof val === "symbol") return undefined;
       if (val && typeof val === "object") {
-        if (seen.has(val as object)) return undefined;
-        seen.add(val as object);
+        if (seen.has(val)) return undefined;
+        seen.add(val);
       }
       return val;
     };

@@ -234,6 +234,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   );
   const [paletteCollapsed, setPaletteCollapsed] = useState(false);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
+  const [loadNonce, setLoadNonce] = useState(0);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const pollInFlightRef = useRef<Set<string>>(new Set());
@@ -241,27 +242,32 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const triggerContextRef = useRef<Record<string, unknown> | null>(null);
   const runtimeStateRef = useRef<RuntimeState>({ inputs: {}, outputs: {} });
   const lastDropTimerRef = useRef<number | null>(null);
+  const loadAttemptRef = useRef<number | null>(null);
+  const loadInFlightRef = useRef(false);
 
   // RAF throttling refs for drag performance
   const pendingDragRef = useRef<{ nodeId: string; x: number; y: number } | null>(null);
   const rafIdRef = useRef<number | null>(null);
 
-  const persistLastError = async (
-    payload: { message: string; time: string; pathId?: string | null } | null
-  ) => {
-    try {
-      await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: AI_PATHS_LAST_ERROR_KEY,
-          value: payload ? JSON.stringify(payload) : "",
-        }),
-      });
-    } catch (error) {
-      console.warn("[AI Paths] Failed to persist last error.", error);
-    }
-  };
+  const persistLastError = useCallback(
+    async (
+      payload: { message: string; time: string; pathId?: string | null } | null
+    ) => {
+      try {
+        await fetch("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            key: AI_PATHS_LAST_ERROR_KEY,
+            value: payload ? JSON.stringify(payload) : "",
+          }),
+        });
+      } catch (error) {
+        console.warn("[AI Paths] Failed to persist last error.", error);
+      }
+    },
+    []
+  );
 
   const saveClusterPresets = async (nextPresets: ClusterPreset[]) => {
     try {
@@ -308,43 +314,51 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     });
   };
 
-  const reportAiPathsError = (
-    error: unknown,
-    context: Record<string, unknown>,
-    fallbackMessage?: string
-  ) => {
-    const rawMessage = error instanceof Error ? error.message : safeStringify(error);
-    const summary = (fallbackMessage ?? rawMessage).replace(/:$/, "");
-    const logMessage = `[AI Paths] ${summary}`;
-    const logError = new Error(logMessage);
-    if (error instanceof Error && error.stack) {
-      logError.stack = error.stack;
-      logError.name = error.name;
-    }
-    console.error(fallbackMessage ?? "AI Paths error:", error);
-    const payload = {
-      message: summary,
-      time: new Date().toISOString(),
-      pathId: activePathId,
-    };
-    setLastError(payload);
-    void persistLastError(payload);
-    logClientError(logError, {
-      context: {
-        feature: "ai-paths",
+  const reportAiPathsError = useCallback(
+    (
+      error: unknown,
+      context: Record<string, unknown>,
+      fallbackMessage?: string
+    ) => {
+      const rawMessage = error instanceof Error ? error.message : safeStringify(error);
+      const summary = (fallbackMessage ?? rawMessage).replace(/:$/, "");
+      const logMessage = `[AI Paths] ${summary}`;
+      const logError = new Error(logMessage);
+      if (error instanceof Error && error.stack) {
+        logError.stack = error.stack;
+        logError.name = error.name;
+      }
+      console.error(fallbackMessage ?? "AI Paths error:", error);
+      const payload = {
+        message: summary,
+        time: new Date().toISOString(),
         pathId: activePathId,
-        pathName,
-        tab: activeTab,
-        nodeCount: nodes.length,
-        edgeCount: edges.length,
-        errorSummary: summary,
-        rawMessage,
-        ...context,
-      },
-    });
-  };
+      };
+      setLastError(payload);
+      void persistLastError(payload);
+      logClientError(logError, {
+        context: {
+          feature: "ai-paths",
+          pathId: activePathId,
+          pathName,
+          tab: activeTab,
+          nodeCount: nodes.length,
+          edgeCount: edges.length,
+          errorSummary: summary,
+          rawMessage,
+          ...context,
+        },
+      });
+    },
+    [activePathId, activeTab, edges.length, nodes.length, pathName, persistLastError]
+  );
 
   useEffect(() => {
+    if (loadInFlightRef.current) return;
+    if (loadAttemptRef.current === loadNonce) return;
+    loadAttemptRef.current = loadNonce;
+    loadInFlightRef.current = true;
+    setLoading(true);
     const loadConfig = async () => {
       try {
         const settingsRes = await fetch("/api/settings");
@@ -404,6 +418,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         const presetsRaw = map.get(CLUSTER_PRESETS_KEY);
         const configs: Record<string, PathConfig> = {};
         let metas: PathMeta[] = [];
+        let loadedLastError: { message: string; time: string; pathId?: string | null } | null = null;
         if (lastErrorRaw) {
           try {
             const parsed = JSON.parse(lastErrorRaw) as {
@@ -412,11 +427,12 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               pathId?: string | null;
             };
             if (parsed?.message && parsed?.time) {
-              setLastError({
+              loadedLastError = {
                 message: parsed.message,
                 time: parsed.time,
                 pathId: parsed.pathId ?? null,
-              });
+              };
+              setLastError(loadedLastError);
             }
           } catch {
             setLastError(null);
@@ -533,16 +549,21 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         setRuntimeState(parseRuntimeState(activeConfig.runtimeState));
         setLastRunAt(activeConfig.lastRunAt ?? null);
         setSelectedNodeId(normalizedNodes[0]?.id ?? null);
+        if (loadedLastError?.message === "Failed to load AI Paths settings") {
+          setLastError(null);
+          void persistLastError(null);
+        }
         setPrefsLoaded(true);
       } catch (error) {
         reportAiPathsError(error, { action: "loadConfig" }, "Failed to load AI Paths settings:");
         toast("Failed to load AI Paths settings.", { variant: "error" });
       } finally {
+        loadInFlightRef.current = false;
         setLoading(false);
       }
     };
     void loadConfig();
-  }, [toast]);
+  }, [toast, reportAiPathsError, loadNonce]);
 
   useEffect(() => {
     if (!prefsLoaded) return;
@@ -579,7 +600,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       }
     };
     void loadModels();
-  }, []);
+  }, [reportAiPathsError]);
 
   useEffect(() => {
     const loadSession = async () => {
@@ -1313,18 +1334,19 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     let current: Element | null = element;
     while (current && current.tagName.toLowerCase() !== "html" && segments.length < 5) {
       const tagName = current.tagName.toLowerCase();
-      const parent = current.parentElement as HTMLElement | null;
-      if (!parent) break;
-      const siblings = Array.from(parent.children).filter(
-        (child) => child.tagName === current?.tagName
-      );
-      const index = siblings.indexOf(current as Element) + 1;
-      segments.unshift(`${tagName}:nth-of-type(${index})`);
-      if (parent.id) {
-        segments.unshift(`#${selectorEscape(parent.id)}`);
-        break;
-      }
-      current = parent;
+              const parent = current.parentElement;
+              if (!parent) break;
+              const siblings = Array.from(parent.children).filter(
+                (child) => child.tagName === (current as Element).tagName
+              );
+              const index = siblings.indexOf(current) + 1;
+              segments.unshift(`${tagName}:nth-of-type(${index})`);
+              if (parent.id) {
+                segments.unshift(`#${selectorEscape(parent.id)}`);
+                break;
+              }
+              current = parent as Element;
+      
     }
     return segments.length ? segments.join(" > ") : element.tagName.toLowerCase();
   };
@@ -1667,38 +1689,39 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     const pollKey = `${node.id}:${options.jobId ?? "db"}`;
     if (pollInFlightRef.current.has(pollKey)) return;
     pollInFlightRef.current.add(pollKey);
-    try {
-      const pollConfig = node.config?.poll ?? {};
-      const pollMode = pollConfig.mode ?? "job";
-      let pollOutput: RuntimePortValues | null = null;
-      if (pollMode === "database") {
-        const queryConfig = {
-          ...DEFAULT_DB_QUERY,
-          ...(pollConfig.dbQuery ?? {}),
-        };
-        const response = await pollDatabaseQuery(options.nodeInputs, {
-          intervalMs: pollConfig.intervalMs ?? 2000,
-          maxAttempts: pollConfig.maxAttempts ?? 30,
-          dbQuery: queryConfig,
-          successPath: pollConfig.successPath ?? "status",
-          successOperator: pollConfig.successOperator ?? "equals",
-          successValue: pollConfig.successValue ?? "completed",
-          resultPath: pollConfig.resultPath ?? "result",
-        });
-        pollOutput = {
-          result: response.result,
-          status: response.status,
-          bundle: response.bundle,
-        };
-      } else {
-        const jobId = options.jobId ?? "";
-        if (!jobId) {
-          return;
-        }
-        const result = await pollGraphJob(jobId, {
-          intervalMs: pollConfig.intervalMs,
-          maxAttempts: pollConfig.maxAttempts,
-        });
+          try {
+            const pollConfig = node.config?.poll;
+            const pollMode = pollConfig?.mode ?? "job";
+            let pollOutput: RuntimePortValues | null = null;
+            if (pollMode === "database") {
+              const queryConfig: DbQueryConfig = {
+                ...DEFAULT_DB_QUERY,
+                ...(pollConfig?.dbQuery ?? {}),
+              };
+              const response = await pollDatabaseQuery(options.nodeInputs, {
+                intervalMs: pollConfig?.intervalMs ?? 2000,
+                maxAttempts: pollConfig?.maxAttempts ?? 30,
+                dbQuery: queryConfig,
+                successPath: pollConfig?.successPath ?? "status",
+                successOperator: pollConfig?.successOperator ?? "equals",
+                successValue: pollConfig?.successValue ?? "completed",
+                resultPath: pollConfig?.resultPath ?? "result",
+              });
+              pollOutput = {
+                result: response.result,
+                status: response.status,
+                bundle: response.bundle,
+              };
+            } else {
+              const jobId = options.jobId ?? "";
+              if (!jobId) {
+                return;
+              }
+              const result = await pollGraphJob(jobId, {
+                intervalMs: pollConfig?.intervalMs ?? 2000,
+                maxAttempts: pollConfig?.maxAttempts ?? 30,
+              });
+    
         pollOutput = {
           result,
           status: "completed",
@@ -1812,7 +1835,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   useEffect(() => {
     if (!runtimeState || nodes.length === 0) return;
     startPendingPolls(runtimeState);
-  }, [nodes, runtimeState]);
+  }, [nodes, runtimeState, startPendingPolls]);
 
   const dispatchTrigger = (
     eventName: string,
@@ -2058,17 +2081,17 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       if (!confirmed) return;
     }
     try {
-      const parsed = JSON.parse(presetsJson);
-      const list = Array.isArray(parsed)
+      const parsed = JSON.parse(presetsJson) as unknown;
+      const list = (Array.isArray(parsed)
         ? parsed
-        : Array.isArray(parsed?.presets)
-          ? parsed.presets
-          : null;
+        : (parsed && typeof parsed === "object" && "presets" in (parsed as Record<string, unknown>))
+          ? (parsed as Record<string, unknown>).presets
+          : null) as unknown[] | null;
       if (!list) {
         toast("Invalid presets JSON. Expected an array.", { variant: "error" });
         return;
       }
-      const normalized = list.map((item: Partial<ClusterPreset>) => normalizePreset(item));
+      const normalized = list.map((item: unknown) => normalizePreset(item as Partial<ClusterPreset>));
       let nextPresets = mode === "replace" ? [] : [...clusterPresets];
       const existingIds = new Set(nextPresets.map((preset) => preset.id));
       const merged = normalized.map((preset) => {
@@ -2158,17 +2181,17 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     );
   };
 
-  const toJsonSafe = (value: unknown) => {
+  const toJsonSafe = (value: unknown): unknown => {
     const replacer = (_key: string, val: unknown) => {
       if (typeof val === "bigint") return val.toString();
       if (val instanceof Date) return val.toISOString();
-      if (val instanceof Set) return Array.from(val.values());
-      if (val instanceof Map) return Object.fromEntries(val.entries());
+      if (val instanceof Set) return Array.from(val.values()) as unknown[];
+      if (val instanceof Map) return Object.fromEntries(val.entries()) as Record<string, unknown>;
       if (typeof val === "function" || typeof val === "symbol") return undefined;
       return val;
     };
     try {
-      return JSON.parse(JSON.stringify(value, replacer));
+      return JSON.parse(JSON.stringify(value, replacer)) as unknown;
     } catch {
       return null;
     }
@@ -2311,7 +2334,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   useEffect(() => {
     if (loading || !activePathId) return;
     lastSavedSnapshotRef.current = buildPathSnapshot();
-  }, [activePathId, loading]);
+  }, [activePathId, loading, buildPathSnapshot]);
 
   useEffect(() => {
     if (loading || !activePathId) return;
@@ -2361,6 +2384,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     lastRunAt,
     saving,
     updaterSamples,
+    buildPathSnapshot,
+    persistPathConfig,
   ]);
 
   const handleReset = () => {
@@ -2627,7 +2652,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                     </Button>
                     <Button
                       className="rounded-md border border-gray-700 text-sm text-white hover:bg-gray-900/80"
-                      onClick={handleSave}
+                      onClick={() => { void handleSave(); }}
                       disabled={saving}
                     >
                       {saving ? "Saving..." : "Save Path"}
@@ -2662,6 +2687,19 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                         >
                           Clear
                         </Button>
+                        {lastError.message === "Failed to load AI Paths settings" && (
+                          <Button
+                            type="button"
+                            className="rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20"
+                            onClick={() => {
+                              setLastError(null);
+                              void persistLastError(null);
+                              setLoadNonce((prev) => prev + 1);
+                            }}
+                          >
+                            Retry
+                          </Button>
+                        )}
                         <Button
                           type="button"
                           className="rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20"
@@ -2933,9 +2971,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       {activeTab === "paths" && (
         <PathsTabPanel
           paths={paths}
-          onCreatePath={handleCreatePath}
-          onCreateAiDescriptionPath={handleCreateAiDescriptionPath}
-          onSaveList={() => savePathIndex(paths)}
+          onCreatePath={() => { void handleCreatePath(); }}
+          onCreateAiDescriptionPath={() => { void handleCreateAiDescriptionPath(); }}
+          onSaveList={() => { void savePathIndex(paths); }}
           onEditPath={(pathId) => {
             handleSwitchPath(pathId);
             onTabChange?.("canvas");

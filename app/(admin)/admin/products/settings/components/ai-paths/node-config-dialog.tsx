@@ -52,7 +52,6 @@ import {
   applyContextPreset,
   buildFlattenedMappings,
   buildTopLevelMappings,
-  coerceInput,
   createParserMappings,
   createViewerOutputs,
   extractJsonPathEntries,
@@ -60,12 +59,109 @@ import {
   getContextPresetSet,
   inferImageMappingPath,
   parsePathList,
-  renderTemplate,
   safeParseJson,
+  safeStringify,
   toggleContextTarget,
   toNumber,
 } from "./helpers";
 import { extractImageUrls, formatPortLabel, formatPlaceholderLabel } from "./ui-utils";
+
+const PLACEHOLDER_CHIPS = [
+  "{{value}}",
+  "{{entityId}}",
+  "{{productId}}",
+  "{{context.entityId}}",
+  "{{bundle.key}}",
+  "{{meta.pathId}}",
+];
+
+const TEMPLATE_SNIPPETS = [
+  {
+    label: "By _id",
+    value: "{\n  \"_id\": \"{{value}}\"\n}",
+  },
+  {
+    label: "By productId",
+    value: "{\n  \"productId\": \"{{value}}\"\n}",
+  },
+  {
+    label: "By SKU",
+    value: "{\n  \"sku\": \"{{value}}\"\n}",
+  },
+  {
+    label: "Name contains",
+    value: "{\n  \"name\": { \"$regex\": \"{{value}}\", \"$options\": \"i\" }\n}",
+  },
+  {
+    label: "Created after",
+    value: "{\n  \"createdAt\": { \"$gte\": \"{{value}}\" }\n}",
+  },
+];
+
+const SORT_PRESETS = [
+  { id: "created_desc", label: "Newest first (createdAt desc)", value: "{ \"createdAt\": -1 }" },
+  { id: "created_asc", label: "Oldest first (createdAt asc)", value: "{ \"createdAt\": 1 }" },
+  { id: "updated_desc", label: "Recently updated", value: "{ \"updatedAt\": -1 }" },
+  { id: "name_asc", label: "Name A-Z", value: "{ \"name_en\": 1 }" },
+  { id: "name_desc", label: "Name Z-A", value: "{ \"name_en\": -1 }" },
+  { id: "price_asc", label: "Price low-high", value: "{ \"price\": 1 }" },
+  { id: "price_desc", label: "Price high-low", value: "{ \"price\": -1 }" },
+];
+
+const PROJECTION_PRESETS = [
+  {
+    id: "list_minimal",
+    label: "Minimal list",
+    value: "{ \"id\": 1, \"sku\": 1, \"name_en\": 1, \"name_pl\": 1 }",
+  },
+  {
+    id: "pricing",
+    label: "Pricing fields",
+    value: "{ \"id\": 1, \"sku\": 1, \"defaultPriceGroupId\": 1, \"price\": 1 }",
+  },
+  {
+    id: "names_only",
+    label: "Names only",
+    value: "{ \"id\": 1, \"name_en\": 1, \"name_pl\": 1, \"name_de\": 1 }",
+  },
+  {
+    id: "descriptions",
+    label: "Descriptions only",
+    value: "{ \"id\": 1, \"description_en\": 1, \"description_pl\": 1 }",
+  },
+  {
+    id: "images_only",
+    label: "Images only",
+    value: "{ \"id\": 1, \"images\": 1, \"imageUrls\": 1 }",
+  },
+  {
+    id: "listing_overview",
+    label: "Listing overview",
+    value: "{ \"id\": 1, \"sku\": 1, \"name_en\": 1, \"status\": 1, \"createdAt\": 1 }",
+  },
+];
+
+function pruneLargeFields(value: unknown, seen = new Set<object>()): unknown {
+  if (!value || typeof value !== "object") return value;
+  if (seen.has(value)) return "[Circular]";
+  seen.add(value);
+  if (Array.isArray(value)) {
+    return value.map((item) => pruneLargeFields(item, seen));
+  }
+  const result: Record<string, unknown> = {};
+  for (const [key, val] of Object.entries(value)) {
+    if (typeof val === "string" && val.length > 1000) {
+      result[key] = `${val.substring(0, 1000)}... [truncated, ${val.length} chars]`;
+    } else {
+      result[key] = pruneLargeFields(val, seen);
+    }
+  }
+  return result;
+}
+
+function sanitizePayload(value: unknown, hideLargeFields: boolean): unknown {
+  return hideLargeFields ? pruneLargeFields(value) : value;
+}
 
 type NodeConfigDialogProps = {
   configOpen: boolean;
@@ -1374,80 +1470,6 @@ export function NodeConfigDialog({
               )
                 ? queryConfig.collection
                 : "custom";
-              const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
-              const runtimeValue =
-                coerceInput(runtimeInputs.value) ??
-                coerceInput(runtimeInputs.entityId) ??
-                coerceInput(runtimeInputs.productId);
-              const queryPreview = (() => {
-                if (queryConfig.mode === "preset") {
-                  const presetValue = runtimeValue ?? "";
-                  const presetField =
-                    queryConfig.preset === "by_field"
-                      ? queryConfig.field || "id"
-                      : queryConfig.preset === "by_productId"
-                        ? "productId"
-                        : queryConfig.preset === "by_entityId"
-                          ? "entityId"
-                          : "_id";
-                  return { [presetField]: presetValue };
-                }
-                if (
-                  runtimeInputs.query &&
-                  typeof runtimeInputs.query === "object" &&
-                  !Array.isArray(runtimeInputs.query)
-                ) {
-                  return runtimeInputs.query as Record<string, unknown>;
-                }
-                const rendered = renderTemplate(
-                  queryConfig.queryTemplate ?? "{}",
-                  runtimeInputs as Record<string, unknown>,
-                  runtimeValue ?? ""
-                );
-                const parsed = safeParseJson(rendered);
-                if (parsed.value && typeof parsed.value === "object") {
-                  return parsed.value as Record<string, unknown>;
-                }
-                return { __raw: rendered };
-              })();
-              const queryPreviewText = (() => {
-                try {
-                  return JSON.stringify(queryPreview, null, 2);
-                } catch {
-                  return String(queryPreview);
-                }
-              })();
-              const placeholderChips = [
-                "{{value}}",
-                "{{entityId}}",
-                "{{productId}}",
-                "{{context.entityId}}",
-                "{{bundle.key}}",
-                "{{meta.pathId}}",
-              ];
-              const templateSnippets = [
-                {
-                  label: "By _id",
-                  value: "{\n  \"_id\": \"{{value}}\"\n}",
-                },
-                {
-                  label: "By productId",
-                  value: "{\n  \"productId\": \"{{value}}\"\n}",
-                },
-                {
-                  label: "By SKU",
-                  value: "{\n  \"sku\": \"{{value}}\"\n}",
-                },
-                {
-                  label: "Name contains",
-                  value:
-                    "{\n  \"name\": { \"$regex\": \"{{value}}\", \"$options\": \"i\" }\n}",
-                },
-                {
-                  label: "Created after",
-                  value: "{\n  \"createdAt\": { \"$gte\": \"{{value}}\" }\n}",
-                },
-              ];
               const updatePollConfig = (patch: Partial<typeof resolvedPollConfig>) =>
                 updateSelectedNodeConfig({
                   poll: {
@@ -1994,6 +2016,9 @@ export function NodeConfigDialog({
                 writeSource: persistedDatabase?.writeSource ?? "bundle",
                 writeSourcePath: persistedDatabase?.writeSourcePath ?? "",
                 dryRun: persistedDatabase?.dryRun ?? false,
+                presetId: persistedDatabase?.presetId,
+                skipEmpty: persistedDatabase?.skipEmpty ?? false,
+                trimStrings: persistedDatabase?.trimStrings ?? false,
               };
               const operation = databaseConfig.operation ?? "query";
               const queryConfig = databaseConfig.query ?? defaultQuery;
@@ -2005,6 +2030,8 @@ export function NodeConfigDialog({
                     .filter((port): port is string => Boolean(port))
                 )
               );
+              const hasEntityIdInput = incomingPorts.includes("entityId");
+              const hasProductIdInput = incomingPorts.includes("productId");
               const availablePorts = incomingPorts.length
                 ? incomingPorts
                 : selectedNode.inputs;
@@ -2144,88 +2171,483 @@ export function NodeConfigDialog({
                     mode: databaseConfig.mode ?? "replace",
                   },
                 });
+              const presetOptions = [
+                {
+                  id: "custom",
+                  label: "Custom",
+                  description: "Keep current settings and customize manually.",
+                },
+                {
+                  id: "query_by_entity",
+                  label: "Query products by entityId",
+                  description: "Preset query using the connected entityId input.",
+                },
+                {
+                  id: "query_by_product",
+                  label: "Query products by productId",
+                  description: "Preset query using the connected productId input.",
+                },
+                {
+                  id: "query_recent_products",
+                  label: "Query recent products",
+                  description: "Fetches newest products sorted by createdAt desc.",
+                },
+                {
+                  id: "query_recent_updates",
+                  label: "Query recently updated products",
+                  description: "Fetches products sorted by updatedAt desc.",
+                },
+                {
+                  id: "query_by_sku",
+                  label: "Query product by SKU",
+                  description: "Looks up a product by SKU using the value input.",
+                },
+                {
+                  id: "query_name_contains",
+                  label: "Query products by name contains",
+                  description: "Uses a regex search on name (value input).",
+                },
+                {
+                  id: "query_listings_by_product",
+                  label: "Query listings by productId",
+                  description: "Fetches product listings for a productId.",
+                },
+                {
+                  id: "query_images_by_product",
+                  label: "Query images by productId",
+                  description: "Fetches image files linked to a productId.",
+                },
+                {
+                  id: "query_ai_jobs_by_status",
+                  label: "Query AI jobs by status",
+                  description: "Searches AI jobs by status (value input).",
+                },
+                {
+                  id: "query_notes_by_entity",
+                  label: "Query notes by entityId",
+                  description: "Fetches notes linked to an entityId.",
+                },
+                {
+                  id: "update_description_from_model",
+                  label: "Update description from model result",
+                  description: "Writes model result into content_en for the product.",
+                },
+                {
+                  id: "update_content_en_from_result",
+                  label: "Update content_en from result (entityId)",
+                  description:
+                    "Updates product content_en using the incoming result and the connected entityId.",
+                },
+                {
+                  id: "append_description_from_result",
+                  label: "Append description from result",
+                  description: "Appends the result to content_en.",
+                },
+                {
+                  id: "update_name_en_from_value",
+                  label: "Update name_en from value",
+                  description: "Updates product name_en using the value input.",
+                },
+                {
+                  id: "delete_product_by_entity",
+                  label: "Delete product by entityId",
+                  description: "Deletes a product using the entityId input.",
+                },
+                {
+                  id: "insert_from_bundle",
+                  label: "Insert product from bundle",
+                  description: "Creates a new product using the bundle payload.",
+                },
+                {
+                  id: "insert_note_from_bundle",
+                  label: "Insert note from bundle",
+                  description: "Creates a note using the bundle payload.",
+                },
+              ];
+              const applyDatabasePreset = (presetId: string) => {
+                if (presetId === "custom") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                    },
+                  });
+                  return;
+                }
+                if (presetId === "query_by_entity") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                      operation: "query",
+                      entityType: "product",
+                      idField: "entityId",
+                      query: {
+                        ...defaultQuery,
+                        ...(databaseConfig.query ?? {}),
+                        mode: "preset",
+                        preset: "by_entityId",
+                      },
+                    },
+                  });
+                  return;
+                }
+                if (presetId === "query_by_product") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                      operation: "query",
+                      entityType: "product",
+                      idField: "productId",
+                      query: {
+                        ...defaultQuery,
+                        ...(databaseConfig.query ?? {}),
+                        mode: "preset",
+                        preset: "by_productId",
+                      },
+                    },
+                  });
+                  return;
+                }
+                if (presetId === "query_recent_products") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                      operation: "query",
+                      entityType: "product",
+                      query: {
+                        ...defaultQuery,
+                        collection: "products",
+                        mode: "custom",
+                        queryTemplate: "{}",
+                        sort: "{\n  \"createdAt\": -1\n}",
+                        limit: 10,
+                      },
+                    },
+                  });
+                  return;
+                }
+                if (presetId === "query_recent_updates") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                      operation: "query",
+                      entityType: "product",
+                      query: {
+                        ...defaultQuery,
+                        collection: "products",
+                        mode: "custom",
+                        queryTemplate: "{}",
+                        sort: "{\n  \"updatedAt\": -1\n}",
+                        limit: 10,
+                      },
+                    },
+                  });
+                  return;
+                }
+                if (presetId === "query_by_sku") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                      operation: "query",
+                      entityType: "product",
+                      query: {
+                        ...defaultQuery,
+                        collection: "products",
+                        mode: "preset",
+                        preset: "by_field",
+                        field: "sku",
+                      },
+                    },
+                  });
+                  return;
+                }
+                if (presetId === "query_name_contains") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                      operation: "query",
+                      entityType: "product",
+                      query: {
+                        ...defaultQuery,
+                        collection: "products",
+                        mode: "custom",
+                        queryTemplate:
+                          "{\n  \"name\": { \"$regex\": \"{{value}}\", \"$options\": \"i\" }\n}",
+                      },
+                    },
+                  });
+                  return;
+                }
+                if (presetId === "query_listings_by_product") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                      operation: "query",
+                      entityType: "product",
+                      query: {
+                        ...defaultQuery,
+                        collection: "product_listings",
+                        mode: "preset",
+                        preset: "by_productId",
+                      },
+                    },
+                  });
+                  return;
+                }
+                if (presetId === "query_images_by_product") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                      operation: "query",
+                      entityType: "product",
+                      query: {
+                        ...defaultQuery,
+                        collection: "image_files",
+                        mode: "preset",
+                        preset: "by_productId",
+                      },
+                    },
+                  });
+                  return;
+                }
+                if (presetId === "query_ai_jobs_by_status") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                      operation: "query",
+                      entityType: "product",
+                      query: {
+                        ...defaultQuery,
+                        collection: "product_ai_jobs",
+                        mode: "custom",
+                        queryTemplate: "{\n  \"status\": \"{{value}}\"\n}",
+                        sort: "{\n  \"createdAt\": -1\n}",
+                        limit: 10,
+                      },
+                    },
+                  });
+                  return;
+                }
+                if (presetId === "query_notes_by_entity") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                      operation: "query",
+                      entityType: "note",
+                      query: {
+                        ...defaultQuery,
+                        collection: "notes",
+                        mode: "preset",
+                        preset: "by_entityId",
+                      },
+                    },
+                  });
+                  return;
+                }
+                if (presetId === "update_description_from_model") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                      operation: "update",
+                      entityType: "product",
+                      idField: "entityId",
+                      mode: "replace",
+                      mappings: [
+                        {
+                          targetPath: "content_en",
+                          sourcePort: selectedNode.inputs.includes("result")
+                            ? "result"
+                            : "content_en",
+                          sourcePath: "",
+                        },
+                      ],
+                      writeSource: databaseConfig.writeSource ?? "bundle",
+                      writeSourcePath: databaseConfig.writeSourcePath ?? "",
+                    },
+                  });
+                  return;
+                }
+                if (presetId === "update_content_en_from_result") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                      operation: "update",
+                      entityType: "product",
+                      idField: "entityId",
+                      mode: "replace",
+                      mappings: [
+                        {
+                          targetPath: "content_en",
+                          sourcePort: selectedNode.inputs.includes("result")
+                            ? "result"
+                            : "content_en",
+                          sourcePath: "",
+                        },
+                      ],
+                      writeSource: databaseConfig.writeSource ?? "bundle",
+                      writeSourcePath: databaseConfig.writeSourcePath ?? "",
+                    },
+                  });
+                  return;
+                }
+                if (presetId === "append_description_from_result") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                      operation: "update",
+                      entityType: "product",
+                      idField: "entityId",
+                      mode: "append",
+                      mappings: [
+                        {
+                          targetPath: "content_en",
+                          sourcePort: selectedNode.inputs.includes("result")
+                            ? "result"
+                            : "content_en",
+                          sourcePath: "",
+                        },
+                      ],
+                    },
+                  });
+                  return;
+                }
+                if (presetId === "update_name_en_from_value") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                      operation: "update",
+                      entityType: "product",
+                      idField: "entityId",
+                      mode: "replace",
+                      mappings: [
+                        {
+                          targetPath: "name_en",
+                          sourcePort: selectedNode.inputs.includes("value")
+                            ? "value"
+                            : "result",
+                          sourcePath: "",
+                        },
+                      ],
+                    },
+                  });
+                  return;
+                }
+                if (presetId === "delete_product_by_entity") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                      operation: "delete",
+                      entityType: "product",
+                      idField: "entityId",
+                    },
+                  });
+                  return;
+                }
+                if (presetId === "insert_from_bundle") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                      operation: "insert",
+                      entityType: "product",
+                      writeSource: "bundle",
+                      writeSourcePath: "",
+                    },
+                  });
+                }
+                if (presetId === "insert_note_from_bundle") {
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      presetId,
+                      operation: "insert",
+                      entityType: "note",
+                      writeSource: "bundle",
+                      writeSourcePath: "",
+                    },
+                  });
+                }
+              };
               const writeSource = databaseConfig.writeSource ?? "bundle";
               const collectionOption = DB_COLLECTION_OPTIONS.some(
                 (option) => option.value === queryConfig.collection
               )
                 ? queryConfig.collection
                 : "custom";
-              const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
-              const runtimeValue =
-                coerceInput(runtimeInputs.value) ??
-                coerceInput(runtimeInputs.entityId) ??
-                coerceInput(runtimeInputs.productId);
-              const queryPreview = (() => {
-                if (queryConfig.mode === "preset") {
-                  const presetValue = runtimeValue ?? "";
-                  const presetField =
-                    queryConfig.preset === "by_field"
-                      ? queryConfig.field || "id"
-                      : queryConfig.preset === "by_productId"
-                        ? "productId"
-                        : queryConfig.preset === "by_entityId"
-                          ? "entityId"
-                          : "_id";
-                  return { [presetField]: presetValue };
-                }
-                if (
-                  runtimeInputs.query &&
-                  typeof runtimeInputs.query === "object" &&
-                  !Array.isArray(runtimeInputs.query)
-                ) {
-                  return runtimeInputs.query as Record<string, unknown>;
-                }
-                const rendered = renderTemplate(
-                  queryConfig.queryTemplate ?? "{}",
-                  runtimeInputs as Record<string, unknown>,
-                  runtimeValue ?? ""
-                );
-                const parsed = safeParseJson(rendered);
-                if (parsed.value && typeof parsed.value === "object") {
-                  return parsed.value as Record<string, unknown>;
-                }
-                return { __raw: rendered };
-              })();
-              const queryPreviewText = (() => {
-                try {
-                  return JSON.stringify(queryPreview, null, 2);
-                } catch {
-                  return String(queryPreview);
-                }
-              })();
-              const placeholderChips = [
-                "{{value}}",
-                "{{entityId}}",
-                "{{productId}}",
-                "{{context.entityId}}",
-                "{{bundle.key}}",
-                "{{meta.pathId}}",
-              ];
-              const templateSnippets = [
-                {
-                  label: "By _id",
-                  value: "{\n  \"_id\": \"{{value}}\"\n}",
-                },
-                {
-                  label: "By productId",
-                  value: "{\n  \"productId\": \"{{value}}\"\n}",
-                },
-                {
-                  label: "By SKU",
-                  value: "{\n  \"sku\": \"{{value}}\"\n}",
-                },
-                {
-                  label: "Name contains",
-                  value:
-                    "{\n  \"name\": { \"$regex\": \"{{value}}\", \"$options\": \"i\" }\n}",
-                },
-                {
-                  label: "Created after",
-                  value: "{\n  \"createdAt\": { \"$gte\": \"{{value}}\" }\n}",
-                },
-              ];
+              const normalizePresetValue = (value?: string) => (value ?? "").trim();
+              const resolvedSortPresetId = SORT_PRESETS.some(
+                (preset) => preset.id === queryConfig.sortPresetId
+              )
+                ? queryConfig.sortPresetId
+                : undefined;
+              const resolvedProjectionPresetId = PROJECTION_PRESETS.some(
+                (preset) => preset.id === queryConfig.projectionPresetId
+              )
+                ? queryConfig.projectionPresetId
+                : undefined;
+              const sortPresetId =
+                resolvedSortPresetId ??
+                SORT_PRESETS.find(
+                  (preset) =>
+                    normalizePresetValue(preset.value) ===
+                    normalizePresetValue(queryConfig.sort)
+                )?.id ??
+                "custom";
+              const projectionPresetId =
+                resolvedProjectionPresetId ??
+                PROJECTION_PRESETS.find(
+                  (preset) =>
+                    normalizePresetValue(preset.value) ===
+                    normalizePresetValue(queryConfig.projection)
+                )?.id ??
+                "custom";
+
               return (
                 <div className="space-y-4">
+                  <div>
+                    <Label className="text-xs text-gray-400">Preset</Label>
+                    <Select
+                      value={databaseConfig.presetId ?? "custom"}
+                      onValueChange={(value) => applyDatabasePreset(value)}
+                    >
+                      <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                        <SelectValue placeholder="Select preset" />
+                      </SelectTrigger>
+                      <SelectContent className="border-gray-800 bg-gray-900">
+                        {presetOptions.map((preset) => (
+                          <SelectItem key={preset.id} value={preset.id}>
+                            {preset.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {presetOptions.find(
+                      (preset) => preset.id === (databaseConfig.presetId ?? "custom")
+                    )?.description && (
+                      <p className="mt-2 text-[11px] text-gray-500">
+                        {
+                          presetOptions.find(
+                            (preset) => preset.id === (databaseConfig.presetId ?? "custom")
+                          )?.description
+                        }
+                      </p>
+                    )}
+                  </div>
                   <div>
                     <Label className="text-xs text-gray-400">Operation</Label>
                     <Select value={operation} onValueChange={handleOperationChange}>
@@ -2264,6 +2686,103 @@ export function NodeConfigDialog({
 
                   {operation === "query" && (
                     <div className="space-y-4">
+                      {(hasEntityIdInput || hasProductIdInput) &&
+                        queryConfig.mode === "preset" &&
+                        queryConfig.preset !== "by_entityId" &&
+                        queryConfig.preset !== "by_productId" && (
+                          <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-[11px] text-emerald-100">
+                            Detected{" "}
+                            <span className="text-emerald-200">
+                              {hasEntityIdInput ? "entityId" : "productId"}
+                            </span>{" "}
+                            connected. Use it as the query preset?
+                            <div className="mt-2">
+                              <Button
+                                type="button"
+                                className="rounded-md border border-emerald-500/40 px-3 py-1 text-[11px] text-emerald-200 hover:bg-emerald-500/10"
+                                onClick={() =>
+                                  updateSelectedNodeConfig({
+                                    database: {
+                                      ...databaseConfig,
+                                      query: {
+                                        ...queryConfig,
+                                        mode: "preset",
+                                        preset: hasEntityIdInput
+                                          ? "by_entityId"
+                                          : "by_productId",
+                                      },
+                                    },
+                                  })
+                                }
+                              >
+                                Use {hasEntityIdInput ? "entityId" : "productId"} preset
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      {queryConfig.mode === "preset" &&
+                        hasEntityIdInput &&
+                        !hasProductIdInput &&
+                        queryConfig.preset === "by_productId" && (
+                          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
+                            You connected{" "}
+                            <span className="text-amber-200">entityId</span>, but the preset is{" "}
+                            <span className="text-amber-200">By productId</span>. This will query
+                            the <span className="text-amber-200">productId</span> field and likely
+                            return no results for Products.
+                            <div className="mt-2">
+                              <Button
+                                type="button"
+                                className="rounded-md border border-amber-500/40 px-3 py-1 text-[11px] text-amber-200 hover:bg-amber-500/10"
+                                onClick={() =>
+                                  updateSelectedNodeConfig({
+                                    database: {
+                                      ...databaseConfig,
+                                      query: {
+                                        ...queryConfig,
+                                        mode: "preset",
+                                        preset: "by_entityId",
+                                      },
+                                    },
+                                  })
+                                }
+                              >
+                                Switch to entityId preset
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      {queryConfig.mode === "preset" &&
+                        hasProductIdInput &&
+                        !hasEntityIdInput &&
+                        queryConfig.preset === "by_entityId" && (
+                          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
+                            You connected{" "}
+                            <span className="text-amber-200">productId</span>, but the preset is{" "}
+                            <span className="text-amber-200">By entityId</span>. This will query
+                            the <span className="text-amber-200">entityId</span> field.
+                            <div className="mt-2">
+                              <Button
+                                type="button"
+                                className="rounded-md border border-amber-500/40 px-3 py-1 text-[11px] text-amber-200 hover:bg-amber-500/10"
+                                onClick={() =>
+                                  updateSelectedNodeConfig({
+                                    database: {
+                                      ...databaseConfig,
+                                      query: {
+                                        ...queryConfig,
+                                        mode: "preset",
+                                        preset: "by_productId",
+                                      },
+                                    },
+                                  })
+                                }
+                              >
+                                Switch to productId preset
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div>
                           <Label className="text-xs text-gray-400">Provider</Label>
@@ -2386,7 +2905,7 @@ export function NodeConfigDialog({
                         <div className="space-y-3">
                           <div className="grid gap-3 sm:grid-cols-2">
                             <div>
-                              <Label className="text-xs text-gray-400">Preset</Label>
+                              <Label className="text-xs text-gray-400">Query preset</Label>
                               <Select
                                 value={queryConfig.preset}
                                 onValueChange={(value) =>
@@ -2476,9 +2995,10 @@ export function NodeConfigDialog({
                               })
                             }
                           />
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {placeholderChips.map((chip) => (
-                              <Button
+                                                      <div className="mt-2 flex flex-wrap gap-2">
+                                                        {PLACEHOLDER_CHIPS.map((chip) => (
+                                                          <Button
+                          
                                 key={chip}
                                 type="button"
                                 className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/80"
@@ -2498,9 +3018,10 @@ export function NodeConfigDialog({
                               </Button>
                             ))}
                           </div>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {templateSnippets.map((snippet) => (
-                              <Button
+                                                      <div className="mt-3 flex flex-wrap gap-2">
+                                                        {TEMPLATE_SNIPPETS.map((snippet) => (
+                                                          <Button
+                          
                                 key={snippet.label}
                                 type="button"
                                 className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/80"
@@ -2525,7 +3046,38 @@ export function NodeConfigDialog({
                       )}
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div>
-                          <Label className="text-xs text-gray-400">Sort (JSON)</Label>
+                          <Label className="text-xs text-gray-400">Sort preset</Label>
+                          <Select
+                            value={sortPresetId}
+                            onValueChange={(value) => {
+                              if (value === "custom") return;
+                              const preset = SORT_PRESETS.find((item) => item.id === value);
+                              if (!preset) return;
+                              updateSelectedNodeConfig({
+                                database: {
+                                  ...databaseConfig,
+                                  query: {
+                                    ...queryConfig,
+                                    sort: preset.value,
+                                    sortPresetId: preset.id,
+                                  },
+                                },
+                              });
+                            }}
+                          >
+                            <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                              <SelectValue placeholder="Select preset" />
+                            </SelectTrigger>
+                            <SelectContent className="border-gray-800 bg-gray-900">
+                              <SelectItem value="custom">Custom</SelectItem>
+                              {SORT_PRESETS.map((preset) => (
+                                <SelectItem key={preset.id} value={preset.id}>
+                                  {preset.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Label className="mt-3 text-xs text-gray-400">Sort (JSON)</Label>
                           <Textarea
                             className="mt-2 min-h-[80px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
                             value={queryConfig.sort}
@@ -2533,7 +3085,11 @@ export function NodeConfigDialog({
                               updateSelectedNodeConfig({
                                 database: {
                                   ...databaseConfig,
-                                  query: { ...queryConfig, sort: event.target.value },
+                                  query: {
+                                    ...queryConfig,
+                                    sort: event.target.value,
+                                    sortPresetId: "custom",
+                                  },
                                 },
                               })
                             }
@@ -2543,7 +3099,38 @@ export function NodeConfigDialog({
                           </p>
                         </div>
                         <div>
-                          <Label className="text-xs text-gray-400">Projection (JSON)</Label>
+                          <Label className="text-xs text-gray-400">Projection preset</Label>
+                          <Select
+                            value={projectionPresetId}
+                            onValueChange={(value) => {
+                              if (value === "custom") return;
+                              const preset = PROJECTION_PRESETS.find((item) => item.id === value);
+                              if (!preset) return;
+                              updateSelectedNodeConfig({
+                                database: {
+                                  ...databaseConfig,
+                                  query: {
+                                    ...queryConfig,
+                                    projection: preset.value,
+                                    projectionPresetId: preset.id,
+                                  },
+                                },
+                              });
+                            }}
+                          >
+                            <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                              <SelectValue placeholder="Select preset" />
+                            </SelectTrigger>
+                            <SelectContent className="border-gray-800 bg-gray-900">
+                              <SelectItem value="custom">Custom</SelectItem>
+                              {PROJECTION_PRESETS.map((preset) => (
+                                <SelectItem key={preset.id} value={preset.id}>
+                                  {preset.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Label className="mt-3 text-xs text-gray-400">Projection (JSON)</Label>
                           <Textarea
                             className="mt-2 min-h-[80px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
                             value={queryConfig.projection}
@@ -2551,7 +3138,11 @@ export function NodeConfigDialog({
                               updateSelectedNodeConfig({
                                 database: {
                                   ...databaseConfig,
-                                  query: { ...queryConfig, projection: event.target.value },
+                                  query: {
+                                    ...queryConfig,
+                                    projection: event.target.value,
+                                    projectionPresetId: "custom",
+                                  },
                                 },
                               })
                             }
@@ -3400,42 +3991,8 @@ export function NodeConfigDialog({
               const presetSet = getContextPresetSet(contextConfig.entityType);
               const receivedInputs = runtimeState.inputs[selectedNode.id] ?? {};
               const resolvedOutputs = runtimeState.outputs[selectedNode.id] ?? {};
-              const largeFieldKeys = new Set([
-                "images",
-                "imageUrls",
-                "entityJson",
-                "entity",
-                "bundle",
-                "context",
-                "meta",
-                "trigger",
-                "inputs",
-                "outputs",
-                "ui",
-                "location",
-                "user",
-                "event",
-                "extras",
-              ]);
-              const pruneLargeFields = (value: unknown, seen = new Set<object>()): unknown => {
-                if (value === null || value === undefined) return value;
-                if (typeof value !== "object") return value;
-                if (seen.has(value)) return value;
-                seen.add(value);
-                if (Array.isArray(value)) {
-                  return value.map((item) => pruneLargeFields(item, seen));
-                }
-                const record = value as Record<string, unknown>;
-                const next: Record<string, unknown> = {};
-                Object.entries(record).forEach(([key, entry]) => {
-                  if (largeFieldKeys.has(key)) return;
-                  next[key] = pruneLargeFields(entry, seen);
-                });
-                return next;
-              };
-              const sanitizePayload = (value: unknown) =>
-                hideLargeFields ? pruneLargeFields(value) : value;
-              const stringifyPayload = (value: unknown) => {
+
+              const stringifyPayload = (value: unknown): string => {
                 if (value === undefined) return "";
                 if (typeof value === "string") return value;
                 try {
@@ -3444,19 +4001,19 @@ export function NodeConfigDialog({
                   return safeStringify(value);
                 }
               };
-              const receivedContext = sanitizePayload(receivedInputs.context);
-              const sanitizedInputs = sanitizePayload(receivedInputs) as Record<string, unknown>;
-              const sanitizedOutputs = sanitizePayload(resolvedOutputs) as Record<string, unknown>;
+              const receivedContext = sanitizePayload(receivedInputs["context"], hideLargeFields);
+              const sanitizedInputs = sanitizePayload(receivedInputs, hideLargeFields) as Record<string, unknown>;
+              const sanitizedOutputs = sanitizePayload(resolvedOutputs, hideLargeFields) as Record<string, unknown>;
               const receivedContextText = stringifyPayload(receivedContext);
               const receivedInputsText = stringifyPayload(sanitizedInputs);
               const resolvedOutputsText = stringifyPayload(sanitizedOutputs);
               const resolvedEntityId =
                 typeof sanitizedOutputs?.entityId === "string"
-                  ? (sanitizedOutputs.entityId as string)
+                  ? (sanitizedOutputs.entityId)
                   : "";
               const resolvedEntityType =
                 typeof sanitizedOutputs?.entityType === "string"
-                  ? (sanitizedOutputs.entityType as string)
+                  ? (sanitizedOutputs.entityType)
                   : "";
               const diffInputs = sanitizedInputs ?? {};
               const diffOutputs = sanitizedOutputs ?? {};
@@ -3552,28 +4109,28 @@ export function NodeConfigDialog({
                     <Button
                       type="button"
                       className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/70"
-                      onClick={() => copyPayload(combinedPayload, "Payload")}
+                      onClick={() => { void copyPayload(combinedPayload, "Payload"); }}
                     >
                       Copy payload
                     </Button>
                     <Button
                       type="button"
                       className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/70"
-                      onClick={() => copyPayload(sanitizedInputs, "Inputs")}
+                      onClick={() => { void copyPayload(sanitizedInputs, "Inputs"); }}
                     >
                       Copy inputs
                     </Button>
                     <Button
                       type="button"
                       className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/70"
-                      onClick={() => copyPayload(sanitizedOutputs, "Outputs")}
+                      onClick={() => { void copyPayload(sanitizedOutputs, "Outputs"); }}
                     >
                       Copy outputs
                     </Button>
                     <Button
                       type="button"
                       className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/70"
-                      onClick={copyDiff}
+                      onClick={() => { void copyDiff(); }}
                     >
                       Copy diff
                     </Button>
@@ -4093,7 +4650,7 @@ export function NodeConfigDialog({
                     const value = fromOutput[fromPort];
                     if (value === undefined) return current;
                     if (current === undefined) return value;
-                    if (Array.isArray(current)) return [...current, value];
+                    if (Array.isArray(current)) return [...(current as unknown[]), value];
                     return [current, value];
                   }, undefined);
                   if (merged !== undefined) {

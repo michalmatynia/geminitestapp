@@ -9,6 +9,9 @@ export type UserPreferencesData = {
   productListCatalogFilter?: string | null;
   productListCurrencyCode?: string | null;
   productListPageSize?: number | null;
+  aiPathsActivePathId?: string | null;
+  aiPathsExpandedGroups?: string[] | null;
+  aiPathsPaletteCollapsed?: boolean | null;
 };
 
 export type UserPreferences = {
@@ -18,6 +21,9 @@ export type UserPreferences = {
   productListCatalogFilter: string | null;
   productListCurrencyCode: string | null;
   productListPageSize: number | null;
+  aiPathsActivePathId: string | null;
+  aiPathsExpandedGroups: string[] | null;
+  aiPathsPaletteCollapsed: boolean | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -29,6 +35,9 @@ type UserPreferencesDocument = {
   productListCatalogFilter: string | null;
   productListCurrencyCode: string | null;
   productListPageSize: number | null;
+  aiPathsActivePathId: string | null;
+  aiPathsExpandedGroups: string[] | null;
+  aiPathsPaletteCollapsed: boolean | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -42,6 +51,9 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferences => ({
   productListCatalogFilter: doc.productListCatalogFilter,
   productListCurrencyCode: doc.productListCurrencyCode,
   productListPageSize: doc.productListPageSize,
+  aiPathsActivePathId: doc.aiPathsActivePathId ?? null,
+  aiPathsExpandedGroups: doc.aiPathsExpandedGroups ?? null,
+  aiPathsPaletteCollapsed: doc.aiPathsPaletteCollapsed ?? false,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
 });
@@ -58,6 +70,9 @@ const defaultPreferences = (userId: string) => ({
   productListCatalogFilter: "all",
   productListCurrencyCode: "PLN",
   productListPageSize: 12,
+  aiPathsActivePathId: null,
+  aiPathsExpandedGroups: ["Triggers"],
+  aiPathsPaletteCollapsed: false,
 });
 
 /**
@@ -124,6 +139,9 @@ export async function getUserPreferences(userId: string): Promise<UserPreference
       productListCatalogFilter: "all",
       productListCurrencyCode: "PLN",
       productListPageSize: 12,
+      aiPathsActivePathId: null,
+      aiPathsExpandedGroups: ["Triggers"],
+      aiPathsPaletteCollapsed: false,
     },
   });
 }

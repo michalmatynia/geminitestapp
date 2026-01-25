@@ -1,10 +1,10 @@
 import { ProductAiJobsPanelSuspense } from "@/components/products/jobs/ProductAiJobsPanel";
 
-export default function ProductAiJobsPage() {
+export default function AiPathsJobsPage() {
   return (
     <ProductAiJobsPanelSuspense
-      title="Product Jobs"
-      description="Monitor AI, import, and export jobs for your products."
+      title="Jobs"
+      description="Monitor AI, import, and export jobs."
       showTabs
     />
   );

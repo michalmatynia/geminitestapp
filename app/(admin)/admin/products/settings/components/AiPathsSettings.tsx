@@ -95,6 +95,63 @@ type AiPathsSettingsProps = {
   onTabChange?: (tab: "canvas" | "paths" | "docs") => void;
 };
 
+const looksLikeImageUrl = (value: string) =>
+  /(\.png|\.jpe?g|\.webp|\.gif|\.svg|\/uploads\/|^https?:\/\/)/i.test(value);
+
+const extractImageUrls = (value: unknown, seen = new Set<object>()): string[] => {
+  if (!value) return [];
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(trimmed) as unknown;
+        return extractImageUrls(parsed, seen);
+      } catch {
+        return looksLikeImageUrl(value) ? [value] : [];
+      }
+    }
+    return looksLikeImageUrl(value) ? [value] : [];
+  }
+  if (Array.isArray(value)) {
+    return Array.from(
+      new Set(value.flatMap((item) => extractImageUrls(item, seen)))
+    );
+  }
+  if (typeof value === "object") {
+    if (seen.has(value as object)) return [];
+    seen.add(value as object);
+    const record = value as Record<string, unknown>;
+    const candidates = [
+      "url",
+      "src",
+      "thumbnail",
+      "thumb",
+      "imageUrl",
+      "image",
+      "imageFile",
+      "filepath",
+      "filePath",
+      "path",
+      "file",
+      "previewUrl",
+      "preview",
+    ];
+    const urls = candidates.flatMap((key) => extractImageUrls(record[key], seen));
+    if (urls.length) return Array.from(new Set(urls));
+    const deepUrls = Object.values(record).flatMap((val) =>
+      extractImageUrls(val, seen)
+    );
+    return Array.from(new Set(deepUrls));
+  }
+  return [];
+};
+
+const formatPortLabel = (port: string) =>
+  port === "images" ? "images (urls)" : port;
+
+const formatPlaceholderLabel = (port: string) =>
+  port === "images" ? "{{images}} (urls)" : `{{${port}}}`;
+
 export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPathsSettingsProps) {
   const { toast } = useToast();
   const docsWiringSnippet = [
@@ -111,6 +168,22 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     "AI Description Generator.description_en → Description Updater.description_en",
     "Parser.productId → Description Updater.productId",
     "Description Updater.description_en → Result Viewer.description_en",
+  ].join("\n");
+  const docsJobsSnippet = [
+    "# Inline (Model waits for result)",
+    "Prompt.prompt → Model.prompt",
+    "Prompt.images → Model.images",
+    "Model.result → Result Viewer.result",
+    "Model.result → Database.result",
+    "Parser.productId → Database.entityId",
+    "",
+    "# Async (Model enqueue-only + Poll)",
+    "Prompt.prompt → Model.prompt",
+    "Prompt.images → Model.images",
+    "Model.jobId → Poll.jobId",
+    "Poll.result → Result Viewer.result",
+    "Poll.result → Database.result",
+    "Parser.productId → Database.entityId",
   ].join("\n");
   const [nodes, setNodes] = useState<AiNode[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
@@ -206,6 +279,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const [expandedPaletteGroups, setExpandedPaletteGroups] = useState<Set<string>>(
     new Set(["Triggers"])
   );
+  const [paletteCollapsed, setPaletteCollapsed] = useState(false);
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLDivElement | null>(null);
 
@@ -315,11 +390,35 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        const res = await fetch("/api/settings");
-        if (!res.ok) {
+        const settingsRes = await fetch("/api/settings");
+        if (!settingsRes.ok) {
           throw new Error("Failed to load AI Paths settings.");
         }
-        const data = (await res.json()) as Array<{ key: string; value: string }>;
+        const data = (await settingsRes.json()) as Array<{ key: string; value: string }>;
+        let preferredPathId: string | null = null;
+        let preferredGroups: string[] | null = null;
+        try {
+          const prefsRes = await fetch("/api/user/preferences");
+          if (prefsRes.ok) {
+            const prefs = (await prefsRes.json()) as {
+              aiPathsActivePathId?: string | null;
+              aiPathsExpandedGroups?: string[] | null;
+              aiPathsPaletteCollapsed?: boolean | null;
+            };
+            preferredPathId =
+              typeof prefs.aiPathsActivePathId === "string"
+                ? prefs.aiPathsActivePathId
+                : null;
+            preferredGroups = Array.isArray(prefs.aiPathsExpandedGroups)
+              ? prefs.aiPathsExpandedGroups
+              : null;
+            if (typeof prefs.aiPathsPaletteCollapsed === "boolean") {
+              setPaletteCollapsed(prefs.aiPathsPaletteCollapsed);
+            }
+          }
+        } catch (error) {
+          console.warn("[AI Paths] Failed to load user preferences.", error);
+        }
         const map = new Map(data.map((item) => [item.key, item.value]));
         const indexRaw = map.get(PATH_INDEX_KEY);
         const lastErrorRaw = map.get(AI_PATHS_LAST_ERROR_KEY);
@@ -411,7 +510,14 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
 
         setPaths(metas);
         setPathConfigs(configs);
-        const firstPath = metas[0]?.id ?? Object.keys(configs)[0] ?? "default";
+        if (preferredGroups !== null) {
+          setExpandedPaletteGroups(new Set(preferredGroups));
+        }
+        const firstPathCandidate = metas[0]?.id ?? Object.keys(configs)[0] ?? "default";
+        const firstPath =
+          preferredPathId && configs[preferredPathId]
+            ? preferredPathId
+            : firstPathCandidate;
         setActivePathId(firstPath);
         const activeConfig = configs[firstPath] ?? createDefaultPathConfig(firstPath);
         const normalizedNodes = normalizeNodes(activeConfig.nodes);
@@ -421,6 +527,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         setPathDescription(activeConfig.description);
         setActiveTrigger(activeConfig.trigger);
         setSelectedNodeId(normalizedNodes[0]?.id ?? null);
+        setPrefsLoaded(true);
       } catch (error) {
         reportAiPathsError(error, { action: "loadConfig" }, "Failed to load AI Paths settings:");
         toast("Failed to load AI Paths settings.", { variant: "error" });
@@ -430,6 +537,25 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     };
     void loadConfig();
   }, [toast]);
+
+  useEffect(() => {
+    if (!prefsLoaded) return;
+    const payload = {
+      aiPathsActivePathId: activePathId,
+      aiPathsExpandedGroups: Array.from(expandedPaletteGroups),
+      aiPathsPaletteCollapsed: paletteCollapsed,
+    };
+    const timeout = setTimeout(() => {
+      fetch("/api/user/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }).catch((error) => {
+        console.warn("[AI Paths] Failed to persist preferences.", error);
+      });
+    }, 200);
+    return () => clearTimeout(timeout);
+  }, [activePathId, expandedPaletteGroups, paletteCollapsed, prefsLoaded]);
 
   useEffect(() => {
     const loadModels = async () => {
@@ -609,6 +735,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const selectedNode = useMemo(
     () => nodes.find((node) => node.id === selectedNodeId) ?? null,
     [nodes, selectedNodeId]
+  );
+  const connectingFromNode = useMemo(
+    () => (connecting ? nodes.find((node) => node.id === connecting.fromNodeId) ?? null : null),
+    [connecting, nodes]
   );
 
   const getPortPosition = (
@@ -1736,6 +1866,16 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
   };
 
+  const handleCopyDocsJobs = async () => {
+    try {
+      await navigator.clipboard.writeText(docsJobsSnippet);
+      toast("AI job wiring copied.", { variant: "success" });
+    } catch (error) {
+      reportAiPathsError(error, { action: "copyDocsJobs" }, "Failed to copy wiring:");
+      toast("Failed to copy wiring.", { variant: "error" });
+    }
+  };
+
   if (loading) {
     return <div className="text-sm text-gray-400">Loading AI Paths...</div>;
   }
@@ -1848,80 +1988,95 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           <div className="grid gap-6 xl:grid-cols-[280px_1fr]">
         <div className="space-y-4">
           <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-4">
-            <div className="mb-3 text-sm font-semibold text-white">Node Palette</div>
-            <div className="max-h-[520px] space-y-1 overflow-y-auto pr-1">
-              {[
-                { title: "Triggers", types: ["trigger"], icon: "⚡" },
-                { title: "Simulation", types: ["simulation"], icon: "🧪" },
-                { title: "Context + Parsing", types: ["context", "parser"], icon: "📦" },
-                { title: "Transforms", types: ["mapper", "mutator", "validator"], icon: "🧭" },
-                {
-                  title: "Signals + Logic",
-                  types: ["constant", "math", "compare", "gate", "router", "delay"],
-                  icon: "🧪",
-                },
-                { title: "Bundles + Templates", types: ["bundle", "template"], icon: "🧩" },
-                { title: "IO + Fetch", types: ["http", "database"], icon: "🌐" },
-                { title: "Prompts + Models", types: ["prompt", "model", "ai_description"], icon: "🤖" },
-                { title: "Description", types: ["description_updater"], icon: "✍️" },
-                { title: "Viewers", types: ["viewer"], icon: "👁" },
-              ].map((group) => {
-                const items = palette.filter((node) => group.types.includes(node.type));
-                if (items.length === 0) return null;
-                const isExpanded = expandedPaletteGroups.has(group.title);
-                return (
-                  <div key={group.title} className="rounded-md border border-gray-800/50">
-                    <button
-                      type="button"
-                      onClick={() => togglePaletteGroup(group.title)}
-                      className="flex w-full items-center justify-between px-3 py-2 text-left transition hover:bg-gray-900/50"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">{group.icon}</span>
-                        <span className="text-[11px] font-medium uppercase tracking-wide text-gray-300">
-                          {group.title}
-                        </span>
-                        <span className="rounded-full bg-gray-800 px-1.5 py-0.5 text-[10px] text-gray-400">
-                          {items.length}
-                        </span>
-                      </div>
-                      <svg
-                        className={`h-4 w-4 text-gray-500 transition-transform ${isExpanded ? "rotate-180" : ""}`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                    {isExpanded && (
-                      <div className="space-y-2 px-3 pb-3">
-                        {items.map((node) => (
-                          <div
-                            key={node.title}
-                            draggable
-                            onDragStart={(event) => handleDragStart(event, node)}
-                            className="cursor-grab rounded-lg border border-gray-800 bg-gray-900/60 p-3 text-xs text-gray-300 transition hover:border-gray-600 hover:bg-gray-900 active:cursor-grabbing"
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-semibold text-white">
-                                {node.title}
-                              </span>
-                              <span className="text-[10px] uppercase text-gray-500">
-                                {node.type}
-                              </span>
-                            </div>
-                            <p className="mt-1 text-[11px] text-gray-400">
-                              {node.description}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-sm font-semibold text-white">Node Palette</span>
+              <button
+                type="button"
+                className="rounded border border-gray-700 px-2 py-1 text-[10px] text-gray-300 hover:bg-gray-900/70"
+                onClick={() => setPaletteCollapsed((prev) => !prev)}
+              >
+                {paletteCollapsed ? "Expand" : "Collapse"}
+              </button>
             </div>
+            {paletteCollapsed ? (
+              <div className="rounded-md border border-dashed border-gray-800/80 px-3 py-2 text-[11px] text-gray-500">
+                Palette collapsed. Expand to add nodes.
+              </div>
+            ) : (
+              <div className="max-h-[520px] space-y-1 overflow-y-auto pr-1">
+                {[
+                  { title: "Triggers", types: ["trigger"], icon: "⚡" },
+                  { title: "Simulation", types: ["simulation"], icon: "🧪" },
+                  { title: "Context + Parsing", types: ["context", "parser"], icon: "📦" },
+                  { title: "Transforms", types: ["mapper", "mutator", "validator"], icon: "🧭" },
+                  {
+                    title: "Signals + Logic",
+                    types: ["constant", "math", "compare", "gate", "router", "delay", "poll"],
+                    icon: "🧪",
+                  },
+                  { title: "Bundles + Templates", types: ["bundle", "template"], icon: "🧩" },
+                  { title: "IO + Fetch", types: ["http", "database"], icon: "🌐" },
+                  { title: "Prompts + Models", types: ["prompt", "model", "ai_description"], icon: "🤖" },
+                  { title: "Description", types: ["description_updater"], icon: "✍️" },
+                  { title: "Viewers", types: ["viewer"], icon: "👁" },
+                ].map((group) => {
+                  const items = palette.filter((node) => group.types.includes(node.type));
+                  if (items.length === 0) return null;
+                  const isExpanded = expandedPaletteGroups.has(group.title);
+                  return (
+                    <div key={group.title} className="rounded-md border border-gray-800/50">
+                      <button
+                        type="button"
+                        onClick={() => togglePaletteGroup(group.title)}
+                        className="flex w-full items-center justify-between px-3 py-2 text-left transition hover:bg-gray-900/50"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{group.icon}</span>
+                          <span className="text-[11px] font-medium uppercase tracking-wide text-gray-300">
+                            {group.title}
+                          </span>
+                          <span className="rounded-full bg-gray-800 px-1.5 py-0.5 text-[10px] text-gray-400">
+                            {items.length}
+                          </span>
+                        </div>
+                        <svg
+                          className={`h-4 w-4 text-gray-500 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {isExpanded && (
+                        <div className="space-y-2 px-3 pb-3">
+                          {items.map((node) => (
+                            <div
+                              key={node.title}
+                              draggable
+                              onDragStart={(event) => handleDragStart(event, node)}
+                              className="cursor-grab rounded-lg border border-gray-800 bg-gray-900/60 p-3 text-xs text-gray-300 transition hover:border-gray-600 hover:bg-gray-900 active:cursor-grabbing"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-semibold text-white">
+                                  {node.title}
+                                </span>
+                                <span className="text-[10px] uppercase text-gray-500">
+                                  {node.type}
+                                </span>
+                              </div>
+                              <p className="mt-1 text-[11px] text-gray-400">
+                                {node.description}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-4">
@@ -1969,8 +2124,13 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                   />
                 </div>
                 <div className="rounded-md border border-gray-800 bg-gray-900/50 p-3 text-[11px] text-gray-400">
-                  Inputs: {selectedNode.inputs.join(", ") || "None"} <br />
-                  Outputs: {selectedNode.outputs.join(", ") || "None"}
+                  Inputs:{" "}
+                  {selectedNode.inputs.map((port) => formatPortLabel(port)).join(", ") ||
+                    "None"}{" "}
+                  <br />
+                  Outputs:{" "}
+                  {selectedNode.outputs.map((port) => formatPortLabel(port)).join(", ") ||
+                    "None"}
                 </div>
                 {selectedNode.type === "prompt" && (() => {
                   const incomingEdges = edges.filter((edge) => edge.to === selectedNode.id);
@@ -2019,7 +2179,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                               key={key}
                               className="rounded-full border border-gray-700 px-2 py-0.5 text-[10px] text-gray-200"
                             >
-                              {`{{${key}}}`}
+                              {formatPlaceholderLabel(key)}
                             </span>
                           ))}
                         </div>
@@ -2027,7 +2187,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                       {directPlaceholders.length > 0 && (
                         <div className="mt-2 text-[11px] text-gray-500">
                           Direct inputs:{" "}
-                          {directPlaceholders.map((port) => `{{${port}}}`).join(", ")}
+                          {directPlaceholders
+                            .map((port) => formatPlaceholderLabel(port))
+                            .join(", ")}
                         </div>
                       )}
                     </div>
@@ -2456,6 +2618,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                   onPointerMove={(event) => handlePointerMove(event, node.id)}
                   onPointerUp={(event) => handlePointerUp(event, node.id)}
                   onClick={() => setSelectedNodeId(node.id)}
+                  onDoubleClick={(event) => {
+                    event.stopPropagation();
+                    setSelectedNodeId(node.id);
+                    setConfigOpen(true);
+                  }}
                 >
                   <div
                     className={`relative flex flex-col gap-2 rounded-xl border bg-gray-950/80 p-3 text-xs text-gray-200 shadow-lg backdrop-blur ${
@@ -2471,21 +2638,53 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                           top: getPortOffsetY(index, node.inputs.length) - PORT_SIZE / 2,
                         }}
                       >
-                        <button
-                          type="button"
-                          data-port="input"
-                          className="cursor-pointer rounded-full border border-sky-400/60 bg-sky-500/20 shadow-[0_0_8px_rgba(56,189,248,0.35)] hover:border-sky-200"
-                          style={{
-                            width: PORT_SIZE + 2,
-                            height: PORT_SIZE + 2,
-                          }}
-                          onPointerUp={(event) => handleCompleteConnection(event, node, input)}
-                          aria-label={`Connect to ${input}`}
-                          title={`Input: ${input}`}
-                        />
-                        <span className="ml-1.5 rounded bg-sky-500/10 px-1 py-0.5 text-[8px] font-medium text-sky-300">
-                          {input}
-                        </span>
+                        {(() => {
+                          const isConnecting = Boolean(connecting && connectingFromNode);
+                          const isConnectable = isConnecting
+                            ? validateConnection(
+                                connectingFromNode,
+                                node,
+                                connecting.fromPort,
+                                input,
+                                edges
+                              ).valid
+                            : false;
+                          return (
+                            <>
+                              <button
+                                type="button"
+                                data-port="input"
+                                className={`cursor-pointer rounded-full border bg-sky-500/20 shadow-[0_0_8px_rgba(56,189,248,0.35)] hover:border-sky-200 ${
+                                  isConnecting
+                                    ? isConnectable
+                                      ? "border-emerald-300/80 bg-emerald-500/30 shadow-[0_0_14px_rgba(52,211,153,0.55)] ring-2 ring-emerald-400/60"
+                                      : "border-gray-700 bg-gray-800/20 opacity-40 shadow-none"
+                                    : "border-sky-400/60"
+                                }`}
+                                style={{
+                                  width: PORT_SIZE + 2,
+                                  height: PORT_SIZE + 2,
+                                }}
+                                onPointerUp={(event) =>
+                                  handleCompleteConnection(event, node, input)
+                                }
+                                aria-label={`Connect to ${formatPortLabel(input)}`}
+                                title={`Input: ${formatPortLabel(input)}`}
+                              />
+                              <span
+                                className={`ml-1.5 rounded px-1 py-0.5 text-[8px] font-medium ${
+                                  isConnecting
+                                    ? isConnectable
+                                      ? "bg-emerald-500/15 text-emerald-200"
+                                      : "bg-gray-800/20 text-gray-500"
+                                    : "bg-sky-500/10 text-sky-300"
+                                }`}
+                              >
+                                {formatPortLabel(input)}
+                              </span>
+                            </>
+                          );
+                        })()}
                       </div>
                     ))}
                     {node.outputs.map((output, index) => (
@@ -2498,7 +2697,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                         }}
                       >
                         <span className="mr-1.5 rounded bg-amber-500/10 px-1 py-0.5 text-[8px] font-medium text-amber-300">
-                          {output}
+                          {formatPortLabel(output)}
                         </span>
                         <button
                           type="button"
@@ -2509,8 +2708,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                             height: PORT_SIZE + 2,
                           }}
                           onPointerDown={(event) => handleStartConnection(event, node, output)}
-                          aria-label={`Start connection from ${output}`}
-                          title={`Output: ${output}`}
+                          aria-label={`Start connection from ${formatPortLabel(output)}`}
+                          title={`Output: ${formatPortLabel(output)}`}
                         />
                       </div>
                     ))}
@@ -2546,27 +2745,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                         Accepts role + simulation inputs
                       </span>
                     )}
-                    {node.type === "viewer" && viewerOutputs && (
-                      <div className="space-y-2 rounded-md border border-gray-800 bg-gray-950/60 p-2 text-[10px] text-gray-300">
-                        <div className="flex items-center justify-between text-[9px] uppercase text-gray-500">
-                          <span>Results</span>
-                          <span>{node.inputs.length} inputs</span>
-                        </div>
-                        <div className="space-y-1">
-                          {node.inputs.map((input) => (
-                            <div key={input} className="space-y-1">
-                              <div className="flex items-center justify-between text-[9px] uppercase text-gray-500">
-                                <span>{input}</span>
-                                {runtimeInputs[input] !== undefined && (
-                                  <span className="text-[9px] text-emerald-300">runtime</span>
-                                )}
-                              </div>
-                              <div className="line-clamp-3 rounded border border-gray-800 bg-gray-900/60 px-2 py-1 text-[10px] text-gray-200">
-                                {formatRuntimeValue(viewerOutputs[input]) || "No data yet"}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                    {node.type === "viewer" && (
+                      <div className="rounded-md border border-gray-800 bg-gray-950/60 px-2 py-1 text-[10px] text-gray-400">
+                        Open node to view results
                       </div>
                     )}
                   </div>
@@ -2600,8 +2781,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         <DocsTabPanel
           docsWiringSnippet={docsWiringSnippet}
           docsDescriptionSnippet={docsDescriptionSnippet}
+          docsJobsSnippet={docsJobsSnippet}
           onCopyDocsWiring={() => void handleCopyDocsWiring()}
           onCopyDocsDescription={() => void handleCopyDocsDescription()}
+          onCopyDocsJobs={() => void handleCopyDocsJobs()}
         />
       )}
 
@@ -2650,6 +2833,21 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                   keyStyle: "path",
                   includeContainers: false,
                 };
+              const simulationOptions = nodes
+                .filter((node) => node.type === "simulation")
+                .map((node) => {
+                  const simConfig = node.config?.simulation;
+                  const entityId =
+                    simConfig?.entityId?.trim() || simConfig?.productId?.trim() || "";
+                  const entityType = simConfig?.entityType?.trim() || "product";
+                  return {
+                    id: node.id,
+                    label: `${node.title} · ${entityType}:${entityId || "missing id"}`,
+                    entityId,
+                    entityType,
+                  };
+                })
+                .filter((option) => option.entityId);
               const parsedSample = safeParseJson(sampleState.json);
               const sampleValue = parsedSample.value;
               const sampleMappings = sampleValue
@@ -2678,6 +2876,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               const suggestedPathOptions = samplePathOptions.length
                 ? [...samplePathOptions, ...PARSER_PATH_OPTIONS]
                 : PARSER_PATH_OPTIONS;
+              const uniqueSuggestedPathOptions = Array.from(
+                new Map(
+                  suggestedPathOptions.map((option) => [option.value, option])
+                ).values()
+              );
               const entries = Object.entries(mappings);
               const commitMappings = (
                 nextMappings: Record<string, string>,
@@ -2687,7 +2890,13 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 const keys = Object.keys(nextMappings)
                   .map((key) => key.trim())
                   .filter(Boolean);
-                const nextOutputs = nextMode === "bundle" ? ["bundle"] : keys;
+                const hasImagesOutput = keys.some(
+                  (key) => key.toLowerCase() === "images"
+                );
+                const nextOutputs =
+                  nextMode === "bundle"
+                    ? ["bundle", ...(hasImagesOutput ? ["images"] : [])]
+                    : keys;
                 updateSelectedNode({
                   outputs: nextOutputs.length ? nextOutputs : selectedNode.outputs,
                   config: {
@@ -2787,9 +2996,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 }
                 if (imageEntryIndex >= 0) {
                   updateMappingPath(imageEntryIndex, detected);
+                  toast(`Image field detected: ${detected}`, { variant: "success" });
                   return;
                 }
                 addMapping("images", detected);
+                toast(`Image field detected: ${detected}`, { variant: "success" });
               };
               const imageEntryIndex = entries.findIndex(([key]) =>
                 key.toLowerCase().includes("image")
@@ -2862,20 +3073,51 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                           <SelectItem value="custom">Custom</SelectItem>
                         </SelectContent>
                       </Select>
-                      <Input
-                        className="w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
-                        value={sampleState.entityId}
-                        onChange={(event) =>
-                          setParserSamples((prev) => ({
-                            ...prev,
-                            [selectedNode.id]: {
-                              ...sampleState,
-                              entityId: event.target.value,
-                            },
-                          }))
-                        }
-                        placeholder="Entity ID"
-                      />
+                      <div className="space-y-2">
+                        <Input
+                          className="w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                          value={sampleState.entityId}
+                          onChange={(event) =>
+                            setParserSamples((prev) => ({
+                              ...prev,
+                              [selectedNode.id]: {
+                                ...sampleState,
+                                entityId: event.target.value,
+                              },
+                            }))
+                          }
+                          placeholder="Entity ID"
+                        />
+                        {simulationOptions.length > 0 && (
+                          <Select
+                            onValueChange={(value) => {
+                              const option = simulationOptions.find(
+                                (item) => item.id === value
+                              );
+                              if (!option) return;
+                              setParserSamples((prev) => ({
+                                ...prev,
+                                [selectedNode.id]: {
+                                  ...sampleState,
+                                  entityType: option.entityType,
+                                  entityId: option.entityId,
+                                },
+                              }));
+                            }}
+                          >
+                            <SelectTrigger className="border-gray-800 bg-gray-950/70 text-[10px] text-gray-200">
+                              <SelectValue placeholder="Use simulation ID" />
+                            </SelectTrigger>
+                            <SelectContent className="border-gray-800 bg-gray-900">
+                              {simulationOptions.map((option) => (
+                                <SelectItem key={option.id} value={option.id}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </div>
                       <Button
                         type="button"
                         className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
@@ -3116,11 +3358,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                               <SelectValue placeholder="Pick a suggested path" />
                             </SelectTrigger>
                             <SelectContent className="border-gray-800 bg-gray-900">
-                              {suggestedPathOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
+                            {uniqueSuggestedPathOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
                             </SelectContent>
                           </Select>
                         </div>
@@ -3238,7 +3480,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                   {outputs.map((output) => (
                     <div key={output}>
                       <Label className="text-xs text-gray-400">
-                        {output} Mapping Path
+                        {formatPortLabel(output)} Mapping Path
                       </Label>
                       <Input
                         className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
@@ -3665,6 +3907,427 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               );
             })()}
 
+            {selectedNode.type === "poll" && (() => {
+              const defaultQuery: DbQueryConfig = {
+                provider: "auto",
+                collection: "products",
+                mode: "preset",
+                preset: "by_id",
+                field: "_id",
+                idType: "string",
+                queryTemplate: "{\n  \"_id\": \"{{value}}\"\n}",
+                limit: 20,
+                sort: "",
+                projection: "",
+                single: false,
+              };
+              const pollConfig = selectedNode.config?.poll ?? {};
+              const resolvedPollConfig = {
+                intervalMs: pollConfig.intervalMs ?? 2000,
+                maxAttempts: pollConfig.maxAttempts ?? 30,
+                mode: pollConfig.mode ?? "job",
+                dbQuery: {
+                  ...defaultQuery,
+                  ...(pollConfig.dbQuery ?? {}),
+                },
+                successPath: pollConfig.successPath ?? "status",
+                successOperator: pollConfig.successOperator ?? "equals",
+                successValue: pollConfig.successValue ?? "completed",
+                resultPath: pollConfig.resultPath ?? "result",
+              };
+              const queryConfig = resolvedPollConfig.dbQuery;
+              const collectionOption = DB_COLLECTION_OPTIONS.some(
+                (option) => option.value === queryConfig.collection
+              )
+                ? queryConfig.collection
+                : "custom";
+              const updatePollConfig = (patch: Partial<typeof resolvedPollConfig>) =>
+                updateSelectedNodeConfig({
+                  poll: {
+                    ...resolvedPollConfig,
+                    ...patch,
+                  },
+                });
+              return (
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-xs text-gray-400">Mode</Label>
+                    <Select
+                      value={resolvedPollConfig.mode}
+                      onValueChange={(value) =>
+                        updatePollConfig({ mode: value as "job" | "database" })
+                      }
+                    >
+                      <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                        <SelectValue placeholder="Select mode" />
+                      </SelectTrigger>
+                      <SelectContent className="border-gray-800 bg-gray-900">
+                        <SelectItem value="job">AI Job</SelectItem>
+                        <SelectItem value="database">Database Query</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <Label className="text-xs text-gray-400">Interval (ms)</Label>
+                      <Input
+                        type="number"
+                        step="100"
+                        className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                        value={resolvedPollConfig.intervalMs}
+                        onChange={(event) =>
+                          updatePollConfig({
+                            intervalMs: toNumber(
+                              event.target.value,
+                              resolvedPollConfig.intervalMs
+                            ),
+                          })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-400">Max Attempts</Label>
+                      <Input
+                        type="number"
+                        step="1"
+                        className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                        value={resolvedPollConfig.maxAttempts}
+                        onChange={(event) =>
+                          updatePollConfig({
+                            maxAttempts: toNumber(
+                              event.target.value,
+                              resolvedPollConfig.maxAttempts
+                            ),
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                  {resolvedPollConfig.mode === "job" && (
+                    <p className="text-[11px] text-gray-500">
+                      Polls /api/products/ai-jobs/{"{{jobId}}"} until completion and
+                      outputs result + status.
+                    </p>
+                  )}
+                  {resolvedPollConfig.mode === "database" && (
+                    <div className="space-y-4">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <Label className="text-xs text-gray-400">Provider</Label>
+                          <Select
+                            value={queryConfig.provider}
+                            onValueChange={(value) =>
+                              updatePollConfig({
+                                dbQuery: {
+                                  ...queryConfig,
+                                  provider: value as DbQueryConfig["provider"],
+                                },
+                              })
+                            }
+                          >
+                            <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                              <SelectValue placeholder="Select provider" />
+                            </SelectTrigger>
+                            <SelectContent className="border-gray-800 bg-gray-900">
+                              <SelectItem value="auto">Auto</SelectItem>
+                              <SelectItem value="mongodb">MongoDB</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-gray-400">Collection</Label>
+                          <Select
+                            value={collectionOption}
+                            onValueChange={(value) =>
+                              updatePollConfig({
+                                dbQuery: {
+                                  ...queryConfig,
+                                  collection:
+                                    value === "custom" ? queryConfig.collection : value,
+                                },
+                              })
+                            }
+                          >
+                            <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                              <SelectValue placeholder="Select collection" />
+                            </SelectTrigger>
+                            <SelectContent className="border-gray-800 bg-gray-900">
+                              {DB_COLLECTION_OPTIONS.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                              <SelectItem value="custom">Custom</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      {collectionOption === "custom" && (
+                        <div>
+                          <Label className="text-xs text-gray-400">Custom collection</Label>
+                          <Input
+                            className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                            value={queryConfig.collection}
+                            onChange={(event) =>
+                              updatePollConfig({
+                                dbQuery: {
+                                  ...queryConfig,
+                                  collection: event.target.value,
+                                },
+                              })
+                            }
+                          />
+                        </div>
+                      )}
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <Label className="text-xs text-gray-400">Query mode</Label>
+                          <Select
+                            value={queryConfig.mode}
+                            onValueChange={(value) =>
+                              updatePollConfig({
+                                dbQuery: {
+                                  ...queryConfig,
+                                  mode: value as DbQueryConfig["mode"],
+                                },
+                              })
+                            }
+                          >
+                            <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                              <SelectValue placeholder="Select mode" />
+                            </SelectTrigger>
+                            <SelectContent className="border-gray-800 bg-gray-900">
+                              <SelectItem value="preset">Preset</SelectItem>
+                              <SelectItem value="custom">Custom</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-gray-400">ID type</Label>
+                          <Select
+                            value={queryConfig.idType}
+                            onValueChange={(value) =>
+                              updatePollConfig({
+                                dbQuery: {
+                                  ...queryConfig,
+                                  idType: value as DbQueryConfig["idType"],
+                                },
+                              })
+                            }
+                          >
+                            <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                              <SelectValue placeholder="Select ID type" />
+                            </SelectTrigger>
+                            <SelectContent className="border-gray-800 bg-gray-900">
+                              <SelectItem value="string">String</SelectItem>
+                              <SelectItem value="objectId">ObjectId</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      {queryConfig.mode === "preset" && (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div>
+                            <Label className="text-xs text-gray-400">Preset</Label>
+                            <Select
+                              value={queryConfig.preset}
+                              onValueChange={(value) =>
+                                updatePollConfig({
+                                  dbQuery: {
+                                    ...queryConfig,
+                                    preset: value as DbQueryConfig["preset"],
+                                  },
+                                })
+                              }
+                            >
+                              <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                                <SelectValue placeholder="Select preset" />
+                              </SelectTrigger>
+                              <SelectContent className="border-gray-800 bg-gray-900">
+                                <SelectItem value="by_id">By _id</SelectItem>
+                                <SelectItem value="by_productId">By productId</SelectItem>
+                                <SelectItem value="by_entityId">By entityId</SelectItem>
+                                <SelectItem value="by_field">By custom field</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label className="text-xs text-gray-400">Custom field</Label>
+                            <Input
+                              className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                              value={queryConfig.field}
+                              disabled={queryConfig.preset !== "by_field"}
+                              onChange={(event) =>
+                                updatePollConfig({
+                                  dbQuery: {
+                                    ...queryConfig,
+                                    field: event.target.value,
+                                  },
+                                })
+                              }
+                            />
+                          </div>
+                        </div>
+                      )}
+                      {queryConfig.mode === "custom" && (
+                        <div>
+                          <Label className="text-xs text-gray-400">Query template</Label>
+                          <Textarea
+                            className="mt-2 min-h-[120px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                            value={queryConfig.queryTemplate}
+                            onChange={(event) =>
+                              updatePollConfig({
+                                dbQuery: {
+                                  ...queryConfig,
+                                  queryTemplate: event.target.value,
+                                },
+                              })
+                            }
+                          />
+                          <p className="mt-2 text-[11px] text-gray-500">
+                            Supports placeholders like {"{{value}}"},{" "}
+                            {"{{entityId}}"}, {"{{jobId}}"}.
+                          </p>
+                        </div>
+                      )}
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <Label className="text-xs text-gray-400">Limit</Label>
+                          <Input
+                            type="number"
+                            step="1"
+                            className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                            value={queryConfig.limit}
+                            onChange={(event) =>
+                              updatePollConfig({
+                                dbQuery: {
+                                  ...queryConfig,
+                                  limit: toNumber(event.target.value, queryConfig.limit),
+                                },
+                              })
+                            }
+                          />
+                        </div>
+                        <div className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-900/50 px-3 py-2 text-xs text-gray-300">
+                          <span>Single result</span>
+                          <Button
+                            type="button"
+                            className={`rounded border border-gray-700 px-3 py-1 text-xs ${
+                              queryConfig.single
+                                ? "text-emerald-200 hover:bg-emerald-500/10"
+                                : "text-gray-300 hover:bg-gray-800"
+                            }`}
+                            onClick={() =>
+                              updatePollConfig({
+                                dbQuery: {
+                                  ...queryConfig,
+                                  single: !queryConfig.single,
+                                },
+                              })
+                            }
+                          >
+                            {queryConfig.single ? "Enabled" : "Disabled"}
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <Label className="text-xs text-gray-400">Sort JSON</Label>
+                          <Textarea
+                            className="mt-2 min-h-[80px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                            value={queryConfig.sort}
+                            onChange={(event) =>
+                              updatePollConfig({
+                                dbQuery: {
+                                  ...queryConfig,
+                                  sort: event.target.value,
+                                },
+                              })
+                            }
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-gray-400">Projection JSON</Label>
+                          <Textarea
+                            className="mt-2 min-h-[80px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                            value={queryConfig.projection}
+                            onChange={(event) =>
+                              updatePollConfig({
+                                dbQuery: {
+                                  ...queryConfig,
+                                  projection: event.target.value,
+                                },
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <Label className="text-xs text-gray-400">Success path</Label>
+                          <Input
+                            className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                            value={resolvedPollConfig.successPath}
+                            onChange={(event) =>
+                              updatePollConfig({ successPath: event.target.value })
+                            }
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-gray-400">Success operator</Label>
+                          <Select
+                            value={resolvedPollConfig.successOperator}
+                            onValueChange={(value) =>
+                              updatePollConfig({
+                                successOperator:
+                                  value as typeof resolvedPollConfig.successOperator,
+                              })
+                            }
+                          >
+                            <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                              <SelectValue placeholder="Select operator" />
+                            </SelectTrigger>
+                            <SelectContent className="border-gray-800 bg-gray-900">
+                              <SelectItem value="truthy">Truthy</SelectItem>
+                              <SelectItem value="equals">Equals</SelectItem>
+                              <SelectItem value="notEquals">Not equals</SelectItem>
+                              <SelectItem value="contains">Contains</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <Label className="text-xs text-gray-400">Success value</Label>
+                          <Input
+                            className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                            value={resolvedPollConfig.successValue}
+                            onChange={(event) =>
+                              updatePollConfig({ successValue: event.target.value })
+                            }
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-gray-400">Result path</Label>
+                          <Input
+                            className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                            value={resolvedPollConfig.resultPath}
+                            onChange={(event) =>
+                              updatePollConfig({ resultPath: event.target.value })
+                            }
+                          />
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-gray-500">
+                        Polls MongoDB using the query settings. Use Success path/value to
+                        stop polling when a record matches.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
             {selectedNode.type === "http" && (() => {
               const httpConfig = selectedNode.config?.http ?? {
                 url: "",
@@ -3886,6 +4549,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 label: path,
                 value: path,
               }));
+              const uniqueTargetPathOptions = Array.from(
+                new Map(targetPathOptions.map((option) => [option.value, option])).values()
+              );
               const findMatchingTargetPath = (port: string) => {
                 const normalized = port.toLowerCase();
                 const endsWith = targetPaths.find((path) =>
@@ -4323,7 +4989,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                           <SelectContent className="border-gray-800 bg-gray-900">
                             {availablePorts.map((port) => (
                               <SelectItem key={port} value={port}>
-                                {port}
+                                {formatPortLabel(port)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -4480,7 +5146,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                         </Button>
                         {bundleKeys.size > 0 && (
                           <span className="text-[11px] text-gray-500">
-                            Bundle keys: {Array.from(bundleKeys).join(", ")}
+                            Bundle keys:{" "}
+                            {Array.from(bundleKeys)
+                              .map((key) => formatPortLabel(key))
+                              .join(", ")}
                           </span>
                         )}
                       </div>
@@ -4513,7 +5182,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                                     <SelectValue placeholder="Pick target field" />
                                   </SelectTrigger>
                                   <SelectContent className="border-gray-800 bg-gray-900">
-                                    {targetPathOptions.map((option) => (
+                                    {uniqueTargetPathOptions.map((option) => (
                                       <SelectItem key={option.value} value={option.value}>
                                         {option.label}
                                       </SelectItem>
@@ -4534,7 +5203,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                                   <SelectContent className="border-gray-800 bg-gray-900">
                                     {availablePorts.map((port) => (
                                       <SelectItem key={port} value={port}>
-                                        {port}
+                                        {formatPortLabel(port)}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
@@ -4562,7 +5231,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                                       <SelectContent className="border-gray-800 bg-gray-900">
                                         {Array.from(bundleKeys).map((key) => (
                                           <SelectItem key={key} value={key}>
-                                            {key}
+                                            {formatPortLabel(key)}
                                           </SelectItem>
                                         ))}
                                       </SelectContent>
@@ -4631,7 +5300,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                           <SelectContent className="border-gray-800 bg-gray-900">
                             {availablePorts.map((port) => (
                               <SelectItem key={port} value={port}>
-                                {port}
+                                {formatPortLabel(port)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -4673,7 +5342,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                             <SelectContent className="border-gray-800 bg-gray-900">
                               {Array.from(bundleKeys).map((key) => (
                                 <SelectItem key={key} value={key}>
-                                  {key}
+                                  {formatPortLabel(key)}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -4724,7 +5393,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                           <SelectContent className="border-gray-800 bg-gray-900">
                             {availablePorts.map((port) => (
                               <SelectItem key={port} value={port}>
-                                {port}
+                                {formatPortLabel(port)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -4851,6 +5520,12 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
 
             {selectedNode.type === "prompt" && (() => {
               const promptConfig = selectedNode.config?.prompt ?? { template: "" };
+              const handleInsertPlaceholder = (placeholder: string) => {
+                const current = promptConfig.template ?? "";
+                const separator = current && !current.endsWith(" ") && !current.endsWith("\n") ? " " : "";
+                const next = `${current}${separator}${placeholder}`;
+                updateSelectedNodeConfig({ prompt: { template: next } });
+              };
               const incomingEdges = edges.filter((edge) => edge.to === selectedNode.id);
               const inputPorts = incomingEdges
                 .map((edge) => edge.toPort)
@@ -4900,17 +5575,33 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                       }
                       placeholder="Describe the product: {{title}}"
                     />
+                    <p className="mt-2 text-[11px] text-gray-500">
+                      Images are passed separately via the Prompt{" "}
+                      <span className="text-gray-300">images</span> output and the Model{" "}
+                      <span className="text-gray-300">images</span> input. You don&apos;t
+                      need an <span className="text-gray-300">images</span> placeholder
+                      inside the prompt text.
+                    </p>
                   </div>
                   <div className="rounded-md border border-gray-800 bg-gray-900/50 p-3 text-[11px] text-gray-400">
                     <div className="text-gray-300">Available placeholders</div>
                     {bundleKeys.size > 0 ? (
-                      <div className="mt-2 flex flex-wrap gap-2">
+                        <div className="mt-2 flex flex-wrap gap-2">
                         {Array.from(bundleKeys).map((key) => (
                           <span
                             key={key}
-                            className="rounded-full border border-gray-700 px-2 py-0.5 text-[10px] text-gray-200"
+                            role="button"
+                            tabIndex={0}
+                            className="cursor-pointer rounded-full border border-gray-700 px-2 py-0.5 text-[10px] text-gray-200 transition hover:border-gray-500 hover:bg-gray-800"
+                            onClick={() => handleInsertPlaceholder(`{{${key}}}`)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                handleInsertPlaceholder(`{{${key}}}`);
+                              }
+                            }}
                           >
-                            {`{{${key}}}`}
+                            {formatPlaceholderLabel(key)}
                           </span>
                         ))}
                       </div>
@@ -4923,7 +5614,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                     {directPlaceholders.length > 0 && (
                       <div className="mt-3 text-[11px] text-gray-500">
                         Direct inputs:{" "}
-                        {directPlaceholders.map((port) => `{{${port}}}`).join(", ")}
+                        {directPlaceholders
+                          .map((port) => formatPlaceholderLabel(port))
+                          .join(", ")}
                       </div>
                     )}
                   </div>
@@ -4938,6 +5631,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                   temperature: 0.7,
                   maxTokens: 800,
                   vision: selectedNode.inputs.includes("images"),
+                  waitForResult: true,
                 };
               return (
                 <div className="space-y-4">
@@ -5023,6 +5717,32 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                       {modelConfig.vision ? "Enabled" : "Disabled"}
                     </Button>
                   </div>
+                  <div className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-900/50 px-3 py-2 text-xs text-gray-300">
+                    <span>Wait for result</span>
+                    <Button
+                      type="button"
+                      className={`rounded border border-gray-700 px-3 py-1 text-xs ${
+                        modelConfig.waitForResult !== false
+                          ? "text-emerald-200 hover:bg-emerald-500/10"
+                          : "text-gray-300 hover:bg-gray-800"
+                      }`}
+                      onClick={() =>
+                        updateSelectedNodeConfig({
+                          model: {
+                            ...modelConfig,
+                            waitForResult: modelConfig.waitForResult === false,
+                          },
+                        })
+                      }
+                    >
+                      {modelConfig.waitForResult === false ? "Disabled" : "Enabled"}
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-gray-500">
+                    When enabled, the Model node polls the job until completion and emits
+                    <span className="text-gray-300"> result</span>. Disable to emit only{" "}
+                    <span className="text-gray-300">jobId</span> and use a Poll node.
+                  </p>
                 </div>
               );
             })()}
@@ -5365,9 +6085,39 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
             {selectedNode.type === "viewer" && (() => {
               const viewerConfig = selectedNode.config?.viewer ?? {
                 outputs: createViewerOutputs(selectedNode.inputs),
+                showImagesAsJson: false,
               };
+              const showImagesAsJson = viewerConfig.showImagesAsJson ?? false;
               const connections = edges.filter((edge) => edge.to === selectedNode.id);
               const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
+              const resolvedRuntimeInputs = selectedNode.inputs.reduce<Record<string, unknown>>(
+                (acc, input) => {
+                  const directValue = runtimeInputs[input];
+                  if (directValue !== undefined) {
+                    acc[input] = directValue;
+                    return acc;
+                  }
+                  const matchingEdges = connections.filter(
+                    (edge) => edge.toPort === input || !edge.toPort
+                  );
+                  const merged = matchingEdges.reduce<unknown>((current, edge) => {
+                    const fromOutput = runtimeState.outputs[edge.from];
+                    if (!fromOutput) return current;
+                    const fromPort = edge.fromPort;
+                    if (!fromPort) return current;
+                    const value = fromOutput[fromPort];
+                    if (value === undefined) return current;
+                    if (current === undefined) return value;
+                    if (Array.isArray(current)) return [...current, value];
+                    return [current, value];
+                  }, undefined);
+                  if (merged !== undefined) {
+                    acc[input] = merged;
+                  }
+                  return acc;
+                },
+                {}
+              );
               const outputValues = {
                 ...createViewerOutputs(selectedNode.inputs),
                 ...viewerConfig.outputs,
@@ -5383,11 +6133,28 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                       className="rounded-md border border-gray-700 text-xs text-gray-200 hover:bg-gray-900/80"
                       onClick={() =>
                         updateSelectedNodeConfig({
-                          viewer: { outputs: createViewerOutputs(selectedNode.inputs) },
+                          viewer: {
+                            outputs: createViewerOutputs(selectedNode.inputs),
+                            showImagesAsJson,
+                          },
                         })
                       }
                     >
                       Clear
+                    </Button>
+                    <Button
+                      type="button"
+                      className="rounded-md border border-gray-700 text-xs text-gray-200 hover:bg-gray-900/80"
+                      onClick={() =>
+                        updateSelectedNodeConfig({
+                          viewer: {
+                            ...viewerConfig,
+                            showImagesAsJson: !showImagesAsJson,
+                          },
+                        })
+                      }
+                    >
+                      {showImagesAsJson ? "Images: JSON" : "Images: Thumbnails"}
                     </Button>
                   </div>
                   {selectedNode.inputs.map((input) => {
@@ -5401,11 +6168,17 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                       })
                       .filter(Boolean)
                       .join(", ");
-                    const runtimeValue = runtimeInputs[input];
+                    const runtimeValue = resolvedRuntimeInputs[input];
+                    const imageUrls =
+                      input === "images" ? extractImageUrls(runtimeValue) : [];
+                    const hasImagePreview =
+                      input === "images" && imageUrls.length > 0 && !showImagesAsJson;
                     return (
                       <div key={input} className="space-y-2">
                         <div className="flex items-center justify-between text-xs text-gray-400">
-                          <Label className="text-xs text-gray-400">{input}</Label>
+                          <Label className="text-xs text-gray-400">
+                            {formatPortLabel(input)}
+                          </Label>
                           {connectedSources && (
                             <span className="text-[10px] text-gray-500">
                               Connected: {connectedSources}
@@ -5417,9 +6190,33 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                             <div className="mb-1 text-[9px] uppercase text-emerald-300">
                               Runtime
                             </div>
-                            <pre className="whitespace-pre-wrap">
-                              {formatRuntimeValue(runtimeValue)}
-                            </pre>
+                            {hasImagePreview ? (
+                              <>
+                                <div className="text-[10px] text-emerald-200">
+                                  Detected {imageUrls.length} image
+                                  {imageUrls.length === 1 ? "" : "s"}
+                                </div>
+                                <div className="mt-2 grid grid-cols-3 gap-2">
+                                  {imageUrls.map((url, index) => (
+                                    <div
+                                      key={`${url}-${index}`}
+                                      className="overflow-hidden rounded border border-emerald-500/30 bg-black/30"
+                                    >
+                                      <img
+                                        src={url}
+                                        alt={`Image ${index + 1}`}
+                                        className="h-20 w-full object-cover"
+                                        loading="lazy"
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              </>
+                            ) : (
+                              <pre className="whitespace-pre-wrap">
+                                {formatRuntimeValue(runtimeValue)}
+                              </pre>
+                            )}
                           </div>
                         )}
                         <Textarea
@@ -5428,6 +6225,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                           onChange={(event) =>
                             updateSelectedNodeConfig({
                               viewer: {
+                                ...viewerConfig,
                                 outputs: {
                                   ...outputValues,
                                   [input]: event.target.value,

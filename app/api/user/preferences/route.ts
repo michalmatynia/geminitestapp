@@ -18,6 +18,9 @@ const updatePreferencesSchema = z.object({
   productListCatalogFilter: z.string().optional().nullable(),
   productListCurrencyCode: z.string().optional().nullable(),
   productListPageSize: z.number().int().min(10).max(200).optional().nullable(),
+  aiPathsActivePathId: z.string().optional().nullable(),
+  aiPathsExpandedGroups: z.array(z.string()).optional().nullable(),
+  aiPathsPaletteCollapsed: z.boolean().optional().nullable(),
 });
 
 /**
@@ -35,6 +38,9 @@ async function GET_handler() {
         productListCatalogFilter: "all",
         productListCurrencyCode: "PLN",
         productListPageSize: 12,
+        aiPathsActivePathId: null,
+        aiPathsExpandedGroups: ["Triggers"],
+        aiPathsPaletteCollapsed: false,
       });
     }
     const preferences = await getUserPreferences(userId);
@@ -48,6 +54,9 @@ async function GET_handler() {
         productListCatalogFilter: "all",
         productListCurrencyCode: "PLN",
         productListPageSize: 12,
+        aiPathsActivePathId: null,
+        aiPathsExpandedGroups: ["Triggers"],
+        aiPathsPaletteCollapsed: false,
       });
     }
     console.error("[user/preferences][GET] Error:", {
@@ -81,6 +90,9 @@ async function PATCH_handler(req: NextRequest) {
       ...(parsed.productListCatalogFilter !== undefined && { productListCatalogFilter: parsed.productListCatalogFilter }),
       ...(parsed.productListCurrencyCode !== undefined && { productListCurrencyCode: parsed.productListCurrencyCode }),
       ...(parsed.productListPageSize !== undefined && { productListPageSize: parsed.productListPageSize }),
+      ...(parsed.aiPathsActivePathId !== undefined && { aiPathsActivePathId: parsed.aiPathsActivePathId }),
+      ...(parsed.aiPathsExpandedGroups !== undefined && { aiPathsExpandedGroups: parsed.aiPathsExpandedGroups }),
+      ...(parsed.aiPathsPaletteCollapsed !== undefined && { aiPathsPaletteCollapsed: parsed.aiPathsPaletteCollapsed }),
     };
 
     if (!isDatabaseConfigured) {

@@ -97,6 +97,9 @@ export type UserPreferences = {
   productListCatalogFilter: string | null;
   productListCurrencyCode: string | null;
   productListPageSize: number | null;
+  aiPathsActivePathId?: string | null;
+  aiPathsExpandedGroups?: string[] | null;
+  aiPathsPaletteCollapsed?: boolean | null;
 };
 
 export type IntegrationDbProvider = "prisma" | "mongodb";

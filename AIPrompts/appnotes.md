@@ -1,30 +1,8 @@
 
 
-* I need a simulation object node, like a simulation modal for a Product, where I can type in the product ID. The simulation object node can be connected to Trigger Button. When I click a trigger button, it will simulate clicking the button on the modal of that object that was connected through the simulation object node.
-
-* wire AI Paths tightly to a notification system as there will be a lot of rules that certain nodes can't get connected etc.
-
-* I need another node called result viewer, where I can see the output results coming from different nodes
-
-When I enter the product ID in my simulation product modal it should automatically fetch simulation data that I can check in the inspector
-
-
-Context grabber inputs Context
-
-Move AI Jobs page into AI Paths and create a link in the main menu
-Each AI job should be logged Separately and the AI path should wait for it's result to be Completed, the AI Path job is logged separately
-
-I want context grab presets (e.g. “Light / Medium / Full”) and also the ability to tweak my context grabbers to target specific data I want to have grabbed.
-
-* I want a Database Query module where I can choose Database Tables to be queries with specific requests (either custom mongoDB) or preset request for a specific data type, like id, productID etc. the Database Query module Returns JSON as output, and input can be object query
-
-MAYBE NOT-I want a node creator option, to be able to create my owncustom nodes, for example I want to have the ability to create my own context grabbers with specific data I want to have grabbed, or very specific Data Parsers, that will parse the JSON data, but could also parse strings through Regex, etc.
-
 continue working on AI Paths a modular node system for data paths and signal paths for a multiapp platform, extend it with new functionalities better validations, better information clusters, be inventive and creative, there's no limit to how the data can travel or be changed along these paths. The only limitations is that it has to work within the AI Paths Node Modular system.
 
-* Build a “Cluster Presets” library for reusable bundles/prompts across apps.
-
-* Add an “Export/Import presets” JSON modal for sharing across projects.
+MAAYBE - Save nodes
 
 LATER - Move the whole Agentic AI configuration into AI Paths, there I want to create specific agents (model sets that will carry out different tasks, like planning, validating formatting etc) that can be used all across platform.
 
@@ -32,21 +10,13 @@ LATER - Move the whole Agentic AI configuration into AI Paths, there I want to c
 
 segment the files 
 
-Implement Y-axis scroller in node modals and make them wider, for example the parser node height is too great and it's overflowing the screen
-
 AI Paths connect to centralized error logging and handling
 
-In AI Paths, when I click on the connector output to grab a connector wire, all the input that I can wire the cable into should highlight.
+* The whole Node pallete Menu should be collapsible
 
-Node pallete Menu should be collapsible, The current state of menus (which ones are collapsed as well as the current state of project, which is the AI Path project that I am currently on should be saved to my user for persistance, so that when I redirect and go back to AI PAths Page I can still continue working where I left off)
+* also, when the jobs finish, I can  see the result in AI jobs details, I don't see the result in AI Paths Node Result Viewer.
 
-Double clicking the node should open node config
-
-In my Prompt Node, I dont' see the bundle input that I can connect my bundle output from the Parser
-in Parser node, when a simulation is connected, show in Entity ID Dropodown Simulation id and fetch Entity ID from simulation node
-
-
-! - remove legacy nodes (updater node and db_query node). Develop the new  database node even further.
+I want the state of nodes to be saved within the project, so when I redirect the page and go back to the AI Paths project, I don't have to choose simulation signal in Parser all the time.
 
 Nodes: evaluator
 

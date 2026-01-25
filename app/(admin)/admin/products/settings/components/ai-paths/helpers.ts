@@ -103,6 +103,19 @@ const DATABASE_INPUT_PORTS = [
   "result",
   "content_en",
 ];
+const DEFAULT_DB_QUERY = {
+  provider: "auto",
+  collection: "products",
+  mode: "preset",
+  preset: "by_id",
+  field: "_id",
+  idType: "string",
+  queryTemplate: "{\n  \"_id\": \"{{value}}\"\n}",
+  limit: 20,
+  sort: "",
+  projection: "",
+  single: false,
+};
 
 const DB_COLLECTION_OPTIONS = [
   { value: "products", label: "Products" },
@@ -316,9 +329,12 @@ const VIEWER_INPUT_PORTS = [
   "description",
   "description_en",
   "prompt",
+  "images",
   "context",
   "meta",
   "trigger",
+  "jobId",
+  "status",
   "entityId",
   "entityType",
   "entityJson",
@@ -327,6 +343,11 @@ const VIEWER_INPUT_PORTS = [
   "errors",
   "value",
 ];
+const PROMPT_INPUT_PORTS = ["bundle", "title", "images", "result"];
+const PROMPT_OUTPUT_PORTS = ["prompt", "images"];
+const POLL_INPUT_PORTS = ["jobId", "query", "value", "entityId", "productId", "bundle"];
+const POLL_OUTPUT_PORTS = ["result", "status", "jobId", "bundle"];
+const MODEL_OUTPUT_PORTS = ["result", "jobId"];
 
 const palette: NodeDefinition[] = [
   {
@@ -442,6 +463,13 @@ const palette: NodeDefinition[] = [
     outputs: DELAY_OUTPUT_PORTS,
   },
   {
+    type: "poll",
+    title: "Poll Job",
+    description: "Poll an AI job or database query until it completes.",
+    inputs: POLL_INPUT_PORTS,
+    outputs: POLL_OUTPUT_PORTS,
+  },
+  {
     type: "http",
     title: "HTTP Fetch",
     description: "Call external APIs with templated inputs.",
@@ -494,15 +522,15 @@ const palette: NodeDefinition[] = [
     type: "prompt",
     title: "Prompt",
     description: "Formats text with placeholders.",
-    inputs: ["bundle", "title", "images", "result"],
-    outputs: ["prompt"],
+    inputs: PROMPT_INPUT_PORTS,
+    outputs: PROMPT_OUTPUT_PORTS,
   },
   {
     type: "model",
     title: "Model",
     description: "Runs a selected model.",
     inputs: ["prompt", "images"],
-    outputs: ["result"],
+    outputs: MODEL_OUTPUT_PORTS,
   },
 ];
 
@@ -705,6 +733,31 @@ const normalizeNodes = (items: AiNode[]) =>
         },
       };
     }
+    if (node.type === "poll") {
+      const pollConfig = node.config?.poll;
+      const pollQuery = {
+        ...DEFAULT_DB_QUERY,
+        ...(pollConfig?.dbQuery ?? {}),
+      };
+      return {
+        ...node,
+        inputs: ensureUniquePorts(node.inputs, POLL_INPUT_PORTS),
+        outputs: ensureUniquePorts(node.outputs, POLL_OUTPUT_PORTS),
+        config: {
+          ...node.config,
+          poll: {
+            intervalMs: pollConfig?.intervalMs ?? 2000,
+            maxAttempts: pollConfig?.maxAttempts ?? 30,
+            mode: pollConfig?.mode ?? "job",
+            dbQuery: pollQuery,
+            successPath: pollConfig?.successPath ?? "status",
+            successOperator: pollConfig?.successOperator ?? "equals",
+            successValue: pollConfig?.successValue ?? "completed",
+            resultPath: pollConfig?.resultPath ?? "result",
+          },
+        },
+      };
+    }
     if (node.type === "http") {
       return {
         ...node,
@@ -827,6 +880,19 @@ const normalizeNodes = (items: AiNode[]) =>
         outputs: ensureUniquePorts(node.outputs, ["description_en"]),
       };
     }
+    if (node.type === "prompt") {
+      return {
+        ...node,
+        inputs: ensureUniquePorts(node.inputs, PROMPT_INPUT_PORTS),
+        outputs: ensureUniquePorts(node.outputs, PROMPT_OUTPUT_PORTS),
+      };
+    }
+    if (node.type === "model") {
+      return {
+        ...node,
+        outputs: ensureUniquePorts(node.outputs, MODEL_OUTPUT_PORTS),
+      };
+    }
     if (nodeType === "updater") {
       const updaterConfig =
         (node.config as { updater?: LegacyUpdaterConfig } | undefined)?.updater ?? {};
@@ -897,6 +963,7 @@ const normalizeNodes = (items: AiNode[]) =>
               ...createViewerOutputs(normalizedInputs),
               ...outputs,
             },
+            showImagesAsJson: node.config?.viewer?.showImagesAsJson ?? false,
           },
         },
       };
@@ -937,7 +1004,7 @@ const getDefaultConfigForType = (
     return { simulation: { productId: "", entityType: "product", entityId: "" } };
   }
   if (type === "viewer") {
-    return { viewer: { outputs: createViewerOutputs(inputs) } };
+    return { viewer: { outputs: createViewerOutputs(inputs), showImagesAsJson: false } };
   }
   if (type === "context") {
     return {
@@ -1040,6 +1107,20 @@ const getDefaultConfigForType = (
       },
     };
   }
+  if (type === "poll") {
+    return {
+      poll: {
+        intervalMs: 2000,
+        maxAttempts: 30,
+        mode: "job",
+        dbQuery: { ...DEFAULT_DB_QUERY },
+        successPath: "status",
+        successOperator: "equals",
+        successValue: "completed",
+        resultPath: "result",
+      },
+    };
+  }
   if (type === "http") {
     return {
       http: {
@@ -1079,6 +1160,7 @@ const getDefaultConfigForType = (
         temperature: 0.7,
         maxTokens: 800,
         vision: inputs.includes("images"),
+        waitForResult: true,
       },
     };
   }
@@ -1257,7 +1339,7 @@ const buildFlattenedMappings = (
 };
 
 const looksLikeImageUrl = (value: string) =>
-  /(\.png|\.jpe?g|\.webp|\.gif|\/uploads\/|^https?:\/\/)/i.test(value);
+  /(\.png|\.jpe?g|\.webp|\.gif|\.svg|\/uploads\/|^https?:\/\/)/i.test(value);
 
 const isImageLikeValue = (value: unknown): boolean => {
   if (!value) return false;
@@ -1269,10 +1351,41 @@ const isImageLikeValue = (value: unknown): boolean => {
   }
   if (typeof value === "object") {
     const record = value as Record<string, unknown>;
-    const candidates = ["url", "src", "thumbnail", "thumb", "imageUrl", "image"];
-    return candidates.some((key) => {
-      const val = record[key];
-      return typeof val === "string" ? looksLikeImageUrl(val) : isImageLikeValue(val);
+    const candidates = [
+      "url",
+      "src",
+      "thumbnail",
+      "thumb",
+      "imageUrl",
+      "image",
+      "filepath",
+      "filePath",
+      "path",
+      "file",
+      "previewUrl",
+      "preview",
+      "imageFile",
+      "image_file",
+      "media",
+      "gallery",
+    ];
+    if (
+      candidates.some((key) => {
+        const val = record[key];
+        return typeof val === "string" ? looksLikeImageUrl(val) : isImageLikeValue(val);
+      })
+    ) {
+      return true;
+    }
+    return Object.entries(record).some(([key, val]) => {
+      if (typeof val === "string") {
+        if (!looksLikeImageUrl(val)) return false;
+        return /(url|path|file|image|media|photo|thumb|preview)/i.test(key);
+      }
+      if (val && typeof val === "object" && /(image|file|media|photo)/i.test(key)) {
+        return isImageLikeValue(val);
+      }
+      return false;
     });
   }
   return false;
@@ -1280,21 +1393,47 @@ const isImageLikeValue = (value: unknown): boolean => {
 
 const inferImageMappingPath = (value: unknown, depth: number) => {
   if (!value) return null;
-  const entries = extractJsonPathEntries(value, depth);
   const keyword = /(image|img|photo|picture|media|gallery)/i;
-  const candidates = entries.filter((entry) => keyword.test(entry.path));
-  const checkEntry = (entry: JsonPathEntry) => {
-    const jsonPath = entry.path.startsWith("[") ? `$${entry.path}` : `$.${entry.path}`;
-    const resolved = getValueAtMappingPath(value, jsonPath);
-    if (isImageLikeValue(resolved)) return jsonPath;
+  const searchIn = (root: unknown, prefix: string) => {
+    if (!root) return null;
+    const entries = extractJsonPathEntries(root, depth);
+    const candidates = entries.filter((entry) => keyword.test(entry.path));
+    const resolveFullPath = (match: string) => {
+      if (!prefix) return match;
+      const prefixPath = prefix.startsWith("$") ? prefix : `$.${prefix}`;
+      return `${prefixPath}${match.slice(1)}`;
+    };
+    const checkEntry = (entry: JsonPathEntry) => {
+      const jsonPath = entry.path.startsWith("[") ? `$${entry.path}` : `$.${entry.path}`;
+      const resolved = getValueAtMappingPath(root, jsonPath);
+      if (isImageLikeValue(resolved)) return resolveFullPath(jsonPath);
+      return null;
+    };
+    for (const entry of candidates) {
+      const match = checkEntry(entry);
+      if (match) return match;
+    }
+    for (const entry of entries) {
+      const match = checkEntry(entry);
+      if (match) return match;
+    }
     return null;
   };
-  for (const entry of candidates) {
-    const match = checkEntry(entry);
-    if (match) return match;
-  }
-  for (const entry of entries) {
-    const match = checkEntry(entry);
+  const direct = searchIn(value, "");
+  if (direct) return direct;
+  const wrapperPaths = [
+    "context.entity",
+    "context.product",
+    "simulation.entity",
+    "simulation.product",
+    "entity",
+    "product",
+    "item",
+    "data",
+  ];
+  for (const path of wrapperPaths) {
+    const wrapped = getValueAtMappingPath(value, path.startsWith("$") ? path : `$.${path}`);
+    const match = searchIn(wrapped, path);
     if (match) return match;
   }
   return null;
@@ -1570,6 +1709,8 @@ const PORT_COMPATIBILITY: Record<string, string[]> = {
   bundle: ["bundle"],
   value: ["value"],
   query: ["query"],
+  jobId: ["jobId"],
+  status: ["status"],
   description_en: ["description_en"],
   valid: ["valid"],
   errors: ["errors"],
@@ -1589,10 +1730,11 @@ const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     "template",
     "router",
     "delay",
+    "poll",
     "http",
     "database",
   ],
-  trigger: ["viewer", "mapper", "mutator", "validator", "bundle", "template", "router", "delay", "database"],
+  trigger: ["viewer", "mapper", "mutator", "validator", "bundle", "template", "router", "delay", "poll", "database"],
   simulation: ["trigger"],
   parser: [
     "prompt",
@@ -1607,6 +1749,7 @@ const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     "template",
     "router",
     "delay",
+    "poll",
     "database",
   ],
   mapper: [
@@ -1620,6 +1763,7 @@ const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     "template",
     "router",
     "delay",
+    "poll",
     "database",
     "trigger",
   ],
@@ -1633,6 +1777,7 @@ const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     "template",
     "router",
     "delay",
+    "poll",
     "database",
   ],
   validator: [
@@ -1645,23 +1790,25 @@ const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     "template",
     "router",
     "delay",
+    "poll",
     "database",
   ],
-  constant: ["math", "template", "viewer", "bundle", "compare", "router", "delay", "http", "database"],
-  math: ["template", "viewer", "bundle", "compare", "router", "delay", "http", "database"],
-  compare: ["gate", "router", "viewer", "bundle", "template", "database"],
-  gate: ["validator", "viewer", "prompt", "ai_description", "description_updater", "bundle", "template", "router", "delay"],
-  router: ["viewer", "bundle", "template", "prompt", "model", "delay", "database"],
-  delay: ["viewer", "bundle", "template", "prompt", "model", "validator", "gate", "database"],
-  http: ["viewer", "bundle", "template", "prompt", "math", "compare", "database"],
-  database: ["viewer", "bundle", "template", "prompt", "mapper", "validator"],
-  bundle: ["viewer", "template", "prompt", "database"],
-  template: ["model", "viewer", "bundle", "prompt", "database"],
-  prompt: ["model", "viewer", "bundle", "template"],
-  model: ["prompt", "database", "viewer", "description_updater", "bundle"],
+  constant: ["math", "template", "viewer", "bundle", "compare", "router", "delay", "poll", "http", "database"],
+  math: ["template", "viewer", "bundle", "compare", "router", "delay", "poll", "http", "database"],
+  compare: ["gate", "router", "viewer", "bundle", "template", "poll", "database"],
+  gate: ["validator", "viewer", "prompt", "ai_description", "description_updater", "bundle", "template", "router", "delay", "poll"],
+  router: ["viewer", "bundle", "template", "prompt", "model", "delay", "poll", "database"],
+  delay: ["viewer", "bundle", "template", "prompt", "model", "validator", "gate", "poll", "database"],
+  poll: ["viewer", "bundle", "template", "prompt", "model", "delay", "database"],
+  http: ["viewer", "bundle", "template", "prompt", "math", "compare", "poll", "database"],
+  database: ["viewer", "bundle", "template", "prompt", "mapper", "validator", "poll"],
+  bundle: ["viewer", "template", "prompt", "poll", "database"],
+  template: ["model", "viewer", "bundle", "prompt", "poll", "database"],
+  prompt: ["model", "viewer", "bundle", "template", "poll"],
+  model: ["prompt", "database", "viewer", "description_updater", "bundle", "poll"],
   viewer: [],
-  ai_description: ["viewer", "description_updater", "bundle", "delay"],
-  description_updater: ["viewer", "bundle", "delay"],
+  ai_description: ["viewer", "description_updater", "bundle", "delay", "poll"],
+  description_updater: ["viewer", "bundle", "delay", "poll"],
 };
 
 const validateConnection = (
@@ -1854,7 +2001,7 @@ const initialNodes: AiNode[] = [
     title: "Vision Prompt",
     description: "Prompt: Analyze [images] and [title].",
     inputs: ["images", "title"],
-    outputs: ["prompt"],
+    outputs: PROMPT_OUTPUT_PORTS,
     position: { x: 1120, y: 510 },
   },
   {
@@ -1863,7 +2010,7 @@ const initialNodes: AiNode[] = [
     title: "Gemma Vision",
     description: "Image analysis.",
     inputs: ["prompt", "images"],
-    outputs: ["result"],
+    outputs: MODEL_OUTPUT_PORTS,
     position: { x: 1400, y: 510 },
     config: {
       model: {
@@ -1880,7 +2027,7 @@ const initialNodes: AiNode[] = [
     title: "Description Prompt",
     description: "Prompt: Use [result] and [title].",
     inputs: ["result", "title"],
-    outputs: ["prompt"],
+    outputs: PROMPT_OUTPUT_PORTS,
     position: { x: 1120, y: 690 },
   },
   {
@@ -1889,7 +2036,7 @@ const initialNodes: AiNode[] = [
     title: "GPT-4o",
     description: "Generate description.",
     inputs: ["prompt"],
-    outputs: ["result"],
+    outputs: MODEL_OUTPUT_PORTS,
     position: { x: 1400, y: 690 },
     config: {
       model: {
@@ -2143,6 +2290,7 @@ const typeStyles: Record<NodeType, { border: string; glow: string }> = {
   compare: { border: "border-amber-300/40", glow: "shadow-amber-300/20" },
   router: { border: "border-pink-500/40", glow: "shadow-pink-500/20" },
   delay: { border: "border-indigo-400/40", glow: "shadow-indigo-400/20" },
+  poll: { border: "border-cyan-300/40", glow: "shadow-cyan-300/20" },
   http: { border: "border-sky-400/40", glow: "shadow-sky-400/20" },
   database: { border: "border-emerald-500/40", glow: "shadow-emerald-500/20" },
   prompt: { border: "border-amber-500/40", glow: "shadow-amber-500/20" },

@@ -14,6 +14,7 @@ export type NodeType =
   | "compare"
   | "router"
   | "delay"
+  | "poll"
   | "http"
   | "prompt"
   | "model"
@@ -37,6 +38,7 @@ export type ModelConfig = {
   temperature: number;
   maxTokens: number;
   vision: boolean;
+  waitForResult?: boolean;
 };
 
 export type UpdaterMapping = {
@@ -71,6 +73,7 @@ export type SimulationConfig = {
 
 export type ViewerConfig = {
   outputs: Record<string, string>;
+  showImagesAsJson?: boolean;
 };
 
 export type ContextConfig = {
@@ -177,6 +180,17 @@ export type DbQueryConfig = {
   single: boolean;
 };
 
+export type PollConfig = {
+  intervalMs: number;
+  maxAttempts: number;
+  mode?: "job" | "database";
+  dbQuery?: DbQueryConfig;
+  successPath?: string;
+  successOperator?: "truthy" | "equals" | "contains" | "notEquals";
+  successValue?: string;
+  resultPath?: string;
+};
+
 export type NodeConfig = {
   trigger?: TriggerConfig;
   simulation?: SimulationConfig;
@@ -193,6 +207,7 @@ export type NodeConfig = {
   compare?: CompareConfig;
   router?: RouterConfig;
   delay?: DelayConfig;
+  poll?: PollConfig;
   http?: HttpConfig;
   dbQuery?: DbQueryConfig;
   description?: DescriptionConfig;

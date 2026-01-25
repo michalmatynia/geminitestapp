@@ -127,20 +127,25 @@ export default function Menu() {
         >
           Integrations
         </Link>
+      </CollapsibleMenu>
+      <CollapsibleMenu
+        title="AI Paths"
+        icon={<GitBranchIcon />}
+        href="/admin/ai-paths"
+      >
         <Link
-          href="/admin/products/jobs"
-          className="block w-full text-left hover:bg-gray-700 p-2 rounded"
+          href="/admin/ai-paths"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Canvas
+        </Link>
+        <Link
+          href="/admin/ai-paths/jobs"
+          className="block hover:bg-gray-700 p-2 rounded"
         >
           AI Jobs
         </Link>
       </CollapsibleMenu>
-      <Link
-        href="/admin/ai-paths"
-        className="flex items-center hover:bg-gray-700 p-2 rounded"
-      >
-        <GitBranchIcon className="mr-2" />
-        {!isMenuCollapsed && "AI Paths"}
-      </Link>
       <CollapsibleMenu
         title="Notes"
         icon={<StickyNoteIcon />}

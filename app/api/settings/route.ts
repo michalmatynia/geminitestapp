@@ -22,7 +22,6 @@ type SettingDocument = {
 };
 
 const SETTINGS_COLLECTION = "settings";
-const AI_PATHS_CONFIG_PREFIX = "ai_paths_config_";
 const productSettingKeys = new Set([
   APP_DB_PROVIDER_SETTING_KEY,
   "ai_vision_model",
@@ -34,12 +33,9 @@ const productSettingKeys = new Set([
   "description_generation_prompt",
   "ai_generation_output_enabled",
   "ai_description_test_product_id",
-  "ai_paths_config",
-  "ai_paths_index",
 ]);
 
-const isProductSettingKey = (key: string) =>
-  productSettingKeys.has(key) || key.startsWith(AI_PATHS_CONFIG_PREFIX);
+const isProductSettingKey = (key: string) => productSettingKeys.has(key);
 
 const canUsePrismaSettings = (provider: "prisma" | "mongodb") =>
   provider === "prisma" && Boolean(process.env.DATABASE_URL) && "setting" in prisma;

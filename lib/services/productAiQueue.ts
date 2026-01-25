@@ -1,5 +1,7 @@
+import OpenAI from "openai";
+import type { ChatCompletionContentPart } from "openai/resources/chat/completions";
 import prisma from "@/lib/prisma";
-import { generateProductDescription } from "./aiDescriptionService";
+import { generateProductDescription, getSettingValue } from "./aiDescriptionService";
 import { translateProduct } from "./aiTranslationService";
 import type { ProductFormData } from "@/types";
 import { getProductRepository } from "@/lib/services/product-repository";
@@ -9,8 +11,12 @@ import { ObjectId } from "mongodb";
 import { getProductDataProvider } from "@/lib/services/product-provider";
 import { getProductAiJobRepository } from "@/lib/services/product-ai-job-repository";
 import type { ProductAiJobRecord } from "@/types/services/product-ai-job-repository";
+import { getImageFileRepository } from "@/lib/services/image-file-repository";
+import fs from "fs/promises";
+import path from "path";
 import {
   badRequestError,
+  configurationError,
   notFoundError,
   operationFailedError,
 } from "@/lib/errors/app-error";
@@ -28,12 +34,139 @@ type JobPayload = {
   visionOutputEnabled?: boolean;
   generationOutputEnabled?: boolean;
   languageIds?: string[];
+  prompt?: string;
+  modelId?: string;
+  temperature?: number;
+  maxTokens?: number;
+  vision?: boolean;
+  source?: string;
+  graph?: Record<string, unknown>;
   [key: string]: unknown;
 };
 
 type Job = ProductAiJobRecord & {
   payload: JobPayload;
 };
+
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
+
+const getClient = (modelName: string, apiKey: string | null) => {
+  const isOpenAI =
+    (modelName.startsWith("gpt-") && !modelName.includes("oss")) ||
+    modelName.startsWith("ft:gpt-") ||
+    modelName.startsWith("o1-");
+
+  if (isOpenAI) {
+    if (!apiKey) {
+      throw configurationError("OpenAI API key is missing for GPT model.");
+    }
+    return new OpenAI({ apiKey });
+  }
+
+  return new OpenAI({
+    baseURL: `${OLLAMA_BASE_URL}/v1`,
+    apiKey: "ollama",
+  });
+};
+
+const buildImageParts = async (imageUrls: string[]) => {
+  if (!imageUrls.length) return [] as ChatCompletionContentPart[];
+  const imageFileRepository = await getImageFileRepository();
+  const imageFiles = await imageFileRepository.listImageFiles();
+  const imageFileMap = new Map(imageFiles.map((file) => [file.filepath, file]));
+
+  const imagePromises = imageUrls.map(async (item) => {
+    try {
+      let base64Image: string;
+      let mimetype = "image/jpeg";
+      if (item.startsWith("http")) {
+        const res = await fetch(item);
+        if (!res.ok) return null;
+        const buffer = Buffer.from(await res.arrayBuffer());
+        base64Image = buffer.toString("base64");
+        mimetype = res.headers.get("content-type") || "image/jpeg";
+      } else {
+        const normalized = item.startsWith("/") ? item.slice(1) : item;
+        const imagePath = path.join(process.cwd(), "public", normalized);
+        const buffer = await fs.readFile(imagePath);
+        base64Image = buffer.toString("base64");
+        const record = imageFileMap.get(item);
+        if (record) mimetype = record.mimetype;
+      }
+      return {
+        type: "image_url" as const,
+        image_url: { url: `data:${mimetype};base64,${base64Image}` },
+      };
+    } catch {
+      return null;
+    }
+  });
+
+  return (await Promise.all(imagePromises)).filter(
+    (img): img is ChatCompletionContentPart => Boolean(img)
+  );
+};
+
+async function processGraphModel(job: Job) {
+  const { payload, productId } = job;
+  const prompt = typeof payload.prompt === "string" ? payload.prompt.trim() : "";
+  if (!prompt) {
+    throw badRequestError("Graph model job missing prompt", { jobId: job.id });
+  }
+  const requestedModelId =
+    typeof payload.modelId === "string" ? payload.modelId.trim() : "";
+  const visionFallback = (await getSettingValue("ai_vision_model"))?.trim() || "";
+  const textFallback = (await getSettingValue("openai_model"))?.trim() || "";
+  let modelId =
+    requestedModelId ||
+    (payload.vision ? visionFallback : textFallback) ||
+    (payload.vision ? "gemma3:27b" : "gpt-4o");
+  const temperature =
+    typeof payload.temperature === "number" ? payload.temperature : 0.7;
+  const maxTokens =
+    typeof payload.maxTokens === "number" ? payload.maxTokens : 800;
+  const imageUrls = Array.isArray(payload.imageUrls)
+    ? payload.imageUrls.filter((url): url is string => typeof url === "string" && url.trim())
+    : [];
+  const attachImages = Boolean(payload.vision) && imageUrls.length > 0;
+  const apiKey = (await getSettingValue("openai_api_key")) ?? process.env.OPENAI_API_KEY ?? null;
+  const isOpenAIModel =
+    (modelId.startsWith("gpt-") && !modelId.includes("oss")) ||
+    modelId.startsWith("ft:gpt-") ||
+    modelId.startsWith("o1-");
+  if (isOpenAIModel && !apiKey) {
+    const fallback = visionFallback || "gemma3:27b";
+    modelId = fallback;
+  }
+  const client = getClient(modelId, apiKey);
+  const content: ChatCompletionContentPart[] = [{ type: "text", text: prompt }];
+  if (attachImages) {
+    const imageParts = await buildImageParts(imageUrls);
+    content.push(...imageParts);
+  }
+
+  const completion = await client.chat.completions.create({
+    model: modelId,
+    messages: [
+      { role: "system", content: "You are an AI assistant." },
+      { role: "user", content },
+    ],
+    temperature,
+    max_tokens: maxTokens,
+  });
+  const resultText = completion.choices[0]?.message.content?.trim() || "";
+  return {
+    result: resultText,
+    modelId,
+    prompt,
+    imageUrls,
+    temperature,
+    maxTokens,
+    source: payload.source ?? "ai_paths",
+    graph: payload.graph ?? undefined,
+    productId,
+  };
+}
 
 const normalizeLanguageDoc = (doc: Record<string, unknown>): LanguageRecord | null => {
   const rawId = doc.id ?? doc._id;
@@ -494,6 +627,14 @@ const pollQueue = async () => {
 
               console.log(`[productAiQueue] Translation completed for job ${typedJob.id}`);
 
+            } else if (nextJob.type === "graph_model") {
+
+              console.log(`[productAiQueue] Processing graph model for job ${typedJob.id}`);
+
+              result = await processGraphModel(typedJob);
+
+              console.log(`[productAiQueue] Graph model completed for job ${typedJob.id}`);
+
             } else {
         throw operationFailedError(`Unknown job type: ${nextJob.type}`, undefined, {
           jobId: nextJob.id,
@@ -613,6 +754,10 @@ export const processSingleJob = async (jobId: string) => {
       console.log(`[processSingleJob] Processing translation for job ${job.id}`);
       result = await processTranslation(typedJob);
       console.log(`[processSingleJob] Translation completed for job ${job.id}`);
+    } else if (job.type === "graph_model") {
+      console.log(`[processSingleJob] Processing graph model for job ${job.id}`);
+      result = await processGraphModel(typedJob);
+      console.log(`[processSingleJob] Graph model completed for job ${job.id}`);
     } else {
       throw operationFailedError(`Unknown job type: ${job.type}`, undefined, {
         jobId: job.id,

@@ -1,4 +1,11 @@
-import type { AiNode, ContextConfig, Edge, RuntimePortValues, RuntimeState } from "./types";
+import type {
+  AiNode,
+  ContextConfig,
+  DbQueryConfig,
+  Edge,
+  RuntimePortValues,
+  RuntimeState,
+} from "./types";
 import {
   DEFAULT_CONTEXT_ROLE,
   DELAY_OUTPUT_PORTS,
@@ -19,6 +26,20 @@ import {
 
 type ToastFn = (message: string, options?: { variant?: "success" | "error" }) => void;
 
+const DEFAULT_DB_QUERY: DbQueryConfig = {
+  provider: "auto",
+  collection: "products",
+  mode: "preset",
+  preset: "by_id",
+  field: "_id",
+  idType: "string",
+  queryTemplate: "{\n  \"_id\": \"{{value}}\"\n}",
+  limit: 20,
+  sort: "",
+  projection: "",
+  single: false,
+};
+
 export type EvaluateGraphOptions = {
   nodes: AiNode[];
   edges: Edge[];
@@ -37,6 +58,57 @@ export type EvaluateGraphOptions = {
   toast: ToastFn;
 };
 
+const looksLikeImageUrl = (value: string) =>
+  /(\.png|\.jpe?g|\.webp|\.gif|\.svg|\/uploads\/|^https?:\/\/)/i.test(value);
+
+const extractImageUrls = (value: unknown, seen = new Set<object>()): string[] => {
+  if (!value) return [];
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(trimmed) as unknown;
+        return extractImageUrls(parsed, seen);
+      } catch {
+        return looksLikeImageUrl(value) ? [value] : [];
+      }
+    }
+    return looksLikeImageUrl(value) ? [value] : [];
+  }
+  if (Array.isArray(value)) {
+    return Array.from(
+      new Set(value.flatMap((item) => extractImageUrls(item, seen)))
+    );
+  }
+  if (typeof value === "object") {
+    if (seen.has(value as object)) return [];
+    seen.add(value as object);
+    const record = value as Record<string, unknown>;
+    const candidates = [
+      "url",
+      "src",
+      "thumbnail",
+      "thumb",
+      "imageUrl",
+      "image",
+      "imageFile",
+      "filepath",
+      "filePath",
+      "path",
+      "file",
+      "previewUrl",
+      "preview",
+    ];
+    const urls = candidates.flatMap((key) => extractImageUrls(record[key], seen));
+    if (urls.length) return Array.from(new Set(urls));
+    const deepUrls = Object.values(record).flatMap((val) =>
+      extractImageUrls(val, seen)
+    );
+    return Array.from(new Set(deepUrls));
+  }
+  return [];
+};
+
 export async function evaluateGraph({
   nodes,
   edges,
@@ -51,6 +123,35 @@ export async function evaluateGraph({
   let inputs: Record<string, RuntimePortValues> = {};
   const now = new Date().toISOString();
   const entityCache = new Map<string, Record<string, unknown> | null>();
+  const activeNodeIds = new Set<string>();
+
+  if (triggerNodeId) {
+    const adjacency = new Map<string, Set<string>>();
+    edges.forEach((edge) => {
+      if (!edge.from || !edge.to) return;
+      const fromSet = adjacency.get(edge.from) ?? new Set<string>();
+      fromSet.add(edge.to);
+      adjacency.set(edge.from, fromSet);
+      const toSet = adjacency.get(edge.to) ?? new Set<string>();
+      toSet.add(edge.from);
+      adjacency.set(edge.to, toSet);
+    });
+    const queue = [triggerNodeId];
+    activeNodeIds.add(triggerNodeId);
+    while (queue.length) {
+      const current = queue.shift();
+      if (!current) continue;
+      const neighbors = adjacency.get(current);
+      if (!neighbors) continue;
+      neighbors.forEach((neighbor) => {
+        if (activeNodeIds.has(neighbor)) return;
+        activeNodeIds.add(neighbor);
+        queue.push(neighbor);
+      });
+    }
+  }
+  const isActiveNode = (node: AiNode) =>
+    !triggerNodeId || activeNodeIds.has(node.id);
 
   const fetchEntityCached = async (entityType: string, entityId: string) => {
     if (!entityType || !entityId) return null;
@@ -132,6 +233,273 @@ export async function evaluateGraph({
     return null;
   };
 
+  const resolveJobProductId = (nodeInputs: RuntimePortValues) => {
+    const direct =
+      coerceInput(nodeInputs.productId) ?? coerceInput(nodeInputs.entityId);
+    if (typeof direct === "string" && direct.trim()) return direct.trim();
+    if (typeof direct === "number") return String(direct);
+    const contextValue = coerceInput(nodeInputs.context) as
+      | { entityId?: string; productId?: string }
+      | undefined;
+    if (contextValue?.productId?.trim()) return contextValue.productId.trim();
+    if (contextValue?.entityId?.trim()) return contextValue.entityId.trim();
+    const entityJson = coerceInput(nodeInputs.entityJson) as
+      | { id?: string | number }
+      | undefined;
+    if (typeof entityJson?.id === "string" && entityJson.id.trim()) {
+      return entityJson.id.trim();
+    }
+    if (typeof entityJson?.id === "number") return String(entityJson.id);
+    if (simulationEntityType === "product" && simulationEntityId) {
+      return simulationEntityId;
+    }
+    return activePathId ?? "ai_paths_graph";
+  };
+
+  const resolveEntityIdFromInputs = (
+    nodeInputs: RuntimePortValues,
+    idField?: string
+  ) => {
+    const direct =
+      (idField ? coerceInput(nodeInputs[idField]) : undefined) ??
+      coerceInput(nodeInputs.entityId) ??
+      coerceInput(nodeInputs.productId);
+    if (typeof direct === "string" && direct.trim()) return direct.trim();
+    if (typeof direct === "number") return String(direct);
+    const contextValue = coerceInput(nodeInputs.context) as
+      | { entityId?: string; productId?: string }
+      | undefined;
+    if (contextValue?.productId?.trim()) return contextValue.productId.trim();
+    if (contextValue?.entityId?.trim()) return contextValue.entityId.trim();
+    const bundleValue = coerceInput(nodeInputs.bundle) as
+      | { entityId?: string; productId?: string; id?: string | number }
+      | undefined;
+    if (typeof bundleValue?.productId === "string" && bundleValue.productId.trim()) {
+      return bundleValue.productId.trim();
+    }
+    if (typeof bundleValue?.entityId === "string" && bundleValue.entityId.trim()) {
+      return bundleValue.entityId.trim();
+    }
+    if (typeof bundleValue?.id === "string" && bundleValue.id.trim()) {
+      return bundleValue.id.trim();
+    }
+    if (typeof bundleValue?.id === "number") return String(bundleValue.id);
+    const entityJson = coerceInput(nodeInputs.entityJson) as
+      | { id?: string | number }
+      | undefined;
+    if (typeof entityJson?.id === "string" && entityJson.id.trim()) {
+      return entityJson.id.trim();
+    }
+    if (typeof entityJson?.id === "number") return String(entityJson.id);
+    if (simulationEntityType === "product" && simulationEntityId) {
+      return simulationEntityId;
+    }
+    return "";
+  };
+
+  const pollGraphJob = async (
+    jobId: string,
+    options?: { intervalMs?: number; maxAttempts?: number }
+  ) => {
+    const maxAttempts = options?.maxAttempts ?? 60;
+    const intervalMs = options?.intervalMs ?? 2000;
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const statusRes = await fetch(`/api/products/ai-jobs/${jobId}`);
+      if (!statusRes.ok) {
+        throw new Error("Failed to fetch job status.");
+      }
+      const payload = (await statusRes.json()) as {
+        job?: { status?: string; result?: unknown; errorMessage?: string | null };
+      };
+      const job = payload.job;
+      if (!job) continue;
+      if (job.status === "completed") {
+        const result = job.result as
+          | { result?: string }
+          | string
+          | null
+          | undefined;
+        if (result && typeof result === "object" && "result" in result) {
+          return (result as { result?: string }).result ?? "";
+        }
+        return typeof result === "string" ? result : JSON.stringify(result ?? "");
+      }
+      if (job.status === "failed") {
+        throw new Error(job.errorMessage || "AI job failed.");
+      }
+      if (job.status === "canceled") {
+        throw new Error("AI job was canceled.");
+      }
+      if (attempt < maxAttempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, Math.max(0, intervalMs)));
+      }
+    }
+    throw new Error("AI job timed out.");
+  };
+
+  const buildDbQueryPayload = (
+    nodeInputs: RuntimePortValues,
+    queryConfig: DbQueryConfig
+  ) => {
+    const inputQuery = coerceInput(nodeInputs.query);
+    const inputValue = coerceInput(nodeInputs.value) ?? coerceInput(nodeInputs.jobId);
+    const entityIdInput = coerceInput(nodeInputs.entityId);
+    const productIdInput = coerceInput(nodeInputs.productId);
+    let query: Record<string, unknown> = {};
+    if (queryConfig.mode === "preset") {
+      const presetValue =
+        queryConfig.preset === "by_productId"
+          ? productIdInput ?? inputValue ?? entityIdInput
+          : queryConfig.preset === "by_entityId"
+            ? entityIdInput ?? inputValue ?? productIdInput
+            : inputValue ?? entityIdInput ?? productIdInput;
+      if (presetValue !== undefined) {
+        const field =
+          queryConfig.preset === "by_productId"
+            ? "productId"
+            : queryConfig.preset === "by_entityId"
+              ? "entityId"
+              : queryConfig.preset === "by_field"
+                ? queryConfig.field || "id"
+                : "_id";
+        query = { [field]: presetValue };
+      }
+    } else if (inputQuery && typeof inputQuery === "object") {
+      query = inputQuery as Record<string, unknown>;
+    } else {
+      const rendered = renderTemplate(
+        queryConfig.queryTemplate ?? "{}",
+        nodeInputs as Record<string, unknown>,
+        inputValue ?? ""
+      );
+      const parsed = parseJsonSafe(rendered);
+      if (parsed && typeof parsed === "object") {
+        query = parsed as Record<string, unknown>;
+      }
+    }
+    const projection = parseJsonSafe(queryConfig.projection ?? "") as
+      | Record<string, unknown>
+      | undefined;
+    const sort = parseJsonSafe(queryConfig.sort ?? "") as
+      | Record<string, unknown>
+      | undefined;
+    return {
+      query,
+      projection,
+      sort,
+      provider: queryConfig.provider,
+      collection: queryConfig.collection,
+      limit: queryConfig.limit,
+      single: queryConfig.single,
+      idType: queryConfig.idType,
+    };
+  };
+
+  const pollDatabaseQuery = async (
+    nodeInputs: RuntimePortValues,
+    config: {
+      intervalMs: number;
+      maxAttempts: number;
+      dbQuery: DbQueryConfig;
+      successPath: string;
+      successOperator: "truthy" | "equals" | "contains" | "notEquals";
+      successValue: string;
+      resultPath: string;
+    }
+  ) => {
+    const evaluateMatch = (value: unknown) => {
+      if (config.successOperator === "truthy") return Boolean(value);
+      const compareTarget = config.successValue ?? "";
+      if (config.successOperator === "equals") {
+        return String(value ?? "") === String(compareTarget);
+      }
+      if (config.successOperator === "notEquals") {
+        return String(value ?? "") !== String(compareTarget);
+      }
+      if (config.successOperator === "contains") {
+        if (Array.isArray(value)) {
+          return value.map((entry) => String(entry)).includes(String(compareTarget));
+        }
+        return String(value ?? "").includes(String(compareTarget));
+      }
+      return Boolean(value);
+    };
+
+    let lastResult: unknown = null;
+    let lastBundle: Record<string, unknown> = {};
+    for (let attempt = 0; attempt < config.maxAttempts; attempt += 1) {
+      const payload = buildDbQueryPayload(nodeInputs, config.dbQuery);
+      const res = await fetch("/api/ai-paths/db-query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        throw new Error("Database poll query failed.");
+      }
+      const data = (await res.json()) as {
+        items?: unknown[];
+        item?: unknown;
+        count?: number;
+      };
+      const result = config.dbQuery.single ? data.item ?? null : data.items ?? [];
+      const bundle = {
+        count: data.count ?? (Array.isArray(result) ? result.length : result ? 1 : 0),
+        query: payload.query,
+        collection: payload.collection,
+        attempt: attempt + 1,
+      };
+      lastResult = result;
+      lastBundle = bundle;
+      const successPath = config.successPath?.trim() ?? "";
+      const matchedItem = Array.isArray(result)
+        ? result.find((item) =>
+            evaluateMatch(getValueAtMappingPath(item, successPath))
+          )
+        : null;
+      const candidate = successPath
+        ? Array.isArray(result)
+          ? matchedItem
+          : getValueAtMappingPath(result, successPath)
+        : result;
+      const isMatch = Array.isArray(result)
+        ? Boolean(matchedItem) ||
+          result.some((item) =>
+            evaluateMatch(
+              successPath ? getValueAtMappingPath(item, successPath) : item
+            )
+          )
+        : evaluateMatch(candidate);
+      if (isMatch) {
+        let resolvedResult = config.resultPath?.trim()
+          ? getValueAtMappingPath(result, config.resultPath)
+          : result;
+        if (resolvedResult === undefined && Array.isArray(result)) {
+          const fallbackSource = matchedItem ?? result[0];
+          resolvedResult = config.resultPath?.trim()
+            ? getValueAtMappingPath(fallbackSource, config.resultPath)
+            : fallbackSource;
+        }
+        return {
+          result: resolvedResult ?? result,
+          status: "completed",
+          bundle: { ...bundle, status: "completed" },
+        };
+      }
+      if (attempt < config.maxAttempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, Math.max(0, config.intervalMs)));
+      }
+    }
+    const fallbackResult = config.resultPath?.trim()
+      ? getValueAtMappingPath(lastResult, config.resultPath)
+      : lastResult;
+    return {
+      result: fallbackResult ?? lastResult,
+      status: "timeout",
+      bundle: { ...lastBundle, status: "timeout" },
+    };
+  };
+
   const buildFormData = (payload: Record<string, unknown>) => {
     const formData = new FormData();
     Object.entries(payload).forEach(([key, value]) => {
@@ -166,6 +534,9 @@ export async function evaluateGraph({
   };
 
   for (const node of nodes) {
+    if (!isActiveNode(node)) {
+      continue;
+    }
     if (node.type === "context") {
       const payload = await resolveContextPayload(node.config?.context);
       outputs[node.id] = {
@@ -232,6 +603,9 @@ export async function evaluateGraph({
 
     let changed = false;
     for (const node of nodes) {
+      if (!isActiveNode(node)) {
+        continue;
+      }
       const nodeInputs = nextInputs[node.id] ?? {};
       const prevOutputs = outputs[node.id] ?? {};
       let nextOutputs: RuntimePortValues = prevOutputs;
@@ -319,8 +693,17 @@ export async function evaluateGraph({
               parsed[key] = value;
             }
           });
-          nextOutputs =
-            outputMode === "bundle" ? { bundle: parsed } : parsed;
+          if (outputMode === "bundle") {
+            const extraOutputs = node.outputs.reduce<Record<string, unknown>>((acc, output) => {
+              if (output !== "bundle" && parsed[output] !== undefined) {
+                acc[output] = parsed[output];
+              }
+              return acc;
+            }, {});
+            nextOutputs = { bundle: parsed, ...extraOutputs };
+          } else {
+            nextOutputs = parsed;
+          }
           break;
         }
         case "mapper": {
@@ -579,6 +962,96 @@ export async function evaluateGraph({
           nextOutputs = delayed;
           break;
         }
+        case "poll": {
+          const pollConfig = node.config?.poll ?? {
+            intervalMs: 2000,
+            maxAttempts: 30,
+            mode: "job",
+          };
+          const pollMode = pollConfig.mode ?? "job";
+          const rawJobId = coerceInput(nodeInputs.jobId);
+          const jobId =
+            typeof rawJobId === "string" || typeof rawJobId === "number"
+              ? String(rawJobId).trim()
+              : "";
+          if (pollMode === "database") {
+            const queryConfig = {
+              ...DEFAULT_DB_QUERY,
+              ...(pollConfig.dbQuery ?? {}),
+            };
+            try {
+              const response = await pollDatabaseQuery(nodeInputs, {
+                intervalMs: pollConfig.intervalMs ?? 2000,
+                maxAttempts: pollConfig.maxAttempts ?? 30,
+                dbQuery: queryConfig,
+                successPath: pollConfig.successPath ?? "status",
+                successOperator: pollConfig.successOperator ?? "equals",
+                successValue: pollConfig.successValue ?? "completed",
+                resultPath: pollConfig.resultPath ?? "result",
+              });
+              nextOutputs = {
+                result: response.result,
+                status: response.status,
+                jobId,
+                bundle: {
+                  jobId,
+                  status: response.status,
+                  ...(response.bundle ?? {}),
+                },
+              };
+            } catch (error) {
+              reportAiPathsError(
+                error,
+                { action: "pollDatabase", nodeId: node.id },
+                "Database polling failed:"
+              );
+              nextOutputs = {
+                result: null,
+                status: "failed",
+                jobId,
+                bundle: {
+                  jobId,
+                  status: "failed",
+                  error: error instanceof Error ? error.message : "Polling failed",
+                },
+              };
+            }
+            break;
+          }
+          if (!jobId) {
+            nextOutputs = prevOutputs;
+            break;
+          }
+          try {
+            const result = await pollGraphJob(jobId, {
+              intervalMs: pollConfig.intervalMs,
+              maxAttempts: pollConfig.maxAttempts,
+            });
+            nextOutputs = {
+              result,
+              status: "completed",
+              jobId,
+              bundle: { jobId, status: "completed", result },
+            };
+          } catch (error) {
+            reportAiPathsError(
+              error,
+              { action: "pollJob", jobId, nodeId: node.id },
+              "AI job polling failed:"
+            );
+            nextOutputs = {
+              result: null,
+              status: "failed",
+              jobId,
+              bundle: {
+                jobId,
+                status: "failed",
+                error: error instanceof Error ? error.message : "Polling failed",
+              },
+            };
+          }
+          break;
+        }
         case "http": {
           if (httpExecuted.has(node.id)) break;
           const httpConfig = node.config?.http ?? {
@@ -688,19 +1161,7 @@ export async function evaluateGraph({
           break;
         }
         case "database": {
-          const defaultQuery = {
-            provider: "auto" as const,
-            collection: "products",
-            mode: "preset" as const,
-            preset: "by_id" as const,
-            field: "_id",
-            idType: "string" as const,
-            queryTemplate: "{\n  \"_id\": \"{{value}}\"\n}",
-            limit: 20,
-            sort: "",
-            projection: "",
-            single: false,
-          };
+          const defaultQuery = DEFAULT_DB_QUERY;
           const dbConfig = node.config?.database ?? {
             operation: "query",
             entityType: "product",
@@ -860,14 +1321,7 @@ export async function evaluateGraph({
             });
             const entityType = (dbConfig.entityType ?? "product").trim().toLowerCase();
             const idField = dbConfig.idField ?? "entityId";
-            const rawEntityId =
-              coerceInput(nodeInputs[idField]) ??
-              coerceInput(nodeInputs.entityId) ??
-              coerceInput(nodeInputs.productId);
-            const entityId =
-              typeof rawEntityId === "string" || typeof rawEntityId === "number"
-                ? String(rawEntityId).trim()
-                : "";
+            const entityId = resolveEntityIdFromInputs(nodeInputs, idField);
             const hasUpdates = Object.keys(updates).length > 0;
             const needsEntityId = entityType !== "custom";
             let updateResult: unknown = updates;
@@ -1036,14 +1490,7 @@ export async function evaluateGraph({
           if (operation === "delete") {
             const entityType = (dbConfig.entityType ?? "product").trim().toLowerCase();
             const idField = dbConfig.idField ?? "entityId";
-            const rawEntityId =
-              coerceInput(nodeInputs[idField]) ??
-              coerceInput(nodeInputs.entityId) ??
-              coerceInput(nodeInputs.productId);
-            const entityId =
-              typeof rawEntityId === "string" || typeof rawEntityId === "number"
-                ? String(rawEntityId).trim()
-                : "";
+            const entityId = resolveEntityIdFromInputs(nodeInputs, idField);
             if (!entityId) {
               reportAiPathsError(
                 new Error("Database delete missing entity id"),
@@ -1161,6 +1608,135 @@ export async function evaluateGraph({
                 .map(([key, value]) => `${key}: ${formatRuntimeValue(value)}`)
                 .join("\n");
           nextOutputs = { prompt: prompt || "Prompt: (no template)" };
+          break;
+        }
+        case "prompt": {
+          const promptConfig = node.config?.prompt ?? { template: "" };
+          const bundleValue = coerceInput(nodeInputs.bundle);
+          const bundleContext =
+            bundleValue && typeof bundleValue === "object" && !Array.isArray(bundleValue)
+              ? (bundleValue as Record<string, unknown>)
+              : {};
+          const data = { ...nodeInputs, ...bundleContext };
+          const currentValue =
+            coerceInput(nodeInputs.result) ?? coerceInput(nodeInputs.value) ?? "";
+          const prompt = promptConfig.template
+            ? renderTemplate(
+                promptConfig.template,
+                data as Record<string, unknown>,
+                currentValue
+              )
+            : Object.entries(data)
+                .map(([key, value]) => `${key}: ${formatRuntimeValue(value)}`)
+                .join("\n");
+          const imagesValue =
+            nodeInputs.images !== undefined
+              ? nodeInputs.images
+              : bundleContext.images !== undefined
+                ? bundleContext.images
+                : undefined;
+          const promptOutput = prompt || "Prompt: (no template)";
+          nextOutputs =
+            imagesValue !== undefined
+              ? { prompt: promptOutput, images: imagesValue }
+              : { prompt: promptOutput };
+          break;
+        }
+        case "model": {
+          const promptInput = coerceInput(nodeInputs.prompt);
+          if (
+            promptInput === undefined ||
+            promptInput === null ||
+            (typeof promptInput === "string" && !promptInput.trim())
+          ) {
+            nextOutputs = prevOutputs;
+            break;
+          }
+          if (aiExecuted.has(node.id)) break;
+          const modelConfig = node.config?.model ?? {
+            modelId: "gpt-4o",
+            temperature: 0.7,
+            maxTokens: 800,
+            vision: node.inputs.includes("images"),
+            waitForResult: true,
+          };
+          const hasResultConsumers = edges.some(
+            (edge) =>
+              edge.from === node.id &&
+              (edge.fromPort === "result" ||
+                (edge.fromPort === undefined && edge.toPort === "result"))
+          );
+          const hasPollConsumer = edges.some((edge) => {
+            if (edge.from !== node.id) return false;
+            if (edge.fromPort && edge.fromPort !== "jobId") return false;
+            const targetNode = nodes.find((item) => item.id === edge.to);
+            return targetNode?.type === "poll";
+          });
+          const shouldWait =
+            (modelConfig.waitForResult !== false || hasResultConsumers) &&
+            !hasPollConsumer;
+          const prompt =
+            typeof promptInput === "string"
+              ? promptInput.trim()
+              : formatRuntimeValue(promptInput);
+          if (!prompt || prompt === "—") {
+            nextOutputs = prevOutputs;
+            break;
+          }
+          const imageUrls = extractImageUrls(nodeInputs.images);
+          const payload = {
+            prompt,
+            imageUrls,
+            modelId: modelConfig.modelId,
+            temperature: modelConfig.temperature,
+            maxTokens: modelConfig.maxTokens,
+            vision: modelConfig.vision,
+            source: "ai_paths",
+            graph: {
+              pathId: activePathId ?? undefined,
+              nodeId: node.id,
+              nodeTitle: node.title,
+            },
+          };
+          const productId = resolveJobProductId(nodeInputs);
+          let enqueuedJobId: string | undefined;
+          try {
+            const enqueueRes = await fetch("/api/products/ai-jobs/enqueue", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                productId,
+                type: "graph_model",
+                payload,
+              }),
+            });
+            const enqueueData = (await enqueueRes.json()) as {
+              error?: string;
+              jobId?: string;
+            };
+            if (!enqueueRes.ok || !enqueueData.jobId) {
+              throw new Error(enqueueData.error || "Failed to enqueue AI job.");
+            }
+            enqueuedJobId = enqueueData.jobId;
+            toast("AI model job queued.", { variant: "success" });
+            if (!shouldWait) {
+              nextOutputs = { jobId: enqueueData.jobId };
+              aiExecuted.add(node.id);
+              break;
+            }
+            const result = await pollGraphJob(enqueueData.jobId);
+            nextOutputs = { result, jobId: enqueueData.jobId };
+            aiExecuted.add(node.id);
+          } catch (error) {
+            reportAiPathsError(
+              error,
+              { action: "graphModel", nodeId: node.id },
+              "AI model job failed:"
+            );
+            toast("AI model job failed.", { variant: "error" });
+            nextOutputs = { result: "", jobId: enqueuedJobId };
+            aiExecuted.add(node.id);
+          }
           break;
         }
         case "ai_description": {

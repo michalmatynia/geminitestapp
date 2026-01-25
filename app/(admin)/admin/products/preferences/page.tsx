@@ -26,6 +26,8 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   productListCatalogFilter: "all",
   productListCurrencyCode: null,
   productListPageSize: 50,
+  aiPathsActivePathId: null,
+  aiPathsExpandedGroups: ["Triggers"],
 };
 
 export default function ProductPreferencesPage() {
@@ -50,6 +52,8 @@ export default function ProductPreferencesPage() {
             productListCatalogFilter: prefsData.productListCatalogFilter || "all",
             productListCurrencyCode: prefsData.productListCurrencyCode || null,
             productListPageSize: prefsData.productListPageSize || 50,
+            aiPathsActivePathId: prefsData.aiPathsActivePathId ?? null,
+            aiPathsExpandedGroups: prefsData.aiPathsExpandedGroups ?? ["Triggers"],
           });
         }
 

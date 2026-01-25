@@ -786,6 +786,10 @@ model UserPreferences {
   productListCatalogFilter String? // catalog ID or "all"
   productListCurrencyCode  String? // currency code
   productListPageSize      Int?    // page size
+  // AI Paths preferences
+  aiPathsActivePathId    String?
+  aiPathsExpandedGroups  String[] @default([])
+  aiPathsPaletteCollapsed Boolean? @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

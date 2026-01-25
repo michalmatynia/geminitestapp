@@ -122,15 +122,19 @@ export function PathsTabPanel({
 type DocsTabPanelProps = {
   docsWiringSnippet: string;
   docsDescriptionSnippet: string;
+  docsJobsSnippet: string;
   onCopyDocsWiring: () => void;
   onCopyDocsDescription: () => void;
+  onCopyDocsJobs: () => void;
 };
 
 export function DocsTabPanel({
   docsWiringSnippet,
   docsDescriptionSnippet,
+  docsJobsSnippet,
   onCopyDocsWiring,
   onCopyDocsDescription,
+  onCopyDocsJobs,
 }: DocsTabPanelProps) {
   return (
     <div className="space-y-6 text-sm text-gray-300">
@@ -140,6 +144,50 @@ export function DocsTabPanel({
           Modular workflows are built by connecting node outputs (right) to matching
           node inputs (left). Connections are strict: port names must match.
         </p>
+      </div>
+
+      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+        <h3 className="text-base font-semibold text-white">System Overview</h3>
+        <ul className="mt-3 space-y-2 text-gray-400">
+          <li>
+            Graphs run from a <span className="text-white">Trigger</span> node and
+            propagate data through connected ports.
+          </li>
+          <li>
+            Ports are strict and type-safe by name:{" "}
+            <span className="text-white">result → result</span>,{" "}
+            <span className="text-white">images → images</span>.
+          </li>
+          <li>
+            Multiple wires into the same input are collected as arrays; the runtime
+            resolves the first value for single-input nodes.
+          </li>
+          <li>
+            Image data travels as <span className="text-white">image URLs</span> (not raw
+            files), and the Model node converts URLs to base64 when calling the model.
+          </li>
+        </ul>
+      </div>
+
+      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+        <h3 className="text-base font-semibold text-white">Execution & State</h3>
+        <ul className="mt-3 space-y-2 text-gray-400">
+          <li>
+            Trigger fires the graph evaluation. Nodes like{" "}
+            <span className="text-white">Model</span>,{" "}
+            <span className="text-white">Database</span>,{" "}
+            <span className="text-white">HTTP</span>,{" "}
+            <span className="text-white">Delay</span> run at most once per graph run.
+          </li>
+          <li>
+            Runtime outputs are stored per node. Viewer nodes can inspect live outputs
+            when opened.
+          </li>
+          <li>
+            Path canvas state and palette group collapse state are persisted per-user
+            in settings so you can resume where you left off.
+          </li>
+        </ul>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -199,6 +247,24 @@ export function DocsTabPanel({
       </div>
 
       <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+        <h3 className="text-base font-semibold text-white">AI Job Queue (AI Paths)</h3>
+        <ul className="mt-3 space-y-2 text-gray-400">
+          <li>
+            <span className="text-white">Model node</span> enqueues a job and can
+            either wait for completion or emit only a jobId.
+          </li>
+          <li>
+            Use <span className="text-white">Poll</span> to wait on a jobId (AI Job
+            mode) or query MongoDB (Database mode).
+          </li>
+          <li>
+            Connect <span className="text-emerald-200">result</span> to Result Viewer
+            or Database Update to save outputs.
+          </li>
+        </ul>
+      </div>
+
+      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
         <h3 className="text-base font-semibold text-white">Cluster Presets</h3>
         <p className="mt-2 text-gray-400">
           Use Cluster Presets to save reusable Bundle + Template pairs. Apply them to
@@ -247,6 +313,22 @@ export function DocsTabPanel({
       </div>
 
       <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-base font-semibold text-white">AI Job Wiring</h3>
+          <Button
+            type="button"
+            className="rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
+            onClick={onCopyDocsJobs}
+          >
+            Copy Job Wiring
+          </Button>
+        </div>
+        <pre className="mt-4 whitespace-pre-wrap rounded-md border border-gray-800 bg-gray-900/60 p-3 text-[11px] text-gray-200">
+          {docsJobsSnippet}
+        </pre>
+      </div>
+
+      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
         <h3 className="text-base font-semibold text-white">Node Reference</h3>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
@@ -282,6 +364,27 @@ export function DocsTabPanel({
             <p className="mt-2 text-gray-400">
               Maps context fields into custom outputs. Outputs must match the port
               names of downstream nodes.
+            </p>
+          </div>
+          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+            <h4 className="text-sm font-semibold text-white">Parser</h4>
+            <p className="mt-2 text-gray-400">
+              Extracts structured fields from incoming JSON and emits outputs per
+              mapping or as a bundled object.
+            </p>
+          </div>
+          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+            <h4 className="text-sm font-semibold text-white">Prompt</h4>
+            <p className="mt-2 text-gray-400">
+              Turns data into a prompt string using placeholders and can forward image
+              URLs to the Model node.
+            </p>
+          </div>
+          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+            <h4 className="text-sm font-semibold text-white">Model</h4>
+            <p className="mt-2 text-gray-400">
+              Enqueues an AI job (<span className="text-gray-200">graph_model</span>)
+              and either waits for completion or emits only a jobId.
             </p>
           </div>
           <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
@@ -321,6 +424,14 @@ export function DocsTabPanel({
             <h4 className="text-sm font-semibold text-white">Delay</h4>
             <p className="mt-2 text-gray-400">
               Introduces a pause between steps to sequence signal flows.
+            </p>
+          </div>
+          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+            <h4 className="text-sm font-semibold text-white">Poll</h4>
+            <p className="mt-2 text-gray-400">
+              Waits for AI job completion or polls a MongoDB query until a success
+              condition is met. Emits <span className="text-gray-200">result</span> and{" "}
+              <span className="text-gray-200">status</span>.
             </p>
           </div>
           <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
@@ -364,6 +475,36 @@ export function DocsTabPanel({
           <li>Use “Save Path” to persist the canvas.</li>
           <li>Errors are logged to System Logs with an AI Paths badge.</li>
           <li>The “Last error” badge links directly to filtered logs.</li>
+        </ul>
+      </div>
+
+      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+        <h3 className="text-base font-semibold text-white">Troubleshooting</h3>
+        <ul className="mt-3 space-y-2 text-gray-400">
+          <li>
+            <span className="text-white">No result in Viewer:</span> check that the
+            input/output port names match (e.g. result → result).
+          </li>
+          <li>
+            <span className="text-white">Model node does nothing:</span> ensure Prompt
+            output is connected and non-empty.
+          </li>
+          <li>
+            <span className="text-white">Poll node stuck:</span> confirm a jobId is
+            wired in AI Job mode, or query config is correct in Database mode.
+          </li>
+          <li>
+            <span className="text-white">Database update missing entityId:</span> wire
+            Parser.productId or entityId into Database.entityId.
+          </li>
+          <li>
+            <span className="text-white">Images not detected:</span> images must be URL
+            strings (e.g. /uploads/..., http URLs).
+          </li>
+          <li>
+            <span className="text-white">Connection rejected:</span> ports must match
+            exactly and node types must be compatible.
+          </li>
         </ul>
       </div>
     </div>

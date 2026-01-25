@@ -23,29 +23,36 @@ import type {
   AiNode,
   ConstantConfig,
   CompareConfig,
+  GateConfig,
   DatabaseConfig,
   DatabaseOperation,
   DbQueryConfig,
+  HttpConfig,
   Edge,
   MathConfig,
+  ModelConfig,
   NodeConfig,
+  ParserConfig,
   ParserSampleState,
+  PollConfig,
+  PromptConfig,
   RouterConfig,
   RuntimeState,
   TemplateConfig,
+  UpdaterMapping,
   UpdaterSampleState,
 } from "./types";
 import {
-  BUNDLE_INPUT_PORTS,
   DB_COLLECTION_OPTIONS,
   DEFAULT_CONTEXT_ROLE,
   DEFAULT_MODELS,
   PARSER_PATH_OPTIONS,
   PARSER_PRESETS,
   TRIGGER_EVENTS,
-  TEMPLATE_INPUT_PORTS,
+  applyContextPreset,
   buildFlattenedMappings,
   buildTopLevelMappings,
+  coerceInput,
   createParserMappings,
   createViewerOutputs,
   extractJsonPathEntries,
@@ -53,7 +60,9 @@ import {
   getContextPresetSet,
   inferImageMappingPath,
   parsePathList,
+  renderTemplate,
   safeParseJson,
+  toggleContextTarget,
   toNumber,
 } from "./helpers";
 import { extractImageUrls, formatPortLabel, formatPlaceholderLabel } from "./ui-utils";
@@ -77,6 +86,7 @@ type NodeConfigDialogProps = {
   handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
   handleFetchUpdaterSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
   handleRunSimulation: (node: AiNode) => void;
+  clearRuntimeForNode?: (nodeId: string) => void;
   toast: (message: string, options?: { variant?: "success" | "error" }) => void;
 };
 
@@ -99,8 +109,32 @@ export function NodeConfigDialog({
   handleFetchParserSample,
   handleFetchUpdaterSample,
   handleRunSimulation,
+  clearRuntimeForNode,
   toast,
 }: NodeConfigDialogProps) {
+  const [hideLargeFields, setHideLargeFields] = React.useState(true);
+  const [showDiff, setShowDiff] = React.useState(true);
+  const [diffOnlyChanges, setDiffOnlyChanges] = React.useState(true);
+  const [parserDraftMappings, setParserDraftMappings] = React.useState<Record<string, string>>(
+    {}
+  );
+  const [parserDraftNodeId, setParserDraftNodeId] = React.useState<string | null>(null);
+  const parserDraftTimerRef = React.useRef<number | null>(null);
+  React.useEffect(() => {
+    if (!selectedNode || selectedNode.type !== "parser") return;
+    const nextMappings =
+      selectedNode.config?.parser?.mappings ??
+      createParserMappings(selectedNode.outputs ?? []);
+    setParserDraftNodeId(selectedNode.id);
+    setParserDraftMappings(nextMappings);
+    return () => {
+      if (parserDraftTimerRef.current) {
+        window.clearTimeout(parserDraftTimerRef.current);
+        parserDraftTimerRef.current = null;
+      }
+    };
+  }, [selectedNode?.id, selectedNode?.type]);
+
   if (!selectedNode) return null;
   return (
 <Dialog open={configOpen} onOpenChange={setConfigOpen}>
@@ -115,14 +149,17 @@ export function NodeConfigDialog({
               </DialogDescription>
             </DialogHeader>
 
-            {selectedNode.type === "parser" && (() => {
-              const parserConfig = selectedNode.config?.parser ?? {
+            <>
+                  {selectedNode.type === "parser" && (() => {
+              const parserConfig: ParserConfig = selectedNode.config?.parser ?? {
                 mappings: createParserMappings(selectedNode.outputs),
                 outputMode: "individual",
                 presetId: PARSER_PRESETS[0]?.id ?? "custom",
               };
               const mappings =
                 parserConfig.mappings ?? createParserMappings(selectedNode.outputs);
+              const draftMappings =
+                parserDraftNodeId === selectedNode.id ? parserDraftMappings : mappings;
               const outputMode = parserConfig.outputMode ?? "individual";
               const presetId =
                 parserConfig.presetId ?? PARSER_PRESETS[0]?.id ?? "custom";
@@ -188,6 +225,23 @@ export function NodeConfigDialog({
                 const value = path.startsWith("[") ? `$${path}` : `$.${path}`;
                 return { label: `Sample: ${path}`, value };
               });
+              const parserRuntimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
+              const parserContext =
+                parserRuntimeInputs.context && typeof parserRuntimeInputs.context === "object"
+                  ? (parserRuntimeInputs.context as Record<string, unknown>)
+                  : null;
+              const parserContextEntity =
+                parserContext?.entity ||
+                parserContext?.entityJson ||
+                parserContext?.product ||
+                null;
+              const parserSourceLabel = parserRuntimeInputs.entityJson
+                ? "entityJson input"
+                : parserContextEntity
+                  ? "context entity"
+                  : parserRuntimeInputs.context
+                    ? "context (no entity)"
+                    : "no runtime input yet";
               const suggestedPathOptions = samplePathOptions.length
                 ? [...samplePathOptions, ...PARSER_PATH_OPTIONS]
                 : PARSER_PATH_OPTIONS;
@@ -196,7 +250,34 @@ export function NodeConfigDialog({
                   suggestedPathOptions.map((option) => [option.value, option])
                 ).values()
               );
-              const entries = Object.entries(mappings);
+              const entries = Object.entries(draftMappings);
+              const commitMappingsDebounced = (
+                nextMappings: Record<string, string>,
+                nextMode: "individual" | "bundle" = outputMode,
+                nextPresetId: string = presetId
+              ) => {
+                setParserDraftNodeId(selectedNode.id);
+                setParserDraftMappings(nextMappings);
+                if (parserDraftTimerRef.current) {
+                  window.clearTimeout(parserDraftTimerRef.current);
+                }
+                parserDraftTimerRef.current = window.setTimeout(() => {
+                  commitMappings(nextMappings, nextMode, nextPresetId);
+                }, 500);
+              };
+              const commitMappingsImmediate = (
+                nextMappings: Record<string, string>,
+                nextMode: "individual" | "bundle" = outputMode,
+                nextPresetId: string = presetId
+              ) => {
+                setParserDraftNodeId(selectedNode.id);
+                setParserDraftMappings(nextMappings);
+                if (parserDraftTimerRef.current) {
+                  window.clearTimeout(parserDraftTimerRef.current);
+                  parserDraftTimerRef.current = null;
+                }
+                commitMappings(nextMappings, nextMode, nextPresetId);
+              };
               const commitMappings = (
                 nextMappings: Record<string, string>,
                 nextMode: "individual" | "bundle" = outputMode,
@@ -227,11 +308,11 @@ export function NodeConfigDialog({
               const addMapping = (baseKey: string, defaultPath: string) => {
                 let nextKey = baseKey;
                 let counter = 1;
-                while (mappings[nextKey]) {
+                while (draftMappings[nextKey]) {
                   counter += 1;
                   nextKey = `${baseKey}_${counter}`;
                 }
-                commitMappings({ ...mappings, [nextKey]: defaultPath });
+                commitMappingsImmediate({ ...draftMappings, [nextKey]: defaultPath });
               };
               const updateMappingKey = (index: number, value: string) => {
                 const nextEntries = entries.map((entry, idx) => {
@@ -244,7 +325,7 @@ export function NodeConfigDialog({
                   if (!key.trim()) return;
                   nextMappings[key.trim()] = path;
                 });
-                commitMappings(nextMappings);
+                commitMappingsDebounced(nextMappings);
               };
               const updateMappingPath = (index: number, value: string) => {
                 const nextEntries = entries.map((entry, idx) =>
@@ -255,7 +336,7 @@ export function NodeConfigDialog({
                   if (!key.trim()) return;
                   nextMappings[key.trim()] = path;
                 });
-                commitMappings(nextMappings);
+                commitMappingsDebounced(nextMappings);
               };
               const removeMapping = (index: number) => {
                 if (entries.length <= 1) return;
@@ -265,36 +346,40 @@ export function NodeConfigDialog({
                   if (!key.trim()) return;
                   nextMappings[key.trim()] = path;
                 });
-                commitMappings(nextMappings);
+                commitMappingsImmediate(nextMappings);
               };
               const applyPreset = (mode: "replace" | "merge") => {
                 if (!activePreset || activePreset.id === "custom") return;
                 if (mode === "replace") {
-                  commitMappings(activePreset.mappings, outputMode, activePreset.id);
+                  commitMappingsImmediate(
+                    activePreset.mappings,
+                    outputMode,
+                    activePreset.id
+                  );
                   return;
                 }
-                const merged: Record<string, string> = { ...mappings };
+                const merged: Record<string, string> = { ...draftMappings };
                 Object.entries(activePreset.mappings).forEach(([key, value]) => {
                   if (!(key in merged)) {
                     merged[key] = value;
                   }
                 });
-                commitMappings(merged, outputMode, activePreset.id);
+                commitMappingsImmediate(merged, outputMode, activePreset.id);
               };
               const applySampleMappings = (mode: "replace" | "merge") => {
                 const keys = Object.keys(sampleMappings);
                 if (keys.length === 0) return;
                 if (mode === "replace") {
-                  commitMappings(sampleMappings, outputMode, "custom");
+                  commitMappingsImmediate(sampleMappings, outputMode, "custom");
                   return;
                 }
-                const merged: Record<string, string> = { ...mappings };
+                const merged: Record<string, string> = { ...draftMappings };
                 keys.forEach((key) => {
                   if (!(key in merged)) {
                     merged[key] = sampleMappings[key] ?? "";
                   }
                 });
-                commitMappings(merged, outputMode, "custom");
+                commitMappingsImmediate(merged, outputMode, "custom");
               };
               const handleDetectImages = () => {
                 if (!sampleValue) {
@@ -310,11 +395,19 @@ export function NodeConfigDialog({
                   return;
                 }
                 if (imageEntryIndex >= 0) {
-                  updateMappingPath(imageEntryIndex, detected);
+                  const nextEntries = entries.map((entry, idx) =>
+                    idx === imageEntryIndex ? [entry[0], detected] : entry
+                  );
+                  const nextMappings: Record<string, string> = {};
+                  nextEntries.forEach(([key, path]) => {
+                    if (!key.trim()) return;
+                    nextMappings[key.trim()] = path;
+                  });
+                  commitMappingsImmediate(nextMappings);
                   toast(`Image field detected: ${detected}`, { variant: "success" });
                   return;
                 }
-                addMapping("images", detected);
+                commitMappingsImmediate({ ...draftMappings, images: detected });
                 toast(`Image field detected: ${detected}`, { variant: "success" });
               };
               const imageEntryIndex = entries.findIndex(([key]) =>
@@ -322,12 +415,16 @@ export function NodeConfigDialog({
               );
               return (
                 <div className="space-y-4">
+                  <div className="rounded-md border border-gray-800 bg-gray-900/60 px-3 py-2 text-[11px] text-gray-300">
+                    <div className="text-gray-400">Input source</div>
+                    <div className="mt-1 text-sm text-gray-200">{parserSourceLabel}</div>
+                  </div>
                   <div>
                     <Label className="text-xs text-gray-400">Preset</Label>
                     <Select
                       value={presetId}
                       onValueChange={(value) =>
-                        commitMappings(mappings, outputMode, value)
+                        commitMappingsImmediate(draftMappings, outputMode, value)
                       }
                     >
                       <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
@@ -564,7 +661,7 @@ export function NodeConfigDialog({
                             className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
                             onClick={() => applySampleMappings("replace")}
                           >
-                            Generate from sample
+                            Auto-map from sample
                           </Button>
                           <Button
                             type="button"
@@ -590,8 +687,8 @@ export function NodeConfigDialog({
                     <Select
                       value={outputMode}
                       onValueChange={(value) =>
-                        commitMappings(
-                          mappings,
+                        commitMappingsImmediate(
+                          draftMappings,
                           value as "individual" | "bundle"
                         )
                       }
@@ -696,15 +793,33 @@ export function NodeConfigDialog({
                     ))}
                   </div>
 
-                  <Button
-                    type="button"
-                    className="w-full rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
-                    onClick={() =>
-                      addMapping(`field_${entries.length + 1}`, "")
-                    }
-                  >
-                    Add mapping
-                  </Button>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <Button
+                      type="button"
+                      className="w-full rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
+                      onClick={() =>
+                        addMapping(`field_${entries.length + 1}`, "")
+                      }
+                    >
+                      Add mapping
+                    </Button>
+                    <Button
+                      type="button"
+                      className="w-full rounded-md border border-gray-700 text-xs text-gray-200 hover:bg-gray-900/80 disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={entries.length === 0}
+                      onClick={() => removeMapping(entries.length - 1)}
+                    >
+                      Remove last
+                    </Button>
+                    <Button
+                      type="button"
+                      className="w-full rounded-md border border-rose-400/50 text-xs text-rose-100 hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={entries.length === 0}
+                      onClick={() => commitMappingsImmediate({}, outputMode, "custom")}
+                    >
+                      Clear mappings
+                    </Button>
+                  </div>
                   {imageEntryIndex >= 0 && (
                     <div className="rounded-md border border-gray-800 bg-gray-900/50 p-3 text-[11px] text-gray-400">
                       <div className="text-gray-300">Image helpers</div>
@@ -1239,19 +1354,19 @@ export function NodeConfigDialog({
                 projection: "",
                 single: false,
               };
-              const pollConfig = selectedNode.config?.poll ?? {};
-              const resolvedPollConfig = {
-                intervalMs: pollConfig.intervalMs ?? 2000,
-                maxAttempts: pollConfig.maxAttempts ?? 30,
-                mode: pollConfig.mode ?? "job",
+              const pollConfig = selectedNode.config?.poll;
+              const resolvedPollConfig: PollConfig = {
+                intervalMs: pollConfig?.intervalMs ?? 2000,
+                maxAttempts: pollConfig?.maxAttempts ?? 30,
+                mode: pollConfig?.mode ?? "job",
                 dbQuery: {
                   ...defaultQuery,
-                  ...(pollConfig.dbQuery ?? {}),
-                },
-                successPath: pollConfig.successPath ?? "status",
-                successOperator: pollConfig.successOperator ?? "equals",
-                successValue: pollConfig.successValue ?? "completed",
-                resultPath: pollConfig.resultPath ?? "result",
+                  ...(pollConfig?.dbQuery ?? {}),
+                } as DbQueryConfig,
+                successPath: pollConfig?.successPath ?? "status",
+                successOperator: pollConfig?.successOperator ?? "equals",
+                successValue: pollConfig?.successValue ?? "completed",
+                resultPath: pollConfig?.resultPath ?? "result",
               };
               const queryConfig = resolvedPollConfig.dbQuery;
               const collectionOption = DB_COLLECTION_OPTIONS.some(
@@ -1259,6 +1374,80 @@ export function NodeConfigDialog({
               )
                 ? queryConfig.collection
                 : "custom";
+              const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
+              const runtimeValue =
+                coerceInput(runtimeInputs.value) ??
+                coerceInput(runtimeInputs.entityId) ??
+                coerceInput(runtimeInputs.productId);
+              const queryPreview = (() => {
+                if (queryConfig.mode === "preset") {
+                  const presetValue = runtimeValue ?? "";
+                  const presetField =
+                    queryConfig.preset === "by_field"
+                      ? queryConfig.field || "id"
+                      : queryConfig.preset === "by_productId"
+                        ? "productId"
+                        : queryConfig.preset === "by_entityId"
+                          ? "entityId"
+                          : "_id";
+                  return { [presetField]: presetValue };
+                }
+                if (
+                  runtimeInputs.query &&
+                  typeof runtimeInputs.query === "object" &&
+                  !Array.isArray(runtimeInputs.query)
+                ) {
+                  return runtimeInputs.query as Record<string, unknown>;
+                }
+                const rendered = renderTemplate(
+                  queryConfig.queryTemplate ?? "{}",
+                  runtimeInputs as Record<string, unknown>,
+                  runtimeValue ?? ""
+                );
+                const parsed = safeParseJson(rendered);
+                if (parsed.value && typeof parsed.value === "object") {
+                  return parsed.value as Record<string, unknown>;
+                }
+                return { __raw: rendered };
+              })();
+              const queryPreviewText = (() => {
+                try {
+                  return JSON.stringify(queryPreview, null, 2);
+                } catch {
+                  return String(queryPreview);
+                }
+              })();
+              const placeholderChips = [
+                "{{value}}",
+                "{{entityId}}",
+                "{{productId}}",
+                "{{context.entityId}}",
+                "{{bundle.key}}",
+                "{{meta.pathId}}",
+              ];
+              const templateSnippets = [
+                {
+                  label: "By _id",
+                  value: "{\n  \"_id\": \"{{value}}\"\n}",
+                },
+                {
+                  label: "By productId",
+                  value: "{\n  \"productId\": \"{{value}}\"\n}",
+                },
+                {
+                  label: "By SKU",
+                  value: "{\n  \"sku\": \"{{value}}\"\n}",
+                },
+                {
+                  label: "Name contains",
+                  value:
+                    "{\n  \"name\": { \"$regex\": \"{{value}}\", \"$options\": \"i\" }\n}",
+                },
+                {
+                  label: "Created after",
+                  value: "{\n  \"createdAt\": { \"$gte\": \"{{value}}\" }\n}",
+                },
+              ];
               const updatePollConfig = (patch: Partial<typeof resolvedPollConfig>) =>
                 updateSelectedNodeConfig({
                   poll: {
@@ -1397,6 +1586,15 @@ export function NodeConfigDialog({
                           />
                         </div>
                       )}
+                      <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3">
+                        <div className="text-[11px] text-gray-400">Query preview</div>
+                        <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200">
+                          {queryPreviewText}
+                        </pre>
+                        <p className="mt-2 text-[11px] text-gray-500">
+                          Preview uses current runtime inputs (if available).
+                        </p>
+                      </div>
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div>
                           <Label className="text-xs text-gray-400">Query mode</Label>
@@ -1647,7 +1845,7 @@ export function NodeConfigDialog({
             })()}
 
             {selectedNode.type === "http" && (() => {
-              const httpConfig = selectedNode.config?.http ?? {
+              const httpConfig: HttpConfig = selectedNode.config?.http ?? {
                 url: "",
                 method: "GET",
                 headers: "{\n  \"Content-Type\": \"application/json\"\n}",
@@ -1773,7 +1971,7 @@ export function NodeConfigDialog({
                 projection: "",
                 single: false,
               };
-              const persistedDatabase = (selectedNode.config?.database ?? {}) as DatabaseConfig;
+              const persistedDatabase = selectedNode.config?.database;
               const defaultMappings: UpdaterMapping[] = [
                 {
                   targetPath: "content_en",
@@ -1781,21 +1979,21 @@ export function NodeConfigDialog({
                 },
               ];
               const databaseConfig: DatabaseConfig = {
-                operation: persistedDatabase.operation ?? "query",
-                entityType: persistedDatabase.entityType ?? "product",
-                idField: persistedDatabase.idField ?? "entityId",
-                mode: persistedDatabase.mode ?? "replace",
+                operation: persistedDatabase?.operation ?? "query",
+                entityType: persistedDatabase?.entityType ?? "product",
+                idField: persistedDatabase?.idField ?? "entityId",
+                mode: persistedDatabase?.mode ?? "replace",
                 mappings:
-                  persistedDatabase.mappings && persistedDatabase.mappings.length > 0
+                  persistedDatabase?.mappings && persistedDatabase.mappings.length > 0
                     ? persistedDatabase.mappings
                     : defaultMappings,
                 query: {
                   ...defaultQuery,
-                  ...(persistedDatabase.query ?? {}),
-                },
-                writeSource: persistedDatabase.writeSource ?? "bundle",
-                writeSourcePath: persistedDatabase.writeSourcePath ?? "",
-                dryRun: persistedDatabase.dryRun ?? false,
+                  ...(persistedDatabase?.query ?? {}),
+                } as DbQueryConfig,
+                writeSource: persistedDatabase?.writeSource ?? "bundle",
+                writeSourcePath: persistedDatabase?.writeSourcePath ?? "",
+                dryRun: persistedDatabase?.dryRun ?? false,
               };
               const operation = databaseConfig.operation ?? "query";
               const queryConfig = databaseConfig.query ?? defaultQuery;
@@ -1952,6 +2150,80 @@ export function NodeConfigDialog({
               )
                 ? queryConfig.collection
                 : "custom";
+              const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
+              const runtimeValue =
+                coerceInput(runtimeInputs.value) ??
+                coerceInput(runtimeInputs.entityId) ??
+                coerceInput(runtimeInputs.productId);
+              const queryPreview = (() => {
+                if (queryConfig.mode === "preset") {
+                  const presetValue = runtimeValue ?? "";
+                  const presetField =
+                    queryConfig.preset === "by_field"
+                      ? queryConfig.field || "id"
+                      : queryConfig.preset === "by_productId"
+                        ? "productId"
+                        : queryConfig.preset === "by_entityId"
+                          ? "entityId"
+                          : "_id";
+                  return { [presetField]: presetValue };
+                }
+                if (
+                  runtimeInputs.query &&
+                  typeof runtimeInputs.query === "object" &&
+                  !Array.isArray(runtimeInputs.query)
+                ) {
+                  return runtimeInputs.query as Record<string, unknown>;
+                }
+                const rendered = renderTemplate(
+                  queryConfig.queryTemplate ?? "{}",
+                  runtimeInputs as Record<string, unknown>,
+                  runtimeValue ?? ""
+                );
+                const parsed = safeParseJson(rendered);
+                if (parsed.value && typeof parsed.value === "object") {
+                  return parsed.value as Record<string, unknown>;
+                }
+                return { __raw: rendered };
+              })();
+              const queryPreviewText = (() => {
+                try {
+                  return JSON.stringify(queryPreview, null, 2);
+                } catch {
+                  return String(queryPreview);
+                }
+              })();
+              const placeholderChips = [
+                "{{value}}",
+                "{{entityId}}",
+                "{{productId}}",
+                "{{context.entityId}}",
+                "{{bundle.key}}",
+                "{{meta.pathId}}",
+              ];
+              const templateSnippets = [
+                {
+                  label: "By _id",
+                  value: "{\n  \"_id\": \"{{value}}\"\n}",
+                },
+                {
+                  label: "By productId",
+                  value: "{\n  \"productId\": \"{{value}}\"\n}",
+                },
+                {
+                  label: "By SKU",
+                  value: "{\n  \"sku\": \"{{value}}\"\n}",
+                },
+                {
+                  label: "Name contains",
+                  value:
+                    "{\n  \"name\": { \"$regex\": \"{{value}}\", \"$options\": \"i\" }\n}",
+                },
+                {
+                  label: "Created after",
+                  value: "{\n  \"createdAt\": { \"$gte\": \"{{value}}\" }\n}",
+                },
+              ];
               return (
                 <div className="space-y-4">
                   <div>
@@ -2204,6 +2476,47 @@ export function NodeConfigDialog({
                               })
                             }
                           />
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {placeholderChips.map((chip) => (
+                              <Button
+                                key={chip}
+                                type="button"
+                                className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                                onClick={() =>
+                                  updateSelectedNodeConfig({
+                                    database: {
+                                      ...databaseConfig,
+                                      query: {
+                                        ...queryConfig,
+                                        queryTemplate: `${queryConfig.queryTemplate ?? ""}${chip}`,
+                                      },
+                                    },
+                                  })
+                                }
+                              >
+                                {chip}
+                              </Button>
+                            ))}
+                          </div>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {templateSnippets.map((snippet) => (
+                              <Button
+                                key={snippet.label}
+                                type="button"
+                                className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                                onClick={() =>
+                                  updateSelectedNodeConfig({
+                                    database: {
+                                      ...databaseConfig,
+                                      query: { ...queryConfig, queryTemplate: snippet.value },
+                                    },
+                                  })
+                                }
+                              >
+                                {snippet.label}
+                              </Button>
+                            ))}
+                          </div>
                           <p className="mt-2 text-[11px] text-gray-500">
                             Use placeholders like <span className="text-gray-300">{`{{value}}`}</span>{" "}
                             or <span className="text-gray-300">{`{{entityId}}`}</span>.
@@ -2225,6 +2538,9 @@ export function NodeConfigDialog({
                               })
                             }
                           />
+                          <p className="mt-2 text-[11px] text-gray-500">
+                            Example: <span className="text-gray-300">{`{ "createdAt": -1 }`}</span>
+                          </p>
                         </div>
                         <div>
                           <Label className="text-xs text-gray-400">Projection (JSON)</Label>
@@ -2240,6 +2556,10 @@ export function NodeConfigDialog({
                               })
                             }
                           />
+                          <p className="mt-2 text-[11px] text-gray-500">
+                            Example:{" "}
+                            <span className="text-gray-300">{`{ "title": 1, "price": 1 }`}</span>
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-900/50 px-3 py-2 text-xs text-gray-300">
@@ -2726,7 +3046,7 @@ export function NodeConfigDialog({
               );
             })()}
             {selectedNode.type === "gate" && (() => {
-              const gateConfig = selectedNode.config?.gate ?? {
+              const gateConfig: GateConfig = selectedNode.config?.gate ?? {
                 mode: "block",
                 failMessage: "Gate blocked",
               };
@@ -2809,7 +3129,7 @@ export function NodeConfigDialog({
             })()}
 
             {selectedNode.type === "template" && (() => {
-              const templateConfig = selectedNode.config?.template ?? {
+              const templateConfig: TemplateConfig = selectedNode.config?.template ?? {
                 template: "",
               };
               return (
@@ -2837,7 +3157,9 @@ export function NodeConfigDialog({
             })()}
 
             {selectedNode.type === "prompt" && (() => {
-              const promptConfig = selectedNode.config?.prompt ?? { template: "" };
+              const promptConfig: PromptConfig = selectedNode.config?.prompt ?? {
+                template: "",
+              };
               const handleInsertPlaceholder = (placeholder: string) => {
                 const current = promptConfig.template ?? "";
                 const separator = current && !current.endsWith(" ") && !current.endsWith("\n") ? " " : "";
@@ -2943,14 +3265,13 @@ export function NodeConfigDialog({
             })()}
 
             {selectedNode.type === "model" && (() => {
-              const modelConfig =
-                selectedNode.config?.model ?? {
-                  modelId: DEFAULT_MODELS[0] ?? "gpt-4o",
-                  temperature: 0.7,
-                  maxTokens: 800,
-                  vision: selectedNode.inputs.includes("images"),
-                  waitForResult: false,
-                };
+                            const modelConfig: ModelConfig = selectedNode.config?.model ?? {
+                              modelId: DEFAULT_MODELS[0] ?? "gpt-4o",
+                              temperature: 0.7,
+                              maxTokens: 800,
+                              vision: selectedNode.inputs.includes("images"),
+                            };
+              
               return (
                 <div className="space-y-4">
                   <div>
@@ -3077,6 +3398,149 @@ export function NodeConfigDialog({
                 excludePaths: [],
               };
               const presetSet = getContextPresetSet(contextConfig.entityType);
+              const receivedInputs = runtimeState.inputs[selectedNode.id] ?? {};
+              const resolvedOutputs = runtimeState.outputs[selectedNode.id] ?? {};
+              const largeFieldKeys = new Set([
+                "images",
+                "imageUrls",
+                "entityJson",
+                "entity",
+                "bundle",
+                "context",
+                "meta",
+                "trigger",
+                "inputs",
+                "outputs",
+                "ui",
+                "location",
+                "user",
+                "event",
+                "extras",
+              ]);
+              const pruneLargeFields = (value: unknown, seen = new Set<object>()): unknown => {
+                if (value === null || value === undefined) return value;
+                if (typeof value !== "object") return value;
+                if (seen.has(value)) return value;
+                seen.add(value);
+                if (Array.isArray(value)) {
+                  return value.map((item) => pruneLargeFields(item, seen));
+                }
+                const record = value as Record<string, unknown>;
+                const next: Record<string, unknown> = {};
+                Object.entries(record).forEach(([key, entry]) => {
+                  if (largeFieldKeys.has(key)) return;
+                  next[key] = pruneLargeFields(entry, seen);
+                });
+                return next;
+              };
+              const sanitizePayload = (value: unknown) =>
+                hideLargeFields ? pruneLargeFields(value) : value;
+              const stringifyPayload = (value: unknown) => {
+                if (value === undefined) return "";
+                if (typeof value === "string") return value;
+                try {
+                  return JSON.stringify(value, null, 2);
+                } catch {
+                  return safeStringify(value);
+                }
+              };
+              const receivedContext = sanitizePayload(receivedInputs.context);
+              const sanitizedInputs = sanitizePayload(receivedInputs) as Record<string, unknown>;
+              const sanitizedOutputs = sanitizePayload(resolvedOutputs) as Record<string, unknown>;
+              const receivedContextText = stringifyPayload(receivedContext);
+              const receivedInputsText = stringifyPayload(sanitizedInputs);
+              const resolvedOutputsText = stringifyPayload(sanitizedOutputs);
+              const resolvedEntityId =
+                typeof sanitizedOutputs?.entityId === "string"
+                  ? (sanitizedOutputs.entityId as string)
+                  : "";
+              const resolvedEntityType =
+                typeof sanitizedOutputs?.entityType === "string"
+                  ? (sanitizedOutputs.entityType as string)
+                  : "";
+              const diffInputs = sanitizedInputs ?? {};
+              const diffOutputs = sanitizedOutputs ?? {};
+              const diffKeys = Array.from(
+                new Set([
+                  ...Object.keys(diffInputs ?? {}),
+                  ...Object.keys(diffOutputs ?? {}),
+                ])
+              ).sort();
+              const diff = diffKeys.reduce<{
+                added: string[];
+                removed: string[];
+                changed: string[];
+                same: string[];
+              }>(
+                (acc, key) => {
+                  const inInput = key in diffInputs;
+                  const inOutput = key in diffOutputs;
+                  if (!inInput && inOutput) {
+                    acc.added.push(key);
+                    return acc;
+                  }
+                  if (inInput && !inOutput) {
+                    acc.removed.push(key);
+                    return acc;
+                  }
+                  const inputValue = diffInputs[key];
+                  const outputValue = diffOutputs[key];
+                  const inputString = stringifyPayload(inputValue);
+                  const outputString = stringifyPayload(outputValue);
+                  if (inputString !== outputString) {
+                    acc.changed.push(key);
+                  } else {
+                    acc.same.push(key);
+                  }
+                  return acc;
+                },
+                { added: [], removed: [], changed: [], same: [] }
+              );
+              const diffLines = [
+                ...diff.added.map(
+                  (key) => `+ ${key}: ${formatRuntimeValue(diffOutputs[key])}`
+                ),
+                ...diff.removed.map(
+                  (key) => `- ${key}: ${formatRuntimeValue(diffInputs[key])}`
+                ),
+                ...diff.changed.map(
+                  (key) =>
+                    `~ ${key}: ${formatRuntimeValue(diffInputs[key])} -> ${formatRuntimeValue(
+                      diffOutputs[key]
+                    )}`
+                ),
+                ...(!diffOnlyChanges
+                  ? diff.same.map((key) => `= ${key}`)
+                  : []),
+              ];
+              const copyPayload = async (payload: unknown, label: string) => {
+                try {
+                  await navigator.clipboard.writeText(stringifyPayload(payload));
+                  toast(`${label} copied.`, { variant: "success" });
+                } catch (error) {
+                  toast("Failed to copy payload.", { variant: "error" });
+                  console.warn("Failed to copy payload", error);
+                }
+              };
+              const copyDiff = async () => {
+                try {
+                  await navigator.clipboard.writeText(diffLines.join("\n"));
+                  toast("Diff copied.", { variant: "success" });
+                } catch (error) {
+                  toast("Failed to copy diff.", { variant: "error" });
+                  console.warn("Failed to copy diff", error);
+                }
+              };
+              const combinedPayload = {
+                inputs: sanitizedInputs,
+                outputs: sanitizedOutputs,
+                diff: {
+                  added: diff.added,
+                  removed: diff.removed,
+                  changed: diff.changed,
+                  same: diff.same,
+                },
+              };
               return (
                 <div className="space-y-4">
                   <p className="text-[11px] text-gray-500">
@@ -3084,6 +3548,148 @@ export function NodeConfigDialog({
                     node to filter it. If left unconnected, the filter will fetch an
                     entity based on the settings below.
                   </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/70"
+                      onClick={() => copyPayload(combinedPayload, "Payload")}
+                    >
+                      Copy payload
+                    </Button>
+                    <Button
+                      type="button"
+                      className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/70"
+                      onClick={() => copyPayload(sanitizedInputs, "Inputs")}
+                    >
+                      Copy inputs
+                    </Button>
+                    <Button
+                      type="button"
+                      className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/70"
+                      onClick={() => copyPayload(sanitizedOutputs, "Outputs")}
+                    >
+                      Copy outputs
+                    </Button>
+                    <Button
+                      type="button"
+                      className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/70"
+                      onClick={copyDiff}
+                    >
+                      Copy diff
+                    </Button>
+                    <Button
+                      type="button"
+                      className={`rounded-md border px-2 py-1 text-[10px] ${
+                        hideLargeFields
+                          ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-200"
+                          : "border-gray-700 text-gray-200 hover:bg-gray-900/70"
+                      }`}
+                      onClick={() => setHideLargeFields((prev) => !prev)}
+                    >
+                      {hideLargeFields ? "Hide large fields" : "Show large fields"}
+                    </Button>
+                    <Button
+                      type="button"
+                      className={`rounded-md border px-2 py-1 text-[10px] ${
+                        showDiff
+                          ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-200"
+                          : "border-gray-700 text-gray-200 hover:bg-gray-900/70"
+                      }`}
+                      onClick={() => setShowDiff((prev) => !prev)}
+                    >
+                      {showDiff ? "Diff on" : "Diff off"}
+                    </Button>
+                    {showDiff && (
+                      <Button
+                        type="button"
+                        className={`rounded-md border px-2 py-1 text-[10px] ${
+                          diffOnlyChanges
+                            ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-200"
+                            : "border-gray-700 text-gray-200 hover:bg-gray-900/70"
+                        }`}
+                        onClick={() => setDiffOnlyChanges((prev) => !prev)}
+                      >
+                        {diffOnlyChanges ? "Changes only" : "Show all"}
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3">
+                      <div className="text-[11px] text-gray-400">Resolved Entity</div>
+                      <div className="mt-2 text-[12px] text-gray-200">
+                        {resolvedEntityId
+                          ? `${resolvedEntityType || "entity"} · ${resolvedEntityId}`
+                          : "No entity resolved yet"}
+                      </div>
+                    </div>
+                    <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3">
+                      <div className="text-[11px] text-gray-400">Received context summary</div>
+                      <div className="mt-2 text-[12px] text-gray-200">
+                        {receivedContextText
+                          ? `${receivedContextText.length} chars`
+                          : "No context input received"}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3">
+                    <div className="text-[11px] text-gray-400">Received payload (context input)</div>
+                    {receivedContextText ? (
+                      <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200">
+                        {receivedContextText}
+                      </pre>
+                    ) : (
+                      <p className="mt-2 text-[11px] text-gray-500">
+                        No context payload received yet. Fire the trigger or connect a
+                        context input to inspect the payload.
+                      </p>
+                    )}
+                  </div>
+                  <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3">
+                    <div className="text-[11px] text-gray-400">All incoming inputs</div>
+                    {Object.keys(receivedInputs).length > 0 ? (
+                      <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200">
+                        {receivedInputsText}
+                      </pre>
+                    ) : (
+                      <p className="mt-2 text-[11px] text-gray-500">
+                        No inputs recorded yet for this node.
+                      </p>
+                    )}
+                  </div>
+                  <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3">
+                    <div className="text-[11px] text-gray-400">Resolved outputs</div>
+                    {Object.keys(resolvedOutputs).length > 0 ? (
+                      <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200">
+                        {resolvedOutputsText}
+                      </pre>
+                    ) : (
+                      <p className="mt-2 text-[11px] text-gray-500">
+                        No resolved outputs yet. Trigger the path to populate this panel.
+                      </p>
+                    )}
+                  </div>
+                  {showDiff && (
+                    <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3">
+                      <div className="text-[11px] text-gray-400">
+                        Diff (inputs vs outputs)
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-gray-300">
+                        <span>Added: {diff.added.length}</span>
+                        <span>Removed: {diff.removed.length}</span>
+                        <span>Changed: {diff.changed.length}</span>
+                        <span>Unchanged: {diff.same.length}</span>
+                      </div>
+                      {diffLines.length > 0 ? (
+                        <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200">
+                          {diffLines.join("\n")}
+                        </pre>
+                      ) : (
+                        <p className="mt-2 text-[11px] text-gray-500">
+                          No differences detected yet.
+                        </p>
+                      )}
+                    </div>
+                  )}
                   <div>
                     <Label className="text-xs text-gray-400">Filter Role</Label>
                     <Input
@@ -3194,7 +3800,7 @@ export function NodeConfigDialog({
                           updateSelectedNodeConfig({
                             context: {
                               ...contextConfig,
-                              entityIdSource: value as "simulation" | "manual",
+                              entityIdSource: value as "simulation" | "manual" | "context",
                             },
                           })
                         }
@@ -3204,6 +3810,7 @@ export function NodeConfigDialog({
                         </SelectTrigger>
                         <SelectContent className="border-gray-800 bg-gray-900">
                           <SelectItem value="simulation">Simulation node</SelectItem>
+                          <SelectItem value="context">Context payload</SelectItem>
                           <SelectItem value="manual">Manual ID</SelectItem>
                         </SelectContent>
                       </Select>
@@ -3509,14 +4116,15 @@ export function NodeConfigDialog({
                     <Button
                       type="button"
                       className="rounded-md border border-gray-700 text-xs text-gray-200 hover:bg-gray-900/80"
-                      onClick={() =>
+                      onClick={() => {
                         updateSelectedNodeConfig({
                           viewer: {
                             outputs: createViewerOutputs(selectedNode.inputs),
                             showImagesAsJson,
                           },
-                        })
-                      }
+                        });
+                        clearRuntimeForNode?.(selectedNode.id);
+                      }}
                     >
                       Clear
                     </Button>
@@ -3704,7 +4312,9 @@ export function NodeConfigDialog({
                   No configuration is available for this node yet.
                 </div>
               )}
+            </>
           </DialogContent>
         </Dialog>
+              
   );
 }

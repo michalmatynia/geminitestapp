@@ -99,7 +99,7 @@ export type ViewerConfig = {
 export type ContextConfig = {
   role: string;
   entityType?: string;
-  entityIdSource?: "simulation" | "manual";
+  entityIdSource?: "simulation" | "manual" | "context";
   entityId?: string;
   scopeMode?: "full" | "include" | "exclude";
   scopeTarget?: "entity" | "context";

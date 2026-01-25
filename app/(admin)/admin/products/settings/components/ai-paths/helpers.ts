@@ -36,7 +36,7 @@ const DEFAULT_CONTEXT_ROLE = "entity";
 const TRIGGER_INPUT_PORTS = ["simulation"];
 const TRIGGER_OUTPUT_PORTS = ["trigger", "context", "meta", "entityId", "entityType"];
 const CONTEXT_INPUT_PORTS = ["context"];
-const CONTEXT_OUTPUT_PORTS = ["role", "context", "entityId", "entityType", "entityJson"];
+const CONTEXT_OUTPUT_PORTS = ["context", "entityId", "entityType", "entityJson"];
 const SIMULATION_OUTPUT_PORTS = ["simulation", "entityId", "entityType", "productId"];
 const DESCRIPTION_OUTPUT_PORTS = ["description_en"];
 const BUNDLE_INPUT_PORTS = [
@@ -105,7 +105,7 @@ const DATABASE_INPUT_PORTS = [
   "result",
   "content_en",
 ];
-const DEFAULT_DB_QUERY = {
+const DEFAULT_DB_QUERY: DbQueryConfig = {
   provider: "auto",
   collection: "products",
   mode: "preset",
@@ -353,7 +353,16 @@ const PROMPT_OUTPUT_PORTS = ["prompt", "images"];
 const POLL_INPUT_PORTS = ["jobId", "query", "value", "entityId", "productId", "bundle"];
 const POLL_OUTPUT_PORTS = ["result", "status", "jobId", "bundle"];
 const MODEL_OUTPUT_PORTS = ["result", "jobId"];
-const NOTIFICATION_INPUT_PORTS = ["result", "prompt", "value", "bundle", "context", "meta", "trigger"];
+const NOTIFICATION_INPUT_PORTS = [
+  "result",
+  "prompt",
+  "value",
+  "bundle",
+  "context",
+  "meta",
+  "trigger",
+  "entityId",
+];
 
 const palette: NodeDefinition[] = [
   {
@@ -424,13 +433,13 @@ const palette: NodeDefinition[] = [
     title: "Context Filter",
     description: "Filter incoming context payloads into scoped entity data.",
     inputs: CONTEXT_INPUT_PORTS,
-    outputs: ["role", "context", "entityId", "entityType", "entityJson"],
+    outputs: ["context", "entityId", "entityType", "entityJson"],
   },
   {
     type: "parser",
     title: "JSON Parser",
     description: "Extract fields into outputs or a single bundle.",
-    inputs: ["entityJson"],
+    inputs: ["entityJson", "context"],
     outputs: ["productId", "title", "images", "content_en"],
   },
   {
@@ -580,14 +589,17 @@ const ensureUniquePorts = (ports: string[], add: string[]) => {
 
 const normalizeNodes = (items: AiNode[]) =>
   items.map((node) => {
-    const nodeType = (node as AiNode & { type: string }).type;
+    const nodeType = node.type as string;
     if (node.type === "context") {
       const contextConfig = node.config?.context;
+      const cleanedOutputs = (node.outputs ?? []).filter(
+        (port) => normalizePortName(port) !== "role"
+      );
       return {
         ...node,
         title: node.title === "Context Grabber" ? "Context Filter" : node.title,
         inputs: ensureUniquePorts(node.inputs ?? [], CONTEXT_INPUT_PORTS),
-        outputs: ensureUniquePorts(node.outputs, CONTEXT_OUTPUT_PORTS),
+        outputs: ensureUniquePorts(cleanedOutputs, CONTEXT_OUTPUT_PORTS),
         config: {
           ...node.config,
           context: {
@@ -959,7 +971,7 @@ const normalizeNodes = (items: AiNode[]) =>
             vision:
               node.config?.model?.vision ??
               node.inputs.includes("images"),
-            waitForResult: node.config?.model?.waitForResult ?? false,
+            waitForResult: node.config?.model?.waitForResult,
           },
         },
       };
@@ -1035,27 +1047,6 @@ const normalizeNodes = (items: AiNode[]) =>
               ...outputs,
             },
             showImagesAsJson: node.config?.viewer?.showImagesAsJson ?? false,
-          },
-        },
-      };
-    }
-    if (node.type === "trigger") {
-      return {
-        ...node,
-        inputs: ensureUniquePorts(node.inputs, TRIGGER_INPUT_PORTS),
-        outputs: ensureUniquePorts(node.outputs, TRIGGER_OUTPUT_PORTS),
-      };
-    }
-    if (node.type === "simulation") {
-      return {
-        ...node,
-        outputs: ensureUniquePorts(node.outputs, SIMULATION_OUTPUT_PORTS),
-        config: {
-          ...node.config,
-          simulation: {
-            productId: node.config?.simulation?.productId ?? "",
-            entityType: node.config?.simulation?.entityType ?? "product",
-            entityId: node.config?.simulation?.entityId ?? "",
           },
         },
       };
@@ -1292,7 +1283,10 @@ export const safeStringify = (value: unknown): string => {
       return "[Complex Object]";
     }
   }
-  return String(value);
+  if (typeof value === "symbol" || typeof value === "function") {
+    return value.toString();
+  }
+  return String(value as string);
 };
 
 const formatRuntimeValue = (value: unknown) => {
@@ -1524,17 +1518,17 @@ const inferImageMappingPath = (value: unknown, depth: number) => {
   return null;
 };
 
-export const getContextPresetSet = (entityType?: string) => {
+const getContextPresetSet = (entityType?: string) => {
   const key = entityType === "auto" ? "" : entityType ?? "";
   return CONTEXT_PRESET_FIELDS[key] ?? CONTEXT_PRESET_FIELDS.default;
 };
 
-export const applyContextPreset = (
+const applyContextPreset = (
   current: ContextConfig,
   preset: "light" | "medium" | "full" | "suggested"
 ): ContextConfig => {
   const set = getContextPresetSet(current.entityType);
-  const paths = set[preset] ?? [];
+  const paths = set ? set[preset] ?? [] : [];
   if (paths.length === 0) return { ...current, scopeMode: "full" };
   return {
     ...current,
@@ -1544,9 +1538,8 @@ export const applyContextPreset = (
   };
 };
 
-export const toggleContextTarget = (current: ContextConfig, field: string) => {
+const toggleContextTarget = (current: ContextConfig, field: string) => {
   const isIncluded = (current.includePaths ?? []).includes(field);
-  const isExcluded = (current.excludePaths ?? []).includes(field);
   if (current.scopeMode === "include") {
     const includePaths = current.includePaths ?? [];
     return {
@@ -1557,6 +1550,7 @@ export const toggleContextTarget = (current: ContextConfig, field: string) => {
     };
   }
   const excludePaths = current.excludePaths ?? [];
+  const isExcluded = excludePaths.includes(field);
   return {
     ...current,
     excludePaths: isExcluded
@@ -1615,7 +1609,7 @@ const parsePathTokens = (path: string) => {
   return tokens;
 };
 
-const getValueAtMappingPath = (obj: unknown, path: string) => {
+const getValueAtMappingPath = (obj: unknown, path: string): unknown => {
   const normalized = normalizeMappingPath(path, obj);
   if (!normalized) return undefined;
   const tokens = parsePathTokens(normalized);
@@ -1633,24 +1627,24 @@ const getValueAtMappingPath = (obj: unknown, path: string) => {
   return current;
 };
 
-const parseJsonSafe = (value: string) => {
+const parseJsonSafe = (value: string): unknown => {
   if (!value.trim()) return undefined;
   try {
-    return JSON.parse(value);
+    return JSON.parse(value) as unknown;
   } catch {
     return undefined;
   }
 };
 
-const coerceInput = <T,>(value: T | T[] | undefined) =>
+const coerceInput = <T,>(value: T | T[] | undefined): T | undefined =>
   Array.isArray(value) ? value[0] : value;
 
-const coerceInputArray = <T,>(value: T | T[] | undefined) =>
+const coerceInputArray = <T,>(value: T | T[] | undefined): T[] =>
   Array.isArray(value) ? value : value === undefined ? [] : [value];
 
-const appendInputValue = (current: unknown, value: unknown) => {
+const appendInputValue = (current: unknown, value: unknown): unknown => {
   if (current === undefined) return value;
-  if (Array.isArray(current)) return [...current, value];
+  if (Array.isArray(current)) return [...(current as unknown[]), value];
   return [current, value];
 };
 
@@ -1659,14 +1653,23 @@ const renderTemplate = (
   context: Record<string, unknown>,
   currentValue: unknown
 ) =>
-  template.replace(/{{\s*([^}]+)\s*}}/g, (_match, token) => {
-    const key = String(token).trim();
-    if (key === "value" || key === "current") {
-      return safeStringify(currentValue);
-    }
-    const resolved = getValueAtMappingPath(context, key);
-    return safeStringify(resolved);
-  });
+  template
+    .replace(/{{\s*([^}]+)\s*}}/g, (_match, token) => {
+      const key = String(token).trim();
+      if (key === "value" || key === "current") {
+        return safeStringify(currentValue);
+      }
+      const resolved = getValueAtMappingPath(context, key);
+      return safeStringify(resolved);
+    })
+    .replace(/\[\s*([^\]]+)\s*\]/g, (_match, token) => {
+      const key = String(token).trim();
+      if (key === "value" || key === "current") {
+        return safeStringify(currentValue);
+      }
+      const resolved = getValueAtMappingPath(context, key);
+      return safeStringify(resolved);
+    });
 
 const setValueAtPath = (obj: Record<string, unknown>, path: string, value: unknown) => {
   const keys = path.split(".");
@@ -1799,14 +1802,34 @@ const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
     const fromPort = edge.fromPort ? normalizePortName(edge.fromPort) : undefined;
     const toPort = edge.toPort ? normalizePortName(edge.toPort) : undefined;
     if (fromPort && toPort) {
-      if (!isValidConnection(from, to, fromPort, toPort)) return [];
-      return [
-        {
-          ...edge,
-          fromPort,
-          toPort,
-        },
-      ];
+      if (isValidConnection(from, to, fromPort, toPort)) {
+        return [
+          {
+            ...edge,
+            fromPort,
+            toPort,
+          },
+        ];
+      }
+      if (from.outputs.includes(toPort) && to.inputs.includes(toPort)) {
+        return [
+          {
+            ...edge,
+            fromPort: toPort,
+            toPort,
+          },
+        ];
+      }
+      if (from.outputs.includes(fromPort) && to.inputs.includes(fromPort)) {
+        return [
+          {
+            ...edge,
+            fromPort,
+            toPort: fromPort,
+          },
+        ];
+      }
+      return [];
     }
     const matches = from.outputs.filter((output) => to.inputs.includes(output));
     if (matches.length !== 1) return [];
@@ -1824,7 +1847,6 @@ const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
 
 // Strict port compatibility: output port must match input port
 const PORT_COMPATIBILITY: Record<string, string[]> = {
-  role: ["role"],
   entityJson: ["entityJson"],
   productId: ["productId"],
   entityId: ["entityId"],
@@ -1869,6 +1891,7 @@ const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
   ],
   trigger: [
     "context",
+    "parser",
     "viewer",
     "notification",
     "mapper",
@@ -1946,16 +1969,17 @@ const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
   gate: ["validator", "viewer", "prompt", "ai_description", "description_updater", "bundle", "template", "router", "delay", "poll"],
   router: ["viewer", "bundle", "template", "prompt", "model", "delay", "poll", "database"],
   delay: ["viewer", "bundle", "template", "prompt", "model", "validator", "gate", "poll", "database"],
-  poll: ["viewer", "bundle", "template", "prompt", "model", "delay", "database"],
+  poll: ["viewer", "notification", "bundle", "template", "prompt", "model", "delay", "database"],
   http: ["viewer", "bundle", "template", "prompt", "math", "compare", "poll", "database"],
   database: ["viewer", "bundle", "template", "prompt", "mapper", "validator", "poll"],
   bundle: ["viewer", "template", "prompt", "poll", "database"],
   template: ["model", "viewer", "bundle", "prompt", "poll", "database"],
-  prompt: ["model", "viewer", "bundle", "template", "poll"],
-  model: ["prompt", "database", "viewer", "description_updater", "bundle", "poll"],
+  prompt: ["model", "viewer", "bundle", "template", "poll", "notification"],
+  model: ["prompt", "database", "viewer", "description_updater", "bundle", "poll", "notification"],
   viewer: [],
   ai_description: ["viewer", "description_updater", "bundle", "delay", "poll"],
   description_updater: ["viewer", "bundle", "delay", "poll"],
+  notification: ["viewer", "bundle", "delay", "poll"],
 };
 
 const validateConnection = (
@@ -2492,6 +2516,7 @@ export {
   VIEWER_INPUT_PORTS,
   VIEW_MARGIN,
   appendInputValue,
+  applyContextPreset,
   buildFlattenedMappings,
   buildTopLevelMappings,
   clampScale,
@@ -2537,6 +2562,7 @@ export {
   setValueAtMappingPath,
   setValueAtPath,
   toNumber,
+  toggleContextTarget,
   triggers,
   typeStyles,
   validateConnection,

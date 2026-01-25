@@ -1,0 +1,320 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/app/(admin)/admin/products/settings/components/AiPathsSettings.tsx
+   544:6   warning  React Hook useEffect has a missing dependency: 'reportAiPathsError'. Either include it or remove the dependency array                           react-hooks/exhaustive-deps
+   581:6   warning  React Hook useEffect has a missing dependency: 'reportAiPathsError'. Either include it or remove the dependency array                           react-hooks/exhaustive-deps
+  1300:22  error    This assertion is unnecessary since it does not change the type of the expression                                                               @typescript-eslint/no-unnecessary-type-assertion
+  1305:38  error    This assertion is unnecessary since it does not change the type of the expression                                                               @typescript-eslint/no-unnecessary-type-assertion
+  1656:13  error    Unsafe assignment of an error typed value                                                                                                       @typescript-eslint/no-unsafe-assignment
+  1659:15  error    Unsafe assignment of an `any` value                                                                                                             @typescript-eslint/no-unsafe-assignment
+  1664:11  error    Unsafe assignment of an error typed value                                                                                                       @typescript-eslint/no-unsafe-assignment
+  1665:11  error    Unsafe assignment of an error typed value                                                                                                       @typescript-eslint/no-unsafe-assignment
+  1666:11  error    Unsafe assignment of an `any` value                                                                                                             @typescript-eslint/no-unsafe-assignment
+  1667:11  error    Unsafe assignment of an error typed value                                                                                                       @typescript-eslint/no-unsafe-assignment
+  1668:11  error    Unsafe assignment of an error typed value                                                                                                       @typescript-eslint/no-unsafe-assignment
+  1669:11  error    Unsafe assignment of an error typed value                                                                                                       @typescript-eslint/no-unsafe-assignment
+  1670:11  error    Unsafe assignment of an error typed value                                                                                                       @typescript-eslint/no-unsafe-assignment
+  1683:11  error    Unsafe assignment of an error typed value                                                                                                       @typescript-eslint/no-unsafe-assignment
+  1684:11  error    Unsafe assignment of an error typed value                                                                                                       @typescript-eslint/no-unsafe-assignment
+  1799:6   warning  React Hook useEffect has a missing dependency: 'startPendingPolls'. Either include it or remove the dependency array                            react-hooks/exhaustive-deps
+  2045:13  error    Unsafe assignment of an `any` value                                                                                                             @typescript-eslint/no-unsafe-assignment
+  2046:13  error    Unsafe assignment of an `any` value                                                                                                             @typescript-eslint/no-unsafe-assignment
+  2048:33  error    Unsafe member access .presets on an `any` value                                                                                                 @typescript-eslint/no-unsafe-member-access
+  2049:20  error    Unsafe member access .presets on an `any` value                                                                                                 @typescript-eslint/no-unsafe-member-access
+  2055:13  error    Unsafe assignment of an `any` value                                                                                                             @typescript-eslint/no-unsafe-assignment
+  2055:26  error    Unsafe call of an `any` typed value                                                                                                             @typescript-eslint/no-unsafe-call
+  2055:31  error    Unsafe member access .map on an `any` value                                                                                                     @typescript-eslint/no-unsafe-member-access
+  2058:13  error    Unsafe assignment of an `any` value                                                                                                             @typescript-eslint/no-unsafe-assignment
+  2058:22  error    Unsafe call of an `any` typed value                                                                                                             @typescript-eslint/no-unsafe-call
+  2058:33  error    Unsafe member access .map on an `any` value                                                                                                     @typescript-eslint/no-unsafe-member-access
+  2059:29  error    Unsafe argument of type `any` assigned to a parameter of type `string`                                                                          @typescript-eslint/no-unsafe-argument
+  2059:36  error    Unsafe member access .id on an `any` value                                                                                                      @typescript-eslint/no-unsafe-member-access
+  2060:11  error    Unsafe return of a value of type `any`                                                                                                          @typescript-eslint/no-unsafe-return
+  2062:9   error    Unsafe return of a value of type `any`                                                                                                          @typescript-eslint/no-unsafe-return
+  2064:7   error    Unsafe assignment of type `any[]` to a variable of type `ClusterPreset[]`                                                                       @typescript-eslint/no-unsafe-assignment
+  2064:38  error    Unsafe spread of an `any` value in an array                                                                                                     @typescript-eslint/no-unsafe-assignment
+  2149:31  error    Unsafe return of a value of type `any[]`                                                                                                        @typescript-eslint/no-unsafe-return
+  2150:31  error    Unsafe return of a value of type `any`                                                                                                          @typescript-eslint/no-unsafe-return
+  2155:7   error    Unsafe return of a value of type `any`                                                                                                          @typescript-eslint/no-unsafe-return
+  2200:11  error    Unsafe assignment of an `any` value                                                                                                             @typescript-eslint/no-unsafe-assignment
+  2305:6   warning  React Hook useEffect has a missing dependency: 'buildPathSnapshot'. Either include it or remove the dependency array                            react-hooks/exhaustive-deps
+  2342:6   warning  React Hook useEffect has missing dependencies: 'buildPathSnapshot' and 'persistPathConfig'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  2621:31  error    Promise-returning function provided to attribute where a void return was expected                                                               @typescript-eslint/no-misused-promises
+  2929:22  error    Promise-returning function provided to attribute where a void return was expected                                                               @typescript-eslint/no-misused-promises
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/app/(admin)/admin/products/settings/components/ai-paths/helpers.ts
+  1304:17  error  'value ?? ""' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/app/(admin)/admin/products/settings/components/ai-paths/node-config-dialog.tsx
+  1244:17  error    Unsafe assignment of an error typed value                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
+  1245:17  error    Unsafe assignment of an error typed value                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
+  1246:17  error    Unsafe assignment of an error typed value                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
+  1251:17  error    Unsafe assignment of an error typed value                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
+  1252:17  error    Unsafe assignment of an error typed value                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
+  1253:17  error    Unsafe assignment of an error typed value                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
+  1254:17  error    Unsafe assignment of an error typed value                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
+  1679:52  error    Unsafe assignment of an error typed value                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
+  1703:31  error    Unsafe assignment of an error typed value                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
+  2743:29  error    Unsafe assignment of an error typed value                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
+  3112:31  error    Unsafe assignment of an error typed value                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
+  3112:40  error    Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                         @typescript-eslint/no-unsafe-call
+  3490:49  error    Unsafe return of a value of type `any[]`                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-return
+  3490:57  error    Unsafe spread of an `any` value in an array                                                                                                                                                                                                                                              @typescript-eslint/no-unsafe-assignment
+  3590:39  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/app/(admin)/admin/products/settings/components/ai-paths/runtime.ts
+  468:24  error  'value' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+  523:13  error  Unsafe assignment of an `any` value                                                            @typescript-eslint/no-unsafe-assignment
+  528:13  error  Unsafe assignment of an `any` value                                                            @typescript-eslint/no-unsafe-assignment
+  546:17  error  Unsafe assignment of an `any` value                                                            @typescript-eslint/no-unsafe-assignment
+  820:15  error  Unsafe assignment of an error typed value                                                      @typescript-eslint/no-unsafe-assignment
+  821:15  error  Unsafe assignment of an error typed value                                                      @typescript-eslint/no-unsafe-assignment
+  823:15  error  Unsafe assignment of an error typed value                                                      @typescript-eslint/no-unsafe-assignment
+  824:15  error  Unsafe assignment of an error typed value                                                      @typescript-eslint/no-unsafe-assignment
+  825:15  error  Unsafe assignment of an error typed value                                                      @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/components/products/form/ProductFormGeneral.tsx
+  134:25   error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+  143:48   error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+  144:48   error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+  361:10   error  Unknown property '   toast(' found                                                 react/no-unknown-property
+  362:3    error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  363:14   error  Unknown property 'ailed to ' found                                                 react/no-unknown-property
+  367:24   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  367:111  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  367:112  error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  369:14   error  Unknown property 'xt-amber-' found                                                 react/no-unknown-property
+  370:8    error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  370:16   error  Unknown property 'log to ed' found                                                 react/no-unknown-property
+  371:18   error  Unknown property '       </' found                                                 react/no-unknown-property
+  373:16   error  Unknown property 'ce-y-4">
+' found                                                 react/no-unknown-property
+  374:18   error  Unknown property 'py-3">
+  ' found                                                 react/no-unknown-property
+  374:89   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  374:90   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  375:20   error  Unknown property 'ate-pulse' found                                                 react/no-unknown-property
+  376:20   error  Unknown property 'rounded-m' found                                                 react/no-unknown-property
+  377:20   error  Unknown property ' classNam' found                                                 react/no-unknown-property
+  377:89   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  377:90   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  378:28   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  378:44   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  378:45   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  379:18   error  Unknown property 'e-500/20"' found                                                 react/no-unknown-property
+  380:30   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  380:77   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  380:80   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  381:16   error  Unknown property '         ' found                                                 react/no-unknown-property
+  382:18   error  Unknown property 'iv>
+     ' found                                                 react/no-unknown-property
+  383:20   error  Unknown property 'ate-pulse' found                                                 react/no-unknown-property
+  383:81   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  384:20   error  Unknown property 'rounded-m' found                                                 react/no-unknown-property
+  385:20   error  Unknown property ' classNam' found                                                 react/no-unknown-property
+  385:89   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  385:90   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  386:28   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  386:44   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  386:45   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  387:18   error  Unknown property 'e-500/20"' found                                                 react/no-unknown-property
+  388:30   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  388:77   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  388:80   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  390:18   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  391:28   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  391:78   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  391:81   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  393:14   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  394:8    error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  409:97   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  412:19   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  413:35   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  425:24   error  Unknown property 'ldName}
+ ' found                                                 react/no-unknown-property
+  425:62   error  Unknown property 'er(f' found                                                      react/no-unknown-property
+  426:55   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  426:60   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  426:64   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  426:70   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  426:71   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  427:20   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  431:24   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  432:20   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  433:30   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  449:97   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  452:19   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  453:35   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  465:24   error  Unknown property 'ldName}
+ ' found                                                 react/no-unknown-property
+  465:62   error  Unknown property 'er(f' found                                                      react/no-unknown-property
+  466:55   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  466:60   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  466:64   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  466:70   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  466:71   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  467:20   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  470:50   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  472:30   error  Unknown property '[fieldNam' found                                                 react/no-unknown-property
+  474:22   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  477:43   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  479:42   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  479:68   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  481:27   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  482:28   error  Unknown property 'ed-200 ho' found                                                 react/no-unknown-property
+  492:47   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  494:52   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  497:35   error  Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+  502:49   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  503:38   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  503:71   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  504:54   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  515:64   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  516:79   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  517:69   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  518:49   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  518:81   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  518:85   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  518:114  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  518:115  error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  520:42   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  520:57   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  520:61   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  520:71   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  520:72   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  523:23   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  524:20   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  527:13   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  527:15   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  528:12   error  Unknown property '         ' found                                                 react/no-unknown-property
+  529:14   error  Unknown property '        <' found                                                 react/no-unknown-property
+  530:8    error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  536:16   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  536:20   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  538:16   error  Unknown property '     <Inp' found                                                 react/no-unknown-property
+  538:54   error  Unknown property '    ' found                                                      react/no-unknown-property
+  540:12   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  542:26   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  542:52   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  542:59   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  542:65   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  542:66   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  543:14   error  Unknown property 'red="true' found                                                 react/no-unknown-property
+  543:34   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  545:16   error  Unknown property 'xt-red-50' found                                                 react/no-unknown-property
+  551:36   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  553:44   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  553:48   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  553:52   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  553:57   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  553:61   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  553:66   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  555:13   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  560:35   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  560:39   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  560:40   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  560:56   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  566:33   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  567:43   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  568:65   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  568:67   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  569:14   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  570:12   error  Unknown property '       id' found                                                 react/no-unknown-property
+  571:14   error  Unknown property '}
+       ' found                                                 react/no-unknown-property
+  573:16   error  Unknown property '        <' found                                                 react/no-unknown-property
+  580:20   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  580:27   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  581:19   error  Unknown property '       ty' found                                                 react/no-unknown-property
+  582:28   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  582:35   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  582:60   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  582:62   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  583:45   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  583:50   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  583:54   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  583:60   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  583:61   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  586:16   error  Unknown property '         ' found                                                 react/no-unknown-property
+  586:49   error  Unknown property '-eve' found                                                      react/no-unknown-property
+  590:26   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  590:47   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  590:54   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  590:60   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  590:61   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  591:14   error  Unknown property 'span>
+   ' found                                                 react/no-unknown-property
+  591:37   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  593:16   error  Unknown property ' text-sm"' found                                                 react/no-unknown-property
+  600:20   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  600:27   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  601:19   error  Unknown property 'ype="numb' found                                                 react/no-unknown-property
+  602:28   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  602:39   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  602:64   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  602:66   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  603:49   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  603:54   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  603:58   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  603:64   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  603:65   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  606:16   error  Unknown property '     <spa' found                                                 react/no-unknown-property
+  606:49   error  Unknown property 'nts-' found                                                      react/no-unknown-property
+  610:26   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  610:47   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  610:54   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  610:60   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  610:61   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  611:14   error  Unknown property '        <' found                                                 react/no-unknown-property
+  611:41   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  613:16   error  Unknown property 'ext-sm" r' found                                                 react/no-unknown-property
+  620:20   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  620:27   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  621:19   error  Unknown property ' type="nu' found                                                 react/no-unknown-property
+  622:28   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  622:38   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  622:63   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  622:65   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  623:48   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  623:53   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  623:57   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  623:63   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  623:64   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  626:16   error  Unknown property '      <sp' found                                                 react/no-unknown-property
+  626:49   error  Unknown property 'ents' found                                                      react/no-unknown-property
+  630:26   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  630:47   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  630:54   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  630:60   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  630:61   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  631:14   error  Unknown property '         ' found                                                 react/no-unknown-property
+  631:40   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  633:16   error  Unknown property '0 text-sm' found                                                 react/no-unknown-property
+  640:20   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  640:27   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  641:19   error  Unknown property '       ty' found                                                 react/no-unknown-property
+  642:28   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  642:35   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  642:60   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  642:62   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  643:45   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  643:50   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  643:54   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  643:60   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  643:61   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+  646:16   error  Unknown property '         ' found                                                 react/no-unknown-property
+  646:49   error  Unknown property '-eve' found                                                      react/no-unknown-property
+  650:26   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  650:47   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  650:54   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  650:60   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  650:61   error  `>` can be escaped with `&gt;`                                                     react/no-unescaped-entities
+  651:37   error  `}` can be escaped with `&#125;`                                                   react/no-unescaped-entities
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/lib/logger.ts
+  14:7   error  Unsafe assignment of an `any` value                                                          @typescript-eslint/no-unsafe-assignment
+  15:7   error  Unsafe assignment of an `any` value                                                          @typescript-eslint/no-unsafe-assignment
+  46:19  error  'arg' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+
+✖ 297 problems (291 errors, 6 warnings)
+  5 errors and 0 warnings potentially fixable with the `--fix` option.
+

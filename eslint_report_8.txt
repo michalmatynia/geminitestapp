@@ -1,0 +1,65 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/app/(admin)/admin/products/settings/components/AiPathsSettings.tsx
+   545:6   warning  React Hook useEffect has a missing dependency: 'reportAiPathsError'. Either include it or remove the dependency array                           react-hooks/exhaustive-deps
+   582:6   warning  React Hook useEffect has a missing dependency: 'reportAiPathsError'. Either include it or remove the dependency array                           react-hooks/exhaustive-deps
+  1301:22  error    This assertion is unnecessary since it does not change the type of the expression                                                               @typescript-eslint/no-unnecessary-type-assertion
+  1306:38  error    This assertion is unnecessary since it does not change the type of the expression                                                               @typescript-eslint/no-unnecessary-type-assertion
+  1657:13  error    Unsafe assignment of an error typed value                                                                                                       @typescript-eslint/no-unsafe-assignment
+  1660:15  error    Unsafe assignment of an `any` value                                                                                                             @typescript-eslint/no-unsafe-assignment
+  1665:11  error    Unsafe assignment of an error typed value                                                                                                       @typescript-eslint/no-unsafe-assignment
+  1666:11  error    Unsafe assignment of an error typed value                                                                                                       @typescript-eslint/no-unsafe-assignment
+  1667:11  error    Unsafe assignment of an `any` value                                                                                                             @typescript-eslint/no-unsafe-assignment
+  1668:11  error    Unsafe assignment of an error typed value                                                                                                       @typescript-eslint/no-unsafe-assignment
+  1669:11  error    Unsafe assignment of an error typed value                                                                                                       @typescript-eslint/no-unsafe-assignment
+  1670:11  error    Unsafe assignment of an error typed value                                                                                                       @typescript-eslint/no-unsafe-assignment
+  1671:11  error    Unsafe assignment of an error typed value                                                                                                       @typescript-eslint/no-unsafe-assignment
+  1684:11  error    Unsafe assignment of an error typed value                                                                                                       @typescript-eslint/no-unsafe-assignment
+  1685:11  error    Unsafe assignment of an error typed value                                                                                                       @typescript-eslint/no-unsafe-assignment
+  1800:6   warning  React Hook useEffect has a missing dependency: 'startPendingPolls'. Either include it or remove the dependency array                            react-hooks/exhaustive-deps
+  2046:13  error    Unsafe assignment of an `any` value                                                                                                             @typescript-eslint/no-unsafe-assignment
+  2047:13  error    Unsafe assignment of an `any` value                                                                                                             @typescript-eslint/no-unsafe-assignment
+  2049:33  error    Unsafe member access .presets on an `any` value                                                                                                 @typescript-eslint/no-unsafe-member-access
+  2050:20  error    Unsafe member access .presets on an `any` value                                                                                                 @typescript-eslint/no-unsafe-member-access
+  2056:13  error    Unsafe assignment of an `any` value                                                                                                             @typescript-eslint/no-unsafe-assignment
+  2056:26  error    Unsafe call of an `any` typed value                                                                                                             @typescript-eslint/no-unsafe-call
+  2056:31  error    Unsafe member access .map on an `any` value                                                                                                     @typescript-eslint/no-unsafe-member-access
+  2059:13  error    Unsafe assignment of an `any` value                                                                                                             @typescript-eslint/no-unsafe-assignment
+  2059:22  error    Unsafe call of an `any` typed value                                                                                                             @typescript-eslint/no-unsafe-call
+  2059:33  error    Unsafe member access .map on an `any` value                                                                                                     @typescript-eslint/no-unsafe-member-access
+  2060:29  error    Unsafe argument of type `any` assigned to a parameter of type `string`                                                                          @typescript-eslint/no-unsafe-argument
+  2060:36  error    Unsafe member access .id on an `any` value                                                                                                      @typescript-eslint/no-unsafe-member-access
+  2061:11  error    Unsafe return of a value of type `any`                                                                                                          @typescript-eslint/no-unsafe-return
+  2063:9   error    Unsafe return of a value of type `any`                                                                                                          @typescript-eslint/no-unsafe-return
+  2065:7   error    Unsafe assignment of type `any[]` to a variable of type `ClusterPreset[]`                                                                       @typescript-eslint/no-unsafe-assignment
+  2065:38  error    Unsafe spread of an `any` value in an array                                                                                                     @typescript-eslint/no-unsafe-assignment
+  2150:31  error    Unsafe return of a value of type `any[]`                                                                                                        @typescript-eslint/no-unsafe-return
+  2151:31  error    Unsafe return of a value of type `any`                                                                                                          @typescript-eslint/no-unsafe-return
+  2156:7   error    Unsafe return of a value of type `any`                                                                                                          @typescript-eslint/no-unsafe-return
+  2201:11  error    Unsafe assignment of an `any` value                                                                                                             @typescript-eslint/no-unsafe-assignment
+  2306:6   warning  React Hook useEffect has a missing dependency: 'buildPathSnapshot'. Either include it or remove the dependency array                            react-hooks/exhaustive-deps
+  2343:6   warning  React Hook useEffect has missing dependencies: 'buildPathSnapshot' and 'persistPathConfig'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  2622:31  error    Promise-returning function provided to attribute where a void return was expected                                                               @typescript-eslint/no-misused-promises
+  2930:22  error    Promise-returning function provided to attribute where a void return was expected                                                               @typescript-eslint/no-misused-promises
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/app/(admin)/admin/products/settings/components/ai-paths/helpers.ts
+   809:13  error  Unsafe assignment of an `any` value  @typescript-eslint/no-unsafe-assignment
+   823:13  error  Unsafe assignment of an `any` value  @typescript-eslint/no-unsafe-assignment
+  1178:9   error  Unsafe assignment of an `any` value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/app/(admin)/admin/products/settings/components/ai-paths/node-config-dialog.tsx
+  4344:12  error  Parsing error: Expected corresponding closing tag for JSX fragment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/app/(admin)/admin/products/settings/components/ai-paths/runtime.ts
+  529:13  error  Unsafe assignment of an `any` value                                                @typescript-eslint/no-unsafe-assignment
+  534:13  error  Unsafe assignment of an `any` value                                                @typescript-eslint/no-unsafe-assignment
+  552:17  error  Unsafe assignment of an `any` value                                                @typescript-eslint/no-unsafe-assignment
+  788:33  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+  827:15  error  Unsafe assignment of an error typed value                                          @typescript-eslint/no-unsafe-assignment
+  828:15  error  Unsafe assignment of an error typed value                                          @typescript-eslint/no-unsafe-assignment
+  830:15  error  Unsafe assignment of an error typed value                                          @typescript-eslint/no-unsafe-assignment
+  831:15  error  Unsafe assignment of an error typed value                                          @typescript-eslint/no-unsafe-assignment
+  832:15  error  Unsafe assignment of an error typed value                                          @typescript-eslint/no-unsafe-assignment
+
+✖ 53 problems (48 errors, 5 warnings)
+  3 errors and 0 warnings potentially fixable with the `--fix` option.
+

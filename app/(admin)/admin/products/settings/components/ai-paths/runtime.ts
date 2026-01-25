@@ -180,6 +180,16 @@ export async function evaluateGraph({
 
   let simulationEntityId: string | null = null;
   let simulationEntityType: string | null = null;
+  const triggerEntityId =
+    typeof triggerContext?.entityId === "string"
+      ? triggerContext?.entityId
+      : typeof triggerContext?.productId === "string"
+        ? triggerContext?.productId
+        : null;
+  const triggerEntityType =
+    typeof triggerContext?.entityType === "string"
+      ? triggerContext?.entityType
+      : null;
 
   if (triggerNodeId) {
     const simulationEdge = edges.find(
@@ -201,7 +211,10 @@ export async function evaluateGraph({
   const resolvedEntity =
     simulationEntityId && simulationEntityType
       ? await fetchEntityCached(simulationEntityType, simulationEntityId)
-      : null;
+      : triggerEntityId && triggerEntityType
+        ? await fetchEntityCached(triggerEntityType, triggerEntityId)
+        : null;
+  const fallbackEntityId = simulationEntityId ?? triggerEntityId ?? null;
 
   const defaultContextConfig =
     nodes.find((node) => node.type === "context")?.config?.context ?? {
@@ -256,11 +269,44 @@ export async function evaluateGraph({
   ) => {
     const resolvedConfig = promptConfig ?? { template: "" };
     const bundleValue = coerceInput(nodeInputs.bundle);
-    const bundleContext =
-      bundleValue && typeof bundleValue === "object" && !Array.isArray(bundleValue)
-        ? (bundleValue as Record<string, unknown>)
-        : {};
-    const data = { ...nodeInputs, ...bundleContext, bundle: bundleContext };
+    let bundleContext: Record<string, unknown> = {};
+    if (bundleValue && typeof bundleValue === "object" && !Array.isArray(bundleValue)) {
+      bundleContext = bundleValue as Record<string, unknown>;
+    } else if (typeof bundleValue === "string") {
+      const parsed = parseJsonSafe(bundleValue);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        bundleContext = parsed as Record<string, unknown>;
+      }
+    }
+    const bundleTitle =
+      bundleContext.title ??
+      bundleContext.name ??
+      bundleContext.name_en ??
+      bundleContext.name_pl ??
+      bundleContext.name_de ??
+      bundleContext.label ??
+      bundleContext.productName ??
+      undefined;
+    const bundleId =
+      bundleContext.productId ??
+      bundleContext.entityId ??
+      bundleContext.id ??
+      bundleContext._id ??
+      undefined;
+    const bundleDescription =
+      bundleContext.content_en ??
+      bundleContext.description_en ??
+      bundleContext.description ??
+      bundleContext.content ??
+      undefined;
+    const alias: Record<string, unknown> = {
+      ...(bundleTitle !== undefined ? { title: bundleTitle, name: bundleTitle } : {}),
+      ...(bundleId !== undefined ? { productId: bundleId, entityId: bundleId } : {}),
+      ...(bundleDescription !== undefined
+        ? { content_en: bundleDescription, description_en: bundleDescription }
+        : {}),
+    };
+    const data = { ...bundleContext, ...alias, ...nodeInputs, bundle: bundleContext };
     const currentValue =
       coerceInput(nodeInputs.result) ?? coerceInput(nodeInputs.value) ?? "";
     const prompt = resolvedConfig.template
@@ -458,14 +504,7 @@ export async function evaluateGraph({
     const evaluateMatch = (value: unknown) => {
       if (config.successOperator === "truthy") return Boolean(value);
       const compareTarget = config.successValue ?? "";
-      const valStr =
-        value === undefined || value === null
-          ? ""
-          : typeof value === "string"
-            ? value
-            : typeof value === "object"
-              ? JSON.stringify(value)
-              : String(value);
+      const valStr = safeStringify(value);
       const targetStr = String(compareTarget);
 
       if (config.successOperator === "equals") {
@@ -603,7 +642,9 @@ export async function evaluateGraph({
     const entityId =
       contextConfig.entityIdSource === "manual"
         ? manualId
-        : baseEntityId ?? simulationEntityId ?? manualId ?? null;
+        : contextConfig.entityIdSource === "context"
+          ? baseEntityId ?? manualId ?? null
+          : baseEntityId ?? simulationEntityId ?? manualId ?? null;
     const baseEntity =
       (baseContext?.entity as Record<string, unknown> | undefined) ??
       (baseContext?.entityJson as Record<string, unknown> | undefined) ??
@@ -713,14 +754,55 @@ export async function evaluateGraph({
       switch (node.type) {
         case "notification": {
           if (notificationExecuted.has(node.id)) break;
+          const hasMeaningfulValue = (value: unknown) => {
+            if (value === undefined || value === null) return false;
+            if (typeof value === "string") return value.trim().length > 0;
+            if (Array.isArray(value)) return value.length > 0;
+            if (typeof value === "object") return Object.keys(value).length > 0;
+            return true;
+          };
+          const promptCandidates = edges
+            .filter((edge) => edge.to === node.id && edge.toPort === "prompt")
+            .map((edge) => ({
+              edge,
+              fromNode: nodes.find((item) => item.id === edge.from),
+            }))
+            .filter((entry) => entry.fromNode?.type === "prompt");
+          const promptSourceNode = promptCandidates[0]?.fromNode ?? null;
+          let derivedPromptMessage: string | null = null;
+          if (promptSourceNode) {
+            const upstreamEdges = edges.filter(
+              (edge) => edge.to === promptSourceNode.id
+            );
+            const promptSourceInputs = nextInputs[promptSourceNode.id] ?? {};
+            if (upstreamEdges.length > 0) {
+              const hasInputValue = Object.values(promptSourceInputs).some(
+                hasMeaningfulValue
+              );
+              if (!hasInputValue) {
+                nextOutputs = prevOutputs;
+                break;
+              }
+            }
+            const derivedPrompt = buildPromptOutput(
+              promptSourceNode.config?.prompt,
+              promptSourceInputs
+            );
+            if (derivedPrompt.promptOutput?.trim()) {
+              derivedPromptMessage = derivedPrompt.promptOutput;
+            }
+          }
           const messageSource =
+            derivedPromptMessage ??
             coerceInput(nodeInputs.result) ??
             coerceInput(nodeInputs.prompt) ??
             coerceInput(nodeInputs.value) ??
             coerceInput(nodeInputs.bundle) ??
             coerceInput(nodeInputs.context) ??
             coerceInput(nodeInputs.trigger) ??
-            coerceInput(nodeInputs.meta);
+            coerceInput(nodeInputs.meta) ??
+            coerceInput(nodeInputs.entityId) ??
+            coerceInput(nodeInputs.entityType);
           if (messageSource === undefined) {
             nextOutputs = prevOutputs;
             break;
@@ -752,7 +834,6 @@ export async function evaluateGraph({
               (payload.context?.source as string | undefined) ?? node.title,
           };
           nextOutputs = {
-            role: payload.role,
             context: resolvedContext,
             entityId: payload.entityId,
             entityType: payload.entityType,
@@ -776,22 +857,34 @@ export async function evaluateGraph({
             simulation?.entityType ?? simulationEntityType ?? null;
           const resolvedEntityId = simulationInputId ?? null;
           const resolvedEntityType = simulationInputType ?? null;
+          const triggerExtras = (triggerContext ?? {}) as Record<string, unknown>;
+          const triggerEntityId =
+            typeof triggerExtras.entityId === "string"
+              ? triggerExtras.entityId
+              : typeof triggerExtras.productId === "string"
+                ? triggerExtras.productId
+                : null;
+          const triggerEntityType =
+            typeof triggerExtras.entityType === "string"
+              ? triggerExtras.entityType
+              : null;
+          const effectiveEntityId = resolvedEntityId ?? triggerEntityId ?? null;
+          const effectiveEntityType = resolvedEntityType ?? triggerEntityType ?? null;
           const resolvedContext = {
-            entityType: resolvedEntityType,
-            entityId: resolvedEntityId,
+            entityType: resolvedEntityType ?? triggerEntityType,
+            entityId: resolvedEntityId ?? triggerEntityId,
             source: node.title,
             timestamp: now,
-            entity: resolvedEntity ?? buildFallbackEntity(resolvedEntityId),
+            entity: resolvedEntity ?? buildFallbackEntity(effectiveEntityId ?? fallbackEntityId),
           };
-          const triggerExtras = triggerContext ?? {};
           nextOutputs = {
             trigger: eventName,
             meta: {
               firedAt: now,
               trigger: eventName,
               pathId: activePathId,
-              entityId: resolvedEntityId,
-              entityType: resolvedEntityType,
+              entityId: effectiveEntityId,
+              entityType: effectiveEntityType,
               ui: triggerExtras.ui ?? null,
               location: triggerExtras.location ?? null,
               source: triggerExtras.source ?? null,
@@ -801,6 +894,8 @@ export async function evaluateGraph({
             },
             context: {
               ...resolvedContext,
+              entityId: effectiveEntityId ?? resolvedContext.entityId,
+              entityType: effectiveEntityType ?? resolvedContext.entityType,
               ui: triggerExtras.ui ?? resolvedContext.ui,
               location: triggerExtras.location ?? resolvedContext.location,
               source: triggerExtras.source ?? resolvedContext.source ?? node.title,
@@ -810,16 +905,30 @@ export async function evaluateGraph({
               trigger: eventName,
               pathId: activePathId,
             },
-            entityId: resolvedEntityId,
-            entityType: resolvedEntityType,
+            entityId: effectiveEntityId,
+            entityType: effectiveEntityType,
           };
           break;
         }
         case "parser": {
+          const contextInput = coerceInput(nodeInputs.context);
+          const contextEntity =
+            contextInput && typeof contextInput === "object"
+              ? ((contextInput as Record<string, unknown>).entity as
+                  | Record<string, unknown>
+                  | undefined) ??
+                ((contextInput as Record<string, unknown>).entityJson as
+                  | Record<string, unknown>
+                  | undefined) ??
+                ((contextInput as Record<string, unknown>).product as
+                  | Record<string, unknown>
+                  | undefined)
+              : undefined;
           const source =
             (coerceInput(nodeInputs.entityJson) as Record<string, unknown> | undefined) ??
+            contextEntity ??
             (resolvedEntity ?? undefined) ??
-            (simulationEntityId ? buildFallbackEntity(simulationEntityId) : undefined);
+            (fallbackEntityId ? buildFallbackEntity(fallbackEntityId) : undefined);
           if (!source) {
             nextOutputs = {};
             break;
@@ -1925,7 +2034,6 @@ export async function evaluateGraph({
             temperature: 0.7,
             maxTokens: 800,
             vision: node.inputs.includes("images"),
-            waitForResult: false,
           };
           const hasResultConsumers = edges.some(
             (edge) =>
@@ -1939,9 +2047,12 @@ export async function evaluateGraph({
             const targetNode = nodes.find((item) => item.id === edge.to);
             return targetNode?.type === "poll";
           });
-          const shouldWait =
+          let shouldWait =
             !hasPollConsumer &&
             (modelConfig.waitForResult ?? hasResultConsumers);
+          if (!hasPollConsumer && modelConfig.waitForResult === false && hasResultConsumers) {
+            shouldWait = true;
+          }
           const prompt =
             typeof promptInput === "string"
               ? promptInput.trim()

@@ -93,6 +93,7 @@ const DEFAULT_DB_QUERY: DbQueryConfig = {
   projection: "",
   single: false,
 };
+const AUTO_SAVE_DEBOUNCE_MS = 1500;
 
 export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPathsSettingsProps) {
   const { toast } = useToast();
@@ -614,6 +615,16 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   useEffect(() => {
     runtimeStateRef.current = runtimeState;
   }, [runtimeState]);
+
+  const clearRuntimeForNode = React.useCallback((nodeId: string) => {
+    setRuntimeState((prev) => {
+      const nextInputs = { ...prev.inputs };
+      const nextOutputs = { ...prev.outputs };
+      delete nextInputs[nodeId];
+      delete nextOutputs[nodeId];
+      return { ...prev, inputs: nextInputs, outputs: nextOutputs };
+    });
+  }, []);
 
   useEffect(() => {
     if (!lastDrop) return;
@@ -1140,11 +1151,16 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
 
   const updateSelectedNode = (patch: Partial<AiNode>) => {
     if (!selectedNodeId) return;
-    setNodes((prev) =>
-      prev.map((node) =>
+    const shouldSanitizeEdges = Boolean(patch.inputs || patch.outputs);
+    setNodes((prev) => {
+      const next = prev.map((node) =>
         node.id === selectedNodeId ? { ...node, ...patch } : node
-      )
-    );
+      );
+      if (shouldSanitizeEdges) {
+        setEdges((current) => sanitizeEdges(next, current));
+      }
+      return next;
+    });
   };
 
   const updateSelectedNodeConfig = (patch: NodeConfig) => {
@@ -1297,12 +1313,12 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     let current: Element | null = element;
     while (current && current.tagName.toLowerCase() !== "html" && segments.length < 5) {
       const tagName = current.tagName.toLowerCase();
-      const parent = current.parentElement;
+      const parent = current.parentElement as HTMLElement | null;
       if (!parent) break;
       const siblings = Array.from(parent.children).filter(
         (child) => child.tagName === current?.tagName
       );
-      const index = siblings.indexOf(current) + 1;
+      const index = siblings.indexOf(current as Element) + 1;
       segments.unshift(`${tagName}:nth-of-type(${index})`);
       if (parent.id) {
         segments.unshift(`#${selectorEscape(parent.id)}`);
@@ -1317,9 +1333,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     const target = event?.target as Element | null;
     if (!target) return null;
     const element =
-      (target.closest(
+      target.closest(
         "[data-component],[data-testid],[data-node],button,a,[role='button']"
-      ) as Element | null) ?? target;
+      ) ?? target;
     const rect = element.getBoundingClientRect();
     const dataset = element instanceof HTMLElement ? element.dataset : undefined;
     return {
@@ -1354,7 +1370,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     event?: React.MouseEvent
   ) => {
     const timestamp = new Date().toISOString();
-    const nativeEvent = event?.nativeEvent as MouseEvent | undefined;
+    const nativeEvent = event?.nativeEvent;
     const pointer = nativeEvent
       ? {
           clientX: nativeEvent.clientX,
@@ -1363,8 +1379,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           pageY: nativeEvent.pageY,
           screenX: nativeEvent.screenX,
           screenY: nativeEvent.screenY,
-          offsetX: "offsetX" in nativeEvent ? (nativeEvent as MouseEvent).offsetX : undefined,
-          offsetY: "offsetY" in nativeEvent ? (nativeEvent as MouseEvent).offsetY : undefined,
+          offsetX: "offsetX" in nativeEvent ? nativeEvent.offsetX : undefined,
+          offsetY: "offsetY" in nativeEvent ? nativeEvent.offsetY : undefined,
           button: nativeEvent.button,
           buttons: nativeEvent.buttons,
           altKey: nativeEvent.altKey,
@@ -1537,7 +1553,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       successValue: string;
       resultPath: string;
     }
-  ) => {
+  ): Promise<{ result: unknown; status: string; bundle: Record<string, unknown> }> => {
     const maxAttempts = config.maxAttempts;
     const intervalMs = config.intervalMs;
     const successPath = config.successPath || "status";
@@ -2177,23 +2193,16 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     state: RuntimeState,
     graphNodes: AiNode[]
   ): string => {
-    const viewerIds = new Set(
-      graphNodes.filter((node) => node.type === "viewer").map((node) => node.id)
-    );
-    const outputIds = new Set(
-      graphNodes
-        .filter((node) => ["viewer", "poll", "model"].includes(node.type))
-        .map((node) => node.id)
-    );
+    const nodeIds = new Set(graphNodes.map((node) => node.id));
     const inputs: Record<string, RuntimePortValues> = {};
     const outputs: Record<string, RuntimePortValues> = {};
     Object.entries(state.inputs ?? {}).forEach(([key, value]) => {
-      if (viewerIds.has(key)) {
+      if (nodeIds.has(key)) {
         inputs[key] = value;
       }
     });
     Object.entries(state.outputs ?? {}).forEach(([key, value]) => {
-      if (outputIds.has(key)) {
+      if (nodeIds.has(key)) {
         outputs[key] = value;
       }
     });
@@ -2332,7 +2341,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         .finally(() => {
           autoSaveInFlightRef.current = false;
         });
-    }, 800);
+    }, AUTO_SAVE_DEBOUNCE_MS);
     return () => {
       if (autoSaveTimerRef.current) {
         window.clearTimeout(autoSaveTimerRef.current);
@@ -2967,6 +2976,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         handleFetchParserSample={handleFetchParserSample}
         handleFetchUpdaterSample={handleFetchUpdaterSample}
         handleRunSimulation={handleRunSimulation}
+        clearRuntimeForNode={clearRuntimeForNode}
         toast={toast}
       />
       <Dialog open={presetsModalOpen} onOpenChange={setPresetsModalOpen}>

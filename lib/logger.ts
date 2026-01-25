@@ -10,9 +10,9 @@ const ensureServerLogger = () => {
   if (!fsModule || !pathModule) {
     try {
       // Avoid bundling fs/path in the client.
-      const req = (0, eval)("require") as NodeRequire;
-      fsModule = req("fs");
-      pathModule = req("path");
+      const req = (0, eval)("require") as (mod: string) => unknown;
+      fsModule = req("fs") as typeof import("fs");
+      pathModule = req("path") as typeof import("path");
     } catch {
       return false;
     }
@@ -43,7 +43,10 @@ function formatMessage(level: LogLevel, args: unknown[]): string {
         return '[Complex Object]';
       }
     }
-    return String(arg);
+    if (typeof arg === 'symbol' || typeof arg === 'function') {
+      return arg.toString();
+    }
+    return String(arg as string);
   }).join(' ');
   return `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
 }

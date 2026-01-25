@@ -20,8 +20,42 @@ import { cn } from "@/lib/utils";
 import { ProductFormData } from "@/types";
 import { useToast } from "@/components/ui/toast";
 import type { ProductAiJob } from "@/types/product-jobs";
+import type {
+  AiNode,
+  PathConfig,
+  PathMeta,
+} from "@/app/(admin)/admin/products/settings/components/ai-paths/types";
+import { evaluateGraph } from "@/app/(admin)/admin/products/settings/components/ai-paths/runtime";
+import {
+  PATH_CONFIG_PREFIX,
+  PATH_INDEX_KEY,
+  TRIGGER_EVENTS,
+  createDefaultPathConfig,
+  normalizeNodes,
+  sanitizeEdges,
+} from "@/app/(admin)/admin/products/settings/components/ai-paths/helpers";
 
 export default function ProductFormGeneral() {
+  const safeJsonStringify = (value: unknown) => {
+    const seen = new WeakSet();
+    const replacer = (_key: string, val: unknown) => {
+      if (typeof val === "bigint") return val.toString();
+      if (val instanceof Date) return val.toISOString();
+      if (val instanceof Set) return Array.from(val.values());
+      if (val instanceof Map) return Object.fromEntries(val.entries());
+      if (typeof val === "function" || typeof val === "symbol") return undefined;
+      if (val && typeof val === "object") {
+        if (seen.has(val as object)) return undefined;
+        seen.add(val as object);
+      }
+      return val;
+    };
+    try {
+      return JSON.stringify(value, replacer);
+    } catch {
+      return "";
+    }
+  };
   const {
     filteredLanguages,
     errors,
@@ -117,26 +151,299 @@ export default function ProductFormGeneral() {
     }
   };
 
-  const handlePathGenerateDescription = () => {
+  const buildTriggerContext = (
+    triggerNode: AiNode,
+    triggerEvent: string,
+    event?: React.MouseEvent<HTMLButtonElement>,
+    pathInfo?: { id?: string; name?: string }
+  ) => {
+    const timestamp = new Date().toISOString();
+    const nativeEvent = event?.nativeEvent;
+    const pointer = nativeEvent
+      ? {
+          clientX: nativeEvent.clientX,
+          clientY: nativeEvent.clientY,
+          pageX: nativeEvent.pageX,
+          pageY: nativeEvent.pageY,
+          screenX: nativeEvent.screenX,
+          screenY: nativeEvent.screenY,
+          offsetX: "offsetX" in nativeEvent ? nativeEvent.offsetX : undefined,
+          offsetY: "offsetY" in nativeEvent ? nativeEvent.offsetY : undefined,
+          button: nativeEvent.button,
+          buttons: nativeEvent.buttons,
+          altKey: nativeEvent.altKey,
+          ctrlKey: nativeEvent.ctrlKey,
+          shiftKey: nativeEvent.shiftKey,
+          metaKey: nativeEvent.metaKey,
+        }
+      : undefined;
+    const location =
+      typeof window !== "undefined"
+        ? {
+            href: window.location.href,
+            origin: window.location.origin,
+            pathname: window.location.pathname,
+            search: window.location.search,
+            hash: window.location.hash,
+            referrer: document.referrer || undefined,
+          }
+        : {};
+    const ui =
+      typeof window !== "undefined"
+        ? {
+            viewport: {
+              width: window.innerWidth,
+              height: window.innerHeight,
+              devicePixelRatio: window.devicePixelRatio,
+            },
+            screen: {
+              width: window.screen?.width,
+              height: window.screen?.height,
+              availWidth: window.screen?.availWidth,
+              availHeight: window.screen?.availHeight,
+            },
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            language: navigator.language,
+            languages: navigator.languages,
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            documentTitle: document.title,
+            visibilityState: document.visibilityState,
+            scroll: {
+              x: window.scrollX,
+              y: window.scrollY,
+            },
+          }
+        : {};
+    return {
+      timestamp,
+      location,
+      ui,
+      user: null,
+      event: {
+        id: triggerEvent,
+        nodeId: triggerNode.id,
+        nodeTitle: triggerNode.title,
+        type: event?.type,
+        pointer,
+      },
+      source: {
+        pathId: pathInfo?.id,
+        pathName: pathInfo?.name ?? "Product Panel",
+        tab: "product",
+      },
+      extras: {
+        triggerLabel: "Path Generate Description",
+      },
+      entityId: product?.id,
+      productId: product?.id,
+      entityType: "product",
+    };
+  };
+
+  const handlePathGenerateDescription = async (
+    event?: React.MouseEvent<HTMLButtonElement>
+  ) => {
     if (!product?.id) {
       toast("Save the product before running a path trigger.", {
         variant: "error",
       });
       return;
     }
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(
-        new CustomEvent("ai-path-trigger", {
-          detail: {
-            trigger: "path_generate_description",
-            productId: product.id,
-          },
-        })
+    try {
+      const prefsRes = await fetch("/api/user/preferences", { cache: "no-store" });
+      if (!prefsRes.ok) {
+        throw new Error("Failed to load AI Paths preferences.");
+      }
+      const prefs = (await prefsRes.json()) as {
+        aiPathsPathConfigs?: Record<string, PathConfig> | string | null;
+        aiPathsPathIndex?: Array<{ id?: string }> | null;
+      };
+      let configs: Record<string, PathConfig> = {};
+      let settingsPathOrder: string[] = [];
+      if (typeof prefs.aiPathsPathConfigs === "string") {
+        try {
+          const parsed = JSON.parse(prefs.aiPathsPathConfigs) as Record<string, PathConfig>;
+          configs = parsed && typeof parsed === "object" ? parsed : {};
+        } catch {
+          configs = {};
+        }
+      } else if (prefs.aiPathsPathConfigs && typeof prefs.aiPathsPathConfigs === "object") {
+        configs = prefs.aiPathsPathConfigs;
+      }
+      if (!configs || Object.keys(configs).length === 0) {
+        try {
+          const settingsRes = await fetch("/api/settings", { cache: "no-store" });
+          if (settingsRes.ok) {
+            const data = (await settingsRes.json()) as Array<{ key: string; value: string }>;
+            const map = new Map(data.map((item) => [item.key, item.value]));
+            const indexRaw = map.get(PATH_INDEX_KEY);
+            if (indexRaw) {
+              try {
+                const parsedIndex = JSON.parse(indexRaw) as PathMeta[];
+                if (Array.isArray(parsedIndex)) {
+                  settingsPathOrder = parsedIndex
+                    .map((meta) => meta?.id)
+                    .filter((id): id is string => typeof id === "string" && id.length > 0);
+                  parsedIndex.forEach((meta) => {
+                    if (!meta?.id) return;
+                    const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
+                    if (!configRaw) {
+                      configs[meta.id] = createDefaultPathConfig(meta.id);
+                      return;
+                    }
+                    try {
+                      const parsedConfig = JSON.parse(configRaw) as PathConfig;
+                      configs[meta.id] = {
+                        ...createDefaultPathConfig(meta.id),
+                        ...parsedConfig,
+                        id: meta.id,
+                        name: parsedConfig?.name || meta.name || `Path ${meta.id}`,
+                      };
+                    } catch {
+                      configs[meta.id] = createDefaultPathConfig(meta.id);
+                    }
+                  });
+                }
+              } catch {
+                settingsPathOrder = [];
+              }
+            }
+            if (Object.keys(configs).length === 0) {
+              const legacyRaw =
+                map.get(`${PATH_CONFIG_PREFIX}default`) ?? map.get("ai_paths_config");
+              if (legacyRaw) {
+                try {
+                  const parsedConfig = JSON.parse(legacyRaw) as PathConfig;
+                  const fallback = createDefaultPathConfig(parsedConfig.id ?? "default");
+                  configs[fallback.id] = {
+                    ...fallback,
+                    ...parsedConfig,
+                    id: parsedConfig.id ?? fallback.id,
+                    name: parsedConfig.name || fallback.name,
+                  };
+                } catch {
+                  const fallback = createDefaultPathConfig("default");
+                  configs[fallback.id] = fallback;
+                }
+              }
+            }
+          }
+        } catch {
+          // If settings fallback fails, keep configs empty.
+        }
+      }
+      const configsList = Object.values(configs);
+      const pathOrder = Array.isArray(prefs.aiPathsPathIndex)
+        ? prefs.aiPathsPathIndex
+            .map((item) => item?.id)
+            .filter((id): id is string => typeof id === "string" && id.length > 0)
+        : settingsPathOrder;
+      const orderedConfigs = pathOrder.length
+        ? pathOrder
+            .map((id) => configs[id])
+            .filter((config): config is PathConfig => Boolean(config))
+        : configsList;
+      const triggerEvent = TRIGGER_EVENTS[0]?.id ?? "path_generate_description";
+      const triggerCandidates = orderedConfigs.filter((config) =>
+        Array.isArray(config?.nodes)
+          ? config.nodes.some(
+              (node) =>
+                node.type === "trigger" &&
+                (node.config?.trigger?.event ?? triggerEvent) === triggerEvent
+            )
+          : false
       );
+      const selectedConfig = triggerCandidates[0] ?? orderedConfigs[0];
+      if (!selectedConfig) {
+        toast(
+          "No AI Path found. Configure a path with the Path Generate Description trigger.",
+          { variant: "error" }
+        );
+        return;
+      }
+      toast(`Running AI Path: ${selectedConfig.name}`, { variant: "success" });
+      const nodes = normalizeNodes(
+        Array.isArray(selectedConfig.nodes) ? selectedConfig.nodes : []
+      );
+      const edges = sanitizeEdges(
+        nodes,
+        Array.isArray(selectedConfig.edges) ? selectedConfig.edges : []
+      );
+      const triggerNodes = nodes.filter(
+        (node) =>
+          node.type === "trigger" &&
+          (node.config?.trigger?.event ?? triggerEvent) === triggerEvent
+      );
+      const triggerNode =
+        triggerNodes.find((node) => edges.some((edge) => edge.from === node.id)) ??
+        triggerNodes.find((node) =>
+          edges.some((edge) => edge.from === node.id || edge.to === node.id)
+        ) ??
+        triggerNodes[0] ??
+        nodes.find((node) => node.type === "trigger");
+      if (!triggerNode) {
+        toast("No trigger node found in the selected path.", { variant: "error" });
+        return;
+      }
+      const triggerContext = buildTriggerContext(triggerNode, triggerEvent, event, {
+        id: selectedConfig.id,
+        name: selectedConfig.name,
+      });
+      const runAt = new Date().toISOString();
+      const runtimeState = await evaluateGraph({
+        nodes,
+        edges,
+        activePathId: selectedConfig.id ?? "path",
+        triggerNodeId: triggerNode.id,
+        triggerEvent,
+        triggerContext,
+        deferPoll: false,
+        fetchEntityByType: async (entityType: string, entityId: string) => {
+          if (entityType !== "product") return null;
+          const res = await fetch(`/api/products/${encodeURIComponent(entityId)}`, {
+            cache: "no-store",
+          });
+          if (!res.ok) return null;
+          return (await res.json()) as Record<string, unknown>;
+        },
+        reportAiPathsError: (error, meta, summary) => {
+          logger.error(summary ?? "AI Paths trigger failed", error, meta);
+        },
+        toast,
+      });
+      try {
+        const updatedConfig: PathConfig = {
+          ...selectedConfig,
+          nodes,
+          edges,
+          runtimeState,
+          lastRunAt: runAt,
+          updatedAt: runAt,
+        };
+        configs[updatedConfig.id] = updatedConfig;
+        const orderedIds = pathOrder.length
+          ? pathOrder
+          : orderedConfigs.map((config) => config.id);
+        const safeConfigs = safeJsonStringify(configs);
+        await fetch("/api/user/preferences", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            aiPathsPathConfigs: safeConfigs || configs,
+            aiPathsActivePathId: updatedConfig.id,
+            ...(orderedIds.length > 0 && {
+              aiPathsPathIndex: orderedIds.map((id) => ({ id })),
+            }),
+          }),
+        });
+      } catch (error) {
+        logger.error("Failed to persist AI Paths runtime state", error);
+      }
+    } catch (error) {
+      logger.error("Failed to run AI Path trigger", error);
+      toast("Failed to run AI Path trigger.", { variant: "error" });
     }
-    toast("Path trigger sent. Configure AI Paths to handle it.", {
-      variant: "info",
-    });
   };
 
   const handleTranslate = async () => {
@@ -316,10 +623,10 @@ export default function ProductFormGeneral() {
                         </Button>
                         <Button
                           type="button"
-                          onClick={handlePathGenerateDescription}
-                          disabled={!product?.id}
+                          onClick={(event) => {
+                            void handlePathGenerateDescription(event);
+                          }}
                           aria-label="Generate description via AI Path"
-                          aria-disabled={!product?.id}
                           className="border border-white/20 hover:border-white/40"
                         >
                           Path Generate Description

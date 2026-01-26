@@ -18,6 +18,8 @@ pages/ (route-level containers)
 
 hooks/ (feature hooks)
 
+validations/ (for feature related zod validators)
+
 api/ (requests, query keys)
 
 types/ (local types + re-exports) <!-- move from types folder, but only those Products specific types -->

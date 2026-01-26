@@ -1,5 +1,11 @@
-All my modals slide from upper left corner and now have a cross to close the modal. Use the Regular Close button as the one in Product Edit / Create in all modals
 
+My AI Paths node modals don't have a close button like the one in Edit / Create Product modal, it is supposed to be a unified UI design.
+
+Baselinker Account is not selected automatically when Exporting Products
+
+images still flicker
+
+move integrations into a separate page / feature
 
 * In Products, When I enter Marketplaces I need Category Mapper page for each marketplace. It is a page Where I can Set up category Mappings from my platfrom to an external pages for proper Export and Import (in the case of Base.com cause it's an integrator). The first Page will be Base.com but there will be others. I need a page within Category Mapper - Base.com where I can download current category list for a given catalog through API. Then, I can select which categories (or maybe all of them) I want to consider during my mappings, finally, I need a mapping engine, where I can one by one map each Base.com Category to a Category in my Catalog.
 
@@ -80,7 +86,7 @@ LATER LATER - At some point the exported product should sync image URLs links wi
 
 LATER - In Integrations Baslinker Tab, create a separate Sync Tab, Where I can set Synchronization intervals. Also, I should be able to setup which way the syning is preferred for each field. So if stock changes in Base.com, should it overwrite what is in my platform, or should it be the other way round. which specific fields are synchronised is set up on per Product basis. So remove syn Price and Sync Inventory Tabs. - 
 
-
+LATER - per  User Activity Log system
 # IN PROGRESS
 
 

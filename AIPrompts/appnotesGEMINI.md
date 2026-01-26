@@ -12,7 +12,6 @@ Optimization and speed up processes
 
 # Check components in Products section and see if any of them or maybe parts of them can be made more reusable across application.
 * npx tsc < -- here now
-add comments
 npx eslint
 add tests
 check Product section optimization opportunities and avoidance of unnecessary re-renders.
@@ -24,10 +23,10 @@ run npx tsc and resolve typescript issues one by one
 
 
 Prepare a suite tests in vitests
-use tanstack query across application
+implement tanstack query across application
 
- User Activity Log system
-
+Connect tanstack queries to a unified error logging and handling system.
+Mimize tanstack queries, it's enough if I just send the collection name in many cases
 
 TESTS
 -use msw API mocking V

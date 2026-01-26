@@ -1,0 +1,118 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { getProductListingRepository } from "@/features/products/services/product-listing-repository";
+import { getProductRepository } from "@/features/products/services/product-repository";
+import { getIntegrationRepository } from "@/lib/services/integration-repository";
+import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { parseJsonBody } from "@/features/products/api/parse-json";
+import { badRequestError, conflictError, notFoundError } from "@/lib/errors/app-error";
+import { apiHandlerWithParams } from "@/lib/api/api-handler";
+
+const createListingSchema = z.object({
+  integrationId: z.string().min(1),
+  connectionId: z.string().min(1),
+});
+
+/**
+ * GET /api/products/[id]/listings
+ * Fetches all listings for a specific product.
+ */
+async function GET_handler(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: productId } = await params;
+    if (!productId) {
+      throw badRequestError("Product id is required");
+    }
+    const repo = await getProductListingRepository();
+    const listings = await repo.getListingsByProductId(productId);
+    return NextResponse.json(listings);
+  } catch (error) {
+    return createErrorResponse(error, {
+      request: req,
+      source: "products.[id].listings.GET",
+      fallbackMessage: "Failed to fetch listings",
+    });
+  }
+}
+
+/**
+ * POST /api/products/[id]/listings
+ * Creates a new listing for a product on a marketplace.
+ */
+async function POST_handler(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: productId } = await params;
+    if (!productId) {
+      throw badRequestError("Product id is required");
+    }
+
+    const parsed = await parseJsonBody(req, createListingSchema, {
+      logPrefix: "product-listings.POST",
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
+
+    // Verify product exists
+    const productRepo = await getProductRepository();
+    const product = await productRepo.getProductById(productId);
+    if (!product) {
+      throw notFoundError("Product not found", { productId });
+    }
+
+    // Verify integration exists
+    const integrationRepo = await getIntegrationRepository();
+    const integration = await integrationRepo.getIntegrationById(data.integrationId);
+    if (!integration) {
+      throw notFoundError("Integration not found", {
+        integrationId: data.integrationId,
+      });
+    }
+
+    // Verify connection exists and belongs to the integration
+    const connection = await integrationRepo.getConnectionByIdAndIntegration(
+      data.connectionId,
+      data.integrationId
+    );
+    if (!connection) {
+      throw notFoundError(
+        "Connection not found or does not belong to the integration",
+        { connectionId: data.connectionId, integrationId: data.integrationId }
+      );
+    }
+
+    // Check if listing already exists
+    const listingRepo = await getProductListingRepository();
+    const exists = await listingRepo.listingExists(productId, data.connectionId);
+    if (exists) {
+      throw conflictError("Product is already listed on this account", {
+        productId,
+        connectionId: data.connectionId,
+      });
+    }
+
+    const listing = await listingRepo.createListing({
+      productId,
+      integrationId: data.integrationId,
+      connectionId: data.connectionId,
+    });
+
+    return NextResponse.json(listing, { status: 201 });
+  } catch (error: unknown) {
+    return createErrorResponse(error, {
+      request: req,
+      source: "products.[id].listings.POST",
+      fallbackMessage: "Failed to create listing",
+    });
+  }
+}
+
+export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].listings.GET" });
+export const POST = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "products.[id].listings.POST" });

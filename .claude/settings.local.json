@@ -40,7 +40,8 @@
       "Read(//Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/**)",
       "Bash(echo:*)",
       "Bash(done)",
-      "Bash(npx next build)"
+      "Bash(npx next build)",
+      "Bash(npm run lint:*)"
     ]
   }
 }

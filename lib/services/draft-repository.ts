@@ -147,6 +147,28 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
   const draft: MongoDraftDoc = {
     _id: id,
     ...input,
+    description: input.description || null,
+    sku: input.sku || null,
+    ean: input.ean || null,
+    gtin: input.gtin || null,
+    asin: input.asin || null,
+    name_en: input.name_en || null,
+    name_pl: input.name_pl || null,
+    name_de: input.name_de || null,
+    description_en: input.description_en || null,
+    description_pl: input.description_pl || null,
+    description_de: input.description_de || null,
+    weight: input.weight || null,
+    sizeLength: input.sizeLength || null,
+    sizeWidth: input.sizeWidth || null,
+    length: input.length || null,
+    price: input.price || null,
+    supplierName: input.supplierName || null,
+    supplierLink: input.supplierLink || null,
+    priceComment: input.priceComment || null,
+    stock: input.stock || null,
+    baseProductId: input.baseProductId || null,
+    defaultPriceGroupId: input.defaultPriceGroupId || null,
     catalogIds: input.catalogIds || [],
     categoryIds: input.categoryIds || [],
     tagIds: input.tagIds || [],
@@ -157,7 +179,7 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
     updatedAt: now,
   };
 
-  await mongo.collection("product_drafts").insertOne(draft);
+  await mongo.collection<MongoDraftDoc>("product_drafts").insertOne(draft);
 
   return {
     id,

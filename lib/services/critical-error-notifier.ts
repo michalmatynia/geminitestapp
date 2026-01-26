@@ -23,7 +23,7 @@ type NotificationConfig = {
   throttleSeconds: number;
 };
 
-type SettingRecord = { key?: string; value?: string };
+type SettingRecord = { _id: string; key?: string; value?: string };
 
 const canUsePrismaSettings = () =>
   Boolean(process.env.DATABASE_URL) && "setting" in prisma;

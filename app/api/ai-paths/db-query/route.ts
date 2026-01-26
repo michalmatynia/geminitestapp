@@ -12,8 +12,8 @@ const querySchema = z.object({
   provider: z.enum(["auto", "mongodb"]).optional(),
   collection: z.string().trim().min(1),
   query: z.unknown().optional(),
-  projection: z.record(z.any()).optional(),
-  sort: z.record(z.any()).optional(),
+  projection: z.record(z.string(), z.any()).optional(),
+  sort: z.record(z.string(), z.any()).optional(),
   limit: z.number().int().min(1).max(200).optional(),
   single: z.boolean().optional(),
   idType: z.enum(["string", "objectId"]).optional(),
@@ -114,7 +114,7 @@ async function POST_handler(req: Request) {
 
     const cursor = mongo.collection(collection).find(filter, projection ? { projection } : undefined);
     if (sort) {
-      cursor.sort(sort);
+      cursor.sort(sort as any);
     }
     const items = await cursor.limit(limit).toArray();
     return NextResponse.json({ items, count: items.length });

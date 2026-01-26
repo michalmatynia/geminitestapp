@@ -1,4 +1,21 @@
 
+Database node
+
+Query page
+
+Dry run button - when I enable it goes green
+[] Query window with query validator, also auto-formatter
+remove : Adjust parser mappings, model selection, or database operations for this node.
+Placeholder list for all the mapped values
+
+Operation choixce
+collection choice, Database Provider
+
+Sort preset
+Projection preset
+Which don't have their separate editor window, but when I select a preset, it's value append whatever is inte Query field to make sense as one query
+---
+
 continue working on AI Paths a modular node system for data paths and signal paths for a multiapp platform, extend it with new functionalities better validations, better information clusters, more developed nodes, be inventive and creative, there's no limit to how the data can travel or be changed along these paths. The only limitations is that it has to work within the AI Paths Node Modular system.
 
 LATER - Move the whole Agentic AI configuration into AI Paths, there I want to create specific agents (model sets that will carry out different tasks, like planning, validating formatting etc) that can be used all across platform.
@@ -51,3 +68,5 @@ Sending another prompt during an agent work means I am adjusting, so at this poi
 
 Connect GPT API to my Agentic Framework
 ---
+
+node-llama-cpp

@@ -1,5 +1,6 @@
 import { ErrorSystem } from "@/lib/error-system";
-import NextAuth from "next-auth";
+import NextAuth, { type Session, type User } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import Facebook from "next-auth/providers/facebook";
@@ -287,7 +288,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
       providers: buildProviders(),
       callbacks: {
         ...(authConfig.callbacks ?? {}),
-        async jwt({ token, user }) {
+        async jwt({ token, user }: { token: JWT; user?: User }) {
           const userId = user?.id ?? token.sub;
           if (userId) {
             const access = await getAuthAccessForUser(userId);
@@ -301,7 +302,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
           }
           return token;
         },
-        session({ session, token }) {
+        session({ session, token }: { session: Session; token: JWT }) {
           if (session.user) {
             session.user.id = token.sub ?? session.user.id;
             session.user.role = token.role ?? null;

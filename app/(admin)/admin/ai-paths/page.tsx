@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AiPathsSettings } from "../products/settings/components/AiPathsSettings";
+import { AiPathsSettings } from "./components/AiPathsSettings";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AiPathsPage() {

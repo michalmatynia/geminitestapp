@@ -7,7 +7,7 @@ import {
 } from "@/lib/constants/auth-user-pages";
 import { getAppDbProvider } from "@/lib/services/app-db-provider";
 
-type SettingRecord = { key: string; value: string };
+type SettingRecord = { _id: string; key: string; value: string };
 
 const canUsePrismaSettings = () =>
   Boolean(process.env.DATABASE_URL) && "setting" in prisma;

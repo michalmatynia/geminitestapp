@@ -3,11 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-
-interface Block {
-  id: string;
-  name: string;
-}
+import { Block } from "@/types/cms";
 
 export default function BlocksPage() {
   const [blocks, setBlocks] = useState<Block[]>([]);

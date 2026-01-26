@@ -14,7 +14,7 @@ import { removeUndefined } from "@/lib/utils";
 const updateSchema = z.object({
   entityType: z.enum(["product", "note", "custom"]),
   entityId: z.string().trim().optional(),
-  updates: z.record(z.any()).optional(),
+  updates: z.record(z.string(), z.any()).optional(),
   mode: z.enum(["replace", "append"]).optional(),
 });
 
@@ -141,7 +141,7 @@ async function POST_handler(req: Request) {
       if (Object.keys(updateData).length === 0) {
         throw badRequestError("No valid note fields to update");
       }
-      const updated = await noteService.update(entityId as string, updateData);
+      const updated = await noteService.update(entityId as string, updateData as any);
       if (!updated) {
         throw notFoundError("Note not found", { noteId: entityId });
       }

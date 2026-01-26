@@ -23,6 +23,11 @@ const AI_SETTINGS_KEYS = new Set([
   "ai_generation_output_enabled",
 ]);
 
+interface MongoSetting {
+  _id: string;
+  value: string;
+}
+
 export async function getSettingValue(key: string): Promise<string | null> {
   let value: string | null = null;
 
@@ -30,7 +35,7 @@ export async function getSettingValue(key: string): Promise<string | null> {
   if (AI_SETTINGS_KEYS.has(key) && process.env.MONGODB_URI) {
     try {
       const mongo = await getMongoDb();
-      const doc = await mongo.collection("settings").findOne({ _id: key }) as { value: string } | null;
+      const doc = await mongo.collection<MongoSetting>("settings").findOne({ _id: key });
       if (doc && typeof doc.value === "string") {
         value = doc.value;
         return value; // Return immediately if found in MongoDB
@@ -57,7 +62,7 @@ export async function getSettingValue(key: string): Promise<string | null> {
   if (!value && !AI_SETTINGS_KEYS.has(key) && process.env.MONGODB_URI) {
     try {
       const mongo = await getMongoDb();
-      const doc = await mongo.collection("settings").findOne({ _id: key }) as { value: string } | null;
+      const doc = await mongo.collection<MongoSetting>("settings").findOne({ _id: key });
       if (doc && typeof doc.value === "string") {
         value = doc.value;
       }

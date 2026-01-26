@@ -24,8 +24,8 @@ import type {
   AiNode,
   PathConfig,
   PathMeta,
-} from "@/app/(admin)/admin/products/settings/components/ai-paths/types";
-import { evaluateGraph } from "@/app/(admin)/admin/products/settings/components/ai-paths/runtime";
+} from "@/lib/ai-paths";
+import { evaluateGraph } from "@/lib/ai-paths";
 import {
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
@@ -33,7 +33,7 @@ import {
   createDefaultPathConfig,
   normalizeNodes,
   sanitizeEdges,
-} from "@/app/(admin)/admin/products/settings/components/ai-paths/helpers";
+} from "@/lib/ai-paths";
 
 export default function ProductFormGeneral() {
   const safeJsonStringify = (value: unknown) => {

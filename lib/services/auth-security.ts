@@ -12,7 +12,7 @@ import {
 import { getAppDbProvider } from "@/lib/services/app-db-provider";
 import { logSystemEvent } from "@/lib/services/system-logger";
 
-type SettingRecord = { key: string; value: string };
+type SettingRecord = { _id: string; key: string; value: string };
 
 type AttemptRecord = {
   _id: string;

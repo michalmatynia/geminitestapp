@@ -13,7 +13,7 @@ import {
   type AuthUserRoleMap,
 } from "@/lib/constants/auth-management";
 
-type SettingRecord = { key: string; value: string };
+type SettingRecord = { _id: string; key: string; value: string };
 
 const canUsePrismaSettings = () =>
   Boolean(process.env.DATABASE_URL) && "setting" in prisma;

@@ -23,13 +23,13 @@ import {
   ProductCategoryWithChildren,
   ProductTag,
 } from "@/types/products";
-import { PriceGroupsSettings } from "./components/PriceGroupsSettings";
-import { CatalogsSettings } from "./components/CatalogsSettings";
+import { PriceGroupsSettings } from "./components/pricing/PriceGroupsSettings";
+import { CatalogsSettings } from "./components/catalogs/CatalogsSettings";
 import { CategoriesSettings } from "@/components/products/settings/CategoriesSettings";
 import { TagsSettings } from "@/components/products/settings/TagsSettings";
-import { InternationalizationSettings } from "./components/InternationalizationSettings";
-import { AiDescriptionSettings } from "./components/AiDescriptionSettings";
-import { AiTranslationSettings } from "./components/AiTranslationSettings";
+import { InternationalizationSettings } from "./components/localization/InternationalizationSettings";
+import { AiDescriptionSettings } from "./components/ai/AiDescriptionSettings";
+import { AiTranslationSettings } from "./components/ai/AiTranslationSettings";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";

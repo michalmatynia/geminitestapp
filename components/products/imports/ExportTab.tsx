@@ -338,7 +338,7 @@ export function ExportTab({
                         onChange={(event) => {
                           const raw = event.target.value;
                           updateImageRetryPreset(preset.id, {
-                            maxDimension: raw ? Number(raw) : undefined,
+                            ...(raw ? { maxDimension: Number(raw) } : {}),
                           });
                         }}
                         className="mt-1 h-8"
@@ -356,7 +356,7 @@ export function ExportTab({
                         onChange={(event) => {
                           const raw = event.target.value;
                           updateImageRetryPreset(preset.id, {
-                            jpegQuality: raw ? Number(raw) : undefined,
+                            ...(raw ? { jpegQuality: Number(raw) } : {}),
                           });
                         }}
                         className="mt-1 h-8"

@@ -22,7 +22,7 @@ const updatePreferencesSchema = z.object({
   aiPathsExpandedGroups: z.array(z.string()).optional().nullable(),
   aiPathsPaletteCollapsed: z.boolean().optional().nullable(),
   aiPathsPathIndex: z.array(z.unknown()).optional().nullable(),
-  aiPathsPathConfigs: z.union([z.record(z.unknown()), z.string()]).optional().nullable(),
+  aiPathsPathConfigs: z.union([z.record(z.string(), z.unknown()), z.string()]).optional().nullable(),
 });
 
 /**
@@ -99,8 +99,8 @@ async function PATCH_handler(req: NextRequest) {
       ...(parsed.aiPathsActivePathId !== undefined && { aiPathsActivePathId: parsed.aiPathsActivePathId }),
       ...(parsed.aiPathsExpandedGroups !== undefined && { aiPathsExpandedGroups: parsed.aiPathsExpandedGroups }),
       ...(parsed.aiPathsPaletteCollapsed !== undefined && { aiPathsPaletteCollapsed: parsed.aiPathsPaletteCollapsed }),
-      ...(parsed.aiPathsPathIndex !== undefined && { aiPathsPathIndex: parsed.aiPathsPathIndex }),
-      ...(parsed.aiPathsPathConfigs !== undefined && { aiPathsPathConfigs: parsed.aiPathsPathConfigs }),
+      ...(parsed.aiPathsPathIndex !== undefined && { aiPathsPathIndex: parsed.aiPathsPathIndex as any }),
+      ...(parsed.aiPathsPathConfigs !== undefined && { aiPathsPathConfigs: parsed.aiPathsPathConfigs as any }),
     };
 
     if (!isDatabaseConfigured) {

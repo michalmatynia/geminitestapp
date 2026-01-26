@@ -11,12 +11,7 @@ import { Loader2, RefreshCcw, Trash2, XCircle, Eye } from "lucide-react";
 import ModalShell from "@/components/ui/modal-shell";
 import ProductListingJobsPanel from "@/components/products/jobs/ProductListingJobsPanel";
 import type { ProductAiJob } from "@/types/product-jobs";
-
-export type ProductAiJobsPanelProps = {
-  title?: string;
-  description?: string;
-  showTabs?: boolean;
-};
+import type { ProductAiJobsPanelProps } from "@/types/products-ui";
 
 export default function ProductAiJobsPanel({
   title = "AI Jobs",

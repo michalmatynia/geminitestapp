@@ -109,3 +109,13 @@ export type IntegrationDbProvider = "prisma" | "mongodb";
 export type SyncDirection = "to_base" | "from_base" | "bidirectional" | "none";
 
 export type ProductAiJobType = "description_generation" | "translation" | "graph_model";
+
+export type ProductMigrationBatchResult = {
+  direction: ProductMigrationDirection;
+  productsProcessed: number;
+  productsUpserted: number;
+  nextCursor: string | null;
+  missingImageFileIds: string[];
+  missingCatalogIds: string[];
+};
+

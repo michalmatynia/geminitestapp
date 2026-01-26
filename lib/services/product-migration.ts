@@ -2,17 +2,7 @@ import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import type { WithId } from "mongodb";
 import type { CatalogRecord, ImageFileRecord } from "@/types";
-
-export type MigrationDirection = "prisma-to-mongo" | "mongo-to-prisma";
-
-export type MigrationBatchResult = {
-  direction: MigrationDirection;
-  productsProcessed: number;
-  productsUpserted: number;
-  nextCursor: string | null;
-  missingImageFileIds: string[];
-  missingCatalogIds: string[];
-};
+import type { ProductMigrationDirection as MigrationDirection, ProductMigrationBatchResult as MigrationBatchResult } from "@/types/products";
 
 type ImageFileInput = {
   id: string;

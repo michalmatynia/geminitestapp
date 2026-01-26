@@ -48,7 +48,7 @@ export function CatalogsSettings({
     <div className="space-y-5">
       <div className="flex justify-start">
         <Button
-          className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
+          className="min-w-[100px] border border-white/20 hover:border-white/40"
           type="button"
           onClick={() => handleOpenCatalogModal()}
         >

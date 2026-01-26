@@ -60,10 +60,7 @@ export const ALL_IMAGE_KEYS = [
   "images_all",
 ];
 
-export type ExportParameterDoc = {
-  key: string;
-  description: string;
-};
+import type { ExportParameterDoc } from "@/types/product-imports";
 
 export const EXPORT_PARAMETER_DOCS: ExportParameterDoc[] = [
   { key: "sku", description: "Unique product SKU/code." },

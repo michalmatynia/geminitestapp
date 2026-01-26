@@ -51,7 +51,8 @@ export function NoteForm({
   onTagClick,
   notebookId,
   folderTheme,
-}: NoteFormProps) {
+  formRef,
+}: NoteFormProps & { formRef?: React.RefObject<HTMLFormElement | null> }) {
   // Content & undo/redo
   const {
     state: content,
@@ -764,19 +765,10 @@ export function NoteForm({
     <>
           <form
             id={note ? "note-edit-form" : undefined}
+            ref={formRef}
             onSubmit={(e) => { void handleSubmit(e); }}
             className="space-y-4"
-          >      {!note && (
-        <div className="flex gap-2 pb-4 border-b border-gray-700">
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
-          >
-            {isSubmitting ? "Saving..." : "Create"}
-          </Button>
-        </div>
-      )}
+          >      
 
       <div>
         <Label className="mb-2 block text-sm font-medium text-white">

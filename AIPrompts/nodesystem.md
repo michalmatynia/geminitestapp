@@ -70,3 +70,6 @@ Connect GPT API to my Agentic Framework
 ---
 
 node-llama-cpp
+
+
+Draggable buttons that can be "Dropped" into a node system availability

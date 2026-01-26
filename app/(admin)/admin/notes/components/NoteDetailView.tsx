@@ -248,12 +248,13 @@ export function NoteDetailView({
               <span className="text-gray-300">{crumb.name}</span>
             ) : (
               <Button
+                variant="link"
                 onClick={() => {
                   setSelectedFolderId(crumb.id);
                   setSelectedNote(null);
                   setIsEditing(false);
                 }}
-                className="cursor-pointer hover:text-blue-400 transition"
+                className="h-auto p-0 text-gray-400 hover:text-blue-400 transition"
               >
                 {crumb.name}
               </Button>
@@ -274,15 +275,14 @@ export function NoteDetailView({
               setSelectedNote(null);
             }
           }}
-          variant="outline"
-          className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+          className="min-w-[80px] border border-white/20 hover:border-white/40"
         >
           Back
         </Button>
         <Button
           type="button"
           onClick={() => onToggleFavorite(selectedNote)}
-          className="flex items-center gap-2 rounded border border-gray-700 px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white"
+          className="flex items-center gap-2 border border-white/20 hover:border-white/40"
         >
           <Star
             size={16}
@@ -295,7 +295,7 @@ export function NoteDetailView({
         {!isEditing ? (
           <Button
             onClick={() => setIsEditing(true)}
-            className="bg-blue-600 text-white hover:bg-blue-700"
+            className="min-w-[80px] border border-white/20 hover:border-white/40"
           >
             Edit
           </Button>
@@ -308,22 +308,21 @@ export function NoteDetailView({
                 const form = document.getElementById("note-edit-form") as HTMLFormElement;
                 form?.requestSubmit();
               }}
-              className="bg-blue-600 text-white hover:bg-blue-700"
+              className="min-w-[80px] border border-white/20 hover:border-white/40"
             >
               Update
             </Button>
             <Button
               type="button"
               onClick={() => setIsEditing(false)}
-              variant="outline"
-              className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+              className="min-w-[80px] border border-white/20 hover:border-white/40"
             >
               Cancel
             </Button>
             <Button
               type="button"
               onClick={() => { void onDeleteNote(); }}
-              className="bg-red-600 text-white hover:bg-red-700"
+              className="min-w-[80px] border border-red-500/20 hover:border-red-500/40 text-red-400"
             >
               Delete
             </Button>

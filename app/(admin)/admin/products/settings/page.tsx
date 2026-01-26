@@ -3,15 +3,12 @@
 import React, {
   useCallback,
   useEffect,
-  useMemo,
   useState,
 } from "react";
 import { useToast } from "@/components/ui/toast";
-import { Input } from "@/components/ui/input";
 
 import {
   settingSections,
-  countryCodeOptions,
 } from "./constants";
 import {
   PriceGroup,
@@ -31,17 +28,19 @@ import { InternationalizationSettings } from "./components/localization/Internat
 import { AiDescriptionSettings } from "./components/ai/AiDescriptionSettings";
 import { AiTranslationSettings } from "./components/ai/AiTranslationSettings";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
+// New Modals
+import { CatalogModal } from "@/components/products/settings/modals/CatalogModal";
+import { LanguageModal } from "@/components/products/settings/modals/LanguageModal";
+import { PriceGroupModal } from "@/components/products/settings/modals/PriceGroupModal";
+import { CurrencyModal } from "@/components/products/settings/modals/CurrencyModal";
+import { CountryModal } from "@/components/products/settings/modals/CountryModal";
 
 export default function ProductSettingsPage() {
-  const generateGroupId = () =>
-    `PG-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
   const [activeSection, setActiveSection] =
     useState<(typeof settingSections)[number]>("Categories");
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  
+  // Data State
   const [priceGroups, setPriceGroups] = useState<PriceGroup[]>([]);
   const [productCategories, setProductCategories] = useState<ProductCategoryWithChildren[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
@@ -61,101 +60,35 @@ export default function ProductSettingsPage() {
   const [languages, setLanguages] = useState<Language[]>([]);
   const [languagesLoading, setLanguagesLoading] = useState(true);
   const [languagesError, setLanguagesError] = useState<string | null>(null);
-  const [showLanguageModal, setShowLanguageModal] = useState(false);
-  const [editingLanguageId, setEditingLanguageId] = useState<string | null>(
-    null
-  );
-  const [selectedCountryIds, setSelectedCountryIds] = useState<string[]>([]);
-  const [languageForm, setLanguageForm] = useState({
-    code: "",
-    name: "",
-    nativeName: "",
-  });
-  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
-  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
-  const [editingCurrencyId, setEditingCurrencyId] = useState<string | null>(
-    null
-  );
-  const [showCountryModal, setShowCountryModal] = useState(false);
-  const [editingCountryId, setEditingCountryId] = useState<string | null>(null);
-  const [selectedCurrencyIds, setSelectedCurrencyIds] = useState<string[]>([]);
-  const [currencyForm, setCurrencyForm] = useState({
-    code: "PLN",
-    name: "",
-    symbol: "",
-  });
-  const [countryForm, setCountryForm] = useState({
-    code: "",
-    name: "",
-  });
-  const [catalogForm, setCatalogForm] = useState({
-    name: "",
-    description: "",
-    isDefault: false,
-  });
-  const [catalogPriceGroupIds, setCatalogPriceGroupIds] = useState<string[]>([]);
-  const [catalogDefaultPriceGroupId, setCatalogDefaultPriceGroupId] =
-    useState("");
-  const [defaultLanguageId, setDefaultLanguageId] = useState("");
-  const [catalogError, setCatalogError] = useState<string | null>(null);
-  const [catalogSaving, setCatalogSaving] = useState(false);
+
+  // Modal State
   const [showCatalogModal, setShowCatalogModal] = useState(false);
-  const [editingCatalogId, setEditingCatalogId] = useState<string | null>(null);
-  const [selectedLanguageIds, setSelectedLanguageIds] = useState<string[]>([]);
-  const [catalogLanguageQuery, setCatalogLanguageQuery] = useState("");
-  const [countrySearch, setCountrySearch] = useState("");
-  const [formState, setFormState] = useState({
-    isDefault: false,
-    groupId: "",
-    name: "",
-    description: "",
-    currencyId: "",
-    groupType: "standard" as PriceGroupType,
-    basePriceField: "price",
-    sourceGroupId: "",
-    priceMultiplier: 1,
-    addToPrice: 0,
-  });
+  const [editingCatalog, setEditingCatalog] = useState<Catalog | null>(null);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [editingLanguage, setEditingLanguage] = useState<Language | null>(null);
+  const [showPriceGroupModal, setShowPriceGroupModal] = useState(false);
+  const [editingPriceGroup, setEditingPriceGroup] = useState<PriceGroup | null>(null);
+  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const [editingCurrency, setEditingCurrency] = useState<CurrencyOption | null>(null);
+  const [showCountryModal, setShowCountryModal] = useState(false);
+  const [editingCountry, setEditingCountry] = useState<CountryOption | null>(null);
+
   const { toast } = useToast();
 
   const refreshPriceGroups = useCallback(async () => {
     try {
       setLoadingGroups(true);
       const res = await fetch("/api/price-groups");
-      if (!res.ok) {
-        throw new Error("Failed to fetch price groups.");
-      }
-      const data = (await res.json()) as {
-        id: string;
-        groupId: string;
-        name: string;
-        description: string | null;
-        currencyId: string;
-        currency: { code: string };
-        isDefault: boolean;
-        type: PriceGroupType;
-        basePriceField: string;
-        sourceGroupId: string | null;
-        priceMultiplier: number;
-        addToPrice: number;
-      }[];
+      if (!res.ok) throw new Error("Failed to fetch price groups.");
+      const data = await res.json();
       setPriceGroups(
-        data.map((group) => ({
-          id: group.id,
-          groupId: group.groupId,
-          name: group.name,
-          description: group.description ?? "",
-          currencyId: group.currencyId,
+        data.map((group: any) => ({
+          ...group,
           currencyCode: group.currency.code,
-          isDefault: group.isDefault,
           groupType: group.type,
-          basePriceField: group.basePriceField,
-          sourceGroupId: group.sourceGroupId,
-          priceMultiplier: group.priceMultiplier,
-          addToPrice: group.addToPrice,
         }))
       );
-      const defaultGroup = data.find((group) => group.isDefault);
+      const defaultGroup = data.find((group: any) => group.isDefault);
       setDefaultGroupId(defaultGroup?.id ?? "");
     } catch (error) {
       console.error(error);
@@ -168,11 +101,8 @@ export default function ProductSettingsPage() {
     try {
       setLoadingCurrencies(true);
       const res = await fetch("/api/currencies");
-      if (!res.ok) {
-        throw new Error("Failed to fetch currencies.");
-      }
-      const data = (await res.json()) as CurrencyOption[];
-      setCurrencyOptions(data);
+      if (!res.ok) throw new Error("Failed to fetch currencies.");
+      setCurrencyOptions(await res.json());
     } catch (error) {
       console.error(error);
     } finally {
@@ -184,11 +114,8 @@ export default function ProductSettingsPage() {
     try {
       setLoadingCountries(true);
       const res = await fetch("/api/countries");
-      if (!res.ok) {
-        throw new Error("Failed to fetch countries.");
-      }
-      const data = (await res.json()) as CountryOption[];
-      setCountries(data);
+      if (!res.ok) throw new Error("Failed to fetch countries.");
+      setCountries(await res.json());
     } catch (error) {
       console.error(error);
     } finally {
@@ -200,12 +127,10 @@ export default function ProductSettingsPage() {
     try {
       setLoadingCatalogs(true);
       const res = await fetch("/api/catalogs");
-      if (!res.ok) {
-        throw new Error("Failed to fetch catalogs.");
-      }
-      const data = (await res.json()) as Catalog[];
+      if (!res.ok) throw new Error("Failed to fetch catalogs.");
+      const data = await res.json();
       setCatalogs(
-        data.map((catalog) => ({
+        data.map((catalog: any) => ({
           ...catalog,
           description: catalog.description ?? "",
           priceGroupIds: catalog.priceGroupIds ?? [],
@@ -227,11 +152,8 @@ export default function ProductSettingsPage() {
     try {
       setLoadingCategories(true);
       const res = await fetch(`/api/products/categories/tree?catalogId=${catalogId}`);
-      if (!res.ok) {
-        throw new Error("Failed to fetch product categories.");
-      }
-      const data = (await res.json()) as ProductCategoryWithChildren[];
-      setProductCategories(data);
+      if (!res.ok) throw new Error("Failed to fetch product categories.");
+      setProductCategories(await res.json());
     } catch (error) {
       console.error(error);
     } finally {
@@ -247,11 +169,8 @@ export default function ProductSettingsPage() {
     try {
       setLoadingTags(true);
       const res = await fetch(`/api/products/tags?catalogId=${catalogId}`);
-      if (!res.ok) {
-        throw new Error("Failed to fetch product tags.");
-      }
-      const data = (await res.json()) as ProductTag[];
-      setProductTags(data);
+      if (!res.ok) throw new Error("Failed to fetch product tags.");
+      setProductTags(await res.json());
     } catch (error) {
       console.error(error);
     } finally {
@@ -263,24 +182,11 @@ export default function ProductSettingsPage() {
     try {
       setLanguagesLoading(true);
       const res = await fetch("/api/languages");
-      if (!res.ok) {
-        const payload = (await res.json()) as {
-          error?: string;
-          errorId?: string;
-        };
-        const message = payload?.error || "Failed to fetch languages.";
-        const suffix = payload?.errorId
-          ? ` (Error ID: ${payload.errorId})`
-          : "";
-        throw new Error(`${message}${suffix}`);
-      }
-      const data = (await res.json()) as Language[];
-      setLanguages(data);
+      if (!res.ok) throw new Error("Failed to fetch languages.");
+      setLanguages(await res.json());
     } catch (error) {
       console.error(error);
-      setLanguagesError(
-        error instanceof Error ? error.message : "Failed to fetch languages."
-      );
+      setLanguagesError(error instanceof Error ? error.message : "Failed to fetch languages.");
     } finally {
       setLanguagesLoading(false);
     }
@@ -292,153 +198,55 @@ export default function ProductSettingsPage() {
     void refreshPriceGroups();
     void refreshCatalogs();
     void refreshLanguages();
-  }, [
-    refreshCurrencies,
-    refreshCountries,
-    refreshPriceGroups,
-    refreshCatalogs,
-    refreshLanguages,
-  ]);
+  }, [refreshCurrencies, refreshCountries, refreshPriceGroups, refreshCatalogs, refreshLanguages]);
 
-  useEffect(() => {
-    if (formState.currencyId) return;
-    const plnCurrency = currencyOptions.find((option) => option.code === "PLN");
-    if (plnCurrency) {
-      setFormState((prev) => ({ ...prev, currencyId: plnCurrency.id }));
-    }
-  }, [currencyOptions, formState.currencyId]);
-
-  // Auto-select default catalog for categories when catalogs load
   useEffect(() => {
     if (catalogs.length > 0 && !selectedCategoryCatalogId) {
-      const defaultCatalog = catalogs.find((c) => c.isDefault);
-      const catalogToSelect = defaultCatalog || catalogs[0];
-      if (catalogToSelect) {
-        setSelectedCategoryCatalogId(catalogToSelect.id);
-        void refreshCategories(catalogToSelect.id);
+      const def = catalogs.find((c) => c.isDefault) || catalogs[0];
+      if (def) {
+        setSelectedCategoryCatalogId(def.id);
+        void refreshCategories(def.id);
       }
     }
   }, [catalogs, selectedCategoryCatalogId, refreshCategories]);
 
-  // Auto-select default catalog for tags when catalogs load
   useEffect(() => {
     if (catalogs.length > 0 && !selectedTagCatalogId) {
-      const defaultCatalog = catalogs.find((c) => c.isDefault);
-      const catalogToSelect = defaultCatalog || catalogs[0];
-      if (catalogToSelect) {
-        setSelectedTagCatalogId(catalogToSelect.id);
-        void refreshTags(catalogToSelect.id);
+      const def = catalogs.find((c) => c.isDefault) || catalogs[0];
+      if (def) {
+        setSelectedTagCatalogId(def.id);
+        void refreshTags(def.id);
       }
     }
   }, [catalogs, selectedTagCatalogId, refreshTags]);
 
-  const handleCategoryCatalogChange = useCallback((catalogId: string) => {
-    setSelectedCategoryCatalogId(catalogId);
-    void refreshCategories(catalogId);
-  }, [refreshCategories]);
-
-  const handleTagCatalogChange = useCallback((catalogId: string) => {
-    setSelectedTagCatalogId(catalogId);
-    void refreshTags(catalogId);
-  }, [refreshTags]);
-
-  const selectedCurrency = useMemo(
-    () => currencyOptions.find((option) => option.id === formState.currencyId),
-    [currencyOptions, formState.currencyId]
-  );
-
-  const handleOpenCreate = () => {
-    setFormState({
-      isDefault: false,
-      groupId: generateGroupId(),
-      name: "",
-      description: "",
-      currencyId: selectedCurrency?.id || "",
-      groupType: "standard",
-      basePriceField: "price",
-      sourceGroupId: "",
-      priceMultiplier: 1,
-      addToPrice: 0,
-    });
-    setEditingGroupId(null);
-    setShowCreateModal(true);
-  };
-
-  const handleSaveGroup = async () => {
-    if (!formState.groupId.trim()) {
-      toast("Price group ID is required.", { variant: "error" });
-      return;
-    }
-    if (!formState.name.trim()) {
-      toast("Price group name is required.", { variant: "error" });
-      return;
-    }
-    if (!formState.currencyId) {
-      toast("Currency is required.", { variant: "error" });
-      return;
-    }
-    if (
-      formState.groupType === "dependent" &&
-      !formState.sourceGroupId.trim()
-    ) {
-      toast("Source price group is required for dependent groups.", {
-        variant: "error",
-      });
-      return;
-    }
-
-    const payload = {
-      groupId: formState.groupId.trim(),
-      isDefault: formState.isDefault,
-      name: formState.name.trim(),
-      description: formState.description.trim() || undefined,
-      currencyId: formState.currencyId,
-      type: formState.groupType,
-      basePriceField: formState.basePriceField,
-      sourceGroupId: formState.sourceGroupId.trim() || undefined,
-      priceMultiplier: formState.priceMultiplier,
-      addToPrice: formState.addToPrice,
-    };
+  const handleSetDefaultGroup = async (groupId: string) => {
+    const group = priceGroups.find((g) => g.id === groupId);
+    if (!group) return;
+    setDefaultGroupSaving(true);
     try {
-      const res = await fetch(
-        editingGroupId
-          ? `/api/price-groups/${editingGroupId}`
-          : "/api/price-groups",
-        {
-          method: editingGroupId ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
-      if (!res.ok) {
-        const error = (await res.json()) as { error?: string };
-        toast(error.error || "Failed to save price group.", { variant: "error" });
-        return;
+      const res = await fetch(`/api/price-groups/${group.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...group, isDefault: true, type: group.groupType }),
+      });
+      if (res.ok) {
+        await refreshPriceGroups();
+        toast("Default price group updated.", { variant: "success" });
       }
-      await refreshPriceGroups();
-      setShowCreateModal(false);
-      setEditingGroupId(null);
     } catch (error) {
-      console.error("Failed to save price group:", error);
-      toast("Failed to save price group.", { variant: "error" });
+      console.error(error);
+    } finally {
+      setDefaultGroupSaving(false);
     }
   };
 
-  const handleEditGroup = (group: PriceGroup) => {
-    setFormState({
-      isDefault: group.isDefault,
-      groupId: group.groupId,
-      name: group.name,
-      description: group.description,
-      currencyId: group.currencyId,
-      groupType: group.groupType,
-      basePriceField: group.basePriceField,
-      sourceGroupId: group.sourceGroupId ?? "",
-      priceMultiplier: group.priceMultiplier,
-      addToPrice: group.addToPrice,
-    });
-    setEditingGroupId(group.id);
-    setShowCreateModal(true);
+  const handleDeleteCatalog = async (catalog: Catalog) => {
+    if (!confirm(`Delete catalog "${catalog.name}"?`)) return;
+    try {
+      const res = await fetch(`/api/catalogs/${catalog.id}`, { method: "DELETE" });
+      if (res.ok) await refreshCatalogs();
+    } catch (err) { console.error(err); }
   };
 
   const handleDeleteGroup = async (group: PriceGroup) => {
@@ -446,566 +254,11 @@ export default function ProductSettingsPage() {
       toast("At least one price group is required.", { variant: "error" });
       return;
     }
-    const confirmed = window.confirm(`Delete price group "${group.name}"?`);
-    if (!confirmed) return;
+    if (!confirm(`Delete price group "${group.name}"?`)) return;
     try {
-      const res = await fetch(`/api/price-groups/${group.id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const error = (await res.json()) as { error?: string };
-        toast(error.error || "Failed to delete price group.", {
-          variant: "error",
-        });
-        return;
-      }
-      await refreshPriceGroups();
-    } catch (error) {
-      console.error("Failed to delete price group:", error);
-      toast("Failed to delete price group.", { variant: "error" });
-    }
-  };
-
-  const handleSetDefaultGroup = async (groupId: string) => {
-    setDefaultGroupId(groupId);
-    const group = priceGroups.find((entry) => entry.id === groupId);
-    if (!group) {
-      toast("Select a valid price group.", { variant: "error" });
-      return;
-    }
-    setDefaultGroupSaving(true);
-    try {
-      const res = await fetch(`/api/price-groups/${group.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          groupId: group.groupId,
-          isDefault: true,
-          name: group.name,
-          description: group.description,
-          currencyId: group.currencyId,
-          type: group.groupType,
-          basePriceField: group.basePriceField,
-          sourceGroupId: group.sourceGroupId ?? "",
-          priceMultiplier: group.priceMultiplier,
-          addToPrice: group.addToPrice,
-        }),
-      });
-      if (!res.ok) {
-        const error = (await res.json()) as { error?: string };
-        toast(error.error || "Failed to set default price group.", {
-          variant: "error",
-        });
-        return;
-      }
-      await refreshPriceGroups();
-      toast("Default price group updated.", { variant: "success" });
-    } catch (error) {
-      console.error("Failed to set default price group:", error);
-      toast("Failed to set default price group.", { variant: "error" });
-    } finally {
-      setDefaultGroupSaving(false);
-    }
-  };
-
-  const handleOpenCurrencyModal = (currency?: CurrencyOption) => {
-    if (currency) {
-      setCurrencyForm({
-        code: currency.code,
-        name: currency.name,
-        symbol: currency.symbol ?? "",
-      });
-      setEditingCurrencyId(currency.id);
-    } else {
-      setCurrencyForm({ code: "PLN", name: "", symbol: "" });
-      setEditingCurrencyId(null);
-    }
-    setShowCurrencyModal(true);
-  };
-
-  const handleSaveCurrency = async () => {
-    if (!currencyForm.code.trim() || !currencyForm.name.trim()) {
-      toast("Currency code and name are required.", { variant: "error" });
-      return;
-    }
-    try {
-      const res = await fetch(
-        editingCurrencyId
-          ? `/api/currencies/${editingCurrencyId}`
-          : "/api/currencies",
-        {
-          method: editingCurrencyId ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            code: currencyForm.code.trim().toUpperCase(),
-            name: currencyForm.name.trim(),
-            symbol: currencyForm.symbol.trim() || undefined,
-          }),
-        }
-      );
-      if (!res.ok) {
-        const error = (await res.json()) as { error?: string };
-        toast(error.error || "Failed to save currency.", { variant: "error" });
-        return;
-      }
-      await refreshCurrencies();
-      setShowCurrencyModal(false);
-      setEditingCurrencyId(null);
-    } catch (error) {
-      console.error("Failed to save currency:", error);
-      toast("Failed to save currency.", { variant: "error" });
-    }
-  };
-
-  const handleDeleteCurrency = async (currency: CurrencyOption) => {
-    const confirmed = window.confirm(`Delete currency "${currency.code}"?`);
-    if (!confirmed) return;
-    try {
-      const res = await fetch(`/api/currencies/${currency.id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const error = (await res.json()) as { error?: string };
-        toast(error.error || "Failed to delete currency.", { variant: "error" });
-        return;
-      }
-      await refreshCurrencies();
-    } catch (error) {
-      console.error("Failed to delete currency:", error);
-      toast("Failed to delete currency.", { variant: "error" });
-    }
-  };
-
-  const handleOpenCountryModal = (country?: CountryOption) => {
-    if (country) {
-      setCountryForm({ code: country.code, name: country.name });
-      setEditingCountryId(country.id);
-      setSelectedCurrencyIds(
-        country.currencies?.map((entry) => entry.currencyId) ?? []
-      );
-    } else {
-      const defaultCountry = countryCodeOptions[0];
-      if (defaultCountry) {
-        setCountryForm({ code: defaultCountry.code, name: defaultCountry.name });
-      }
-      setEditingCountryId(null);
-      setSelectedCurrencyIds([]);
-    }
-    setShowCountryModal(true);
-  };
-
-  const handleSaveCountry = async () => {
-    if (!countryForm.code.trim() || !countryForm.name.trim()) {
-      toast("Country code and name are required.", { variant: "error" });
-      return;
-    }
-    try {
-      const res = await fetch(
-        editingCountryId
-          ? `/api/countries/${editingCountryId}`
-          : "/api/countries",
-        {
-          method: editingCountryId ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            code: countryForm.code.trim().toUpperCase(),
-            name: countryForm.name.trim(),
-            currencyIds: selectedCurrencyIds,
-          }),
-        }
-      );
-      if (!res.ok) {
-        const error = (await res.json()) as { error?: string };
-        toast(error.error || "Failed to save country.", { variant: "error" });
-        return;
-      }
-      await refreshCountries();
-      setShowCountryModal(false);
-      setEditingCountryId(null);
-    } catch (error) {
-      console.error("Failed to save country:", error);
-      toast("Failed to save country.", { variant: "error" });
-    }
-  };
-
-  const handleDeleteCountry = async (country: CountryOption) => {
-    const confirmed = window.confirm(`Delete country "${country.name}"?`);
-    if (!confirmed) return;
-    try {
-      const res = await fetch(`/api/countries/${country.id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const error = (await res.json()) as { error?: string };
-        toast(error.error || "Failed to delete country.", { variant: "error" });
-        return;
-      }
-      await refreshCountries();
-    } catch (error) {
-      console.error("Failed to delete country:", error);
-      toast("Failed to delete country.", { variant: "error" });
-    }
-  };
-
-  const toggleCountryCurrency = (currencyId: string) => {
-    setSelectedCurrencyIds((prev) =>
-      prev.includes(currencyId)
-        ? prev.filter((id) => id !== currencyId)
-        : [...prev, currencyId]
-    );
-  };
-
-  const filteredCountries = countries.filter((country) => {
-    const query = countrySearch.trim().toLowerCase();
-    if (!query) return true;
-    return (
-      country.code.toLowerCase().includes(query) ||
-      country.name.toLowerCase().includes(query)
-    );
-  });
-
-  const handleOpenCatalogModal = (catalog?: Catalog) => {
-    if (catalog) {
-      setEditingCatalogId(catalog.id);
-      setCatalogForm({
-        name: catalog.name,
-        description: catalog.description ?? "",
-        isDefault: catalog.isDefault,
-      });
-      const nextLanguageIds = catalog.languageIds ?? [];
-      setSelectedLanguageIds(nextLanguageIds);
-      setDefaultLanguageId(
-        catalog.defaultLanguageId ??
-          (nextLanguageIds.length > 0 ? (nextLanguageIds[0] ?? "") : "")
-      );
-      const nextPriceGroupIds =
-        catalog.priceGroupIds?.length && catalog.priceGroupIds.length > 0
-          ? catalog.priceGroupIds
-          : defaultGroupId
-            ? [defaultGroupId]
-            : [];
-      setCatalogPriceGroupIds(nextPriceGroupIds);
-      setCatalogDefaultPriceGroupId(
-        catalog.defaultPriceGroupId ??
-          nextPriceGroupIds[0] ??
-          defaultGroupId ??
-          ""
-      );
-    } else {
-      setEditingCatalogId(null);
-      setCatalogForm({
-        name: "",
-        description: "",
-        isDefault: catalogs.length === 0,
-      });
-      setSelectedLanguageIds([]);
-      setDefaultLanguageId("");
-      setCatalogPriceGroupIds(defaultGroupId ? [defaultGroupId] : []);
-      setCatalogDefaultPriceGroupId(defaultGroupId ?? "");
-    }
-    setCatalogError(null);
-    setCatalogLanguageQuery("");
-    setShowCatalogModal(true);
-  };
-
-  const handleDeleteCatalog = (catalog: Catalog) => {
-    const deleteCatalog = async () => {
-      const confirmed = window.confirm(
-        `Delete catalog "${catalog.name}"? This cannot be undone.`
-      );
-      if (!confirmed) {
-        return;
-      }
-
-      try {
-        const res = await fetch(`/api/catalogs/${catalog.id}`, {
-          method: "DELETE",
-        });
-
-        if (!res.ok) {
-          const error = (await res.json()) as {
-            error?: string;
-            errorId?: string;
-          };
-          const message = error.error || "Failed to delete catalog.";
-          const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-          toast(`${message}${suffix}`, { variant: "error" });
-          return;
-        }
-
-        await refreshCatalogs();
-      } catch (error) {
-        console.error("Failed to delete catalog:", error);
-        toast("Failed to delete catalog.", { variant: "error" });
-      }
-    };
-
-    void deleteCatalog();
-  };
-
-  const handleSubmitCatalog = () => {
-    const submitCatalog = async () => {
-      if (catalogSaving) {
-        return;
-      }
-      const name = catalogForm.name.trim();
-      const description = catalogForm.description.trim();
-      if (!name) {
-        toast("Catalog name is required.", { variant: "error" });
-        return;
-      }
-      if (selectedLanguageIds.length === 0) {
-        toast("Select at least one language.", { variant: "error" });
-        return;
-      }
-      if (!defaultLanguageId || !selectedLanguageIds.includes(defaultLanguageId)) {
-        toast("Select a default language from the available languages.", {
-          variant: "error",
-        });
-        return;
-      }
-      if (catalogPriceGroupIds.length === 0) {
-        toast("Select at least one price group.", { variant: "error" });
-        return;
-      }
-      if (
-        !catalogDefaultPriceGroupId ||
-        !catalogPriceGroupIds.includes(catalogDefaultPriceGroupId)
-      ) {
-        toast("Select a default price group from the available price groups.", {
-          variant: "error",
-        });
-        return;
-      }
-      setCatalogSaving(true);
-      try {
-        const endpoint = editingCatalogId
-          ? `/api/catalogs/${editingCatalogId}`
-          : "/api/catalogs";
-        const res = await fetch(endpoint, {
-          method: editingCatalogId ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name,
-            description,
-            languageIds: selectedLanguageIds,
-            defaultLanguageId,
-            priceGroupIds: catalogPriceGroupIds,
-            defaultPriceGroupId: catalogDefaultPriceGroupId,
-            isDefault: catalogForm.isDefault,
-          }),
-        });
-        if (!res.ok) {
-          const error = (await res.json()) as {
-            error?: string;
-            errorId?: string;
-          };
-          const message = error.error || "Failed to save catalog.";
-          const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-          setCatalogError(`${message}${suffix}`);
-          return;
-        }
-        setCatalogError(null);
-        toast("Catalog saved.", { variant: "success" });
-        setShowCatalogModal(false);
-        setEditingCatalogId(null);
-        setCatalogForm({ name: "", description: "", isDefault: false });
-        setSelectedLanguageIds([]);
-        setDefaultLanguageId("");
-        setCatalogPriceGroupIds([]);
-        setCatalogDefaultPriceGroupId("");
-        refreshCatalogs().catch((error) => {
-          console.error("Failed to refresh catalogs:", error);
-          toast("Catalog saved, but refresh failed.", { variant: "error" });
-        });
-      } catch (error) {
-        console.error("Failed to save catalog:", error);
-        setCatalogError("Failed to save catalog.");
-      } finally {
-        setCatalogSaving(false);
-      }
-    };
-    void submitCatalog();
-  };
-
-  const toggleLanguage = (languageId: string) => {
-    setSelectedLanguageIds((prev) => {
-      const next = prev.includes(languageId)
-        ? prev.filter((id) => id !== languageId)
-        : [...prev, languageId];
-      if (!next.includes(defaultLanguageId)) {
-        setDefaultLanguageId(next[0] ?? "");
-      }
-      return next;
-    });
-  };
-
-  const removeLanguage = (languageId: string) => {
-    setSelectedLanguageIds((prev) => {
-      const next = prev.filter((id) => id !== languageId);
-      if (!next.includes(defaultLanguageId)) {
-        setDefaultLanguageId(next[0] ?? "");
-      }
-      return next;
-    });
-  };
-
-  const moveLanguage = (languageId: string, direction: "up" | "down") => {
-    setSelectedLanguageIds((prev) => {
-      const index = prev.indexOf(languageId);
-      if (index === -1) return prev;
-
-      const newIndex = direction === "up" ? index - 1 : index + 1;
-      if (newIndex < 0 || newIndex >= prev.length) return prev;
-
-      const next = [...prev];
-      const temp = next[index];
-      const swapItem = next[newIndex];
-      if (temp !== undefined && swapItem !== undefined) {
-        next[index] = swapItem;
-        next[newIndex] = temp;
-      }
-      return next;
-    });
-  };
-
-  const toggleCatalogPriceGroup = (groupId: string) => {
-    setCatalogPriceGroupIds((prev) => {
-      const next = prev.includes(groupId)
-        ? prev.filter((id) => id !== groupId)
-        : [...prev, groupId];
-      if (!next.includes(catalogDefaultPriceGroupId)) {
-        setCatalogDefaultPriceGroupId(next[0] ?? "");
-      }
-      return next;
-    });
-  };
-
-  const selectedLanguages = useMemo(
-    () =>
-      languages.filter((language) => selectedLanguageIds.includes(language.id)),
-    [languages, selectedLanguageIds]
-  );
-
-  const availableLanguages = useMemo(() => {
-    const query = catalogLanguageQuery.trim().toLowerCase();
-    return languages.filter((language) => {
-      if (selectedLanguageIds.includes(language.id)) {
-        return false;
-      }
-      if (!query) {
-        return true;
-      }
-      return (
-        language.name.toLowerCase().includes(query) ||
-        language.code.toLowerCase().includes(query)
-      );
-    });
-  }, [catalogLanguageQuery, languages, selectedLanguageIds]);
-
-  const handleOpenLanguageModal = (language: Language) => {
-    setEditingLanguageId(language.id);
-    setSelectedCountryIds(
-      language.countries?.map((entry) => entry.countryId) ?? []
-    );
-    setLanguageForm({
-      code: language.code,
-      name: language.name,
-      nativeName: language.nativeName ?? "",
-    });
-    setShowLanguageModal(true);
-  };
-
-  const handleOpenNewLanguageModal = () => {
-    setEditingLanguageId(null);
-    setSelectedCountryIds([]);
-    setLanguageForm({ code: "", name: "", nativeName: "" });
-    setShowLanguageModal(true);
-  };
-
-  const toggleCountry = (countryId: string) => {
-    setSelectedCountryIds((prev) =>
-      prev.includes(countryId)
-        ? prev.filter((id) => id !== countryId)
-        : [...prev, countryId]
-    );
-  };
-
-  const handleSaveLanguage = () => {
-    const saveLanguage = async () => {
-      if (!languageForm.code.trim() || !languageForm.name.trim()) {
-        toast("Language code and name are required.", { variant: "error" });
-        return;
-      }
-      const payload = {
-        code: languageForm.code.trim(),
-        name: languageForm.name.trim(),
-        nativeName: languageForm.nativeName.trim() || undefined,
-        countryIds: selectedCountryIds,
-      };
-      try {
-        const res = await fetch(
-          editingLanguageId
-            ? `/api/languages/${editingLanguageId}`
-            : "/api/languages",
-          {
-            method: editingLanguageId ? "PUT" : "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          }
-        );
-        if (!res.ok) {
-          const error = (await res.json()) as {
-            error?: string;
-            errorId?: string;
-          };
-          const message = error.error || "Failed to save language.";
-          const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-          toast(`${message}${suffix}`, { variant: "error" });
-          return;
-        }
-        setShowLanguageModal(false);
-        setEditingLanguageId(null);
-        setSelectedCountryIds([]);
-        await refreshLanguages();
-      } catch (error) {
-        console.error("Failed to save language:", error);
-        toast("Failed to save language.", { variant: "error" });
-      }
-    };
-    void saveLanguage();
-  };
-
-  const handleDeleteLanguage = (language: Language) => {
-    const confirmed = window.confirm(`Delete language "${language.name}"?`);
-    if (!confirmed) return;
-    const removeLanguage = async () => {
-      try {
-        const res = await fetch(`/api/languages/${language.id}`, {
-          method: "DELETE",
-        });
-        if (!res.ok) {
-          const error = (await res.json()) as {
-            error?: string;
-            errorId?: string;
-          };
-          const message = error.error || "Failed to delete language.";
-          const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-          toast(`${message}${suffix}`, { variant: "error" });
-          return;
-        }
-        await refreshLanguages();
-        if (editingLanguageId === language.id) {
-          setShowLanguageModal(false);
-          setEditingLanguageId(null);
-          setSelectedCountryIds([]);
-        }
-      } catch (error) {
-        console.error("Failed to delete language:", error);
-        toast("Failed to delete language.", { variant: "error" });
-      }
-    };
-    void removeLanguage();
+      const res = await fetch(`/api/price-groups/${group.id}`, { method: "DELETE" });
+      if (res.ok) await refreshPriceGroups();
+    } catch (err) { console.error(err); }
   };
 
   return (
@@ -1037,7 +290,7 @@ export default function ProductSettingsPage() {
                 categories={productCategories}
                 catalogs={catalogs}
                 selectedCatalogId={selectedCategoryCatalogId}
-                onCatalogChange={handleCategoryCatalogChange}
+                onCatalogChange={(id) => { setSelectedCategoryCatalogId(id); void refreshCategories(id); }}
                 onRefresh={() => void refreshCategories(selectedCategoryCatalogId)}
               />
             )}
@@ -1047,7 +300,7 @@ export default function ProductSettingsPage() {
                 tags={productTags}
                 catalogs={catalogs}
                 selectedCatalogId={selectedTagCatalogId}
-                onCatalogChange={handleTagCatalogChange}
+                onCatalogChange={(id) => { setSelectedTagCatalogId(id); void refreshTags(id); }}
                 onRefresh={() => void refreshTags(selectedTagCatalogId)}
               />
             )}
@@ -1056,11 +309,11 @@ export default function ProductSettingsPage() {
                 loadingGroups={loadingGroups}
                 priceGroups={priceGroups}
                 defaultGroupId={defaultGroupId}
-                onDefaultGroupChange={(val) => void handleSetDefaultGroup(val)}
+                onDefaultGroupChange={handleSetDefaultGroup}
                 defaultGroupSaving={defaultGroupSaving}
-                handleOpenCreate={handleOpenCreate}
-                handleEditGroup={handleEditGroup}
-                handleDeleteGroup={(id) => void handleDeleteGroup(id)}
+                handleOpenCreate={() => { setEditingPriceGroup(null); setShowPriceGroupModal(true); }}
+                handleEditGroup={(g) => { setEditingPriceGroup(g); setShowPriceGroupModal(true); }}
+                handleDeleteGroup={handleDeleteGroup}
               />
             )}
             {activeSection === "Catalogs" && (
@@ -1068,29 +321,44 @@ export default function ProductSettingsPage() {
                 loadingCatalogs={loadingCatalogs}
                 catalogs={catalogs}
                 languages={languages}
-                handleOpenCatalogModal={handleOpenCatalogModal}
-                handleEditCatalog={handleOpenCatalogModal}
-                handleDeleteCatalog={(id) => void handleDeleteCatalog(id)}
+                handleOpenCatalogModal={() => { setEditingCatalog(null); setShowCatalogModal(true); }}
+                handleEditCatalog={(c) => { setEditingCatalog(c); setShowCatalogModal(true); }}
+                handleDeleteCatalog={handleDeleteCatalog}
               />
             )}
             {activeSection === "Internationalization" && (
               <InternationalizationSettings
                 loadingCurrencies={loadingCurrencies}
                 currencyOptions={currencyOptions}
-                handleOpenCurrencyModal={handleOpenCurrencyModal}
-                handleDeleteCurrency={(id) => void handleDeleteCurrency(id)}
+                handleOpenCurrencyModal={(c) => { setEditingCurrency(c ?? null); setShowCurrencyModal(true); }}
+                handleDeleteCurrency={async (c) => { 
+                  if (confirm(`Delete ${c.code}?`)) {
+                    await fetch(`/api/currencies/${c.id}`, { method: "DELETE" });
+                    await refreshCurrencies();
+                  }
+                }}
                 loadingCountries={loadingCountries}
-                filteredCountries={filteredCountries}
-                countrySearch={countrySearch}
-                setCountrySearch={setCountrySearch}
-                handleOpenCountryModal={handleOpenCountryModal}
-                handleDeleteCountry={(id) => void handleDeleteCountry(id)}
+                filteredCountries={countries}
+                countrySearch=""
+                setCountrySearch={() => {}}
+                handleOpenCountryModal={(c) => { setEditingCountry(c ?? null); setShowCountryModal(true); }}
+                handleDeleteCountry={async (c) => {
+                  if (confirm(`Delete ${c.name}?`)) {
+                    await fetch(`/api/countries/${c.id}`, { method: "DELETE" });
+                    await refreshCountries();
+                  }
+                }}
                 languagesLoading={languagesLoading}
                 languagesError={languagesError}
                 languages={languages}
-                handleOpenNewLanguageModal={handleOpenNewLanguageModal}
-                handleOpenLanguageModal={handleOpenLanguageModal}
-                handleDeleteLanguage={(id) => void handleDeleteLanguage(id)}
+                handleOpenNewLanguageModal={() => { setEditingLanguage(null); setShowLanguageModal(true); }}
+                handleOpenLanguageModal={(l) => { setEditingLanguage(l); setShowLanguageModal(true); }}
+                handleDeleteLanguage={async (l) => {
+                  if (confirm(`Delete ${l.name}?`)) {
+                    await fetch(`/api/languages/${l.id}`, { method: "DELETE" });
+                    await refreshLanguages();
+                  }
+                }}
               />
             )}
             {activeSection === "AI Description" && <AiDescriptionSettings />}
@@ -1098,828 +366,54 @@ export default function ProductSettingsPage() {
           </section>
         </div>
       </div>
-      {showCatalogModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={() => setShowCatalogModal(false)}
-        >
-          <div
-            className="w-full max-w-lg rounded-lg bg-gray-950 p-6 shadow-lg"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white">
-                {editingCatalogId ? "Edit Catalog" : "Create Catalog"}
-              </h2>
-              <Button
-                className="text-sm text-gray-400 hover:text-white"
-                type="button"
-                onClick={() => setShowCatalogModal(false)}
-              >
-                Close
-              </Button>
-            </div>
-            <div className="space-y-4">
-              {catalogError ? (
-                <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="font-semibold">Catalog save failed</span>
-                    <Button
-                      className="rounded border border-red-400/50 px-2 py-1 text-[11px] text-red-100 hover:bg-red-500/20"
-                      type="button"
-                      onClick={() => {
-                        if (catalogError) {
-                          void navigator.clipboard.writeText(catalogError);
-                          toast("Error copied to clipboard.", {
-                            variant: "success",
-                          });
-                        }
-                      }}
-                    >
-                      Copy
-                    </Button>
-                  </div>
-                  <Textarea
-                    className="mt-2 w-full resize-none rounded-md border border-red-500/30 bg-gray-900/70 p-2 text-[11px] text-red-100"
-                    rows={3}
-                    readOnly
-                    value={catalogError}
-                  />
-                </div>
-              ) : null}
-              <div>
-                <Label className="text-xs text-gray-400">Name</Label>
-                <Input
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
-                  value={catalogForm.name}
-                  onChange={(event) =>
-                    setCatalogForm((prev) => ({
-                      ...prev,
-                      name: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-gray-400">Description</Label>
-                <Textarea
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
-                  rows={3}
-                  value={catalogForm.description}
-                  onChange={(event) =>
-                    setCatalogForm((prev) => ({
-                      ...prev,
-                      description: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <Label className="flex items-center gap-2 text-xs text-gray-300">
-                <Checkbox
-                  className="accent-emerald-400"
-                  checked={catalogForm.isDefault}
-                  disabled={!editingCatalogId && catalogs.length === 0} onCheckedChange={(checked) =>
-                    setCatalogForm((prev) => ({
-                      ...prev,
-                      isDefault: Boolean(checked),
-                    }))
-                  }
-                />
-                Set as default catalog
-              </Label>
-              <div>
-                <div className="rounded-md border border-gray-800 bg-gray-950/70 p-3">
-                  <Label className="text-xs text-gray-400">Languages</Label>
-                  {languagesLoading ? (
-                    <p className="mt-2 text-xs text-gray-500">
-                      Loading languages...
-                    </p>
-                  ) : languagesError ? (
-                    <p className="mt-2 text-xs text-red-400">
-                      {languagesError}
-                    </p>
-                  ) : (
-                    <div className="mt-2 space-y-3">
-                      <Input
-                        placeholder="Search languages..."
-                        value={catalogLanguageQuery}
-                        onChange={(event) =>
-                          setCatalogLanguageQuery(event.target.value)
-                        }
-                      />
-                      <div className="space-y-1">
-                        {selectedLanguages.length === 0 ? (
-                          <span className="text-[11px] text-gray-500">
-                            No languages selected.
-                          </span>
-                        ) : (
-                          selectedLanguages.map((language, index) => (
-                            <div
-                              key={language.id}
-                              className="flex items-center justify-between rounded-md border border-gray-700 bg-gray-900 px-3 py-1.5 text-xs text-gray-200"
-                            >
-                              <div className="flex items-center gap-2">
-                                <span className="text-gray-500 w-4 text-center">
-                                  {index + 1}.
-                                </span>
-                                <span>
-                                  {language.name}
-                                  <span className="ml-1 text-gray-500">
-                                    ({language.code})
-                                  </span>
-                                </span>
-                                {language.id === defaultLanguageId && (
-                                  <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] text-emerald-300">
-                                    Default
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Button
-                                  type="button"
-                                  className="rounded p-1 text-gray-500 hover:bg-gray-800 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500"
-                                  onClick={() => moveLanguage(language.id, "up")}
-                                  disabled={index === 0}
-                                  title="Move up"
-                                >
-                                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                                  </svg>
-                                </Button>
-                                <Button
-                                  type="button"
-                                  className="rounded p-1 text-gray-500 hover:bg-gray-800 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500"
-                                  onClick={() => moveLanguage(language.id, "down")}
-                                  disabled={index === selectedLanguages.length - 1}
-                                  title="Move down"
-                                >
-                                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                  </svg>
-                                </Button>
-                                <Button
-                                  type="button"
-                                  className="rounded p-1 text-gray-500 hover:bg-red-500/20 hover:text-red-400"
-                                  onClick={() => removeLanguage(language.id)}
-                                  title="Remove"
-                                >
-                                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                  </svg>
-                                </Button>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                      <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-xs text-gray-200">
-                        {availableLanguages.length === 0 ? (
-                          <p className="text-gray-500">
-                            No matching languages.
-                          </p>
-                        ) : (
-                          availableLanguages.map((language) => (
-                            <Button
-                              key={language.id}
-                              type="button"
-                              className="flex w-full items-center justify-between rounded-md px-2 py-1 text-left hover:bg-gray-800"
-                              onClick={() => toggleLanguage(language.id)}
-                            >
-                              <span>
-                                {language.name}
-                                <span className="ml-1 text-gray-500">
-                                  ({language.code})
-                                </span>
-                              </span>
-                              <span className="text-gray-500">Add</span>
-                            </Button>
-                          ))
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs text-gray-400">
-                          Default language
-                        </Label>
-                        <select
-                          className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-white"
-                          value={defaultLanguageId}
-                          onChange={(event) =>
-                            setDefaultLanguageId(event.target.value)
-                          }
-                          disabled={selectedLanguages.length === 0}
-                        >
-                          <option value="">Select a default language</option>
-                          {selectedLanguages.map((language) => (
-                            <option key={language.id} value={language.id}>
-                              {language.name} ({language.code})
-                            </option>
-                          ))}
-                        </select>
-                        <p className="text-[11px] text-gray-500">
-                          Required. Choose from the available languages.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div>
-                <div className="rounded-md border border-gray-800 bg-gray-950/70 p-3">
-                  <Label className="text-xs text-gray-400">Price groups</Label>
-                  {loadingGroups ? (
-                    <p className="mt-2 text-xs text-gray-500">
-                      Loading price groups...
-                    </p>
-                  ) : priceGroups.length === 0 ? (
-                    <p className="mt-2 text-xs text-gray-500">
-                      Add a price group to continue.
-                    </p>
-                  ) : (
-                    <div className="mt-2 space-y-3">
-                      <div className="flex flex-wrap gap-2">
-                        {catalogPriceGroupIds.length === 0 ? (
-                          <span className="text-[11px] text-gray-500">
-                            No price groups selected.
-                          </span>
-                        ) : (
-                          catalogPriceGroupIds.map((groupId) => {
-                            const group = priceGroups.find(
-                              (entry) => entry.id === groupId
-                            );
-                            return (
-                              <Button
-                                key={groupId}
-                                type="button"
-                                className="inline-flex items-center gap-1 rounded-full border border-gray-700 bg-gray-900 px-3 py-1 text-xs text-gray-200 hover:border-gray-500"
-                                onClick={() => toggleCatalogPriceGroup(groupId)}
-                              >
-                                {group?.name ?? groupId}
-                                {group?.currencyCode ? (
-                                  <span className="text-gray-500">
-                                    ({group.currencyCode})
-                                  </span>
-                                ) : null}
-                                <span className="text-gray-500">×</span>
-                              </Button>
-                            );
-                          })
-                        )}
-                      </div>
-                      <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-xs text-gray-200">
-                        {priceGroups.map((group) => {
-                          const isSelected = catalogPriceGroupIds.includes(
-                            group.id
-                          );
-                          return (
-                            <Button
-                              key={group.id}
-                              type="button"
-                              className="flex w-full items-center justify-between rounded-md px-2 py-1 text-left hover:bg-gray-800"
-                              onClick={() => toggleCatalogPriceGroup(group.id)}
-                            >
-                              <span>
-                                {group.name}
-                                <span className="ml-1 text-gray-500">
-                                  ({group.currencyCode})
-                                </span>
-                              </span>
-                              <span className="text-gray-500">
-                                {isSelected ? "Remove" : "Add"}
-                              </span>
-                            </Button>
-                          );
-                        })}
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs text-gray-400">
-                          Default price group
-                        </Label>
-                        <select
-                          className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-white"
-                          value={catalogDefaultPriceGroupId}
-                          onChange={(event) =>
-                            setCatalogDefaultPriceGroupId(event.target.value)
-                          }
-                          disabled={catalogPriceGroupIds.length === 0}
-                        >
-                          <option value="">Select a default price group</option>
-                          {catalogPriceGroupIds.map((groupId) => {
-                            const group = priceGroups.find(
-                              (entry) => entry.id === groupId
-                            );
-                            return (
-                              <option key={groupId} value={groupId}>
-                                {group?.name ?? groupId}
-                              </option>
-                            );
-                          })}
-                        </select>
-                        <p className="text-[11px] text-gray-500">
-                          Required. Choose from the available price groups.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center justify-end gap-3">
-                <Button
-                  className="rounded-md border border-gray-800 px-3 py-2 text-sm text-gray-300 hover:bg-gray-900"
-                  type="button"
-                  onClick={() => setShowCatalogModal(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
-                  type="button"
-                  onClick={handleSubmitCatalog}
-                  disabled={catalogSaving}
-                >
-                  {catalogSaving ? "Saving..." : "Save"}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      {showLanguageModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={() => setShowLanguageModal(false)}
-        >
-          <div
-            className="w-full max-w-lg rounded-lg bg-gray-950 p-6 shadow-lg"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white">
-                {editingLanguageId ? "Edit Language" : "Add Language"}
-              </h2>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <Label className="text-xs text-gray-400">Code</Label>
-                <Input
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
-                  value={languageForm.code}
-                  onChange={(event) =>
-                    setLanguageForm((prev) => ({
-                      ...prev,
-                      code: event.target.value.toUpperCase(),
-                    }))
-                  }
-                  placeholder="e.g. EN"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-gray-400">Name</Label>
-                <Input
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
-                  value={languageForm.name}
-                  onChange={(event) =>
-                    setLanguageForm((prev) => ({
-                      ...prev,
-                      name: event.target.value,
-                    }))
-                  }
-                  placeholder="e.g. English"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-gray-400">Native name</Label>
-                <Input
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
-                  value={languageForm.nativeName}
-                  onChange={(event) =>
-                    setLanguageForm((prev) => ({
-                      ...prev,
-                      nativeName: event.target.value,
-                    }))
-                  }
-                  placeholder="e.g. English"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-gray-400">Countries</Label>
-                <div className="mt-2 flex max-h-64 flex-wrap gap-2 overflow-y-auto">
-                  {countries.map((country) => (
-                    <Label
-                      key={country.id}
-                      className="inline-flex items-center gap-2 rounded border border-gray-800 bg-gray-900 px-2 py-1 text-xs text-gray-200"
-                    >
-                      <Checkbox
-                        checked={selectedCountryIds.includes(country.id)} onCheckedChange={() => toggleCountry(country.id)}
-                      />
-                      <span>
-                        {country.name}
-                        <span className="ml-1 text-gray-500">
-                          ({country.code})
-                        </span>
-                      </span>
-                    </Label>
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center justify-end gap-3">
-                <Button
-                  className="rounded-md border border-gray-800 px-3 py-2 text-sm text-gray-300 hover:bg-gray-900"
-                  type="button"
-                  onClick={() => setShowLanguageModal(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
-                  type="button"
-                  onClick={handleSaveLanguage}
-                >
-                  Save
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      {showCreateModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={() => setShowCreateModal(false)}
-        >
-          <div
-            className="w-full max-w-2xl rounded-lg bg-gray-950 p-6 shadow-lg"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-2xl font-semibold text-white">
-                {editingGroupId ? "Edit Price Group" : "Create Price Group"}
-              </h2>
-              <Button
-                className="text-sm text-gray-400 hover:text-white"
-                type="button"
-                onClick={() => setShowCreateModal(false)}
-              >
-                Close
-              </Button>
-            </div>
-            <div className="space-y-4">
-              <Label className="flex items-center gap-2 text-sm text-gray-300">
-                <Checkbox
-                  checked={formState.isDefault} onCheckedChange={(checked) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      isDefault: Boolean(checked),
-                    }))
-                  }
-                />
-                Set as default group
-              </Label>
-              <Input type="hidden" value={formState.groupId} />
-              <div>
-                <Label className="text-sm text-gray-300">Name</Label>
-                <Input
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
-                  value={formState.name}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      name: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div>
-                <Label className="text-sm text-gray-300">Description</Label>
-                <Textarea
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
-                  rows={3}
-                  value={formState.description}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      description: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div>
-                <Label className="text-sm text-gray-300">Currency</Label>
-                <select
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
-                  value={formState.currencyId}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      currencyId: event.target.value,
-                    }))
-                  }
-                  disabled={loadingCurrencies}
-                >
-                  {loadingCurrencies && (
-                    <option value="">Loading currencies...</option>
-                  )}
-                  {!loadingCurrencies &&
-                    currencyOptions.map((option) => (
-                      <option key={option.id} value={option.id}>
-                        {option.code} · {option.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-300">Group type</Label>
-                <RadioGroup
-                  className="mt-2 flex gap-4"
-                  value={formState.groupType}
-                  onValueChange={(value) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      groupType: value as "standard" | "dependent",
-                    }))
-                  }
-                >
-                  <div className="flex items-center gap-2 text-sm text-gray-300">
-                    <RadioGroupItem value="standard" id="price-group-standard" />
-                    <Label htmlFor="price-group-standard">Standard</Label>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-300">
-                    <RadioGroupItem value="dependent" id="price-group-dependent" />
-                    <Label htmlFor="price-group-dependent">Dependent</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-              {formState.groupType === "dependent" && (
-                <>
-                  <div>
-                    <Label className="text-sm text-gray-300">
-                      Source Price Group
-                    </Label>
-                    <select
-                      className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
-                      value={formState.sourceGroupId}
-                      onChange={(event) =>
-                        setFormState((prev) => ({
-                          ...prev,
-                          sourceGroupId: event.target.value,
-                        }))
-                      }
-                    >
-                      <option value="">Select a source group</option>
-                      {priceGroups.map((group) => (
-                        <option key={group.id} value={group.id}>
-                          {group.name} ({group.groupId})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <Label className="text-sm text-gray-300">
-                        Price Multiplier
-                      </Label>
-                      <Input
-                        className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
-                        type="number"
-                        step="0.01"
-                        value={formState.priceMultiplier}
-                        onChange={(event) =>
-                          setFormState((prev) => ({
-                            ...prev,
-                            priceMultiplier: Number(event.target.value),
-                          }))
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm text-gray-300">Add To Price</Label>
-                      <Input
-                        className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
-                        type="number"
-                        value={formState.addToPrice}
-                        onChange={(event) =>
-                          setFormState((prev) => ({
-                            ...prev,
-                            addToPrice: Number(event.target.value),
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-            <div className="mt-6 flex justify-end gap-3">
-              <Button
-                className="rounded-md border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-gray-500"
-                type="button"
-                onClick={() => setShowCreateModal(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
-                type="button"
-                onClick={() => void handleSaveGroup()}
-              >
-                Save Price Group
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-      {showCurrencyModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={() => setShowCurrencyModal(false)}
-        >
-          <div
-            className="w-full max-w-xl rounded-lg bg-gray-950 p-6 shadow-lg"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-2xl font-semibold text-white">
-                {editingCurrencyId ? "Edit Currency" : "Add Currency"}
-              </h2>
-              <Button
-                className="text-sm text-gray-400 hover:text-white"
-                type="button"
-                onClick={() => setShowCurrencyModal(false)}
-              >
-                Close
-              </Button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <Label className="text-sm text-gray-300">Code</Label>
-                <select
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
-                  value={currencyForm.code}
-                  onChange={(event) =>
-                    setCurrencyForm((prev) => ({
-                      ...prev,
-                      code: event.target.value,
-                    }))
-                  }
-                >
-                  {["PLN", "EUR", "USD", "GBP", "SEK"].map((code) => (
-                    <option key={code} value={code}>
-                      {code}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-300">Name</Label>
-                <Input
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
-                  value={currencyForm.name}
-                  onChange={(event) =>
-                    setCurrencyForm((prev) => ({
-                      ...prev,
-                      name: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div>
-                <Label className="text-sm text-gray-300">Symbol</Label>
-                <Input
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
-                  value={currencyForm.symbol}
-                  onChange={(event) =>
-                    setCurrencyForm((prev) => ({
-                      ...prev,
-                      symbol: event.target.value,
-                    }))
-                  }
-                  placeholder="e.g. $"
-                />
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end gap-3">
-              <Button
-                className="rounded-md border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-gray-500"
-                type="button"
-                onClick={() => setShowCurrencyModal(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
-                type="button"
-                onClick={() => void handleSaveCurrency()}
-              >
-                Save Currency
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-      {showCountryModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={() => setShowCountryModal(false)}
-        >
-          <div
-            className="w-full max-w-xl rounded-lg bg-gray-950 p-6 shadow-lg"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-2xl font-semibold text-white">
-                {editingCountryId ? "Edit Country" : "Add Country"}
-              </h2>
-              <Button
-                className="text-sm text-gray-400 hover:text-white"
-                type="button"
-                onClick={() => setShowCountryModal(false)}
-              >
-                Close
-              </Button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <Label className="text-sm text-gray-300">Code</Label>
-                <select
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
-                  value={countryForm.code}
-                  onChange={(event) => {
-                    const selected = countryCodeOptions.find(
-                      (option) => option.code === event.target.value
-                    );
-                    setCountryForm((prev) => ({
-                      ...prev,
-                      code: event.target.value,
-                      name: selected?.name ?? prev.name,
-                    }));
-                  }}
-                >
-                  {countryCodeOptions.map((option) => (
-                    <option key={option.code} value={option.code}>
-                      {option.code} · {option.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-300">Name</Label>
-                <Input
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
-                  value={countryForm.name}
-                  onChange={(event) =>
-                    setCountryForm((prev) => ({
-                      ...prev,
-                      name: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div>
-                <Label className="text-sm text-gray-300">Currencies</Label>
-                {loadingCurrencies ? (
-                  <p className="mt-2 text-xs text-gray-500">
-                    Loading currencies...
-                  </p>
-                ) : (
-                  <div className="mt-2 flex max-h-64 flex-wrap gap-2 overflow-y-auto">
-                    {currencyOptions.map((currency) => (
-                      <Label
-                        key={currency.id}
-                        className="inline-flex items-center gap-2 rounded border border-gray-800 bg-gray-900 px-2 py-1 text-xs text-gray-200"
-                      >
-                        <Checkbox
-                          checked={selectedCurrencyIds.includes(currency.id)} onCheckedChange={() => toggleCountryCurrency(currency.id)}
-                        />
-                        <span>
-                          {currency.code}
-                          <span className="ml-1 text-gray-500">
-                            {currency.name}
-                          </span>
-                        </span>
-                      </Label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end gap-3">
-              <Button
-                className="rounded-md border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-gray-500"
-                type="button"
-                onClick={() => setShowCountryModal(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
-                type="button"
-                onClick={() => void handleSaveCountry()}
-              >
-                Save Country
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+
+      {/* Modals */}
+      <CatalogModal
+        isOpen={showCatalogModal}
+        onClose={() => setShowCatalogModal(false)}
+        onSuccess={async () => { setShowCatalogModal(false); await refreshCatalogs(); }}
+        catalog={editingCatalog}
+        languages={languages}
+        languagesLoading={languagesLoading}
+        languagesError={languagesError}
+        priceGroups={priceGroups}
+        loadingGroups={loadingGroups}
+        defaultGroupId={defaultGroupId}
+      />
+
+      <LanguageModal
+        isOpen={showLanguageModal}
+        onClose={() => setShowLanguageModal(false)}
+        onSuccess={async () => { setShowLanguageModal(false); await refreshLanguages(); }}
+        language={editingLanguage}
+        countries={countries}
+      />
+
+      <PriceGroupModal
+        isOpen={showPriceGroupModal}
+        onClose={() => setShowPriceGroupModal(false)}
+        onSuccess={async () => { setShowPriceGroupModal(false); await refreshPriceGroups(); }}
+        priceGroup={editingPriceGroup}
+        currencyOptions={currencyOptions}
+        loadingCurrencies={loadingCurrencies}
+        priceGroups={priceGroups}
+      />
+
+      <CurrencyModal
+        isOpen={showCurrencyModal}
+        onClose={() => setShowCurrencyModal(false)}
+        onSuccess={async () => { setShowCurrencyModal(false); await refreshCurrencies(); }}
+        currency={editingCurrency}
+      />
+
+      <CountryModal
+        isOpen={showCountryModal}
+        onClose={() => setShowCountryModal(false)}
+        onSuccess={async () => { setShowCountryModal(false); await refreshCountries(); }}
+        country={editingCountry}
+        currencyOptions={currencyOptions}
+        loadingCurrencies={loadingCurrencies}
+      />
     </div>
   );
 }

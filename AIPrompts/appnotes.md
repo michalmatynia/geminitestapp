@@ -1,7 +1,5 @@
+All my modals slide from upper left corner and now have a cross to close the modal. Use the Regular Close button as the one in Product Edit / Create in all modals
 
-segment the files and create meaningful file folder structure that follows my current convention
-
-make as many components as possible reusable in my AI Paths section
 
 * In Products, When I enter Marketplaces I need Category Mapper page for each marketplace. It is a page Where I can Set up category Mappings from my platfrom to an external pages for proper Export and Import (in the case of Base.com cause it's an integrator). The first Page will be Base.com but there will be others. I need a page within Category Mapper - Base.com where I can download current category list for a given catalog through API. Then, I can select which categories (or maybe all of them) I want to consider during my mappings, finally, I need a mapping engine, where I can one by one map each Base.com Category to a Category in my Catalog.
 

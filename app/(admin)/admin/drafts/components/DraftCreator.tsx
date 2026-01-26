@@ -37,9 +37,10 @@ interface DraftCreatorProps {
   draftId: string | null;
   onSaveSuccess: () => void;
   onCancel: () => void;
+  formRef?: React.RefObject<HTMLFormElement | null>;
 }
 
-export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorProps) {
+export function DraftCreator({ draftId, onSaveSuccess, onCancel, formRef }: DraftCreatorProps) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -419,16 +420,14 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
   }
 
   return (
-    <div className="rounded-lg bg-gray-950 p-6">
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-white">
-          {draftId ? "Edit Draft" : "Create New Draft"}
-        </h2>
-        <p className="mt-1 text-sm text-gray-400">
-          Set up default values for new products
-        </p>
-      </div>
-
+    <form
+      ref={formRef}
+      onSubmit={(e) => {
+        e.preventDefault();
+        void handleSave();
+      }}
+      className="space-y-6"
+    >
       <div className="space-y-6">
         <Tabs defaultValue="details" className="w-full">
           <TabsList className="mb-6">
@@ -938,17 +937,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel }: DraftCreatorP
             </div>
           </TabsContent>
         </Tabs>
-
-        {/* Actions */}
-        <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={onCancel} disabled={saving}>
-            Cancel
-          </Button>
-          <Button onClick={() => void handleSave()} disabled={saving}>
-            {saving ? "Saving..." : draftId ? "Update Draft" : "Create Draft"}
-          </Button>
-        </div>
       </div>
-    </div>
+    </form>
   );
 }

@@ -29,7 +29,7 @@ export function PriceGroupsSettings({
       <div>
         <div className="flex items-center gap-4">
           <Button
-            className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
+            className="min-w-[100px] border border-white/20 hover:border-white/40"
             type="button"
             onClick={handleOpenCreate}
           >
@@ -77,14 +77,14 @@ export function PriceGroupsSettings({
                   {group.description || "No description"}
                 </span>
                 <Button
-                  className="text-sm text-gray-300 hover:text-white"
+                  className="border border-white/20 hover:border-white/40"
                   type="button"
                   onClick={() => handleEditGroup(group)}
                 >
                   Edit
                 </Button>
                 <Button
-                  className="text-sm text-red-400 hover:text-red-300"
+                  className="border border-red-500/20 hover:border-red-500/40 text-red-400"
                   type="button"
                   onClick={() => handleDeleteGroup(group)}
                 >

@@ -1,11 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-
-export type ProductListPreferences = {
-  nameLocale: "name_en" | "name_pl" | "name_de";
-  catalogFilter: string;
-  currencyCode: string | null;
-  pageSize: number;
-};
+import type { ProductListPreferences } from "@/types/products-ui";
 
 const DEFAULT_PREFERENCES: ProductListPreferences = {
   nameLocale: "name_en",

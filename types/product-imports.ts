@@ -79,10 +79,8 @@ export type ImageRetryPreset = {
 };
 
 export type ExportParameterDoc = {
-  name: string;
-  type: string;
+  key: string;
   description: string;
-  required: boolean;
 };
 
 export type ImportListStats = {

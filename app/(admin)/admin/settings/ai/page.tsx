@@ -144,7 +144,7 @@ export default function AiApiSettingsPage() {
             <Button 
               onClick={() => void handleSave()} 
               disabled={saving}
-              className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px]"
+              className="min-w-[120px] border border-white/20 hover:border-white/40"
             >
               {saving ? "Saving..." : (
                 <>

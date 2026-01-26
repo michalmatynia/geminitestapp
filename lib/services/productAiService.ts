@@ -2,8 +2,7 @@ import { productService } from "./productService";
 import { getProductAiJobRepository } from "@/lib/services/product-ai-job-repository";
 import { invalidStateError, notFoundError } from "@/lib/errors/app-error";
 import type { ProductAiJobUpdate } from "@/types/services/product-ai-job-repository";
-
-export type ProductAiJobType = "description_generation" | "translation" | "graph_model";
+import type { ProductAiJobType } from "@/types/products";
 
 export async function enqueueProductAiJob(productId: string, type: ProductAiJobType, payload: unknown) {
   console.log(`[enqueueProductAiJob] Creating job for productId: ${productId}, type: ${type}`);

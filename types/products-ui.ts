@@ -33,3 +33,16 @@ export type DebugInfo = {
   filename?: string | undefined;
   timestamp: string;
 };
+
+export type ProductListPreferences = {
+  nameLocale: "name_en" | "name_pl" | "name_de";
+  catalogFilter: string;
+  currencyCode: string | null;
+  pageSize: number;
+};
+
+export type ProductAiJobsPanelProps = {
+  title?: string;
+  description?: string;
+  showTabs?: boolean;
+};

@@ -78,7 +78,199 @@ export default function SelectProductForListingModal({
   // Export logging
   const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
   const [logsOpen, setLogsOpen] = useState(false);
+import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
+import { useBaseComSettings } from "./hooks/useBaseComSettings";
+import { isImageExportError } from "./utils";
+
+type SelectProductForListingModalProps = {
+  integrationId: string;
+  connectionId: string;
+  onClose: () => void;
+  onSuccess: () => void;
+};
+
+export default function SelectProductForListingModal({
+  integrationId: initialIntegrationId,
+  connectionId: initialConnectionId,
+  onClose,
+  onSuccess,
+}: SelectProductForListingModalProps) {
+  const [products, setProducts] = useState<ProductWithImages[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
+  const [submitting, setSubmitting] = useState(false);
+
+  // Integration & connection selection
+  const {
+    integrations,
+    loading: loadingIntegrations,
+    selectedIntegrationId,
+    selectedConnectionId,
+    selectedIntegration,
+    isBaseComIntegration,
+    setSelectedIntegrationId,
+    setSelectedConnectionId,
+  } = useIntegrationSelection(initialIntegrationId, initialConnectionId);
+
+  // Base.com specific settings
+  const {
+    templates,
+    selectedTemplateId,
+    setSelectedTemplateId,
+    inventories,
+    selectedInventoryId,
+    setSelectedInventoryId,
+    loadingInventories,
+    allowDuplicateSku,
+    setAllowDuplicateSku,
+  } = useBaseComSettings(isBaseComIntegration, selectedConnectionId);
+
+  // Export logging
+  const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
+  const [logsOpen, setLogsOpen] = useState(false);
   const imageRetryPresets = useImageRetryPresets();
+
+  const connectionName = selectedIntegration?.connections.find(
+    (c) => c.id === selectedConnectionId
+  )?.name || "";
+
+  // Load products
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoadingProducts(true);
+        const res = await fetch("/api/products");
+        if (!res.ok) throw new Error("Failed to fetch products");
+        const data = (await res.json()) as ProductWithImages[];
+        setProducts(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load products");
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+    void fetchProducts();
+  }, []);
+
+  const exportToBase = async (options?: {
+    imageBase64Mode?: "base-only" | "full-data-uri";
+    imageTransform?: ImageTransformOptions | null;
+  }) => {
+    const payload: Record<string, unknown> = {
+      connectionId: selectedConnectionId,
+      inventoryId: selectedInventoryId,
+      templateId: selectedTemplateId !== "none" ? selectedTemplateId : undefined,
+      allowDuplicateSku,
+    };
+
+    if (options?.imageBase64Mode) {
+      payload.imageBase64Mode = options.imageBase64Mode;
+      payload.exportImagesAsBase64 = true;
+    }
+    if (options?.imageTransform) {
+      payload.imageTransform = options.imageTransform;
+      payload.exportImagesAsBase64 = true;
+    }
+
+    const res = await fetch(`/api/products/${selectedProductId}/export-to-base`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = (await res.json().catch(() => ({}))) as { 
+      logs?: CapturedLog[]; 
+      skuExists?: boolean; 
+      error?: string 
+    };
+    if (data.logs) {
+      setExportLogs(data.logs);
+    }
+
+    if (!res.ok) {
+      if (data.skuExists) {
+        throw new Error(data.error || "SKU already exists in Base.com");
+      }
+      throw new Error(data.error || "Failed to export product to Base.com");
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedProductId) {
+      setError("Please select a product");
+      return;
+    }
+
+    if (!selectedConnectionId) {
+      setError("Please select an account");
+      return;
+    }
+
+    if (isBaseComIntegration && !selectedInventoryId) {
+      setError("Please select a Base.com inventory");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setError(null);
+      setExportLogs([]);
+      setLogsOpen(true);
+
+      if (isBaseComIntegration) {
+        await exportToBase();
+        onSuccess();
+      } else {
+        const res = await fetch(`/api/products/${selectedProductId}/listings`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            integrationId: selectedIntegrationId,
+            connectionId: selectedConnectionId,
+          }),
+        });
+
+        if (!res.ok) {
+          const data = (await res.json()) as { error?: string };
+          throw new Error(data.error || "Failed to create listing");
+        }
+
+        onSuccess();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to list product");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleImageRetry = async (preset: ImageRetryPreset) => {
+    if (!selectedProductId || !isBaseComIntegration || !selectedInventoryId) {
+      return;
+    }
+    try {
+      setSubmitting(true);
+      setError(null);
+      setExportLogs([]);
+      setLogsOpen(true);
+      await exportToBase({
+        imageBase64Mode: preset.imageBase64Mode,
+        imageTransform: preset.transform,
+      });
+      onSuccess();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to export product");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const getProductDisplayName = (product: ProductWithImages) => {
+    return product.name_en || product.name_pl || product.name_de || product.sku;
+  };
+
+  const loading = loadingProducts || loadingIntegrations;
 
   const isBaseComIntegration = ["baselinker", "base-com"].includes(
     integration?.slug ?? ""

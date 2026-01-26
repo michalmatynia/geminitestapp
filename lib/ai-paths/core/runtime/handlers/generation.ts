@@ -10,7 +10,7 @@ import {
   pollGraphJob,
   resolveJobProductId,
 } from "../utils";
-import type { NodeHandler } from "./types";
+import type { NodeHandler } from "@/types/ai-paths-runtime";
 
 export const handleTemplate: NodeHandler = ({ node, nodeInputs }) => {
   const templateConfig = node.config?.template ?? { template: "" };

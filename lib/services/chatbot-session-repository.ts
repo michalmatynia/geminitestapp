@@ -4,18 +4,10 @@ import type {
   ChatSession,
   CreateSessionInput,
   UpdateSessionInput,
-} from "@/app/(admin)/admin/chatbot/types";
+  ChatSessionDocument,
+} from "@/types/chatbot";
 
 const COLLECTION_NAME = "chatbot_sessions";
-
-export interface ChatSessionDocument {
-  _id: ObjectId;
-  title: string;
-  messages: ChatSession["messages"];
-  createdAt: Date;
-  updatedAt: Date;
-  settings?: ChatSession["settings"];
-}
 
 function documentToSession(doc: ChatSessionDocument): ChatSession {
   return {

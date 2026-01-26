@@ -43,44 +43,45 @@ interface ProductModalsProps {
   onMassListSuccess?: () => void;
 }
 
-function CreateProductModalContent({ onClose }: { onClose: () => void }) {
-  const { showFileManager, handleMultiFileSelect, handleSubmit, uploading } =
-    useProductFormContext();
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
-  const header = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <Button
-          onClick={() => void handleSubmit()}
-          disabled={uploading}
-          className="min-w-[100px] border border-white/20 hover:border-white/40"
-        >
-          {uploading ? "Saving..." : "Create"}
-        </Button>
-        <h2 className="text-2xl font-bold text-white">Product</h2>
-      </div>
-      <Button
-        type="button"
-        onClick={onClose}
-        className="min-w-[100px] border border-white/20 hover:border-white/40"
-      >
-        Close
-      </Button>
-    </div>
-  );
-
-  return (
-    <ModalShell title="Create Product" onClose={onClose} header={header}>
-      {showFileManager ? (
-        <FileManager onSelectFile={handleMultiFileSelect} />
-      ) : (
-        <ProductForm submitButtonText="Create" />
-      )}
-    </ModalShell>
-  );
+interface ProductModalsProps {
+  isCreateOpen: boolean;
+  initialSku: string;
+  createDraft?: ProductDraft | null;
+  onCloseCreate: () => void;
+  onCreateSuccess: () => void;
+  editingProduct: ProductWithImages | null;
+  onCloseEdit: () => void;
+  onEditSuccess: () => void;
+  onEditSave: (saved: ProductWithImages) => void;
+  integrationsProduct: ProductWithImages | null;
+  onCloseIntegrations: () => void;
+  onStartListing: (integrationId: string, connectionId: string) => void;
+  showListProductModal: boolean;
+  onCloseListProduct: () => void;
+  onListProductSuccess: () => void;
+  listProductPreset: { integrationId: string; connectionId: string } | null;
+  // Export settings (opened via Store icon)
+  exportSettingsProduct?: ProductWithImages | null;
+  onCloseExportSettings?: () => void;
+  onListingsUpdated?: () => void;
+  // Mass Listing
+  massListIntegration?: { integrationId: string; connectionId: string } | null;
+  massListProductIds?: string[];
+  onCloseMassList?: () => void;
+  onMassListSuccess?: () => void;
 }
 
-function EditProductModalContent({ onClose }: { onClose: () => void }) {
+function ProductFormModalContent({ 
+  onClose, 
+  title, 
+  submitButtonText 
+}: { 
+  onClose: () => void;
+  title: string;
+  submitButtonText: string;
+}) {
   const { showFileManager, handleMultiFileSelect, handleSubmit, uploading } =
     useProductFormContext();
 
@@ -92,9 +93,9 @@ function EditProductModalContent({ onClose }: { onClose: () => void }) {
           disabled={uploading}
           className="min-w-[100px] border border-white/20 hover:border-white/40"
         >
-          {uploading ? "Saving..." : "Update"}
+          {uploading ? "Saving..." : submitButtonText}
         </Button>
-        <h2 className="text-2xl font-bold text-white">Product</h2>
+        <h2 className="text-2xl font-bold text-white">{title}</h2>
       </div>
       <Button
         type="button"
@@ -107,18 +108,18 @@ function EditProductModalContent({ onClose }: { onClose: () => void }) {
   );
 
   return (
-    <ModalShell title="Edit Product" onClose={onClose} header={header}>
+    <ModalShell title={title} onClose={onClose} header={header}>
       {showFileManager ? (
         <FileManager onSelectFile={handleMultiFileSelect} />
       ) : (
-        <ProductForm submitButtonText="Update" />
+        <ProductForm submitButtonText={submitButtonText} />
       )}
     </ModalShell>
   );
 }
 
 export function ProductModals({
-  isCreateOpen: isCreateOpen,
+  isCreateOpen,
   initialSku,
   createDraft,
   onCloseCreate,
@@ -142,97 +143,65 @@ export function ProductModals({
   onCloseMassList,
   onMassListSuccess,
 }: ProductModalsProps) {
-  const isBackdropMouseDownRef = React.useRef(false);
-
-  const handleBackdropMouseDown = (
-    event: React.MouseEvent<HTMLDivElement>
-  ) => {
-    isBackdropMouseDownRef.current = event.target === event.currentTarget;
-  };
-
-  const handleBackdropMouseUp =
-    (onClose: () => void) => (event: React.MouseEvent<HTMLDivElement>) => {
-      if (event.target === event.currentTarget && isBackdropMouseDownRef.current) {
-        onClose();
-      }
-      isBackdropMouseDownRef.current = false;
-    };
-
   return (
     <>
-      {isCreateOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onMouseDown={handleBackdropMouseDown}
-          onMouseUp={handleBackdropMouseUp(onCloseCreate)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
+      <Dialog open={isCreateOpen} onOpenChange={(open) => !open && onCloseCreate()}>
+        <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
+          <ProductFormProvider
+            key={createDraft?.id ?? "create"}
+            onSuccess={onCreateSuccess}
+            initialSku={initialSku}
+            draft={createDraft ?? undefined}
           >
-            <ProductFormProvider
-              key={createDraft?.id ?? "create"}
-              onSuccess={onCreateSuccess}
-              initialSku={initialSku}
-              draft={createDraft ?? undefined}
-            >
-              <CreateProductModalContent onClose={onCloseCreate} />
-            </ProductFormProvider>
-          </div>
-        </div>
-      )}
+            <ProductFormModalContent 
+              onClose={onCloseCreate} 
+              title="Create Product" 
+              submitButtonText="Create" 
+            />
+          </ProductFormProvider>
+        </DialogContent>
+      </Dialog>
 
-      {editingProduct && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onMouseDown={handleBackdropMouseDown}
-          onMouseUp={handleBackdropMouseUp(onCloseEdit)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-          >
+      <Dialog open={!!editingProduct} onOpenChange={(open) => !open && onCloseEdit()}>
+        <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
+          {editingProduct && (
             <ProductFormProvider
               product={editingProduct}
               onSuccess={onEditSuccess}
               onEditSave={onEditSave}
             >
-              <EditProductModalContent onClose={onCloseEdit} />
+              <ProductFormModalContent 
+                onClose={onCloseEdit} 
+                title="Edit Product" 
+                submitButtonText="Update" 
+              />
             </ProductFormProvider>
-          </div>
-        </div>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
 
-      {integrationsProduct && !showListProductModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onMouseDown={handleBackdropMouseDown}
-          onMouseUp={handleBackdropMouseUp(onCloseIntegrations)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-          >
+      <Dialog 
+        open={!!integrationsProduct && !showListProductModal} 
+        onOpenChange={(open) => !open && onCloseIntegrations()}
+      >
+        <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
+          {integrationsProduct && (
             <ProductListingsModal
               product={integrationsProduct}
               onClose={onCloseIntegrations}
               onStartListing={onStartListing}
               onListingsUpdated={onListingsUpdated}
             />
-          </div>
-        </div>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
 
-      {integrationsProduct && showListProductModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onMouseDown={handleBackdropMouseDown}
-          onMouseUp={handleBackdropMouseUp(onCloseListProduct)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-          >
+      <Dialog 
+        open={!!integrationsProduct && showListProductModal} 
+        onOpenChange={(open) => !open && onCloseListProduct()}
+      >
+        <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
+          {integrationsProduct && (
             <ListProductModal
               product={integrationsProduct}
               onClose={onCloseListProduct}
@@ -240,40 +209,32 @@ export function ProductModals({
               initialIntegrationId={listProductPreset?.integrationId ?? null}
               initialConnectionId={listProductPreset?.connectionId ?? null}
             />
-          </div>
-        </div>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
 
-      {exportSettingsProduct && onCloseExportSettings && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onMouseDown={handleBackdropMouseDown}
-          onMouseUp={handleBackdropMouseUp(onCloseExportSettings)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-          >
+      <Dialog 
+        open={!!exportSettingsProduct && !!onCloseExportSettings} 
+        onOpenChange={(open) => !open && onCloseExportSettings?.()}
+      >
+        <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
+          {exportSettingsProduct && onCloseExportSettings && (
             <ProductListingsModal
               product={exportSettingsProduct}
               onClose={onCloseExportSettings}
               filterIntegrationSlug="baselinker"
               onListingsUpdated={onListingsUpdated}
             />
-          </div>
-        </div>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
 
-      {massListIntegration && massListProductIds && massListProductIds.length > 0 && onCloseMassList && onMassListSuccess && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onMouseDown={handleBackdropMouseDown}
-          onMouseUp={handleBackdropMouseUp(onCloseMassList)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-          >
+      <Dialog 
+        open={!!massListIntegration && !!massListProductIds && massListProductIds.length > 0} 
+        onOpenChange={(open) => !open && onCloseMassList?.()}
+      >
+        <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
+          {massListIntegration && massListProductIds && onCloseMassList && onMassListSuccess && (
             <MassListProductModal
               integrationId={massListIntegration.integrationId}
               connectionId={massListIntegration.connectionId}
@@ -281,9 +242,10 @@ export function ProductModals({
               onClose={onCloseMassList}
               onSuccess={onMassListSuccess}
             />
-          </div>
-        </div>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
+

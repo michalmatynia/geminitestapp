@@ -10,7 +10,9 @@ import AdminNotesPage from "@/app/(admin)/admin/notes/page";
 import { AdminLayoutProvider } from "@/lib/context/AdminLayoutContext";
 import { NoteSettingsProvider } from "@/lib/context/NoteSettingsContext";
 import { ToastProvider } from "@/components/ui/toast";
-import type { CategoryRecord, NoteWithRelations, TagRecord } from "@/types/notes";
+import type { NoteWithRelations, TagRecord, CategoryRecord } from "@/types/notes";
+import { server } from "@/mocks/server";
+import { http, HttpResponse } from "msw";
 
 const now = new Date();
 
@@ -79,6 +81,7 @@ const makeNote = (overrides: Partial<NoteWithRelations> = {}): NoteWithRelations
   ],
   relationsFrom: [],
   relationsTo: [],
+  relations: [],
   ...overrides,
 });
 
@@ -94,8 +97,10 @@ const renderNotesPage = () =>
   );
 
 describe("Notes page UI", () => {
+  let notes: NoteWithRelations[] = [];
+  
   beforeEach(() => {
-    const notes = [makeNote(), makeNote({ id: "note-2", title: "Beta" })];
+    notes = [makeNote(), makeNote({ id: "note-2", title: "Beta" })];
     const tags = [...baseTags];
     const categories = [...baseCategories];
     const notebooks = [...baseNotebooks];
@@ -106,32 +111,17 @@ describe("Notes page UI", () => {
       });
     }
 
-    vi.spyOn(global, "fetch").mockImplementation((input, init) => {
-      const url =
-        typeof input === "string"
-          ? input
-          : input instanceof URL
-          ? input.href
-          : input.url;
-      const method = init?.method ?? "GET";
-      const parsed = new URL(url, "http://localhost");
-
-      if (parsed.pathname === "/api/settings") {
-        if (method === "GET") {
-          return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }));
-        }
-        return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
-      }
-
-      if (parsed.pathname === "/api/notes/tags") {
-        return Promise.resolve(new Response(JSON.stringify(tags), { status: 200 }));
-      }
-
-      if (parsed.pathname === "/api/notes/notebooks") {
-        return Promise.resolve(new Response(JSON.stringify(notebooks), { status: 200 }));
-      }
-
-      if (parsed.pathname === "/api/notes/categories/tree") {
+    server.use(
+      http.get("/api/settings", () => {
+        return HttpResponse.json([]);
+      }),
+      http.get("/api/notes/tags", () => {
+        return HttpResponse.json(tags);
+      }),
+      http.get("/api/notes/notebooks", () => {
+        return HttpResponse.json(notebooks);
+      }),
+      http.get("/api/notes/categories/tree", () => {
         const tree = categories.map((category) => ({
           ...category,
           children: [],
@@ -150,18 +140,10 @@ describe("Notes page UI", () => {
               updatedAt: note.updatedAt,
             })),
         }));
-        return Promise.resolve(new Response(JSON.stringify(tree), { status: 200 }));
-      }
-
-      if (parsed.pathname === "/api/notes" && method === "POST") {
-        const body = JSON.parse(init?.body as string) as {
-          title?: string;
-          content?: string;
-          isPinned?: boolean;
-          isArchived?: boolean;
-          tagIds?: string[];
-          categoryIds?: string[];
-        };
+        return HttpResponse.json(tree);
+      }),
+      http.post("/api/notes", async ({ request }) => {
+        const body = (await request.json()) as any;
         const tagIds = Array.isArray(body.tagIds) ? body.tagIds : [];
         const categoryIds = Array.isArray(body.categoryIds) ? body.categoryIds : [];
         const newNote = makeNote({
@@ -170,7 +152,7 @@ describe("Notes page UI", () => {
           content: body.content || "",
           isPinned: body.isPinned ?? false,
           isArchived: body.isArchived ?? false,
-          tags: tagIds.map((tagId) => {
+          tags: tagIds.map((tagId: string) => {
             const tag = tags.find((t) => t.id === tagId) ?? tags[0]!;
             return {
               noteId: "temp",
@@ -179,7 +161,7 @@ describe("Notes page UI", () => {
               tag,
             };
           }),
-          categories: categoryIds.map((categoryId) => {
+          categories: categoryIds.map((categoryId: string) => {
             const category =
               categories.find((c) => c.id === categoryId) ?? categories[0]!;
             return {
@@ -191,30 +173,22 @@ describe("Notes page UI", () => {
           }),
         });
         notes.push(newNote);
-        return Promise.resolve(new Response(JSON.stringify(newNote), { status: 201 }));
-      }
-
-      if (parsed.pathname === "/api/notes") {
+        return HttpResponse.json(newNote, { status: 201 });
+      }),
+      http.get("/api/notes", ({ request }) => {
+        const url = new URL(request.url);
         let filtered = [...notes];
-        const search = parsed.searchParams.get("search");
-        const searchScope = parsed.searchParams.get("searchScope") ?? "both";
-        const isPinned = parsed.searchParams.get("isPinned");
-        const isArchived = parsed.searchParams.get("isArchived");
-        const tagIds = parsed.searchParams.get("tagIds")?.split(",") ?? [];
+        const search = url.searchParams.get("search");
+        const isPinned = url.searchParams.get("isPinned");
+        const isArchived = url.searchParams.get("isArchived");
+        const tagIds = url.searchParams.get("tagIds")?.split(",") ?? [];
         const categoryIds =
-          parsed.searchParams.get("categoryIds")?.split(",") ?? [];
+          url.searchParams.get("categoryIds")?.split(",") ?? [];
 
         if (search) {
           filtered = filtered.filter((note) => {
-            const inTitle = note.title
-              .toLowerCase()
-              .includes(search.toLowerCase());
-            const inContent = note.content
-              .toLowerCase()
-              .includes(search.toLowerCase());
-            if (searchScope === "title") return inTitle;
-            if (searchScope === "content") return inContent;
-            return inTitle || inContent;
+            return note.title.toLowerCase().includes(search.toLowerCase()) || 
+                   note.content.toLowerCase().includes(search.toLowerCase());
           });
         }
         if (isPinned !== null && isPinned !== undefined) {
@@ -237,11 +211,9 @@ describe("Notes page UI", () => {
             note.categories.some((cat) => categoryIds.includes(cat.categoryId))
           );
         }
-        return Promise.resolve(new Response(JSON.stringify(filtered), { status: 200 }));
-      }
-
-      return Promise.resolve(new Response("Not found", { status: 404 }));
-    });
+        return HttpResponse.json(filtered);
+      })
+    );
   });
 
   afterEach(() => {

@@ -36,6 +36,96 @@ const mockSettings = [
   { key: 'SITE_DESCRIPTION', value: 'Test Description' },
 ];
 
+const now = new Date().toISOString();
+
+const mockTags = [
+  {
+    id: "tag-1",
+    name: "Work",
+    color: "#3b82f6",
+    notebookId: null,
+    createdAt: now,
+    updatedAt: now,
+  },
+];
+
+const mockCategories = [
+  {
+    id: "cat-1",
+    name: "Projects",
+    description: null,
+    color: "#10b981",
+    parentId: null,
+    notebookId: null,
+    themeId: null,
+    createdAt: now,
+    updatedAt: now,
+  },
+];
+
+const mockNotebooks = [
+  {
+    id: "notebook-1",
+    name: "Default",
+    color: "#3b82f6",
+    createdAt: now,
+    updatedAt: now,
+  },
+];
+
+const mockNotes = [
+  {
+    id: "note-1",
+    title: "Alpha",
+    content: "First note",
+    color: "#ffffff",
+    editorType: "markdown",
+    isPinned: true,
+    isArchived: false,
+    isFavorite: false,
+    notebookId: null,
+    createdAt: now,
+    updatedAt: now,
+    tags: [
+      {
+        noteId: "note-1",
+        tagId: "tag-1",
+        assignedAt: now,
+        tag: mockTags[0],
+      },
+    ],
+    categories: [
+      {
+        noteId: "note-1",
+        categoryId: "cat-1",
+        assignedAt: now,
+        category: mockCategories[0],
+      },
+    ],
+    relationsFrom: [],
+    relationsTo: [],
+    relations: [],
+  },
+  {
+    id: "note-2",
+    title: "Beta",
+    content: "Second note",
+    color: "#ffffff",
+    editorType: "markdown",
+    isPinned: false,
+    isArchived: false,
+    isFavorite: false,
+    notebookId: null,
+    createdAt: now,
+    updatedAt: now,
+    tags: [],
+    categories: [],
+    relationsFrom: [],
+    relationsTo: [],
+    relations: [],
+  },
+];
+
 /**
  * MSW Handlers for API mocking
  * Define all mock API responses here
@@ -43,13 +133,11 @@ const mockSettings = [
 export const handlers = [
   // Products endpoints
   http.get('/api/products', () => {
-    return HttpResponse.json({
-      data: mockProducts,
-      total: mockProducts.length,
-      page: 1,
-      pageSize: 10,
-      totalPages: 1,
-    });
+    return HttpResponse.json(mockProducts);
+  }),
+
+  http.get('/api/products/count', () => {
+    return HttpResponse.json({ count: mockProducts.length });
   }),
 
   http.get('/api/products/:id', ({ params }) => {
@@ -111,9 +199,7 @@ export const handlers = [
 
   // Settings endpoints
   http.get('/api/settings', () => {
-    return HttpResponse.json({
-      data: mockSettings,
-    });
+    return HttpResponse.json(mockSettings);
   }),
 
   http.get('/api/settings/:key', ({ params }) => {
@@ -130,6 +216,80 @@ export const handlers = [
       ...body,
     };
     return HttpResponse.json(newSetting, { status: 201 });
+  }),
+
+  // Notes endpoints
+  http.get('/api/notes', ({ request }) => {
+    const url = new URL(request.url);
+    const search = url.searchParams.get('search');
+    const isPinned = url.searchParams.get('isPinned');
+    const isArchived = url.searchParams.get('isArchived');
+
+    let filtered = [...mockNotes];
+    if (search) {
+      filtered = filtered.filter(n => n.title.toLowerCase().includes(search.toLowerCase()) || n.content.toLowerCase().includes(search.toLowerCase()));
+    }
+    if (isPinned !== null && isPinned !== undefined) {
+      filtered = filtered.filter(n => String(n.isPinned) === isPinned);
+    }
+    if (isArchived !== null && isArchived !== undefined) {
+      filtered = filtered.filter(n => String(n.isArchived) === isArchived);
+    }
+
+    return HttpResponse.json(filtered);
+  }),
+
+  http.post('/api/notes', async ({ request }) => {
+    const body = (await request.json()) as any;
+    const newNote = {
+      id: `note-${mockNotes.length + 1}`,
+      title: body.title || 'Untitled',
+      content: body.content || '',
+      color: body.color || '#ffffff',
+      editorType: body.editorType || 'markdown',
+      isPinned: body.isPinned || false,
+      isArchived: body.isArchived || false,
+      isFavorite: body.isFavorite || false,
+      notebookId: body.notebookId || null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      tags: [],
+      categories: [],
+      relationsFrom: [],
+      relationsTo: [],
+      relations: [],
+    };
+    return HttpResponse.json(newNote, { status: 201 });
+  }),
+
+  http.get('/api/notes/tags', () => {
+    return HttpResponse.json(mockTags);
+  }),
+
+  http.get('/api/notes/notebooks', () => {
+    return HttpResponse.json(mockNotebooks);
+  }),
+
+  http.get('/api/notes/categories/tree', () => {
+    const tree = mockCategories.map((category) => ({
+      ...category,
+      children: [],
+      notes: mockNotes
+        .filter((note) =>
+          note.categories.some((cat) => cat.categoryId === category.id)
+        )
+        .map((note) => ({
+          id: note.id,
+          title: note.title,
+          content: note.content,
+          color: note.color,
+          isPinned: note.isPinned,
+          isArchived: note.isArchived,
+          createdAt: note.createdAt,
+          updatedAt: note.updatedAt,
+        })),
+    }));
+    return HttpResponse.json(tree);
   }),
 
   // Health check

@@ -3,17 +3,7 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import RichTextBlock from "./RichTextBlock";
-
-export interface PageComponent {
-  type: string;
-  content: Record<string, unknown>;
-}
-
-export interface Page {
-  id: string;
-  name: string;
-  components: PageComponent[];
-}
+import type { PageComponent, Page } from "@/types/cms";
 
 interface CmsSideMenuProps {
   page: Page | null;

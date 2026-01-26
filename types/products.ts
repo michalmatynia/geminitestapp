@@ -107,3 +107,5 @@ export type UserPreferences = {
 export type IntegrationDbProvider = "prisma" | "mongodb";
 
 export type SyncDirection = "to_base" | "from_base" | "bidirectional" | "none";
+
+export type ProductAiJobType = "description_generation" | "translation" | "graph_model";

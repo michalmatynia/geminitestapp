@@ -15,8 +15,8 @@ import {
   ChatMessage,
   ChatbotSettingsPayload,
   ChatbotDebugState,
+  ChatSession,
 } from "@/types/chatbot";
-import type { ChatSession } from "../types";
 import { useSearchParams } from "next/navigation";
 import { CHATBOT_SETTINGS_KEY } from "../constants";
 

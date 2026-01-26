@@ -2,4 +2,4 @@ export * from "./common";
 export * from "./transform";
 export * from "./generation";
 export * from "./integration";
-export * from "./types";
+export * from "@/types/ai-paths-runtime";

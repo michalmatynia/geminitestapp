@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { IntegrationWithConnections, ProductListingRecord, ProductWithImages } from "@/types";
+import { ProductListingRecord, ProductWithImages } from "@/types";
 import { SyncDirection } from "@/types/products";
 import { Trash2, ArrowRight, ArrowLeft, ArrowLeftRight, Check, X } from "lucide-react";
 import { ExportLogViewer } from "./ExportLogViewer";
@@ -25,6 +25,8 @@ import type { CapturedLog } from "@/lib/services/exports/log-capture";
 import type { ImageRetryPreset, ImageTransformOptions } from "@/types/product-imports";
 import { useImageRetryPresets } from "./useImageRetryPresets";
 import { Label } from "@/components/ui/label";
+import { isImageExportError } from "./utils";
+import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
 
 type ProductListingsModalProps = {
   product: ProductWithImages;
@@ -41,19 +43,6 @@ const statusColors: Record<string, string> = {
   removed: "bg-gray-500/20 text-gray-300 border-gray-500/40",
 };
 
-const normalizeSearchText = (value: string) =>
-  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-const isImageExportError = (message: string | null) => {
-  if (!message) return false;
-  const normalized = normalizeSearchText(message.toLowerCase());
-  return (
-    normalized.includes("zdjec") ||
-    normalized.includes("image") ||
-    normalized.includes("photo")
-  );
-};
-
 export default function ProductListingsModal({
   product,
   onClose,
@@ -62,30 +51,35 @@ export default function ProductListingsModal({
   onListingsUpdated,
 }: ProductListingsModalProps) {
   const [listings, setListings] = useState<ProductListingRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingListings, setLoadingListings] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingFromBase, setDeletingFromBase] = useState<string | null>(null);
   const [purgingListing, setPurgingListing] = useState<string | null>(null);
   const [exportingListing, setExportingListing] = useState<string | null>(null);
   const [inventoryOverrides, setInventoryOverrides] = useState<Record<string, string>>({});
   const [savingInventoryId, setSavingInventoryId] = useState<string | null>(null);
-  const [integrations, setIntegrations] = useState<IntegrationWithConnections[]>([]);
-  const [loadingIntegrations, setLoadingIntegrations] = useState(false);
-  const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>("");
-  const [selectedConnectionId, setSelectedConnectionId] = useState<string>("");
-  const [preferredConnectionId, setPreferredConnectionId] = useState<string | null>(null);
   const [historyOpenByListing, setHistoryOpenByListing] = useState<Record<string, boolean>>({});
   const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
   const [logsOpen, setLogsOpen] = useState(false);
   const [lastExportListingId, setLastExportListingId] = useState<string | null>(null);
   const imageRetryPresets = useImageRetryPresets();
 
+  const {
+    integrations,
+    loading: loadingIntegrations,
+    selectedIntegrationId,
+    selectedConnectionId,
+    selectedIntegration,
+    setSelectedIntegrationId,
+    setSelectedConnectionId,
+  } = useIntegrationSelection();
+
   const productName =
     product.name_en || product.name_pl || product.name_de || "Unnamed Product";
 
   const fetchListings = useCallback(async () => {
     try {
-      setLoading(true);
+      setLoadingListings(true);
       setError(null);
       const res = await fetch(`/api/products/${product.id}/listings`);
       if (!res.ok) {
@@ -96,7 +90,7 @@ export default function ProductListingsModal({
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load listings");
     } finally {
-      setLoading(false);
+      setLoadingListings(false);
     }
   }, [product.id]);
 
@@ -104,48 +98,6 @@ export default function ProductListingsModal({
     void fetchListings();
   }, [fetchListings]);
 
-  // Load preferred connection from export settings
-  useEffect(() => {
-    void (async () => {
-      try {
-        const res = await fetch("/api/products/exports/base/default-connection");
-        if (!res.ok) {
-          console.log('[ProductListingsModal] Failed to load preferred connection');
-          return;
-        }
-        const payload = (await res.json()) as { connectionId?: string | null };
-        console.log('[ProductListingsModal] Loaded preferred connection:', payload.connectionId);
-        setPreferredConnectionId(payload.connectionId ?? null);
-      } catch (error) {
-        console.error('[ProductListingsModal] Error loading preferred connection:', error);
-      }
-    })();
-  }, []);
-
-  useEffect(() => {
-    const fetchIntegrations = async () => {
-      try {
-        setLoadingIntegrations(true);
-        const res = await fetch("/api/integrations/with-connections");
-        if (!res.ok) throw new Error("Failed to fetch integrations");
-        const data = (await res.json()) as IntegrationWithConnections[];
-        setIntegrations(data.filter((integration) => integration.connections.length > 0));
-      } catch (err) {
-        console.error("Failed to load integrations:", err);
-      } finally {
-        setLoadingIntegrations(false);
-      }
-    };
-
-    void fetchIntegrations();
-  }, []);
-
-  // Note: We don't auto-select the integration on initial load
-  // The user should manually select the integration, and then we auto-select the connection
-
-  const selectedIntegration = integrations.find(
-    (integration) => integration.id === selectedIntegrationId
-  );
   const filteredListings = filterIntegrationSlug
     ? listings.filter((listing) => listing.integration.slug === filterIntegrationSlug)
     : listings;
@@ -290,30 +242,7 @@ export default function ProductListingsModal({
             </Label>
             <Select
               value={selectedIntegrationId}
-              onValueChange={(value) => {
-                console.log('[ProductListingsModal] Integration selected:', value);
-                console.log('[ProductListingsModal] Preferred connection ID:', preferredConnectionId);
-
-                setSelectedIntegrationId(value);
-
-                // Try to auto-select preferred connection if it exists in this integration
-                if (preferredConnectionId) {
-                  const newIntegration = integrations.find((i) => i.id === value);
-                  const preferredConnection = newIntegration?.connections.find(
-                    (conn) => conn.id === preferredConnectionId
-                  );
-
-                  if (preferredConnection) {
-                    console.log('[ProductListingsModal] ✓ Auto-selecting preferred connection:', preferredConnection.name);
-                    setSelectedConnectionId(preferredConnectionId);
-                  } else {
-                    console.log('[ProductListingsModal] ✗ Preferred connection not in this integration - clearing');
-                    setSelectedConnectionId("");
-                  }
-                } else {
-                  setSelectedConnectionId("");
-                }
-              }}
+              onValueChange={setSelectedIntegrationId}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select an integration..." />
@@ -711,6 +640,8 @@ export default function ProductListingsModal({
       setExportingListing(null);
     }
   };
+
+  const loading = loadingListings;
 
   return (
     <ModalShell

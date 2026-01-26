@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -11,12 +11,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import ModalShell from "@/components/ui/modal-shell";
-import type { IntegrationWithConnections } from "@/types";
 import { logger } from "@/lib/logger";
-import type { Template, BaseInventory } from "@/types/product-imports";
 import { ExportLogViewer } from "./ExportLogViewer";
 import type { CapturedLog } from "@/lib/services/exports/log-capture";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
+import { useBaseComSettings } from "./hooks/useBaseComSettings";
 
 type MassListProductModalProps = {
   productIds: string[];
@@ -28,187 +28,43 @@ type MassListProductModalProps = {
 
 export default function MassListProductModal({
   productIds,
-  integrationId,
-  connectionId,
+  integrationId: initialIntegrationId,
+  connectionId: initialConnectionId,
   onClose,
   onSuccess,
 }: MassListProductModalProps) {
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [progress, setProgress] = useState<{ current: number; total: number; errors: number } | null>(null);
-  const [integration, setIntegration] = useState<IntegrationWithConnections | null>(null);
-  const [connectionName, setConnectionName] = useState<string>("");
 
-  // Base.com specific fields
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("none");
-  const [preferredTemplateId, setPreferredTemplateId] = useState<string | null>(null);
-  const [inventories, setInventories] = useState<BaseInventory[]>([]);
-  const [selectedInventoryId, setSelectedInventoryId] = useState<string>("");
-  const [preferredInventoryId, setPreferredInventoryId] = useState<string | null>(null);
-  const [loadingInventories, setLoadingInventories] = useState(false);
-  const [allowDuplicateSku, setAllowDuplicateSku] = useState(false);
-  const previousConnectionId = useRef<string>("");
-  const previousIntegrationId = useRef<string>("");
+  // Integration & connection selection
+  const {
+    loading: loadingIntegrations,
+    selectedConnectionId,
+    selectedIntegration,
+    isBaseComIntegration,
+  } = useIntegrationSelection(initialIntegrationId, initialConnectionId);
+
+  // Base.com specific settings
+  const {
+    templates,
+    selectedTemplateId,
+    setSelectedTemplateId,
+    inventories,
+    selectedInventoryId,
+    setSelectedInventoryId,
+    loadingInventories,
+    allowDuplicateSku,
+    setAllowDuplicateSku,
+  } = useBaseComSettings(isBaseComIntegration, selectedConnectionId);
   
   // Export logging - for mass operations, store all logs
   const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
   const [logsOpen, setLogsOpen] = useState(false);
 
-  const isBaseComIntegration = ["baselinker", "base-com"].includes(
-    integration?.slug ?? ""
-  );
-
-  // Load integration details
-  useEffect(() => {
-    const fetchIntegration = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch("/api/integrations/with-connections");
-        if (!res.ok) throw new Error("Failed to fetch integration");
-        const data = (await res.json()) as IntegrationWithConnections[];
-        const found = data.find((i) => i.id === integrationId);
-        if (found) {
-          setIntegration(found);
-          const conn = found.connections.find((c) => c.id === connectionId);
-          if (conn) setConnectionName(conn.name);
-        }
-      } catch {
-        // Silently fail
-      } finally {
-        setLoading(false);
-      }
-    };
-    void fetchIntegration();
-  }, [integrationId, connectionId]);
-
-  // Load templates for Base.com
-  useEffect(() => {
-    const fetchTemplates = async () => {
-      try {
-        const res = await fetch("/api/products/export-templates");
-        if (!res.ok) return;
-        const data = (await res.json()) as Template[];
-        setTemplates(data);
-      } catch {
-        // Silently fail - templates are optional
-      }
-    };
-    void fetchTemplates();
-  }, []);
-
-  useEffect(() => {
-    const loadPreferredTemplate = async () => {
-      try {
-        const res = await fetch("/api/products/exports/base/active-template");
-        const payload = (await res.json()) as { templateId?: string | null };
-        if (!res.ok) return;
-        setPreferredTemplateId(payload.templateId ?? null);
-      } catch {
-        // Ignore template preference errors
-      }
-    };
-
-    void loadPreferredTemplate();
-  }, []);
-
-  useEffect(() => {
-    const loadPreferredInventory = async () => {
-      try {
-        const res = await fetch("/api/products/exports/base/default-inventory");
-        if (!res.ok) return;
-        const payload = (await res.json()) as { inventoryId?: string | null };
-        setPreferredInventoryId(payload.inventoryId ?? null);
-      } catch {
-        // Ignore inventory preference errors
-      }
-    };
-
-    void loadPreferredInventory();
-  }, []);
-
-  // Load Base.com inventories when it's a Base.com integration
-  useEffect(() => {
-    const loadInventories = async () => {
-      if (!isBaseComIntegration || !connectionId) {
-        setInventories([]);
-        return;
-      }
-
-      try {
-        setLoadingInventories(true);
-        const res = await fetch("/api/products/imports/base", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "inventories",
-            connectionId,
-          }),
-        });
-
-        if (!res.ok) throw new Error("Failed to load inventories");
-
-        const data = (await res.json()) as { inventories: BaseInventory[] };
-        setInventories(data.inventories || []);
-      } catch (err) {
-        console.error("Failed to load inventories:", err);
-        setError("Failed to load Base.com inventories");
-      } finally {
-        setLoadingInventories(false);
-      }
-    };
-
-    void loadInventories();
-  }, [isBaseComIntegration, connectionId]);
-
-  useEffect(() => {
-    if (
-      previousIntegrationId.current &&
-      integrationId &&
-      integrationId !== previousIntegrationId.current
-    ) {
-      setInventories([]);
-      setSelectedInventoryId("");
-    }
-    previousIntegrationId.current = integrationId;
-  }, [integrationId]);
-
-  useEffect(() => {
-    if (
-      previousConnectionId.current &&
-      connectionId &&
-      connectionId !== previousConnectionId.current
-    ) {
-      setSelectedInventoryId("");
-    }
-    previousConnectionId.current = connectionId;
-  }, [connectionId]);
-
-  useEffect(() => {
-    if (!isBaseComIntegration) return;
-    if (!preferredTemplateId) return;
-    if (selectedTemplateId !== "none") return;
-    setSelectedTemplateId(preferredTemplateId);
-  }, [isBaseComIntegration, preferredTemplateId, selectedTemplateId]);
-
-  useEffect(() => {
-    if (!isBaseComIntegration) return;
-    if (selectedInventoryId) return;
-    if (!inventories.length) return;
-    if (loadingInventories) return;
-    if (preferredInventoryId && inventories.some((inv) => inv.id === preferredInventoryId)) {
-      setSelectedInventoryId(preferredInventoryId);
-      return;
-    }
-    setSelectedInventoryId(inventories[0]?.id ?? "");
-  }, [
-    isBaseComIntegration,
-    inventories,
-    preferredInventoryId,
-    selectedInventoryId,
-    loadingInventories,
-  ]);
+  const connectionName = selectedIntegration?.connections.find(
+    (c) => c.id === selectedConnectionId
+  )?.name || "";
 
   const handleSubmit = async () => {
     if (isBaseComIntegration && !selectedInventoryId) {
@@ -227,6 +83,7 @@ export default function MassListProductModal({
     
     for (let i = 0; i < productIds.length; i++) {
         const productId = productIds[i];
+        if (!productId) continue;
         setProgress(prev => prev ? { ...prev, current: i + 1 } : null);
         
         try {
@@ -235,7 +92,7 @@ export default function MassListProductModal({
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
-                    connectionId,
+                    connectionId: selectedConnectionId,
                     inventoryId: selectedInventoryId,
                     templateId: selectedTemplateId !== "none" ? selectedTemplateId : undefined,
                     allowDuplicateSku,
@@ -256,8 +113,8 @@ export default function MassListProductModal({
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
-                    integrationId,
-                    connectionId,
+                    integrationId: initialIntegrationId,
+                    connectionId: selectedConnectionId,
                   }),
                 });
         
@@ -283,9 +140,11 @@ export default function MassListProductModal({
     }
   };
 
+  const loading = loadingIntegrations;
+
   return (
     <ModalShell
-      title={`List ${productIds.length} Products to ${integration?.name || "Marketplace"}`}
+      title={`List ${productIds.length} Products to ${selectedIntegration?.name || "Marketplace"}`}
       onClose={onClose}
       size="md"
       showClose={!submitting}
@@ -339,7 +198,7 @@ export default function MassListProductModal({
                 <div className="rounded-md border border-gray-700 bg-gray-900/50 px-4 py-3">
                 <p className="text-sm text-gray-300">
                     <span className="text-gray-500">Integration:</span>{" "}
-                    <span className="font-medium">{integration?.name || "Loading..."}</span>
+                    <span className="font-medium">{selectedIntegration?.name || "Loading..."}</span>
                 </p>
                 <p className="text-sm text-gray-300">
                     <span className="text-gray-500">Account:</span>{" "}

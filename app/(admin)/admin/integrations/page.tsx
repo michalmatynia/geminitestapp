@@ -11,7 +11,7 @@ import {
   TestConnectionResponse,
   integrationDefinitions,
   defaultPlaywrightSettings,
-} from "./types";
+} from "@/types/integrations-ui";
 import { normalizeSteps } from "./utils";
 import { IntegrationList } from "./components/IntegrationList";
 import { IntegrationModal } from "./components/IntegrationModal";

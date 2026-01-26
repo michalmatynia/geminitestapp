@@ -1,15 +1,7 @@
 import { z } from "zod";
 import { createErrorResponse } from "@/lib/api/handle-api-error";
 import { badRequestError, validationError } from "@/lib/errors/app-error";
-
-export type JsonParseResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; response: Response };
-
-type ParseJsonOptions = {
-  logPrefix?: string;
-  allowEmpty?: boolean;
-};
+import type { JsonParseResult, ParseJsonOptions } from "@/types/api";
 
 export async function parseJsonBody<T>(
   req: Request,

@@ -16,8 +16,8 @@ import {
   pollGraphJob,
   resolveEntityIdFromInputs,
 } from "../utils";
-import type { NodeHandler } from "./types";
-import type { DbQueryConfig } from "../../types";
+import type { NodeHandler } from "@/types/ai-paths-runtime";
+import type { DbQueryConfig } from "@/types/ai-paths";
 
 export const handleTrigger: NodeHandler = ({
   node,

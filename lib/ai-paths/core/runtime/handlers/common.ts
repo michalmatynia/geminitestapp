@@ -5,7 +5,7 @@ import {
   createViewerOutputs,
   safeStringify,
 } from "../../utils";
-import type { NodeHandler } from "./types";
+import type { NodeHandler } from "@/types/ai-paths-runtime";
 
 export const handleConstant: NodeHandler = ({ node }) => {
   const constantConfig = node.config?.constant ?? {

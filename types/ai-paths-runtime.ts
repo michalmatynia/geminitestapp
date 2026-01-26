@@ -2,7 +2,7 @@ import type {
   AiNode,
   Edge,
   RuntimePortValues,
-} from "../../types";
+} from "./ai-paths";
 
 export type ToastFn = (message: string, options?: { variant?: "success" | "error" }) => void;
 

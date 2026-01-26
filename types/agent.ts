@@ -104,3 +104,46 @@ export type LoopSignal = {
   urls: Array<string | null>;
   statuses: Array<PlanStep["status"]>;
 };
+
+export type ApprovalRequest = {
+  id: string;
+  runId: string;
+  stepId: string;
+  action: string;
+  context?: Record<string, unknown>;
+  status: "pending" | "approved" | "rejected";
+  requestedAt: Date;
+  decidedAt?: Date;
+};
+
+export type AuditLevel = "info" | "warning" | "error";
+
+export type PlanHierarchy = {
+  goals: Array<{
+    id: string;
+    title: string;
+    description?: string;
+    subgoals: string[];
+  }>;
+  subgoals: Array<{
+    id: string;
+    title: string;
+    steps: string[];
+  }>;
+};
+
+export type MemoryScope = "session" | "longterm";
+
+export type AgentToolRequest = {
+  tool: string;
+  input: unknown;
+  runId: string;
+  stepId: string;
+};
+
+export type AgentToolResult = {
+  success: boolean;
+  output?: unknown;
+  error?: string;
+  observation?: string;
+};

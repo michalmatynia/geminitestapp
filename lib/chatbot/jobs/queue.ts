@@ -1,17 +1,7 @@
 import prisma from "@/lib/prisma";
+import type { ChatMessage, ChatbotJobPayload } from "@/types/chatbot";
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
-const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
-
-type ChatMessage = {
-  role: "user" | "assistant" | "system";
-  content: string;
-};
-
-type ChatbotJobPayload = {
-  messages: ChatMessage[];
-  model: string;
-};
 
 let intervalId: NodeJS.Timeout | null = null;
 let isProcessing = false;

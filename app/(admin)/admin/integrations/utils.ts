@@ -1,4 +1,4 @@
-import { TestLogEntry, TestStatus } from "./types";
+import { TestLogEntry, TestStatus } from "@/types/integrations-ui";
 
 export const coerceStatus = (value: unknown): TestStatus => {
   return value === "pending" || value === "ok" || value === "failed"

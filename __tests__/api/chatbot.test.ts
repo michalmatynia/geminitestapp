@@ -1,12 +1,15 @@
 import { vi, MockInstance } from "vitest";
 import { NextRequest } from "next/server";
 import { GET, POST } from "@/app/api/chatbot/route";
+import { server } from "@/mocks/server";
+import { http, HttpResponse } from "msw";
+
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 
 describe("Chatbot API", () => {
   let consoleErrorSpy: MockInstance;
 
   beforeEach(() => {
-    global.fetch = vi.fn();
     consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
@@ -16,12 +19,12 @@ describe("Chatbot API", () => {
   });
 
   it("should list available Ollama models", async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
+    server.use(
+      http.get(`${OLLAMA_BASE_URL}/api/tags`, () => {
+        return HttpResponse.json({
           models: [{ name: "test-model" }, { name: "llava" }],
-        })
-      )
+        });
+      })
     );
 
     const res = await GET(new NextRequest("http://localhost/api/chatbot"));
@@ -32,8 +35,10 @@ describe("Chatbot API", () => {
   });
 
   it("should return an error when model listing fails", async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      new Response("Provider down", { status: 502 })
+    server.use(
+      http.get(`${OLLAMA_BASE_URL}/api/tags`, () => {
+        return new HttpResponse("Provider down", { status: 502 });
+      })
     );
 
     const res = await GET(new NextRequest("http://localhost/api/chatbot"));
@@ -59,10 +64,10 @@ describe("Chatbot API", () => {
   });
 
   it("should proxy chat requests to Ollama", async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({ message: { content: "Hello from model." } })
-      )
+    server.use(
+      http.post(`${OLLAMA_BASE_URL}/api/chat`, () => {
+        return HttpResponse.json({ message: { content: "Hello from model." } });
+      })
     );
 
     const req = new NextRequest("http://localhost/api/chatbot", {
@@ -78,17 +83,13 @@ describe("Chatbot API", () => {
 
     expect(res.status).toBe(200);
     expect(data.message).toBe("Hello from model.");
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining("/api/chat"),
-      expect.objectContaining({
-        method: "POST",
-      })
-    );
   });
 
   it("should return a debug errorId when chat proxy fails", async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-      new Response("Model unavailable", { status: 502 })
+    server.use(
+      http.post(`${OLLAMA_BASE_URL}/api/chat`, () => {
+        return new HttpResponse("Model unavailable", { status: 502 });
+      })
     );
 
     const req = new NextRequest("http://localhost/api/chatbot", {
@@ -109,7 +110,11 @@ describe("Chatbot API", () => {
   });
 
   it("should return a debug errorId on unexpected chat errors", async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error("Network down"));
+    server.use(
+      http.post(`${OLLAMA_BASE_URL}/api/chat`, () => {
+        return HttpResponse.error();
+      })
+    );
 
     const req = new NextRequest("http://localhost/api/chatbot", {
       method: "POST",

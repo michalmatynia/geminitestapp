@@ -7,8 +7,8 @@ import {
   setValueAtMappingPath,
 } from "../../utils";
 import { buildFallbackEntity, resolveContextPayload } from "../utils";
-import type { NodeHandler } from "./types";
-import type { RuntimePortValues } from "../../types";
+import type { NodeHandler } from "@/types/ai-paths-runtime";
+import type { RuntimePortValues } from "@/types/ai-paths";
 
 export const handleContext: NodeHandler = async ({
   node,

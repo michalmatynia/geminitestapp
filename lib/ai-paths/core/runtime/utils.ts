@@ -22,7 +22,7 @@ import type {
   ContextConfig,
   DbQueryConfig,
   RuntimePortValues,
-} from "../types";
+} from "@/types/ai-paths";
 
 export const looksLikeObjectId = (value: unknown) =>
   typeof value === "string" && /^[0-9a-fA-F]{24}$/.test(value);

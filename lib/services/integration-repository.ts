@@ -5,75 +5,13 @@ import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
 import { getIntegrationDataProvider } from "@/lib/services/integration-provider";
 import { conflictError, notFoundError } from "@/lib/errors/app-error";
+import type {
+  IntegrationRecord,
+  IntegrationConnectionRecord,
+  IntegrationRepository,
+} from "@/types/integrations";
 
-export type IntegrationRecord = {
-  id: string;
-  name: string;
-  slug: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-export type IntegrationConnectionRecord = {
-  id: string;
-  integrationId: string;
-  name: string;
-  username: string;
-  password: string;
-  playwrightStorageState?: string | null;
-  playwrightStorageStateUpdatedAt?: Date | null;
-  playwrightHeadless?: boolean | null;
-  playwrightSlowMo?: number | null;
-  playwrightTimeout?: number | null;
-  playwrightNavigationTimeout?: number | null;
-  playwrightHumanizeMouse?: boolean | null;
-  playwrightMouseJitter?: number | null;
-  playwrightClickDelayMin?: number | null;
-  playwrightClickDelayMax?: number | null;
-  playwrightInputDelayMin?: number | null;
-  playwrightInputDelayMax?: number | null;
-  playwrightActionDelayMin?: number | null;
-  playwrightActionDelayMax?: number | null;
-  playwrightProxyEnabled?: boolean | null;
-  playwrightProxyServer?: string | null;
-  playwrightProxyUsername?: string | null;
-  playwrightProxyPassword?: string | null;
-  playwrightEmulateDevice?: boolean | null;
-  playwrightDeviceName?: string | null;
-  allegroAccessToken?: string | null;
-  allegroRefreshToken?: string | null;
-  allegroTokenType?: string | null;
-  allegroScope?: string | null;
-  allegroExpiresAt?: Date | null;
-  allegroTokenUpdatedAt?: Date | null;
-  allegroUseSandbox?: boolean | null;
-  baseApiToken?: string | null;
-  baseTokenUpdatedAt?: Date | null;
-  baseLastInventoryId?: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-export type IntegrationRepository = {
-  listIntegrations: () => Promise<IntegrationRecord[]>;
-  upsertIntegration: (input: { name: string; slug: string }) => Promise<IntegrationRecord>;
-  getIntegrationById: (id: string) => Promise<IntegrationRecord | null>;
-  listConnections: (integrationId: string) => Promise<IntegrationConnectionRecord[]>;
-  getConnectionById: (id: string) => Promise<IntegrationConnectionRecord | null>;
-  getConnectionByIdAndIntegration: (
-    id: string,
-    integrationId: string
-  ) => Promise<IntegrationConnectionRecord | null>;
-  createConnection: (
-    integrationId: string,
-    input: { name: string; username: string; password: string }
-  ) => Promise<IntegrationConnectionRecord>;
-  updateConnection: (
-    id: string,
-    input: Partial<IntegrationConnectionRecord>
-  ) => Promise<IntegrationConnectionRecord>;
-  deleteConnection: (id: string) => Promise<void>;
-};
+export type { IntegrationRecord, IntegrationConnectionRecord, IntegrationRepository };
 
 const CONNECTION_DEFAULTS = {
   playwrightHeadless: true,

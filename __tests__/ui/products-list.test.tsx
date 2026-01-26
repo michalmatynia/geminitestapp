@@ -7,8 +7,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import AdminProductsPage from "@/app/(admin)/admin/products/page";
-import { getProducts, countProducts } from "@/lib/api";
 import { ToastProvider } from "@/components/ui/toast";
+import { server } from "@/mocks/server";
+import { http, HttpResponse } from "msw";
 
 const pushMock = vi.fn();
 
@@ -22,11 +23,6 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-vi.mock("@/lib/api", () => ({
-  getProducts: vi.fn(() => Promise.resolve([])),
-  countProducts: vi.fn(() => Promise.resolve(0)),
-}));
-
 const mockProducts = [
   {
     id: "product-1",
@@ -35,8 +31,8 @@ const mockProducts = [
     name_de: null,
     sku: "ALPHA1",
     price: 100,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     images: [],
   },
   {
@@ -46,8 +42,8 @@ const mockProducts = [
     name_de: null,
     sku: "BETA2",
     price: 200,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     images: [],
   },
 ];
@@ -56,18 +52,17 @@ describe("Admin Products List UI", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     
-    const mockFetch = vi.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve([]),
+    server.use(
+      http.get("/api/products", () => {
+        return HttpResponse.json(mockProducts);
+      }),
+      http.get("/api/products/count", () => {
+        return HttpResponse.json({ count: mockProducts.length });
+      }),
+      http.get("/api/catalogs", () => {
+        return HttpResponse.json({ data: [], total: 0 });
       })
-    ) as Mock;
-    
-    global.fetch = mockFetch;
-    window.fetch = mockFetch;
-
-    (getProducts as Mock).mockResolvedValue(mockProducts);
-    (countProducts as Mock).mockResolvedValue(2);
+    );
   });
 
   it("renders product rows", async () => {

@@ -1,3 +1,5 @@
+import { ObjectId } from "mongodb";
+
 export interface ChatMessage {
   role: "user" | "assistant" | "system";
   content: string;
@@ -29,6 +31,20 @@ export interface UpdateSessionInput {
   messages?: ChatMessage[];
   settings?: ChatSession["settings"];
 }
+
+export interface ChatSessionDocument {
+  _id: ObjectId;
+  title: string;
+  messages: ChatSession["messages"];
+  createdAt: Date;
+  updatedAt: Date;
+  settings?: ChatSession["settings"];
+}
+
+export type ChatbotJobPayload = {
+  messages: ChatMessage[];
+  model: string;
+};
 
 export type ChatbotDebugState = {
   lastRequest?: {

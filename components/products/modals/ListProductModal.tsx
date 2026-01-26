@@ -29,25 +29,14 @@ import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
 import { useBaseComSettings } from "./hooks/useBaseComSettings";
 import { Checkbox } from "@/components/ui/checkbox";
 
+import { isImageExportError } from "./utils";
+
 type ListProductModalProps = {
   product: ProductWithImages;
   onClose: () => void;
   onSuccess: () => void;
   initialIntegrationId?: string | null;
   initialConnectionId?: string | null;
-};
-
-const normalizeSearchText = (value: string) =>
-  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-const isImageExportError = (message: string | null) => {
-  if (!message) return false;
-  const normalized = normalizeSearchText(message.toLowerCase());
-  return (
-    normalized.includes("zdjec") ||
-    normalized.includes("image") ||
-    normalized.includes("photo")
-  );
 };
 
 export default function ListProductModal({

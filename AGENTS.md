@@ -33,6 +33,7 @@ src/
   features/             # Domain feature modules (UI + state + hooks + api)
     admin/              # Admin shell, navigation, admin-only pages
     ai-paths/           # AI path runtime + UI
+    drafter/            # Product draft templates + editor
     products/           # Product domain UI + services
   shared/               # Cross-feature UI primitives, components, utils, hooks, types
     lib/                # Shared runtime helpers (api, db, query-client, transient-recovery)

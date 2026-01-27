@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/shared/ui/button";
+import { AppModal } from "@/shared/ui/app-modal";
 import ModalShell from "@/shared/ui/modal-shell";
 
 type TestErrorModalProps = {
@@ -73,49 +74,51 @@ export function TestErrorModal({
   );
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()}>
-        <ModalShell title="Playwright Error" onClose={onClose} size="lg" footer={footer}>
-          <div className="space-y-3">
-            <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3 text-xs text-gray-300">
-              Copy the raw error to share or debug it.
-            </div>
-            {(testErrorMeta?.errorId ||
-              testErrorMeta?.integrationId ||
-              testErrorMeta?.connectionId) && (
-              <div className="grid gap-2 rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300 md:grid-cols-3">
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">
-                    Error ID
-                  </p>
-                  <p className="mt-1 break-all text-gray-200">
-                    {testErrorMeta?.errorId || "—"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">
-                    Integration ID
-                  </p>
-                  <p className="mt-1 break-all text-gray-200">
-                    {testErrorMeta?.integrationId || "—"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">
-                    Connection ID
-                  </p>
-                  <p className="mt-1 break-all text-gray-200">
-                    {testErrorMeta?.connectionId || "—"}
-                  </p>
-                </div>
-              </div>
-            )}
-            <pre className="max-h-72 overflow-auto rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-200">
-              <code className="select-text whitespace-pre-wrap">{testError}</code>
-            </pre>
+    <AppModal
+      open={true}
+      onOpenChange={(open) => !open && onClose()}
+      title="Playwright Error"
+    >
+      <ModalShell title="Playwright Error" onClose={onClose} size="lg" footer={footer}>
+        <div className="space-y-3">
+          <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3 text-xs text-gray-300">
+            Copy the raw error to share or debug it.
           </div>
-        </ModalShell>
-      </div>
-    </div>
+          {(testErrorMeta?.errorId ||
+            testErrorMeta?.integrationId ||
+            testErrorMeta?.connectionId) && (
+            <div className="grid gap-2 rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300 md:grid-cols-3">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">
+                  Error ID
+                </p>
+                <p className="mt-1 break-all text-gray-200">
+                  {testErrorMeta?.errorId || "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">
+                  Integration ID
+                </p>
+                <p className="mt-1 break-all text-gray-200">
+                  {testErrorMeta?.integrationId || "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">
+                  Connection ID
+                </p>
+                <p className="mt-1 break-all text-gray-200">
+                  {testErrorMeta?.connectionId || "—"}
+                </p>
+              </div>
+            </div>
+          )}
+          <pre className="max-h-72 overflow-auto rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-200">
+            <code className="select-text whitespace-pre-wrap">{testError}</code>
+          </pre>
+        </div>
+      </ModalShell>
+    </AppModal>
   );
 }

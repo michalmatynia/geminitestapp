@@ -1,4 +1,4 @@
-import { AdminDraftsPage } from "@/features/admin/drafter/pages/AdminDraftsPage";
+import { AdminDraftsPage } from "@/features/drafter/pages/AdminDraftsPage";
 
 export default function Page() {
   return <AdminDraftsPage />;

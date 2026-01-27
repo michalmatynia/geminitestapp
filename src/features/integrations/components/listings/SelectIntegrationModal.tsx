@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AppModal } from "@/shared/ui/app-modal";
 import ModalShell from "@/shared/ui/modal-shell";
 import {
   Select,
@@ -79,8 +80,13 @@ export default function SelectIntegrationModal({
   };
 
   return (
-    <ModalShell title="Select Marketplace / Integration" onClose={onClose} size="md">
-      <div className="space-y-4">
+    <AppModal
+      open={true}
+      onOpenChange={(open) => !open && onClose()}
+      title="Select Marketplace / Integration"
+    >
+      <ModalShell title="Select Marketplace / Integration" onClose={onClose} size="md">
+        <div className="space-y-4">
         {loading ? (
           <p className="text-sm text-gray-400">Loading integrations...</p>
         ) : integrations.length === 0 ? (
@@ -193,7 +199,8 @@ export default function SelectIntegrationModal({
             </div>
           </>
         )}
-      </div>
-    </ModalShell>
+        </div>
+      </ModalShell>
+    </AppModal>
   );
 }

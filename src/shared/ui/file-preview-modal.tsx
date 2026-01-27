@@ -2,6 +2,7 @@
 
 import { XIcon } from "lucide-react";
 import Image from "next/image";
+import { AppModal } from "@/shared/ui/app-modal";
 
 export interface FilePreviewData {
   filename: string;
@@ -24,7 +25,11 @@ export default function FilePreviewModal({
   children,
 }: FilePreviewModalProps) {
   return (
-    <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50">
+    <AppModal
+      open={true}
+      onOpenChange={(open) => !open && onClose()}
+      title={file.filename}
+    >
       <div className="bg-gray-900 rounded-lg shadow-lg p-6 max-w-2xl w-full relative">
         <button
           onClick={onClose}
@@ -62,6 +67,6 @@ export default function FilePreviewModal({
           </div>
         </div>
       </div>
-    </div>
+    </AppModal>
   );
 }

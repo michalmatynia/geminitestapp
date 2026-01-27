@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/shared/ui/toast";
 import { Button } from "@/shared/ui/button";
+import { AppModal } from "@/shared/ui/app-modal";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import {
@@ -243,14 +244,12 @@ export function ParametersSettings({
       )}
 
       {showModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={() => setShowModal(false)}
+        <AppModal
+          open={showModal}
+          onOpenChange={(open) => !open && setShowModal(false)}
+          title={editingParameter ? "Edit Parameter" : "Create Parameter"}
         >
-          <div
-            className="w-full max-w-md rounded-lg bg-gray-950 p-6 shadow-lg"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="w-full max-w-md rounded-lg bg-gray-950 p-6 shadow-lg">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-white">
                 {editingParameter ? "Edit Parameter" : "Create Parameter"}
@@ -307,7 +306,7 @@ export function ParametersSettings({
               </Button>
             </div>
           </div>
-        </div>
+        </AppModal>
       )}
     </div>
   );

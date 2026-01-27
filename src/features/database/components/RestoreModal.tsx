@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { Label } from "@/shared/ui/label";
 import { Checkbox } from "@/shared/ui/checkbox";
+import { AppModal } from "@/shared/ui/app-modal";
 
 type RestoreModalProps = {
   backupName: string;
@@ -19,7 +20,11 @@ export const RestoreModal = ({
   const [truncate, setTruncate] = useState(true);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <AppModal
+      open={true}
+      onOpenChange={(open) => !open && onClose()}
+      title="Restore Database"
+    >
       <div className="w-full max-w-md rounded-lg bg-gray-900 p-6 shadow-lg">
         <h2 className="mb-4 text-xl font-bold">Restore Database</h2>
         <p className="mb-4 text-gray-300">
@@ -47,6 +52,6 @@ export const RestoreModal = ({
           </Button>
         </div>
       </div>
-    </div>
+    </AppModal>
   );
 };

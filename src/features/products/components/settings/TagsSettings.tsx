@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/shared/ui/toast";
 import { Button } from "@/shared/ui/button";
+import { AppModal } from "@/shared/ui/app-modal";
 import {
   Select,
   SelectContent,
@@ -230,14 +231,12 @@ export function TagsSettings({
       )}
 
       {showModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={() => setShowModal(false)}
+        <AppModal
+          open={showModal}
+          onOpenChange={(open) => !open && setShowModal(false)}
+          title={editingTag ? "Edit Tag" : "Create Tag"}
         >
-          <div
-            className="w-full max-w-md rounded-lg bg-gray-950 p-6 shadow-lg"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="w-full max-w-md rounded-lg bg-gray-950 p-6 shadow-lg">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-white">
                 {editingTag ? "Edit Tag" : "Create Tag"}
@@ -327,7 +326,7 @@ export function TagsSettings({
               </div>
             </div>
           </div>
-        </div>
+        </AppModal>
       )}
     </div>
   );

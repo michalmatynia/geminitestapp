@@ -21,11 +21,14 @@
 * do the same for modals and unify modal component using Product modal component as a reference, all modal components should stem from the product modal
   component (although with their own flavours).
 
-do another restructure and move drafter away from admin into its own separate feature
+* do another restructure and move drafter away from admin into its own separate feature
+
+* do a deep segmentation of node-config-dialog.tsx component into smaller thematic components, the file is huge
+
+unify components (Modal and List are already unified) using Products components as a reference to achieve a unifying look across the application. There may be some individual components that can't be unified, don't force it, but strive for general unified look across the application.
 
 continue with features restructuring and even stricter separation
 
-do a deep segmentation of node-config-dialog.tsx component into smaller thematic components, the file is huge
 expose a single point of entry
 
 ---done

@@ -528,21 +528,21 @@ export function IntegrationModal({
         {showTestErrorModal && testError && (
           <TestErrorModal
             testError={testError}
-          testErrorMeta={
-            testErrorMeta
-              ? {
-                  ...(testErrorMeta.errorId !== undefined && {
-                    errorId: testErrorMeta.errorId,
-                  }),
-                  ...(testErrorMeta.integrationId !== undefined && {
-                    integrationId: testErrorMeta.integrationId,
-                  }),
-                  ...(testErrorMeta.connectionId !== undefined && {
-                    connectionId: testErrorMeta.connectionId,
-                  }),
-                }
-              : null
-          }
+            testErrorMeta={
+              testErrorMeta
+                ? {
+                    ...(testErrorMeta.errorId !== undefined && {
+                      errorId: testErrorMeta.errorId,
+                    }),
+                    ...(testErrorMeta.integrationId !== undefined && {
+                      integrationId: testErrorMeta.integrationId,
+                    }),
+                    ...(testErrorMeta.connectionId !== undefined && {
+                      connectionId: testErrorMeta.connectionId,
+                    }),
+                  }
+                : null
+            }
             onClose={onCloseTestErrorModal}
           />
         )}
@@ -564,12 +564,11 @@ export function IntegrationModal({
             onClose={onCloseSessionModal}
           />
         )}
-        
-      {showPlaywrightSaved && (
-        <div className="fixed right-6 top-6 z-[200] rounded-md border border-emerald-400/40 bg-emerald-500/20 px-3 py-2 text-xs font-medium text-emerald-100 shadow-lg">
-          Playwright settings saved
-        </div>
-      )}
+        {showPlaywrightSaved && (
+          <div className="fixed right-6 top-6 z-[200] rounded-md border border-emerald-400/40 bg-emerald-500/20 px-3 py-2 text-xs font-medium text-emerald-100 shadow-lg">
+            Playwright settings saved
+          </div>
+        )}
     </AppModal>
   );
 }

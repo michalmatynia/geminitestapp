@@ -499,17 +499,17 @@ export default function AgentRunsPage() {
             onClose={closeAgentModal}
             size="xl"
           >
-              <Tabs defaultValue="summary" className="w-full">
-                <TabsList className="grid w-full grid-cols-7">
-                  <TabsTrigger value="summary">Summary</TabsTrigger>
-                  <TabsTrigger value="preview">Preview</TabsTrigger>
-                  <TabsTrigger value="dom">DOM</TabsTrigger>
-                  <TabsTrigger value="steps">Steps</TabsTrigger>
-                  <TabsTrigger value="logs">Logs</TabsTrigger>
-                  <TabsTrigger value="context">Context</TabsTrigger>
-                  <TabsTrigger value="elements">Elements</TabsTrigger>
-                </TabsList>
-                <TabsContent value="summary" className="mt-4 space-y-3">
+            <Tabs defaultValue="summary" className="w-full">
+              <TabsList className="grid w-full grid-cols-7">
+                <TabsTrigger value="summary">Summary</TabsTrigger>
+                <TabsTrigger value="preview">Preview</TabsTrigger>
+                <TabsTrigger value="dom">DOM</TabsTrigger>
+                <TabsTrigger value="steps">Steps</TabsTrigger>
+                <TabsTrigger value="logs">Logs</TabsTrigger>
+                <TabsTrigger value="context">Context</TabsTrigger>
+                <TabsTrigger value="elements">Elements</TabsTrigger>
+              </TabsList>
+              <TabsContent value="summary" className="mt-4 space-y-3">
                   {selectedAgentRun ? (
                     <div className="rounded-md border border-gray-800 bg-gray-900 p-3 text-xs text-gray-300">
                       <p className="text-[11px] text-gray-500">Run summary</p>

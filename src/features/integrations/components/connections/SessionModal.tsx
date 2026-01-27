@@ -1,5 +1,6 @@
 "use client";
 
+import { AppModal } from "@/shared/ui/app-modal";
 import ModalShell from "@/shared/ui/modal-shell";
 
 type SessionCookie = {
@@ -36,23 +37,26 @@ export function SessionModal({
   onClose,
 }: SessionModalProps) {
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()}>
-        <ModalShell title="Session cookies" onClose={onClose} size="lg">
-          {loading ? (
-            <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4 text-sm text-gray-400">
-              Loading session details...
+    <AppModal
+      open={true}
+      onOpenChange={(open) => !open && onClose()}
+      title="Session cookies"
+    >
+      <ModalShell title="Session cookies" onClose={onClose} size="lg">
+        {loading ? (
+          <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4 text-sm text-gray-400">
+            Loading session details...
+          </div>
+        ) : error ? (
+          <div className="rounded-md border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-100">
+            {error}
+          </div>
+        ) : (
+          <div className="space-y-4 text-sm text-gray-200">
+            <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300">
+              <span className="text-gray-400">Obtained:</span>{" "}
+              {updatedAt ? new Date(updatedAt).toLocaleString() : "—"}
             </div>
-          ) : error ? (
-            <div className="rounded-md border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-100">
-              {error}
-            </div>
-          ) : (
-            <div className="space-y-4 text-sm text-gray-200">
-              <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300">
-                <span className="text-gray-400">Obtained:</span>{" "}
-                {updatedAt ? new Date(updatedAt).toLocaleString() : "—"}
-              </div>
 
               <div className="space-y-3">
                 {cookies.length === 0 ? (
@@ -115,10 +119,9 @@ export function SessionModal({
                   </p>
                 </div>
               )}
-            </div>
-          )}
-        </ModalShell>
-      </div>
-    </div>
+          </div>
+        )}
+      </ModalShell>
+    </AppModal>
   );
 }

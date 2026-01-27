@@ -75,6 +75,7 @@ src/
   app/                  # Route groups + API handlers
   features/             # Domain features (UI + state + hooks + api)
     admin/              # Admin shell, navigation, admin-only pages
+    drafter/            # Product draft templates + editor
     playwright/         # Playwright personas and shared automation settings
   shared/               # Cross-feature UI primitives, components, utils, hooks, types
     lib/                # Shared runtime helpers (api, db, query-client, transient-recovery)

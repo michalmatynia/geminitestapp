@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { productService } from "@/features/products/services/productService";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { badRequestError, notFoundError } from "@/lib/errors/app-error";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError, notFoundError } from "@/shared/errors/app-error";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 const duplicateSchema = z.object({
   sku: z.string().trim().optional(),

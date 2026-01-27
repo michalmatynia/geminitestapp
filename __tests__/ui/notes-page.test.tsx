@@ -6,13 +6,14 @@ import { vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import AdminNotesPage from "@/app/(admin)/admin/notes/page";
+import { AdminNotesPage } from "@/features/notesapp/pages/AdminNotesPage";
 import { AdminLayoutProvider } from "@/lib/context/AdminLayoutContext";
-import { NoteSettingsProvider } from "@/lib/context/NoteSettingsContext";
-import { ToastProvider } from "@/components/ui/toast";
-import type { NoteWithRelations, TagRecord, CategoryRecord } from "@/types/notes";
+import { NoteSettingsProvider } from "@/features/notesapp/hooks/NoteSettingsContext";
+import { ToastProvider } from "@/shared/ui/toast";
+import type { NoteWithRelations, TagRecord, CategoryRecord } from "@/shared/types/notes";
 import { server } from "@/mocks/server";
 import { http, HttpResponse } from "msw";
+import { NoteCreateData } from "@/features/notesapp/validations/notes";
 
 const now = new Date();
 
@@ -143,7 +144,7 @@ describe("Notes page UI", () => {
         return HttpResponse.json(tree);
       }),
       http.post("/api/notes", async ({ request }) => {
-        const body = (await request.json()) as any;
+        const body = (await request.json()) as NoteCreateData;
         const tagIds = Array.isArray(body.tagIds) ? body.tagIds : [];
         const categoryIds = Array.isArray(body.categoryIds) ? body.categoryIds : [];
         const newNote = makeNote({

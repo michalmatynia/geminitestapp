@@ -1,4 +1,4 @@
-import { GET, POST } from "../../../app/api/currencies/route";
+import { GET, POST } from "@/app/api/currencies/route";
 import prisma from "@/lib/prisma";
 import { NextRequest } from "next/server";
 

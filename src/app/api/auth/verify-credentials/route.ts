@@ -2,17 +2,17 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { findAuthUserByEmail } from "@/lib/services/auth-user-repository";
-import { getAuthSecurityProfile } from "@/lib/services/auth-security-profile";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { findAuthUserByEmail } from "@/features/auth/services/auth-user-repository";
+import { getAuthSecurityProfile } from "@/features/auth/services/auth-security-profile";
 import {
   checkLoginAllowed,
   extractClientIp,
   recordLoginFailure,
-} from "@/lib/services/auth-security";
-import { getAuthUserPageSettings } from "@/lib/services/auth-settings";
-import { createLoginChallenge } from "@/lib/services/auth-login-challenge";
-import { apiHandler } from "@/lib/api/api-handler";
+} from "@/features/auth/services/auth-security";
+import { getAuthUserPageSettings } from "@/features/auth/services/auth-settings";
+import { createLoginChallenge } from "@/features/auth/services/auth-login-challenge";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";
 

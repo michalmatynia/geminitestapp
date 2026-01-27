@@ -3,7 +3,7 @@
 import { memo, Profiler, useMemo } from "react";
 import type { ProfilerOnRenderCallback } from "react";
 import dynamic from "next/dynamic";
-import { DataTable } from "@/components/data-table";
+import { DataTable } from "@/shared/components/data-table";
 import { Button } from "@/shared/ui/button";
 import type { ColumnDef, RowSelectionState, OnChangeFn } from "@tanstack/react-table";
 import type { ProductDraft } from "@/types/drafts";

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import prisma from "@/lib/prisma";
-import { getMongoDb } from "@/lib/db/mongo-client";
+import prisma from "@/shared/lib/db/prisma";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { productService } from "@/features/products/services/productService";
 import ProductCard from "@/features/products/components/ProductCard";
 import type { ProductWithImages } from "@/types";

@@ -1,0 +1,569 @@
+"use client";
+
+import { Dispatch, SetStateAction, useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
+import {
+  Integration,
+  IntegrationConnection,
+  TestLogEntry,
+} from "@/features/integrations/types/integrations-ui";
+import { ConnectionManager } from "./ConnectionManager";
+import { PlaywrightSettingsForm } from "@/features/playwright/components/PlaywrightSettingsForm";
+import type { PlaywrightPersona, PlaywrightSettings } from "@/features/playwright/types";
+import { BaseApiConsole } from "./BaseApiConsole";
+import { AllegroApiConsole } from "./AllegroApiConsole";
+import { AllegroSettings } from "./AllegroSettings";
+import { BaselinkerSettings } from "./BaselinkerSettings";
+import { TestLogModal } from "./TestLogModal";
+import { TestErrorModal } from "./TestErrorModal";
+import { TestSuccessModal } from "./TestSuccessModal";
+import { SessionModal } from "./SessionModal";
+import { Button } from "@/shared/ui/button";
+import { Card } from "@/shared/ui/card";
+import ModalShell from "@/shared/ui/modal-shell";
+import { Dialog, DialogContent } from "@/shared/ui/dialog";
+import Link from "next/link";
+import { Label } from "@/shared/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui/select";
+
+type IntegrationModalProps = {
+  activeIntegration: Integration;
+  connections: IntegrationConnection[];
+  onClose: () => void;
+
+  // Connection Manager
+  editingConnectionId: string | null;
+  setEditingConnectionId: (id: string | null) => void;
+  connectionForm: { name: string; username: string; password: string };
+  setConnectionForm: Dispatch<
+    SetStateAction<{ name: string; username: string; password: string }>
+  >;
+  onSaveConnection: () => void;
+  onDeleteConnection: (connection: IntegrationConnection) => void;
+  onTestConnection: (connection: IntegrationConnection) => void;
+  onBaselinkerTest: (connection: IntegrationConnection) => void;
+  onAllegroTest: (connection: IntegrationConnection) => void;
+  isTesting: boolean;
+  testLog: TestLogEntry[];
+  onShowLog: (step: TestLogEntry) => void;
+
+  // Modals State
+  showTestLogModal: boolean;
+  onCloseTestLogModal: () => void;
+  selectedStep: (TestLogEntry & { status: "ok" | "failed" }) | null;
+
+  showTestErrorModal: boolean;
+  testError: string | null;
+  testErrorMeta: {
+    errorId?: string | undefined;
+    integrationId?: string | null | undefined;
+    connectionId?: string | null | undefined;
+  } | null;
+  onCloseTestErrorModal: () => void;
+
+  showTestSuccessModal: boolean;
+  testSuccessMessage: string | null;
+  onCloseTestSuccessModal: () => void;
+
+  showSessionModal: boolean;
+  sessionLoading: boolean;
+  sessionError: string | null;
+  sessionCookies: {
+    name?: string;
+    value?: string;
+    domain?: string;
+    path?: string;
+    expires?: number;
+    httpOnly?: boolean;
+    secure?: boolean;
+    sameSite?: string;
+  }[];
+  sessionOrigins: {
+    origin?: string;
+    localStorage?: { name?: string; value?: string }[];
+  }[];
+  sessionUpdatedAt: string | null;
+  onCloseSessionModal: () => void;
+
+  // Playwright
+  playwrightPersonas: PlaywrightPersona[];
+  playwrightPersonasLoading: boolean;
+  playwrightPersonaId: string | null;
+  onSelectPlaywrightPersona: (personaId: string | null) => void;
+  playwrightSettings: PlaywrightSettings;
+  setPlaywrightSettings: Dispatch<
+    SetStateAction<PlaywrightSettings>
+  >;
+  onSavePlaywrightSettings: () => void;
+  showPlaywrightSaved: boolean;
+  onOpenSessionModal: () => void;
+
+  // Allegro Settings
+  savingAllegroSandbox: boolean;
+  onToggleAllegroSandbox: (checked: boolean) => void;
+  onAllegroAuthorize: () => void;
+  onAllegroDisconnect: () => void;
+  onAllegroSandboxConnect: () => void;
+
+  // Base API Console
+  baseApiMethod: string;
+  setBaseApiMethod: (value: string) => void;
+  baseApiParams: string;
+  setBaseApiParams: (value: string) => void;
+  baseApiLoading: boolean;
+  baseApiError: string | null;
+  baseApiResponse: { data: unknown } | null;
+  onBaseApiRequest: () => void;
+
+  // Allegro API Console
+  allegroApiMethod: string;
+  setAllegroApiMethod: (value: string) => void;
+  allegroApiPath: string;
+  setAllegroApiPath: (value: string) => void;
+  allegroApiBody: string;
+  setAllegroApiBody: (value: string) => void;
+  allegroApiLoading: boolean;
+  allegroApiError: string | null;
+  allegroApiResponse: {
+    status: number;
+    statusText: string;
+    data: unknown;
+    refreshed?: boolean | undefined;
+  } | null;
+  onAllegroApiRequest: () => void;
+};
+
+export function IntegrationModal({
+  activeIntegration,
+  connections,
+  onClose,
+  editingConnectionId,
+  setEditingConnectionId,
+  connectionForm,
+  setConnectionForm,
+  onSaveConnection,
+  onDeleteConnection,
+  onTestConnection,
+  onBaselinkerTest,
+  onAllegroTest,
+  isTesting,
+  testLog,
+  onShowLog,
+  showTestLogModal,
+  onCloseTestLogModal,
+  selectedStep,
+  showTestErrorModal,
+  testError,
+  testErrorMeta,
+  onCloseTestErrorModal,
+  showTestSuccessModal,
+  testSuccessMessage,
+  onCloseTestSuccessModal,
+  showSessionModal,
+  sessionLoading,
+  sessionError,
+  sessionCookies,
+  sessionOrigins,
+  sessionUpdatedAt,
+  onCloseSessionModal,
+  playwrightPersonas,
+  playwrightPersonasLoading,
+  playwrightPersonaId,
+  onSelectPlaywrightPersona,
+  playwrightSettings,
+  setPlaywrightSettings,
+  onSavePlaywrightSettings,
+  showPlaywrightSaved,
+  onOpenSessionModal,
+  savingAllegroSandbox,
+  onToggleAllegroSandbox,
+  onAllegroAuthorize,
+  onAllegroDisconnect,
+  onAllegroSandboxConnect,
+  baseApiMethod,
+  setBaseApiMethod,
+  baseApiParams,
+  setBaseApiParams,
+  baseApiLoading,
+  baseApiError,
+  baseApiResponse,
+  onBaseApiRequest,
+  allegroApiMethod,
+  setAllegroApiMethod,
+  allegroApiPath,
+  setAllegroApiPath,
+  allegroApiBody,
+  setAllegroApiBody,
+  allegroApiLoading,
+  allegroApiError,
+  allegroApiResponse,
+  onAllegroApiRequest,
+}: IntegrationModalProps) {
+  const [activeTab, setActiveTab] = useState("connections");
+  const integrationSlug = activeIntegration.slug;
+  const isTradera = integrationSlug === "tradera";
+  const isAllegro = integrationSlug === "allegro";
+  const isBaselinker = integrationSlug === "baselinker";
+  const showPlaywright = isTradera;
+  const showAllegroConsole = isAllegro;
+  const showBaseConsole = isBaselinker;
+  const activeConnection = connections[0] || null;
+  const selectedPersona =
+    playwrightPersonas.find((persona) => persona.id === playwrightPersonaId) ??
+    null;
+
+  const header = (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        {activeTab === "playwright" && (
+          <Button
+            onClick={onSavePlaywrightSettings}
+            className="min-w-[100px] border border-white/20 hover:border-white/40"
+          >
+            Save
+          </Button>
+        )}
+        <h2 className="text-2xl font-bold text-white">
+          {activeIntegration.name} Integration
+          {isTradera && (
+            <span className="ml-2 rounded bg-orange-500/30 px-1.5 py-0.5 text-xs font-normal uppercase tracking-wider text-orange-200">
+              Browser
+            </span>
+          )}
+          {isAllegro && (
+            <span className="ml-2 rounded bg-blue-500/30 px-1.5 py-0.5 text-xs font-normal uppercase tracking-wider text-blue-200">
+              API
+            </span>
+          )}
+          {isBaselinker && (
+            <span className="ml-2 rounded bg-purple-500/30 px-1.5 py-0.5 text-xs font-normal uppercase tracking-wider text-purple-200">
+              Platform
+            </span>
+          )}
+        </h2>
+      </div>
+      <Button
+        type="button"
+        onClick={onClose}
+        className="min-w-[100px] border border-white/20 hover:border-white/40"
+      >
+        Close
+      </Button>
+    </div>
+  );
+
+  return (
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
+        <ModalShell title={`${activeIntegration.name} Integration`} onClose={onClose} header={header}>
+          <div className="mb-4">
+            <p className="text-sm text-gray-400">
+              {isBaselinker
+                ? "Manage connections and warehouse sync settings."
+                : isTradera
+                ? "Manage connections via browser automation (Playwright)."
+                : "Manage connections and marketplace API settings."}
+            </p>
+          </div>
+
+          <Tabs defaultValue="connections" value={activeTab} onValueChange={setActiveTab}>
+            <TabsList
+              className={`grid w-full ${
+                showPlaywright || showAllegroConsole || showBaseConsole
+                  ? "grid-cols-5"
+                  : "grid-cols-4"
+              }`}
+            >
+              <TabsTrigger value="connections">Connections</TabsTrigger>
+              <TabsTrigger value="settings">Settings</TabsTrigger>
+              {showAllegroConsole && (
+                <TabsTrigger value="allegro-api">Allegro API</TabsTrigger>
+              )}
+              {showBaseConsole && (
+                <TabsTrigger value="base-api">Base API</TabsTrigger>
+              )}
+              <TabsTrigger value="price-sync">Price Sync</TabsTrigger>
+              <TabsTrigger value="inventory-sync">Inventory Sync</TabsTrigger>
+              {showPlaywright && (
+                <TabsTrigger value="playwright">Playwright</TabsTrigger>
+              )}
+            </TabsList>
+
+            <TabsContent value="connections" className="mt-4 space-y-6">
+              <ConnectionManager
+                activeIntegration={activeIntegration}
+                connections={connections}
+                editingConnectionId={editingConnectionId}
+                setEditingConnectionId={setEditingConnectionId}
+                connectionForm={connectionForm}
+                setConnectionForm={setConnectionForm}
+                onSave={onSaveConnection}
+                onDelete={onDeleteConnection}
+                onTest={(conn) => {
+                  if (isBaselinker) onBaselinkerTest(conn);
+                  else if (isAllegro) onAllegroTest(conn);
+                  else onTestConnection(conn);
+                }}
+                isTesting={isTesting}
+                testLog={testLog}
+                onShowLog={onShowLog}
+              />
+            </TabsContent>
+
+            <TabsContent value="settings" className="mt-4">
+              {isAllegro ? (
+                <AllegroSettings
+                  activeConnection={activeConnection}
+                  savingSandbox={savingAllegroSandbox}
+                  onToggleSandbox={onToggleAllegroSandbox}
+                  onAuthorize={onAllegroAuthorize}
+                  onDisconnect={onAllegroDisconnect}
+                  onSandboxConnect={onAllegroSandboxConnect}
+                />
+              ) : isBaselinker ? (
+                <BaselinkerSettings
+                  activeConnection={activeConnection}
+                  onTest={() =>
+                    activeConnection && onBaselinkerTest(activeConnection)
+                  }
+                  isTesting={isTesting}
+                />
+              ) : (
+                <div className="min-h-[220px]" />
+              )}
+
+              {isTradera && activeConnection && (
+                <div className="mt-4 rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300">
+                  <div className="flex items-center justify-between gap-3">
+                    <p>
+                      <span className="text-gray-400">Session cookie:</span>{" "}
+                      {activeConnection.hasPlaywrightStorageState
+                        ? "Retained"
+                        : "Not stored"}
+                    </p>
+                    <Button
+                      type="button"
+                      onClick={onOpenSessionModal}
+                      disabled={!activeConnection.hasPlaywrightStorageState}
+                      className="text-xs text-emerald-200 hover:text-emerald-100 disabled:cursor-not-allowed disabled:text-gray-600"
+                    >
+                      View details
+                    </Button>
+                  </div>
+                  <p className="mt-1">
+                    <span className="text-gray-400">Obtained:</span>{" "}
+                    {activeConnection.playwrightStorageStateUpdatedAt
+                      ? new Date(
+                          activeConnection.playwrightStorageStateUpdatedAt
+                        ).toLocaleString()
+                      : "—"}
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+
+            {showBaseConsole && (
+              <TabsContent value="base-api" className="mt-4">
+                <BaseApiConsole
+                  activeConnection={activeConnection}
+                  method={baseApiMethod}
+                  setMethod={setBaseApiMethod}
+                  params={baseApiParams}
+                  setParams={setBaseApiParams}
+                  loading={baseApiLoading}
+                  error={baseApiError}
+                  response={baseApiResponse}
+                  onRequest={onBaseApiRequest}
+                />
+              </TabsContent>
+            )}
+
+            {showAllegroConsole && (
+              <TabsContent value="allegro-api" className="mt-4">
+                <AllegroApiConsole
+                  activeConnection={activeConnection}
+                  method={allegroApiMethod}
+                  setMethod={setAllegroApiMethod}
+                  path={allegroApiPath}
+                  setPath={setAllegroApiPath}
+                  body={allegroApiBody}
+                  setBody={setAllegroApiBody}
+                  loading={allegroApiLoading}
+                  error={allegroApiError}
+                  response={
+                    allegroApiResponse
+                      ? {
+                          status: allegroApiResponse.status,
+                          statusText: allegroApiResponse.statusText,
+                          data: allegroApiResponse.data,
+                          ...(allegroApiResponse.refreshed !== undefined && {
+                            refreshed: allegroApiResponse.refreshed,
+                          }),
+                        }
+                      : null
+                  }
+                  onRequest={onAllegroApiRequest}
+                  isConnected={Boolean(activeConnection?.hasAllegroAccessToken)}
+                />
+              </TabsContent>
+            )}
+
+            <TabsContent value="price-sync" className="mt-4">
+              <div className="min-h-[220px]" />
+            </TabsContent>
+            <TabsContent value="inventory-sync" className="mt-4">
+              <div className="min-h-[220px]" />
+            </TabsContent>
+
+            {showPlaywright && (
+              <TabsContent value="playwright" className="mt-4 space-y-4">
+                <Card className="border-gray-800 bg-gray-950/60 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-white">
+                        Playwright persona
+                      </p>
+                      <p className="mt-1 text-xs text-gray-400">
+                        Apply shared automation presets to this connection.
+                      </p>
+                    </div>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href="/admin/settings/playwright">
+                        Manage personas
+                      </Link>
+                    </Button>
+                  </div>
+
+                  {playwrightPersonasLoading ? (
+                    <p className="mt-4 text-xs text-gray-500">
+                      Loading personas...
+                    </p>
+                  ) : playwrightPersonas.length === 0 ? (
+                    <p className="mt-4 text-xs text-gray-500">
+                      No personas yet. Create one in settings.
+                    </p>
+                  ) : (
+                    <div className="mt-4 grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label className="text-xs text-gray-400">
+                          Persona
+                        </Label>
+                        <Select
+                          value={playwrightPersonaId ?? "custom"}
+                          onValueChange={(value) =>
+                            onSelectPlaywrightPersona(
+                              value === "custom" ? null : value
+                            )
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select persona" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="custom">Custom</SelectItem>
+                            {playwrightPersonas.map((persona) => (
+                              <SelectItem key={persona.id} value={persona.id}>
+                                {persona.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-[11px] text-gray-500">
+                          Selecting a persona overwrites the settings below.
+                        </p>
+                      </div>
+                      <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3 text-xs text-gray-400">
+                        {selectedPersona ? (
+                          <>
+                            <p className="text-xs font-semibold text-gray-200">
+                              {selectedPersona.name}
+                            </p>
+                            <p className="mt-1">
+                              {selectedPersona.description ||
+                                "No description provided."}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-xs font-semibold text-gray-200">
+                              Custom settings
+                            </p>
+                            <p className="mt-1">
+                              Adjust the form below or apply a persona.
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </Card>
+
+                <PlaywrightSettingsForm
+                  settings={playwrightSettings}
+                  setSettings={setPlaywrightSettings}
+                  onSave={onSavePlaywrightSettings}
+                />
+              </TabsContent>
+            )}
+          </Tabs>
+        </ModalShell>
+
+        {showTestLogModal && selectedStep && (
+          <TestLogModal selectedStep={selectedStep} onClose={onCloseTestLogModal} />
+        )}
+
+        {showTestErrorModal && testError && (
+          <TestErrorModal
+            testError={testError}
+          testErrorMeta={
+            testErrorMeta
+              ? {
+                  ...(testErrorMeta.errorId !== undefined && {
+                    errorId: testErrorMeta.errorId,
+                  }),
+                  ...(testErrorMeta.integrationId !== undefined && {
+                    integrationId: testErrorMeta.integrationId,
+                  }),
+                  ...(testErrorMeta.connectionId !== undefined && {
+                    connectionId: testErrorMeta.connectionId,
+                  }),
+                }
+              : null
+          }
+            onClose={onCloseTestErrorModal}
+          />
+        )}
+
+        {showTestSuccessModal && testSuccessMessage && (
+          <TestSuccessModal
+            message={testSuccessMessage}
+            onClose={onCloseTestSuccessModal}
+          />
+        )}
+
+        {showSessionModal && (
+          <SessionModal
+            loading={sessionLoading}
+            error={sessionError}
+            cookies={sessionCookies}
+            origins={sessionOrigins}
+            updatedAt={sessionUpdatedAt}
+            onClose={onCloseSessionModal}
+          />
+        )}
+        
+        {showPlaywrightSaved && (
+          <div className="fixed right-6 top-6 z-[200] rounded-md border border-emerald-400/40 bg-emerald-500/20 px-3 py-2 text-xs font-medium text-emerald-100 shadow-lg">
+            Playwright settings saved
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}

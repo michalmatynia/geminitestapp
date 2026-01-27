@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
-import { logger } from "@/shared/lib/utils/logger";
+import { logger } from "@/shared/utils/logger";
 import type { Catalog } from "@/features/products/types";
 import type { PriceGroupWithDetails } from "@/types";
 

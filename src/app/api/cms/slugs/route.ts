@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
+import prisma from "@/shared/lib/db/prisma";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 const slugSchema = z.object({
   slug: z.string().trim().min(1),

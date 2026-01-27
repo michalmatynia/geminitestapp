@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/shared/utils";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TextareaProps

@@ -1,6 +1,7 @@
 import React from "react";
 import { MoreVertical } from "lucide-react";
-import { Catalog, Language } from "@/features/products/types";
+import { Catalog } from "@/features/products/types";
+import type { Language } from "@/shared/types/internationalization";
 import { Button } from "@/shared/ui/button";
 import {
   DropdownMenu,

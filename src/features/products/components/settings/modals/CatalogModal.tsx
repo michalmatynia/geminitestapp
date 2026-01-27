@@ -9,7 +9,8 @@ import { Label } from "@/shared/ui/label";
 import { Textarea } from "@/shared/ui/textarea";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { useToast } from "@/shared/ui/toast";
-import type { Catalog, Language, PriceGroup } from "@/features/products/types";
+import type { Catalog, PriceGroup } from "@/features/products/types";
+import type { Language } from "@/shared/types/internationalization";
 
 interface CatalogModalProps {
   isOpen: boolean;

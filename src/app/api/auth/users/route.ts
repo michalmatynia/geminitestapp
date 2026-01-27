@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import type { ObjectId } from "mongodb";
-import prisma from "@/lib/prisma";
-import { getMongoDb } from "@/lib/db/mongo-client";
-import { getAuthDataProvider } from "@/lib/services/auth-provider";
-import { auth } from "@/lib/auth";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { authError, internalError } from "@/lib/errors/app-error";
-import type { AuthUserSummary } from "@/types/auth";
-import { apiHandler } from "@/lib/api/api-handler";
+import prisma from "@/shared/lib/db/prisma";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { getAuthDataProvider } from "@/features/auth/services/auth-provider";
+import { auth } from "@/features/auth/auth";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { authError, internalError } from "@/shared/errors/app-error";
+import type { AuthUserSummary } from "@/features/auth/types";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";
 

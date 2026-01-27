@@ -1,7 +1,7 @@
-import { handlers } from "@/lib/auth";
+import { handlers } from "@/features/auth/auth";
 import { NextRequest } from "next/server";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";
 

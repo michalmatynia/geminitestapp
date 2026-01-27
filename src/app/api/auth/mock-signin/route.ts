@@ -1,21 +1,21 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { getMongoDb } from "@/lib/db/mongo-client";
-import { normalizeAuthEmail } from "@/lib/services/auth-user-repository";
-import { auth } from "@/lib/auth";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { normalizeAuthEmail } from "@/features/auth/services/auth-user-repository";
+import { auth } from "@/features/auth/auth";
 import {
   checkLoginAllowed,
   extractClientIp,
   recordLoginFailure,
   recordLoginSuccess,
-} from "@/lib/services/auth-security";
-import { getAuthSecurityProfile } from "@/lib/services/auth-security-profile";
-import { getAuthUserPageSettings } from "@/lib/services/auth-settings";
+} from "@/features/auth/services/auth-security";
+import { getAuthSecurityProfile } from "@/features/auth/services/auth-security-profile";
+import { getAuthUserPageSettings } from "@/features/auth/services/auth-settings";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { internalError } from "@/lib/errors/app-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { internalError } from "@/shared/errors/app-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";
 

@@ -12,18 +12,29 @@ import {
 } from "./ProductSettingsConstants"; // TODO: This is a bit awkward, maybe move constants to feature too
 import {
   PriceGroup,
-  CurrencyOption,
-  CountryOption,
   Catalog,
-  Language,
   ProductCategoryWithChildren,
   ProductTag,
+  PriceGroupType,
 } from "@/features/products/types";
+import type { CurrencyOption, CountryOption, Language } from "@/shared/types/internationalization";
+
+interface ApiPriceGroup extends Omit<PriceGroup, "currencyCode" | "groupType"> {
+  currency: { code: string };
+  type: PriceGroupType;
+}
+
+interface ApiCatalog extends Omit<Catalog, "description" | "priceGroupIds" | "defaultPriceGroupId"> {
+  description: string | null;
+  priceGroupIds: string[] | null;
+  defaultPriceGroupId: string | null;
+}
+
 import { PriceGroupsSettings } from "@/app/(admin)/admin/products/settings/components/pricing/PriceGroupsSettings";
 import { CatalogsSettings } from "@/app/(admin)/admin/products/settings/components/catalogs/CatalogsSettings";
 import { CategoriesSettings } from "@/features/products/components/settings/CategoriesSettings";
 import { TagsSettings } from "@/features/products/components/settings/TagsSettings";
-import { InternationalizationSettings } from "@/app/(admin)/admin/products/settings/components/localization/InternationalizationSettings";
+import { InternationalizationSettings } from "@/features/internationalization/components/InternationalizationSettings";
 import { AiDescriptionSettings } from "@/app/(admin)/admin/products/settings/components/ai/AiDescriptionSettings";
 import { AiTranslationSettings } from "@/app/(admin)/admin/products/settings/components/ai/AiTranslationSettings";
 import { Button } from "@/shared/ui/button";
@@ -79,15 +90,15 @@ export function ProductSettingsPage() {
       setLoadingGroups(true);
       const res = await fetch("/api/price-groups");
       if (!res.ok) throw new Error("Failed to fetch price groups.");
-      const data = await res.json();
+      const data = (await res.json()) as ApiPriceGroup[];
       setPriceGroups(
-        data.map((group: any) => ({
+        data.map((group: ApiPriceGroup) => ({
           ...group,
           currencyCode: group.currency.code,
           groupType: group.type,
         }))
       );
-      const defaultGroup = data.find((group: any) => group.isDefault);
+      const defaultGroup = data.find((group: ApiPriceGroup) => group.isDefault);
       setDefaultGroupId(defaultGroup?.id ?? "");
     } catch (error) {
       console.error(error);
@@ -101,7 +112,7 @@ export function ProductSettingsPage() {
       setLoadingCurrencies(true);
       const res = await fetch("/api/currencies");
       if (!res.ok) throw new Error("Failed to fetch currencies.");
-      setCurrencyOptions(await res.json());
+      setCurrencyOptions((await res.json()) as CurrencyOption[]);
     } catch (error) {
       console.error(error);
     } finally {
@@ -114,7 +125,7 @@ export function ProductSettingsPage() {
       setLoadingCountries(true);
       const res = await fetch("/api/countries");
       if (!res.ok) throw new Error("Failed to fetch countries.");
-      setCountries(await res.json());
+      setCountries((await res.json()) as CountryOption[]);
     } catch (error) {
       console.error(error);
     } finally {
@@ -127,9 +138,9 @@ export function ProductSettingsPage() {
       setLoadingCatalogs(true);
       const res = await fetch("/api/catalogs");
       if (!res.ok) throw new Error("Failed to fetch catalogs.");
-      const data = await res.json();
+      const data = (await res.json()) as ApiCatalog[];
       setCatalogs(
-        data.map((catalog: any) => ({
+        data.map((catalog: ApiCatalog) => ({
           ...catalog,
           description: catalog.description ?? "",
           priceGroupIds: catalog.priceGroupIds ?? [],
@@ -152,7 +163,7 @@ export function ProductSettingsPage() {
       setLoadingCategories(true);
       const res = await fetch(`/api/products/categories/tree?catalogId=${catalogId}`);
       if (!res.ok) throw new Error("Failed to fetch product categories.");
-      setProductCategories(await res.json());
+      setProductCategories((await res.json()) as ProductCategoryWithChildren[]);
     } catch (error) {
       console.error(error);
     } finally {
@@ -169,7 +180,7 @@ export function ProductSettingsPage() {
       setLoadingTags(true);
       const res = await fetch(`/api/products/tags?catalogId=${catalogId}`);
       if (!res.ok) throw new Error("Failed to fetch product tags.");
-      setProductTags(await res.json());
+      setProductTags((await res.json()) as ProductTag[]);
     } catch (error) {
       console.error(error);
     } finally {
@@ -182,7 +193,7 @@ export function ProductSettingsPage() {
       setLanguagesLoading(true);
       const res = await fetch("/api/languages");
       if (!res.ok) throw new Error("Failed to fetch languages.");
-      setLanguages(await res.json());
+      setLanguages((await res.json()) as Language[]);
     } catch (error) {
       console.error(error);
       setLanguagesError(error instanceof Error ? error.message : "Failed to fetch languages.");

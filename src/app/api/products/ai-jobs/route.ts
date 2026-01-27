@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getProductAiJobs, deleteTerminalProductAiJobs, deleteAllProductAiJobs, cleanupStaleRunningProductAiJobs } from "@/features/products/services/productAiService";
-import { startProductAiJobQueue, getQueueStatus } from "@/features/products/services/productAiQueue";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { badRequestError } from "@/lib/errors/app-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { getProductAiJobs, deleteTerminalProductAiJobs, deleteAllProductAiJobs, cleanupStaleRunningProductAiJobs } from "@/features/jobs/services/productAiService";
+import { startProductAiJobQueue, getQueueStatus } from "@/features/jobs/workers/productAiQueue";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError } from "@/shared/errors/app-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 async function GET_handler(req: NextRequest) {
   try {

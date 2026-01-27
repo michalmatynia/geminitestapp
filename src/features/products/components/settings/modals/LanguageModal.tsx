@@ -8,7 +8,7 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { useToast } from "@/shared/ui/toast";
-import type { Language, CountryOption } from "@/features/products/types";
+import type { Language, CountryOption } from "@/shared/types/internationalization";
 
 interface LanguageModalProps {
   isOpen: boolean;

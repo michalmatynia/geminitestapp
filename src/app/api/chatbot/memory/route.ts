@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { internalError } from "@/lib/errors/app-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import prisma from "@/shared/lib/db/prisma";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { internalError } from "@/shared/errors/app-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 

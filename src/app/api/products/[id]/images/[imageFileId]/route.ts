@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import { productService } from "@/features/products/services/productService";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { badRequestError } from "@/lib/errors/app-error";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError } from "@/shared/errors/app-error";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 type Params = { id: string; imageFileId: string };
 type Ctx = { params: Params | Promise<Params> };

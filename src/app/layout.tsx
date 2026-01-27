@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Suspense } from "react";
 
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/shared/providers/theme-provider";
 import { ToastProvider } from "@/shared/ui/toast";
-import { QueryProvider } from "@/components/providers/QueryProvider";
-import ClientErrorReporter from "@/components/ClientErrorReporter";
+import { QueryProvider } from "@/shared/providers/QueryProvider";
+import ClientErrorReporter from "@/features/observability/components/ClientErrorReporter";
 import { SessionProvider } from "next-auth/react";
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/shared/utils";
 
 import "./globals.css";
 

@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
-import { ensureInternationalizationDefaults } from "@/lib/seedInternationalization";
-import { fallbackLanguages } from "@/lib/internationalizationFallback";
-import { defaultLanguages, countryMappings } from "@/lib/internationalizationDefaults";
+import prisma from "@/shared/lib/db/prisma";
+import { ensureInternationalizationDefaults } from "@/features/internationalization/lib/seedInternationalization";
+import { fallbackLanguages } from "@/features/internationalization/lib/internationalizationFallback";
+import { defaultLanguages, countryMappings } from "@/features/internationalization/lib/internationalizationDefaults";
 import { getProductDataProvider } from "@/features/products/services/product-provider";
-import { getMongoDb } from "@/lib/db/mongo-client";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { conflictError, internalError } from "@/lib/errors/app-error";
-import { logSystemEvent } from "@/lib/services/system-logger";
-import { apiHandler } from "@/lib/api/api-handler";
+import { conflictError, internalError } from "@/shared/errors/app-error";
+import { logSystemEvent } from "@/features/observability/services/system-logger";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";
 

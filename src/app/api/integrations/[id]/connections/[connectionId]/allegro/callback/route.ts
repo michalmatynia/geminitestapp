@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getIntegrationRepository } from "@/lib/services/integration-repository";
-import { decryptSecret, encryptSecret } from "@/shared/lib/utils/encryption";
-import { logSystemEvent } from "@/lib/services/system-logger";
-import { mapErrorToAppError } from "@/lib/errors/error-mapper";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { getIntegrationRepository } from "@/features/integrations/services/integration-repository";
+import { decryptSecret, encryptSecret } from "@/features/integrations/utils/encryption";
+import { logSystemEvent } from "@/features/observability/services/system-logger";
+import { mapErrorToAppError } from "@/shared/errors/error-mapper";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 const PROD_TOKEN_URL =
   process.env.ALLEGRO_TOKEN_URL ?? "https://allegro.pl/auth/oauth/token";

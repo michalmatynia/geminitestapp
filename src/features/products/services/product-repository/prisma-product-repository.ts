@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
-import prisma from "@/lib/prisma";
-import { conflictError } from "@/lib/errors/app-error";
+import prisma from "@/shared/lib/db/prisma";
+import { conflictError } from "@/shared/errors/app-error";
 import type { CatalogRecord, ImageFileRecord, ProductRecord } from "@/types";
 import type { ProductParameterValue } from "@/features/products/types";
 import type {

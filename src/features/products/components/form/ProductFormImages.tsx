@@ -1,6 +1,6 @@
 "use client";
 
-import { useProductFormContext } from "@/lib/context/ProductFormContext";
+import { useProductFormContext } from "@/features/products/context/ProductFormContext";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";

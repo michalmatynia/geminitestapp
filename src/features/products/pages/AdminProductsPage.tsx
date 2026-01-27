@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, Profiler, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ProfilerOnRenderCallback } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
@@ -8,19 +8,20 @@ import { useToast } from "@/shared/ui/toast";
 import { ProductTableSkeleton } from "@/features/products/components/list/ProductTableSkeleton";
 import { useProductData } from "@/features/products/hooks/useProductData";
 import { useProductOperations } from "@/features/products/hooks/useProductOperations";
+import { useIntegrationOperations } from "@/features/integrations/hooks/useIntegrationOperations";
 import { useCatalogSync } from "@/features/products/hooks/useCatalogSync";
 import { useUserPreferences } from "@/features/products/hooks/useUserPreferences";
 import { ProductListPanel } from "@/features/products/components/ProductListPanel";
 import { ProductModals } from "@/features/products/components/ProductModals";
-import { columns } from "@/components/columns"; // TODO: Move to shared or features if it is product specific
-import DebugPanel from "@/components/DebugPanel";
+import { columns } from "@/features/products/components/list/ProductColumns";
+import DebugPanel from "@/features/products/components/DebugPanel";
 import type { RowSelectionState } from "@tanstack/react-table";
 import type { ProductDraft } from "@/types/drafts";
 import type { ProductWithImages } from "@/types";
-import { logger } from "@/shared/lib/utils/logger";
+import { logger } from "@/shared/utils/logger";
 
 const SelectIntegrationModal = dynamic(
-  () => import("@/features/products/components/modals/SelectIntegrationModal"),
+  () => import("@/features/integrations/components/listings/SelectIntegrationModal"),
   { ssr: false }
 );
 
@@ -96,6 +97,14 @@ export function AdminProductsPage() {
     lastEditedId,
     actionError,
     setActionError,
+    handleOpenCreateModal,
+    handleOpenCreateFromDraft,
+    handleCreateSuccess,
+    handleEditSuccess,
+    handleEditSave,
+  } = useProductOperations(setRefreshTrigger);
+
+  const {
     integrationsProduct,
     setIntegrationsProduct,
     showListProductModal,
@@ -107,13 +116,8 @@ export function AdminProductsPage() {
     exportSettingsProduct,
     setExportSettingsProduct,
     refreshListingBadges,
-    handleOpenCreateModal,
-    handleOpenCreateFromDraft,
-    handleCreateSuccess,
-    handleEditSuccess,
-    handleEditSave,
     handleListProductSuccess: baseHandleListProductSuccess,
-  } = useProductOperations(setRefreshTrigger);
+  } = useIntegrationOperations();
 
   // Initialize currency code from preferences
   useEffect(() => {

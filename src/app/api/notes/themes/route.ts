@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { noteService } from "@/lib/services/noteService/index";
+import { noteService } from "@/features/notesapp/services/notes";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { themeCreateSchema } from "@/lib/validations/notes";
-import type { ThemeCreateInput } from "@/types/notes";
-import { removeUndefined } from "@/shared/lib/utils";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { themeCreateSchema } from "@/features/notesapp/validations/notes";
+import type { ThemeCreateInput } from "@/shared/types/notes";
+import { removeUndefined } from "@/shared/utils";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 /**
  * GET /api/notes/themes

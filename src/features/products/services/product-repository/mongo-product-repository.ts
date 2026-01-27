@@ -1,10 +1,10 @@
 import { randomUUID } from "crypto";
 import type { Filter, WithId } from "mongodb";
-import { getMongoDb } from "@/lib/db/mongo-client";
-import { conflictError } from "@/lib/errors/app-error";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { conflictError } from "@/shared/errors/app-error";
 import type { ProductRecord, ProductWithImages } from "@/types";
-import { mongoCatalogRepository } from "@/lib/services/catalog-repository/mongo-catalog-repository";
-import { mongoImageFileRepository } from "@/lib/services/image-file-repository/mongo-image-file-repository";
+import { mongoCatalogRepository } from "@/features/products/services/catalog-repository/mongo-catalog-repository";
+import { mongoImageFileRepository } from "@/features/files/services/image-file-repository/mongo-image-file-repository";
 import type {
   CreateProductInput,
   ProductFilters,

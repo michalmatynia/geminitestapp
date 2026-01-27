@@ -1,4 +1,4 @@
-import { ErrorSystem } from "@/lib/error-system";
+import { ErrorSystem } from "@/features/observability/services/error-system";
 // This service encapsulates all business logic for managing products.
 
 import fs from "fs/promises";
@@ -7,12 +7,12 @@ import {
   productCreateSchema,
   productUpdateSchema,
 } from "@/features/products/validations";
-import { getDiskPathFromPublicPath, uploadFile } from "@/shared/lib/utils/fileUploader";
+import { getDiskPathFromPublicPath, uploadFile } from "@/features/files/utils/fileUploader";
 import { getProductRepository } from "@/features/products/services/product-repository";
 import type { ProductFilters } from "@/features/products/types/services/product-repository";
-import { getImageFileRepository } from "@/lib/services/image-file-repository";
-import { getCatalogRepository } from "@/lib/services/catalog-repository";
-import { badRequestError } from "@/lib/errors/app-error";
+import { getImageFileRepository } from "@/features/files/services/image-file-repository";
+import { getCatalogRepository } from "@/features/products/services/catalog-repository";
+import { badRequestError } from "@/shared/errors/app-error";
 
 const resolveProductRepository = async () => getProductRepository();
 const resolveImageFileRepository = async () => getImageFileRepository();

@@ -8,8 +8,8 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { useToast } from "@/shared/ui/toast";
-import type { CountryOption, CurrencyOption } from "@/features/products/types";
-import { countryCodeOptions } from "@/features/products/pages/ProductSettingsConstants";
+import type { CountryOption, CurrencyOption } from "@/shared/types/internationalization";
+import { countryCodeOptions } from "@/shared/constants/internationalization";
 
 interface CountryModalProps {
   isOpen: boolean;

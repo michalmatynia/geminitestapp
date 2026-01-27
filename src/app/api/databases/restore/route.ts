@@ -1,10 +1,10 @@
 import path from "path";
 import { promises as fs } from "fs";
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { getMongoDb } from "@/lib/db/mongo-client";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { badRequestError, internalError } from "@/lib/errors/app-error";
+import prisma from "@/shared/lib/db/prisma";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError, internalError } from "@/shared/errors/app-error";
 
 import {
   backupsDir as pgBackupsDir,
@@ -13,7 +13,7 @@ import {
   getPgConnectionUrl,
   getPgRestoreCommand,
   execFileAsync as pgExecFileAsync,
-} from "../_utils";
+} from "@/features/database/utils/postgres";
 
 import {
   backupsDir as mongoBackupsDir,
@@ -23,8 +23,8 @@ import {
   getMongoDatabaseName,
   getMongoRestoreCommand,
   execFileAsync as mongoExecFileAsync,
-} from "../_utils-mongo";
-import { apiHandler } from "@/lib/api/api-handler";
+} from "@/features/database/utils/mongo";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 type ExecOutputishError = {
   stdout?: string;

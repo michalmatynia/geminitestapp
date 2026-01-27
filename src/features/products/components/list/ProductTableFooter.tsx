@@ -4,7 +4,7 @@ import React, { memo } from "react";
 import { Table as ReactTable } from "@tanstack/react-table";
 import { Button } from "@/shared/ui/button";
 import { ProductWithImages } from "@/types";
-import { logger } from "@/shared/lib/utils/logger";
+import { logger } from "@/shared/utils/logger";
 import { useToast } from "@/shared/ui/toast";
 import {
   AlertDialog,

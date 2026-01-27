@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { listDrafts, createDraft } from "@/lib/services/draft-repository";
+import { listDrafts, createDraft } from "@/features/admin/drafter/services/draft-repository";
 import type { CreateProductDraftInput } from "@/types/drafts";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { apiHandler } from "@/lib/api/api-handler";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 const createDraftSchema = z.object({
   name: z.string().min(1, "Name is required"),

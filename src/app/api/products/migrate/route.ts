@@ -5,12 +5,12 @@ import {
   migrateProductBatch,
   type MigrationDirection,
 } from "@/features/products/services/product-migration";
-import { createFullDatabaseBackup } from "@/lib/services/database-backup";
+import { createFullDatabaseBackup } from "@/features/database/services/database-backup";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { removeUndefined } from "@/shared/lib/utils";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { badRequestError } from "@/lib/errors/app-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { removeUndefined } from "@/shared/utils";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError } from "@/shared/errors/app-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";
 

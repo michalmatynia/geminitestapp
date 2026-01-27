@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import prisma from "@/shared/lib/db/prisma";
 import type { ProductCategoryWithChildren } from "@/features/products/types";
 import { getProductDataProvider } from "@/features/products/services/product-provider";
-import { getMongoDb } from "@/lib/db/mongo-client";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { badRequestError, internalError } from "@/lib/errors/app-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError, internalError } from "@/shared/errors/app-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 type CategoryFromDb = {
   id: string;

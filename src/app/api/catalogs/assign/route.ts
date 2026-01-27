@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCatalogRepository } from "@/lib/services/catalog-repository";
+import { getCatalogRepository } from "@/features/products/services/catalog-repository";
 import { getProductRepository } from "@/features/products/services/product-repository";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { badRequestError } from "@/lib/errors/app-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { badRequestError } from "@/shared/errors/app-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 const assignSchema = z.object({
   productIds: z.array(z.string().trim().min(1)).min(1),

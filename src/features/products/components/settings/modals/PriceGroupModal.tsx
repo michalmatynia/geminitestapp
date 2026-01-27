@@ -10,7 +10,8 @@ import { Textarea } from "@/shared/ui/textarea";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
 import { useToast } from "@/shared/ui/toast";
-import type { PriceGroup, PriceGroupType, CurrencyOption } from "@/features/products/types";
+import type { PriceGroup, PriceGroupType } from "@/features/products/types";
+import type { CurrencyOption } from "@/shared/types/internationalization";
 
 interface PriceGroupModalProps {
   isOpen: boolean;

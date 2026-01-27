@@ -1,5 +1,5 @@
-import prisma from "@/lib/prisma";
-import { getAppDbProvider } from "@/lib/services/app-db-provider";
+import prisma from "@/shared/lib/db/prisma";
+import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 
 type ProductDbProvider = "prisma" | "mongodb";
 

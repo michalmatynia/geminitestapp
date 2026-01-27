@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui/tabs";
-import { useProductFormContext } from "@/lib/context/ProductFormContext";
-import DebugPanel from "@/components/DebugPanel";
+import { useProductFormContext } from "@/features/products/context/ProductFormContext";
+import DebugPanel from "@/features/products/components/DebugPanel";
 import ProductFormGeneral from "./form/ProductFormGeneral";
 import ProductFormOther from "./form/ProductFormOther";
 import ProductFormImages from "./form/ProductFormImages";

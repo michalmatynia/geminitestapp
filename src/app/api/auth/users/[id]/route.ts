@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
-import { getMongoDb } from "@/lib/db/mongo-client";
-import { getAuthDataProvider } from "@/lib/services/auth-provider";
-import { normalizeAuthEmail } from "@/lib/services/auth-user-repository";
-import { auth } from "@/lib/auth";
+import prisma from "@/shared/lib/db/prisma";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { getAuthDataProvider } from "@/features/auth/services/auth-provider";
+import { normalizeAuthEmail } from "@/features/auth/services/auth-user-repository";
+import { auth } from "@/features/auth/auth";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { authError, conflictError, internalError, notFoundError } from "@/lib/errors/app-error";
-import type { AuthUserSummary } from "@/types/auth";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { authError, conflictError, internalError, notFoundError } from "@/shared/errors/app-error";
+import type { AuthUserSummary } from "@/features/auth/types";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";
 

@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
+import prisma from "@/shared/lib/db/prisma";
 import { parseJsonBody } from "@/features/products/api/parse-json";
 import { getProductDataProvider } from "@/features/products/services/product-provider";
-import { getMongoDb } from "@/lib/db/mongo-client";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { badRequestError, conflictError, internalError, notFoundError } from "@/lib/errors/app-error";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError, conflictError, internalError, notFoundError } from "@/shared/errors/app-error";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 const productParameterUpdateSchema = z.object({
   name_en: z.string().min(1).optional(),

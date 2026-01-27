@@ -1,5 +1,5 @@
-import { GET, POST } from "../../../app/api/languages/route";
-import { DELETE, PUT } from "../../../app/api/languages/[id]/route";
+import { GET, POST } from "@/app/api/languages/route";
+import { DELETE, PUT } from "@/app/api/languages/[id]/route";
 import prisma from "@/lib/prisma";
 import { NextRequest } from "next/server";
 

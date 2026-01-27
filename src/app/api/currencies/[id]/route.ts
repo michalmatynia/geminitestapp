@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
+import prisma from "@/shared/lib/db/prisma";
 import { getProductDataProvider } from "@/features/products/services/product-provider";
-import { getMongoDb } from "@/lib/db/mongo-client";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {
   badRequestError,
   configurationError,
   notFoundError,
   duplicateEntryError,
-} from "@/lib/errors/app-error";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+} from "@/shared/errors/app-error";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 type CurrencyDoc = {
   id: string;

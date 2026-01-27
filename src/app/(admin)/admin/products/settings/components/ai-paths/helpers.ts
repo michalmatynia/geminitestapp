@@ -10,7 +10,7 @@ import type {
   NodeType,
   PathConfig,
   PathMeta,
-} from "@/types/ai-paths";
+} from "@/shared/types/ai-paths";
 
 type LegacyUpdaterConfig = {
   targetField?: string;
@@ -1982,6 +1982,7 @@ const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
   poll: ["viewer", "notification", "bundle", "template", "prompt", "model", "delay", "database"],
   http: ["viewer", "bundle", "template", "prompt", "math", "compare", "poll", "database"],
   database: ["viewer", "bundle", "template", "prompt", "mapper", "validator", "poll", "notification"],
+  db_schema: ["prompt", "template", "model", "bundle", "viewer", "database"],
   bundle: ["viewer", "template", "prompt", "poll", "database"],
   template: ["model", "viewer", "bundle", "prompt", "poll", "database"],
   prompt: ["model", "viewer", "bundle", "template", "poll", "notification"],
@@ -2473,6 +2474,7 @@ const typeStyles: Record<NodeType, { border: string; glow: string }> = {
   poll: { border: "border-cyan-300/40", glow: "shadow-cyan-300/20" },
   http: { border: "border-sky-400/40", glow: "shadow-sky-400/20" },
   database: { border: "border-emerald-500/40", glow: "shadow-emerald-500/20" },
+  db_schema: { border: "border-purple-500/40", glow: "shadow-purple-500/20" },
   prompt: { border: "border-amber-500/40", glow: "shadow-amber-500/20" },
   model: { border: "border-fuchsia-500/40", glow: "shadow-fuchsia-500/20" },
   viewer: { border: "border-violet-500/40", glow: "shadow-violet-500/20" },

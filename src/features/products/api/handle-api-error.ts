@@ -1,1 +1,1 @@
-export * from "@/lib/api/handle-api-error";
+export * from "@/shared/lib/api/handle-api-error";

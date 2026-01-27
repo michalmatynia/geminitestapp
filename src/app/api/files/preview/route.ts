@@ -4,10 +4,10 @@ import path from "path";
 import mime from "mime-types";
 import { NextRequest, NextResponse } from "next/server";
 
-import { getImageFileRepository } from "@/lib/services/image-file-repository";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { badRequestError, notFoundError } from "@/lib/errors/app-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { getImageFileRepository } from "@/features/files/services/image-file-repository";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError, notFoundError } from "@/shared/errors/app-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 async function GET_handler(req: NextRequest) {
   const fileId = req.nextUrl.searchParams.get("fileId");

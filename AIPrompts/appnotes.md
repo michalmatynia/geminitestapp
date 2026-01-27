@@ -1,12 +1,31 @@
 
+
 My AI Paths node modals don't have a close button like the one in Edit / Create Product modal, it is supposed to be a unified UI design.
 
 Baselinker Account is not selected automatically when Exporting Products
 
+AI teaching embeddings feature
+
+LATER - DTbAE Auto-map from inputs - I DONT REALLY GET IT it needs to be described in Docs, infer from sample, my targets turned into placeholders, also create a database note that Is an API that asks
+Database Query is not being auto-saved
+
+Database query prompt presets
+Chatbot send on return in DB Query
+The AI Callback reply is not getting saved, or auto-saved, no retention, as soon as I close the node and redirect to a different page, teh node result disappears
+
+AI query ready for review - messages get really wide, wrap them
+
+Move Dry run to the left
+
+If nothing is connected in the value input, teh {{value}} placeholder shouldn't be active at all
+
 images still flicker
+DB query fielf provider is nit saving
 
-move integrations into a separate page / feature
+When I connect the Database node, I should Actually be abe to query the database on th elfly
 
+
+LATER - All Jobs / runners should be in one place 
 * In Products, When I enter Marketplaces I need Category Mapper page for each marketplace. It is a page Where I can Set up category Mappings from my platfrom to an external pages for proper Export and Import (in the case of Base.com cause it's an integrator). The first Page will be Base.com but there will be others. I need a page within Category Mapper - Base.com where I can download current category list for a given catalog through API. Then, I can select which categories (or maybe all of them) I want to consider during my mappings, finally, I need a mapping engine, where I can one by one map each Base.com Category to a Category in my Catalog.
 
 
@@ -19,6 +38,7 @@ Producer list
 
 In Product List - Operations - I need an Option to Mass Export Products to Base.com
 
+LATE - A-Train style shooter
 
 * I load the import list in the Limit of 10, yet when I see the Import list preview is says Total: 1000 · Existing: 0 · Showing: 1000
 
@@ -32,6 +52,8 @@ Note APP, simplified NoTE editing, which allows me to edit, delete text right in
 
 Draft list should be reordered the same way as mapping parameters
 
+LATER - Loader as a separate feature
+LATER - ANalytics
 
 Link Note to Product? Why not, a special kind of Theme that has this linking field
 
@@ -51,6 +73,7 @@ Markdown TO Wysywig make it a dropdown and place it by Delete
 * Opening WYSYWIG Note fails in Edit Mode
 
 LATER - Analytics
+LATER - aI SHop manager
 
 LATER - Post Production Studio -> Should have changeable options for relight etc. also an option to Generate, or add environemet. Also, each post-production work should be handled in one session, so it's easier to regenerate with an addidtional prompt (or prompt suggestions)
 

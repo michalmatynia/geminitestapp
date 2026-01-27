@@ -5,7 +5,7 @@ import React, { useRef, useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Switch } from "@/shared/ui/switch";
-import { useProductFormContext } from "@/lib/context/ProductFormContext";
+import { useProductFormContext } from "@/features/products/context/ProductFormContext";
 import { PlusIcon, XIcon, GripVertical } from "lucide-react";
 import { DebugInfo } from "@/features/products/types/products-ui";
 

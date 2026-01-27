@@ -2,7 +2,7 @@ import "dotenv/config";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { getMongoDb } from "@/lib/db/mongo-client";
-import { AUTH_SETTINGS_KEYS, parseJsonSetting, serializeSetting } from "@/lib/constants/auth-management";
+import { AUTH_SETTINGS_KEYS, parseJsonSetting, serializeSetting } from "@/features/auth/utils/auth-management";
 
 async function main() {
   const email = process.argv[2];
@@ -88,7 +88,7 @@ async function main() {
     
     // Fetch existing roles map
     const rolesDoc = await settingsCollection.findOne({ 
-      $or: [{ _id: AUTH_SETTINGS_KEYS.userRoles as any }, { key: AUTH_SETTINGS_KEYS.userRoles }] 
+      $or: [{ _id: AUTH_SETTINGS_KEYS.userRoles as unknown as string }, { key: AUTH_SETTINGS_KEYS.userRoles }] 
     });
     
     const userRoles = parseJsonSetting<Record<string, string>>(rolesDoc?.value as string, {});

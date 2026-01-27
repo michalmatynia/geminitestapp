@@ -15,20 +15,6 @@ export type PriceGroup = {
   addToPrice: number;
 };
 
-export type CurrencyOption = {
-  id: string;
-  code: string;
-  name: string;
-  symbol?: string | null;
-};
-
-export type CountryOption = {
-  id: string;
-  code: string;
-  name: string;
-  currencies?: { currencyId: string; currency: CurrencyOption }[];
-};
-
 export type Catalog = {
   id: string;
   name: string;
@@ -44,14 +30,6 @@ export type Catalog = {
 
 export type ProductDbProvider = "prisma" | "mongodb";
 export type ProductMigrationDirection = "prisma-to-mongo" | "mongo-to-prisma";
-
-export type Language = {
-  id: string;
-  code: string;
-  name: string;
-  nativeName?: string | null;
-  countries?: { countryId: string; country: CountryOption }[];
-};
 
 export type ProductCategory = {
   id: string;
@@ -108,7 +86,7 @@ export type IntegrationDbProvider = "prisma" | "mongodb";
 
 export type SyncDirection = "to_base" | "from_base" | "bidirectional" | "none";
 
-export type ProductAiJobType = "description_generation" | "translation" | "graph_model";
+export type { ProductAiJobType } from "@/shared/types/jobs";
 
 export type ProductMigrationBatchResult = {
   direction: ProductMigrationDirection;
@@ -118,4 +96,3 @@ export type ProductMigrationBatchResult = {
   missingImageFileIds: string[];
   missingCatalogIds: string[];
 };
-

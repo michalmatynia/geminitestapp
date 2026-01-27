@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getIntegrationRepository } from "@/lib/services/integration-repository";
-import { decryptSecret, encryptSecret } from "@/shared/lib/utils/encryption";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { AppErrorCodes, createAppError } from "@/lib/errors/app-error";
-import { mapStatusToAppError } from "@/lib/errors/error-mapper";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { getIntegrationRepository } from "@/features/integrations/services/integration-repository";
+import { decryptSecret, encryptSecret } from "@/features/integrations/utils/encryption";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { AppErrorCodes, createAppError } from "@/shared/errors/app-error";
+import { mapStatusToAppError } from "@/shared/errors/error-mapper";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 type TestLogEntry = {
   step: string;

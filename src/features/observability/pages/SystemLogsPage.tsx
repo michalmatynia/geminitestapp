@@ -1,0 +1,529 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui/select";
+import { useToast } from "@/shared/ui/toast";
+import { RefreshCcw, Trash2, Download } from "lucide-react";
+import type { SystemLogMetrics, SystemLogRecord, SystemLogLevel } from "@/shared/types/system-logs";
+import { Label } from "@/shared/ui/label";
+
+const levelOptions: Array<{ value: SystemLogLevel | "all"; label: string }> = [
+  { value: "all", label: "All levels" },
+  { value: "error", label: "Errors" },
+  { value: "warn", label: "Warnings" },
+  { value: "info", label: "Info" },
+];
+
+const formatTimestamp = (value: Date | string) => {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleString();
+};
+
+const formatDateParam = (value: string, endOfDay = false) => {
+  if (!value) return null;
+  const suffix = endOfDay ? "T23:59:59.999" : "T00:00:00.000";
+  const date = new Date(`${value}${suffix}`);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
+};
+
+export default function SystemLogsPage() {
+  const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const [logs, setLogs] = useState<SystemLogRecord[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [metrics, setMetrics] = useState<SystemLogMetrics | null>(null);
+  const [metricsLoading, setMetricsLoading] = useState(true);
+  const [level, setLevel] = useState<SystemLogLevel | "all">("all");
+  const [query, setQuery] = useState("");
+  const [source, setSource] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 50;
+
+  useEffect(() => {
+    if (!searchParams) return;
+    const levelParam = searchParams.get("level");
+    const sourceParam = searchParams.get("source");
+    const queryParam = searchParams.get("query");
+    const fromParam = searchParams.get("from");
+    const toParam = searchParams.get("to");
+    if (levelParam) {
+      const isValidLevel = levelOptions.some((option) => option.value === levelParam);
+      if (isValidLevel) setLevel(levelParam as SystemLogLevel | "all");
+    }
+    if (sourceParam !== null) setSource(sourceParam);
+    if (queryParam !== null) setQuery(queryParam);
+    if (fromParam !== null) {
+      const fromDateValue = new Date(fromParam);
+      setFromDate(
+        Number.isNaN(fromDateValue.getTime())
+          ? fromParam
+          : fromDateValue.toISOString().slice(0, 10)
+      );
+    }
+    if (toParam !== null) {
+      const toDateValue = new Date(toParam);
+      setToDate(
+        Number.isNaN(toDateValue.getTime())
+          ? toParam
+          : toDateValue.toISOString().slice(0, 10)
+      );
+    }
+    setPage(1);
+  }, [searchParams]);
+
+  const totalPages = useMemo(() => {
+    return Math.max(1, Math.ceil(total / pageSize));
+  }, [total, pageSize]);
+
+  const loadLogs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("pageSize", String(pageSize));
+      if (level !== "all") params.set("level", level);
+      if (query.trim()) params.set("query", query.trim());
+      if (source.trim()) params.set("source", source.trim());
+      const from = formatDateParam(fromDate);
+      const to = formatDateParam(toDate, true);
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
+
+      const res = await fetch(`/api/system/logs?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to load system logs.");
+      const data = (await res.json()) as {
+        logs?: SystemLogRecord[];
+        total?: number;
+        page?: number;
+        pageSize?: number;
+      };
+      setLogs(data.logs ?? []);
+      setTotal(data.total ?? 0);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Failed to load system logs.", {
+        variant: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [level, page, pageSize, query, source, fromDate, toDate, toast]);
+
+  const loadMetrics = useCallback(async () => {
+    setMetricsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (level !== "all") params.set("level", level);
+      if (query.trim()) params.set("query", query.trim());
+      if (source.trim()) params.set("source", source.trim());
+      const from = formatDateParam(fromDate);
+      const to = formatDateParam(toDate, true);
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
+
+      const res = await fetch(`/api/system/logs/metrics?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to load system log metrics.");
+      const data = (await res.json()) as { metrics?: SystemLogMetrics };
+      setMetrics(data.metrics ?? null);
+    } catch (error) {
+      toast(
+        error instanceof Error ? error.message : "Failed to load system log metrics.",
+        { variant: "error" }
+      );
+    } finally {
+      setMetricsLoading(false);
+    }
+  }, [level, query, source, fromDate, toDate, toast]);
+
+  useEffect(() => {
+    void loadLogs();
+    void loadMetrics();
+  }, [loadLogs, loadMetrics]);
+
+
+  const clearLogs = async () => {
+    if (!window.confirm("Clear all system logs?")) return;
+    try {
+      const res = await fetch("/api/system/logs", { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to clear logs.");
+      toast("System logs cleared.", { variant: "success" });
+      await loadLogs();
+      await loadMetrics();
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Failed to clear logs.", {
+        variant: "error",
+      });
+    }
+  };
+
+  const exportLogs = async () => {
+    try {
+      const payload = JSON.stringify(logs, null, 2);
+      await navigator.clipboard.writeText(payload);
+      toast("Logs copied to clipboard.", { variant: "success" });
+    } catch (_error) {
+      toast("Failed to copy logs.", { variant: "error" });
+    }
+  };
+
+  const levelStyles: Record<string, string> = {
+    error: "border-red-500/40 text-red-300 bg-red-500/10",
+    warn: "border-yellow-500/40 text-yellow-300 bg-yellow-500/10",
+    info: "border-blue-500/40 text-blue-300 bg-blue-500/10",
+  };
+
+  const getContextValue = (context: unknown, path: string) => {
+    if (!context || typeof context !== "object") return null;
+    return path.split(".").reduce<unknown>((acc, key) => {
+      if (!acc || typeof acc !== "object") return null;
+      return (acc as Record<string, unknown>)[key] ?? null;
+    }, context);
+  };
+
+  const levels = metrics?.levels ?? { error: 0, warn: 0, info: 0 };
+
+  return (
+    <div className="container mx-auto py-10">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-white">System Logs</h1>
+          <p className="mt-2 text-sm text-gray-400">
+            Centralized error and warning events captured across the platform.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.location.assign("/admin/settings/logging")}
+            className="border-gray-700"
+          >
+            Client Logging Settings
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              void loadLogs();
+              void loadMetrics();
+            }}
+            className="border-gray-700"
+            disabled={loading || metricsLoading}
+          >
+            <RefreshCcw className="mr-2 h-4 w-4" />
+            Refresh
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void exportLogs()}
+            className="border-gray-700"
+            disabled={logs.length === 0}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Copy JSON
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void clearLogs()}
+            className="border-red-500/40 text-red-200 hover:bg-red-500/10"
+            disabled={logs.length === 0}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Clear Logs
+          </Button>
+        </div>
+      </div>
+
+      <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
+        <div className="grid gap-4 md:grid-cols-4">
+          <div>
+            <Label className="text-xs text-gray-400">Level</Label>
+            <Select
+              value={level}
+              onValueChange={(value) => {
+                setLevel(value as SystemLogLevel | "all");
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="mt-2">
+                <SelectValue placeholder="All levels" />
+              </SelectTrigger>
+              <SelectContent>
+                {levelOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs text-gray-400">Search</Label>
+            <Input
+              className="mt-2"
+              placeholder="Message or source"
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setPage(1);
+              }}
+            />
+          </div>
+          <div>
+            <Label className="text-xs text-gray-400">Source</Label>
+            <Input
+              className="mt-2"
+              placeholder="api/products, auth, etc."
+              value={source}
+              onChange={(event) => {
+                setSource(event.target.value);
+                setPage(1);
+              }}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs text-gray-400">From</Label>
+              <Input
+                className="mt-2"
+                type="date"
+                value={fromDate}
+                onChange={(event) => {
+                  setFromDate(event.target.value);
+                  setPage(1);
+                }}
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-400">To</Label>
+              <Input
+                className="mt-2"
+                type="date"
+                value={toDate}
+                onChange={(event) => {
+                  setToDate(event.target.value);
+                  setPage(1);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 rounded-md border border-gray-800 bg-gray-950/60 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-white">Metrics</h2>
+            <p className="text-xs text-gray-400">
+              Metrics reflect the current filters.
+            </p>
+          </div>
+          <div className="text-xs text-gray-500">
+            {metrics?.generatedAt ? `Updated ${formatTimestamp(metrics.generatedAt)}` : "—"}
+          </div>
+        </div>
+        {metricsLoading ? (
+          <div className="mt-4 text-sm text-gray-400">Loading metrics...</div>
+        ) : !metrics ? (
+          <div className="mt-4 text-sm text-gray-400">
+            No metrics available yet.
+          </div>
+        ) : (
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
+            <div className="rounded-md border border-gray-800 bg-gray-950 p-3">
+              <div className="text-xs text-gray-400">Totals</div>
+              <div className="mt-2 space-y-1 text-sm text-gray-200">
+                <div>Total: {metrics.total}</div>
+                <div>Last 24h: {metrics.last24Hours}</div>
+                <div>Last 7d: {metrics.last7Days}</div>
+              </div>
+            </div>
+            <div className="rounded-md border border-gray-800 bg-gray-950 p-3">
+              <div className="text-xs text-gray-400">By level</div>
+              <div className="mt-2 space-y-1 text-sm text-gray-200">
+                <div className="text-red-300">Errors: {levels.error}</div>
+                <div className="text-yellow-300">Warnings: {levels.warn}</div>
+                <div className="text-blue-300">Info: {levels.info}</div>
+              </div>
+            </div>
+            <div className="rounded-md border border-gray-800 bg-gray-950 p-3">
+              <div className="text-xs text-gray-400">Top sources</div>
+              {metrics.topSources.length === 0 ? (
+                <div className="mt-2 text-xs text-gray-500">No sources yet.</div>
+              ) : (
+                <div className="mt-2 space-y-1 text-xs text-gray-300">
+                  {metrics.topSources.map((item) => (
+                    <div key={item.source} className="flex items-center justify-between gap-2">
+                      <span className="truncate">{item.source}</span>
+                      <span className="text-gray-500">{item.count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="mt-3 text-xs text-gray-400">Top paths</div>
+              {metrics.topPaths.length === 0 ? (
+                <div className="mt-2 text-xs text-gray-500">No paths yet.</div>
+              ) : (
+                <div className="mt-2 space-y-1 text-xs text-gray-300">
+                  {metrics.topPaths.map((item) => (
+                    <div key={item.path} className="flex items-center justify-between gap-2">
+                      <span className="truncate">{item.path}</span>
+                      <span className="text-gray-500">{item.count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-6 rounded-md border border-gray-800 bg-gray-950/50">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-800 px-4 py-3 text-xs text-gray-400">
+          <span>
+            Showing {logs.length} of {total} logs
+          </span>
+          <span>Page {page} of {totalPages}</span>
+        </div>
+        {loading ? (
+          <div className="px-4 py-8 text-sm text-gray-400">Loading logs...</div>
+        ) : logs.length === 0 ? (
+          <div className="px-4 py-8 text-sm text-gray-400">
+            No system logs found.
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-800">
+            {logs.map((log) => (
+              <div key={log.id} className="px-4 py-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`rounded border px-2 py-0.5 text-xs ${
+                        levelStyles[log.level] ?? "border-gray-700 text-gray-300"
+                      }`}
+                    >
+                      {log.level.toUpperCase()}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {formatTimestamp(log.createdAt)}
+                    </span>
+                  </div>
+                  {log.source ? (
+                    <span className="text-xs text-gray-500">{log.source}</span>
+                  ) : null}
+                </div>
+                <div className="mt-2 text-sm text-gray-200">{log.message}</div>
+                {(log.path || log.method || log.statusCode) && (
+                  <div className="mt-2 text-xs text-gray-500">
+                    {log.method ? `${log.method} ` : ""}
+                    {log.path ?? ""}
+                    {log.statusCode ? ` • ${log.statusCode}` : ""}
+                  </div>
+                )}
+                {log.context && getContextValue(log.context, "fingerprint") ? (
+                  <div className="mt-2 text-xs text-gray-500">
+                    Fingerprint:{" "}
+                    <span className="font-mono text-gray-300">
+                      {String(getContextValue(log.context, "fingerprint"))}
+                    </span>
+                  </div>
+                ) : null}
+                {(log.context || log.stack) && (
+                  <details className="mt-2 text-xs text-gray-400">
+                    <summary className="cursor-pointer hover:text-gray-200">
+                      Details
+                    </summary>
+                    {log.source === "client" && log.context ? (
+                      <div className="mt-2 rounded border border-gray-800 bg-gray-950 p-2 text-[11px] text-gray-300">
+                        <div className="font-semibold text-gray-200">Client context</div>
+                        <div className="mt-2 grid gap-2 md:grid-cols-2">
+                          <div>
+                            <div className="text-gray-500">App</div>
+                            <div>{String((getContextValue(log.context, "app.version") as string | number | null) ?? "—")}</div>
+                            <div className="text-gray-500">Build</div>
+                            <div>{String((getContextValue(log.context, "app.buildId") as string | number | null) ?? "—")}</div>
+                            <div className="text-gray-500">Release</div>
+                            <div>{String((getContextValue(log.context, "app.releaseChannel") as string | number | null) ?? "—")}</div>
+                          </div>
+                          <div>
+                            <div className="text-gray-500">User</div>
+                            <div>{String((getContextValue(log.context, "user.email") as string | number | null) ?? "—")}</div>
+                            <div className="text-gray-500">Role</div>
+                            <div>{String((getContextValue(log.context, "user.role") as string | number | null) ?? "—")}</div>
+                            <div className="text-gray-500">Route</div>
+                            <div>{String((getContextValue(log.context, "route") as string | number | null) ?? "—")}</div>
+                          </div>
+                          <div>
+                            <div className="text-gray-500">Device</div>
+                            <div>{String((getContextValue(log.context, "device.platform") as string | number | null) ?? "—")}</div>
+                            <div className="text-gray-500">Memory</div>
+                            <div>{String((getContextValue(log.context, "device.deviceMemory") as string | number | null) ?? "—")}</div>
+                            <div className="text-gray-500">Cores</div>
+                            <div>{String((getContextValue(log.context, "device.hardwareConcurrency") as string | number | null) ?? "—")}</div>
+                          </div>
+                          <div>
+                            <div className="text-gray-500">Network</div>
+                            <div>{String((getContextValue(log.context, "network.effectiveType") as string | number | null) ?? "—")}</div>
+                            <div className="text-gray-500">Downlink</div>
+                            <div>{String((getContextValue(log.context, "network.downlink") as string | number | null) ?? "—")}</div>
+                            <div className="text-gray-500">RTT</div>
+                            <div>{String((getContextValue(log.context, "network.rtt") as string | number | null) ?? "—")}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+                    {log.stack && (
+                      <pre className="mt-2 whitespace-pre-wrap rounded border border-gray-800 bg-gray-950 p-2 text-[11px] text-gray-300">
+                        {log.stack}
+                      </pre>
+                    )}
+                    {log.context && (
+                      <pre className="mt-2 whitespace-pre-wrap rounded border border-gray-800 bg-gray-950 p-2 text-[11px] text-gray-300">
+                        {JSON.stringify(log.context, null, 2)}
+                      </pre>
+                    )}
+                  </details>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="flex items-center justify-between gap-3 border-t border-gray-800 px-4 py-3">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-gray-700"
+            disabled={page <= 1}
+            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-gray-700"
+            disabled={page >= totalPages}
+            onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

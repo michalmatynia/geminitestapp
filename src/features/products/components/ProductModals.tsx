@@ -3,15 +3,15 @@
 import React from "react";
 import ModalShell from "@/shared/ui/modal-shell";
 import { Button } from "@/shared/ui/button";
-import FileManager from "@/components/files/FileManager";
+import FileManager from "@/features/files/components/FileManager";
 import ProductForm from "@/features/products/components/ProductForm";
-import ProductListingsModal from "@/features/products/components/modals/ProductListingsModal";
-import ListProductModal from "@/features/products/components/modals/ListProductModal";
-import MassListProductModal from "@/features/products/components/modals/MassListProductModal";
+import ProductListingsModal from "@/features/integrations/components/listings/ProductListingsModal";
+import ListProductModal from "@/features/integrations/components/listings/ListProductModal";
+import MassListProductModal from "@/features/integrations/components/listings/MassListProductModal";
 import {
   ProductFormProvider,
   useProductFormContext,
-} from "@/lib/context/ProductFormContext";
+} from "@/features/products/context/ProductFormContext";
 import type { ProductWithImages } from "@/types";
 import type { ProductDraft } from "@/types/drafts";
 

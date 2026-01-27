@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getProductAiJob, cancelProductAiJob, deleteProductAiJob } from "@/features/products/services/productAiService";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { getProductAiJob, cancelProductAiJob, deleteProductAiJob } from "@/features/jobs/services/productAiService";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { badRequestError, notFoundError } from "@/lib/errors/app-error";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { badRequestError, notFoundError } from "@/shared/errors/app-error";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 const actionSchema = z.object({
   action: z.string().trim().min(1),

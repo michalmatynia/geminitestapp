@@ -10,8 +10,8 @@ import {
   DEFAULT_TRANSIENT_RECOVERY_SETTINGS,
   TRANSIENT_RECOVERY_KEYS,
   type TransientRecoverySettings,
-} from "@/lib/constants/transient-recovery";
-import { parseJsonSetting, serializeSetting } from "@/lib/constants/auth-management";
+} from "@/shared/lib/transient-recovery/constants";
+import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 
 const toNumber = (value: string, fallback: number, min = 0) => {
   const parsed = Number(value);

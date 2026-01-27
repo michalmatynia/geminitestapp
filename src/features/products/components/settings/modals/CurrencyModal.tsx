@@ -7,7 +7,7 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { useToast } from "@/shared/ui/toast";
-import type { CurrencyOption } from "@/features/products/types";
+import type { CurrencyOption } from "@/shared/types/internationalization";
 
 interface CurrencyModalProps {
   isOpen: boolean;

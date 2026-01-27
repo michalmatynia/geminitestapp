@@ -1,0 +1,480 @@
+"use client";
+
+import React, { useState, useCallback, useMemo } from "react";
+import { useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
+import { useNoteSettings } from "@/features/notesapp/hooks/NoteSettingsContext";
+import { useToast } from "@/shared/ui/toast";
+import { FolderTree } from "@/features/foldertree/components/FolderTree";
+import { NoteListView } from "@/features/notesapp/components/NoteListView";
+import { NoteDetailView } from "@/features/notesapp/components/NoteDetailView";
+import { CreateNoteModal } from "@/features/notesapp/components/CreateNoteModal";
+import { useNoteData } from "@/features/notesapp/hooks/useNoteData";
+import { useNoteFilters } from "@/features/notesapp/hooks/useNoteFilters";
+import { useNoteOperations } from "@/features/notesapp/hooks/useNoteOperations";
+import { useNoteTheme } from "@/features/notesapp/hooks/useNoteTheme";
+import type { NoteWithRelations } from "@/shared/types/notes";
+import type { UndoAction } from "@/features/notesapp/types/notes-hooks";
+
+export function AdminNotesPage() {
+  const { isMenuCollapsed } = useAdminLayout();
+  const { settings, updateSettings } = useNoteSettings();
+  const { toast } = useToast();
+
+  // Local UI State
+  const [selectedNote, setSelectedNote] = useState<NoteWithRelations | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [draggedNoteId, setDraggedNoteId] = useState<string | null>(null);
+  const [isFolderTreeCollapsed, setIsFolderTreeCollapsed] = useState(false);
+  const [undoStack, setUndoStack] = useState<UndoAction[]>([]);
+
+  // Settings helpers
+  const setSelectedFolderId = useCallback((id: string | null) => {
+    updateSettings({ selectedFolderId: id });
+  }, [updateSettings]);
+
+  const setSelectedNotebookId = useCallback((id: string | null) => {
+    updateSettings({ selectedNotebookId: id });
+  }, [updateSettings]);
+
+  // Hooks
+  const filters = useNoteFilters({ settings, updateSettings });
+  
+  const {
+    notes,
+    setNotes,
+    tags,
+    themes,
+    notebook,
+    setNotebook,
+    folderTree,
+    loading,
+    notesRef,
+    folderTreeRef,
+    fetchNotes,
+    fetchFolderTree,
+    fetchTags,
+  } = useNoteData({
+    selectedNotebookId: settings.selectedNotebookId,
+    selectedFolderId: settings.selectedFolderId,
+    searchQuery: filters.debouncedSearchQuery,
+    searchScope: settings.searchScope,
+    filterPinned: filters.filterPinned,
+    filterArchived: filters.filterArchived,
+    filterFavorite: filters.filterFavorite,
+    filterTagIds: filters.filterTagIds,
+    setSelectedNotebookId,
+  });
+
+  const operations = useNoteOperations({
+    selectedNotebookId: settings.selectedNotebookId,
+    notesRef,
+    folderTreeRef,
+    fetchNotes,
+    fetchFolderTree,
+    setUndoStack,
+    toast,
+    setSelectedFolderId,
+    setSelectedNote,
+    selectedNote,
+  });
+
+  const themeLogic = useNoteTheme({
+    themes,
+    notebook,
+    folderTree,
+    selectedFolderId: settings.selectedFolderId,
+    selectedNotebookId: settings.selectedNotebookId,
+    selectedNote,
+    fetchFolderTree,
+    setNotebook,
+  });
+
+  // Derived Logic (Sorting & Pagination)
+  // We can keep this here or move to a separate utility/hook if needed, 
+  // but it's lightweight enough to stay for now given dependencies on 'notes' and 'filters'.
+  const notesInScope = useMemo(() => {
+    // Note: useNoteData already fetches scoped notes if we rely on API filtering.
+    // However, the original code did client-side filtering for descendants if selectedFolderId was set.
+    // Our useNoteData passes categoryIds to API, so API returns correct subset.
+    // But we might still need to ensure we aren't showing stale data if we just switched folders.
+    // The original code was:
+    // return notes.filter((note) => ...);
+    // Since we fetch based on folder ID now, 'notes' should be correct.
+    return notes;
+  }, [notes]);
+
+  const sortedNotes = useMemo(() => {
+    const sorted = [...notesInScope].sort((a, b) => {
+      if (settings.sortBy === "name") {
+        return a.title.localeCompare(b.title);
+      }
+      if (settings.sortBy === "updated") {
+        return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+      }
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    });
+    return settings.sortOrder === "desc" ? sorted.reverse() : sorted;
+  }, [notesInScope, settings.sortBy, settings.sortOrder]);
+
+  const totalPages = useMemo(() => {
+    return Math.max(1, Math.ceil(sortedNotes.length / filters.pageSize));
+  }, [sortedNotes.length, filters.pageSize]);
+
+  const pagedNotes = useMemo(() => {
+    const clampedPage = Math.min(filters.page, totalPages);
+    const start = (clampedPage - 1) * filters.pageSize;
+    return sortedNotes.slice(start, start + filters.pageSize);
+  }, [sortedNotes, filters.page, filters.pageSize, totalPages]);
+
+  const noteLayoutClassName = useMemo(() => {
+    if (settings.viewMode === "list") {
+      return "grid grid-cols-1 gap-3";
+    }
+    if (settings.gridDensity === 8) {
+      return "grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8";
+    }
+    return "grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
+  }, [settings.viewMode, settings.gridDensity]);
+
+  const availableTagsInScope = useMemo(() => {
+    const tagMap = new Map<string, typeof tags[0]>();
+    notesInScope.forEach((note) => {
+      note.tags.forEach((noteTag) => {
+        tagMap.set(noteTag.tagId, noteTag.tag);
+      });
+    });
+    return Array.from(tagMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [notesInScope]);
+
+  // Handlers
+  const handleSelectNoteFromTree = useCallback(async (noteId: string) => {
+    try {
+      const response = await fetch(`/api/notes/${noteId}`, { cache: "no-store" });
+      if (response.ok) {
+        const note = (await response.json()) as NoteWithRelations;
+        setSelectedNote(note);
+        setIsEditing(false);
+      }
+    } catch (error) {
+      console.error("Failed to fetch note:", error);
+    }
+  }, []);
+
+  const handleCreateSuccess = useCallback(() => {
+    setIsCreating(false);
+    void fetchNotes();
+    void fetchFolderTree();
+  }, [fetchNotes, fetchFolderTree]);
+
+  const handleUpdateSuccess = useCallback(() => {
+    setIsEditing(false);
+    void fetchNotes();
+    void fetchFolderTree();
+    if (selectedNote) {
+      void handleSelectNoteFromTree(selectedNote.id);
+    }
+  }, [fetchNotes, fetchFolderTree, selectedNote, handleSelectNoteFromTree]);
+
+  const handleToggleFavorite = useCallback(async (note: NoteWithRelations) => {
+    const nextFavorite = !note.isFavorite;
+    try {
+      const response = await fetch(`/api/notes/${note.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isFavorite: nextFavorite }),
+      });
+      if (!response.ok) {
+        toast("Failed to update favorite", { variant: "error" });
+        return;
+      }
+      setNotes((prev) =>
+        prev.map((item) =>
+          item.id === note.id ? { ...item, isFavorite: nextFavorite } : item
+        )
+      );
+      setSelectedNote((prev) =>
+        prev && prev.id === note.id ? { ...prev, isFavorite: nextFavorite } : prev
+      );
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+      toast("Failed to update favorite", { variant: "error" });
+    }
+  }, [toast, setNotes]);
+
+  const handleUnlinkRelatedNote = useCallback(async (relatedId: string) => {
+    if (!selectedNote) return;
+    try {
+      const sourceRelations =
+        selectedNote.relations?.map((rel) => rel.id) ||
+        [
+          ...(selectedNote.relationsFrom ?? []).map((rel) => rel.targetNote.id),
+          ...(selectedNote.relationsTo ?? []).map((rel) => rel.sourceNote.id),
+        ].filter(
+          (id, index, array) => array.findIndex((entry) => entry === id) === index
+        );
+
+      const nextSourceIds = sourceRelations.filter((id) => id !== relatedId);
+
+      const response = await fetch(`/api/notes/${selectedNote.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ relatedNoteIds: nextSourceIds }),
+      });
+
+      if (!response.ok) {
+        toast("Failed to unlink note", { variant: "error" });
+        return;
+      }
+
+      toast("Note unlinked");
+      await fetchNotes();
+      void handleSelectNoteFromTree(selectedNote.id);
+    } catch (error) {
+      console.error("Failed to unlink note:", error);
+      toast("Failed to unlink note", { variant: "error" });
+    }
+  }, [selectedNote, fetchNotes, handleSelectNoteFromTree, toast]);
+
+  const handleDeleteNote = useCallback(async () => {
+    if (!selectedNote) return;
+    if (!confirm("Are you sure you want to delete this note?")) return;
+    try {
+      const response = await fetch(`/api/notes/${selectedNote.id}`, { method: "DELETE" });
+      if (response.ok) {
+        setSelectedNote(null);
+        setIsEditing(false);
+        await fetchNotes();
+        await fetchFolderTree();
+      }
+    } catch (error) {
+      console.error("Failed to delete note:", error);
+    }
+  }, [selectedNote, fetchNotes, fetchFolderTree]);
+
+  // Undo Logic
+  const formatUndoLabel = useCallback((action: UndoAction) => {
+    if (action.type === "moveNote") return "Moved note";
+    if (action.type === "moveFolder") return "Moved folder";
+    if (action.type === "renameFolder") return `Renamed folder to "${action.toName}"`;
+    return `Renamed note to "${action.toTitle}"`;
+  }, []);
+
+  const applyUndoAction = useCallback(async (action: UndoAction) => {
+    if (action.type === "moveNote") {
+      await fetch(`/api/notes/${action.noteId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          categoryIds: action.fromFolderId ? [action.fromFolderId] : [],
+        }),
+      });
+      return;
+    }
+    if (action.type === "moveFolder") {
+      await fetch(`/api/notes/categories/${action.folderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ parentId: action.fromParentId ?? null }),
+      });
+      return;
+    }
+    if (action.type === "renameFolder") {
+      await fetch(`/api/notes/categories/${action.folderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: action.fromName }),
+      });
+      return;
+    }
+    await fetch(`/api/notes/${action.noteId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: action.fromTitle }),
+    });
+  }, []);
+
+  const handleUndoFolderTree = useCallback(async (count = 1) => {
+    const actionsToUndo = undoStack.slice(0, count);
+    if (actionsToUndo.length === 0) return;
+    setUndoStack((prev) => prev.slice(count));
+    try {
+      for (const action of actionsToUndo) {
+        await applyUndoAction(action);
+      }
+      await fetchFolderTree();
+      await fetchNotes();
+    } catch (error) {
+      console.error("Failed to undo folder tree action:", error);
+      toast("Failed to undo", { variant: "error" });
+    }
+  }, [undoStack, applyUndoAction, fetchFolderTree, fetchNotes, toast]);
+
+  const handleUndoAtIndex = useCallback((index: number) => {
+    const count = Math.max(1, index + 1);
+    void handleUndoFolderTree(count);
+  }, [handleUndoFolderTree]);
+
+  const undoHistory = useMemo(
+    () => undoStack.map((action) => ({ label: formatUndoLabel(action) })),
+    [undoStack, formatUndoLabel]
+  );
+
+  return (
+    <div className="w-full">
+      <div
+        className={`grid h-[calc(100vh-120px)] w-full grid-cols-1 gap-6 ${
+          isFolderTreeCollapsed
+            ? ""
+            : isMenuCollapsed
+              ? "lg:grid-cols-[360px_minmax(0,1fr)]"
+              : "lg:grid-cols-[420px_minmax(0,1fr)]"
+        }`}
+      >
+        {/* Sidebar */}
+        {!isFolderTreeCollapsed && (
+          <div className="hidden overflow-hidden rounded-lg border border-gray-800 bg-gray-950 lg:block">
+            <FolderTree
+              folders={folderTree}
+              selectedFolderId={settings.selectedFolderId}
+              selectedNotebookId={settings.selectedNotebookId}
+              onSelectFolder={(id) => {
+                setSelectedFolderId(id);
+                setSelectedNote(null);
+                setIsEditing(false);
+              }}
+              onCreateFolder={(parentId) => void operations.handleCreateFolder(parentId)}
+              onCreateNote={(folderId) => {
+                setSelectedFolderId(folderId);
+                setIsCreating(true);
+                setSelectedNote(null);
+              }}
+              onDeleteFolder={(id) => void operations.handleDeleteFolder(id)}
+              onRenameFolder={(id, name) => void operations.handleRenameFolder(id, name)}
+              onSelectNote={(id) => void handleSelectNoteFromTree(id)}
+              onDuplicateNote={(id) => void operations.handleDuplicateNote(id)}
+              onDeleteNote={(id) => void operations.handleDeleteNoteFromTree(id)}
+              onRenameNote={(id, title) => void operations.handleRenameNote(id, title)}
+              onRelateNotes={(id1, id2) => void operations.handleRelateNotes(id1, id2)}
+              selectedNoteId={selectedNote?.id}
+              onDropNote={(id, folderId) => void operations.handleMoveNoteToFolder(id, folderId)}
+              onDropFolder={(id, parentId) => void operations.handleMoveFolderToFolder(id, parentId)}
+              draggedNoteId={draggedNoteId}
+              setDraggedNoteId={setDraggedNoteId}
+              onToggleCollapse={() => setIsFolderTreeCollapsed(true)}
+              isFavoritesActive={filters.filterFavorite === true}
+              onToggleFavorites={() => filters.handleToggleFavoritesFilter(setSelectedFolderId, setSelectedNote, setIsEditing)}
+              canUndo={undoStack.length > 0}
+              onUndo={() => void handleUndoFolderTree(1)}
+              undoHistory={undoHistory}
+              onUndoAtIndex={handleUndoAtIndex}
+              onRefreshFolders={() => fetchFolderTree()}
+            />
+          </div>
+        )}
+
+        {/* Main Content */}
+        <div className="flex min-h-0 flex-col overflow-hidden rounded-lg bg-gray-950 p-6 shadow-lg">
+          {selectedNote ? (
+            <NoteDetailView
+              selectedNote={selectedNote}
+              folderTree={folderTree}
+              selectedFolderId={settings.selectedFolderId}
+              isFolderTreeCollapsed={isFolderTreeCollapsed}
+              onExpandFolderTree={() => setIsFolderTreeCollapsed(false)}
+              setSelectedFolderId={setSelectedFolderId}
+              setSelectedNote={setSelectedNote}
+              isEditing={isEditing}
+              setIsEditing={setIsEditing}
+              onToggleFavorite={(note) => void handleToggleFavorite(note)}
+              onDeleteNote={handleDeleteNote}
+              tags={tags}
+              selectedNotebookId={settings.selectedNotebookId}
+              onUpdateSuccess={handleUpdateSuccess}
+              fetchTags={() => void fetchTags()}
+              selectedNoteTheme={themeLogic.selectedNoteTheme}
+              onSelectRelatedNote={(id) => void handleSelectNoteFromTree(id)}
+              onFilterByTag={(tagId) => filters.handleFilterByTag(tagId, setSelectedFolderId, setSelectedNote, setIsEditing)}
+              onUnlinkRelatedNote={(id) => handleUnlinkRelatedNote(id)}
+            />
+          ) : (
+            <NoteListView
+              loading={loading}
+              sortedNotes={sortedNotes}
+              pagedNotes={pagedNotes}
+              page={filters.page}
+              totalPages={totalPages}
+              setPage={filters.setPage}
+              pageSize={filters.pageSize}
+              setPageSize={filters.setPageSize}
+              selectedFolderId={settings.selectedFolderId}
+              folderTree={folderTree}
+              isFolderTreeCollapsed={isFolderTreeCollapsed}
+              onExpandFolderTree={() => setIsFolderTreeCollapsed(false)}
+              onCreateNote={() => {
+                setIsCreating(true);
+                setSelectedNote(null);
+              }}
+              selectedFolderThemeId={themeLogic.selectedFolderThemeId}
+              themes={themes}
+              onThemeChange={(themeId) => void themeLogic.handleThemeChange(themeId)}
+              availableTagsInScope={availableTagsInScope}
+              filterTagIds={filters.filterTagIds}
+              setFilterTagIds={filters.setFilterTagIds}
+              searchQuery={filters.searchQuery}
+              setSearchQuery={filters.setSearchQuery}
+              searchScope={settings.searchScope}
+              updateSettings={updateSettings}
+              sortBy={settings.sortBy}
+              sortOrder={settings.sortOrder}
+              showTimestamps={settings.showTimestamps}
+              showBreadcrumbs={settings.showBreadcrumbs}
+              showRelatedNotes={settings.showRelatedNotes}
+              viewMode={settings.viewMode}
+              gridDensity={settings.gridDensity}
+              highlightTagId={filters.highlightTagId}
+              filterPinned={filters.filterPinned}
+              setFilterPinned={filters.setFilterPinned}
+              filterArchived={filters.filterArchived}
+              setFilterArchived={filters.setFilterArchived}
+              noteLayoutClassName={noteLayoutClassName}
+              getThemeForNote={themeLogic.getThemeForNote}
+              onSelectNote={(note) => {
+                setSelectedNote(note);
+                setIsEditing(false);
+              }}
+              onSelectFolderFromCard={(id) => {
+                setSelectedFolderId(id);
+                setSelectedNote(null);
+                setIsEditing(false);
+              }}
+              onToggleFavorite={(note) => void handleToggleFavorite(note)}
+              onDragStart={setDraggedNoteId}
+              onDragEnd={() => setDraggedNoteId(null)}
+              setSelectedFolderId={setSelectedFolderId}
+              setSelectedNote={setSelectedNote}
+              setIsEditing={setIsEditing}
+            />
+          )}
+        </div>
+
+        {/* Modals */}
+        <CreateNoteModal
+          isOpen={isCreating}
+          onClose={() => setIsCreating(false)}
+          folderTree={folderTree}
+          selectedFolderId={settings.selectedFolderId}
+          tags={tags}
+          selectedNotebookId={settings.selectedNotebookId}
+          onSuccess={handleCreateSuccess}
+          onTagCreated={() => void fetchTags()}
+          folderTheme={themeLogic.selectedFolderTheme}
+          onSelectRelatedNote={(id) => {
+            setIsCreating(false);
+            void handleSelectNoteFromTree(id);
+          }}
+        />
+      </div>
+    </div>
+  );
+}

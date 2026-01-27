@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
-import { chatbotSessionRepository } from "@/lib/services/chatbot-session-repository";
+import { chatbotSessionRepository } from "@/features/chatbot/services/chatbot-session-repository";
 import type { ChatMessage } from "@/types/chatbot";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {
   badRequestError,
   externalServiceError,
   internalError,
-} from "@/lib/errors/app-error";
-import { apiHandler } from "@/lib/api/api-handler";
+} from "@/shared/errors/app-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";
 

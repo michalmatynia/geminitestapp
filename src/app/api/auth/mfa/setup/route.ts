@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { getAuthSecurityProfile, updateAuthSecurityProfile } from "@/lib/services/auth-security-profile";
-import { buildOtpAuthUrl, generateTotpSecret } from "@/lib/services/totp";
-import { encryptAuthSecret } from "@/shared/lib/utils/auth-encryption";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { conflictError, authError } from "@/lib/errors/app-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { auth } from "@/features/auth/auth";
+import { getAuthSecurityProfile, updateAuthSecurityProfile } from "@/features/auth/services/auth-security-profile";
+import { buildOtpAuthUrl, generateTotpSecret } from "@/features/auth/services/totp";
+import { encryptAuthSecret } from "@/features/auth/utils/auth-encryption";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { conflictError, authError } from "@/shared/errors/app-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";
 

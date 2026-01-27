@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { deleteNoteFile } from "@/shared/lib/utils/fileUploader";
-import { noteService } from "@/lib/services/noteService";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { badRequestError, internalError, notFoundError } from "@/lib/errors/app-error";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { deleteNoteFile } from "@/features/files/utils/fileUploader";
+import { noteService } from "@/features/notesapp/services/notes";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError, internalError, notFoundError } from "@/shared/errors/app-error";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 const MAX_SLOT_INDEX = 9;
 

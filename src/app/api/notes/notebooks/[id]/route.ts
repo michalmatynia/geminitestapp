@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { noteService } from "@/lib/services/noteService/index";
+import { noteService } from "@/features/notesapp/services/notes";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { notebookUpdateSchema } from "@/lib/validations/notes";
-import { removeUndefined } from "@/shared/lib/utils";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { notebookUpdateSchema } from "@/features/notesapp/validations/notes";
+import { removeUndefined } from "@/shared/utils";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 /**
  * PATCH /api/notes/notebooks/[id]

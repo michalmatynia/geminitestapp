@@ -40,9 +40,3 @@ export type ProductListPreferences = {
   currencyCode: string | null;
   pageSize: number;
 };
-
-export type ProductAiJobsPanelProps = {
-  title?: string;
-  description?: string;
-  showTabs?: boolean;
-};

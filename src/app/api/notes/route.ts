@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { noteService } from "@/lib/services/noteService/index";
+import { noteService } from "@/features/notesapp/services/notes";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { noteCreateSchema } from "@/lib/validations/notes";
-import type { NoteFilters } from "@/types/notes";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { apiHandler } from "@/lib/api/api-handler";
-import { ErrorSystem } from "@/lib/error-system";
+import { noteCreateSchema } from "@/features/notesapp/validations/notes";
+import type { NoteFilters } from "@/shared/types/notes";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
+import { ErrorSystem } from "@/features/observability/services/error-system";
 
 /**
  * GET /api/notes

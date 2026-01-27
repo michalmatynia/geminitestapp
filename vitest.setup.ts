@@ -2,7 +2,7 @@ import 'dotenv/config';
 import '@testing-library/jest-dom';
 import { vi, beforeAll, afterEach, afterAll } from 'vitest';
 import React from 'react';
-import { server } from './mocks/server';
+import { server } from './src/mocks/server';
 
 // Mock next/image
 vi.mock('next/image', () => ({

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
+import prisma from "@/shared/lib/db/prisma";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { apiHandler } from "@/lib/api/api-handler";
-import { ErrorSystem } from "@/lib/error-system";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
+import { ErrorSystem } from "@/features/observability/services/error-system";
 
 const pageCreateSchema = z.object({
   name: z.string().trim().min(1),

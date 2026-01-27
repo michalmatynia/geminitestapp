@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { useToast } from "@/shared/ui/toast";
-import { CLIENT_LOGGING_KEYS } from "@/lib/constants/client-logging";
-import { parseJsonSetting, serializeSetting } from "@/lib/constants/auth-management";
+import { CLIENT_LOGGING_KEYS } from "@/features/observability/constants/client-logging";
+import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { Textarea } from "@/shared/ui/textarea";
 import { Label } from "@/shared/ui/label";
 

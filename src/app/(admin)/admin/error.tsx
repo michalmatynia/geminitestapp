@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/button";
-import { logClientError } from "@/lib/client/error-logger";
+import { logClientError } from "@/features/observability/utils/client-error-logger";
 
 export default function AdminError({
   error,

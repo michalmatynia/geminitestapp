@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { ObjectId } from "mongodb";
+import { ObjectId, Sort } from "mongodb";
 
-import { apiHandler } from "@/lib/api/api-handler";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { getMongoDb } from "@/lib/db/mongo-client";
-import { internalError } from "@/lib/errors/app-error";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { internalError } from "@/shared/errors/app-error";
 
 const querySchema = z.object({
   provider: z.enum(["auto", "mongodb"]).optional(),
   collection: z.string().trim().min(1),
   query: z.unknown().optional(),
-  projection: z.record(z.string(), z.any()).optional(),
-  sort: z.record(z.string(), z.any()).optional(),
+  projection: z.record(z.string(), z.unknown()).optional(),
+  sort: z.record(z.string(), z.union([z.number(), z.literal("asc"), z.literal("desc")])).optional(),
   limit: z.number().int().min(1).max(200).optional(),
   single: z.boolean().optional(),
   idType: z.enum(["string", "objectId"]).optional(),
@@ -114,7 +114,7 @@ async function POST_handler(req: Request) {
 
     const cursor = mongo.collection(collection).find(filter, projection ? { projection } : undefined);
     if (sort) {
-      cursor.sort(sort as any);
+      cursor.sort(sort as Sort);
     }
     const items = await cursor.limit(limit).toArray();
     return NextResponse.json({ items, count: items.length });

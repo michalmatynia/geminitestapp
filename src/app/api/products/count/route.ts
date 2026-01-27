@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { productService } from "@/features/products/services/productService";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 /**
  * GET /api/products/count

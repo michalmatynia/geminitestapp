@@ -1,5 +1,61 @@
 1. App structure → run a code organisation and segmentation strategy
 
+* I would like to continue restructuring my website. I would like to run deep analysis of my Notes APP and  move my Notes App
+  section into src/features/notesapp/* (where only domain feature: UI + state + hooks + types + api will be locates), but also scan for shared elements in my note app  and move them to src/shared/* (only related to truly cross-feature: UI primitives, utils, hooks, types) and leave the src/app/* routing, providers, bootstrapping. Also, inside features/notesapp I want the following segmentaion.  components/ (only feature-specific UI), pages/ (route-level containers), hooks/ (feature hooks), validations/ (for feature related zod validators), api/  (requests, query keys), types/ (local types + re-exports), utils/ (feature helpers). All types from notesapp that are shared with other features or can be shared, move over to src/shared/types/
+
+
+## Error Type
+Console Error
+
+## Error Message
+./middleware.ts:2:1
+Module not found: Can't resolve '@/lib/auth.config'
+  1 | import NextAuth from "next-auth";
+> 2 | import { authConfig } from "@/lib/auth.config";
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  3 |
+  4 | export default NextAuth(authConfig).auth;
+  5 |
+
+Import map: aliased to relative './src/lib/auth.config' inside of [project]/
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+    at <unknown> (Error: ./middleware.ts:2:1)
+    at createConsoleError (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_f3530cac._.js:2199:71)
+    at handleConsoleError (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_f3530cac._.js:2980:54)
+    at console.error (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_f3530cac._.js:3124:57)
+    at handleErrors (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_client_17643121._.js:11479:21)
+    at processMessage (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_client_17643121._.js:11542:21)
+    at WebSocket.handleMessage (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_client_17643121._.js:10912:52)
+
+Next.js version: 16.1.2 (Turbopack)
+
+do restructuring src/shared/lib/agent and create a new folder src/features/agent-runtime and restructure everything pertaining to agent runtime.
+
+* do the same restructuring for my products importer and exporter. products importer and exporter should be treated as a generic data import export module and moved to a separate feature
+
+* do the same restructuring for my Folder tree feature from notesapp that enables the user to manage notes and folders as if they were regular files to a separate feature to be used across the app
+
+* run through src/lib folder check the libraries and their functions and assign them to their localised lib folders in features or shared/lib
+
+* run through src/shared/lib/utils and assign utilites either to src/shared/utils or their respective localised folders in features.
+
+src/app/* (only routing, providers, bootstrapping)
+ and app/(routes)/<NAMEOFSECTION>/* should contain only page.tsx, layout.tsx, loading.tsx, error.tsx and wiring, move other files to their respective localised features or shared folder  as everything else (components, hooks, queries, types) lives in features/<NAMEOFSECTION>/*
+
+
+
+unify components (like the list component, modals) and types
+continue with restructuring and do stricter separation
+
+expose a single point of entry
+
+src/app/api ? ask if it's good to have that here or is it better to redistribute
+
+---done
+
 <!-- <NAMEOFSECTION> - can be products, AI PATHS, etc. -->
 
 Use a feature-first split with hard boundaries:
@@ -85,7 +141,7 @@ app/(routes)/<NAMEOFSECTION>/* contains only page.tsx, layout.tsx, loading.tsx, 
 
 Everything else (components, hooks, queries, types) lives in features/<NAMEOFSECTION>/*
 
-# Reusability audit for Products components
+# Reusability audit for <NAMEOFSECTION> components
 
 When reviewing components, classify them:
 

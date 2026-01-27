@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { ProductListHeader } from "@/components/products/list/ProductListHeader";
+import { ProductListHeader } from "@/features/products/components/list/ProductListHeader";
 
 describe("ProductListHeader Component", () => {
   const mockProps = {

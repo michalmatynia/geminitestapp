@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
-import { useProductFormContext } from "@/lib/context/ProductFormContext";
+import { useProductFormContext } from "@/features/products/context/ProductFormContext";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -15,17 +15,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui/select";
-import { logger } from "@/shared/lib/utils/logger";
-import { cn } from "@/shared/lib/utils";
+import { logger } from "@/shared/utils/logger";
+import { cn } from "@/shared/utils";
 import { ProductFormData } from "@/types";
 import { useToast } from "@/shared/ui/toast";
-import type { ProductAiJob } from "@/features/products/types/product-jobs";
+import type { ProductAiJob } from "@/shared/types/jobs";
 import type {
   AiNode,
   PathConfig,
   PathMeta,
-} from "@/lib/ai-paths";
-import { evaluateGraph } from "@/lib/ai-paths";
+} from "@/features/ai-paths/lib";
+import { evaluateGraph } from "@/features/ai-paths/lib";
 import {
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
@@ -33,7 +33,7 @@ import {
   createDefaultPathConfig,
   normalizeNodes,
   sanitizeEdges,
-} from "@/lib/ai-paths";
+} from "@/features/ai-paths/lib";
 
 export default function ProductFormGeneral() {
   const safeJsonStringify = (value: unknown) => {

@@ -2,12 +2,12 @@
  * @vitest-environment jsdom
  */
 
-import { vi, Mock } from "vitest";
+import { vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import AdminProductsPage from "@/app/(admin)/admin/products/page";
-import { ToastProvider } from "@/components/ui/toast";
+import { ToastProvider } from "@/shared/ui/toast";
 import { server } from "@/mocks/server";
 import { http, HttpResponse } from "msw";
 

@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
+import prisma from "@/shared/lib/db/prisma";
 import { getProductDataProvider } from "@/features/products/services/product-provider";
-import { getMongoDb } from "@/lib/db/mongo-client";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { badRequestError, internalError, notFoundError } from "@/lib/errors/app-error";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { badRequestError, internalError, notFoundError } from "@/shared/errors/app-error";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -211,7 +211,7 @@ async function DELETE_handler(
 
       // Remove language from any catalogs that reference it
       await mongo.collection("catalogs").updateMany(
-        { languageIds: id } as any,
+        { languageIds: id },
         { $pull: { languageIds: id } as any }
       );
 

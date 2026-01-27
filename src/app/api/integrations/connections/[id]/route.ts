@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getIntegrationRepository } from "@/lib/services/integration-repository";
-import { encryptSecret } from "@/shared/lib/utils/encryption";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { getIntegrationRepository } from "@/features/integrations/services/integration-repository";
+import { encryptSecret } from "@/features/integrations/utils/encryption";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { badRequestError } from "@/lib/errors/app-error";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { badRequestError } from "@/shared/errors/app-error";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 const connectionSchema = z.object({
   name: z.string().trim().min(1),

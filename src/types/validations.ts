@@ -11,7 +11,7 @@ import {
   notebookUpdateSchema,
   themeCreateSchema,
   themeUpdateSchema
-} from '@/lib/validations/notes';
+} from '@/features/notesapp/validations/notes';
 
 export type ProductCreateData = z.infer<typeof productCreateSchema>;
 export type ProductUpdateData = z.infer<typeof productUpdateSchema>;

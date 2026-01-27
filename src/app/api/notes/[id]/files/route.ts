@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { uploadNoteFile } from "@/shared/lib/utils/fileUploader";
-import { noteService } from "@/lib/services/noteService";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { badRequestError, conflictError, notFoundError } from "@/lib/errors/app-error";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { uploadNoteFile } from "@/features/files/utils/fileUploader";
+import { noteService } from "@/features/notesapp/services/notes";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError, conflictError, notFoundError } from "@/shared/errors/app-error";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_SLOT_INDEX = 9;

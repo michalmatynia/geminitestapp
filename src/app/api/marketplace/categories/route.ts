@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getExternalCategoryRepository } from "@/lib/services/external-category-repository";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { badRequestError } from "@/lib/errors/app-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { getExternalCategoryRepository } from "@/features/integrations/services/external-category-repository";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError } from "@/shared/errors/app-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 /**
  * GET /api/marketplace/categories

@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import type {
   NoteRelationWithSource,
   NoteRelationWithTarget,
-} from "@/types/notes";
+} from "@/shared/types/notes";
 
 test.describe("Notes page", () => {
   test("lists, filters, and creates notes", async ({ page }) => {

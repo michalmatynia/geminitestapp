@@ -1,4 +1,4 @@
-import { ProductAiJobsPage } from "@/features/products/pages/ProductAiJobsPage";
+import { ProductAiJobsPage } from "@/features/jobs/pages/ProductAiJobsPage";
 
 export default function Page() {
   return <ProductAiJobsPage />;

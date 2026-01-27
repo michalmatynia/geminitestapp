@@ -2,10 +2,10 @@ import path from "path";
 import fs from "fs/promises";
 import { NextRequest, NextResponse } from "next/server";
 
-import { backupsDir, ensureBackupsDir, assertValidBackupName } from "../_utils";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { badRequestError } from "@/lib/errors/app-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { backupsDir, ensureBackupsDir, assertValidBackupName } from "@/features/database/utils/postgres";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError } from "@/shared/errors/app-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 async function POST_handler(req: NextRequest) {
   try {

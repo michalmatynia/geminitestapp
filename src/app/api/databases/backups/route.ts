@@ -1,18 +1,18 @@
 import path from "path";
 import { promises as fs } from "fs";
 import { NextResponse } from "next/server";
-import { DatabaseInfo } from "@/components/database-columns";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
+import type { DatabaseInfo } from "@/features/database/types";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 
 import {
   backupsDir as pgBackupsDir,
   ensureBackupsDir as ensurePgBackupsDir,
-} from "../_utils";
+} from "@/features/database/utils/postgres";
 import {
   backupsDir as mongoBackupsDir,
   ensureBackupsDir as ensureMongoBackupsDir,
-} from "../_utils-mongo";
-import { apiHandler } from "@/lib/api/api-handler";
+} from "@/features/database/utils/mongo";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 async function getBackups(type: "postgresql" | "mongodb"): Promise<DatabaseInfo[]> {
   const backupsDir = type === "mongodb" ? mongoBackupsDir : pgBackupsDir;

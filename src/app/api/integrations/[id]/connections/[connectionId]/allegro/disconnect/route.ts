@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { getIntegrationRepository } from "@/lib/services/integration-repository";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { badRequestError, notFoundError } from "@/lib/errors/app-error";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { getIntegrationRepository } from "@/features/integrations/services/integration-repository";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError, notFoundError } from "@/shared/errors/app-error";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 async function POST_handler(
   req: Request,

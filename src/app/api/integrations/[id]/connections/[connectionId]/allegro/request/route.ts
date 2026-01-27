@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getIntegrationRepository } from "@/lib/services/integration-repository";
-import { decryptSecret, encryptSecret } from "@/shared/lib/utils/encryption";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { getIntegrationRepository } from "@/features/integrations/services/integration-repository";
+import { decryptSecret, encryptSecret } from "@/features/integrations/utils/encryption";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { badRequestError, notFoundError } from "@/lib/errors/app-error";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { badRequestError, notFoundError } from "@/shared/errors/app-error";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 const requestSchema = z.object({
   method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).default("GET"),

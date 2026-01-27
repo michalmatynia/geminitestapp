@@ -41,7 +41,11 @@
       "Bash(echo:*)",
       "Bash(done)",
       "Bash(npx next build)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npx eslint src/lib/ai-paths/core/runtime/handlers/integration.ts src/lib/ai-paths/core/constants/index.ts)",
+      "Bash(npx eslint src/app/\\\\\\(admin\\\\\\)/admin/ai-paths/components/node-config-dialog.tsx)",
+      "Bash(npx eslint src/app/api/databases/browse/route.ts)"
     ]
   }
 }

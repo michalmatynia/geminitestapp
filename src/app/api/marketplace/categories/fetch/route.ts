@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { fetchBaseCategories } from "@/lib/services/imports/base-client";
-import { getExternalCategoryRepository } from "@/lib/services/external-category-repository";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { badRequestError, notFoundError } from "@/lib/errors/app-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import prisma from "@/shared/lib/db/prisma";
+import { fetchBaseCategories } from "@/features/integrations/services/imports/base-client";
+import { getExternalCategoryRepository } from "@/features/integrations/services/external-category-repository";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError, notFoundError } from "@/shared/errors/app-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 type FetchCategoriesRequest = {
   connectionId: string;

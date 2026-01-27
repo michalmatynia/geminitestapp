@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCatalogRepository } from "@/lib/services/catalog-repository";
-import { removeUndefined } from "@/shared/lib/utils";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { getCatalogRepository } from "@/features/products/services/catalog-repository";
+import { removeUndefined } from "@/shared/utils";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { badRequestError, notFoundError } from "@/lib/errors/app-error";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { badRequestError, notFoundError } from "@/shared/errors/app-error";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 const catalogUpdateSchema = z.object({
   name: z.string().trim().min(1).optional(),

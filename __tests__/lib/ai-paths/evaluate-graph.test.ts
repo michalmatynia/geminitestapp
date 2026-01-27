@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { evaluateGraph } from "@/lib/ai-paths/core/runtime/engine";
-import type { AiNode, Edge } from "@/types/ai-paths";
+import type { AiNode, Edge } from "@/shared/types/ai-paths";
 
 describe("evaluateGraph", () => {
   const mockFetchEntityByType = vi.fn();
@@ -186,7 +186,6 @@ describe("evaluateGraph", () => {
         },
       },
     ];
-    const edges: Edge[] = [];
     const seedOutputs = {
       "trigger-node": {
         entityJson: {
@@ -358,7 +357,7 @@ describe("evaluateGraph", () => {
     // Iteration 2: inputs[n1].value=1, outputs[n1].value=2
     // Iteration 3: inputs[n1].value=2, outputs[n1].value=3
     // It should stop at 3 or 4 depending on loop logic.
-    expect(result.outputs["n1"].value).toBeGreaterThanOrEqual(2);
-    expect(result.outputs["n1"].value).toBeLessThanOrEqual(4);
+    expect(result.outputs["n1"]!.value).toBeGreaterThanOrEqual(2);
+    expect(result.outputs["n1"]!.value).toBeLessThanOrEqual(4);
   });
 });

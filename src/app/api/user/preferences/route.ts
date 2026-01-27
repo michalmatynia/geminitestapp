@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserPreferences, updateUserPreferences, type UserPreferencesData } from "@/lib/services/user-preferences-repository";
+import { getUserPreferences, updateUserPreferences, type UserPreferencesData } from "@/shared/lib/services/user-preferences-repository";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { apiHandler } from "@/lib/api/api-handler";
-import { auth } from "@/lib/auth";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
+import { auth } from "@/features/auth/auth";
 
 export const runtime = "nodejs";
 
@@ -99,8 +99,8 @@ async function PATCH_handler(req: NextRequest) {
       ...(parsed.aiPathsActivePathId !== undefined && { aiPathsActivePathId: parsed.aiPathsActivePathId }),
       ...(parsed.aiPathsExpandedGroups !== undefined && { aiPathsExpandedGroups: parsed.aiPathsExpandedGroups }),
       ...(parsed.aiPathsPaletteCollapsed !== undefined && { aiPathsPaletteCollapsed: parsed.aiPathsPaletteCollapsed }),
-      ...(parsed.aiPathsPathIndex !== undefined && { aiPathsPathIndex: parsed.aiPathsPathIndex as any }),
-      ...(parsed.aiPathsPathConfigs !== undefined && { aiPathsPathConfigs: parsed.aiPathsPathConfigs as any }),
+      ...(parsed.aiPathsPathIndex !== undefined && { aiPathsPathIndex: parsed.aiPathsPathIndex as Prisma.JsonValue }),
+      ...(parsed.aiPathsPathConfigs !== undefined && { aiPathsPathConfigs: parsed.aiPathsPathConfigs as Prisma.JsonValue }),
     };
 
     if (!isDatabaseConfigured) {

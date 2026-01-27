@@ -1,19 +1,18 @@
 
 Database node
 
-Query page
+Direct queries to database
 
-Dry run button - when I enable it goes green
-[] Query window with query validator, also auto-formatter
-remove : Adjust parser mappings, model selection, or database operations for this node.
-Placeholder list for all the mapped values
+I need to have logical operators in Database Query as well, for example, find all products created between and between
 
-Operation choixce
-collection choice, Database Provider
+I need to take care of the connections fucked by gemini
 
-Sort preset
-Projection preset
-Which don't have their separate editor window, but when I select a preset, it's value append whatever is inte Query field to make sense as one query
+When I select a preset, I want it to Automatically to show the query textfield, but not instantly overwrite my custom preset, only when I start writing over the custom preset, it overwrites what is in the custom preset and the preset selector changes again to custom
+
+Mapping object (from Sample for example) should detect the type of object (if it's a string etc. actually it should come from an established DTO)
+
+
+I need  AIpaths viewing settings , a button to show only possible inputs and output, not all of them
 ---
 
 continue working on AI Paths a modular node system for data paths and signal paths for a multiapp platform, extend it with new functionalities better validations, better information clusters, more developed nodes, be inventive and creative, there's no limit to how the data can travel or be changed along these paths. The only limitations is that it has to work within the AI Paths Node Modular system.

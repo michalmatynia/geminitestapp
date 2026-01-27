@@ -1,8 +1,8 @@
 import { vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { ProductTableFooter } from "@/components/products/list/ProductTableFooter";
+import { ProductTableFooter } from "@/features/products/components/list/ProductTableFooter";
 import { Table } from "@tanstack/react-table";
-import { ToastProvider } from "@/components/ui/toast";
+import { ToastProvider } from "@/shared/ui/toast";
 
 describe("ProductTableFooter Component", () => {
   const mockTable = {

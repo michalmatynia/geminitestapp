@@ -1,5 +1,5 @@
-import prisma from "@/lib/prisma";
-import { getMongoDb } from "@/lib/db/mongo-client";
+import prisma from "@/shared/lib/db/prisma";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import type { WithId } from "mongodb";
 import type { CatalogRecord, ImageFileRecord } from "@/types";
 import type { ProductMigrationDirection as MigrationDirection, ProductMigrationBatchResult as MigrationBatchResult } from "@/features/products/types";

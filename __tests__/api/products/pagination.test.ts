@@ -1,6 +1,6 @@
-import { GET as GET_COUNT } from "../../../app/api/products/count/route";
-import { GET as GET_LIST } from "../../../app/api/products/route";
-import { createMockProduct } from "@/lib/utils/productUtils";
+import { GET as GET_COUNT } from "@/app/api/products/count/route";
+import { GET as GET_LIST } from "@/app/api/products/route";
+import { createMockProduct } from "@/features/products/utils/productUtils";
 import prisma from "@/lib/prisma";
 import { Product } from "@prisma/client";
 import { NextRequest } from "next/server";

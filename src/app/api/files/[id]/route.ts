@@ -1,11 +1,11 @@
 import fs from "fs/promises";
 import { NextRequest } from "next/server";
 
-import { getDiskPathFromPublicPath } from "@/shared/lib/utils/fileUploader";
-import { getImageFileRepository } from "@/lib/services/image-file-repository";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { notFoundError } from "@/lib/errors/app-error";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { getDiskPathFromPublicPath } from "@/features/files/utils/fileUploader";
+import { getImageFileRepository } from "@/features/files/services/image-file-repository";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { notFoundError } from "@/shared/errors/app-error";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 async function DELETE_handler(
   req: NextRequest,

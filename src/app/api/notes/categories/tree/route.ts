@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { noteService } from "@/lib/services/noteService/index";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { noteService } from "@/features/notesapp/services/notes";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 /**
  * GET /api/notes/categories/tree

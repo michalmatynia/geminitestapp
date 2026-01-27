@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { hash } from "bcryptjs";
-import prisma from "@/lib/prisma";
-import { getMongoDb } from "@/lib/db/mongo-client";
-import { getAuthDataProvider } from "@/lib/services/auth-provider";
-import { normalizeAuthEmail } from "@/lib/services/auth-user-repository";
-import { getAuthSecurityPolicy, validatePasswordStrength } from "@/lib/services/auth-security";
-import { getAuthUserPageSettings } from "@/lib/services/auth-settings";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
+import prisma from "@/shared/lib/db/prisma";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { getAuthDataProvider } from "@/features/auth/services/auth-provider";
+import { normalizeAuthEmail } from "@/features/auth/services/auth-user-repository";
+import { getAuthSecurityPolicy, validatePasswordStrength } from "@/features/auth/services/auth-security";
+import { getAuthUserPageSettings } from "@/features/auth/services/auth-settings";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { conflictError, internalError, validationError, forbiddenError } from "@/lib/errors/app-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { conflictError, internalError, validationError, forbiddenError } from "@/shared/errors/app-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";
 

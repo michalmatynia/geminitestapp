@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMongoDb } from "@/lib/db/mongo-client";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { configurationError, notFoundError } from "@/lib/errors/app-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { configurationError, notFoundError } from "@/shared/errors/app-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 async function POST_handler(req: NextRequest) {
   try {

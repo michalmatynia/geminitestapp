@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { chatbotSessionRepository } from "@/lib/services/chatbot-session-repository";
-import type { ChatSession } from "@/types/chatbot";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { chatbotSessionRepository } from "@/features/chatbot/services/chatbot-session-repository";
+import type { ChatSession, UpdateSessionInput } from "@/types/chatbot";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { notFoundError } from "@/lib/errors/app-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { notFoundError } from "@/shared/errors/app-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -119,7 +119,7 @@ async function PATCH_handler(req: Request) {
       });
     }
 
-    const updateData: any = {};
+    const updateData: UpdateSessionInput = {};
     if (title?.trim()) {
       updateData.title = title.trim();
     }

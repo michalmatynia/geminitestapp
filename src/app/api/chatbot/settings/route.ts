@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
+import prisma from "@/shared/lib/db/prisma";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { badRequestError, internalError } from "@/lib/errors/app-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { badRequestError, internalError } from "@/shared/errors/app-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 const DEFAULT_SETTINGS_KEY = "default";

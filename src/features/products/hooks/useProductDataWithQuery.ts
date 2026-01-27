@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { useProductsWithCount } from "@/lib/hooks/useProductsQuery";
+import { useProductsWithCount } from "@/features/products/hooks/useProductsQuery";
 
 interface UseProductDataWithQueryProps {
   initialCatalogFilter?: string;

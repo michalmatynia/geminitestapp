@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { chatbotSessionRepository } from "@/lib/services/chatbot-session-repository";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { notFoundError } from "@/lib/errors/app-error";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { chatbotSessionRepository } from "@/features/chatbot/services/chatbot-session-repository";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { notFoundError } from "@/shared/errors/app-error";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 

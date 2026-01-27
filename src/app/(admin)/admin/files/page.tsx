@@ -1,11 +1,5 @@
-"use client";
+import { AdminFilesPage } from "@/features/files/pages/AdminFilesPage";
 
-import FileManager from "@/components/files/FileManager";
-
-export default function FilesPage() {
-  return (
-    <div>
-      <FileManager mode="view" />
-    </div>
-  );
+export default function Page() {
+  return <AdminFilesPage />;
 }

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCategoryMappingRepository } from "@/lib/services/category-mapping-repository";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { badRequestError } from "@/lib/errors/app-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { getCategoryMappingRepository } from "@/features/integrations/services/category-mapping-repository";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError } from "@/shared/errors/app-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 type CreateMappingRequest = {
   connectionId: string;

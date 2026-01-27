@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getImageFileRepository } from "@/lib/services/image-file-repository";
+import { getImageFileRepository } from "@/features/files/services/image-file-repository";
 import { getProductRepository } from "@/features/products/services/product-repository";
 import type { ProductWithImages } from "@/types";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { apiHandler } from "@/lib/api/api-handler";
-import { ErrorSystem } from "@/lib/error-system";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
+import { ErrorSystem } from "@/features/observability/services/error-system";
 
 async function GET_handler(req: Request) {
   try {

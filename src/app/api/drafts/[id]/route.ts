@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getDraft, updateDraft, deleteDraft } from "@/lib/services/draft-repository";
+import { getDraft, updateDraft, deleteDraft } from "@/features/admin/drafter/services/draft-repository";
 import type { UpdateProductDraftInput } from "@/types/drafts";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { notFoundError } from "@/lib/errors/app-error";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { notFoundError } from "@/shared/errors/app-error";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 const updateDraftSchema = z.object({
   name: z.string().min(1).optional(),

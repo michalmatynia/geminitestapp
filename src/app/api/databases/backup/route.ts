@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createMongoBackup, createPostgresBackup } from "@/lib/services/database-backup";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { createMongoBackup, createPostgresBackup } from "@/features/database/services/database-backup";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";
 

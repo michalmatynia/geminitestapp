@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getIntegrationsWithConnections } from "@/features/products/services/product-listing-repository";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { getIntegrationsWithConnections } from "@/features/integrations/services/product-listing-repository";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 /**
  * GET /api/integrations/with-connections

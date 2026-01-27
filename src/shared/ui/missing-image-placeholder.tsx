@@ -1,4 +1,4 @@
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/shared/utils";
 
 interface MissingImagePlaceholderProps {
   className?: string;

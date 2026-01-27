@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
-import { startChatbotJobQueue } from "@/lib/chatbot/jobs/queue";
+import prisma from "@/shared/lib/db/prisma";
+import { startChatbotJobQueue } from "@/features/jobs/workers/chatbotJobQueue";
 import { ChatbotJobStatus } from "@prisma/client";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { badRequestError, internalError, notFoundError } from "@/lib/errors/app-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError, internalError, notFoundError } from "@/shared/errors/app-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 

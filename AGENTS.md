@@ -10,41 +10,35 @@ Keep this file accurate and lean. Other agent docs should defer to it.
 - **Language**: TypeScript 5.9 (strict true)
 - **DB**: Prisma 7.2.0 (Postgres) with optional MongoDB provider
 - **Auth**: NextAuth/Auth.js 5.0.0-beta.30
-- **UI**: Tailwind CSS 4.1 + ShadCN/ui (copy-pasted in `components/ui/`)
+- **UI**: Tailwind CSS 4.1 + ShadCN/ui (copy-pasted in `src/shared/ui/`)
 - **Data**: TanStack Query + TanStack Table
 - **AI**: OpenAI SDK (chat completions) with optional Ollama local models
 - **Runtime**: Custom server (`server.cjs`) for dev/prod start
 
 ## Multi-App Structure (Current)
 
-- **Admin app**: `app/(admin)/admin/*` (products, drafts, notes, settings, integrations)
-- **Public app**: `app/(frontend)/*` (product listings, detail pages)
-- **Shared API**: `app/api/*` (REST-style routes for admin + frontend)
+- **Admin app**: `src/app/(admin)/admin/*` (products, drafts, notes, settings, integrations)
+- **Public app**: `src/app/(frontend)/*` (product listings, detail pages)
+- **Shared API**: `src/app/api/*` (REST-style routes for admin + frontend)
 
 ## Core Directories (Actual)
 
 ```
-app/
-  (admin)/admin/        # Admin UI
-  (frontend)/           # Public UI
-  api/                  # Server routes (Next.js route handlers)
+src/
+  app/
+    (admin)/admin/      # Admin UI
+    (frontend)/         # Public UI
+    api/                # Server routes (Next.js route handlers)
 
-lib/
-  agent/                # Internal agent runtime (planning/execution/memory/tools)
-  chatbot/              # AI job orchestration
-  context/              # React context providers
-  db/                   # Mongo client + helpers
-  hooks/                # Custom React hooks
-  services/             # Domain services + repositories
-  utils/                # Shared utilities
-  validations/          # Zod schemas
-  prisma.ts             # Prisma client bootstrap
+  features/             # Domain feature modules (UI + state + hooks + api)
+    admin/              # Admin shell, navigation, admin-only pages
+    ai-paths/           # AI path runtime + UI
+    products/           # Product domain UI + services
+  shared/               # Cross-feature UI primitives, components, utils, hooks, types
+    lib/                # Shared runtime helpers (api, db, agent, query-client, transient-recovery)
+    ui/                 # ShadCN/ui components
 
-components/
-  ui/                   # ShadCN/ui primitives
-  ...                   # Feature components
-
-types/                  # Shared TS types (source of truth)
+  types/                # Shared TS types (source of truth)
 prisma/                 # Prisma schema + migrations
 public/uploads/         # File storage (images, notes)
 ```
@@ -56,38 +50,69 @@ The platform can run on **Prisma (Postgres)** or **MongoDB**, selected by:
 - `PRODUCT_DB_PROVIDER` env var
 - Fallback to Prisma when `DATABASE_URL` exists, else Mongo if `MONGODB_URI` exists
 
-See: `lib/services/product-provider.ts` and repository implementations under
-`lib/services/*-repository/` (e.g. `mongo-*` and `prisma-*`).
+See: `src/features/products/services/product-provider.ts` and repository implementations under
+`src/features/products/services/*-repository/` (e.g. `mongo-*` and `prisma-*`).
 
 ## AI & Agent Runtime
 
-- **AI services** live in `lib/services/aiDescriptionService.ts`,
-  `lib/services/aiTranslationService.ts`, and `lib/services/productAiQueue.ts`.
-- **Agent runtime** lives in `lib/agent/` with planning, execution, memory,
+- **AI services** live in `src/features/products/services/aiDescriptionService.ts` and
+  `src/features/products/services/aiTranslationService.ts`. Product AI job processing lives in
+  `src/features/jobs/workers/productAiQueue.ts` (orchestrated by
+  `src/features/jobs/services/productAiService.ts`).
+- **Job workers** for chatbot/agent queues live in `src/features/jobs/workers/`
+  (e.g. `chatbotJobQueue.ts`, `agentQueue.ts`).
+- **Agent runtime** lives in `src/shared/lib/agent/` with planning, execution, memory,
   and tool orchestration. It uses `OLLAMA_BASE_URL` when targeting local models.
-- **Chatbot API** is implemented in `app/api/chatbot/route.ts`.
+- **Chatbot API** is implemented in `src/app/api/chatbot/route.ts`.
+- **Chatbot feature UI + state** live in `src/features/chatbot/`.
+- **Agent creator UI + settings** live in `src/features/agentcreator/`.
+- **Agent run monitoring API** routes are under `src/app/api/agentcreator/agent/*`
+  with handlers in `src/features/agentcreator/api/agent/*`.
 - **AI models** are configured via settings and env; OpenAI or Ollama is picked
   dynamically by model name.
+
+## Notes & Folder Tree
+
+- Folder tree UI + helpers live in `src/features/foldertree/` and are reused by notes.
 
 ## Integrations
 
 - Base.com/Baselinker import/export is first-class:
-  - `lib/services/imports/` and `lib/services/exports/`
-  - `app/api/products/imports/base/*`
-  - `app/api/products/[id]/export-to-base/route.ts`
+  - `src/features/integrations/services/imports/` and `src/features/integrations/services/exports/`
+  - `src/app/api/integrations/imports/base/*`
+  - `src/app/api/integrations/products/[id]/export-to-base/route.ts`
+
+## Playwright Personas
+
+- Shared Playwright persona settings live in `src/features/playwright/`.
+- Personas are stored via `/api/settings` under the `playwright_personas` key.
+
+## Data Import/Export
+
+- Product import/export UI and shared helpers live in `src/features/data-import-export/`.
+- CSV product import uses `/admin/import` with the handler in `src/features/data-import-export/api/import/route.ts`.
 
 ## File Storage
 
 - Files are stored under `public/uploads/*`.
 - Metadata lives in `ImageFile` records (Prisma or Mongo).
-- See `lib/utils/fileUploader.ts` and `app/api/files/*`.
+- See `src/features/files/utils/fileUploader.ts` and `src/app/api/files/*`.
+
+## Error Handling & Logging
+
+- **Error helpers** live in `src/shared/errors/*`.
+- **System logging** services live in `src/features/observability/services/*`
+  (system logger, log repository, critical notifier, ErrorSystem).
+- **Client error logging** lives in `src/features/observability/utils/client-error-logger.ts`.
+- **System logs UI** lives in `src/features/observability/pages/SystemLogsPage.tsx`
+  with the route wrapper in `src/app/(admin)/admin/system/logs/page.tsx`.
 
 ## Conventions That Actually Match the Code
 
 - **Routes**: thin handlers, Zod-validated inputs, call services/repositories.
-- **Services**: `lib/services/*` functions or modules, not always classes.
-- **Repositories**: live under `lib/services/*-repository` with Prisma/Mongo impls.
-- **Types**: primary definitions live in `types/`.
+- **Services**: `src/features/*/services` or `src/shared/lib/services` modules, not always classes.
+- **Repositories**: live under feature services folders (e.g. `src/features/*/services/*-repository`).
+- **Types**: primary definitions live in `src/types/`.
 - **UI**: ShadCN components are copy-pasted; do not assume external UI packages.
 
 ## Environment Variables (Common)
@@ -131,4 +156,4 @@ If you change architecture, data providers, or AI flows, update this file and
 
 ---
 
-**Last Updated**: January 23, 2026
+**Last Updated**: January 27, 2026

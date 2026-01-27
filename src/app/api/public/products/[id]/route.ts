@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { productService } from "@/features/products/services/productService";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { notFoundError } from "@/lib/errors/app-error";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { notFoundError } from "@/shared/errors/app-error";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 /**
  * GET /api/public/products/[id]

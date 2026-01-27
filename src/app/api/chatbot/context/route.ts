@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { badRequestError, configurationError } from "@/lib/errors/app-error";
-import { apiHandler } from "@/lib/api/api-handler";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError, configurationError } from "@/shared/errors/app-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 const chunkText = (text: string, maxChars: number) => {
   const chunks: string[] = [];

@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { ProductFilters } from "@/components/products/list/ProductFilters";
+import { ProductFilters } from "@/features/products/components/list/ProductFilters";
 
 describe("ProductFilters Component", () => {
   const mockProps = {

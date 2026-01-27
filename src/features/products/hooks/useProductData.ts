@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { getProducts, countProducts } from "@/features/products/api";
 import { ProductWithImages, PriceGroupWithDetails } from "@/types";
-import { logger } from "@/shared/lib/utils/logger";
+import { logger } from "@/shared/utils/logger";
 
 interface UseProductDataProps {
   refreshTrigger: number;

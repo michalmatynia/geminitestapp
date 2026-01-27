@@ -1,0 +1,131 @@
+import type {
+  DatabaseBackupResponse,
+  DatabaseInfo,
+  DatabasePreviewGroup,
+  DatabasePreviewMode,
+  DatabasePreviewPayload,
+  DatabasePreviewRow,
+  DatabasePreviewTable,
+  DatabaseRestoreResponse,
+  DatabaseType,
+} from "../types";
+
+const safeJson = async <T>(res: Response): Promise<T> => {
+  try {
+    return (await res.json()) as T;
+  } catch {
+    return {} as T;
+  }
+};
+
+const normalizeGroups = (
+  groups?: Record<string, string[]> | DatabasePreviewGroup[]
+): DatabasePreviewGroup[] => {
+  if (!groups) return [];
+  if (Array.isArray(groups)) return groups;
+  return Object.entries(groups).map(([type, objects]) => ({
+    type,
+    objects,
+  }));
+};
+
+type PreviewApiResponse = DatabasePreviewPayload & {
+  stats?: {
+    groups?: Record<string, string[]>;
+    tables?: DatabasePreviewTable[];
+  };
+  data?: DatabasePreviewRow[];
+};
+
+export const fetchDatabaseBackups = async (
+  dbType: DatabaseType
+): Promise<DatabaseInfo[]> => {
+  const res = await fetch(`/api/databases/backups?type=${dbType}`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch backups");
+  }
+  return res.json() as Promise<DatabaseInfo[]>;
+};
+
+export const createDatabaseBackup = async (dbType: DatabaseType) => {
+  const res = await fetch(`/api/databases/backup?type=${dbType}`, {
+    method: "POST",
+  });
+  const payload = await safeJson<DatabaseBackupResponse>(res);
+  return { ok: res.ok, payload };
+};
+
+export const restoreDatabaseBackup = async (
+  dbType: DatabaseType,
+  input: { backupName: string; truncateBeforeRestore: boolean }
+) => {
+  const res = await fetch(`/api/databases/restore?type=${dbType}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      backupName: input.backupName,
+      truncateBeforeRestore: input.truncateBeforeRestore,
+    }),
+  });
+  const payload = await safeJson<DatabaseRestoreResponse>(res);
+  return { ok: res.ok, payload };
+};
+
+export const uploadDatabaseBackup = async (
+  dbType: DatabaseType,
+  file: File
+) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("type", dbType);
+  const res = await fetch("/api/databases/upload", {
+    method: "POST",
+    body: formData,
+  });
+  const payload = await safeJson<DatabaseBackupResponse>(res);
+  return { ok: res.ok, payload };
+};
+
+export const deleteDatabaseBackup = async (
+  dbType: DatabaseType,
+  backupName: string
+) => {
+  const res = await fetch("/api/databases/delete", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ backupName, type: dbType }),
+  });
+  const payload = await safeJson<DatabaseBackupResponse>(res);
+  return { ok: res.ok, payload };
+};
+
+export const fetchDatabasePreview = async (input: {
+  backupName?: string;
+  mode?: DatabasePreviewMode;
+  page?: number;
+  pageSize?: number;
+}) => {
+  const res = await fetch("/api/databases/preview", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      backupName: input.backupName,
+      mode: input.mode,
+      page: input.page,
+      pageSize: input.pageSize,
+    }),
+  });
+  const raw = await safeJson<PreviewApiResponse>(res);
+  const groups = normalizeGroups(raw.groups ?? raw.stats?.groups);
+  const tables = raw.tables ?? raw.stats?.tables ?? [];
+  const tableRows = raw.tableRows ?? raw.data ?? [];
+  const payload: DatabasePreviewPayload = {
+    ...raw,
+    groups,
+    tables,
+    tableRows,
+    page: raw.page ?? input.page,
+    pageSize: raw.pageSize ?? input.pageSize,
+  };
+  return { ok: res.ok, payload };
+};

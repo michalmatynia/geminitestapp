@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { SystemLogLevel } from "@/types";
+import type { SystemLogLevel } from "@/shared/types/system-logs";
 
 /**
  * Configuration options for the API handler wrapper.

@@ -8,7 +8,7 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { useToast } from "@/shared/ui/toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
-import { useSettings, useUpdateSetting } from "@/lib/hooks/useSettings";
+import { useSettings, useUpdateSetting } from "@/shared/hooks/useSettings";
 
 export default function AiApiSettingsPage() {
   const { toast } = useToast();

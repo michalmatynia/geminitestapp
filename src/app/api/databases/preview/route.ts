@@ -1,8 +1,8 @@
 import path from "path";
 import { NextResponse } from "next/server";
 import { Client } from "pg";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { badRequestError, internalError } from "@/lib/errors/app-error";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { badRequestError, internalError } from "@/shared/errors/app-error";
 
 import {
   backupsDir,
@@ -10,8 +10,8 @@ import {
   assertValidBackupName,
   getPgRestoreCommand,
   execFileAsync,
-} from "../_utils";
-import { apiHandler } from "@/lib/api/api-handler";
+} from "@/features/database/utils/postgres";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 async function POST_handler(req: Request) {
   let stage = "parse";

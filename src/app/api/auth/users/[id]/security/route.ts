@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { updateAuthSecurityProfile, getAuthSecurityProfile } from "@/lib/services/auth-security-profile";
-import { internalError, authError } from "@/lib/errors/app-error";
-import { auth } from "@/lib/auth";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { updateAuthSecurityProfile, getAuthSecurityProfile } from "@/features/auth/services/auth-security-profile";
+import { internalError, authError } from "@/shared/errors/app-error";
+import { auth } from "@/features/auth/auth";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";
 

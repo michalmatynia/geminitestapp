@@ -1,10 +1,10 @@
-import { GET as GET_LIST, POST } from "../../../app/api/products/route";
-import { PUT, DELETE } from "../../../app/api/products/[id]/route";
-import { DELETE as DELETE_IMAGE } from "../../../app/api/products/[id]/images/[imageFileId]/route";
-import { POST as POST_DUPLICATE } from "../../../app/api/products/[id]/duplicate/route";
-import { GET as GET_PUBLIC } from "../../../app/api/public/products/[id]/route";
+import { GET as GET_LIST, POST } from "@/app/api/products/route";
+import { PUT, DELETE } from "@/app/api/products/[id]/route";
+import { DELETE as DELETE_IMAGE } from "@/app/api/products/[id]/images/[imageFileId]/route";
+import { POST as POST_DUPLICATE } from "@/app/api/products/[id]/duplicate/route";
+import { GET as GET_PUBLIC } from "@/app/api/public/products/[id]/route";
 import { NextRequest } from "next/server";
-import { createMockProduct } from "@/lib/utils/productUtils";
+import { createMockProduct } from "@/features/products/utils/productUtils";
 import prisma from "@/lib/prisma";
 import { Product } from "@prisma/client";
 

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { noteService } from "@/lib/services/noteService";
+import { noteService } from "@/features/notesapp/services/notes";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { categoryUpdateSchema } from "@/lib/validations/notes";
-import { removeUndefined } from "@/shared/lib/utils";
-import type { CategoryUpdateInput } from "@/types/notes";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
-import { apiHandlerWithParams } from "@/lib/api/api-handler";
+import { categoryUpdateSchema } from "@/features/notesapp/validations/notes";
+import { removeUndefined } from "@/shared/utils";
+import type { CategoryUpdateInput } from "@/shared/types/notes";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 /**
  * PATCH /api/notes/categories/[id]

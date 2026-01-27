@@ -1,1 +1,1 @@
-export * from "@/lib/api/parse-json";
+export * from "@/shared/lib/api/parse-json";

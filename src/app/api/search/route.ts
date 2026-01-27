@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { parseJsonBody } from "@/features/products/api/parse-json";
-import { createErrorResponse } from "@/lib/api/handle-api-error";
+import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {
   badRequestError,
   configurationError,
   externalServiceError,
-} from "@/lib/errors/app-error";
-import { apiHandler } from "@/lib/api/api-handler";
+} from "@/shared/errors/app-error";
+import { apiHandler } from "@/shared/lib/api/api-handler";
 
 type BraveSearchResult = {
   title?: string;

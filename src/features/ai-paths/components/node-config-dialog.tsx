@@ -25,7 +25,6 @@ import type {
   CompareConfig,
   GateConfig,
   DatabaseConfig,
-  DatabaseOperation,
   DbQueryConfig,
   DbQueryPreset,
   DbNodePreset,
@@ -34,47 +33,26 @@ import type {
   MathConfig,
   ModelConfig,
   NodeConfig,
-  ParserConfig,
   ParserSampleState,
   PollConfig,
   PromptConfig,
   RouterConfig,
   RuntimeState,
   TemplateConfig,
-  UpdaterMapping,
   UpdaterSampleState,
 } from "@/features/ai-paths/lib";
 import {
   DB_COLLECTION_OPTIONS,
-  DEFAULT_CONTEXT_ROLE,
   DEFAULT_MODELS,
-  PARSER_PATH_OPTIONS,
-  PARSER_PRESETS,
   TRIGGER_EVENTS,
-  applyContextPreset,
-  buildFlattenedMappings,
-  buildTopLevelMappings,
-  createPresetId,
   createParserMappings,
   createViewerOutputs,
-  extractJsonPathEntries,
   formatRuntimeValue,
-  getContextPresetSet,
-  inferImageMappingPath,
   parsePathList,
   renderTemplate,
-  safeParseJson,
-  safeStringify,
-  toggleContextTarget,
   toNumber,
 } from "@/features/ai-paths/lib";
 import { extractImageUrls, formatPortLabel, formatPlaceholderLabel } from "../utils/ui-utils";
-import {
-  TEMPLATE_SNIPPETS,
-  SORT_PRESETS,
-  PROJECTION_PRESETS,
-  buildPresetQueryTemplate,
-} from "../config/query-presets";
 import { ParserNodeConfigSection } from "./node-config/ParserNodeConfigSection";
 import { DatabaseNodeConfigSection } from "./node-config/DatabaseNodeConfigSection";
 import { ContextNodeConfigSection } from "./node-config/ContextNodeConfigSection";
@@ -1268,7 +1246,6 @@ export function NodeConfigDialog({
                 nodes={nodes}
                 edges={edges}
                 runtimeState={runtimeState}
-                updateSelectedNode={updateSelectedNode}
                 updateSelectedNodeConfig={updateSelectedNodeConfig}
                 onSendToAi={onSendToAi}
                 sendingToAi={sendingToAi}

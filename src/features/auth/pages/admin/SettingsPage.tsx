@@ -8,8 +8,8 @@ import { Label } from "@/shared/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { useToast } from "@/shared/ui/toast";
 import { useSession } from "next-auth/react";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 import {
   AUTH_SETTINGS_KEYS,
   DEFAULT_AUTH_ROLES,
@@ -261,7 +261,7 @@ export default function AuthSettingsPage() {
         description="Authentication data source is managed globally."
       />
 
-      <div className="rounded-md border border-gray-800 bg-gray-950 p-4">
+      <div className="rounded-md border border-border bg-card p-4">
         <h2 className="text-lg font-semibold text-white">Default role</h2>
         <p className="mt-1 text-xs text-gray-400">
           Users without an explicit role will receive this role. To avoid
@@ -276,7 +276,7 @@ export default function AuthSettingsPage() {
             }}
             disabled={loading}
           >
-            <SelectTrigger className="w-64 bg-gray-900 border-gray-700 text-white">
+            <SelectTrigger className="w-64 bg-gray-900 border text-white">
               <SelectValue placeholder="Select default role" />
             </SelectTrigger>
             <SelectContent>
@@ -293,7 +293,7 @@ export default function AuthSettingsPage() {
         </div>
       </div>
 
-      <div className="rounded-md border border-gray-800 bg-gray-950 p-4 space-y-4">
+      <div className="rounded-md border border-border bg-card p-4 space-y-4">
         <div>
           <h2 className="text-lg font-semibold text-white">Security policy</h2>
           <p className="mt-1 text-xs text-gray-400">
@@ -315,7 +315,7 @@ export default function AuthSettingsPage() {
                 }));
                 setSecurityDirty(true);
               }}
-              className="bg-gray-900 border-gray-700 text-white"
+              className="bg-gray-900 border text-white"
             />
           </div>
           <div className="space-y-2">
@@ -329,7 +329,7 @@ export default function AuthSettingsPage() {
                   }));
                   setSecurityDirty(true);
                 }}
-                className="h-4 w-4 rounded border-gray-700 bg-gray-900"
+                className="h-4 w-4 rounded border bg-gray-900"
               />
               <span className="text-xs text-gray-400">
                 Enforce uppercase, lowercase, number, and symbol.
@@ -356,7 +356,7 @@ export default function AuthSettingsPage() {
                       }));
                       setSecurityDirty(true);
                     }}
-                    className="h-4 w-4 rounded border-gray-700 bg-gray-900"
+                    className="h-4 w-4 rounded border bg-gray-900"
                   />
                   {label}
                 </Label>
@@ -377,7 +377,7 @@ export default function AuthSettingsPage() {
                 }));
                 setSecurityDirty(true);
               }}
-              className="bg-gray-900 border-gray-700 text-white"
+              className="bg-gray-900 border text-white"
             />
           </div>
           <div className="space-y-2">
@@ -394,7 +394,7 @@ export default function AuthSettingsPage() {
                 }));
                 setSecurityDirty(true);
               }}
-              className="bg-gray-900 border-gray-700 text-white"
+              className="bg-gray-900 border text-white"
             />
           </div>
           <div className="space-y-2">
@@ -411,7 +411,7 @@ export default function AuthSettingsPage() {
                 }));
                 setSecurityDirty(true);
               }}
-              className="bg-gray-900 border-gray-700 text-white"
+              className="bg-gray-900 border text-white"
             />
           </div>
           <div className="space-y-2">
@@ -428,7 +428,7 @@ export default function AuthSettingsPage() {
                 }));
                 setSecurityDirty(true);
               }}
-              className="bg-gray-900 border-gray-700 text-white"
+              className="bg-gray-900 border text-white"
             />
           </div>
           <div className="space-y-2">
@@ -445,7 +445,7 @@ export default function AuthSettingsPage() {
                 }));
                 setSecurityDirty(true);
               }}
-              className="bg-gray-900 border-gray-700 text-white"
+              className="bg-gray-900 border text-white"
             />
           </div>
           <div className="space-y-2">
@@ -462,7 +462,7 @@ export default function AuthSettingsPage() {
                 }));
                 setSecurityDirty(true);
               }}
-              className="bg-gray-900 border-gray-700 text-white"
+              className="bg-gray-900 border text-white"
             />
           </div>
         </div>
@@ -473,7 +473,7 @@ export default function AuthSettingsPage() {
         </div>
       </div>
 
-      <div className="rounded-md border border-gray-800 bg-gray-950 p-4 space-y-4">
+      <div className="rounded-md border border-border bg-card p-4 space-y-4">
         <div>
           <h2 className="text-lg font-semibold text-white">Multi-factor authentication</h2>
           <p className="mt-1 text-xs text-gray-400">
@@ -489,7 +489,7 @@ export default function AuthSettingsPage() {
               {mfaLoading ? "Starting..." : "Start MFA setup"}
             </Button>
             {mfaSecret ? (
-              <div className="rounded-md border border-gray-800 bg-gray-900/40 p-3 text-xs text-gray-300 space-y-2">
+              <div className="rounded-md border border-border bg-card/40 p-3 text-xs text-gray-300 space-y-2">
                 <div>Secret: {mfaSecret}</div>
                 {mfaOtpAuth ? <div>OTP URL: {mfaOtpAuth}</div> : null}
               </div>
@@ -500,7 +500,7 @@ export default function AuthSettingsPage() {
                 <Input
                   value={mfaToken}
                   onChange={(event) => setMfaToken(event.target.value)}
-                  className="bg-gray-900 border-gray-700 text-white"
+                  className="bg-gray-900 border text-white"
                   placeholder="123456"
                 />
                 <Button onClick={() => void handleMfaVerify()} disabled={mfaVerifying}>
@@ -525,7 +525,7 @@ export default function AuthSettingsPage() {
             <Input
               value={mfaDisableCode}
               onChange={(event) => setMfaDisableCode(event.target.value)}
-              className="bg-gray-900 border-gray-700 text-white"
+              className="bg-gray-900 border text-white"
               placeholder="MFA code or recovery code"
             />
             <Button variant="outline" onClick={() => void handleMfaDisable()} disabled={mfaDisabling}>

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { AppModal } from "@/shared/ui/app-modal";
-import ModalShell from "@/shared/ui/modal-shell";
+import ModalShell from "@/shared/components/modal-shell";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -245,7 +245,7 @@ export function CatalogModal({
               </Label>
             </div>
 
-            <div className="rounded-md border border-gray-800 bg-gray-950/70 p-4 space-y-4">
+            <div className="rounded-md border border-border bg-card/70 p-4 space-y-4">
               <Label className="text-sm font-semibold text-white">Languages</Label>
               {languagesLoading ? (
                 <p className="text-xs text-gray-500">Loading languages...</p>
@@ -267,7 +267,7 @@ export function CatalogModal({
                         const lang = languages.find(l => l.id === id);
                         if (!lang) return null;
                         return (
-                          <div key={id} className="flex items-center justify-between rounded-md border border-gray-700 bg-gray-900 px-3 py-1.5 text-xs text-gray-200">
+                          <div key={id} className="flex items-center justify-between rounded-md border bg-gray-900 px-3 py-1.5 text-xs text-gray-200">
                             <div className="flex items-center gap-2">
                               <span className="text-gray-500 w-4">{index + 1}.</span>
                               <span>{lang.name} ({lang.code})</span>
@@ -292,7 +292,7 @@ export function CatalogModal({
                     )}
                   </div>
 
-                  <div className="max-h-32 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-xs">
+                  <div className="max-h-32 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-xs">
                     {availableLanguages.map(lang => (
                       <Button key={lang.id} variant="ghost" className="w-full justify-between h-8 px-2" onClick={() => toggleLanguage(lang.id)}>
                         <span>{lang.name} ({lang.code})</span>
@@ -304,7 +304,7 @@ export function CatalogModal({
                   <div className="space-y-2">
                     <Label className="text-xs text-gray-400">Default language</Label>
                     <select
-                      className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-white"
+                      className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-white"
                       value={defaultLanguageId}
                       onChange={(e) => setDefaultLanguageId(e.target.value)}
                       disabled={selectedLanguageIds.length === 0}
@@ -320,7 +320,7 @@ export function CatalogModal({
               )}
             </div>
 
-            <div className="rounded-md border border-gray-800 bg-gray-950/70 p-4 space-y-4">
+            <div className="rounded-md border border-border bg-card/70 p-4 space-y-4">
               <Label className="text-sm font-semibold text-white">Price Groups</Label>
               {loadingGroups ? (
                 <p className="text-xs text-gray-500">Loading groups...</p>
@@ -337,7 +337,7 @@ export function CatalogModal({
                     })}
                   </div>
 
-                  <div className="max-h-32 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-xs">
+                  <div className="max-h-32 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-xs">
                     {priceGroups.map(group => (
                       <Button key={group.id} variant="ghost" className="w-full justify-between h-8 px-2" onClick={() => togglePriceGroup(group.id)}>
                         <span>{group.name} ({group.currencyCode})</span>
@@ -349,7 +349,7 @@ export function CatalogModal({
                   <div className="space-y-2">
                     <Label className="text-xs text-gray-400">Default price group</Label>
                     <select
-                      className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-white"
+                      className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-white"
                       value={catalogDefaultPriceGroupId}
                       onChange={(e) => setCatalogDefaultPriceGroupId(e.target.value)}
                       disabled={catalogPriceGroupIds.length === 0}

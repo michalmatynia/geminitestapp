@@ -6,8 +6,8 @@ import Link from "next/link";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { useToast } from "@/shared/ui/toast";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 type ChatbotJob = {
   id: string;
@@ -214,7 +214,7 @@ export default function ChatbotJobsPage() {
             {filteredJobs.map((job) => (
               <div
                 key={job.id}
-                className="rounded-md border border-gray-800 bg-gray-900 px-4 py-3"
+                className="rounded-md border border-border bg-gray-900 px-4 py-3"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>

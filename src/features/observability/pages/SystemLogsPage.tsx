@@ -15,9 +15,9 @@ import { useToast } from "@/shared/ui/toast";
 import { RefreshCcw, Trash2, Download } from "lucide-react";
 import type { SystemLogMetrics, SystemLogRecord, SystemLogLevel } from "@/shared/types/system-logs";
 import { Label } from "@/shared/ui/label";
-import { ListPanel } from "@/shared/ui/list-panel";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { ListPanel } from "@/shared/components/list-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 const levelOptions: Array<{ value: SystemLogLevel | "all"; label: string }> = [
   { value: "all", label: "All levels" },
@@ -328,7 +328,7 @@ export default function SystemLogsPage() {
         }
       >
         <div className="space-y-6">
-          <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4">
+          <div className="rounded-md border border-border bg-card/60 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-white">Metrics</h2>
@@ -348,7 +348,7 @@ export default function SystemLogsPage() {
               </div>
             ) : (
               <div className="mt-4 grid gap-4 md:grid-cols-3">
-                <div className="rounded-md border border-gray-800 bg-gray-950 p-3">
+                <div className="rounded-md border border-border bg-card p-3">
                   <div className="text-xs text-gray-400">Totals</div>
                   <div className="mt-2 space-y-1 text-sm text-gray-200">
                     <div>Total: {metrics.total}</div>
@@ -356,7 +356,7 @@ export default function SystemLogsPage() {
                     <div>Last 7d: {metrics.last7Days}</div>
                   </div>
                 </div>
-                <div className="rounded-md border border-gray-800 bg-gray-950 p-3">
+                <div className="rounded-md border border-border bg-card p-3">
                   <div className="text-xs text-gray-400">By level</div>
                   <div className="mt-2 space-y-1 text-sm text-gray-200">
                     <div className="text-red-300">Errors: {levels.error}</div>
@@ -364,7 +364,7 @@ export default function SystemLogsPage() {
                     <div className="text-blue-300">Info: {levels.info}</div>
                   </div>
                 </div>
-                <div className="rounded-md border border-gray-800 bg-gray-950 p-3">
+                <div className="rounded-md border border-border bg-card p-3">
                   <div className="text-xs text-gray-400">Top sources</div>
                   {metrics.topSources.length === 0 ? (
                     <div className="mt-2 text-xs text-gray-500">No sources yet.</div>
@@ -396,8 +396,8 @@ export default function SystemLogsPage() {
             )}
           </div>
 
-          <div className="rounded-md border border-gray-800 bg-gray-950/50">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-800 px-4 py-3 text-xs text-gray-400">
+          <div className="rounded-md border border-border bg-card/50">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 text-xs text-gray-400">
               <span>
                 Showing {logs.length} of {total} logs
               </span>
@@ -410,14 +410,14 @@ export default function SystemLogsPage() {
                 No system logs found.
               </div>
             ) : (
-              <div className="divide-y divide-gray-800">
+              <div className="divide-y divide-border">
                 {logs.map((log) => (
                   <div key={log.id} className="px-4 py-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <span
                           className={`rounded border px-2 py-0.5 text-xs ${
-                            levelStyles[log.level] ?? "border-gray-700 text-gray-300"
+                            levelStyles[log.level] ?? "border text-gray-300"
                           }`}
                         >
                           {log.level.toUpperCase()}
@@ -452,7 +452,7 @@ export default function SystemLogsPage() {
                           Details
                         </summary>
                         {log.source === "client" && log.context ? (
-                          <div className="mt-2 rounded border border-gray-800 bg-gray-950 p-2 text-[11px] text-gray-300">
+                          <div className="mt-2 rounded border border-border bg-card p-2 text-[11px] text-gray-300">
                             <div className="font-semibold text-gray-200">Client context</div>
                             <div className="mt-2 grid gap-2 md:grid-cols-2">
                               <div>
@@ -491,12 +491,12 @@ export default function SystemLogsPage() {
                           </div>
                         ) : null}
                         {log.stack && (
-                          <pre className="mt-2 whitespace-pre-wrap rounded border border-gray-800 bg-gray-950 p-2 text-[11px] text-gray-300">
+                          <pre className="mt-2 whitespace-pre-wrap rounded border border-border bg-card p-2 text-[11px] text-gray-300">
                             {log.stack}
                           </pre>
                         )}
                         {log.context && (
-                          <pre className="mt-2 whitespace-pre-wrap rounded border border-gray-800 bg-gray-950 p-2 text-[11px] text-gray-300">
+                          <pre className="mt-2 whitespace-pre-wrap rounded border border-border bg-card p-2 text-[11px] text-gray-300">
                             {JSON.stringify(log.context, null, 2)}
                           </pre>
                         )}
@@ -506,11 +506,11 @@ export default function SystemLogsPage() {
                 ))}
               </div>
             )}
-            <div className="flex items-center justify-between gap-3 border-t border-gray-800 px-4 py-3">
+            <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3">
               <Button
                 variant="outline"
                 size="sm"
-                className="border-gray-700"
+                className="border"
                 disabled={page <= 1}
                 onClick={() => setPage((prev) => Math.max(1, prev - 1))}
               >
@@ -519,7 +519,7 @@ export default function SystemLogsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-gray-700"
+                className="border"
                 disabled={page >= totalPages}
                 onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
               >

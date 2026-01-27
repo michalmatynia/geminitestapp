@@ -71,15 +71,15 @@ export default function ProductFormParameters() {
       </div>
 
       {parametersLoading ? (
-        <div className="rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+        <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
           Loading parameters...
         </div>
       ) : parameters.length === 0 ? (
-        <div className="rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+        <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
           No parameters available for the selected catalog(s).
         </div>
       ) : parameterValues.length === 0 ? (
-        <div className="rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+        <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
           Add your first parameter to start building values.
         </div>
       ) : (
@@ -92,7 +92,7 @@ export default function ProductFormParameters() {
             return (
               <div
                 key={`${entry.parameterId || "new"}-${index}`}
-                className="flex flex-col gap-3 rounded-md border border-gray-800 bg-gray-950/60 p-3 md:flex-row md:items-center"
+                className="flex flex-col gap-3 rounded-md border border-border bg-card/60 p-3 md:flex-row md:items-center"
               >
                 <div className="w-full md:w-64">
                   <Select

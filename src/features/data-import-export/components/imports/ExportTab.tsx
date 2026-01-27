@@ -125,7 +125,7 @@ export function ExportTab({
   };
 
   return (
-    <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
+    <div className="rounded-md border border-border bg-gray-900 p-4">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-white">
@@ -148,7 +148,7 @@ export function ExportTab({
               Base connection for inventories/warehouses
             </Label>
             <select
-              className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+              className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
               value={selectedBaseConnectionId}
               onChange={(event) => setSelectedBaseConnectionId(event.target.value)}
               disabled={baseConnections.length === 0}
@@ -173,7 +173,7 @@ export function ExportTab({
           <div>
             <Label className="text-xs text-gray-400">Default Inventory</Label>
             <select
-              className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+              className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
               value={exportInventoryId}
               onChange={(event) => setExportInventoryId(event.target.value)}
               disabled={inventories.length === 0}
@@ -207,7 +207,7 @@ export function ExportTab({
               Default Export Template
             </Label>
             <select
-              className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+              className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
               value={exportActiveTemplateId}
               onChange={(event) => {
                 const nextId = event.target.value;
@@ -238,7 +238,7 @@ export function ExportTab({
         <div>
           <Label className="text-xs text-gray-400">Default Warehouse ID</Label>
           <select
-            className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+            className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
             value={exportWarehouseId}
             onChange={(event) => setExportWarehouseId(event.target.value)}
             disabled={warehouseOptions.length === 0}
@@ -270,7 +270,7 @@ export function ExportTab({
                 setExportStockFallbackEnabled(Boolean(checked))
               }
               disabled={!exportStockFallbackLoaded}
-              className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
+              className="h-3 w-3 rounded border bg-gray-900 text-emerald-500"
             />
             <Label htmlFor="exportStockFallback">
               Skip stock when Base rejects the warehouse (allow listing)
@@ -281,7 +281,7 @@ export function ExportTab({
               <Checkbox
                 id="showAllWarehouses"
                 checked={showAllWarehouses} onCheckedChange={(checked) => setShowAllWarehouses(Boolean(checked))}
-                className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
+                className="h-3 w-3 rounded border bg-gray-900 text-emerald-500"
               />
               <Label htmlFor="showAllWarehouses">
                 Show all warehouses (may include ones not assigned to the inventory)
@@ -290,7 +290,7 @@ export function ExportTab({
           ) : null}
         </div>
 
-        <div className="rounded-md border border-gray-800 bg-gray-950 p-4">
+        <div className="rounded-md border border-border bg-card p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="text-sm font-semibold text-white">
@@ -306,7 +306,7 @@ export function ExportTab({
               size="sm"
               onClick={handleResetImageRetryPresets}
               disabled={!imageRetryPresetsLoaded}
-              className="border-gray-700"
+              className="border"
             >
               Reset defaults
             </Button>
@@ -318,7 +318,7 @@ export function ExportTab({
               {imageRetryPresets.map((preset) => (
                 <div
                   key={preset.id}
-                  className="rounded-md border border-gray-800 bg-gray-950/60 p-3"
+                  className="rounded-md border border-border bg-card/60 p-3"
                 >
                   <div className="text-xs font-semibold text-gray-200">
                     {preset.label}
@@ -370,7 +370,7 @@ export function ExportTab({
                           forceJpeg: Boolean(checked),
                         })
                       }
-                      className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
+                      className="h-3 w-3 rounded border bg-gray-900 text-emerald-500"
                     />
                     <span>Force JPEG conversion</span>
                   </div>
@@ -414,7 +414,7 @@ export function ExportTab({
           </ul>
         </div>
 
-        <div className="rounded-md border border-gray-800 bg-gray-950 p-4">
+        <div className="rounded-md border border-border bg-card p-4">
           <h3 className="text-sm font-semibold text-white mb-3">
             Quick Actions
           </h3>
@@ -424,7 +424,7 @@ export function ExportTab({
               disabled={loadingInventories}
               variant="outline"
               size="sm"
-              className="border-gray-700"
+              className="border"
             >
               {loadingInventories ? "Loading..." : "Load Inventories"}
             </Button>
@@ -433,7 +433,7 @@ export function ExportTab({
               disabled={loadingWarehouses}
               variant="outline"
               size="sm"
-              className="border-gray-700"
+              className="border"
             >
               {loadingWarehouses ? "Loading..." : "Load Warehouses"}
             </Button>
@@ -442,7 +442,7 @@ export function ExportTab({
               disabled={loadingDebugWarehouses}
               variant="outline"
               size="sm"
-              className="border-gray-700"
+              className="border"
             >
               {loadingDebugWarehouses ? "Debugging..." : "Debug Warehouses"}
             </Button>
@@ -450,7 +450,7 @@ export function ExportTab({
               <Checkbox
                 id="includeAllWarehouses"
                 checked={includeAllWarehouses} onCheckedChange={(checked) => setIncludeAllWarehouses(Boolean(checked))}
-                className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
+                className="h-3 w-3 rounded border bg-gray-900 text-emerald-500"
               />
               <Label htmlFor="includeAllWarehouses">
                 Try loading global warehouses (if supported)
@@ -464,19 +464,19 @@ export function ExportTab({
               {savingExportSettings ? "Saving..." : "Save Export Settings"}
             </Button>
             <Link href="/admin/products/jobs?tab=export">
-              <Button variant="outline" size="sm" className="border-gray-700">
+              <Button variant="outline" size="sm" className="border">
                 View Listing Jobs
               </Button>
             </Link>
             <Link href="/admin/products">
-              <Button variant="outline" size="sm" className="border-gray-700">
+              <Button variant="outline" size="sm" className="border">
                 Go to Products
               </Button>
             </Link>
           </div>
         </div>
         {debugWarehouses ? (
-          <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300">
+          <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="font-semibold text-gray-200">
                 Warehouse debug (raw IDs)
@@ -519,13 +519,13 @@ export function ExportTab({
                       });
                       if (!match) {
                         return (
-                          <div className="rounded border border-gray-800 bg-gray-950/60 p-2 text-[10px] text-gray-300">
+                          <div className="rounded border border-border bg-card/60 p-2 text-[10px] text-gray-300">
                             Selected inventory not found in response.
                           </div>
                         );
                       }
                       return (
-                        <div className="rounded border border-gray-800 bg-gray-950/60 p-2 text-[10px] text-gray-300">
+                        <div className="rounded border border-border bg-card/60 p-2 text-[10px] text-gray-300">
                           <div className="text-[11px] uppercase tracking-wide text-gray-500">
                             Selected inventory details
                           </div>
@@ -553,7 +553,7 @@ export function ExportTab({
                     {debugWarehouses.inventoryRaw.error ? (
                       <div>Error: {debugWarehouses.inventoryRaw.error}</div>
                     ) : null}
-                    <pre className="mt-2 max-h-64 overflow-auto rounded border border-gray-800 bg-gray-950 p-2 text-[10px] text-gray-300">
+                    <pre className="mt-2 max-h-64 overflow-auto rounded border border-border bg-card p-2 text-[10px] text-gray-300">
                       {debugWarehouses.inventoryRaw.payload
                         ? JSON.stringify(debugWarehouses.inventoryRaw.payload, null, 2)
                         : "No payload returned."}

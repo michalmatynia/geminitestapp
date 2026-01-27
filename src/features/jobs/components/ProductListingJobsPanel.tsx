@@ -13,14 +13,14 @@ import {
   Eye,
 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import ModalShell from "@/shared/ui/modal-shell";
+import ModalShell from "@/shared/components/modal-shell";
 import { Input } from "@/shared/ui/input";
 import { AppModal } from "@/shared/ui/app-modal";
 import type { ListingJob, ListingAttempt, ProductJob } from "@/shared/types/listing-jobs";
 import { Label } from "@/shared/ui/label";
-import { ListPanel } from "@/shared/ui/list-panel";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { ListPanel } from "@/shared/components/list-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 type ProductListingJobsPanelProps = {
   showBackToProducts?: boolean;
@@ -65,7 +65,7 @@ const getStatusColor = (status: string) => {
       return "bg-green-900/20 text-green-300 border-green-900/50";
     case "deleted":
     case "removed":
-      return "bg-gray-900/40 text-gray-300 border-gray-800";
+      return "bg-card/40 text-gray-300 border-border";
     case "failed":
     case "error":
       return "bg-red-900/20 text-red-300 border-red-900/50";
@@ -305,7 +305,7 @@ export default function ProductListingJobsPanel({
         <Label htmlFor="exportJobsPageSize">Rows</Label>
         <select
           id="exportJobsPageSize"
-          className="rounded-md border border-gray-800 bg-gray-900 px-2 py-1 text-xs text-white"
+          className="rounded-md border border-border bg-gray-900 px-2 py-1 text-xs text-white"
           value={pageSize}
           onChange={(event) => {
             setPageSize(Number(event.target.value));
@@ -323,7 +323,7 @@ export default function ProductListingJobsPanel({
           size="sm"
           onClick={() => setPage((current) => Math.max(1, current - 1))}
           disabled={clampedPage <= 1}
-          className="border-gray-700 bg-gray-800 hover:bg-gray-700"
+          className="border bg-gray-800 hover:bg-gray-700"
         >
           Prev
         </Button>
@@ -335,7 +335,7 @@ export default function ProductListingJobsPanel({
           size="sm"
           onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
           disabled={clampedPage >= totalPages}
-          className="border-gray-700 bg-gray-800 hover:bg-gray-700"
+          className="border bg-gray-800 hover:bg-gray-700"
         >
           Next
         </Button>
@@ -362,7 +362,7 @@ export default function ProductListingJobsPanel({
             <Loader2 className="size-8 animate-spin text-gray-500" />
           </div>
         ) : !error ? (
-          <div className="rounded-lg border border-gray-800 bg-gray-950 overflow-hidden">
+          <div className="rounded-lg border border-border bg-card overflow-hidden">
             <table className="w-full text-left text-sm text-gray-300">
               <thead className="bg-gray-900 text-xs uppercase text-gray-500">
                 <tr>
@@ -373,7 +373,7 @@ export default function ProductListingJobsPanel({
                   <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800">
+              <tbody className="divide-y divide-border">
                 {pagedRows.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
@@ -390,7 +390,7 @@ export default function ProductListingJobsPanel({
                     return (
                       <tr
                         key={`${job.productId}-${listing.id}-${attemptIndex ?? "current"}`}
-                        className="hover:bg-gray-900/50"
+                        className="hover:bg-card/50"
                       >
                         <td className="px-4 py-4">
                           <div className="flex items-start gap-2">
@@ -532,7 +532,7 @@ export default function ProductListingJobsPanel({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 rounded-md border border-gray-800 bg-gray-950/60 p-4">
+              <div className="grid grid-cols-2 gap-4 rounded-md border border-border bg-card/60 p-4">
                 <div>
                   <div className="text-gray-500 uppercase text-[10px] font-bold">Job ID</div>
                   <div className="text-white font-mono text-xs">
@@ -604,7 +604,7 @@ export default function ProductListingJobsPanel({
                 </div>
               </div>
 
-              <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4">
+              <div className="rounded-md border border-border bg-card/60 p-4">
                 <div className="text-gray-400 font-bold text-xs uppercase mb-3">
                   Export Attempt
                 </div>
@@ -650,7 +650,7 @@ export default function ProductListingJobsPanel({
                 )}
               </div>
 
-              <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4">
+              <div className="rounded-md border border-border bg-card/60 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="text-gray-400 font-bold text-xs uppercase">
                     Export History
@@ -688,7 +688,7 @@ export default function ProductListingJobsPanel({
                           (event, index) => (
                             <div
                               key={`${selectedListing.listing.id}-history-${index}`}
-                              className="rounded border border-gray-800 bg-gray-900/60 p-3 text-xs text-gray-300"
+                              className="rounded border border-border bg-card/60 p-3 text-xs text-gray-300"
                             >
                               <div className="flex flex-wrap gap-4">
                                 <div>
@@ -740,7 +740,7 @@ export default function ProductListingJobsPanel({
                   <div className="text-gray-500 uppercase text-[10px] font-bold">
                     Listing Payload
                   </div>
-                  <pre className="max-h-72 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-400 border border-gray-800">
+                  <pre className="max-h-72 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-400 border border-border">
                     {JSON.stringify(selectedListing.listing, null, 2)}
                   </pre>
                 </div>
@@ -748,7 +748,7 @@ export default function ProductListingJobsPanel({
                   <div className="text-gray-500 uppercase text-[10px] font-bold">
                     Job Payload
                   </div>
-                  <pre className="max-h-72 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-400 border border-gray-800">
+                  <pre className="max-h-72 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-400 border border-border">
                     {JSON.stringify(selectedListing.job, null, 2)}
                   </pre>
                 </div>

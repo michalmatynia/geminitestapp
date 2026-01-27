@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 export default function AllegroListingTemplatesPage() {
   return (

@@ -51,7 +51,7 @@ export function AllegroApiConsole({
   ];
 
   return (
-    <div className="rounded-lg border border-gray-800 bg-gray-900/60 p-4">
+    <div className="rounded-lg border border-border bg-card/60 p-4">
       <div className="mb-3">
         <h3 className="text-sm font-semibold text-white">Allegro API Console</h3>
         <p className="text-xs text-gray-400">
@@ -63,7 +63,7 @@ export function AllegroApiConsole({
           <Button
             key={preset.label}
             type="button"
-            className="rounded-full border border-gray-700 px-3 py-1 text-[11px] text-gray-300 hover:border-gray-500"
+            className="rounded-full border px-3 py-1 text-[11px] text-gray-300 hover:border-gray-500"
             onClick={() => {
               setMethod(preset.method);
               setPath(preset.path);
@@ -83,7 +83,7 @@ export function AllegroApiConsole({
         <div>
           <Label className="text-xs text-gray-400">Method</Label>
           <select
-            className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white"
+            className="mt-2 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"
             value={method}
             onChange={(event) => setMethod(event.target.value)}
           >
@@ -97,7 +97,7 @@ export function AllegroApiConsole({
         <div>
           <Label className="text-xs text-gray-400">Endpoint path</Label>
           <Input
-            className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white"
+            className="mt-2 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"
             placeholder="/sale/categories"
             value={path}
             onChange={(event) => setPath(event.target.value)}
@@ -107,7 +107,7 @@ export function AllegroApiConsole({
       <div className="mt-3">
         <Label className="text-xs text-gray-400">JSON body</Label>
         <Textarea
-          className="mt-2 h-32 w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-xs text-white"
+          className="mt-2 h-32 w-full rounded-md border border-border bg-card px-3 py-2 text-xs text-white"
           value={body}
           onChange={(event) => setBody(event.target.value)}
         />
@@ -134,7 +134,7 @@ export function AllegroApiConsole({
         </div>
       )}
       {response && (
-        <div className="mt-3 rounded-md border border-gray-800 bg-gray-950 p-3">
+        <div className="mt-3 rounded-md border border-border bg-card p-3">
           <div className="text-xs text-gray-400">
             Status:{" "}
             <span className="text-gray-200">

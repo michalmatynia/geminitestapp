@@ -14,6 +14,7 @@ import { useNoteOperations } from "@/features/notesapp/hooks/useNoteOperations";
 import { useNoteTheme } from "@/features/notesapp/hooks/useNoteTheme";
 import type { NoteWithRelations } from "@/shared/types/notes";
 import type { UndoAction } from "@/features/notesapp/types/notes-hooks";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 export function AdminNotesPage() {
   const { isMenuCollapsed } = useAdminLayout();
@@ -333,7 +334,7 @@ export function AdminNotesPage() {
       >
         {/* Sidebar */}
         {!isFolderTreeCollapsed && (
-          <div className="hidden overflow-hidden rounded-lg border border-gray-800 bg-gray-950 lg:block">
+          <SectionPanel className="hidden overflow-hidden p-0 lg:block">
             <FolderTree
               folders={folderTree}
               selectedFolderId={settings.selectedFolderId}
@@ -370,11 +371,11 @@ export function AdminNotesPage() {
               onUndoAtIndex={handleUndoAtIndex}
               onRefreshFolders={() => fetchFolderTree()}
             />
-          </div>
+          </SectionPanel>
         )}
 
         {/* Main Content */}
-        <div className="flex min-h-0 flex-col overflow-hidden rounded-lg bg-gray-950 p-6 shadow-lg">
+        <SectionPanel className="flex min-h-0 flex-col overflow-hidden p-6">
           {selectedNote ? (
             <NoteDetailView
               selectedNote={selectedNote}
@@ -456,7 +457,7 @@ export function AdminNotesPage() {
               setIsEditing={setIsEditing}
             />
           )}
-        </div>
+        </SectionPanel>
 
         {/* Modals */}
         <CreateNoteModal

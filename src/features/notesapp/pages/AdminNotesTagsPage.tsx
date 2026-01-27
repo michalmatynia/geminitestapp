@@ -8,8 +8,8 @@ import { useNoteSettings } from "@/features/notesapp/hooks/NoteSettingsContext";
 import type { TagRecord } from "@/shared/types/notes";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 export function AdminNotesTagsPage() {
   const { toast } = useToast();

@@ -21,7 +21,7 @@ type ListPanelProps = {
 };
 
 const variantStyles: Record<ListPanelVariant, string> = {
-  default: "rounded-lg bg-gray-950 p-6 shadow-lg",
+  default: "rounded-lg border bg-card p-6",
   flat: "bg-transparent p-0 shadow-none",
 };
 

@@ -68,7 +68,7 @@ export function ConnectionManager({
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <div className="rounded-lg border border-gray-800 bg-gray-900/60 p-4">
+      <div className="rounded-lg border border-border bg-card/60 p-4">
         <h3 className="text-sm font-semibold text-white">
           {editingConnectionId ? "Connection details" : "Add connection"}
         </h3>
@@ -76,7 +76,7 @@ export function ConnectionManager({
           <div>
             <Label className="text-xs text-gray-400">Connection name</Label>
             <Input
-              className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white"
+              className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"
               placeholder={connectionNamePlaceholder}
               value={connectionForm.name}
               onChange={(event) =>
@@ -90,7 +90,7 @@ export function ConnectionManager({
           <div>
             <Label className="text-xs text-gray-400">{usernameLabel}</Label>
             <Input
-              className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white"
+              className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"
               placeholder={usernamePlaceholder}
               value={connectionForm.username}
               onChange={(event) =>
@@ -104,7 +104,7 @@ export function ConnectionManager({
           <div>
             <Label className="text-xs text-gray-400">{passwordLabel}</Label>
             <Input
-              className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white"
+              className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"
               type="password"
               placeholder={
                 editingConnectionId
@@ -134,7 +134,7 @@ export function ConnectionManager({
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-800 bg-gray-900/60 p-4">
+      <div className="rounded-lg border border-border bg-card/60 p-4">
         <h3 className="text-sm font-semibold text-white">Existing connection</h3>
         {connections.length === 0 ? (
           <p className="mt-3 text-sm text-gray-400">No connections yet.</p>
@@ -143,7 +143,7 @@ export function ConnectionManager({
             {connections.slice(0, 1).map((connection) => (
               <div
                 key={connection.id}
-                className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-950/70 px-3 py-2"
+                className="flex items-center justify-between rounded-md border border-border bg-card/70 px-3 py-2"
               >
                 <div>
                   <p className="text-sm font-semibold text-white">
@@ -179,7 +179,7 @@ export function ConnectionManager({
           </div>
         )}
         {showPlaywright && (
-          <div className="mt-4 rounded-md border border-gray-800 bg-gray-950/60 p-3">
+          <div className="mt-4 rounded-md border border-border bg-card/60 p-3">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-gray-300">
                 Playwright live update

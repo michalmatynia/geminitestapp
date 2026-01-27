@@ -38,10 +38,10 @@ export function TriggerNodeConfigSection({
             })
           }
         >
-          <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
             <SelectValue placeholder="Select action" />
           </SelectTrigger>
-          <SelectContent className="border-gray-800 bg-gray-900">
+          <SelectContent className="border-border bg-gray-900">
             {TRIGGER_EVENTS.map((event) => (
               <SelectItem key={event.id} value={event.id}>
                 {event.label}

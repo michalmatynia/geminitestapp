@@ -91,12 +91,12 @@ export function AiTranslationSettings() {
           </div>
         </div>
 
-        <div className="space-y-6 rounded-md border border-gray-800 bg-gray-950/50 p-6">
+        <div className="space-y-6 rounded-md border border-border bg-card/50 p-6">
           <div className="max-w-md space-y-4">
             <div className="space-y-2">
               <Label>Translation Model</Label>
               <Select value={translationModel} onValueChange={setTranslationModel}>
-                <SelectTrigger className="mt-1.5 bg-gray-900 border-gray-700 text-white">
+                <SelectTrigger className="mt-1.5 bg-gray-900 border text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -126,7 +126,7 @@ export function AiTranslationSettings() {
               </p>
             </div>
 
-            <div className="rounded-md bg-gray-900/50 p-4 border border-gray-800">
+            <div className="rounded-md bg-card/50 p-4 border border-border">
               <h4 className="text-sm font-medium text-white mb-2">How It Works</h4>
               <ul className="text-xs text-gray-400 space-y-1 list-disc list-inside">
                 <li>

@@ -9,9 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { useToast } from "@/shared/ui/toast";
 import { Loader2, RefreshCcw, Trash2, XCircle, Eye } from "lucide-react";
 import { AppModal } from "@/shared/ui/app-modal";
-import ModalShell from "@/shared/ui/modal-shell";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import ModalShell from "@/shared/components/modal-shell";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 import ProductListingJobsPanel from "@/features/jobs/components/ProductListingJobsPanel";
 import type { ProductAiJob } from "@/shared/types/jobs";
 import type { ProductAiJobsPanelProps } from "@/features/jobs/types/jobs-ui";
@@ -211,7 +211,7 @@ export default function ProductAiJobsPanel({
           placeholder="Search by ID, entity, path, or model..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="max-w-md bg-gray-900 border-gray-800 text-white"
+          className="max-w-md bg-gray-900 border-border text-white"
         />
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => void loadJobs()} disabled={loading}>
@@ -229,7 +229,7 @@ export default function ProductAiJobsPanel({
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-800 bg-gray-950 overflow-hidden">
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
         <table className="w-full text-left text-sm text-gray-300">
           <thead className="bg-gray-900 text-xs uppercase text-gray-500">
             <tr>
@@ -240,7 +240,7 @@ export default function ProductAiJobsPanel({
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-800">
+          <tbody className="divide-y divide-border">
             {filteredJobs.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
@@ -251,7 +251,7 @@ export default function ProductAiJobsPanel({
               filteredJobs.map((job) => {
                 const meta = getJobMeta(job);
                 return (
-                  <tr key={job.id} className="hover:bg-gray-900/50">
+                  <tr key={job.id} className="hover:bg-card/50">
                   <td className="px-4 py-4">
                     <div className="font-medium text-white">{meta.displayEntity}</div>
                     {meta.subEntity && (
@@ -398,7 +398,7 @@ export default function ProductAiJobsPanel({
                 </div>
               </div>
 
-                <div className="rounded-md border border-gray-800 bg-gray-900/40 p-4">
+                <div className="rounded-md border border-border bg-card/40 p-4">
                   <div className="text-gray-400 font-bold text-xs uppercase mb-3">
                     Run Metadata
                   </div>
@@ -478,7 +478,7 @@ export default function ProductAiJobsPanel({
                 </div>
 
                 {selectedJob.result && (selectedJob.result.visionModel || selectedJob.result.generationModel) && (
-                  <div className="rounded-md bg-gray-900/50 border border-gray-800 p-4">
+                  <div className="rounded-md bg-card/50 border border-border p-4">
                     <div className="text-gray-400 font-bold text-xs uppercase mb-3">AI Models Used</div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {selectedJob.result.visionModel && (
@@ -515,7 +515,7 @@ export default function ProductAiJobsPanel({
                 )}
 
                 {selectedJob.type === "graph_model" && (
-                  <div className="rounded-md border border-gray-800 bg-gray-900/40 p-4">
+                  <div className="rounded-md border border-border bg-card/40 p-4">
                     <div className="text-gray-400 font-bold text-xs uppercase mb-3">
                       Graph Model Inputs
                     </div>
@@ -542,7 +542,7 @@ export default function ProductAiJobsPanel({
                         ) &&
                         (selectedJob.payload as { imageUrls?: string[] } | null)?.imageUrls
                           ?.length ? (
-                          <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-gray-800 max-h-40 overflow-auto">
+                          <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto">
                             {(selectedJob.payload as { imageUrls?: string[] } | null)?.imageUrls?.map(
                               (url, index) => (
                                 <div key={`${url}-${index}`} className="truncate">
@@ -558,7 +558,7 @@ export default function ProductAiJobsPanel({
                     </div>
                     <div className="mt-4 space-y-2">
                       <div className="text-[10px] uppercase text-gray-500 font-bold">Prompt</div>
-                      <pre className="max-h-60 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-gray-800 whitespace-pre-wrap">
+                      <pre className="max-h-60 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border whitespace-pre-wrap">
                         {(selectedJob.payload as { prompt?: string } | null)?.prompt ||
                           "No prompt provided."}
                       </pre>
@@ -573,7 +573,7 @@ export default function ProductAiJobsPanel({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <div className="text-blue-400 uppercase text-[10px] font-bold">Path 1: Image Analysis (Initial)</div>
-                        <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-gray-800 max-h-40 overflow-auto">
+                        <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto">
                           {selectedJob.result.analysisInitial || selectedJob.result.analysis || 'N/A'}
                         </div>
                       </div>
@@ -581,7 +581,7 @@ export default function ProductAiJobsPanel({
                       {selectedJob.result.analysisFinal && (
                         <div className="space-y-2">
                           <div className="text-blue-400 uppercase text-[10px] font-bold">Path 1: Image Analysis (Final)</div>
-                          <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-gray-800 max-h-40 overflow-auto">
+                          <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto">
                             {selectedJob.result.analysisFinal}
                           </div>
                         </div>
@@ -591,7 +591,7 @@ export default function ProductAiJobsPanel({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <div className="text-purple-400 uppercase text-[10px] font-bold">Path 2: Description (Initial)</div>
-                        <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-gray-800 max-h-40 overflow-auto whitespace-pre-wrap">
+                        <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto whitespace-pre-wrap">
                           {selectedJob.result.descriptionInitial || selectedJob.result.description || 'N/A'}
                         </div>
                       </div>
@@ -599,7 +599,7 @@ export default function ProductAiJobsPanel({
                       {selectedJob.result.descriptionFinal && (
                         <div className="space-y-2">
                           <div className="text-purple-400 uppercase text-[10px] font-bold">Path 2: Description (Final)</div>
-                          <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-gray-800 max-h-40 overflow-auto whitespace-pre-wrap">
+                          <div className="rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border max-h-40 overflow-auto whitespace-pre-wrap">
                             {selectedJob.result.descriptionFinal}
                           </div>
                         </div>
@@ -611,7 +611,7 @@ export default function ProductAiJobsPanel({
                     <div className="text-gray-400 font-bold text-xs uppercase mb-2">Translation Results</div>
 
                     {selectedJob.result.translationModel && (
-                      <div className="rounded-md bg-gray-900/50 border border-gray-800 p-4 mb-4">
+                      <div className="rounded-md bg-card/50 border border-border p-4 mb-4">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
                             <div className="text-green-400 text-[10px] font-bold uppercase mb-1">Translation Model</div>
@@ -635,18 +635,18 @@ export default function ProductAiJobsPanel({
 
                     <div className="space-y-4">
                       {selectedJob.result.translations && Object.entries(selectedJob.result.translations).map(([lang, trans]) => (
-                        <div key={lang} className="rounded-md border border-gray-800 bg-gray-900/30 p-4">
+                        <div key={lang} className="rounded-md border border-border bg-card/30 p-4">
                           <div className="text-green-400 uppercase text-[10px] font-bold mb-3">{lang}</div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">Translated Name</div>
-                              <div className="text-white text-sm p-2 bg-gray-900 rounded border border-gray-800">
+                              <div className="text-white text-sm p-2 bg-gray-900 rounded border border-border">
                                 {trans.name || 'N/A'}
                               </div>
                             </div>
                             <div>
                               <div className="text-gray-500 text-[10px] font-bold uppercase mb-1">Translated Description</div>
-                              <div className="text-white text-sm p-2 bg-gray-900 rounded border border-gray-800 max-h-32 overflow-auto whitespace-pre-wrap">
+                              <div className="text-white text-sm p-2 bg-gray-900 rounded border border-border max-h-32 overflow-auto whitespace-pre-wrap">
                                 {trans.description || 'N/A'}
                               </div>
                             </div>
@@ -659,13 +659,13 @@ export default function ProductAiJobsPanel({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <div className="text-gray-500 uppercase text-[10px] font-bold">Payload (Input Config)</div>
-                      <pre className="max-h-60 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-400 border border-gray-800">
+                      <pre className="max-h-60 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-400 border border-border">
                         {JSON.stringify(selectedJob.payload, null, 2)}
                       </pre>
                     </div>
                     <div className="space-y-2">
                       <div className="text-gray-500 uppercase text-[10px] font-bold">Result (Output)</div>
-                      <pre className="max-h-60 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-gray-800 whitespace-pre-wrap">
+                      <pre className="max-h-60 overflow-auto rounded-md bg-gray-900 p-3 text-[11px] text-gray-300 border border-border whitespace-pre-wrap">
                         {selectedJob.result ? JSON.stringify(selectedJob.result, null, 2) : "No result yet."}
                       </pre>
                     </div>

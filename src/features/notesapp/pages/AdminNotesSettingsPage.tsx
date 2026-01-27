@@ -17,8 +17,8 @@ import type { NoteSettings } from "@/features/notesapp/types/notes-settings";
 import { Label } from "@/shared/ui/label";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 const sortByOptions = [
   { value: "created", label: "Created Date" },
@@ -152,7 +152,7 @@ export function AdminNotesSettingsPage() {
                   checked={settings.showTimestamps} onCheckedChange={(checked) =>
                     updateSettings({ showTimestamps: Boolean(checked) })
                   }
-                  className="h-4 w-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"
+                  className="h-4 w-4 rounded border-border/60 bg-gray-800 text-blue-600 focus:ring-blue-500"
                 />
                 <div>
                   <span className="text-sm font-medium text-gray-200">
@@ -174,7 +174,7 @@ export function AdminNotesSettingsPage() {
                   checked={settings.showBreadcrumbs} onCheckedChange={(checked) =>
                     updateSettings({ showBreadcrumbs: Boolean(checked) })
                   }
-                  className="h-4 w-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"
+                  className="h-4 w-4 rounded border-border/60 bg-gray-800 text-blue-600 focus:ring-blue-500"
                 />
                 <div>
                   <span className="text-sm font-medium text-gray-200">
@@ -250,13 +250,13 @@ export function AdminNotesSettingsPage() {
                         className={`flex items-start gap-3 rounded-md border p-3 transition-colors ${
                           isSelected
                             ? "border-blue-500 bg-blue-500/10"
-                            : "border-gray-700 hover:border-gray-600"
+                            : "border hover:border-border/60"
                         }`}
                       >
                         <RadioGroupItem
                           id={id}
                           value={option.value}
-                          className="mt-1 border-gray-600 text-blue-600"
+                          className="mt-1 border-border/60 text-blue-600"
                         />
                         <Label htmlFor={id} className="flex-1 cursor-pointer">
                           <span className="text-sm font-medium text-gray-200">
@@ -277,7 +277,7 @@ export function AdminNotesSettingsPage() {
                   checked={settings.autoformatOnPaste} onCheckedChange={(checked) =>
                     updateSettings({ autoformatOnPaste: Boolean(checked) })
                   }
-                  className="h-4 w-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"
+                  className="h-4 w-4 rounded border-border/60 bg-gray-800 text-blue-600 focus:ring-blue-500"
                 />
                 <div>
                   <span className="text-sm font-medium text-gray-200">

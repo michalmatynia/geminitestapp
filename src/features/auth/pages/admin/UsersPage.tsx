@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/shared/ui/button";
-import { ListPanel } from "@/shared/ui/list-panel";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { ListPanel } from "@/shared/components/list-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -387,7 +387,7 @@ export default function AuthUsersPage() {
         }
       >
         {loading ? (
-          <div className="rounded-md border border-dashed border-gray-800 p-6 text-center text-gray-400">
+          <div className="rounded-md border border-dashed border-border p-6 text-center text-gray-400">
             Loading users...
           </div>
         ) : (
@@ -433,7 +433,7 @@ export default function AuthUsersPage() {
                         }
                         onValueChange={(value) => handleRoleChange(user.id, value)}
                       >
-                        <SelectTrigger className="h-8 bg-gray-900 border-gray-700 text-white">
+                        <SelectTrigger className="h-8 bg-gray-900 border text-white">
                           <SelectValue placeholder="Select role" />
                         </SelectTrigger>
                         <SelectContent>
@@ -460,7 +460,7 @@ export default function AuthUsersPage() {
       </ListPanel>
 
       <Dialog open={Boolean(editingUser)} onOpenChange={(open) => !open && setEditingUser(null)}>
-        <DialogContent className="bg-gray-950 border-gray-800 text-white">
+        <DialogContent className="bg-card border-border text-white">
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
           </DialogHeader>
@@ -473,7 +473,7 @@ export default function AuthUsersPage() {
                 id="edit-name"
                 value={editName}
                 onChange={(event) => setEditName(event.target.value)}
-                className="bg-gray-900 border-gray-700 text-white"
+                className="bg-gray-900 border text-white"
               />
             </div>
             <div className="space-y-2">
@@ -484,20 +484,20 @@ export default function AuthUsersPage() {
                 id="edit-email"
                 value={editEmail}
                 onChange={(event) => setEditEmail(event.target.value)}
-                className="bg-gray-900 border-gray-700 text-white"
+                className="bg-gray-900 border text-white"
               />
             </div>
             <div className="flex items-center gap-2">
               <Checkbox
                 id="edit-verified"
                 checked={editVerified} onCheckedChange={(checked) => setEditVerified(Boolean(checked))}
-                className="h-4 w-4 rounded border-gray-700 bg-gray-900"
+                className="h-4 w-4 rounded border bg-gray-900"
               />
               <Label htmlFor="edit-verified" className="text-xs text-gray-300">
                 Email verified
               </Label>
             </div>
-            <div className="rounded-md border border-gray-800 bg-gray-900/40 p-3 space-y-3">
+            <div className="rounded-md border border-border bg-card/40 p-3 space-y-3">
               <div className="text-xs font-semibold text-gray-300">
                 Security controls
               </div>
@@ -508,7 +508,7 @@ export default function AuthUsersPage() {
                 <Checkbox
                   id="edit-disabled"
                   checked={editDisabled} onCheckedChange={(checked) => setEditDisabled(Boolean(checked))}
-                  className="h-4 w-4 rounded border-gray-700 bg-gray-900"
+                  className="h-4 w-4 rounded border bg-gray-900"
                 />
                 <Label htmlFor="edit-disabled" className="text-xs text-gray-300">
                   Disable account
@@ -518,7 +518,7 @@ export default function AuthUsersPage() {
                 <Checkbox
                   id="edit-banned"
                   checked={editBanned} onCheckedChange={(checked) => setEditBanned(Boolean(checked))}
-                  className="h-4 w-4 rounded border-gray-700 bg-gray-900"
+                  className="h-4 w-4 rounded border bg-gray-900"
                 />
                 <Label htmlFor="edit-banned" className="text-xs text-gray-300">
                   Ban account
@@ -532,7 +532,7 @@ export default function AuthUsersPage() {
                   id="edit-allowed-ips"
                   value={editAllowedIps}
                   onChange={(event) => setEditAllowedIps(event.target.value)}
-                  className="min-h-[80px] w-full rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white"
+                  className="min-h-[80px] w-full rounded-md border bg-gray-900 px-3 py-2 text-xs text-white"
                   placeholder="One IP per line or comma-separated"
                 />
               </div>
@@ -563,7 +563,7 @@ export default function AuthUsersPage() {
       </Dialog>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="bg-gray-950 border-gray-800 text-white">
+        <DialogContent className="bg-card border-border text-white">
           <DialogHeader>
             <DialogTitle>Create User</DialogTitle>
           </DialogHeader>
@@ -578,7 +578,7 @@ export default function AuthUsersPage() {
                 onChange={(event) =>
                   setCreateForm((prev) => ({ ...prev, name: event.target.value }))
                 }
-                className="bg-gray-900 border-gray-700 text-white"
+                className="bg-gray-900 border text-white"
               />
             </div>
             <div className="space-y-2">
@@ -591,7 +591,7 @@ export default function AuthUsersPage() {
                 onChange={(event) =>
                   setCreateForm((prev) => ({ ...prev, email: event.target.value }))
                 }
-                className="bg-gray-900 border-gray-700 text-white"
+                className="bg-gray-900 border text-white"
               />
             </div>
             <div className="space-y-2">
@@ -605,7 +605,7 @@ export default function AuthUsersPage() {
                 onChange={(event) =>
                   setCreateForm((prev) => ({ ...prev, password: event.target.value }))
                 }
-                className="bg-gray-900 border-gray-700 text-white"
+                className="bg-gray-900 border text-white"
               />
             </div>
             <div className="space-y-2">
@@ -618,7 +618,7 @@ export default function AuthUsersPage() {
                   setCreateForm((prev) => ({ ...prev, roleId: value }))
                 }
               >
-                <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
+                <SelectTrigger className="bg-gray-900 border text-white">
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
@@ -640,7 +640,7 @@ export default function AuthUsersPage() {
                     verified: Boolean(checked),
                   }))
                 }
-                className="h-4 w-4 rounded border-gray-700 bg-gray-900"
+                className="h-4 w-4 rounded border bg-gray-900"
               />
               <Label htmlFor="create-verified" className="text-xs text-gray-300">
                 Mark email as verified
@@ -659,7 +659,7 @@ export default function AuthUsersPage() {
       </Dialog>
 
       <Dialog open={mockOpen} onOpenChange={setMockOpen}>
-        <DialogContent className="bg-gray-950 border-gray-800 text-white">
+        <DialogContent className="bg-card border-border text-white">
           <DialogHeader>
             <DialogTitle>Mock Sign-in</DialogTitle>
           </DialogHeader>
@@ -675,7 +675,7 @@ export default function AuthUsersPage() {
                 id="mock-email"
                 value={mockEmail}
                 onChange={(event) => setMockEmail(event.target.value)}
-                className="bg-gray-900 border-gray-700 text-white"
+                className="bg-gray-900 border text-white"
               />
             </div>
             <div className="space-y-2">
@@ -687,7 +687,7 @@ export default function AuthUsersPage() {
                 type="password"
                 value={mockPassword}
                 onChange={(event) => setMockPassword(event.target.value)}
-                className="bg-gray-900 border-gray-700 text-white"
+                className="bg-gray-900 border text-white"
               />
             </div>
             {mockStatus !== "idle" ? (

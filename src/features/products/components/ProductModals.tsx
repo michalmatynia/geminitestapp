@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import ModalShell from "@/shared/ui/modal-shell";
+import ModalShell from "@/shared/components/modal-shell";
 import { Button } from "@/shared/ui/button";
 import { AppModal } from "@/shared/ui/app-modal";
 import FileManager from "@/features/files/components/FileManager";

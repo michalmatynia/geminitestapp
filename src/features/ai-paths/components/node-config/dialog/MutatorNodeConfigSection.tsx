@@ -26,7 +26,7 @@ export function MutatorNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">Target Path</Label>
         <Input
-          className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+          className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={mutatorConfig.path}
           onChange={(event) =>
             updateSelectedNodeConfig({
@@ -38,7 +38,7 @@ export function MutatorNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">Value Template</Label>
         <Textarea
-          className="mt-2 min-h-[90px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+          className="mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={mutatorConfig.valueTemplate}
           onChange={(event) =>
             updateSelectedNodeConfig({

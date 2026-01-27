@@ -5,8 +5,8 @@ import Link from "next/link";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 import type { ChatbotMemoryItem } from "../types";
 import * as chatbotApi from "../api";
 
@@ -116,7 +116,7 @@ export default function AgentMemoryPage() {
             </div>
           </div>
         </SectionPanel>
-        <div className="mt-4 rounded-md border border-gray-800 bg-gray-900 p-4 text-sm text-gray-300">
+        <div className="mt-4 rounded-md border border-border bg-gray-900 p-4 text-sm text-gray-300">
           {loading ? (
             <p className="text-gray-400">Loading memory…</p>
           ) : error ? (
@@ -128,7 +128,7 @@ export default function AgentMemoryPage() {
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-md border border-gray-800 bg-gray-950 p-3"
+                  className="rounded-md border border-border bg-card p-3"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400">
                     <span>Key: {item.memoryKey}</span>
@@ -142,7 +142,7 @@ export default function AgentMemoryPage() {
                       item.tags.map((tagValue) => (
                         <span
                           key={`${item.id}-${tagValue}`}
-                          className="rounded-full border border-gray-800 bg-gray-900 px-2 py-[1px]"
+                          className="rounded-full border border-border bg-gray-900 px-2 py-[1px]"
                         >
                           {tagValue}
                         </span>
@@ -177,7 +177,7 @@ export default function AgentMemoryPage() {
                         <p className="text-[10px] uppercase text-gray-500">
                           Content
                         </p>
-                        <pre className="mt-1 whitespace-pre-wrap rounded-md border border-gray-800 bg-gray-900 p-2 text-[10px] text-gray-200">
+                        <pre className="mt-1 whitespace-pre-wrap rounded-md border border-border bg-gray-900 p-2 text-[10px] text-gray-200">
                           {item.content}
                         </pre>
                       </div>
@@ -186,7 +186,7 @@ export default function AgentMemoryPage() {
                           <p className="text-[10px] uppercase text-gray-500">
                             Metadata
                           </p>
-                          <pre className="mt-1 whitespace-pre-wrap rounded-md border border-gray-800 bg-gray-900 p-2 text-[10px] text-gray-200">
+                          <pre className="mt-1 whitespace-pre-wrap rounded-md border border-border bg-gray-900 p-2 text-[10px] text-gray-200">
                             {JSON.stringify(item.metadata, null, 2)}
                           </pre>
                         </div>

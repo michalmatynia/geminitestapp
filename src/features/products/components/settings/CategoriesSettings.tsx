@@ -136,7 +136,7 @@ function CategoryNode({
         className={`group flex items-center gap-1 rounded px-2 py-1.5 cursor-pointer active:cursor-grabbing transition ${
           isDragOver && canDropHere
             ? "bg-emerald-600 text-white"
-            : "text-gray-300 hover:bg-gray-800"
+            : "text-gray-300 hover:bg-muted/50"
         }`}
         style={{ paddingLeft: `${level * 16 + 8}px` }}
       >
@@ -536,7 +536,7 @@ export function CategoriesSettings({
   return (
     <div className="space-y-5">
       {/* Catalog Selector */}
-      <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4">
+      <div className="rounded-md border border-border bg-card/60 p-4">
         <p className="text-sm font-semibold text-white mb-3">Select Catalog</p>
         <p className="text-xs text-gray-400 mb-3">
           Each catalog has its own category tree. Select a catalog to manage its categories.
@@ -574,22 +574,22 @@ export function CategoriesSettings({
             </Button>
           </div>
 
-          <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4">
+          <div className="rounded-md border border-border bg-card/60 p-4">
             <p className="text-sm font-semibold text-white mb-4">
               Category Tree for &quot;{selectedCatalog?.name}&quot;
             </p>
 
             {loading ? (
-              <div className="rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+              <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
                 Loading categories...
               </div>
             ) : categories.length === 0 ? (
-              <div className="rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+              <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
                 No categories yet for this catalog. Create your first category!
               </div>
             ) : (
               <div
-                className="space-y-0.5 rounded-md border border-gray-800 bg-gray-900 p-2"
+                className="space-y-0.5 rounded-md border border-border bg-gray-900 p-2"
                 onDragOver={(e) => {
                   e.preventDefault();
                 }}
@@ -597,7 +597,7 @@ export function CategoriesSettings({
               >
                 {/* Root drop zone */}
                 <div
-                  className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-gray-500 border border-dashed border-gray-700 mb-2"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-gray-500 border border-dashed border mb-2"
                   onDragOver={(e) => {
                     e.preventDefault();
                     e.currentTarget.classList.add("bg-emerald-600/20", "border-emerald-500");
@@ -638,7 +638,7 @@ export function CategoriesSettings({
       )}
 
       {!selectedCatalogId && catalogs.length === 0 && (
-        <div className="rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+        <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
           No catalogs found. Please create a catalog first in the Catalogs section.
         </div>
       )}
@@ -650,7 +650,7 @@ export function CategoriesSettings({
           onOpenChange={(open) => !open && setShowModal(false)}
           title={editingCategory ? "Edit Category" : "Create Category"}
         >
-          <div className="w-full max-w-md rounded-lg bg-gray-950 p-6 shadow-lg">
+          <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-lg">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-white">
                 {editingCategory ? "Edit Category" : "Create Category"}
@@ -668,7 +668,7 @@ export function CategoriesSettings({
               <div>
                 <Label className="text-xs text-gray-400">Name</Label>
                 <Input
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.name}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, name: e.target.value }))
@@ -680,7 +680,7 @@ export function CategoriesSettings({
               <div>
                 <Label className="text-xs text-gray-400">Description</Label>
                 <Textarea
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   rows={3}
                   value={formData.description}
                   onChange={(e) =>
@@ -696,7 +696,7 @@ export function CategoriesSettings({
               <div>
                 <Label className="text-xs text-gray-400">Catalog</Label>
                 <select
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.catalogId}
                   onChange={(e) => {
                     const nextCatalogId = e.target.value;
@@ -721,7 +721,7 @@ export function CategoriesSettings({
               <div>
                 <Label className="text-xs text-gray-400">Parent Category</Label>
                 <select
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.parentId ?? ""}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -757,7 +757,7 @@ export function CategoriesSettings({
                 <div className="mt-2 flex items-center gap-3">
                   <Input
                     type="color"
-                    className="h-10 w-20 cursor-pointer rounded border border-gray-800 bg-gray-900"
+                    className="h-10 w-20 cursor-pointer rounded border border-border bg-gray-900"
                     value={formData.color}
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, color: e.target.value }))
@@ -765,7 +765,7 @@ export function CategoriesSettings({
                   />
                   <Input
                     type="text"
-                    className="flex-1 rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                    className="flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                     value={formData.color}
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, color: e.target.value }))
@@ -777,7 +777,7 @@ export function CategoriesSettings({
 
               <div className="flex items-center justify-end gap-3 pt-4">
                 <Button
-                  className="rounded-md border border-gray-800 px-3 py-2 text-sm text-gray-300 hover:bg-gray-900"
+                  className="rounded-md border border-border px-3 py-2 text-sm text-gray-300 hover:bg-muted/50"
                   type="button"
                   onClick={() => setShowModal(false)}
                 >

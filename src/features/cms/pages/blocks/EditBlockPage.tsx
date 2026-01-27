@@ -8,7 +8,7 @@ import { Label } from "@/shared/ui/label";
 import { Textarea } from "@/shared/ui/textarea";
 import { fetchBlock, updateBlock } from "@/features/cms/api/blocks";
 import type { BlockForm } from "@/features/cms/types";
-import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionHeader } from "@/shared/components/section-header";
 
 export default function EditBlockPage() {
   const [block, setBlock] = useState<BlockForm | null>(null);

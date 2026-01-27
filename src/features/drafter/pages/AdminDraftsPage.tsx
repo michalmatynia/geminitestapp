@@ -3,10 +3,10 @@
 import { useRef, useState } from "react";
 import { DraftList } from "../components/DraftList";
 import { DraftCreator } from "../components/DraftCreator";
-import ModalShell from "@/shared/ui/modal-shell";
+import ModalShell from "@/shared/components/modal-shell";
 import { Button } from "@/shared/ui/button";
 import { AppModal } from "@/shared/ui/app-modal";
-import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionHeader } from "@/shared/components/section-header";
 
 export function AdminDraftsPage() {
   const [isCreatorOpen, setIsCreatorOpen] = useState(false);

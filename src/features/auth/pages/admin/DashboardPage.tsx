@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 import { useToast } from "@/shared/ui/toast";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 import {
   AUTH_SETTINGS_KEYS,
   DEFAULT_AUTH_ROLES,
@@ -99,7 +99,7 @@ export default function AuthDashboardPage() {
       </SectionPanel>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-gray-950 border-gray-800">
+        <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-white text-lg">Total Users</CardTitle>
             <CardDescription className="text-gray-500">All accounts</CardDescription>
@@ -108,7 +108,7 @@ export default function AuthDashboardPage() {
             <div className="text-3xl font-semibold text-white">{metrics.total}</div>
           </CardContent>
         </Card>
-        <Card className="bg-gray-950 border-gray-800">
+        <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-white text-lg">Verified Emails</CardTitle>
             <CardDescription className="text-gray-500">Email verified</CardDescription>
@@ -117,7 +117,7 @@ export default function AuthDashboardPage() {
             <div className="text-3xl font-semibold text-white">{metrics.verified}</div>
           </CardContent>
         </Card>
-        <Card className="bg-gray-950 border-gray-800">
+        <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-white text-lg">Unverified</CardTitle>
             <CardDescription className="text-gray-500">Pending verification</CardDescription>
@@ -126,7 +126,7 @@ export default function AuthDashboardPage() {
             <div className="text-3xl font-semibold text-white">{metrics.unverified}</div>
           </CardContent>
         </Card>
-        <Card className="bg-gray-950 border-gray-800">
+        <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-white text-lg">Unassigned Roles</CardTitle>
             <CardDescription className="text-gray-500">No role assigned</CardDescription>
@@ -137,7 +137,7 @@ export default function AuthDashboardPage() {
         </Card>
       </div>
 
-      <Card className="bg-gray-950 border-gray-800">
+      <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="text-white text-lg">Role Distribution</CardTitle>
           <CardDescription className="text-gray-500">
@@ -148,7 +148,7 @@ export default function AuthDashboardPage() {
           {roles.map((role) => (
             <div
               key={role.id}
-              className="rounded-md border border-gray-800 bg-gray-900/50 px-4 py-3"
+              className="rounded-md border border-border bg-card/50 px-4 py-3"
             >
               <div className="text-sm font-semibold text-white">{role.name}</div>
               <div className="text-xs text-gray-400">{role.description ?? role.id}</div>

@@ -59,10 +59,10 @@ export function ChatInterface({
           </div>
         )}
       </div>
-      <div className="border-t border-gray-800 p-4">
+      <div className="border-t border-border p-4">
         <form onSubmit={onSend} className="flex gap-2">
           <Input
-            className="flex-1 rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+            className="flex-1 rounded-md border bg-gray-900 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..."

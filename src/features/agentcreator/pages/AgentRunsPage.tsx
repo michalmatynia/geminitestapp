@@ -9,10 +9,10 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { useToast } from "@/shared/ui/toast";
-import ModalShell from "@/shared/ui/modal-shell";
+import ModalShell from "@/shared/components/modal-shell";
 import { AppModal } from "@/shared/ui/app-modal";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 type AgentRun = {
   id: string;
@@ -429,7 +429,7 @@ export default function AgentRunsPage() {
             {filteredRuns.map((job) => (
               <div
                 key={job.id}
-                className="rounded-md border border-gray-800 bg-gray-900 px-4 py-3"
+                className="rounded-md border border-border bg-gray-900 px-4 py-3"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
@@ -516,7 +516,7 @@ export default function AgentRunsPage() {
               </TabsList>
               <TabsContent value="summary" className="mt-4 space-y-3">
                   {selectedAgentRun ? (
-                    <div className="rounded-md border border-gray-800 bg-gray-900 p-3 text-xs text-gray-300">
+                    <div className="rounded-md border border-border bg-gray-900 p-3 text-xs text-gray-300">
                       <p className="text-[11px] text-gray-500">Run summary</p>
                       <p className="mt-1 text-sm text-white">
                         {selectedAgentRun.prompt}
@@ -563,7 +563,7 @@ export default function AgentRunsPage() {
                   ) : null}
                 </TabsContent>
                 <TabsContent value="preview" className="mt-4">
-                  <div className="rounded-md border border-gray-800 bg-gray-950 p-3">
+                  <div className="rounded-md border border-border bg-card p-3">
                     <div className="flex items-center justify-between text-xs text-gray-400">
                       <span>Preview</span>
                       <span>
@@ -576,7 +576,7 @@ export default function AgentRunsPage() {
                               : "Idle"}
                       </span>
                     </div>
-                    <div className="mt-3 overflow-hidden rounded-md border border-gray-800 bg-gray-900">
+                    <div className="mt-3 overflow-hidden rounded-md border border-border bg-gray-900">
                       {agentSnapshot?.screenshotPath ||
                       agentSnapshot?.screenshotData ? (
                         <div className="relative">
@@ -619,15 +619,15 @@ export default function AgentRunsPage() {
                   </div>
                 </TabsContent>
                 <TabsContent value="dom" className="mt-4">
-                  <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                  <div className="rounded-md border border-border bg-card p-3 text-xs text-gray-300">
                     <p className="text-[11px] text-gray-500">DOM snapshot</p>
-                    <div className="mt-2 max-h-48 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                    <div className="mt-2 max-h-48 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200">
                       {agentSnapshot?.domText || "No DOM captured yet."}
                     </div>
                   </div>
                 </TabsContent>
                 <TabsContent value="steps" className="mt-4">
-                  <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                  <div className="rounded-md border border-border bg-card p-3 text-xs text-gray-300">
                     <div className="mb-3 flex items-center justify-between text-[11px] text-gray-400">
                       <span>Checkpoint status</span>
                       {selectedAgentRun?.checkpointedAt ? (
@@ -649,7 +649,7 @@ export default function AgentRunsPage() {
                     ) : null}
                     <p className="text-[11px] text-gray-500">Plan hierarchy</p>
                     {latestPlanHierarchy?.goals?.length ? (
-                      <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                      <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200">
                         {(
                           latestPlanHierarchy.goals as Array<{
                             id?: string;
@@ -670,7 +670,7 @@ export default function AgentRunsPage() {
                         ).map((goal, goalIndex) => (
                           <div
                             key={goal.id ?? `goal-${goalIndex}`}
-                            className="rounded-md border border-gray-800 bg-gray-950 p-2"
+                            className="rounded-md border border-border bg-card p-2"
                           >
                             <p className="text-xs text-slate-200">
                               Goal {goalIndex + 1}: {goal.title}
@@ -687,7 +687,7 @@ export default function AgentRunsPage() {
                                     subgoal.id ??
                                     `subgoal-${goalIndex}-${subIndex}`
                                   }
-                                  className="rounded-md border border-gray-800 bg-gray-900 p-2"
+                                  className="rounded-md border border-border bg-gray-900 p-2"
                                 >
                                   <p className="text-[11px] text-slate-100">
                                     Subgoal {goalIndex + 1}.{subIndex + 1}:{" "}
@@ -742,17 +742,17 @@ export default function AgentRunsPage() {
                       </p>
                     )}
                   </div>
-                  <div className="mt-4 rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                  <div className="mt-4 rounded-md border border-border bg-card p-3 text-xs text-gray-300">
                     <p className="text-[11px] text-gray-500">Plan steps</p>
                     {latestPlanSteps.length ? (
-                      <div className="mt-2 max-h-56 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                      <div className="mt-2 max-h-56 space-y-2 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200">
                         {latestPlanSteps.map((step, index) => {
                           const stepId = step.id ?? `step-${index}`;
                           const events = planningEventsByStep.get(stepId) ?? [];
                           return (
                             <div
                               key={stepId}
-                              className="rounded-md border border-gray-800 bg-gray-950 p-2"
+                              className="rounded-md border border-border bg-card p-2"
                             >
                               <div className="flex items-center justify-between text-[10px] text-gray-500">
                                 <span>{step.status ?? "pending"}</span>
@@ -776,7 +776,7 @@ export default function AgentRunsPage() {
                                 </p>
                               ) : null}
                               {events.length > 0 ? (
-                                <div className="mt-2 rounded-md border border-gray-800 bg-gray-900 p-2">
+                                <div className="mt-2 rounded-md border border-border bg-gray-900 p-2">
                                   <p className="text-[10px] uppercase tracking-wide text-gray-500">
                                     Planning events
                                   </p>
@@ -795,7 +795,7 @@ export default function AgentRunsPage() {
                       <p className="mt-2 text-gray-500">No plan steps found.</p>
                     )}
                   </div>
-                  <div className="mt-4 rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                  <div className="mt-4 rounded-md border border-border bg-card p-3 text-xs text-gray-300">
                     <div className="flex items-center gap-2">
                       <span className="rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200">
                         Branch
@@ -805,7 +805,7 @@ export default function AgentRunsPage() {
                       </p>
                     </div>
                     {branchAudits.length ? (
-                      <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                      <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200">
                         {branchAudits.map((audit, index) => {
                           const meta = audit.metadata as {
                             failedStepId?: string;
@@ -821,7 +821,7 @@ export default function AgentRunsPage() {
                           return (
                             <div
                               key={audit.id ?? `branch-${index}`}
-                              className="rounded-md border border-gray-800 bg-gray-950 p-2"
+                              className="rounded-md border border-border bg-card p-2"
                             >
                               <div className="flex items-center justify-between text-[10px] text-gray-500">
                                 <span>
@@ -888,16 +888,16 @@ export default function AgentRunsPage() {
                       </p>
                     )}
                   </div>
-                  <div className="mt-4 rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                  <div className="mt-4 rounded-md border border-border bg-card p-3 text-xs text-gray-300">
                     <p className="text-[11px] text-gray-500">Agent steps</p>
-                    <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                    <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200">
                       {agentAudits.length === 0 ? (
                         <p className="text-gray-500">No steps yet.</p>
                       ) : (
                         agentAudits.map((step) => (
                           <div
                             key={step.id}
-                            className="rounded-md border border-gray-800 px-2 py-1"
+                            className="rounded-md border border-border px-2 py-1"
                           >
                             <div className="flex items-center justify-between text-[10px] text-gray-500">
                               <span className="uppercase tracking-wide">
@@ -925,7 +925,7 @@ export default function AgentRunsPage() {
                                     : "Show metadata"}
                                 </Button>
                                 {expandedAuditIds[step.id] ? (
-                                  <pre className="mt-2 whitespace-pre-wrap rounded-md border border-gray-800 bg-gray-900 p-2 text-[10px] text-gray-300">
+                                  <pre className="mt-2 whitespace-pre-wrap rounded-md border border-border bg-gray-900 p-2 text-[10px] text-gray-300">
                                     {JSON.stringify(step.metadata, null, 2)}
                                   </pre>
                                 ) : null}
@@ -938,9 +938,9 @@ export default function AgentRunsPage() {
                   </div>
                 </TabsContent>
                 <TabsContent value="logs" className="mt-4">
-                  <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                  <div className="rounded-md border border-border bg-card p-3 text-xs text-gray-300">
                     <p className="text-[11px] text-gray-500">Logs</p>
-                    <div className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                    <div className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200">
                       {agentLogs.length === 0 ? (
                         <p className="text-gray-500">No logs yet.</p>
                       ) : (
@@ -954,10 +954,10 @@ export default function AgentRunsPage() {
                   </div>
                 </TabsContent>
                 <TabsContent value="context" className="mt-4">
-                  <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                  <div className="rounded-md border border-border bg-card p-3 text-xs text-gray-300">
                     <p className="text-[11px] text-gray-500">Planner context</p>
                     {latestPlannerContext ? (
-                      <div className="mt-2 max-h-48 overflow-y-auto rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                      <div className="mt-2 max-h-48 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200">
                         <pre className="whitespace-pre-wrap break-words">
                           {JSON.stringify(latestPlannerContext, null, 2)}
                         </pre>
@@ -968,11 +968,11 @@ export default function AgentRunsPage() {
                       </p>
                     )}
                   </div>
-                  <div className="mt-4 rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                  <div className="mt-4 rounded-md border border-border bg-card p-3 text-xs text-gray-300">
                     <p className="text-[11px] text-gray-500">Session context</p>
                     {latestSessionContext ? (
                       <div className="mt-2 space-y-3">
-                        <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                        <div className="rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200">
                           <p className="text-[10px] uppercase tracking-wide text-gray-500">
                             Cookies
                           </p>
@@ -1012,7 +1012,7 @@ export default function AgentRunsPage() {
                             )}
                           </div>
                         </div>
-                        <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                        <div className="rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200">
                           <p className="text-[10px] uppercase tracking-wide text-gray-500">
                             Storage keys
                           </p>
@@ -1052,13 +1052,13 @@ export default function AgentRunsPage() {
                   </div>
                 </TabsContent>
                 <TabsContent value="elements" className="mt-4">
-                  <div className="rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-300">
+                  <div className="rounded-md border border-border bg-card p-3 text-xs text-gray-300">
                     <p className="text-[11px] text-gray-500">
                       Login candidates
                     </p>
                     {latestLoginCandidates ? (
                       <div className="mt-2 grid gap-3 md:grid-cols-2">
-                        <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                        <div className="rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200">
                           <p className="text-[10px] uppercase tracking-wide text-gray-500">
                             Inputs
                           </p>
@@ -1094,7 +1094,7 @@ export default function AgentRunsPage() {
                             )}
                           </div>
                         </div>
-                        <div className="rounded-md border border-gray-800 bg-gray-900 p-2 text-[11px] text-gray-200">
+                        <div className="rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200">
                           <p className="text-[10px] uppercase tracking-wide text-gray-500">
                             Buttons
                           </p>

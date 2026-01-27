@@ -126,7 +126,7 @@ export function CanvasBoard({
   return (
     <div
       ref={viewportRef}
-      className={`relative min-h-[560px] rounded-lg border border-gray-800 bg-gray-950/70 overflow-hidden ${
+      className={`relative min-h-[560px] rounded-lg border bg-card/70 backdrop-blur overflow-hidden ${
         panState ? "cursor-grabbing" : "cursor-grab"
       }`}
       onDrop={onDrop}
@@ -136,16 +136,16 @@ export function CanvasBoard({
       onPointerUp={onPanEnd}
       onPointerLeave={onPanEnd}
     >
-      <div className="absolute bottom-3 left-3 z-10 rounded-md border border-gray-800 bg-gray-950/70 px-3 py-2 text-[11px] text-gray-400">
+      <div className="absolute bottom-3 left-3 z-10 rounded-md border bg-card/70 backdrop-blur px-3 py-2 text-[11px] text-gray-400">
         Nodes: {nodes.length}
         {lastDrop ? ` • Last drop: ${Math.round(lastDrop.x)}, ${Math.round(lastDrop.y)}` : ""}
         {` • View: ${Math.round(view.x)}, ${Math.round(view.y)} @ ${Math.round(view.scale * 100)}%`}
       </div>
-      <div className="absolute bottom-4 right-4 z-10 rounded-md border border-gray-800 bg-gray-950/70 p-2 text-xs text-gray-300">
+      <div className="absolute bottom-4 right-4 z-10 rounded-md border bg-card/70 backdrop-blur p-2 text-xs text-gray-300">
         <div className="mb-2 text-[11px] uppercase text-gray-500">View Controls</div>
         <div className="flex items-center gap-2">
           <Button
-            className="h-7 w-7 rounded-full border border-gray-700 text-xs text-white hover:bg-gray-900/80"
+            className="h-7 w-7 rounded-full border text-xs text-white hover:bg-muted/60"
             type="button"
             onClick={() => onZoomTo(view.scale - 0.1)}
           >
@@ -155,21 +155,21 @@ export function CanvasBoard({
             {Math.round(view.scale * 100)}%
           </span>
           <Button
-            className="h-7 w-7 rounded-full border border-gray-700 text-xs text-white hover:bg-gray-900/80"
+            className="h-7 w-7 rounded-full border text-xs text-white hover:bg-muted/60"
             type="button"
             onClick={() => onZoomTo(view.scale + 0.1)}
           >
             +
           </Button>
           <Button
-            className="h-7 rounded-full border border-gray-700 px-2 text-[11px] text-white hover:bg-gray-900/80"
+            className="h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60"
             type="button"
             onClick={onFitToNodes}
           >
             Fit
           </Button>
           <Button
-            className="h-7 rounded-full border border-gray-700 px-2 text-[11px] text-white hover:bg-gray-900/80"
+            className="h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60"
             type="button"
             onClick={onResetView}
           >
@@ -328,7 +328,7 @@ export function CanvasBoard({
               }}
             >
               <div
-                className={`relative flex flex-col gap-2 rounded-xl border bg-gray-950/80 p-3 text-xs text-gray-200 shadow-lg backdrop-blur ${
+                className={`relative flex flex-col gap-2 rounded-xl border bg-card/80 p-3 text-xs text-gray-200 shadow-lg backdrop-blur ${
                   style.border
                 } ${style.glow} ${isSelected ? "ring-2 ring-white/20" : ""}`}
               >
@@ -360,7 +360,7 @@ export function CanvasBoard({
                               isConnecting
                                 ? isConnectable
                                   ? "border-emerald-300/80 bg-emerald-500/30 shadow-[0_0_14px_rgba(52,211,153,0.55)] ring-2 ring-emerald-400/60"
-                                  : "border-gray-700 bg-gray-800/20 opacity-40 shadow-none"
+                                  : "border-border/60 bg-card/20 opacity-40 shadow-none"
                                 : "border-sky-400/60"
                             }`}
                             style={{
@@ -381,7 +381,7 @@ export function CanvasBoard({
                               isConnecting
                                 ? isConnectable
                                   ? "bg-emerald-500/15 text-emerald-200"
-                                  : "bg-gray-800 text-gray-500"
+                                  : "bg-muted/60 text-gray-500"
                                 : "bg-sky-500/10 text-sky-300"
                             }`}
                           >
@@ -420,7 +420,7 @@ export function CanvasBoard({
                 ))}
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-white">{node.title}</span>
-                  <span className="rounded-full border border-gray-700 px-2 py-[1px] text-[10px] uppercase text-gray-400">
+                  <span className="rounded-full border px-2 py-[1px] text-[10px] uppercase text-gray-400">
                     {node.type}
                   </span>
                 </div>
@@ -469,7 +469,7 @@ export function CanvasBoard({
                   </span>
                 )}
                 {node.type === "viewer" && (
-                  <div className="rounded-md border border-gray-800 bg-gray-950/60 px-2 py-1 text-[10px] text-gray-400">
+                  <div className="rounded-md border border-border bg-card/60 px-2 py-1 text-[10px] text-gray-400">
                     Open node to view results
                   </div>
                 )}

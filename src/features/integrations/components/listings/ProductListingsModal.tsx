@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import ModalShell from "@/shared/ui/modal-shell";
+import ModalShell from "@/shared/components/modal-shell";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import {
@@ -224,7 +224,7 @@ export default function ProductListingsModal({
   const canStartListing = Boolean(onStartListing) && !filterIntegrationSlug;
 
   const StartListingPanel = () => (
-    <div className="rounded-md border border-gray-800 bg-gray-950/60 px-4 py-4">
+    <div className="rounded-md border border-border bg-card/60 px-4 py-4">
       {loadingIntegrations ? (
         <p className="text-sm text-gray-400">Loading integrations...</p>
       ) : integrations.length === 0 ? (
@@ -307,7 +307,7 @@ export default function ProductListingsModal({
     const activeFields = syncFields.filter((f) => f.hasValue);
 
     return (
-      <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3">
+      <div className="rounded-md border border-border bg-card/60 p-3">
         <div className="mb-3 flex items-center justify-between">
           <h4 className="text-xs font-medium uppercase tracking-wide text-gray-400">
             Sync Configuration
@@ -333,7 +333,7 @@ export default function ProductListingsModal({
               key={field.name}
               className={`flex items-center justify-between rounded px-2 py-1.5 text-xs ${
                 field.hasValue
-                  ? "bg-gray-900/50"
+                  ? "bg-card/50"
                   : "bg-gray-900/20 opacity-50"
               }`}
             >
@@ -359,7 +359,7 @@ export default function ProductListingsModal({
           ))}
         </div>
 
-        <div className="mt-3 border-t border-gray-800 pt-2">
+        <div className="mt-3 border-t border-border pt-2">
           <div className="flex items-center justify-between text-[10px] text-gray-500">
             <span>{activeFields.length} of {syncFields.length} fields will be synced</span>
             <div className="flex items-center gap-3">
@@ -670,7 +670,7 @@ export default function ProductListingsModal({
                         Retry image export
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="bg-gray-950 border-gray-800">
+                    <DropdownMenuContent align="start" className="bg-card border-border">
                       {imageRetryPresets.map((preset) => (
                         <DropdownMenuItem
                           key={preset.id}
@@ -698,20 +698,20 @@ export default function ProductListingsModal({
           <div className="space-y-3">
             {canStartListing && <StartListingPanel />}
             {filteredListings.length === 0 ? (
-              <div className="rounded-md border border-gray-700 bg-gray-900/50 px-4 py-8 text-center">
+              <div className="rounded-md border bg-card/50 px-4 py-8 text-center">
                 {filterIntegrationSlug ? (
                   <div className="space-y-3">
                     <div className="text-sm text-gray-300">
                       {statusTargetLabel} status
                     </div>
-                    <div className="rounded-md border border-gray-800 bg-gray-950/60 px-3 py-2 text-xs text-gray-400">
+                    <div className="rounded-md border border-border bg-card/60 px-3 py-2 text-xs text-gray-400">
                       Not connected.
                     </div>
                     {filterIntegrationSlug === "baselinker" && <SyncConfigurationPanel />}
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="border-t border-gray-800 pt-3">
+                    <div className="border-t border-border pt-3">
                       <p className="text-sm text-gray-400">
                         This product is not listed on any marketplace yet.
                       </p>
@@ -725,7 +725,7 @@ export default function ProductListingsModal({
             ) : (
               <div className="space-y-3">
                 {filterIntegrationSlug && (
-                  <div className="rounded-md border border-gray-800 bg-gray-950/60 px-3 py-2 text-xs text-gray-300">
+                  <div className="rounded-md border border-border bg-card/60 px-3 py-2 text-xs text-gray-300">
                     {statusTargetLabel} status: {filteredListings[0]?.status ?? "Unknown"}
                   </div>
                 )}
@@ -733,7 +733,7 @@ export default function ProductListingsModal({
                 {filteredListings.map((listing) => (
                   <div
                     key={listing.id}
-                    className="flex items-center justify-between rounded-md border border-gray-700 bg-gray-900/50 px-4 py-3"
+                    className="flex items-center justify-between rounded-md border bg-card/50 px-4 py-3"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -768,7 +768,7 @@ export default function ProductListingsModal({
                         )}
                       </div>
                       {listing.exportHistory && listing.exportHistory.length > 0 ? (
-                        <div className="mt-3 rounded border border-gray-800 bg-gray-950/50 p-2">
+                        <div className="mt-3 rounded border border-border bg-card/50 p-2">
                           <div className="flex items-center justify-between">
                             <p className="text-[10px] uppercase tracking-wide text-gray-500">
                               Export history
@@ -853,7 +853,7 @@ export default function ProductListingsModal({
                               </DropdownMenuTrigger>
                               <DropdownMenuContent
                                 align="start"
-                                className="bg-gray-950 border-gray-800"
+                                className="bg-card border-border"
                               >
                                 <DropdownMenuItem
                                   onSelect={() => void handleExportImagesOnly(listing.id)}
@@ -900,7 +900,7 @@ export default function ProductListingsModal({
                                   }))
                                 }
                                 placeholder="Enter inventory ID"
-                                className="h-7 border-gray-700 bg-gray-950/60 text-gray-200"
+                                className="h-7 border bg-card/60 text-gray-200"
                               />
                               <Button
                                 type="button"
@@ -908,7 +908,7 @@ export default function ProductListingsModal({
                                 size="sm"
                                 onClick={() => void handleSaveInventoryId(listing.id)}
                                 disabled={savingInventoryId === listing.id}
-                                className="h-7 border-gray-700 text-gray-200 hover:bg-gray-800"
+                                className="h-7 border text-gray-200 hover:bg-muted/50"
                               >
                                 Save inventory ID
                               </Button>
@@ -934,7 +934,7 @@ export default function ProductListingsModal({
                         size="sm"
                         onClick={() => void handlePurgeListing(listing.id)}
                         disabled={purgingListing === listing.id}
-                        className="text-gray-400 hover:bg-gray-800 hover:text-red-400"
+                        className="text-gray-400 hover:bg-muted/50 hover:text-red-400"
                       >
                         <Trash2 className="mr-1 size-3" />
                         Remove history
@@ -947,7 +947,7 @@ export default function ProductListingsModal({
           </div>
         )}
         {exportLogs.length > 0 && (
-          <div className="mt-4 border-t border-gray-700 pt-4">
+          <div className="mt-4 border-t border pt-4">
             <ExportLogViewer
               logs={exportLogs}
               isOpen={logsOpen}

@@ -35,7 +35,7 @@ export function PathsTabPanel({
         </div>
         <div className="flex items-center gap-2">
           <Button
-            className="rounded-md border border-gray-700 text-sm text-white hover:bg-gray-900/80"
+            className="rounded-md border text-sm text-white hover:bg-muted/60"
             type="button"
             onClick={onCreatePath}
           >
@@ -49,7 +49,7 @@ export function PathsTabPanel({
             Create AI Description Path
           </Button>
           <Button
-            className="rounded-md border border-gray-700 text-sm text-white hover:bg-gray-900/80"
+            className="rounded-md border text-sm text-white hover:bg-muted/60"
             type="button"
             onClick={onSaveList}
           >
@@ -58,10 +58,10 @@ export function PathsTabPanel({
         </div>
       </div>
 
-      <div className="rounded-md border border-gray-800 bg-gray-950/60">
+      <div className="rounded-md border bg-card/60 backdrop-blur">
         <Table>
           <TableHeader>
-            <TableRow className="border-gray-800/80">
+            <TableRow className="border-border/60">
               <TableHead className="text-xs text-gray-400">Path Name</TableHead>
               <TableHead className="text-xs text-gray-400">Updated</TableHead>
               <TableHead className="text-xs text-gray-400 text-right">Actions</TableHead>
@@ -69,7 +69,7 @@ export function PathsTabPanel({
           </TableHeader>
           <TableBody>
             {paths.map((path) => (
-              <TableRow key={path.id} className="border-gray-800/60">
+              <TableRow key={path.id} className="border-border/50">
                 <TableCell className="text-sm text-white">
                   <button
                     type="button"
@@ -85,14 +85,14 @@ export function PathsTabPanel({
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
                     <Button
-                      className="rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
+                      className="rounded-md border text-xs text-white hover:bg-muted/60"
                       type="button"
                       onClick={() => onEditPath(path.id)}
                     >
                       Edit
                     </Button>
                     <Button
-                      className="rounded-md border border-gray-800 text-xs text-rose-200 hover:bg-rose-500/10"
+                      className="rounded-md border border-border text-xs text-rose-200 hover:bg-rose-500/10"
                       type="button"
                       onClick={() => onDeletePath(path.id)}
                     >
@@ -138,7 +138,7 @@ export function DocsTabPanel({
 }: DocsTabPanelProps) {
   return (
     <div className="space-y-6 text-sm text-gray-300">
-      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
         <h2 className="text-lg font-semibold text-white">AI Paths Docs</h2>
         <p className="mt-2 text-gray-400">
           Modular workflows are built by connecting node outputs (right) to matching
@@ -146,7 +146,7 @@ export function DocsTabPanel({
         </p>
       </div>
 
-      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
         <h3 className="text-base font-semibold text-white">System Overview</h3>
         <ul className="mt-3 space-y-2 text-gray-400">
           <li>
@@ -169,7 +169,7 @@ export function DocsTabPanel({
         </ul>
       </div>
 
-      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
         <h3 className="text-base font-semibold text-white">Execution & State</h3>
         <ul className="mt-3 space-y-2 text-gray-400">
           <li>
@@ -191,7 +191,7 @@ export function DocsTabPanel({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+        <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
           <h3 className="text-base font-semibold text-white">Core Flow</h3>
           <ul className="mt-3 space-y-2 text-gray-400">
             <li>
@@ -213,7 +213,7 @@ export function DocsTabPanel({
           </ul>
         </div>
 
-        <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+        <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
           <h3 className="text-base font-semibold text-white">Port Rules</h3>
           <ul className="mt-3 space-y-2 text-gray-400">
             <li>Ports must match exactly (e.g. result → result).</li>
@@ -226,7 +226,7 @@ export function DocsTabPanel({
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
         <h3 className="text-base font-semibold text-white">Context Presets</h3>
         <p className="mt-2 text-gray-400">
           Use Light/Medium/Full presets on Context Filter nodes to quickly scope the entity
@@ -234,7 +234,7 @@ export function DocsTabPanel({
         </p>
       </div>
 
-      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
         <h3 className="text-base font-semibold text-white">AI Description Flow</h3>
         <ol className="mt-3 space-y-2 text-gray-400">
           <li>Context Filter.entityJson → Parser.entityJson</li>
@@ -245,7 +245,7 @@ export function DocsTabPanel({
         </ol>
       </div>
 
-      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
         <h3 className="text-base font-semibold text-white">AI Job Queue (AI Paths)</h3>
         <ul className="mt-3 space-y-2 text-gray-400">
           <li>
@@ -263,7 +263,7 @@ export function DocsTabPanel({
         </ul>
       </div>
 
-      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
         <h3 className="text-base font-semibold text-white">Cluster Presets</h3>
         <p className="mt-2 text-gray-400">
           Use Cluster Presets to save reusable Bundle + Template pairs. Apply them to
@@ -277,60 +277,60 @@ export function DocsTabPanel({
         </ul>
       </div>
 
-      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 className="text-base font-semibold text-white">Quick Wiring</h3>
           <Button
             type="button"
-            className="rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
+            className="rounded-md border text-xs text-white hover:bg-muted/60"
             onClick={onCopyDocsWiring}
           >
             Copy Wiring
           </Button>
         </div>
-        <pre className="mt-4 whitespace-pre-wrap rounded-md border border-gray-800 bg-gray-900/60 p-3 text-[11px] text-gray-200">
+        <pre className="mt-4 whitespace-pre-wrap rounded-md border border-border bg-card/60 p-3 text-[11px] text-gray-200">
           {docsWiringSnippet}
         </pre>
       </div>
 
-      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 className="text-base font-semibold text-white">
             AI Description Wiring
           </h3>
           <Button
             type="button"
-            className="rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
+            className="rounded-md border text-xs text-white hover:bg-muted/60"
             onClick={onCopyDocsDescription}
           >
             Copy AI Description Wiring
           </Button>
         </div>
-        <pre className="mt-4 whitespace-pre-wrap rounded-md border border-gray-800 bg-gray-900/60 p-3 text-[11px] text-gray-200">
+        <pre className="mt-4 whitespace-pre-wrap rounded-md border border-border bg-card/60 p-3 text-[11px] text-gray-200">
           {docsDescriptionSnippet}
         </pre>
       </div>
 
-      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 className="text-base font-semibold text-white">AI Job Wiring</h3>
           <Button
             type="button"
-            className="rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
+            className="rounded-md border text-xs text-white hover:bg-muted/60"
             onClick={onCopyDocsJobs}
           >
             Copy Job Wiring
           </Button>
         </div>
-        <pre className="mt-4 whitespace-pre-wrap rounded-md border border-gray-800 bg-gray-900/60 p-3 text-[11px] text-gray-200">
+        <pre className="mt-4 whitespace-pre-wrap rounded-md border border-border bg-card/60 p-3 text-[11px] text-gray-200">
           {docsJobsSnippet}
         </pre>
       </div>
 
-      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
         <h3 className="text-base font-semibold text-white">Node Reference</h3>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Context Filter</h4>
             <p className="mt-2 text-gray-400">
               Filters a context payload into scoped entity data. Feed it Trigger{" "}
@@ -338,94 +338,94 @@ export function DocsTabPanel({
               <span className="text-emerald-200">entityJson</span> to Parser.
             </p>
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Trigger</h4>
             <p className="mt-2 text-gray-400">
               The execution hub. Accepts simulation input and emits trigger,
               context, and meta outputs.
             </p>
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Simulation Modal</h4>
             <p className="mt-2 text-gray-400">
               Emits a simulation payload (e.g. productId) used to emulate a trigger run.
             </p>
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Result Viewer</h4>
             <p className="mt-2 text-gray-400">
               Terminal node to inspect outputs. Connect context/meta/trigger or model
               results to review data.
             </p>
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">JSON Mapper</h4>
             <p className="mt-2 text-gray-400">
               Maps context fields into custom outputs. Outputs must match the port
               names of downstream nodes.
             </p>
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Parser</h4>
             <p className="mt-2 text-gray-400">
               Extracts structured fields from incoming JSON and emits outputs per
               mapping or as a bundled object.
             </p>
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Prompt</h4>
             <p className="mt-2 text-gray-400">
               Turns data into a prompt string using placeholders and can forward image
               URLs to the Model node.
             </p>
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Model</h4>
             <p className="mt-2 text-gray-400">
               Enqueues an AI job (<span className="text-gray-200">graph_model</span>)
               and either waits for completion or emits only a jobId.
             </p>
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Mutator</h4>
             <p className="mt-2 text-gray-400">
               Updates a context path using a template. Use it to normalize or enrich
               data before running prompts or models.
             </p>
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Validator</h4>
             <p className="mt-2 text-gray-400">
               Checks required context paths and emits valid/errors outputs for
               gating downstream actions.
             </p>
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Gate</h4>
             <p className="mt-2 text-gray-400">
               Allows context through only when a validator emits valid. Useful for
               stopping incomplete flows.
             </p>
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Compare</h4>
             <p className="mt-2 text-gray-400">
               Compares a value and emits valid/errors so you can branch with Gate or Router.
             </p>
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Router</h4>
             <p className="mt-2 text-gray-400">
               Routes payloads when a condition is met. Outputs context/value when passing.
             </p>
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Delay</h4>
             <p className="mt-2 text-gray-400">
               Introduces a pause between steps to sequence signal flows.
             </p>
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Poll</h4>
             <p className="mt-2 text-gray-400">
               Waits for AI job completion or polls a MongoDB query until a success
@@ -433,32 +433,32 @@ export function DocsTabPanel({
               <span className="text-gray-200">status</span>.
             </p>
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">HTTP Fetch</h4>
             <p className="mt-2 text-gray-400">
               Calls external APIs with templated inputs and returns response data.
             </p>
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Database Query</h4>
             <p className="mt-2 text-gray-400">
               Queries MongoDB collections using preset or custom filters and returns JSON.
             </p>
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Bundle</h4>
             <p className="mt-2 text-gray-400">
               Clusters multiple inputs into a single bundle object for downstream
               prompts or viewers.
             </p>
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Template</h4>
             <p className="mt-2 text-gray-400">
               Converts bundled data into a custom prompt using placeholders.
             </p>
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-900/50 p-4">
+          <div className="rounded-md border border-border bg-card/50 p-4">
             <h4 className="text-sm font-semibold text-white">Constant + Math</h4>
             <p className="mt-2 text-gray-400">
               Emit reusable signals and perform numeric transformations for scoring
@@ -468,7 +468,7 @@ export function DocsTabPanel({
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
         <h3 className="text-base font-semibold text-white">Saving & Debugging</h3>
         <ul className="mt-3 space-y-2 text-gray-400">
           <li>Use “Save Path” to persist the canvas.</li>
@@ -477,7 +477,7 @@ export function DocsTabPanel({
         </ul>
       </div>
 
-      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-5">
+      <div className="rounded-lg border bg-card/60 p-5 backdrop-blur">
         <h3 className="text-base font-semibold text-white">Troubleshooting</h3>
         <ul className="mt-3 space-y-2 text-gray-400">
           <li>

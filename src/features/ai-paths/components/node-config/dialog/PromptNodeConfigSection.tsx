@@ -78,7 +78,7 @@ export function PromptNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">Prompt Template</Label>
         <Textarea
-          className="mt-2 min-h-[140px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+          className="mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={promptConfig.template}
           onChange={(event) =>
             updateSelectedNodeConfig({
@@ -95,7 +95,7 @@ export function PromptNodeConfigSection({
           inside the prompt text.
         </p>
       </div>
-      <div className="rounded-md border border-gray-800 bg-gray-900/50 p-3 text-[11px] text-gray-400">
+      <div className="rounded-md border border-border bg-card/50 p-3 text-[11px] text-gray-400">
         <div className="text-gray-300">Available placeholders</div>
         {bundleKeys.size > 0 ? (
           <div className="mt-2 flex flex-wrap gap-2">
@@ -104,7 +104,7 @@ export function PromptNodeConfigSection({
                 key={key}
                 role="button"
                 tabIndex={0}
-                className="cursor-pointer rounded-full border border-gray-700 px-2 py-0.5 text-[10px] text-gray-200 transition hover:border-gray-500 hover:bg-gray-800"
+                className="cursor-pointer rounded-full border px-2 py-0.5 text-[10px] text-gray-200 transition hover:border-gray-500 hover:bg-muted/50"
                 onClick={() => handleInsertPlaceholder(`{{${key}}}`)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" || event.key === " ") {
@@ -202,7 +202,7 @@ export function PromptNodeConfigSection({
           <div className="mt-4">
             <Label className="text-xs text-gray-400">Result Input</Label>
             <Textarea
-              className="mt-2 min-h-[100px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+              className="mt-2 min-h-[100px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={displayValue}
               readOnly
               placeholder="No result received yet. Connect a node to the result input and run the graph."

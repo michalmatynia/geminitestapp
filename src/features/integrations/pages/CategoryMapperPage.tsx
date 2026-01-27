@@ -4,8 +4,8 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useToast } from "@/shared/ui/toast";
 import { MarketplaceSelector } from "@/features/integrations/components/marketplaces/category-mapper/MarketplaceSelector";
 import { BaseCategoryMapper } from "@/features/integrations/components/marketplaces/category-mapper/BaseCategoryMapper";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 type Integration = {
   id: string;

@@ -46,10 +46,10 @@ export function SimulationNodeConfigSection({
             })
           }
         >
-          <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
             <SelectValue placeholder="Select entity" />
           </SelectTrigger>
-          <SelectContent className="border-gray-800 bg-gray-900">
+          <SelectContent className="border-border bg-gray-900">
             <SelectItem value="product">Product</SelectItem>
             <SelectItem value="note">Note</SelectItem>
             <SelectItem value="chat">Chat</SelectItem>
@@ -64,7 +64,7 @@ export function SimulationNodeConfigSection({
             : "Entity ID"}
         </Label>
         <Input
-          className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+          className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={simulationConfig.entityId ?? simulationConfig.productId}
           onChange={(event) =>
             updateSelectedNodeConfig({

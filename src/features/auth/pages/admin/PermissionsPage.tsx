@@ -7,8 +7,8 @@ import { Checkbox } from "@/shared/ui/checkbox";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { useToast } from "@/shared/ui/toast";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 import {
   AUTH_SETTINGS_KEYS,
   DEFAULT_AUTH_PERMISSIONS,
@@ -243,7 +243,7 @@ export default function AuthPermissionsPage() {
       </SectionPanel>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="bg-gray-950 border-gray-800">
+        <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-white text-lg">Permissions Library</CardTitle>
             <CardDescription className="text-gray-500">
@@ -255,7 +255,7 @@ export default function AuthPermissionsPage() {
               {permissions.map((permission) => (
                 <div
                   key={permission.id}
-                  className="rounded-md border border-gray-800 bg-gray-900/40 p-3"
+                  className="rounded-md border border-border bg-card/40 p-3"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -280,7 +280,7 @@ export default function AuthPermissionsPage() {
               ))}
             </div>
 
-            <div className="rounded-md border border-gray-800 bg-gray-900/40 p-4 space-y-3">
+            <div className="rounded-md border border-border bg-card/40 p-4 space-y-3">
               <div className="text-sm font-semibold text-white">Add Permission</div>
               <div className="space-y-2">
                 <Label htmlFor="permission-name" className="text-xs text-gray-300">
@@ -291,7 +291,7 @@ export default function AuthPermissionsPage() {
                   value={newPermissionName}
                   onChange={(event) => setNewPermissionName(event.target.value)}
                   placeholder="Manage products"
-                  className="bg-gray-900 border-gray-700 text-white"
+                  className="bg-gray-900 border text-white"
                 />
               </div>
               <div className="space-y-2">
@@ -303,7 +303,7 @@ export default function AuthPermissionsPage() {
                   value={newPermissionId}
                   onChange={(event) => setNewPermissionId(event.target.value)}
                   placeholder="products.manage"
-                  className="bg-gray-900 border-gray-700 text-white"
+                  className="bg-gray-900 border text-white"
                 />
               </div>
               <div className="space-y-2">
@@ -315,7 +315,7 @@ export default function AuthPermissionsPage() {
                   value={newPermissionDescription}
                   onChange={(event) => setNewPermissionDescription(event.target.value)}
                   placeholder="Create and edit product listings"
-                  className="bg-gray-900 border-gray-700 text-white"
+                  className="bg-gray-900 border text-white"
                 />
               </div>
               <Button onClick={handleAddPermission} className="bg-blue-600 hover:bg-blue-700 text-white">
@@ -325,7 +325,7 @@ export default function AuthPermissionsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-950 border-gray-800">
+        <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-white text-lg">Roles</CardTitle>
             <CardDescription className="text-gray-500">
@@ -336,7 +336,7 @@ export default function AuthPermissionsPage() {
             {roles.map((role) => (
               <div
                 key={role.id}
-                className="rounded-md border border-gray-800 bg-gray-900/40 p-4 space-y-3"
+                className="rounded-md border border-border bg-card/40 p-4 space-y-3"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-2 flex-1">
@@ -344,7 +344,7 @@ export default function AuthPermissionsPage() {
                     <Input
                       value={role.name}
                       onChange={(event) => handleRoleFieldChange(role.id, "name", event.target.value)}
-                      className="bg-gray-900 border-gray-700 text-white"
+                      className="bg-gray-900 border text-white"
                     />
                     <Label className="text-xs text-gray-400">Description</Label>
                     <Input
@@ -352,7 +352,7 @@ export default function AuthPermissionsPage() {
                       onChange={(event) =>
                         handleRoleFieldChange(role.id, "description", event.target.value)
                       }
-                      className="bg-gray-900 border-gray-700 text-white"
+                      className="bg-gray-900 border text-white"
                     />
                     <Label className="text-xs text-gray-400">Role level</Label>
                     <Input
@@ -363,7 +363,7 @@ export default function AuthPermissionsPage() {
                       onChange={(event) =>
                         handleRoleFieldChange(role.id, "level", event.target.value)
                       }
-                      className="bg-gray-900 border-gray-700 text-white"
+                      className="bg-gray-900 border text-white"
                     />
                     <div className="text-xs text-gray-500">
                       Levels ≥ 90 are treated as elevated access.
@@ -399,7 +399,7 @@ export default function AuthPermissionsPage() {
               </div>
             ))}
 
-            <div className="rounded-md border border-gray-800 bg-gray-900/40 p-4 space-y-3">
+            <div className="rounded-md border border-border bg-card/40 p-4 space-y-3">
               <div className="text-sm font-semibold text-white">Add Role</div>
               <div className="space-y-2">
                 <Label htmlFor="role-name" className="text-xs text-gray-300">
@@ -410,7 +410,7 @@ export default function AuthPermissionsPage() {
                   value={newRoleName}
                   onChange={(event) => setNewRoleName(event.target.value)}
                   placeholder="Editor"
-                  className="bg-gray-900 border-gray-700 text-white"
+                  className="bg-gray-900 border text-white"
                 />
               </div>
               <div className="space-y-2">
@@ -422,7 +422,7 @@ export default function AuthPermissionsPage() {
                   value={newRoleDescription}
                   onChange={(event) => setNewRoleDescription(event.target.value)}
                   placeholder="Manage content and products"
-                  className="bg-gray-900 border-gray-700 text-white"
+                  className="bg-gray-900 border text-white"
                 />
               </div>
               <Button onClick={handleAddRole} className="bg-blue-600 hover:bg-blue-700 text-white">

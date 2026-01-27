@@ -16,19 +16,13 @@ import type {
   DatabaseConfig,
   DatabaseOperation,
   NodeConfig,
-  UpdaterMapping,
   UpdaterSampleState,
 } from "@/features/ai-paths/lib";
 import { formatPortLabel } from "@/features/ai-paths/utils/ui-utils";
 
 type DatabaseSettingsTabProps = {
   queryEditor: React.ReactNode;
-  mappings: UpdaterMapping[];
-  updateMapping: (index: number, patch: Partial<UpdaterMapping>) => void;
-  removeMapping: (index: number) => void;
-  addMapping: () => void;
   availablePorts: string[];
-  uniqueTargetPathOptions: Array<{ label: string; value: string }>;
   bundleKeys: Set<string>;
   operation: DatabaseOperation;
   databaseConfig: DatabaseConfig;
@@ -46,12 +40,7 @@ type DatabaseSettingsTabProps = {
 
 export function DatabaseSettingsTab({
   queryEditor,
-  mappings,
-  updateMapping,
-  removeMapping,
-  addMapping,
   availablePorts,
-  uniqueTargetPathOptions,
   bundleKeys,
   operation,
   databaseConfig,
@@ -68,114 +57,6 @@ export function DatabaseSettingsTab({
     <div className="space-y-4">
       {queryEditor}
 
-      <div className="space-y-4">
-        <div className="space-y-3">
-          {mappings.map((mapping, index) => {
-            const targetValue = mapping.targetPath ?? "";
-            return (
-              <div
-                key={`${mapping.targetPath}-${index}`}
-                className="grid gap-2 sm:grid-cols-[1fr_140px_auto] sm:items-start"
-              >
-                <div className="space-y-2">
-                  <Input
-                    className="w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
-                    value={targetValue}
-                    onChange={(event) =>
-                      updateMapping(index, {
-                        targetPath: event.target.value,
-                      })
-                    }
-                    placeholder="Target field path"
-                  />
-                  <Select
-                    onValueChange={(value) =>
-                      updateMapping(index, { targetPath: value })
-                    }
-                  >
-                    <SelectTrigger className="border-gray-800 bg-gray-950/70 text-[10px] text-gray-200">
-                      <SelectValue placeholder="Pick target field" />
-                    </SelectTrigger>
-                    <SelectContent className="border-gray-800 bg-gray-900">
-                      {uniqueTargetPathOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Select
-                    value={mapping.sourcePort}
-                    onValueChange={(value) =>
-                      updateMapping(index, { sourcePort: value })
-                    }
-                  >
-                    <SelectTrigger className="border-gray-800 bg-gray-950/70 text-[10px] text-gray-200">
-                      <SelectValue placeholder="Input" />
-                    </SelectTrigger>
-                    <SelectContent className="border-gray-800 bg-gray-900">
-                      {availablePorts.map((port) => (
-                        <SelectItem key={port} value={port}>
-                          {formatPortLabel(port)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {mapping.sourcePort === "bundle" && (
-                    <>
-                      <Input
-                        className="w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
-                        value={mapping.sourcePath ?? ""}
-                        onChange={(event) =>
-                          updateMapping(index, {
-                            sourcePath: event.target.value,
-                          })
-                        }
-                        placeholder="Bundle path"
-                      />
-                      <Select
-                        onValueChange={(value) =>
-                          updateMapping(index, { sourcePath: value })
-                        }
-                      >
-                        <SelectTrigger className="border-gray-800 bg-gray-950/70 text-[10px] text-gray-200">
-                          <SelectValue placeholder="Pick bundle key" />
-                        </SelectTrigger>
-                        <SelectContent className="border-gray-800 bg-gray-900">
-                          {Array.from(bundleKeys).map((key) => (
-                            <SelectItem key={key} value={key}>
-                              {formatPortLabel(key)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </>
-                  )}
-                </div>
-                <Button
-                  type="button"
-                  className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
-                  disabled={mappings.length <= 1}
-                  onClick={() => removeMapping(index)}
-                >
-                  Remove
-                </Button>
-              </div>
-            );
-          })}
-        </div>
-
-        <Button
-          type="button"
-          className="w-full rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
-          onClick={addMapping}
-        >
-          Add mapping
-        </Button>
-      </div>
-
       {operation === "update" && (
         <div className="space-y-4">
           <div>
@@ -191,10 +72,10 @@ export function DatabaseSettingsTab({
                 })
               }
             >
-              <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+              <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
                 <SelectValue placeholder="Select mode" />
               </SelectTrigger>
-              <SelectContent className="border-gray-800 bg-gray-900">
+              <SelectContent className="border-border bg-gray-900">
                 <SelectItem value="replace">Replace</SelectItem>
                 <SelectItem value="append">Append</SelectItem>
               </SelectContent>
@@ -215,17 +96,17 @@ export function DatabaseSettingsTab({
                   }))
                 }
               >
-                <SelectTrigger className="border-gray-800 bg-gray-950/70 text-sm text-white">
+                <SelectTrigger className="border-border bg-card/70 text-sm text-white">
                   <SelectValue placeholder="Entity type" />
                 </SelectTrigger>
-                <SelectContent className="border-gray-800 bg-gray-900">
+                <SelectContent className="border-border bg-gray-900">
                   <SelectItem value="product">Product</SelectItem>
                   <SelectItem value="note">Note</SelectItem>
                   <SelectItem value="custom">Custom</SelectItem>
                 </SelectContent>
               </Select>
               <Input
-                className="w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
                 value={sampleState.entityId}
                 onChange={(event) =>
                   setUpdaterSamples((prev) => ({
@@ -240,7 +121,7 @@ export function DatabaseSettingsTab({
               />
               <Button
                 type="button"
-                className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
                 disabled={updaterSampleLoading}
                 onClick={() =>
                   void onFetchUpdaterSample(
@@ -254,7 +135,7 @@ export function DatabaseSettingsTab({
               </Button>
             </div>
             <Textarea
-              className="mt-2 min-h-[120px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+              className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={sampleState.json}
               onChange={(event) =>
                 setUpdaterSamples((prev) => ({
@@ -283,10 +164,10 @@ export function DatabaseSettingsTab({
                   }))
                 }
               >
-                <SelectTrigger className="w-[150px] border-gray-800 bg-gray-950/70 text-sm text-white">
+                <SelectTrigger className="w-[150px] border-border bg-card/70 text-sm text-white">
                   <SelectValue placeholder="Depth" />
                 </SelectTrigger>
-                <SelectContent className="border-gray-800 bg-gray-900">
+                <SelectContent className="border-border bg-gray-900">
                   {[1, 2, 3, 4].map((depth) => (
                     <SelectItem key={depth} value={String(depth)}>
                       Depth {depth}
@@ -296,10 +177,10 @@ export function DatabaseSettingsTab({
               </Select>
               <Button
                 type="button"
-                className={`rounded-md border border-gray-700 px-3 text-[10px] ${
+                className={`rounded-md border px-3 text-[10px] ${
                   sampleState.includeContainers
                     ? "text-emerald-200 hover:bg-emerald-500/10"
-                    : "text-gray-300 hover:bg-gray-900/80"
+                    : "text-gray-300 hover:bg-muted/60"
                 }`}
                 onClick={() =>
                   setUpdaterSamples((prev) => ({
@@ -330,10 +211,10 @@ export function DatabaseSettingsTab({
                 })
               }
             >
-              <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+              <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
                 <SelectValue placeholder="Entity type" />
               </SelectTrigger>
-              <SelectContent className="border-gray-800 bg-gray-900">
+              <SelectContent className="border-border bg-gray-900">
                 <SelectItem value="product">Product</SelectItem>
                 <SelectItem value="note">Note</SelectItem>
                 <SelectItem value="custom">Custom</SelectItem>
@@ -350,10 +231,10 @@ export function DatabaseSettingsTab({
                 })
               }
             >
-              <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+              <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
                 <SelectValue placeholder="Select payload input" />
               </SelectTrigger>
-              <SelectContent className="border-gray-800 bg-gray-900">
+              <SelectContent className="border-border bg-gray-900">
                 {availablePorts.map((port) => (
                   <SelectItem key={port} value={port}>
                     {formatPortLabel(port)}
@@ -368,7 +249,7 @@ export function DatabaseSettingsTab({
           <div>
             <Label className="text-xs text-gray-400">Payload Path (optional)</Label>
             <Input
-              className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+              className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={databaseConfig.writeSourcePath ?? ""}
               onChange={(event) =>
                 updateSelectedNodeConfig({
@@ -392,10 +273,10 @@ export function DatabaseSettingsTab({
                   })
                 }
               >
-                <SelectTrigger className="mt-2 border-gray-800 bg-gray-950/70 text-[10px] text-gray-200">
+                <SelectTrigger className="mt-2 border-border bg-card/70 text-[10px] text-gray-200">
                   <SelectValue placeholder="Pick bundle key" />
                 </SelectTrigger>
-                <SelectContent className="border-gray-800 bg-gray-900">
+                <SelectContent className="border-border bg-gray-900">
                   {Array.from(bundleKeys).map((key) => (
                     <SelectItem key={key} value={key}>
                       {formatPortLabel(key)}
@@ -423,10 +304,10 @@ export function DatabaseSettingsTab({
                 })
               }
             >
-              <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+              <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
                 <SelectValue placeholder="Entity type" />
               </SelectTrigger>
-              <SelectContent className="border-gray-800 bg-gray-900">
+              <SelectContent className="border-border bg-gray-900">
                 <SelectItem value="product">Product</SelectItem>
                 <SelectItem value="note">Note</SelectItem>
                 <SelectItem value="custom">Custom</SelectItem>
@@ -443,10 +324,10 @@ export function DatabaseSettingsTab({
                 })
               }
             >
-              <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+              <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
                 <SelectValue placeholder="Select ID input" />
               </SelectTrigger>
-              <SelectContent className="border-gray-800 bg-gray-900">
+              <SelectContent className="border-border bg-gray-900">
                 {availablePorts.map((port) => (
                   <SelectItem key={port} value={port}>
                     {formatPortLabel(port)}

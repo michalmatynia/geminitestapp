@@ -408,7 +408,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
 
   if (loading) {
     return (
-      <div className="rounded-lg bg-gray-950 p-6">
+      <div className="rounded-lg bg-card p-6">
         <p className="text-sm text-gray-400">Loading draft...</p>
       </div>
     );
@@ -431,7 +431,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
           </TabsList>
           <TabsContent value="details" className="mt-0 space-y-6">
             {/* Draft Info */}
-            <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4">
+            <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
           <h3 className="text-sm font-semibold text-white">Draft Information</h3>
 
           <div className="space-y-2">
@@ -458,7 +458,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-900 px-4 py-3">
+            <div className="flex items-center justify-between rounded-md border border-border bg-gray-900 px-4 py-3">
               <div>
                 <Label htmlFor="active" className="cursor-pointer">
                   Active Draft
@@ -483,7 +483,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
                       className={`flex h-10 w-10 items-center justify-center rounded-md border transition ${
                         icon === item.id
                           ? "border-emerald-500 bg-emerald-500/20 text-emerald-400"
-                          : "border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-600 hover:text-gray-300"
+                          : "border bg-gray-800 text-gray-400 hover:border-border/60 hover:text-gray-300"
                       }`}
                       title={item.label}
                     >
@@ -497,7 +497,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
         </div>
 
         {/* Product Fields */}
-        <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4">
+        <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
           <h3 className="text-sm font-semibold text-white">Default Product Values</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -668,7 +668,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
         </div>
 
         {/* Pricing and Supplier */}
-        <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4">
+        <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
           <h3 className="text-sm font-semibold text-white">Pricing & Supplier Information</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -727,7 +727,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
         </div>
 
         {/* Catalogs */}
-        <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4">
+        <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
           <h3 className="text-sm font-semibold text-white">Catalogs</h3>
           <div className="flex flex-wrap gap-2">
             {catalogs.map((catalog) => (
@@ -749,7 +749,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
 
         {/* Categories */}
         {categories.length > 0 && (
-          <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4">
+          <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
             <h3 className="text-sm font-semibold text-white">Categories</h3>
             <div className="flex flex-wrap gap-2">
               {categories.map((category) => (
@@ -772,7 +772,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
 
         {/* Tags */}
         {tags.length > 0 && (
-          <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4">
+          <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
             <h3 className="text-sm font-semibold text-white">Tags</h3>
             <div className="flex flex-wrap gap-2">
               {tags.map((tag) => (
@@ -805,7 +805,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
         )}
 
         {/* Image Links */}
-        <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4">
+        <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
           <h3 className="text-sm font-semibold text-white">Default Image Links (up to 15)</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {imageLinks.map((link, index) => (
@@ -830,7 +830,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
         </div>
 
         {/* Import Info */}
-        <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4">
+        <div className="space-y-4 rounded-lg border border-border bg-card/50 p-4">
           <h3 className="text-sm font-semibold text-white">Import Information</h3>
           <div className="space-y-2">
             <Label htmlFor="baseProductId">Base Product ID</Label>
@@ -847,7 +847,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
         </div>
           </TabsContent>
           <TabsContent value="parameters" className="mt-0 space-y-4">
-            <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-4 space-y-4">
+            <div className="rounded-lg border border-border bg-card/50 p-4 space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h3 className="text-sm font-semibold text-white">Parameters</h3>
@@ -866,15 +866,15 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
               </div>
 
               {parametersLoading ? (
-                <div className="rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+                <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
                   Loading parameters...
                 </div>
               ) : parameters.length === 0 ? (
-                <div className="rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+                <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
                   No parameters available for the selected catalog(s).
                 </div>
               ) : parameterValues.length === 0 ? (
-                <div className="rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+                <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
                   Add your first parameter to start defining defaults.
                 </div>
               ) : (
@@ -888,7 +888,7 @@ export function DraftCreator({ draftId, onSaveSuccess, onCancel: _onCancel, form
                     return (
                       <div
                         key={`${entry.parameterId || "new"}-${index}`}
-                        className="flex flex-col gap-3 rounded-md border border-gray-800 bg-gray-950/60 p-3 md:flex-row md:items-center"
+                        className="flex flex-col gap-3 rounded-md border border-border bg-card/60 p-3 md:flex-row md:items-center"
                       >
                         <div className="w-full md:w-64">
                           <Select

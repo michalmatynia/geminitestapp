@@ -21,8 +21,8 @@ export function SessionSidebar({
   onDeleteSession,
 }: SessionSidebarProps) {
   return (
-    <div className="flex h-full flex-col bg-gray-900 border-r border-gray-800">
-      <div className="p-4 border-b border-gray-800">
+    <div className="flex h-full flex-col bg-gray-900 border-r border-border">
+      <div className="p-4 border-b border-border">
         <Button
           onClick={onNewSession}
           className="w-full bg-blue-600 text-white hover:bg-blue-700"
@@ -45,7 +45,7 @@ export function SessionSidebar({
                 className={`group flex items-center gap-2 rounded-lg p-3 cursor-pointer transition ${
                   currentSessionId === session.id
                     ? "bg-gray-800 text-white"
-                    : "text-gray-400 hover:bg-gray-800/50 hover:text-white"
+                    : "text-gray-400 hover:bg-muted/50/50 hover:text-white"
                 }`}
                 onClick={() => onSelectSession(session.id)}
               >

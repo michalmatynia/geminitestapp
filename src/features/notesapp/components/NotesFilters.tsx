@@ -46,7 +46,7 @@ export function NotesFilters({
             }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 pl-10 pr-4 text-white placeholder-gray-400"
+            className="w-full rounded-lg border bg-gray-800 py-2 pl-10 pr-4 text-white placeholder-gray-400"
           />
         </div>
 
@@ -60,7 +60,7 @@ export function NotesFilters({
                 }
                 e.target.value = "";
               }}
-              className="rounded-lg border border-gray-700 bg-gray-800 px-3 py-1 text-xs text-white"
+              className="rounded-lg border bg-gray-800 px-3 py-1 text-xs text-white"
             >
               <option value="">Filter by Tag...</option>
               {tags
@@ -184,7 +184,7 @@ export function NotesFilters({
             </Button>
           </div>
 
-          <div className="flex items-center gap-2 ml-2 pl-2 border-l border-gray-700">
+          <div className="flex items-center gap-2 ml-2 pl-2 border-l border">
             <span className="text-xs text-gray-500">Show:</span>
             <Button
               onClick={() => updateSettings({ showTimestamps: !showTimestamps })}
@@ -223,7 +223,7 @@ export function NotesFilters({
               <span>Links</span>
             </Button>
           </div>
-          <div className="relative flex items-center gap-2 ml-2 pl-2 border-l border-gray-700">
+          <div className="relative flex items-center gap-2 ml-2 pl-2 border-l border">
             <Button
               type="button"
               onClick={() => setIsLayoutOpen((prev) => !prev)}
@@ -240,14 +240,14 @@ export function NotesFilters({
                   className="fixed inset-0 z-40"
                   onClick={() => setIsLayoutOpen(false)}
                 />
-                <div className="absolute right-0 top-full z-50 mt-2 w-44 rounded-md border border-gray-700 bg-gray-900 p-1 shadow-lg">
+                <div className="absolute right-0 top-full z-50 mt-2 w-44 rounded-md border bg-gray-900 p-1 shadow-lg">
                   <Button
                     type="button"
                     onClick={() => {
                       updateSettings({ viewMode: "grid", gridDensity: 4 });
                       setIsLayoutOpen(false);
                     }}
-                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-gray-800"
+                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
                   >
                     <LayoutGrid size={14} />
                     <span className="flex-1 text-left">Grid (4 per row)</span>
@@ -259,7 +259,7 @@ export function NotesFilters({
                       updateSettings({ viewMode: "grid", gridDensity: 8 });
                       setIsLayoutOpen(false);
                     }}
-                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-gray-800"
+                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
                   >
                     <LayoutGrid size={14} />
                     <span className="flex-1 text-left">Grid (8 per row)</span>
@@ -271,7 +271,7 @@ export function NotesFilters({
                       updateSettings({ viewMode: "list" });
                       setIsLayoutOpen(false);
                     }}
-                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-gray-800"
+                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
                   >
                     <List size={14} />
                     <span className="flex-1 text-left">List</span>

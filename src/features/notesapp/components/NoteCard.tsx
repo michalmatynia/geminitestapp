@@ -168,7 +168,7 @@ function NoteCardBase({
         ["--note-inline-code-bg" as never]:
           effectiveTheme.markdownCodeBackground ?? "rgba(15, 23, 42, 0.12)",
       }}
-      className={`rounded-lg border border-gray-700 p-4 shadow-sm transition ${
+      className={`rounded-lg border p-4 shadow-sm transition ${
         enableDrag
           ? "cursor-grab active:cursor-grabbing hover:shadow-md"
           : "cursor-pointer hover:shadow-md hover:brightness-90"
@@ -219,7 +219,7 @@ function NoteCardBase({
         </div>
       </div>
       {thumbnailFile && (
-        <div className="mb-3 overflow-hidden rounded-md border border-gray-700">
+        <div className="mb-3 overflow-hidden rounded-md border border">
           <Image
             src={thumbnailFile.filepath}
             alt={thumbnailFile.filename}

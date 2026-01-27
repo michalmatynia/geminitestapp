@@ -20,8 +20,8 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 import type {
   DatabasePreviewGroup,
   DatabasePreviewMode,
@@ -214,7 +214,7 @@ function DatabasePreviewPageInner() {
             <div className="mt-3 space-y-2">
               <p className="text-xs text-red-300">{error}</p>
               {errorMeta?.errorId && (
-                <div className="grid gap-2 rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300 md:grid-cols-3">
+                <div className="grid gap-2 rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300 md:grid-cols-3">
                   <div>
                     <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">
                       Error ID
@@ -255,7 +255,7 @@ function DatabasePreviewPageInner() {
                 return (
                   <div
                     key={group.type}
-                    className="rounded-md border border-gray-800 bg-gray-900/60"
+                    className="rounded-md border border-border bg-card/60"
                   >
                     <Button
                       type="button"
@@ -275,7 +275,7 @@ function DatabasePreviewPageInner() {
                       )}
                     </Button>
                     {expanded && (
-                      <div className="border-t border-gray-800 px-3 py-2 text-xs text-gray-400">
+                      <div className="border-t border-border px-3 py-2 text-xs text-gray-400">
                         {group.objects.join(", ")}
                       </div>
                     )}
@@ -286,7 +286,7 @@ function DatabasePreviewPageInner() {
           )}
         </SectionPanel>
 
-        <div className="rounded-lg border border-gray-800 bg-gray-950 p-5">
+        <SectionPanel className="p-5">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-white">
               Tables & Row Estimates
@@ -301,7 +301,7 @@ function DatabasePreviewPageInner() {
             </p>
           )}
           {!loading && !error && tables.length > 0 && (
-            <div className="mt-3 max-h-64 divide-y divide-gray-800 overflow-auto rounded-md border border-gray-800 bg-gray-900/60">
+            <div className="mt-3 max-h-64 divide-y divide-border overflow-auto rounded-md border border-border bg-card/60">
               {tables.map((table) => (
                 <div
                   key={table.name}
@@ -318,9 +318,9 @@ function DatabasePreviewPageInner() {
           <p className="mt-2 text-xs text-gray-500">
             Row counts are current DB estimates, not dump totals.
           </p>
-        </div>
+        </SectionPanel>
 
-        <div className="rounded-lg border border-gray-800 bg-gray-950 p-5">
+        <SectionPanel className="p-5">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-white">
               Table Rows (first 20)
@@ -335,7 +335,7 @@ function DatabasePreviewPageInner() {
                     setPage(1);
                     setPageSize(Number(event.target.value));
                   }}
-                  className="rounded-md border border-gray-800 bg-gray-900 px-2 py-1 text-xs text-gray-200"
+                  className="rounded-md border border-border bg-gray-900 px-2 py-1 text-xs text-gray-200"
                 >
                   {[10, 20, 50, 100].map((size) => (
                     <option key={size} value={size}>
@@ -349,7 +349,7 @@ function DatabasePreviewPageInner() {
                   type="button"
                   onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                   disabled={page <= 1}
-                  className="rounded-md border border-gray-800 bg-gray-900 px-2 py-1 text-xs text-gray-200 hover:bg-gray-800"
+                  className="rounded-md border border-border bg-gray-900 px-2 py-1 text-xs text-gray-200 hover:bg-muted/50"
                 >
                   Prev
                 </Button>
@@ -360,13 +360,13 @@ function DatabasePreviewPageInner() {
                   type="button"
                   onClick={() => setPage((prev) => Math.min(maxPage, prev + 1))}
                   disabled={page >= maxPage}
-                  className="rounded-md border border-gray-800 bg-gray-900 px-2 py-1 text-xs text-gray-200 hover:bg-gray-800"
+                  className="rounded-md border border-border bg-gray-900 px-2 py-1 text-xs text-gray-200 hover:bg-muted/50"
                 >
                   Next
                 </Button>
-              </div>
             </div>
           </div>
+        </SectionPanel>
           {!loading && !error && tableRows.length === 0 && (
             <p className="mt-3 text-xs text-gray-500">
               No table rows available in this backup.
@@ -382,7 +382,7 @@ function DatabasePreviewPageInner() {
                 return (
                   <div
                     key={table.name}
-                    className="rounded-md border border-gray-800 bg-gray-900/60"
+                    className="rounded-md border border-border bg-card/60"
                   >
                     <Button
                       type="button"
@@ -403,13 +403,13 @@ function DatabasePreviewPageInner() {
                       )}
                     </Button>
                     {expanded && (
-                      <div className="border-t border-gray-800 px-3 py-3">
+                      <div className="border-t border-border px-3 py-3">
                         {table.rows.length === 0 ? (
                           <p className="text-xs text-gray-500">
                             No rows in this table.
                           </p>
                         ) : (
-                          <div className="overflow-auto rounded-md border border-gray-800">
+                          <div className="overflow-auto rounded-md border border-border">
                             <table className="min-w-full text-xs text-gray-300">
                               <thead className="bg-gray-900/80 text-gray-400">
                                 <tr>
@@ -427,7 +427,7 @@ function DatabasePreviewPageInner() {
                                 {table.rows.map((row, rowIndex) => (
                                   <tr
                                     key={`${table.name}-${rowIndex}`}
-                                    className="border-t border-gray-800/60"
+                                    className="border-t border-border/60"
                                   >
                                     {columns.map((column) => (
                                       <td
@@ -473,7 +473,7 @@ function DatabasePreviewPageInner() {
           </p>
         </div>
 
-        <div className="rounded-lg border border-gray-800 bg-gray-950 p-5">
+        <div className="rounded-lg border border-border bg-card p-5">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-white">
               Raw Backup List
@@ -481,12 +481,12 @@ function DatabasePreviewPageInner() {
             <Button
               type="button"
               onClick={() => void copyRaw()}
-              className="rounded-md border border-gray-800 bg-gray-900 px-3 py-1.5 text-xs text-gray-200 hover:bg-gray-800"
+              className="rounded-md border border-border bg-gray-900 px-3 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
             >
               Copy
             </Button>
           </div>
-          <pre className="mt-3 max-h-[60vh] overflow-auto rounded-md border border-gray-800 bg-gray-900/60 p-3 text-xs text-gray-300 whitespace-pre-wrap">
+          <pre className="mt-3 max-h-[60vh] overflow-auto rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300 whitespace-pre-wrap">
             {content}
           </pre>
         </div>

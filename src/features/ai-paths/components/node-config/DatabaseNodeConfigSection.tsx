@@ -1274,7 +1274,7 @@ export function DatabaseNodeConfigSection({
                 );
 
                 const queryEditor = (
-                  <div className="space-y-4 rounded-md border border-gray-800 bg-gray-900/40 p-3">
+                  <div className="space-y-4 rounded-md border border-border bg-card/40 p-3">
                     <div>
                       {queryInputControls}
                       {/* Query Result Display */}
@@ -1284,14 +1284,14 @@ export function DatabaseNodeConfigSection({
                             <Label className="text-xs text-gray-400">Query Result</Label>
                             <Button
                               type="button"
-                              className="h-6 rounded-md border border-gray-700 px-2 text-[10px] text-gray-400 hover:bg-gray-800"
+                              className="h-6 rounded-md border px-2 text-[10px] text-gray-400 hover:bg-muted/50"
                               onClick={() => setTestQueryResult("")}
                             >
                               Clear
                             </Button>
                           </div>
                           <Textarea
-                            className="min-h-[120px] w-full rounded-md border border-cyan-800/50 bg-gray-950/70 font-mono text-xs text-cyan-100"
+                            className="min-h-[120px] w-full rounded-md border border-cyan-800/50 bg-card/70 font-mono text-xs text-cyan-100"
                             value={testQueryResult}
                             readOnly
                             placeholder="Query results will appear here..."
@@ -1322,10 +1322,10 @@ export function DatabaseNodeConfigSection({
                             updateQueryConfig({ provider: value as DbQueryConfig["provider"] })
                           }
                         >
-                          <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
                             <SelectValue placeholder="Select provider" />
                           </SelectTrigger>
-                          <SelectContent className="border-gray-800 bg-gray-900">
+                          <SelectContent className="border-border bg-gray-900">
                             <SelectItem value="auto">Auto</SelectItem>
                             <SelectItem value="mongodb">MongoDB</SelectItem>
                           </SelectContent>
@@ -1341,10 +1341,10 @@ export function DatabaseNodeConfigSection({
                             });
                           }}
                         >
-                          <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
                             <SelectValue placeholder="Select collection" />
                           </SelectTrigger>
-                          <SelectContent className="border-gray-800 bg-gray-900">
+                          <SelectContent className="border-border bg-gray-900">
                             {DB_COLLECTION_OPTIONS.map((option) => (
                               <SelectItem key={option.value} value={option.value}>
                                 {option.label}
@@ -1355,7 +1355,7 @@ export function DatabaseNodeConfigSection({
                         </Select>
                         {collectionOption === "custom" && (
                           <Input
-                            className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                            className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
                             value={queryConfig.collection}
                             onChange={(event) =>
                               updateQueryConfig({ collection: event.target.value })
@@ -1371,7 +1371,7 @@ export function DatabaseNodeConfigSection({
                         <Input
                           type="number"
                           step="1"
-                          className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                          className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
                           value={queryConfig.limit}
                           onChange={(event) =>
                             updateQueryConfig({
@@ -1397,10 +1397,10 @@ export function DatabaseNodeConfigSection({
                               });
                             }}
                           >
-                            <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                            <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
                               <SelectValue placeholder="Select preset" />
                             </SelectTrigger>
-                            <SelectContent className="border-gray-800 bg-gray-900">
+                            <SelectContent className="border-border bg-gray-900">
                               <SelectItem value="custom">Custom</SelectItem>
                               {SORT_PRESETS.map((preset) => (
                                 <SelectItem key={preset.id} value={preset.id}>
@@ -1411,7 +1411,7 @@ export function DatabaseNodeConfigSection({
                           </Select>
                           <Label className="mt-3 text-xs text-gray-400">Sort (JSON)</Label>
                           <Textarea
-                            className="mt-2 min-h-[80px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                            className="mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
                             value={queryConfig.sort}
                             onChange={(event) =>
                               updateQueryConfig({
@@ -1439,10 +1439,10 @@ export function DatabaseNodeConfigSection({
                               });
                             }}
                           >
-                            <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                            <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
                               <SelectValue placeholder="Select preset" />
                             </SelectTrigger>
-                            <SelectContent className="border-gray-800 bg-gray-900">
+                            <SelectContent className="border-border bg-gray-900">
                               <SelectItem value="custom">Custom</SelectItem>
                               {PROJECTION_PRESETS.map((preset) => (
                                 <SelectItem key={preset.id} value={preset.id}>
@@ -1455,7 +1455,7 @@ export function DatabaseNodeConfigSection({
                             Projection (JSON)
                           </Label>
                           <Textarea
-                            className="mt-2 min-h-[80px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                            className="mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
                             value={queryConfig.projection}
                             onChange={(event) =>
                               updateQueryConfig({
@@ -1472,14 +1472,14 @@ export function DatabaseNodeConfigSection({
                       </div>
                     )}
                     {showQueryExtras && (
-                      <div className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-900/50 px-3 py-2 text-xs text-gray-300">
+                      <div className="flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300">
                         <span>Single result</span>
                         <Button
                           type="button"
-                          className={`rounded border border-gray-700 px-3 py-1 text-xs ${
+                          className={`rounded border px-3 py-1 text-xs ${
                             queryConfig.single
                               ? "text-emerald-200 hover:bg-emerald-500/10"
-                              : "text-gray-300 hover:bg-gray-800"
+                              : "text-gray-300 hover:bg-muted/50"
                           }`}
                           onClick={() =>
                             updateQueryConfig({ single: !queryConfig.single })
@@ -1504,7 +1504,7 @@ export function DatabaseNodeConfigSection({
                     onValueChange={(value) => setDatabaseTab(value as "settings" | "constructor" | "presets")}
                     className="space-y-4"
                   >
-                    <TabsList className="w-full justify-start border border-gray-800 bg-gray-950/60">
+                    <TabsList className="w-full justify-start border border-border bg-card/60">
                     <TabsTrigger value="settings">Query</TabsTrigger>
                     <TabsTrigger value="constructor">Constructor</TabsTrigger>
                     <TabsTrigger value="presets">Presets</TabsTrigger>
@@ -1512,12 +1512,7 @@ export function DatabaseNodeConfigSection({
                     <TabsContent value="settings">
                       <DatabaseSettingsTab
                         queryEditor={queryEditor}
-                        mappings={mappings}
-                        updateMapping={updateMapping}
-                        removeMapping={removeMapping}
-                        addMapping={addMapping}
                         availablePorts={availablePorts}
-                        uniqueTargetPathOptions={uniqueTargetPathOptions}
                         bundleKeys={bundleKeys}
                         operation={operation}
                         databaseConfig={databaseConfig}
@@ -1563,6 +1558,12 @@ export function DatabaseNodeConfigSection({
                     bundleKeys={bundleKeys}
                     toast={toast}
                     aiPromptRef={aiPromptRef}
+                    mappings={mappings}
+                    updateMapping={updateMapping}
+                    removeMapping={removeMapping}
+                    addMapping={addMapping}
+                    availablePorts={availablePorts}
+                    uniqueTargetPathOptions={uniqueTargetPathOptions}
                   />
                 </TabsContent>
                 <TabsContent value="presets">

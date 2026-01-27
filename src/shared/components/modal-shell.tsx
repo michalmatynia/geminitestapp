@@ -31,7 +31,7 @@ export default function ModalShell({
         : "max-w-6xl md:min-w-[960px]";
 
   return (
-    <div className={`w-full rounded-lg bg-gray-950 p-6 shadow-lg ${sizeClass}`}>
+    <div className={`w-full rounded-lg border bg-card p-6 ${sizeClass}`}>
       {header ? (
         <div className="mb-4">{header}</div>
       ) : (

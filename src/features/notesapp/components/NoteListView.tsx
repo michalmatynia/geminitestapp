@@ -1,7 +1,7 @@
 import React from "react";
 import { Plus, Pin, Archive, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import { ListPanel } from "@/shared/ui/list-panel";
+import { ListPanel } from "@/shared/components/list-panel";
 import { NotesFilters } from "./NotesFilters";
 import { NoteCard } from "./NoteCard";
 import { buildBreadcrumbPath } from "../utils";
@@ -64,7 +64,7 @@ export function NoteListView({
             <Button
               onClick={onExpandFolderTree}
               variant="outline"
-              className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+              className="border text-gray-300 hover:bg-muted/50 hover:text-white"
             >
               <ChevronLeft className="-scale-x-100" size={16} />
               <span className="ml-2">Show Folders</span>
@@ -87,7 +87,7 @@ export function NoteListView({
             <select
               value={selectedFolderThemeId}
               onChange={(e) => onThemeChange(e.target.value || null)}
-              className="rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-300"
+              className="rounded border bg-gray-800 px-2 py-1 text-xs text-gray-300"
             >
               <option value="">Default</option>
               {themes.map((theme) => (
@@ -124,7 +124,7 @@ export function NoteListView({
                 setPageSize(Number(e.target.value));
                 setPage(1);
               }}
-              className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-300 border border-gray-700"
+              className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-300 border border"
               aria-label="Notes per page"
             >
               {[12, 24, 48].map((size) => (
@@ -163,7 +163,7 @@ export function NoteListView({
             className={`rounded-lg border px-4 py-2 ${
               filterPinned === true
                 ? "border-blue-500 bg-blue-600 text-white"
-                : "border-gray-700 bg-gray-800 text-gray-300"
+                : "border bg-gray-800 text-gray-300"
             }`}
           >
             <Pin size={20} />
@@ -173,7 +173,7 @@ export function NoteListView({
             className={`rounded-lg border px-4 py-2 ${
               filterArchived === true
                 ? "border-gray-500 bg-gray-700 text-white"
-                : "border-gray-700 bg-gray-800 text-gray-300"
+                : "border bg-gray-800 text-gray-300"
             }`}
           >
             <Archive size={20} />
@@ -209,7 +209,7 @@ export function NoteListView({
         {loading ? (
           <div className="text-center text-gray-400">Loading...</div>
         ) : sortedNotes.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-gray-700 p-12 text-center text-gray-400">
+          <div className="rounded-lg border border-dashed border p-12 text-center text-gray-400">
             No notes found. Create your first note!
           </div>
         ) : (
@@ -240,7 +240,7 @@ export function NoteListView({
               type="button"
               onClick={() => setPage(Math.max(1, page - 1))}
               disabled={page <= 1}
-              className="rounded border border-gray-700 px-3 py-1.5 text-gray-300 hover:bg-gray-800 disabled:opacity-50"
+              className="rounded border px-3 py-1.5 text-gray-300 hover:bg-muted/50 disabled:opacity-50"
             >
               Previous
             </Button>
@@ -251,7 +251,7 @@ export function NoteListView({
               type="button"
               onClick={() => setPage(Math.min(totalPages, page + 1))}
               disabled={page >= totalPages}
-              className="rounded border border-gray-700 px-3 py-1.5 text-gray-300 hover:bg-gray-800 disabled:opacity-50"
+              className="rounded border px-3 py-1.5 text-gray-300 hover:bg-muted/50 disabled:opacity-50"
             >
               Next
             </Button>

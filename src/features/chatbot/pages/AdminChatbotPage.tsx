@@ -3,6 +3,7 @@
 import React, { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
+import { SectionPanel } from "@/shared/components/section-panel";
 import { useChatbotLogic } from "../hooks/useChatbotLogic";
 import { ChatInterface } from "../components/ChatInterface";
 import { SettingsTab } from "../components/SettingsTab";
@@ -128,7 +129,7 @@ function ChatbotPageInner() {
     <div className="container mx-auto h-[calc(100vh-120px)] py-6">
       <div className="grid h-full grid-cols-1 gap-6 lg:grid-cols-5">
         {/* Session Sidebar */}
-        <div className="hidden lg:block overflow-hidden rounded-lg border border-gray-800 bg-gray-950">
+        <SectionPanel className="hidden overflow-hidden p-0 lg:block">
           <SessionSidebar
             sessions={logic.sessions}
             currentSessionId={logic.currentSessionId}
@@ -136,17 +137,17 @@ function ChatbotPageInner() {
             onNewSession={() => void logic.createNewSession()}
             onDeleteSession={(id) => void logic.deleteSession(id)}
           />
-        </div>
+        </SectionPanel>
 
         {/* Main Chat Area */}
-        <div className="flex flex-col overflow-hidden rounded-lg border border-gray-800 bg-gray-950 lg:col-span-3">
+        <SectionPanel className="flex flex-col overflow-hidden p-0 lg:col-span-3">
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
             className="flex h-full flex-col"
           >
-            <div className="border-b border-gray-800 bg-gray-900/50 px-4 py-2">
-              <TabsList className="bg-gray-950">
+            <div className="border-b bg-muted/40 px-4 py-2">
+              <TabsList className="bg-card">
                 <TabsTrigger value="chat">Chat</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
               </TabsList>
@@ -167,13 +168,13 @@ function ChatbotPageInner() {
               </TabsContent>
             </div>
           </Tabs>
-        </div>
-        <div className="hidden overflow-hidden rounded-lg border border-gray-800 bg-gray-950 lg:block">
+        </SectionPanel>
+        <SectionPanel className="hidden overflow-hidden p-0 lg:block">
           <DebugPanel
             debugState={debugState}
             agentRunLogs={[]}
           />
-        </div>
+        </SectionPanel>
       </div>
     </div>
   );

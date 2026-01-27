@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/shared/ui/select";
 import { Label } from "@/shared/ui/label";
-import ModalShell from "@/shared/ui/modal-shell";
+import ModalShell from "@/shared/components/modal-shell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -253,7 +253,7 @@ export default function ListProductModal({
                         Retry image export
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="bg-gray-950 border-gray-800">
+                    <DropdownMenuContent align="start" className="bg-card border-border">
                       {imageRetryPresets.map((preset) => (
                         <DropdownMenuItem
                           key={preset.id}
@@ -293,7 +293,7 @@ export default function ListProductModal({
         ) : (
           <>
             {hasPresetSelection ? (
-              <div className="rounded-md border border-gray-800 bg-gray-950/60 px-4 py-3 text-sm text-gray-300">
+              <div className="rounded-md border border-border bg-card/60 px-4 py-3 text-sm text-gray-300">
                 <p>
                   Marketplace:{" "}
                   <span className="font-medium text-white">
@@ -419,7 +419,7 @@ export default function ListProductModal({
                   <Checkbox
                     id="allowDuplicateSku"
                     checked={allowDuplicateSku} onCheckedChange={(checked) => setAllowDuplicateSku(Boolean(checked))}
-                    className="h-4 w-4 rounded border-gray-700 bg-gray-900 text-blue-500"
+                    className="h-4 w-4 rounded border bg-gray-900 text-blue-500"
                   />
                   <Label htmlFor="allowDuplicateSku" className="text-sm text-gray-300">
                     Allow duplicate SKUs
@@ -433,7 +433,7 @@ export default function ListProductModal({
           </>
         )}
         {exportLogs.length > 0 && (
-          <div className="mt-4 border-t border-gray-700 pt-4">
+          <div className="mt-4 border-t border pt-4">
             <ExportLogViewer
               logs={exportLogs}
               isOpen={logsOpen}

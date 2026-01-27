@@ -45,10 +45,10 @@ export function ModelNodeConfigSection({
             })
           }
         >
-          <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
             <SelectValue placeholder="Select model" />
           </SelectTrigger>
-          <SelectContent className="border-gray-800 bg-gray-900">
+          <SelectContent className="border-border bg-gray-900">
             {modelOptions.map((model) => (
               <SelectItem key={model} value={model}>
                 {model}
@@ -63,7 +63,7 @@ export function ModelNodeConfigSection({
           <Input
             type="number"
             step="0.1"
-            className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+            className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
             value={modelConfig.temperature}
             onChange={(event) =>
               updateSelectedNodeConfig({
@@ -83,7 +83,7 @@ export function ModelNodeConfigSection({
           <Input
             type="number"
             step="50"
-            className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+            className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
             value={modelConfig.maxTokens}
             onChange={(event) =>
               updateSelectedNodeConfig({
@@ -99,14 +99,14 @@ export function ModelNodeConfigSection({
           />
         </div>
       </div>
-      <div className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-900/50 px-3 py-2 text-xs text-gray-300">
+      <div className="flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300">
         <span>Accepts Images</span>
         <Button
           type="button"
-          className={`rounded border border-gray-700 px-3 py-1 text-xs ${
+          className={`rounded border px-3 py-1 text-xs ${
             modelConfig.vision
               ? "text-emerald-200 hover:bg-emerald-500/10"
-              : "text-gray-300 hover:bg-gray-800"
+              : "text-gray-300 hover:bg-muted/50"
           }`}
           onClick={() =>
             updateSelectedNodeConfig({
@@ -117,14 +117,14 @@ export function ModelNodeConfigSection({
           {modelConfig.vision ? "Enabled" : "Disabled"}
         </Button>
       </div>
-      <div className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-900/50 px-3 py-2 text-xs text-gray-300">
+      <div className="flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300">
         <span>Wait for result</span>
         <Button
           type="button"
-          className={`rounded border border-gray-700 px-3 py-1 text-xs ${
+          className={`rounded border px-3 py-1 text-xs ${
             modelConfig.waitForResult !== false
               ? "text-emerald-200 hover:bg-emerald-500/10"
-              : "text-gray-300 hover:bg-gray-800"
+              : "text-gray-300 hover:bg-muted/50"
           }`}
           onClick={() =>
             updateSelectedNodeConfig({

@@ -24,7 +24,7 @@ export function TemplateNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">Template</Label>
         <Textarea
-          className="mt-2 min-h-[140px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+          className="mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={templateConfig.template}
           onChange={(event) =>
             updateSelectedNodeConfig({

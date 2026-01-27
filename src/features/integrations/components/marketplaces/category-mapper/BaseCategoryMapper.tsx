@@ -270,13 +270,13 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
 
     return (
       <React.Fragment key={category.id}>
-        <tr className={`border-b border-gray-800 ${hasPendingChange ? "bg-yellow-500/5" : ""}`}>
+        <tr className={`border-b border-border ${hasPendingChange ? "bg-yellow-500/5" : ""}`}>
           <td className="px-4 py-2">
             <div className="flex items-center" style={{ paddingLeft: `${depth * 20}px` }}>
               {hasChildren ? (
                 <Button
                   onClick={() => toggleExpand(category.id)}
-                  className="mr-2 rounded p-0.5 text-gray-400 hover:bg-gray-800 hover:text-white"
+                  className="mr-2 rounded p-0.5 text-gray-400 hover:bg-muted/50 hover:text-white"
                 >
                   {isExpanded ? (
                     <ChevronDown className="h-4 w-4" />
@@ -299,7 +299,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
               onChange={(e) =>
                 handleMappingChange(category.id, e.target.value || null)
               }
-              className="w-full rounded border border-gray-700 bg-gray-800 px-2 py-1 text-sm text-white"
+              className="w-full rounded border bg-gray-800 px-2 py-1 text-sm text-white"
               disabled={internalCategoriesLoading || !selectedCatalogId}
             >
               <option value="">— Not mapped —</option>
@@ -339,7 +339,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
           <Button
             onClick={() => void handleFetchFromBase()}
             disabled={fetching}
-            className="flex items-center gap-2 rounded-md border border-gray-700 bg-gray-800 px-4 py-2 text-sm text-white hover:bg-gray-700 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-md border bg-gray-800 px-4 py-2 text-sm text-white hover:bg-gray-700 disabled:opacity-50"
           >
             {fetching ? (
               <RefreshCw className="h-4 w-4 animate-spin" />
@@ -371,7 +371,7 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
           value={selectedCatalogId ?? ""}
           onChange={(e) => setSelectedCatalogId(e.target.value || null)}
           disabled={catalogsLoading}
-          className="rounded border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white"
+          className="rounded border bg-gray-800 px-3 py-2 text-sm text-white"
         >
           {catalogsLoading && <option value="">Loading...</option>}
           {!catalogsLoading && catalogs.length === 0 && (
@@ -407,10 +407,10 @@ export function BaseCategoryMapper({ connectionId, connectionName }: BaseCategor
       </div>
 
       {/* Category Table */}
-      <div className="overflow-hidden rounded-md border border-gray-800">
+      <div className="overflow-hidden rounded-md border border-border">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-gray-800 bg-gray-900/50">
+            <tr className="border-b border-border bg-card/50">
               <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-400">
                 External Category
               </th>

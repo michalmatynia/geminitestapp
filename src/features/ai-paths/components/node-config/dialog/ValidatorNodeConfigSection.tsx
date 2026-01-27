@@ -43,10 +43,10 @@ export function ValidatorNodeConfigSection({
             })
           }
         >
-          <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
             <SelectValue placeholder="Select mode" />
           </SelectTrigger>
-          <SelectContent className="border-gray-800 bg-gray-900">
+          <SelectContent className="border-border bg-gray-900">
             <SelectItem value="all">All paths required</SelectItem>
             <SelectItem value="any">Any path required</SelectItem>
           </SelectContent>
@@ -57,7 +57,7 @@ export function ValidatorNodeConfigSection({
           Required Paths (one per line)
         </Label>
         <Textarea
-          className="mt-2 min-h-[100px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+          className="mt-2 min-h-[100px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={(validatorConfig.requiredPaths ?? []).join("\n")}
           onChange={(event) =>
             updateSelectedNodeConfig({

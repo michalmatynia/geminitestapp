@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/button";
-import { ListPanel } from "@/shared/ui/list-panel";
-import { SectionHeader } from "@/shared/ui/section-header";
+import { ListPanel } from "@/shared/components/list-panel";
+import { SectionHeader } from "@/shared/components/section-header";
 import { useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
 import { useRouter } from "next/navigation";
 import { deletePage, fetchPages } from "@/features/cms/api/pages";
@@ -45,7 +45,7 @@ export default function PagesPage() {
       >
         <ul>
           {pages.map((page) => (
-                          <li key={page.id} className="flex justify-between items-center py-2 border-b border-gray-700">
+                          <li key={page.id} className="flex justify-between items-center py-2 border-b border">
                             <Link href={`/admin/cms/pages/${page.id}/edit`}>
                               <span className="hover:underline">{page.name} ({page.slugs.map(s => `/${s.slug.slug}`).join(', ')})</span>
                             </Link>

@@ -95,7 +95,7 @@ export const ProductImageCell = React.memo(function ProductImageCell({
             })()}px`,
           }}
         >
-          <div className="bg-gray-950 rounded-lg overflow-hidden shadow-2xl border border-gray-600">
+          <div className="bg-card rounded-lg overflow-hidden shadow-2xl border border-border/60">
             <Image
               src={imageUrl}
               alt={productName}

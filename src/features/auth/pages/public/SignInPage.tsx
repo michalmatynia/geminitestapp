@@ -100,7 +100,7 @@ function SignInContent() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-900 px-4">
-      <div className="w-full max-w-md space-y-6 rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
+      <div className="w-full max-w-md space-y-6 rounded-lg border border-border bg-card p-6 shadow-lg">
         <div>
           <h1 className="text-2xl font-semibold text-white">Sign in</h1>
           <p className="mt-1 text-sm text-gray-400">
@@ -125,7 +125,7 @@ function SignInContent() {
             <Input
               id="email"
               type="email"
-              className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
+              className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
@@ -138,7 +138,7 @@ function SignInContent() {
             <Input
               id="password"
               type="password"
-              className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
+              className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
@@ -153,7 +153,7 @@ function SignInContent() {
                 <Input
                   id="otp"
                   type="text"
-                  className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
+                  className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
                   value={otp}
                   onChange={(event) => setOtp(event.target.value)}
                   placeholder="123456"
@@ -166,7 +166,7 @@ function SignInContent() {
                 <Input
                   id="recovery"
                   type="text"
-                  className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
+                  className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
                   value={recoveryCode}
                   onChange={(event) => setRecoveryCode(event.target.value)}
                   placeholder="ABCD-1234-EFGH"
@@ -190,14 +190,14 @@ function SignInContent() {
               <span className="h-px flex-1 bg-gray-800" />
             </div>
             <Button
-              className="w-full rounded-md border border-gray-700 px-3 py-2 text-sm font-semibold text-gray-200 hover:border-gray-500"
+              className="w-full rounded-md border px-3 py-2 text-sm font-semibold text-gray-200 hover:border-gray-500"
               type="button"
               onClick={() => void signIn("google", { callbackUrl: "/admin" })}
             >
               Continue with Google
             </Button>
             <Button
-              className="w-full rounded-md border border-gray-700 px-3 py-2 text-sm font-semibold text-gray-200 hover:border-gray-500"
+              className="w-full rounded-md border px-3 py-2 text-sm font-semibold text-gray-200 hover:border-gray-500"
               type="button"
               onClick={() => void signIn("facebook", { callbackUrl: "/admin" })}
             >

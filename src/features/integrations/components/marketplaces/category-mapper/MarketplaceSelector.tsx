@@ -82,7 +82,7 @@ export function MarketplaceSelector({
                   className={`w-full rounded px-3 py-2 text-left text-sm transition ${
                     selectedConnectionId === connection.id
                       ? "bg-gray-800 text-white"
-                      : "text-gray-300 hover:bg-gray-800/60"
+                      : "text-gray-300 hover:bg-muted/50/60"
                   }`}
                 >
                   {connection.name}

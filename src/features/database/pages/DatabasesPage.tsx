@@ -5,8 +5,8 @@ import { DataTable } from "@/shared/components/data-table";
 import { Button } from "@/shared/ui/button";
 import { useToast } from "@/shared/ui/toast";
 import { Input } from "@/shared/ui/input";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 import { getDatabaseColumns } from "../components/DatabaseColumns";
 import { LogModal } from "../components/LogModal";
 import { RestoreModal } from "../components/RestoreModal";
@@ -170,7 +170,7 @@ export default function DatabasesPage() {
       )}
 
       {/* Tabs */}
-      <div className="mb-6 border-b border-gray-700">
+      <div className="mb-6 border-b border">
         <div className="flex gap-4">
           <Button
             onClick={() => setActiveTab("postgresql")}

@@ -54,10 +54,10 @@ export function DatabaseQueryInputControls({
             value={operation}
             onValueChange={(value: DatabaseOperation) => onOperationChange(value)}
           >
-            <SelectTrigger className="h-7 w-[140px] border-gray-800 bg-gray-950/70 text-xs text-white">
+            <SelectTrigger className="h-7 w-[140px] border-border bg-card/70 text-xs text-white">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="border-gray-800 bg-gray-900">
+            <SelectContent className="border-border bg-gray-900">
               <SelectItem value="query">Query</SelectItem>
               <SelectItem value="update">Update</SelectItem>
               <SelectItem value="insert">Insert</SelectItem>
@@ -70,7 +70,7 @@ export function DatabaseQueryInputControls({
             type="button"
             className={`h-7 rounded-md border px-2 text-[10px] ${
               !queryFormatterEnabled
-                ? "border-gray-700 bg-gray-800/50 text-gray-400 hover:bg-gray-800"
+                ? "border bg-gray-800/50 text-gray-400 hover:bg-muted/50"
                 : queryValidation && queryValidation.status === "error"
                 ? "border-amber-700 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20"
                 : "border-emerald-700 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20"
@@ -86,7 +86,7 @@ export function DatabaseQueryInputControls({
           </Button>
           <Button
             type="button"
-            className="h-7 rounded-md border border-gray-700 px-2 text-[10px] text-gray-200 hover:bg-gray-900/80"
+            className="h-7 rounded-md border px-2 text-[10px] text-gray-200 hover:bg-muted/60"
             onClick={onToggleValidator}
           >
             {queryValidatorEnabled ? "Hide validator" : "Validate"}
@@ -107,7 +107,7 @@ export function DatabaseQueryInputControls({
       </div>
       <Textarea
         ref={queryTemplateRef}
-        className="min-h-[140px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+        className="min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
         value={queryTemplateValue}
         onChange={(event) => onQueryChange(event.target.value)}
         placeholder={queryTemplateValue.trim() === "" ? queryPlaceholder : undefined}

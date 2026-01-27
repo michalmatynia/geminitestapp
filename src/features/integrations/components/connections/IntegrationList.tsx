@@ -4,8 +4,9 @@ import Link from "next/link";
 import { PlusIcon, SettingsIcon } from "lucide-react";
 import { Integration, integrationDefinitions } from "@/features/integrations/types/integrations-ui";
 import { Button } from "@/shared/ui/button";
-import { ListPanel } from "@/shared/ui/list-panel";
-import { SectionHeader } from "@/shared/ui/section-header";
+import { ListPanel } from "@/shared/components/list-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 type IntegrationListProps = {
   integrations: Integration[];
@@ -36,7 +37,7 @@ export function IntegrationList({
         />
       }
     >
-      <div className="relative overflow-hidden rounded-xl border border-gray-800 bg-gray-900/60 p-6">
+      <SectionPanel variant="subtle" className="relative overflow-hidden rounded-xl p-6">
         <div className="absolute -left-20 -top-20 size-64 rounded-full bg-emerald-500/10 blur-3xl" />
         <div className="absolute -bottom-24 right-10 size-72 rounded-full bg-sky-500/10 blur-3xl" />
         <div className="absolute -right-16 top-20 size-48 rounded-full bg-purple-500/10 blur-3xl" />
@@ -108,17 +109,17 @@ export function IntegrationList({
         </div>
 
         <div className="mt-6 grid gap-3 text-xs text-gray-500 md:grid-cols-3">
-          <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-3">
+          <SectionPanel variant="subtle-compact" className="text-xs text-muted-foreground">
             Connect marketplaces and automate listings.
-          </div>
-          <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-3">
+          </SectionPanel>
+          <SectionPanel variant="subtle-compact" className="text-xs text-muted-foreground">
             Monitor sync status and data flow.
-          </div>
-          <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-3">
+          </SectionPanel>
+          <SectionPanel variant="subtle-compact" className="text-xs text-muted-foreground">
             Add new nodes to expand your stack.
-          </div>
+          </SectionPanel>
         </div>
-      </div>
+      </SectionPanel>
     </ListPanel>
   );
 }

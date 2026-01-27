@@ -6,8 +6,8 @@ import Link from "next/link";
 import { Button } from "@/shared/ui/button";
 import { useToast } from "@/shared/ui/toast";
 import { cn } from "@/shared/utils";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 type FrontAppOption = "products" | "chatbot" | "notes";
 
@@ -125,7 +125,7 @@ export function AdminFrontManagePage() {
                   "flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left transition-colors",
                   selected === option.id
                     ? "border-blue-500/60 bg-blue-500/10 text-white"
-                    : "border-gray-800 bg-gray-900/40 text-gray-200 hover:border-gray-700"
+                    : "border-border bg-card/40 text-gray-200 hover:border"
                 )}
               >
                 <div>
@@ -137,7 +137,7 @@ export function AdminFrontManagePage() {
                     "rounded-full border px-2 py-1 text-[10px] uppercase tracking-wide",
                     selected === option.id
                       ? "border-blue-500/60 text-blue-200"
-                      : "border-gray-700 text-gray-400"
+                      : "border text-gray-400"
                   )}
                 >
                   {option.route}

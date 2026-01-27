@@ -2,7 +2,7 @@
 
 import { TestLogEntry } from "@/features/integrations/types/integrations-ui";
 import { AppModal } from "@/shared/ui/app-modal";
-import ModalShell from "@/shared/ui/modal-shell";
+import ModalShell from "@/shared/components/modal-shell";
 
 type TestLogModalProps = {
   selectedStep: (TestLogEntry & { status: "ok" | "failed" }) | null;
@@ -37,7 +37,7 @@ export function TestLogModal({ selectedStep, onClose }: TestLogModalProps) {
               {selectedStep.detail}
             </p>
           )}
-          <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3 text-xs text-gray-400">
+          <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-400">
             {selectedStep.status === "ok"
               ? "Playwright completed this step successfully."
               : "Playwright stopped after this step due to a failure."}

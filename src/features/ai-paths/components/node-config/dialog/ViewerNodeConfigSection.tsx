@@ -103,7 +103,7 @@ export function ViewerNodeConfigSection({
         </div>
         <Button
           type="button"
-          className="rounded-md border border-gray-700 text-xs text-gray-200 hover:bg-gray-900/80"
+          className="rounded-md border text-xs text-gray-200 hover:bg-muted/60"
           onClick={() => {
             updateSelectedNodeConfig({
               viewer: {
@@ -118,7 +118,7 @@ export function ViewerNodeConfigSection({
         </Button>
         <Button
           type="button"
-          className="rounded-md border border-gray-700 text-xs text-gray-200 hover:bg-gray-900/80"
+          className="rounded-md border text-xs text-gray-200 hover:bg-muted/60"
           onClick={() =>
             updateSelectedNodeConfig({
               viewer: {
@@ -200,7 +200,7 @@ export function ViewerNodeConfigSection({
               </div>
             )}
             <Textarea
-              className="min-h-[90px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+              className="min-h-[90px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={outputValues[input] ?? ""}
               onChange={(event) =>
                 updateSelectedNodeConfig({

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { AppModal } from "@/shared/ui/app-modal";
-import ModalShell from "@/shared/ui/modal-shell";
+import ModalShell from "@/shared/components/modal-shell";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -125,7 +125,7 @@ export function CountryModal({
             <Label htmlFor="country-code">Code</Label>
             <select
               id="country-code"
-              className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
+              className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
               value={form.code}
               onChange={(e) => {
                 const sel = countryCodeOptions.find(o => o.code === e.target.value);
@@ -150,11 +150,11 @@ export function CountryModal({
             {loadingCurrencies ? (
               <p className="text-xs text-gray-500">Loading currencies...</p>
             ) : (
-              <div className="mt-2 grid grid-cols-2 gap-2 max-h-48 overflow-y-auto rounded-md border border-gray-800 bg-gray-900/50 p-3">
+              <div className="mt-2 grid grid-cols-2 gap-2 max-h-48 overflow-y-auto rounded-md border border-border bg-card/50 p-3">
                 {currencyOptions.map((curr) => (
                   <Label
                     key={curr.id}
-                    className="flex items-center gap-2 cursor-pointer hover:bg-gray-800 p-1.5 rounded transition-colors"
+                    className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1.5 rounded transition-colors"
                   >
                     <Checkbox
                       checked={selectedCurrencyIds.includes(curr.id)}

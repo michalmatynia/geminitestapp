@@ -43,10 +43,10 @@ export function MathNodeConfigSection({
             })
           }
         >
-          <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
             <SelectValue placeholder="Select operation" />
           </SelectTrigger>
-          <SelectContent className="border-gray-800 bg-gray-900">
+          <SelectContent className="border-border bg-gray-900">
             <SelectItem value="add">Add</SelectItem>
             <SelectItem value="subtract">Subtract</SelectItem>
             <SelectItem value="multiply">Multiply</SelectItem>
@@ -62,7 +62,7 @@ export function MathNodeConfigSection({
         <Input
           type="number"
           step="0.1"
-          className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+          className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={mathConfig.operand}
           onChange={(event) =>
             updateSelectedNodeConfig({

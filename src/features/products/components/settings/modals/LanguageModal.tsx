@@ -2,7 +2,7 @@
 
 import React from "react";
 import { AppModal } from "@/shared/ui/app-modal";
-import ModalShell from "@/shared/ui/modal-shell";
+import ModalShell from "@/shared/components/modal-shell";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -154,11 +154,11 @@ export function LanguageModal({
           </div>
           <div className="space-y-2">
             <Label>Associated Countries</Label>
-            <div className="mt-2 grid grid-cols-2 gap-2 max-h-48 overflow-y-auto rounded-md border border-gray-800 bg-gray-900/50 p-3">
+            <div className="mt-2 grid grid-cols-2 gap-2 max-h-48 overflow-y-auto rounded-md border border-border bg-card/50 p-3">
               {countries.map((country) => (
                 <Label
                   key={country.id}
-                  className="flex items-center gap-2 cursor-pointer hover:bg-gray-800 p-1.5 rounded transition-colors"
+                  className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1.5 rounded transition-colors"
                 >
                   <Checkbox
                     checked={selectedCountryIds.includes(country.id)}

@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/shared/ui/button";
-import { ListPanel } from "@/shared/ui/list-panel";
+import { ListPanel } from "@/shared/components/list-panel";
 import { useToast } from "@/shared/ui/toast";
-import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionHeader } from "@/shared/components/section-header";
 import { ProductDraft } from "@/features/products/types/drafts";
 import {
   PlusIcon,
@@ -112,7 +112,7 @@ export function DraftList({ onEdit, onCreateNew, refreshTrigger }: DraftListProp
       {loading ? (
         <p className="text-sm text-gray-400">Loading drafts...</p>
       ) : drafts.length === 0 ? (
-        <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-8 text-center">
+        <div className="rounded-lg border border-border bg-card/50 p-8 text-center">
           <p className="mb-4 text-gray-400">No drafts yet</p>
           <Button onClick={onCreateNew} variant="outline">
             Create Your First Draft
@@ -123,7 +123,7 @@ export function DraftList({ onEdit, onCreateNew, refreshTrigger }: DraftListProp
           {drafts.map((draft) => (
             <div
               key={draft.id}
-              className="rounded-lg border border-gray-800 bg-gray-900/50 p-4 transition-colors hover:border-gray-700"
+              className="rounded-lg border border-border bg-card/50 p-4 transition-colors hover:border"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -132,7 +132,7 @@ export function DraftList({ onEdit, onCreateNew, refreshTrigger }: DraftListProp
                       (() => {
                         const IconComponent = iconMap[draft.icon];
                         return IconComponent ? (
-                          <div className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-700 bg-gray-800 text-gray-400">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-md border bg-gray-800 text-gray-400">
                             <IconComponent className="h-4 w-4" />
                           </div>
                         ) : null;

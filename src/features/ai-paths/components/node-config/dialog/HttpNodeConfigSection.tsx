@@ -37,7 +37,7 @@ export function HttpNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">URL</Label>
         <Input
-          className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+          className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={httpConfig.url}
           onChange={(event) =>
             updateSelectedNodeConfig({
@@ -57,10 +57,10 @@ export function HttpNodeConfigSection({
               })
             }
           >
-            <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+            <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
               <SelectValue placeholder="Select method" />
             </SelectTrigger>
-            <SelectContent className="border-gray-800 bg-gray-900">
+            <SelectContent className="border-border bg-gray-900">
               <SelectItem value="GET">GET</SelectItem>
               <SelectItem value="POST">POST</SelectItem>
               <SelectItem value="PUT">PUT</SelectItem>
@@ -82,10 +82,10 @@ export function HttpNodeConfigSection({
               })
             }
           >
-            <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+            <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
               <SelectValue placeholder="Select mode" />
             </SelectTrigger>
-            <SelectContent className="border-gray-800 bg-gray-900">
+            <SelectContent className="border-border bg-gray-900">
               <SelectItem value="json">JSON</SelectItem>
               <SelectItem value="text">Text</SelectItem>
               <SelectItem value="status">Status only</SelectItem>
@@ -96,7 +96,7 @@ export function HttpNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">Headers (JSON)</Label>
         <Textarea
-          className="mt-2 min-h-[90px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+          className="mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={httpConfig.headers}
           onChange={(event) =>
             updateSelectedNodeConfig({
@@ -108,7 +108,7 @@ export function HttpNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">Body Template</Label>
         <Textarea
-          className="mt-2 min-h-[110px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+          className="mt-2 min-h-[110px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={httpConfig.bodyTemplate}
           onChange={(event) =>
             updateSelectedNodeConfig({
@@ -120,7 +120,7 @@ export function HttpNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">Response Path</Label>
         <Input
-          className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+          className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={httpConfig.responsePath}
           onChange={(event) =>
             updateSelectedNodeConfig({

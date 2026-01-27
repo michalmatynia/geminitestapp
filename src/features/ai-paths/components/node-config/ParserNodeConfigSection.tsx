@@ -340,7 +340,7 @@ export function ParserNodeConfigSection({
   );
   return (
     <div className="space-y-4">
-      <div className="rounded-md border border-gray-800 bg-gray-900/60 px-3 py-2 text-[11px] text-gray-300">
+      <div className="rounded-md border border-border bg-card/60 px-3 py-2 text-[11px] text-gray-300">
         <div className="text-gray-400">Input source</div>
         <div className="mt-1 text-sm text-gray-200">{parserSourceLabel}</div>
       </div>
@@ -352,10 +352,10 @@ export function ParserNodeConfigSection({
             commitMappingsImmediate(draftMappings, outputMode, value)
           }
         >
-          <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
             <SelectValue placeholder="Select preset" />
           </SelectTrigger>
-          <SelectContent className="border-gray-800 bg-gray-900">
+          <SelectContent className="border-border bg-gray-900">
             {presetOptions.map((preset) => (
               <SelectItem key={preset.id} value={preset.id}>
                 {preset.label}
@@ -371,14 +371,14 @@ export function ParserNodeConfigSection({
         <div className="mt-3 flex flex-wrap gap-2">
           <Button
             type="button"
-            className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+            className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
             onClick={() => applyPreset("replace")}
           >
             Replace mappings
           </Button>
           <Button
             type="button"
-            className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+            className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
             onClick={() => applyPreset("merge")}
           >
             Add missing fields
@@ -401,10 +401,10 @@ export function ParserNodeConfigSection({
               }))
             }
           >
-            <SelectTrigger className="border-gray-800 bg-gray-950/70 text-sm text-white">
+            <SelectTrigger className="border-border bg-card/70 text-sm text-white">
               <SelectValue placeholder="Entity type" />
             </SelectTrigger>
-            <SelectContent className="border-gray-800 bg-gray-900">
+            <SelectContent className="border-border bg-gray-900">
               <SelectItem value="product">Product</SelectItem>
               <SelectItem value="note">Note</SelectItem>
               <SelectItem value="custom">Custom</SelectItem>
@@ -412,7 +412,7 @@ export function ParserNodeConfigSection({
           </Select>
           <div className="space-y-2">
             <Input
-              className="w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+              className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={sampleState.entityId}
               onChange={(event) =>
                 setParserSamples((prev) => ({
@@ -445,10 +445,10 @@ export function ParserNodeConfigSection({
                   }));
                 }}
               >
-                <SelectTrigger className="border-gray-800 bg-gray-950/70 text-[10px] text-gray-200">
+                <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
                   <SelectValue placeholder="Use simulation ID" />
                 </SelectTrigger>
-                <SelectContent className="border-gray-800 bg-gray-900">
+                <SelectContent className="border-border bg-gray-900">
                   {simulationOptions.map((option) => (
                     <SelectItem key={option.id} value={option.id}>
                       {option.label}
@@ -460,7 +460,7 @@ export function ParserNodeConfigSection({
           </div>
           <Button
             type="button"
-            className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+            className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
             disabled={parserSampleLoading}
             onClick={() =>
               void handleFetchParserSample(
@@ -474,7 +474,7 @@ export function ParserNodeConfigSection({
           </Button>
         </div>
         <Textarea
-          className="mt-2 min-h-[120px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+          className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={sampleState.json}
           onChange={(event) =>
             setParserSamples((prev) => ({
@@ -500,10 +500,10 @@ export function ParserNodeConfigSection({
               }))
             }
           >
-            <SelectTrigger className="w-[180px] border-gray-800 bg-gray-950/70 text-sm text-white">
+            <SelectTrigger className="w-[180px] border-border bg-card/70 text-sm text-white">
               <SelectValue placeholder="Mapping mode" />
             </SelectTrigger>
-            <SelectContent className="border-gray-800 bg-gray-900">
+            <SelectContent className="border-border bg-gray-900">
               <SelectItem value="top">Top-level fields</SelectItem>
               <SelectItem value="flatten">Flatten nested</SelectItem>
             </SelectContent>
@@ -520,10 +520,10 @@ export function ParserNodeConfigSection({
               }))
             }
           >
-            <SelectTrigger className="w-[160px] border-gray-800 bg-gray-950/70 text-sm text-white">
+            <SelectTrigger className="w-[160px] border-border bg-card/70 text-sm text-white">
               <SelectValue placeholder="Depth" />
             </SelectTrigger>
-            <SelectContent className="border-gray-800 bg-gray-900">
+            <SelectContent className="border-border bg-gray-900">
               {[1, 2, 3, 4].map((depth) => (
                 <SelectItem key={depth} value={String(depth)}>
                   Depth {depth}
@@ -533,10 +533,10 @@ export function ParserNodeConfigSection({
           </Select>
           <Button
             type="button"
-            className={`rounded-md border border-gray-700 px-3 text-[10px] ${
+            className={`rounded-md border px-3 text-[10px] ${
               sampleState.includeContainers
                 ? "text-emerald-200 hover:bg-emerald-500/10"
-                : "text-gray-300 hover:bg-gray-900/80"
+                : "text-gray-300 hover:bg-muted/60"
             }`}
             onClick={() =>
               setParserSamples((prev) => ({
@@ -563,10 +563,10 @@ export function ParserNodeConfigSection({
                 }))
               }
             >
-              <SelectTrigger className="w-[170px] border-gray-800 bg-gray-950/70 text-sm text-white">
+              <SelectTrigger className="w-[170px] border-border bg-card/70 text-sm text-white">
                 <SelectValue placeholder="Key style" />
               </SelectTrigger>
-              <SelectContent className="border-gray-800 bg-gray-900">
+              <SelectContent className="border-border bg-gray-900">
                 <SelectItem value="path">Path keys</SelectItem>
                 <SelectItem value="leaf">Leaf keys</SelectItem>
               </SelectContent>
@@ -583,14 +583,14 @@ export function ParserNodeConfigSection({
             <>
               <Button
                 type="button"
-                className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
                 onClick={() => applySampleMappings("replace")}
               >
                 Auto-map from sample
               </Button>
               <Button
                 type="button"
-                className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
                 onClick={() => applySampleMappings("merge")}
               >
                 Add missing from sample
@@ -599,7 +599,7 @@ export function ParserNodeConfigSection({
           )}
           <Button
             type="button"
-            className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+            className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
             onClick={handleDetectImages}
           >
             Detect images
@@ -618,10 +618,10 @@ export function ParserNodeConfigSection({
             )
           }
         >
-          <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
             <SelectValue placeholder="Select output mode" />
           </SelectTrigger>
-          <SelectContent className="border-gray-800 bg-gray-900">
+          <SelectContent className="border-border bg-gray-900">
             <SelectItem value="individual">Individual outputs</SelectItem>
             <SelectItem value="bundle">Single bundle output</SelectItem>
           </SelectContent>
@@ -635,35 +635,35 @@ export function ParserNodeConfigSection({
       <div className="flex flex-wrap gap-2">
         <Button
           type="button"
-          className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+          className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
           onClick={() => addMapping("title", "$.title")}
         >
           Add title
         </Button>
         <Button
           type="button"
-          className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+          className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
           onClick={() => addMapping("images", "$.images")}
         >
           Add images
         </Button>
         <Button
           type="button"
-          className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+          className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
           onClick={() => addMapping("productId", "$.id")}
         >
           Add id
         </Button>
         <Button
           type="button"
-          className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+          className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
           onClick={() => addMapping("sku", "$.sku")}
         >
           Add sku
         </Button>
         <Button
           type="button"
-          className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+          className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
           onClick={() => addMapping("price", "$.price")}
         >
           Add price
@@ -677,7 +677,7 @@ export function ParserNodeConfigSection({
             className="grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-start"
           >
             <Input
-              className="w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+              className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={key}
               onChange={(event) =>
                 updateMappingKey(index, event.target.value)
@@ -686,7 +686,7 @@ export function ParserNodeConfigSection({
             />
             <div className="space-y-2">
               <Input
-                className="w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
                 value={path}
                 onChange={(event) =>
                   updateMappingPath(index, event.target.value)
@@ -694,10 +694,10 @@ export function ParserNodeConfigSection({
                 placeholder="$.path.to.value"
               />
               <Select onValueChange={(value) => updateMappingPath(index, value)}>
-                <SelectTrigger className="border-gray-800 bg-gray-950/70 text-[10px] text-gray-200">
+                <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
                   <SelectValue placeholder="Pick a suggested path" />
                 </SelectTrigger>
-                <SelectContent className="border-gray-800 bg-gray-900">
+                <SelectContent className="border-border bg-gray-900">
                 {uniqueSuggestedPathOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -709,7 +709,7 @@ export function ParserNodeConfigSection({
             <Button
               type="button"
               disabled={entries.length <= 1}
-              className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50"
               onClick={() => removeMapping(index)}
             >
               Remove
@@ -721,7 +721,7 @@ export function ParserNodeConfigSection({
       <div className="grid gap-2 sm:grid-cols-3">
         <Button
           type="button"
-          className="w-full rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
+          className="w-full rounded-md border text-xs text-white hover:bg-muted/60"
           onClick={() =>
             addMapping(`field_${entries.length + 1}`, "")
           }
@@ -730,7 +730,7 @@ export function ParserNodeConfigSection({
         </Button>
         <Button
           type="button"
-          className="w-full rounded-md border border-gray-700 text-xs text-gray-200 hover:bg-gray-900/80 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-md border text-xs text-gray-200 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={entries.length === 0}
           onClick={() => removeMapping(entries.length - 1)}
         >
@@ -746,12 +746,12 @@ export function ParserNodeConfigSection({
         </Button>
       </div>
       {imageEntryIndex >= 0 && (
-        <div className="rounded-md border border-gray-800 bg-gray-900/50 p-3 text-[11px] text-gray-400">
+        <div className="rounded-md border border-border bg-card/50 p-3 text-[11px] text-gray-400">
           <div className="text-gray-300">Image helpers</div>
           <div className="mt-2 flex flex-wrap gap-2">
             <Button
               type="button"
-              className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+              className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
               onClick={() =>
                 updateMappingPath(imageEntryIndex, "$.images")
               }
@@ -760,7 +760,7 @@ export function ParserNodeConfigSection({
             </Button>
             <Button
               type="button"
-              className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+              className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
               onClick={() =>
                 updateMappingPath(imageEntryIndex, "$.imageLinks")
               }
@@ -769,7 +769,7 @@ export function ParserNodeConfigSection({
             </Button>
             <Button
               type="button"
-              className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+              className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
               onClick={() =>
                 updateMappingPath(imageEntryIndex, "$.media")
               }

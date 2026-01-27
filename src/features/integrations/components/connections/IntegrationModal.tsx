@@ -20,7 +20,7 @@ import { TestSuccessModal } from "./TestSuccessModal";
 import { SessionModal } from "./SessionModal";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
-import ModalShell from "@/shared/ui/modal-shell";
+import ModalShell from "@/shared/components/modal-shell";
 import { AppModal } from "@/shared/ui/app-modal";
 import Link from "next/link";
 import { Label } from "@/shared/ui/label";
@@ -346,7 +346,7 @@ export function IntegrationModal({
               )}
 
               {isTradera && activeConnection && (
-                <div className="mt-4 rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300">
+                <div className="mt-4 rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300">
                   <div className="flex items-center justify-between gap-3">
                     <p>
                       <span className="text-gray-400">Session cookie:</span>{" "}
@@ -430,7 +430,7 @@ export function IntegrationModal({
 
             {showPlaywright && (
               <TabsContent value="playwright" className="mt-4 space-y-4">
-                <Card className="border-gray-800 bg-gray-950/60 p-4">
+                <Card className="border-border bg-card/60 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-white">
@@ -485,7 +485,7 @@ export function IntegrationModal({
                           Selecting a persona overwrites the settings below.
                         </p>
                       </div>
-                      <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3 text-xs text-gray-400">
+                      <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-400">
                         {selectedPersona ? (
                           <>
                             <p className="text-xs font-semibold text-gray-200">

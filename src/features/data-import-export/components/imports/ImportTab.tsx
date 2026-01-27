@@ -95,7 +95,7 @@ export function ImportTab({
 }: ImportTabProps) {
   return (
     <>
-      <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
+      <div className="rounded-md border border-border bg-gray-900 p-4">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-white">Base.com</h2>
@@ -121,7 +121,7 @@ export function ImportTab({
             <div className="flex-1 min-w-[200px]">
               <Label className="text-xs text-gray-400">Inventory</Label>
               <select
-                className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                 value={inventoryId}
                 onChange={(event) => setInventoryId(event.target.value)}
                 disabled={inventories.length === 0}
@@ -149,7 +149,7 @@ export function ImportTab({
             <div className="w-40">
               <Label className="text-xs text-gray-400">Limit</Label>
               <select
-                className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                 value={limit}
                 onChange={(event) => setLimit(event.target.value)}
               >
@@ -167,7 +167,7 @@ export function ImportTab({
             <div>
               <Label className="text-xs text-gray-400">Catalog</Label>
               <select
-                className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                 value={catalogId}
                 onChange={(event) => setCatalogId(event.target.value)}
                 disabled={loadingCatalogs || catalogs.length === 0}
@@ -189,7 +189,7 @@ export function ImportTab({
             <div>
               <Label className="text-xs text-gray-400">Import template</Label>
               <select
-                className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                 value={importTemplateId}
                 onChange={(event) => setImportTemplateId(event.target.value)}
                 disabled={loadingImportTemplates || importTemplates.length === 0}
@@ -208,7 +208,7 @@ export function ImportTab({
             <div>
               <Label className="text-xs text-gray-400">Images</Label>
               <select
-                className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                 value={imageMode}
                 onChange={(event) =>
                   setImageMode(
@@ -230,7 +230,7 @@ export function ImportTab({
                 <Checkbox
                   id="allowDuplicateSku"
                   checked={allowDuplicateSku} onCheckedChange={(checked) => setAllowDuplicateSku(Boolean(checked))}
-                  className="h-4 w-4 rounded border-gray-700 bg-gray-900 text-blue-500"
+                  className="h-4 w-4 rounded border bg-gray-900 text-blue-500"
                 />
                 <Label htmlFor="allowDuplicateSku" className="text-sm text-white">
                   Allow duplicate SKUs
@@ -253,7 +253,7 @@ export function ImportTab({
         </div>
       </div>
 
-      <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
+      <div className="rounded-md border border-border bg-gray-900 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-semibold text-white">
@@ -268,10 +268,10 @@ export function ImportTab({
               value={importSearch}
               onChange={(event) => setImportSearch(event.target.value)}
               placeholder="Search products..."
-              className="h-8 w-48 border-gray-800 bg-gray-900 text-xs text-white placeholder:text-gray-500"
+              className="h-8 w-48 border-border bg-gray-900 text-xs text-white placeholder:text-gray-500"
             />
             <select
-              className="rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-white"
+              className="rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-white"
               value={uniqueOnly ? "unique" : "all"}
               onChange={(event) =>
                 setUniqueOnly(event.target.value === "unique")
@@ -304,8 +304,8 @@ export function ImportTab({
         ) : null}
 
         {filteredImportList.length > 0 ? (
-          <div className="mt-3 max-h-96 overflow-auto rounded-md border border-gray-800 bg-gray-950/70">
-            <div className="grid grid-cols-[28px_50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-gray-800 px-3 py-2 text-[11px] uppercase tracking-wide text-gray-500 sticky top-0 bg-gray-950 z-10">
+          <div className="mt-3 max-h-96 overflow-auto rounded-md border border-border bg-card/70">
+            <div className="grid grid-cols-[28px_50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-border px-3 py-2 text-[11px] uppercase tracking-wide text-gray-500 sticky top-0 bg-card z-10">
               <span className="flex items-center">
                 <Checkbox
                   aria-label="Select all visible products"
@@ -329,7 +329,7 @@ export function ImportTab({
                       });
                     }
                   }}
-                  className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
+                  className="h-3 w-3 rounded border bg-gray-900 text-emerald-500"
                 />
               </span>
               <span>Img</span>
@@ -346,7 +346,7 @@ export function ImportTab({
                 className={`grid grid-cols-[28px_50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-gray-900/70 px-3 py-2 text-xs text-gray-300 last:border-b-0 items-center transition-colors ${
                   selectedImportIds.has(item.baseProductId)
                     ? "bg-emerald-500/5"
-                    : "hover:bg-gray-900/40"
+                    : "hover:bg-card/40"
                 }`}
               >
                 <Checkbox
@@ -363,7 +363,7 @@ export function ImportTab({
                       return next;
                     });
                   }}
-                  className="h-3 w-3 rounded border-gray-700 bg-gray-900 text-emerald-500"
+                  className="h-3 w-3 rounded border bg-gray-900 text-emerald-500"
                   aria-label={`Select ${item.name}`}
                 />
                 <div className="relative h-10 w-10 overflow-hidden rounded bg-gray-900">
@@ -432,7 +432,7 @@ export function ImportTab({
       </div>
 
       {lastResult ? (
-        <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
+        <div className="rounded-md border border-border bg-gray-900 p-4">
           <h3 className="text-sm font-semibold text-white">
             Last import summary
           </h3>

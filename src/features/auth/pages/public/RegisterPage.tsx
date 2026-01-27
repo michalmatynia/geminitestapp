@@ -85,7 +85,7 @@ export default function RegisterPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-900 px-4">
-      <div className="w-full max-w-md space-y-6 rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
+      <div className="w-full max-w-md space-y-6 rounded-lg border border-border bg-card p-6 shadow-lg">
         <div>
           <h1 className="text-2xl font-semibold text-white">Create account</h1>
           <p className="mt-1 text-sm text-gray-400">
@@ -110,7 +110,7 @@ export default function RegisterPage() {
             <Input
               id="name"
               type="text"
-              className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
+              className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
               value={name}
               onChange={(event) => setName(event.target.value)}
               disabled={!allowSignup}
@@ -123,7 +123,7 @@ export default function RegisterPage() {
             <Input
               id="email"
               type="email"
-              className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
+              className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
@@ -137,7 +137,7 @@ export default function RegisterPage() {
             <Input
               id="password"
               type="password"
-              className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
+              className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required

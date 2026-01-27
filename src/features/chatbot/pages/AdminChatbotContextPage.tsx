@@ -8,13 +8,13 @@ import { PlusIcon } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
-import ModalShell from "@/shared/ui/modal-shell";
+import ModalShell from "@/shared/components/modal-shell";
 import { AppModal } from "@/shared/ui/app-modal";
 import { useToast } from "@/shared/ui/toast";
 import { Label } from "@/shared/ui/label";
 import { Checkbox } from "@/shared/ui/checkbox";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 import * as chatbotApi from "../api";
 
 type ContextItem = {
@@ -300,7 +300,7 @@ function ChatbotContextPageInner() {
               >
                 <PlusIcon className="size-5" />
               </Button>
-              <Label className="cursor-pointer rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-gray-300">
+              <Label className="cursor-pointer rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-gray-300">
                 {uploading ? "Uploading..." : "Upload PDF"}
                 <Input
                   type="file"
@@ -355,7 +355,7 @@ function ChatbotContextPageInner() {
                 className={`rounded-full border px-3 py-1 transition ${
                   tagFilters.includes(tag)
                     ? "border-blue-400/40 bg-blue-500/10 text-blue-100"
-                    : "border-gray-700 bg-gray-900 text-gray-200 hover:border-gray-500"
+                    : "border bg-gray-900 text-gray-200 hover:border-gray-500"
                 }`}
                 onClick={() => {
                   setTagFilters((prev) =>
@@ -371,7 +371,7 @@ function ChatbotContextPageInner() {
             {tagFilters.length > 0 ? (
               <Button
                 type="button"
-                className="rounded-full border border-gray-700 px-3 py-1 text-gray-300 hover:border-gray-500"
+                className="rounded-full border px-3 py-1 text-gray-300 hover:border-gray-500"
                 onClick={() => setTagFilters([])}
               >
                 Clear filters
@@ -379,7 +379,7 @@ function ChatbotContextPageInner() {
             ) : null}
           </div>
         </div>
-        <div className="overflow-hidden rounded-md border border-gray-800">
+        <div className="overflow-hidden rounded-md border border-border">
           <table className="min-w-full text-left text-sm text-gray-200">
             <thead className="bg-gray-900 text-xs uppercase text-gray-500">
               <tr>
@@ -401,7 +401,7 @@ function ChatbotContextPageInner() {
                 filteredContexts.map((item) => (
                   <tr
                     key={item.id}
-                    className="border-t border-gray-800 bg-gray-950 hover:bg-gray-900/60"
+                    className="border-t border-border bg-card hover:bg-card/60"
                   >
                     <td className="px-4 py-3 font-semibold text-white">
                       {item.title}
@@ -414,7 +414,7 @@ function ChatbotContextPageInner() {
                           (item.tags || []).map((tag) => (
                             <span
                               key={tag}
-                              className="rounded-full border border-gray-700 px-2 py-[1px] text-xs text-gray-300"
+                              className="rounded-full border px-2 py-[1px] text-xs text-gray-300"
                             >
                               {tag}
                             </span>
@@ -531,7 +531,7 @@ function ChatbotContextPageInner() {
                       <Button
                         key={tag}
                         type="button"
-                        className="rounded-full border border-gray-700 bg-gray-900 px-3 py-1 text-xs text-gray-200 hover:border-gray-500"
+                        className="rounded-full border bg-gray-900 px-3 py-1 text-xs text-gray-200 hover:border-gray-500"
                         onClick={() => {
                           setModalDraft((prev) =>
                             prev

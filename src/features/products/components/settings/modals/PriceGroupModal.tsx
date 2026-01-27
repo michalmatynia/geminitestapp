@@ -2,7 +2,7 @@
 
 import React from "react";
 import { AppModal } from "@/shared/ui/app-modal";
-import ModalShell from "@/shared/ui/modal-shell";
+import ModalShell from "@/shared/components/modal-shell";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -175,7 +175,7 @@ export function PriceGroupModal({
                 <Label htmlFor="pg-currency">Currency</Label>
                 <select
                   id="pg-currency"
-                  className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
+                  className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
                   value={form.currencyId}
                   onChange={(e) => setForm(p => ({ ...p, currencyId: e.target.value }))}
                   disabled={loadingCurrencies}
@@ -219,12 +219,12 @@ export function PriceGroupModal({
             </div>
 
             {form.groupType === "dependent" && (
-              <div className="rounded-md border border-gray-800 bg-gray-950/70 p-4 space-y-4">
+              <div className="rounded-md border border-border bg-card/70 p-4 space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="pg-source">Source Price Group</Label>
                   <select
                     id="pg-source"
-                    className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
+                    className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
                     value={form.sourceGroupId}
                     onChange={(e) => setForm(p => ({ ...p, sourceGroupId: e.target.value }))}
                   >

@@ -54,7 +54,7 @@ export function BaseApiConsole({
   ];
 
   return (
-    <div className="rounded-lg border border-gray-800 bg-gray-900/60 p-4">
+    <div className="rounded-lg border border-border bg-card/60 p-4">
       <div className="mb-3">
         <h3 className="text-sm font-semibold text-white">Base.com API Console</h3>
         <p className="text-xs text-gray-400">
@@ -66,7 +66,7 @@ export function BaseApiConsole({
           <Button
             key={preset.label}
             type="button"
-            className="rounded-full border border-gray-700 px-3 py-1 text-[11px] text-gray-300 hover:border-gray-500"
+            className="rounded-full border px-3 py-1 text-[11px] text-gray-300 hover:border-gray-500"
             onClick={() => {
               setMethod(preset.method);
               setParams(JSON.stringify(preset.params, null, 2));
@@ -79,7 +79,7 @@ export function BaseApiConsole({
       <div>
         <Label className="text-xs text-gray-400">Method</Label>
         <Input
-          className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-white"
+          className="mt-2 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white"
           placeholder="getInventories"
           value={method}
           onChange={(event) => setMethod(event.target.value)}
@@ -88,7 +88,7 @@ export function BaseApiConsole({
       <div className="mt-3">
         <Label className="text-xs text-gray-400">Parameters (JSON)</Label>
         <Textarea
-          className="mt-2 h-32 w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-xs text-white"
+          className="mt-2 h-32 w-full rounded-md border border-border bg-card px-3 py-2 text-xs text-white"
           value={params}
           onChange={(event) => setParams(event.target.value)}
         />
@@ -112,7 +112,7 @@ export function BaseApiConsole({
         </div>
       )}
       {response && (
-        <div className="mt-3 rounded-md border border-gray-800 bg-gray-950 p-3">
+        <div className="mt-3 rounded-md border border-border bg-card p-3">
           <pre className="max-h-80 overflow-auto whitespace-pre-wrap text-xs text-gray-200">
             {JSON.stringify(response.data, null, 2)}
           </pre>

@@ -8,9 +8,9 @@ import { Input } from "@/shared/ui/input";
 import { useToast } from "@/shared/ui/toast";
 import { Label } from "@/shared/ui/label";
 import { Checkbox } from "@/shared/ui/checkbox";
-import { ListPanel } from "@/shared/ui/list-panel";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { ListPanel } from "@/shared/components/list-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 import type { ChatbotSessionListItem } from "../types";
 import * as chatbotApi from "../api";
 
@@ -312,7 +312,7 @@ export default function ChatbotSessionsPage() {
             {filteredSessions.map((session) => (
               <div
                 key={session.id}
-                className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-900 px-4 py-3"
+                className="flex items-center justify-between rounded-md border border-border bg-gray-900 px-4 py-3"
               >
                 <div className="flex items-start gap-3">
                   <Checkbox

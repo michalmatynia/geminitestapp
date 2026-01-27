@@ -2,7 +2,7 @@
 
 import { Button } from "@/shared/ui/button";
 import { AppModal } from "@/shared/ui/app-modal";
-import ModalShell from "@/shared/ui/modal-shell";
+import ModalShell from "@/shared/components/modal-shell";
 
 type TestErrorModalProps = {
   testError: string | null;
@@ -81,13 +81,13 @@ export function TestErrorModal({
     >
       <ModalShell title="Playwright Error" onClose={onClose} size="lg" footer={footer}>
         <div className="space-y-3">
-          <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3 text-xs text-gray-300">
+          <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300">
             Copy the raw error to share or debug it.
           </div>
           {(testErrorMeta?.errorId ||
             testErrorMeta?.integrationId ||
             testErrorMeta?.connectionId) && (
-            <div className="grid gap-2 rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300 md:grid-cols-3">
+            <div className="grid gap-2 rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300 md:grid-cols-3">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">
                   Error ID
@@ -114,7 +114,7 @@ export function TestErrorModal({
               </div>
             </div>
           )}
-          <pre className="max-h-72 overflow-auto rounded-md border border-gray-800 bg-gray-950 p-3 text-xs text-gray-200">
+          <pre className="max-h-72 overflow-auto rounded-md border border-border bg-card p-3 text-xs text-gray-200">
             <code className="select-text whitespace-pre-wrap">{testError}</code>
           </pre>
         </div>

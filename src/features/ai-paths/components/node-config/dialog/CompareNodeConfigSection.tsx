@@ -45,10 +45,10 @@ export function CompareNodeConfigSection({
             })
           }
         >
-          <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
             <SelectValue placeholder="Select operator" />
           </SelectTrigger>
-          <SelectContent className="border-gray-800 bg-gray-900">
+          <SelectContent className="border-border bg-gray-900">
             <SelectItem value="eq">Equals</SelectItem>
             <SelectItem value="neq">Not equals</SelectItem>
             <SelectItem value="gt">Greater than</SelectItem>
@@ -66,7 +66,7 @@ export function CompareNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">Compare To</Label>
         <Input
-          className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+          className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={compareConfig.compareTo}
           onChange={(event) =>
             updateSelectedNodeConfig({
@@ -78,14 +78,14 @@ export function CompareNodeConfigSection({
           }
         />
       </div>
-      <div className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-900/50 px-3 py-2 text-xs text-gray-300">
+      <div className="flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300">
         <span>Case Sensitive</span>
         <Button
           type="button"
-          className={`rounded border border-gray-700 px-3 py-1 text-xs ${
+          className={`rounded border px-3 py-1 text-xs ${
             compareConfig.caseSensitive
               ? "text-emerald-200 hover:bg-emerald-500/10"
-              : "text-gray-300 hover:bg-gray-800"
+              : "text-gray-300 hover:bg-muted/50"
           }`}
           onClick={() =>
             updateSelectedNodeConfig({
@@ -102,7 +102,7 @@ export function CompareNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">Error Message</Label>
         <Input
-          className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+          className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={compareConfig.message ?? "Comparison failed"}
           onChange={(event) =>
             updateSelectedNodeConfig({

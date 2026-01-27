@@ -12,8 +12,8 @@ import {
 } from "lucide-react";
 import { Card } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 type SettingsOption = {
   id: string;
@@ -127,7 +127,7 @@ export function AdminSettingsHomePage() {
 
           return (
             <Link key={setting.id} href={setting.href}>
-              <Card className={`group relative h-full cursor-pointer border-gray-800 bg-gray-950 p-6 transition-all duration-300 hover:border-gray-700 hover:bg-gray-900 ${colors.border}`}>
+              <Card className={`group relative h-full cursor-pointer border-border bg-card p-6 transition-all duration-300 hover:border hover:bg-muted/50 ${colors.border}`}>
                 <div className="flex items-start gap-4">
                   {/* Icon */}
                   <div className={`flex size-12 flex-shrink-0 items-center justify-center rounded-lg ${setting.bgColor} transition-transform duration-300 group-hover:scale-110`}>

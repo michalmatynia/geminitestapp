@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui/select";
-import ModalShell from "@/shared/ui/modal-shell";
+import ModalShell from "@/shared/components/modal-shell";
 import type { ProductWithImages } from "@/features/products/types";
 import type {
   ImageRetryPreset,
@@ -269,7 +269,7 @@ export default function SelectProductForListingModal({
                         Retry image export
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="bg-gray-950 border-gray-800">
+                    <DropdownMenuContent align="start" className="bg-card border-border">
                       {imageRetryPresets.map((preset: ImageRetryPreset) => (
                         <DropdownMenuItem
                           key={preset.id}
@@ -295,7 +295,7 @@ export default function SelectProductForListingModal({
           </div>
         )}
 
-        <div className="rounded-md border border-gray-700 bg-gray-900/50 px-4 py-3">
+        <div className="rounded-md border bg-card/50 px-4 py-3">
           <p className="text-sm text-gray-300">
             <span className="text-gray-500">Integration:</span>{" "}
             <span className="font-medium">{selectedIntegration?.name || "Loading..."}</span>
@@ -389,7 +389,7 @@ export default function SelectProductForListingModal({
                   <Checkbox
                     id="allowDuplicateSku"
                     checked={allowDuplicateSku} onCheckedChange={(checked: boolean) => setAllowDuplicateSku(Boolean(checked))}
-                    className="h-4 w-4 rounded border-gray-700 bg-gray-900 text-blue-500"
+                    className="h-4 w-4 rounded border bg-gray-900 text-blue-500"
                   />
                   <Label htmlFor="allowDuplicateSku" className="text-sm text-gray-300">
                     Allow duplicate SKUs
@@ -403,7 +403,7 @@ export default function SelectProductForListingModal({
           </>
         )}
         {exportLogs.length > 0 && (
-          <div className="mt-4 border-t border-gray-700 pt-4">
+          <div className="mt-4 border-t border pt-4">
             <ExportLogViewer
               logs={exportLogs}
               isOpen={logsOpen}

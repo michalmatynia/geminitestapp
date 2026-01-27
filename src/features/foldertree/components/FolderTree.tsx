@@ -303,7 +303,7 @@ function FolderTreeBase({
 
   return (
     <div
-      className="flex h-full flex-col bg-gray-900 border-r border-gray-800"
+      className="flex h-full flex-col bg-gray-900 border-r border-border"
       onDragEnterCapture={(e) => {
         if (!draggedNoteId) return;
         e.preventDefault();
@@ -348,7 +348,7 @@ function FolderTreeBase({
         onRelateNotes(draggedNoteId, targetId);
       }}
     >
-      <div className="p-4 border-b border-gray-800">
+      <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-white">Folders</h2>
           <div className="flex items-center gap-2">
@@ -356,7 +356,7 @@ function FolderTreeBase({
               onClick={() => setShowDropzone(!showDropzone)}
               size="sm"
               variant="outline"
-              className={`h-7 w-7 p-0 border-gray-700 hover:bg-gray-800 ${
+              className={`h-7 w-7 p-0 border hover:bg-muted/50 ${
                 showDropzone ? "bg-blue-600/20 text-blue-400" : "text-gray-300"
               }`}
               aria-label={showDropzone ? "Hide dropzone" : "Show dropzone"}
@@ -375,7 +375,7 @@ function FolderTreeBase({
                 onClick={onUndo}
                 size="sm"
                 variant="outline"
-                className="h-7 px-2 border-gray-700 text-gray-300 hover:bg-gray-800"
+                className="h-7 px-2 border text-gray-300 hover:bg-muted/50"
                 disabled={!canUndo}
               >
                 Undo
@@ -385,7 +385,7 @@ function FolderTreeBase({
               onClick={handleToggleSelectedCollapse}
               size="sm"
               variant="outline"
-              className="h-7 w-7 p-0 border-gray-700 text-gray-300 hover:bg-gray-800"
+              className="h-7 w-7 p-0 border text-gray-300 hover:bg-muted/50"
               disabled={!selectedFolderId}
               aria-label={isSelectedSubtreeExpanded ? "Collapse folder" : "Expand folder"}
             >
@@ -400,7 +400,7 @@ function FolderTreeBase({
                 onClick={onToggleCollapse}
                 size="sm"
                 variant="outline"
-                className="h-7 w-7 p-0 border-gray-700 text-gray-300 hover:bg-gray-800"
+                className="h-7 w-7 p-0 border text-gray-300 hover:bg-muted/50"
                 aria-label="Collapse folder tree"
               >
                 <ChevronLeft className="size-4" />
@@ -439,7 +439,7 @@ function FolderTreeBase({
               ? "bg-blue-600 text-white"
               : isAllNotesDragOver
               ? "bg-green-600 text-white"
-              : "text-gray-300 hover:bg-gray-800"
+              : "text-gray-300 hover:bg-muted/50"
           }`}
         >
           <Folder className="size-4" />
@@ -451,7 +451,7 @@ function FolderTreeBase({
             className={`mt-1 w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition ${
               isFavoritesActive
                 ? "bg-yellow-500/20 text-yellow-200"
-                : "text-gray-300 hover:bg-gray-800"
+                : "text-gray-300 hover:bg-muted/50"
             }`}
           >
             <Star className="size-4" />
@@ -459,7 +459,7 @@ function FolderTreeBase({
           </Button>
         )}
         {undoHistory && undoHistory.length > 0 && (
-          <div className="mt-3 rounded border border-gray-800 bg-gray-900/60 p-2 text-xs text-gray-300">
+          <div className="mt-3 rounded border border-border bg-card/60 p-2 text-xs text-gray-300">
             <Button
               onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
               className="flex w-full items-center justify-between mb-2 text-[10px] uppercase tracking-wide text-gray-500 hover:text-gray-300 transition"
@@ -478,7 +478,7 @@ function FolderTreeBase({
                     key={`${entry.label}-${index}`}
                     type="button"
                     onClick={() => onUndoAtIndex?.(index)}
-                    className="flex w-full items-center justify-between rounded px-1.5 py-1 text-left text-gray-300 hover:bg-gray-800"
+                    className="flex w-full items-center justify-between rounded px-1.5 py-1 text-left text-gray-300 hover:bg-muted/50"
                   >
                     <span className="truncate">{entry.label}</span>
                     <span className="text-[10px] text-gray-500">Undo</span>
@@ -495,7 +495,7 @@ function FolderTreeBase({
           className={`mx-4 mt-2 mb-3 border-2 border-dashed rounded-lg transition-all ${
             isDropzoneActive
               ? "border-blue-500 bg-blue-500/10"
-              : "border-gray-700 bg-gray-800/30"
+              : "border bg-gray-800/30"
           } ${isImporting ? "opacity-50 pointer-events-none" : ""}`}
           onDragOver={handleDropzoneDragOver}
           onDragLeave={handleDropzoneDragLeave}

@@ -39,7 +39,7 @@ export function MapperNodeConfigSection({
           Outputs (one per line)
         </Label>
         <Textarea
-          className="mt-2 min-h-[90px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+          className="mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={outputs.join("\n")}
           onChange={(event) => {
             const list = parsePathList(event.target.value);
@@ -72,7 +72,7 @@ export function MapperNodeConfigSection({
             {formatPortLabel(output)} Mapping Path
           </Label>
           <Input
-            className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+            className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
             value={mapperConfig.mappings?.[output] ?? ""}
             onChange={(event) => {
               const nextMappings = {

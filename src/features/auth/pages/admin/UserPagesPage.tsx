@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/sha
 import { Label } from "@/shared/ui/label";
 import { Switch } from "@/shared/ui/switch";
 import { useToast } from "@/shared/ui/toast";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import {
@@ -95,7 +95,7 @@ export default function AuthUserPagesPage() {
         />
       </SectionPanel>
 
-      <Card className="bg-gray-950 border-gray-800">
+      <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="text-white text-lg">Authentication Flows</CardTitle>
           <CardDescription className="text-gray-500">
@@ -113,7 +113,7 @@ export default function AuthUserPagesPage() {
           ).map(([key, title, description]) => (
             <div
               key={key}
-              className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-900/40 px-4 py-3"
+              className="flex items-center justify-between rounded-md border border-border bg-card/40 px-4 py-3"
             >
               <div>
                 <Label className="text-sm text-gray-200">{title}</Label>

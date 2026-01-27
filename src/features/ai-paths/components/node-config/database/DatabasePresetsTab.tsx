@@ -77,7 +77,7 @@ export function DatabasePresetsTab({
 }: DatabasePresetsTabProps) {
   return (
     <div className="space-y-4">
-      <div className="rounded-md border border-gray-800 bg-gray-950/50 p-3">
+      <div className="rounded-md border border-border bg-card/50 p-3">
         <div className="space-y-3">
           <Label className="text-xs text-gray-400">Database presets</Label>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -101,10 +101,10 @@ export function DatabasePresetsTab({
                   }
                 }}
               >
-                <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
                   <SelectValue placeholder="Select preset" />
                 </SelectTrigger>
-                <SelectContent className="border-gray-800 bg-gray-900">
+                <SelectContent className="border-border bg-gray-900">
                   <SelectItem value="none">None</SelectItem>
                   {dbNodePresets.map((preset) => (
                     <SelectItem key={preset.id} value={preset.id}>
@@ -117,7 +117,7 @@ export function DatabasePresetsTab({
             <div>
               <Label className="text-xs text-gray-400">Preset name</Label>
               <Input
-                className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
                 value={dbPresetName}
                 onChange={(event) => setDbPresetName(event.target.value)}
                 placeholder="My database preset"
@@ -127,7 +127,7 @@ export function DatabasePresetsTab({
           <div>
             <Label className="text-xs text-gray-400">Description</Label>
             <Input
-              className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+              className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={dbPresetDescription}
               onChange={(event) => setDbPresetDescription(event.target.value)}
               placeholder="Optional"
@@ -153,7 +153,7 @@ export function DatabasePresetsTab({
           </div>
         </div>
       </div>
-      <div className="rounded-md border border-gray-800 bg-gray-950/50 p-3">
+      <div className="rounded-md border border-border bg-card/50 p-3">
         <div className="space-y-3">
           <Label className="text-xs text-gray-400">Query presets</Label>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -184,10 +184,10 @@ export function DatabasePresetsTab({
                     }
                   }}
                 >
-                  <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+                  <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
                     <SelectValue placeholder="Select preset" />
                   </SelectTrigger>
-                  <SelectContent className="border-gray-800 bg-gray-900">
+                  <SelectContent className="border-border bg-gray-900">
                     <SelectItem value="none">None</SelectItem>
                     {dbQueryPresets.map((preset) => (
                       <SelectItem key={preset.id} value={preset.id}>
@@ -201,13 +201,13 @@ export function DatabasePresetsTab({
                 <Label className="text-xs text-gray-400">Query preview</Label>
                 <Textarea
                   readOnly
-                  className="mt-2 min-h-[90px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                  className="mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
                   value={queryTemplateValue}
                 />
                 <div className="mt-2 flex flex-wrap gap-2">
                   <Button
                     type="button"
-                    className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                    className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
                     onClick={() => {
                       setDatabaseTab("settings");
                       updateSelectedNodeConfig({
@@ -237,7 +237,7 @@ export function DatabasePresetsTab({
             <div>
               <Label className="text-xs text-gray-400">Preset name</Label>
               <Input
-                className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
                 value={queryPresetName}
                 onChange={(event) => setQueryPresetName(event.target.value)}
                 placeholder="My product lookup"

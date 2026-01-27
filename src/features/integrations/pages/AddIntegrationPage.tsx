@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/shared/ui/toast";
 import { Button } from "@/shared/ui/button";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 const integrations = [
   {
@@ -157,7 +157,7 @@ export default function AddIntegrationPage() {
             </div>
           ))}
         </div>
-      </div>
+      </SectionPanel>
     </div>
   );
 }

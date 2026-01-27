@@ -101,7 +101,7 @@ export function MarkdownEditor({
             onChange={(e) => setContent(e.target.value)}
             onPaste={(e) => { void onPaste(e); }}
             rows={12}
-            className="w-full rounded-lg border border-gray-700 px-4 py-2 font-mono"
+            className="w-full rounded-lg border px-4 py-2 font-mono"
             style={{
               backgroundColor: contentBackground,
               color: contentTextColor,
@@ -135,7 +135,7 @@ export function MarkdownEditor({
             </div>
           </div>
           <div
-            className="flex-1 rounded-lg border border-gray-700 px-4 py-3"
+            className="flex-1 rounded-lg border px-4 py-3"
             style={{ backgroundColor: contentBackground, color: contentTextColor }}
           >
             <div className="mb-2 text-xs uppercase tracking-wide text-gray-400">

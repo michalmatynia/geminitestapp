@@ -39,7 +39,7 @@ export function FileAttachments({
 
   if (!noteId) {
     return (
-      <div className="rounded-lg border border-dashed border-gray-600 bg-gray-800/50 p-4 text-center text-sm text-gray-400">
+      <div className="rounded-lg border border-dashed border-border/60 bg-gray-800/50 p-4 text-center text-sm text-gray-400">
         Save the note first to enable file attachments ({maxSlots} slots available)
       </div>
     );
@@ -56,7 +56,7 @@ export function FileAttachments({
           const isUploading = nextSlot !== null && uploadingSlots.has(nextSlot);
           return (
             <div
-              className="relative h-20 w-20 rounded-md border border-gray-700 bg-gray-800"
+              className="relative h-20 w-20 rounded-md border bg-gray-800"
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 if (nextSlot === null) return;
@@ -69,7 +69,7 @@ export function FileAttachments({
             >
               {isUploading ? (
                 <div className="flex h-full items-center justify-center">
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-600 border-t-blue-500" />
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-border/60 border-t-blue-500" />
                 </div>
               ) : nextSlot === null ? (
                 <div className="flex h-full items-center justify-center text-[10px] text-gray-500">
@@ -106,7 +106,7 @@ export function FileAttachments({
         {noteFiles.map((file) => (
           <div
             key={file.slotIndex}
-            className="relative h-20 w-24 rounded-md border border-gray-700 bg-gray-800/70"
+            className="relative h-20 w-24 rounded-md border bg-gray-800/70"
           >
             <div className="group relative h-full">
               {isImageFile(file.mimetype) ? (

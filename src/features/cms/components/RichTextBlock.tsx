@@ -18,7 +18,7 @@ interface RichTextBlockProps {
 
 export default function RichTextBlock({ content, onChange }: RichTextBlockProps) {
   return (
-    <div className="p-4 border border-gray-700 rounded-lg">
+    <div className="p-4 border rounded-lg">
       <h4 className="font-bold mb-2">Rich Text</h4>
       <div className="space-y-4">
         <div>

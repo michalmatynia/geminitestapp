@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { AppModal } from "@/shared/ui/app-modal";
-import ModalShell from "@/shared/ui/modal-shell";
+import ModalShell from "@/shared/components/modal-shell";
 import { Button } from "@/shared/ui/button";
 import { NoteForm } from "./NoteForm";
 import type { CreateNoteModalProps } from "@/features/notesapp/types/notes-ui";

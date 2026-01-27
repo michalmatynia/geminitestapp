@@ -106,7 +106,7 @@ export function DbSchemaNodeConfigSection({
                   updateSchemaConfig({ mode: value as "all" | "selected" })
                 }
               >
-                <SelectTrigger className="mt-2 border-gray-800 bg-gray-950/70 text-sm text-white">
+                <SelectTrigger className="mt-2 border-border bg-card/70 text-sm text-white">
                   <SelectValue placeholder="Select mode" />
                 </SelectTrigger>
                 <SelectContent>
@@ -121,7 +121,7 @@ export function DbSchemaNodeConfigSection({
                 <Label className="text-xs text-gray-400">
                   Select Collections ({schemaConfig.collections?.length ?? 0} selected)
                 </Label>
-                <div className="mt-2 max-h-[200px] space-y-1 overflow-y-auto rounded-md border border-gray-800 bg-gray-950/50 p-2">
+                <div className="mt-2 max-h-[200px] space-y-1 overflow-y-auto rounded-md border border-border bg-card/50 p-2">
                   {fetchedDbSchema.collections.map((coll) => {
                     const isSelected = schemaConfig.collections?.includes(coll.name);
                     return (
@@ -132,7 +132,7 @@ export function DbSchemaNodeConfigSection({
                         className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition ${
                           isSelected
                             ? "bg-purple-500/20 text-purple-200"
-                            : "text-gray-300 hover:bg-gray-800"
+                            : "text-gray-300 hover:bg-muted/50"
                         }`}
                       >
                         <span className="font-medium">{coll.name}</span>
@@ -147,14 +147,14 @@ export function DbSchemaNodeConfigSection({
             )}
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-900/50 px-3 py-2 text-xs text-gray-300">
+              <div className="flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300">
                 <span>Include Fields</span>
                 <Button
                   type="button"
-                  className={`rounded border border-gray-700 px-3 py-1 text-xs ${
+                  className={`rounded border px-3 py-1 text-xs ${
                     schemaConfig.includeFields
                       ? "text-emerald-200 hover:bg-emerald-500/10"
-                      : "text-gray-500 hover:bg-gray-800"
+                      : "text-gray-500 hover:bg-muted/50"
                   }`}
                   onClick={() =>
                     updateSchemaConfig({ includeFields: !schemaConfig.includeFields })
@@ -163,14 +163,14 @@ export function DbSchemaNodeConfigSection({
                   {schemaConfig.includeFields ? "Yes" : "No"}
                 </Button>
               </div>
-              <div className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-900/50 px-3 py-2 text-xs text-gray-300">
+              <div className="flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300">
                 <span>Include Relations</span>
                 <Button
                   type="button"
-                  className={`rounded border border-gray-700 px-3 py-1 text-xs ${
+                  className={`rounded border px-3 py-1 text-xs ${
                     schemaConfig.includeRelations
                       ? "text-emerald-200 hover:bg-emerald-500/10"
-                      : "text-gray-500 hover:bg-gray-800"
+                      : "text-gray-500 hover:bg-muted/50"
                   }`}
                   onClick={() =>
                     updateSchemaConfig({ includeRelations: !schemaConfig.includeRelations })
@@ -189,7 +189,7 @@ export function DbSchemaNodeConfigSection({
                   updateSchemaConfig({ formatAs: value as "json" | "text" })
                 }
               >
-                <SelectTrigger className="mt-2 border-gray-800 bg-gray-950/70 text-sm text-white">
+                <SelectTrigger className="mt-2 border-border bg-card/70 text-sm text-white">
                   <SelectValue placeholder="Select format" />
                 </SelectTrigger>
                 <SelectContent>
@@ -200,7 +200,7 @@ export function DbSchemaNodeConfigSection({
             </div>
 
             {/* Preview of selected collections */}
-            <div className="rounded-md border border-gray-800 bg-gray-900/40 p-3">
+            <div className="rounded-md border border-border bg-card/40 p-3">
               <div className="mb-2 text-[10px] uppercase text-gray-500">Preview</div>
               <div className="max-h-[150px] overflow-y-auto text-[11px] text-gray-300">
                 {(schemaConfig.mode === "all"
@@ -255,7 +255,7 @@ export function DbSchemaNodeConfigSection({
                       }
                     }}
                   >
-                    <SelectTrigger className="flex-1 border-gray-800 bg-gray-950/70 text-sm text-white">
+                    <SelectTrigger className="flex-1 border-border bg-card/70 text-sm text-white">
                       <SelectValue placeholder="Select collection to browse" />
                     </SelectTrigger>
                     <SelectContent>
@@ -269,7 +269,7 @@ export function DbSchemaNodeConfigSection({
                   {browseCollection && (
                     <Button
                       type="button"
-                      className="rounded border border-gray-700 px-3 text-xs text-gray-300 hover:bg-gray-800"
+                      className="rounded border px-3 text-xs text-gray-300 hover:bg-muted/50"
                       onClick={() => {
                         setBrowseCollection(null);
                         setBrowseDocuments([]);
@@ -290,7 +290,7 @@ export function DbSchemaNodeConfigSection({
                   {/* Search */}
                   <div className="flex gap-2">
                     <Input
-                      className="flex-1 border-gray-800 bg-gray-950/70 text-sm text-white"
+                      className="flex-1 border-border bg-card/70 text-sm text-white"
                       placeholder="Search documents..."
                       value={browseSearch}
                       onChange={(e) => setBrowseSearch(e.target.value)}
@@ -351,11 +351,11 @@ export function DbSchemaNodeConfigSection({
                                                             return (
                                                               <div
                                                                 key={docId}
-                                                                className="rounded-md border border-gray-800 bg-gray-900/50"
+                                                                className="rounded-md border border-border bg-card/50"
                                                               >
                                                                 <button
                                                                   type="button"
-                                                                  className="flex w-full items-center justify-between px-3 py-2 text-left text-xs hover:bg-gray-800/50"
+                                                                  className="flex w-full items-center justify-between px-3 py-2 text-left text-xs hover:bg-muted/50/50"
                                                                   onClick={() => setExpandedDocId(isExpanded ? null : docId)}
                                                                 >
                                                                   <div className="flex items-center gap-2">
@@ -371,7 +371,7 @@ export function DbSchemaNodeConfigSection({
                               </svg>
                             </button>
                             {isExpanded && (
-                              <div className="border-t border-gray-800 p-3">
+                              <div className="border-t border-border p-3">
                                 <pre className="max-h-[200px] overflow-auto whitespace-pre-wrap text-[10px] text-gray-300">
                                   {JSON.stringify(doc, null, 2)}
                                 </pre>
@@ -393,7 +393,7 @@ export function DbSchemaNodeConfigSection({
                       <Button
                         type="button"
                         disabled={browseSkip === 0}
-                        className="rounded border border-gray-700 px-3 py-1 text-xs text-gray-300 hover:bg-gray-800 disabled:opacity-50"
+                        className="rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50"
                         onClick={() => {
                           const newSkip = Math.max(0, browseSkip - browseLimit);
                           setBrowseSkip(newSkip);
@@ -417,7 +417,7 @@ export function DbSchemaNodeConfigSection({
                       <Button
                         type="button"
                         disabled={browseSkip + browseLimit >= browseTotal}
-                        className="rounded border border-gray-700 px-3 py-1 text-xs text-gray-300 hover:bg-gray-800 disabled:opacity-50"
+                        className="rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50"
                         onClick={() => {
                           const newSkip = browseSkip + browseLimit;
                           setBrowseSkip(newSkip);

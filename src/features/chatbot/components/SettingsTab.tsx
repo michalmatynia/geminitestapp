@@ -160,7 +160,7 @@ export function SettingsTab({
       />
 
       {agentModeEnabled && (
-        <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4 space-y-4">
+        <div className="rounded-md border border-border bg-card/60 p-4 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-white">
@@ -205,7 +205,7 @@ export function SettingsTab({
                   Selecting a persona updates the headless setting.
                 </p>
               </div>
-              <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3 text-xs text-gray-400">
+              <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-400">
                 {selectedPersona ? (
                   <>
                     <p className="text-xs font-semibold text-gray-200">

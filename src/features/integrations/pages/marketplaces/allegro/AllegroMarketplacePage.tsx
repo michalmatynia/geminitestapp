@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 const sections = [
   {
@@ -58,7 +58,7 @@ export default function AllegroMarketplacePage() {
             <Link
               key={section.name}
               href={section.href}
-              className="rounded-md border bg-card p-4 transition hover:border-gray-600"
+              className="rounded-md border bg-card p-4 transition hover:border-border/60"
             >
               <h2 className="text-lg font-semibold text-white">
                 {section.name}

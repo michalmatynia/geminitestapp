@@ -115,7 +115,7 @@ export const EditableCell = memo(function EditableCell({
   return (
     <div
       onDoubleClick={handleDoubleClick}
-      className="cursor-pointer rounded px-2 py-1 hover:bg-gray-800/50 transition-colors"
+      className="cursor-pointer rounded px-2 py-1 hover:bg-muted/50/50 transition-colors"
       title={`Double-click to edit ${field}`}
     >
       {value !== null ? (field === "price" ? value.toFixed(2) : value) : "-"}

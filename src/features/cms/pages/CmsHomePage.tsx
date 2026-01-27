@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionHeader } from "@/shared/components/section-header";
 
 export default function CmsPage() {
   return (

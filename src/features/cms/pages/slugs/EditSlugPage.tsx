@@ -8,7 +8,7 @@ import { Label } from "@/shared/ui/label";
 import { Switch } from "@/shared/ui/switch";
 import { fetchSlug, updateSlug } from "@/features/cms/api/slugs";
 import type { Slug } from "@/features/cms/types";
-import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionHeader } from "@/shared/components/section-header";
 
 export default function EditSlugPage() {
   const [slug, setSlug] = useState<Slug | null>(null);

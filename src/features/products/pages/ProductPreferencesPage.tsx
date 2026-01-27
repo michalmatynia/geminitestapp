@@ -14,8 +14,8 @@ import { Input } from "@/shared/ui/input";
 import { useToast } from "@/shared/ui/toast";
 import { useRouter } from "next/navigation";
 import { UserPreferences } from "@/features/products/types";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 type Catalog = {
   id: string;
@@ -127,7 +127,7 @@ export function ProductPreferencesPage() {
   if (loading) {
     return (
       <div className="container mx-auto py-10">
-        <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
+        <div className="rounded-lg bg-card p-6 shadow-lg">
           <p className="text-sm text-gray-400">Loading preferences...</p>
         </div>
       </div>

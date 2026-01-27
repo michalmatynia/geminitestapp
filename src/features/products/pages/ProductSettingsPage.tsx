@@ -45,8 +45,8 @@ import { LanguageModal } from "@/features/products/components/settings/modals/La
 import { PriceGroupModal } from "@/features/products/components/settings/modals/PriceGroupModal";
 import { CurrencyModal } from "@/features/products/components/settings/modals/CurrencyModal";
 import { CountryModal } from "@/features/products/components/settings/modals/CountryModal";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 export function ProductSettingsPage() {
   const [activeSection, setActiveSection] =
@@ -289,7 +289,7 @@ export function ProductSettingsPage() {
                 className={`justify-start rounded px-3 py-2 text-left text-sm transition ${
                   activeSection === section
                     ? "bg-gray-800 text-white"
-                    : "text-gray-300 hover:bg-gray-800/60"
+                    : "text-gray-300 hover:bg-muted/50/60"
                 }`}
               >
                 {section}

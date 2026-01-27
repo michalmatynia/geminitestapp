@@ -106,7 +106,7 @@ export function ExportLogViewer({
   };
 
   return (
-    <div className="rounded-lg border border-gray-700 bg-gray-900/50">
+    <div className="rounded-lg border bg-card/50">
       <div
         role="button"
         tabIndex={0}
@@ -118,7 +118,7 @@ export function ExportLogViewer({
             onToggle?.(!isOpen);
           }
         }}
-        className="flex w-full items-center justify-between px-4 py-3 hover:bg-gray-800/50 transition cursor-pointer"
+        className="flex w-full items-center justify-between px-4 py-3 hover:bg-muted/50/50 transition cursor-pointer"
       >
         <div className="flex items-center gap-2">
           <ChevronDown
@@ -145,9 +145,9 @@ export function ExportLogViewer({
       </div>
 
       {isOpen && (
-        <div className="border-t border-gray-700 px-4 py-3 bg-gray-950/50 max-h-96 overflow-y-auto">
+        <div className="border-t border px-4 py-3 bg-card/50 max-h-96 overflow-y-auto">
           {imagePayloadSummary && (
-            <div className="mb-3 rounded-md border border-gray-800 bg-gray-950/70 p-2 text-[11px] text-gray-300">
+            <div className="mb-3 rounded-md border border-border bg-card/70 p-2 text-[11px] text-gray-300">
               <div className="text-[10px] uppercase tracking-wide text-gray-500">
                 Image payload summary
               </div>
@@ -201,7 +201,7 @@ export function ExportLogViewer({
                           <summary className="hover:text-gray-300 transition">
                             Context Details
                           </summary>
-                          <pre className="mt-2 p-2 bg-gray-950/50 rounded text-[11px] overflow-x-auto">
+                          <pre className="mt-2 p-2 bg-card/50 rounded text-[11px] overflow-x-auto">
                             {JSON.stringify(log.context, null, 2)}
                           </pre>
                         </details>

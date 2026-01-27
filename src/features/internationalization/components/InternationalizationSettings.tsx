@@ -68,11 +68,11 @@ export function InternationalizationSettings({
             </Button>
           </div>
           {loadingCurrencies ? (
-            <div className="rounded-md border border-dashed border-gray-700 p-6 text-center text-gray-400">
+            <div className="rounded-md border border-dashed border p-6 text-center text-gray-400">
               Loading currencies...
             </div>
           ) : currencyOptions.length === 0 ? (
-            <div className="rounded-md border border-dashed border-gray-700 p-6 text-center text-gray-400">
+            <div className="rounded-md border border-dashed border p-6 text-center text-gray-400">
               No currencies yet.
             </div>
           ) : (
@@ -80,7 +80,7 @@ export function InternationalizationSettings({
               {currencyOptions.map((currency) => (
                 <div
                   key={currency.id}
-                  className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-950/60 px-4 py-3"
+                  className="flex items-center justify-between rounded-md border border-border bg-card/60 px-4 py-3"
                 >
                   <div>
                     <p className="font-semibold text-white">
@@ -96,7 +96,7 @@ export function InternationalizationSettings({
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
-                        className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-800 hover:text-white"
+                        className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-muted/50 hover:text-white"
                         aria-label="Currency actions"
                         type="button"
                       >
@@ -147,7 +147,7 @@ export function InternationalizationSettings({
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div className="w-full md:max-w-sm">
               <Input
-                className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                 placeholder="Search countries..."
                 value={countrySearch}
                 onChange={(event) => setCountrySearch(event.target.value)}
@@ -158,11 +158,11 @@ export function InternationalizationSettings({
             </p>
           </div>
           {loadingCountries ? (
-            <div className="rounded-md border border-dashed border-gray-700 p-6 text-center text-gray-400">
+            <div className="rounded-md border border-dashed border p-6 text-center text-gray-400">
               Loading countries...
             </div>
           ) : filteredCountries.length === 0 ? (
-            <div className="rounded-md border border-dashed border-gray-700 p-6 text-center text-gray-400">
+            <div className="rounded-md border border-dashed border p-6 text-center text-gray-400">
               No countries yet.
             </div>
           ) : (
@@ -170,11 +170,11 @@ export function InternationalizationSettings({
               {filteredCountries.map((country) => (
                 <div
                   key={country.id}
-                  className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-950/60 px-4 py-3"
+                  className="flex items-center justify-between rounded-md border border-border bg-card/60 px-4 py-3"
                 >
                   <div>
                     <div className="flex items-center gap-3">
-                      <span className="h-4 w-6 overflow-hidden rounded-sm border border-gray-700">
+                      <span className="h-4 w-6 overflow-hidden rounded-sm border border">
                         {countryFlagMap[country.code] ?? null}
                       </span>
                       <p className="font-semibold text-white">{country.code}</p>
@@ -185,7 +185,7 @@ export function InternationalizationSettings({
                         country.currencies.map((entry) => (
                           <span
                             key={entry.currencyId}
-                            className="rounded-full border border-gray-700 bg-gray-900 px-2 py-0.5 text-[10px] font-semibold text-gray-200"
+                            className="rounded-full border bg-gray-900 px-2 py-0.5 text-[10px] font-semibold text-gray-200"
                           >
                             {entry.currency.code}
                           </span>
@@ -200,7 +200,7 @@ export function InternationalizationSettings({
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
-                        className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-800 hover:text-white"
+                        className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-muted/50 hover:text-white"
                         aria-label="Country actions"
                         type="button"
                       >
@@ -234,7 +234,7 @@ export function InternationalizationSettings({
         </div>
       </div>
       <div className="space-y-4">
-        <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4">
+        <div className="rounded-md border border-border bg-card/60 p-4">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-white">Languages</p>
             <Button
@@ -246,7 +246,7 @@ export function InternationalizationSettings({
             </Button>
           </div>
           {languagesLoading ? (
-            <div className="mt-4 rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+            <div className="mt-4 rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
               Loading languages...
             </div>
           ) : languagesError ? (
@@ -254,7 +254,7 @@ export function InternationalizationSettings({
               {languagesError}
             </div>
           ) : languages.length === 0 ? (
-            <div className="mt-4 rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+            <div className="mt-4 rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
               No languages yet.
             </div>
           ) : (
@@ -262,7 +262,7 @@ export function InternationalizationSettings({
               {languages.map((language) => (
                 <div
                   key={language.id}
-                  className="flex items-start justify-between gap-3 rounded-md border border-gray-800 bg-gray-900 px-3 py-2"
+                  className="flex items-start justify-between gap-3 rounded-md border border-border bg-gray-900 px-3 py-2"
                 >
                   <div>
                     <p className="text-sm font-semibold text-white">
@@ -281,10 +281,10 @@ export function InternationalizationSettings({
                         language.countries.map((entry) => (
                           <div
                             key={entry.countryId}
-                            className="flex items-center gap-2 rounded-full border border-gray-700 bg-gray-900 px-2 py-0.5 text-[10px] font-semibold text-gray-200"
+                            className="flex items-center gap-2 rounded-full border bg-gray-900 px-2 py-0.5 text-[10px] font-semibold text-gray-200"
                             title={entry.country.name}
                           >
-                            <span className="h-3 w-4 overflow-hidden rounded-sm border border-gray-700">
+                            <span className="h-3 w-4 overflow-hidden rounded-sm border border">
                               {countryFlagMap[entry.country.code] ?? null}
                             </span>
                             <span>{entry.country.name}</span>
@@ -298,7 +298,7 @@ export function InternationalizationSettings({
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
-                        className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-800 hover:text-white"
+                        className="inline-flex size-8 items-center justify-center rounded-full text-gray-400 hover:bg-muted/50 hover:text-white"
                         aria-label="Language actions"
                         type="button"
                       >

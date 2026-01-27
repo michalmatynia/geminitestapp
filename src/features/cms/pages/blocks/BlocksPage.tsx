@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/button";
-import { ListPanel } from "@/shared/ui/list-panel";
-import { SectionHeader } from "@/shared/ui/section-header";
+import { ListPanel } from "@/shared/components/list-panel";
+import { SectionHeader } from "@/shared/components/section-header";
 import { deleteBlock, fetchBlocks } from "@/features/cms/api/blocks";
 import type { Block } from "@/features/cms/types";
 
@@ -40,7 +40,7 @@ export default function BlocksPage() {
       >
         <ul>
           {blocks.map((block) => (
-            <li key={block.id} className="flex justify-between items-center py-2 border-b border-gray-700">
+            <li key={block.id} className="flex justify-between items-center py-2 border-b border">
               <Link href={`/admin/cms/blocks/${block.id}/edit`}>
                 <span className="hover:underline">{block.name}</span>
               </Link>

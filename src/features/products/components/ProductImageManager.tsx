@@ -315,7 +315,7 @@ export default function ProductImageManager() {
                   relative flex h-24 w-24 items-center justify-center rounded-md border-2 bg-gray-800
                   ${!isReordering ? "transition-all" : ""}
                   ${hasUpload ? "cursor-grab active:cursor-grabbing" : ""}
-                  ${isDragging ? "opacity-70 ring-2 ring-emerald-400/60 scale-[0.98] border-emerald-400/40" : "border-gray-700"}
+                  ${isDragging ? "opacity-70 ring-2 ring-emerald-400/60 scale-[0.98] border-emerald-400/40" : "border"}
                   ${isDragOver ? "border-emerald-500 bg-emerald-500/10" : ""}
                 `}
               >

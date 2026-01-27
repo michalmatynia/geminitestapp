@@ -19,10 +19,12 @@ import type {
   Edge,
   NodeConfig,
   RuntimeState,
+  UpdaterMapping,
 } from "@/features/ai-paths/lib";
 import { formatPortLabel } from "@/features/ai-paths/utils/ui-utils";
 import { TEMPLATE_SNIPPETS } from "@/features/ai-paths/config/query-presets";
 import type { AiQuery, DatabasePresetOption, SchemaData } from "./types";
+import { Input } from "@/shared/ui/input";
 
 type DatabaseConstructorTabProps = {
   queryInputControls: React.ReactNode;
@@ -55,6 +57,12 @@ type DatabaseConstructorTabProps = {
   bundleKeys: Set<string>;
   toast: (message: string, options?: { variant?: "success" | "error" }) => void;
   aiPromptRef?: React.RefObject<HTMLTextAreaElement>;
+  mappings: UpdaterMapping[];
+  updateMapping: (index: number, patch: Partial<UpdaterMapping>) => void;
+  removeMapping: (index: number) => void;
+  addMapping: () => void;
+  availablePorts: string[];
+  uniqueTargetPathOptions: Array<{ label: string; value: string }>;
 };
 
 export function DatabaseConstructorTab({
@@ -88,6 +96,12 @@ export function DatabaseConstructorTab({
   bundleKeys,
   toast,
   aiPromptRef,
+  mappings,
+  updateMapping,
+  removeMapping,
+  addMapping,
+  availablePorts,
+  uniqueTargetPathOptions,
 }: DatabaseConstructorTabProps) {
   const pendingAiQuerySection = pendingAiQuery ? (
     <div className="rounded-md border border-purple-500/40 bg-purple-500/10 p-3">
@@ -136,14 +150,14 @@ export function DatabaseConstructorTab({
           </Button>
         </div>
       </div>
-      <pre className="mt-2 max-h-[100px] overflow-auto rounded-md bg-gray-950/70 p-2 text-[11px] text-gray-300 whitespace-pre-wrap break-all">
+      <pre className="mt-2 max-h-[100px] overflow-auto rounded-md bg-card/70 p-2 text-[11px] text-gray-300 whitespace-pre-wrap break-all">
         {pendingAiQuery}
       </pre>
     </div>
   ) : null;
 
   return (
-    <div className="space-y-4 rounded-md border border-gray-800 bg-gray-900/40 p-3">
+    <div className="space-y-4 rounded-md border border-border bg-card/40 p-3">
       {queryInputControls}
 
       {pendingAiQuerySection}
@@ -162,10 +176,10 @@ export function DatabaseConstructorTab({
             value={databaseConfig.presetId ?? "custom"}
             onValueChange={(value) => applyDatabasePreset(value)}
           >
-            <SelectTrigger className="h-7 w-[180px] border-gray-800 bg-gray-950/70 text-xs text-white">
+            <SelectTrigger className="h-7 w-[180px] border-border bg-card/70 text-xs text-white">
               <SelectValue placeholder="Select preset" />
             </SelectTrigger>
-            <SelectContent className="border-gray-800 bg-gray-900">
+            <SelectContent className="border-border bg-gray-900">
               {presetOptions.map((preset) => (
                 <SelectItem key={preset.id} value={preset.id}>
                   {preset.label}
@@ -196,10 +210,10 @@ export function DatabaseConstructorTab({
               }
             }}
           >
-            <SelectTrigger className="h-7 w-[180px] border-gray-800 bg-gray-950/70 text-xs text-white">
+            <SelectTrigger className="h-7 w-[180px] border-border bg-card/70 text-xs text-white">
               <SelectValue placeholder="AI Queries" />
             </SelectTrigger>
-            <SelectContent className="border-gray-800 bg-gray-900">
+            <SelectContent className="border-border bg-gray-900">
               <SelectItem value="none">No AI Query</SelectItem>
               {aiQueries.map((aiQuery) => (
                 <SelectItem key={aiQuery.id} value={aiQuery.id}>
@@ -306,7 +320,7 @@ export function DatabaseConstructorTab({
                         <Button
                           key={field.name}
                           type="button"
-                          className="rounded-md border border-gray-700/50 bg-gray-800/30 px-2 py-0.5 text-[9px] text-gray-300 hover:bg-gray-700/50"
+                          className="rounded-md border border/50 bg-gray-800/30 px-2 py-0.5 text-[9px] text-gray-300 hover:bg-gray-700/50"
                           onClick={() => {
                             const fieldQuery = `"${field.name}": "{{value}}"`;
                             const current = queryTemplateValue.trim();
@@ -361,7 +375,7 @@ export function DatabaseConstructorTab({
             <Button
               key={snippet.label}
               type="button"
-              className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/80"
+              className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
               onClick={() => {
                 setSelectedAiQueryId("");
                 updateQueryConfig({
@@ -380,7 +394,7 @@ export function DatabaseConstructorTab({
         <Label className="text-xs text-gray-400">AI Prompt (Output to AI Node)</Label>
         <Textarea
           ref={aiPromptRef}
-          className="min-h-[100px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+          className="min-h-[100px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={databaseConfig.aiPrompt ?? ""}
           onChange={(event) =>
             updateSelectedNodeConfig({
@@ -527,12 +541,12 @@ export function DatabaseConstructorTab({
         })()}
       </div>
 
-      <div className="space-y-3 border-t border-gray-800 pt-4">
+      <div className="space-y-3 border-t border-border pt-4">
         <Label className="text-xs text-gray-400">Field Mapping</Label>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
           <Button
             type="button"
-            className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+            className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
             onClick={mapInputsToTargets}
           >
             Auto-map inputs
@@ -546,6 +560,112 @@ export function DatabaseConstructorTab({
             </span>
           )}
         </div>
+
+        <div className="space-y-3">
+          {mappings.map((mapping, index) => {
+            const targetValue = mapping.targetPath ?? "";
+            return (
+              <div
+                key={`${mapping.targetPath}-${index}`}
+                className="grid gap-2 sm:grid-cols-[1fr_140px_auto] sm:items-start"
+              >
+                <div className="space-y-2">
+                  <Input
+                    className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                    value={targetValue}
+                    onChange={(event) =>
+                      updateMapping(index, {
+                        targetPath: event.target.value,
+                      })
+                    }
+                    placeholder="Target field path"
+                  />
+                  <Select
+                    onValueChange={(value) =>
+                      updateMapping(index, { targetPath: value })
+                    }
+                  >
+                    <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
+                      <SelectValue placeholder="Pick target field" />
+                    </SelectTrigger>
+                    <SelectContent className="border-border bg-gray-900">
+                      {uniqueTargetPathOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Select
+                    value={mapping.sourcePort}
+                    onValueChange={(value) =>
+                      updateMapping(index, { sourcePort: value })
+                    }
+                  >
+                    <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
+                      <SelectValue placeholder="Input" />
+                    </SelectTrigger>
+                    <SelectContent className="border-border bg-gray-900">
+                      {availablePorts.map((port) => (
+                        <SelectItem key={port} value={port}>
+                          {formatPortLabel(port)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {mapping.sourcePort === "bundle" && (
+                    <>
+                      <Input
+                        className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                        value={mapping.sourcePath ?? ""}
+                        onChange={(event) =>
+                          updateMapping(index, {
+                            sourcePath: event.target.value,
+                          })
+                        }
+                        placeholder="Bundle path"
+                      />
+                      <Select
+                        onValueChange={(value) =>
+                          updateMapping(index, { sourcePath: value })
+                        }
+                      >
+                        <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
+                          <SelectValue placeholder="Pick bundle key" />
+                        </SelectTrigger>
+                        <SelectContent className="border-border bg-gray-900">
+                          {Array.from(bundleKeys).map((key) => (
+                            <SelectItem key={key} value={key}>
+                              {formatPortLabel(key)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
+                  disabled={mappings.length <= 1}
+                  onClick={() => removeMapping(index)}
+                >
+                  Remove
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+
+        <Button
+          type="button"
+          className="w-full rounded-md border text-xs text-white hover:bg-muted/60"
+          onClick={addMapping}
+        >
+          Add mapping
+        </Button>
       </div>
     </div>
   );

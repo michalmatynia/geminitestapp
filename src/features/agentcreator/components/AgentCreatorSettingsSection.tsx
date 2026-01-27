@@ -54,7 +54,7 @@ export function AgentCreatorSettingsSection({
         </Label>
       </div>
       {agentModeEnabled && (
-        <div className="space-y-4 rounded-md border border-gray-800 p-4">
+        <div className="space-y-4 rounded-md border border-border p-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label>Browser</Label>

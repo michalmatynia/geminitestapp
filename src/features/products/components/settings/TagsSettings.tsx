@@ -133,7 +133,7 @@ export function TagsSettings({
 
   return (
     <div className="space-y-5">
-      <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4">
+      <div className="rounded-md border border-border bg-card/60 p-4">
         <p className="text-sm font-semibold text-white mb-3">Select Catalog</p>
         <p className="text-xs text-gray-400 mb-3">
           Tags are managed per catalog.
@@ -170,17 +170,17 @@ export function TagsSettings({
             </Button>
           </div>
 
-          <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4">
+          <div className="rounded-md border border-border bg-card/60 p-4">
             <p className="text-sm font-semibold text-white mb-4">
               Tags for &quot;{selectedCatalog?.name}&quot;
             </p>
 
             {loading ? (
-              <div className="rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+              <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
                 Loading tags...
               </div>
             ) : tags.length === 0 ? (
-              <div className="rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+              <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
                 No tags yet for this catalog. Create your first tag!
               </div>
             ) : (
@@ -188,11 +188,11 @@ export function TagsSettings({
                 {tags.map((tag) => (
                   <div
                     key={tag.id}
-                    className="flex items-center justify-between gap-3 rounded-md border border-gray-800 bg-gray-900 px-3 py-2"
+                    className="flex items-center justify-between gap-3 rounded-md border border-border bg-gray-900 px-3 py-2"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <span
-                        className="size-3 rounded-full border border-gray-700"
+                        className="size-3 rounded-full border border"
                         style={{ backgroundColor: tag.color || "#38bdf8" }}
                       />
                       <span className="text-sm text-gray-100 truncate">
@@ -225,7 +225,7 @@ export function TagsSettings({
       )}
 
       {!selectedCatalogId && catalogs.length === 0 && (
-        <div className="rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+        <div className="rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
           No catalogs found. Please create a catalog first in the Catalogs section.
         </div>
       )}
@@ -236,7 +236,7 @@ export function TagsSettings({
           onOpenChange={(open) => !open && setShowModal(false)}
           title={editingTag ? "Edit Tag" : "Create Tag"}
         >
-          <div className="w-full max-w-md rounded-lg bg-gray-950 p-6 shadow-lg">
+          <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-lg">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-white">
                 {editingTag ? "Edit Tag" : "Create Tag"}
@@ -254,7 +254,7 @@ export function TagsSettings({
               <div>
                 <Label className="text-xs text-gray-400">Name</Label>
                 <Input
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.name}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, name: e.target.value }))
@@ -266,7 +266,7 @@ export function TagsSettings({
               <div>
                 <Label className="text-xs text-gray-400">Catalog</Label>
                 <select
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={formData.catalogId}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -289,7 +289,7 @@ export function TagsSettings({
                 <div className="mt-2 flex items-center gap-3">
                   <Input
                     type="color"
-                    className="h-10 w-20 cursor-pointer rounded border border-gray-800 bg-gray-900"
+                    className="h-10 w-20 cursor-pointer rounded border border-border bg-gray-900"
                     value={formData.color}
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, color: e.target.value }))
@@ -297,7 +297,7 @@ export function TagsSettings({
                   />
                   <Input
                     type="text"
-                    className="flex-1 rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                    className="flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                     value={formData.color}
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, color: e.target.value }))
@@ -309,7 +309,7 @@ export function TagsSettings({
 
               <div className="flex items-center justify-end gap-3 pt-4">
                 <Button
-                  className="rounded-md border border-gray-800 px-3 py-2 text-sm text-gray-300 hover:bg-gray-900"
+                  className="rounded-md border border-border px-3 py-2 text-sm text-gray-300 hover:bg-muted/50"
                   type="button"
                   onClick={() => setShowModal(false)}
                 >

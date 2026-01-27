@@ -9,8 +9,8 @@ import type { NotebookRecord } from "@/shared/types/notes";
 import { useRouter } from "next/navigation";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 export function AdminNotesNotebooksPage() {
   const { toast } = useToast();
@@ -227,7 +227,7 @@ export function AdminNotesNotebooksPage() {
                 return (
                   <div
                     key={notebook.id}
-                    className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3 transition hover:border-gray-600"
+                    className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3 transition hover:border-border/60"
                     onClick={() => {
                       updateSettings({ selectedNotebookId: notebook.id });
                       router.push("/admin/notes");

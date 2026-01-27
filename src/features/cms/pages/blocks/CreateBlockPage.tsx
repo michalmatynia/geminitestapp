@@ -7,7 +7,7 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Textarea } from "@/shared/ui/textarea";
 import { createBlock } from "@/features/cms/api/blocks";
-import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionHeader } from "@/shared/components/section-header";
 
 export default function CreateBlockPage() {
   const [name, setName] = useState("");

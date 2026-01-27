@@ -25,7 +25,7 @@ export function DelayNodeConfigSection({
         <Input
           type="number"
           step="50"
-          className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+          className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={delayConfig.ms}
           onChange={(event) =>
             updateSelectedNodeConfig({

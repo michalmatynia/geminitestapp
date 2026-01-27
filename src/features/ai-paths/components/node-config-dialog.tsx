@@ -109,7 +109,7 @@ export function NodeConfigDialog({
 
   return (
     <Dialog open={configOpen} onOpenChange={setConfigOpen}>
-      <DialogContent className="max-h-[85vh] w-[95vw] max-w-4xl overflow-y-auto border border-gray-800 bg-gray-950 text-white">
+      <DialogContent className="max-h-[85vh] w-[95vw] max-w-4xl overflow-y-auto border border-border bg-card text-white">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg">
@@ -120,10 +120,10 @@ export function NodeConfigDialog({
                 <Button
                   type="button"
                   size="sm"
-                  className={`rounded border border-gray-700 px-3 py-1 text-xs ${
+                  className={`rounded border px-3 py-1 text-xs ${
                     selectedNode.config.database.dryRun
                       ? "text-emerald-200 hover:bg-emerald-500/10"
-                      : "text-gray-300 hover:bg-gray-800"
+                      : "text-gray-300 hover:bg-muted/50"
                   }`}
                   onClick={() => {
                     const dbConfig = selectedNode.config?.database;
@@ -142,7 +142,7 @@ export function NodeConfigDialog({
               <Button
                 type="button"
                 size="sm"
-                className="rounded border border-gray-700 px-3 py-1 text-xs text-gray-300 hover:bg-gray-800"
+                className="rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50"
                 onClick={() => setConfigOpen(false)}
               >
                 Close

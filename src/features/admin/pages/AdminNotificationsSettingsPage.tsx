@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { BellIcon } from "lucide-react";
 
 import { Button } from "@/shared/ui/button";
 import { Label } from "@/shared/ui/label";
@@ -14,8 +13,8 @@ import {
   SelectValue,
 } from "@/shared/ui/select";
 import { useToast, useToastSettings } from "@/shared/ui/toast";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 const positionOptions = [
   { value: "top-right", label: "Top Right", desc: "Corner top right" },
@@ -143,7 +142,7 @@ export function AdminNotificationsSettingsPage() {
                       className={`group relative flex items-center justify-center rounded-lg px-3 py-2 transition-all ${
                         accent === option.value
                           ? "ring-2 ring-offset-2 ring-offset-gray-950 ring-white"
-                          : "border border-gray-700 hover:border-gray-600"
+                          : "border hover:border-border/60"
                       }`}
                     >
                       <div className={`size-6 rounded-md ${option.color}`} />
@@ -156,7 +155,7 @@ export function AdminNotificationsSettingsPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3 border-t border-gray-800 pt-6">
+              <div className="flex flex-wrap gap-3 border-t border-border pt-6">
                 <Button onClick={handleSave} className="gap-2">
                   Save Settings
                 </Button>
@@ -178,7 +177,7 @@ export function AdminNotificationsSettingsPage() {
         <div>
           <SectionPanel className="sticky top-6 p-6">
             <h2 className="mb-4 text-sm font-semibold text-white">Position Preview</h2>
-            <div className="relative aspect-video w-full rounded-lg border border-gray-800 bg-gray-900">
+            <div className="relative aspect-video w-full rounded-lg border border-border bg-gray-900">
               {/* Position indicator */}
               <div
                 className={`absolute size-10 rounded-lg border-2 border-dashed border-emerald-400/50 bg-emerald-400/10 ${preview.x}-3 ${preview.y}-3 flex items-center justify-center`}
@@ -193,7 +192,7 @@ export function AdminNotificationsSettingsPage() {
               <div className="absolute bottom-2 right-2 text-xs text-gray-500">BR</div>
             </div>
 
-            <div className="mt-4 space-y-2 rounded-lg border border-gray-800 bg-gray-900 p-3">
+            <div className="mt-4 space-y-2 rounded-lg border border-border bg-gray-900 p-3">
               <p className="text-xs font-medium text-gray-300">Current Settings:</p>
               <div className="space-y-1">
                 <p className="flex items-center justify-between text-xs text-gray-400">

@@ -8,12 +8,12 @@ import { Button } from "@/shared/ui/button";
 import { AppModal } from "@/shared/ui/app-modal";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import ModalShell from "@/shared/ui/modal-shell";
+import ModalShell from "@/shared/components/modal-shell";
 import { Textarea } from "@/shared/ui/textarea";
 import { useToast } from "@/shared/ui/toast";
 import { serializeSetting } from "@/shared/utils/settings-json";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 import { PlaywrightSettingsForm } from "@/features/playwright/components/PlaywrightSettingsForm";
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from "@/features/playwright/constants/playwright";
@@ -217,11 +217,11 @@ export function PlaywrightPersonasPage() {
       </SectionPanel>
 
       {loading ? (
-        <div className="rounded-md border border-dashed border-gray-800 p-6 text-center text-sm text-gray-400">
+        <div className="rounded-md border border-dashed border-border p-6 text-center text-sm text-gray-400">
           Loading personas...
         </div>
       ) : sortedPersonas.length === 0 ? (
-        <div className="rounded-md border border-dashed border-gray-800 p-6 text-center text-sm text-gray-400">
+        <div className="rounded-md border border-dashed border-border p-6 text-center text-sm text-gray-400">
           No personas yet. Create your first Playwright profile.
         </div>
       ) : (
@@ -231,7 +231,7 @@ export function PlaywrightPersonasPage() {
             return (
               <Card
                 key={persona.id}
-                className="border-gray-800 bg-gray-950/70 p-4"
+                className="border-border bg-card/70 p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -275,7 +275,7 @@ export function PlaywrightPersonasPage() {
                   {tags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full border border-gray-700 px-2 py-1 text-[11px] text-gray-300"
+                      className="rounded-full border px-2 py-1 text-[11px] text-gray-300"
                     >
                       {tag}
                     </span>

@@ -202,7 +202,7 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
-            className="inline-flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-gray-800 hover:text-white"
+            className="inline-flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted/50 hover:text-white"
             aria-label="Open row actions"
             type="button"
           >

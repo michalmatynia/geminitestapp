@@ -155,7 +155,7 @@ export const FolderNode = React.memo(function FolderNode({
             ? "bg-blue-600 text-white"
             : isDragOver && canDropHere
             ? "bg-green-600 text-white"
-            : "text-gray-300 hover:bg-gray-800"
+            : "text-gray-300 hover:bg-muted/50"
         }`}
         style={{ paddingLeft: `${level * 16 + 8}px` }}
         onDragOver={(e) => {

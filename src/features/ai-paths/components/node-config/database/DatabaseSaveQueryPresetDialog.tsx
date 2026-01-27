@@ -35,7 +35,7 @@ export function DatabaseSaveQueryPresetDialog({
 }: DatabaseSaveQueryPresetDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md border border-gray-800 bg-gray-950 text-white">
+      <DialogContent className="max-w-md border border-border bg-card text-white">
         <DialogHeader>
           <DialogTitle className="text-lg">Save Query Preset</DialogTitle>
           <DialogDescription className="text-sm text-gray-400">
@@ -46,7 +46,7 @@ export function DatabaseSaveQueryPresetDialog({
           <div>
             <Label className="text-xs text-gray-400">Preset name</Label>
             <Input
-              className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+              className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={newQueryPresetName}
               onChange={(event) => setNewQueryPresetName(event.target.value)}
               placeholder="My query preset"
@@ -56,7 +56,7 @@ export function DatabaseSaveQueryPresetDialog({
             <Label className="text-xs text-gray-400">Query preview</Label>
             <Textarea
               readOnly
-              className="mt-2 min-h-[120px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-xs text-gray-200"
+              className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-xs text-gray-200"
               value={queryTemplateValue}
             />
           </div>
@@ -64,7 +64,7 @@ export function DatabaseSaveQueryPresetDialog({
         <DialogFooter className="mt-4 gap-2 sm:gap-2">
           <Button
             type="button"
-            className="rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
+            className="rounded-md border text-xs text-white hover:bg-muted/60"
             onClick={onCancel}
           >
             Cancel

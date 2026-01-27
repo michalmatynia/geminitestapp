@@ -61,13 +61,13 @@ export function MarkdownToolbar({
   onMigrateToMarkdown,
 }: MarkdownToolbarProps) {
   return (
-    <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-gray-700 bg-gray-900 px-3 py-2">
+    <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg border bg-gray-900 px-3 py-2">
       {/* Editor Mode Display/Toggle */}
       <div className="flex items-center gap-2">
         {isEditorModeLocked ? (
           <>
             {/* Display current mode (locked) */}
-            <span className="px-2 py-1 text-xs bg-gray-800 text-gray-300 rounded border border-gray-600">
+            <span className="px-2 py-1 text-xs bg-gray-800 text-gray-300 rounded border border-border/60">
               {editorMode === "markdown" ? "Markdown" : editorMode === "wysiwyg" ? "WYSIWYG" : "Code"}
             </span>
             {/* Migration buttons */}
@@ -111,7 +111,7 @@ export function MarkdownToolbar({
           </>
         ) : (
           /* Mode toggle for new notes */
-          <div className="flex rounded-md border border-gray-600 overflow-hidden">
+          <div className="flex rounded-md border border-border/60 overflow-hidden">
             <Button
               type="button"
               onClick={() => onEditorModeChange("markdown")}
@@ -157,7 +157,7 @@ export function MarkdownToolbar({
           <Button
             type="button"
             onClick={() => setShowPreview(!showPreview)}
-            className="rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            className="rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
             title="Toggle preview"
           >
             {showPreview ? "Hide Preview" : "Show Preview"}
@@ -305,7 +305,7 @@ export function MarkdownToolbar({
               }
               e.target.value = "";
             }}
-            className="rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
+            className="rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700"
             title="Insert file reference"
           >
             <option value="">Insert File</option>
@@ -318,12 +318,12 @@ export function MarkdownToolbar({
           </select>
         </div>
       )}
-      <div className="ml-2 flex items-center gap-2 border-l border-gray-700 pl-2">
+      <div className="ml-2 flex items-center gap-2 border-l border pl-2">
         <Label className="text-xs text-gray-400">Font</Label>
         <select
           value={fontFamily}
           onChange={(event) => setFontFamily(event.target.value)}
-          className="rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-200"
+          className="rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200"
         >
           <option value="inherit">Default</option>
           <option value="Georgia, serif">Serif</option>
@@ -337,7 +337,7 @@ export function MarkdownToolbar({
           type="color"
           value={textColor}
           onChange={(event) => setTextColor(event.target.value)}
-          className="h-7 w-10 rounded border border-gray-700 bg-gray-800"
+          className="h-7 w-10 rounded border bg-gray-800"
         />
       </div>
       <Button

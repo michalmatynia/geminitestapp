@@ -7,7 +7,7 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { createSlug } from "@/features/cms/api/slugs";
 import { SLUG_REGEX } from "@/features/cms/validations/slug";
-import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionHeader } from "@/shared/components/section-header";
 
 export default function CreateSlugPage() {
   const [slug, setSlug] = useState("");

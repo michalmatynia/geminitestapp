@@ -51,21 +51,21 @@ export function CanvasSidebar({
   return (
     <div className="space-y-4">
       <div
-        className="rounded-lg border border-gray-800 bg-gray-950/60 p-4"
+        className="rounded-lg border bg-card/60 backdrop-blur p-4"
         data-edge-panel
       >
         <div className="mb-3 flex items-center justify-between">
           <span className="text-sm font-semibold text-white">Node Palette</span>
           <button
             type="button"
-            className="rounded border border-gray-700 px-2 py-1 text-[10px] text-gray-300 hover:bg-gray-900/70"
+            className="rounded border px-2 py-1 text-[10px] text-gray-300 hover:bg-muted/60"
             onClick={onTogglePaletteCollapsed}
           >
             {paletteCollapsed ? "Expand" : "Collapse"}
           </button>
         </div>
         {paletteCollapsed ? (
-          <div className="rounded-md border border-dashed border-gray-800/80 px-3 py-2 text-[11px] text-gray-500">
+          <div className="rounded-md border border-dashed border-border/60 px-3 py-2 text-[11px] text-gray-500">
             Palette collapsed. Expand to add nodes.
           </div>
         ) : (
@@ -94,18 +94,18 @@ export function CanvasSidebar({
               if (items.length === 0) return null;
               const isExpanded = expandedPaletteGroups.has(group.title);
               return (
-                <div key={group.title} className="rounded-md border border-gray-800/50">
+                <div key={group.title} className="rounded-md border border-border/60">
                   <button
                     type="button"
                     onClick={() => onTogglePaletteGroup(group.title)}
-                    className="flex w-full items-center justify-between px-3 py-2 text-left transition hover:bg-gray-900/50"
+                    className="flex w-full items-center justify-between px-3 py-2 text-left transition hover:bg-muted/40"
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-sm">{group.icon}</span>
                       <span className="text-[11px] font-medium uppercase tracking-wide text-gray-300">
                         {group.title}
                       </span>
-                      <span className="rounded-full bg-gray-800 px-1.5 py-0.5 text-[10px] text-gray-400">
+                      <span className="rounded-full bg-muted/60 px-1.5 py-0.5 text-[10px] text-gray-400">
                         {items.length}
                       </span>
                     </div>
@@ -125,7 +125,7 @@ export function CanvasSidebar({
                           key={node.title}
                           draggable
                           onDragStart={(event) => onDragStart(event, node)}
-                          className="cursor-grab rounded-lg border border-gray-800 bg-gray-900/60 p-3 text-xs text-gray-300 transition hover:border-gray-600 hover:bg-gray-900 active:cursor-grabbing"
+                          className="cursor-grab rounded-lg border bg-card/60 backdrop-blur p-3 text-xs text-gray-300 transition hover:border-border/60 hover:bg-muted/50 active:cursor-grabbing"
                         >
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold text-white">
@@ -150,7 +150,7 @@ export function CanvasSidebar({
       </div>
 
       {!selectedEdgeId && (
-        <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-4">
+        <div className="rounded-lg border bg-card/60 backdrop-blur p-4">
           <div className="mb-3 text-sm font-semibold text-white">Inspector</div>
           {selectedNode ? (
             <div className="space-y-3 text-xs text-gray-300">
@@ -175,7 +175,7 @@ export function CanvasSidebar({
               <div>
                 <Label className="text-[10px] uppercase text-gray-500">Title</Label>
                 <Input
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 px-3 py-2 text-xs text-white"
+                  className="mt-2 w-full rounded-md border bg-card/70 px-3 py-2 text-xs text-white"
                   value={selectedNode.title}
                   onChange={(event) => onUpdateSelectedNode({ title: event.target.value })}
                 />
@@ -183,14 +183,14 @@ export function CanvasSidebar({
               <div>
                 <Label className="text-[10px] uppercase text-gray-500">Description</Label>
                 <Textarea
-                  className="mt-2 min-h-[64px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-xs text-white"
+                  className="mt-2 min-h-[64px] w-full rounded-md border bg-card/70 text-xs text-white"
                   value={selectedNode.description}
                   onChange={(event) =>
                     onUpdateSelectedNode({ description: event.target.value })
                   }
                 />
               </div>
-              <div className="rounded-md border border-gray-800 bg-gray-900/50 p-3 text-[11px] text-gray-400">
+              <div className="rounded-md border bg-card/50 p-3 text-[11px] text-gray-400">
                 Inputs:{" "}
                 {selectedNode.inputs.map((port) => formatPortLabel(port)).join(", ") ||
                   "None"}{" "}
@@ -237,14 +237,14 @@ export function CanvasSidebar({
                 const directPlaceholders = inputPorts.filter((port) => port !== "bundle");
                 if (bundleKeys.size === 0 && directPlaceholders.length === 0) return null;
                 return (
-                  <div className="rounded-md border border-gray-800 bg-gray-900/50 p-3 text-[11px] text-gray-400">
+                  <div className="rounded-md border bg-card/50 p-3 text-[11px] text-gray-400">
                     <div className="text-gray-300">Prompt placeholders</div>
                     {bundleKeys.size > 0 && (
                       <div className="mt-2 flex flex-wrap gap-2">
                         {Array.from(bundleKeys).map((key) => (
                           <span
                             key={key}
-                            className="rounded-full border border-gray-700 px-2 py-0.5 text-[10px] text-gray-200"
+                            className="rounded-full border px-2 py-0.5 text-[10px] text-gray-200"
                           >
                             {formatPlaceholderLabel(key)}
                           </span>
@@ -263,7 +263,7 @@ export function CanvasSidebar({
                 );
               })()}
               <Button
-                className="w-full rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
+                className="w-full rounded-md border text-xs text-white hover:bg-muted/60"
                 onClick={onOpenNodeConfig}
               >
                 Open Node Config
@@ -284,7 +284,7 @@ export function CanvasSidebar({
         </div>
       )}
 
-      <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-4">
+      <div className="rounded-lg border bg-card/60 backdrop-blur p-4">
         <div className="mb-3 text-sm font-semibold text-white">Connections</div>
         <div className="space-y-2 text-xs text-gray-400">
           <div>Active wires: {edges.length}</div>
@@ -296,7 +296,7 @@ export function CanvasSidebar({
               <div className="space-y-3 rounded-md border border-blue-500/30 bg-blue-500/5 p-3">
                 <div className="text-xs font-medium text-blue-300">Selected Wire</div>
                 <div className="space-y-2">
-                  <div className="rounded border border-gray-700 bg-gray-900/50 p-2">
+                  <div className="rounded border bg-card/50 p-2">
                     <div className="text-[10px] uppercase text-gray-500">From</div>
                     <div className="text-sm text-white">
                       {fromNode?.title ?? selectedEdge.from}
@@ -315,7 +315,7 @@ export function CanvasSidebar({
                     </div>
                   </div>
                   <div className="flex justify-center text-gray-500">↓</div>
-                  <div className="rounded border border-gray-700 bg-gray-900/50 p-2">
+                  <div className="rounded border bg-card/50 p-2">
                     <div className="text-[10px] uppercase text-gray-500">To</div>
                     <div className="text-sm text-white">
                       {toNode?.title ?? selectedEdge.to}
@@ -336,7 +336,7 @@ export function CanvasSidebar({
                 </div>
                 <div className="flex gap-2">
                   <Button
-                    className="flex-1 rounded-md border border-gray-600 text-xs text-gray-300 hover:bg-gray-700"
+                    className="flex-1 rounded-md border text-xs text-muted-foreground hover:bg-muted/50"
                     type="button"
                     onClick={() => onSelectEdge(null)}
                   >
@@ -376,13 +376,13 @@ export function CanvasSidebar({
                   className={`flex items-center justify-between gap-2 rounded-md border px-2 py-1 ${
                     isSelected
                       ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                      : "border-gray-800 bg-gray-900/40"
+                      : "border bg-card/40"
                   }`}
                 >
                   <span className="truncate">{label}</span>
                   <button
                     type="button"
-                    className="rounded border border-gray-700 px-1.5 py-0.5 text-[9px] text-gray-400 hover:bg-gray-900"
+                    className="rounded border px-1.5 py-0.5 text-[9px] text-gray-400 hover:bg-muted/50"
                     onClick={() => onSelectEdge(edge.id)}
                   >
                     Select

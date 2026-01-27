@@ -232,7 +232,7 @@ export function NoteDetailView({
           <Button
             onClick={onExpandFolderTree}
             variant="outline"
-            className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+            className="border text-gray-300 hover:bg-muted/50 hover:text-white"
           >
             <ChevronLeft className="-scale-x-100" size={16} />
             <span className="ml-2">Show Folders</span>
@@ -347,7 +347,7 @@ export function NoteDetailView({
         </div>
       ) : (
         <div
-          className="flex-1 overflow-y-auto rounded-lg border border-gray-800 bg-gray-900 p-6 cursor-text"
+          className="flex-1 overflow-y-auto rounded-lg border border-border bg-gray-900 p-6 cursor-text"
           onDoubleClick={() => setIsEditing(true)}
           style={previewStyle}
         >
@@ -453,7 +453,7 @@ export function NoteDetailView({
               </div>
             </div>
           )}
-          <div className="mt-8 pt-4 border-t border-gray-800 flex gap-6 text-sm text-gray-500">
+          <div className="mt-8 pt-4 border-t border-border flex gap-6 text-sm text-gray-500">
             <span>Created: {new Date(selectedNote.createdAt).toLocaleString()}</span>
             <span>Modified: {new Date(selectedNote.updatedAt).toLocaleString()}</span>
           </div>

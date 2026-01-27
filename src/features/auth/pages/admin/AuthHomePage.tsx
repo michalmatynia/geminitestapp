@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 const cards = [
   {
@@ -46,7 +46,7 @@ export default function AuthPage() {
           <Link
             key={card.title}
             href={card.href}
-            className="rounded-md border border-gray-800 bg-gray-900 p-4 text-left transition hover:border-gray-700 hover:bg-gray-900/80"
+            className="rounded-md border border-border bg-gray-900 p-4 text-left transition hover:border hover:bg-muted/60"
           >
             <h2 className="text-lg font-semibold text-white">{card.title}</h2>
             <p className="mt-1 text-sm text-gray-400">{card.description}</p>

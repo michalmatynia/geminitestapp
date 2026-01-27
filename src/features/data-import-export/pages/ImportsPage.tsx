@@ -37,6 +37,8 @@ import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
 } from "@/features/data-import-export/utils/image-retry-presets";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 export default function ImportsPage() {
   const { toast } = useToast();
@@ -1490,16 +1492,16 @@ export default function ImportsPage() {
 
   if (checkingIntegration) {
     return (
-      <div className="flex h-64 items-center justify-center rounded-lg bg-gray-950 p-6 shadow-lg">
-        <p className="text-gray-400">Checking integration status...</p>
-      </div>
+      <SectionPanel className="flex h-64 items-center justify-center p-6">
+        <p className="text-muted-foreground">Checking integration status...</p>
+      </SectionPanel>
     );
   }
 
   if (!isBaseConnected) {
     return (
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-        <h1 className="mb-4 text-3xl font-bold text-white">Product Import/Export</h1>
+      <SectionPanel className="p-6">
+        <SectionHeader title="Product Import/Export" className="mb-4" />
         <div className="rounded-md border border-yellow-900/50 bg-yellow-900/20 p-4">
           <h2 className="text-lg font-semibold text-yellow-200">
             Base.com Integration Required
@@ -1513,30 +1515,28 @@ export default function ImportsPage() {
             </Link>
           </div>
         </div>
-      </div>
+      </SectionPanel>
     );
   }
 
   return (
-    <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Product Import/Export</h1>
-          <p className="mt-1 text-sm text-gray-400">
-            Import products from Base.com or export your products to Base.com
-            using templates for field mapping.
-          </p>
-        </div>
-        <Link
-          href="/admin/import"
-          className="text-sm font-semibold text-gray-300 hover:text-white"
-        >
-          CSV Import
-        </Link>
-      </div>
+    <SectionPanel className="p-6">
+      <SectionHeader
+        title="Product Import/Export"
+        description="Import products from Base.com or export your products to Base.com using templates for field mapping."
+        actions={(
+          <Link
+            href="/admin/import"
+            className="text-sm font-semibold text-blue-300 hover:text-blue-200"
+          >
+            CSV Import
+          </Link>
+        )}
+        className="mb-6"
+      />
 
       <Tabs defaultValue="imports">
-        <TabsList className="border border-gray-800 bg-gray-900/70">
+        <TabsList className="border border-border bg-card/70">
           <TabsTrigger value="imports">Imports</TabsTrigger>
           <TabsTrigger value="exports">Exports</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
@@ -1627,7 +1627,7 @@ export default function ImportsPage() {
         </TabsContent>
 
         <TabsContent value="templates" className="mt-6 space-y-6">
-          <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
+          <div className="rounded-md border border-border bg-gray-900 p-4">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -1638,7 +1638,7 @@ export default function ImportsPage() {
                       setTemplateScope(value === "export" ? "export" : "import")
                     }
                   >
-                    <TabsList className="border border-gray-800 bg-gray-950/60">
+                    <TabsList className="border border-border bg-card/60">
                       <TabsTrigger value="import">Import templates</TabsTrigger>
                       <TabsTrigger value="export">Export templates</TabsTrigger>
                     </TabsList>
@@ -1741,7 +1741,7 @@ export default function ImportsPage() {
                 <Label className="text-xs text-gray-400">
                   {isImportTemplateScope ? "Import templates" : "Export templates"}
                 </Label>
-                <div className="max-h-64 overflow-auto rounded-md border border-gray-800 bg-gray-950/60 p-2">
+                <div className="max-h-64 overflow-auto rounded-md border border-border bg-card/60 p-2">
                   {currentTemplates.length === 0 ? (
                     <p className="text-xs text-gray-500">
                       {currentLoadingTemplates
@@ -1759,7 +1759,7 @@ export default function ImportsPage() {
                                                       className={`flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-xs ${
                                                         currentActiveTemplateId === template.id
                                                           ? "bg-emerald-500/20 text-emerald-100"
-                                                          : "text-gray-300 hover:bg-gray-800/60"
+                                                          : "text-gray-300 hover:bg-muted/50/60"
                                                       }`}
                                                       onClick={() => { void handleSelectTemplate(template.id); }}
                                                     >                          <span>{template.name}</span>
@@ -1814,7 +1814,7 @@ export default function ImportsPage() {
                     <Checkbox
                       id="exportImagesAsBase64"
                       checked={exportImagesAsBase64} onCheckedChange={(checked) => setExportImagesAsBase64(Boolean(checked))}
-                      className="h-4 w-4 rounded border-gray-800 bg-gray-900 text-emerald-500 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-0"
+                      className="h-4 w-4 rounded border-border bg-gray-900 text-emerald-500 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-0"
                     />
                     <Label
                       htmlFor="exportImagesAsBase64"
@@ -1901,12 +1901,12 @@ export default function ImportsPage() {
                             }
                           />
                           {openKeyIndex === index && (
-                            <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-gray-800 bg-gray-950 shadow-lg">
+                            <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-border bg-card shadow-lg">
                               {filterKeys(mapping.sourceKey).map((key) => (
                                   <Button
                                     key={key}
                                     type="button"
-                                    className="block w-full px-3 py-2 text-left text-xs text-gray-200 hover:bg-gray-800"
+                                    className="block w-full px-3 py-2 text-left text-xs text-gray-200 hover:bg-muted/50"
                                     onMouseDown={(event) => {
                                       event.preventDefault();
                                       updateMapping(index, { sourceKey: key });
@@ -1924,7 +1924,7 @@ export default function ImportsPage() {
                             </div>
                           )}
                         </div>
-                        <div className="rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-gray-500">
+                        <div className="rounded-md border border-border bg-gray-900 px-3 py-2 text-xs text-gray-500">
                           {mapping.sourceKey &&
                           currentParameterValues[mapping.sourceKey]
                             ? currentParameterValues[mapping.sourceKey]
@@ -1932,7 +1932,7 @@ export default function ImportsPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <select
-                            className="flex-1 rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                            className="flex-1 rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                             value={mapping.targetField}
                             onChange={(event) =>
                               updateMapping(index, {
@@ -1987,6 +1987,6 @@ export default function ImportsPage() {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+    </SectionPanel>
   );
 }

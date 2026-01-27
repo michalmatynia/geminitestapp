@@ -106,7 +106,7 @@ export function NoteMetadata({
             placeholder="Enter note title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white"
+            className="w-full rounded-lg border bg-gray-800 px-4 py-2 text-white"
             required
           />
         </div>
@@ -117,7 +117,7 @@ export function NoteMetadata({
         <select
           value={selectedFolderId}
           onChange={(e) => setSelectedFolderId(e.target.value)}
-          className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white"
+          className="w-full rounded-lg border bg-gray-800 px-4 py-2 text-white"
         >
           <option value="">No Folder</option>
           {flatFolders.map((folder) => (
@@ -136,12 +136,12 @@ export function NoteMetadata({
             type="color"
             value={color}
             onChange={(e) => setColor(e.target.value)}
-            className="h-10 w-full cursor-pointer rounded-lg border border-gray-700 bg-gray-800"
+            className="h-10 w-full cursor-pointer rounded-lg border bg-gray-800"
           />
           <Button
             type="button"
             onClick={() => setColor("#ffffff")}
-            className="whitespace-nowrap rounded-lg border border-gray-700 px-3 py-2 text-xs text-gray-200 hover:bg-gray-800"
+            className="whitespace-nowrap rounded-lg border px-3 py-2 text-xs text-gray-200 hover:bg-muted/50"
             title="Use folder theme background"
           >
             Use Folder Theme
@@ -197,12 +197,12 @@ export function NoteMetadata({
                   }
                 }
               }}
-              className="flex-1 rounded-none border-x-0 border-t border-b border-gray-700 bg-transparent px-0 py-2 text-white text-sm focus:outline-none focus:border-gray-500 placeholder:text-gray-500"
+              className="flex-1 rounded-none border-x-0 border-t border-b border bg-transparent px-0 py-2 text-white text-sm focus:outline-none focus:border-gray-500 placeholder:text-gray-500"
             />
           </div>
 
           {isTagDropdownOpen && (tagInput || filteredTags.length > 0) && (
-            <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-700 bg-gray-800 shadow-lg">
+            <div className="absolute z-10 mt-1 w-full rounded-md border bg-gray-800 shadow-lg">
               <ul className="max-h-60 overflow-auto py-1 text-sm text-gray-300">
                 {filteredTags.map((tag) => (
                   <li
@@ -289,12 +289,12 @@ export function NoteMetadata({
                 setIsRelatedDropdownOpen(true);
               }}
               onFocus={() => setIsRelatedDropdownOpen(true)}
-              className="flex-1 rounded-none border-x-0 border-t border-b border-gray-700 bg-transparent px-0 py-2 text-white text-sm focus:outline-none focus:border-gray-500 placeholder:text-gray-500"
+              className="flex-1 rounded-none border-x-0 border-t border-b border bg-transparent px-0 py-2 text-white text-sm focus:outline-none focus:border-gray-500 placeholder:text-gray-500"
             />
           </div>
 
           {isRelatedDropdownOpen && relatedNoteQuery && (
-            <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-700 bg-gray-800 shadow-lg">
+            <div className="absolute z-10 mt-1 w-full rounded-md border bg-gray-800 shadow-lg">
               <ul className="max-h-60 overflow-auto py-1 text-sm text-gray-300">
                 {isRelatedLoading && (
                   <li className="px-4 py-2 text-gray-500">Searching...</li>

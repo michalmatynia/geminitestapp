@@ -8,8 +8,8 @@ import { useNoteSettings } from "@/features/notesapp/hooks/NoteSettingsContext";
 import type { ThemeRecord } from "@/shared/types/notes";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 const defaultTheme: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> = {
   name: "",
@@ -204,7 +204,7 @@ export function AdminNotesThemesPage() {
                 type="text"
                 value={form.name}
                 onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white"
+                className="w-full rounded-lg border bg-gray-800 px-4 py-2 text-white"
                 placeholder="Enter theme name"
               />
             </div>
@@ -218,7 +218,7 @@ export function AdminNotesThemesPage() {
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, textColor: event.target.value }))
                 }
-                className="h-10 w-full rounded border border-gray-700 bg-gray-800"
+                className="h-10 w-full rounded border bg-gray-800"
               />
             </div>
             <div>
@@ -231,7 +231,7 @@ export function AdminNotesThemesPage() {
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, backgroundColor: event.target.value }))
                 }
-                className="h-10 w-full rounded border border-gray-700 bg-gray-800"
+                className="h-10 w-full rounded border bg-gray-800"
               />
             </div>
             <div>
@@ -244,7 +244,7 @@ export function AdminNotesThemesPage() {
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, markdownHeadingColor: event.target.value }))
                 }
-                className="h-10 w-full rounded border border-gray-700 bg-gray-800"
+                className="h-10 w-full rounded border bg-gray-800"
               />
             </div>
             <div>
@@ -257,7 +257,7 @@ export function AdminNotesThemesPage() {
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, markdownLinkColor: event.target.value }))
                 }
-                className="h-10 w-full rounded border border-gray-700 bg-gray-800"
+                className="h-10 w-full rounded border bg-gray-800"
               />
             </div>
             <div>
@@ -270,7 +270,7 @@ export function AdminNotesThemesPage() {
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, markdownCodeBackground: event.target.value }))
                 }
-                className="h-10 w-full rounded border border-gray-700 bg-gray-800"
+                className="h-10 w-full rounded border bg-gray-800"
               />
             </div>
             <div>
@@ -283,7 +283,7 @@ export function AdminNotesThemesPage() {
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, markdownCodeText: event.target.value }))
                 }
-                className="h-10 w-full rounded border border-gray-700 bg-gray-800"
+                className="h-10 w-full rounded border bg-gray-800"
               />
             </div>
             <div>
@@ -301,7 +301,7 @@ export function AdminNotesThemesPage() {
                     relatedNoteBorderWidth: Number(event.target.value),
                   }))
                 }
-                className="h-10 w-full rounded border border-gray-700 bg-gray-800 px-3 text-white"
+                className="h-10 w-full rounded border bg-gray-800 px-3 text-white"
               />
             </div>
             <div>
@@ -314,7 +314,7 @@ export function AdminNotesThemesPage() {
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, relatedNoteBorderColor: event.target.value }))
                 }
-                className="h-10 w-full rounded border border-gray-700 bg-gray-800"
+                className="h-10 w-full rounded border bg-gray-800"
               />
             </div>
             <div>
@@ -330,7 +330,7 @@ export function AdminNotesThemesPage() {
                     relatedNoteBackgroundColor: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded border border-gray-700 bg-gray-800"
+                className="h-10 w-full rounded border bg-gray-800"
               />
             </div>
             <div>
@@ -343,7 +343,7 @@ export function AdminNotesThemesPage() {
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, relatedNoteTextColor: event.target.value }))
                 }
-                className="h-10 w-full rounded border border-gray-700 bg-gray-800"
+                className="h-10 w-full rounded border bg-gray-800"
               />
             </div>
           </div>
@@ -377,7 +377,7 @@ export function AdminNotesThemesPage() {
                 return (
                   <div
                     key={theme.id}
-                    className="rounded-lg border border-gray-800 bg-gray-900/60 p-4"
+                    className="rounded-lg border border-border bg-card/60 p-4"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
@@ -426,7 +426,7 @@ export function AdminNotesThemesPage() {
                             isEditing &&
                             setEditingForm((prev) => ({ ...prev, name: event.target.value }))
                           }
-                          className="w-full rounded-md border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white disabled:opacity-60"
+                          className="w-full rounded-md border bg-gray-800 px-3 py-2 text-sm text-white disabled:opacity-60"
                         />
                       </div>
                       <div>
@@ -439,7 +439,7 @@ export function AdminNotesThemesPage() {
                             isEditing &&
                             setEditingForm((prev) => ({ ...prev, textColor: event.target.value }))
                           }
-                          className="h-9 w-full rounded border border-gray-700 bg-gray-800 disabled:opacity-60"
+                          className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
                         />
                       </div>
                       <div>
@@ -455,7 +455,7 @@ export function AdminNotesThemesPage() {
                               backgroundColor: event.target.value,
                             }))
                           }
-                          className="h-9 w-full rounded border border-gray-700 bg-gray-800 disabled:opacity-60"
+                          className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
                         />
                       </div>
                       <div>
@@ -471,7 +471,7 @@ export function AdminNotesThemesPage() {
                               markdownHeadingColor: event.target.value,
                             }))
                           }
-                          className="h-9 w-full rounded border border-gray-700 bg-gray-800 disabled:opacity-60"
+                          className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
                         />
                       </div>
                       <div>
@@ -487,7 +487,7 @@ export function AdminNotesThemesPage() {
                               markdownLinkColor: event.target.value,
                             }))
                           }
-                          className="h-9 w-full rounded border border-gray-700 bg-gray-800 disabled:opacity-60"
+                          className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
                         />
                       </div>
                       <div>
@@ -503,7 +503,7 @@ export function AdminNotesThemesPage() {
                               markdownCodeBackground: event.target.value,
                             }))
                           }
-                          className="h-9 w-full rounded border border-gray-700 bg-gray-800 disabled:opacity-60"
+                          className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
                         />
                       </div>
                       <div>
@@ -519,7 +519,7 @@ export function AdminNotesThemesPage() {
                               markdownCodeText: event.target.value,
                             }))
                           }
-                          className="h-9 w-full rounded border border-gray-700 bg-gray-800 disabled:opacity-60"
+                          className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
                         />
                       </div>
                       <div>
@@ -539,7 +539,7 @@ export function AdminNotesThemesPage() {
                               relatedNoteBorderWidth: Number(event.target.value),
                             }))
                           }
-                          className="h-9 w-full rounded border border-gray-700 bg-gray-800 px-3 text-sm text-white disabled:opacity-60"
+                          className="h-9 w-full rounded border bg-gray-800 px-3 text-sm text-white disabled:opacity-60"
                         />
                       </div>
                       <div>
@@ -557,7 +557,7 @@ export function AdminNotesThemesPage() {
                               relatedNoteBorderColor: event.target.value,
                             }))
                           }
-                          className="h-9 w-full rounded border border-gray-700 bg-gray-800 disabled:opacity-60"
+                          className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
                         />
                       </div>
                       <div>
@@ -575,7 +575,7 @@ export function AdminNotesThemesPage() {
                               relatedNoteBackgroundColor: event.target.value,
                             }))
                           }
-                          className="h-9 w-full rounded border border-gray-700 bg-gray-800 disabled:opacity-60"
+                          className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
                         />
                       </div>
                       <div>
@@ -593,7 +593,7 @@ export function AdminNotesThemesPage() {
                               relatedNoteTextColor: event.target.value,
                             }))
                           }
-                          className="h-9 w-full rounded border border-gray-700 bg-gray-800 disabled:opacity-60"
+                          className="h-9 w-full rounded border bg-gray-800 disabled:opacity-60"
                         />
                       </div>
                     </div>

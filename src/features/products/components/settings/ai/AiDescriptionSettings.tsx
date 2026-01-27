@@ -374,7 +374,7 @@ export function AiDescriptionSettings() {
               placeholder="Product ID or SKU"
               value={testProductId}
               onChange={(e) => setTestProductId(e.target.value)}
-              className="w-[180px] bg-gray-900 border-gray-700 text-white h-9 text-sm"
+              className="w-[180px] bg-gray-900 border text-white h-9 text-sm"
             />
             <Button variant="secondary" onClick={() => void handleTest()} disabled={testing} className="gap-2 h-9">
               <PlayIcon className="size-3.5" />
@@ -407,7 +407,7 @@ export function AiDescriptionSettings() {
                 </DialogHeader>
                 <div className="space-y-2 mt-4">
                   {AVAILABLE_PLACEHOLDERS.map((ph) => (
-                    <div key={ph.key} className="flex items-center justify-between text-sm border-b border-gray-800/50 pb-2 last:border-0 last:pb-0">
+                    <div key={ph.key} className="flex items-center justify-between text-sm border-b border-border/50 pb-2 last:border-0 last:pb-0">
                       <code className="text-purple-400 font-bold bg-purple-500/10 px-1 py-0.5 rounded">[{ph.key}]</code>
                       <span className="text-gray-500 italic text-xs">{ph.description}</span>
                     </div>
@@ -418,7 +418,7 @@ export function AiDescriptionSettings() {
           </div>
         </div>
 
-        <div className="space-y-6 rounded-md border border-gray-800 bg-gray-950/50 p-6">
+        <div className="space-y-6 rounded-md border border-border bg-card/50 p-6">
           {/* Path 1 */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -434,7 +434,7 @@ export function AiDescriptionSettings() {
                     rows={4}
                     value={visionInputPrompt}
                     onChange={(e) => setVisionInputPrompt(e.target.value)}
-                    className="mt-1.5 bg-gray-900 border-gray-700 text-white font-mono text-sm"
+                    className="mt-1.5 bg-gray-900 border text-white font-mono text-sm"
                   />
                 </div>
                 <div className="space-y-2">
@@ -444,7 +444,7 @@ export function AiDescriptionSettings() {
                       <CopyIcon className="size-3 mr-1"/>Copy
                     </Button>
                   </div>
-                  <div className="mt-1.5 rounded-md bg-gray-900/50 p-4 text-sm text-gray-300 h-[100px] overflow-y-auto border border-gray-800 font-mono">
+                  <div className="mt-1.5 rounded-md bg-card/50 p-4 text-sm text-gray-300 h-[100px] overflow-y-auto border border-border font-mono">
                     {testResult?.analysisInitial ? (
                       <div className="whitespace-pre-wrap">{testResult.analysisInitial}</div>
                     ) : (
@@ -457,7 +457,7 @@ export function AiDescriptionSettings() {
               <div className="max-w-md">
                 <Label>Vision Model</Label>
                 <Select value={imageAnalysisModel} onValueChange={setImageAnalysisModel}>
-                  <SelectTrigger className="mt-1.5 bg-gray-900 border-gray-700 text-white"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="mt-1.5 bg-gray-900 border text-white"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>OpenAI</SelectLabel>
@@ -473,7 +473,7 @@ export function AiDescriptionSettings() {
                 </Select>
               </div>
 
-              <div className="pt-4 border-t border-gray-800/50 space-y-4">
+              <div className="pt-4 border-t border-border/50 space-y-4">
                 <div className="flex items-center gap-2">
                   <Checkbox 
                     id="v-output-enabled" 
@@ -490,7 +490,7 @@ export function AiDescriptionSettings() {
                         rows={4}
                         value={visionOutputPrompt}
                         onChange={(e) => setVisionOutputPrompt(e.target.value)}
-                        className="mt-1.5 bg-gray-900 border-gray-700 text-white font-mono text-sm"
+                        className="mt-1.5 bg-gray-900 border text-white font-mono text-sm"
                         placeholder="Refine result... use [result] for initial analysis."
                       />
                     </div>
@@ -501,7 +501,7 @@ export function AiDescriptionSettings() {
                           <CopyIcon className="size-3 mr-1"/>Copy
                         </Button>
                       </div>
-                      <div className="mt-1.5 rounded-md bg-gray-900/50 p-4 text-sm text-gray-300 h-[100px] overflow-y-auto border border-gray-800 font-mono">
+                      <div className="mt-1.5 rounded-md bg-card/50 p-4 text-sm text-gray-300 h-[100px] overflow-y-auto border border-border font-mono">
                         {testResult?.analysisFinal ? (
                           <div className="whitespace-pre-wrap">{testResult.analysisFinal}</div>
                         ) : (
@@ -515,7 +515,7 @@ export function AiDescriptionSettings() {
             </div>
           </div>
 
-          <div className="border-t border-gray-800 my-8"></div>
+          <div className="border-t border-border my-8"></div>
 
           {/* Path 2 */}
           <div className="space-y-4">
@@ -532,7 +532,7 @@ export function AiDescriptionSettings() {
                     rows={6}
                     value={generationInputPrompt}
                     onChange={(e) => setGenerationInputPrompt(e.target.value)}
-                    className="mt-1.5 bg-gray-900 border-gray-700 text-white font-mono text-sm"
+                    className="mt-1.5 bg-gray-900 border text-white font-mono text-sm"
                   />
                 </div>
                 <div className="space-y-2">
@@ -542,7 +542,7 @@ export function AiDescriptionSettings() {
                       <CopyIcon className="size-3 mr-1"/>Copy
                     </Button>
                   </div>
-                  <div className="mt-1.5 rounded-md bg-gray-900/50 p-4 text-sm text-gray-300 h-[132px] overflow-y-auto border border-gray-800 font-sans">
+                  <div className="mt-1.5 rounded-md bg-card/50 p-4 text-sm text-gray-300 h-[132px] overflow-y-auto border border-border font-sans">
                     {testResult?.descriptionInitial ? (
                       <div className="whitespace-pre-wrap">{testResult.descriptionInitial}</div>
                     ) : (
@@ -555,7 +555,7 @@ export function AiDescriptionSettings() {
               <div className="max-w-md">
                 <Label>Generation Model</Label>
                 <Select value={descriptionGenerationModel} onValueChange={setDescriptionGenerationModel}>
-                  <SelectTrigger className="mt-1.5 bg-gray-900 border-gray-700 text-white"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="mt-1.5 bg-gray-900 border text-white"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>OpenAI</SelectLabel>
@@ -571,7 +571,7 @@ export function AiDescriptionSettings() {
                 </Select>
               </div>
 
-              <div className="pt-4 border-t border-gray-800/50 space-y-4">
+              <div className="pt-4 border-t border-border/50 space-y-4">
                 <div className="flex items-center gap-2">
                   <Checkbox 
                     id="g-output-enabled" 
@@ -588,7 +588,7 @@ export function AiDescriptionSettings() {
                         rows={6}
                         value={generationOutputPrompt}
                         onChange={(e) => setGenerationOutputPrompt(e.target.value)}
-                        className="mt-1.5 bg-gray-900 border-gray-700 text-white font-mono text-sm"
+                        className="mt-1.5 bg-gray-900 border text-white font-mono text-sm"
                         placeholder="Final polish... use [result] for initial description."
                       />
                     </div>
@@ -599,7 +599,7 @@ export function AiDescriptionSettings() {
                           <CopyIcon className="size-3 mr-1"/>Copy
                         </Button>
                       </div>
-                      <div className="mt-1.5 rounded-md bg-gray-900/50 p-4 text-sm text-gray-300 h-[132px] overflow-y-auto border border-gray-800 font-sans">
+                      <div className="mt-1.5 rounded-md bg-card/50 p-4 text-sm text-gray-300 h-[132px] overflow-y-auto border border-border font-sans">
                         {testResult?.descriptionFinal ? (
                           <div className="whitespace-pre-wrap">{testResult.descriptionFinal}</div>
                         ) : (

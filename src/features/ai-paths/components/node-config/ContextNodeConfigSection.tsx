@@ -194,28 +194,28 @@ export function ContextNodeConfigSection({
       <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
-          className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/70"
+          className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70"
           onClick={() => { void copyPayload(combinedPayload, "Payload"); }}
         >
           Copy payload
         </Button>
         <Button
           type="button"
-          className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/70"
+          className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70"
           onClick={() => { void copyPayload(sanitizedInputs, "Inputs"); }}
         >
           Copy inputs
         </Button>
         <Button
           type="button"
-          className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/70"
+          className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70"
           onClick={() => { void copyPayload(sanitizedOutputs, "Outputs"); }}
         >
           Copy outputs
         </Button>
         <Button
           type="button"
-          className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/70"
+          className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70"
           onClick={() => { void copyDiff(); }}
         >
           Copy diff
@@ -225,7 +225,7 @@ export function ContextNodeConfigSection({
           className={`rounded-md border px-2 py-1 text-[10px] ${
             hideLargeFields
               ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-200"
-              : "border-gray-700 text-gray-200 hover:bg-gray-900/70"
+              : "border text-gray-200 hover:bg-card/70"
           }`}
           onClick={() => setHideLargeFields((prev) => !prev)}
         >
@@ -236,7 +236,7 @@ export function ContextNodeConfigSection({
           className={`rounded-md border px-2 py-1 text-[10px] ${
             showDiff
               ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-200"
-              : "border-gray-700 text-gray-200 hover:bg-gray-900/70"
+              : "border text-gray-200 hover:bg-card/70"
           }`}
           onClick={() => setShowDiff((prev) => !prev)}
         >
@@ -248,7 +248,7 @@ export function ContextNodeConfigSection({
             className={`rounded-md border px-2 py-1 text-[10px] ${
               diffOnlyChanges
                 ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-200"
-                : "border-gray-700 text-gray-200 hover:bg-gray-900/70"
+                : "border text-gray-200 hover:bg-card/70"
             }`}
             onClick={() => setDiffOnlyChanges((prev) => !prev)}
           >
@@ -257,7 +257,7 @@ export function ContextNodeConfigSection({
         )}
       </div>
       <div className="grid gap-3 md:grid-cols-2">
-        <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3">
+        <div className="rounded-md border border-border bg-card/60 p-3">
           <div className="text-[11px] text-gray-400">Resolved Entity</div>
           <div className="mt-2 text-[12px] text-gray-200">
             {resolvedEntityId
@@ -265,7 +265,7 @@ export function ContextNodeConfigSection({
               : "No entity resolved yet"}
           </div>
         </div>
-        <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3">
+        <div className="rounded-md border border-border bg-card/60 p-3">
           <div className="text-[11px] text-gray-400">Received context summary</div>
           <div className="mt-2 text-[12px] text-gray-200">
             {receivedContextText
@@ -274,7 +274,7 @@ export function ContextNodeConfigSection({
           </div>
         </div>
       </div>
-      <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3">
+      <div className="rounded-md border border-border bg-card/60 p-3">
         <div className="text-[11px] text-gray-400">Received payload (context input)</div>
         {receivedContextText ? (
           <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200">
@@ -287,7 +287,7 @@ export function ContextNodeConfigSection({
           </p>
         )}
       </div>
-      <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3">
+      <div className="rounded-md border border-border bg-card/60 p-3">
         <div className="text-[11px] text-gray-400">All incoming inputs</div>
         {Object.keys(receivedInputs).length > 0 ? (
           <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200">
@@ -299,7 +299,7 @@ export function ContextNodeConfigSection({
           </p>
         )}
       </div>
-      <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3">
+      <div className="rounded-md border border-border bg-card/60 p-3">
         <div className="text-[11px] text-gray-400">Resolved outputs</div>
         {Object.keys(resolvedOutputs).length > 0 ? (
           <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200">
@@ -312,7 +312,7 @@ export function ContextNodeConfigSection({
         )}
       </div>
       {showDiff && (
-        <div className="rounded-md border border-gray-800 bg-gray-900/60 p-3">
+        <div className="rounded-md border border-border bg-card/60 p-3">
           <div className="text-[11px] text-gray-400">
             Diff (inputs vs outputs)
           </div>
@@ -336,7 +336,7 @@ export function ContextNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">Filter Role</Label>
         <Input
-          className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+          className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={contextConfig.role}
           onChange={(event) =>
             updateSelectedNodeConfig({
@@ -355,7 +355,7 @@ export function ContextNodeConfigSection({
             <Button
               key={preset}
               type="button"
-              className="rounded-md border border-gray-700 px-3 py-1 text-[10px] text-gray-200 hover:bg-gray-900/80"
+              className="rounded-md border px-3 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
               onClick={() =>
                 updateSelectedNodeConfig({
                   context: applyContextPreset(contextConfig, preset),
@@ -367,7 +367,7 @@ export function ContextNodeConfigSection({
           ))}
           <Button
             type="button"
-            className="rounded-md border border-gray-700 px-3 py-1 text-[10px] text-gray-200 hover:bg-gray-900/80"
+            className="rounded-md border px-3 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
             onClick={() =>
               updateSelectedNodeConfig({
                 context: {
@@ -397,10 +397,10 @@ export function ContextNodeConfigSection({
               })
             }
           >
-            <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+            <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
               <SelectValue placeholder="Select entity" />
             </SelectTrigger>
-            <SelectContent className="border-gray-800 bg-gray-900">
+            <SelectContent className="border-border bg-gray-900">
               <SelectItem value="auto">Auto (use trigger)</SelectItem>
               <SelectItem value="product">Product</SelectItem>
               <SelectItem value="note">Note</SelectItem>
@@ -422,10 +422,10 @@ export function ContextNodeConfigSection({
               })
             }
           >
-            <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+            <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
               <SelectValue placeholder="Select target" />
             </SelectTrigger>
-            <SelectContent className="border-gray-800 bg-gray-900">
+            <SelectContent className="border-border bg-gray-900">
               <SelectItem value="entity">Entity only</SelectItem>
               <SelectItem value="context">Full context</SelectItem>
             </SelectContent>
@@ -448,10 +448,10 @@ export function ContextNodeConfigSection({
               })
             }
           >
-            <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+            <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
               <SelectValue placeholder="Select source" />
             </SelectTrigger>
-            <SelectContent className="border-gray-800 bg-gray-900">
+            <SelectContent className="border-border bg-gray-900">
               <SelectItem value="simulation">Simulation node</SelectItem>
               <SelectItem value="context">Context payload</SelectItem>
               <SelectItem value="manual">Manual ID</SelectItem>
@@ -476,7 +476,7 @@ export function ContextNodeConfigSection({
                 className={`rounded-full border px-2 py-1 text-[10px] transition ${
                   active
                     ? "border-emerald-400/50 bg-emerald-500/10 text-emerald-200"
-                    : "border-gray-700 text-gray-300 hover:bg-gray-900/70"
+                    : "border text-gray-300 hover:bg-card/70"
                 }`}
               >
                 {field}
@@ -495,7 +495,7 @@ export function ContextNodeConfigSection({
                 },
               })
             }
-            className="rounded-full border border-gray-700 px-2 py-1 text-[10px] text-gray-300 hover:bg-gray-900/70"
+            className="rounded-full border px-2 py-1 text-[10px] text-gray-300 hover:bg-card/70"
           >
             Clear
           </button>
@@ -508,7 +508,7 @@ export function ContextNodeConfigSection({
         <div>
           <Label className="text-xs text-gray-400">Entity ID</Label>
           <Input
-            className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+            className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
             value={contextConfig.entityId ?? ""}
             onChange={(event) =>
               updateSelectedNodeConfig({
@@ -532,10 +532,10 @@ export function ContextNodeConfigSection({
             }
           >
 
-          <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
             <SelectValue placeholder="Select scope" />
           </SelectTrigger>
-          <SelectContent className="border-gray-800 bg-gray-900">
+          <SelectContent className="border-border bg-gray-900">
             <SelectItem value="full">Full entity payload</SelectItem>
             <SelectItem value="include">Include only listed paths</SelectItem>
             <SelectItem value="exclude">Exclude listed paths</SelectItem>
@@ -554,7 +554,7 @@ export function ContextNodeConfigSection({
               : "Exclude paths (one per line)"}
           </Label>
           <Textarea
-            className="mt-2 min-h-[120px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+            className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
             value={
               contextConfig.scopeMode === "include"
                 ? (contextConfig.includePaths ?? []).join("\n")

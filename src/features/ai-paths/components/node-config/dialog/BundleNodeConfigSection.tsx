@@ -29,7 +29,7 @@ export function BundleNodeConfigSection({
         </Label>
         <Button
           type="button"
-          className="rounded-md border border-gray-700 text-[10px] text-gray-200 hover:bg-gray-900/80"
+          className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
           onClick={() =>
             updateSelectedNodeConfig({
               bundle: { includePorts: selectedNode.inputs },
@@ -40,7 +40,7 @@ export function BundleNodeConfigSection({
         </Button>
       </div>
       <Textarea
-        className="min-h-[110px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+        className="min-h-[110px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
         value={(bundleConfig.includePorts ?? []).join("\n")}
         onChange={(event) =>
           updateSelectedNodeConfig({

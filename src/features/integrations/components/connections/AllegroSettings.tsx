@@ -28,7 +28,7 @@ export function AllegroSettings({
     : "—";
 
   return (
-    <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900/60 p-4 text-sm text-gray-200">
+    <div className="space-y-4 rounded-lg border border-border bg-card/60 p-4 text-sm text-gray-200">
       <div>
         <h3 className="text-sm font-semibold text-white">Allegro OAuth</h3>
         <p className="mt-1 text-xs text-gray-400">
@@ -36,7 +36,7 @@ export function AllegroSettings({
           fields, then authorize access.
         </p>
       </div>
-      <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300">
+      <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300">
         <Label className="flex items-center justify-between gap-3">
           <span>
             Use Allegro sandbox
@@ -52,12 +52,12 @@ export function AllegroSettings({
         </Label>
       </div>
       {!activeConnection ? (
-        <div className="rounded-md border border-dashed border-gray-800 p-4 text-xs text-gray-400">
+        <div className="rounded-md border border-dashed border-border p-4 text-xs text-gray-400">
           Add a connection first to enable Allegro authorization.
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300">
+          <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300">
             <div className="flex items-center justify-between">
               <span>Authorization status</span>
               <span
@@ -90,14 +90,14 @@ export function AllegroSettings({
             >
               {savingSandbox ? "Preparing..." : "Test Sandbox Connection"}
             </Button>
-            <span className="rounded-full border border-gray-700 bg-gray-950/60 px-2 py-1 text-[10px] font-semibold text-gray-300">
+            <span className="rounded-full border bg-card/60 px-2 py-1 text-[10px] font-semibold text-gray-300">
               {activeConnection?.allegroUseSandbox ? "Sandbox" : "Production"}
             </span>
             {allegroConnected && (
               <Button
                 type="button"
                 onClick={onDisconnect}
-                className="rounded-md border border-gray-700 px-3 py-2 text-sm text-gray-200 hover:border-gray-500"
+                className="rounded-md border px-3 py-2 text-sm text-gray-200 hover:border-gray-500"
               >
                 Disconnect
               </Button>

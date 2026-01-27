@@ -35,8 +35,8 @@ function EditProductForm() {
   const router = useRouter();
 
   return (
-    <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-      <div className="mb-6 flex items-center gap-4 border-b border-gray-800 pb-4">
+    <div className="rounded-lg bg-card p-6 shadow-lg">
+      <div className="mb-6 flex items-center gap-4 border-b border-border pb-4">
         <Button
           onClick={(e) => { void handleSubmit(e); }}
           disabled={uploading}

@@ -42,11 +42,11 @@ export function PriceGroupsSettings({
         </p>
       </div>
       {loadingGroups ? (
-        <div className="rounded-md border border-dashed border-gray-700 p-6 text-center text-gray-400">
+        <div className="rounded-md border border-dashed border p-6 text-center text-gray-400">
           Loading price groups...
         </div>
       ) : priceGroups.length === 0 ? (
-        <div className="rounded-md border border-dashed border-gray-700 p-6 text-center text-gray-400">
+        <div className="rounded-md border border-dashed border p-6 text-center text-gray-400">
           At least one price group is required. Add a price group to continue.
         </div>
       ) : (
@@ -54,7 +54,7 @@ export function PriceGroupsSettings({
           {priceGroups.map((group) => (
             <div
               key={group.id}
-              className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-950/60 px-4 py-3"
+              className="flex items-center justify-between rounded-md border border-border bg-card/60 px-4 py-3"
             >
               <div>
                 <div className="flex items-center gap-2 text-white">
@@ -95,7 +95,7 @@ export function PriceGroupsSettings({
           ))}
         </div>
       )}
-      <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4">
+      <div className="rounded-md border border-border bg-card/60 p-4">
         <Label className="text-sm font-semibold text-white">
           Default price group
         </Label>
@@ -103,7 +103,7 @@ export function PriceGroupsSettings({
           Required. Select one of the available price groups.
         </p>
         <select
-          className="mt-3 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+          className="mt-3 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
           value={defaultGroupId}
           onChange={(event) => onDefaultGroupChange(event.target.value)}
           disabled={priceGroups.length === 0 || defaultGroupSaving}

@@ -7,6 +7,7 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Checkbox } from "@/shared/ui/checkbox";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 type PlaywrightSettingsProps = {
   settings: PlaywrightSettings;
@@ -36,7 +37,10 @@ export function PlaywrightSettingsForm({
   const shouldShowSave = showSave ?? Boolean(onSave);
 
   return (
-    <div className="max-h-[70vh] overflow-y-auto rounded-lg border border-gray-800 bg-gray-900/60 p-4">
+    <SectionPanel
+      variant="subtle"
+      className="max-h-[70vh] overflow-y-auto p-4"
+    >
       <h3 className="text-sm font-semibold text-white">
         {title ?? "Playwright settings"}
       </h3>
@@ -45,7 +49,7 @@ export function PlaywrightSettingsForm({
       </p>
 
       <div className="mt-4 space-y-4">
-        <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-3">
+        <SectionPanel variant="subtle-compact">
           <Label className="flex items-center justify-between text-sm text-gray-300">
             <span>
               Headless mode
@@ -60,9 +64,9 @@ export function PlaywrightSettingsForm({
               }
             />
           </Label>
-        </div>
+        </SectionPanel>
 
-        <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-3">
+        <SectionPanel variant="subtle-compact">
           <Label className="flex items-center justify-between text-sm text-gray-300">
             <span>
               Emulate Device
@@ -83,7 +87,7 @@ export function PlaywrightSettingsForm({
           {settings.emulateDevice && (
             <div className="mt-3">
               <select
-                className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                 value={settings.deviceName}
                 onChange={(e) =>
                   setSettings((prev) => ({
@@ -100,14 +104,14 @@ export function PlaywrightSettingsForm({
               </select>
             </div>
           )}
-        </div>
+        </SectionPanel>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-3">
+          <SectionPanel variant="subtle-compact">
             <Label className="text-xs text-gray-400">SlowMo (ms)</Label>
             <Input
               type="number"
-              className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+              className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
               value={settings.slowMo}
               onChange={(e) =>
                 setSettings((prev) => ({
@@ -116,12 +120,12 @@ export function PlaywrightSettingsForm({
                 }))
               }
             />
-          </div>
-          <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-3">
+          </SectionPanel>
+          <SectionPanel variant="subtle-compact">
             <Label className="text-xs text-gray-400">Timeout (ms)</Label>
             <Input
               type="number"
-              className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+              className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
               value={settings.timeout}
               onChange={(e) =>
                 setSettings((prev) => ({
@@ -130,14 +134,14 @@ export function PlaywrightSettingsForm({
                 }))
               }
             />
-          </div>
-          <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-3">
+          </SectionPanel>
+          <SectionPanel variant="subtle-compact">
             <Label className="text-xs text-gray-400">
               Navigation Timeout (ms)
             </Label>
             <Input
               type="number"
-              className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+              className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
               value={settings.navigationTimeout}
               onChange={(e) =>
                 setSettings((prev) => ({
@@ -149,10 +153,10 @@ export function PlaywrightSettingsForm({
                 }))
               }
             />
-          </div>
+          </SectionPanel>
         </div>
 
-        <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-3">
+        <SectionPanel variant="subtle-compact">
           <Label className="flex items-center justify-between text-sm text-gray-300">
             <span>
               Humanize Mouse
@@ -177,7 +181,7 @@ export function PlaywrightSettingsForm({
               </Label>
               <Input
                 type="number"
-                className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                 value={settings.mouseJitter}
                 onChange={(e) =>
                   setSettings((prev) => ({
@@ -188,9 +192,9 @@ export function PlaywrightSettingsForm({
               />
             </div>
           )}
-        </div>
+        </SectionPanel>
 
-        <details className="rounded-lg border border-gray-800 bg-gray-950/60 p-3">
+        <details className="rounded-lg border bg-card/60 p-3 backdrop-blur">
           <summary className="cursor-pointer text-sm font-semibold text-gray-200">
             Advanced settings
           </summary>
@@ -205,13 +209,13 @@ export function PlaywrightSettingsForm({
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-lg border border-gray-800 bg-gray-900/70 p-3">
+              <SectionPanel variant="subtle-compact">
                 <Label className="text-xs text-gray-400">
                   Click delay min
                 </Label>
                 <Input
                   type="number"
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={settings.clickDelayMin}
                   onChange={(e) =>
                     setSettings((prev) => ({
@@ -223,14 +227,14 @@ export function PlaywrightSettingsForm({
                     }))
                   }
                 />
-              </div>
-              <div className="rounded-lg border border-gray-800 bg-gray-900/70 p-3">
+              </SectionPanel>
+              <SectionPanel variant="subtle-compact">
                 <Label className="text-xs text-gray-400">
                   Click delay max
                 </Label>
                 <Input
                   type="number"
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={settings.clickDelayMax}
                   onChange={(e) =>
                     setSettings((prev) => ({
@@ -242,17 +246,17 @@ export function PlaywrightSettingsForm({
                     }))
                   }
                 />
-              </div>
+              </SectionPanel>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-lg border border-gray-800 bg-gray-900/70 p-3">
+              <SectionPanel variant="subtle-compact">
                 <Label className="text-xs text-gray-400">
                   Input delay min
                 </Label>
                 <Input
                   type="number"
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={settings.inputDelayMin}
                   onChange={(e) =>
                     setSettings((prev) => ({
@@ -264,14 +268,14 @@ export function PlaywrightSettingsForm({
                     }))
                   }
                 />
-              </div>
-              <div className="rounded-lg border border-gray-800 bg-gray-900/70 p-3">
+              </SectionPanel>
+              <SectionPanel variant="subtle-compact">
                 <Label className="text-xs text-gray-400">
                   Input delay max
                 </Label>
                 <Input
                   type="number"
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={settings.inputDelayMax}
                   onChange={(e) =>
                     setSettings((prev) => ({
@@ -283,17 +287,17 @@ export function PlaywrightSettingsForm({
                     }))
                   }
                 />
-              </div>
+              </SectionPanel>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-lg border border-gray-800 bg-gray-900/70 p-3">
+              <SectionPanel variant="subtle-compact">
                 <Label className="text-xs text-gray-400">
                   Action delay min
                 </Label>
                 <Input
                   type="number"
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={settings.actionDelayMin}
                   onChange={(e) =>
                     setSettings((prev) => ({
@@ -305,14 +309,14 @@ export function PlaywrightSettingsForm({
                     }))
                   }
                 />
-              </div>
-              <div className="rounded-lg border border-gray-800 bg-gray-900/70 p-3">
+              </SectionPanel>
+              <SectionPanel variant="subtle-compact">
                 <Label className="text-xs text-gray-400">
                   Action delay max
                 </Label>
                 <Input
                   type="number"
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                  className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                   value={settings.actionDelayMax}
                   onChange={(e) =>
                     setSettings((prev) => ({
@@ -324,10 +328,10 @@ export function PlaywrightSettingsForm({
                     }))
                   }
                 />
-              </div>
+              </SectionPanel>
             </div>
 
-            <div className="rounded-lg border border-gray-800 bg-gray-900/70 p-3">
+            <SectionPanel variant="subtle-compact">
               <Label className="flex items-center justify-between text-sm text-gray-300">
                 <span>
                   Proxy
@@ -354,7 +358,7 @@ export function PlaywrightSettingsForm({
                     </Label>
                     <Input
                       type="text"
-                      className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                      className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                       placeholder="http://host:port"
                       value={settings.proxyServer}
                       onChange={(e) =>
@@ -372,7 +376,7 @@ export function PlaywrightSettingsForm({
                       </Label>
                       <Input
                         type="text"
-                        className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                        className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                         value={settings.proxyUsername}
                         onChange={(e) =>
                           setSettings((prev) => ({
@@ -388,7 +392,7 @@ export function PlaywrightSettingsForm({
                       </Label>
                       <Input
                         type="password"
-                        className="mt-2 w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-sm text-white"
+                        className="mt-2 w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-sm text-white"
                         value={settings.proxyPassword}
                         onChange={(e) =>
                           setSettings((prev) => ({
@@ -401,7 +405,7 @@ export function PlaywrightSettingsForm({
                   </div>
                 </div>
               )}
-            </div>
+            </SectionPanel>
           </div>
         </details>
 
@@ -417,6 +421,6 @@ export function PlaywrightSettingsForm({
           </div>
         ) : null}
       </div>
-    </div>
+    </SectionPanel>
   );
 }

@@ -75,7 +75,7 @@ export function BaselinkerSettings({
   };
 
   return (
-    <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-900/60 p-4 text-sm text-gray-200">
+    <div className="space-y-4 rounded-lg border border-border bg-card/60 p-4 text-sm text-gray-200">
       <div>
         <h3 className="text-sm font-semibold text-white">Baselinker API</h3>
         <p className="mt-1 text-xs text-gray-400">
@@ -84,12 +84,12 @@ export function BaselinkerSettings({
         </p>
       </div>
       {!activeConnection ? (
-        <div className="rounded-md border border-dashed border-gray-800 p-4 text-xs text-gray-400">
+        <div className="rounded-md border border-dashed border-border p-4 text-xs text-gray-400">
           Add a connection first to enable Baselinker API access.
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300">
+          <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300">
             <div className="flex items-center justify-between">
               <span>Connection status</span>
               <span
@@ -113,7 +113,7 @@ export function BaselinkerSettings({
               </p>
             )}
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300">
+          <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300">
             <div className="flex items-center justify-between">
               <span>Listing sync interval</span>
               {loadingSyncInterval ? (
@@ -128,7 +128,7 @@ export function BaselinkerSettings({
                 min="1"
                 value={syncIntervalMinutes}
                 onChange={(event) => setSyncIntervalMinutes(event.target.value)}
-                className="w-32 rounded-md border border-gray-800 bg-gray-900 px-2 py-1 text-xs text-white"
+                className="w-32 rounded-md border border-border bg-gray-900 px-2 py-1 text-xs text-white"
               />
               <Button
                 type="button"
@@ -160,7 +160,7 @@ export function BaselinkerSettings({
                 : "Test Connection"}
             </Button>
           </div>
-          <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-400">
+          <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-400">
             <p>
               To get your API token, log in to{" "}
               <a

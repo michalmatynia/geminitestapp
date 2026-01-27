@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { AiPathsSettings } from "../components/AiPathsSettings";
 import { Tabs, TabsList, TabsTrigger } from "@/shared/ui/tabs";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { SectionPanel } from "@/shared/ui/section-panel";
+import { SectionHeader } from "@/shared/components/section-header";
+import { SectionPanel } from "@/shared/components/section-panel";
 
 export function AdminAiPathsPage() {
   const [activeTab, setActiveTab] = useState<"canvas" | "paths" | "docs">(
@@ -27,7 +27,7 @@ export function AdminAiPathsPage() {
               setActiveTab(value as "canvas" | "paths" | "docs")
             }
           >
-            <TabsList className="bg-gray-950/70">
+            <TabsList className="bg-card/70">
               <TabsTrigger value="canvas">Canvas</TabsTrigger>
               <TabsTrigger value="paths">Paths</TabsTrigger>
               <TabsTrigger value="docs">Docs</TabsTrigger>

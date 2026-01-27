@@ -1,7 +1,7 @@
 "use client";
 
 import { AppModal } from "@/shared/ui/app-modal";
-import ModalShell from "@/shared/ui/modal-shell";
+import ModalShell from "@/shared/components/modal-shell";
 
 type SessionCookie = {
   name?: string;
@@ -44,7 +44,7 @@ export function SessionModal({
     >
       <ModalShell title="Session cookies" onClose={onClose} size="lg">
         {loading ? (
-          <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4 text-sm text-gray-400">
+          <div className="rounded-md border border-border bg-card/60 p-4 text-sm text-gray-400">
             Loading session details...
           </div>
         ) : error ? (
@@ -53,21 +53,21 @@ export function SessionModal({
           </div>
         ) : (
           <div className="space-y-4 text-sm text-gray-200">
-            <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3 text-xs text-gray-300">
+            <div className="rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300">
               <span className="text-gray-400">Obtained:</span>{" "}
               {updatedAt ? new Date(updatedAt).toLocaleString() : "—"}
             </div>
 
               <div className="space-y-3">
                 {cookies.length === 0 ? (
-                  <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4 text-sm text-gray-400">
+                  <div className="rounded-md border border-border bg-card/60 p-4 text-sm text-gray-400">
                     No cookies stored.
                   </div>
                 ) : (
                   cookies.map((cookie, index) => (
                     <div
                       key={`${cookie.name || "cookie"}-${index}`}
-                      className="rounded-md border border-gray-800 bg-gray-950/60 p-3"
+                      className="rounded-md border border-border bg-card/60 p-3"
                     >
                       <div className="flex flex-wrap items-center gap-2 text-xs text-gray-300">
                         <span className="rounded-full bg-gray-800 px-2 py-0.5 text-gray-200">
@@ -113,7 +113,7 @@ export function SessionModal({
               </div>
 
               {origins.length > 0 && (
-                <div className="rounded-md border border-gray-800 bg-gray-950/60 p-3">
+                <div className="rounded-md border border-border bg-card/60 p-3">
                   <p className="text-xs text-gray-400">
                     Origins stored: {origins.length}
                   </p>

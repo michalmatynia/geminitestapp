@@ -2845,7 +2845,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         ? "border-rose-500/40 bg-rose-500/10 text-rose-200"
         : autoSaveStatus === "saving"
           ? "border-sky-500/40 bg-sky-500/10 text-sky-200"
-          : "border-gray-700 bg-gray-900/60 text-gray-300";
+          : "border bg-card/60 text-gray-300";
 
   return (
     <div className="space-y-6">
@@ -2856,7 +2856,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 renderActions(
                   <div className="flex flex-wrap items-center gap-3">
                     <Button
-                      className="rounded-md border border-gray-700 text-sm text-white hover:bg-gray-900/80"
+                      className="rounded-md border text-sm text-white hover:bg-muted/60"
                       type="button"
                       onClick={handleCreatePath}
                     >
@@ -2870,21 +2870,21 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                       Create AI Description Path
                     </Button>
                     <Button
-                      className="rounded-md border border-gray-700 text-sm text-white hover:bg-gray-900/80"
+                      className="rounded-md border text-sm text-white hover:bg-muted/60"
                       onClick={() => { void handleSave(); }}
                       disabled={saving}
                     >
                       {saving ? "Saving..." : "Save Path"}
                     </Button>
                     <Button
-                      className="rounded-md border border-gray-800 text-sm text-gray-300 hover:bg-gray-900/60"
+                      className="rounded-md border border-border text-sm text-gray-300 hover:bg-card/60"
                       onClick={handleReset}
                       type="button"
                     >
                       Reset to Defaults
                     </Button>
                     <Button
-                      className="rounded-md border border-gray-800 text-sm text-rose-200 hover:bg-rose-500/10"
+                      className="rounded-md border border-border text-sm text-rose-200 hover:bg-rose-500/10"
                       onClick={() => void handleDeletePath()}
                       type="button"
                       disabled={!activePathId}
@@ -2953,7 +2953,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                     </div>
                   )}
                   <Input
-                    className="h-9 w-[260px] rounded-md border border-gray-800 bg-gray-950/60 px-3 text-sm text-white"
+                    className="h-9 w-[260px] rounded-md border border-border bg-card/60 px-3 text-sm text-white"
                     value={pathName}
                     onChange={(event) => {
                       const value = event.target.value;
@@ -2994,13 +2994,13 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 onRemoveEdge={handleRemoveEdge}
                 onClearWires={() => void handleClearWires()}
               />
-              <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-4">
+              <div className="rounded-lg border border-border bg-card/60 p-4">
             <div className="mb-3 flex items-center justify-between text-sm font-semibold text-white">
               <span>Cluster Presets</span>
               <div className="flex items-center gap-2">
                 <Button
                   type="button"
-                  className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                  className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
                   onClick={() => handlePresetFromSelection()}
                 >
                   From Selection
@@ -3008,7 +3008,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 {editingPresetId && (
                   <Button
                     type="button"
-                    className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                    className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
                     onClick={() => {
                       setEditingPresetId(null);
                       setPresetDraft({
@@ -3028,7 +3028,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               <div>
                 <Label className="text-[10px] uppercase text-gray-500">Name</Label>
                 <Input
-                  className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 px-3 py-2 text-xs text-white"
+                  className="mt-2 w-full rounded-md border border-border bg-card/70 px-3 py-2 text-xs text-white"
                   value={presetDraft.name}
                   onChange={(event) =>
                     setPresetDraft((prev) => ({ ...prev, name: event.target.value }))
@@ -3038,7 +3038,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               <div>
                 <Label className="text-[10px] uppercase text-gray-500">Description</Label>
                 <Textarea
-                  className="mt-2 min-h-[64px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-xs text-white"
+                  className="mt-2 min-h-[64px] w-full rounded-md border border-border bg-card/70 text-xs text-white"
                   value={presetDraft.description}
                   onChange={(event) =>
                     setPresetDraft((prev) => ({ ...prev, description: event.target.value }))
@@ -3050,7 +3050,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                   Bundle Ports (one per line)
                 </Label>
                 <Textarea
-                  className="mt-2 min-h-[90px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-xs text-white"
+                  className="mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-xs text-white"
                   value={presetDraft.bundlePorts}
                   onChange={(event) =>
                     setPresetDraft((prev) => ({ ...prev, bundlePorts: event.target.value }))
@@ -3060,7 +3060,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               <div>
                 <Label className="text-[10px] uppercase text-gray-500">Template</Label>
                 <Textarea
-                  className="mt-2 min-h-[90px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-xs text-white"
+                  className="mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-xs text-white"
                   value={presetDraft.template}
                   onChange={(event) =>
                     setPresetDraft((prev) => ({ ...prev, template: event.target.value }))
@@ -3078,14 +3078,14 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
             <div className="mt-4 space-y-2 text-xs text-gray-400">
               <div className="text-[11px] uppercase text-gray-500">Library</div>
               {clusterPresets.length === 0 && (
-                <div className="rounded-md border border-gray-800 bg-gray-900/50 p-3 text-[11px] text-gray-500">
+                <div className="rounded-md border border-border bg-card/50 p-3 text-[11px] text-gray-500">
                   No presets yet. Save a bundle + template pair to reuse across apps.
                 </div>
               )}
               {clusterPresets.map((preset) => (
                 <div
                   key={preset.id}
-                  className="rounded-md border border-gray-800 bg-gray-900/50 p-3"
+                  className="rounded-md border border-border bg-card/50 p-3"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div>
@@ -3099,7 +3099,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                     <div className="flex items-center gap-2">
                       <Button
                         type="button"
-                        className="rounded-md border border-gray-700 px-2 py-1 text-[10px] text-gray-200 hover:bg-gray-900/80"
+                        className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
                         onClick={() => handleLoadPreset(preset)}
                       >
                         Edit
@@ -3127,17 +3127,17 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               ))}
               <Button
                 type="button"
-                className="w-full rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
+                className="w-full rounded-md border text-xs text-white hover:bg-muted/60"
                 onClick={handleExportPresets}
               >
                 Export / Import
               </Button>
             </div>
           </div>
-          <div className="rounded-lg border border-gray-800 bg-gray-950/60 p-4">
+          <div className="rounded-lg border border-border bg-card/60 p-4">
             <div className="mb-2 text-sm font-semibold text-white">Graph Model Debug</div>
             {lastGraphModelPayload ? (
-              <pre className="max-h-60 overflow-auto rounded-md border border-gray-800 bg-gray-950/70 p-3 text-[11px] text-gray-300 whitespace-pre-wrap">
+              <pre className="max-h-60 overflow-auto rounded-md border border-border bg-card/70 p-3 text-[11px] text-gray-300 whitespace-pre-wrap">
                 {JSON.stringify(lastGraphModelPayload, null, 2)}
               </pre>
             ) : (
@@ -3245,7 +3245,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         toast={toast}
       />
       <Dialog open={presetsModalOpen} onOpenChange={setPresetsModalOpen}>
-        <DialogContent className="max-w-2xl border border-gray-800 bg-gray-950 text-white">
+        <DialogContent className="max-w-2xl border border-border bg-card text-white">
           <DialogHeader>
             <DialogTitle className="text-lg">Export / Import Presets</DialogTitle>
             <DialogDescription className="text-sm text-gray-400">
@@ -3254,14 +3254,14 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           </DialogHeader>
           <div className="space-y-4">
             <Textarea
-              className="min-h-[240px] w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+              className="min-h-[240px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
               value={presetsJson}
               onChange={(event) => setPresetsJson(event.target.value)}
             />
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="button"
-                className="rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
+                className="rounded-md border text-xs text-white hover:bg-muted/60"
                 onClick={() => setPresetsJson(JSON.stringify(clusterPresets, null, 2))}
               >
                 Load Export
@@ -3282,7 +3282,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               </Button>
               <Button
                 type="button"
-                className="rounded-md border border-gray-700 text-xs text-white hover:bg-gray-900/80"
+                className="rounded-md border text-xs text-white hover:bg-muted/60"
                 onClick={() => {
                   const value = presetsJson || JSON.stringify(clusterPresets, null, 2);
                   navigator.clipboard
@@ -3308,7 +3308,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
             if (!open) setSimulationOpenNodeId(null);
           }}
         >
-          <DialogContent className="max-w-md border border-gray-800 bg-gray-950 text-white">
+          <DialogContent className="max-w-md border border-border bg-card text-white">
             <DialogHeader>
               <DialogTitle className="text-lg">Simulation Modal</DialogTitle>
               <DialogDescription className="text-sm text-gray-400">
@@ -3324,7 +3324,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                   <div>
                     <Label className="text-xs text-gray-400">Entity ID</Label>
                     <Input
-                      className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+                      className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
                       value={simulationConfig.entityId ?? simulationConfig.productId}
                       onChange={(event) => {
                         const value = event.target.value;

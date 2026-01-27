@@ -56,14 +56,14 @@ export function CatalogsSettings({
           Add Catalog
         </Button>
       </div>
-      <div className="rounded-md border border-gray-800 bg-gray-950/60 p-4">
+      <div className="rounded-md border border-border bg-card/60 p-4">
         <p className="text-sm font-semibold text-white">Existing Catalogs</p>
         {loadingCatalogs ? (
-          <div className="mt-4 rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+          <div className="mt-4 rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
             Loading catalogs...
           </div>
         ) : catalogs.length === 0 ? (
-          <div className="mt-4 rounded-md border border-dashed border-gray-700 p-4 text-center text-sm text-gray-400">
+          <div className="mt-4 rounded-md border border-dashed border p-4 text-center text-sm text-gray-400">
             No catalogs yet.
           </div>
         ) : (
@@ -71,7 +71,7 @@ export function CatalogsSettings({
             {catalogs.map((catalog) => (
               <div
                 key={catalog.id}
-                className="flex items-start justify-between gap-3 rounded-md border border-gray-800 bg-gray-900 px-3 py-2"
+                className="flex items-start justify-between gap-3 rounded-md border border-border bg-gray-900 px-3 py-2"
               >
                 <div>
                   <p className="text-sm font-semibold text-white">
@@ -95,7 +95,7 @@ export function CatalogsSettings({
                               normalizeLanguageId(catalog.defaultLanguageId) ===
                               languageId
                                 ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                                : "border-gray-700 bg-gray-900"
+                                : "border bg-gray-900"
                             }`}
                           >
                             {index + 1}. {getLanguageDisplay(languageId)}
@@ -110,7 +110,7 @@ export function CatalogsSettings({
                 <div className="flex gap-2">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button className="p-1 hover:bg-gray-800 rounded-full text-gray-400 hover:text-white">
+                      <Button className="p-1 hover:bg-muted/50 rounded-full text-gray-400 hover:text-white">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>

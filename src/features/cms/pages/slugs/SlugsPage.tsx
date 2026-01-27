@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/button";
-import { ListPanel } from "@/shared/ui/list-panel";
-import { SectionHeader } from "@/shared/ui/section-header";
+import { ListPanel } from "@/shared/components/list-panel";
+import { SectionHeader } from "@/shared/components/section-header";
 import { deleteSlug, fetchSlugs } from "@/features/cms/api/slugs";
 import type { Slug } from "@/features/cms/types";
 
@@ -48,7 +48,7 @@ export default function SlugsPage() {
           {slugs.map((slug) => (
             <li
               key={slug.id}
-              className="flex justify-between items-center py-2 border-b border-gray-700"
+              className="flex justify-between items-center py-2 border-b border"
             >
               <Link href={`/admin/cms/slugs/${slug.id}/edit`}>
                 <span className="hover:underline">

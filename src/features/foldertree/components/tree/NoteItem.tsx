@@ -128,7 +128,7 @@ export const NoteItem = React.memo(function NoteItem({
           ? "bg-blue-600 text-white"
           : isDragOver
           ? "bg-emerald-600 text-white"
-          : "text-gray-300 hover:bg-gray-800 hover:text-white"
+          : "text-gray-300 hover:bg-muted/50 hover:text-white"
       }`}
       style={{ paddingLeft: `${(level + 1) * 16 + 28}px` }}
     >

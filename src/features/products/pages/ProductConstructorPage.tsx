@@ -70,7 +70,7 @@ export function ProductConstructorPage() {
   }, [selectedCatalogId, refreshParameters]);
 
   return (
-    <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
+    <div className="rounded-lg bg-card p-6 shadow-lg">
       <Tabs defaultValue="parameters" className="w-full">
         <TabsList className="mb-6">
           <TabsTrigger value="parameters">Parameters</TabsTrigger>

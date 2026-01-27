@@ -43,10 +43,10 @@ export function RouterNodeConfigSection({
             })
           }
         >
-          <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
             <SelectValue placeholder="Select mode" />
           </SelectTrigger>
-          <SelectContent className="border-gray-800 bg-gray-900">
+          <SelectContent className="border-border bg-gray-900">
             <SelectItem value="valid">Validator valid</SelectItem>
             <SelectItem value="value">Value input</SelectItem>
           </SelectContent>
@@ -65,10 +65,10 @@ export function RouterNodeConfigSection({
             })
           }
         >
-          <SelectTrigger className="mt-2 w-full border-gray-800 bg-gray-950/70 text-sm text-white">
+          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
             <SelectValue placeholder="Select match mode" />
           </SelectTrigger>
-          <SelectContent className="border-gray-800 bg-gray-900">
+          <SelectContent className="border-border bg-gray-900">
             <SelectItem value="truthy">Truthy</SelectItem>
             <SelectItem value="falsy">Falsy</SelectItem>
             <SelectItem value="equals">Equals</SelectItem>
@@ -79,7 +79,7 @@ export function RouterNodeConfigSection({
       <div>
         <Label className="text-xs text-gray-400">Compare To</Label>
         <Input
-          className="mt-2 w-full rounded-md border border-gray-800 bg-gray-950/70 text-sm text-white"
+          className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={routerConfig.compareTo}
           onChange={(event) =>
             updateSelectedNodeConfig({

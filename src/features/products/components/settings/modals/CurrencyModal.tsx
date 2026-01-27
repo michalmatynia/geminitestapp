@@ -2,7 +2,7 @@
 
 import React from "react";
 import { AppModal } from "@/shared/ui/app-modal";
-import ModalShell from "@/shared/ui/modal-shell";
+import ModalShell from "@/shared/components/modal-shell";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -114,7 +114,7 @@ export function CurrencyModal({
             <Label htmlFor="curr-code">Code</Label>
             <select
               id="curr-code"
-              className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
+              className="w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white"
               value={form.code}
               onChange={(e) => setForm(p => ({ ...p, code: e.target.value }))}
             >

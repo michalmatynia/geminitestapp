@@ -5,6 +5,7 @@ import { PlusIcon, SettingsIcon } from "lucide-react";
 import { Integration, integrationDefinitions } from "@/features/integrations/types/integrations-ui";
 import { Button } from "@/shared/ui/button";
 import { ListPanel } from "@/shared/ui/list-panel";
+import { SectionHeader } from "@/shared/ui/section-header";
 
 type IntegrationListProps = {
   integrations: Integration[];
@@ -21,21 +22,18 @@ export function IntegrationList({
   return (
     <ListPanel
       header={
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Integrations</h1>
-            <p className="mt-1 text-sm text-gray-400">
-              Visualize and manage marketplace and platform connections.
-            </p>
-          </div>
-          <Link
-            href="/admin/integrations/add"
-            className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
-          >
-            <PlusIcon className="size-4" />
-            Add Integration
-          </Link>
-        </div>
+        <SectionHeader
+          title="Integrations"
+          description="Visualize and manage marketplace and platform connections."
+          actions={
+            <Button asChild className="gap-2">
+              <Link href="/admin/integrations/add">
+                <PlusIcon className="size-4" />
+                Add Integration
+              </Link>
+            </Button>
+          }
+        />
       }
     >
       <div className="relative overflow-hidden rounded-xl border border-gray-800 bg-gray-900/60 p-6">

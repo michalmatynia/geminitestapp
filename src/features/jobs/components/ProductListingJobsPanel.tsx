@@ -19,6 +19,8 @@ import { AppModal } from "@/shared/ui/app-modal";
 import type { ListingJob, ListingAttempt, ProductJob } from "@/shared/types/listing-jobs";
 import { Label } from "@/shared/ui/label";
 import { ListPanel } from "@/shared/ui/list-panel";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 type ProductListingJobsPanelProps = {
   showBackToProducts?: boolean;
@@ -254,50 +256,44 @@ export default function ProductListingJobsPanel({
   const selectedStatus = selectedAttempt?.status ?? selectedListing?.listing.status ?? "";
 
   const header = (
-    <div className="flex items-center justify-between">
-      <div>
-        <h2 className="text-2xl font-bold text-white">Export Jobs</h2>
-        <p className="mt-1 text-sm text-gray-400">
-          Track product export and listing jobs across all integrations
-        </p>
-      </div>
-      <div className="flex items-center gap-3">
-        <Button
-          onClick={() => void handleRefresh()}
-          disabled={refreshing}
-          variant="outline"
-          size="sm"
-          className="border-gray-700 bg-gray-800 hover:bg-gray-700"
-        >
-          <RefreshCw
-            className={`mr-2 size-4 ${refreshing ? "animate-spin" : ""}`}
-          />
-          Refresh
-        </Button>
-        {showBackToProducts && (
-          <Link href="/admin/products">
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-gray-700 bg-gray-800 hover:bg-gray-700"
-            >
-              Back to Products
+    <SectionHeader
+      title="Export Jobs"
+      description="Track product export and listing jobs across all integrations"
+      size="md"
+      actions={
+        <>
+          <Button
+            onClick={() => void handleRefresh()}
+            disabled={refreshing}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw
+              className={`mr-2 size-4 ${refreshing ? "animate-spin" : ""}`}
+            />
+            Refresh
+          </Button>
+          {showBackToProducts && (
+            <Button asChild variant="outline" size="sm">
+              <Link href="/admin/products">Back to Products</Link>
             </Button>
-          </Link>
-        )}
-      </div>
-    </div>
+          )}
+        </>
+      }
+    />
   );
 
   const filters = !loading && !error ? (
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <Input
-        placeholder="Search by product, SKU, integration, or ID..."
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        className="max-w-md bg-gray-900 border-gray-800 text-white"
-      />
-    </div>
+    <SectionPanel>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Input
+          placeholder="Search by product, SKU, integration, or ID..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="h-8 text-sm sm:max-w-md"
+        />
+      </div>
+    </SectionPanel>
   ) : null;
 
   const footer = !loading && !error ? (

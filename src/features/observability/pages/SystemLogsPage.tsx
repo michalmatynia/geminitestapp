@@ -16,6 +16,8 @@ import { RefreshCcw, Trash2, Download } from "lucide-react";
 import type { SystemLogMetrics, SystemLogRecord, SystemLogLevel } from "@/shared/types/system-logs";
 import { Label } from "@/shared/ui/label";
 import { ListPanel } from "@/shared/ui/list-panel";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 const levelOptions: Array<{ value: SystemLogLevel | "all"; label: string }> = [
   { value: "all", label: "All levels" },
@@ -200,60 +202,55 @@ export default function SystemLogsPage() {
     <div className="container mx-auto py-10">
       <ListPanel
         header={
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-white">System Logs</h1>
-              <p className="mt-2 text-sm text-gray-400">
-                Centralized error and warning events captured across the platform.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.location.assign("/admin/settings/logging")}
-                className="border-gray-700"
-              >
-                Client Logging Settings
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  void loadLogs();
-                  void loadMetrics();
-                }}
-                className="border-gray-700"
-                disabled={loading || metricsLoading}
-              >
-                <RefreshCcw className="mr-2 h-4 w-4" />
-                Refresh
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => void exportLogs()}
-                className="border-gray-700"
-                disabled={logs.length === 0}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Copy JSON
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => void clearLogs()}
-                className="border-red-500/40 text-red-200 hover:bg-red-500/10"
-                disabled={logs.length === 0}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Clear Logs
-              </Button>
-            </div>
-          </div>
+          <SectionHeader
+            title="System Logs"
+            description="Centralized error and warning events captured across the platform."
+            actions={
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.location.assign("/admin/settings/logging")}
+                >
+                  Client Logging Settings
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    void loadLogs();
+                    void loadMetrics();
+                  }}
+                  disabled={loading || metricsLoading}
+                >
+                  <RefreshCcw className="mr-2 h-4 w-4" />
+                  Refresh
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void exportLogs()}
+                  disabled={logs.length === 0}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Copy JSON
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void clearLogs()}
+                  className="border-red-500/40 text-red-200 hover:bg-red-500/10"
+                  disabled={logs.length === 0}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Clear Logs
+                </Button>
+              </>
+            }
+          />
         }
         filters={
-          <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
+          <SectionPanel>
             <div className="grid gap-4 md:grid-cols-4">
               <div>
                 <Label className="text-xs text-gray-400">Level</Label>
@@ -327,7 +324,7 @@ export default function SystemLogsPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </SectionPanel>
         }
       >
         <div className="space-y-6">

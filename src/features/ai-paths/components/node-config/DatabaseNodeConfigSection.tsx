@@ -24,6 +24,7 @@ import type {
   NodeConfig,
   RuntimeState,
   UpdaterMapping,
+  UpdaterSampleState,
 } from "@/features/ai-paths/lib";
 import {
   DB_COLLECTION_OPTIONS,
@@ -59,6 +60,10 @@ type DatabaseNodeConfigSectionProps = {
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
   onSendToAi?: (databaseNodeId: string, prompt: string) => Promise<void>;
   sendingToAi?: boolean;
+  updaterSamples: Record<string, UpdaterSampleState>;
+  setUpdaterSamples: React.Dispatch<React.SetStateAction<Record<string, UpdaterSampleState>>>;
+  updaterSampleLoading: boolean;
+  handleFetchUpdaterSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
   dbQueryPresets: DbQueryPreset[];
   setDbQueryPresets: React.Dispatch<React.SetStateAction<DbQueryPreset[]>>;
   saveDbQueryPresets: (nextPresets: DbQueryPreset[]) => Promise<void>;
@@ -76,6 +81,10 @@ export function DatabaseNodeConfigSection({
   updateSelectedNodeConfig,
   onSendToAi,
   sendingToAi,
+  updaterSamples,
+  setUpdaterSamples,
+  updaterSampleLoading,
+  handleFetchUpdaterSample,
   dbQueryPresets,
   setDbQueryPresets,
   saveDbQueryPresets,

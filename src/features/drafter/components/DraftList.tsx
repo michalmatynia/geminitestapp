@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { ListPanel } from "@/shared/ui/list-panel";
 import { useToast } from "@/shared/ui/toast";
+import { SectionHeader } from "@/shared/ui/section-header";
 import { ProductDraft } from "@/features/products/types/drafts";
 import {
   PlusIcon,
@@ -96,15 +97,16 @@ export function DraftList({ onEdit, onCreateNew, refreshTrigger }: DraftListProp
   return (
     <ListPanel
       header={
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-white">
-            Your Product Drafts
-          </h2>
-          <Button onClick={onCreateNew} className="flex items-center gap-2">
-            <PlusIcon className="h-4 w-4" />
-            Create New Draft
-          </Button>
-        </div>
+        <SectionHeader
+          title="Your Product Drafts"
+          size="sm"
+          actions={
+            <Button onClick={onCreateNew} className="flex items-center gap-2">
+              <PlusIcon className="h-4 w-4" />
+              Create New Draft
+            </Button>
+          }
+        />
       }
     >
       {loading ? (

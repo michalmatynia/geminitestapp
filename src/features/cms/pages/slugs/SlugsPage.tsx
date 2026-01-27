@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/button";
 import { ListPanel } from "@/shared/ui/list-panel";
+import { SectionHeader } from "@/shared/ui/section-header";
 import { deleteSlug, fetchSlugs } from "@/features/cms/api/slugs";
 import type { Slug } from "@/features/cms/types";
 
@@ -33,12 +34,14 @@ export default function SlugsPage() {
     <div className="container mx-auto py-10">
       <ListPanel
         header={
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold">Slugs</h1>
-            <Button asChild>
-              <Link href="/admin/cms/slugs/create">Create Slug</Link>
-            </Button>
-          </div>
+          <SectionHeader
+            title="Slugs"
+            actions={
+              <Button asChild>
+                <Link href="/admin/cms/slugs/create">Create Slug</Link>
+              </Button>
+            }
+          />
         }
       >
         <ul>

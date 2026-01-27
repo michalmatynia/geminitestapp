@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { ListPanel } from "@/shared/ui/list-panel";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -347,41 +349,41 @@ export default function AuthUsersPage() {
     <>
       <ListPanel
         header={
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-white">Users</h1>
-              <p className="mt-2 text-sm text-gray-400">
-                Manage user accounts and assign roles (provider: {provider}).
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" onClick={() => void loadUsers()} disabled={loading}>
-                Refresh
-              </Button>
-              <Button variant="outline" onClick={() => setMockOpen(true)}>
-                Mock Sign-in
-              </Button>
-              <Button variant="outline" onClick={() => setCreateOpen(true)}>
-                Create User
-              </Button>
-              <Button onClick={() => void handleSaveRoles()} disabled={!dirtyRoles || savingRoles}>
-                {savingRoles ? "Saving..." : "Save Roles"}
-              </Button>
-            </div>
-          </div>
+          <SectionHeader
+            title="Users"
+            description={`Manage user accounts and assign roles (provider: ${provider}).`}
+            actions={
+              <>
+                <Button variant="outline" onClick={() => void loadUsers()} disabled={loading}>
+                  Refresh
+                </Button>
+                <Button variant="outline" onClick={() => setMockOpen(true)}>
+                  Mock Sign-in
+                </Button>
+                <Button variant="outline" onClick={() => setCreateOpen(true)}>
+                  Create User
+                </Button>
+                <Button onClick={() => void handleSaveRoles()} disabled={!dirtyRoles || savingRoles}>
+                  {savingRoles ? "Saving..." : "Save Roles"}
+                </Button>
+              </>
+            }
+          />
         }
         filters={
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <Input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search by name, email, or ID"
-              className="bg-gray-900 border-gray-700 text-white sm:max-w-xs"
-            />
-            <div className="text-xs text-gray-500">
-              {dirtyRoles ? "Unsaved role changes" : "Roles are up to date"}
+          <SectionPanel>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <Input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search by name, email, or ID"
+                className="h-8 text-sm sm:max-w-xs"
+              />
+              <div className="text-xs text-gray-500">
+                {dirtyRoles ? "Unsaved role changes" : "Roles are up to date"}
+              </div>
             </div>
-          </div>
+          </SectionPanel>
         }
       >
         {loading ? (

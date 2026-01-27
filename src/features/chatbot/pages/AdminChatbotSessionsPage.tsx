@@ -9,6 +9,8 @@ import { useToast } from "@/shared/ui/toast";
 import { Label } from "@/shared/ui/label";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { ListPanel } from "@/shared/ui/list-panel";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 import type { ChatbotSessionListItem } from "../types";
 import * as chatbotApi from "../api";
 
@@ -206,38 +208,43 @@ export default function ChatbotSessionsPage() {
     <div className="container mx-auto py-10">
       <ListPanel
         header={
-          <div>
-            <Link
-              href="/admin/chatbot"
-              className="text-sm text-blue-300 hover:text-blue-200"
-            >
-              ← Back to chatbot
-            </Link>
-            <h1 className="mt-3 text-3xl font-bold text-white">Chat Sessions</h1>
-          </div>
+          <SectionHeader
+            title="Chat Sessions"
+            eyebrow={(
+              <Link
+                href="/admin/chatbot"
+                className="text-blue-300 hover:text-blue-200"
+              >
+                ← Back to chatbot
+              </Link>
+            )}
+          />
         }
         alerts={
           error ? <p className="text-sm text-red-400">{error}</p> : null
         }
         filters={
           showList ? (
-            <div className="max-w-sm">
-              <Input
-                placeholder="Search sessions..."
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    const value = query.trim();
-                    if (!value) {
-                      toast("Search cleared");
-                    } else {
-                      toast(`Searching “${value}”`);
+            <SectionPanel>
+              <div className="max-w-sm">
+                <Input
+                  placeholder="Search sessions..."
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      const value = query.trim();
+                      if (!value) {
+                        toast("Search cleared");
+                      } else {
+                        toast(`Searching “${value}”`);
+                      }
                     }
-                  }
-                }}
-              />
-            </div>
+                  }}
+                  className="h-8 text-sm"
+                />
+              </div>
+            </SectionPanel>
           ) : null
         }
         actions={

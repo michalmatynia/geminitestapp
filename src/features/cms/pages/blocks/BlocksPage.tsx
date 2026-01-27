@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/button";
 import { ListPanel } from "@/shared/ui/list-panel";
+import { SectionHeader } from "@/shared/ui/section-header";
 import { deleteBlock, fetchBlocks } from "@/features/cms/api/blocks";
 import type { Block } from "@/features/cms/types";
 
@@ -27,12 +28,14 @@ export default function BlocksPage() {
     <div className="container mx-auto py-10">
       <ListPanel
         header={
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold">Blocks</h1>
-            <Button asChild>
-              <Link href="/admin/cms/blocks/create">Create Block</Link>
-            </Button>
-          </div>
+          <SectionHeader
+            title="Blocks"
+            actions={
+              <Button asChild>
+                <Link href="/admin/cms/blocks/create">Create Block</Link>
+              </Button>
+            }
+          />
         }
       >
         <ul>

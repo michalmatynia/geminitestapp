@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { logger } from "@/shared/utils/logger";
 import type { Catalog } from "@/features/products/types";
-import type { PriceGroupWithDetails } from "@/types";
+import type { PriceGroupWithDetails } from "@/features/products/types";
 
 type LanguageRecord = { id: string; code: string; name: string };
 type LanguageOption = { value: "name_en" | "name_pl" | "name_de"; label: string };

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { useToast } from "@/shared/ui/toast";
-import type { CatalogRecord } from "@/types";
+import type { CatalogRecord } from "@/features/products/types";
 import type { ProductParameter } from "@/features/products/types";
 import { ParametersSettings } from "@/features/products/components/constructor/ParametersSettings";
 

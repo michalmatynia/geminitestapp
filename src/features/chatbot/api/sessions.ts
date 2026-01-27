@@ -1,4 +1,4 @@
-import type { ChatMessage, ChatSession } from "@/types/chatbot";
+import type { ChatMessage, ChatSession } from "@/shared/types/chatbot";
 import type { ChatbotSessionListItem } from "../types";
 import { fetchWithTimeout, readErrorMessage, requestJson } from "./client";
 

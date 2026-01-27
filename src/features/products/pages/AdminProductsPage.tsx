@@ -16,8 +16,8 @@ import { ProductModals } from "@/features/products/components/ProductModals";
 import { columns } from "@/features/products/components/list/ProductColumns";
 import DebugPanel from "@/features/products/components/DebugPanel";
 import type { RowSelectionState } from "@tanstack/react-table";
-import type { ProductDraft } from "@/types/drafts";
-import type { ProductWithImages } from "@/types";
+import type { ProductDraft } from "@/features/products/types/drafts";
+import type { ProductWithImages } from "@/features/products/types";
 import { logger } from "@/shared/utils/logger";
 
 const SelectIntegrationModal = dynamic(

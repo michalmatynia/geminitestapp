@@ -13,7 +13,7 @@ import {
   ChatbotSettingsPayload,
   ChatbotDebugState,
   ChatSession,
-} from "@/types/chatbot";
+} from "@/shared/types/chatbot";
 import { useSearchParams } from "next/navigation";
 import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from "../utils/constants";
 import * as chatbotApi from "../api";

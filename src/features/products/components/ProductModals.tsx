@@ -3,6 +3,7 @@
 import React from "react";
 import ModalShell from "@/shared/ui/modal-shell";
 import { Button } from "@/shared/ui/button";
+import { AppModal } from "@/shared/ui/app-modal";
 import FileManager from "@/features/files/components/FileManager";
 import ProductForm from "@/features/products/components/ProductForm";
 import ProductListingsModal from "@/features/integrations/components/listings/ProductListingsModal";
@@ -12,8 +13,8 @@ import {
   ProductFormProvider,
   useProductFormContext,
 } from "@/features/products/context/ProductFormContext";
-import type { ProductWithImages } from "@/types";
-import type { ProductDraft } from "@/types/drafts";
+import type { ProductWithImages } from "@/features/products/types";
+import type { ProductDraft } from "@/features/products/types/drafts";
 
 interface ProductModalsProps {
   isCreateOpen: boolean;
@@ -42,8 +43,6 @@ interface ProductModalsProps {
   onCloseMassList?: () => void;
   onMassListSuccess?: () => void;
 }
-
-import { Dialog, DialogContent, DialogTitle } from "@/shared/ui/dialog";
 
 function ProductFormModalContent({ 
   onClose, 
@@ -117,113 +116,106 @@ export function ProductModals({
 }: ProductModalsProps) {
   return (
     <>
-      <Dialog open={isCreateOpen} onOpenChange={(open) => !open && onCloseCreate()}>
-        <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
-          <DialogTitle className="sr-only">Create Product</DialogTitle>
+      <AppModal
+        open={isCreateOpen}
+        onOpenChange={(open) => !open && onCloseCreate()}
+        title="Create Product"
+      >
+        <ProductFormProvider
+          key={createDraft?.id ?? "create"}
+          onSuccess={onCreateSuccess}
+          initialSku={initialSku}
+          draft={createDraft ?? undefined}
+        >
+          <ProductFormModalContent
+            onClose={onCloseCreate}
+            title="Create Product"
+            submitButtonText="Create"
+          />
+        </ProductFormProvider>
+      </AppModal>
+
+      <AppModal
+        open={!!editingProduct}
+        onOpenChange={(open) => !open && onCloseEdit()}
+        title="Edit Product"
+      >
+        {editingProduct && (
           <ProductFormProvider
-            key={createDraft?.id ?? "create"}
-            onSuccess={onCreateSuccess}
-            initialSku={initialSku}
-            draft={createDraft ?? undefined}
+            product={editingProduct}
+            onSuccess={onEditSuccess}
+            onEditSave={onEditSave}
           >
-            <ProductFormModalContent 
-              onClose={onCloseCreate} 
-              title="Create Product" 
-              submitButtonText="Create" 
+            <ProductFormModalContent
+              onClose={onCloseEdit}
+              title="Edit Product"
+              submitButtonText="Update"
             />
           </ProductFormProvider>
-        </DialogContent>
-      </Dialog>
+        )}
+      </AppModal>
 
-      <Dialog open={!!editingProduct} onOpenChange={(open) => !open && onCloseEdit()}>
-        <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
-          <DialogTitle className="sr-only">Edit Product</DialogTitle>
-          {editingProduct && (
-            <ProductFormProvider
-              product={editingProduct}
-              onSuccess={onEditSuccess}
-              onEditSave={onEditSave}
-            >
-              <ProductFormModalContent 
-                onClose={onCloseEdit} 
-                title="Edit Product" 
-                submitButtonText="Update" 
-              />
-            </ProductFormProvider>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog 
-        open={!!integrationsProduct && !showListProductModal} 
+      <AppModal
+        open={!!integrationsProduct && !showListProductModal}
         onOpenChange={(open) => !open && onCloseIntegrations()}
+        title="Product Listings"
       >
-        <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
-          <DialogTitle className="sr-only">Product Listings</DialogTitle>
-          {integrationsProduct && (
-            <ProductListingsModal
-              product={integrationsProduct}
-              onClose={onCloseIntegrations}
-              onStartListing={onStartListing}
-              onListingsUpdated={onListingsUpdated}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+        {integrationsProduct && (
+          <ProductListingsModal
+            product={integrationsProduct}
+            onClose={onCloseIntegrations}
+            onStartListing={onStartListing}
+            onListingsUpdated={onListingsUpdated}
+          />
+        )}
+      </AppModal>
 
-      <Dialog 
-        open={!!integrationsProduct && showListProductModal} 
+      <AppModal
+        open={!!integrationsProduct && showListProductModal}
         onOpenChange={(open) => !open && onCloseListProduct()}
+        title="List Product"
       >
-        <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
-          <DialogTitle className="sr-only">List Product</DialogTitle>
-          {integrationsProduct && (
-            <ListProductModal
-              product={integrationsProduct}
-              onClose={onCloseListProduct}
-              onSuccess={onListProductSuccess}
-              initialIntegrationId={listProductPreset?.integrationId ?? null}
-              initialConnectionId={listProductPreset?.connectionId ?? null}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+        {integrationsProduct && (
+          <ListProductModal
+            product={integrationsProduct}
+            onClose={onCloseListProduct}
+            onSuccess={onListProductSuccess}
+            initialIntegrationId={listProductPreset?.integrationId ?? null}
+            initialConnectionId={listProductPreset?.connectionId ?? null}
+          />
+        )}
+      </AppModal>
 
-      <Dialog 
-        open={!!exportSettingsProduct && !!onCloseExportSettings} 
+      <AppModal
+        open={!!exportSettingsProduct && !!onCloseExportSettings}
         onOpenChange={(open) => !open && onCloseExportSettings?.()}
+        title="Export Settings"
       >
-        <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
-          <DialogTitle className="sr-only">Export Settings</DialogTitle>
-          {exportSettingsProduct && onCloseExportSettings && (
-            <ProductListingsModal
-              product={exportSettingsProduct}
-              onClose={onCloseExportSettings}
-              filterIntegrationSlug="baselinker"
-              onListingsUpdated={onListingsUpdated}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+        {exportSettingsProduct && onCloseExportSettings && (
+          <ProductListingsModal
+            product={exportSettingsProduct}
+            onClose={onCloseExportSettings}
+            filterIntegrationSlug="baselinker"
+            onListingsUpdated={onListingsUpdated}
+          />
+        )}
+      </AppModal>
 
-      <Dialog 
-        open={!!massListIntegration && !!massListProductIds && massListProductIds.length > 0} 
+      <AppModal
+        open={!!massListIntegration && !!massListProductIds && massListProductIds.length > 0}
         onOpenChange={(open) => !open && onCloseMassList?.()}
+        title="Mass List Products"
       >
-        <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
-          <DialogTitle className="sr-only">Mass List Products</DialogTitle>
-          {massListIntegration && massListProductIds && onCloseMassList && onMassListSuccess && (
-            <MassListProductModal
-              integrationId={massListIntegration.integrationId}
-              connectionId={massListIntegration.connectionId}
-              productIds={massListProductIds}
-              onClose={onCloseMassList}
-              onSuccess={onMassListSuccess}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+        {massListIntegration && massListProductIds && onCloseMassList && onMassListSuccess && (
+          <MassListProductModal
+            integrationId={massListIntegration.integrationId}
+            connectionId={massListIntegration.connectionId}
+            productIds={massListProductIds}
+            onClose={onCloseMassList}
+            onSuccess={onMassListSuccess}
+          />
+        )}
+      </AppModal>
     </>
   );
 }
-

@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import type {
   ProductWithImages,
   ProductFormData,
-} from "@/types";
+} from "@/features/products/types";
 import { UseFormSetValue, UseFormGetValues } from "react-hook-form";
 import { 
   useCatalogs, 

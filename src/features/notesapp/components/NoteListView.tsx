@@ -1,6 +1,7 @@
 import React from "react";
 import { Plus, Pin, Archive, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/shared/ui/button";
+import { ListPanel } from "@/shared/ui/list-panel";
 import { NotesFilters } from "./NotesFilters";
 import { NoteCard } from "./NoteCard";
 import { buildBreadcrumbPath } from "../utils";
@@ -54,129 +55,133 @@ export function NoteListView({
   setIsEditing,
 }: NoteListViewProps) {
   return (
-    <>
-      <div className="mb-4 flex items-center gap-3">
-        {isFolderTreeCollapsed && (
+    <ListPanel
+      variant="flat"
+      className="flex min-h-0 flex-1 flex-col"
+      header={
+        <div className="flex items-center gap-3">
+          {isFolderTreeCollapsed && (
+            <Button
+              onClick={onExpandFolderTree}
+              variant="outline"
+              className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+            >
+              <ChevronLeft className="-scale-x-100" size={16} />
+              <span className="ml-2">Show Folders</span>
+            </Button>
+          )}
           <Button
-            onClick={onExpandFolderTree}
-            variant="outline"
-            className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+            onClick={onCreateNote}
+            className="size-11 rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90"
+            aria-label="Create note"
           >
-            <ChevronLeft className="-scale-x-100" size={16} />
-            <span className="ml-2">Show Folders</span>
+            <Plus className="size-5" />
           </Button>
-        )}
-        <Button
-          onClick={onCreateNote}
-          className="size-11 rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90"
-          aria-label="Create note"
-        >
-          <Plus className="size-5" />
-        </Button>
-        <h1 className="text-3xl font-bold text-white">
-          {selectedFolderId
-            ? buildBreadcrumbPath(selectedFolderId, null, folderTree).slice(-1)[0]?.name
-            : "Notes"}
-        </h1>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">Theme</span>
-          <select
-            value={selectedFolderThemeId}
-            onChange={(e) => onThemeChange(e.target.value || null)}
-            className="rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-300"
-          >
-            <option value="">Default</option>
-            {themes.map((theme) => (
-              <option key={theme.id} value={theme.id}>
-                {theme.name}
-              </option>
-            ))}
-          </select>
+          <h1 className="text-3xl font-bold text-white">
+            {selectedFolderId
+              ? buildBreadcrumbPath(selectedFolderId, null, folderTree).slice(-1)[0]?.name
+              : "Notes"}
+          </h1>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">Theme</span>
+            <select
+              value={selectedFolderThemeId}
+              onChange={(e) => onThemeChange(e.target.value || null)}
+              className="rounded border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-300"
+            >
+              <option value="">Default</option>
+              {themes.map((theme) => (
+                <option key={theme.id} value={theme.id}>
+                  {theme.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs text-gray-500">Page</span>
+            <Button
+              type="button"
+              onClick={() => setPage(Math.max(1, page - 1))}
+              disabled={page <= 1}
+              className="rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition disabled:opacity-50"
+            >
+              Prev
+            </Button>
+            <span className="text-xs text-gray-300">
+              {page} / {totalPages}
+            </span>
+            <Button
+              type="button"
+              onClick={() => setPage(Math.min(totalPages, page + 1))}
+              disabled={page >= totalPages}
+              className="rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition disabled:opacity-50"
+            >
+              Next
+            </Button>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+              className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-300 border border-gray-700"
+              aria-label="Notes per page"
+            >
+              {[12, 24, 48].map((size) => (
+                <option key={size} value={size}>
+                  {size} / page
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs text-gray-500">Page</span>
+      }
+      filters={
+        <div className="flex gap-4">
+          <NotesFilters
+            selectedFolderId={selectedFolderId}
+            folderTree={folderTree}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            tags={availableTagsInScope}
+            filterTagIds={filterTagIds}
+            setFilterTagIds={setFilterTagIds}
+            searchScope={searchScope}
+            updateSettings={updateSettings}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            showTimestamps={showTimestamps}
+            showBreadcrumbs={showBreadcrumbs}
+            showRelatedNotes={showRelatedNotes}
+            viewMode={viewMode}
+            gridDensity={gridDensity}
+            highlightTagId={highlightTagId}
+            buildBreadcrumbPath={buildBreadcrumbPath}
+          />
           <Button
-            type="button"
-            onClick={() => setPage(Math.max(1, page - 1))}
-            disabled={page <= 1}
-            className="rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition disabled:opacity-50"
+            onClick={() => setFilterPinned(filterPinned === true ? undefined : true)}
+            className={`rounded-lg border px-4 py-2 ${
+              filterPinned === true
+                ? "border-blue-500 bg-blue-600 text-white"
+                : "border-gray-700 bg-gray-800 text-gray-300"
+            }`}
           >
-            Prev
+            <Pin size={20} />
           </Button>
-          <span className="text-xs text-gray-300">
-            {page} / {totalPages}
-          </span>
           <Button
-            type="button"
-            onClick={() => setPage(Math.min(totalPages, page + 1))}
-            disabled={page >= totalPages}
-            className="rounded px-2 py-1 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700 transition disabled:opacity-50"
+            onClick={() => setFilterArchived(filterArchived === true ? undefined : true)}
+            className={`rounded-lg border px-4 py-2 ${
+              filterArchived === true
+                ? "border-gray-500 bg-gray-700 text-white"
+                : "border-gray-700 bg-gray-800 text-gray-300"
+            }`}
           >
-            Next
+            <Archive size={20} />
           </Button>
-          <select
-            value={pageSize}
-            onChange={(e) => {
-              setPageSize(Number(e.target.value));
-              setPage(1);
-            }}
-            className="rounded bg-gray-800 px-2 py-1 text-xs text-gray-300 border border-gray-700"
-            aria-label="Notes per page"
-          >
-            {[12, 24, 48].map((size) => (
-              <option key={size} value={size}>
-                {size} / page
-              </option>
-            ))}
-          </select>
         </div>
-      </div>
-
-      {/* Filters */}
-      <div className="mb-4 flex gap-4">
-        <NotesFilters
-          selectedFolderId={selectedFolderId}
-          folderTree={folderTree}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          tags={availableTagsInScope}
-          filterTagIds={filterTagIds}
-          setFilterTagIds={setFilterTagIds}
-          searchScope={searchScope}
-          updateSettings={updateSettings}
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-          showTimestamps={showTimestamps}
-          showBreadcrumbs={showBreadcrumbs}
-          showRelatedNotes={showRelatedNotes}
-          viewMode={viewMode}
-          gridDensity={gridDensity}
-          highlightTagId={highlightTagId}
-          buildBreadcrumbPath={buildBreadcrumbPath}
-        />
-        <Button
-          onClick={() => setFilterPinned(filterPinned === true ? undefined : true)}
-          className={`rounded-lg border px-4 py-2 ${
-            filterPinned === true
-              ? "border-blue-500 bg-blue-600 text-white"
-              : "border-gray-700 bg-gray-800 text-gray-300"
-          }`}
-        >
-          <Pin size={20} />
-        </Button>
-        <Button
-          onClick={() => setFilterArchived(filterArchived === true ? undefined : true)}
-          className={`rounded-lg border px-4 py-2 ${
-            filterArchived === true
-              ? "border-gray-500 bg-gray-700 text-white"
-              : "border-gray-700 bg-gray-800 text-gray-300"
-          }`}
-        >
-          <Archive size={20} />
-        </Button>
-      </div>
-
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pr-1">
+      }
+      contentClassName="flex min-h-0 flex-1 flex-col overflow-y-auto pr-1"
+    >
         {/* Breadcrumb */}
         {selectedFolderId && (
           <div className="mb-6 flex items-center gap-2 text-sm text-gray-400">
@@ -252,7 +257,6 @@ export function NoteListView({
             </Button>
           </div>
         )}
-      </div>
-    </>
+    </ListPanel>
   );
 }

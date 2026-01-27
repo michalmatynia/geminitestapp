@@ -3,7 +3,7 @@
 import { useFormContext } from "react-hook-form";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
-import { ProductFormData } from "@/types";
+import { ProductFormData } from "@/features/products/types";
 
 export default function ProductFormImportInfo() {
   const { register } = useFormContext<ProductFormData>();

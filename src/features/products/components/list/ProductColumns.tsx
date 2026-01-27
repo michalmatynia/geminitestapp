@@ -15,7 +15,7 @@ import {
 import { useToast } from "@/shared/ui/toast";
 import { EditableCell } from "@/features/products/components/EditableCell";
 import { ProductImageCell } from "@/features/products/components/cells/ProductImageCell";
-import type { ProductWithImages } from "@/types";
+import type { ProductWithImages } from "@/features/products/types";
 import type { PriceGroupForCalculation } from "@/shared/components/data-table";
 
 // Keep the exported name `Product` in case other files import it from here.

@@ -1,5 +1,5 @@
 import prisma from "@/shared/lib/db/prisma";
-import type { ChatMessage, ChatbotJobPayload } from "@/types/chatbot";
+import type { ChatMessage, ChatbotJobPayload } from "@/shared/types/chatbot";
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 const DEBUG_CHATBOT = process.env.NODE_ENV !== "production";

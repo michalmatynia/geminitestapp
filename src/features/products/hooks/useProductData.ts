@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { getProducts, countProducts } from "@/features/products/api";
-import { ProductWithImages, PriceGroupWithDetails } from "@/types";
+import { ProductWithImages, PriceGroupWithDetails } from "@/features/products/types";
 import { logger } from "@/shared/utils/logger";
 
 interface UseProductDataProps {

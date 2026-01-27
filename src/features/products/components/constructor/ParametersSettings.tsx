@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui/select";
-import type { CatalogRecord } from "@/types";
+import type { CatalogRecord } from "@/features/products/types";
 import type { ProductParameter } from "@/features/products/types";
 
 type ParametersSettingsProps = {

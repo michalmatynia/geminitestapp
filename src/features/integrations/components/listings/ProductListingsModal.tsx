@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui/select";
-import type { ProductWithImages } from "@/types";
+import type { ProductWithImages } from "@/features/products/types";
 import type { ProductListingWithDetails } from "@/features/integrations/types/listings";
 import { SyncDirection } from "@/features/products/types";
 import { Trash2, ArrowRight, ArrowLeft, ArrowLeftRight, Check, X } from "lucide-react";

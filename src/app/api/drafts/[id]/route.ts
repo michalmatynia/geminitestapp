@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getDraft, updateDraft, deleteDraft } from "@/features/admin/drafter/services/draft-repository";
-import type { UpdateProductDraftInput } from "@/types/drafts";
+import type { UpdateProductDraftInput } from "@/features/products/types/drafts";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/api/parse-json";
 import { notFoundError } from "@/shared/errors/app-error";

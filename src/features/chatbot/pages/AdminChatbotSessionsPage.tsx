@@ -8,6 +8,7 @@ import { Input } from "@/shared/ui/input";
 import { useToast } from "@/shared/ui/toast";
 import { Label } from "@/shared/ui/label";
 import { Checkbox } from "@/shared/ui/checkbox";
+import { ListPanel } from "@/shared/ui/list-panel";
 import type { ChatbotSessionListItem } from "../types";
 import * as chatbotApi from "../api";
 
@@ -199,26 +200,27 @@ export default function ChatbotSessionsPage() {
     }
   };
 
+  const showList = !loading && !error && sessions.length > 0;
+
   return (
     <div className="container mx-auto py-10">
-      <div className="mb-6">
-        <Link
-          href="/admin/chatbot"
-          className="text-sm text-blue-300 hover:text-blue-200"
-        >
-          ← Back to chatbot
-        </Link>
-        <h1 className="mt-3 text-3xl font-bold text-white">Chat Sessions</h1>
-      </div>
-      <div className="rounded-lg border border-gray-800 bg-gray-950 p-4">
-        {loading ? (
-          <p className="text-sm text-gray-400">Loading sessions...</p>
-        ) : error ? (
-          <p className="text-sm text-red-400">{error}</p>
-        ) : sessions.length === 0 ? (
-          <p className="text-sm text-gray-400">No sessions yet.</p>
-        ) : (
-          <div className="space-y-4">
+      <ListPanel
+        header={
+          <div>
+            <Link
+              href="/admin/chatbot"
+              className="text-sm text-blue-300 hover:text-blue-200"
+            >
+              ← Back to chatbot
+            </Link>
+            <h1 className="mt-3 text-3xl font-bold text-white">Chat Sessions</h1>
+          </div>
+        }
+        alerts={
+          error ? <p className="text-sm text-red-400">{error}</p> : null
+        }
+        filters={
+          showList ? (
             <div className="max-w-sm">
               <Input
                 placeholder="Search sessions..."
@@ -236,7 +238,10 @@ export default function ChatbotSessionsPage() {
                 }}
               />
             </div>
-
+          ) : null
+        }
+        actions={
+          showList ? (
             <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400">
               <span>Selected: {selectedIds.size}</span>
               <Button
@@ -279,99 +284,107 @@ export default function ChatbotSessionsPage() {
               </Button>
               <Label className="flex items-center gap-2 text-[11px] text-gray-500">
                 <Checkbox
-                  checked={skipBulkConfirm} onCheckedChange={(checked) => setSkipBulkConfirm(Boolean(checked))}
+                  checked={skipBulkConfirm}
+                  onCheckedChange={(checked) =>
+                    setSkipBulkConfirm(Boolean(checked))
+                  }
                   disabled={bulkDeleting || selectingAll}
                 />
                 Skip confirmation
               </Label>
             </div>
-
-            <div className="space-y-3">
-              {filteredSessions.map((session) => (
-                <div
-                  key={session.id}
-                  className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-900 px-4 py-3"
-                >
-                  <div className="flex items-start gap-3">
-                    <Checkbox
-                      checked={selectedIds.has(session.id)} onCheckedChange={() => toggleSelected(session.id)}
-                      aria-label={`Select session ${session.title || session.id}`}
-                      className="mt-1"
-                    />
-                    <div>
-                      {editingId === session.id ? (
-                        <Input
-                          value={draftTitle}
-                          onChange={(event) =>
-                            setDraftTitle(event.target.value)
-                          }
-                          className="max-w-xs"
-                          placeholder="Session title"
-                        />
-                      ) : (
-                        <p className="text-sm text-white">
-                          {session.title || `Session ${session.id.slice(0, 6)}`}
-                        </p>
-                      )}
-                      <p className="text-xs text-gray-500">
-                        Updated {new Date(session.updatedAt).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
+          ) : null
+        }
+      >
+        {loading ? (
+          <p className="text-sm text-gray-400">Loading sessions...</p>
+        ) : error ? null : sessions.length === 0 ? (
+          <p className="text-sm text-gray-400">No sessions yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {filteredSessions.map((session) => (
+              <div
+                key={session.id}
+                className="flex items-center justify-between rounded-md border border-gray-800 bg-gray-900 px-4 py-3"
+              >
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    checked={selectedIds.has(session.id)}
+                    onCheckedChange={() => toggleSelected(session.id)}
+                    aria-label={`Select session ${session.title || session.id}`}
+                    className="mt-1"
+                  />
+                  <div>
                     {editingId === session.id ? (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => void saveTitle(session.id)}
-                        >
-                          Save
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={cancelEditing}
-                        >
-                          Cancel
-                        </Button>
-                      </>
+                      <Input
+                        value={draftTitle}
+                        onChange={(event) => setDraftTitle(event.target.value)}
+                        className="max-w-xs"
+                        placeholder="Session title"
+                      />
                     ) : (
+                      <p className="text-sm text-white">
+                        {session.title || `Session ${session.id.slice(0, 6)}`}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-500">
+                      Updated {new Date(session.updatedAt).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {editingId === session.id ? (
+                    <>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => startEditing(session)}
+                        onClick={() => void saveTitle(session.id)}
                       >
-                        Edit
+                        Save
                       </Button>
-                    )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={cancelEditing}
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  ) : (
                     <Button
-                      variant="destructive"
+                      variant="outline"
                       size="sm"
-                      disabled={deletingId === session.id}
-                      onClick={() => void deleteSession(session)}
+                      onClick={() => startEditing(session)}
                     >
-                      {deletingId === session.id ? "Removing..." : "Remove"}
+                      Edit
                     </Button>
-                    <Link
-                      href={`/admin/chatbot?session=${session.id}`}
-                      onClick={() => toast("Opening session...")}
-                    >
-                      <Button variant="outline" size="sm">
-                        Open
-                      </Button>
-                    </Link>
-                  </div>
+                  )}
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={deletingId === session.id}
+                    onClick={() => void deleteSession(session)}
+                  >
+                    {deletingId === session.id ? "Removing..." : "Remove"}
+                  </Button>
+                  <Link
+                    href={`/admin/chatbot?session=${session.id}`}
+                    onClick={() => toast("Opening session...")}
+                  >
+                    <Button variant="outline" size="sm">
+                      Open
+                    </Button>
+                  </Link>
                 </div>
-              ))}
-              {filteredSessions.length === 0 ? (
-                <p className="text-sm text-gray-500">No matching sessions.</p>
-              ) : null}
-            </div>
+              </div>
+            ))}
+            {filteredSessions.length === 0 ? (
+              <p className="text-sm text-gray-500">No matching sessions.</p>
+            ) : null}
           </div>
         )}
-      </div>
+      </ListPanel>
     </div>
   );
 }

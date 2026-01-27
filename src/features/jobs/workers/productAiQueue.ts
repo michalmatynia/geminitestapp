@@ -3,7 +3,7 @@ import type { ChatCompletionContentPart } from "openai/resources/chat/completion
 import prisma from "@/shared/lib/db/prisma";
 import { generateProductDescription, getSettingValue } from "@/features/products/services/aiDescriptionService";
 import { translateProduct } from "@/features/products/services/aiTranslationService";
-import type { ProductFormData } from "@/types";
+import type { ProductFormData } from "@/features/products/types";
 import { getProductRepository } from "@/features/products/services/product-repository";
 import { defaultLanguages } from "@/features/internationalization/lib/internationalizationDefaults";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";

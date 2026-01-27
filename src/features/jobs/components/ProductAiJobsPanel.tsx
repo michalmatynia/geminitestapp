@@ -8,6 +8,7 @@ import { Input } from "@/shared/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { useToast } from "@/shared/ui/toast";
 import { Loader2, RefreshCcw, Trash2, XCircle, Eye } from "lucide-react";
+import { AppModal } from "@/shared/ui/app-modal";
 import ModalShell from "@/shared/ui/modal-shell";
 import ProductListingJobsPanel from "@/features/jobs/components/ProductListingJobsPanel";
 import type { ProductAiJob } from "@/shared/types/jobs";
@@ -368,30 +369,33 @@ export default function ProductAiJobsPanel({
       )}
 
       {selectedJob && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setSelectedJob(null)}>
-          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-4xl">
-            <ModalShell title="Job Details" onClose={() => setSelectedJob(null)} size="xl">
-              <div className="space-y-6 text-sm">
-                <div className="grid grid-cols-2 gap-4 rounded-md bg-gray-900 p-4">
-                  <div>
-                    <div className="text-gray-500 uppercase text-[10px] font-bold">Status</div>
-                    <div className="text-white font-medium">{selectedJob.status.toUpperCase()}</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-500 uppercase text-[10px] font-bold">Type</div>
-                    <div className="text-white font-medium">{selectedJob.type}</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-500 uppercase text-[10px] font-bold">Entity</div>
-                    <div className="text-white font-medium">
-                      {getJobMeta(selectedJob).displayEntity}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-gray-500 uppercase text-[10px] font-bold">Job ID</div>
-                    <div className="text-white font-mono text-xs">{selectedJob.id}</div>
+        <AppModal
+          open={true}
+          onOpenChange={(open) => !open && setSelectedJob(null)}
+          title="Job Details"
+        >
+          <ModalShell title="Job Details" onClose={() => setSelectedJob(null)} size="xl">
+            <div className="space-y-6 text-sm">
+              <div className="grid grid-cols-2 gap-4 rounded-md bg-gray-900 p-4">
+                <div>
+                  <div className="text-gray-500 uppercase text-[10px] font-bold">Status</div>
+                  <div className="text-white font-medium">{selectedJob.status.toUpperCase()}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500 uppercase text-[10px] font-bold">Type</div>
+                  <div className="text-white font-medium">{selectedJob.type}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500 uppercase text-[10px] font-bold">Entity</div>
+                  <div className="text-white font-medium">
+                    {getJobMeta(selectedJob).displayEntity}
                   </div>
                 </div>
+                <div>
+                  <div className="text-gray-500 uppercase text-[10px] font-bold">Job ID</div>
+                  <div className="text-white font-mono text-xs">{selectedJob.id}</div>
+                </div>
+              </div>
 
                 <div className="rounded-md border border-gray-800 bg-gray-900/40 p-4">
                   <div className="text-gray-400 font-bold text-xs uppercase mb-3">
@@ -673,9 +677,8 @@ export default function ProductAiJobsPanel({
                   {selectedJob.finishedAt && ` | Finished: ${new Date(selectedJob.finishedAt).toLocaleString()}`}
                 </div>
               </div>
-            </ModalShell>
-          </div>
-        </div>
+          </ModalShell>
+        </AppModal>
       )}
     </div>
   );

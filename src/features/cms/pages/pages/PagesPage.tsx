@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/button";
+import { ListPanel } from "@/shared/ui/list-panel";
 import { useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
 import { useRouter } from "next/navigation";
 import { deletePage, fetchPages } from "@/features/cms/api/pages";
@@ -33,11 +34,14 @@ export default function PagesPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Pages</h1>
-        <Button onClick={handleCreatePage}>Create Page</Button>
-      </div>
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
+      <ListPanel
+        header={
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Pages</h1>
+            <Button onClick={handleCreatePage}>Create Page</Button>
+          </div>
+        }
+      >
         <ul>
           {pages.map((page) => (
                           <li key={page.id} className="flex justify-between items-center py-2 border-b border-gray-700">
@@ -47,7 +51,7 @@ export default function PagesPage() {
                             <Button variant="destructive" onClick={() => { void handleDelete(page.id); }}>Delete</Button>
                           </li>          ))}
         </ul>
-      </div>
+      </ListPanel>
     </div>
   );
 }

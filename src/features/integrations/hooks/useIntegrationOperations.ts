@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { logger } from "@/shared/utils/logger";
-import type { ProductWithImages } from "@/types";
+import type { ProductWithImages } from "@/features/products/types";
 
 export function useIntegrationOperations() {
   // Integrations state

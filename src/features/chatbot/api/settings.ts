@@ -1,4 +1,4 @@
-import type { ChatbotSettingsPayload } from "@/types/chatbot";
+import type { ChatbotSettingsPayload } from "@/shared/types/chatbot";
 import type { SettingRecord } from "../types";
 import { fetchWithTimeout, readErrorResponse, requestJson } from "./client";
 

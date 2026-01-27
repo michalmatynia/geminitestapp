@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import { chatbotSessionRepository } from "@/features/chatbot/services/chatbot-session-repository";
-import type { ChatMessage } from "@/types/chatbot";
+import type { ChatMessage } from "@/shared/types/chatbot";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {
   badRequestError,

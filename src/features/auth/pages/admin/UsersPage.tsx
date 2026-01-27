@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/shared/ui/button";
+import { ListPanel } from "@/shared/ui/list-panel";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -343,113 +344,118 @@ export default function AuthUsersPage() {
   };
 
   return (
-    <div className="rounded-lg bg-gray-950 p-6 shadow-lg space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Users</h1>
-          <p className="mt-2 text-sm text-gray-400">
-            Manage user accounts and assign roles (provider: {provider}).
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" onClick={() => void loadUsers()} disabled={loading}>
-            Refresh
-          </Button>
-          <Button variant="outline" onClick={() => setMockOpen(true)}>
-            Mock Sign-in
-          </Button>
-          <Button variant="outline" onClick={() => setCreateOpen(true)}>
-            Create User
-          </Button>
-          <Button onClick={() => void handleSaveRoles()} disabled={!dirtyRoles || savingRoles}>
-            {savingRoles ? "Saving..." : "Save Roles"}
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search by name, email, or ID"
-          className="bg-gray-900 border-gray-700 text-white sm:max-w-xs"
-        />
-        <div className="text-xs text-gray-500">
-          {dirtyRoles ? "Unsaved role changes" : "Roles are up to date"}
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="rounded-md border border-dashed border-gray-800 p-6 text-center text-gray-400">
-          Loading users...
-        </div>
-      ) : (
-        <Table className="text-gray-200">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Verified</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredUsers.length === 0 ? (
+    <>
+      <ListPanel
+        header={
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-white">Users</h1>
+              <p className="mt-2 text-sm text-gray-400">
+                Manage user accounts and assign roles (provider: {provider}).
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" onClick={() => void loadUsers()} disabled={loading}>
+                Refresh
+              </Button>
+              <Button variant="outline" onClick={() => setMockOpen(true)}>
+                Mock Sign-in
+              </Button>
+              <Button variant="outline" onClick={() => setCreateOpen(true)}>
+                Create User
+              </Button>
+              <Button onClick={() => void handleSaveRoles()} disabled={!dirtyRoles || savingRoles}>
+                {savingRoles ? "Saving..." : "Save Roles"}
+              </Button>
+            </div>
+          </div>
+        }
+        filters={
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search by name, email, or ID"
+              className="bg-gray-900 border-gray-700 text-white sm:max-w-xs"
+            />
+            <div className="text-xs text-gray-500">
+              {dirtyRoles ? "Unsaved role changes" : "Roles are up to date"}
+            </div>
+          </div>
+        }
+      >
+        {loading ? (
+          <div className="rounded-md border border-dashed border-gray-800 p-6 text-center text-gray-400">
+            Loading users...
+          </div>
+        ) : (
+          <Table className="text-gray-200">
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-gray-500">
-                  No users found.
-                </TableCell>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Verified</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ) : (
-              filteredUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.name ?? "Unnamed"}</TableCell>
-                  <TableCell className="text-gray-300">{user.email ?? "No email"}</TableCell>
-                  <TableCell>
-                    {user.emailVerified ? (
-                      <span className="rounded-full bg-green-500/10 px-2 py-1 text-xs text-green-200">
-                        Verified
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-amber-500/10 px-2 py-1 text-xs text-amber-200">
-                        Pending
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="min-w-[180px]">
-                    <Select
-                      value={
-                        roles.some((role) => role.id === userRoles[user.id])
-                          ? (userRoles[user.id] as string)
-                          : "none"
-                      }
-                      onValueChange={(value) => handleRoleChange(user.id, value)}
-                    >
-                      <SelectTrigger className="h-8 bg-gray-900 border-gray-700 text-white">
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Unassigned</SelectItem>
-                        {roles.map((role) => (
-                          <SelectItem key={role.id} value={role.id}>
-                            {role.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(user)}>
-                      Edit
-                    </Button>
+            </TableHeader>
+            <TableBody>
+              {filteredUsers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-gray-500">
+                    No users found.
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      )}
+              ) : (
+                filteredUsers.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">{user.name ?? "Unnamed"}</TableCell>
+                    <TableCell className="text-gray-300">{user.email ?? "No email"}</TableCell>
+                    <TableCell>
+                      {user.emailVerified ? (
+                        <span className="rounded-full bg-green-500/10 px-2 py-1 text-xs text-green-200">
+                          Verified
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-amber-500/10 px-2 py-1 text-xs text-amber-200">
+                          Pending
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="min-w-[180px]">
+                      <Select
+                        value={
+                          roles.some((role) => role.id === userRoles[user.id])
+                            ? (userRoles[user.id] as string)
+                            : "none"
+                        }
+                        onValueChange={(value) => handleRoleChange(user.id, value)}
+                      >
+                        <SelectTrigger className="h-8 bg-gray-900 border-gray-700 text-white">
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Unassigned</SelectItem>
+                          {roles.map((role) => (
+                            <SelectItem key={role.id} value={role.id}>
+                              {role.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(user)}>
+                        Edit
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        )}
+      </ListPanel>
 
       <Dialog open={Boolean(editingUser)} onOpenChange={(open) => !open && setEditingUser(null)}>
         <DialogContent className="bg-gray-950 border-gray-800 text-white">
@@ -704,6 +710,6 @@ export default function AuthUsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

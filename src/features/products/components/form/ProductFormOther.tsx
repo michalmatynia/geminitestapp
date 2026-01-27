@@ -20,7 +20,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { ProductFormData } from "@/types";
+import { ProductFormData } from "@/features/products/types";
 
 export default function ProductFormOther() {
   const {

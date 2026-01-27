@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { ProductWithImages } from "@/types";
+import type { ProductWithImages } from "@/features/products/types";
 
 interface CreateProductPayload {
   name_en: string;

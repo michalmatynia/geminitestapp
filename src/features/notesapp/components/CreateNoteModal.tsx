@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { Dialog, DialogContent, DialogTitle } from "@/shared/ui/dialog";
+import { AppModal } from "@/shared/ui/app-modal";
 import ModalShell from "@/shared/ui/modal-shell";
 import { Button } from "@/shared/ui/button";
 import { NoteForm } from "./NoteForm";
@@ -47,23 +47,24 @@ export function CreateNoteModal({
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
-        <DialogTitle className="sr-only">Create Note</DialogTitle>
-        <ModalShell title="Create Note" onClose={onClose} header={header}>
-          <NoteForm
-            formRef={formRef}
-            folderTree={folderTree}
-            defaultFolderId={selectedFolderId}
-            availableTags={tags}
-            notebookId={selectedNotebookId}
-            onSuccess={onSuccess}
-            onTagCreated={onTagCreated}
-            folderTheme={folderTheme}
-            onSelectRelatedNote={onSelectRelatedNote}
-          />
-        </ModalShell>
-      </DialogContent>
-    </Dialog>
+    <AppModal
+      open={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+      title="Create Note"
+    >
+      <ModalShell title="Create Note" onClose={onClose} header={header}>
+        <NoteForm
+          formRef={formRef}
+          folderTree={folderTree}
+          defaultFolderId={selectedFolderId}
+          availableTags={tags}
+          notebookId={selectedNotebookId}
+          onSuccess={onSuccess}
+          onTagCreated={onTagCreated}
+          folderTheme={folderTheme}
+          onSelectRelatedNote={onSelectRelatedNote}
+        />
+      </ModalShell>
+    </AppModal>
   );
 }

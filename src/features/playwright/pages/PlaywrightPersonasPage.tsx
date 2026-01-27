@@ -6,7 +6,7 @@ import { ChevronLeftIcon, MonitorPlay, Pencil, Plus, Trash2 } from "lucide-react
 
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
-import { Dialog, DialogContent } from "@/shared/ui/dialog";
+import { AppModal } from "@/shared/ui/app-modal";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import ModalShell from "@/shared/ui/modal-shell";
@@ -300,69 +300,71 @@ export function PlaywrightPersonasPage() {
         </div>
       )}
 
-      <Dialog open={modalOpen} onOpenChange={(open) => !open && closeModal()}>
-        <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
-          <ModalShell
-            title={editingId ? "Edit persona" : "New persona"}
-            onClose={closeModal}
-            footer={
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={closeModal}
-                  disabled={saving}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => void handleSavePersona()}
-                  disabled={saving}
-                >
-                  {saving ? "Saving..." : "Save persona"}
-                </Button>
-              </>
-            }
-          >
-            <div className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <Label className="mb-2 block text-sm font-medium text-gray-200">
-                    Persona name
-                  </Label>
-                  <Input
-                    value={draftName}
-                    onChange={(event) => setDraftName(event.target.value)}
-                    placeholder="Example: Safe desktop headless"
-                  />
-                </div>
-                <div>
-                  <Label className="mb-2 block text-sm font-medium text-gray-200">
-                    Description
-                  </Label>
-                  <Textarea
-                    value={draftDescription}
-                    onChange={(event) =>
-                      setDraftDescription(event.target.value)
-                    }
-                    placeholder="Optional notes for this persona"
-                    className="min-h-[90px]"
-                  />
-                </div>
+      <AppModal
+        open={modalOpen}
+        onOpenChange={(open) => !open && closeModal()}
+        title={editingId ? "Edit persona" : "New persona"}
+      >
+        <ModalShell
+          title={editingId ? "Edit persona" : "New persona"}
+          onClose={closeModal}
+          footer={
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeModal}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={() => void handleSavePersona()}
+                disabled={saving}
+              >
+                {saving ? "Saving..." : "Save persona"}
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label className="mb-2 block text-sm font-medium text-gray-200">
+                  Persona name
+                </Label>
+                <Input
+                  value={draftName}
+                  onChange={(event) => setDraftName(event.target.value)}
+                  placeholder="Example: Safe desktop headless"
+                />
               </div>
-
-              <PlaywrightSettingsForm
-                settings={draftSettings}
-                setSettings={setDraftSettings}
-                showSave={false}
-                title="Persona settings"
-                description="Tune browser behavior, timeouts, and automation pacing."
-              />
+              <div>
+                <Label className="mb-2 block text-sm font-medium text-gray-200">
+                  Description
+                </Label>
+                <Textarea
+                  value={draftDescription}
+                  onChange={(event) =>
+                    setDraftDescription(event.target.value)
+                  }
+                  placeholder="Optional notes for this persona"
+                  className="min-h-[90px]"
+                />
+              </div>
             </div>
-          </ModalShell>
-        </DialogContent>
-      </Dialog>
+
+            <PlaywrightSettingsForm
+              settings={draftSettings}
+              setSettings={setDraftSettings}
+              showSave={false}
+              title="Persona settings"
+              description="Tune browser behavior, timeouts, and automation pacing."
+            />
+          </div>
+        </ModalShell>
+      </AppModal>
     </div>
   );
 }

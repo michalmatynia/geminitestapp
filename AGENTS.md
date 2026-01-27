@@ -35,10 +35,9 @@ src/
     ai-paths/           # AI path runtime + UI
     products/           # Product domain UI + services
   shared/               # Cross-feature UI primitives, components, utils, hooks, types
-    lib/                # Shared runtime helpers (api, db, agent, query-client, transient-recovery)
+    lib/                # Shared runtime helpers (api, db, query-client, transient-recovery)
+    types/              # Shared TS types (cross-feature)
     ui/                 # ShadCN/ui components
-
-  types/                # Shared TS types (source of truth)
 prisma/                 # Prisma schema + migrations
 public/uploads/         # File storage (images, notes)
 ```
@@ -61,7 +60,7 @@ See: `src/features/products/services/product-provider.ts` and repository impleme
   `src/features/jobs/services/productAiService.ts`).
 - **Job workers** for chatbot/agent queues live in `src/features/jobs/workers/`
   (e.g. `chatbotJobQueue.ts`, `agentQueue.ts`).
-- **Agent runtime** lives in `src/shared/lib/agent/` with planning, execution, memory,
+- **Agent runtime** lives in `src/features/agent-runtime/` with planning, execution, memory,
   and tool orchestration. It uses `OLLAMA_BASE_URL` when targeting local models.
 - **Chatbot API** is implemented in `src/app/api/chatbot/route.ts`.
 - **Chatbot feature UI + state** live in `src/features/chatbot/`.
@@ -112,7 +111,7 @@ See: `src/features/products/services/product-provider.ts` and repository impleme
 - **Routes**: thin handlers, Zod-validated inputs, call services/repositories.
 - **Services**: `src/features/*/services` or `src/shared/lib/services` modules, not always classes.
 - **Repositories**: live under feature services folders (e.g. `src/features/*/services/*-repository`).
-- **Types**: primary definitions live in `src/types/`.
+- **Types**: shared definitions live in `src/shared/types/`, with feature-specific types under `src/features/*/types/`.
 - **UI**: ShadCN components are copy-pasted; do not assume external UI packages.
 
 ## Environment Variables (Common)

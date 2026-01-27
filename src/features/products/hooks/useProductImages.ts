@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import type { ImageFileSelection, ProductWithImages } from "@/types";
+import type { ProductWithImages } from "@/features/products/types";
+import type { ImageFileSelection } from "@/shared/types/files";
 import type { ProductImageSlot } from "@/features/products/types/products-ui";
 
 const TOTAL_IMAGE_SLOTS = 15;

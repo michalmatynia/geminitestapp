@@ -30,13 +30,13 @@ interface ApiCatalog extends Omit<Catalog, "description" | "priceGroupIds" | "de
   defaultPriceGroupId: string | null;
 }
 
-import { PriceGroupsSettings } from "@/app/(admin)/admin/products/settings/components/pricing/PriceGroupsSettings";
-import { CatalogsSettings } from "@/app/(admin)/admin/products/settings/components/catalogs/CatalogsSettings";
+import { PriceGroupsSettings } from "@/features/products/components/settings/pricing/PriceGroupsSettings";
+import { CatalogsSettings } from "@/features/products/components/settings/catalogs/CatalogsSettings";
 import { CategoriesSettings } from "@/features/products/components/settings/CategoriesSettings";
 import { TagsSettings } from "@/features/products/components/settings/TagsSettings";
 import { InternationalizationSettings } from "@/features/internationalization/components/InternationalizationSettings";
-import { AiDescriptionSettings } from "@/app/(admin)/admin/products/settings/components/ai/AiDescriptionSettings";
-import { AiTranslationSettings } from "@/app/(admin)/admin/products/settings/components/ai/AiTranslationSettings";
+import { AiDescriptionSettings } from "@/features/products/components/settings/ai/AiDescriptionSettings";
+import { AiTranslationSettings } from "@/features/products/components/settings/ai/AiTranslationSettings";
 import { Button } from "@/shared/ui/button";
 
 // New Modals

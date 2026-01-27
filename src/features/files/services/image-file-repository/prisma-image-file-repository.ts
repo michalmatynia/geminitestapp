@@ -4,7 +4,7 @@ import type {
   ImageFileListFilters,
   ImageFileRecord,
   ImageFileRepository,
-} from "@/types/services/image-file-repository";
+} from "@/features/files/types/services/image-file-repository";
 
 const toRecord = (imageFile: {
   id: string;

@@ -10,6 +10,7 @@ import { Input } from "@/shared/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { useToast } from "@/shared/ui/toast";
 import ModalShell from "@/shared/ui/modal-shell";
+import { AppModal } from "@/shared/ui/app-modal";
 
 type AgentRun = {
   id: string;
@@ -488,16 +489,16 @@ export default function AgentRunsPage() {
         )}
       </div>
       {selectedAgentRunId ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={closeAgentModal}
+        <AppModal
+          open={true}
+          onOpenChange={(open) => !open && closeAgentModal()}
+          title="Agent job details"
         >
-          <div onClick={(event) => event.stopPropagation()}>
-            <ModalShell
-              title="Agent job details"
-              onClose={closeAgentModal}
-              size="xl"
-            >
+          <ModalShell
+            title="Agent job details"
+            onClose={closeAgentModal}
+            size="xl"
+          >
               <Tabs defaultValue="summary" className="w-full">
                 <TabsList className="grid w-full grid-cols-7">
                   <TabsTrigger value="summary">Summary</TabsTrigger>
@@ -1133,8 +1134,7 @@ export default function AgentRunsPage() {
                 </TabsContent>
               </Tabs>
             </ModalShell>
-          </div>
-        </div>
+        </AppModal>
       ) : null}
     </div>
   );

@@ -96,3 +96,19 @@ export type ProductMigrationBatchResult = {
   missingImageFileIds: string[];
   missingCatalogIds: string[];
 };
+
+export type {
+  CatalogRecord,
+  ProductRecord,
+  ProductImageRecord,
+  ProductCatalogRecord,
+  ProductWithImages,
+  PriceGroupWithDetails,
+} from "./records";
+
+export type { ProductFormData } from "./forms";
+export type {
+  ProductDraft,
+  CreateProductDraftInput,
+  UpdateProductDraftInput,
+} from "./drafts";

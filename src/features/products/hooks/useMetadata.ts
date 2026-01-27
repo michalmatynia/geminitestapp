@@ -2,7 +2,7 @@
 
 import { useQuery, useQueries } from "@tanstack/react-query";
 import type { Language } from "@prisma/client";
-import type { CatalogRecord, PriceGroupWithDetails } from "@/types";
+import type { CatalogRecord, PriceGroupWithDetails } from "@/features/products/types";
 import type { ProductCategory, ProductTag, ProductParameter } from "@/features/products/types";
 
 export function useCatalogs() {

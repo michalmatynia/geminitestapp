@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/button";
+import { ListPanel } from "@/shared/ui/list-panel";
 import { deleteBlock, fetchBlocks } from "@/features/cms/api/blocks";
 import type { Block } from "@/features/cms/types";
 
@@ -24,13 +25,16 @@ export default function BlocksPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Blocks</h1>
-        <Button asChild>
-          <Link href="/admin/cms/blocks/create">Create Block</Link>
-        </Button>
-      </div>
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
+      <ListPanel
+        header={
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Blocks</h1>
+            <Button asChild>
+              <Link href="/admin/cms/blocks/create">Create Block</Link>
+            </Button>
+          </div>
+        }
+      >
         <ul>
           {blocks.map((block) => (
             <li key={block.id} className="flex justify-between items-center py-2 border-b border-gray-700">
@@ -41,7 +45,7 @@ export default function BlocksPage() {
             </li>
           ))}
         </ul>
-      </div>
+      </ListPanel>
     </div>
   );
 }

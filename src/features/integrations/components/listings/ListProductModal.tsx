@@ -17,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { ProductWithImages } from "@/types";
+import { ProductWithImages } from "@/features/products/types";
 import type {
   ImageRetryPreset,
   ImageTransformOptions,

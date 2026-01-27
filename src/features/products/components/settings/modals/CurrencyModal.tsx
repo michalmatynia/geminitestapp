@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Dialog, DialogContent } from "@/shared/ui/dialog";
+import { AppModal } from "@/shared/ui/app-modal";
 import ModalShell from "@/shared/ui/modal-shell";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -98,44 +98,51 @@ export function CurrencyModal({
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
-        <ModalShell title={currency ? "Edit Currency" : "Add Currency"} onClose={onClose} header={header} size="md">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="curr-code">Code</Label>
-              <select
-                id="curr-code"
-                className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
-                value={form.code}
-                onChange={(e) => setForm(p => ({ ...p, code: e.target.value }))}
-              >
-                {["PLN", "EUR", "USD", "GBP", "SEK"].map((code) => (
-                  <option key={code} value={code}>{code}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="curr-name">Name</Label>
-              <Input
-                id="curr-name"
-                value={form.name}
-                onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
-                placeholder="e.g. Polish Zloty"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="curr-symbol">Symbol</Label>
-              <Input
-                id="curr-symbol"
-                value={form.symbol}
-                onChange={(e) => setForm(p => ({ ...p, symbol: e.target.value }))}
-                placeholder="e.g. zł"
-              />
-            </div>
+    <AppModal
+      open={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+      title={currency ? "Edit Currency" : "Add Currency"}
+    >
+      <ModalShell
+        title={currency ? "Edit Currency" : "Add Currency"}
+        onClose={onClose}
+        header={header}
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="curr-code">Code</Label>
+            <select
+              id="curr-code"
+              className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
+              value={form.code}
+              onChange={(e) => setForm(p => ({ ...p, code: e.target.value }))}
+            >
+              {["PLN", "EUR", "USD", "GBP", "SEK"].map((code) => (
+                <option key={code} value={code}>{code}</option>
+              ))}
+            </select>
           </div>
-        </ModalShell>
-      </DialogContent>
-    </Dialog>
+          <div className="space-y-2">
+            <Label htmlFor="curr-name">Name</Label>
+            <Input
+              id="curr-name"
+              value={form.name}
+              onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
+              placeholder="e.g. Polish Zloty"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="curr-symbol">Symbol</Label>
+            <Input
+              id="curr-symbol"
+              value={form.symbol}
+              onChange={(e) => setForm(p => ({ ...p, symbol: e.target.value }))}
+              placeholder="e.g. zł"
+            />
+          </div>
+        </div>
+      </ModalShell>
+    </AppModal>
   );
 }

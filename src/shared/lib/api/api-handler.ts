@@ -9,7 +9,7 @@ import type {
   ApiHandlerContext,
   ApiRouteHandler,
   ApiRouteHandlerWithParams,
-} from "@/types/api";
+} from "@/shared/types/api";
 
 /**
  * Wraps an API route handler with automatic error handling, logging, and request tracking.

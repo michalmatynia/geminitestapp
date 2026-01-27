@@ -1,4 +1,4 @@
-import type { ProductDraft, CreateProductDraftInput, UpdateProductDraftInput } from "@/types/drafts";
+import type { ProductDraft, CreateProductDraftInput, UpdateProductDraftInput } from "@/features/products/types/drafts";
 import type { ProductParameterValue } from "@/features/products/types";
 import { randomUUID } from "crypto";
 import { Prisma } from "@prisma/client";

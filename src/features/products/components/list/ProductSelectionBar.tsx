@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { CheckSquare, Settings2, Trash2, Store } from "lucide-react";
-import type { ProductWithImages } from "@/types";
+import type { ProductWithImages } from "@/features/products/types";
 import type { RowSelectionState } from "@tanstack/react-table";
 
 interface ProductSelectionBarProps {

@@ -17,7 +17,7 @@ import {
 } from "@/shared/ui/select";
 import { logger } from "@/shared/utils/logger";
 import { cn } from "@/shared/utils";
-import { ProductFormData } from "@/types";
+import { ProductFormData } from "@/features/products/types";
 import { useToast } from "@/shared/ui/toast";
 import type { ProductAiJob } from "@/shared/types/jobs";
 import type {

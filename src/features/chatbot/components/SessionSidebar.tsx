@@ -3,7 +3,7 @@
 import React from "react";
 import { Plus, Trash2, MessageSquare } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import type { ChatSession } from "@/types/chatbot";
+import type { ChatSession } from "@/shared/types/chatbot";
 
 interface SessionSidebarProps {
   sessions: ChatSession[];

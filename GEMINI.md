@@ -77,9 +77,9 @@ src/
     admin/              # Admin shell, navigation, admin-only pages
     playwright/         # Playwright personas and shared automation settings
   shared/               # Cross-feature UI primitives, components, utils, hooks, types
-    lib/                # Shared runtime helpers (api, db, agent, query-client, transient-recovery)
+    lib/                # Shared runtime helpers (api, db, query-client, transient-recovery)
+    types/              # Shared TS types (cross-feature)
     ui/                 # ShadCN/ui components
-  types/                # Shared TS types (source of truth)
 
 prisma/                 # Schema + migrations
 public/uploads/         # File storage
@@ -102,7 +102,7 @@ See `src/features/products/services/product-provider.ts` and the repository impl
   `src/features/products/services/aiTranslationService.ts`, plus product AI job processing in
   `src/features/jobs/workers/productAiQueue.ts` (orchestrated by
   `src/features/jobs/services/productAiService.ts`)
-- **Agent runtime**: `src/shared/lib/agent/` (planning, execution, memory, tool calls)
+- **Agent runtime**: `src/features/agent-runtime/` (planning, execution, memory, tool calls)
 - **Chatbot feature**: `src/features/chatbot/` (UI, hooks, helpers)
 - **Agent creator feature**: `src/features/agentcreator/` (agent settings UI)
 - **Agent run API**: `src/app/api/agentcreator/agent/*` (delegates to `src/features/agentcreator/api/agent/*`)
@@ -127,9 +127,9 @@ This is the internal agent stack used by the chatbot and automation flows.
 ### Lifecycle (Queue -> Engine)
 
 - Queue loop: `src/features/jobs/workers/agentQueue.ts` (`startAgentQueue`, `processAgentQueue`)
-- Control loop: `src/shared/lib/agent/core/engine.ts` (`runAgentControlLoop`)
-- Run context assembly: `src/shared/lib/agent/execution/context.ts`
-- Plan initialization: `src/shared/lib/agent/execution/plan.ts`
+- Control loop: `src/features/agent-runtime/core/engine.ts` (`runAgentControlLoop`)
+- Run context assembly: `src/features/agent-runtime/execution/context.ts`
+- Plan initialization: `src/features/agent-runtime/execution/plan.ts`
 
 The queue pulls from `chatbotAgentRun` when the Prisma tables exist and
 auto-resumes stuck runs. The engine orchestrates planning, tool execution,
@@ -137,43 +137,43 @@ memory, and finalization.
 
 ### Planning Layer
 
-- LLM planning: `src/shared/lib/agent/planning/llm.ts`
-- Decision utils: `src/shared/lib/agent/planning/utils.ts`
+- LLM planning: `src/features/agent-runtime/planning/llm.ts`
+- Decision utils: `src/features/agent-runtime/planning/utils.ts`
 
 The planner selects task type, decomposes steps, and decides whether to invoke
 tools.
 
 ### Execution Layer
 
-- Step loop: `src/shared/lib/agent/execution/step-runner.ts`
-- Loop guard: `src/shared/lib/agent/execution/loop-guard.ts`
-- Finalize + verification: `src/shared/lib/agent/execution/finalize.ts`
+- Step loop: `src/features/agent-runtime/execution/step-runner.ts`
+- Loop guard: `src/features/agent-runtime/execution/loop-guard.ts`
+- Finalize + verification: `src/features/agent-runtime/execution/finalize.ts`
 
 ### Memory Layer
 
-- Session + long-term memory: `src/shared/lib/agent/memory/index.ts`
-- Checkpointing: `src/shared/lib/agent/memory/checkpoint.ts`
-- Memory context assembly: `src/shared/lib/agent/memory/context.ts`
+- Session + long-term memory: `src/features/agent-runtime/memory/index.ts`
+- Checkpointing: `src/features/agent-runtime/memory/checkpoint.ts`
+- Memory context assembly: `src/features/agent-runtime/memory/context.ts`
 
 Memory storage is backed by Prisma tables when available
 (`agentMemoryItem`, `agentLongTermMemory`).
 
 ### Tools & Browsing
 
-- Tool router: `src/shared/lib/agent/tools/index.ts`
-- LLM helper tools: `src/shared/lib/agent/tools/llm/*`
-- Playwright automation: `src/shared/lib/agent/tools/playwright/*`
-- Search integration: `src/shared/lib/agent/tools/search/index.ts`
-- Browsing context: `src/shared/lib/agent/browsing/context.ts`
+- Tool router: `src/features/agent-runtime/tools/index.ts`
+- LLM helper tools: `src/features/agent-runtime/tools/llm/*`
+- Playwright automation: `src/features/agent-runtime/tools/playwright/*`
+- Search integration: `src/features/agent-runtime/tools/search/index.ts`
+- Browsing context: `src/features/agent-runtime/browsing/context.ts`
 
 Playwright tooling handles navigation, extraction, and snapshotting. Search
 can be used to find candidates before browsing.
 
 ### Audit & Approvals
 
-- Audit logging: `src/shared/lib/agent/audit/index.ts`
-- Approval gating: `src/shared/lib/agent/audit/gate.ts`
-- Human approval workflows: `src/shared/lib/agent/audit/approvals.ts`
+- Audit logging: `src/features/agent-runtime/audit/index.ts`
+- Approval gating: `src/features/agent-runtime/audit/gate.ts`
+- Human approval workflows: `src/features/agent-runtime/audit/approvals.ts`
 
 Audit logs and browser artifacts are stored in Prisma tables when present
 (`agentAuditLog`, `agentBrowserLog`, `agentBrowserSnapshot`).
@@ -216,13 +216,13 @@ Queue (src/features/jobs/workers/agentQueue.ts) ──> Engine (core/engine.ts)
    - `chatbotAgentRun.logLines` captures run-level events.  
    - `agentAuditLog` tracks granular events and errors.
 4. **Validate tool execution**  
-   - `src/shared/lib/agent/tools/index.ts` is the router.  
+   - `src/features/agent-runtime/tools/index.ts` is the router.  
    - Playwright failures are often logged in `agentBrowserLog`.
 5. **Check memory pipelines**  
    - Memory validation uses `OLLAMA_BASE_URL`.  
-   - See `src/shared/lib/agent/memory/index.ts` for failure paths.
+   - See `src/features/agent-runtime/memory/index.ts` for failure paths.
 6. **Approval gate issues**  
-   - `src/shared/lib/agent/audit/gate.ts` determines human approval requirements.  
+   - `src/features/agent-runtime/audit/gate.ts` determines human approval requirements.  
    - If a run stalls, check approval decisions + UI workflow.
 7. **Model selection mismatches**  
    - `prepareRunContext` sets planner/self-check/loop guard models.  

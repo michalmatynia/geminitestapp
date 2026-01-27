@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Dialog, DialogContent } from "@/shared/ui/dialog";
+import { AppModal } from "@/shared/ui/app-modal";
 import ModalShell from "@/shared/ui/modal-shell";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -198,15 +198,23 @@ export function CatalogModal({
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
-        <ModalShell title={catalog ? "Edit Catalog" : "Create Catalog"} onClose={onClose} header={header} size="lg">
-          <div className="space-y-6">
-            {error && (
-              <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200">
-                {error}
-              </div>
-            )}
+    <AppModal
+      open={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+      title={catalog ? "Edit Catalog" : "Create Catalog"}
+    >
+      <ModalShell
+        title={catalog ? "Edit Catalog" : "Create Catalog"}
+        onClose={onClose}
+        header={header}
+        size="lg"
+      >
+        <div className="space-y-6">
+          {error && (
+            <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200">
+              {error}
+            </div>
+          )}
 
             <div className="grid gap-4">
               <div className="space-y-2">
@@ -356,9 +364,8 @@ export function CatalogModal({
                 </div>
               )}
             </div>
-          </div>
-        </ModalShell>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </ModalShell>
+    </AppModal>
   );
 }

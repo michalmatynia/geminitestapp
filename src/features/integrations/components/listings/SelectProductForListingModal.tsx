@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/shared/ui/select";
 import ModalShell from "@/shared/ui/modal-shell";
-import type { ProductWithImages } from "@/types";
+import type { ProductWithImages } from "@/features/products/types";
 import type {
   ImageRetryPreset,
   ImageTransformOptions,

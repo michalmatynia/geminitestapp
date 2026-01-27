@@ -4,7 +4,7 @@ import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { productService } from "@/features/products/services/productService";
 import ProductCard from "@/features/products/components/ProductCard";
-import type { ProductWithImages } from "@/types";
+import type { ProductWithImages } from "@/features/products/types";
 
 export const dynamic = "force-dynamic";
 

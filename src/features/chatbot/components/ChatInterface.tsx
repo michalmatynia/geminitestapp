@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect } from "react";
-import { ChatMessage } from "@/types/chatbot";
+import { ChatMessage } from "@/shared/types/chatbot";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 

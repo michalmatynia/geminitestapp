@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/button";
+import { ListPanel } from "@/shared/ui/list-panel";
 import { deleteSlug, fetchSlugs } from "@/features/cms/api/slugs";
 import type { Slug } from "@/features/cms/types";
 
@@ -30,13 +31,16 @@ export default function SlugsPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Slugs</h1>
-        <Button asChild>
-          <Link href="/admin/cms/slugs/create">Create Slug</Link>
-        </Button>
-      </div>
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
+      <ListPanel
+        header={
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Slugs</h1>
+            <Button asChild>
+              <Link href="/admin/cms/slugs/create">Create Slug</Link>
+            </Button>
+          </div>
+        }
+      >
         <ul>
           {slugs.map((slug) => (
             <li
@@ -57,7 +61,7 @@ export default function SlugsPage() {
             </li>
           ))}
         </ul>
-      </div>
+      </ListPanel>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ChatbotDebugState } from "@/types/chatbot";
+import { ChatbotDebugState } from "@/shared/types/chatbot";
 import { AgentAuditLog } from "@prisma/client";
 
 interface LogEntry {

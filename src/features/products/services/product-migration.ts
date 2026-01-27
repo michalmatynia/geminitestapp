@@ -1,7 +1,8 @@
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import type { WithId } from "mongodb";
-import type { CatalogRecord, ImageFileRecord } from "@/types";
+import type { CatalogRecord } from "@/features/products/types";
+import type { ImageFileRecord } from "@/shared/types/files";
 import type { ProductMigrationDirection as MigrationDirection, ProductMigrationBatchResult as MigrationBatchResult } from "@/features/products/types";
 
 export type { MigrationDirection };

@@ -23,12 +23,12 @@ import {
 
 import type {
   CatalogRecord,
-  ImageFileSelection,
   ProductWithImages,
   PriceGroupWithDetails,
   ProductFormData,
-} from "@/types";
-import type { ProductDraft } from "@/types/drafts";
+  ProductDraft,
+} from "@/features/products/types";
+import type { ImageFileSelection } from "@/shared/types/files";
 import type { ProductCategory, ProductTag, ProductParameter, ProductParameterValue } from "@/features/products/types";
 import {
   ProductImageSlot,

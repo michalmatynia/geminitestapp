@@ -5,10 +5,11 @@ import type { ProfilerOnRenderCallback } from "react";
 import dynamic from "next/dynamic";
 import { DataTable } from "@/shared/components/data-table";
 import { Button } from "@/shared/ui/button";
+import { ListPanel } from "@/shared/ui/list-panel";
 import type { ColumnDef, RowSelectionState, OnChangeFn } from "@tanstack/react-table";
-import type { ProductDraft } from "@/types/drafts";
+import type { ProductDraft } from "@/features/products/types/drafts";
 import type { Catalog } from "@/features/products/types";
-import type { PriceGroupWithDetails, ProductWithImages } from "@/types";
+import type { PriceGroupWithDetails, ProductWithImages } from "@/features/products/types";
 
 const ProductListHeader = dynamic(
   () =>
@@ -258,38 +259,50 @@ export const ProductListPanel = memo(function ProductListPanel({
     ]
   );
 
+  const alerts = useMemo(() => {
+    if (!loadError && !actionError) return null;
+    return (
+      <>
+        {loadError && (
+          <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {loadError}
+          </div>
+        )}
+        {actionError && (
+          <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {actionError}
+            <Button
+              onClick={onDismissActionError}
+              className="ml-4 bg-transparent text-red-200 hover:bg-red-500/20"
+            >
+              Dismiss
+            </Button>
+          </div>
+        )}
+      </>
+    );
+  }, [actionError, loadError, onDismissActionError]);
+
   return (
-    <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-      <ProductListHeader {...headerProps} />
-      {loadError && (
-        <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-          {loadError}
-        </div>
-      )}
-      {actionError && (
-        <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-          {actionError}
-          <Button
-            onClick={onDismissActionError}
-            className="ml-4 bg-transparent text-red-200 hover:bg-red-500/20"
-          >
-            Dismiss
-          </Button>
-        </div>
-      )}
-      <ProductFilters {...filtersProps} />
-      <ProductSelectionActions
-        data={data}
-        rowSelection={rowSelection}
-        setRowSelection={setRowSelection}
-        onSelectAllGlobal={onSelectAllGlobal}
-        loadingGlobal={loadingGlobal}
-        onDeleteSelected={onDeleteSelected}
-        onAddToMarketplace={onAddToMarketplace}
-      />
+    <ListPanel
+      header={<ProductListHeader {...headerProps} />}
+      alerts={alerts}
+      filters={<ProductFilters {...filtersProps} />}
+      actions={
+        <ProductSelectionActions
+          data={data}
+          rowSelection={rowSelection}
+          setRowSelection={setRowSelection}
+          onSelectAllGlobal={onSelectAllGlobal}
+          loadingGlobal={loadingGlobal}
+          onDeleteSelected={onDeleteSelected}
+          onAddToMarketplace={onAddToMarketplace}
+        />
+      }
+    >
       <Profiler id="ProductsTable" onRender={handleProductsTableRender}>
         <DataTable {...tableProps} />
       </Profiler>
-    </div>
+    </ListPanel>
   );
 });

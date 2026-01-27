@@ -26,7 +26,7 @@ import {
 import { extractBaseImageUrls, mapBaseProduct } from "@/features/integrations/services/imports/base-mapper";
 import { productCreateSchema } from "@/features/products/validations";
 import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ProductWithImages } from "@/types";
+import type { ProductWithImages } from "@/features/products/types";
 
 export const runtime = "nodejs";
 

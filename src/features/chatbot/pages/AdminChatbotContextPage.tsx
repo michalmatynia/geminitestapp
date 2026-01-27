@@ -9,6 +9,7 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
 import ModalShell from "@/shared/ui/modal-shell";
+import { AppModal } from "@/shared/ui/app-modal";
 import { useToast } from "@/shared/ui/toast";
 import { Label } from "@/shared/ui/label";
 import { Checkbox } from "@/shared/ui/checkbox";
@@ -162,13 +163,17 @@ function ChatbotContextPageInner() {
     setIsModalOpen(true);
   };
 
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setModalDraft(null);
+    setTagDraft("");
+  };
+
   const handleDeleteContext = (id: string) => {
     setContexts((prev) => prev.filter((item) => item.id !== id));
     setActiveIds((prev) => prev.filter((item) => item !== id));
     if (modalDraft?.id === id) {
-      setIsModalOpen(false);
-      setModalDraft(null);
-      setTagDraft("");
+      closeModal();
     }
   };
 
@@ -194,9 +199,7 @@ function ChatbotContextPageInner() {
       const without = prev.filter((item) => item !== modalDraft.id);
       return modalDraft.active ? [...without, modalDraft.id] : without;
     });
-    setIsModalOpen(false);
-    setModalDraft(null);
-    setTagDraft("");
+    closeModal();
   };
 
   const handlePdfUpload = async (file: File) => {
@@ -472,60 +475,52 @@ function ChatbotContextPageInner() {
         </div>
       </div>
       {isModalOpen && modalDraft ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={() => {
-            setIsModalOpen(false);
-            setModalDraft(null);
-            setTagDraft("");
-          }}
+        <AppModal
+          open={isModalOpen}
+          onOpenChange={(open) => !open && closeModal()}
+          title={
+            contexts.some((item) => item.id === modalDraft.id)
+              ? "Edit context"
+              : "New context"
+          }
         >
-          <div onClick={(event) => event.stopPropagation()}>
-            <ModalShell
-              title={
-                contexts.some((item) => item.id === modalDraft.id)
-                  ? "Edit context"
-                  : "New context"
-              }
-              onClose={() => {
-                setIsModalOpen(false);
-                setModalDraft(null);
-                setTagDraft("");
-              }}
-              footer={
-                <>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setIsModalOpen(false);
-                      setModalDraft(null);
-                      setTagDraft("");
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="button" onClick={handleSaveDraft}>
-                    Save context
-                  </Button>
-                </>
-              }
-            >
-              <div className="space-y-4">
-                <div>
-                  <Label className="mb-2 block text-sm font-medium text-gray-200">
-                    Title
-                  </Label>
-                  <Input
-                    value={modalDraft.title}
-                    onChange={(event) =>
-                      setModalDraft((prev) =>
-                        prev ? { ...prev, title: event.target.value } : prev
-                      )
-                    }
-                    disabled={saving}
-                  />
-                </div>
+          <ModalShell
+            title={
+              contexts.some((item) => item.id === modalDraft.id)
+                ? "Edit context"
+                : "New context"
+            }
+            onClose={closeModal}
+            footer={
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={closeModal}
+                >
+                  Cancel
+                </Button>
+                <Button type="button" onClick={handleSaveDraft}>
+                  Save context
+                </Button>
+              </>
+            }
+          >
+            <div className="space-y-4">
+              <div>
+                <Label className="mb-2 block text-sm font-medium text-gray-200">
+                  Title
+                </Label>
+                <Input
+                  value={modalDraft.title}
+                  onChange={(event) =>
+                    setModalDraft((prev) =>
+                      prev ? { ...prev, title: event.target.value } : prev
+                    )
+                  }
+                  disabled={saving}
+                />
+              </div>
                 <div>
                   <Label className="mb-2 block text-sm font-medium text-gray-200">
                     Tags
@@ -629,10 +624,9 @@ function ChatbotContextPageInner() {
                   />
                   Active in global context
                 </Label>
-              </div>
-            </ModalShell>
-          </div>
-        </div>
+            </div>
+          </ModalShell>
+        </AppModal>
       ) : null}
     </div>
   );

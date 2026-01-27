@@ -28,7 +28,7 @@ import {
   SelectValue,
 } from "@/shared/ui/select";
 import type { Catalog } from "@/features/products/types";
-import type { ProductDraft } from "@/types/drafts";
+import type { ProductDraft } from "@/features/products/types/drafts";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   package: Package,
@@ -86,7 +86,7 @@ export const ProductListHeader = memo(function ProductListHeader({
   catalogs,
 }: ProductListHeaderProps) {
   return (
-    <div className="mb-6 space-y-4">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex flex-wrap items-center gap-2">

@@ -15,8 +15,8 @@ import {
   SelectValue,
 } from "@/shared/ui/select";
 import { useToast } from "@/shared/ui/toast";
-import { ProductDraft, CreateProductDraftInput } from "@/types/drafts";
-import type { CatalogRecord } from "@/types";
+import { ProductDraft, CreateProductDraftInput } from "@/features/products/types/drafts";
+import type { CatalogRecord } from "@/features/products/types";
 import type { ProductCategory, ProductTag, ProductParameter, ProductParameterValue } from "@/features/products/types";
 import {
   Package,

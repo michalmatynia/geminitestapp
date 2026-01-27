@@ -1,4 +1,4 @@
-import { ImageFileRecord, ImageFileSelection } from "@/types/index";
+import { ImageFileRecord, ImageFileSelection } from "@/shared/types/files";
 
 export type ProductImageSlot =
   | {

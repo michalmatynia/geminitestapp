@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Dialog, DialogContent } from "@/shared/ui/dialog";
+import { AppModal } from "@/shared/ui/app-modal";
 import ModalShell from "@/shared/ui/modal-shell";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -113,59 +113,66 @@ export function LanguageModal({
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
-        <ModalShell title={language ? "Edit Language" : "Add Language"} onClose={onClose} header={header} size="md">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="lang-code">Code</Label>
-              <Input
-                id="lang-code"
-                value={form.code}
-                onChange={(e) => setForm(p => ({ ...p, code: e.target.value.toUpperCase() }))}
-                placeholder="e.g. EN"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lang-name">Name</Label>
-              <Input
-                id="lang-name"
-                value={form.name}
-                onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
-                placeholder="e.g. English"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lang-native">Native Name</Label>
-              <Input
-                id="lang-native"
-                value={form.nativeName}
-                onChange={(e) => setForm(p => ({ ...p, nativeName: e.target.value }))}
-                placeholder="e.g. English"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Associated Countries</Label>
-              <div className="mt-2 grid grid-cols-2 gap-2 max-h-48 overflow-y-auto rounded-md border border-gray-800 bg-gray-900/50 p-3">
-                {countries.map((country) => (
-                  <Label
-                    key={country.id}
-                    className="flex items-center gap-2 cursor-pointer hover:bg-gray-800 p-1.5 rounded transition-colors"
-                  >
-                    <Checkbox
-                      checked={selectedCountryIds.includes(country.id)}
-                      onCheckedChange={() => toggleCountry(country.id)}
-                    />
-                    <span className="text-xs text-gray-200">
-                      {country.name} ({country.code})
-                    </span>
-                  </Label>
-                ))}
-              </div>
+    <AppModal
+      open={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+      title={language ? "Edit Language" : "Add Language"}
+    >
+      <ModalShell
+        title={language ? "Edit Language" : "Add Language"}
+        onClose={onClose}
+        header={header}
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="lang-code">Code</Label>
+            <Input
+              id="lang-code"
+              value={form.code}
+              onChange={(e) => setForm(p => ({ ...p, code: e.target.value.toUpperCase() }))}
+              placeholder="e.g. EN"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="lang-name">Name</Label>
+            <Input
+              id="lang-name"
+              value={form.name}
+              onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
+              placeholder="e.g. English"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="lang-native">Native Name</Label>
+            <Input
+              id="lang-native"
+              value={form.nativeName}
+              onChange={(e) => setForm(p => ({ ...p, nativeName: e.target.value }))}
+              placeholder="e.g. English"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Associated Countries</Label>
+            <div className="mt-2 grid grid-cols-2 gap-2 max-h-48 overflow-y-auto rounded-md border border-gray-800 bg-gray-900/50 p-3">
+              {countries.map((country) => (
+                <Label
+                  key={country.id}
+                  className="flex items-center gap-2 cursor-pointer hover:bg-gray-800 p-1.5 rounded transition-colors"
+                >
+                  <Checkbox
+                    checked={selectedCountryIds.includes(country.id)}
+                    onCheckedChange={() => toggleCountry(country.id)}
+                  />
+                  <span className="text-xs text-gray-200">
+                    {country.name} ({country.code})
+                  </span>
+                </Label>
+              ))}
             </div>
           </div>
-        </ModalShell>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </ModalShell>
+    </AppModal>
   );
 }

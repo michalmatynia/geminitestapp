@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Dialog, DialogContent } from "@/shared/ui/dialog";
+import { AppModal } from "@/shared/ui/app-modal";
 import ModalShell from "@/shared/ui/modal-shell";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -109,60 +109,67 @@ export function CountryModal({
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
-        <ModalShell title={country ? "Edit Country" : "Add Country"} onClose={onClose} header={header} size="md">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="country-code">Code</Label>
-              <select
-                id="country-code"
-                className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
-                value={form.code}
-                onChange={(e) => {
-                  const sel = countryCodeOptions.find(o => o.code === e.target.value);
-                  setForm({ code: e.target.value, name: sel?.name ?? "" });
-                }}
-              >
-                {countryCodeOptions.map((opt) => (
-                  <option key={opt.code} value={opt.code}>{opt.code} · {opt.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="country-name">Name</Label>
-              <Input
-                id="country-name"
-                value={form.name}
-                onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Associated Currencies</Label>
-              {loadingCurrencies ? (
-                <p className="text-xs text-gray-500">Loading currencies...</p>
-              ) : (
-                <div className="mt-2 grid grid-cols-2 gap-2 max-h-48 overflow-y-auto rounded-md border border-gray-800 bg-gray-900/50 p-3">
-                  {currencyOptions.map((curr) => (
-                    <Label
-                      key={curr.id}
-                      className="flex items-center gap-2 cursor-pointer hover:bg-gray-800 p-1.5 rounded transition-colors"
-                    >
-                      <Checkbox
-                        checked={selectedCurrencyIds.includes(curr.id)}
-                        onCheckedChange={() => toggleCurrency(curr.id)}
-                      />
-                      <span className="text-xs text-gray-200">
-                        {curr.code} ({curr.name})
-                      </span>
-                    </Label>
-                  ))}
-                </div>
-              )}
-            </div>
+    <AppModal
+      open={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+      title={country ? "Edit Country" : "Add Country"}
+    >
+      <ModalShell
+        title={country ? "Edit Country" : "Add Country"}
+        onClose={onClose}
+        header={header}
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="country-code">Code</Label>
+            <select
+              id="country-code"
+              className="w-full rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-white"
+              value={form.code}
+              onChange={(e) => {
+                const sel = countryCodeOptions.find(o => o.code === e.target.value);
+                setForm({ code: e.target.value, name: sel?.name ?? "" });
+              }}
+            >
+              {countryCodeOptions.map((opt) => (
+                <option key={opt.code} value={opt.code}>{opt.code} · {opt.name}</option>
+              ))}
+            </select>
           </div>
-        </ModalShell>
-      </DialogContent>
-    </Dialog>
+          <div className="space-y-2">
+            <Label htmlFor="country-name">Name</Label>
+            <Input
+              id="country-name"
+              value={form.name}
+              onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Associated Currencies</Label>
+            {loadingCurrencies ? (
+              <p className="text-xs text-gray-500">Loading currencies...</p>
+            ) : (
+              <div className="mt-2 grid grid-cols-2 gap-2 max-h-48 overflow-y-auto rounded-md border border-gray-800 bg-gray-900/50 p-3">
+                {currencyOptions.map((curr) => (
+                  <Label
+                    key={curr.id}
+                    className="flex items-center gap-2 cursor-pointer hover:bg-gray-800 p-1.5 rounded transition-colors"
+                  >
+                    <Checkbox
+                      checked={selectedCurrencyIds.includes(curr.id)}
+                      onCheckedChange={() => toggleCurrency(curr.id)}
+                    />
+                    <span className="text-xs text-gray-200">
+                      {curr.code} ({curr.name})
+                    </span>
+                  </Label>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </ModalShell>
+    </AppModal>
   );
 }

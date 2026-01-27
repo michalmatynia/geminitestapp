@@ -1,4 +1,4 @@
-import type { ChatbotSettingsPayload } from "@/types/chatbot";
+import type { ChatbotSettingsPayload } from "@/shared/types/chatbot";
 import { DEFAULT_AGENT_SETTINGS } from "@/features/agentcreator/utils/constants";
 
 export const CHATBOT_SETTINGS_KEY = "default";

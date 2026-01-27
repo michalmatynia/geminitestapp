@@ -1,38 +1,6 @@
 1. App structure → run a code organisation and segmentation strategy
 
-* I would like to continue restructuring my website. I would like to run deep analysis of my Notes APP and  move my Notes App
-  section into src/features/notesapp/* (where only domain feature: UI + state + hooks + types + api will be locates), but also scan for shared elements in my note app  and move them to src/shared/* (only related to truly cross-feature: UI primitives, utils, hooks, types) and leave the src/app/* routing, providers, bootstrapping. Also, inside features/notesapp I want the following segmentaion.  components/ (only feature-specific UI), pages/ (route-level containers), hooks/ (feature hooks), validations/ (for feature related zod validators), api/  (requests, query keys), types/ (local types + re-exports), utils/ (feature helpers). All types from notesapp that are shared with other features or can be shared, move over to src/shared/types/
-
-
-## Error Type
-Console Error
-
-## Error Message
-./middleware.ts:2:1
-Module not found: Can't resolve '@/lib/auth.config'
-  1 | import NextAuth from "next-auth";
-> 2 | import { authConfig } from "@/lib/auth.config";
-    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  3 |
-  4 | export default NextAuth(authConfig).auth;
-  5 |
-
-Import map: aliased to relative './src/lib/auth.config' inside of [project]/
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-    at <unknown> (Error: ./middleware.ts:2:1)
-    at createConsoleError (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_f3530cac._.js:2199:71)
-    at handleConsoleError (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_f3530cac._.js:2980:54)
-    at console.error (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_f3530cac._.js:3124:57)
-    at handleErrors (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_client_17643121._.js:11479:21)
-    at processMessage (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_client_17643121._.js:11542:21)
-    at WebSocket.handleMessage (file:///Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/static/chunks/node_modules_next_dist_client_17643121._.js:10912:52)
-
-Next.js version: 16.1.2 (Turbopack)
-
-do restructuring src/shared/lib/agent and create a new folder src/features/agent-runtime and restructure everything pertaining to agent runtime.
+* do restructuring src/shared/lib/agent and create a new folder src/features/agent-runtime and restructure everything pertaining to agent runtime.
 
 * do the same restructuring for my products importer and exporter. products importer and exporter should be treated as a generic data import export module and moved to a separate feature
 
@@ -42,17 +10,23 @@ do restructuring src/shared/lib/agent and create a new folder src/features/agent
 
 * run through src/shared/lib/utils and assign utilites either to src/shared/utils or their respective localised folders in features.
 
-src/app/* (only routing, providers, bootstrapping)
+* src/app/* (only routing, providers, bootstrapping)
  and app/(routes)/<NAMEOFSECTION>/* should contain only page.tsx, layout.tsx, loading.tsx, error.tsx and wiring, move other files to their respective localised features or shared folder  as everything else (components, hooks, queries, types) lives in features/<NAMEOFSECTION>/*
 
+* run through src/types designate their functions and distribute them into localised types folders in their respective features or a shared/types folder
 
+* unify components (like the list component, modals) and types
+* unify list component using Product list component as a reference, all list components should stem from the product list
+  component (although with their own flavours).
+* do the same for modals and unify modal component using Product modal component as a reference, all modal components should stem from the product modal
+  component (although with their own flavours).
 
-unify components (like the list component, modals) and types
-continue with restructuring and do stricter separation
+do another restructure and move drafter away from admin into its own separate feature
 
+continue with features restructuring and even stricter separation
+
+do a deep segmentation of node-config-dialog.tsx component into smaller thematic components, the file is huge
 expose a single point of entry
-
-src/app/api ? ask if it's good to have that here or is it better to redistribute
 
 ---done
 
@@ -149,7 +123,7 @@ UI primitive (Button-ish, Modal-ish) → shared/ui
 
 Composable pattern (SearchBar, Pagination, FilterPanel) → shared/components
 
-Feature widget (ProductCard, ProductGrid, ProductEditor) → stay in features/products
+Feature widget (for example ProductCard, ProductGrid, ProductEditor) → stay in features/<NAMEOFSECTION>
 
 Quick tests for “should be shared”:
 
@@ -193,7 +167,7 @@ Memo only where it helps:
 
 add React.memo to hot leaf components with stable props
 
-5) RSC vs Client boundaries (server-only / client-only)
+5) RSC vs Client boundaries (server-only / client-only) - NOT NECESSARY
 
 Make boundaries explicit so you never accidentally ship DB/LLM code to the client:
 
@@ -220,7 +194,7 @@ look for prop drilling causing wide rerenders
 look for “index barrel causing circular deps” or slow builds
 
 
-7) Mongo as primary DB: store/repository + contract
+7) Mongo as primary DB: store/repository + contract - DONE
 
 Define a domain contract and implement providers behind it:
 
@@ -264,11 +238,11 @@ Routes/actions should call services, not the DB directly.
 
 Standardize data access:
 
-features/products/queries/keys.ts (key factory)
+features/<NAMEOFSECTION>/queries/keys.ts (key factory)
 
-features/products/queries/useProducts.ts
+features/<NAMEOFSECTION>/queries/use<NAMEOFSECTION>.ts
 
-features/products/mutations/useUpdateProduct.ts
+features/<NAMEOFSECTION>/mutations/useUpdate<NAMEOFSECTION>.ts
 
 Rule: no stringly-typed query keys inside components.
 

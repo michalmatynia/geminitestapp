@@ -21,7 +21,7 @@ import { SessionModal } from "./SessionModal";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import ModalShell from "@/shared/ui/modal-shell";
-import { Dialog, DialogContent } from "@/shared/ui/dialog";
+import { AppModal } from "@/shared/ui/app-modal";
 import Link from "next/link";
 import { Label } from "@/shared/ui/label";
 import {
@@ -259,18 +259,25 @@ export function IntegrationModal({
   );
 
   return (
-    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
-        <ModalShell title={`${activeIntegration.name} Integration`} onClose={onClose} header={header}>
-          <div className="mb-4">
-            <p className="text-sm text-gray-400">
-              {isBaselinker
-                ? "Manage connections and warehouse sync settings."
-                : isTradera
-                ? "Manage connections via browser automation (Playwright)."
-                : "Manage connections and marketplace API settings."}
-            </p>
-          </div>
+    <AppModal
+      open={true}
+      onOpenChange={(open) => !open && onClose()}
+      title={`${activeIntegration.name} Integration`}
+    >
+      <ModalShell
+        title={`${activeIntegration.name} Integration`}
+        onClose={onClose}
+        header={header}
+      >
+        <div className="mb-4">
+          <p className="text-sm text-gray-400">
+            {isBaselinker
+              ? "Manage connections and warehouse sync settings."
+              : isTradera
+              ? "Manage connections via browser automation (Playwright)."
+              : "Manage connections and marketplace API settings."}
+          </p>
+        </div>
 
           <Tabs defaultValue="connections" value={activeTab} onValueChange={setActiveTab}>
             <TabsList
@@ -558,12 +565,11 @@ export function IntegrationModal({
           />
         )}
         
-        {showPlaywrightSaved && (
-          <div className="fixed right-6 top-6 z-[200] rounded-md border border-emerald-400/40 bg-emerald-500/20 px-3 py-2 text-xs font-medium text-emerald-100 shadow-lg">
-            Playwright settings saved
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+      {showPlaywrightSaved && (
+        <div className="fixed right-6 top-6 z-[200] rounded-md border border-emerald-400/40 bg-emerald-500/20 px-3 py-2 text-xs font-medium text-emerald-100 shadow-lg">
+          Playwright settings saved
+        </div>
+      )}
+    </AppModal>
   );
 }

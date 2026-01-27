@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Dialog, DialogContent } from "@/shared/ui/dialog";
+import { AppModal } from "@/shared/ui/app-modal";
 import ModalShell from "@/shared/ui/modal-shell";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -141,17 +141,25 @@ export function PriceGroupModal({
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
-        <ModalShell title={priceGroup ? "Edit Price Group" : "Create Price Group"} onClose={onClose} header={header} size="lg">
-          <div className="space-y-4">
-            <Label className="flex items-center gap-2 text-sm text-gray-300">
-              <Checkbox
-                checked={form.isDefault}
-                onCheckedChange={(v) => setForm(p => ({ ...p, isDefault: Boolean(v) }))}
-              />
-              Set as default group
-            </Label>
+    <AppModal
+      open={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+      title={priceGroup ? "Edit Price Group" : "Create Price Group"}
+    >
+      <ModalShell
+        title={priceGroup ? "Edit Price Group" : "Create Price Group"}
+        onClose={onClose}
+        header={header}
+        size="lg"
+      >
+        <div className="space-y-4">
+          <Label className="flex items-center gap-2 text-sm text-gray-300">
+            <Checkbox
+              checked={form.isDefault}
+              onCheckedChange={(v) => setForm(p => ({ ...p, isDefault: Boolean(v) }))}
+            />
+            Set as default group
+          </Label>
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
@@ -249,9 +257,8 @@ export function PriceGroupModal({
                 </div>
               </div>
             )}
-          </div>
-        </ModalShell>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </ModalShell>
+    </AppModal>
   );
 }

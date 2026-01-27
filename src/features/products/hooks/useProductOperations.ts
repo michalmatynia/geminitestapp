@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useToast } from "@/shared/ui/toast";
-import type { ProductWithImages } from "@/types";
-import type { ProductDraft } from "@/types/drafts";
+import type { ProductWithImages } from "@/features/products/types";
+import type { ProductDraft } from "@/features/products/types/drafts";
 
 export function useProductOperations(setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>) {
   const { toast } = useToast();

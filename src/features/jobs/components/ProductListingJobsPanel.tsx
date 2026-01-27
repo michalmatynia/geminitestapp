@@ -15,8 +15,10 @@ import {
 import { Button } from "@/shared/ui/button";
 import ModalShell from "@/shared/ui/modal-shell";
 import { Input } from "@/shared/ui/input";
+import { AppModal } from "@/shared/ui/app-modal";
 import type { ListingJob, ListingAttempt, ProductJob } from "@/shared/types/listing-jobs";
 import { Label } from "@/shared/ui/label";
+import { ListPanel } from "@/shared/ui/list-panel";
 
 type ProductListingJobsPanelProps = {
   showBackToProducts?: boolean;
@@ -251,66 +253,119 @@ export default function ProductListingJobsPanel({
   const selectedAttempt = selectedListing?.attempt ?? null;
   const selectedStatus = selectedAttempt?.status ?? selectedListing?.listing.status ?? "";
 
+  const header = (
+    <div className="flex items-center justify-between">
+      <div>
+        <h2 className="text-2xl font-bold text-white">Export Jobs</h2>
+        <p className="mt-1 text-sm text-gray-400">
+          Track product export and listing jobs across all integrations
+        </p>
+      </div>
+      <div className="flex items-center gap-3">
+        <Button
+          onClick={() => void handleRefresh()}
+          disabled={refreshing}
+          variant="outline"
+          size="sm"
+          className="border-gray-700 bg-gray-800 hover:bg-gray-700"
+        >
+          <RefreshCw
+            className={`mr-2 size-4 ${refreshing ? "animate-spin" : ""}`}
+          />
+          Refresh
+        </Button>
+        {showBackToProducts && (
+          <Link href="/admin/products">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-gray-700 bg-gray-800 hover:bg-gray-700"
+            >
+              Back to Products
+            </Button>
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+
+  const filters = !loading && !error ? (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <Input
+        placeholder="Search by product, SKU, integration, or ID..."
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        className="max-w-md bg-gray-900 border-gray-800 text-white"
+      />
+    </div>
+  ) : null;
+
+  const footer = !loading && !error ? (
+    <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-gray-400">
+      <div>
+        Showing {totalRows === 0 ? 0 : startIndex + 1}–{Math.min(endIndex, totalRows)} of {totalRows}
+      </div>
+      <div className="flex items-center gap-2">
+        <Label htmlFor="exportJobsPageSize">Rows</Label>
+        <select
+          id="exportJobsPageSize"
+          className="rounded-md border border-gray-800 bg-gray-900 px-2 py-1 text-xs text-white"
+          value={pageSize}
+          onChange={(event) => {
+            setPageSize(Number(event.target.value));
+            setPage(1);
+          }}
+        >
+          {[10, 25, 50, 100].map((size) => (
+            <option key={size} value={size}>
+              {size}
+            </option>
+          ))}
+        </select>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPage((current) => Math.max(1, current - 1))}
+          disabled={clampedPage <= 1}
+          className="border-gray-700 bg-gray-800 hover:bg-gray-700"
+        >
+          Prev
+        </Button>
+        <span className="min-w-[72px] text-center">
+          {clampedPage} / {totalPages}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+          disabled={clampedPage >= totalPages}
+          className="border-gray-700 bg-gray-800 hover:bg-gray-700"
+        >
+          Next
+        </Button>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <>
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Export Jobs</h2>
-          <p className="mt-1 text-sm text-gray-400">
-            Track product export and listing jobs across all integrations
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={() => void handleRefresh()}
-            disabled={refreshing}
-            variant="outline"
-            size="sm"
-            className="border-gray-700 bg-gray-800 hover:bg-gray-700"
-          >
-            <RefreshCw
-              className={`mr-2 size-4 ${refreshing ? "animate-spin" : ""}`}
-            />
-            Refresh
-          </Button>
-          {showBackToProducts && (
-            <Link href="/admin/products">
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-gray-700 bg-gray-800 hover:bg-gray-700"
-              >
-                Back to Products
-              </Button>
-            </Link>
-          )}
-        </div>
-      </div>
-
-      {loading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="size-8 animate-spin text-gray-500" />
-        </div>
-      )}
-
-      {error && (
-        <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-          {error}
-        </div>
-      )}
-
-      {!loading && !error && (
-        <div className="space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <Input
-              placeholder="Search by product, SKU, integration, or ID..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="max-w-md bg-gray-900 border-gray-800 text-white"
-            />
+      <ListPanel
+        header={header}
+        alerts={
+          error ? (
+            <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+              {error}
+            </div>
+          ) : null
+        }
+        filters={filters}
+        footer={footer}
+      >
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="size-8 animate-spin text-gray-500" />
           </div>
-
+        ) : !error ? (
           <div className="rounded-lg border border-gray-800 bg-gray-950 overflow-hidden">
             <table className="w-full text-left text-sm text-gray-300">
               <thead className="bg-gray-900 text-xs uppercase text-gray-500">
@@ -326,154 +381,124 @@ export default function ProductListingJobsPanel({
                 {pagedRows.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
-                      {loading
-                        ? "Loading export jobs..."
-                        : "No export jobs found."}
+                      {loading ? "Loading export jobs..." : "No export jobs found."}
                     </td>
                   </tr>
                 ) : (
                   pagedRows.map(({ job, listing, attempt, attemptIndex }) => {
                     const status = attempt?.status ?? listing.status ?? "unknown";
-                    const typeLabel = status === "deleted" || status === "removed" ? "Removal" : "Export";
+                    const typeLabel =
+                      status === "deleted" || status === "removed" ? "Removal" : "Export";
                     const attemptLabel =
                       attemptIndex !== null ? `Attempt ${attemptIndex + 1}` : "Listing";
                     return (
-                    <tr key={`${job.productId}-${listing.id}-${attemptIndex ?? "current"}`} className="hover:bg-gray-900/50">
-                      <td className="px-4 py-4">
-                        <div className="flex items-start gap-2">
-                          <div>
-                            <div className="font-medium text-white">{job.productName}</div>
-                            <div className="text-xs text-gray-500">SKU: {job.productSku || "N/A"}</div>
+                      <tr
+                        key={`${job.productId}-${listing.id}-${attemptIndex ?? "current"}`}
+                        className="hover:bg-gray-900/50"
+                      >
+                        <td className="px-4 py-4">
+                          <div className="flex items-start gap-2">
+                            <div>
+                              <div className="font-medium text-white">{job.productName}</div>
+                              <div className="text-xs text-gray-500">
+                                SKU: {job.productSku || "N/A"}
+                              </div>
+                            </div>
+                            <Link
+                              href={`/admin/products?id=${job.productId}`}
+                              className="text-blue-400 hover:text-blue-300"
+                              aria-label="Open product"
+                            >
+                              <ExternalLink className="size-4" />
+                            </Link>
                           </div>
-                          <Link
-                            href={`/admin/products?id=${job.productId}`}
-                            className="text-blue-400 hover:text-blue-300"
-                            aria-label="Open product"
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="text-xs font-mono">
+                            {typeLabel}: {listing.integrationName}
+                          </div>
+                          <div className="text-[10px] text-gray-600">
+                            {attemptLabel} · {listing.id}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${getStatusColor(
+                              status
+                            )}`}
                           >
-                            <ExternalLink className="size-4" />
-                          </Link>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="text-xs font-mono">{typeLabel}: {listing.integrationName}</div>
-                        <div className="text-[10px] text-gray-600">
-                          {attemptLabel} · {listing.id}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${getStatusColor(
-                            status
-                          )}`}
-                        >
-                          {getStatusIcon(status)}
-                          {status.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 text-xs">
-                        {attempt?.exportedAt ? (
-                          <>
-                            <div>Attempted: {formatDateTime(attempt.exportedAt)}</div>
-                            <div className="text-gray-500">Listing updated: {formatDateTime(listing.updatedAt)}</div>
-                          </>
-                        ) : (
-                          <>
-                            <div>Created: {formatDateTime(listing.createdAt)}</div>
-                            <div className="text-gray-500">Updated: {formatDateTime(listing.updatedAt)}</div>
-                          </>
-                        )}
-                      </td>
-                      <td className="px-4 py-4 text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-blue-500 hover:text-blue-400"
-                            onClick={() => setSelectedListing({ job, listing, attempt: attempt ?? null, attemptIndex })}
-                            aria-label="View export job details"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {attempt === null && (listing.status === "pending" || listing.status === "failed") && (
+                            {getStatusIcon(status)}
+                            {status.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-xs">
+                          {attempt?.exportedAt ? (
+                            <>
+                              <div>Attempted: {formatDateTime(attempt.exportedAt)}</div>
+                              <div className="text-gray-500">
+                                Listing updated: {formatDateTime(listing.updatedAt)}
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div>Created: {formatDateTime(listing.createdAt)}</div>
+                              <div className="text-gray-500">
+                                Updated: {formatDateTime(listing.updatedAt)}
+                              </div>
+                            </>
+                          )}
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          <div className="flex justify-end gap-2">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-red-500 hover:text-red-400"
-                              onClick={() => void handleCancelListing(job.productId, listing.id)}
-                              disabled={deleting === listing.id}
-                              aria-label="Cancel export job"
+                              className="h-8 w-8 text-blue-500 hover:text-blue-400"
+                              onClick={() =>
+                                setSelectedListing({
+                                  job,
+                                  listing,
+                                  attempt: attempt ?? null,
+                                  attemptIndex,
+                                })
+                              }
+                              aria-label="View export job details"
                             >
-                              {deleting === listing.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Trash2 className="h-4 w-4" />
-                              )}
+                              <Eye className="h-4 w-4" />
                             </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
+                            {attempt === null &&
+                              (listing.status === "pending" || listing.status === "failed") && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-red-500 hover:text-red-400"
+                                  onClick={() => void handleCancelListing(job.productId, listing.id)}
+                                  disabled={deleting === listing.id}
+                                  aria-label="Cancel export job"
+                                >
+                                  {deleting === listing.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
                   })
                 )}
               </tbody>
             </table>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-gray-400">
-            <div>
-              Showing {totalRows === 0 ? 0 : startIndex + 1}–{Math.min(endIndex, totalRows)} of {totalRows}
-            </div>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="exportJobsPageSize">Rows</Label>
-              <select
-                id="exportJobsPageSize"
-                className="rounded-md border border-gray-800 bg-gray-900 px-2 py-1 text-xs text-white"
-                value={pageSize}
-                onChange={(event) => {
-                  setPageSize(Number(event.target.value));
-                  setPage(1);
-                }}
-              >
-                {[10, 25, 50, 100].map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
-                disabled={clampedPage <= 1}
-                className="border-gray-700 bg-gray-800 hover:bg-gray-700"
-              >
-                Prev
-              </Button>
-              <span className="min-w-[72px] text-center">
-                {clampedPage} / {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-                disabled={clampedPage >= totalPages}
-                className="border-gray-700 bg-gray-800 hover:bg-gray-700"
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-      </div>
+        ) : null}
+      </ListPanel>
       {selectedListing && (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-        onClick={() => setSelectedListing(null)}
-      >
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-3xl"
+        <AppModal
+          open={true}
+          onOpenChange={(open) => !open && setSelectedListing(null)}
+          title="Export Job Details"
         >
           <ModalShell
             title="Export Job Details"
@@ -734,8 +759,7 @@ export default function ProductListingJobsPanel({
               </div>
             </div>
           </ModalShell>
-        </div>
-      </div>
+        </AppModal>
       )}
     </>
   );

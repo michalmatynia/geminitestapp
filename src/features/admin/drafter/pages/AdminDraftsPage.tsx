@@ -3,9 +3,9 @@
 import { useRef, useState } from "react";
 import { DraftList } from "../components/DraftList";
 import { DraftCreator } from "../components/DraftCreator";
-import { Dialog, DialogContent } from "@/shared/ui/dialog";
 import ModalShell from "@/shared/ui/modal-shell";
 import { Button } from "@/shared/ui/button";
+import { AppModal } from "@/shared/ui/app-modal";
 
 export function AdminDraftsPage() {
   const [isCreatorOpen, setIsCreatorOpen] = useState(false);
@@ -77,18 +77,20 @@ export function AdminDraftsPage() {
         refreshTrigger={refreshTrigger}
       />
 
-      <Dialog open={isCreatorOpen} onOpenChange={(open) => !open && handleCloseCreator()}>
-        <DialogContent className="max-w-none w-auto p-0 border-none bg-transparent shadow-none">
-          <ModalShell title={title} onClose={handleCloseCreator} header={header}>
-            <DraftCreator
-              formRef={formRef}
-              draftId={editingDraftId}
-              onSaveSuccess={handleSaveSuccess}
-              onCancel={handleCloseCreator}
-            />
-          </ModalShell>
-        </DialogContent>
-      </Dialog>
+      <AppModal
+        open={isCreatorOpen}
+        onOpenChange={(open) => !open && handleCloseCreator()}
+        title={title}
+      >
+        <ModalShell title={title} onClose={handleCloseCreator} header={header}>
+          <DraftCreator
+            formRef={formRef}
+            draftId={editingDraftId}
+            onSaveSuccess={handleSaveSuccess}
+            onCancel={handleCloseCreator}
+          />
+        </ModalShell>
+      </AppModal>
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
-import type { ImageFileSelection } from "@/types";
+import type { ImageFileSelection } from "@/shared/types/files";
 import type { ExpandedImageFile } from "@/features/products/types/products-ui";
 
 import FilePreviewModal from "@/shared/ui/file-preview-modal";

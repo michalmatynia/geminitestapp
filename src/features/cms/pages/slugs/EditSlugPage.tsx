@@ -8,6 +8,7 @@ import { Label } from "@/shared/ui/label";
 import { Switch } from "@/shared/ui/switch";
 import { fetchSlug, updateSlug } from "@/features/cms/api/slugs";
 import type { Slug } from "@/features/cms/types";
+import { SectionHeader } from "@/shared/ui/section-header";
 
 export default function EditSlugPage() {
   const [slug, setSlug] = useState<Slug | null>(null);
@@ -35,8 +36,8 @@ export default function EditSlugPage() {
 
       return (
         <div className="container mx-auto py-10">
-          <h1 className="text-3xl font-bold">Edit Slug</h1>
-          <form onSubmit={(e) => { void handleSubmit(e); }} className="mt-6">
+          <SectionHeader title="Edit Slug" className="mb-6" />
+          <form onSubmit={(e) => { void handleSubmit(e); }}>
             <div className="mb-4">
               <Label htmlFor="slug">Slug</Label>          <Input
             id="slug"

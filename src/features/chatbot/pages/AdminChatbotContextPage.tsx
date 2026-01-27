@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ChevronLeftIcon, PlusIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -13,6 +13,8 @@ import { AppModal } from "@/shared/ui/app-modal";
 import { useToast } from "@/shared/ui/toast";
 import { Label } from "@/shared/ui/label";
 import { Checkbox } from "@/shared/ui/checkbox";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 import * as chatbotApi from "../api";
 
 type ContextItem = {
@@ -274,70 +276,69 @@ function ChatbotContextPageInner() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="mb-6 flex items-center gap-3">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/admin/chatbot" aria-label="Back to chatbot">
-            <ChevronLeftIcon className="size-5" />
+      <SectionHeader
+        title="Chatbot Context"
+        description="Define global instructions applied to every chat."
+        eyebrow={(
+          <Link href="/admin/chatbot" className="text-blue-300 hover:text-blue-200">
+            ← Back to chatbot
           </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold text-white">Chatbot Context</h1>
-          <p className="text-sm text-gray-400">
-            Define global instructions applied to every chat.
-          </p>
-        </div>
-      </div>
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Button
-              onClick={openCreateModal}
-              className="size-11 rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90"
-              aria-label="Create context"
-            >
-              <PlusIcon className="size-5" />
-            </Button>
-            <h2 className="text-3xl font-bold text-white">Global Contexts</h2>
-          </div>
-          <div className="flex items-center gap-2">
-            <Label className="cursor-pointer rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-gray-300">
-              {uploading ? "Uploading..." : "Upload PDF"}
-              <Input
-                type="file"
-                accept="application/pdf"
-                className="hidden"
-                disabled={loading || saving || uploading}
-                onChange={(event) => {
-                  void (async () => {
-                    const file = event.target.files?.[0];
-                    if (!file) return;
-                    await handlePdfUpload(file);
-                    event.target.value = "";
-                  })();
+        )}
+        className="mb-6"
+      />
+      <SectionPanel className="p-6">
+        <SectionHeader
+          title="Global Contexts"
+          size="md"
+          className="mb-4"
+          actions={
+            <>
+              <Button
+                onClick={openCreateModal}
+                className="size-11 rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90"
+                aria-label="Create context"
+              >
+                <PlusIcon className="size-5" />
+              </Button>
+              <Label className="cursor-pointer rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-gray-300">
+                {uploading ? "Uploading..." : "Upload PDF"}
+                <Input
+                  type="file"
+                  accept="application/pdf"
+                  className="hidden"
+                  disabled={loading || saving || uploading}
+                  onChange={(event) => {
+                    void (async () => {
+                      const file = event.target.files?.[0];
+                      if (!file) return;
+                      await handlePdfUpload(file);
+                      event.target.value = "";
+                    })();
+                  }}
+                />
+              </Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  if (tagQuery.trim()) {
+                    params.set("q", tagQuery.trim());
+                  }
+                  if (tagFilters.length > 0) {
+                    params.set("tags", tagFilters.join(","));
+                  }
+                  const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+                  void navigator.clipboard.writeText(url);
+                  toast("Filtered link copied", { variant: "success" });
                 }}
-              />
-            </Label>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const params = new URLSearchParams();
-                if (tagQuery.trim()) {
-                  params.set("q", tagQuery.trim());
-                }
-                if (tagFilters.length > 0) {
-                  params.set("tags", tagFilters.join(","));
-                }
-                const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-                void navigator.clipboard.writeText(url);
-                toast("Filtered link copied", { variant: "success" });
-              }}
-            >
-              Copy filtered link
-            </Button>
-          </div>
-        </div>
+              >
+                Copy filtered link
+              </Button>
+            </>
+          }
+        />
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <Input
             placeholder="Search contexts or tags..."
@@ -473,7 +474,7 @@ function ChatbotContextPageInner() {
             {saving ? "Saving..." : "Save"}
           </Button>
         </div>
-      </div>
+      </SectionPanel>
       {isModalOpen && modalDraft ? (
         <AppModal
           open={isModalOpen}

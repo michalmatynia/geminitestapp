@@ -6,6 +6,8 @@ import Link from "next/link";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { useToast } from "@/shared/ui/toast";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 type ChatbotJob = {
   id: string;
@@ -160,19 +162,22 @@ export default function ChatbotJobsPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="mb-6">
-        <Link
-          href="/admin/chatbot"
-          className="text-sm text-blue-300 hover:text-blue-200"
-        >
-          ← Back to chatbot
-        </Link>
-        <h1 className="mt-3 text-3xl font-bold text-white">Chatbot Jobs</h1>
-      </div>
-      <div className="rounded-lg border border-gray-800 bg-gray-950 p-4">
+      <SectionHeader
+        title="Chatbot Jobs"
+        eyebrow={(
+          <Link
+            href="/admin/chatbot"
+            className="text-blue-300 hover:text-blue-200"
+          >
+            ← Back to chatbot
+          </Link>
+        )}
+        className="mb-6"
+      />
+      <SectionPanel className="p-4">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <Input
-            className="max-w-sm"
+            className="max-w-sm h-8 text-sm"
             placeholder="Search jobs..."
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -289,7 +294,7 @@ export default function ChatbotJobsPage() {
             ))}
           </div>
         )}
-      </div>
+      </SectionPanel>
     </div>
   );
 }

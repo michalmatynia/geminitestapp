@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { Card } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 type SettingsOption = {
   id: string;
@@ -111,12 +113,11 @@ export function AdminSettingsHomePage() {
   return (
     <div className="container mx-auto py-10">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white">Settings</h1>
-        <p className="mt-2 text-sm text-gray-400">
-          Customize your application preferences and configuration.
-        </p>
-      </div>
+      <SectionHeader
+        title="Settings"
+        description="Customize your application preferences and configuration."
+        className="mb-8"
+      />
 
       {/* Settings Grid */}
       <div className="grid gap-4 md:grid-cols-2">
@@ -158,7 +159,7 @@ export function AdminSettingsHomePage() {
       </div>
 
       {/* Help Section */}
-      <Card className="mt-8 border-gray-800 bg-gray-950/50 p-6">
+      <SectionPanel className="mt-8">
         <h3 className="text-sm font-semibold text-white">Need Help?</h3>
         <p className="mt-2 text-sm text-gray-400">
           Each setting section contains detailed explanations and preview options to help you customize your preferences.
@@ -168,7 +169,7 @@ export function AdminSettingsHomePage() {
             <Link href="/admin">Back to Admin</Link>
           </Button>
         </div>
-      </Card>
+      </SectionPanel>
     </div>
   );
 }

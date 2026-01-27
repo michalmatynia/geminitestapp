@@ -1,18 +1,13 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { ChevronLeftIcon, SaveIcon } from "lucide-react";
+import { SaveIcon } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/shared/ui/card";
 import { useToast } from "@/shared/ui/toast";
 import { cn } from "@/shared/utils";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 type FrontAppOption = "products" | "chatbot" | "notes";
 
@@ -100,29 +95,26 @@ export function AdminFrontManagePage() {
   }
 
   return (
-    <div className="container mx-auto py-10 max-w-4xl">
-      <div className="mb-6 flex items-center gap-3">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/admin" aria-label="Back to dashboard">
-            <ChevronLeftIcon className="size-5" />
+    <div className="container mx-auto max-w-4xl py-10">
+      <SectionHeader
+        title="Front Manage"
+        description="Pick which app should open when users land on the home page."
+        eyebrow={(
+          <Link href="/admin" className="text-blue-300 hover:text-blue-200">
+            ← Back to dashboard
           </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold text-white">Front Manage</h1>
-          <p className="text-sm text-gray-400">
-            Pick which app should open when users land on the home page.
-          </p>
-        </div>
-      </div>
+        )}
+        className="mb-6"
+      />
 
-      <Card className="bg-gray-950 border-gray-800">
-        <CardHeader>
-          <CardTitle className="text-white text-xl">Front Page Destination</CardTitle>
-          <CardDescription className="text-gray-400">
-            Choose one application to serve as the entry point for your site.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <SectionPanel className="p-6">
+        <SectionHeader
+          title="Front Page Destination"
+          description="Choose one application to serve as the entry point for your site."
+          size="sm"
+          className="mb-6"
+        />
+        <div className="space-y-4">
           <div className="grid gap-3">
             {options.map((option) => (
               <Button
@@ -168,8 +160,8 @@ export function AdminFrontManagePage() {
               )}
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </SectionPanel>
     </div>
   );
 }

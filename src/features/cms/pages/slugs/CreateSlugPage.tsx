@@ -7,6 +7,7 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { createSlug } from "@/features/cms/api/slugs";
 import { SLUG_REGEX } from "@/features/cms/validations/slug";
+import { SectionHeader } from "@/shared/ui/section-header";
 
 export default function CreateSlugPage() {
   const [slug, setSlug] = useState("");
@@ -39,8 +40,8 @@ export default function CreateSlugPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold">Create Slug</h1>
-      <form onSubmit={(e) => void handleSubmit(e)} className="mt-6">
+      <SectionHeader title="Create Slug" className="mb-6" />
+      <form onSubmit={(e) => void handleSubmit(e)}>
         <div className="mb-4">
           <Label htmlFor="slug">Slug</Label>
           <Input

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { AiPathsSettings } from "../components/AiPathsSettings";
 import { Tabs, TabsList, TabsTrigger } from "@/shared/ui/tabs";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 export function AdminAiPathsPage() {
   const [activeTab, setActiveTab] = useState<"canvas" | "paths" | "docs">(
@@ -36,11 +38,11 @@ export function AdminAiPathsPage() {
         )}
         <div id="ai-paths-name" className="text-sm text-gray-300" />
       </div>
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-        <div className="mb-6 flex items-center justify-between">
-          <div id="ai-paths-actions" className="flex items-center gap-3" />
-          <h1 className="text-3xl font-bold text-white">AI Paths</h1>
-        </div>
+      <SectionPanel className="p-6">
+        <SectionHeader
+          title="AI Paths"
+          actions={<div id="ai-paths-actions" className="flex items-center gap-3" />}
+        />
         <AiPathsSettings
           activeTab={activeTab}
           renderActions={(actions) => (
@@ -48,7 +50,7 @@ export function AdminAiPathsPage() {
           )}
           onTabChange={setActiveTab}
         />
-      </div>
+      </SectionPanel>
     </div>
   );
 }

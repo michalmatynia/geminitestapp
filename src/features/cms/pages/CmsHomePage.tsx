@@ -1,10 +1,14 @@
 import Link from "next/link";
+import { SectionHeader } from "@/shared/ui/section-header";
 
 export default function CmsPage() {
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold">CMS</h1>
-      <p className="mt-4">Welcome to the Content Management System.</p>
+      <SectionHeader
+        title="CMS"
+        description="Welcome to the Content Management System."
+        className="mb-6"
+      />
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Link href="/admin/cms/slugs" className="block p-6 bg-gray-800 rounded-lg hover:bg-gray-700">
           <h2 className="text-xl font-bold">Manage Slugs</h2>

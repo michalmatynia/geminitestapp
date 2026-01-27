@@ -7,6 +7,8 @@ import { Checkbox } from "@/shared/ui/checkbox";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { useToast } from "@/shared/ui/toast";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 import {
   AUTH_SETTINGS_KEYS,
   DEFAULT_AUTH_PERMISSIONS,
@@ -225,21 +227,20 @@ export default function AuthPermissionsPage() {
 
   if (loading) {
     return (
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg text-sm text-gray-400">
+      <SectionPanel className="p-6 text-sm text-gray-400">
         Loading permission settings...
-      </div>
+      </SectionPanel>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-        <h1 className="text-3xl font-bold text-white">Permissions</h1>
-        <p className="mt-2 text-sm text-gray-400">
-          Define roles and the permissions they include. Enforcement is handled by the
-          application logic you wire up later.
-        </p>
-      </div>
+      <SectionPanel className="p-6">
+        <SectionHeader
+          title="Permissions"
+          description="Define roles and the permissions they include. Enforcement is handled by the application logic you wire up later."
+        />
+      </SectionPanel>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="bg-gray-950 border-gray-800">

@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/sha
 import { Label } from "@/shared/ui/label";
 import { Switch } from "@/shared/ui/switch";
 import { useToast } from "@/shared/ui/toast";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import {
@@ -78,20 +80,20 @@ export default function AuthUserPagesPage() {
 
   if (loading) {
     return (
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg text-sm text-gray-400">
+      <SectionPanel className="p-6 text-sm text-gray-400">
         Loading user page settings...
-      </div>
+      </SectionPanel>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-        <h1 className="text-3xl font-bold text-white">User Pages</h1>
-        <p className="mt-2 text-sm text-gray-400">
-          Configure which authentication flows are available in the public UI.
-        </p>
-      </div>
+      <SectionPanel className="p-6">
+        <SectionHeader
+          title="User Pages"
+          description="Configure which authentication flows are available in the public UI."
+        />
+      </SectionPanel>
 
       <Card className="bg-gray-950 border-gray-800">
         <CardHeader>

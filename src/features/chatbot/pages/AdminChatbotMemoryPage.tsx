@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 import type { ChatbotMemoryItem } from "../types";
 import * as chatbotApi from "../api";
 
@@ -62,14 +64,17 @@ export default function AgentMemoryPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-3xl font-bold text-white">Agent Long-Term Memory</h1>
-          <Button asChild type="button" variant="outline" size="sm">
-            <Link href="/admin/chatbot">Back to chatbot</Link>
-          </Button>
-        </div>
-        <div className="rounded-md border border-gray-800 bg-gray-900 p-4">
+      <SectionPanel className="p-6">
+        <SectionHeader
+          title="Agent Long-Term Memory"
+          actions={
+            <Button asChild type="button" variant="outline" size="sm">
+              <Link href="/admin/chatbot">Back to chatbot</Link>
+            </Button>
+          }
+          className="mb-4"
+        />
+        <SectionPanel className="p-4">
           <div className="grid gap-3 md:grid-cols-4">
             <div>
               <Label className="text-xs text-gray-400">Memory key</Label>
@@ -110,7 +115,7 @@ export default function AgentMemoryPage() {
               />
             </div>
           </div>
-        </div>
+        </SectionPanel>
         <div className="mt-4 rounded-md border border-gray-800 bg-gray-900 p-4 text-sm text-gray-300">
           {loading ? (
             <p className="text-gray-400">Loading memory…</p>
@@ -193,7 +198,7 @@ export default function AgentMemoryPage() {
             </div>
           )}
         </div>
-      </div>
+      </SectionPanel>
     </div>
   );
 }

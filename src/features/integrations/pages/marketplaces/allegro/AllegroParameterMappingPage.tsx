@@ -1,26 +1,29 @@
 import Link from "next/link";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 export default function AllegroParameterMappingPage() {
   return (
-    <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-      <div className="mb-6">
-        <Link
-          href="/admin/integrations/marketplaces/allegro"
-          className="text-xs font-semibold uppercase tracking-wide text-gray-400 hover:text-gray-200"
-        >
-          ← Allegro
-        </Link>
-        <h1 className="mt-2 text-3xl font-bold text-white">
-          Parameter Mapping
-        </h1>
-        <p className="mt-1 text-sm text-gray-400">
-          Define how product fields map to Allegro listing parameters.
-        </p>
-      </div>
+    <div className="container mx-auto py-10">
+      <SectionPanel className="p-6">
+        <SectionHeader
+          title="Parameter Mapping"
+          description="Define how product fields map to Allegro listing parameters."
+          eyebrow={(
+            <Link
+              href="/admin/integrations/marketplaces/allegro"
+              className="text-blue-300 hover:text-blue-200"
+            >
+              ← Allegro
+            </Link>
+          )}
+          className="mb-6"
+        />
 
-      <div className="rounded-md border border-dashed border-gray-800 bg-gray-900 p-4 text-sm text-gray-400">
-        Mapping rules will appear here.
-      </div>
+        <div className="rounded-md border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
+          Mapping rules will appear here.
+        </div>
+      </SectionPanel>
     </div>
   );
 }

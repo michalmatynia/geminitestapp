@@ -27,6 +27,8 @@
 
 * unify components (Modal and List are already unified) using Products components as a reference to achieve a unifying look across the application. There may be some individual components that can't be unified, don't force it, but strive for general unified look across the application.
 
+Database feature seems not to have a unified list, the same geos for jobs and agents
+
 continue with features restructuring and even stricter separation
 
 expose a single point of entry

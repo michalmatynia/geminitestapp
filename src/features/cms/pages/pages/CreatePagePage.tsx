@@ -15,6 +15,7 @@ import {
 import { createPage } from "@/features/cms/api/pages";
 import { fetchSlugs } from "@/features/cms/api/slugs";
 import type { Slug } from "@/features/cms/types";
+import { SectionHeader } from "@/shared/ui/section-header";
 
 export default function CreatePagePage() {
   const [name, setName] = useState("");
@@ -34,8 +35,8 @@ export default function CreatePagePage() {
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold">Create Page</h1>
-      <form onSubmit={(e) => { void handleSubmit(e); }} className="mt-6">
+      <SectionHeader title="Create Page" className="mb-6" />
+      <form onSubmit={(e) => { void handleSubmit(e); }}>
         <div className="mb-4">
           <Label htmlFor="name">Page Name</Label>
           <Input

@@ -6,6 +6,7 @@ import { DraftCreator } from "../components/DraftCreator";
 import ModalShell from "@/shared/ui/modal-shell";
 import { Button } from "@/shared/ui/button";
 import { AppModal } from "@/shared/ui/app-modal";
+import { SectionHeader } from "@/shared/ui/section-header";
 
 export function AdminDraftsPage() {
   const [isCreatorOpen, setIsCreatorOpen] = useState(false);
@@ -64,12 +65,11 @@ export function AdminDraftsPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-white">Product Drafts</h1>
-        <p className="mt-2 text-sm text-gray-400">
-          Create reusable templates for products with pre-filled values
-        </p>
-      </div>
+      <SectionHeader
+        title="Product Drafts"
+        description="Create reusable templates for products with pre-filled values"
+        className="mb-6"
+      />
 
       <DraftList
         onEdit={handleEdit}

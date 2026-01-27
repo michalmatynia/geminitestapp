@@ -45,6 +45,8 @@ import { LanguageModal } from "@/features/products/components/settings/modals/La
 import { PriceGroupModal } from "@/features/products/components/settings/modals/PriceGroupModal";
 import { CurrencyModal } from "@/features/products/components/settings/modals/CurrencyModal";
 import { CountryModal } from "@/features/products/components/settings/modals/CountryModal";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 export function ProductSettingsPage() {
   const [activeSection, setActiveSection] =
@@ -272,10 +274,13 @@ export function ProductSettingsPage() {
   };
 
   return (
-    <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-      <h1 className="mb-6 text-3xl font-bold text-white">Product Settings</h1>
+    <SectionPanel className="p-6">
+      <SectionHeader
+        title="Product Settings"
+        className="mb-6"
+      />
       <div className="grid gap-6 md:grid-cols-[240px_1fr]">
-        <aside className="rounded-md border border-gray-800 bg-gray-900 p-4">
+        <SectionPanel className="p-4">
           <div className="flex flex-col gap-2">
             {settingSections.map((section) => (
               <Button
@@ -291,8 +296,8 @@ export function ProductSettingsPage() {
               </Button>
             ))}
           </div>
-        </aside>
-        <section className="rounded-md border border-gray-800 bg-gray-900 p-6">
+        </SectionPanel>
+        <SectionPanel className="p-6">
           {activeSection === "Categories" && (
             <CategoriesSettings
               loading={loadingCategories}
@@ -378,7 +383,7 @@ export function ProductSettingsPage() {
           )}
           {activeSection === "AI Description" && <AiDescriptionSettings />}
           {activeSection === "AI Translation" && <AiTranslationSettings />}
-        </section>
+        </SectionPanel>
       </div>
 
       {/* Modals */}
@@ -428,6 +433,6 @@ export function ProductSettingsPage() {
         currencyOptions={currencyOptions}
         loadingCurrencies={loadingCurrencies}
       />
-    </div>
+    </SectionPanel>
   );
 }

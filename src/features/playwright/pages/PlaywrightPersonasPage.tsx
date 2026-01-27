@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeftIcon, MonitorPlay, Pencil, Plus, Trash2 } from "lucide-react";
+import { MonitorPlay, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/shared/ui/button";
-import { Card } from "@/shared/ui/card";
 import { AppModal } from "@/shared/ui/app-modal";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -13,6 +12,8 @@ import ModalShell from "@/shared/ui/modal-shell";
 import { Textarea } from "@/shared/ui/textarea";
 import { useToast } from "@/shared/ui/toast";
 import { serializeSetting } from "@/shared/utils/settings-json";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 import { PlaywrightSettingsForm } from "@/features/playwright/components/PlaywrightSettingsForm";
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from "@/features/playwright/constants/playwright";
@@ -185,33 +186,23 @@ export function PlaywrightPersonasPage() {
 
   return (
     <div className="container mx-auto py-10 space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/admin/settings" aria-label="Back to settings">
-              <ChevronLeftIcon className="size-5" />
-            </Link>
+      <SectionHeader
+        title="Playwright Personas"
+        description="Centralize browser automation settings to reuse across integrations and chatbot flows."
+        eyebrow={(
+          <Link href="/admin/settings" className="text-blue-300 hover:text-blue-200">
+            ← Back to settings
+          </Link>
+        )}
+        actions={
+          <Button onClick={openCreate} className="gap-2">
+            <Plus className="size-4" />
+            New Persona
           </Button>
-          <div>
-            <h1 className="flex items-center gap-2 text-3xl font-bold text-white">
-              <span className="flex size-8 items-center justify-center rounded-full bg-orange-500/10 text-orange-200">
-                <MonitorPlay className="size-5" />
-              </span>
-              Playwright Personas
-            </h1>
-            <p className="mt-1 text-sm text-gray-400">
-              Centralize browser automation settings to reuse across integrations
-              and chatbot flows.
-            </p>
-          </div>
-        </div>
-        <Button onClick={openCreate} className="gap-2">
-          <Plus className="size-4" />
-          New Persona
-        </Button>
-      </div>
+        }
+      />
 
-      <Card className="border-gray-800 bg-gray-950 p-4">
+      <SectionPanel className="p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-white">Persona library</p>
@@ -223,7 +214,7 @@ export function PlaywrightPersonasPage() {
             {loading ? "Loading..." : `${personas.length} persona(s)`}
           </div>
         </div>
-      </Card>
+      </SectionPanel>
 
       {loading ? (
         <div className="rounded-md border border-dashed border-gray-800 p-6 text-center text-sm text-gray-400">

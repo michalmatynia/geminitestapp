@@ -8,6 +8,7 @@ import { Label } from "@/shared/ui/label";
 import { Textarea } from "@/shared/ui/textarea";
 import { fetchBlock, updateBlock } from "@/features/cms/api/blocks";
 import type { BlockForm } from "@/features/cms/types";
+import { SectionHeader } from "@/shared/ui/section-header";
 
 export default function EditBlockPage() {
   const [block, setBlock] = useState<BlockForm | null>(null);
@@ -49,8 +50,8 @@ export default function EditBlockPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold">Edit Block</h1>
-      <form onSubmit={handleSubmit} className="mt-6">
+      <SectionHeader title="Edit Block" className="mb-6" />
+      <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <Label htmlFor="name">Block Name</Label>
           <Input

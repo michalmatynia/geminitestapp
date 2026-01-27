@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -19,13 +21,12 @@ const marketplaces = [
 
 export default function MarketplacesPage() {
   return (
-    <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-white">Marketplaces</h1>
-        <p className="mt-1 text-sm text-gray-400">
-          Configure and manage external marketplaces for product listings.
-        </p>
-      </div>
+    <SectionPanel className="p-6">
+      <SectionHeader
+        title="Marketplaces"
+        description="Configure and manage external marketplaces for product listings."
+        className="mb-6"
+      />
 
       <div className="grid gap-4 md:grid-cols-2">
         {marketplaces.map((marketplace) => (
@@ -43,6 +44,6 @@ export default function MarketplacesPage() {
           </Link>
         ))}
       </div>
-    </div>
+    </SectionPanel>
   );
 }

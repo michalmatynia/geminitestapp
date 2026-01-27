@@ -20,6 +20,8 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 import type {
   DatabasePreviewGroup,
   DatabasePreviewMode,
@@ -168,27 +170,25 @@ function DatabasePreviewPageInner() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Backup Preview</h1>
-          <p className="mt-1 text-sm text-gray-400">
-            {mode === "current"
-              ? "Source: Current database"
-              : backupName
-                ? `Source: ${backupName}`
-                : "No backup selected."}
-          </p>
-        </div>
-        <Link
-          href="/admin/databases"
-          className="rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-200 hover:bg-gray-900"
-        >
-          Back to databases
-        </Link>
-      </div>
+      <SectionHeader
+        title="Backup Preview"
+        description={
+          mode === "current"
+            ? "Source: Current database"
+            : backupName
+              ? `Source: ${backupName}`
+              : "No backup selected."
+        }
+        actions={
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin/databases">Back to databases</Link>
+          </Button>
+        }
+        className="mb-6"
+      />
 
       <div className="space-y-6">
-        <div className="rounded-lg border border-gray-800 bg-gray-950 p-5">
+        <SectionPanel className="p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-sm font-semibold text-white">
@@ -203,7 +203,7 @@ function DatabasePreviewPageInner() {
               value={groupQuery}
               onChange={(event) => setGroupQuery(event.target.value)}
               placeholder="Filter objects or types..."
-              className="w-full max-w-xs rounded-md border border-gray-800 bg-gray-900 px-3 py-2 text-xs text-gray-200 placeholder:text-gray-500"
+              className="h-8 w-full max-w-xs text-xs"
               aria-label="Filter schema objects"
             />
           </div>
@@ -284,7 +284,7 @@ function DatabasePreviewPageInner() {
               })}
             </div>
           )}
-        </div>
+        </SectionPanel>
 
         <div className="rounded-lg border border-gray-800 bg-gray-950 p-5">
           <div className="flex items-center justify-between">

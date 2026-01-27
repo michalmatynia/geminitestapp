@@ -9,6 +9,8 @@ import type { NotebookRecord } from "@/shared/types/notes";
 import { useRouter } from "next/navigation";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 export function AdminNotesNotebooksPage() {
   const { toast } = useToast();
@@ -174,16 +176,15 @@ export function AdminNotesNotebooksPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-white">Notebooks</h1>
-        <p className="text-sm text-gray-400">
-          Create and manage notebooks. Notes, folders, and tags are scoped per notebook.
-        </p>
-      </div>
+      <SectionHeader
+        title="Notebooks"
+        description="Create and manage notebooks. Notes, folders, and tags are scoped per notebook."
+        className="mb-6"
+      />
 
       <div className="max-w-3xl space-y-6">
-        <div className="rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
-          <h2 className="mb-4 text-lg font-semibold text-white">Create Notebook</h2>
+        <SectionPanel className="p-6">
+          <SectionHeader title="Create Notebook" size="sm" className="mb-4" />
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
             <div className="flex-1">
               <Label className="mb-2 block text-sm font-medium text-gray-200">
@@ -193,7 +194,7 @@ export function AdminNotesNotebooksPage() {
                 type="text"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white"
+                className="w-full"
                 placeholder="Enter notebook name"
               />
             </div>
@@ -201,15 +202,19 @@ export function AdminNotesNotebooksPage() {
               {isSaving ? "Saving..." : "Create"}
             </Button>
           </div>
-        </div>
+        </SectionPanel>
 
-        <div className="rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">Your Notebooks</h2>
-            <Button variant="outline" onClick={() => { void fetchNotebooks(); }}>
-              Refresh
-            </Button>
-          </div>
+        <SectionPanel className="p-6">
+          <SectionHeader
+            title="Your Notebooks"
+            size="sm"
+            className="mb-4"
+            actions={(
+              <Button variant="outline" onClick={() => { void fetchNotebooks(); }}>
+                Refresh
+              </Button>
+            )}
+          />
           {loading ? (
             <div className="text-sm text-gray-400">Loading notebooks...</div>
           ) : notebooks.length === 0 ? (
@@ -222,7 +227,7 @@ export function AdminNotesNotebooksPage() {
                 return (
                   <div
                     key={notebook.id}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-gray-800 bg-gray-900 px-4 py-3 cursor-pointer transition hover:border-gray-700 hover:bg-gray-800/20"
+                    className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3 transition hover:border-gray-600"
                     onClick={() => {
                       updateSettings({ selectedNotebookId: notebook.id });
                       router.push("/admin/notes");
@@ -235,7 +240,7 @@ export function AdminNotesNotebooksPage() {
                             type="text"
                             value={editingName}
                             onChange={(event) => setEditingName(event.target.value)}
-                            className="w-full rounded-md border border-gray-700 bg-gray-800 px-3 py-1 text-sm text-white"
+                            className="w-full"
                           />
                         </div>
                       ) : (
@@ -253,8 +258,8 @@ export function AdminNotesNotebooksPage() {
                         </div>
                       )}
                     </div>
-                  <div className="flex items-center gap-2">
-                    {isEditing ? (
+                    <div className="flex items-center gap-2">
+                      {isEditing ? (
                         <>
                           <Button
                             variant="outline"
@@ -285,7 +290,7 @@ export function AdminNotesNotebooksPage() {
                                 prev === notebook.id ? null : notebook.id
                               );
                             }}
-                            className="rounded p-1 text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+                            className="rounded p-1 text-gray-400 hover:bg-muted/50 hover:text-gray-200"
                             aria-label={`Notebook actions for ${notebook.name}`}
                           >
                             <MoreVertical size={16} />
@@ -296,7 +301,7 @@ export function AdminNotesNotebooksPage() {
                                 className="fixed inset-0 z-40"
                                 onClick={() => setMenuNotebookId(null)}
                               />
-                              <div className="absolute right-0 top-full z-50 mt-2 w-44 rounded-md border border-gray-700 bg-gray-900 p-1 shadow-lg">
+                              <div className="absolute right-0 top-full z-50 mt-2 w-44 rounded-md border bg-card p-1 shadow-lg">
                                 <Button
                                   type="button"
                                   onClick={(event) => {
@@ -305,7 +310,7 @@ export function AdminNotesNotebooksPage() {
                                     setMenuNotebookId(null);
                                   }}
                                   onClickCapture={(event) => event.stopPropagation()}
-                                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-gray-800"
+                                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
                                 >
                                   Rename
                                 </Button>
@@ -316,7 +321,7 @@ export function AdminNotesNotebooksPage() {
                                     void handleDuplicate(notebook);
                                   }}
                                   onClickCapture={(event) => event.stopPropagation()}
-                                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-gray-800"
+                                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-muted/50"
                                 >
                                   Duplicate
                                 </Button>
@@ -327,7 +332,7 @@ export function AdminNotesNotebooksPage() {
                                     void handleDelete(notebook.id);
                                   }}
                                   onClickCapture={(event) => event.stopPropagation()}
-                                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-red-300 hover:bg-gray-800"
+                                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-red-300 hover:bg-muted/50"
                                 >
                                   Delete
                                 </Button>
@@ -342,7 +347,7 @@ export function AdminNotesNotebooksPage() {
               })}
             </div>
           )}
-        </div>
+        </SectionPanel>
       </div>
     </div>
   );

@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/shared/ui/toast";
 import { Button } from "@/shared/ui/button";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 const integrations = [
   {
@@ -92,29 +94,23 @@ export default function AddIntegrationPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white">
-              Add Integrations
-            </h1>
-            <p className="mt-1 text-sm text-gray-400">
-              Select a marketplace connection to add to your map.
-            </p>
-          </div>
-          <Link
-            href="/admin/integrations"
-            className="text-sm text-gray-300 hover:text-white"
-          >
-            Back to Integrations
-          </Link>
-        </div>
+      <SectionPanel className="p-6">
+        <SectionHeader
+          title="Add Integrations"
+          description="Select a marketplace connection to add to your map."
+          eyebrow={(
+            <Link href="/admin/integrations" className="text-blue-300 hover:text-blue-200">
+              ← Back to integrations
+            </Link>
+          )}
+          className="mb-6"
+        />
 
         <div className="grid gap-6 md:grid-cols-2">
           {integrations.map((integration) => (
             <div
               key={integration.slug}
-              className="rounded-xl border border-gray-800 bg-gray-900/70 p-5"
+              className="rounded-xl border bg-card p-5"
             >
               <div className="flex items-start justify-between">
                 <div>

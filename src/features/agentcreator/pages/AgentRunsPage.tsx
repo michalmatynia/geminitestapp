@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { useToast } from "@/shared/ui/toast";
 import ModalShell from "@/shared/ui/modal-shell";
 import { AppModal } from "@/shared/ui/app-modal";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 type AgentRun = {
   id: string;
@@ -373,19 +375,22 @@ export default function AgentRunsPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="mb-6">
-        <Link
-          href="/admin/agentcreator"
-          className="text-sm text-blue-300 hover:text-blue-200"
-        >
-          ← Back to agent creator
-        </Link>
-        <h1 className="mt-3 text-3xl font-bold text-white">Agent Runs</h1>
-      </div>
-      <div className="rounded-lg border border-gray-800 bg-gray-950 p-4">
+      <SectionHeader
+        title="Agent Runs"
+        eyebrow={(
+          <Link
+            href="/admin/agentcreator"
+            className="text-blue-300 hover:text-blue-200"
+          >
+            ← Back to agent creator
+          </Link>
+        )}
+        className="mb-6"
+      />
+      <SectionPanel className="p-4">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <Input
-            className="max-w-sm"
+            className="max-w-sm h-8 text-sm"
             placeholder="Search runs..."
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -487,7 +492,7 @@ export default function AgentRunsPage() {
             ))}
           </div>
         )}
-      </div>
+      </SectionPanel>
       {selectedAgentRunId ? (
         <AppModal
           open={true}

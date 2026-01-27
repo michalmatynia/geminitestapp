@@ -8,6 +8,8 @@ import { useNoteSettings } from "@/features/notesapp/hooks/NoteSettingsContext";
 import type { ThemeRecord } from "@/shared/types/notes";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 const defaultTheme: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt"> = {
   name: "",
@@ -184,16 +186,15 @@ export function AdminNotesThemesPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-white">Note Themes</h1>
-        <p className="text-sm text-gray-400">
-          Create and manage themes for your notes.
-        </p>
-      </div>
+      <SectionHeader
+        title="Note Themes"
+        description="Create and manage themes for your notes."
+        className="mb-6"
+      />
 
       <div className="space-y-6">
-        <div className="rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
-          <h2 className="mb-4 text-lg font-semibold text-white">Create Theme</h2>
+        <SectionPanel className="p-6">
+          <SectionHeader title="Create Theme" size="sm" className="mb-4" />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="sm:col-span-2">
               <Label className="mb-2 block text-sm font-medium text-gray-200">
@@ -351,15 +352,19 @@ export function AdminNotesThemesPage() {
               {isSaving ? "Saving..." : "Create"}
             </Button>
           </div>
-        </div>
+        </SectionPanel>
 
-        <div className="rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">Existing Themes</h2>
-            <Button variant="outline" onClick={() => { void fetchThemes(); }}>
-              Refresh
-            </Button>
-          </div>
+        <SectionPanel className="p-6">
+          <SectionHeader
+            title="Existing Themes"
+            size="sm"
+            className="mb-4"
+            actions={(
+              <Button variant="outline" onClick={() => { void fetchThemes(); }}>
+                Refresh
+              </Button>
+            )}
+          />
           {loading ? (
             <p className="text-sm text-gray-400">Loading themes...</p>
           ) : themes.length === 0 ? (
@@ -597,7 +602,7 @@ export function AdminNotesThemesPage() {
               })}
             </div>
           )}
-        </div>
+        </SectionPanel>
       </div>
     </div>
   );

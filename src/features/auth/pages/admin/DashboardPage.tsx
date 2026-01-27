@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 import { useToast } from "@/shared/ui/toast";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 import {
   AUTH_SETTINGS_KEYS,
   DEFAULT_AUTH_ROLES,
@@ -81,20 +83,20 @@ export default function AuthDashboardPage() {
 
   if (loading) {
     return (
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg text-sm text-gray-400">
+      <SectionPanel className="p-6 text-sm text-gray-400">
         Loading auth metrics...
-      </div>
+      </SectionPanel>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-        <h1 className="text-3xl font-bold text-white">Auth Dashboard</h1>
-        <p className="mt-2 text-sm text-gray-400">
-          Overview of user accounts and role assignments (provider: {provider}).
-        </p>
-      </div>
+      <SectionPanel className="p-6">
+        <SectionHeader
+          title="Auth Dashboard"
+          description={`Overview of user accounts and role assignments (provider: ${provider}).`}
+        />
+      </SectionPanel>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="bg-gray-950 border-gray-800">

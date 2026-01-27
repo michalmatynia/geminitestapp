@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ChevronLeftIcon, BellIcon } from "lucide-react";
+import { BellIcon } from "lucide-react";
 
 import { Button } from "@/shared/ui/button";
-import { Card } from "@/shared/ui/card";
 import { Label } from "@/shared/ui/label";
 import {
   Select,
@@ -15,6 +14,8 @@ import {
   SelectValue,
 } from "@/shared/ui/select";
 import { useToast, useToastSettings } from "@/shared/ui/toast";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 const positionOptions = [
   { value: "top-right", label: "Top Right", desc: "Corner top right" },
@@ -65,30 +66,21 @@ export function AdminNotificationsSettingsPage() {
 
   return (
     <div className="container mx-auto py-10">
-      {/* Header */}
-      <div className="mb-8 flex items-center gap-3">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/admin/settings" aria-label="Back to settings">
-            <ChevronLeftIcon className="size-5" />
+      <SectionHeader
+        title="Notifications"
+        description="Customize toast position, accent color, and preview behavior."
+        eyebrow={(
+          <Link href="/admin/settings" className="text-blue-300 hover:text-blue-200">
+            ← Back to settings
           </Link>
-        </Button>
-        <div>
-          <h1 className="flex items-center gap-2 text-3xl font-bold text-white">
-            <div className="flex size-8 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-200">
-              <BellIcon className="size-5" />
-            </div>
-            Notifications
-          </h1>
-          <p className="mt-1 text-sm text-gray-400">
-            Customize toast position, accent color, and preview behavior.
-          </p>
-        </div>
-      </div>
+        )}
+        className="mb-8"
+      />
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Settings Panel */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="border-gray-800 bg-gray-950 p-6">
+          <SectionPanel className="p-6">
             <div className="space-y-6">
               {/* Position Setting */}
               <div>
@@ -179,12 +171,12 @@ export function AdminNotificationsSettingsPage() {
                 </Button>
               </div>
             </div>
-          </Card>
+          </SectionPanel>
         </div>
 
         {/* Preview Panel */}
         <div>
-          <Card className="sticky top-6 border-gray-800 bg-gray-950 p-6">
+          <SectionPanel className="sticky top-6 p-6">
             <h2 className="mb-4 text-sm font-semibold text-white">Position Preview</h2>
             <div className="relative aspect-video w-full rounded-lg border border-gray-800 bg-gray-900">
               {/* Position indicator */}
@@ -223,7 +215,7 @@ export function AdminNotificationsSettingsPage() {
                 💡 Click the preview buttons to see how notifications appear with your settings.
               </p>
             </div>
-          </Card>
+          </SectionPanel>
         </div>
       </div>
     </div>

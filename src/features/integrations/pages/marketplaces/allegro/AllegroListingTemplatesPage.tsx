@@ -1,26 +1,29 @@
 import Link from "next/link";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 export default function AllegroListingTemplatesPage() {
   return (
-    <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-      <div className="mb-6">
-        <Link
-          href="/admin/integrations/marketplaces/allegro"
-          className="text-xs font-semibold uppercase tracking-wide text-gray-400 hover:text-gray-200"
-        >
-          ← Allegro
-        </Link>
-        <h1 className="mt-2 text-3xl font-bold text-white">
-          Listing Templates
-        </h1>
-        <p className="mt-1 text-sm text-gray-400">
-          Build reusable listing templates for Allegro.
-        </p>
-      </div>
+    <div className="container mx-auto py-10">
+      <SectionPanel className="p-6">
+        <SectionHeader
+          title="Listing Templates"
+          description="Build reusable listing templates for Allegro."
+          eyebrow={(
+            <Link
+              href="/admin/integrations/marketplaces/allegro"
+              className="text-blue-300 hover:text-blue-200"
+            >
+              ← Allegro
+            </Link>
+          )}
+          className="mb-6"
+        />
 
-      <div className="rounded-md border border-dashed border-gray-800 bg-gray-900 p-4 text-sm text-gray-400">
-        Listing templates will appear here.
-      </div>
+        <div className="rounded-md border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
+          Listing templates will appear here.
+        </div>
+      </SectionPanel>
     </div>
   );
 }

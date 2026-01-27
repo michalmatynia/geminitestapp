@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 const sections = [
   {
@@ -35,36 +37,39 @@ const sections = [
 
 export default function AllegroMarketplacePage() {
   return (
-    <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-      <div className="mb-6">
-        <Link
-          href="/admin/integrations/marketplaces"
-          className="text-xs font-semibold uppercase tracking-wide text-gray-400 hover:text-gray-200"
-        >
-          ← Marketplaces
-        </Link>
-        <h1 className="mt-2 text-3xl font-bold text-white">Allegro</h1>
-        <p className="mt-1 text-sm text-gray-400">
-          Configure Allegro integrations and listing workflows.
-        </p>
-      </div>
+    <div className="container mx-auto py-10">
+      <SectionPanel className="p-6">
+        <SectionHeader
+          title="Allegro"
+          description="Configure Allegro integrations and listing workflows."
+          eyebrow={(
+            <Link
+              href="/admin/integrations/marketplaces"
+              className="text-blue-300 hover:text-blue-200"
+            >
+              ← Marketplaces
+            </Link>
+          )}
+          className="mb-6"
+        />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {sections.map((section) => (
-          <Link
-            key={section.name}
-            href={section.href}
-            className="rounded-md border border-gray-800 bg-gray-900 p-4 transition hover:border-gray-600"
-          >
-            <h2 className="text-lg font-semibold text-white">
-              {section.name}
-            </h2>
-            <p className="mt-1 text-sm text-gray-400">
-              {section.description}
-            </p>
-          </Link>
-        ))}
-      </div>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {sections.map((section) => (
+            <Link
+              key={section.name}
+              href={section.href}
+              className="rounded-md border bg-card p-4 transition hover:border-gray-600"
+            >
+              <h2 className="text-lg font-semibold text-white">
+                {section.name}
+              </h2>
+              <p className="mt-1 text-sm text-gray-400">
+                {section.description}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </SectionPanel>
     </div>
   );
 }

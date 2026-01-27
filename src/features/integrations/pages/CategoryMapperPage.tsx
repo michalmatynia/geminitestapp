@@ -4,6 +4,8 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useToast } from "@/shared/ui/toast";
 import { MarketplaceSelector } from "@/features/integrations/components/marketplaces/category-mapper/MarketplaceSelector";
 import { BaseCategoryMapper } from "@/features/integrations/components/marketplaces/category-mapper/BaseCategoryMapper";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 type Integration = {
   id: string;
@@ -80,25 +82,26 @@ export default function CategoryMapperPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-        <h1 className="mb-2 text-3xl font-bold text-white">Category Mapper</h1>
-        <p className="mb-6 text-sm text-gray-400">
-          Map external marketplace categories to your internal product categories for seamless import and export.
-        </p>
+      <SectionPanel className="p-6">
+        <SectionHeader
+          title="Category Mapper"
+          description="Map external marketplace categories to your internal product categories for seamless import and export."
+          className="mb-6"
+        />
 
         <div className="grid gap-6 md:grid-cols-[280px_1fr]">
           {/* Sidebar */}
-          <aside className="rounded-md border border-gray-800 bg-gray-900 p-4">
+          <SectionPanel className="p-4">
             <MarketplaceSelector
               integrations={integrations}
               loading={loading}
               selectedConnectionId={selectedConnectionId}
               onSelectConnection={setSelectedConnectionId}
             />
-          </aside>
+          </SectionPanel>
 
           {/* Main Content */}
-          <section className="rounded-md border border-gray-800 bg-gray-900 p-6">
+          <SectionPanel className="p-6">
             {!selectedConnectionId ? (
               <div className="flex h-64 items-center justify-center text-gray-500">
                 <p>Select a marketplace connection to start mapping categories.</p>
@@ -113,9 +116,9 @@ export default function CategoryMapperPage() {
                 <p>Category mapping is not yet supported for this marketplace.</p>
               </div>
             )}
-          </section>
+          </SectionPanel>
         </div>
-      </div>
+      </SectionPanel>
     </div>
   );
 }

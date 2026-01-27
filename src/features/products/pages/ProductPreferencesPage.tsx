@@ -14,6 +14,8 @@ import { Input } from "@/shared/ui/input";
 import { useToast } from "@/shared/ui/toast";
 import { useRouter } from "next/navigation";
 import { UserPreferences } from "@/features/products/types";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 type Catalog = {
   id: string;
@@ -134,25 +136,25 @@ export function ProductPreferencesPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="rounded-lg bg-gray-950 p-6 shadow-lg">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Product Preferences</h1>
-            <p className="mt-1 text-sm text-gray-400">
-              Manage your product list display and navigation preferences
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => router.push("/admin/products")}
-          >
-            Back to Products
-          </Button>
-        </div>
+      <SectionPanel className="p-6">
+        <SectionHeader
+          title="Product Preferences"
+          size="md"
+          description="Manage your product list display and navigation preferences"
+          actions={
+            <Button
+              variant="outline"
+              onClick={() => router.push("/admin/products")}
+            >
+              Back to Products
+            </Button>
+          }
+          className="mb-6"
+        />
 
         <div className="space-y-6">
           {/* Product List Section */}
-          <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-6">
+          <SectionPanel className="p-6">
             <h2 className="mb-4 text-lg font-semibold text-white">Product List Settings</h2>
 
             <div className="space-y-4">
@@ -282,9 +284,9 @@ export function ProductPreferencesPage() {
                 {saving ? "Saving..." : "Save Preferences"}
               </Button>
             </div>
-          </div>
+          </SectionPanel>
         </div>
-      </div>
+      </SectionPanel>
     </div>
   );
 }

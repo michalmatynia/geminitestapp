@@ -5,6 +5,8 @@ import { DataTable } from "@/shared/components/data-table";
 import { Button } from "@/shared/ui/button";
 import { useToast } from "@/shared/ui/toast";
 import { Input } from "@/shared/ui/input";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 import { getDatabaseColumns } from "../components/DatabaseColumns";
 import { LogModal } from "../components/LogModal";
 import { RestoreModal } from "../components/RestoreModal";
@@ -193,37 +195,38 @@ export default function DatabasesPage() {
         </div>
       </div>
 
-      <div className="mb-2">
-        <p className="text-sm text-gray-400">
-          {activeTab === "postgresql"
+      <SectionHeader
+        title={`Databases - ${activeTab === "postgresql" ? "PostgreSQL" : "MongoDB"}`}
+        description={
+          activeTab === "postgresql"
             ? "PostgreSQL backups use pg_dump/pg_restore (.dump files). Restores are data-only and preserve your current schema."
-            : "MongoDB backups use mongodump/mongorestore (.archive files). Full database dumps with BSON format."}
-        </p>
-      </div>
-      <div className="flex flex-col gap-3 mb-6 md:flex-row md:items-center md:justify-between">
-        <h1 className="text-3xl font-bold">Databases - {activeTab === "postgresql" ? "PostgreSQL" : "MongoDB"}</h1>
-        <div className="flex flex-wrap items-center gap-3">
-          <Button
-            onClick={() => {
-              void handleBackup();
-            }}
-          >
-            Create Backup
-          </Button>
-          <Button onClick={triggerFileUpload}>Upload Backup</Button>
-          <Button variant="secondary" onClick={handlePreviewCurrent}>
-            Preview Current DB
-          </Button>
-          <Input
-            type="file"
-            ref={fileInputRef}
-            onChange={(e) => void handleUpload(e)}
-            className="hidden"
-            accept={activeTab === "postgresql" ? ".dump" : ".archive"}
-          />
-        </div>
-      </div>
-      <div className="rounded-lg bg-gray-900 p-6 shadow-lg">
+            : "MongoDB backups use mongodump/mongorestore (.archive files). Full database dumps with BSON format."
+        }
+        actions={
+          <>
+            <Button
+              onClick={() => {
+                void handleBackup();
+              }}
+            >
+              Create Backup
+            </Button>
+            <Button onClick={triggerFileUpload}>Upload Backup</Button>
+            <Button variant="secondary" onClick={handlePreviewCurrent}>
+              Preview Current DB
+            </Button>
+            <Input
+              type="file"
+              ref={fileInputRef}
+              onChange={(e) => void handleUpload(e)}
+              className="hidden"
+              accept={activeTab === "postgresql" ? ".dump" : ".archive"}
+            />
+          </>
+        }
+        className="mb-6"
+      />
+      <SectionPanel className="p-6">
         <DataTable
           columns={getDatabaseColumns({
             onPreview: handlePreview,
@@ -237,7 +240,7 @@ export default function DatabasesPage() {
           initialSorting={[{ id: "lastModifiedAt", desc: true }]}
           sortingStorageKey={`stardb:database-backups:${activeTab}:sorting`}
         />
-      </div>
+      </SectionPanel>
     </div>
   );
 }

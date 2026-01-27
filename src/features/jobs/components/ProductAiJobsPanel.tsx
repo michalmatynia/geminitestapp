@@ -10,6 +10,8 @@ import { useToast } from "@/shared/ui/toast";
 import { Loader2, RefreshCcw, Trash2, XCircle, Eye } from "lucide-react";
 import { AppModal } from "@/shared/ui/app-modal";
 import ModalShell from "@/shared/ui/modal-shell";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 import ProductListingJobsPanel from "@/features/jobs/components/ProductListingJobsPanel";
 import type { ProductAiJob } from "@/shared/types/jobs";
 import type { ProductAiJobsPanelProps } from "@/features/jobs/types/jobs-ui";
@@ -325,12 +327,11 @@ export default function ProductAiJobsPanel({
 
   return (
     <div className="container mx-auto py-10">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-white">{title}</h1>
-        <p className="text-gray-400">
-          {description}
-        </p>
-      </div>
+      <SectionHeader
+        title={title}
+        description={description}
+        className="mb-6"
+      />
 
       {showTabs ? (
         <Tabs defaultValue={defaultTab} className="space-y-6">
@@ -345,7 +346,7 @@ export default function ProductAiJobsPanel({
           </TabsContent>
 
           <TabsContent value="import" className="space-y-4">
-            <div className="rounded-lg border border-gray-800 bg-gray-950 p-6">
+            <SectionPanel className="p-6">
               <h2 className="text-2xl font-bold text-white">Import Jobs</h2>
               <p className="mt-2 text-sm text-gray-400">
                 Import jobs will appear here once import tracking is enabled.
@@ -355,7 +356,7 @@ export default function ProductAiJobsPanel({
                   Go to Imports
                 </Link>
               </div>
-            </div>
+            </SectionPanel>
           </TabsContent>
 
           <TabsContent value="export">

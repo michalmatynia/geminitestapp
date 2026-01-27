@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeftIcon, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 
 import { Button } from "@/shared/ui/button";
 import {
@@ -17,6 +17,8 @@ import type { NoteSettings } from "@/features/notesapp/types/notes-settings";
 import { Label } from "@/shared/ui/label";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 const sortByOptions = [
   { value: "created", label: "Created Date" },
@@ -70,24 +72,21 @@ export function AdminNotesSettingsPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="mb-6 flex items-center gap-3">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/admin/notes" aria-label="Back to notes">
-            <ChevronLeftIcon className="size-5" />
+      <SectionHeader
+        title="Note Settings"
+        description="Configure default view preferences for the Notes app."
+        eyebrow={(
+          <Link href="/admin/notes" className="text-blue-300 hover:text-blue-200">
+            ← Back to notes
           </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold text-white">Note Settings</h1>
-          <p className="text-sm text-gray-400">
-            Configure default view preferences for the Notes app.
-          </p>
-        </div>
-      </div>
+        )}
+        className="mb-6"
+      />
 
       <div className="max-w-xl space-y-6">
         {/* Sorting Settings */}
-        <div className="rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
-          <h2 className="mb-4 text-lg font-semibold text-white">Sorting</h2>
+        <SectionPanel className="p-6">
+          <SectionHeader title="Sorting" size="sm" className="mb-4" />
           <div className="space-y-4">
             <div>
               <Label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-200">
@@ -141,13 +140,11 @@ export function AdminNotesSettingsPage() {
               </Select>
             </div>
           </div>
-        </div>
+        </SectionPanel>
 
         {/* Visibility Settings */}
-        <div className="rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
-          <h2 className="mb-4 text-lg font-semibold text-white">
-            Card Visibility
-          </h2>
+        <SectionPanel className="p-6">
+          <SectionHeader title="Card Visibility" size="sm" className="mb-4" />
           <div className="space-y-4">
             <Label className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -193,11 +190,11 @@ export function AdminNotesSettingsPage() {
               )}
             </Label>
           </div>
-        </div>
+        </SectionPanel>
 
         {/* Search Settings */}
-        <div className="rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
-          <h2 className="mb-4 text-lg font-semibold text-white">Search</h2>
+        <SectionPanel className="p-6">
+          <SectionHeader title="Search" size="sm" className="mb-4" />
           <div>
             <Label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-200">
               <span>Default Search Scope</span>
@@ -223,11 +220,11 @@ export function AdminNotesSettingsPage() {
               </SelectContent>
             </Select>
           </div>
-        </div>
+        </SectionPanel>
 
         {/* Editor Settings */}
-        <div className="rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
-          <h2 className="mb-4 text-lg font-semibold text-white">Editor</h2>
+        <SectionPanel className="p-6">
+          <SectionHeader title="Editor" size="sm" className="mb-4" />
           <div className="space-y-4">
             <div>
               <Label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-200">
@@ -297,11 +294,11 @@ export function AdminNotesSettingsPage() {
               )}
             </Label>
           </div>
-        </div>
+        </SectionPanel>
 
         {/* Navigation State */}
-        <div className="rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
-          <h2 className="mb-4 text-lg font-semibold text-white">Navigation</h2>
+        <SectionPanel className="p-6">
+          <SectionHeader title="Navigation" size="sm" className="mb-4" />
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div>
@@ -328,7 +325,7 @@ export function AdminNotesSettingsPage() {
               )}
             </div>
           </div>
-        </div>
+        </SectionPanel>
 
         {/* Reset Button */}
         <div className="flex justify-end">
@@ -344,7 +341,7 @@ export function AdminNotesSettingsPage() {
         </div>
 
         {/* Current Settings Summary */}
-        <div className="rounded-lg border border-gray-700 bg-gray-900/50 p-4">
+        <SectionPanel className="p-4">
           <h3 className="mb-2 text-sm font-medium text-gray-400">
             Current Settings Summary
           </h3>
@@ -379,7 +376,7 @@ export function AdminNotesSettingsPage() {
               {editorModeOptions.find((o) => o.value === settings.editorMode)?.label}
             </span>
           </div>
-        </div>
+        </SectionPanel>
       </div>
     </div>
   );

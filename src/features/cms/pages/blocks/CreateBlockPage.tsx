@@ -7,6 +7,7 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Textarea } from "@/shared/ui/textarea";
 import { createBlock } from "@/features/cms/api/blocks";
+import { SectionHeader } from "@/shared/ui/section-header";
 
 export default function CreateBlockPage() {
   const [name, setName] = useState("");
@@ -23,8 +24,8 @@ export default function CreateBlockPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold">Create Block</h1>
-      <form onSubmit={handleSubmit} className="mt-6">
+      <SectionHeader title="Create Block" className="mb-6" />
+      <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <Label htmlFor="name">Block Name</Label>
           <Input

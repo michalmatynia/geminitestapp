@@ -8,6 +8,8 @@ import { useNoteSettings } from "@/features/notesapp/hooks/NoteSettingsContext";
 import type { TagRecord } from "@/shared/types/notes";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
+import { SectionHeader } from "@/shared/ui/section-header";
+import { SectionPanel } from "@/shared/ui/section-panel";
 
 export function AdminNotesTagsPage() {
   const { toast } = useToast();
@@ -166,26 +168,25 @@ export function AdminNotesTagsPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-white">Note Tags</h1>
-        <p className="text-sm text-gray-400">
-          Create and remove tags used in the Notes app.
-        </p>
-      </div>
+      <SectionHeader
+        title="Note Tags"
+        description="Create and remove tags used in the Notes app."
+        className="mb-6"
+      />
 
       <div className="max-w-3xl space-y-6">
-        <div className="rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
-          <h2 className="mb-4 text-lg font-semibold text-white">Search</h2>
+        <SectionPanel className="p-6">
+          <SectionHeader title="Search" size="sm" className="mb-4" />
           <Input
             type="text"
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
             placeholder="Search tags..."
-            className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white"
+            className="w-full"
           />
-        </div>
-        <div className="rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
-          <h2 className="mb-4 text-lg font-semibold text-white">Create Tag</h2>
+        </SectionPanel>
+        <SectionPanel className="p-6">
+          <SectionHeader title="Create Tag" size="sm" className="mb-4" />
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
             <div className="flex-1">
               <Label className="mb-2 block text-sm font-medium text-gray-200">
@@ -195,7 +196,7 @@ export function AdminNotesTagsPage() {
                 type="text"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white"
+                className="w-full"
                 placeholder="Enter tag name"
               />
             </div>
@@ -207,22 +208,26 @@ export function AdminNotesTagsPage() {
                 type="color"
                 value={color}
                 onChange={(event) => setColor(event.target.value)}
-                className="h-10 w-20 rounded border border-gray-700 bg-gray-800"
+                className="h-10 w-20"
               />
             </div>
             <Button onClick={() => { void handleCreate(); }} disabled={isSaving}>
               {isSaving ? "Saving..." : "Create"}
             </Button>
           </div>
-        </div>
+        </SectionPanel>
 
-        <div className="rounded-lg border border-gray-800 bg-gray-950 p-6 shadow-lg">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">Existing Tags</h2>
-            <Button variant="outline" onClick={() => { void fetchTags(); }}>
-              Refresh
-            </Button>
-          </div>
+        <SectionPanel className="p-6">
+          <SectionHeader
+            title="Existing Tags"
+            size="sm"
+            className="mb-4"
+            actions={(
+              <Button variant="outline" onClick={() => { void fetchTags(); }}>
+                Refresh
+              </Button>
+            )}
+          />
           {loading ? (
             <div className="text-sm text-gray-400">Loading tags...</div>
           ) : filteredTags.length === 0 ? (
@@ -234,7 +239,7 @@ export function AdminNotesTagsPage() {
                 return (
                   <div
                     key={tag.id}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-gray-800 bg-gray-900 px-4 py-3"
+                    className="flex items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3"
                   >
                     <div className="flex flex-1 items-center gap-3">
                       <span
@@ -247,13 +252,13 @@ export function AdminNotesTagsPage() {
                             type="text"
                             value={editingName}
                             onChange={(event) => setEditingName(event.target.value)}
-                            className="w-full rounded-md border border-gray-700 bg-gray-800 px-3 py-1 text-sm text-white"
+                            className="w-full"
                           />
                           <Input
                             type="color"
                             value={editingColor}
                             onChange={(event) => setEditingColor(event.target.value)}
-                            className="h-8 w-14 rounded border border-gray-700 bg-gray-800"
+                            className="h-8 w-14"
                           />
                         </div>
                       ) : (
@@ -302,7 +307,7 @@ export function AdminNotesTagsPage() {
               })}
             </div>
           )}
-        </div>
+        </SectionPanel>
       </div>
     </div>
   );

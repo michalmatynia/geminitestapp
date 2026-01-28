@@ -1,1 +1,2 @@
-export { AgentCreatorAgentRunStreamRuntime as runtime, AgentCreatorAgentRunStreamGET as GET } from "@/features/agentcreator/server";
+export { AgentCreatorAgentRunStreamGET as GET } from "@/features/agentcreator/server";
+export const runtime = "nodejs";

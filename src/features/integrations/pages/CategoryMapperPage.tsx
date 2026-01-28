@@ -42,22 +42,19 @@ export default function CategoryMapperPage() {
     return firstConnection?.id ?? null;
   }, [integrations, selectedConnectionIdOverride]);
 
-  const selectedConnection = useMemo(() => {
+  const selectedConnection = (() => {
     if (!selectedConnectionId) return null;
-    for (const integration of integrations) {
-      const connection = integration.connections.find((c) => c.id === selectedConnectionId);
-      if (connection) {
-        return { ...connection, integration };
-      }
-    }
-    return null;
-  }, [integrations, selectedConnectionId]);
+    const allConnections = integrations.flatMap((i) =>
+      i.connections.map((c) => ({ ...c, integration: i }))
+    );
+    return allConnections.find((c) => c.id === selectedConnectionId) ?? null;
+  })();
 
-  const isBaseConnection = useMemo(() => {
+  const isBaseConnection = (() => {
     if (!selectedConnection) return false;
     const slug = selectedConnection.integration.slug.toLowerCase();
     return slug === "baselinker" || slug === "base";
-  }, [selectedConnection]);
+  })();
 
   return (
     <div className="container mx-auto py-10">

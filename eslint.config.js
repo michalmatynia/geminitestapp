@@ -1,4 +1,5 @@
-import { dirname } from "path";
+import { readdirSync } from "fs";
+import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { FlatCompat } from "@eslint/eslintrc";
 import importPlugin from "eslint-plugin-import";
@@ -11,13 +12,135 @@ const compat = new FlatCompat({
   baseDirectory: __dirname,
 });
 
+const featureNames = readdirSync(join(__dirname, "src", "features"), {
+  withFileTypes: true,
+})
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => entry.name);
+
+const sharedUiRestrictions = [
+  {
+    group: ["@/shared/ui/**", "@/shared/components/**"],
+    message: "Import shared UI from '@/shared/ui'.",
+  },
+];
+
+const sharedUiPathRestrictions = [
+  {
+    name: "@/shared/components",
+    message: "Import shared UI from '@/shared/ui'.",
+  },
+];
+
+const buildRestrictedImportsRule = (extraPatterns = [], extraPaths = []) => [
+  "error",
+  {
+    paths: [...sharedUiPathRestrictions, ...extraPaths],
+    patterns: [...sharedUiRestrictions, ...extraPatterns],
+  },
+];
+
+const featureBaseRestrictions = [
+  {
+    group: ["@/app/**"],
+    message: "Features must not import from app.",
+  },
+];
+
+const layerBoundaryConfigs = [
+  {
+    files: ["src/**/*.{ts,tsx,js,jsx}"],
+    rules: {
+      "no-restricted-imports": buildRestrictedImportsRule(),
+      "import/no-restricted-paths": [
+        "error",
+        {
+          zones: [
+            {
+              target: "./src/shared",
+              from: "./src/features",
+              message: "Shared layer must not import from features.",
+            },
+            {
+              target: "./src/shared",
+              from: "./src/app",
+              message: "Shared layer must not import from app.",
+            },
+            {
+              target: "./src/features",
+              from: "./src/app",
+              message: "Features must not import from app.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/app/**/*.{ts,tsx,js,jsx}"],
+    rules: {
+      "no-restricted-imports": buildRestrictedImportsRule([
+        {
+          group: [
+            "@/features/*/!(server)",
+            "@/features/*/!(server)/**",
+            "@/features/*/server/**",
+          ],
+          message:
+            "Import feature public APIs only (use '@/features/<name>' or '@/features/<name>/server').",
+        },
+      ]),
+    },
+  },
+  {
+    files: ["src/shared/**/*.{ts,tsx,js,jsx}"],
+    rules: {
+      "no-restricted-imports": buildRestrictedImportsRule([
+        {
+          group: ["@/features/**"],
+          message: "Shared layer must not import from features.",
+        },
+        {
+          group: ["@/app/**"],
+          message: "Shared layer must not import from app.",
+        },
+      ]),
+    },
+  },
+  ...featureNames.map((feature) => ({
+    files: [`src/features/${feature}/**/*.{ts,tsx,js,jsx}`],
+    rules: {
+      "no-restricted-imports": buildRestrictedImportsRule([
+        ...featureBaseRestrictions,
+        {
+          group: [
+            `@/features/!(${feature})/!(server)`,
+            `@/features/!(${feature})/!(server)/**`,
+            `@/features/!(${feature})/server/**`,
+          ],
+          message:
+            "Import other features via their public API (use '@/features/<name>' or '@/features/<name>/server').",
+        },
+      ]),
+    },
+  })),
+];
+
 const configFiles = [
   "eslint.config.js",
-  "jest.config.cjs",
+  "vitest.config.ts",
+  "vitest.setup.ts",
   "next.config.mjs",
   "postcss.config.mjs",
   "prisma/seed.js",
   "server.cjs",
+  "scripts/check-catalog.mjs",
+  "scripts/check-db-tables.mjs",
+  "scripts/check-job.mjs",
+  "scripts/debug-db.cjs",
+  "scripts/debug-product.mjs",
+  "scripts/cleanup-base-export-templates.mjs",
+  "scripts/backfill-note-colors.mjs",
 ];
 
 const disableTypeCheckedForConfigFiles = compat
@@ -30,7 +153,7 @@ const disableTypeCheckedForConfigFiles = compat
 const eslintConfig = [
   ...nextCoreWebVitals,
   {
-    ignores: ["lib/generated/prisma/**"],
+    ignores: ["lib/generated/prisma/**", "scripts/backfill-note-colors.mjs"],
   },
   ...compat.extends(
     "plugin:@typescript-eslint/recommended-type-checked",
@@ -57,22 +180,17 @@ const eslintConfig = [
       "react/react-in-jsx-scope": "off",
       "react/prop-types": "off",
       // Added to disable specific TypeScript rules
-      "@typescript-eslint/no-unused-vars": "off",
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unsafe-assignment": "off",
-      "@typescript-eslint/no-unsafe-member-access": "off",
-      "@typescript-eslint/no-unsafe-argument": "off",
-      // "@typescript-eslint/no-unused-vars": [
-      //   "error",
-      //   {
-      //     "argsIgnorePattern": "^_",
-      //     "varsIgnorePattern": "^_",
-      //     "caughtErrorsIgnorePattern": "^_",
-      //     "ignoreRestSiblings": true
-      //   }
-      // ],
-      // "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-misused-promises": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          "argsIgnorePattern": "^_",
+          "varsIgnorePattern": "^_",
+          "caughtErrorsIgnorePattern": "^_",
+          "ignoreRestSiblings": true
+        }
+      ],
+      "@typescript-eslint/no-explicit-any": "error",
+      // "@typescript-eslint/no-misused-promises": "off",
       "import/order": "off",
     },
     settings: {
@@ -85,6 +203,7 @@ const eslintConfig = [
       },
     },
   },
+  ...layerBoundaryConfigs,
   {
     files: ["lib/generated/prisma/**/*.ts", "lib/generated/prisma/**/*.js"],
     rules: {

@@ -1,4 +1,6 @@
-import prisma from "@/lib/prisma";
+import { NextRequest } from "next/server";
+import prisma from "@/shared/lib/db/prisma";
+import { ChatbotAgentRun, AgentBrowserLog, AgentAuditLog } from "@prisma/client";
 import { GET as listRuns, POST as createRun } from "@/app/api/chatbot/agent/route";
 import { GET as getLogs } from "@/app/api/chatbot/agent/[runId]/logs/route";
 import { GET as getAudits } from "@/app/api/chatbot/agent/[runId]/audits/route";
@@ -17,13 +19,13 @@ describe("Agent API", () => {
   });
 
   it("should reject missing prompt when creating a run", async () => {
-    const req = new Request("http://localhost/api/chatbot/agent", {
+    const req = new NextRequest("http://localhost/api/chatbot/agent", {
       method: "POST",
       body: JSON.stringify({}),
     });
 
     const res = await createRun(req);
-    const data = await res.json();
+    const data = (await res.json()) as { error: string };
 
     expect(res.status).toBe(400);
     expect(data.error).toBe("Prompt is required.");
@@ -53,13 +55,17 @@ describe("Agent API", () => {
       },
     });
 
-    const res = await listRuns();
-    const data = await res.json();
+    const res = await listRuns(new NextRequest("http://localhost/api/chatbot/agent"));
+    const data = (await res.json()) as {
+      runs: (ChatbotAgentRun & {
+        _count: { browserLogs: number; browserSnapshots: number };
+      })[];
+    };
 
     expect(res.status).toBe(200);
     expect(data.runs).toHaveLength(1);
-    expect(data.runs[0]._count.browserLogs).toBe(1);
-    expect(data.runs[0]._count.browserSnapshots).toBe(1);
+    expect(data.runs[0]!._count.browserLogs).toBe(1);
+    expect(data.runs[0]!._count.browserSnapshots).toBe(1);
   });
 
   it("should return agent logs for a run", async () => {
@@ -74,14 +80,14 @@ describe("Agent API", () => {
       },
     });
 
-    const res = await getLogs(new Request("http://localhost"), {
+    const res = await getLogs(new NextRequest("http://localhost"), {
       params: Promise.resolve({ runId: run.id }),
     });
-    const data = await res.json();
+    const data = (await res.json()) as { logs: AgentBrowserLog[] };
 
     expect(res.status).toBe(200);
     expect(data.logs).toHaveLength(1);
-    expect(data.logs[0].message).toBe("Log entry");
+    expect(data.logs[0]!.message).toBe("Log entry");
   });
 
   it("should return agent audit logs for a run", async () => {
@@ -97,13 +103,14 @@ describe("Agent API", () => {
       },
     });
 
-    const res = await getAudits(new Request("http://localhost"), {
+    const res = await getAudits(new NextRequest("http://localhost"), {
       params: Promise.resolve({ runId: run.id }),
     });
-    const data = await res.json();
+    const data = (await res.json()) as { audits: AgentAuditLog[] };
 
     expect(res.status).toBe(200);
     expect(data.audits).toHaveLength(1);
-    expect(data.audits[0].metadata.step).toBe("tool");
+    expect(data.audits[0]!.metadata).toBeDefined();
+    expect((data.audits[0]!.metadata as { step: string }).step).toBe("tool");
   });
 });

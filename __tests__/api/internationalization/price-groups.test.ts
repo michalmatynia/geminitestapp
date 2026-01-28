@@ -1,5 +1,17 @@
-import { GET, POST } from "../../../app/api/price-groups/route";
-import prisma from "@/lib/prisma";
+import { NextRequest } from "next/server";
+import { GET, POST } from "@/app/api/price-groups/route";
+import prisma from "@/shared/lib/db/prisma";
+
+type PriceGroupResponse = {
+  id: string;
+  groupId: string;
+  name: string;
+  currencyId: string;
+  type: string;
+  basePriceField: string;
+  isDefault: boolean;
+  sourceGroupId?: string | null;
+};
 
 describe("Price Groups API", () => {
   beforeEach(async () => {
@@ -13,8 +25,8 @@ describe("Price Groups API", () => {
 
   describe("GET /api/price-groups", () => {
     it("should return empty list initially", async () => {
-      const res = await GET();
-      const groups = await res.json();
+      const res = await GET(new NextRequest("http://localhost/api/price-groups"));
+      const groups = (await res.json()) as PriceGroupResponse[];
       expect(res.status).toEqual(200);
       expect(groups).toEqual([]);
     });
@@ -33,11 +45,11 @@ describe("Price Groups API", () => {
         },
       });
 
-      const res = await GET();
-      const groups = await res.json();
+      const res = await GET(new NextRequest("http://localhost/api/price-groups"));
+      const groups = (await res.json()) as PriceGroupResponse[];
       expect(res.status).toEqual(200);
       expect(groups).toHaveLength(1);
-      expect(groups[0].groupId).toBe("PG1");
+      expect(groups[0]!.groupId).toBe("PG1");
     });
   });
 
@@ -58,13 +70,13 @@ describe("Price Groups API", () => {
         isDefault: true,
       };
 
-      const req = new Request("http://localhost/api/price-groups", {
+      const req = new NextRequest("http://localhost/api/price-groups", {
         method: "POST",
         body: JSON.stringify(newGroup),
       });
 
       const res = await POST(req);
-      const group = await res.json();
+      const group = (await res.json()) as PriceGroupResponse;
 
       expect(res.status).toEqual(200);
       expect(group.groupId).toBe("STD");
@@ -96,13 +108,13 @@ describe("Price Groups API", () => {
         addToPrice: 10,
       };
 
-      const req = new Request("http://localhost/api/price-groups", {
+      const req = new NextRequest("http://localhost/api/price-groups", {
         method: "POST",
         body: JSON.stringify(newGroup),
       });
 
       const res = await POST(req);
-      const group = await res.json();
+      const group = (await res.json()) as PriceGroupResponse;
 
       expect(res.status).toEqual(200);
       expect(group.type).toBe("dependent");
@@ -125,14 +137,14 @@ describe("Price Groups API", () => {
         addToPrice: 10,
       };
 
-      const req = new Request("http://localhost/api/price-groups", {
+      const req = new NextRequest("http://localhost/api/price-groups", {
         method: "POST",
         body: JSON.stringify(newGroup),
       });
 
       const res = await POST(req);
       expect(res.status).toEqual(400);
-      const body = await res.json();
+      const body = (await res.json()) as { error: string };
       expect(body.error).toContain("Invalid payload");
     });
   });

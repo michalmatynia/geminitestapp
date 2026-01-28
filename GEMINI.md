@@ -1,181 +1,303 @@
-# Project Information
+# GEMINI.md - Project Reference (Authoritative)
 
-This project is a Next.js application designed as a monochrome admin dashboard with full CRUD (Create, Read, Update, Delete) capabilities for managing products. It leverages modern web technologies to provide a clean, efficient, and type-safe development experience. It also features a user-facing frontend to display the products.
+This project is an **AI-forward, multi-app platform** built on Next.js with a
+shared API layer, a feature-rich admin app, and a public frontend. It is designed
+for extensibility: new apps can be added as additional route groups while
+re-using the same services, data providers, and AI runtime.
 
-## Getting Started
+## Quick Start
 
-To get the project up and running locally, follow these steps:
-
-1.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
-2.  **Set environment variables:**
-    Update `.env` with your database and API keys. For local Postgres:
-    ```bash
-    DATABASE_URL="postgresql://postgresuser@localhost:5432/stardb?schema=public"
-    PG_DUMP_PATH="/usr/local/opt/postgresql@16/bin/pg_dump"
-    PG_RESTORE_PATH="/usr/local/opt/postgresql@16/bin/pg_restore"
-    ```
-3.  **Initialize the database:**
-    ```bash
-    npx prisma migrate dev --name init
-    ```
-4.  **Seed the database with initial data:**
-    ```bash
-    npm run seed
-    ```
-5.  **Start the development server:**
-    ```bash
-    npm run dev
-    ```
-The application will be available at `http://localhost:3000`.
-
-## Local Environment Notes
-
-- **Database**: PostgreSQL (local). The Prisma client uses the Pg driver adapter.
-- **pg_dump/pg_restore**: Required for the Database admin page. Configure `PG_DUMP_PATH` and `PG_RESTORE_PATH` in `.env` if Postgres is keg-only (Homebrew).
-- **.env**: Must include `DATABASE_URL`, `IMAGEKIT_ID`, `OPENAI_API_KEY`, and the pg tool paths when needed.
-
-## Postgres Setup (Local)
-
-1. **Install PostgreSQL (Homebrew):**
+1. Install dependencies:
    ```bash
-   brew install postgresql@16
+   npm install
    ```
-2. **Start the service:**
+2. Set environment variables (see below).
+3. Initialize DB (Postgres via Prisma):
    ```bash
-   brew services start postgresql@16
+   npx prisma migrate dev
    ```
-3. **Create role and database:**
+4. Seed (optional):
    ```bash
-   /usr/local/opt/postgresql@16/bin/createuser -s postgresuser
-   /usr/local/opt/postgresql@16/bin/createdb -O postgresuser stardb
+   npm run seed
+   npm run seed:admin
+   ```
+5. Run dev server:
+   ```bash
+   npm run dev
    ```
 
-## Key Technologies
+The server uses `server.cjs` for dev/prod.
 
-- **Framework**: Next.js (App Router)
-- **Language**: TypeScript
-- **Database ORM**: Prisma (PostgreSQL)
-- **UI Components**: Radix UI (headless components for accessibility), including `@radix-ui/react-collapsible` and `@radix-ui/react-select`
-- **Styling**: Tailwind CSS (utility-first CSS framework)
-- **Form Handling**: React Hook Form with Zod for schema validation
-- **Data Display**: TanStack Table (for efficient and flexible table rendering)
-- **Icons**: Lucide React
-- **Testing**: Jest (testing framework)
-- **AI**: OpenAI API for description generation
+## Environment Variables (Common)
 
-## Architecture
+```
+DATABASE_URL=postgresql://...
+MONGODB_URI=mongodb://...
+PRODUCT_DB_PROVIDER=prisma|mongodb
+NEXTAUTH_SECRET=...
+NEXTAUTH_URL=http://localhost:3000
+OPENAI_API_KEY=...
+OLLAMA_BASE_URL=http://localhost:11434
+BASE_API_URL=https://api.baselinker.com/connector.php
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+AI_PATHS_RUN_CONCURRENCY=1
+AI_PATHS_RUN_MAX_ATTEMPTS=3
+AI_PATHS_RUN_BACKOFF_MS=5000
+AI_PATHS_RUN_BACKOFF_MAX_MS=60000
+```
 
-This application follows a modular architecture that separates concerns and promotes maintainability.
+## Stack (Actual Versions)
 
-- **`app/`**: Contains the pages and API routes, following the Next.js App Router conventions. The app is split into two route groups:
-  - **`app/(admin)/`**: The main UI for the admin dashboard, featuring a panel-based layout with foldable sections for managing products, files, and application settings.
-  - **`app/(frontend)/`**: The user-facing pages, including the homepage and product detail pages.
-  - **`app/api/`**: Houses the backend API endpoints, which are now thin wrappers around the business logic in the `productService`.
-- **`components/`**: Reusable UI components, including a `DebugPanel` for development, a `ProductImageManager` for handling image uploads, and a `FileManager` for browsing and selecting existing images. The `data-table.tsx` and `columns.tsx` files provide a generic, reusable table component powered by TanStack Table.
-- **`lib/`**: Contains the core business logic, utilities, and type definitions.
-  - **`lib/services/productService.ts`**: A dedicated service file that encapsulates all business logic for managing products, including creating, updating, deleting, and linking images to products.
-  - **`lib/api.ts`**: A centralized module for all client-side API calls.
-  - **`lib/types.ts`**: A central repository for all custom TypeScript types.
-  - **`lib/context/ProductFormContext.tsx`**: A React context that provides a centralized place for managing the state and logic of the product form.
-- **`prisma/`**: The Prisma schema definition, migrations, and database seeding script.
-- **`__tests__/`**: Unit and integration tests for the API endpoints.
+- Next.js 16.1.1 (App Router)
+- React 19.2.3
+- TypeScript 5.9 (strict true)
+- Prisma 7.2.0 + Postgres
+- MongoDB optional provider for products/settings
+- Tailwind CSS 4.1 + ShadCN/ui (copy-pasted in `src/shared/ui/`)
+- TanStack Query + TanStack Table
+- NextAuth/Auth.js 5.0.0-beta.30
+- OpenAI SDK 6.15 (chat completions)
+- Ollama local models (via `OLLAMA_BASE_URL`)
 
-## Data Model
+## Multi-App Architecture
 
-Prisma is used as the ORM to interact with a PostgreSQL database. The data model is defined in `prisma/schema.prisma` and includes the following models:
+```
+src/app/
+  (admin)/admin/        # Admin UI
+  (frontend)/           # Public UI
+  api/                  # REST-style API
+```
 
-| Model           | Description                                                                                                                                    |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Product`       | Represents a product in the catalog.                                                                                                           |
-| `ImageFile`     | Represents an image file that can be associated with one or more products.                                                                     |
-| `ProductImage`  | A join table that creates a many-to-many relationship between `Product` and `ImageFile`.                                                       |
-| `Setting`       | A key-value store for application settings.                                                                                                    |
-| `Slug`          | Represents a URL slug for a CMS page.                                                                                                          |
+- Admin handles products, drafts, notes, settings, integrations.
+- Frontend exposes public product experiences.
+- API is shared by both apps.
 
-## API Endpoints
+## Core Layers
 
-The application exposes a set of RESTful API endpoints for managing products and fetching connection logs.
+```
+src/
+  app/                  # Route groups + API handlers
+  features/             # Domain features (UI + state + hooks + api)
+    admin/              # Admin shell, navigation, admin-only pages
+    drafter/            # Product draft templates + editor
+    playwright/         # Playwright personas and shared automation settings
+  shared/               # Cross-feature UI primitives, components, utils, hooks, types
+    lib/                # Shared runtime helpers (api, db, query-client, transient-recovery)
+    types/              # Shared TS types (cross-feature)
+    ui/                 # ShadCN/ui components
 
-- **`GET /api/products`**: Fetches a list of products with filtering options.
-- **`POST /api/products`**: Creates a new product.
-- **`GET /api/products/[id]`**: Fetches a single product by its ID.
-- **`PUT /api/products/[id]`**: Updates an existing product.
-- **`DELETE /api/products/[id]`**: Deletes a product.
-- **`DELETE /api/products/[id]/images/[imageFileId]`**: Unlinks an image from a product.
-- **`GET /api/files`**: Fetches a list of image files with filtering options.
-- **`DELETE /api/files/[id]`**: Deletes an image file.
-- **`POST /api/generate-description`**: Generates a product description based on the product name and other attributes.
-- **`POST /api/import`**: Imports products from a CSV file.
-- **`GET /api/settings`**: Fetches all application settings.
-- **`POST /api/settings`**: Creates or updates an application setting.
-- **`POST /api/databases/upload`**: Uploads a `.dump` backup file.
-- **`POST /api/databases/backup`**: Creates a new database backup via `pg_dump`.
-- **`GET /api/databases/backups`**: Fetches a list of all database backups.
-- **`POST /api/databases/restore`**: Restores a database backup via `pg_restore`.
-- **`POST /api/databases/delete`**: Deletes a database backup.
-- **`GET /api/cms/slugs`**: Fetches a list of all slugs.
-- **`POST /api/cms/slugs`**: Creates a new slug.
-- **`DELETE /api/cms/slugs/[id]`**: Deletes a slug.
+prisma/                 # Schema + migrations
+public/uploads/         # File storage
+```
 
-## Code Style and Conventions
+## Data Providers (Prisma + Mongo)
 
-- **Linting**: The project uses ESLint with the `next/core-web-vitals` configuration to enforce code quality and consistency.
-- **Formatting**: Prettier is used for automatic code formatting.
-- **Type Checking**: TypeScript is used for static type checking.
+The product domain can run on **Prisma (Postgres)** or **MongoDB**. Provider is
+selected by:
+- `product_db_provider` setting (db)
+- `PRODUCT_DB_PROVIDER` env var
+- Fallback: Prisma if `DATABASE_URL` is set, else Mongo if `MONGODB_URI` is set
 
-## New Features
+See `src/features/products/services/product-provider.ts` and the repository implementations under
+`src/features/products/services/*-repository/`.
 
-- **AI-Powered Description Generation:** The admin dashboard now features a tool to generate product descriptions using the OpenAI API. This feature is highly customizable, allowing users to:
-    - Select the AI model (`gpt-3.5-turbo` or `gpt-4o`).
-    - Define a custom prompt with placeholders for product attributes (e.g., `[name]`, `[price]`).
-    - Include product images in the prompt for vision-capable models.
-- **Database Management:** The admin dashboard includes a database management page where users can:
-    - Create and restore PostgreSQL backups (custom `.dump` format).
-    - Upload and delete backup files stored under `prisma/backups/`.
-- **SKU Search:** The product list page now includes a search field for filtering products by SKU.
-- **CMS Slug Management:** The admin dashboard now includes a basic CMS for managing URL slugs.
-- **Frontend/Admin Split:** The application has been restructured into separate frontend and admin sections, each with its own layout and navigation.
-- **Modular Business Logic:** The backend logic has been refactored into a dedicated `productService` for improved maintainability and testability.
-- **Centralized API Calls:** All client-side `fetch` calls have been consolidated into `lib/api.ts`.
-- **Decomposed Components:** The `ProductForm` has been broken down into smaller, more focused components like `ProductImageManager`.
-- **Debugging Features:** A `DebugPanel` can be activated with the `?debug=true` query parameter to provide real-time insights into the product form's state.
+## AI & Agent Runtime
 
-## Testing
+- **AI services**: `src/features/products/services/aiDescriptionService.ts`,
+  `src/features/products/services/aiTranslationService.ts`, plus product AI job processing in
+  `src/features/jobs/workers/productAiQueue.ts` (orchestrated by
+  `src/features/jobs/services/productAiService.ts`)
+- **AI Paths persistent runtime**: run records live in `AiPathRun`, `AiPathRunNode`, `AiPathRunEvent`
+  (Prisma) or `ai_path_runs`, `ai_path_run_nodes`, `ai_path_run_events` (Mongo). Queue worker:
+  `src/features/jobs/workers/aiPathRunQueue.ts`.
+- **Agent runtime**: `src/features/agent-runtime/` (planning, execution, memory, tool calls)
+- **Chatbot feature**: `src/features/chatbot/` (UI, hooks, helpers)
+- **Agent creator feature**: `src/features/agentcreator/` (agent settings UI)
+- **Agent run API**: `src/app/api/agentcreator/agent/*` (delegates to `src/features/agentcreator/api/agent/*`)
+- **Chatbot API**: `src/app/api/chatbot/route.ts`
 
-The project includes a suite of tests for the API endpoints, written with Jest. The tests cover the following areas:
-- **Products API:** Tests for creating, reading, updating, and deleting products, as well as filtering and image linking.
-- **Files API:** Tests for fetching and deleting files.
-- **Databases API:** Tests for creating, restoring, uploading, and deleting database backups.
-- **AI Description Generation API:** Tests for the AI description generation feature, including prompt customization and error handling.
+Model selection is dynamic. OpenAI models use `OPENAI_API_KEY`; non-OpenAI
+models route to Ollama via `OLLAMA_BASE_URL`.
 
-## Available Scripts
+## Notes & Folder Tree
 
-- **`npm run dev`**: Starts the Next.js development server.
-- **`npm run build`**: Builds the Next.js application for production.
-- **`npm run start`**: Starts the Next.js production server.
-- **`npm run test`**: Runs the Jest test suite.
-- **`npm run seed`**: Seeds the database with initial data.
-- **`npm run lint`**: Lints the codebase.
+- Folder tree UI + helpers live in `src/features/foldertree/` and are reused by notes.
 
-## Project-specific Coding Conventions and Architecture Patterns
+## Playwright Personas
 
-This project follows a set of coding conventions and architecture patterns to ensure consistency, maintainability, and scalability.
+- Playwright persona presets live in `src/features/playwright/`.
+- Personas are stored in `/api/settings` under the `playwright_personas` key.
 
-- **Component-Based Architecture**: The application is built around a component-based architecture, which emphasizes modularity and reusability. The UI is broken down into smaller, independent components that can be easily composed to create complex user interfaces.
+## AI Runtime Deep Dive (Planning, Memory, Tools)
 
-- **Styling with Tailwind CSS**: The project uses a utility-first approach to styling, with a preference for inline classes over custom CSS files. This approach allows for rapid development and easy maintenance of the application's visual identity.
+This is the internal agent stack used by the chatbot and automation flows.
 
-- **State Management with React Context and Hooks**: The application uses React Context and Hooks to manage the state of the admin menu. The menu's state is centralized in `AdminLayoutContext`, and custom hooks are used to access and modify the state from different components.
+### Lifecycle (Queue -> Engine)
 
-- **Routing and Navigation**: The application uses Next.js's file-based routing system, which simplifies the creation of new pages and API routes. The `useRouter` hook is used for programmatic navigation between pages.
+- Queue loop: `src/features/jobs/workers/agentQueue.ts` (`startAgentQueue`, `processAgentQueue`)
+- Control loop: `src/features/agent-runtime/core/engine.ts` (`runAgentControlLoop`)
+- Run context assembly: `src/features/agent-runtime/execution/context.ts`
+- Plan initialization: `src/features/agent-runtime/execution/plan.ts`
 
-- **API Communication**: Most client-side API calls are centralized in `lib/api.ts`; some admin flows still use direct `fetch` in page components.
+The queue pulls from `chatbotAgentRun` when the Prisma tables exist and
+auto-resumes stuck runs. The engine orchestrates planning, tool execution,
+memory, and finalization.
 
-- **Type Safety with TypeScript**: The project enforces type safety with TypeScript, using interfaces for props and API responses. This helps to prevent common errors and improve the overall quality of the code.
+### Planning Layer
 
-- **Separation of Concerns**: The application follows the principle of separation of concerns, with business logic residing in `lib/services` and UI components in `components`. This separation makes the codebase easier to understand, test, and maintain.
+- LLM planning: `src/features/agent-runtime/planning/llm.ts`
+- Decision utils: `src/features/agent-runtime/planning/utils.ts`
 
-- **Naming Conventions**: The project follows standard naming conventions for React components, hooks, and files. Components are named in `PascalCase`, hooks are named in `camelCase` with a `use` prefix, and files are named in `kebab-case` or `PascalCase` depending on their content.
+The planner selects task type, decomposes steps, and decides whether to invoke
+tools.
+
+### Execution Layer
+
+- Step loop: `src/features/agent-runtime/execution/step-runner.ts`
+- Loop guard: `src/features/agent-runtime/execution/loop-guard.ts`
+- Finalize + verification: `src/features/agent-runtime/execution/finalize.ts`
+
+### Memory Layer
+
+- Session + long-term memory: `src/features/agent-runtime/memory/index.ts`
+- Checkpointing: `src/features/agent-runtime/memory/checkpoint.ts`
+- Memory context assembly: `src/features/agent-runtime/memory/context.ts`
+
+Memory storage is backed by Prisma tables when available
+(`agentMemoryItem`, `agentLongTermMemory`).
+
+### Tools & Browsing
+
+- Tool router: `src/features/agent-runtime/tools/index.ts`
+- LLM helper tools: `src/features/agent-runtime/tools/llm/*`
+- Playwright automation: `src/features/agent-runtime/tools/playwright/*`
+- Search integration: `src/features/agent-runtime/tools/search/index.ts`
+- Browsing context: `src/features/agent-runtime/browsing/context.ts`
+
+Playwright tooling handles navigation, extraction, and snapshotting. Search
+can be used to find candidates before browsing.
+
+### Audit & Approvals
+
+- Audit logging: `src/features/agent-runtime/audit/index.ts`
+- Approval gating: `src/features/agent-runtime/audit/gate.ts`
+- Human approval workflows: `src/features/agent-runtime/audit/approvals.ts`
+
+Audit logs and browser artifacts are stored in Prisma tables when present
+(`agentAuditLog`, `agentBrowserLog`, `agentBrowserSnapshot`).
+
+### Runtime Diagram (High-Level)
+
+```
+User Prompt
+   │
+   ▼
+chatbotAgentRun (DB)  ◀─────────── status/planState/logLines
+   │
+   ▼
+Queue (src/features/jobs/workers/agentQueue.ts) ──> Engine (core/engine.ts)
+                             │
+                             ├─ Planning (planning/llm.ts, utils.ts)
+                             │      ▼
+                             ├─ Execution (execution/*)
+                             │      ├─ step-runner / loop-guard
+                             │      └─ finalize / verification
+                             │
+                             ├─ Tools (tools/*)
+                             │      ├─ Playwright (browse/extract/snapshot)
+                             │      └─ Search (provider + LLM ranking)
+                             │
+                             └─ Memory (memory/*)
+                                    ├─ session memory
+                                    └─ long-term memory
+```
+
+### Debug Runbook (Agent Runtime)
+
+1. **Confirm tables exist**  
+   - Engine bails if `chatbotAgentRun` (or related tables) are missing.  
+   - Check migrations/schema before debugging code.
+2. **Check queue status**  
+   - `src/features/jobs/workers/agentQueue.ts` controls polling and stuck-run recovery.  
+   - Look for `status: queued|running|failed` in `chatbotAgentRun`.
+3. **Inspect run logs**  
+   - `chatbotAgentRun.logLines` captures run-level events.  
+   - `agentAuditLog` tracks granular events and errors.
+4. **Validate tool execution**  
+   - `src/features/agent-runtime/tools/index.ts` is the router.  
+   - Playwright failures are often logged in `agentBrowserLog`.
+5. **Check memory pipelines**  
+   - Memory validation uses `OLLAMA_BASE_URL`.  
+   - See `src/features/agent-runtime/memory/index.ts` for failure paths.
+6. **Approval gate issues**  
+   - `src/features/agent-runtime/audit/gate.ts` determines human approval requirements.  
+   - If a run stalls, check approval decisions + UI workflow.
+7. **Model selection mismatches**  
+   - `prepareRunContext` sets planner/self-check/loop guard models.  
+   - Ensure `OLLAMA_MODEL`/`OPENAI_API_KEY`/settings align.
+
+## Key Domains
+
+- Products, catalogs, tags, pricing, stock
+- Drafts (product templates and pre-publish states)
+- Notes (internal knowledge base)
+- Integrations (Base.com/Baselinker import/export)
+- Settings (feature flags, AI config, defaults)
+
+## Integrations (Base.com/Baselinker)
+
+- Import and export templates are first-class.
+- Relevant paths:
+  - `src/features/integrations/services/imports/*`
+  - `src/features/integrations/services/exports/*`
+  - `src/app/api/integrations/imports/base/*`
+  - `src/app/api/integrations/exports/base/*`
+  - `src/app/api/integrations/products/[id]/export-to-base/route.ts`
+
+## Data Import/Export
+
+- Product import/export UI and helpers live in `src/features/data-import-export/`.
+- CSV product import is routed via `/admin/import` and handled by `src/features/data-import-export/api/import/route.ts`.
+
+## File Storage
+
+- Uploads are stored under `public/uploads/`.
+- File metadata is tracked in `ImageFile` records (Prisma or Mongo).
+- See `src/features/files/utils/fileUploader.ts` and `src/app/api/files/*`.
+
+## Error Handling & Logging
+
+- Error helpers live in `src/shared/errors/*`.
+- System logging services live in `src/features/observability/services/*`.
+- Client error logging lives in `src/features/observability/utils/client-error-logger.ts`.
+- System logs UI lives in `src/features/observability/pages/SystemLogsPage.tsx`
+  with the route wrapper in `src/app/(admin)/admin/system/logs/page.tsx`.
+
+## API Design (Guidance)
+
+- Use Zod validation in API routes (`src/features/*/validations`).
+- Keep routes thin; call `src/features/*/services` or `src/shared/lib/services` for business logic.
+- Return consistent JSON error shapes.
+
+## Testing & Scripts
+
+```
+npm run dev
+npm run build
+npm run start
+npm run lint
+npm run test
+npm run test:e2e
+npm run seed
+npm run seed:admin
+```
+
+## AI Agent Hygiene (Mandatory)
+
+- Do NOT read `AIPrompts/` (admin-only, sensitive).
+- Do NOT access other agents' `AIReasoning/*` folders.
+- Do NOT commit reasoning/results files.
+
+---
+
+**Last Updated**: January 27, 2026

@@ -1,24 +1,26 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 
+import { vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import AdminProductsPage from "@/app/(admin)/admin/products/page";
-import { getProducts } from "@/lib/api";
+import { ToastProvider } from "@/shared/ui/toast";
+import { server } from "@/mocks/server";
+import { http, HttpResponse } from "msw";
 
-const pushMock = jest.fn();
+const pushMock = vi.fn();
 
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: pushMock,
-    refresh: jest.fn(),
+    refresh: vi.fn(),
   }),
-}));
-
-jest.mock("@/lib/api", () => ({
-  getProducts: jest.fn(),
+  useSearchParams: () => ({
+    get: vi.fn(),
+  }),
 }));
 
 const mockProducts = [
@@ -29,8 +31,8 @@ const mockProducts = [
     name_de: null,
     sku: "ALPHA1",
     price: 100,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     images: [],
   },
   {
@@ -40,32 +42,51 @@ const mockProducts = [
     name_de: null,
     sku: "BETA2",
     price: 200,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     images: [],
   },
 ];
 
 describe("Admin Products List UI", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    (getProducts as jest.Mock).mockResolvedValue(mockProducts);
+    vi.clearAllMocks();
+    
+    server.use(
+      http.get("/api/products", () => {
+        return HttpResponse.json(mockProducts);
+      }),
+      http.get("/api/products/count", () => {
+        return HttpResponse.json({ count: mockProducts.length });
+      }),
+      http.get("/api/catalogs", () => {
+        return HttpResponse.json({ data: [], total: 0 });
+      })
+    );
   });
 
   it("renders product rows", async () => {
-    render(<AdminProductsPage />);
+    render(
+      <ToastProvider>
+        <AdminProductsPage />
+      </ToastProvider>
+    );
 
     expect(await screen.findByText("Product Alpha")).toBeInTheDocument();
     expect(screen.getByText("Product Beta")).toBeInTheDocument();
   });
 
   it("shows row actions menu with Edit, Duplicate, and Remove", async () => {
-    render(<AdminProductsPage />);
+    render(
+      <ToastProvider>
+        <AdminProductsPage />
+      </ToastProvider>
+    );
     await screen.findByText("Product Alpha");
 
     const user = userEvent.setup();
     const actionButtons = screen.getAllByLabelText("Open row actions");
-    await user.click(actionButtons[0]);
+    await user.click(actionButtons[0]!);
 
     expect(await screen.findByText("Edit")).toBeInTheDocument();
     expect(screen.getByText("Duplicate")).toBeInTheDocument();
@@ -73,28 +94,25 @@ describe("Admin Products List UI", () => {
   });
 
   it("prompts for SKU before opening the create modal and pre-fills SKU", async () => {
-    const promptMock = jest
+    const promptMock = vi
       .spyOn(window, "prompt")
       .mockReturnValue("abc123");
-    const fetchMock = jest
-      .spyOn(global, "fetch")
-      .mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve([]),
-      } as Response);
-
-    render(<AdminProductsPage />);
+    
+    render(
+      <ToastProvider>
+        <AdminProductsPage />
+      </ToastProvider>
+    );
 
     const user = userEvent.setup();
     await user.click(screen.getByLabelText("Create product"));
 
-    await screen.findByText("Create Product");
-    const skuInput = screen.getByLabelText<HTMLInputElement>("SKU");
+    await screen.findByRole("heading", { name: "Product" });
+    const skuInput = screen.getByLabelText<HTMLInputElement>(/SKU/i);
     await waitFor(() => {
       expect(skuInput.value).toBe("ABC123");
     });
 
     promptMock.mockRestore();
-    fetchMock.mockRestore();
   });
 });

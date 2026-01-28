@@ -1,0 +1,474 @@
+"use client";
+
+import { Canvas, useThree } from "@react-three/fiber";
+import {
+  OrbitControls,
+  Center,
+  useGLTF,
+  Environment,
+  Html,
+  ContactShadows,
+  useProgress,
+  Bounds,
+  PresentationControls,
+} from "@react-three/drei";
+import { EffectComposer, Bloom, SMAA, ToneMapping, Vignette } from "@react-three/postprocessing";
+import { Suspense, useEffect, useRef, useMemo } from "react";
+import * as THREE from "three";
+import { DitheringPass } from "./shaders/DitheringEffect";
+import { PixelationPass } from "./shaders/PixelationEffect";
+import { OrderedDitheringPass } from "./shaders/OrderedDitheringEffect";
+import { ToneMappingMode, BlendFunction } from "postprocessing";
+
+// Loading progress component
+function Loader() {
+  const { progress } = useProgress();
+  return (
+    <Html center>
+      <div className="flex flex-col items-center gap-3">
+        <div className="relative h-16 w-16">
+          <svg className="h-16 w-16 -rotate-90" viewBox="0 0 36 36">
+            <circle
+              cx="18"
+              cy="18"
+              r="16"
+              fill="none"
+              className="stroke-gray-700"
+              strokeWidth="2"
+            />
+            <circle
+              cx="18"
+              cy="18"
+              r="16"
+              fill="none"
+              className="stroke-blue-500"
+              strokeWidth="2"
+              strokeDasharray={100}
+              strokeDashoffset={100 - progress}
+              strokeLinecap="round"
+            />
+          </svg>
+          <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-white">
+            {Math.round(progress)}%
+          </span>
+        </div>
+        <span className="text-sm text-gray-400">Loading model...</span>
+      </div>
+    </Html>
+  );
+}
+
+// Enhanced model component with PBR material optimization
+interface Model3DProps {
+  url: string;
+  onLoad?: () => void;
+  onError?: (error: Error) => void;
+  castShadow?: boolean;
+  receiveShadow?: boolean;
+}
+
+function Model3D({ url, onLoad, onError, castShadow = true, receiveShadow = true }: Model3DProps) {
+  const { scene } = useGLTF(url);
+  const modelRef = useRef<THREE.Group>(null);
+
+  useEffect(() => {
+    if (scene) {
+      // Optimize materials for PBR rendering
+      scene.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.castShadow = castShadow;
+          child.receiveShadow = receiveShadow;
+
+          // Enhance material properties for better realism
+          if (child.material instanceof THREE.MeshStandardMaterial) {
+            child.material.envMapIntensity = 1.5;
+            child.material.needsUpdate = true;
+          }
+        }
+      });
+      onLoad?.();
+    }
+  }, [scene, onLoad, castShadow, receiveShadow]);
+
+  useEffect(() => {
+    if (!scene && onError) {
+      onError(new Error("Failed to load model"));
+    }
+  }, [scene, onError]);
+
+  /* eslint-disable react/no-unknown-property */
+  return (
+    <primitive
+      ref={modelRef}
+      object={scene}
+      dispose={null}
+    />
+  );
+  /* eslint-enable react/no-unknown-property */
+}
+
+// Ground plane with realistic shadows
+function Ground({ visible = true }: { visible?: boolean }) {
+  if (!visible) return null;
+
+  /* eslint-disable react/no-unknown-property */
+  return (
+    <mesh
+      rotation={[-Math.PI / 2, 0, 0]}
+      position={[0, -0.001, 0]}
+      receiveShadow
+    >
+      <planeGeometry args={[50, 50]} />
+      <shadowMaterial
+        transparent
+        opacity={0.4}
+      />
+    </mesh>
+  );
+  /* eslint-enable react/no-unknown-property */
+}
+
+// Scene lighting setup
+interface SceneLightingProps {
+  preset: LightingPreset;
+  intensity?: number;
+}
+
+function SceneLighting({ preset, intensity = 1 }: SceneLightingProps) {
+  const lightConfigs = {
+    studio: {
+      ambient: 0.4,
+      main: { position: [5, 5, 5] as [number, number, number], intensity: 1.2 },
+      fill: { position: [-5, 3, -5] as [number, number, number], intensity: 0.5 },
+      rim: { position: [0, 5, -10] as [number, number, number], intensity: 0.8 },
+    },
+    outdoor: {
+      ambient: 0.3,
+      main: { position: [10, 10, 5] as [number, number, number], intensity: 1.5 },
+      fill: { position: [-5, 2, 5] as [number, number, number], intensity: 0.3 },
+      rim: { position: [0, 8, -8] as [number, number, number], intensity: 0.4 },
+    },
+    dramatic: {
+      ambient: 0.15,
+      main: { position: [3, 8, 3] as [number, number, number], intensity: 2 },
+      fill: { position: [-8, 2, -3] as [number, number, number], intensity: 0.2 },
+      rim: { position: [-3, 5, -8] as [number, number, number], intensity: 1.2 },
+    },
+    soft: {
+      ambient: 0.6,
+      main: { position: [5, 5, 5] as [number, number, number], intensity: 0.8 },
+      fill: { position: [-5, 5, 5] as [number, number, number], intensity: 0.6 },
+      rim: { position: [0, 3, -5] as [number, number, number], intensity: 0.4 },
+    },
+  };
+
+  const config = lightConfigs[preset] || lightConfigs.studio;
+
+  /* eslint-disable react/no-unknown-property */
+  return (
+    <>
+      <ambientLight intensity={config.ambient * intensity} />
+      <directionalLight
+        position={config.main.position}
+        intensity={config.main.intensity * intensity}
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-far={50}
+        shadow-camera-left={-10}
+        shadow-camera-right={10}
+        shadow-camera-top={10}
+        shadow-camera-bottom={-10}
+        shadow-bias={-0.0001}
+      />
+      <directionalLight
+        position={config.fill.position}
+        intensity={config.fill.intensity * intensity}
+      />
+      <directionalLight
+        position={config.rim.position}
+        intensity={config.rim.intensity * intensity}
+      />
+    </>
+  );
+  /* eslint-enable react/no-unknown-property */
+}
+
+// Camera auto-framing
+function CameraController({ autoFit }: { autoFit?: boolean }) {
+  const { camera, scene } = useThree();
+
+  useEffect(() => {
+    if (autoFit) {
+      const box = new THREE.Box3().setFromObject(scene);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const fov = (camera as THREE.PerspectiveCamera).fov * (Math.PI / 180);
+      let distance = maxDim / (2 * Math.tan(fov / 2));
+      distance *= 1.5; // Add some padding
+
+      camera.position.set(center.x + distance * 0.5, center.y + distance * 0.3, center.z + distance);
+      camera.lookAt(center);
+      camera.updateProjectionMatrix();
+    }
+  }, [autoFit, camera, scene]);
+
+  return null;
+}
+
+export type LightingPreset = "studio" | "outdoor" | "dramatic" | "soft";
+export type EnvironmentPreset = "studio" | "sunset" | "dawn" | "night" | "warehouse" | "forest" | "apartment" | "city" | "park" | "lobby";
+
+export interface Viewer3DProps {
+  /** URL to the 3D model file (.glb or .gltf) */
+  modelUrl: string;
+  /** Background color */
+  backgroundColor?: string;
+  /** Enable dithering post-processing effect */
+  enableDithering?: boolean;
+  /** Dithering intensity (0-2, default 1) */
+  ditheringIntensity?: number;
+  /** Enable ordered dithering shader */
+  enableOrderedDithering?: boolean;
+  /** Dither grid size (2-12, default 4) */
+  orderedDitheringGridSize?: number;
+  /** Dither pixel size ratio (0.5-3, default 1) */
+  orderedDitheringPixelSizeRatio?: number;
+  /** Dither grayscale only */
+  orderedDitheringGrayscaleOnly?: boolean;
+  /** Dither invert colors */
+  orderedDitheringInvertColor?: boolean;
+  /** Dither luminance method (0=Average, 1=Rec.601, 2=Rec.709, 3=Max) */
+  orderedDitheringLuminanceMethod?: number;
+  /** Enable pixelation (pixel art effect) */
+  enablePixelation?: boolean;
+  /** Pixel size in screen pixels (1-32, default 6) */
+  pixelSize?: number;
+  /** Container class name */
+  className?: string;
+  /** Callback when model loads */
+  onLoad?: () => void;
+  /** Callback on load error */
+  onError?: (error: Error) => void;
+  /** Enable auto-rotation */
+  autoRotate?: boolean;
+  /** Auto-rotation speed */
+  autoRotateSpeed?: number;
+  /** Environment preset for HDR lighting */
+  environment?: EnvironmentPreset;
+  /** Lighting preset */
+  lighting?: LightingPreset;
+  /** Light intensity multiplier */
+  lightIntensity?: number;
+  /** Enable shadows */
+  enableShadows?: boolean;
+  /** Enable bloom effect */
+  enableBloom?: boolean;
+  /** Bloom intensity */
+  bloomIntensity?: number;
+  /** Enable tone mapping */
+  enableToneMapping?: boolean;
+  /** Tone mapping exposure */
+  exposure?: number;
+  /** Show ground plane */
+  showGround?: boolean;
+  /** Enable contact shadows */
+  enableContactShadows?: boolean;
+  /** Enable vignette effect */
+  enableVignette?: boolean;
+  /** Auto-fit camera to model */
+  autoFit?: boolean;
+  /** Enable anti-aliasing */
+  enableAntiAliasing?: boolean;
+  /** Use presentation controls (drag to rotate) */
+  presentationMode?: boolean;
+}
+
+export function Viewer3D({
+  modelUrl,
+  backgroundColor = "#1a1a2e",
+  enableDithering = false,
+  ditheringIntensity = 1.0,
+  enableOrderedDithering = false,
+  orderedDitheringGridSize = 4,
+  orderedDitheringPixelSizeRatio = 1,
+  orderedDitheringGrayscaleOnly = false,
+  orderedDitheringInvertColor = false,
+  orderedDitheringLuminanceMethod = 1,
+  enablePixelation = false,
+  pixelSize = 6,
+  className,
+  onLoad,
+  onError,
+  autoRotate = true,
+  autoRotateSpeed = 2,
+  environment = "studio",
+  lighting = "studio",
+  lightIntensity = 1,
+  enableShadows = true,
+  enableBloom = false,
+  bloomIntensity = 0.5,
+  enableToneMapping = true,
+  exposure = 1,
+  showGround = false,
+  enableContactShadows = true,
+  enableVignette = false,
+  autoFit = true,
+  enableAntiAliasing = true,
+  presentationMode = false,
+}: Viewer3DProps) {
+  const hasPostProcessing =
+    enableDithering ||
+    enableOrderedDithering ||
+    enablePixelation ||
+    enableBloom ||
+    enableToneMapping ||
+    enableVignette ||
+    enableAntiAliasing;
+
+  const effects = useMemo(() => {
+    const effectsList: React.ReactElement[] = [];
+    if (enableAntiAliasing) effectsList.push(<SMAA key="smaa" />);
+    if (enableToneMapping) effectsList.push(<ToneMapping key="tonemapping" mode={ToneMappingMode.ACES_FILMIC} />);
+    if (enableBloom) effectsList.push(<Bloom key="bloom" intensity={bloomIntensity} luminanceThreshold={0.9} luminanceSmoothing={0.025} />);
+    if (enableVignette) effectsList.push(<Vignette key="vignette" offset={0.3} darkness={0.5} blendFunction={BlendFunction.NORMAL} />);
+    if (enablePixelation) effectsList.push(<PixelationPass key="pixelation" pixelSize={Math.max(1, pixelSize)} />);
+    if (enableOrderedDithering) {
+      effectsList.push(
+        <OrderedDitheringPass
+          key="ordered-dithering"
+          gridSize={orderedDitheringGridSize}
+          pixelSizeRatio={orderedDitheringPixelSizeRatio}
+          grayscaleOnly={orderedDitheringGrayscaleOnly}
+          invertColor={orderedDitheringInvertColor}
+          luminanceMethod={orderedDitheringLuminanceMethod}
+        />
+      );
+    }
+    if (enableDithering) effectsList.push(<DitheringPass key="dithering" intensity={ditheringIntensity} />);
+    return effectsList;
+  }, [
+    enableAntiAliasing,
+    enableToneMapping,
+    enableBloom,
+    bloomIntensity,
+    enableVignette,
+    enablePixelation,
+    pixelSize,
+    enableOrderedDithering,
+    orderedDitheringGridSize,
+    orderedDitheringPixelSizeRatio,
+    orderedDitheringGrayscaleOnly,
+    orderedDitheringInvertColor,
+    orderedDitheringLuminanceMethod,
+    enableDithering,
+    ditheringIntensity,
+  ]);
+
+  return (
+    <div className={className}>
+      <Canvas
+        camera={{ position: [0, 0, 5], fov: 45, near: 0.1, far: 1000 }}
+        shadows={enableShadows}
+        gl={{
+          preserveDrawingBuffer: true,
+          antialias: !hasPostProcessing, // Disable if using SMAA
+          toneMapping: enableToneMapping ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping,
+          toneMappingExposure: exposure,
+          outputColorSpace: THREE.SRGBColorSpace,
+        }}
+        dpr={[1, 2]} // Responsive pixel ratio
+      >
+        {/* eslint-disable react/no-unknown-property */}
+        <color attach="background" args={[backgroundColor]} />
+        {/* eslint-enable react/no-unknown-property */}
+
+        {/* Lighting */}
+        <SceneLighting preset={lighting} intensity={lightIntensity} />
+
+        {/* HDR Environment */}
+        <Environment preset={environment} background={false} />
+
+        <Suspense fallback={<Loader />}>
+          {presentationMode ? (
+            <PresentationControls
+              global
+              rotation={[0, 0, 0]}
+              polar={[-Math.PI / 4, Math.PI / 4]}
+              azimuth={[-Math.PI / 4, Math.PI / 4]}
+            >
+              <Center>
+                <Bounds fit clip observe margin={1.2}>
+                  <Model3D
+                    url={modelUrl}
+                    {...(onLoad && { onLoad })}
+                    {...(onError && { onError })}
+                    castShadow={enableShadows}
+                    receiveShadow={enableShadows}
+                  />
+                </Bounds>
+              </Center>
+            </PresentationControls>
+          ) : (
+            <Center>
+              <Bounds fit clip observe margin={1.2}>
+                <Model3D
+                  url={modelUrl}
+                  {...(onLoad && { onLoad })}
+                  {...(onError && { onError })}
+                  castShadow={enableShadows}
+                  receiveShadow={enableShadows}
+                />
+              </Bounds>
+            </Center>
+          )}
+
+          {/* Ground and shadows */}
+          {showGround && <Ground visible={showGround} />}
+
+          {enableContactShadows && (
+            <ContactShadows
+              opacity={0.5}
+              scale={10}
+              blur={2}
+              far={4}
+              resolution={256}
+              color="#000000"
+            />
+          )}
+        </Suspense>
+
+        {/* Camera Controls */}
+        {!presentationMode && (
+          <OrbitControls
+            autoRotate={autoRotate}
+            autoRotateSpeed={autoRotateSpeed}
+            enablePan={true}
+            enableZoom={true}
+            enableDamping={true}
+            dampingFactor={0.05}
+            minDistance={0.5}
+            maxDistance={100}
+            minPolarAngle={0}
+            maxPolarAngle={Math.PI}
+          />
+        )}
+
+        <CameraController autoFit={autoFit} />
+
+        {/* Post-processing */}
+        {hasPostProcessing && effects.length > 0 && (
+          <EffectComposer multisampling={0}>
+            {effects}
+          </EffectComposer>
+        )}
+      </Canvas>
+    </div>
+  );
+}
+
+// Preload models for better performance
+export function preloadModel(url: string) {
+  useGLTF.preload(url);
+}

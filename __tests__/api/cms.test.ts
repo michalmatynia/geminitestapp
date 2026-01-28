@@ -2,7 +2,8 @@ import { NextRequest } from "next/server";
 import { GET, POST } from "@/app/api/cms/slugs/route";
 import { DELETE } from "@/app/api/cms/slugs/[id]/route";
 
-import prisma from "@/lib/prisma";
+import prisma from "@/shared/lib/db/prisma";
+import { Slug } from "@prisma/client";
 
 describe("CMS API", () => {
   beforeEach(async () => {
@@ -14,13 +15,13 @@ describe("CMS API", () => {
   });
 
   it("should create a new slug", async () => {
-    const req = new Request("http://localhost/api/cms/slugs", {
+    const req = new NextRequest("http://localhost/api/cms/slugs", {
       method: "POST",
       body: JSON.stringify({ slug: "test-slug" }),
     });
 
     const res = await POST(req);
-    const data = await res.json();
+    const data = (await res.json()) as { slug: string };
 
     expect(res.status).toBe(200);
     expect(data.slug).toBe("test-slug");
@@ -29,7 +30,7 @@ describe("CMS API", () => {
   it("should not create a duplicate slug", async () => {
     await prisma.slug.create({ data: { slug: "test-slug" } });
 
-    const req = new Request("http://localhost/api/cms/slugs", {
+    const req = new NextRequest("http://localhost/api/cms/slugs", {
       method: "POST",
       body: JSON.stringify({ slug: "test-slug" }),
     });
@@ -43,8 +44,8 @@ describe("CMS API", () => {
       data: [{ slug: "test-slug-1" }, { slug: "test-slug-2" }],
     });
 
-    const res = await GET();
-    const data = await res.json();
+    const res = await GET(new NextRequest("http://localhost/api/cms/slugs"));
+    const data = (await res.json()) as Slug[];
 
     expect(res.status).toBe(200);
     expect(data.length).toBe(2);
@@ -57,7 +58,7 @@ describe("CMS API", () => {
       method: "DELETE",
     });
 
-    const res = await DELETE(req, { params: { id: slug.id } });
+    const res = await DELETE(req, { params: Promise.resolve({ id: slug.id }) });
     expect(res.status).toBe(204);
 
     const deletedSlug = await prisma.slug.findUnique({

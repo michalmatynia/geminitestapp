@@ -2,7 +2,12 @@
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone", // Docker-friendly build output
+  serverExternalPackages: [
+    '@prisma/client',
+    'bcrypt',
+  ],
   images: {
+    qualities: [75, 90],
     remotePatterns: [
       {
         protocol: 'https',
@@ -10,7 +15,20 @@ const nextConfig = {
         port: '',
         pathname: '/your_imagekit_id/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'upload.cdn.baselinker.com',
+      },
     ],
+  },
+  async redirects() {
+    return [
+      {
+        source: "/admin/products/constructor",
+        destination: "/admin/products/builder",
+        permanent: false,
+      },
+    ];
   },
 };
 

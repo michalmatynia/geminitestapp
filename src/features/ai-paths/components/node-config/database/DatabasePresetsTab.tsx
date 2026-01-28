@@ -1,0 +1,197 @@
+"use client";
+
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label, Textarea } from "@/shared/ui";
+import React from "react";
+import { Eye } from "lucide-react";
+
+import type { DbQueryPreset } from "@/features/ai-paths/lib";
+import type { DatabasePresetOption } from "./types";
+
+type DatabasePresetsTabProps = {
+  dbQueryPresets: DbQueryPreset[];
+  builtInPresets?: DatabasePresetOption[];
+  onApplyBuiltInPreset?: (presetId: string) => void;
+  onRenameQueryPreset: (presetId: string, nextName: string) => Promise<void> | void;
+  onDeleteQueryPreset: (presetId: string) => Promise<void> | void;
+};
+
+export function DatabasePresetsTab({
+  dbQueryPresets,
+  builtInPresets,
+  onApplyBuiltInPreset,
+  onRenameQueryPreset,
+  onDeleteQueryPreset,
+}: DatabasePresetsTabProps) {
+  const [queryNameDrafts, setQueryNameDrafts] = React.useState<Record<string, string>>({});
+  const [viewPresetId, setViewPresetId] = React.useState<string | null>(null);
+  const activePreset = viewPresetId
+    ? dbQueryPresets.find((preset) => preset.id === viewPresetId) ?? null
+    : null;
+
+  React.useEffect(() => {
+    setQueryNameDrafts((prev) => {
+      const next = { ...prev };
+      dbQueryPresets.forEach((preset) => {
+        if (!next[preset.id]) {
+          next[preset.id] = preset.name;
+        }
+      });
+      Object.keys(next).forEach((key) => {
+        if (!dbQueryPresets.some((preset) => preset.id === key)) {
+          delete next[key];
+        }
+      });
+      return next;
+    });
+  }, [dbQueryPresets]);
+
+  const handleRename = async (presetId: string, nextName: string) => {
+    const trimmed = nextName.trim();
+    if (!trimmed) return;
+    await onRenameQueryPreset(presetId, trimmed);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Built-in Presets Section */}
+      {builtInPresets && builtInPresets.length > 0 && (
+        <div className="rounded-md border border-border bg-card/50 p-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-gray-400">Built-in Presets</Label>
+            <span className="text-[10px] text-gray-500">
+              {builtInPresets.filter((p) => p.id !== "custom").length} presets
+            </span>
+          </div>
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {builtInPresets
+              .filter((preset) => preset.id !== "custom")
+              .map((preset) => (
+                <div
+                  key={preset.id}
+                  className="rounded-md border border-border bg-card/60 p-2"
+                >
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-white">{preset.label}</span>
+                      {onApplyBuiltInPreset && (
+                        <Button
+                          type="button"
+                          className="h-6 rounded-md border border-emerald-500/40 px-2 text-[10px] text-emerald-200 hover:bg-emerald-500/10"
+                          onClick={() => onApplyBuiltInPreset(preset.id)}
+                        >
+                          Apply
+                        </Button>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-gray-400">{preset.description}</span>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* User Query Presets Section */}
+      <div className="rounded-md border border-border bg-card/50 p-3">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs text-gray-400">Saved Query Presets</Label>
+          <span className="text-[10px] text-gray-500">
+            {dbQueryPresets.length} presets
+          </span>
+        </div>
+        {dbQueryPresets.length === 0 ? (
+          <div className="mt-3 text-xs text-gray-500">No query presets saved.</div>
+        ) : (
+          <div className="mt-3 space-y-2">
+            {dbQueryPresets.map((preset) => {
+              const draftName = queryNameDrafts[preset.id] ?? preset.name;
+              const nameChanged = draftName.trim() !== preset.name.trim();
+              return (
+                <div
+                  key={preset.id}
+                  className="rounded-md border border-border bg-card/60 p-2"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Input
+                      className="h-7 flex-1 rounded-md border border-border bg-card/70 text-xs text-white"
+                      value={draftName}
+                      onChange={(event) =>
+                        setQueryNameDrafts((prev) => ({
+                          ...prev,
+                          [preset.id]: event.target.value,
+                        }))
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          void handleRename(preset.id, draftName);
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      className="h-7 rounded-md border border-sky-500/40 px-2 text-[10px] text-sky-200 hover:bg-sky-500/10"
+                      onClick={() => setViewPresetId(preset.id)}
+                      title="View preset"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      type="button"
+                      className="h-7 rounded-md border border-emerald-500/40 px-2 text-[10px] text-emerald-200 hover:bg-emerald-500/10"
+                      disabled={!nameChanged}
+                      onClick={() => void handleRename(preset.id, draftName)}
+                    >
+                      Rename
+                    </Button>
+                    <Button
+                      type="button"
+                      className="h-7 rounded-md border border-rose-500/40 px-2 text-[10px] text-rose-200 hover:bg-rose-500/10"
+                      onClick={() => void onDeleteQueryPreset(preset.id)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <Dialog
+        open={Boolean(activePreset)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setViewPresetId(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-2xl border border-border bg-card text-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg">
+              {activePreset?.name ?? "Query Preset"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label className="text-xs text-gray-400">Filter Query</Label>
+              <Textarea
+                className="min-h-[120px] w-full rounded-md border border-border bg-card/70 text-xs text-white"
+                value={activePreset?.queryTemplate ?? ""}
+                readOnly
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-gray-400">Update Document</Label>
+              <Textarea
+                className="min-h-[120px] w-full rounded-md border border-border bg-card/70 text-xs text-white"
+                value={activePreset?.updateTemplate?.trim() ? activePreset.updateTemplate : "// Not set"}
+                readOnly
+              />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

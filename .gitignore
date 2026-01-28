@@ -56,6 +56,9 @@ next-env.d.ts
 /prisma/seed.sh
 /prisma/.seed.lock
 
+# Database
+/mongo/backups
+
 # Docker
 compose.yaml
 docker.md

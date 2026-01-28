@@ -1,0 +1,5 @@
+import { AllegroListingManagementPage } from "@/features/integrations";
+
+export default function Page() {
+  return <AllegroListingManagementPage />;
+}

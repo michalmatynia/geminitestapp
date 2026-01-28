@@ -1,11 +1,12 @@
-import { GET as GET_LIST, POST } from "../../../app/api/products/route";
-import { PUT, DELETE } from "../../../app/api/products/[id]/route";
-import { DELETE as DELETE_IMAGE } from "../../../app/api/products/[id]/images/[imageFileId]/route";
-import { POST as POST_DUPLICATE } from "../../../app/api/products/[id]/duplicate/route";
-import { GET as GET_PUBLIC } from "../../../app/api/public/products/[id]/route";
+import { GET as GET_LIST, POST } from "@/app/api/products/route";
+import { PUT, DELETE } from "@/app/api/products/[id]/route";
+import { DELETE as DELETE_IMAGE } from "@/app/api/products/[id]/images/[imageFileId]/route";
+import { POST as POST_DUPLICATE } from "@/app/api/products/[id]/duplicate/route";
+import { GET as GET_PUBLIC } from "@/app/api/public/products/[id]/route";
 import { NextRequest } from "next/server";
-import { createMockProduct } from "@/lib/utils/productUtils";
-import prisma from "@/lib/prisma";
+import { createMockProduct } from "@/features/products/utils/productUtils";
+import prisma from "@/shared/lib/db/prisma";
+import { Product } from "@prisma/client";
 
 describe("Products API", () => {
   beforeEach(async () => {
@@ -23,15 +24,15 @@ describe("Products API", () => {
     it("should return all products when no filters are applied", async () => {
       await createMockProduct({ name_en: "Product 1" });
       await createMockProduct({ name_en: "Product 2" });
-      const res = await GET_LIST(new Request("http://localhost/api/products"));
-      const products = await res.json();
+      const res = await GET_LIST(new NextRequest("http://localhost/api/products"));
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(2);
     });
 
     it("should return an empty array if no products exist", async () => {
-      const res = await GET_LIST(new Request("http://localhost/api/products"));
-      const products = await res.json();
+      const res = await GET_LIST(new NextRequest("http://localhost/api/products"));
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products).toEqual([]);
     });
@@ -40,81 +41,81 @@ describe("Products API", () => {
       await createMockProduct({ name_en: "Laptop" });
       await createMockProduct({ name_en: "Mouse" });
       const res = await GET_LIST(
-        new Request("http://localhost/api/products?search=lap")
+        new NextRequest("http://localhost/api/products?search=lap")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].name_en).toEqual("Laptop");
+      expect(products[0]!.name_en).toEqual("Laptop");
     });
 
     it("should filter products by name_pl using the search parameter", async () => {
       await createMockProduct({ name_pl: "Laptop (PL)" });
       await createMockProduct({ name_pl: "Mysz (PL)" });
       const res = await GET_LIST(
-        new Request("http://localhost/api/products?search=mysz")
+        new NextRequest("http://localhost/api/products?search=mysz")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].name_pl).toEqual("Mysz (PL)");
+      expect(products[0]!.name_pl).toEqual("Mysz (PL)");
     });
 
     it("should filter products by name_de using the search parameter", async () => {
       await createMockProduct({ name_de: "Laptop (DE)" });
       await createMockProduct({ name_de: "Maus (DE)" });
       const res = await GET_LIST(
-        new Request("http://localhost/api/products?search=maus")
+        new NextRequest("http://localhost/api/products?search=maus")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].name_de).toEqual("Maus (DE)");
+      expect(products[0]!.name_de).toEqual("Maus (DE)");
     });
 
     it("should filter products by description_en using the search parameter", async () => {
       await createMockProduct({ description_en: "Fast laptop for gaming" });
       await createMockProduct({ description_en: "Ergonomic mouse" });
       const res = await GET_LIST(
-        new Request("http://localhost/api/products?search=gaming")
+        new NextRequest("http://localhost/api/products?search=gaming")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].description_en).toEqual("Fast laptop for gaming");
+      expect(products[0]!.description_en).toEqual("Fast laptop for gaming");
     });
 
     it("should filter products by description_pl using the search parameter", async () => {
       await createMockProduct({ description_pl: "Szybki laptop do gier" });
       await createMockProduct({ description_pl: "Ergonomiczna mysz" });
       const res = await GET_LIST(
-        new Request("http://localhost/api/products?search=gier")
+        new NextRequest("http://localhost/api/products?search=gier")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].description_pl).toEqual("Szybki laptop do gier");
+      expect(products[0]!.description_pl).toEqual("Szybki laptop do gier");
     });
 
     it("should filter products by description_de using the search parameter", async () => {
       await createMockProduct({ description_de: "Schneller Laptop für Spiele" });
       await createMockProduct({ description_de: "Ergonomische Maus" });
       const res = await GET_LIST(
-        new Request("http://localhost/api/products?search=spiele")
+        new NextRequest("http://localhost/api/products?search=spiele")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].description_de).toEqual("Schneller Laptop für Spiele");
+      expect(products[0]!.description_de).toEqual("Schneller Laptop für Spiele");
     });
 
     it("should filter products by minPrice", async () => {
       await createMockProduct({ name_en: "Product Min Price 1", price: "100" });
       await createMockProduct({ name_en: "Product Min Price 2", price: "500" });
       const res = await GET_LIST(
-        new Request("http://localhost/api/products?minPrice=200")
+        new NextRequest("http://localhost/api/products?minPrice=200")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
     });
@@ -123,9 +124,9 @@ describe("Products API", () => {
       await createMockProduct({ name_en: "Product Max Price 1", price: "100" });
       await createMockProduct({ name_en: "Product Max Price 2", price: "500" });
       const res = await GET_LIST(
-        new Request("http://localhost/api/products?maxPrice=200")
+        new NextRequest("http://localhost/api/products?maxPrice=200")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
     });
@@ -136,9 +137,9 @@ describe("Products API", () => {
       await prisma.product.updateMany({ where: { sku: "1" }, data: { createdAt: new Date("2023-01-01") } });
       await prisma.product.updateMany({ where: { sku: "2" }, data: { createdAt: new Date("2023-04-01") } });
       const res = await GET_LIST(
-        new Request("http://localhost/api/products?startDate=2023-03-01")
+        new NextRequest("http://localhost/api/products?startDate=2023-03-01")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
     });
@@ -149,9 +150,9 @@ describe("Products API", () => {
       await prisma.product.updateMany({ where: { sku: "1" }, data: { createdAt: new Date("2023-01-01") } });
       await prisma.product.updateMany({ where: { sku: "2" }, data: { createdAt: new Date("2023-04-01") } });
       const res = await GET_LIST(
-        new Request("http://localhost/api/products?endDate=2023-03-01")
+        new NextRequest("http://localhost/api/products?endDate=2023-03-01")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
     });
@@ -160,11 +161,11 @@ describe("Products API", () => {
       await createMockProduct({ name_en: "Laptop", price: "1200" });
       await createMockProduct({ name_en: "Mouse", price: "50" });
       const res = await GET_LIST(
-        new Request(
+        new NextRequest(
           "http://localhost/api/products?search=lap&minPrice=1000&maxPrice=1500"
         )
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
     });
@@ -173,12 +174,12 @@ describe("Products API", () => {
       await createMockProduct({ name_en: "SKU 1", sku: "ABC123" });
       await createMockProduct({ name_en: "SKU 2", sku: "XYZ999" });
       const res = await GET_LIST(
-        new Request("http://localhost/api/products?sku=ABC")
+        new NextRequest("http://localhost/api/products?sku=ABC")
       );
-      const products = await res.json();
+      const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      expect(products[0].sku).toEqual("ABC123");
+      expect(products[0]!.sku).toEqual("ABC123");
     });
 
     it("should return the correct response structure", async () => {
@@ -194,11 +195,11 @@ describe("Products API", () => {
         weight: 500,
         length: 20,
       });
-      const res = await GET_LIST(new Request("http://localhost/api/products"));
-      const products = await res.json();
+      const res = await GET_LIST(new NextRequest("http://localhost/api/products"));
+      const products = (await res.json()) as (Product & { images: unknown[] })[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
-      const product = products[0];
+      const product = products[0]!;
       expect(product).toHaveProperty("id");
       expect(product).toHaveProperty("name_en");
       expect(product.name_en).toEqual("Product 1 (EN)");
@@ -231,7 +232,7 @@ describe("Products API", () => {
       const formData = new FormData();
       formData.append("price", "not-a-number");
       formData.append("sku", "SKU123");
-      const req = new Request("http://localhost/api/products", {
+      const req = new NextRequest("http://localhost/api/products", {
         method: "POST",
         body: formData,
       });
@@ -253,12 +254,12 @@ describe("Products API", () => {
       formData.append("weight", "1000");
       formData.append("length", "30");
 
-      const req = new Request("http://localhost/api/products", {
+      const req = new NextRequest("http://localhost/api/products", {
         method: "POST",
         body: formData,
       });
       const res = await POST(req);
-      const product = await res.json();
+      const product = (await res.json()) as Product;
 
       expect(res.status).toEqual(200);
       expect(product.name_en).toEqual("New Product (EN)");
@@ -289,7 +290,7 @@ describe("Products API", () => {
       formData.append("name", "Updated Product");
       formData.append("price", "150");
       formData.append("sku", "SKU123");
-      const req = new Request("http://localhost/api/products/non-existent-id", {
+      const req = new NextRequest("http://localhost/api/products/non-existent-id", {
         method: "PUT",
         body: formData,
       });
@@ -316,7 +317,7 @@ describe("Products API", () => {
       formData.append("sku", "SKU456");
       formData.append("imageFileIds", imageFile.id);
 
-      const req = new Request(`http://localhost/api/products/${product.id}`, {
+      const req = new NextRequest(`http://localhost/api/products/${product.id}`, {
         method: "PUT",
         body: formData,
       });
@@ -330,7 +331,7 @@ describe("Products API", () => {
         where: { productId: product.id },
       });
       expect(productImages.length).toEqual(1);
-      expect(productImages[0].imageFileId).toEqual(imageFile.id);
+      expect(productImages[0]!.imageFileId).toEqual(imageFile.id);
     });
 
     it("should successfully update localized name and description fields", async () => {
@@ -351,14 +352,14 @@ describe("Products API", () => {
       formData.append("weight", "1500");
       formData.append("length", "40");
 
-      const req = new Request(`http://localhost/api/products/${product.id}`, {
+      const req = new NextRequest(`http://localhost/api/products/${product.id}`, {
         method: "PUT",
         body: formData,
       });
       const res = await PUT(req, {
         params: Promise.resolve({ id: product.id }),
       });
-      const updatedProduct = await res.json();
+      const updatedProduct = (await res.json()) as Product;
 
       expect(res.status).toEqual(200);
       expect(updatedProduct.id).toEqual(product.id);
@@ -377,7 +378,7 @@ describe("Products API", () => {
 
   describe("DELETE /api/products/[id]", () => {
     it("should return 404 when deleting a non-existent product", async () => {
-      const req = new Request("http://localhost/api/products/non-existent-id", {
+      const req = new NextRequest("http://localhost/api/products/non-existent-id", {
         method: "DELETE",
       });
       const res = await DELETE(req, {
@@ -412,7 +413,7 @@ describe("Products API", () => {
         }
       );
       const res = await DELETE_IMAGE(req, {
-        params: { id: product.id, imageFileId: imageFile.id },
+        params: Promise.resolve({ id: product.id, imageFileId: imageFile.id }),
       });
 
       expect(res.status).toEqual(204);
@@ -429,20 +430,20 @@ describe("Products API", () => {
   describe("GET /api/public/products/[id]", () => {
     it("should return a single product", async () => {
       const product = await createMockProduct({ name_en: "Product 1 (EN)" });
-      const req = new Request(`http://localhost/api/products/${product.id}`);
+      const req = new NextRequest(`http://localhost/api/products/${product.id}`);
       const res = await GET_PUBLIC(req, {
         params: Promise.resolve({ id: product.id }),
       });
-      const fetchedProduct = await res.json();
+      const fetchedProduct = (await res.json()) as Product;
       expect(res.status).toEqual(200);
       expect(fetchedProduct.name_en).toEqual("Product 1 (EN)");
     });
 
     it("should return a single product when params is a Promise", async () => {
       const product = await createMockProduct({ name_en: "Product 1 (EN)" });
-      const req = new Request(`http://localhost/api/products/${product.id}`);
+      const req = new NextRequest(`http://localhost/api/products/${product.id}`);
       const res = await GET_PUBLIC(req, { params: Promise.resolve({ id: product.id }) });
-      const fetchedProduct = await res.json();
+      const fetchedProduct = (await res.json()) as Product;
       expect(res.status).toEqual(200);
       expect(fetchedProduct.name_en).toEqual("Product 1 (EN)");
     });
@@ -450,7 +451,7 @@ describe("Products API", () => {
 
   describe("POST /api/products/[id]/duplicate", () => {
     it("should return 404 when product does not exist", async () => {
-      const req = new Request(
+      const req = new NextRequest(
         "http://localhost/api/products/non-existent-id/duplicate",
         {
           method: "POST",
@@ -465,7 +466,7 @@ describe("Products API", () => {
 
     it("should reject invalid SKU format", async () => {
       const product = await createMockProduct({ name_en: "Product 1 (EN)" });
-      const req = new Request(
+      const req = new NextRequest(
         `http://localhost/api/products/${product.id}/duplicate`,
         {
           method: "POST",
@@ -481,7 +482,7 @@ describe("Products API", () => {
     it("should reject duplicate SKU", async () => {
       await createMockProduct({ name_en: "Product 1 (EN)", sku: "DUP123" });
       const product = await createMockProduct({ name_en: "Product 2 (EN)" });
-      const req = new Request(
+      const req = new NextRequest(
         `http://localhost/api/products/${product.id}/duplicate`,
         {
           method: "POST",
@@ -515,7 +516,7 @@ describe("Products API", () => {
         },
       });
 
-      const req = new Request(
+      const req = new NextRequest(
         `http://localhost/api/products/${product.id}/duplicate`,
         {
           method: "POST",
@@ -525,7 +526,7 @@ describe("Products API", () => {
       const res = await POST_DUPLICATE(req, {
         params: Promise.resolve({ id: product.id }),
       });
-      const duplicated = await res.json();
+      const duplicated = (await res.json()) as Product;
 
       expect(res.status).toEqual(200);
       expect(duplicated.sku).toEqual("NEW123");

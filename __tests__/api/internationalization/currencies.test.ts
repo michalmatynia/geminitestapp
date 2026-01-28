@@ -1,10 +1,12 @@
-import { GET, POST } from "../../../app/api/currencies/route";
-import prisma from "@/lib/prisma";
+import { GET, POST } from "@/app/api/currencies/route";
+import prisma from "@/shared/lib/db/prisma";
+import { NextRequest } from "next/server";
 
 type CurrencyResponse = {
+  id: string;
   code: string;
   name: string;
-  symbol: string;
+  symbol: string | null;
 };
 
 describe("Currencies API", () => {
@@ -19,7 +21,7 @@ describe("Currencies API", () => {
 
   describe("GET /api/currencies", () => {
     it("should seed default currencies on first call", async () => {
-      const res = await GET();
+      const res = await GET(new NextRequest("http://localhost/api/currencies"));
       const currencies = (await res.json()) as CurrencyResponse[];
 
       expect(res.status).toEqual(200);
@@ -28,7 +30,7 @@ describe("Currencies API", () => {
       const dbCurrencies = await prisma.currency.findMany();
       expect(dbCurrencies.length).toBeGreaterThan(0);
 
-      const usd = currencies.find((c: any) => c.code === "USD");
+      const usd = currencies.find((c: CurrencyResponse) => c.code === "USD");
       if (!usd) {
         throw new Error("Expected seeded currency USD.");
       }
@@ -48,13 +50,13 @@ describe("Currencies API", () => {
         symbol: "$",
       };
 
-      const req = new Request("http://localhost/api/currencies", {
+      const req = new NextRequest("http://localhost/api/currencies", {
         method: "POST",
         body: JSON.stringify(newCurrency),
       });
 
       const res = await POST(req);
-      const currency = await res.json();
+      const currency = (await res.json()) as CurrencyResponse;
 
       expect(res.status).toEqual(200);
       expect(currency.code).toBe("USD");
@@ -67,7 +69,7 @@ describe("Currencies API", () => {
         name: "Invalid",
       };
 
-      const req = new Request("http://localhost/api/currencies", {
+      const req = new NextRequest("http://localhost/api/currencies", {
         method: "POST",
         body: JSON.stringify(invalidCurrency),
       });

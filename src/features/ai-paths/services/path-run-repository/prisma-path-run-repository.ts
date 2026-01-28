@@ -1,0 +1,260 @@
+import "server-only";
+
+import prisma from "@/shared/lib/db/prisma";
+import type {
+  AiPathRunEventRecord,
+  AiPathRunNodeRecord,
+  AiPathRunRecord,
+} from "@/shared/types/ai-paths";
+import type {
+  AiPathRunCreateInput,
+  AiPathRunEventCreateInput,
+  AiPathRunListOptions,
+  AiPathRunRepository,
+  AiPathRunUpdate,
+} from "@/features/ai-paths/types/path-run-repository";
+
+const prismaAny = prisma as unknown as {
+  aiPathRun?: {
+    create: (args: unknown) => Promise<unknown>;
+    update: (args: unknown) => Promise<unknown>;
+    findUnique: (args: unknown) => Promise<unknown>;
+    findMany: (args: unknown) => Promise<unknown[]>;
+    findFirst: (args: unknown) => Promise<unknown>;
+    count: (args: unknown) => Promise<number>;
+    updateMany: (args: unknown) => Promise<unknown>;
+  };
+  aiPathRunNode?: {
+    createMany: (args: unknown) => Promise<unknown>;
+    upsert: (args: unknown) => Promise<unknown>;
+    findMany: (args: unknown) => Promise<unknown[]>;
+  };
+  aiPathRunEvent?: {
+    create: (args: unknown) => Promise<unknown>;
+    findMany: (args: unknown) => Promise<unknown[]>;
+  };
+};
+
+const mapRun = (run: unknown): AiPathRunRecord => {
+  const r = run as Record<string, unknown>;
+  return {
+    id: String(r.id),
+    pathId: String(r.pathId),
+    pathName: (r.pathName as string) ?? null,
+    status: r.status as AiPathRunRecord["status"],
+    triggerEvent: (r.triggerEvent as string) ?? null,
+    triggerNodeId: (r.triggerNodeId as string) ?? null,
+    triggerContext: (r.triggerContext as AiPathRunRecord["triggerContext"]) ?? null,
+    graph: (r.graph as AiPathRunRecord["graph"]) ?? null,
+    runtimeState: (r.runtimeState as AiPathRunRecord["runtimeState"]) ?? null,
+    meta: (r.meta as AiPathRunRecord["meta"]) ?? null,
+    entityId: (r.entityId as string) ?? null,
+    entityType: (r.entityType as string) ?? null,
+    errorMessage: (r.errorMessage as string) ?? null,
+    retryCount: (r.retryCount as number) ?? 0,
+    maxAttempts: (r.maxAttempts as number) ?? 3,
+    nextRetryAt: (r.nextRetryAt as Date) ?? null,
+    deadLetteredAt: (r.deadLetteredAt as Date) ?? null,
+    createdAt: r.createdAt as Date,
+    updatedAt: (r.updatedAt as Date) ?? null,
+    startedAt: (r.startedAt as Date) ?? null,
+    finishedAt: (r.finishedAt as Date) ?? null,
+  };
+};
+
+const mapNode = (node: unknown): AiPathRunNodeRecord => {
+  const n = node as Record<string, unknown>;
+  return {
+    id: String(n.id),
+    runId: String(n.runId),
+    nodeId: String(n.nodeId),
+    nodeType: String(n.nodeType),
+    nodeTitle: (n.nodeTitle as string) ?? null,
+    status: n.status as AiPathRunNodeRecord["status"],
+    attempt: (n.attempt as number) ?? 0,
+    inputs: (n.inputs as AiPathRunNodeRecord["inputs"]) ?? null,
+    outputs: (n.outputs as AiPathRunNodeRecord["outputs"]) ?? null,
+    errorMessage: (n.errorMessage as string) ?? null,
+    createdAt: n.createdAt as Date,
+    updatedAt: (n.updatedAt as Date) ?? null,
+    startedAt: (n.startedAt as Date) ?? null,
+    finishedAt: (n.finishedAt as Date) ?? null,
+  };
+};
+
+const mapEvent = (event: unknown): AiPathRunEventRecord => {
+  const e = event as Record<string, unknown>;
+  return {
+    id: String(e.id),
+    runId: String(e.runId),
+    level: e.level as AiPathRunEventRecord["level"],
+    message: String(e.message),
+    metadata: (e.metadata as AiPathRunEventRecord["metadata"]) ?? null,
+    createdAt: e.createdAt as Date,
+  };
+};
+
+const ensureModels = () => {
+  if (!prismaAny.aiPathRun || !prismaAny.aiPathRunNode || !prismaAny.aiPathRunEvent) {
+    throw new Error("AiPath run models not initialized in Prisma.");
+  }
+};
+
+export const prismaPathRunRepository: AiPathRunRepository = {
+  async createRun(input: AiPathRunCreateInput) {
+    ensureModels();
+    const run = await prismaAny.aiPathRun!.create({
+      data: {
+        pathId: input.pathId,
+        pathName: input.pathName ?? null,
+        status: "queued",
+        triggerEvent: input.triggerEvent ?? null,
+        triggerNodeId: input.triggerNodeId ?? null,
+        triggerContext: input.triggerContext ?? null,
+        graph: input.graph ?? null,
+        runtimeState: input.runtimeState ?? null,
+        meta: input.meta ?? null,
+        entityId: input.entityId ?? null,
+        entityType: input.entityType ?? null,
+        retryCount: input.retryCount ?? 0,
+        maxAttempts: input.maxAttempts ?? 3,
+        nextRetryAt: input.nextRetryAt ?? null,
+      },
+    });
+    return mapRun(run);
+  },
+
+  async updateRun(runId: string, data: AiPathRunUpdate) {
+    ensureModels();
+    const run = await prismaAny.aiPathRun!.update({
+      where: { id: runId },
+      data: data as Record<string, unknown>,
+    });
+    return mapRun(run);
+  },
+
+  async findRunById(runId: string) {
+    ensureModels();
+    const run = await prismaAny.aiPathRun!.findUnique({
+      where: { id: runId },
+    });
+    return run ? mapRun(run) : null;
+  },
+
+  async listRuns(options: AiPathRunListOptions = {}) {
+    ensureModels();
+    const where = {
+      ...(options.pathId ? { pathId: options.pathId } : {}),
+      ...(options.status ? { status: options.status } : {}),
+    };
+    const [runs, total] = await Promise.all([
+      prismaAny.aiPathRun!.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        ...(typeof options.offset === "number" ? { skip: options.offset } : {}),
+        ...(typeof options.limit === "number" ? { take: options.limit } : {}),
+      }),
+      prismaAny.aiPathRun!.count({ where }),
+    ]);
+    return { runs: runs.map(mapRun), total };
+  },
+
+  async claimNextQueuedRun() {
+    ensureModels();
+    const now = new Date();
+    const run = (await prismaAny.aiPathRun!.findFirst({
+      where: {
+        status: "queued",
+        OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
+      },
+      orderBy: { createdAt: "asc" },
+    })) as Record<string, unknown> | null;
+    if (!run) return null;
+    const updated = await prismaAny.aiPathRun!.update({
+      where: { id: run.id },
+      data: { status: "running", startedAt: new Date() },
+    });
+    return mapRun(updated);
+  },
+
+  async createRunNodes(runId, nodes) {
+    ensureModels();
+    if (!nodes || nodes.length === 0) return;
+    const data = nodes.map((node) => ({
+      runId,
+      nodeId: node.id,
+      nodeType: node.type,
+      nodeTitle: node.title ?? null,
+      status: "pending",
+      attempt: 0,
+    }));
+    await prismaAny.aiPathRunNode!.createMany({ data });
+  },
+
+  async upsertRunNode(runId, nodeId, data) {
+    ensureModels();
+    const node = await prismaAny.aiPathRunNode!.upsert({
+      where: { runId_nodeId: { runId, nodeId } },
+      update: data as Record<string, unknown>,
+      create: {
+        runId,
+        nodeId,
+        nodeType: data.nodeType,
+        nodeTitle: data.nodeTitle ?? null,
+        status: data.status ?? "pending",
+        attempt: data.attempt ?? 0,
+        inputs: data.inputs ?? null,
+        outputs: data.outputs ?? null,
+        errorMessage: data.errorMessage ?? null,
+        startedAt: data.startedAt ?? null,
+        finishedAt: data.finishedAt ?? null,
+      },
+    });
+    return mapNode(node);
+  },
+
+  async listRunNodes(runId: string) {
+    ensureModels();
+    const nodes = await prismaAny.aiPathRunNode!.findMany({
+      where: { runId },
+      orderBy: { createdAt: "asc" },
+    });
+    return nodes.map(mapNode);
+  },
+
+  async createRunEvent(input: AiPathRunEventCreateInput) {
+    ensureModels();
+    const event = await prismaAny.aiPathRunEvent!.create({
+      data: {
+        runId: input.runId,
+        level: input.level,
+        message: input.message,
+        metadata: input.metadata ?? null,
+      },
+    });
+    return mapEvent(event);
+  },
+
+  async listRunEvents(runId: string) {
+    ensureModels();
+    const events = await prismaAny.aiPathRunEvent!.findMany({
+      where: { runId },
+      orderBy: { createdAt: "asc" },
+    });
+    return events.map(mapEvent);
+  },
+
+  async markStaleRunningRuns(maxAgeMs: number) {
+    ensureModels();
+    const cutoff = new Date(Date.now() - maxAgeMs);
+    const result = await prismaAny.aiPathRun!.updateMany({
+      where: { status: "running", startedAt: { lt: cutoff } },
+      data: {
+        status: "failed",
+        finishedAt: new Date(),
+        errorMessage: "Run marked failed due to stale running state.",
+      },
+    });
+    return { count: (result as { count?: number }).count ?? 0 };
+  },
+};

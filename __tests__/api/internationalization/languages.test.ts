@@ -1,8 +1,10 @@
-import { GET, POST } from "../../../app/api/languages/route";
-import { DELETE, PUT } from "../../../app/api/languages/[id]/route";
-import prisma from "@/lib/prisma";
+import { GET, POST } from "@/app/api/languages/route";
+import { DELETE, PUT } from "@/app/api/languages/[id]/route";
+import prisma from "@/shared/lib/db/prisma";
+import { NextRequest } from "next/server";
 
 type LanguageResponse = {
+  id: string;
   code: string;
   name: string;
   nativeName?: string | null;
@@ -22,7 +24,7 @@ describe("Languages API", () => {
 
   describe("GET /api/languages", () => {
     it("should seed default languages on first call", async () => {
-      const res = await GET();
+      const res = await GET(new NextRequest("http://localhost/api/languages"));
       const languages = (await res.json()) as LanguageResponse[];
 
       expect(res.status).toEqual(200);
@@ -31,7 +33,7 @@ describe("Languages API", () => {
       const dbLanguages = await prisma.language.findMany();
       expect(dbLanguages.length).toBeGreaterThan(0);
 
-      const en = languages.find((l: any) => l.code === "EN");
+      const en = languages.find((l: LanguageResponse) => l.code === "EN");
       if (!en) {
         throw new Error("Expected seeded language EN.");
       }
@@ -48,13 +50,13 @@ describe("Languages API", () => {
         nativeName: "Français",
       };
 
-      const req = new Request("http://localhost/api/languages", {
+      const req = new NextRequest("http://localhost/api/languages", {
         method: "POST",
         body: JSON.stringify(newLanguage),
       });
 
       const res = await POST(req);
-      const language = await res.json();
+      const language = (await res.json()) as LanguageResponse;
 
       expect(res.status).toEqual(200);
       expect(language.code).toBe("FR");
@@ -73,17 +75,17 @@ describe("Languages API", () => {
             countryIds: [country.id]
         };
 
-        const req = new Request("http://localhost/api/languages", {
+        const req = new NextRequest("http://localhost/api/languages", {
             method: "POST",
             body: JSON.stringify(newLanguage),
         });
 
         const res = await POST(req);
-        const language = await res.json();
+        const language = (await res.json()) as LanguageResponse;
 
         expect(res.status).toEqual(200);
         expect(language.countries).toHaveLength(1);
-        expect(language.countries[0].countryId).toBe(country.id);
+        expect(language.countries![0]!.countryId).toBe(country.id);
     });
 
     it("should reject invalid payload", async () => {
@@ -91,7 +93,7 @@ describe("Languages API", () => {
         name: "Missing Code",
       };
 
-      const req = new Request("http://localhost/api/languages", {
+      const req = new NextRequest("http://localhost/api/languages", {
         method: "POST",
         body: JSON.stringify(invalidLanguage),
       });
@@ -110,7 +112,7 @@ describe("Languages API", () => {
         data: { code: "PL", name: "Poland" },
       });
 
-      const req = new Request(`http://localhost/api/languages/${language.id}`, {
+      const req = new NextRequest(`http://localhost/api/languages/${language.id}`, {
         method: "PUT",
         body: JSON.stringify({
           code: "PL",
@@ -121,12 +123,12 @@ describe("Languages API", () => {
       });
 
       const res = await PUT(req, { params: Promise.resolve({ id: language.id }) });
-      const updated = await res.json();
+      const updated = (await res.json()) as LanguageResponse;
 
       expect(res.status).toEqual(200);
       expect(updated.name).toBe("Polish Updated");
       expect(updated.countries).toHaveLength(1);
-      expect(updated.countries[0].countryId).toBe(country.id);
+      expect(updated.countries![0]!.countryId).toBe(country.id);
     });
   });
 
@@ -149,7 +151,7 @@ describe("Languages API", () => {
         data: { catalogId: catalog.id, languageId: language.id },
       });
 
-      const res = await DELETE(new Request("http://localhost/api/languages/" + language.id), {
+      const res = await DELETE(new NextRequest("http://localhost/api/languages/" + language.id), {
         params: Promise.resolve({ id: language.id }),
       });
 

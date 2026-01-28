@@ -1,0 +1,57 @@
+import type { ChatbotSettingsPayload } from "@/shared/types/chatbot";
+import type { SettingRecord } from "../types";
+import { fetchWithTimeout, readErrorResponse, requestJson } from "./client";
+
+export const fetchChatbotSettings = async (
+  key: string,
+  timeoutMs = 5000
+) => {
+  return requestJson<{ settings?: { settings?: unknown } | null }>(
+    `/api/chatbot/settings?key=${encodeURIComponent(key)}`,
+    undefined,
+    { timeoutMs, fallbackMessage: "Failed to load chatbot settings." }
+  );
+};
+
+export const saveChatbotSettings = async (
+  key: string,
+  settings: ChatbotSettingsPayload,
+  timeoutMs = 5000
+) => {
+  const res = await fetchWithTimeout(
+    "/api/chatbot/settings",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key, settings }),
+    },
+    timeoutMs
+  );
+  if (!res.ok) {
+    const error = await readErrorResponse(res);
+    throw new Error(error.message);
+  }
+  return (await res.json()) as { settings?: { settings?: ChatbotSettingsPayload } };
+};
+
+export const fetchSettings = async () =>
+  requestJson<SettingRecord[]>(
+    "/api/settings",
+    { cache: "no-store" },
+    { fallbackMessage: "Failed to load context." }
+  );
+
+export const saveSetting = async (
+  key: string,
+  value: string,
+  fallbackMessage = "Failed to save setting."
+) =>
+  requestJson<SettingRecord>(
+    "/api/settings",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key, value }),
+    },
+    { fallbackMessage }
+  );

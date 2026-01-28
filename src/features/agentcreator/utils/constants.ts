@@ -1,0 +1,38 @@
+import type { AgentSettingsPayload, ModelTaskRule } from "@/shared/types/chatbot";
+
+export const MODEL_TASK_RULES: Record<string, ModelTaskRule> = {
+  main: { preferLarge: true, minSize: 7, preferReasoning: true },
+  planner: { preferLarge: true, minSize: 7, preferReasoning: true },
+  selfCheck: { preferLarge: true, minSize: 7 },
+  extractionValidation: { preferLarge: true, minSize: 7 },
+  approvalGate: { preferLarge: true, minSize: 7, preferReasoning: true },
+  memoryValidation: { preferSmall: true, targetSize: 7, maxSize: 13 },
+  memorySummarization: { preferLarge: true, minSize: 7, preferReasoning: true },
+  loopGuard: { preferSmall: true, targetSize: 7, maxSize: 13 },
+  selectorInference: { preferSmall: true, targetSize: 7, maxSize: 13 },
+  outputNormalization: { preferSmall: true, targetSize: 3, maxSize: 7 },
+};
+
+export const DEFAULT_AGENT_SETTINGS: AgentSettingsPayload = {
+  agentBrowser: "chromium",
+  runHeadless: true,
+  ignoreRobotsTxt: false,
+  requireHumanApproval: false,
+  memoryValidationModel: "",
+  plannerModel: "",
+  selfCheckModel: "",
+  extractionValidationModel: "",
+  loopGuardModel: "",
+  approvalGateModel: "",
+  memorySummarizationModel: "",
+  selectorInferenceModel: "",
+  outputNormalizationModel: "",
+  maxSteps: 12,
+  maxStepAttempts: 2,
+  maxReplanCalls: 2,
+  replanEverySteps: 2,
+  maxSelfChecks: 4,
+  loopGuardThreshold: 2,
+  loopBackoffBaseMs: 2000,
+  loopBackoffMaxMs: 12000,
+};

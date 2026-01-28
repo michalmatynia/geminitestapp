@@ -1,25 +1,45 @@
+/**
+ * @vitest-environment node
+ */
+
+import { vi, Mock } from "vitest";
 import { NextRequest } from "next/server";
 import { POST } from "@/app/api/generate-description/route";
 import OpenAI from "openai";
 
-import prisma from "@/lib/prisma";
-const createMock = jest.fn();
-jest.mock("openai", () => {
+import prisma from "@/shared/lib/db/prisma";
+
+const { mockCreate } = vi.hoisted(() => {
+  return {
+    mockCreate: vi.fn(),
+  };
+});
+
+vi.mock("openai", () => {
   const mockChat = {
     completions: {
-      create: createMock,
+      create: mockCreate,
     },
   };
-  return jest.fn().mockImplementation(() => ({
-    chat: mockChat,
-  }));
+  return {
+    default: vi.fn().mockImplementation(() => ({
+      chat: mockChat,
+    })),
+  };
 });
 
 describe("AI Description Generation API", () => {
+  const originalEnv = process.env;
+
   beforeEach(async () => {
+    process.env = { ...originalEnv, OPENAI_API_KEY: "" };
     await prisma.setting.deleteMany({});
-    (OpenAI as unknown as jest.Mock).mockClear();
-    createMock.mockClear();
+    (OpenAI as unknown as Mock).mockClear();
+    mockCreate.mockClear();
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
   });
 
   afterAll(async () => {
@@ -34,7 +54,7 @@ describe("AI Description Generation API", () => {
     const mockCompletion = {
       choices: [{ message: { content: "This is a test description." } }],
     };
-    createMock.mockResolvedValue(mockCompletion);
+    mockCreate.mockResolvedValue(mockCompletion);
 
     const req = new NextRequest(
       "http://localhost/api/generate-description",
@@ -48,10 +68,12 @@ describe("AI Description Generation API", () => {
     );
 
     const res = await POST(req);
-    const data = await res.json();
+    const data = (await res.json()) as { description: string };
 
     expect(res.status).toBe(200);
     expect(data.description).toBe("This is a test description.");
+    // Called once for vision, once for generation
+    expect(mockCreate).toHaveBeenCalledTimes(2);
   });
 
   it("should fail if product name is missing", async () => {
@@ -68,6 +90,15 @@ describe("AI Description Generation API", () => {
   });
 
   it("should fail if API key is not configured", async () => {
+    // Both setting and env are empty
+    // Force OpenAI models so it checks for API key
+    await prisma.setting.createMany({
+      data: [
+        { key: "ai_vision_model", value: "gpt-4o" },
+        { key: "openai_model", value: "gpt-3.5-turbo" },
+      ],
+    });
+
     const req = new NextRequest(
       "http://localhost/api/generate-description",
       {
@@ -88,8 +119,12 @@ describe("AI Description Generation API", () => {
       data: [
         { key: "openai_api_key", value: "test-api-key" },
         {
-          key: "description_generation_prompt",
-          value: "Custom prompt for [name]",
+          key: "openai_model",
+          value: "gpt-3.5-turbo",
+        },
+        {
+          key: "description_generation_user_prompt",
+          value: "Custom prompt for [name_en]",
         },
       ],
     });
@@ -97,7 +132,7 @@ describe("AI Description Generation API", () => {
     const mockCompletion = {
       choices: [{ message: { content: "Custom description" } }],
     };
-    createMock.mockResolvedValue(mockCompletion);
+    mockCreate.mockResolvedValue(mockCompletion);
 
     const req = new NextRequest(
       "http://localhost/api/generate-description",
@@ -112,12 +147,19 @@ describe("AI Description Generation API", () => {
 
     await POST(req);
 
-    expect(createMock).toHaveBeenCalledWith(
+    expect(mockCreate).toHaveBeenCalledWith(
       expect.objectContaining({
+        model: "gpt-3.5-turbo",
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         messages: expect.arrayContaining([
           expect.objectContaining({
-            role: "system",
-            content: "Custom prompt for Test Product",
+            role: "user",
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            content: expect.arrayContaining([
+              expect.objectContaining({
+                text: "Custom prompt for Test Product",
+              }),
+            ]),
           }),
         ]),
       })

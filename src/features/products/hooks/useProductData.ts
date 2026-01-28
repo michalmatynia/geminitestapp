@@ -77,24 +77,17 @@ export function useProductData({
   // Track whether initial sync from preferences has completed
   const [initialSyncComplete, setInitialSyncComplete] = useState(false);
 
-  // Sync catalogFilter and pageSize when preferences load (single effect to avoid multiple state updates)
-  useEffect(() => {
-    if (preferencesLoaded && !initialSyncComplete) {
-      // Batch state updates to prevent multiple re-renders
-      const needsCatalogSync = catalogFilter !== initialCatalogFilter;
-      const needsPageSizeSync = pageSize !== initialPageSize;
-
-      if (needsCatalogSync) {
-        setCatalogFilter(initialCatalogFilter);
-      }
-      if (needsPageSizeSync) {
-        setPageSize(initialPageSize);
-      }
-
-      // Mark sync as complete - this will allow the fetch to proceed
-      setInitialSyncComplete(true);
+  // Sync catalogFilter and pageSize when preferences load
+  // We do this during render to avoid useEffect state sync warnings
+  if (preferencesLoaded && !initialSyncComplete) {
+    setInitialSyncComplete(true);
+    if (catalogFilter !== initialCatalogFilter) {
+      setCatalogFilter(initialCatalogFilter);
     }
-  }, [initialCatalogFilter, initialPageSize, preferencesLoaded, initialSyncComplete, catalogFilter, pageSize]);
+    if (pageSize !== initialPageSize) {
+      setPageSize(initialPageSize);
+    }
+  }
 
   // Debounce search
   useEffect(() => {

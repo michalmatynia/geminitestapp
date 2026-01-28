@@ -2,17 +2,38 @@
 
 import { Button, Input, Label } from "@/shared/ui";
 import Link from "next/link";
-import { useEffect, useState, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
 import { DEFAULT_AUTH_USER_PAGE_SETTINGS } from "@/features/auth/utils/auth-user-pages";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
-import { verifyCredentials } from "@/features/auth/api/credentials";
+import { useVerifyCredentials } from "@/features/auth/hooks/useAuthQueries";
+import { useSettingsMap } from "@/shared/hooks/useSettings";
 
 
 
-function SignInContent() {
+function SignInPageLoader() {
+  const settingsQuery = useSettingsMap();
+
+  if (settingsQuery.isLoading || !settingsQuery.data) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-900 px-4">
+        <div className="text-gray-400">Loading...</div>
+      </div>
+    );
+  }
+
+  const userPages = parseJsonSetting(
+    settingsQuery.data.get(AUTH_SETTINGS_KEYS.userPages),
+    DEFAULT_AUTH_USER_PAGE_SETTINGS
+  );
+  const allowSocialLogin = Boolean(userPages.allowSocialLogin);
+
+  return <SignInForm allowSocialLogin={allowSocialLogin} />;
+}
+
+function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }) {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const errorMessage =
@@ -28,10 +49,8 @@ function SignInContent() {
   const [challengeId, setChallengeId] = useState<string | null>(null);
   const [mfaRequired, setMfaRequired] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [allowSocialLogin, setAllowSocialLogin] = useState(
-    DEFAULT_AUTH_USER_PAGE_SETTINGS.allowSocialLogin
-  );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const verifyCredentialsMutation = useVerifyCredentials();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -39,64 +58,68 @@ function SignInContent() {
     setMessage(null);
 
     if (!mfaRequired) {
-      const { ok, payload } = await verifyCredentials({ email, password });
-      if (!ok || !payload.ok) {
-        setMessage(payload.message ?? "Sign-in failed. Check your credentials.");
+      try {
+        const { ok, payload } = await verifyCredentialsMutation.mutateAsync({ email, password });
+        if (!ok || !payload.ok) {
+          setMessage(payload.message ?? "Sign-in failed. Check your credentials.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        if (payload.mfaRequired) {
+          setChallengeId(payload.challengeId ?? null);
+          setMfaRequired(true);
+          setIsSubmitting(false);
+          return;
+        }
+
+        try {
+          await signIn("credentials", {
+            email,
+            password,
+            challengeId: payload.challengeId ?? undefined,
+            callbackUrl: "/admin",
+          });
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Sign-in failed. Please try again.";
+          setMessage(message);
+        } finally {
+          setIsSubmitting(false);
+        }
+        return;
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Unable to verify credentials. Check your connection.";
+        setMessage(message);
         setIsSubmitting(false);
         return;
       }
+    }
 
-      if (payload.mfaRequired) {
-        setChallengeId(payload.challengeId ?? null);
-        setMfaRequired(true);
-        setIsSubmitting(false);
-        return;
-      }
-
+    try {
       await signIn("credentials", {
         email,
         password,
-        challengeId: payload.challengeId ?? undefined,
+        otp,
+        recoveryCode,
+        challengeId: challengeId ?? undefined,
         callbackUrl: "/admin",
       });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Sign-in failed. Please try again.";
+      setMessage(message);
+    } finally {
       setIsSubmitting(false);
-      return;
     }
-
-    await signIn("credentials", {
-      email,
-      password,
-      otp,
-      recoveryCode,
-      challengeId: challengeId ?? undefined,
-      callbackUrl: "/admin",
-    });
-    setIsSubmitting(false);
   };
-
-  useEffect(() => {
-    let active = true;
-    const loadSettings = async () => {
-      try {
-        const res = await fetch("/api/settings", { cache: "no-store" });
-        if (!res.ok) return;
-        const settings = (await res.json()) as Array<{ key: string; value: string }>;
-        const map = new Map(settings.map((item) => [item.key, item.value]));
-        const userPages = parseJsonSetting(
-          map.get(AUTH_SETTINGS_KEYS.userPages),
-          DEFAULT_AUTH_USER_PAGE_SETTINGS
-        );
-        if (!active) return;
-        setAllowSocialLogin(Boolean(userPages.allowSocialLogin));
-      } catch {
-        // ignore
-      }
-    };
-    void loadSettings();
-    return () => {
-      active = false;
-    };
-  }, []);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-900 px-4">
@@ -219,7 +242,7 @@ function SignInContent() {
 export default function SignInPage() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <SignInContent />
+      <SignInPageLoader />
     </Suspense>
   );
 }

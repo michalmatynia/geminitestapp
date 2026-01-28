@@ -100,10 +100,10 @@ export const deleteDatabaseBackup = async (
 };
 
 export const fetchDatabasePreview = async (input: {
-  backupName?: string;
-  mode?: DatabasePreviewMode;
-  page?: number;
-  pageSize?: number;
+  backupName?: string | undefined;
+  mode?: DatabasePreviewMode | undefined;
+  page?: number | undefined;
+  pageSize?: number | undefined;
 }) => {
   const res = await fetch("/api/databases/preview", {
     method: "POST",

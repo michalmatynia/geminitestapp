@@ -63,14 +63,14 @@ export function useNoteThemes(notebookId?: string) {
 }
 
 export interface FetchNotesParams {
-  notebookId?: string;
-  search?: string;
-  searchScope?: string;
-  isPinned?: boolean;
-  isArchived?: boolean;
-  isFavorite?: boolean;
-  tagIds?: string[];
-  categoryIds?: string[];
+  notebookId?: string | undefined;
+  search?: string | undefined;
+  searchScope?: string | undefined;
+  isPinned?: boolean | undefined;
+  isArchived?: boolean | undefined;
+  isFavorite?: boolean | undefined;
+  tagIds?: string[] | undefined;
+  categoryIds?: string[] | undefined;
 }
 
 export function useNotes(params: FetchNotesParams) {

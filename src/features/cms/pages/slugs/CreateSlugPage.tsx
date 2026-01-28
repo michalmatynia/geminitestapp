@@ -6,13 +6,14 @@ import { useRouter } from "next/navigation";
 
 
 
-import { createSlug } from "@/features/cms/api/slugs";
+import { useCreateSlug } from "@/features/cms/hooks/useCmsQueries";
 import { SLUG_REGEX } from "@/features/cms/validations/slug";
 
 export default function CreateSlugPage() {
   const [slug, setSlug] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
+  const createSlug = useCreateSlug();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,15 +27,10 @@ export default function CreateSlugPage() {
     }
 
     try {
-      const { ok, payload } = await createSlug({ slug });
-      if (ok) {
-        router.push("/admin/cms/slugs");
-      } else {
-        const data = payload as { error?: string };
-        setError(data.error || "Failed to create slug.");
-      }
-    } catch (_err) {
-      setError("An unexpected error occurred.");
+      await createSlug.mutateAsync({ slug });
+      router.push("/admin/cms/slugs");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An unexpected error occurred.");
     }
   };
 

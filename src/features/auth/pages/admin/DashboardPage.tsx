@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 
 
 
@@ -14,53 +14,43 @@ import {
   type AuthUserRoleMap,
 } from "@/features/auth/utils/auth-management";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
-import type { AuthUserSummary } from "@/features/auth/types";
-import { fetchAuthUsers } from "@/features/auth/api/users";
+import { useAuthUsers } from "@/features/auth/hooks/useAuthQueries";
+import { useSettingsMap } from "@/shared/hooks/useSettings";
 
 export default function AuthDashboardPage() {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [users, setUsers] = useState<AuthUserSummary[]>([]);
-  const [provider, setProvider] = useState<"prisma" | "mongodb">("prisma");
-  const [roles, setRoles] = useState<AuthRole[]>(DEFAULT_AUTH_ROLES);
-  const [userRoles, setUserRoles] = useState<AuthUserRoleMap>({});
+  const authUsersQuery = useAuthUsers();
+  const settingsQuery = useSettingsMap();
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [usersPayload, settingsRes] = await Promise.all([
-          fetchAuthUsers(),
-          fetch("/api/settings"),
-        ]);
-        setUsers(usersPayload.users ?? []);
-        setProvider(usersPayload.provider ?? "prisma");
+    if (!authUsersQuery.error) return;
+    console.error("Failed to load auth dashboard data:", authUsersQuery.error);
+    toast("Failed to load auth dashboard data", { variant: "error" });
+  }, [authUsersQuery.error, toast]);
 
-        if (settingsRes.ok) {
-          const settings = (await settingsRes.json()) as Array<{ key: string; value: string }>;
-          const settingsMap = new Map(settings.map((item) => [item.key, item.value]));
-          const storedRoles = mergeDefaultRoles(
-            parseJsonSetting<AuthRole[]>(
-              settingsMap.get(AUTH_SETTINGS_KEYS.roles),
-              DEFAULT_AUTH_ROLES
-            )
-          );
-          const storedUserRoles = parseJsonSetting<AuthUserRoleMap>(
-            settingsMap.get(AUTH_SETTINGS_KEYS.userRoles),
-            {}
-          );
-          setRoles(storedRoles);
-          setUserRoles(storedUserRoles);
-        }
-      } catch (error) {
-        console.error("Failed to load auth dashboard data:", error);
-        toast("Failed to load auth dashboard data", { variant: "error" });
-      } finally {
-        setLoading(false);
-      }
-    };
+  useEffect(() => {
+    if (!settingsQuery.error) return;
+    console.error("Failed to load auth settings:", settingsQuery.error);
+    toast("Failed to load auth settings", { variant: "error" });
+  }, [settingsQuery.error, toast]);
 
-    void load();
-  }, [toast]);
+  const users = (authUsersQuery.data?.users ?? []);
+  const provider = authUsersQuery.data?.provider ?? "prisma";
+  const roles = useMemo(() => {
+    const storedRoles = parseJsonSetting<AuthRole[]>(
+      settingsQuery.data?.get(AUTH_SETTINGS_KEYS.roles),
+      DEFAULT_AUTH_ROLES
+    );
+    return mergeDefaultRoles(storedRoles);
+  }, [settingsQuery.data]);
+  const userRoles = useMemo(
+    () =>
+      parseJsonSetting<AuthUserRoleMap>(
+        settingsQuery.data?.get(AUTH_SETTINGS_KEYS.userRoles),
+        {}
+      ),
+    [settingsQuery.data]
+  );
 
   const metrics = useMemo(() => {
     const total = users.length;
@@ -82,7 +72,7 @@ export default function AuthDashboardPage() {
     return { total, verified, unverified, roleCounts, unassigned };
   }, [roles, userRoles, users]);
 
-  if (loading) {
+  if (authUsersQuery.isPending || settingsQuery.isPending) {
     return (
       <SectionPanel className="p-6 text-sm text-gray-400">
         Loading auth metrics...

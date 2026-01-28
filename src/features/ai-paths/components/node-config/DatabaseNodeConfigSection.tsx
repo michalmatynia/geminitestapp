@@ -26,6 +26,7 @@ import {
   createParserMappings,
   createPresetId,
   extractJsonPathEntries,
+  renderTemplate,
   safeParseJson,
   toNumber,
 } from "@/features/ai-paths/lib";
@@ -288,8 +289,20 @@ export function DatabaseNodeConfigSection({
                   }
                 });
 
+                const mappings =
+                  databaseConfig.mappings && databaseConfig.mappings.length > 0
+                    ? databaseConfig.mappings
+                    : defaultMappings;
+
                 // Build connected placeholders from actual inputs
                 const connectedPlaceholders: string[] = [];
+                const placeholderSet = new Set<string>();
+                const addPlaceholder = (placeholder: string) => {
+                  const trimmed = placeholder.trim();
+                  if (!trimmed || placeholderSet.has(trimmed)) return;
+                  placeholderSet.add(trimmed);
+                  connectedPlaceholders.push(trimmed);
+                };
                 // Check if db_schema node is connected
                 const hasSchemaConnection = incomingEdges.some((edge) => {
                   const fromNode = nodes.find((node) => node.id === edge.from);
@@ -301,11 +314,11 @@ export function DatabaseNodeConfigSection({
                     // Bundle keys are handled separately below
                     return;
                   }
-                  connectedPlaceholders.push(`{{${port}}}`);
+                  addPlaceholder(`{{${port}}}`);
                 });
                 // Add bundle keys as {{bundle.keyName}}
                 bundleKeys.forEach((key) => {
-                  connectedPlaceholders.push(`{{bundle.${key}}}`);
+                  addPlaceholder(`{{bundle.${key}}}`);
                 });
                 // Also add context keys if context is connected
                 if (incomingPorts.includes("context")) {
@@ -314,21 +327,31 @@ export function DatabaseNodeConfigSection({
                     const fromNode = nodes.find((node) => node.id === edge.from);
                     if (!fromNode) return;
                     if (fromNode.type === "context") {
-                      connectedPlaceholders.push("{{context.entityId}}");
-                      connectedPlaceholders.push("{{context.entityType}}");
+                      addPlaceholder("{{context.entityId}}");
+                      addPlaceholder("{{context.entityType}}");
                     }
                   });
                 }
                 // Add meta keys if meta is connected
                 if (incomingPorts.includes("meta")) {
-                  connectedPlaceholders.push("{{meta.pathId}}");
-                  connectedPlaceholders.push("{{meta.trigger}}");
+                  addPlaceholder("{{meta.pathId}}");
+                  addPlaceholder("{{meta.trigger}}");
                 }
-
-                const mappings =
-                  databaseConfig.mappings && databaseConfig.mappings.length > 0
-                    ? databaseConfig.mappings
-                    : defaultMappings;
+                // Add placeholders derived from mappings so they appear immediately
+                mappings.forEach((mapping) => {
+                  const sourcePort = mapping.sourcePort?.trim();
+                  if (!sourcePort) return;
+                  const sourcePath = mapping.sourcePath?.trim();
+                  if (sourcePath) {
+                    const normalizedPath = sourcePath.startsWith(`${sourcePort}.`)
+                      ? sourcePath
+                      : `${sourcePort}.${sourcePath}`;
+                    addPlaceholder(`{{${normalizedPath}}}`);
+                    return;
+                  }
+                  if (sourcePort === "bundle") return;
+                  addPlaceholder(`{{${sourcePort}}}`);
+                });
                 const sampleState =
                   updaterSamples[selectedNode.id] ?? {
                     entityType: databaseConfig.entityType ?? "product",
@@ -1191,10 +1214,29 @@ export function DatabaseNodeConfigSection({
                   setTestQueryLoading(true);
                   setTestQueryResult("");
                   try {
-                    let testQuery = queryTemplateValue;
-                    testQuery = testQuery.replace(/\{\{[^}]+\}\}/g, '""');
-
-                    const queryObj = JSON.parse(testQuery);
+                    const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
+                    const runtimeOutputs = runtimeState.outputs[selectedNode.id] ?? {};
+                    const templateContext = { ...runtimeOutputs, ...runtimeInputs };
+                    const rawValue =
+                      runtimeInputs.value ??
+                      runtimeInputs.jobId ??
+                      runtimeOutputs.value ??
+                      runtimeOutputs.jobId;
+                    const currentValue = Array.isArray(rawValue) ? rawValue[0] : rawValue;
+                    const renderedQuery = renderTemplate(
+                      queryTemplateValue,
+                      templateContext as Record<string, unknown>,
+                      currentValue ?? ""
+                    );
+                    const parsedQuery = safeParseJson(renderedQuery);
+                    if (parsedQuery.error || !parsedQuery.value || typeof parsedQuery.value !== "object") {
+                      const message = parsedQuery.error || "Query template must be valid JSON.";
+                      setTestQueryResult(JSON.stringify({ error: message }, null, 2));
+                      toast(message, { variant: "error" });
+                      setTestQueryLoading(false);
+                      return;
+                    }
+                    const queryObj = parsedQuery.value as Record<string, unknown>;
                     const response = await fetch("/api/ai-paths/db-query", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
@@ -1512,12 +1554,6 @@ export function DatabaseNodeConfigSection({
                         operation={operation}
                         databaseConfig={databaseConfig}
                         writeSource={writeSource}
-                        sampleState={sampleState}
-                        parsedSampleError={parsedSample.error}
-                        updaterSampleLoading={updaterSampleLoading}
-                        selectedNodeId={selectedNode.id}
-                        setUpdaterSamples={setUpdaterSamples}
-                        onFetchUpdaterSample={handleFetchUpdaterSample}
                         updateSelectedNodeConfig={updateSelectedNodeConfig}
                       />
                 </TabsContent>
@@ -1537,6 +1573,13 @@ export function DatabaseNodeConfigSection({
                     queryConfig={queryConfig}
                     operation={operation}
                     queryTemplateValue={queryTemplateValue}
+                    queryTemplateRef={queryTemplateRef}
+                    sampleState={sampleState}
+                    parsedSampleError={parsedSample.error}
+                    updaterSampleLoading={updaterSampleLoading}
+                    selectedNodeId={selectedNode.id}
+                    setUpdaterSamples={setUpdaterSamples}
+                    onFetchUpdaterSample={handleFetchUpdaterSample}
                     updateSelectedNodeConfig={updateSelectedNodeConfig}
                     updateQueryConfig={updateQueryConfig}
                     connectedPlaceholders={connectedPlaceholders}

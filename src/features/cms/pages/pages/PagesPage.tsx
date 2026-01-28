@@ -1,30 +1,24 @@
 "use client";
 import { Button, ListPanel, SectionHeader } from "@/shared/ui";
-import { useEffect, useState } from "react";
 import Link from "next/link";
 
 
 
 import { useAdminLayout } from "@/features/admin";
 import { useRouter } from "next/navigation";
-import { deletePage, fetchPages } from "@/features/cms/api/pages";
-import type { PageSummary } from "@/features/cms/types";
+import { useCmsPages, useDeletePage } from "@/features/cms/hooks/useCmsQueries";
 
 export default function PagesPage() {
-  const [pages, setPages] = useState<PageSummary[]>([]);
   const { setIsMenuCollapsed } = useAdminLayout();
   const router = useRouter();
+  const pagesQuery = useCmsPages();
+  const deletePage = useDeletePage();
 
-  useEffect(() => {
-    void fetchPages().then(setPages);
-  }, []);
+  const pages = pagesQuery.data ?? [];
 
   const handleDelete = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this page?")) {
-      const result = await deletePage(id);
-      if (result.ok) {
-        setPages(pages.filter((page) => page.id !== id));
-      }
+      await deletePage.mutateAsync(id);
     }
   };
 

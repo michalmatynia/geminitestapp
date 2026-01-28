@@ -1,37 +1,35 @@
 "use client";
 
 import { Button } from "@/shared/ui";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 
 import CmsEditorLayout from "@/features/cms/components/CmsEditorLayout";
-import { fetchPage, updatePage } from "@/features/cms/api/pages";
+import { useCmsPage, useUpdatePage } from "@/features/cms/hooks/useCmsQueries";
 import type { Page } from "@/features/cms/types";
 
-export default function EditPagePage() {
-  const [page, setPage] = useState<Page | null>(null);
-  const router = useRouter();
+export default function EditPagePageLoader() {
   const { id } = useParams();
+  const pageQuery = useCmsPage(id as string | undefined);
 
-  useEffect(() => {
-    if (!id) return;
-    const loadPage = async () => {
-      const data = await fetchPage(id as string);
-      setPage(data);
-    };
-    void loadPage();
-  }, [id]);
-
-  const handleSave = async () => {
-    if (!page || !id) return;
-
-    await updatePage(id as string, page);
-    router.push("/admin/cms/pages");
-  };
-
-  if (!page) {
+  if (pageQuery.isLoading || !pageQuery.data) {
     return <div>Loading...</div>;
   }
+
+  return <EditPageContent initialPage={pageQuery.data} id={id as string} />;
+}
+
+function EditPageContent({ initialPage, id }: { initialPage: Page; id: string }) {
+  const [page] = useState<Page>(initialPage);
+  const router = useRouter();
+  const updatePage = useUpdatePage();
+
+  const handleSave = async () => {
+    if (!page) return;
+
+    await updatePage.mutateAsync({ id, input: page });
+    router.push("/admin/cms/pages");
+  };
 
   return (
     <CmsEditorLayout>

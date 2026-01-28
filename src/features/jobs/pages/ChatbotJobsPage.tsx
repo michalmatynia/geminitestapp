@@ -258,7 +258,7 @@ export default function ChatbotJobsPage() {
                         Open session
                       </Button>
                     </Link>
-                    {(["pending", "running"] as const).includes(job.status) ? (
+                    {(job.status === "pending" || job.status === "running") ? (
                       <Button
                         variant="destructive"
                         size="sm"

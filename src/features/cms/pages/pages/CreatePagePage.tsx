@@ -1,29 +1,26 @@
 "use client";
 
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SectionHeader } from "@/shared/ui";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 
 
 
-import { createPage } from "@/features/cms/api/pages";
-import { fetchSlugs } from "@/features/cms/api/slugs";
-import type { Slug } from "@/features/cms/types";
+import { useCmsSlugs, useCreatePage } from "@/features/cms/hooks/useCmsQueries";
 
 export default function CreatePagePage() {
   const [name, setName] = useState("");
   const [slugIds, setSlugIds] = useState<string[]>([]);
-  const [slugs, setSlugs] = useState<Slug[]>([]);
   const router = useRouter();
+  const slugsQuery = useCmsSlugs();
+  const createPage = useCreatePage();
 
-  useEffect(() => {
-    void fetchSlugs().then(setSlugs);
-  }, []);
+  const slugs = slugsQuery.data ?? [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await createPage({ name, slugIds });
+    await createPage.mutateAsync({ name, slugIds });
     router.push("/admin/cms/pages");
   };
 

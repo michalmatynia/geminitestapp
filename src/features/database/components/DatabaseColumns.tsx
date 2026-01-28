@@ -3,10 +3,7 @@
 import { Button } from "@/shared/ui";
 import type { ColumnDef, Column } from "@tanstack/react-table";
 
-import type { DatabaseInfo, DatabaseType } from "../types";
-import { deleteDatabaseBackup } from "../api";
-
-type Notify = (message: string, variant?: "success" | "error" | "info") => void;
+import type { DatabaseInfo } from "../types";
 
 // ✅ Use TanStack's Column type, and accept that the handler may be undefined.
 const renderSortableHeader = <TData, TValue>(
@@ -32,37 +29,10 @@ const renderSortableHeader = <TData, TValue>(
   );
 };
 
-async function handleDelete(
-  backupName: string,
-  onDelete: () => void,
-  notify?: Notify,
-  dbType?: DatabaseType
-) {
-  if (window.confirm(`Delete backup ${backupName}? This cannot be undone.`)) {
-    try {
-      const result = await deleteDatabaseBackup(
-        dbType ?? "postgresql",
-        backupName
-      );
-      if (result.ok) {
-        notify?.("Backup deleted successfully.", "success");
-        onDelete();
-      } else {
-        notify?.("Failed to delete backup.", "error");
-      }
-    } catch (error) {
-      console.error("Error deleting backup:", error);
-      notify?.("An error occurred during deletion.", "error");
-    }
-  }
-}
-
 export const getDatabaseColumns = (options?: {
   onPreview?: (backupName: string) => void;
   onRestoreRequest?: (backup: DatabaseInfo) => void;
-  onDelete?: () => void;
-  notify?: Notify;
-  dbType?: DatabaseType;
+  onDeleteRequest?: (backupName: string) => void;
 }): ColumnDef<DatabaseInfo>[] => [
   {
     accessorKey: "name",
@@ -122,14 +92,7 @@ export const getDatabaseColumns = (options?: {
           <Button
             variant="destructive"
             onClick={() => {
-              if (options?.onDelete) {
-                void handleDelete(
-                  backup.name,
-                  options.onDelete,
-                  options.notify,
-                  options.dbType
-                );
-              }
+              options?.onDeleteRequest?.(backup.name);
             }}
           >
             Delete

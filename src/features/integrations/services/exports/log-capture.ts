@@ -72,7 +72,7 @@ export class LogCapture {
     } else if (typeof firstArg === "object" && firstArg !== null) {
       // If first argument is an object, use it as context
       message = "Log data";
-      context = firstArg;
+      context = firstArg as Record<string, unknown>;
     } else {
       message = firstArg === null ? "null" : (typeof firstArg === "symbol" ? firstArg.toString() : String(firstArg as unknown));
     }

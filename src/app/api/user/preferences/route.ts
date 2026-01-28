@@ -97,10 +97,10 @@ async function PATCH_handler(req: NextRequest) {
       ...(parsed.productListCurrencyCode !== undefined && { productListCurrencyCode: parsed.productListCurrencyCode }),
       ...(parsed.productListPageSize !== undefined && { productListPageSize: parsed.productListPageSize }),
       ...(parsed.aiPathsActivePathId !== undefined && { aiPathsActivePathId: parsed.aiPathsActivePathId }),
-      ...(parsed.aiPathsExpandedGroups !== undefined && { aiPathsExpandedGroups: parsed.aiPathsExpandedGroups }),
+      ...(parsed.aiPathsExpandedGroups !== undefined && { aiPathsExpandedGroups: parsed.aiPathsExpandedGroups ?? [] }),
       ...(parsed.aiPathsPaletteCollapsed !== undefined && { aiPathsPaletteCollapsed: parsed.aiPathsPaletteCollapsed }),
-      ...(parsed.aiPathsPathIndex !== undefined && { aiPathsPathIndex: parsed.aiPathsPathIndex as Prisma.JsonValue }),
-      ...(parsed.aiPathsPathConfigs !== undefined && { aiPathsPathConfigs: parsed.aiPathsPathConfigs as Prisma.JsonValue }),
+      ...(parsed.aiPathsPathIndex !== undefined && { aiPathsPathIndex: (parsed.aiPathsPathIndex ?? Prisma.JsonNull) as Prisma.InputJsonValue }),
+      ...(parsed.aiPathsPathConfigs !== undefined && { aiPathsPathConfigs: (parsed.aiPathsPathConfigs ?? Prisma.JsonNull) as Prisma.InputJsonValue }),
     };
 
     if (!isDatabaseConfigured) {

@@ -13,7 +13,7 @@ import {
 } from "@/features/ai-paths/lib";
 import { formatPortLabel } from "../utils/ui-utils";
 
-type EdgePath = { id: string; path: string; label?: string };
+type EdgePath = { id: string; path: string; label?: string; arrow?: { x: number; y: number; angle: number } };
 
 type CanvasBoardProps = {
   viewportRef: React.RefObject<HTMLDivElement | null>;
@@ -123,6 +123,10 @@ export function CanvasBoard({
     }
     return visited;
   }, [nodes, edges]);
+  const edgeMetaMap = React.useMemo(
+    () => new Map(edges.map((edge) => [edge.id, edge])),
+    [edges]
+  );
 
   return (
     <div
@@ -214,6 +218,26 @@ export function CanvasBoard({
         >
           {edgePaths.map((edge) => {
             const isSelected = selectedEdgeId === edge.id;
+            const edgeMeta = edgeMetaMap.get(edge.id);
+            const isManualConnector =
+              edgeMeta?.fromPort === "aiPrompt" || edgeMeta?.toPort === "queryCallback";
+            const isActivePath =
+              !isManualConnector &&
+              edgeMeta &&
+              triggerConnected.has(edgeMeta.from) &&
+              triggerConnected.has(edgeMeta.to);
+            const edgeClass = `transition-all duration-150 ${
+              isSelected
+                ? "text-blue-400"
+                : isManualConnector
+                  ? "text-amber-400/65 group-hover:text-amber-300/80"
+                  : isActivePath
+                    ? "text-sky-400/60 group-hover:text-sky-300/80"
+                    : "text-slate-400/45 group-hover:text-blue-400/70"
+            }`;
+            const arrowSize = isSelected ? 9 : 8;
+            const arrowWidth = isSelected ? 6 : 5;
+            const arrowPath = `M 0 0 L -${arrowSize} ${arrowWidth / 2} L -${arrowSize} -${arrowWidth / 2} Z`;
             return (
               <g key={edge.id} className="group cursor-pointer">
                 <path
@@ -234,15 +258,23 @@ export function CanvasBoard({
                 />
                 <path
                   d={edge.path}
-                  className={`transition-all duration-150 ${
-                    isSelected
-                      ? "stroke-blue-400"
-                      : "stroke-slate-400/45 group-hover:stroke-blue-400/70"
-                  }`}
+                  className={edgeClass}
                   strokeWidth={isSelected ? 2.5 : 1.6}
+                  strokeDasharray={isManualConnector ? "5 4" : undefined}
+                  stroke="currentColor"
                   fill="none"
                   style={{ pointerEvents: "none" }}
                 />
+                {edge.arrow ? (
+                  <path
+                    d={arrowPath}
+                    transform={`translate(${edge.arrow.x} ${edge.arrow.y}) rotate(${edge.arrow.angle})`}
+                    className={edgeClass}
+                    fill="currentColor"
+                    stroke="none"
+                    style={{ pointerEvents: "none" }}
+                  />
+                ) : null}
               </g>
             );
           })}

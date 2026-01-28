@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, ListPanel, SectionHeader, SectionPanel, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, useToast, Textarea, Checkbox } from "@/shared/ui";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 
 
@@ -23,27 +23,25 @@ import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json
 import { DEFAULT_AUTH_SECURITY_POLICY } from "@/features/auth/utils/auth-security";
 import type { AuthUserSummary } from "@/features/auth/types";
 
-
 import {
-  fetchAuthUserSecurity,
-  fetchAuthUsers,
-  mockSignIn,
-  updateAuthUser,
-  updateAuthUserSecurity,
-} from "@/features/auth/api/users";
-import { registerUser } from "@/features/auth/api/register";
+  useAuthUsers,
+  useAuthUserSecurity,
+  useMockSignIn,
+  useRegisterUser,
+  useUpdateAuthUser,
+  useUpdateAuthUserSecurity,
+} from "@/features/auth/hooks/useAuthQueries";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
 
 const EMPTY_CREATE = { name: "", email: "", password: "", roleId: "none", verified: false };
 
 export default function AuthUsersPage() {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<AuthUserSummary[]>([]);
   const [provider, setProvider] = useState<"prisma" | "mongodb">("prisma");
   const [roles, setRoles] = useState<AuthRole[]>(DEFAULT_AUTH_ROLES);
   const [userRoles, setUserRoles] = useState<AuthUserRoleMap>({});
   const [search, setSearch] = useState("");
-  const [savingRoles, setSavingRoles] = useState(false);
   const [dirtyRoles, setDirtyRoles] = useState(false);
 
   const [editingUser, setEditingUser] = useState<AuthUserSummary | null>(null);
@@ -54,57 +52,66 @@ export default function AuthUsersPage() {
   const [editBanned, setEditBanned] = useState(false);
   const [editAllowedIps, setEditAllowedIps] = useState("");
   const [editMfaEnabled, setEditMfaEnabled] = useState(false);
-  const [loadingSecurity, setLoadingSecurity] = useState(false);
-  const [savingUser, setSavingUser] = useState(false);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState(EMPTY_CREATE);
-  const [creatingUser, setCreatingUser] = useState(false);
 
   const [mockEmail, setMockEmail] = useState("");
   const [mockPassword, setMockPassword] = useState("");
   const [mockStatus, setMockStatus] = useState<"idle" | "success" | "error">("idle");
   const [mockMessage, setMockMessage] = useState("");
-  const [mockSigningIn, setMockSigningIn] = useState(false);
   const [mockOpen, setMockOpen] = useState(false);
-
-  const loadUsers = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [usersPayload, settingsRes] = await Promise.all([
-        fetchAuthUsers(),
-        fetch("/api/settings"),
-      ]);
-      setUsers(usersPayload.users ?? []);
-      setProvider(usersPayload.provider ?? "prisma");
-
-      if (settingsRes.ok) {
-        const settings = (await settingsRes.json()) as Array<{ key: string; value: string }>;
-        const settingsMap = new Map(settings.map((item) => [item.key, item.value]));
-        const storedRoles = mergeDefaultRoles(
-          parseJsonSetting<AuthRole[]>(
-            settingsMap.get(AUTH_SETTINGS_KEYS.roles),
-            DEFAULT_AUTH_ROLES
-          )
-        );
-        const storedUserRoles = parseJsonSetting<AuthUserRoleMap>(
-          settingsMap.get(AUTH_SETTINGS_KEYS.userRoles),
-          {}
-        );
-        setRoles(storedRoles);
-        setUserRoles(storedUserRoles);
-      }
-    } catch (error) {
-      console.error("Failed to load users:", error);
-      toast("Failed to load users", { variant: "error" });
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
+  const authUsersQuery = useAuthUsers();
+  const settingsQuery = useSettingsMap();
+  const updateSetting = useUpdateSetting();
+  const updateAuthUserMutation = useUpdateAuthUser();
+  const updateAuthUserSecurityMutation = useUpdateAuthUserSecurity();
+  const registerUserMutation = useRegisterUser();
+  const mockSignInMutation = useMockSignIn();
+  const userSecurityQuery = useAuthUserSecurity(editingUser?.id);
+  const loading = authUsersQuery.isPending || settingsQuery.isPending;
+  const loadingSecurity = userSecurityQuery.isPending;
 
   useEffect(() => {
-    void loadUsers();
-  }, [loadUsers]);
+    if (!authUsersQuery.error) return;
+    console.error("Failed to load users:", authUsersQuery.error);
+    toast("Failed to load users", { variant: "error" });
+  }, [authUsersQuery.error, toast]);
+
+  useEffect(() => {
+    if (!settingsQuery.error) return;
+    console.error("Failed to load user roles:", settingsQuery.error);
+    toast("Failed to load user roles", { variant: "error" });
+  }, [settingsQuery.error, toast]);
+
+  useEffect(() => {
+    if (!userSecurityQuery.error) return;
+    console.error("Failed to load security profile:", userSecurityQuery.error);
+  }, [userSecurityQuery.error]);
+
+  useEffect(() => {
+    if (authUsersQuery.data) {
+      setUsers(authUsersQuery.data.users ?? []);
+      setProvider(authUsersQuery.data.provider ?? "prisma");
+    }
+  }, [authUsersQuery.data]);
+
+  useEffect(() => {
+    if (!settingsQuery.data) return;
+    const storedRoles = mergeDefaultRoles(
+      parseJsonSetting<AuthRole[]>(
+        settingsQuery.data.get(AUTH_SETTINGS_KEYS.roles),
+        DEFAULT_AUTH_ROLES
+      )
+    );
+    const storedUserRoles = parseJsonSetting<AuthUserRoleMap>(
+      settingsQuery.data.get(AUTH_SETTINGS_KEYS.userRoles),
+      {}
+    );
+    setRoles(storedRoles);
+    setUserRoles(storedUserRoles);
+    setDirtyRoles(false);
+  }, [settingsQuery.data]);
 
   const filteredUsers = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -133,25 +140,15 @@ export default function AuthUsersPage() {
 
   const handleSaveRoles = async () => {
     try {
-      setSavingRoles(true);
-      const res = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: AUTH_SETTINGS_KEYS.userRoles,
-          value: serializeSetting(userRoles),
-        }),
+      await updateSetting.mutateAsync({
+        key: AUTH_SETTINGS_KEYS.userRoles,
+        value: serializeSetting(userRoles),
       });
-      if (!res.ok) {
-        throw new Error("Failed to save roles");
-      }
       setDirtyRoles(false);
       toast("User roles updated", { variant: "success" });
     } catch (error) {
       console.error("Failed to save user roles:", error);
       toast("Failed to save user roles", { variant: "error" });
-    } finally {
-      setSavingRoles(false);
     }
   };
 
@@ -164,21 +161,15 @@ export default function AuthUsersPage() {
     setEditBanned(false);
     setEditAllowedIps("");
     setEditMfaEnabled(false);
-    setLoadingSecurity(true);
-    void fetchAuthUserSecurity(user.id)
-      .then((profile) => {
-        setEditDisabled(Boolean(profile.disabledAt));
-        setEditBanned(Boolean(profile.bannedAt));
-        setEditAllowedIps((profile.allowedIps ?? []).join("\n"));
-        setEditMfaEnabled(Boolean(profile.mfaEnabled));
-      })
-      .catch((error) => {
-        console.error("Failed to load security profile:", error);
-      })
-      .finally(() => {
-        setLoadingSecurity(false);
-      });
   };
+
+  useEffect(() => {
+    if (!userSecurityQuery.data || !editingUser) return;
+    setEditDisabled(Boolean(userSecurityQuery.data.disabledAt));
+    setEditBanned(Boolean(userSecurityQuery.data.bannedAt));
+    setEditAllowedIps((userSecurityQuery.data.allowedIps ?? []).join("\n"));
+    setEditMfaEnabled(Boolean(userSecurityQuery.data.mfaEnabled));
+  }, [userSecurityQuery.data, editingUser]);
 
   const handleSaveUser = async () => {
     if (!editingUser) return;
@@ -187,7 +178,6 @@ export default function AuthUsersPage() {
       return;
     }
     try {
-      setSavingUser(true);
       const payload: { name?: string; email: string; emailVerified?: boolean } = {
         email: editEmail.trim(),
       };
@@ -197,11 +187,10 @@ export default function AuthUsersPage() {
       if (editVerified !== Boolean(editingUser.emailVerified)) {
         payload.emailVerified = editVerified;
       }
-      const result = await updateAuthUser(editingUser.id, payload);
-      if (!result.ok) {
-        throw new Error("Failed to update user");
-      }
-      const updated = result.payload as AuthUserSummary;
+      const updated = (await updateAuthUserMutation.mutateAsync({
+        userId: editingUser.id,
+        input: payload,
+      }));
       const securityPayload = {
         disabled: editDisabled,
         banned: editBanned,
@@ -210,13 +199,10 @@ export default function AuthUsersPage() {
           .map((entry) => entry.trim())
           .filter(Boolean),
       };
-      const securityResult = await updateAuthUserSecurity(
-        editingUser.id,
-        securityPayload
-      );
-      if (!securityResult.ok) {
-        throw new Error("Failed to update security settings");
-      }
+      await updateAuthUserSecurityMutation.mutateAsync({
+        userId: editingUser.id,
+        input: securityPayload,
+      });
       setUsers((prev) =>
         prev.map((user) => (user.id === updated.id ? updated : user))
       );
@@ -225,20 +211,16 @@ export default function AuthUsersPage() {
     } catch (error) {
       console.error("Failed to update user:", error);
       toast("Failed to update user", { variant: "error" });
-    } finally {
-      setSavingUser(false);
     }
   };
 
   const handleDisableMfa = async () => {
     if (!editingUser) return;
     try {
-      const result = await updateAuthUserSecurity(editingUser.id, {
-        disableMfa: true,
+      await updateAuthUserSecurityMutation.mutateAsync({
+        userId: editingUser.id,
+        input: { disableMfa: true },
       });
-      if (!result.ok) {
-        throw new Error("Failed to disable MFA");
-      }
       setEditMfaEnabled(false);
       toast("MFA disabled for user", { variant: "success" });
     } catch (error) {
@@ -259,8 +241,7 @@ export default function AuthUsersPage() {
       return;
     }
     try {
-      setCreatingUser(true);
-      const res = await registerUser({
+      const res = await registerUserMutation.mutateAsync({
         email: createForm.email.trim(),
         password: createForm.password.trim(),
         name: createForm.name.trim() || undefined,
@@ -282,33 +263,32 @@ export default function AuthUsersPage() {
 
       if (createForm.roleId && createForm.roleId !== "none") {
         const nextRoles = { ...userRoles, [created.id]: createForm.roleId };
-        const rolesRes = await fetch("/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        try {
+          await updateSetting.mutateAsync({
             key: AUTH_SETTINGS_KEYS.userRoles,
             value: serializeSetting(nextRoles),
-          }),
-        });
-        if (rolesRes.ok) {
+          });
           setUserRoles(nextRoles);
           setDirtyRoles(false);
+        } catch {
+          // ignore role save errors here; user was created
         }
       }
 
       if (createForm.verified) {
-        await updateAuthUser(created.id, { emailVerified: true });
+        await updateAuthUserMutation.mutateAsync({
+          userId: created.id,
+          input: { emailVerified: true },
+        });
       }
 
       toast("User created", { variant: "success" });
       setCreateOpen(false);
       setCreateForm(EMPTY_CREATE);
-      void loadUsers();
+      void authUsersQuery.refetch();
     } catch (error) {
       console.error("Failed to create user:", error);
       toast("Failed to create user", { variant: "error" });
-    } finally {
-      setCreatingUser(false);
     }
   };
 
@@ -319,10 +299,9 @@ export default function AuthUsersPage() {
       return;
     }
     try {
-      setMockSigningIn(true);
       setMockStatus("idle");
       setMockMessage("");
-      const res = await mockSignIn({
+      const res = await mockSignInMutation.mutateAsync({
         email: mockEmail.trim(),
         password: mockPassword,
       });
@@ -341,8 +320,6 @@ export default function AuthUsersPage() {
       console.error("Mock sign-in failed:", error);
       setMockStatus("error");
       setMockMessage("Sign-in failed. Check server logs.");
-    } finally {
-      setMockSigningIn(false);
     }
   };
 
@@ -355,7 +332,14 @@ export default function AuthUsersPage() {
             description={`Manage user accounts and assign roles (provider: ${provider}).`}
             actions={
               <>
-                <Button variant="outline" onClick={() => void loadUsers()} disabled={loading}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    void authUsersQuery.refetch();
+                    void settingsQuery.refetch();
+                  }}
+                  disabled={loading}
+                >
                   Refresh
                 </Button>
                 <Button variant="outline" onClick={() => setMockOpen(true)}>
@@ -364,8 +348,11 @@ export default function AuthUsersPage() {
                 <Button variant="outline" onClick={() => setCreateOpen(true)}>
                   Create User
                 </Button>
-                <Button onClick={() => void handleSaveRoles()} disabled={!dirtyRoles || savingRoles}>
-                  {savingRoles ? "Saving..." : "Save Roles"}
+                <Button
+                  onClick={() => void handleSaveRoles()}
+                  disabled={!dirtyRoles || updateSetting.isPending}
+                >
+                  {updateSetting.isPending ? "Saving..." : "Save Roles"}
                 </Button>
               </>
             }
@@ -429,7 +416,7 @@ export default function AuthUsersPage() {
                       <Select
                         value={
                           roles.some((role) => role.id === userRoles[user.id])
-                            ? (userRoles[user.id] as string)
+                            ? userRoles[user.id]
                             : "none"
                         }
                         onValueChange={(value) => handleRoleChange(user.id, value)}
@@ -556,8 +543,13 @@ export default function AuthUsersPage() {
             <Button variant="outline" onClick={() => setEditingUser(null)}>
               Cancel
             </Button>
-            <Button onClick={() => void handleSaveUser()} disabled={savingUser}>
-              {savingUser ? "Saving..." : "Save changes"}
+            <Button
+              onClick={() => void handleSaveUser()}
+              disabled={updateAuthUserMutation.isPending || updateAuthUserSecurityMutation.isPending}
+            >
+              {updateAuthUserMutation.isPending || updateAuthUserSecurityMutation.isPending
+                ? "Saving..."
+                : "Save changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -652,8 +644,8 @@ export default function AuthUsersPage() {
             <Button variant="outline" onClick={() => setCreateOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={() => void handleCreateUser()} disabled={creatingUser}>
-              {creatingUser ? "Creating..." : "Create user"}
+            <Button onClick={() => void handleCreateUser()} disabled={registerUserMutation.isPending}>
+              {registerUserMutation.isPending ? "Creating..." : "Create user"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -707,8 +699,8 @@ export default function AuthUsersPage() {
             <Button variant="outline" onClick={() => setMockOpen(false)}>
               Close
             </Button>
-            <Button onClick={() => void handleMockSignIn()} disabled={mockSigningIn}>
-              {mockSigningIn ? "Testing..." : "Test Sign-in"}
+            <Button onClick={() => void handleMockSignIn()} disabled={mockSignInMutation.isPending}>
+              {mockSignInMutation.isPending ? "Testing..." : "Test Sign-in"}
             </Button>
           </DialogFooter>
         </DialogContent>

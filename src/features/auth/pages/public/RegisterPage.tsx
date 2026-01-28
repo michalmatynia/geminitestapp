@@ -2,49 +2,45 @@
 
 import { Button, Input, Label } from "@/shared/ui";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
 import { DEFAULT_AUTH_USER_PAGE_SETTINGS } from "@/features/auth/utils/auth-user-pages";
 import { DEFAULT_AUTH_SECURITY_POLICY } from "@/features/auth/utils/auth-security";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
-import { registerUser } from "@/features/auth/api/register";
+import { useRegisterUser } from "@/features/auth/hooks/useAuthQueries";
+import { useSettingsMap } from "@/shared/hooks/useSettings";
 
 
 
 export default function RegisterPage() {
+  const settingsQuery = useSettingsMap();
+
+  if (settingsQuery.isLoading || !settingsQuery.data) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-900 px-4">
+        <div className="text-gray-400">Loading...</div>
+      </div>
+    );
+  }
+
+  const userPages = parseJsonSetting(
+    settingsQuery.data.get(AUTH_SETTINGS_KEYS.userPages),
+    DEFAULT_AUTH_USER_PAGE_SETTINGS
+  );
+  const allowSignup = Boolean(userPages.allowSignup);
+
+  return <RegisterForm allowSignup={allowSignup} />;
+}
+
+function RegisterForm({ allowSignup }: { allowSignup: boolean }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [allowSignup, setAllowSignup] = useState(
-    DEFAULT_AUTH_USER_PAGE_SETTINGS.allowSignup
-  );
-
-  useEffect(() => {
-    let active = true;
-    const loadSettings = async () => {
-      try {
-        const res = await fetch("/api/settings", { cache: "no-store" });
-        if (!res.ok) return;
-        const settings = (await res.json()) as Array<{ key: string; value: string }>;
-        const map = new Map(settings.map((item) => [item.key, item.value]));
-        const userPages = parseJsonSetting(
-          map.get(AUTH_SETTINGS_KEYS.userPages),
-          DEFAULT_AUTH_USER_PAGE_SETTINGS
-        );
-        if (!active) return;
-        setAllowSignup(Boolean(userPages.allowSignup));
-      } catch {
-        // ignore
-      }
-    };
-    void loadSettings();
-    return () => {
-      active = false;
-    };
-  }, []);
+  
+  const registerUserMutation = useRegisterUser();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -52,7 +48,7 @@ export default function RegisterPage() {
     setError(null);
 
     try {
-      const response = await registerUser({
+      const response = await registerUserMutation.mutateAsync({
         name: name.trim() || undefined,
         email,
         password,
@@ -68,17 +64,27 @@ export default function RegisterPage() {
             ? `${payload.error}${details ? ` ${details}` : ""}`
             : "Failed to create account."
         );
-        setIsSubmitting(false);
         return;
       }
 
-      await signIn("credentials", {
-        email,
-        password,
-        callbackUrl: "/admin",
-      });
-    } catch (_err) {
-      setError("Failed to create account.");
+      try {
+        await signIn("credentials", {
+          email,
+          password,
+          callbackUrl: "/admin",
+        });
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Sign-in failed. Please try again.";
+        setError(message);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to create account.";
+      setError(message);
+    } finally {
       setIsSubmitting(false);
     }
   };

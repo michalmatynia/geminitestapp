@@ -25,6 +25,10 @@ export function SimulationNodeConfigSection({
     entityType: "product",
     entityId: "",
   };
+  const simulationEntityValue =
+    simulationConfig.entityId?.trim()
+      ? simulationConfig.entityId
+      : simulationConfig.productId ?? "";
 
   return (
     <div className="space-y-4">
@@ -60,7 +64,7 @@ export function SimulationNodeConfigSection({
         </Label>
         <Input
           className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
-          value={simulationConfig.entityId ?? simulationConfig.productId}
+          value={simulationEntityValue}
           onChange={(event) =>
             updateSelectedNodeConfig({
               simulation: {

@@ -1,7 +1,8 @@
 "use client";
 
 import { useToast, Button, Label } from "@/shared/ui";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
 
 
 
@@ -21,11 +22,26 @@ const providerOptions = [
 type ProviderValue = (typeof providerOptions)[number]["value"];
 
 export default function DatabaseSettingsPage() {
+  const settingsQuery = useSettingsMap();
+
+  if (settingsQuery.isLoading || !settingsQuery.data) {
+    return <div className="p-10 text-center text-gray-400">Loading settings...</div>;
+  }
+
+  const initialProvider: ProviderValue =
+    settingsQuery.data.get("app_db_provider") === "mongodb" ? "mongodb" : "prisma";
+
+  return <DatabaseSettingsForm initialProvider={initialProvider} />;
+}
+
+function DatabaseSettingsForm({ initialProvider }: { initialProvider: ProviderValue }) {
   const { toast } = useToast();
-  const [provider, setProvider] = useState<ProviderValue>("prisma");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [provider, setProvider] = useState<ProviderValue>(initialProvider);
   const [dirty, setDirty] = useState(false);
+  const updateSetting = useUpdateSetting();
+  const settingsQuery = useSettingsMap(); // Re-fetch or pass as prop if needed for other things, but here it seems only used for initial value. 
+  // Wait, the original code used settingsQuery.isPending in the button disabled state.
+  // We can just call useSettingsMap() again, it will use the cache.
 
   const providerDescription = useMemo(
     () =>
@@ -34,46 +50,12 @@ export default function DatabaseSettingsPage() {
     [provider]
   );
 
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        const res = await fetch("/api/settings", { cache: "no-store" });
-        if (!res.ok) throw new Error("Failed to load database settings.");
-        const data = (await res.json()) as { key: string; value: string }[];
-        if (!mounted) return;
-        const settingsMap = new Map(data.map((item) => [item.key, item.value]));
-        const value =
-          settingsMap.get("app_db_provider") === "mongodb" ? "mongodb" : "prisma";
-        setProvider(value);
-        setDirty(false);
-      } catch (error) {
-        toast(
-          error instanceof Error ? error.message : "Failed to load settings.",
-          { variant: "error" }
-        );
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-    void load();
-    return () => {
-      mounted = false;
-    };
-  }, [toast]);
-
   const saveProvider = async () => {
     try {
-      setSaving(true);
-      const res = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: "app_db_provider",
-          value: provider,
-        }),
+      await updateSetting.mutateAsync({
+        key: "app_db_provider",
+        value: provider,
       });
-      if (!res.ok) throw new Error("Failed to save database provider.");
       setDirty(false);
       toast("Database provider saved.", { variant: "success" });
     } catch (error) {
@@ -81,8 +63,6 @@ export default function DatabaseSettingsPage() {
         error instanceof Error ? error.message : "Failed to save settings.",
         { variant: "error" }
       );
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -106,10 +86,10 @@ export default function DatabaseSettingsPage() {
           <Button
             type="button"
             onClick={() => void saveProvider()}
-            disabled={loading || saving || !dirty}
+            disabled={settingsQuery.isPending || updateSetting.isPending || !dirty}
             className="inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-300"
           >
-            {saving ? "Saving..." : "Save"}
+            {updateSetting.isPending ? "Saving..." : "Save"}
           </Button>
         </div>
 
@@ -126,7 +106,7 @@ export default function DatabaseSettingsPage() {
               setProvider(value);
               setDirty(true);
             }}
-            disabled={loading}
+            disabled={settingsQuery.isPending}
           >
             {providerOptions.map((option) => (
               <option key={option.value} value={option.value}>

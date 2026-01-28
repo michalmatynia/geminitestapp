@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import type { Integration, IntegrationConnection } from "@/features/integrations/types/integrations-ui";
+import type { IntegrationWithConnections } from "@/features/integrations/types/listings";
 
 export function useIntegrations() {
   return useQuery({
@@ -33,7 +34,10 @@ export function useIntegrationConnections(integrationId?: string) {
   });
 }
 
-export function useConnectionSession(connectionId?: string) {
+export function useConnectionSession(
+  connectionId?: string,
+  options?: { enabled?: boolean }
+) {
   return useQuery({
     queryKey: ["connection-session", connectionId],
     queryFn: async () => {
@@ -45,7 +49,21 @@ export function useConnectionSession(connectionId?: string) {
       }
       return (await res.json());
     },
-    enabled: !!connectionId,
+    enabled: !!connectionId && (options?.enabled ?? true),
     staleTime: 0, // Session cookies might change frequently during testing
+  });
+}
+
+export function useIntegrationsWithConnections() {
+  return useQuery({
+    queryKey: ["integrations", "with-connections"],
+    queryFn: async () => {
+      const res = await fetch("/api/integrations/with-connections");
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to load integrations");
+      }
+      return (await res.json()) as IntegrationWithConnections[];
+    },
   });
 }

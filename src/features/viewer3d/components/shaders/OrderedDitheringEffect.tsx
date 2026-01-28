@@ -44,7 +44,7 @@ export class OrderedDitheringEffectImpl extends Effect {
     });
   }
 
-  update(
+  override update(
     _renderer: WebGLRenderer,
     inputBuffer: WebGLRenderTarget,
     deltaTime: number

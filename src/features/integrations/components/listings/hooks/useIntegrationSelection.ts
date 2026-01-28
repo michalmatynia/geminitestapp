@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { IntegrationWithConnections } from "@/features/integrations/types/listings";
 
@@ -44,67 +44,37 @@ export function useIntegrationSelection(
   const preferredConnectionId = preferredConnectionQuery.data?.connectionId ?? null;
 
   // Apply initial selection from props OR preferred connection
-  useEffect(() => {
-    if (loading || appliedInitialSelection || !integrations.length) return;
-
-    console.log('[useIntegrationSelection] Applying initial selection:', {
-      hasInitialIntegrationId: Boolean(initialIntegrationId),
-      hasInitialConnectionId: Boolean(initialConnectionId),
-      preferredConnectionId,
-      integrationsCount: integrations.length
-    });
-
+  // We do this during render to avoid useEffect warnings
+  if (!loading && !appliedInitialSelection && integrations.length > 0) {
+    setAppliedInitialSelection(true);
+    
     // If explicit initial values are provided, use them (takes precedence)
     if (initialIntegrationId) {
-      console.log('[useIntegrationSelection] Using explicit initial values');
       setSelectedIntegrationId(initialIntegrationId);
       if (initialConnectionId) {
         setSelectedConnectionId(initialConnectionId);
       }
-      setAppliedInitialSelection(true);
-      return;
     }
+  }
 
-    // Don't auto-select the integration on initial load
-    // User should manually select it, then we auto-select the connection
-    console.log('[useIntegrationSelection] Initial load complete - no auto-selection of integration');
-    setAppliedInitialSelection(true);
-  }, [integrations, loading, initialIntegrationId, initialConnectionId, preferredConnectionId, appliedInitialSelection]);
+  // Auto-select preferred connection when integration is selected
+  // Perform check and update during render
+  if (selectedIntegrationId && integrations.length > 0) {
+    const integration = integrations.find((i) => i.id === selectedIntegrationId);
+    if (integration) {
+      const connectionIds = integration.connections?.map((conn) => conn.id) ?? [];
+      const selectedIsValid =
+        Boolean(selectedConnectionId) && connectionIds.includes(selectedConnectionId);
 
-  // Auto-select preferred connection when integration is selected or preference loads
-  useEffect(() => {
-    if (!selectedIntegrationId || !integrations.length) return;
-
-    const integration = (integrations || []).find((i) => i.id === selectedIntegrationId);
-    if (!integration) return;
-
-    const connectionIds = integration.connections?.map((conn) => conn.id) ?? [];
-    const selectedIsValid =
-      Boolean(selectedConnectionId) && connectionIds.includes(selectedConnectionId);
-
-    if (selectedIsValid) return;
-
-    if (preferredConnectionId && connectionIds.includes(preferredConnectionId)) {
-      console.log(
-        "[useIntegrationSelection] ✓ Auto-selecting preferred connection:",
-        preferredConnectionId
-      );
-      setSelectedConnectionId(preferredConnectionId);
-      return;
+      if (!selectedIsValid) {
+        if (preferredConnectionId && connectionIds.includes(preferredConnectionId)) {
+          setSelectedConnectionId(preferredConnectionId);
+        } else if (selectedConnectionId) {
+          setSelectedConnectionId("");
+        }
+      }
     }
-
-    if (selectedConnectionId) {
-      console.log(
-        "[useIntegrationSelection] ✗ Clearing invalid connection selection"
-      );
-      setSelectedConnectionId("");
-    }
-  }, [
-    selectedIntegrationId,
-    preferredConnectionId,
-    integrations,
-    selectedConnectionId,
-  ]);
+  }
 
   const selectedIntegration = (integrations || []).find((i) => i.id === selectedIntegrationId);
   const isBaseComIntegration = ["baselinker", "base-com"].includes(

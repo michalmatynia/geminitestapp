@@ -2,9 +2,11 @@
 
 import { useToast, Button, SectionHeader, SectionPanel } from "@/shared/ui";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 
+import { useCreateIntegration } from "@/features/integrations/hooks/useIntegrationMutations";
+import { useIntegrations } from "@/features/integrations/hooks/useIntegrationQueries";
 
 
 
@@ -37,60 +39,40 @@ const integrations = [
 
 export default function AddIntegrationPage() {
   const router = useRouter();
-  const [integrationCounts, setIntegrationCounts] = useState<
-    Record<string, number>
-  >({});
+  const integrationsQuery = useIntegrations();
+  const createIntegrationMutation = useCreateIntegration();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!integrationsQuery.isError) return;
+    const message =
+      integrationsQuery.error instanceof Error
+        ? integrationsQuery.error.message
+        : "Failed to load integrations.";
+    toast(message, { variant: "error" });
+  }, [integrationsQuery.error, integrationsQuery.isError, toast]);
 
   const handleAdd = async (integration: (typeof integrations)[number]) => {
     try {
-      const res = await fetch("/api/integrations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: integration.name,
-          slug: integration.slug,
-        }),
+      await createIntegrationMutation.mutateAsync({
+        name: integration.name,
+        slug: integration.slug,
       });
-      if (!res.ok) {
-        const error = (await res.json()) as { error?: string; errorId?: string };
-        const message = error.error || "Failed to add integration.";
-        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-        toast(`${message}${suffix}`, { variant: "error" });
-        return;
-      }
       router.push("/admin/integrations");
     } catch (error) {
-      console.error("Failed to add integration:", error);
-      toast("Failed to add integration.", { variant: "error" });
+      const message =
+        error instanceof Error ? error.message : "Failed to add integration.";
+      toast(message, { variant: "error" });
     }
   };
 
-  useEffect(() => {
-    const fetchCounts = async () => {
-      try {
-        const res = await fetch("/api/integrations");
-        if (!res.ok) {
-          const error = (await res.json()) as { error?: string; errorId?: string };
-          const message = error.error || "Failed to load integrations.";
-          const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-          toast(`${message}${suffix}`, { variant: "error" });
-          return;
-        }
-        const data = (await res.json()) as { id: string; slug: string }[];
-        const counts = data.reduce<Record<string, number>>((acc, integration) => {
-          acc[integration.slug] = (acc[integration.slug] || 0) + 1;
-          return acc;
-        }, {});
-        setIntegrationCounts(counts);
-      } catch (error) {
-        console.error("Failed to load integrations:", error);
-        toast("Failed to load integrations.", { variant: "error" });
-      }
-    };
-
-    void fetchCounts();
-  }, [toast]);
+  const integrationCounts = useMemo(() => {
+    const data = integrationsQuery.data ?? [];
+    return data.reduce<Record<string, number>>((acc, integration) => {
+      acc[integration.slug] = (acc[integration.slug] || 0) + 1;
+      return acc;
+    }, {});
+  }, [integrationsQuery.data]);
 
   return (
     <div className="container mx-auto py-10">
@@ -149,6 +131,7 @@ export default function AddIntegrationPage() {
                 <Button
                   className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200"
                   type="button"
+                  disabled={createIntegrationMutation.isPending}
                   onClick={() => { void handleAdd(integration); }}
                 >
                   Add

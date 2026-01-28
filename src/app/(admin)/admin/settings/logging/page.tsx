@@ -1,87 +1,75 @@
 "use client";
 import { Button, useToast, Textarea, Label } from "@/shared/ui";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 
 import { CLIENT_LOGGING_KEYS } from "@/features/observability";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
+import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/useSettings";
 
 
 export default function LoggingSettingsPage() {
-  const { toast } = useToast();
-  const [clientTags, setClientTags] = useState("{}");
-  const [clientFlags, setClientFlags] = useState("{}");
-  const [dirty, setDirty] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const settingsQuery = useSettingsMap();
 
-  useEffect(() => {
-    let active = true;
-    const loadSettings = async () => {
-      try {
-        const res = await fetch("/api/settings", { cache: "no-store" });
-        if (!res.ok) return;
-        const settings = (await res.json()) as Array<{ key: string; value: string }>;
-        const map = new Map(settings.map((item) => [item.key, item.value]));
-        const tags = parseJsonSetting<Record<string, unknown> | null>(
-          map.get(CLIENT_LOGGING_KEYS.tags),
-          null
-        );
-        const flags = parseJsonSetting<Record<string, unknown> | null>(
-          map.get(CLIENT_LOGGING_KEYS.featureFlags),
-          null
-        );
-        if (!active) return;
-        setClientTags(JSON.stringify(tags ?? {}, null, 2));
-        setClientFlags(JSON.stringify(flags ?? {}, null, 2));
-        setDirty(false);
-      } catch {
-        // ignore
-      }
-    };
-    void loadSettings();
-    return () => {
-      active = false;
-    };
-  }, []);
+  if (settingsQuery.isLoading || !settingsQuery.data) {
+    return <div className="p-10 text-center text-gray-400">Loading settings...</div>;
+  }
+
+  const tags = parseJsonSetting<Record<string, unknown> | null>(
+    settingsQuery.data.get(CLIENT_LOGGING_KEYS.tags),
+    null
+  );
+  const flags = parseJsonSetting<Record<string, unknown> | null>(
+    settingsQuery.data.get(CLIENT_LOGGING_KEYS.featureFlags),
+    null
+  );
+
+  return (
+    <LoggingSettingsForm
+      initialTags={JSON.stringify(tags ?? {}, null, 2)}
+      initialFlags={JSON.stringify(flags ?? {}, null, 2)}
+    />
+  );
+}
+
+function LoggingSettingsForm({
+  initialTags,
+  initialFlags,
+}: {
+  initialTags: string;
+  initialFlags: string;
+}) {
+  const { toast } = useToast();
+  const [clientTags, setClientTags] = useState(initialTags);
+  const [clientFlags, setClientFlags] = useState(initialFlags);
+  const [dirty, setDirty] = useState(false);
+  
+  const saveSettingsMutation = useUpdateSettingsBulk();
 
   const saveSettings = async () => {
     try {
-      setSaving(true);
       const parsedTags = clientTags.trim()
         ? (JSON.parse(clientTags) as Record<string, unknown>)
         : {};
       const parsedFlags = clientFlags.trim()
         ? (JSON.parse(clientFlags) as Record<string, unknown>)
         : {};
-      const responses = await Promise.all([
-        fetch("/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            key: CLIENT_LOGGING_KEYS.tags,
-            value: serializeSetting(parsedTags),
-          }),
-        }),
-        fetch("/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            key: CLIENT_LOGGING_KEYS.featureFlags,
-            value: serializeSetting(parsedFlags),
-          }),
-        }),
+      await saveSettingsMutation.mutateAsync([
+        {
+          key: CLIENT_LOGGING_KEYS.tags,
+          value: serializeSetting(parsedTags),
+        },
+        {
+          key: CLIENT_LOGGING_KEYS.featureFlags,
+          value: serializeSetting(parsedFlags),
+        },
       ]);
-      if (responses.some((res) => !res.ok)) {
-        throw new Error("Failed to save logging settings.");
-      }
       setDirty(false);
       toast("Logging settings saved.", { variant: "success" });
     } catch (error) {
       toast(error instanceof Error ? error.message : "Failed to save settings.", {
         variant: "error",
       });
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -102,8 +90,12 @@ export default function LoggingSettingsPage() {
               Provide feature flags and tags attached to client errors.
             </p>
           </div>
-          <Button size="sm" onClick={() => void saveSettings()} disabled={!dirty || saving}>
-            {saving ? "Saving..." : "Save settings"}
+          <Button
+            size="sm"
+            onClick={() => void saveSettings()}
+            disabled={!dirty || saveSettingsMutation.isPending}
+          >
+            {saveSettingsMutation.isPending ? "Saving..." : "Save settings"}
           </Button>
         </div>
         <div className="grid gap-4 md:grid-cols-2">

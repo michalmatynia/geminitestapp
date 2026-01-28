@@ -19,6 +19,7 @@ import {
   type AuthRole,
 } from "@/features/auth/utils/auth-management";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
+import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/useSettings";
 
 const slugify = (value: string) =>
   value
@@ -29,49 +30,59 @@ const slugify = (value: string) =>
 
 export default function AuthPermissionsPage() {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const settingsQuery = useSettingsMap();
+
+  useEffect(() => {
+    if (!settingsQuery.error) return;
+    console.error("Failed to load permissions settings:", settingsQuery.error);
+    toast("Failed to load permission settings", { variant: "error" });
+  }, [settingsQuery.error, toast]);
+
+  if (settingsQuery.isPending || !settingsQuery.data) {
+    return (
+      <SectionPanel className="p-6 text-sm text-gray-400">
+        Loading permission settings...
+      </SectionPanel>
+    );
+  }
+
+  const initialPermissions = parseJsonSetting<AuthPermission[]>(
+    settingsQuery.data.get(AUTH_SETTINGS_KEYS.permissions),
+    DEFAULT_AUTH_PERMISSIONS
+  );
+  const initialRoles = mergeDefaultRoles(
+    parseJsonSetting<AuthRole[]>(
+      settingsQuery.data.get(AUTH_SETTINGS_KEYS.roles),
+      DEFAULT_AUTH_ROLES
+    )
+  );
+
+  return (
+    <AuthPermissionsForm
+      initialPermissions={initialPermissions}
+      initialRoles={initialRoles}
+    />
+  );
+}
+
+function AuthPermissionsForm({
+  initialPermissions,
+  initialRoles,
+}: {
+  initialPermissions: AuthPermission[];
+  initialRoles: AuthRole[];
+}) {
+  const { toast } = useToast();
   const [dirty, setDirty] = useState(false);
-  const [permissions, setPermissions] = useState<AuthPermission[]>(DEFAULT_AUTH_PERMISSIONS);
-  const [roles, setRoles] = useState<AuthRole[]>(DEFAULT_AUTH_ROLES);
+  const [permissions, setPermissions] = useState<AuthPermission[]>(initialPermissions);
+  const [roles, setRoles] = useState<AuthRole[]>(initialRoles);
+  const saveSettingsMutation = useUpdateSettingsBulk();
 
   const [newPermissionId, setNewPermissionId] = useState("");
   const [newPermissionName, setNewPermissionName] = useState("");
   const [newPermissionDescription, setNewPermissionDescription] = useState("");
   const [newRoleName, setNewRoleName] = useState("");
   const [newRoleDescription, setNewRoleDescription] = useState("");
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch("/api/settings");
-        if (!res.ok) {
-          throw new Error("Failed to load settings");
-        }
-        const settings = (await res.json()) as Array<{ key: string; value: string }>;
-        const map = new Map(settings.map((item) => [item.key, item.value]));
-        const storedPermissions = parseJsonSetting<AuthPermission[]>(
-          map.get(AUTH_SETTINGS_KEYS.permissions),
-          DEFAULT_AUTH_PERMISSIONS
-        );
-        const storedRoles = mergeDefaultRoles(
-          parseJsonSetting<AuthRole[]>(
-            map.get(AUTH_SETTINGS_KEYS.roles),
-            DEFAULT_AUTH_ROLES
-          )
-        );
-        setPermissions(storedPermissions);
-        setRoles(storedRoles);
-      } catch (error) {
-        console.error("Failed to load permissions settings:", error);
-        toast("Failed to load permission settings", { variant: "error" });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void load();
-  }, [toast]);
 
   const permissionIds = useMemo(
     () => new Set(permissions.map((permission) => permission.id)),
@@ -187,36 +198,21 @@ export default function AuthPermissionsPage() {
 
   const handleSave = async () => {
     try {
-      setSaving(true);
-      const payloads = [
-        fetch("/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            key: AUTH_SETTINGS_KEYS.permissions,
-            value: serializeSetting(permissions),
-          }),
-        }),
-        fetch("/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            key: AUTH_SETTINGS_KEYS.roles,
-            value: serializeSetting(roles),
-          }),
-        }),
-      ];
-      const responses = await Promise.all(payloads);
-      if (responses.some((res) => !res.ok)) {
-        throw new Error("Failed to save permission settings");
-      }
+      await saveSettingsMutation.mutateAsync([
+        {
+          key: AUTH_SETTINGS_KEYS.permissions,
+          value: serializeSetting(permissions),
+        },
+        {
+          key: AUTH_SETTINGS_KEYS.roles,
+          value: serializeSetting(roles),
+        },
+      ]);
       setDirty(false);
       toast("Permission settings saved", { variant: "success" });
     } catch (error) {
       console.error("Failed to save permission settings:", error);
       toast("Failed to save permission settings", { variant: "error" });
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -225,14 +221,6 @@ export default function AuthPermissionsPage() {
     setRoles(DEFAULT_AUTH_ROLES);
     setDirty(true);
   };
-
-  if (loading) {
-    return (
-      <SectionPanel className="p-6 text-sm text-gray-400">
-        Loading permission settings...
-      </SectionPanel>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -438,8 +426,11 @@ export default function AuthPermissionsPage() {
         <Button variant="outline" onClick={handleReset}>
           Reset defaults
         </Button>
-        <Button onClick={() => void handleSave()} disabled={!dirty || saving}>
-          {saving ? "Saving..." : "Save permissions"}
+        <Button
+          onClick={() => void handleSave()}
+          disabled={!dirty || saveSettingsMutation.isPending}
+        >
+          {saveSettingsMutation.isPending ? "Saving..." : "Save permissions"}
         </Button>
       </div>
     </div>

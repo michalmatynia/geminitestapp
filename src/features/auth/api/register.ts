@@ -15,8 +15,8 @@ const safeJson = async <T>(res: Response): Promise<T> => {
 export const registerUser = async (input: {
   email: string;
   password: string;
-  name?: string;
-  emailVerified?: boolean;
+  name?: string | undefined;
+  emailVerified?: boolean | undefined;
 }) => {
   const res = await fetch("/api/auth/register", {
     method: "POST",

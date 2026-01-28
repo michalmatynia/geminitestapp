@@ -3,6 +3,7 @@
 import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Label, ListPanel, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 
 
@@ -37,128 +38,141 @@ const formatDateParam = (value: string, endOfDay = false) => {
 export default function SystemLogsPage() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
-  const [logs, setLogs] = useState<SystemLogRecord[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [metrics, setMetrics] = useState<SystemLogMetrics | null>(null);
-  const [metricsLoading, setMetricsLoading] = useState(true);
-  const [level, setLevel] = useState<SystemLogLevel | "all">("all");
-  const [query, setQuery] = useState("");
-  const [source, setSource] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const queryClient = useQueryClient();
+
+  const [level, setLevel] = useState<SystemLogLevel | "all">(() => {
+    const p = searchParams?.get("level");
+    if (p && levelOptions.some((option) => option.value === p)) {
+      return p as SystemLogLevel | "all";
+    }
+    return "all";
+  });
+
+  const [query, setQuery] = useState(() => searchParams?.get("query") ?? "");
+  const [source, setSource] = useState(() => searchParams?.get("source") ?? "");
+  
+  const [fromDate, setFromDate] = useState(() => {
+    const p = searchParams?.get("from");
+    if (!p) return "";
+    const date = new Date(p);
+    return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
+  });
+
+  const [toDate, setToDate] = useState(() => {
+    const p = searchParams?.get("to");
+    if (!p) return "";
+    const date = new Date(p);
+    return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
+  });
+
   const [page, setPage] = useState(1);
   const pageSize = 50;
 
+  // Reset page when filters change
   useEffect(() => {
-    if (!searchParams) return;
-    const levelParam = searchParams.get("level");
-    const sourceParam = searchParams.get("source");
-    const queryParam = searchParams.get("query");
-    const fromParam = searchParams.get("from");
-    const toParam = searchParams.get("to");
-    if (levelParam) {
-      const isValidLevel = levelOptions.some((option) => option.value === levelParam);
-      if (isValidLevel) setLevel(levelParam as SystemLogLevel | "all");
-    }
-    if (sourceParam !== null) setSource(sourceParam);
-    if (queryParam !== null) setQuery(queryParam);
-    if (fromParam !== null) {
-      const fromDateValue = new Date(fromParam);
-      setFromDate(
-        Number.isNaN(fromDateValue.getTime())
-          ? fromParam
-          : fromDateValue.toISOString().slice(0, 10)
-      );
-    }
-    if (toParam !== null) {
-      const toDateValue = new Date(toParam);
-      setToDate(
-        Number.isNaN(toDateValue.getTime())
-          ? toParam
-          : toDateValue.toISOString().slice(0, 10)
-      );
-    }
     setPage(1);
-  }, [searchParams]);
+  }, [level, query, source, fromDate, toDate]);
 
-  const totalPages = useMemo(() => {
-    return Math.max(1, Math.ceil(total / pageSize));
-  }, [total, pageSize]);
+  const buildLogParams = useCallback(() => {
+    const params = new URLSearchParams();
+    params.set("page", String(page));
+    params.set("pageSize", String(pageSize));
+    if (level !== "all") params.set("level", level);
+    if (query.trim()) params.set("query", query.trim());
+    if (source.trim()) params.set("source", source.trim());
+    const from = formatDateParam(fromDate);
+    const to = formatDateParam(toDate, true);
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
+    return params;
+  }, [level, page, pageSize, query, source, fromDate, toDate]);
 
-  const loadLogs = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      params.set("page", String(page));
-      params.set("pageSize", String(pageSize));
-      if (level !== "all") params.set("level", level);
-      if (query.trim()) params.set("query", query.trim());
-      if (source.trim()) params.set("source", source.trim());
-      const from = formatDateParam(fromDate);
-      const to = formatDateParam(toDate, true);
-      if (from) params.set("from", from);
-      if (to) params.set("to", to);
+  const buildMetricsParams = useCallback(() => {
+    const params = new URLSearchParams();
+    if (level !== "all") params.set("level", level);
+    if (query.trim()) params.set("query", query.trim());
+    if (source.trim()) params.set("source", source.trim());
+    const from = formatDateParam(fromDate);
+    const to = formatDateParam(toDate, true);
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
+    return params;
+  }, [level, query, source, fromDate, toDate]);
 
+  const logsQuery = useQuery({
+    queryKey: ["system-logs", page, pageSize, level, query, source, fromDate, toDate],
+    queryFn: async () => {
+      const params = buildLogParams();
       const res = await fetch(`/api/system/logs?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to load system logs.");
-      const data = (await res.json()) as {
+      return (await res.json()) as {
         logs?: SystemLogRecord[];
         total?: number;
         page?: number;
         pageSize?: number;
       };
-      setLogs(data.logs ?? []);
-      setTotal(data.total ?? 0);
-    } catch (error) {
-      toast(error instanceof Error ? error.message : "Failed to load system logs.", {
-        variant: "error",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [level, page, pageSize, query, source, fromDate, toDate, toast]);
+    },
+    keepPreviousData: true,
+  });
 
-  const loadMetrics = useCallback(async () => {
-    setMetricsLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (level !== "all") params.set("level", level);
-      if (query.trim()) params.set("query", query.trim());
-      if (source.trim()) params.set("source", source.trim());
-      const from = formatDateParam(fromDate);
-      const to = formatDateParam(toDate, true);
-      if (from) params.set("from", from);
-      if (to) params.set("to", to);
-
+  const metricsQuery = useQuery({
+    queryKey: ["system-log-metrics", level, query, source, fromDate, toDate],
+    queryFn: async () => {
+      const params = buildMetricsParams();
       const res = await fetch(`/api/system/logs/metrics?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to load system log metrics.");
-      const data = (await res.json()) as { metrics?: SystemLogMetrics };
-      setMetrics(data.metrics ?? null);
-    } catch (error) {
-      toast(
-        error instanceof Error ? error.message : "Failed to load system log metrics.",
-        { variant: "error" }
-      );
-    } finally {
-      setMetricsLoading(false);
-    }
-  }, [level, query, source, fromDate, toDate, toast]);
+      return (await res.json()) as { metrics?: SystemLogMetrics };
+    },
+  });
 
   useEffect(() => {
-    void loadLogs();
-    void loadMetrics();
-  }, [loadLogs, loadMetrics]);
+    if (!logsQuery.error) return;
+    toast(
+      logsQuery.error instanceof Error
+        ? logsQuery.error.message
+        : "Failed to load system logs.",
+      { variant: "error" }
+    );
+  }, [logsQuery.error, toast]);
+
+  useEffect(() => {
+    if (!metricsQuery.error) return;
+    toast(
+      metricsQuery.error instanceof Error
+        ? metricsQuery.error.message
+        : "Failed to load system log metrics.",
+      { variant: "error" }
+    );
+  }, [metricsQuery.error, toast]);
+
+  const logs = logsQuery.data?.logs ?? [];
+  const total = logsQuery.data?.total ?? 0;
+  const metrics = metricsQuery.data?.metrics ?? null;
+  const loading = logsQuery.isPending;
+  const metricsLoading = metricsQuery.isPending;
+
+  const totalPages = useMemo(() => {
+    return Math.max(1, Math.ceil(total / pageSize));
+  }, [total, pageSize]);
+
+  const clearLogsMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/system/logs", { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to clear logs.");
+      return true;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["system-logs"] });
+      void queryClient.invalidateQueries({ queryKey: ["system-log-metrics"] });
+    },
+  });
 
 
   const clearLogs = async () => {
     if (!window.confirm("Clear all system logs?")) return;
     try {
-      const res = await fetch("/api/system/logs", { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to clear logs.");
+      await clearLogsMutation.mutateAsync();
       toast("System logs cleared.", { variant: "success" });
-      await loadLogs();
-      await loadMetrics();
     } catch (error) {
       toast(error instanceof Error ? error.message : "Failed to clear logs.", {
         variant: "error",
@@ -212,8 +226,8 @@ export default function SystemLogsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    void loadLogs();
-                    void loadMetrics();
+                    void logsQuery.refetch();
+                    void metricsQuery.refetch();
                   }}
                   disabled={loading || metricsLoading}
                 >
@@ -234,10 +248,10 @@ export default function SystemLogsPage() {
                   size="sm"
                   onClick={() => void clearLogs()}
                   className="border-red-500/40 text-red-200 hover:bg-red-500/10"
-                  disabled={logs.length === 0}
+                  disabled={logs.length === 0 || clearLogsMutation.isPending}
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Clear Logs
+                  {clearLogsMutation.isPending ? "Clearing..." : "Clear Logs"}
                 </Button>
               </>
             }

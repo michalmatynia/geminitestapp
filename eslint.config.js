@@ -57,18 +57,18 @@ const layerBoundaryConfigs = [
         {
           zones: [
             {
-              target: "./src/features",
-              from: "./src/shared",
+              target: "./src/shared",
+              from: "./src/features",
               message: "Shared layer must not import from features.",
             },
             {
-              target: "./src/app",
-              from: "./src/shared",
+              target: "./src/shared",
+              from: "./src/app",
               message: "Shared layer must not import from app.",
             },
             {
-              target: "./src/app",
-              from: "./src/features",
+              target: "./src/features",
+              from: "./src/app",
               message: "Features must not import from app.",
             },
           ],

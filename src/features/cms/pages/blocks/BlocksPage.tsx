@@ -1,27 +1,20 @@
 "use client";
 
 import { Button, ListPanel, SectionHeader } from "@/shared/ui";
-import { useEffect, useState } from "react";
 import Link from "next/link";
 
 
 
-import { deleteBlock, fetchBlocks } from "@/features/cms/api/blocks";
-import type { Block } from "@/features/cms/types";
+import { useCmsBlocks, useDeleteBlock } from "@/features/cms/hooks/useCmsQueries";
 
 export default function BlocksPage() {
-  const [blocks, setBlocks] = useState<Block[]>([]);
-
-  useEffect(() => {
-    void fetchBlocks().then(setBlocks);
-  }, []);
+  const blocksQuery = useCmsBlocks();
+  const deleteBlock = useDeleteBlock();
+  const blocks = blocksQuery.data ?? [];
 
   const handleDelete = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this block?")) {
-      const result = await deleteBlock(id);
-      if (result.ok) {
-        setBlocks(blocks.filter((block) => block.id !== id));
-      }
+      await deleteBlock.mutateAsync(id);
     }
   };
 

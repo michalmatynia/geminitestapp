@@ -13,7 +13,10 @@ export function useCreateIntegration() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error("Failed to create integration");
+      if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.error || "Failed to create integration");
+      }
       return (await res.json()) as Integration;
     },
     onSuccess: () => {
@@ -45,7 +48,10 @@ export function useUpsertConnection() {
         body: JSON.stringify(payload),
       });
       
-      if (!res.ok) throw new Error("Failed to save connection");
+      if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.error || "Failed to save connection");
+      }
       return (await res.json()) as IntegrationConnection;
     },
     onSuccess: (data, variables) => {
@@ -68,7 +74,10 @@ export function useDeleteConnection() {
       const res = await fetch(`/api/integrations/connections/${connectionId}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Failed to delete connection");
+      if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.error || "Failed to delete connection");
+      }
       return (await res.json());
     },
     onSuccess: (data, variables) => {

@@ -15,6 +15,7 @@ import type {
   NodeConfig,
   RuntimeState,
   UpdaterMapping,
+  UpdaterSampleState,
 } from "@/features/ai-paths/lib";
 import { formatPortLabel } from "@/features/ai-paths/utils/ui-utils";
 import { TEMPLATE_SNIPPETS } from "@/features/ai-paths/config/query-presets";
@@ -35,6 +36,15 @@ type DatabaseConstructorTabProps = {
   queryConfig: DbQueryConfig;
   operation: DatabaseOperation;
   queryTemplateValue: string;
+  queryTemplateRef?: React.RefObject<HTMLTextAreaElement | null>;
+  sampleState: UpdaterSampleState;
+  parsedSampleError?: string;
+  updaterSampleLoading: boolean;
+  selectedNodeId: string;
+  setUpdaterSamples: React.Dispatch<
+    React.SetStateAction<Record<string, UpdaterSampleState>>
+  >;
+  onFetchUpdaterSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
   updateQueryConfig: (patch: Partial<DbQueryConfig>) => void;
   connectedPlaceholders: string[];
@@ -45,8 +55,8 @@ type DatabaseConstructorTabProps = {
   edges: Edge[];
   selectedNode: AiNode;
   runtimeState: RuntimeState;
-  onSendToAi?: (databaseNodeId: string, prompt: string) => Promise<void>;
-  sendingToAi?: boolean;
+  onSendToAi?: ((databaseNodeId: string, prompt: string) => Promise<void>) | undefined;
+  sendingToAi?: boolean | undefined;
   mapInputsToTargets: () => void;
   bundleKeys: Set<string>;
   toast: (message: string, options?: { variant?: "success" | "error" }) => void;
@@ -74,6 +84,13 @@ export function DatabaseConstructorTab({
   queryConfig,
   operation,
   queryTemplateValue,
+  queryTemplateRef,
+  sampleState,
+  parsedSampleError,
+  updaterSampleLoading,
+  selectedNodeId,
+  setUpdaterSamples,
+  onFetchUpdaterSample,
   updateSelectedNodeConfig,
   updateQueryConfig,
   connectedPlaceholders,
@@ -97,6 +114,53 @@ export function DatabaseConstructorTab({
   availablePorts,
   uniqueTargetPathOptions,
 }: DatabaseConstructorTabProps) {
+  const applyQueryTemplateUpdate = (nextQuery: string) => {
+    const currentPresetId = databaseConfig.presetId ?? "custom";
+    const currentAiQueryId = selectedAiQueryId;
+
+    if (currentPresetId !== "custom" || currentAiQueryId) {
+      setSelectedAiQueryId("");
+      updateSelectedNodeConfig({
+        database: {
+          ...databaseConfig,
+          presetId: "custom",
+          query: {
+            ...queryConfig,
+            mode: "custom",
+            queryTemplate: nextQuery,
+          },
+        },
+      });
+    } else {
+      updateQueryConfig({
+        mode: "custom",
+        queryTemplate: nextQuery,
+      });
+    }
+  };
+
+  const insertQueryPlaceholder = (placeholder: string) => {
+    const currentTemplate = queryTemplateValue ?? "";
+    const textArea = queryTemplateRef?.current;
+    const selectionStart =
+      typeof textArea?.selectionStart === "number" ? textArea.selectionStart : currentTemplate.length;
+    const selectionEnd =
+      typeof textArea?.selectionEnd === "number" ? textArea.selectionEnd : currentTemplate.length;
+    const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentTemplate.length));
+    const rangeEnd = Math.max(rangeStart, Math.min(Math.max(selectionStart, selectionEnd), currentTemplate.length));
+    const nextQuery = `${currentTemplate.slice(0, rangeStart)}${placeholder}${currentTemplate.slice(rangeEnd)}`;
+
+    applyQueryTemplateUpdate(nextQuery);
+
+    window.setTimeout(() => {
+      const node = queryTemplateRef?.current;
+      if (!node) return;
+      const cursorPosition = rangeStart + placeholder.length;
+      node.focus();
+      node.setSelectionRange(cursorPosition, cursorPosition);
+    }, 0);
+  };
+
   const pendingAiQuerySection = pendingAiQuery ? (
     <div className="rounded-md border border-purple-500/40 bg-purple-500/10 p-3">
       <div className="flex items-center justify-between">
@@ -164,7 +228,7 @@ export function DatabaseConstructorTab({
             className="h-7 rounded-md border border-blue-700 bg-blue-500/10 px-2 text-[10px] text-blue-200 hover:bg-blue-500/20"
             onClick={openSaveQueryPresetModal}
           >
-            Save Preset
+            Save As Preset
           </Button>
           <Select
             value={databaseConfig.presetId ?? "custom"}
@@ -229,30 +293,8 @@ export function DatabaseConstructorTab({
                   key={chip}
                   type="button"
                   className="rounded-md border border-emerald-700/50 bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-300 hover:bg-emerald-500/20"
-                  onClick={() => {
-                    const currentPresetId = databaseConfig.presetId ?? "custom";
-                    const currentAiQueryId = selectedAiQueryId;
-
-                    if (currentPresetId !== "custom" || currentAiQueryId) {
-                      setSelectedAiQueryId("");
-                      updateSelectedNodeConfig({
-                        database: {
-                          ...databaseConfig,
-                          presetId: "custom",
-                          query: {
-                            ...queryConfig,
-                            mode: "custom",
-                            queryTemplate: `${queryTemplateValue}${chip}`,
-                          },
-                        },
-                      });
-                    } else {
-                      updateQueryConfig({
-                        mode: "custom",
-                        queryTemplate: `${queryTemplateValue}${chip}`,
-                      });
-                    }
-                  }}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => insertQueryPlaceholder(chip)}
                 >
                   {chip}
                 </Button>
@@ -534,6 +576,124 @@ export function DatabaseConstructorTab({
           );
         })()}
       </div>
+
+      {operation === "update" && (
+        <div className="space-y-3 rounded-md border border-border bg-card/40 p-3">
+          <Label className="text-xs text-gray-400">Sample JSON</Label>
+          <div className="grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-center">
+            <Select
+              value={sampleState.entityType}
+              onValueChange={(value) =>
+                setUpdaterSamples((prev) => ({
+                  ...prev,
+                  [selectedNodeId]: {
+                    ...sampleState,
+                    entityType: value,
+                  },
+                }))
+              }
+            >
+              <SelectTrigger className="border-border bg-card/70 text-sm text-white">
+                <SelectValue placeholder="Entity type" />
+              </SelectTrigger>
+              <SelectContent className="border-border bg-gray-900">
+                <SelectItem value="product">Product</SelectItem>
+                <SelectItem value="note">Note</SelectItem>
+                <SelectItem value="custom">Custom</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+              className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
+              value={sampleState.entityId}
+              onChange={(event) =>
+                setUpdaterSamples((prev) => ({
+                  ...prev,
+                  [selectedNodeId]: {
+                    ...sampleState,
+                    entityId: event.target.value,
+                  },
+                }))
+              }
+              placeholder="Entity ID"
+            />
+            <Button
+              type="button"
+              className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
+              disabled={updaterSampleLoading}
+              onClick={() =>
+                void onFetchUpdaterSample(
+                  selectedNodeId,
+                  sampleState.entityType,
+                  sampleState.entityId
+                )
+              }
+            >
+              {updaterSampleLoading ? "Loading..." : "Fetch sample"}
+            </Button>
+          </div>
+          <Textarea
+            className="min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+            value={sampleState.json}
+            onChange={(event) =>
+              setUpdaterSamples((prev) => ({
+                ...prev,
+                [selectedNodeId]: {
+                  ...sampleState,
+                  json: event.target.value,
+                },
+              }))
+            }
+            placeholder='{ "id": "123", "title": "Sample" }'
+          />
+          {parsedSampleError ? (
+            <p className="text-[11px] text-rose-300">{parsedSampleError}</p>
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            <Select
+              value={String(sampleState.depth)}
+              onValueChange={(value) =>
+                setUpdaterSamples((prev) => ({
+                  ...prev,
+                  [selectedNodeId]: {
+                    ...sampleState,
+                    depth: Number(value),
+                  },
+                }))
+              }
+            >
+              <SelectTrigger className="w-[150px] border-border bg-card/70 text-sm text-white">
+                <SelectValue placeholder="Depth" />
+              </SelectTrigger>
+              <SelectContent className="border-border bg-gray-900">
+                {[1, 2, 3, 4].map((depth) => (
+                  <SelectItem key={depth} value={String(depth)}>
+                    Depth {depth}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              className={`rounded-md border px-3 text-[10px] ${
+                sampleState.includeContainers
+                  ? "text-emerald-200 hover:bg-emerald-500/10"
+                  : "text-gray-300 hover:bg-muted/60"
+              }`}
+              onClick={() =>
+                setUpdaterSamples((prev) => ({
+                  ...prev,
+                  [selectedNodeId]: {
+                    ...sampleState,
+                    includeContainers: !sampleState.includeContainers,
+                  },
+                }))
+              }
+            >
+              {sampleState.includeContainers ? "Containers: On" : "Containers: Off"}
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-3 border-t border-border pt-4">
         <Label className="text-xs text-gray-400">Field Mapping</Label>

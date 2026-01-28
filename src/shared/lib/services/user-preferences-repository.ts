@@ -119,7 +119,7 @@ export async function getUserPreferences(userId: string): Promise<UserPreference
     const db = await getMongoDb();
     const doc = await db
       .collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION)
-      .findOne({ $or: [{ _id: toMongoId(userId) }, { userId }] });
+      .findOne({ $or: [{ _id: toMongoId(userId) }, { userId }] } as any);
 
     if (doc) {
       return toUserPreferences(doc);
@@ -189,7 +189,7 @@ export async function updateUserPreferences(
     const result = await db
       .collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION)
       .findOneAndUpdate(
-        { $or: [{ _id: toMongoId(userId) }, { userId }] },
+        { $or: [{ _id: toMongoId(userId) }, { userId }] } as any,
         {
           $set: {
             ...data,
@@ -198,7 +198,7 @@ export async function updateUserPreferences(
           $setOnInsert: {
             ...insertDefaults,
           },
-        },
+        } as any,
         { upsert: true, returnDocument: "after" }
       );
 
@@ -211,7 +211,7 @@ export async function updateUserPreferences(
 
     const fallbackDoc = await db
       .collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION)
-      .findOne({ $or: [{ _id: toMongoId(userId) }, { userId }] });
+      .findOne({ $or: [{ _id: toMongoId(userId) }, { userId }] } as any);
 
     if (!fallbackDoc) {
       throw operationFailedError("Failed to update preferences", undefined, {
@@ -228,7 +228,7 @@ export async function updateUserPreferences(
 
     const updated = await prisma.userPreferences.update({
       where: { userId },
-      data,
+      data: data as any,
     });
     return updated as unknown as UserPreferences;
   } catch (error) {
@@ -238,7 +238,7 @@ export async function updateUserPreferences(
       await getUserPreferences(userId);
       const updated = await prisma.userPreferences.update({
         where: { userId },
-        data,
+        data: data as any,
       });
       return updated as unknown as UserPreferences;
     }

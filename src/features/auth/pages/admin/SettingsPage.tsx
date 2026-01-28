@@ -24,8 +24,10 @@ import {
   normalizeAuthSecurityPolicy,
   type AuthSecurityPolicy,
 } from "@/features/auth/utils/auth-security";
-import { fetchAuthUserSecurity } from "@/features/auth/api/users";
+import { useAuthUserSecurity } from "@/features/auth/hooks/useAuthQueries";
 import { disableMfa, setupMfa, verifyMfa } from "@/features/auth/api/mfa";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
+import { useMutation } from "@tanstack/react-query";
 
 export default function AuthSettingsPage() {
   const { toast } = useToast();
@@ -35,8 +37,6 @@ export default function AuthSettingsPage() {
   const [securityPolicy, setSecurityPolicy] = useState<AuthSecurityPolicy>(
     DEFAULT_AUTH_SECURITY_POLICY
   );
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [defaultDirty, setDefaultDirty] = useState(false);
   const [securityDirty, setSecurityDirty] = useState(false);
   const [mfaEnabled, setMfaEnabled] = useState(false);
@@ -45,9 +45,19 @@ export default function AuthSettingsPage() {
   const [mfaToken, setMfaToken] = useState("");
   const [mfaDisableCode, setMfaDisableCode] = useState("");
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
-  const [mfaLoading, setMfaLoading] = useState(false);
-  const [mfaVerifying, setMfaVerifying] = useState(false);
-  const [mfaDisabling, setMfaDisabling] = useState(false);
+  const settingsQuery = useSettingsMap();
+  const updateDefaultRole = useUpdateSetting();
+  const updateSecurityPolicy = useUpdateSetting();
+  const mfaSetupMutation = useMutation({ mutationFn: setupMfa });
+  const mfaVerifyMutation = useMutation({ mutationFn: verifyMfa });
+  const mfaDisableMutation = useMutation({ mutationFn: disableMfa });
+  const userSecurityQuery = useAuthUserSecurity(session?.user?.id);
+
+  useEffect(() => {
+    if (!settingsQuery.error) return;
+    console.error("Failed to load auth settings:", settingsQuery.error);
+    toast("Failed to load auth settings.", { variant: "error" });
+  }, [settingsQuery.error, toast]);
 
   const roleOptions = useMemo(
     () =>
@@ -59,82 +69,43 @@ export default function AuthSettingsPage() {
   );
 
   useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        const res = await fetch("/api/settings", { cache: "no-store" });
-        if (!res.ok) throw new Error("Failed to load auth settings.");
-        const settings = (await res.json()) as Array<{ key: string; value: string }>;
-        if (!mounted) return;
-        const settingsMap = new Map(settings.map((item) => [item.key, item.value]));
-        const storedRoles = mergeDefaultRoles(
-          parseJsonSetting<AuthRole[]>(
-            settingsMap.get(AUTH_SETTINGS_KEYS.roles),
-            DEFAULT_AUTH_ROLES
-          )
-        );
-        setRoles(storedRoles);
-        const storedDefault = settingsMap.get(AUTH_SETTINGS_KEYS.defaultRole);
-        const nextDefault =
-          storedDefault && storedRoles.some((role) => role.id === storedDefault)
-            ? storedDefault
-            : storedRoles.find((role) => role.id === "viewer")?.id ??
-              storedRoles[0]?.id ??
-              "viewer";
-        setDefaultRole(nextDefault);
-        setDefaultDirty(false);
+    if (!settingsQuery.data) return;
+    const storedRoles = mergeDefaultRoles(
+      parseJsonSetting<AuthRole[]>(
+        settingsQuery.data.get(AUTH_SETTINGS_KEYS.roles),
+        DEFAULT_AUTH_ROLES
+      )
+    );
+    setRoles(storedRoles);
+    const storedDefault = settingsQuery.data.get(AUTH_SETTINGS_KEYS.defaultRole);
+    const nextDefault =
+      storedDefault && storedRoles.some((role) => role.id === storedDefault)
+        ? storedDefault
+        : storedRoles.find((role) => role.id === "viewer")?.id ??
+          storedRoles[0]?.id ??
+          "viewer";
+    setDefaultRole(nextDefault);
+    setDefaultDirty(false);
 
-        const storedPolicyRaw = settingsMap.get(AUTH_SETTINGS_KEYS.securityPolicy);
-        const parsedPolicy = storedPolicyRaw
-          ? normalizeAuthSecurityPolicy(parseJsonSetting(storedPolicyRaw, DEFAULT_AUTH_SECURITY_POLICY))
-          : DEFAULT_AUTH_SECURITY_POLICY;
-        setSecurityPolicy(parsedPolicy);
-        setSecurityDirty(false);
-      } catch (error) {
-        toast(
-          error instanceof Error ? error.message : "Failed to load auth settings.",
-          { variant: "error" }
-        );
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-    void load();
-    return () => {
-      mounted = false;
-    };
-  }, [toast]);
+    const storedPolicyRaw = settingsQuery.data.get(AUTH_SETTINGS_KEYS.securityPolicy);
+    const parsedPolicy = storedPolicyRaw
+      ? normalizeAuthSecurityPolicy(parseJsonSetting(storedPolicyRaw, DEFAULT_AUTH_SECURITY_POLICY))
+      : DEFAULT_AUTH_SECURITY_POLICY;
+    setSecurityPolicy(parsedPolicy);
+    setSecurityDirty(false);
+  }, [settingsQuery.data]);
 
   useEffect(() => {
-    if (!session?.user?.id) return;
-    let active = true;
-    const loadSecurity = async () => {
-      try {
-        const data = await fetchAuthUserSecurity(session.user.id);
-        if (!active) return;
-        setMfaEnabled(Boolean(data.mfaEnabled));
-      } catch {
-        // ignore
-      }
-    };
-    void loadSecurity();
-    return () => {
-      active = false;
-    };
-  }, [session?.user?.id]);
+    if (!userSecurityQuery.data) return;
+    setMfaEnabled(Boolean(userSecurityQuery.data.mfaEnabled));
+  }, [userSecurityQuery.data]);
 
   const saveDefaultRole = async () => {
     try {
-      setSaving(true);
-      const res = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: AUTH_SETTINGS_KEYS.defaultRole,
-          value: defaultRole,
-        }),
+      await updateDefaultRole.mutateAsync({
+        key: AUTH_SETTINGS_KEYS.defaultRole,
+        value: defaultRole,
       });
-      if (!res.ok) throw new Error("Failed to save default role.");
       setDefaultDirty(false);
       toast("Default role saved.", { variant: "success" });
     } catch (error) {
@@ -142,23 +113,15 @@ export default function AuthSettingsPage() {
         error instanceof Error ? error.message : "Failed to save settings.",
         { variant: "error" }
       );
-    } finally {
-      setSaving(false);
     }
   };
 
   const saveSecurityPolicy = async () => {
     try {
-      setSaving(true);
-      const res = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: AUTH_SETTINGS_KEYS.securityPolicy,
-          value: JSON.stringify(securityPolicy),
-        }),
+      await updateSecurityPolicy.mutateAsync({
+        key: AUTH_SETTINGS_KEYS.securityPolicy,
+        value: JSON.stringify(securityPolicy),
       });
-      if (!res.ok) throw new Error("Failed to save security policy.");
       setSecurityDirty(false);
       toast("Security policy saved.", { variant: "success" });
     } catch (error) {
@@ -166,21 +129,16 @@ export default function AuthSettingsPage() {
         error instanceof Error ? error.message : "Failed to save security policy.",
         { variant: "error" }
       );
-    } finally {
-      setSaving(false);
     }
   };
 
   const handleMfaSetup = async () => {
     try {
-      setMfaLoading(true);
       setMfaSecret(null);
       setMfaOtpAuth(null);
       setRecoveryCodes([]);
-      const res = await setupMfa();
-      if (!res.ok) {
-        throw new Error("Failed to start MFA setup.");
-      }
+      const res = await mfaSetupMutation.mutateAsync();
+      if (!res.ok) throw new Error("Failed to start MFA setup.");
       const payload = res.payload as { secret?: string; otpauthUrl?: string };
       setMfaSecret(payload.secret ?? null);
       setMfaOtpAuth(payload.otpauthUrl ?? null);
@@ -192,8 +150,6 @@ export default function AuthSettingsPage() {
         error instanceof Error ? error.message : "Failed to start MFA setup.",
         { variant: "error" }
       );
-    } finally {
-      setMfaLoading(false);
     }
   };
 
@@ -203,8 +159,7 @@ export default function AuthSettingsPage() {
       return;
     }
     try {
-      setMfaVerifying(true);
-      const res = await verifyMfa(mfaToken.trim());
+      const res = await mfaVerifyMutation.mutateAsync(mfaToken.trim());
       const payload = res.payload as {
         recoveryCodes?: string[];
         error?: string;
@@ -220,8 +175,6 @@ export default function AuthSettingsPage() {
       toast(error instanceof Error ? error.message : "Failed to verify MFA.", {
         variant: "error",
       });
-    } finally {
-      setMfaVerifying(false);
     }
   };
 
@@ -231,8 +184,7 @@ export default function AuthSettingsPage() {
       return;
     }
     try {
-      setMfaDisabling(true);
-      const res = await disableMfa({
+      const res = await mfaDisableMutation.mutateAsync({
         token: mfaDisableCode.trim(),
         recoveryCode: mfaDisableCode.trim(),
       });
@@ -250,8 +202,6 @@ export default function AuthSettingsPage() {
       toast(error instanceof Error ? error.message : "Failed to disable MFA.", {
         variant: "error",
       });
-    } finally {
-      setMfaDisabling(false);
     }
   };
 
@@ -275,7 +225,7 @@ export default function AuthSettingsPage() {
               setDefaultRole(value);
               setDefaultDirty(true);
             }}
-            disabled={loading}
+            disabled={settingsQuery.isPending}
           >
             <SelectTrigger className="w-64 bg-gray-900 border text-white">
               <SelectValue placeholder="Select default role" />
@@ -288,8 +238,11 @@ export default function AuthSettingsPage() {
               ))}
             </SelectContent>
           </Select>
-          <Button onClick={() => void saveDefaultRole()} disabled={!defaultDirty || saving}>
-            {saving ? "Saving..." : "Save"}
+          <Button
+            onClick={() => void saveDefaultRole()}
+            disabled={!defaultDirty || updateDefaultRole.isPending}
+          >
+            {updateDefaultRole.isPending ? "Saving..." : "Save"}
           </Button>
         </div>
       </div>
@@ -468,8 +421,11 @@ export default function AuthSettingsPage() {
           </div>
         </div>
         <div className="flex justify-end">
-          <Button onClick={() => void saveSecurityPolicy()} disabled={!securityDirty || saving}>
-            {saving ? "Saving..." : "Save security policy"}
+          <Button
+            onClick={() => void saveSecurityPolicy()}
+            disabled={!securityDirty || updateSecurityPolicy.isPending}
+          >
+            {updateSecurityPolicy.isPending ? "Saving..." : "Save security policy"}
           </Button>
         </div>
       </div>
@@ -486,8 +442,8 @@ export default function AuthSettingsPage() {
         </div>
         {!mfaEnabled ? (
           <div className="space-y-3">
-            <Button onClick={() => void handleMfaSetup()} disabled={mfaLoading}>
-              {mfaLoading ? "Starting..." : "Start MFA setup"}
+            <Button onClick={() => void handleMfaSetup()} disabled={mfaSetupMutation.isPending}>
+              {mfaSetupMutation.isPending ? "Starting..." : "Start MFA setup"}
             </Button>
             {mfaSecret ? (
               <div className="rounded-md border border-border bg-card/40 p-3 text-xs text-gray-300 space-y-2">
@@ -504,8 +460,8 @@ export default function AuthSettingsPage() {
                   className="bg-gray-900 border text-white"
                   placeholder="123456"
                 />
-                <Button onClick={() => void handleMfaVerify()} disabled={mfaVerifying}>
-                  {mfaVerifying ? "Verifying..." : "Verify & enable"}
+                <Button onClick={() => void handleMfaVerify()} disabled={mfaVerifyMutation.isPending}>
+                  {mfaVerifyMutation.isPending ? "Verifying..." : "Verify & enable"}
                 </Button>
               </div>
             ) : null}
@@ -529,8 +485,12 @@ export default function AuthSettingsPage() {
               className="bg-gray-900 border text-white"
               placeholder="MFA code or recovery code"
             />
-            <Button variant="outline" onClick={() => void handleMfaDisable()} disabled={mfaDisabling}>
-              {mfaDisabling ? "Disabling..." : "Disable MFA"}
+            <Button
+              variant="outline"
+              onClick={() => void handleMfaDisable()}
+              disabled={mfaDisableMutation.isPending}
+            >
+              {mfaDisableMutation.isPending ? "Disabling..." : "Disable MFA"}
             </Button>
           </div>
         )}

@@ -1,67 +1,44 @@
 "use client";
 
 import { useToast, SectionHeader, SectionPanel } from "@/shared/ui";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import { MarketplaceSelector } from "@/features/integrations/components/marketplaces/category-mapper/MarketplaceSelector";
 import { BaseCategoryMapper } from "@/features/integrations/components/marketplaces/category-mapper/BaseCategoryMapper";
-
-
-type Integration = {
-  id: string;
-  name: string;
-  slug: string;
-};
-
-type Connection = {
-  id: string;
-  integrationId: string;
-  name: string;
-};
-
-type IntegrationWithConnections = Integration & {
-  connections: Connection[];
-};
+import { useIntegrationsWithConnections } from "@/features/integrations/hooks/useIntegrationQueries";
+import type { IntegrationWithConnections } from "@/features/integrations/types/listings";
 
 export default function CategoryMapperPage() {
-  const [integrations, setIntegrations] = useState<IntegrationWithConnections[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
   const { toast } = useToast();
-
-  const fetchIntegrations = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/integrations/with-connections");
-      if (!res.ok) {
-        throw new Error("Failed to fetch integrations");
-      }
-      const data = (await res.json()) as IntegrationWithConnections[];
-
-      // Filter to only show marketplace integrations that support category mapping
-      const marketplaceIntegrations = data.filter(
-        (i) => i.slug.toLowerCase() === "baselinker" || i.slug.toLowerCase() === "base"
-      );
-      setIntegrations(marketplaceIntegrations);
-
-      // Auto-select first connection if available
-      const firstConnection = marketplaceIntegrations
-        .flatMap((i) => i.connections)
-        .find((c) => c);
-      if (firstConnection && !selectedConnectionId) {
-        setSelectedConnectionId(firstConnection.id);
-      }
-    } catch (error) {
-      console.error("Failed to fetch integrations:", error);
-      toast("Failed to load integrations", { variant: "error" });
-    } finally {
-      setLoading(false);
-    }
-  }, [toast, selectedConnectionId]);
+  const integrationsQuery = useIntegrationsWithConnections();
 
   useEffect(() => {
-    void fetchIntegrations();
-  }, [fetchIntegrations]);
+    if (!integrationsQuery.isError) return;
+    const message =
+      integrationsQuery.error instanceof Error
+        ? integrationsQuery.error.message
+        : "Failed to load integrations.";
+    toast(message, { variant: "error" });
+  }, [integrationsQuery.error, integrationsQuery.isError, toast]);
+
+  const integrations = useMemo<IntegrationWithConnections[]>(() => {
+    const data = integrationsQuery.data ?? [];
+    return data.filter(
+      (i) => i.slug.toLowerCase() === "baselinker" || i.slug.toLowerCase() === "base"
+    );
+  }, [integrationsQuery.data]);
+
+  // Auto-select first connection if none selected
+  // Done during render to avoid useEffect state sync warnings
+  if (!selectedConnectionId && integrations.length > 0) {
+    const firstConnection = integrations
+      .flatMap((i) => i.connections)
+      .find((c) => c);
+    if (firstConnection) {
+      setSelectedConnectionId(firstConnection.id);
+    }
+  }
 
   const selectedConnection = useMemo(() => {
     if (!selectedConnectionId) return null;
@@ -94,7 +71,7 @@ export default function CategoryMapperPage() {
           <SectionPanel className="p-4">
             <MarketplaceSelector
               integrations={integrations}
-              loading={loading}
+              loading={integrationsQuery.isLoading}
               selectedConnectionId={selectedConnectionId}
               onSelectConnection={setSelectedConnectionId}
             />

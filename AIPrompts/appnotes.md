@@ -1,10 +1,26 @@
 
 
-My AI Paths node modals don't have a close button like the one in Edit / Create Product modal, it is supposed to be a unified UI design.
+* In Database Query Node, when I run Query with placeholders, it doesn't actually resolve the placeholders.
 
-Baselinker Account is not selected automatically when Exporting Products
+* My field mapping In my Node Database Query, as soon as the parameter mapping is done, the mapped parameterd should become instantly available as a placeholder.
 
-AI teaching embeddings feature
+And in AI reply, little arrows that automatically detecs ``` code snippets and let me cycle through them, cycling highligts  code snippets, If I accept with highlighted code snippet, only the targater code snippet is added to a query, not the whole text around it.   
+
+remove "ID Field
+entityId
+The selected input will be used as the entity ID to delete." from Delete section in Database Query Node
+
+When I select a preset, the query from preset doesn't show in Query textfield are
+
+For context placeholders (Context placeholders:) when I have the database schema connected that provides a context, show the placeholder as Schema: <Nameofcollection>. Placeholder {Collection: products} is actually giving Products name only and is useless when providing deeper context.
+
+* In Database Query Node, When I highlight a piece of text in my Query textfield, and then click on a placeholder, the highlighted text should be replaced by the placeholder.
+
+In Database Query Node,  In my Quick Presetes, I want the text "Save Preset" changed to "Save As Preset"
+
+In Database Query Node, I want Template Snippets to Have like a one button, which, when I click it, opens up a whole modal of snipperts that I can choose.
+
+In Database Query Node, for Provider I want only MongoDB and nothing else
 
 LATER - DTbAE Auto-map from inputs - I DONT REALLY GET IT it needs to be described in Docs, infer from sample, my targets turned into placeholders, also create a database note that Is an API that asks
 Database Query is not being auto-saved
@@ -69,7 +85,7 @@ Markdown TO Wysywig make it a dropdown and place it by Delete
 
 LATER - Analytics
 LATER - aI SHop manager
-
+LATER - AI teaching embeddings feature
 LATER - Post Production Studio -> Should have changeable options for relight etc. also an option to Generate, or add environemet. Also, each post-production work should be handled in one session, so it's easier to regenerate with an addidtional prompt (or prompt suggestions)
 
 I am unable to Open my Note, if I migrate it to Wysiwyg

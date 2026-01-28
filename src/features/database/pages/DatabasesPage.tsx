@@ -1,7 +1,8 @@
 "use client";
 
 import { DataTable, Button, useToast, Input, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useEffect, useState, useRef } from "react";
+import { useState, useRef } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 
 
@@ -17,18 +18,66 @@ import {
   fetchDatabaseBackups,
   restoreDatabaseBackup,
   uploadDatabaseBackup,
+  deleteDatabaseBackup,
 } from "../api";
 
 export default function DatabasesPage() {
   const [activeTab, setActiveTab] = useState<DatabaseType>("postgresql");
-  const [data, setData] = useState<DatabaseInfo[]>([]);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [logModalContent, setLogModalContent] = useState("");
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
   const [selectedBackupForRestore, setSelectedBackupForRestore] = useState<string | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const backupsQuery = useQuery({
+    queryKey: ["database-backups", activeTab],
+    queryFn: () => fetchDatabaseBackups(activeTab),
+  });
+  const data = backupsQuery.data ?? [];
+
+  const createBackup = useMutation({
+    mutationFn: async ({ dbType }: { dbType: DatabaseType }) => createDatabaseBackup(dbType),
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ["database-backups", variables.dbType] });
+    },
+  });
+
+  const restoreBackup = useMutation({
+    mutationFn: async ({
+      dbType,
+      backupName,
+      truncateBeforeRestore,
+    }: {
+      dbType: DatabaseType;
+      backupName: string;
+      truncateBeforeRestore: boolean;
+    }) =>
+      restoreDatabaseBackup(dbType, {
+        backupName,
+        truncateBeforeRestore,
+      }),
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ["database-backups", variables.dbType] });
+    },
+  });
+
+  const uploadBackup = useMutation({
+    mutationFn: async ({ dbType, file }: { dbType: DatabaseType; file: File }) =>
+      uploadDatabaseBackup(dbType, file),
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ["database-backups", variables.dbType] });
+    },
+  });
+
+  const deleteBackup = useMutation({
+    mutationFn: async ({ dbType, backupName }: { dbType: DatabaseType; backupName: string }) =>
+      deleteDatabaseBackup(dbType, backupName),
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ["database-backups", variables.dbType] });
+    },
+  });
 
   const openLogModal = (content: string) => {
     setLogModalContent(content);
@@ -38,12 +87,9 @@ export default function DatabasesPage() {
   const closeLogModal = () => {
     setIsLogModalOpen(false);
     setLogModalContent("");
-    setRefreshTrigger((prev) => prev + 1);
+    void queryClient.invalidateQueries({ queryKey: ["database-backups", activeTab] });
   };
 
-  useEffect(() => {
-    void fetchDatabaseBackups(activeTab).then(setData);
-  }, [refreshTrigger, activeTab]);
 
   const handleRestoreRequest = (backup: DatabaseInfo) => {
     setSelectedBackupForRestore(backup.name);
@@ -58,7 +104,8 @@ export default function DatabasesPage() {
     if (!backupName) return;
 
     try {
-      const { ok, payload } = await restoreDatabaseBackup(activeTab, {
+      const { ok, payload } = await restoreBackup.mutateAsync({
+        dbType: activeTab,
         backupName,
         truncateBeforeRestore: truncate,
       });
@@ -91,7 +138,7 @@ export default function DatabasesPage() {
 
   const handleBackup = async () => {
     try {
-      const { ok, payload } = await createDatabaseBackup(activeTab);
+      const { ok, payload } = await createBackup.mutateAsync({ dbType: activeTab });
       const log = payload.log ?? "No log available.";
       if (ok) {
         if (payload.warning) {
@@ -118,15 +165,29 @@ export default function DatabasesPage() {
     }
   };
 
+  const handleDeleteRequest = async (backupName: string) => {
+    if (!window.confirm(`Delete backup ${backupName}? This cannot be undone.`)) return;
+    try {
+      const result = await deleteBackup.mutateAsync({ dbType: activeTab, backupName });
+      if (result.ok) {
+        toast("Backup deleted successfully.", { variant: "success" });
+      } else {
+        toast("Failed to delete backup.", { variant: "error" });
+      }
+    } catch (error) {
+      console.error("Error deleting backup:", error);
+      toast("An error occurred during deletion.", { variant: "error" });
+    }
+  };
+
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     try {
-      const result = await uploadDatabaseBackup(activeTab, file);
+      const result = await uploadBackup.mutateAsync({ dbType: activeTab, file });
       if (result.ok) {
         toast("Backup uploaded successfully.", { variant: "success" });
-        setRefreshTrigger((prev) => prev + 1);
       } else {
         toast("Failed to upload backup.", { variant: "error" });
       }
@@ -232,10 +293,7 @@ export default function DatabasesPage() {
           columns={getDatabaseColumns({
             onPreview: handlePreview,
             onRestoreRequest: handleRestoreRequest,
-            onDelete: () => setRefreshTrigger((prev) => prev + 1),
-            notify: (message, variant) =>
-              toast(message, { variant: variant ?? "info" }),
-            dbType: activeTab,
+            onDeleteRequest: handleDeleteRequest,
           })}
           data={data}
           initialSorting={[{ id: "lastModifiedAt", desc: true }]}

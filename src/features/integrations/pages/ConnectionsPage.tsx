@@ -3,6 +3,7 @@
 import { useToast } from "@/shared/ui";
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 
 import {
   Integration,
@@ -22,15 +23,34 @@ import {
 import { normalizeSteps } from "@/features/integrations/utils/connections";
 import { IntegrationList } from "@/features/integrations/components/connections/IntegrationList";
 import { IntegrationModal } from "@/features/integrations/components/connections/IntegrationModal";
+import {
+  useConnectionSession,
+  useIntegrationConnections,
+  useIntegrations,
+} from "@/features/integrations/hooks/useIntegrationQueries";
+import {
+  useCreateIntegration,
+  useDeleteConnection,
+  useUpsertConnection,
+} from "@/features/integrations/hooks/useIntegrationMutations";
+
+const EMPTY_INTEGRATIONS: Integration[] = [];
+const EMPTY_CONNECTIONS: IntegrationConnection[] = [];
 
 function IntegrationsContent() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [integrations, setIntegrations] = useState<Integration[]>([]);
+  const queryClient = useQueryClient();
+  const integrationsQuery = useIntegrations();
+  const createIntegrationMutation = useCreateIntegration();
+  const upsertConnectionMutation = useUpsertConnection();
+  const deleteConnectionMutation = useDeleteConnection();
+  const integrations = integrationsQuery.data ?? EMPTY_INTEGRATIONS;
   const [activeIntegration, setActiveIntegration] =
     useState<Integration | null>(null);
-  const [connections, setConnections] = useState<IntegrationConnection[]>([]);
+  const connectionsQuery = useIntegrationConnections(activeIntegration?.id);
+  const connections = connectionsQuery.data ?? EMPTY_CONNECTIONS;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingConnectionId, setEditingConnectionId] = useState<string | null>(
     null
@@ -58,24 +78,6 @@ function IntegrationsContent() {
   );
   const [showPlaywrightSaved, setShowPlaywrightSaved] = useState(false);
   const [showSessionModal, setShowSessionModal] = useState(false);
-  const [sessionCookies, setSessionCookies] = useState< 
-    {
-      name?: string;
-      value?: string;
-      domain?: string;
-      path?: string;
-      expires?: number;
-      httpOnly?: boolean;
-      secure?: boolean;
-      sameSite?: string;
-    }[]
-  >([]);
-  const [sessionOrigins, setSessionOrigins] = useState< 
-    { origin?: string; localStorage?: { name?: string; value?: string }[] }[]
-  >([]);
-  const [sessionUpdatedAt, setSessionUpdatedAt] = useState<string | null>(null);
-  const [sessionError, setSessionError] = useState<string | null>(null);
-  const [isSessionLoading, setIsSessionLoading] = useState(false);
   const [savingAllegroSandbox, setSavingAllegroSandbox] = useState(false);
   const [baseApiMethod, setBaseApiMethod] = useState("getInventories");
   const [baseApiParams, setBaseApiParams] = useState("{}");
@@ -108,6 +110,34 @@ function IntegrationsContent() {
   const [playwrightPersonaId, setPlaywrightPersonaId] = useState<string | null>(null);
 
   const activeConnection = connections[0] || null;
+  const sessionQuery = useConnectionSession(activeConnection?.id, {
+    enabled: showSessionModal,
+  });
+  const sessionPayload = sessionQuery.data as
+    | {
+        error?: string;
+        cookies?: {
+          name?: string;
+          value?: string;
+          domain?: string;
+          path?: string;
+          expires?: number;
+          httpOnly?: boolean;
+          secure?: boolean;
+          sameSite?: string;
+        }[];
+        origins?: { origin?: string; localStorage?: { name?: string; value?: string }[] }[];
+        updatedAt?: string | null;
+      }
+    | null;
+  const sessionCookies = sessionPayload?.cookies ?? [];
+  const sessionOrigins = sessionPayload?.origins ?? [];
+  const sessionUpdatedAt = sessionPayload?.updatedAt ?? null;
+  const sessionError = sessionQuery.isError
+    ? sessionQuery.error instanceof Error
+      ? sessionQuery.error.message
+      : "Failed to load session cookies."
+    : sessionPayload?.error ?? null;
 
   useEffect(() => {
     const status = searchParams.get("allegro");
@@ -123,6 +153,30 @@ function IntegrationsContent() {
     }
     router.replace("/admin/integrations");
   }, [router, searchParams, toast]);
+
+  useEffect(() => {
+    if (!integrationsQuery.isError) return;
+    const message =
+      integrationsQuery.error instanceof Error
+        ? integrationsQuery.error.message
+        : "Failed to load integrations.";
+    toast(message, { variant: "error" });
+  }, [integrationsQuery.error, integrationsQuery.isError, toast]);
+
+  useEffect(() => {
+    if (!connectionsQuery.isError) return;
+    const message =
+      connectionsQuery.error instanceof Error
+        ? connectionsQuery.error.message
+        : "Failed to load connections.";
+    toast(message, { variant: "error" });
+  }, [connectionsQuery.error, connectionsQuery.isError, toast]);
+
+  useEffect(() => {
+    if (!activeIntegration) return;
+    if (integrations.find((item) => item.id === activeIntegration.id)) return;
+    setActiveIntegration(null);
+  }, [activeIntegration, integrations]);
 
   useEffect(() => {
     if (!showPlaywrightSaved) return;
@@ -152,50 +206,10 @@ function IntegrationsContent() {
     };
   }, [toast]);
 
-  useEffect(() => {
-    const fetchIntegrations = async () => {
-      try {
-        const res = await fetch("/api/integrations");
-        if (!res.ok) {
-          const error = (await res.json()) as {
-            error?: string;
-            errorId?: string;
-          };
-          const message = error.error || "Failed to load integrations.";
-          const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-          toast(`${message}${suffix}`, { variant: "error" });
-          return;
-        }
-        const data = (await res.json()) as Integration[];
-        setIntegrations(data);
-      } catch (error) {
-        console.error("Failed to load integrations:", error);
-        toast("Failed to load integrations.", { variant: "error" });
-      }
-    };
-
-    void fetchIntegrations();
-  }, [toast]);
-
-  const refreshConnections = async (integrationId: string) => {
-    try {
-      const res = await fetch(`/api/integrations/${integrationId}/connections`);
-      if (!res.ok) {
-        const error = (await res.json()) as {
-          error?: string;
-          errorId?: string;
-        };
-        const message = error.error || "Failed to load connections.";
-        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-        toast(`${message}${suffix}`, { variant: "error" });
-        return;
-      }
-      const data = (await res.json()) as IntegrationConnection[];
-      setConnections(data);
-    } catch (error) {
-      console.error("Failed to load connections:", error);
-      toast("Failed to load connections.", { variant: "error" });
-    }
+  const refreshConnections = (integrationId: string) => {
+    void queryClient.invalidateQueries({
+      queryKey: ["integration-connections", integrationId],
+    });
   };
 
   useEffect(() => {
@@ -282,32 +296,27 @@ function IntegrationsContent() {
   const ensureIntegration = async (
     definition: (typeof integrationDefinitions)[number]
   ) => {
-    const existing = integrations.find(
+    let currentIntegrations = integrations;
+    if (!currentIntegrations.length && integrationsQuery.isFetching) {
+      const refreshed = await integrationsQuery.refetch();
+      currentIntegrations = refreshed.data ?? integrationsQuery.data ?? [];
+    }
+    const existing = currentIntegrations.find(
       (integration) => integration.slug === definition.slug
     );
     if (existing) return existing;
     try {
-      const res = await fetch("/api/integrations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: definition.name, slug: definition.slug }),
+      const created = await createIntegrationMutation.mutateAsync({
+        name: definition.name,
+        slug: definition.slug,
       });
-      if (!res.ok) {
-        const error = (await res.json()) as {
-          error?: string;
-          errorId?: string;
-        };
-        const message = error.error || `Failed to add ${definition.name}`;
-        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-        toast(`${message}${suffix}`, { variant: "error" });
-        return null;
-      }
-      const created = (await res.json()) as Integration;
-      setIntegrations((prev) => [created, ...prev]);
       return created;
     } catch (error) {
-      console.error(`Failed to add integration ${definition.slug}:`, error);
-      toast(`Failed to add ${definition.name}.`, { variant: "error" });
+      const message =
+        error instanceof Error
+          ? error.message
+          : `Failed to add ${definition.name}.`;
+      toast(message, { variant: "error" });
       return null;
     }
   };
@@ -318,7 +327,7 @@ function IntegrationsContent() {
     const integration = await ensureIntegration(definition);
     if (!integration) return;
     setActiveIntegration(integration);
-    await refreshConnections(integration.id);
+    refreshConnections(integration.id);
     setIsModalOpen(true);
   };
 
@@ -342,32 +351,17 @@ function IntegrationsContent() {
         : {}),
     };
     try {
-      const res = await fetch(
-        editingConnectionId
-          ? `/api/integrations/connections/${editingConnectionId}`
-          : `/api/integrations/${activeIntegration.id}/connections`,
-        {
-          method: editingConnectionId ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
-      if (!res.ok) {
-        const error = (await res.json()) as {
-          error?: string;
-          errorId?: string;
-        };
-        const message = error.error || "Failed to save connection.";
-        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-        toast(`${message}${suffix}`, { variant: "error" });
-        return;
-      }
+      await upsertConnectionMutation.mutateAsync({
+        integrationId: activeIntegration.id,
+        connectionId: editingConnectionId ?? undefined,
+        payload,
+      });
       setConnectionForm({ name: "", username: "", password: "" });
       setEditingConnectionId(null);
-      await refreshConnections(activeIntegration.id);
     } catch (error) {
-      console.error("Failed to save connection:", error);
-      toast("Failed to save connection.", { variant: "error" });
+      const message =
+        error instanceof Error ? error.message : "Failed to save connection.";
+      toast(message, { variant: "error" });
     }
   };
 
@@ -397,7 +391,7 @@ function IntegrationsContent() {
         return;
       }
       toast("Allegro disconnected.", { variant: "success" });
-      await refreshConnections(activeIntegration.id);
+      refreshConnections(activeIntegration.id);
     } catch (error) {
       console.error("Failed to disconnect Allegro:", error);
       toast("Failed to disconnect Allegro.", { variant: "error" });
@@ -408,32 +402,18 @@ function IntegrationsContent() {
     const confirmed = window.confirm(`Delete connection "${connection.name}"?`);
     if (!confirmed) return;
     try {
-      const res = await fetch(
-        `/api/integrations/connections/${connection.id}`,
-        {
-          method: "DELETE",
-        }
-      );
-      if (!res.ok) {
-        const error = (await res.json()) as {
-          error?: string;
-          errorId?: string;
-        };
-        const message = error.error || "Failed to delete connection.";
-        const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : "";
-        toast(`${message}${suffix}`, { variant: "error" });
-        return;
-      }
-      if (activeIntegration) {
-        await refreshConnections(activeIntegration.id);
-      }
+      await deleteConnectionMutation.mutateAsync({
+        integrationId: connection.integrationId,
+        connectionId: connection.id,
+      });
       if (editingConnectionId === connection.id) {
         setEditingConnectionId(null);
         setConnectionForm({ name: "", username: "", password: "" });
       }
     } catch (error) {
-      console.error("Failed to delete connection:", error);
-      toast("Failed to delete connection.", { variant: "error" });
+      const message =
+        error instanceof Error ? error.message : "Failed to delete connection.";
+      toast(message, { variant: "error" });
     }
   };
 
@@ -521,7 +501,7 @@ function IntegrationsContent() {
       );
       setShowTestSuccessModal(true);
       setTestErrorMeta(null);
-      await refreshConnections(activeIntegration.id);
+      refreshConnections(activeIntegration.id);
     } catch (error) {
       const durationMs = Math.round(performance.now() - startedAt);
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -622,7 +602,7 @@ function IntegrationsContent() {
       );
       setShowTestSuccessModal(true);
       setTestErrorMeta(null);
-      await refreshConnections(activeIntegration.id);
+      refreshConnections(activeIntegration.id);
     } catch (error) {
       const durationMs = Math.round(performance.now() - startedAt);
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -714,7 +694,7 @@ function IntegrationsContent() {
       );
       setShowTestSuccessModal(true);
       setTestErrorMeta(null);
-      await refreshConnections(activeIntegration.id);
+      refreshConnections(activeIntegration.id);
     } catch (error) {
       const durationMs = Math.round(performance.now() - startedAt);
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -728,40 +708,9 @@ function IntegrationsContent() {
     }
   };
 
-  const handleOpenSessionModal = async () => {
+  const handleOpenSessionModal = () => {
     if (!activeConnection) return;
     setShowSessionModal(true);
-    setSessionError(null);
-    setIsSessionLoading(true);
-    try {
-      const res = await fetch(
-        `/api/integrations/connections/${activeConnection.id}/session`
-      );
-      const payload = (await res.json()) as {
-        error?: string;
-        cookies?: typeof sessionCookies;
-        origins?: typeof sessionOrigins;
-        updatedAt?: string | null;
-      };
-      if (!res.ok) {
-        setSessionError(payload.error || "Failed to load session cookies.");
-        setSessionCookies([]);
-        setSessionOrigins([]);
-        setSessionUpdatedAt(null);
-        return;
-      }
-      setSessionCookies(payload.cookies || []);
-      setSessionOrigins(payload.origins || []);
-      setSessionUpdatedAt(payload.updatedAt ?? null);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      setSessionError(message);
-      setSessionCookies([]);
-      setSessionOrigins([]);
-      setSessionUpdatedAt(null);
-    } finally {
-      setIsSessionLoading(false);
-    }
   };
 
   const handleSelectPlaywrightPersona = (personaId: string | null) => {
@@ -780,48 +729,41 @@ function IntegrationsContent() {
     const connection = connections[0];
     if (!connection) return;
 
-    const res = await fetch(`/api/integrations/connections/${connection.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: connection.name,
-        username: connection.username,
-        playwrightHeadless: playwrightSettings.headless,
-        playwrightSlowMo: playwrightSettings.slowMo,
-        playwrightTimeout: playwrightSettings.timeout,
-        playwrightNavigationTimeout: playwrightSettings.navigationTimeout,
-        playwrightHumanizeMouse: playwrightSettings.humanizeMouse,
-        playwrightMouseJitter: playwrightSettings.mouseJitter,
-        playwrightClickDelayMin: playwrightSettings.clickDelayMin,
-        playwrightClickDelayMax: playwrightSettings.clickDelayMax,
-        playwrightInputDelayMin: playwrightSettings.inputDelayMin,
-        playwrightInputDelayMax: playwrightSettings.inputDelayMax,
-        playwrightActionDelayMin: playwrightSettings.actionDelayMin,
-        playwrightActionDelayMax: playwrightSettings.actionDelayMax,
-        playwrightProxyEnabled: playwrightSettings.proxyEnabled,
-        playwrightProxyServer: playwrightSettings.proxyServer,
-        playwrightProxyUsername: playwrightSettings.proxyUsername,
-        playwrightProxyPassword: playwrightSettings.proxyPassword,
-        playwrightEmulateDevice: playwrightSettings.emulateDevice,
-        playwrightDeviceName: playwrightSettings.deviceName,
-      }),
-    });
-
-    if (!res.ok) {
-      const error = (await res.json()) as { error?: string };
-      toast(error.error || "Failed to save Playwright settings.", {
-        variant: "error",
+    try {
+      await upsertConnectionMutation.mutateAsync({
+        integrationId: activeIntegration?.id ?? connection.integrationId,
+        connectionId: connection.id,
+        payload: {
+          name: connection.name,
+          username: connection.username,
+          playwrightHeadless: playwrightSettings.headless,
+          playwrightSlowMo: playwrightSettings.slowMo,
+          playwrightTimeout: playwrightSettings.timeout,
+          playwrightNavigationTimeout: playwrightSettings.navigationTimeout,
+          playwrightHumanizeMouse: playwrightSettings.humanizeMouse,
+          playwrightMouseJitter: playwrightSettings.mouseJitter,
+          playwrightClickDelayMin: playwrightSettings.clickDelayMin,
+          playwrightClickDelayMax: playwrightSettings.clickDelayMax,
+          playwrightInputDelayMin: playwrightSettings.inputDelayMin,
+          playwrightInputDelayMax: playwrightSettings.inputDelayMax,
+          playwrightActionDelayMin: playwrightSettings.actionDelayMin,
+          playwrightActionDelayMax: playwrightSettings.actionDelayMax,
+          playwrightProxyEnabled: playwrightSettings.proxyEnabled,
+          playwrightProxyServer: playwrightSettings.proxyServer,
+          playwrightProxyUsername: playwrightSettings.proxyUsername,
+          playwrightProxyPassword: playwrightSettings.proxyPassword,
+          playwrightEmulateDevice: playwrightSettings.emulateDevice,
+          playwrightDeviceName: playwrightSettings.deviceName,
+        },
       });
-      return;
+      setShowPlaywrightSaved(true);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to save Playwright settings.";
+      toast(message, { variant: "error" });
     }
-
-    const updated = (await res.json()) as IntegrationConnection;
-    setConnections((prev) =>
-      prev.map((item) =>
-        item.id === updated.id ? { ...item, ...updated } : item
-      )
-    );
-    setShowPlaywrightSaved(true);
   };
 
   const handleAllegroSandboxToggle = async (value: boolean) => {
@@ -829,35 +771,21 @@ function IntegrationsContent() {
     if (savingAllegroSandbox) return;
     setSavingAllegroSandbox(true);
     try {
-      const res = await fetch(
-        `/api/integrations/connections/${activeConnection.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: activeConnection.name,
-            username: activeConnection.username,
-            allegroUseSandbox: value,
-          }),
-        }
-      );
-      const payload = (await res.json()) as IntegrationConnection & {
-        error?: string;
-      };
-      if (!res.ok) {
-        toast(payload.error || "Failed to update Allegro sandbox setting.", {
-          variant: "error",
-        });
-        return;
-      }
-      setConnections((prev) =>
-        prev.map((item) =>
-          item.id === payload.id ? { ...item, ...payload } : item
-        )
-      );
+      await upsertConnectionMutation.mutateAsync({
+        integrationId: activeIntegration?.id ?? activeConnection.integrationId,
+        connectionId: activeConnection.id,
+        payload: {
+          name: activeConnection.name,
+          username: activeConnection.username,
+          allegroUseSandbox: value,
+        },
+      });
       toast("Allegro sandbox setting updated.", { variant: "success" });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to update Allegro sandbox setting.";
       toast(message, { variant: "error" });
     } finally {
       setSavingAllegroSandbox(false);
@@ -872,35 +800,19 @@ function IntegrationsContent() {
     if (savingAllegroSandbox) return;
     setSavingAllegroSandbox(true);
     try {
-      const res = await fetch(
-        `/api/integrations/connections/${activeConnection.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: activeConnection.name,
-            username: activeConnection.username,
-            allegroUseSandbox: true,
-          }),
-        }
-      );
-      const payload = (await res.json()) as IntegrationConnection & {
-        error?: string;
-      };
-      if (!res.ok) {
-        toast(payload.error || "Failed to enable Allegro sandbox.", {
-          variant: "error",
-        });
-        return;
-      }
-      setConnections((prev) =>
-        prev.map((item) =>
-          item.id === payload.id ? { ...item, ...payload } : item
-        )
-      );
+      await upsertConnectionMutation.mutateAsync({
+        integrationId: activeIntegration.id,
+        connectionId: activeConnection.id,
+        payload: {
+          name: activeConnection.name,
+          username: activeConnection.username,
+          allegroUseSandbox: true,
+        },
+      });
       window.location.href = `/api/integrations/${activeIntegration.id}/connections/${activeConnection.id}/allegro/authorize`;
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
+      const message =
+        error instanceof Error ? error.message : "Failed to enable Allegro sandbox.";
       toast(message, { variant: "error" });
     } finally {
       setSavingAllegroSandbox(false);
@@ -1127,7 +1039,7 @@ function IntegrationsContent() {
           testSuccessMessage={testSuccessMessage}
           onCloseTestSuccessModal={() => setShowTestSuccessModal(false)}
           showSessionModal={showSessionModal}
-          sessionLoading={isSessionLoading}
+          sessionLoading={sessionQuery.isFetching}
           sessionError={sessionError}
           sessionCookies={sessionCookies}
           sessionOrigins={sessionOrigins}

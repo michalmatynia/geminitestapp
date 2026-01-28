@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Input, Label, Switch, useToast } from "@/shared/ui";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 
 
@@ -13,6 +13,7 @@ import {
   type TransientRecoverySettings,
 } from "@/shared/lib/transient-recovery/constants";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
 
 const toNumber = (value: string, fallback: number, min = 0) => {
   const parsed = Number(value);
@@ -21,77 +22,65 @@ const toNumber = (value: string, fallback: number, min = 0) => {
 };
 
 export default function TransientRecoverySettingsPage() {
-  const { toast } = useToast();
-  const [settings, setSettings] = useState<TransientRecoverySettings>(
-    DEFAULT_TRANSIENT_RECOVERY_SETTINGS
-  );
-  const [dirty, setDirty] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const settingsQuery = useSettingsMap();
 
-  useEffect(() => {
-    let active = true;
-    const loadSettings = async () => {
-      try {
-        const res = await fetch("/api/settings", { cache: "no-store" });
-        if (!res.ok) throw new Error("Failed to load settings.");
-        const data = (await res.json()) as Array<{ key: string; value: string }>;
-        const map = new Map(data.map((item) => [item.key, item.value]));
-        const stored = parseJsonSetting<TransientRecoverySettings | null>(
-          map.get(TRANSIENT_RECOVERY_KEYS.settings),
-          null
-        );
-        if (!active) return;
-        if (stored) {
-          setSettings({
-            enabled: stored.enabled ?? DEFAULT_TRANSIENT_RECOVERY_SETTINGS.enabled,
-            retry: {
-              enabled:
-                stored.retry?.enabled ?? DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.enabled,
-              maxAttempts:
-                stored.retry?.maxAttempts ??
-                DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.maxAttempts,
-              initialDelayMs:
-                stored.retry?.initialDelayMs ??
-                DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.initialDelayMs,
-              maxDelayMs:
-                stored.retry?.maxDelayMs ??
-                DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.maxDelayMs,
-              timeoutMs:
-                stored.retry?.timeoutMs === null
-                  ? 0
-                  : stored.retry?.timeoutMs ??
-                    DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.timeoutMs,
-            },
-            circuit: {
-              enabled:
-                stored.circuit?.enabled ??
-                DEFAULT_TRANSIENT_RECOVERY_SETTINGS.circuit.enabled,
-              failureThreshold:
-                stored.circuit?.failureThreshold ??
-                DEFAULT_TRANSIENT_RECOVERY_SETTINGS.circuit.failureThreshold,
-              resetTimeoutMs:
-                stored.circuit?.resetTimeoutMs ??
-                DEFAULT_TRANSIENT_RECOVERY_SETTINGS.circuit.resetTimeoutMs,
-            },
-          });
-        } else {
-          setSettings(DEFAULT_TRANSIENT_RECOVERY_SETTINGS);
-        }
-        setDirty(false);
-      } catch (error) {
-        toast(error instanceof Error ? error.message : "Failed to load settings.", {
-          variant: "error",
-        });
-      } finally {
-        if (active) setLoading(false);
+  if (settingsQuery.isLoading || !settingsQuery.data) {
+    return <div className="p-10 text-center text-gray-400">Loading settings...</div>;
+  }
+
+  const stored = parseJsonSetting<TransientRecoverySettings | null>(
+    settingsQuery.data.get(TRANSIENT_RECOVERY_KEYS.settings),
+    null
+  );
+
+  const initialSettings: TransientRecoverySettings = stored
+    ? {
+        enabled: stored.enabled ?? DEFAULT_TRANSIENT_RECOVERY_SETTINGS.enabled,
+        retry: {
+          enabled:
+            stored.retry?.enabled ?? DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.enabled,
+          maxAttempts:
+            stored.retry?.maxAttempts ??
+            DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.maxAttempts,
+          initialDelayMs:
+            stored.retry?.initialDelayMs ??
+            DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.initialDelayMs,
+          maxDelayMs:
+            stored.retry?.maxDelayMs ??
+            DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.maxDelayMs,
+          timeoutMs:
+            stored.retry?.timeoutMs === null
+              ? 0
+              : stored.retry?.timeoutMs ??
+                DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.timeoutMs,
+        },
+        circuit: {
+          enabled:
+            stored.circuit?.enabled ??
+            DEFAULT_TRANSIENT_RECOVERY_SETTINGS.circuit.enabled,
+          failureThreshold:
+            stored.circuit?.failureThreshold ??
+            DEFAULT_TRANSIENT_RECOVERY_SETTINGS.circuit.failureThreshold,
+          resetTimeoutMs:
+            stored.circuit?.resetTimeoutMs ??
+            DEFAULT_TRANSIENT_RECOVERY_SETTINGS.circuit.resetTimeoutMs,
+        },
       }
-    };
-    void loadSettings();
-    return () => {
-      active = false;
-    };
-  }, [toast]);
+    : DEFAULT_TRANSIENT_RECOVERY_SETTINGS;
+
+  return <TransientRecoverySettingsForm initialSettings={initialSettings} />;
+}
+
+function TransientRecoverySettingsForm({
+  initialSettings,
+}: {
+  initialSettings: TransientRecoverySettings;
+}) {
+  const { toast } = useToast();
+  const [settings, setSettings] = useState<TransientRecoverySettings>(initialSettings);
+  const [dirty, setDirty] = useState(false);
+  const settingsQuery = useSettingsMap();
+  const updateSetting = useUpdateSetting();
 
   const updateRetry = (key: keyof TransientRecoverySettings["retry"], value: number | boolean) => {
     setSettings((prev) => ({
@@ -120,7 +109,6 @@ export default function TransientRecoverySettingsPage() {
 
   const saveSettings = async () => {
     try {
-      setSaving(true);
       const payload: TransientRecoverySettings = {
         enabled: settings.enabled,
         retry: {
@@ -134,23 +122,16 @@ export default function TransientRecoverySettingsPage() {
           ...settings.circuit,
         },
       };
-      const res = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: TRANSIENT_RECOVERY_KEYS.settings,
-          value: serializeSetting(payload),
-        }),
+      await updateSetting.mutateAsync({
+        key: TRANSIENT_RECOVERY_KEYS.settings,
+        value: serializeSetting(payload),
       });
-      if (!res.ok) throw new Error("Failed to save settings.");
       setDirty(false);
       toast("Transient recovery settings saved.", { variant: "success" });
     } catch (error) {
       toast(error instanceof Error ? error.message : "Failed to save settings.", {
         variant: "error",
       });
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -214,7 +195,7 @@ export default function TransientRecoverySettingsPage() {
                       toNumber(event.target.value, settings.retry.maxAttempts, 1)
                     )
                   }
-                  disabled={loading}
+                  disabled={settingsQuery.isPending}
                 />
               </div>
               <div className="grid gap-1">
@@ -229,7 +210,7 @@ export default function TransientRecoverySettingsPage() {
                       toNumber(event.target.value, settings.retry.initialDelayMs)
                     )
                   }
-                  disabled={loading}
+                  disabled={settingsQuery.isPending}
                 />
               </div>
               <div className="grid gap-1">
@@ -244,7 +225,7 @@ export default function TransientRecoverySettingsPage() {
                       toNumber(event.target.value, settings.retry.maxDelayMs)
                     )
                   }
-                  disabled={loading}
+                  disabled={settingsQuery.isPending}
                 />
               </div>
               <div className="grid gap-1">
@@ -259,7 +240,7 @@ export default function TransientRecoverySettingsPage() {
                       toNumber(event.target.value, settings.retry.timeoutMs ?? 0)
                     )
                   }
-                  disabled={loading}
+                  disabled={settingsQuery.isPending}
                 />
                 <p className="text-[11px] text-gray-500">
                   Set to 0 to disable per-attempt timeout.
@@ -302,7 +283,7 @@ export default function TransientRecoverySettingsPage() {
                       )
                     )
                   }
-                  disabled={loading}
+                  disabled={settingsQuery.isPending}
                 />
               </div>
               <div className="grid gap-1">
@@ -320,7 +301,7 @@ export default function TransientRecoverySettingsPage() {
                       )
                     )
                   }
-                  disabled={loading}
+                  disabled={settingsQuery.isPending}
                 />
               </div>
             </div>
@@ -331,8 +312,12 @@ export default function TransientRecoverySettingsPage() {
           <p className="text-xs text-gray-500">
             Changes apply across the app after saving.
           </p>
-          <Button size="sm" onClick={() => void saveSettings()} disabled={!dirty || saving}>
-            {saving ? "Saving..." : "Save settings"}
+          <Button
+            size="sm"
+            onClick={() => void saveSettings()}
+            disabled={!dirty || updateSetting.isPending}
+          >
+            {updateSetting.isPending ? "Saving..." : "Save settings"}
           </Button>
         </div>
       </div>

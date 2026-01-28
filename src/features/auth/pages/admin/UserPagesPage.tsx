@@ -15,40 +15,43 @@ import {
   DEFAULT_AUTH_USER_PAGE_SETTINGS,
   type AuthUserPageSettings,
 } from "@/features/auth/utils/auth-user-pages";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
 
 export default function AuthUserPagesPage() {
   const { toast } = useToast();
-  const [settings, setSettings] = useState<AuthUserPageSettings>(
-    DEFAULT_AUTH_USER_PAGE_SETTINGS
-  );
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [dirty, setDirty] = useState(false);
+  const settingsQuery = useSettingsMap();
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch("/api/settings");
-        if (!res.ok) {
-          throw new Error("Failed to load settings");
-        }
-        const data = (await res.json()) as Array<{ key: string; value: string }>;
-        const map = new Map(data.map((item) => [item.key, item.value]));
-        const stored = parseJsonSetting<AuthUserPageSettings>(
-          map.get(AUTH_SETTINGS_KEYS.userPages),
-          DEFAULT_AUTH_USER_PAGE_SETTINGS
-        );
-        setSettings(stored);
-      } catch (error) {
-        console.error("Failed to load user page settings:", error);
-        toast("Failed to load user page settings", { variant: "error" });
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (!settingsQuery.error) return;
+    console.error("Failed to load user page settings:", settingsQuery.error);
+    toast("Failed to load user page settings", { variant: "error" });
+  }, [settingsQuery.error, toast]);
 
-    void load();
-  }, [toast]);
+  if (settingsQuery.isPending || !settingsQuery.data) {
+    return (
+      <SectionPanel className="p-6 text-sm text-gray-400">
+        Loading user page settings...
+      </SectionPanel>
+    );
+  }
+
+  const initialSettings = parseJsonSetting<AuthUserPageSettings>(
+    settingsQuery.data.get(AUTH_SETTINGS_KEYS.userPages),
+    DEFAULT_AUTH_USER_PAGE_SETTINGS
+  );
+
+  return <AuthUserPagesForm initialSettings={initialSettings} />;
+}
+
+function AuthUserPagesForm({
+  initialSettings,
+}: {
+  initialSettings: AuthUserPageSettings;
+}) {
+  const { toast } = useToast();
+  const [settings, setSettings] = useState<AuthUserPageSettings>(initialSettings);
+  const [dirty, setDirty] = useState(false);
+  const updateSetting = useUpdateSetting();
 
   const handleToggle = (key: keyof AuthUserPageSettings) => {
     setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -57,35 +60,17 @@ export default function AuthUserPagesPage() {
 
   const handleSave = async () => {
     try {
-      setSaving(true);
-      const res = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: AUTH_SETTINGS_KEYS.userPages,
-          value: serializeSetting(settings),
-        }),
+      await updateSetting.mutateAsync({
+        key: AUTH_SETTINGS_KEYS.userPages,
+        value: serializeSetting(settings),
       });
-      if (!res.ok) {
-        throw new Error("Failed to save settings");
-      }
       setDirty(false);
       toast("User page settings saved", { variant: "success" });
     } catch (error) {
       console.error("Failed to save user page settings:", error);
       toast("Failed to save user page settings", { variant: "error" });
-    } finally {
-      setSaving(false);
     }
   };
-
-  if (loading) {
-    return (
-      <SectionPanel className="p-6 text-sm text-gray-400">
-        Loading user page settings...
-      </SectionPanel>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -130,8 +115,11 @@ export default function AuthUserPagesPage() {
       </Card>
 
       <div className="flex justify-end">
-        <Button onClick={() => void handleSave()} disabled={!dirty || saving}>
-          {saving ? "Saving..." : "Save settings"}
+        <Button
+          onClick={() => void handleSave()}
+          disabled={!dirty || updateSetting.isPending}
+        >
+          {updateSetting.isPending ? "Saving..." : "Save settings"}
         </Button>
       </div>
     </div>

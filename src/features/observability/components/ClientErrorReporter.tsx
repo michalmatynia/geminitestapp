@@ -6,46 +6,33 @@ import { useSession } from "next-auth/react";
 import { initClientErrorReporting, setClientErrorBaseContext } from "@/features/observability/utils/client-error-logger";
 import { CLIENT_LOGGING_KEYS } from "@/features/observability/constants/client-logging";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
+import { useSettingsMap } from "@/shared/hooks/useSettings";
 
 export default function ClientErrorReporter() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
+  const settingsQuery = useSettingsMap();
 
   useEffect(() => {
     initClientErrorReporting();
   }, []);
 
   useEffect(() => {
-    let active = true;
-    const loadLoggingSettings = async () => {
-      try {
-        const res = await fetch("/api/settings", { cache: "no-store" });
-        if (!res.ok) return;
-        const settings = (await res.json()) as Array<{ key: string; value: string }>;
-        const map = new Map(settings.map((item) => [item.key, item.value]));
-        const featureFlags = parseJsonSetting<Record<string, unknown> | null>(
-          map.get(CLIENT_LOGGING_KEYS.featureFlags),
-          null
-        );
-        const tags = parseJsonSetting<Record<string, unknown> | null>(
-          map.get(CLIENT_LOGGING_KEYS.tags),
-          null
-        );
-        if (!active) return;
-        setClientErrorBaseContext({
-          featureFlags,
-          tags,
-        });
-      } catch {
-        // ignore
-      }
-    };
-    void loadLoggingSettings();
-    return () => {
-      active = false;
-    };
-  }, []);
+    if (!settingsQuery.data) return;
+    const featureFlags = parseJsonSetting<Record<string, unknown> | null>(
+      settingsQuery.data.get(CLIENT_LOGGING_KEYS.featureFlags),
+      null
+    );
+    const tags = parseJsonSetting<Record<string, unknown> | null>(
+      settingsQuery.data.get(CLIENT_LOGGING_KEYS.tags),
+      null
+    );
+    setClientErrorBaseContext({
+      featureFlags,
+      tags,
+    });
+  }, [settingsQuery.data]);
 
   useEffect(() => {
     const context = {

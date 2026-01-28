@@ -1,45 +1,47 @@
 "use client";
 
 import { Button, Input, Label, Switch, SectionHeader } from "@/shared/ui";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 
 
 
 
-import { fetchSlug, updateSlug } from "@/features/cms/api/slugs";
+import { useCmsSlug, useUpdateSlug } from "@/features/cms/hooks/useCmsQueries";
 import type { Slug } from "@/features/cms/types";
 
-export default function EditSlugPage() {
-  const [slug, setSlug] = useState<Slug | null>(null);
-  const router = useRouter();
+export default function EditSlugPageLoader() {
   const params = useParams();
   const id = params.id as string;
+  const slugQuery = useCmsSlug(id);
 
-  useEffect(() => {
-    if (id) {
-      void fetchSlug(id).then(setSlug);
-    }
-  }, [id]);
+  if (slugQuery.isLoading || !slugQuery.data) {
+    return <div>Loading...</div>;
+  }
+
+  return <EditSlugForm initialSlug={slugQuery.data} id={id} />;
+}
+
+function EditSlugForm({ initialSlug, id }: { initialSlug: Slug; id: string }) {
+  const [slug, setSlug] = useState<Slug>(initialSlug);
+  const router = useRouter();
+  const updateSlug = useUpdateSlug();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!slug) return;
 
-    await updateSlug(id, slug);
+    await updateSlug.mutateAsync({ id, input: slug });
     router.push("/admin/cms/slugs");
   };
 
-  if (!slug) {
-    return <div>Loading...</div>;
-  }
-
-      return (
-        <div className="container mx-auto py-10">
-          <SectionHeader title="Edit Slug" className="mb-6" />
-          <form onSubmit={(e) => { void handleSubmit(e); }}>
-            <div className="mb-4">
-              <Label htmlFor="slug">Slug</Label>          <Input
+  return (
+    <div className="container mx-auto py-10">
+      <SectionHeader title="Edit Slug" className="mb-6" />
+      <form onSubmit={(e) => { void handleSubmit(e); }}>
+        <div className="mb-4">
+          <Label htmlFor="slug">Slug</Label>
+          <Input
             id="slug"
             value={slug.slug}
             onChange={(e) => setSlug({ ...slug, slug: e.target.value })}

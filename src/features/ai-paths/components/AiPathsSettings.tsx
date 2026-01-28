@@ -787,6 +787,28 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     [selectedEdgeId]
   );
 
+  const isTypingTarget = (target: EventTarget | null) => {
+    const element = target as HTMLElement | null;
+    if (!element) return false;
+    if (element.isContentEditable) return true;
+    const tag = element.tagName?.toLowerCase();
+    if (tag === "input" || tag === "textarea" || tag === "select") return true;
+    return Boolean(element.closest("input, textarea, select, [contenteditable=\"true\"]"));
+  };
+
+  const handleDeleteSelectedNode = useCallback(() => {
+    if (!selectedNodeId) return;
+    const targetNode = nodes.find((node) => node.id === selectedNodeId);
+    const label = targetNode?.title || "this node";
+    const confirmed = window.confirm(`Remove ${label}? This will delete connected wires.`);
+    if (!confirmed) return;
+    setNodes((prev) => prev.filter((node) => node.id !== selectedNodeId));
+    setEdges((prev) =>
+      prev.filter((edge) => edge.from !== selectedNodeId && edge.to !== selectedNodeId)
+    );
+    setSelectedNodeId(null);
+  }, [nodes, selectedNodeId]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -795,15 +817,21 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         setSelectedEdgeId(null);
       }
       if (event.key === "Backspace" || event.key === "Delete") {
+        if (isTypingTarget(event.target)) return;
         if (selectedEdgeId) {
           event.preventDefault();
           handleRemoveEdge(selectedEdgeId);
+          return;
+        }
+        if (selectedNodeId) {
+          event.preventDefault();
+          handleDeleteSelectedNode();
         }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedEdgeId, handleRemoveEdge]);
+  }, [selectedEdgeId, selectedNodeId, handleRemoveEdge, handleDeleteSelectedNode]);
 
   useEffect(() => {
     setEdges((prev) => sanitizeEdges(nodes, prev));
@@ -943,6 +971,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
 
   const edgePaths = useMemo(() => {
     const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+    const midpoint = (a: { x: number; y: number }, b: { x: number; y: number }) => ({
+      x: (a.x + b.x) / 2,
+      y: (a.y + b.y) / 2,
+    });
     return edges
       .map((edge) => {
         const from = nodeMap.get(edge.from);
@@ -953,15 +985,37 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         const toPort = edge.toPort ?? (to.inputs.length > 0 ? to.inputs[0] : undefined);
         const fromPos = getPortPosition(from, fromPort, "output");
         const toPos = getPortPosition(to, toPort, "input");
-        const fromX = fromPos.x;
-        const fromY = fromPos.y;
-        const toX = toPos.x;
-        const toY = toPos.y;
-        const midX = fromX + (toX - fromX) * 0.5;
-        const path = `M ${fromX} ${fromY} C ${midX} ${fromY}, ${midX} ${toY}, ${toX} ${toY}`;
-        return { id: edge.id, path, label: edge.label };
+        const p0 = { x: fromPos.x, y: fromPos.y };
+        const p3 = { x: toPos.x, y: toPos.y };
+        const midX = p0.x + (p3.x - p0.x) * 0.5;
+        const p1 = { x: midX, y: p0.y };
+        const p2 = { x: midX, y: p3.y };
+        const q0 = midpoint(p0, p1);
+        const q1 = midpoint(p1, p2);
+        const q2 = midpoint(p2, p3);
+        const r0 = midpoint(q0, q1);
+        const r1 = midpoint(q1, q2);
+        const s = midpoint(r0, r1);
+        const path = [
+          `M ${p0.x} ${p0.y}`,
+          `C ${q0.x} ${q0.y}, ${r0.x} ${r0.y}, ${s.x} ${s.y}`,
+          `C ${r1.x} ${r1.y}, ${q2.x} ${q2.y}, ${p3.x} ${p3.y}`,
+        ].join(" ");
+        let dx = r1.x - r0.x;
+        let dy = r1.y - r0.y;
+        if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) {
+          dx = p3.x - p0.x;
+          dy = p3.y - p0.y;
+        }
+        const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+        return {
+          id: edge.id,
+          path,
+          label: edge.label,
+          arrow: { x: s.x, y: s.y, angle },
+        };
       })
-      .filter(Boolean) as { id: string; path: string; label?: string }[];
+      .filter(Boolean) as { id: string; path: string; label?: string; arrow?: { x: number; y: number; angle: number } }[];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [edges, nodePositionsKey]);
 
@@ -2122,19 +2176,6 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     } finally {
       setSendingToAi(false);
     }
-  };
-
-  const handleDeleteSelectedNode = () => {
-    if (!selectedNodeId) return;
-    const targetNode = nodes.find((node) => node.id === selectedNodeId);
-    const label = targetNode?.title || "this node";
-    const confirmed = window.confirm(`Remove ${label}? This will delete connected wires.`);
-    if (!confirmed) return;
-    setNodes((prev) => prev.filter((node) => node.id !== selectedNodeId));
-    setEdges((prev) =>
-      prev.filter((edge) => edge.from !== selectedNodeId && edge.to !== selectedNodeId)
-    );
-    setSelectedNodeId(null);
   };
 
   const handleSelectEdge = (edgeId: string | null) => {
@@ -3313,13 +3354,17 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               const simulationNode = nodes.find((node) => node.id === simulationOpenNodeId);
               if (!simulationNode) return null;
               const simulationConfig = simulationNode.config?.simulation ?? { productId: "" };
+              const simulationEntityValue =
+                simulationConfig.entityId?.trim()
+                  ? simulationConfig.entityId
+                  : simulationConfig.productId ?? "";
               return (
                 <div className="space-y-4">
                   <div>
                     <Label className="text-xs text-gray-400">Entity ID</Label>
                     <Input
                       className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
-                      value={simulationConfig.entityId ?? simulationConfig.productId}
+                      value={simulationEntityValue}
                       onChange={(event) => {
                         const value = event.target.value;
                         setNodes((prev) =>

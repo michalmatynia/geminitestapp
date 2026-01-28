@@ -7,17 +7,18 @@ import { useRouter } from "next/navigation";
 
 
 
-import { createBlock } from "@/features/cms/api/blocks";
+import { useCreateBlock } from "@/features/cms/hooks/useCmsQueries";
 
 export default function CreateBlockPage() {
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
   const router = useRouter();
+  const createBlock = useCreateBlock();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     void (async () => {
-      await createBlock({ name, content: JSON.parse(content) as unknown });
+      await createBlock.mutateAsync({ name, content: JSON.parse(content) as unknown });
       router.push("/admin/cms/blocks");
     })();
   };

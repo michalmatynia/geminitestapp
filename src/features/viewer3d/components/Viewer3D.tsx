@@ -1,6 +1,6 @@
 "use client";
 
-import { Canvas, useThree, useFrame } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import {
   OrbitControls,
   Center,
@@ -8,15 +8,12 @@ import {
   Environment,
   Html,
   ContactShadows,
-  AccumulativeShadows,
-  RandomizedLight,
   useProgress,
   Bounds,
-  Stage,
   PresentationControls,
 } from "@react-three/drei";
 import { EffectComposer, Bloom, SMAA, ToneMapping, Vignette } from "@react-three/postprocessing";
-import { Suspense, useEffect, useRef, useState, useMemo, Fragment } from "react";
+import { Suspense, useEffect, useRef, useMemo } from "react";
 import * as THREE from "three";
 import { DitheringPass } from "./shaders/DitheringEffect";
 import { PixelationPass } from "./shaders/PixelationEffect";
@@ -99,39 +96,36 @@ function Model3D({ url, onLoad, onError, castShadow = true, receiveShadow = true
     }
   }, [scene, onError]);
 
+  /* eslint-disable react/no-unknown-property */
   return (
     <primitive
       ref={modelRef}
       object={scene}
-      // eslint-disable-next-line react/no-unknown-property
       dispose={null}
     />
   );
+  /* eslint-enable react/no-unknown-property */
 }
 
 // Ground plane with realistic shadows
 function Ground({ visible = true }: { visible?: boolean }) {
   if (!visible) return null;
 
+  /* eslint-disable react/no-unknown-property */
   return (
     <mesh
-      // eslint-disable-next-line react/no-unknown-property
       rotation={[-Math.PI / 2, 0, 0]}
-      // eslint-disable-next-line react/no-unknown-property
       position={[0, -0.001, 0]}
-      // eslint-disable-next-line react/no-unknown-property
       receiveShadow
     >
-      {/* eslint-disable-next-line react/no-unknown-property */}
       <planeGeometry args={[50, 50]} />
       <shadowMaterial
-        // eslint-disable-next-line react/no-unknown-property
         transparent
-        // eslint-disable-next-line react/no-unknown-property
         opacity={0.4}
       />
     </mesh>
   );
+  /* eslint-enable react/no-unknown-property */
 }
 
 // Scene lighting setup
@@ -170,9 +164,9 @@ function SceneLighting({ preset, intensity = 1 }: SceneLightingProps) {
 
   const config = lightConfigs[preset] || lightConfigs.studio;
 
+  /* eslint-disable react/no-unknown-property */
   return (
     <>
-      {/* eslint-disable react/no-unknown-property */}
       <ambientLight intensity={config.ambient * intensity} />
       <directionalLight
         position={config.main.position}
@@ -194,9 +188,9 @@ function SceneLighting({ preset, intensity = 1 }: SceneLightingProps) {
         position={config.rim.position}
         intensity={config.rim.intensity * intensity}
       />
-      {/* eslint-enable react/no-unknown-property */}
     </>
   );
+  /* eslint-enable react/no-unknown-property */
 }
 
 // Camera auto-framing
@@ -435,17 +429,11 @@ export function Viewer3D({
 
           {enableContactShadows && (
             <ContactShadows
-              // eslint-disable-next-line react/no-unknown-property
               opacity={0.5}
-              // eslint-disable-next-line react/no-unknown-property
               scale={10}
-              // eslint-disable-next-line react/no-unknown-property
               blur={2}
-              // eslint-disable-next-line react/no-unknown-property
               far={4}
-              // eslint-disable-next-line react/no-unknown-property
               resolution={256}
-              // eslint-disable-next-line react/no-unknown-property
               color="#000000"
             />
           )}

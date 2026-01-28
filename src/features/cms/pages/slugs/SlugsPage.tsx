@@ -1,33 +1,20 @@
 "use client";
 
 import { Button, ListPanel, SectionHeader } from "@/shared/ui";
-import { useEffect, useState } from "react";
 import Link from "next/link";
 
 
 
-import { deleteSlug, fetchSlugs } from "@/features/cms/api/slugs";
-import type { Slug } from "@/features/cms/types";
+import { useCmsSlugs, useDeleteSlug } from "@/features/cms/hooks/useCmsQueries";
 
 export default function SlugsPage() {
-  const [slugs, setSlugs] = useState<Slug[]>([]);
-
-  useEffect(() => {
-    void fetchSlugs().then((data) => {
-      if (Array.isArray(data)) {
-        setSlugs(data);
-      } else {
-        console.error("API did not return an array of slugs:", data);
-      }
-    });
-  }, []);
+  const slugsQuery = useCmsSlugs();
+  const deleteSlug = useDeleteSlug();
+  const slugs = slugsQuery.data ?? [];
 
   const handleDelete = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this slug?")) {
-      const result = await deleteSlug(id);
-      if (result.ok) {
-        setSlugs(slugs.filter((slug) => slug.id !== id));
-      }
+      await deleteSlug.mutateAsync(id);
     }
   };
 

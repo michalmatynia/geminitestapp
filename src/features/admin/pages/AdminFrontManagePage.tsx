@@ -1,12 +1,13 @@
 "use client";
 
 import { Button, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
-import React, { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { SaveIcon } from "lucide-react";
 import Link from "next/link";
 
 
 import { cn } from "@/shared/utils";
+import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
 
 
 type FrontAppOption = "products" | "chatbot" | "notes";
@@ -14,10 +15,33 @@ type FrontAppOption = "products" | "chatbot" | "notes";
 const FRONT_PAGE_SETTING_KEY = "front_page_app";
 
 export function AdminFrontManagePage() {
+  const settingsQuery = useSettingsMap();
+
+  if (settingsQuery.isPending || !settingsQuery.data) {
+    return (
+      <div className="container mx-auto py-10">
+        <div className="text-white">Loading front page settings...</div>
+      </div>
+    );
+  }
+
+  const current = settingsQuery.data.get(FRONT_PAGE_SETTING_KEY);
+  const initialSelected: FrontAppOption =
+    current === "products" || current === "chatbot" || current === "notes"
+      ? current
+      : "products";
+
+  return <AdminFrontManageContent initialSelected={initialSelected} />;
+}
+
+function AdminFrontManageContent({
+  initialSelected,
+}: {
+  initialSelected: FrontAppOption;
+}) {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [selected, setSelected] = useState<FrontAppOption>("products");
+  const [selected, setSelected] = useState<FrontAppOption>(initialSelected);
+  const updateSetting = useUpdateSetting();
 
   const options = useMemo(
     () => [
@@ -43,56 +67,18 @@ export function AdminFrontManagePage() {
     []
   );
 
-  useEffect(() => {
-    const loadSetting = async () => {
-      try {
-        const res = await fetch("/api/settings");
-        if (!res.ok) {
-          throw new Error("Failed to load settings");
-        }
-        const data = (await res.json()) as Array<{ key: string; value: string }>;
-        const current = data.find((item) => item.key === FRONT_PAGE_SETTING_KEY)?.value;
-        if (current === "products" || current === "chatbot" || current === "notes") {
-          setSelected(current);
-        }
-      } catch (error) {
-        console.error("Failed to load front page setting:", error);
-        toast("Failed to load front page setting", { variant: "error" });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void loadSetting();
-  }, [toast]);
-
   const handleSave = async () => {
-    setSaving(true);
     try {
-      const res = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: FRONT_PAGE_SETTING_KEY, value: selected }),
+      await updateSetting.mutateAsync({
+        key: FRONT_PAGE_SETTING_KEY,
+        value: selected,
       });
-      if (!res.ok) {
-        throw new Error("Failed to save setting");
-      }
       toast("Front page updated", { variant: "success" });
     } catch (error) {
       console.error("Failed to save front page setting:", error);
       toast("Failed to save front page setting", { variant: "error" });
-    } finally {
-      setSaving(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="container mx-auto py-10">
-        <div className="text-white">Loading front page settings...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto max-w-4xl py-10">
@@ -149,10 +135,10 @@ export function AdminFrontManagePage() {
           <div className="flex justify-end pt-4">
             <Button
               onClick={() => void handleSave()}
-              disabled={saving}
+              disabled={updateSetting.isPending}
               className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px]"
             >
-              {saving ? "Saving..." : (
+              {updateSetting.isPending ? "Saving..." : (
                 <>
                   <SaveIcon className="mr-2 size-4" />
                   Save Selection

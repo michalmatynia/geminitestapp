@@ -17,6 +17,7 @@ import {
   PROMPT_OUTPUT_PORTS,
   ROUTER_INPUT_PORTS,
   ROUTER_OUTPUT_PORTS,
+  SIMULATION_OUTPUT_PORTS,
   TRIGGER_EVENTS,
   TRIGGER_INPUT_PORTS,
   TRIGGER_OUTPUT_PORTS,
@@ -79,6 +80,25 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
           ...node.config,
           trigger: {
             event: node.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id ?? "path_generate_description",
+          },
+        },
+      };
+    }
+    if (node.type === "simulation") {
+      const simulationConfig = node.config?.simulation;
+      const rawEntityId = simulationConfig?.entityId ?? "";
+      const rawProductId = simulationConfig?.productId ?? "";
+      const resolvedId = rawEntityId.trim() || rawProductId.trim() || "";
+      return {
+        ...node,
+        inputs: [],
+        outputs: SIMULATION_OUTPUT_PORTS,
+        config: {
+          ...node.config,
+          simulation: {
+            productId: rawProductId || resolvedId,
+            entityType: simulationConfig?.entityType ?? "product",
+            entityId: rawEntityId || resolvedId,
           },
         },
       };

@@ -20,6 +20,7 @@ import type {
   DbQueryPreset,
   Edge,
   NodeConfig,
+  PathDebugSnapshot,
   RuntimeState,
   UpdaterMapping,
   UpdaterSampleState,
@@ -63,6 +64,7 @@ type DatabaseNodeConfigSectionProps = {
   nodes: AiNode[];
   edges: Edge[];
   runtimeState: RuntimeState;
+  pathDebugSnapshot?: PathDebugSnapshot | null;
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
   onSendToAi?: (databaseNodeId: string, prompt: string) => Promise<void>;
   sendingToAi?: boolean;
@@ -84,6 +86,7 @@ export function DatabaseNodeConfigSection({
   nodes,
   edges,
   runtimeState,
+  pathDebugSnapshot,
   updateSelectedNodeConfig,
   onSendToAi,
   sendingToAi,
@@ -1470,10 +1473,10 @@ export function DatabaseNodeConfigSection({
                   }
                 };
                 // Shared query input controls (used in both Query and Constructor tabs)
-                                  const queryInputControls = (
-                                    <DatabaseQueryInputControls
-                                      actionCategory={actionCategory}
-                                      action={action}
+                const queryInputControls = (
+                  <DatabaseQueryInputControls
+                    actionCategory={actionCategory}
+                    action={action}
                                       actionCategoryOptions={[...actionCategoryOptions]}
                 
                     actionOptions={[...actionOptions]}
@@ -1499,6 +1502,18 @@ export function DatabaseNodeConfigSection({
                     onQueryChange={handleQueryChange}
                   />
                 );
+                const liveDebugPayload = (runtimeState.outputs[selectedNode.id] as
+                  | { debugPayload?: unknown }
+                  | undefined)?.debugPayload;
+                const persistedDebugEntry = pathDebugSnapshot?.entries?.find(
+                  (entry) => entry.nodeId === selectedNode.id
+                );
+                const debugPayload = liveDebugPayload ?? persistedDebugEntry?.debug;
+                const debugRunAt =
+                  liveDebugPayload || !pathDebugSnapshot?.runAt
+                    ? null
+                    : pathDebugSnapshot.runAt;
+                const hasDebugPayload = debugPayload !== undefined && debugPayload !== null;
 
                 const queryEditor = (
                   <div className="space-y-4 rounded-md border border-border bg-card/40 p-3">
@@ -1792,14 +1807,14 @@ export function DatabaseNodeConfigSection({
                     className="space-y-4"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <TabsList className="justify-start border border-border bg-card/60">
-                        <TabsTrigger value="settings">Query</TabsTrigger>
-                        <TabsTrigger value="constructor">Constructor</TabsTrigger>
-                        <TabsTrigger value="presets">Presets</TabsTrigger>
-                      </TabsList>
-                      <div
-                        className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-wide ${
-                          databaseConfig.useMongoActions
+                  <TabsList className="justify-start border border-border bg-card/60">
+                    <TabsTrigger value="settings">Query</TabsTrigger>
+                    <TabsTrigger value="constructor">Constructor</TabsTrigger>
+                    <TabsTrigger value="presets">Presets</TabsTrigger>
+                  </TabsList>
+                  <div
+                    className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-wide ${
+                      databaseConfig.useMongoActions
                             ? "border-emerald-700/60 bg-emerald-500/10 text-emerald-200"
                             : "border-amber-700/60 bg-amber-500/10 text-amber-200"
                         }`}
@@ -1811,6 +1826,39 @@ export function DatabaseNodeConfigSection({
                       >
                         Mongo Actions: {databaseConfig.useMongoActions ? "On" : "Off"}
                       </div>
+                    </div>
+                    <div className="rounded-md border border-border bg-card/50 p-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs text-gray-400">
+                          Last Runtime Debug
+                          {debugRunAt
+                            ? ` • Saved ${new Date(debugRunAt).toLocaleString()}`
+                            : ""}
+                        </Label>
+                        <Button
+                          type="button"
+                          className="h-6 rounded-md border px-2 text-[10px] text-gray-400 hover:bg-muted/50 disabled:opacity-50"
+                          disabled={!hasDebugPayload}
+                          onClick={() => {
+                            if (!hasDebugPayload) return;
+                            try {
+                              const payload = JSON.stringify(debugPayload, null, 2);
+                              void navigator.clipboard.writeText(payload);
+                              toast("Debug payload copied.", { variant: "success" });
+                            } catch {
+                              toast("Failed to copy debug payload.", { variant: "error" });
+                            }
+                          }}
+                        >
+                          Copy
+                        </Button>
+                      </div>
+                      <Textarea
+                        className="mt-2 min-h-[110px] w-full rounded-md border border-amber-800/50 bg-card/70 font-mono text-xs text-amber-100"
+                        value={hasDebugPayload ? JSON.stringify(debugPayload, null, 2) : ""}
+                        readOnly
+                        placeholder="Run the path trigger to capture debug output..."
+                      />
                     </div>
                     <TabsContent value="settings">
                       <DatabaseSettingsTab

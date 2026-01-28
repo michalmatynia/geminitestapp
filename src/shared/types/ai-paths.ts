@@ -310,6 +310,75 @@ export type RuntimeState = {
   outputs: Record<string, RuntimePortValues>;
 };
 
+export type AiPathRunStatus =
+  | "queued"
+  | "running"
+  | "paused"
+  | "completed"
+  | "failed"
+  | "canceled"
+  | "dead_lettered";
+
+export type AiPathNodeStatus =
+  | "pending"
+  | "running"
+  | "completed"
+  | "failed"
+  | "skipped"
+  | "blocked";
+
+export type AiPathRunEventLevel = "info" | "warning" | "error";
+
+export type AiPathRunRecord = {
+  id: string;
+  pathId: string;
+  pathName?: string | null;
+  status: AiPathRunStatus;
+  triggerEvent?: string | null;
+  triggerNodeId?: string | null;
+  triggerContext?: Record<string, unknown> | null;
+  graph?: { nodes: AiNode[]; edges: Edge[] } | null;
+  runtimeState?: RuntimeState | null;
+  meta?: Record<string, unknown> | null;
+  entityId?: string | null;
+  entityType?: string | null;
+  errorMessage?: string | null;
+  retryCount?: number | null;
+  maxAttempts?: number | null;
+  nextRetryAt?: Date | string | null;
+  deadLetteredAt?: Date | string | null;
+  startedAt?: Date | string | null;
+  finishedAt?: Date | string | null;
+  createdAt: Date | string;
+  updatedAt?: Date | string | null;
+};
+
+export type AiPathRunNodeRecord = {
+  id: string;
+  runId: string;
+  nodeId: string;
+  nodeType: string;
+  nodeTitle?: string | null;
+  status: AiPathNodeStatus;
+  attempt: number;
+  inputs?: RuntimePortValues | null;
+  outputs?: RuntimePortValues | null;
+  errorMessage?: string | null;
+  startedAt?: Date | string | null;
+  finishedAt?: Date | string | null;
+  createdAt: Date | string;
+  updatedAt?: Date | string | null;
+};
+
+export type AiPathRunEventRecord = {
+  id: string;
+  runId: string;
+  level: AiPathRunEventLevel;
+  message: string;
+  metadata?: Record<string, unknown> | null;
+  createdAt: Date | string;
+};
+
 export type PathMeta = {
   id: string;
   name: string;
@@ -330,6 +399,18 @@ export type PathConfig = {
   updaterSamples?: Record<string, UpdaterSampleState>;
   runtimeState?: RuntimeState | string | null;
   lastRunAt?: string | null;
+};
+
+export type PathDebugEntry = {
+  nodeId: string;
+  title?: string;
+  debug: unknown;
+};
+
+export type PathDebugSnapshot = {
+  pathId: string;
+  runAt: string;
+  entries: PathDebugEntry[];
 };
 
 export type ClusterPreset = {

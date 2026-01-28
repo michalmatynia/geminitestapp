@@ -4,6 +4,7 @@ import { Button, Input, Label, Textarea, Tabs, TabsList, TabsTrigger, TabsConten
 import { useState, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { useProductFormContext } from "@/features/products/context/ProductFormContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 
 
@@ -18,10 +19,12 @@ import type {
   AiNode,
   PathConfig,
   PathMeta,
+  PathDebugSnapshot,
 } from "@/features/ai-paths";
 import { evaluateGraph } from "@/features/ai-paths";
 import {
   PATH_CONFIG_PREFIX,
+  PATH_DEBUG_PREFIX,
   PATH_INDEX_KEY,
   TRIGGER_EVENTS,
   createDefaultPathConfig,
@@ -30,6 +33,7 @@ import {
 } from "@/features/ai-paths";
 
 export default function ProductFormGeneral() {
+  const queryClient = useQueryClient();
   const safeJsonStringify = (value: unknown) => {
     const seen = new WeakSet();
     const replacer = (_key: string, val: unknown) => {
@@ -406,6 +410,8 @@ export default function ProductFormGeneral() {
         },
         toast,
       });
+      void queryClient.invalidateQueries({ queryKey: ["products"] });
+      void queryClient.invalidateQueries({ queryKey: ["products-count"] });
       try {
         const updatedConfig: PathConfig = {
           ...selectedConfig,
@@ -415,6 +421,30 @@ export default function ProductFormGeneral() {
           lastRunAt: runAt,
           updatedAt: runAt,
         };
+        const debugEntries = nodes
+          .filter((node) => node.type === "database")
+          .map((node) => {
+            const output = runtimeState.outputs[node.id] as
+              | { debugPayload?: unknown }
+              | undefined;
+            const debugPayload = output?.debugPayload;
+            if (debugPayload === undefined || debugPayload === null) return null;
+            return {
+              nodeId: node.id,
+              title: node.title,
+              debug: debugPayload,
+            };
+          })
+          .filter(
+            (entry): entry is PathDebugSnapshot["entries"][number] => Boolean(entry)
+          );
+        const debugSnapshot: PathDebugSnapshot | null = debugEntries.length
+          ? {
+              pathId: updatedConfig.id,
+              runAt,
+              entries: debugEntries,
+            }
+          : null;
         configs[updatedConfig.id] = updatedConfig;
         const orderedIds = pathOrder.length
           ? pathOrder
@@ -431,6 +461,40 @@ export default function ProductFormGeneral() {
             }),
           }),
         });
+        try {
+          const configValue = safeJsonStringify(updatedConfig);
+          const indexValue = JSON.stringify(orderedIds.map((id) => ({ id })));
+          const debugValue = debugSnapshot ? safeJsonStringify(debugSnapshot) : "";
+          if (configValue) {
+            await fetch("/api/settings", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                key: `${PATH_CONFIG_PREFIX}${updatedConfig.id}`,
+                value: configValue,
+              }),
+            });
+          }
+          if (debugValue) {
+            await fetch("/api/settings", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                key: `${PATH_DEBUG_PREFIX}${updatedConfig.id}`,
+                value: debugValue,
+              }),
+            });
+          }
+          if (orderedIds.length > 0) {
+            await fetch("/api/settings", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ key: PATH_INDEX_KEY, value: indexValue }),
+            });
+          }
+        } catch (error) {
+          logger.error("Failed to persist AI Paths settings snapshot", error);
+        }
       } catch (error) {
         logger.error("Failed to persist AI Paths runtime state", error);
       }

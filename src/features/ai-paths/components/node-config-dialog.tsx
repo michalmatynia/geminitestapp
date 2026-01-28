@@ -11,6 +11,7 @@ import type {
   Edge,
   NodeConfig,
   ParserSampleState,
+  PathDebugSnapshot,
   RuntimeState,
   UpdaterSampleState,
 } from "@/features/ai-paths/lib";
@@ -53,6 +54,7 @@ type NodeConfigDialogProps = {
   setUpdaterSamples: React.Dispatch<React.SetStateAction<Record<string, UpdaterSampleState>>>;
   updaterSampleLoading: boolean;
   runtimeState: RuntimeState;
+  pathDebugSnapshot?: PathDebugSnapshot | null;
   updateSelectedNode: (patch: Partial<AiNode>) => void;
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
   handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
@@ -84,6 +86,7 @@ export function NodeConfigDialog({
   setUpdaterSamples,
   updaterSampleLoading,
   runtimeState,
+  pathDebugSnapshot,
   updateSelectedNode,
   updateSelectedNodeConfig,
   handleFetchParserSample,
@@ -224,6 +227,7 @@ export function NodeConfigDialog({
           nodes={nodes}
           edges={edges}
           runtimeState={runtimeState}
+          pathDebugSnapshot={pathDebugSnapshot}
           updateSelectedNodeConfig={updateSelectedNodeConfig}
           {...(onSendToAi && { onSendToAi })}
           {...(sendingToAi !== undefined && { sendingToAi })}

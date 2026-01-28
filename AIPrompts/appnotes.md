@@ -1,9 +1,50 @@
 
-* I'm trying to RUN my database Query Node to update the database, but I get the message "Run is available for read and aggregate actions only.". 
-I want the RUN button to work on ALL of the queries. 
+I need to implement a persistent RUNTIME and decouple AI Model Nodes from their regular polling operations. They should start working within a general runtime framework
+Jobs system for the whole Path
 
-{ "$set":{"fieldName": "{{value}}"}
+Polling
+
+Action logger
+ 1. Persistent runtime engine (resume runs, track node status, replay/retry, audit history) <-
+  2. Execution scheduling (queue, concurrency limits, retries, backoff, dead-letter) <-
+     a. Add a dead‑letter review screen (filter + requeue from DLQ). <- Stopped here
+  b. Add per‑node retry controls in the Run Details modal.
+
+  3. Streaming + progress tracking (node-by-node status, live logs, timestamps)
+  4. Deterministic execution + caching (hash inputs, memoize node outputs)
+  5. Multi-tenant safety (per-user isolation, permissions, rate limits)
+  6. Visual runtime timeline (per-run trace + logs shown in UI)
+
+---
+
+Generating Product updates via Database Query Node works if I click on Run, It works through trigger event as well, and goes through a complete signal path until it reaches the Database Query Node where it updates a product, but only if the ID is harcoded in the Query, like so:
+{
+  "id": "8f9c5c77-6c14-477a-9945-5ae41afdf908"
 }
+
+{ "$set":{"description_en": "test"}
+}
+Also, I need to hard refresh my PRoduct list to see the change, which is a proble,
+if I'm using a placeholder like this {{entityId}}, the Trigger event of Signal Path in AI Paths doesn't work. PRoducts are not updated via Database Query Node. Here's the query I used. 
+
+{
+  "id": "{{entityId}}"
+}
+
+{ "$set":{"description_en": "test"}
+}
+
+---
+
+AI jobs are created even if the signal path in AI Paths doesn't have any AI model nodes connected, look at this job "36627686-61be-42be-aa1a-1985e3405e62"
+
+---
+
+node module should have a step by step logger
+
+
+
+I can't see the product immediately after product creation
 
 the mapper can assign the object {"fieldName": "{{value}}"}, this should also be helpful
 

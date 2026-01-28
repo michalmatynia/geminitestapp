@@ -563,6 +563,7 @@ const palette: NodeDefinition[] = [
 const PATH_INDEX_KEY = "ai_paths_index";
 const AI_PATHS_LAST_ERROR_KEY = "ai_paths_last_error";
 const PATH_CONFIG_PREFIX = "ai_paths_config_";
+const PATH_DEBUG_PREFIX = "ai_paths_debug_";
 const CLUSTER_PRESETS_KEY = "ai_paths_cluster_presets";
 const DB_QUERY_PRESETS_KEY = "ai_paths_db_query_presets";
 const DB_NODE_PRESETS_KEY = "ai_paths_db_node_presets";
@@ -2515,6 +2516,7 @@ export {
   PARSER_PATH_OPTIONS,
   PARSER_PRESETS,
   PATH_CONFIG_PREFIX,
+  PATH_DEBUG_PREFIX,
   PATH_INDEX_KEY,
   PORT_COMPATIBILITY,
   PORT_GAP,

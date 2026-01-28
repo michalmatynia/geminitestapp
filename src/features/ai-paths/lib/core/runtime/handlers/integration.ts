@@ -446,11 +446,30 @@ export const handleDatabase: NodeHandler = async ({
   toast,
   simulationEntityType,
   simulationEntityId,
+  triggerContext,
+  fallbackEntityId,
 }) => {
   const resolveDatabaseInputs = (inputs: Record<string, unknown>) => {
     const next = { ...inputs };
     const pickString = (value: unknown) =>
       typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined;
+    const pickFromContext = (ctx: Record<string, unknown> | null | undefined) => {
+      if (!ctx || typeof ctx !== "object") return;
+      const entityId =
+        pickString(ctx.entityId) ??
+        pickString(ctx.productId) ??
+        pickString(ctx.id) ??
+        pickString(ctx._id);
+      const productId =
+        pickString(ctx.productId) ??
+        pickString(ctx.entityId) ??
+        pickString(ctx.id) ??
+        pickString(ctx._id);
+      const entityType = pickString(ctx.entityType);
+      if (next.entityId === undefined && entityId) next.entityId = entityId;
+      if (next.productId === undefined && productId) next.productId = productId;
+      if (next.entityType === undefined && entityType) next.entityType = entityType;
+    };
     const applyFromObject = (record: Record<string, unknown>) => {
       const entityId =
         pickString(record.entityId) ??
@@ -478,6 +497,16 @@ export const handleDatabase: NodeHandler = async ({
     const bundleValue = coerceInput(inputs.bundle);
     if (bundleValue && typeof bundleValue === "object") {
       applyFromObject(bundleValue as Record<string, unknown>);
+    }
+    pickFromContext(triggerContext as Record<string, unknown> | null | undefined);
+    if (next.entityId === undefined && fallbackEntityId) {
+      next.entityId = fallbackEntityId;
+    }
+    if (next.productId === undefined && next.entityId) {
+      next.productId = next.entityId;
+    }
+    if (next.entityType === undefined && simulationEntityType) {
+      next.entityType = simulationEntityType;
     }
     return next;
   };
@@ -685,6 +714,18 @@ export const handleDatabase: NodeHandler = async ({
           resolvedFilter = parsedFilter as Record<string, unknown>;
         }
       }
+      const debugPayload = {
+        mode: "mongo",
+        actionCategory,
+        action,
+        collection,
+        filter: resolvedFilter,
+        updateTemplate: updateTemplate || undefined,
+        idType,
+        entityId: resolvedInputs.entityId,
+        productId: resolvedInputs.productId,
+        entityType: resolvedInputs.entityType,
+      };
       const buildUpdatesFromMappings = () => {
         const fallbackTarget = dbConfig.mappings?.[0]?.targetPath ?? "content_en";
         const mappings =
@@ -747,13 +788,13 @@ export const handleDatabase: NodeHandler = async ({
       const parsedUpdate = updateTemplate ? parseJsonTemplate(updateTemplate) : null;
       if (updateTemplate && (!parsedUpdate || (typeof parsedUpdate !== "object" && !Array.isArray(parsedUpdate)))) {
         toast("Update template must be valid JSON.", { variant: "error" });
-        return { result: null, bundle: { error: "Invalid update template" }, aiPrompt };
+        return { result: null, bundle: { error: "Invalid update template" }, debugPayload, aiPrompt };
       }
       const { updates, primaryTarget } = buildUpdatesFromMappings();
       const updateDoc = parsedUpdate ?? updates;
       if (!updateDoc || (typeof updateDoc !== "object" && !Array.isArray(updateDoc))) {
         toast("Update document is missing or invalid.", { variant: "error" });
-        return { result: null, bundle: { error: "Invalid update" }, aiPrompt };
+        return { result: null, bundle: { error: "Invalid update" }, debugPayload, aiPrompt };
       }
       if (
         !Array.isArray(updateDoc) &&
@@ -761,16 +802,22 @@ export const handleDatabase: NodeHandler = async ({
         Object.keys(updateDoc as Record<string, unknown>).length === 0
       ) {
         toast("Update document is empty.", { variant: "error" });
-        return { result: null, bundle: { error: "Empty update" }, aiPrompt };
+        return { result: null, bundle: { error: "Empty update" }, debugPayload, aiPrompt };
       }
       if (executed.updater.has(node.id)) {
-        return { result: updateDoc as Record<string, unknown>, bundle: updateDoc as Record<string, unknown>, aiPrompt };
+        return {
+          result: updateDoc as Record<string, unknown>,
+          bundle: updateDoc as Record<string, unknown>,
+          debugPayload,
+          aiPrompt,
+        };
       }
       if (dryRun) {
         executed.updater.add(node.id);
         return {
           result: updateDoc as Record<string, unknown>,
-          bundle: { dryRun: true, action, collection, filter, update: updateDoc },
+          bundle: { dryRun: true, action, collection, filter: resolvedFilter, update: updateDoc },
+          debugPayload,
           aiPrompt,
         };
       }
@@ -789,7 +836,7 @@ export const handleDatabase: NodeHandler = async ({
           "Database update failed:"
         );
         toast("Database update failed.", { variant: "error" });
-        return { result: null, bundle: { error: "Update failed" }, aiPrompt };
+        return { result: null, bundle: { error: "Update failed" }, debugPayload, aiPrompt };
       }
       toast("Update completed.", { variant: "success" });
       const primaryValue = (updates as Record<string, unknown>)[primaryTarget];
@@ -800,6 +847,7 @@ export const handleDatabase: NodeHandler = async ({
             : (nodeInputs.content_en as string | undefined),
         result: updateResult.data,
         bundle: updateResult.data as Record<string, unknown>,
+        debugPayload,
         aiPrompt,
       };
     }
@@ -1100,6 +1148,15 @@ export const handleDatabase: NodeHandler = async ({
       simulationEntityType,
       simulationEntityId
     );
+    const debugPayload = {
+      mode: "legacy",
+      updateStrategy,
+      entityType,
+      idField,
+      entityId,
+      updates,
+      mappings,
+    };
     const hasUpdates = Object.keys(updates).length > 0;
     const needsEntityId = entityType !== "custom";
     let updateResult: unknown = updates;
@@ -1233,6 +1290,7 @@ export const handleDatabase: NodeHandler = async ({
               : nodeInputs.content_en) ?? "",
       bundle: updates,
       result: updateResult,
+      debugPayload,
       aiPrompt,
     };
   }

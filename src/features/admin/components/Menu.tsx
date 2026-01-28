@@ -171,6 +171,12 @@ export default function Menu() {
         >
           AI Jobs
         </Link>
+        <Link
+          href="/admin/ai-paths/dead-letter"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Dead Letter Queue
+        </Link>
       </CollapsibleMenu>
       <CollapsibleMenu
         title="Notes"

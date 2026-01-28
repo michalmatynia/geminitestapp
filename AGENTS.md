@@ -59,6 +59,9 @@ See: `src/features/products/services/product-provider.ts` and repository impleme
   `src/features/products/services/aiTranslationService.ts`. Product AI job processing lives in
   `src/features/jobs/workers/productAiQueue.ts` (orchestrated by
   `src/features/jobs/services/productAiService.ts`).
+- **AI Paths persistent runtime** runs are stored in `AiPathRun`, `AiPathRunNode`, and
+  `AiPathRunEvent` (Prisma) or `ai_path_runs`, `ai_path_run_nodes`, `ai_path_run_events` (Mongo).
+  Queue worker: `src/features/jobs/workers/aiPathRunQueue.ts`.
 - **Job workers** for chatbot/agent queues live in `src/features/jobs/workers/`
   (e.g. `chatbotJobQueue.ts`, `agentQueue.ts`).
 - **Agent runtime** lives in `src/features/agent-runtime/` with planning, execution, memory,
@@ -127,6 +130,10 @@ OPENAI_API_KEY=...
 OLLAMA_BASE_URL=http://localhost:11434
 BASE_API_URL=https://api.baselinker.com/connector.php
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+AI_PATHS_RUN_CONCURRENCY=1
+AI_PATHS_RUN_MAX_ATTEMPTS=3
+AI_PATHS_RUN_BACKOFF_MS=5000
+AI_PATHS_RUN_BACKOFF_MAX_MS=60000
 ```
 
 ## Commands (package.json)
@@ -156,4 +163,4 @@ If you change architecture, data providers, or AI flows, update this file and
 
 ---
 
-**Last Updated**: January 27, 2026
+**Last Updated**: January 28, 2026

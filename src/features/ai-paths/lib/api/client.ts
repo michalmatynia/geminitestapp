@@ -76,12 +76,29 @@ export type BrowseResponse = {
 // Base Fetch Utilities
 // ============================================================================
 
+const resolveApiUrl = (url: string) => {
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  if (typeof window !== "undefined") {
+    return url;
+  }
+  const base =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXTAUTH_URL ||
+    "http://localhost:3000";
+  const trimmedBase = base.endsWith("/") ? base.slice(0, -1) : base;
+  const path = url.startsWith("/") ? url : `/${url}`;
+  return `${trimmedBase}${path}`;
+};
+
 async function apiFetch<T>(
   url: string,
   options?: RequestInit
 ): Promise<ApiResponse<T>> {
   try {
-    const res = await fetch(url, options);
+    const resolvedUrl = resolveApiUrl(url);
+    const res = await fetch(resolvedUrl, options);
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({})) as { error?: string; message?: string };
       return {
@@ -377,5 +394,89 @@ export const httpApi = {
         error: error instanceof Error ? error.message : "Request failed",
       };
     }
+  },
+};
+
+// ============================================================================
+// AI Paths Runs API
+// ============================================================================
+
+export const runsApi = {
+  async enqueue(payload: {
+    pathId: string;
+    pathName?: string;
+    nodes: unknown[];
+    edges: unknown[];
+    triggerEvent?: string;
+    triggerNodeId?: string;
+    triggerContext?: Record<string, unknown> | null;
+    entityId?: string | null;
+    entityType?: string | null;
+    maxAttempts?: number | null;
+    backoffMs?: number | null;
+    backoffMaxMs?: number | null;
+    meta?: Record<string, unknown> | null;
+  }): Promise<ApiResponse<{ run: unknown }>> {
+    return apiPost<{ run: unknown }>("/api/ai-paths/runs/enqueue", payload);
+  },
+
+  async list(options?: {
+    pathId?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<ApiResponse<{ runs: unknown[]; total: number }>> {
+    const params = new URLSearchParams();
+    if (options?.pathId) params.set("pathId", options.pathId);
+    if (options?.status) params.set("status", options.status);
+    if (typeof options?.limit === "number") params.set("limit", String(options.limit));
+    if (typeof options?.offset === "number") params.set("offset", String(options.offset));
+    const query = params.toString();
+    const url = query ? `/api/ai-paths/runs?${query}` : "/api/ai-paths/runs";
+    return apiFetch<{ runs: unknown[]; total: number }>(url);
+  },
+
+  async get(runId: string): Promise<ApiResponse<{ run: unknown; nodes: unknown[]; events: unknown[] }>> {
+    return apiFetch<{ run: unknown; nodes: unknown[]; events: unknown[] }>(
+      `/api/ai-paths/runs/${encodeURIComponent(runId)}`
+    );
+  },
+
+  async resume(runId: string, mode?: "resume" | "replay"): Promise<ApiResponse<{ run: unknown }>> {
+    return apiPost<{ run: unknown }>(
+      `/api/ai-paths/runs/${encodeURIComponent(runId)}/resume`,
+      { mode }
+    );
+  },
+
+  async retryNode(runId: string, nodeId: string): Promise<ApiResponse<{ run: unknown }>> {
+    return apiPost<{ run: unknown }>(
+      `/api/ai-paths/runs/${encodeURIComponent(runId)}/retry-node`,
+      { nodeId }
+    );
+  },
+
+  async cancel(runId: string): Promise<ApiResponse<{ run: unknown }>> {
+    return apiPost<{ run: unknown }>(
+      `/api/ai-paths/runs/${encodeURIComponent(runId)}/cancel`,
+      {}
+    );
+  },
+
+  async requeueDeadLetter(payload: {
+    runIds?: string[];
+    pathId?: string | null;
+    mode?: "resume" | "replay";
+    limit?: number | null;
+  }): Promise<ApiResponse<{
+    requeued: number;
+    runIds: string[];
+    errors?: Array<{ runId: string; error: string }>;
+  }>> {
+    return apiPost<{
+      requeued: number;
+      runIds: string[];
+      errors?: Array<{ runId: string; error: string }>;
+    }>("/api/ai-paths/runs/dead-letter/requeue", payload);
   },
 };

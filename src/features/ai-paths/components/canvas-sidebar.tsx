@@ -21,6 +21,7 @@ type CanvasSidebarProps = {
   selectedEdgeId: string | null;
   onSelectEdge: (edgeId: string | null) => void;
   onFireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
+  onFireTriggerPersistent?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void;
   onOpenSimulation: (nodeId: string) => void;
   onUpdateSelectedNode: (patch: Partial<AiNode>) => void;
   onOpenNodeConfig: () => void;
@@ -42,6 +43,7 @@ export function CanvasSidebar({
   selectedEdgeId,
   onSelectEdge,
   onFireTrigger,
+  onFireTriggerPersistent,
   onOpenSimulation,
   onUpdateSelectedNode,
   onOpenNodeConfig,
@@ -156,13 +158,24 @@ export function CanvasSidebar({
           {selectedNode ? (
             <div className="space-y-3 text-xs text-gray-300">
               {selectedNode.type === "trigger" && (
-                <Button
-                  className="w-full rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10"
-                  type="button"
-                  onClick={(event) => onFireTrigger(selectedNode, event)}
-                >
-                  Fire Trigger
-                </Button>
+                <div className="space-y-2">
+                  <Button
+                    className="w-full rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10"
+                    type="button"
+                    onClick={(event) => onFireTrigger(selectedNode, event)}
+                  >
+                    Fire Trigger
+                  </Button>
+                  {onFireTriggerPersistent && (
+                    <Button
+                      className="w-full rounded-md border border-sky-500/40 text-xs text-sky-200 hover:bg-sky-500/10"
+                      type="button"
+                      onClick={(event) => onFireTriggerPersistent(selectedNode, event)}
+                    >
+                      Queue Persistent Run
+                    </Button>
+                  )}
+                </div>
               )}
               {selectedNode.type === "simulation" && (
                 <Button

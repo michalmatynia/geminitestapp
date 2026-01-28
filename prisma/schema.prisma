@@ -843,6 +843,31 @@ enum ProductAiJobStatus {
   canceled
 }
 
+enum AiPathRunStatus {
+  queued
+  running
+  paused
+  completed
+  failed
+  canceled
+  dead_lettered
+}
+
+enum AiPathNodeStatus {
+  pending
+  running
+  completed
+  failed
+  skipped
+  blocked
+}
+
+enum AiPathRunEventLevel {
+  info
+  warning
+  error
+}
+
 model ProductAiJob {
   id           String             @id @default(cuid())
   productId    String
@@ -860,6 +885,75 @@ model ProductAiJob {
   @@index([status])
   @@index([createdAt])
   @@index([status, createdAt]) // Compound index for finding next pending job
+}
+
+model AiPathRun {
+  id            String         @id @default(cuid())
+  pathId        String
+  pathName      String?
+  status        AiPathRunStatus @default(queued)
+  triggerEvent  String?
+  triggerNodeId String?
+  triggerContext Json?
+  graph         Json?
+  runtimeState  Json?
+  meta          Json?
+  entityId      String?
+  entityType    String?
+  errorMessage  String?
+  retryCount    Int            @default(0)
+  maxAttempts   Int            @default(3)
+  nextRetryAt   DateTime?
+  deadLetteredAt DateTime?
+  startedAt     DateTime?
+  finishedAt    DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  nodes   AiPathRunNode[]
+  events  AiPathRunEvent[]
+
+  @@index([pathId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([nextRetryAt])
+}
+
+model AiPathRunNode {
+  id          String          @id @default(cuid())
+  runId       String
+  nodeId      String
+  nodeType    String
+  nodeTitle   String?
+  status      AiPathNodeStatus @default(pending)
+  attempt     Int             @default(0)
+  inputs      Json?
+  outputs     Json?
+  errorMessage String?
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  run AiPathRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([nodeId])
+  @@unique([runId, nodeId])
+}
+
+model AiPathRunEvent {
+  id        String            @id @default(cuid())
+  runId     String
+  level     AiPathRunEventLevel @default(info)
+  message   String
+  metadata  Json?
+  createdAt DateTime          @default(now())
+
+  run AiPathRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([createdAt])
 }
 
 model ProductDraft {

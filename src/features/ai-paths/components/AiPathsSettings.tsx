@@ -12,12 +12,13 @@ import { createPortal } from "react-dom";
 import { logClientError } from "@/features/observability";
 import { useUpdateSetting, useUpdateSettingsBulk } from "@/shared/hooks/useSettings";
 import { DocsTabPanel, PathsTabPanel } from "./ui-panels";
-import { evaluateGraph, dbApi, aiJobsApi, entityApi } from "@/features/ai-paths/lib";
+import { evaluateGraph, dbApi, aiJobsApi, entityApi, runsApi } from "@/features/ai-paths/lib";
 import { CanvasBoard } from "./canvas-board";
 import { CanvasSidebar } from "./canvas-sidebar";
 import { NodeConfigDialog } from "./node-config-dialog";
 import type {
   AiNode,
+  AiPathRunRecord,
   ClusterPreset,
   DbQueryConfig,
   DbQueryPreset,
@@ -27,6 +28,7 @@ import type {
   NodeDefinition,
   ParserSampleState,
   PathConfig,
+  PathDebugSnapshot,
   PathMeta,
   RuntimePortValues,
   RuntimeState,
@@ -44,6 +46,7 @@ import {
   NODE_MIN_HEIGHT,
   NODE_WIDTH,
   PATH_CONFIG_PREFIX,
+  PATH_DEBUG_PREFIX,
   PATH_INDEX_KEY,
   STORAGE_VERSION,
   TEMPLATE_INPUT_PORTS,
@@ -189,6 +192,17 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     inputs: {},
     outputs: {},
   });
+  const [pathDebugSnapshots, setPathDebugSnapshots] = useState<
+    Record<string, PathDebugSnapshot>
+  >({});
+  const [runDetailOpen, setRunDetailOpen] = useState(false);
+  const [runDetailLoading, setRunDetailLoading] = useState(false);
+  const [runFilter, setRunFilter] = useState<"all" | "active" | "failed" | "dead">("all");
+  const [runDetail, setRunDetail] = useState<{
+    run: AiPathRunRecord;
+    nodes: unknown[];
+    events: unknown[];
+  } | null>(null);
   const [lastRunAt, setLastRunAt] = useState<string | null>(null);
   const [sendingToAi, setSendingToAi] = useState(false);
   const [lastError, setLastError] = useState<{
@@ -659,6 +673,20 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     };
   }, [sessionQuery.data]);
 
+  const runsQuery = useQuery({
+    queryKey: ["ai-paths-runs", activePathId],
+    queryFn: async () => runsApi.list({ pathId: activePathId ?? undefined }),
+    enabled: Boolean(activePathId),
+    refetchInterval: (data) => {
+      if (!data || !data.ok) return false;
+      const runs = (data.data.runs as AiPathRunRecord[]) ?? [];
+      const hasActive = runs.some(
+        (run) => run.status === "queued" || run.status === "running"
+      );
+      return hasActive ? 5000 : false;
+    },
+  });
+
   useEffect(() => {
     if (loadInFlightRef.current) return;
     if (loadAttemptRef.current === loadNonce) return;
@@ -721,6 +749,17 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           console.warn("[AI Paths] Failed to load user preferences.", error);
         }
         const map = new Map(data.map((item) => [item.key, item.value]));
+        const debugSnapshots: Record<string, PathDebugSnapshot> = {};
+        map.forEach((value, key) => {
+          if (!key.startsWith(PATH_DEBUG_PREFIX)) return;
+          const pathId = key.slice(PATH_DEBUG_PREFIX.length);
+          if (!pathId) return;
+          const parsed = safeParseJson(value).value;
+          if (parsed && typeof parsed === "object") {
+            debugSnapshots[pathId] = parsed as PathDebugSnapshot;
+          }
+        });
+        setPathDebugSnapshots(debugSnapshots);
         const indexRaw = map.get(PATH_INDEX_KEY);
         const lastErrorRaw = map.get(AI_PATHS_LAST_ERROR_KEY);
         const presetsRaw = map.get(CLUSTER_PRESETS_KEY);
@@ -1759,6 +1798,78 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     };
   };
 
+  const safeJsonStringify = (value: unknown) => {
+    const seen = new WeakSet();
+    const replacer = (_key: string, val: unknown) => {
+      if (typeof val === "bigint") return val.toString();
+      if (val instanceof Date) return val.toISOString();
+      if (val instanceof Set) return Array.from(val.values()) as unknown[];
+      if (val instanceof Map) return Object.fromEntries(val.entries()) as Record<string, unknown>;
+      if (typeof val === "function" || typeof val === "symbol") return undefined;
+      if (val && typeof val === "object") {
+        if (seen.has(val as object)) return undefined;
+        seen.add(val as object);
+      }
+      return val;
+    };
+    try {
+      return JSON.stringify(value, replacer);
+    } catch {
+      return "";
+    }
+  };
+
+  const buildDebugSnapshot = (
+    pathId: string | null,
+    runAt: string,
+    state: RuntimeState
+  ): PathDebugSnapshot | null => {
+    if (!pathId) return null;
+    const entries = nodes
+      .filter((node) => node.type === "database")
+      .map((node) => {
+        const output = state.outputs[node.id] as
+          | { debugPayload?: unknown }
+          | undefined;
+        const debugPayload = output?.debugPayload;
+        if (debugPayload === undefined || debugPayload === null) return null;
+        return {
+          nodeId: node.id,
+          title: node.title,
+          debug: debugPayload,
+        };
+      })
+      .filter(
+        (entry): entry is PathDebugSnapshot["entries"][number] => Boolean(entry)
+      );
+    if (entries.length === 0) return null;
+    return { pathId, runAt, entries };
+  };
+
+  const persistDebugSnapshot = async (
+    pathId: string | null,
+    runAt: string,
+    state: RuntimeState
+  ) => {
+    if (!pathId) return;
+    const snapshot = buildDebugSnapshot(pathId, runAt, state);
+    if (!snapshot) return;
+    const payload = safeJsonStringify(snapshot);
+    if (!payload) return;
+    try {
+      await updateSettingMutation.mutateAsync({
+        key: `${PATH_DEBUG_PREFIX}${pathId}`,
+        value: payload,
+      });
+      setPathDebugSnapshots((prev) => ({
+        ...prev,
+        [pathId]: snapshot,
+      }));
+    } catch (error) {
+      console.warn("[AI Paths] Failed to persist debug snapshot.", error);
+    }
+  };
+
   const buildTriggerContext = (
     triggerNode: AiNode,
     triggerEvent: string,
@@ -1867,6 +1978,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     const runAt = new Date().toISOString();
     setRuntimeState(result);
     setLastRunAt(runAt);
+    void persistDebugSnapshot(activePathId ?? null, runAt, result);
     if (activePathId) {
       setPathConfigs((prev) => ({
         ...prev,
@@ -2139,6 +2251,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       const runAt = new Date().toISOString();
       setRuntimeState(downstreamState);
       setLastRunAt(runAt);
+      void persistDebugSnapshot(activePathId ?? null, runAt, downstreamState);
       if (activePathId) {
         setPathConfigs((prev) => ({
           ...prev,
@@ -2275,6 +2388,141 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
     simulationNodes.forEach((node) => handleRunSimulation(node, triggerEvent));
     void runGraphForTrigger(triggerNode, event);
+  };
+
+  const handleFireTriggerPersistent = async (
+    triggerNode: AiNode,
+    event?: React.MouseEvent
+  ) => {
+    const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id;
+    const connectedSimulationIds = edges
+      .filter((edge) => edge.to === triggerNode.id)
+      .filter(
+        (edge) =>
+          (!edge.toPort || edge.toPort === "simulation") &&
+          (!edge.fromPort || edge.fromPort === "simulation")
+      )
+      .map((edge) => edge.from);
+    const simulationNodes = nodes.filter(
+      (node) => node.type === "simulation" && connectedSimulationIds.includes(node.id)
+    );
+    if (simulationNodes.length === 0) {
+      toast("Connect a Simulation node to the Trigger simulation input.", { variant: "error" });
+      return;
+    }
+    const primarySimulation = simulationNodes[0];
+    const entityId =
+      primarySimulation.config?.simulation?.entityId?.trim() ||
+      primarySimulation.config?.simulation?.productId?.trim() ||
+      "";
+    const entityType = primarySimulation.config?.simulation?.entityType?.trim() || "product";
+    if (!entityId) {
+      toast("Simulation node is missing an Entity ID.", { variant: "error" });
+      return;
+    }
+    const triggerContext = {
+      ...buildTriggerContext(triggerNode, triggerEvent ?? "", event),
+      entityId,
+      entityType,
+    };
+    const enqueueResult = await runsApi.enqueue({
+      pathId: activePathId ?? "default",
+      pathName,
+      nodes,
+      edges,
+      triggerEvent: triggerEvent ?? undefined,
+      triggerNodeId: triggerNode.id,
+      triggerContext,
+      entityId,
+      entityType,
+      meta: {
+        source: "ai_paths_ui",
+      },
+    });
+    if (!enqueueResult.ok) {
+      toast(enqueueResult.error || "Failed to enqueue persistent run.", {
+        variant: "error",
+      });
+      return;
+    }
+    toast("Persistent run queued.", { variant: "success" });
+  };
+
+  const runList = useMemo(() => {
+    if (!runsQuery.data || !runsQuery.data.ok) return [] as AiPathRunRecord[];
+    return (runsQuery.data.data.runs as AiPathRunRecord[]) ?? [];
+  }, [runsQuery.data]);
+
+  const filteredRunList = useMemo(() => {
+    if (runFilter === "all") return runList;
+    if (runFilter === "active") {
+      return runList.filter(
+        (run) => run.status === "queued" || run.status === "running"
+      );
+    }
+    if (runFilter === "failed") {
+      return runList.filter(
+        (run) => run.status === "failed" || run.status === "paused"
+      );
+    }
+    return runList.filter((run) => run.status === "dead_lettered");
+  }, [runFilter, runList]);
+
+  const handleOpenRunDetail = async (runId: string) => {
+    setRunDetailOpen(true);
+    setRunDetailLoading(true);
+    try {
+      const response = await runsApi.get(runId);
+      if (!response.ok) {
+        throw new Error(response.error || "Failed to load run details.");
+      }
+      const data = response.data as {
+        run: AiPathRunRecord;
+        nodes: unknown[];
+        events: unknown[];
+      };
+      setRunDetail(data);
+    } catch (error) {
+      toast(
+        error instanceof Error ? error.message : "Failed to load run details.",
+        { variant: "error" }
+      );
+      setRunDetail(null);
+    } finally {
+      setRunDetailLoading(false);
+    }
+  };
+
+  const handleResumeRun = async (runId: string, mode: "resume" | "replay") => {
+    const response = await runsApi.resume(runId, mode);
+    if (!response.ok) {
+      toast(response.error || "Failed to resume run.", { variant: "error" });
+      return;
+    }
+    toast(mode === "resume" ? "Run resumed." : "Run replay queued.", {
+      variant: "success",
+    });
+    void runsQuery.refetch();
+  };
+
+  const handleCancelRun = async (runId: string) => {
+    const response = await runsApi.cancel(runId);
+    if (!response.ok) {
+      toast(response.error || "Failed to cancel run.", { variant: "error" });
+      return;
+    }
+    toast("Run canceled.", { variant: "success" });
+    void runsQuery.refetch();
+  };
+
+  const handleRequeueDeadLetter = async (runId: string) => {
+    const response = await runsApi.resume(runId, "replay");
+    if (!response.ok) {
+      toast(response.error || "Failed to requeue run.", { variant: "error" });
+      return;
+    }
+    toast("Dead-letter run requeued.", { variant: "success" });
+    void runsQuery.refetch();
   };
 
   const handleSendToAi = async (sourceNodeId: string, prompt: string) => {
@@ -2648,12 +2896,17 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   };
 
   const toJsonSafe = (value: unknown): unknown => {
+    const seen = new WeakSet();
     const replacer = (_key: string, val: unknown) => {
       if (typeof val === "bigint") return val.toString();
       if (val instanceof Date) return val.toISOString();
       if (val instanceof Set) return Array.from(val.values()) as unknown[];
       if (val instanceof Map) return Object.fromEntries(val.entries()) as Record<string, unknown>;
       if (typeof val === "function" || typeof val === "symbol") return undefined;
+      if (val && typeof val === "object") {
+        if (seen.has(val as object)) return undefined;
+        seen.add(val as object);
+      }
       return val;
     };
     try {
@@ -3406,6 +3659,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
                 selectedEdgeId={selectedEdgeId}
                 onSelectEdge={handleSelectEdge}
                 onFireTrigger={handleFireTrigger}
+                onFireTriggerPersistent={handleFireTriggerPersistent}
                 onOpenSimulation={setSimulationOpenNodeId}
                 onUpdateSelectedNode={updateSelectedNode}
                 onOpenNodeConfig={() => setConfigOpen(true)}
@@ -3565,6 +3819,135 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
               </div>
             )}
           </div>
+          <div className="rounded-lg border border-border bg-card/60 p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-sm font-semibold text-white">Run History</span>
+              <Button
+                type="button"
+                className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+                onClick={() => void runsQuery.refetch()}
+                disabled={runsQuery.isFetching}
+              >
+                {runsQuery.isFetching ? "Refreshing..." : "Refresh"}
+              </Button>
+            </div>
+            <div className="mb-3 flex flex-wrap gap-2">
+              {[
+                { id: "all", label: "All" },
+                { id: "active", label: "Active" },
+                { id: "failed", label: "Failed" },
+                { id: "dead", label: "Dead-letter" },
+              ].map((filter) => (
+                <Button
+                  key={filter.id}
+                  type="button"
+                  className={`rounded-md border px-2 py-1 text-[10px] ${
+                    runFilter === filter.id
+                      ? "border-emerald-500/50 text-emerald-200"
+                      : "text-gray-300 hover:bg-muted/60"
+                  }`}
+                  onClick={() => setRunFilter(filter.id as typeof runFilter)}
+                >
+                  {filter.label}
+                </Button>
+              ))}
+            </div>
+            {filteredRunList.length === 0 ? (
+              <div className="text-[11px] text-gray-500">No runs yet.</div>
+            ) : (
+              <div className="space-y-2 text-xs text-gray-300">
+                {filteredRunList.slice(0, 6).map((run) => {
+                  const statusClass =
+                    run.status === "completed"
+                      ? "text-emerald-200"
+                      : run.status === "failed"
+                        ? "text-rose-200"
+                        : run.status === "dead_lettered"
+                          ? "text-rose-300"
+                        : run.status === "running"
+                          ? "text-sky-200"
+                          : run.status === "queued"
+                            ? "text-amber-200"
+                            : "text-gray-300";
+                  return (
+                    <div
+                      key={run.id}
+                      className="rounded-md border border-border/60 bg-card/70 p-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className={`text-[10px] uppercase ${statusClass}`}>
+                            {run.status}
+                          </div>
+                          <div className="text-[11px] text-gray-400">
+                            {new Date(run.createdAt).toLocaleString()}
+                          </div>
+                          {typeof run.retryCount === "number" && typeof run.maxAttempts === "number" && (
+                            <div className="text-[10px] text-gray-500">
+                              Retries: {run.retryCount}/{run.maxAttempts}
+                            </div>
+                          )}
+                          {run.nextRetryAt && (
+                            <div className="text-[10px] text-amber-200">
+                              Retry at {new Date(run.nextRetryAt).toLocaleString()}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
+                            onClick={() => void handleOpenRunDetail(run.id)}
+                          >
+                            Details
+                          </Button>
+                          {(run.status === "failed" || run.status === "paused") && (
+                            <Button
+                              type="button"
+                              className="rounded-md border px-2 py-1 text-[10px] text-amber-200 hover:bg-amber-500/10"
+                              onClick={() => void handleResumeRun(run.id, "resume")}
+                            >
+                              Resume
+                            </Button>
+                          )}
+                          <Button
+                            type="button"
+                            className="rounded-md border px-2 py-1 text-[10px] text-sky-200 hover:bg-sky-500/10"
+                            onClick={() => void handleResumeRun(run.id, "replay")}
+                          >
+                            Replay
+                          </Button>
+                          {(run.status === "queued" || run.status === "running") && (
+                            <Button
+                              type="button"
+                              className="rounded-md border px-2 py-1 text-[10px] text-rose-200 hover:bg-rose-500/10"
+                              onClick={() => void handleCancelRun(run.id)}
+                            >
+                              Cancel
+                            </Button>
+                          )}
+                          {run.status === "dead_lettered" && (
+                            <Button
+                              type="button"
+                              className="rounded-md border px-2 py-1 text-[10px] text-amber-200 hover:bg-amber-500/10"
+                              onClick={() => void handleRequeueDeadLetter(run.id)}
+                            >
+                              Requeue
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      {run.errorMessage && (
+                        <div className="mt-2 text-[10px] text-rose-300">
+                          {run.errorMessage}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
         <CanvasBoard
           viewportRef={viewportRef}
@@ -3647,6 +4030,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         setUpdaterSamples={setUpdaterSamples}
         updaterSampleLoading={updaterSampleLoading}
         runtimeState={runtimeState}
+        pathDebugSnapshot={
+          activePathId ? pathDebugSnapshots[activePathId] : null
+        }
         updateSelectedNode={updateSelectedNode}
         updateSelectedNodeConfig={updateSelectedNodeConfig}
         handleFetchParserSample={handleFetchParserSample}
@@ -3663,6 +4049,84 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         saveDbNodePresets={saveDbNodePresets}
         toast={toast}
       />
+      <Dialog
+        open={runDetailOpen}
+        onOpenChange={(open) => {
+          setRunDetailOpen(open);
+          if (!open) setRunDetail(null);
+        }}
+      >
+        <DialogContent className="max-w-3xl border border-border bg-card text-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg">Run Details</DialogTitle>
+            <DialogDescription className="text-sm text-gray-400">
+              Persistent AI Path runtime snapshot.
+            </DialogDescription>
+          </DialogHeader>
+          {runDetailLoading ? (
+            <div className="text-sm text-gray-400">Loading...</div>
+          ) : runDetail ? (
+            <div className="space-y-4 text-xs text-gray-300">
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div>
+                  <span className="text-[10px] uppercase text-gray-500">Status</span>
+                  <div className="text-sm">{runDetail.run.status}</div>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase text-gray-500">Run ID</span>
+                  <div className="font-mono text-[11px]">{runDetail.run.id}</div>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase text-gray-500">Created</span>
+                  <div>{new Date(runDetail.run.createdAt).toLocaleString()}</div>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase text-gray-500">Started</span>
+                  <div>
+                    {runDetail.run.startedAt
+                      ? new Date(runDetail.run.startedAt).toLocaleString()
+                      : "—"}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase text-gray-500">Finished</span>
+                  <div>
+                    {runDetail.run.finishedAt
+                      ? new Date(runDetail.run.finishedAt).toLocaleString()
+                      : "—"}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <Label className="text-[10px] uppercase text-gray-500">Run</Label>
+                <Textarea
+                  className="mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
+                  readOnly
+                  value={JSON.stringify(runDetail.run, null, 2)}
+                />
+              </div>
+              <div>
+                <Label className="text-[10px] uppercase text-gray-500">Nodes</Label>
+                <Textarea
+                  className="mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
+                  readOnly
+                  value={JSON.stringify(runDetail.nodes, null, 2)}
+                />
+              </div>
+              <div>
+                <Label className="text-[10px] uppercase text-gray-500">Events</Label>
+                <Textarea
+                  className="mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200"
+                  readOnly
+                  value={JSON.stringify(runDetail.events, null, 2)}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm text-gray-400">No run selected.</div>
+          )}
+        </DialogContent>
+      </Dialog>
       <Dialog open={presetsModalOpen} onOpenChange={setPresetsModalOpen}>
         <DialogContent className="max-w-2xl border border-border bg-card text-white">
           <DialogHeader>

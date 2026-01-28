@@ -40,6 +40,10 @@ OPENAI_API_KEY=...
 OLLAMA_BASE_URL=http://localhost:11434
 BASE_API_URL=https://api.baselinker.com/connector.php
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+AI_PATHS_RUN_CONCURRENCY=1
+AI_PATHS_RUN_MAX_ATTEMPTS=3
+AI_PATHS_RUN_BACKOFF_MS=5000
+AI_PATHS_RUN_BACKOFF_MAX_MS=60000
 ```
 
 ## Stack (Actual Versions)
@@ -103,6 +107,9 @@ See `src/features/products/services/product-provider.ts` and the repository impl
   `src/features/products/services/aiTranslationService.ts`, plus product AI job processing in
   `src/features/jobs/workers/productAiQueue.ts` (orchestrated by
   `src/features/jobs/services/productAiService.ts`)
+- **AI Paths persistent runtime**: run records live in `AiPathRun`, `AiPathRunNode`, `AiPathRunEvent`
+  (Prisma) or `ai_path_runs`, `ai_path_run_nodes`, `ai_path_run_events` (Mongo). Queue worker:
+  `src/features/jobs/workers/aiPathRunQueue.ts`.
 - **Agent runtime**: `src/features/agent-runtime/` (planning, execution, memory, tool calls)
 - **Chatbot feature**: `src/features/chatbot/` (UI, hooks, helpers)
 - **Agent creator feature**: `src/features/agentcreator/` (agent settings UI)

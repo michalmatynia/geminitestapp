@@ -352,6 +352,7 @@ export const NOTIFICATION_INPUT_PORTS = [
 export const PATH_INDEX_KEY = "ai_paths_index";
 export const AI_PATHS_LAST_ERROR_KEY = "ai_paths_last_error";
 export const PATH_CONFIG_PREFIX = "ai_paths_config_";
+export const PATH_DEBUG_PREFIX = "ai_paths_debug_";
 export const CLUSTER_PRESETS_KEY = "ai_paths_cluster_presets";
 export const DB_QUERY_PRESETS_KEY = "ai_paths_db_query_presets";
 export const DB_NODE_PRESETS_KEY = "ai_paths_db_node_presets";

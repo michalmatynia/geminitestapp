@@ -49,6 +49,33 @@ export type EvaluateGraphOptions = {
   deferPoll?: boolean;
   skipAiJobs?: boolean;
   seedOutputs?: Record<string, RuntimePortValues>;
+  skipNodeIds?: Set<string> | string[];
+  onNodeStart?: (payload: {
+    node: AiNode;
+    nodeInputs: RuntimePortValues;
+    prevOutputs: RuntimePortValues;
+    iteration: number;
+  }) => void | Promise<void>;
+  onNodeFinish?: (payload: {
+    node: AiNode;
+    nodeInputs: RuntimePortValues;
+    prevOutputs: RuntimePortValues;
+    nextOutputs: RuntimePortValues;
+    changed: boolean;
+    iteration: number;
+  }) => void | Promise<void>;
+  onNodeError?: (payload: {
+    node: AiNode;
+    nodeInputs: RuntimePortValues;
+    prevOutputs: RuntimePortValues;
+    error: unknown;
+    iteration: number;
+  }) => void | Promise<void>;
+  onIterationEnd?: (payload: {
+    iteration: number;
+    inputs: Record<string, RuntimePortValues>;
+    outputs: Record<string, RuntimePortValues>;
+  }) => void | Promise<void>;
   fetchEntityByType: (
     entityType: string,
     entityId: string
@@ -99,6 +126,11 @@ export async function evaluateGraph({
   deferPoll,
   skipAiJobs,
   seedOutputs,
+  skipNodeIds,
+  onNodeStart,
+  onNodeFinish,
+  onNodeError,
+  onIterationEnd,
   fetchEntityByType,
   reportAiPathsError,
   toast,
@@ -143,6 +175,9 @@ export async function evaluateGraph({
     !triggerNodeId ||
     activeNodeIds.has(node.id) ||
     alwaysActiveTypes.has(node.type);
+  const skipNodeSet = skipNodeIds
+    ? new Set(Array.isArray(skipNodeIds) ? skipNodeIds : Array.from(skipNodeIds))
+    : null;
 
   const fetchEntityCached = async (entityType: string, entityId: string) => {
     if (!entityType || !entityId) return null;
@@ -257,47 +292,78 @@ export async function evaluateGraph({
       const prevOutputs = outputs[node.id] ?? {};
       let nextOutputs: RuntimePortValues = prevOutputs;
 
+      if (skipNodeSet?.has(node.id)) {
+        if (!outputs[node.id]) {
+          outputs[node.id] = prevOutputs;
+        }
+        continue;
+      }
+
       const handler = HANDLERS[node.type];
       if (handler) {
-        const result = await handler({
+        if (onNodeStart) {
+          await onNodeStart({ node, nodeInputs, prevOutputs, iteration });
+        }
+        try {
+          const result = await handler({
+            node,
+            nodeInputs,
+            prevOutputs,
+            edges,
+            nodes,
+            activePathId,
+            triggerNodeId,
+            triggerEvent,
+            triggerContext,
+            deferPoll,
+            skipAiJobs,
+            now,
+            allOutputs: outputs,
+            allInputs: nextInputs,
+            fetchEntityCached,
+            reportAiPathsError,
+            toast,
+            simulationEntityType,
+            simulationEntityId,
+            resolvedEntity,
+            fallbackEntityId,
+            executed,
+          });
+          nextOutputs = result;
+        } catch (error) {
+          if (onNodeError) {
+            await onNodeError({ node, nodeInputs, prevOutputs, error, iteration });
+          }
+          throw error;
+        }
+      } else {
+        // Default behavior for unknown nodes or if no outputs changed
+        if (!outputs[node.id]) {
+          nextOutputs = prevOutputs;
+        }
+      }
+
+      const didChange = JSON.stringify(prevOutputs) !== JSON.stringify(nextOutputs);
+      if (didChange) {
+        outputs[node.id] = nextOutputs;
+        changed = true;
+      }
+      if (handler && onNodeFinish) {
+        await onNodeFinish({
           node,
           nodeInputs,
           prevOutputs,
-          edges,
-          nodes,
-          activePathId,
-          triggerNodeId,
-          triggerEvent,
-          triggerContext,
-          deferPoll,
-          skipAiJobs,
-          now,
-          allOutputs: outputs,
-          allInputs: nextInputs,
-          fetchEntityCached,
-          reportAiPathsError,
-          toast,
-          simulationEntityType,
-          simulationEntityId,
-          resolvedEntity,
-          fallbackEntityId,
-          executed,
+          nextOutputs,
+          changed: didChange,
+          iteration,
         });
-        nextOutputs = result;
-      } else {
-        // Default behavior for unknown nodes or if no outputs changed
-         if (!outputs[node.id]) {
-            nextOutputs = prevOutputs;
-          }
-      }
-
-      if (JSON.stringify(prevOutputs) !== JSON.stringify(nextOutputs)) {
-        outputs[node.id] = nextOutputs;
-        changed = true;
       }
     }
 
     inputs = nextInputs;
+    if (onIterationEnd) {
+      await onIterationEnd({ iteration, inputs, outputs });
+    }
     if (!changed) break;
   }
 

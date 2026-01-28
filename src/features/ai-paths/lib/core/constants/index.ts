@@ -87,7 +87,7 @@ export const DATABASE_INPUT_PORTS = [
   "aiQuery",
 ];
 export const DEFAULT_DB_QUERY: DbQueryConfig = {
-  provider: "auto",
+  provider: "mongodb",
   collection: "products",
   mode: "preset",
   preset: "by_id",
@@ -385,7 +385,7 @@ export const PORT_COMPATIBILITY: Record<string, string[]> = {
   errors: ["errors", "value", "result"],
   queryCallback: ["queryCallback", "aiPrompt", "value", "result"],
   aiPrompt: ["prompt"],
-  schema: ["schema", "context", "prompt", "value"],
+  schema: ["schema"],
   aiQuery: ["aiQuery", "query", "queryCallback", "value"],
 };
 
@@ -642,7 +642,7 @@ export const initialNodes: AiNode[] = [
           },
         ],
         query: {
-          provider: "auto",
+          provider: "mongodb",
           collection: "products",
           mode: "preset",
           preset: "by_id",

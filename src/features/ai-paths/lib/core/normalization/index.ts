@@ -325,7 +325,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
     }
     if (node.type === "database") {
       const defaultQuery = {
-        provider: "auto" as const,
+        provider: "mongodb" as const,
         collection: "products",
         mode: "preset" as const,
         preset: "by_id" as const,
@@ -472,7 +472,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
               },
             ];
       const defaultQuery = {
-        provider: "auto" as const,
+        provider: "mongodb" as const,
         collection: "products",
         mode: "preset" as const,
         preset: "by_id" as const,

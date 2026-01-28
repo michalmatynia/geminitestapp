@@ -79,7 +79,7 @@ type AiPathsSettingsProps = {
 };
 
 const DEFAULT_DB_QUERY: DbQueryConfig = {
-  provider: "auto",
+  provider: "mongodb",
   collection: "products",
   mode: "preset",
   preset: "by_id",
@@ -1417,31 +1417,45 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     entityType: string,
     entityId: string
   ) => {
-    if (!entityId.trim()) {
-      toast("Enter an entity ID to load a sample.", { variant: "error" });
-      return;
-    }
     if (entityType === "custom") {
       toast("Use pasted JSON for custom samples.", { variant: "error" });
       return;
     }
     setUpdaterSampleLoading(true);
     try {
-      const sample = await fetchEntityByType(entityType, entityId);
+      let sample: unknown = null;
+      let fetchedId = entityId;
+
+      // If no entityId provided, fetch first document from collection
+      if (!entityId.trim()) {
+        const res = await fetch(`/api/databases/browse?collection=${encodeURIComponent(entityType)}&limit=1`);
+        if (res.ok) {
+          const data = await res.json() as { documents?: Record<string, unknown>[]; _id?: string; id?: string };
+          const firstDoc = data.documents?.[0];
+          if (firstDoc) {
+            sample = firstDoc;
+            fetchedId = ((firstDoc._id ?? firstDoc.id ?? "") as string);
+          }
+        }
+      } else {
+        sample = await fetchEntityByType(entityType, entityId);
+      }
+
       if (!sample) {
-        toast("No sample found for that ID.", { variant: "error" });
+        toast("No sample found.", { variant: "error" });
         return;
       }
       setUpdaterSamples((prev) => ({
         ...prev,
         [nodeId]: {
           entityType,
-          entityId,
+          entityId: fetchedId,
           json: JSON.stringify(sample, null, 2),
           depth: prev[nodeId]?.depth ?? 2,
           includeContainers: prev[nodeId]?.includeContainers ?? false,
         },
       }));
+      toast("Sample fetched.", { variant: "success" });
     } finally {
       setUpdaterSampleLoading(false);
     }

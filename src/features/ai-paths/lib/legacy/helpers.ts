@@ -108,7 +108,7 @@ const DATABASE_INPUT_PORTS = [
   "content_en",
 ];
 const DEFAULT_DB_QUERY: DbQueryConfig = {
-  provider: "auto",
+  provider: "mongodb",
   collection: "products",
   mode: "preset",
   preset: "by_id",
@@ -1250,7 +1250,7 @@ const getDefaultConfigForType = (
           },
         ],
         query: {
-          provider: "auto",
+          provider: "mongodb",
           collection: "products",
           mode: "preset",
           preset: "by_id",
@@ -2240,7 +2240,7 @@ const initialNodes: AiNode[] = [
           },
         ],
         query: {
-          provider: "auto",
+          provider: "mongodb",
           collection: "products",
           mode: "preset",
           preset: "by_id",

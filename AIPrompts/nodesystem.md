@@ -5,9 +5,7 @@ Direct queries to database
 
 I need to have logical operators in Database Query as well, for example, find all products created between and between
 
-I need to take care of the connections fucked by gemini
-
-When I select a preset, I want it to Automatically to show the query textfield, but not instantly overwrite my custom preset, only when I start writing over the custom preset, it overwrites what is in the custom preset and the preset selector changes again to custom
+* When I select a preset, I want it to Automatically to show the query textfield, but not instantly overwrite my custom preset, only when I start writing over the custom preset, it overwrites what is in the custom preset and the preset selector changes again to custom
 
 Mapping object (from Sample for example) should detect the type of object (if it's a string etc. actually it should come from an established DTO)
 

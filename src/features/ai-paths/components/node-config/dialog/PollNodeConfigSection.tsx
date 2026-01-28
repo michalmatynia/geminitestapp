@@ -32,7 +32,7 @@ export function PollNodeConfigSection({
   if (selectedNode.type !== "poll") return null;
 
   const defaultQuery: DbQueryConfig = {
-    provider: "auto",
+    provider: "mongodb",
     collection: "products",
     mode: "preset",
     preset: "by_id",

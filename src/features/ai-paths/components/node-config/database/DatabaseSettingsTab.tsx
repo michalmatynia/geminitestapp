@@ -8,6 +8,7 @@ import React from "react";
 
 
 import type { DatabaseConfig, DatabaseOperation, NodeConfig } from "@/features/ai-paths/lib";
+import { DB_COLLECTION_OPTIONS } from "@/features/ai-paths/lib";
 import { formatPortLabel } from "@/features/ai-paths/utils/ui-utils";
 
 type DatabaseSettingsTabProps = {
@@ -63,9 +64,9 @@ export function DatabaseSettingsTab({
       {operation === "insert" && (
         <div className="space-y-4">
           <div>
-            <Label className="text-xs text-gray-400">Entity Type</Label>
+            <Label className="text-xs text-gray-400">Collection Type</Label>
             <Select
-              value={databaseConfig.entityType ?? "product"}
+              value={databaseConfig.entityType ?? "products"}
               onValueChange={(value) =>
                 updateSelectedNodeConfig({
                   database: { ...databaseConfig, entityType: value },
@@ -73,12 +74,14 @@ export function DatabaseSettingsTab({
               }
             >
               <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-                <SelectValue placeholder="Entity type" />
+                <SelectValue placeholder="Collection type" />
               </SelectTrigger>
-              <SelectContent className="border-border bg-gray-900">
-                <SelectItem value="product">Product</SelectItem>
-                <SelectItem value="note">Note</SelectItem>
-                <SelectItem value="custom">Custom</SelectItem>
+              <SelectContent className="border-border bg-gray-900 max-h-60 overflow-y-auto">
+                {DB_COLLECTION_OPTIONS.filter((opt) => opt.value !== "custom").map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -156,9 +159,9 @@ export function DatabaseSettingsTab({
       {operation === "delete" && (
         <div className="space-y-4">
           <div>
-            <Label className="text-xs text-gray-400">Entity Type</Label>
+            <Label className="text-xs text-gray-400">Collection Type</Label>
             <Select
-              value={databaseConfig.entityType ?? "product"}
+              value={databaseConfig.entityType ?? "products"}
               onValueChange={(value) =>
                 updateSelectedNodeConfig({
                   database: { ...databaseConfig, entityType: value },
@@ -166,39 +169,16 @@ export function DatabaseSettingsTab({
               }
             >
               <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-                <SelectValue placeholder="Entity type" />
+                <SelectValue placeholder="Collection type" />
               </SelectTrigger>
-              <SelectContent className="border-border bg-gray-900">
-                <SelectItem value="product">Product</SelectItem>
-                <SelectItem value="note">Note</SelectItem>
-                <SelectItem value="custom">Custom</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs text-gray-400">ID Field</Label>
-            <Select
-              value={databaseConfig.idField ?? "entityId"}
-              onValueChange={(value) =>
-                updateSelectedNodeConfig({
-                  database: { ...databaseConfig, idField: value },
-                })
-              }
-            >
-              <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-                <SelectValue placeholder="Select ID input" />
-              </SelectTrigger>
-              <SelectContent className="border-border bg-gray-900">
-                {availablePorts.map((port) => (
-                  <SelectItem key={port} value={port}>
-                    {formatPortLabel(port)}
+              <SelectContent className="border-border bg-gray-900 max-h-60 overflow-y-auto">
+                {DB_COLLECTION_OPTIONS.filter((opt) => opt.value !== "custom").map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <p className="mt-2 text-[11px] text-gray-500">
-              The selected input will be used as the entity ID to delete.
-            </p>
           </div>
         </div>
       )}

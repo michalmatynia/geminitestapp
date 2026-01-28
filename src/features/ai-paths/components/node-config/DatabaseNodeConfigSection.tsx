@@ -109,6 +109,69 @@ export function DatabaseNodeConfigSection({
   const queryTemplateRef = React.useRef<HTMLTextAreaElement | null>(null);
   const aiPromptRef = React.useRef<HTMLTextAreaElement | null>(null);
   const lastInjectedResponseRef = React.useRef<string>("");
+  const lastAutoFetchedRef = React.useRef<string>("");
+
+  // Auto-intercept incoming signal data and fetch sample for Field Mapping
+  React.useEffect(() => {
+    if (selectedNode.type !== "database") return;
+
+    const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
+    const runtimeOutputs = runtimeState.outputs[selectedNode.id] ?? {};
+
+    // Extract potential entityId/productId from various sources
+    let detectedId: string | undefined;
+    let detectedCollection: string | undefined;
+
+    // Check direct inputs
+    if (typeof runtimeInputs.entityId === "string" && runtimeInputs.entityId.trim()) {
+      detectedId = runtimeInputs.entityId.trim();
+    } else if (typeof runtimeInputs.productId === "string" && runtimeInputs.productId.trim()) {
+      detectedId = runtimeInputs.productId.trim();
+    } else if (typeof runtimeInputs.value === "string" && runtimeInputs.value.trim()) {
+      detectedId = runtimeInputs.value.trim();
+    }
+
+    // Check context input for nested entityId/entityType
+    const contextInput = runtimeInputs.context;
+    if (contextInput && typeof contextInput === "object") {
+      const ctx = contextInput as Record<string, unknown>;
+      if (!detectedId && typeof ctx.entityId === "string" && ctx.entityId.trim()) {
+        detectedId = ctx.entityId.trim();
+      }
+      if (typeof ctx.entityType === "string" && ctx.entityType.trim()) {
+        detectedCollection = ctx.entityType.trim();
+      }
+    }
+
+    // Check for collection from inputs
+    if (!detectedCollection) {
+      if (typeof runtimeInputs.entityType === "string" && runtimeInputs.entityType.trim()) {
+        detectedCollection = runtimeInputs.entityType.trim();
+      } else if (typeof runtimeInputs.collection === "string" && runtimeInputs.collection.trim()) {
+        detectedCollection = runtimeInputs.collection.trim();
+      }
+    }
+
+    // Use the configured collection from queryConfig if not detected
+    const persistedDatabase = selectedNode.config?.database;
+    const queryCollection = persistedDatabase?.query?.collection ?? "products";
+    const finalCollection = detectedCollection || queryCollection;
+
+    // Only auto-fetch if we have an ID and it's different from last fetch
+    if (!detectedId) return;
+
+    const fetchKey = `${finalCollection}:${detectedId}`;
+    if (fetchKey === lastAutoFetchedRef.current) return;
+
+    // Check if we already have a sample for this node
+    const existingSample = updaterSamples[selectedNode.id];
+    if (existingSample?.entityId === detectedId && existingSample?.json?.trim()) return;
+
+    lastAutoFetchedRef.current = fetchKey;
+
+    // Auto-fetch the sample
+    void handleFetchUpdaterSample(selectedNode.id, finalCollection, detectedId);
+  }, [selectedNode.id, selectedNode.type, selectedNode.config?.database, runtimeState, updaterSamples, handleFetchUpdaterSample]);
 
   React.useEffect(() => {
     if (selectedNode.type !== "database") return;
@@ -118,6 +181,7 @@ export function DatabaseNodeConfigSection({
       if (callbackValue !== lastInjectedResponseRef.current) {
         lastInjectedResponseRef.current = callbackValue;
         setPendingAiQuery(callbackValue);
+        setDatabaseTab("constructor"); // Auto-switch to constructor tab to show pending query
         toast("AI query ready for review.", { variant: "success" });
       }
     }
@@ -181,6 +245,8 @@ export function DatabaseNodeConfigSection({
     setDbPresetDescription("");
     setDatabaseTab("settings");
     setQueryValidatorEnabled(false);
+    setPendingAiQuery("");
+    lastInjectedResponseRef.current = "";
   }, [selectedNode.id]);
 
   React.useEffect(() => {
@@ -203,7 +269,7 @@ export function DatabaseNodeConfigSection({
   if (selectedNode.type !== "database") return null;
 
                 const defaultQuery: DbQueryConfig = {
-                  provider: "auto",
+                  provider: "mongodb",
                   collection: "products",
                   mode: "preset",
                   preset: "by_id",
@@ -314,6 +380,10 @@ export function DatabaseNodeConfigSection({
                     // Bundle keys are handled separately below
                     return;
                   }
+                  if (port === "result") {
+                    // result is not a valid placeholder for database queries
+                    return;
+                  }
                   addPlaceholder(`{{${port}}}`);
                 });
                 // Add bundle keys as {{bundle.keyName}}
@@ -350,6 +420,7 @@ export function DatabaseNodeConfigSection({
                     return;
                   }
                   if (sourcePort === "bundle") return;
+                  if (sourcePort === "result") return; // result is not a valid placeholder
                   addPlaceholder(`{{${sourcePort}}}`);
                 });
                 const sampleState =
@@ -1363,7 +1434,6 @@ export function DatabaseNodeConfigSection({
                             <SelectValue placeholder="Select provider" />
                           </SelectTrigger>
                           <SelectContent className="border-border bg-gray-900">
-                            <SelectItem value="auto">Auto</SelectItem>
                             <SelectItem value="mongodb">MongoDB</SelectItem>
                           </SelectContent>
                         </Select>
@@ -1381,7 +1451,7 @@ export function DatabaseNodeConfigSection({
                           <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
                             <SelectValue placeholder="Select collection" />
                           </SelectTrigger>
-                          <SelectContent className="border-border bg-gray-900">
+                          <SelectContent className="border-border bg-gray-900 max-h-60 overflow-y-auto">
                             {DB_COLLECTION_OPTIONS.map((option) => (
                               <SelectItem key={option.value} value={option.value}>
                                 {option.label}

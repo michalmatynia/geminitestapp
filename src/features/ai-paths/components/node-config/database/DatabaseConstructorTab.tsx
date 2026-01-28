@@ -1,7 +1,20 @@
 "use client";
 
-import { Button, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input } from "@/shared/ui";
+import { Button, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input, Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/ui";
+import { ChevronUp, ChevronDown, LayoutGrid } from "lucide-react";
 import React from "react";
+
+/** Extract code blocks from markdown-style ``` delimiters */
+function extractCodeSnippets(text: string): string[] {
+  const regex = /```[\w]*\n?([\s\S]*?)```/g;
+  const snippets: string[] = [];
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    const code = match[1]?.trim();
+    if (code) snippets.push(code);
+  }
+  return snippets;
+}
 
 
 
@@ -18,7 +31,7 @@ import type {
   UpdaterSampleState,
 } from "@/features/ai-paths/lib";
 import { formatPortLabel } from "@/features/ai-paths/utils/ui-utils";
-import { TEMPLATE_SNIPPETS } from "@/features/ai-paths/config/query-presets";
+import { TEMPLATE_SNIPPETS, SORT_PRESETS, PROJECTION_PRESETS } from "@/features/ai-paths/config/query-presets";
 import type { AiQuery, DatabasePresetOption, SchemaData } from "./types";
 
 type DatabaseConstructorTabProps = {
@@ -114,6 +127,22 @@ export function DatabaseConstructorTab({
   availablePorts,
   uniqueTargetPathOptions,
 }: DatabaseConstructorTabProps) {
+  // State for code snippet navigation in AI responses
+  const [selectedSnippetIndex, setSelectedSnippetIndex] = React.useState<number>(-1);
+  // State for template snippets modal
+  const [snippetsModalOpen, setSnippetsModalOpen] = React.useState(false);
+
+  // Extract code snippets from pending AI query
+  const codeSnippets = React.useMemo(() => {
+    if (!pendingAiQuery) return [];
+    return extractCodeSnippets(pendingAiQuery);
+  }, [pendingAiQuery]);
+
+  // Reset snippet selection when pending query changes
+  React.useEffect(() => {
+    setSelectedSnippetIndex(codeSnippets.length > 0 ? 0 : -1);
+  }, [pendingAiQuery, codeSnippets.length]);
+
   const applyQueryTemplateUpdate = (nextQuery: string) => {
     const currentPresetId = databaseConfig.presetId ?? "custom";
     const currentAiQueryId = selectedAiQueryId;
@@ -167,15 +196,24 @@ export function DatabaseConstructorTab({
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-purple-400"></div>
           <span className="text-xs text-purple-100">AI query ready for review</span>
+          {codeSnippets.length > 0 && (
+            <span className="text-[10px] text-purple-300">
+              ({codeSnippets.length} code snippet{codeSnippets.length > 1 ? "s" : ""})
+            </span>
+          )}
         </div>
         <div className="flex gap-2">
           <Button
             type="button"
             className="h-7 rounded-md border border-emerald-700 bg-emerald-500/10 px-3 text-[10px] text-emerald-200 hover:bg-emerald-500/20"
             onClick={() => {
+              // Use selected snippet if available, otherwise use full response
+              const queryToAccept = selectedSnippetIndex >= 0 && codeSnippets[selectedSnippetIndex]
+                ? codeSnippets[selectedSnippetIndex]
+                : pendingAiQuery;
               const newQuery = {
                 id: `ai-${Date.now()}`,
-                query: pendingAiQuery,
+                query: queryToAccept,
                 timestamp: new Date().toISOString(),
               };
               setAiQueries((prev) => [...prev, newQuery]);
@@ -186,15 +224,22 @@ export function DatabaseConstructorTab({
                   query: {
                     ...queryConfig,
                     mode: "custom",
-                    queryTemplate: pendingAiQuery,
+                    queryTemplate: queryToAccept,
                   },
                 },
               });
               setPendingAiQuery("");
-              toast("AI query accepted and saved.", { variant: "success" });
+              toast(
+                selectedSnippetIndex >= 0 && codeSnippets[selectedSnippetIndex]
+                  ? `Code snippet ${selectedSnippetIndex + 1} accepted.`
+                  : "AI query accepted and saved.",
+                { variant: "success" }
+              );
             }}
           >
-            Accept
+            {selectedSnippetIndex >= 0 && codeSnippets.length > 0
+              ? `Accept Snippet ${selectedSnippetIndex + 1}`
+              : "Accept"}
           </Button>
           <Button
             type="button"
@@ -208,9 +253,54 @@ export function DatabaseConstructorTab({
           </Button>
         </div>
       </div>
-      <pre className="mt-2 max-h-[100px] overflow-auto rounded-md bg-card/70 p-2 text-[11px] text-gray-300 whitespace-pre-wrap break-all">
-        {pendingAiQuery}
-      </pre>
+
+      {/* Code snippet navigation */}
+      {codeSnippets.length > 0 && (
+        <div className="mt-2 flex items-center gap-2">
+          <div className="flex flex-col">
+            <Button
+              type="button"
+              className="h-5 w-5 rounded-sm border border-purple-600 bg-purple-500/20 p-0 text-purple-200 hover:bg-purple-500/40 disabled:opacity-30"
+              disabled={selectedSnippetIndex <= 0}
+              onClick={() => setSelectedSnippetIndex((prev) => Math.max(0, prev - 1))}
+            >
+              <ChevronUp className="h-3 w-3" />
+            </Button>
+            <Button
+              type="button"
+              className="h-5 w-5 rounded-sm border border-purple-600 bg-purple-500/20 p-0 text-purple-200 hover:bg-purple-500/40 disabled:opacity-30"
+              disabled={selectedSnippetIndex >= codeSnippets.length - 1}
+              onClick={() => setSelectedSnippetIndex((prev) => Math.min(codeSnippets.length - 1, prev + 1))}
+            >
+              <ChevronDown className="h-3 w-3" />
+            </Button>
+          </div>
+          <div className="flex-1 rounded-md border border-cyan-600/50 bg-cyan-500/10 p-2">
+            <div className="mb-1 flex items-center justify-between">
+              <span className="text-[10px] text-cyan-300">
+                Snippet {selectedSnippetIndex + 1} of {codeSnippets.length}
+              </span>
+              <Button
+                type="button"
+                className="h-5 rounded-sm border border-gray-600 bg-gray-500/20 px-2 text-[9px] text-gray-300 hover:bg-gray-500/40"
+                onClick={() => setSelectedSnippetIndex(-1)}
+              >
+                Show Full Response
+              </Button>
+            </div>
+            <pre className="max-h-20 overflow-auto rounded bg-card/70 p-2 text-[11px] text-cyan-100 whitespace-pre-wrap break-all">
+              {codeSnippets[selectedSnippetIndex]}
+            </pre>
+          </div>
+        </div>
+      )}
+
+      {/* Full response (shown when no snippet selected or no snippets available) */}
+      {(selectedSnippetIndex < 0 || codeSnippets.length === 0) && (
+        <pre className="mt-2 max-h-25 overflow-auto rounded-md bg-card/70 p-2 text-[11px] text-gray-300 whitespace-pre-wrap break-all">
+          {pendingAiQuery}
+        </pre>
+      )}
     </div>
   ) : null;
 
@@ -406,25 +496,101 @@ export function DatabaseConstructorTab({
 
       <div className="space-y-2">
         <Label className="text-xs text-gray-400">Template Snippets</Label>
-        <div className="flex flex-wrap gap-2">
-          {TEMPLATE_SNIPPETS.map((snippet) => (
-            <Button
-              key={snippet.label}
-              type="button"
-              className="rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60"
-              onClick={() => {
-                setSelectedAiQueryId("");
-                updateQueryConfig({
-                  mode: "custom",
-                  queryTemplate: snippet.value,
-                });
-              }}
-            >
-              {snippet.label}
-            </Button>
-          ))}
-        </div>
+        <Button
+          type="button"
+          className="flex items-center gap-2 rounded-md border border-purple-600 bg-purple-500/10 px-3 py-1.5 text-[11px] text-purple-200 hover:bg-purple-500/20"
+          onClick={() => setSnippetsModalOpen(true)}
+        >
+          <LayoutGrid className="h-3.5 w-3.5" />
+          Browse Snippets
+        </Button>
       </div>
+
+      {/* Template Snippets Modal */}
+      <Dialog open={snippetsModalOpen} onOpenChange={setSnippetsModalOpen}>
+        <DialogContent className="max-w-2xl border border-border bg-card text-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg">Template Snippets</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+            {/* Query Templates */}
+            <div className="space-y-2">
+              <Label className="text-xs text-gray-400 uppercase tracking-wide">Query Templates</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {TEMPLATE_SNIPPETS.map((snippet) => (
+                  <Button
+                    key={snippet.label}
+                    type="button"
+                    className="h-auto flex-col items-start gap-1 rounded-md border border-emerald-600/50 bg-emerald-500/10 p-3 text-left hover:bg-emerald-500/20"
+                    onClick={() => {
+                      setSelectedAiQueryId("");
+                      updateQueryConfig({
+                        mode: "custom",
+                        queryTemplate: snippet.value,
+                      });
+                      setSnippetsModalOpen(false);
+                      toast(`Applied: ${snippet.label}`, { variant: "success" });
+                    }}
+                  >
+                    <span className="text-[11px] font-medium text-emerald-200">{snippet.label}</span>
+                    <pre className="text-[9px] text-gray-400 whitespace-pre-wrap break-all line-clamp-2">{snippet.value}</pre>
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Sort Presets */}
+            <div className="space-y-2">
+              <Label className="text-xs text-gray-400 uppercase tracking-wide">Sort Options</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {SORT_PRESETS.map((preset) => (
+                  <Button
+                    key={preset.id}
+                    type="button"
+                    className="h-auto flex-col items-start gap-1 rounded-md border border-sky-600/50 bg-sky-500/10 p-3 text-left hover:bg-sky-500/20"
+                    onClick={() => {
+                      updateQueryConfig({
+                        mode: "custom",
+                        sortTemplate: preset.value,
+                      });
+                      setSnippetsModalOpen(false);
+                      toast(`Applied sort: ${preset.label}`, { variant: "success" });
+                    }}
+                  >
+                    <span className="text-[11px] font-medium text-sky-200">{preset.label}</span>
+                    <pre className="text-[9px] text-gray-400 whitespace-pre-wrap break-all">{preset.value}</pre>
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Projection Presets */}
+            <div className="space-y-2">
+              <Label className="text-xs text-gray-400 uppercase tracking-wide">Projection (Fields)</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {PROJECTION_PRESETS.map((preset) => (
+                  <Button
+                    key={preset.id}
+                    type="button"
+                    className="h-auto flex-col items-start gap-1 rounded-md border border-amber-600/50 bg-amber-500/10 p-3 text-left hover:bg-amber-500/20"
+                    onClick={() => {
+                      updateQueryConfig({
+                        mode: "custom",
+                        projectionTemplate: preset.value,
+                      });
+                      setSnippetsModalOpen(false);
+                      toast(`Applied projection: ${preset.label}`, { variant: "success" });
+                    }}
+                  >
+                    <span className="text-[11px] font-medium text-amber-200">{preset.label}</span>
+                    <pre className="text-[9px] text-gray-400 whitespace-pre-wrap break-all line-clamp-2">{preset.value}</pre>
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="space-y-3">
         <Label className="text-xs text-gray-400">AI Prompt (Output to AI Node)</Label>
@@ -440,7 +606,16 @@ export function DatabaseConstructorTab({
               },
             })
           }
-          placeholder="Write a MongoDB query that finds products where..."
+          onKeyDown={(event) => {
+            // Send on Ctrl+Enter or Cmd+Enter
+            if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+              event.preventDefault();
+              if (onSendToAi && selectedNode?.id && databaseConfig.aiPrompt?.trim() && !sendingToAi) {
+                void onSendToAi(selectedNode.id, databaseConfig.aiPrompt);
+              }
+            }
+          }}
+          placeholder="Write a MongoDB query that finds products where... (Ctrl+Enter to send)"
         />
         <div className="flex flex-wrap gap-2">
           <div className="text-[11px] text-gray-400">Context placeholders:</div>
@@ -460,22 +635,48 @@ export function DatabaseConstructorTab({
           >
             Operation: {operation}
           </Button>
-          <Button
-            type="button"
-            className="rounded-md border border-blue-700 bg-blue-500/10 px-2 py-1 text-[10px] text-blue-200 hover:bg-blue-500/20"
-            onClick={() => {
-              const placeholder = `{{collection:${queryConfig.collection}}}`;
-              const currentValue = databaseConfig.aiPrompt ?? "";
-              updateSelectedNodeConfig({
-                database: {
-                  ...databaseConfig,
-                  aiPrompt: currentValue + placeholder,
-                },
-              });
-            }}
-          >
-            Collection: {queryConfig.collection}
-          </Button>
+          {hasSchemaConnection && fetchedDbSchema?.collections && fetchedDbSchema.collections.length > 0 ? (
+            fetchedDbSchema.collections.map((coll) => {
+              const schemaFields = coll.fields?.map((f) => `${f.name}: ${f.type}`).join(", ") ?? "";
+              const schemaContext = `Collection "${coll.name}" with fields: ${schemaFields || "unknown"}`;
+              return (
+                <Button
+                  key={coll.name}
+                  type="button"
+                  className="rounded-md border border-cyan-700 bg-cyan-500/10 px-2 py-1 text-[10px] text-cyan-200 hover:bg-cyan-500/20"
+                  onClick={() => {
+                    const placeholder = `{{schema:${schemaContext}}}`;
+                    const currentValue = databaseConfig.aiPrompt ?? "";
+                    updateSelectedNodeConfig({
+                      database: {
+                        ...databaseConfig,
+                        aiPrompt: currentValue + placeholder,
+                      },
+                    });
+                  }}
+                >
+                  Schema: {coll.name}
+                </Button>
+              );
+            })
+          ) : (
+            <Button
+              type="button"
+              className="rounded-md border border-blue-700 bg-blue-500/10 px-2 py-1 text-[10px] text-blue-200 hover:bg-blue-500/20"
+              onClick={() => {
+                const placeholder = `{{collection:${queryConfig.collection}}}`;
+                const currentValue = databaseConfig.aiPrompt ?? "";
+                updateSelectedNodeConfig({
+                  database: {
+                    ...databaseConfig,
+                    aiPrompt: currentValue + placeholder,
+                  },
+                });
+              }}
+            >
+              Collection: {queryConfig.collection}
+            </Button>
+          )}
           <Button
             type="button"
             className="rounded-md border border-purple-700 bg-purple-500/10 px-2 py-1 text-[10px] text-purple-200 hover:bg-purple-500/20"
@@ -579,31 +780,37 @@ export function DatabaseConstructorTab({
 
       {operation === "update" && (
         <div className="space-y-3 rounded-md border border-border bg-card/40 p-3">
-          <Label className="text-xs text-gray-400">Sample JSON</Label>
-          <div className="grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-center">
-            <Select
-              value={sampleState.entityType}
-              onValueChange={(value) =>
-                setUpdaterSamples((prev) => ({
-                  ...prev,
-                  [selectedNodeId]: {
-                    ...sampleState,
-                    entityType: value,
-                  },
-                }))
-              }
-            >
-              <SelectTrigger className="border-border bg-card/70 text-sm text-white">
-                <SelectValue placeholder="Entity type" />
-              </SelectTrigger>
-              <SelectContent className="border-border bg-gray-900">
-                <SelectItem value="product">Product</SelectItem>
-                <SelectItem value="note">Note</SelectItem>
-                <SelectItem value="custom">Custom</SelectItem>
-              </SelectContent>
-            </Select>
+          <Label className="text-xs text-gray-400">Sample JSON (fetch to enable Field Mapping)</Label>
+          <div className="flex flex-wrap gap-2 items-center">
+            {hasSchemaConnection && fetchedDbSchema?.collections && fetchedDbSchema.collections.length > 0 && (
+              <Select
+                value={sampleState.entityType}
+                onValueChange={(value) => {
+                  setUpdaterSamples((prev) => ({
+                    ...prev,
+                    [selectedNodeId]: {
+                      ...sampleState,
+                      entityType: value,
+                    },
+                  }));
+                  // Auto-fetch first document from selected collection
+                  void onFetchUpdaterSample(selectedNodeId, value, "");
+                }}
+              >
+                <SelectTrigger className="w-[180px] border-border bg-card/70 text-sm text-white">
+                  <SelectValue placeholder="Select collection" />
+                </SelectTrigger>
+                <SelectContent className="border-border bg-gray-900 max-h-60 overflow-y-auto">
+                  {fetchedDbSchema.collections.map((coll) => (
+                    <SelectItem key={coll.name} value={coll.name}>
+                      {coll.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <Input
-              className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
+              className="w-[200px] rounded-md border border-border bg-card/70 text-sm text-white"
               value={sampleState.entityId}
               onChange={(event) =>
                 setUpdaterSamples((prev) => ({
@@ -614,12 +821,12 @@ export function DatabaseConstructorTab({
                   },
                 }))
               }
-              placeholder="Entity ID"
+              placeholder="Document ID"
             />
             <Button
               type="button"
               className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
-              disabled={updaterSampleLoading}
+              disabled={updaterSampleLoading || (hasSchemaConnection && !sampleState.entityType)}
               onClick={() =>
                 void onFetchUpdaterSample(
                   selectedNodeId,
@@ -631,6 +838,9 @@ export function DatabaseConstructorTab({
               {updaterSampleLoading ? "Loading..." : "Fetch sample"}
             </Button>
           </div>
+          {hasSchemaConnection && !fetchedDbSchema?.collections?.length && !schemaLoading && (
+            <p className="text-[11px] text-amber-300">Connect a Database Schema node to select collections</p>
+          )}
           <Textarea
             className="min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
             value={sampleState.json}
@@ -695,8 +905,10 @@ export function DatabaseConstructorTab({
         </div>
       )}
 
+      {/* Field Mapping: Show for query operations always, for update only after sample is fetched */}
+      {(operation !== "update" || sampleState.json.trim().length > 0) && (
       <div className="space-y-3 border-t border-border pt-4">
-        <Label className="text-xs text-gray-400">Field Mapping</Label>
+        <Label className="text-xs text-gray-400">Parameter Mapping</Label>
         <div className="flex flex-wrap items-center gap-2 mb-3">
           <Button
             type="button"
@@ -718,40 +930,14 @@ export function DatabaseConstructorTab({
         <div className="space-y-3">
           {mappings.map((mapping, index) => {
             const targetValue = mapping.targetPath ?? "";
+            const hasSourceSelected = !!mapping.sourcePort;
             return (
               <div
                 key={`${mapping.targetPath}-${index}`}
-                className="grid gap-2 sm:grid-cols-[1fr_140px_auto] sm:items-start"
+                className="flex flex-wrap gap-2 items-start"
               >
-                <div className="space-y-2">
-                  <Input
-                    className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
-                    value={targetValue}
-                    onChange={(event) =>
-                      updateMapping(index, {
-                        targetPath: event.target.value,
-                      })
-                    }
-                    placeholder="Target field path"
-                  />
-                  <Select
-                    onValueChange={(value) =>
-                      updateMapping(index, { targetPath: value })
-                    }
-                  >
-                    <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
-                      <SelectValue placeholder="Pick target field" />
-                    </SelectTrigger>
-                    <SelectContent className="border-border bg-gray-900">
-                      {uniqueTargetPathOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
+                {/* Step 1: Pick source field first */}
+                <div className="space-y-2 min-w-[140px]">
                   <Select
                     value={mapping.sourcePort}
                     onValueChange={(value) =>
@@ -759,7 +945,7 @@ export function DatabaseConstructorTab({
                     }
                   >
                     <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
-                      <SelectValue placeholder="Input" />
+                      <SelectValue placeholder="Pick source field" />
                     </SelectTrigger>
                     <SelectContent className="border-border bg-gray-900">
                       {availablePorts.map((port) => (
@@ -769,40 +955,109 @@ export function DatabaseConstructorTab({
                       ))}
                     </SelectContent>
                   </Select>
-                  {mapping.sourcePort === "bundle" && (
-                    <>
+                  {mapping.sourcePort === "bundle" && (() => {
+                    const sourcePath = mapping.sourcePath ?? "";
+                    // Check if sourcePath is from dropdown (matches a bundle key)
+                    const isFromBundleDropdown = bundleKeys.has(sourcePath) && sourcePath.trim() !== "";
+                    const hasCustomSourcePath = sourcePath.trim() !== "" && !isFromBundleDropdown;
+
+                    return (
+                      <>
+                        {/* Show text input only if dropdown value is not selected */}
+                        {!isFromBundleDropdown && (
+                          <Input
+                            className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                            value={sourcePath}
+                            onChange={(event) =>
+                              updateMapping(index, {
+                                sourcePath: event.target.value,
+                              })
+                            }
+                            placeholder="Bundle path"
+                          />
+                        )}
+                        {/* Show dropdown only if custom text is not entered */}
+                        {!hasCustomSourcePath && (
+                          <Select
+                            value={isFromBundleDropdown ? sourcePath : ""}
+                            onValueChange={(value) =>
+                              updateMapping(index, { sourcePath: value })
+                            }
+                          >
+                            <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
+                              <SelectValue placeholder="Pick bundle key" />
+                            </SelectTrigger>
+                            <SelectContent className="border-border bg-gray-900">
+                              {Array.from(bundleKeys).map((key) => (
+                                <SelectItem key={key} value={key}>
+                                  {formatPortLabel(key)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                        {/* Show clear button when a selection is made */}
+                        {(isFromBundleDropdown || hasCustomSourcePath) && (
+                          <Button
+                            type="button"
+                            className="h-6 rounded-md border border-gray-600 px-2 text-[9px] text-gray-400 hover:bg-muted/50"
+                            onClick={() => updateMapping(index, { sourcePath: "" })}
+                          >
+                            Clear to switch input
+                          </Button>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+
+                {/* Step 2: Remap options appear only after source is selected */}
+                {hasSourceSelected && (() => {
+                  // Only set Select value if it matches a valid option
+                  const selectValue = uniqueTargetPathOptions.some(
+                    (opt) => opt.value === targetValue
+                  ) ? targetValue : "";
+
+                  return (
+                    <div className="flex-1 space-y-2 min-w-[180px]">
+                      <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                        <span>→</span>
+                        <span>Remap to:</span>
+                      </div>
                       <Input
                         className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
-                        value={mapping.sourcePath ?? ""}
+                        value={targetValue}
                         onChange={(event) =>
                           updateMapping(index, {
-                            sourcePath: event.target.value,
+                            targetPath: event.target.value,
                           })
                         }
-                        placeholder="Bundle path"
+                        placeholder="Custom placeholder name"
                       />
                       <Select
+                        value={selectValue}
                         onValueChange={(value) =>
-                          updateMapping(index, { sourcePath: value })
+                          updateMapping(index, { targetPath: value })
                         }
                       >
                         <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
-                          <SelectValue placeholder="Pick bundle key" />
+                          <SelectValue placeholder="Or pick from schema" />
                         </SelectTrigger>
                         <SelectContent className="border-border bg-gray-900">
-                          {Array.from(bundleKeys).map((key) => (
-                            <SelectItem key={key} value={key}>
-                              {formatPortLabel(key)}
+                          {uniqueTargetPathOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                    </>
-                  )}
-                </div>
+                    </div>
+                  );
+                })()}
+
                 <Button
                   type="button"
-                  className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60"
+                  className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60 self-start mt-6"
                   disabled={mappings.length <= 1}
                   onClick={() => removeMapping(index)}
                 >
@@ -821,6 +1076,7 @@ export function DatabaseConstructorTab({
           Add mapping
         </Button>
       </div>
+      )}
     </div>
   );
 }

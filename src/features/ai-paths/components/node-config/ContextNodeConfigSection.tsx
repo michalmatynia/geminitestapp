@@ -383,7 +383,7 @@ export function ContextNodeConfigSection({
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
-          <Label className="text-xs text-gray-400">Entity Type</Label>
+          <Label className="text-xs text-gray-400">Collection Type</Label>
         <Select
             value={contextConfig.entityType ?? "auto"}
             onValueChange={(value) =>
@@ -393,7 +393,7 @@ export function ContextNodeConfigSection({
             }
           >
             <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-              <SelectValue placeholder="Select entity" />
+              <SelectValue placeholder="Select collection" />
             </SelectTrigger>
             <SelectContent className="border-border bg-gray-900">
               <SelectItem value="auto">Auto (use trigger)</SelectItem>

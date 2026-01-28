@@ -221,19 +221,27 @@ export function CanvasBoard({
             const edgeMeta = edgeMetaMap.get(edge.id);
             const isManualConnector =
               edgeMeta?.fromPort === "aiPrompt" || edgeMeta?.toPort === "queryCallback";
+            // Check if this is a schema connection (db_schema -> database)
+            const fromNode = edgeMeta ? nodes.find((n) => n.id === edgeMeta.from) : null;
+            const toNode = edgeMeta ? nodes.find((n) => n.id === edgeMeta.to) : null;
+            const isSchemaConnection =
+              fromNode?.type === "db_schema" && toNode?.type === "database";
             const isActivePath =
               !isManualConnector &&
+              !isSchemaConnection &&
               edgeMeta &&
               triggerConnected.has(edgeMeta.from) &&
               triggerConnected.has(edgeMeta.to);
             const edgeClass = `transition-all duration-150 ${
               isSelected
                 ? "text-blue-400"
-                : isManualConnector
-                  ? "text-amber-400/65 group-hover:text-amber-300/80"
-                  : isActivePath
-                    ? "text-sky-400/60 group-hover:text-sky-300/80"
-                    : "text-slate-400/45 group-hover:text-blue-400/70"
+                : isSchemaConnection
+                  ? "text-yellow-400/70 group-hover:text-cyan-300/80"
+                  : isManualConnector
+                    ? "text-amber-400/65 group-hover:text-amber-300/80"
+                    : isActivePath
+                      ? "text-sky-400/60 group-hover:text-sky-300/80"
+                      : "text-slate-400/45 group-hover:text-blue-400/70"
             }`;
             const arrowSize = isSelected ? 9 : 8;
             const arrowWidth = isSelected ? 6 : 5;
@@ -260,7 +268,7 @@ export function CanvasBoard({
                   d={edge.path}
                   className={edgeClass}
                   strokeWidth={isSelected ? 2.5 : 1.6}
-                  strokeDasharray={isManualConnector ? "5 4" : undefined}
+                  strokeDasharray={isManualConnector ? "5 4" : isSchemaConnection ? "3 3" : undefined}
                   stroke="currentColor"
                   fill="none"
                   style={{ pointerEvents: "none" }}

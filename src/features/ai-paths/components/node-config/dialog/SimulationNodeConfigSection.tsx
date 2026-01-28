@@ -6,6 +6,7 @@
 
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import type { AiNode, NodeConfig } from "@/features/ai-paths/lib";
+import { DB_COLLECTION_OPTIONS } from "@/features/ai-paths/lib";
 
 type SimulationNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -33,9 +34,9 @@ export function SimulationNodeConfigSection({
   return (
     <div className="space-y-4">
       <div>
-        <Label className="text-xs text-gray-400">Entity Type</Label>
+        <Label className="text-xs text-gray-400">Collection Type</Label>
         <Select
-          value={simulationConfig.entityType ?? "product"}
+          value={simulationConfig.entityType ?? "products"}
           onValueChange={(value) =>
             updateSelectedNodeConfig({
               simulation: {
@@ -46,22 +47,19 @@ export function SimulationNodeConfigSection({
           }
         >
           <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-            <SelectValue placeholder="Select entity" />
+            <SelectValue placeholder="Select collection" />
           </SelectTrigger>
-          <SelectContent className="border-border bg-gray-900">
-            <SelectItem value="product">Product</SelectItem>
-            <SelectItem value="note">Note</SelectItem>
-            <SelectItem value="chat">Chat</SelectItem>
-            <SelectItem value="log">Log Entry</SelectItem>
+          <SelectContent className="border-border bg-gray-900 max-h-60 overflow-y-auto">
+            {DB_COLLECTION_OPTIONS.filter((opt) => opt.value !== "custom").map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
       <div>
-        <Label className="text-xs text-gray-400">
-          {simulationConfig.entityType === "product"
-            ? "Product ID"
-            : "Entity ID"}
-        </Label>
+        <Label className="text-xs text-gray-400">Document ID</Label>
         <Input
           className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
           value={simulationEntityValue}
@@ -77,7 +75,7 @@ export function SimulationNodeConfigSection({
         />
       </div>
       <p className="text-[11px] text-gray-500">
-        Used to simulate {simulationConfig.entityType ?? "product"} context.
+        Used to simulate {simulationConfig.entityType ?? "products"} collection context.
       </p>
       <Button
         className="w-full rounded-md border border-cyan-500/40 text-sm text-cyan-200 hover:bg-cyan-500/10"

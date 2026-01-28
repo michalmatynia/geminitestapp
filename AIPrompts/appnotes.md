@@ -4,36 +4,35 @@
 
 * My field mapping In my Node Database Query, as soon as the parameter mapping is done, the mapped parameterd should become instantly available as a placeholder.
 
-And in AI reply, little arrows that automatically detecs ``` code snippets and let me cycle through them, cycling highligts  code snippets, If I accept with highlighted code snippet, only the targater code snippet is added to a query, not the whole text around it.   
+* In Database Query Node in AI reply, I need little arrows that automatically detect ``` code snippets and let me cycle up and down through code snippets in AI Reply, through cycling  code snippets are hightlighted, If I accept with highlighted code snippet, only the targater code snippet is added to a query, not the whole text around it.   
 
-remove "ID Field
+* In my Database Query Node {{result}} shouldn't be available as a placeholder
+
+* remove "ID Field
 entityId
 The selected input will be used as the entity ID to delete." from Delete section in Database Query Node
 
-When I select a preset, the query from preset doesn't show in Query textfield are
+* When I select a preset, the query from preset doesn't show in Query textfield are
 
-For context placeholders (Context placeholders:) when I have the database schema connected that provides a context, show the placeholder as Schema: <Nameofcollection>. Placeholder {Collection: products} is actually giving Products name only and is useless when providing deeper context.
+* For context placeholders (Context placeholders:) when I have the database schema connected that provides a context, show the placeholder as Schema: <Nameofcollection>. Placeholder {Collection: products} is actually giving Products name only and is useless when providing deeper context.
 
 * In Database Query Node, When I highlight a piece of text in my Query textfield, and then click on a placeholder, the highlighted text should be replaced by the placeholder.
 
-In Database Query Node,  In my Quick Presetes, I want the text "Save Preset" changed to "Save As Preset"
 
-In Database Query Node, I want Template Snippets to Have like a one button, which, when I click it, opens up a whole modal of snipperts that I can choose.
+* In Database Query Node, I want Template Snippets to Have like a one button, which, when I click it, opens up a whole modal matrix of snippets that I can choose from.
 
-In Database Query Node, for Provider I want only MongoDB and nothing else
+* In Database Query Node, for Provider in Provider Dropdown I want to see only MongoDB and nothing else
+
+* In Database Query Node, auto mapper / parameter mapper should be available in Query section as well and not only in Update section
 
 LATER - DTbAE Auto-map from inputs - I DONT REALLY GET IT it needs to be described in Docs, infer from sample, my targets turned into placeholders, also create a database note that Is an API that asks
 Database Query is not being auto-saved
 
-Database query prompt presets
-Chatbot send on return in DB Query
-The AI Callback reply is not getting saved, or auto-saved, no retention, as soon as I close the node and redirect to a different page, teh node result disappears
+* AI Prompt needs to be sent on pressing the return button in Database Query Node.
 
-AI query ready for review - messages get really wide, wrap them
+The AI Callback reply is not getting saved, or auto-saved, no retention, as soon as I close the node and redirect to a different page, the node result disappears
 
-Move Dry run to the left
-
-If nothing is connected in the value input, teh {{value}} placeholder shouldn't be active at all
+If nothing is connected in the value input, the {{value}} placeholder shouldn't be active at all
 
 images still flicker
 DB query fielf provider is nit saving

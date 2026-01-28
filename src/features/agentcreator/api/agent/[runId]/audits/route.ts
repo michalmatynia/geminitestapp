@@ -3,6 +3,7 @@ import prisma from "@/shared/lib/db/prisma";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { internalError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { AgentAuditLog } from "@prisma/client";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -31,7 +32,7 @@ async function GET_handler(
       take,
     });
     const filtered = stepId
-      ? audits.filter((audit) => {
+      ? audits.filter((audit: AgentAuditLog) => {
           const metadata = audit.metadata as
             | {
                 stepId?: string;

@@ -1,0 +1,45 @@
+command:
+mongodump --uri mongodb+srv://mmatynia:mlokos16@cluster0.zv9e9.azure.mongodb.net/ --db app --archive=/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768904274039.archive --gzip
+
+stdout:
+
+
+stderr:
+2026-01-20T11:17:58.203+0100	writing app.image_files to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768904274039.archive'
+2026-01-20T11:17:58.205+0100	writing app.categories to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768904274039.archive'
+2026-01-20T11:17:58.205+0100	writing app.notes to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768904274039.archive'
+2026-01-20T11:17:58.205+0100	writing app.product_ai_jobs to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768904274039.archive'
+2026-01-20T11:17:58.930+0100	done dumping app.categories (109 documents)
+2026-01-20T11:17:58.930+0100	writing app.settings to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768904274039.archive'
+2026-01-20T11:17:58.961+0100	done dumping app.product_ai_jobs (35 documents)
+2026-01-20T11:17:58.961+0100	writing app.products to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768904274039.archive'
+2026-01-20T11:17:59.047+0100	done dumping app.notes (103 documents)
+2026-01-20T11:17:59.047+0100	writing app.noteFiles to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768904274039.archive'
+2026-01-20T11:17:59.129+0100	done dumping app.image_files (1436 documents)
+2026-01-20T11:17:59.129+0100	writing app.currencies to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768904274039.archive'
+2026-01-20T11:17:59.200+0100	done dumping app.settings (17 documents)
+2026-01-20T11:17:59.200+0100	writing app.product_categories to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768904274039.archive'
+2026-01-20T11:17:59.201+0100	done dumping app.noteFiles (6 documents)
+2026-01-20T11:17:59.201+0100	writing app.countries to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768904274039.archive'
+2026-01-20T11:17:59.269+0100	done dumping app.currencies (5 documents)
+2026-01-20T11:17:59.269+0100	writing app.notebooks to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768904274039.archive'
+2026-01-20T11:17:59.298+0100	done dumping app.products (15 documents)
+2026-01-20T11:17:59.298+0100	writing app.price_groups to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768904274039.archive'
+2026-01-20T11:17:59.318+0100	done dumping app.countries (4 documents)
+2026-01-20T11:17:59.318+0100	writing app.integration_connections to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768904274039.archive'
+2026-01-20T11:17:59.351+0100	done dumping app.product_categories (4 documents)
+2026-01-20T11:17:59.351+0100	writing app.integrations to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768904274039.archive'
+2026-01-20T11:17:59.388+0100	done dumping app.notebooks (3 documents)
+2026-01-20T11:17:59.389+0100	writing app.themes to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768904274039.archive'
+2026-01-20T11:17:59.413+0100	done dumping app.price_groups (3 documents)
+2026-01-20T11:17:59.413+0100	writing app.catalogs to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768904274039.archive'
+2026-01-20T11:17:59.458+0100	done dumping app.integration_connections (2 documents)
+2026-01-20T11:17:59.458+0100	writing app.tags to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768904274039.archive'
+2026-01-20T11:17:59.487+0100	done dumping app.integrations (2 documents)
+2026-01-20T11:17:59.487+0100	writing app.ai_configurations to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768904274039.archive'
+2026-01-20T11:17:59.497+0100	done dumping app.themes (2 documents)
+2026-01-20T11:17:59.497+0100	writing app.product_listings to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768904274039.archive'
+2026-01-20T11:17:59.550+0100	done dumping app.catalogs (2 documents)
+2026-01-20T11:17:59.584+0100	done dumping app.tags (1 document)
+2026-01-20T11:17:59.604+0100	done dumping app.ai_configurations (1 document)
+2026-01-20T11:17:59.629+0100	done dumping app.product_listings (1 document)

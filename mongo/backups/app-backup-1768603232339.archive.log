@@ -1,0 +1,23 @@
+command:
+mongodump --uri mongodb+srv://mmatynia:mlokos16@cluster0.zv9e9.azure.mongodb.net/ --db app --archive=/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768603232339.archive --gzip
+
+stdout:
+
+
+stderr:
+2026-01-16T23:40:34.412+0100	writing app.products to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768603232339.archive'
+2026-01-16T23:40:34.414+0100	writing app.categories to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768603232339.archive'
+2026-01-16T23:40:34.414+0100	writing app.notes to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768603232339.archive'
+2026-01-16T23:40:34.414+0100	writing app.themes to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768603232339.archive'
+2026-01-16T23:40:34.723+0100	done dumping app.products (79 documents)
+2026-01-16T23:40:34.723+0100	writing app.notebooks to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768603232339.archive'
+2026-01-16T23:40:34.732+0100	done dumping app.themes (2 documents)
+2026-01-16T23:40:34.732+0100	writing app.noteFiles to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768603232339.archive'
+2026-01-16T23:40:34.741+0100	done dumping app.categories (10 documents)
+2026-01-16T23:40:34.741+0100	writing app.tags to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768603232339.archive'
+2026-01-16T23:40:34.765+0100	done dumping app.notes (9 documents)
+2026-01-16T23:40:34.765+0100	writing app.settings to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768603232339.archive'
+2026-01-16T23:40:34.831+0100	done dumping app.noteFiles (2 documents)
+2026-01-16T23:40:34.854+0100	done dumping app.notebooks (2 documents)
+2026-01-16T23:40:34.860+0100	done dumping app.tags (1 document)
+2026-01-16T23:40:34.878+0100	done dumping app.settings (1 document)

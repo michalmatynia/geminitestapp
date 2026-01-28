@@ -1,0 +1,17 @@
+command:
+mongodump --uri mongodb+srv://mmatynia:mlokos16@cluster0.zv9e9.azure.mongodb.net/ --db app --archive=/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768529764130.archive --gzip
+
+stdout:
+
+
+stderr:
+2026-01-16T03:16:05.902+0100	writing app.products to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768529764130.archive'
+2026-01-16T03:16:05.905+0100	writing app.categories to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768529764130.archive'
+2026-01-16T03:16:05.905+0100	writing app.notes to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768529764130.archive'
+2026-01-16T03:16:05.905+0100	writing app.tags to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768529764130.archive'
+2026-01-16T03:16:06.133+0100	done dumping app.tags (1 document)
+2026-01-16T03:16:06.134+0100	writing app.settings to archive '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/mongo/backups/app-backup-1768529764130.archive'
+2026-01-16T03:16:06.177+0100	done dumping app.categories (12 documents)
+2026-01-16T03:16:06.218+0100	done dumping app.notes (8 documents)
+2026-01-16T03:16:06.275+0100	done dumping app.products (40 documents)
+2026-01-16T03:16:06.275+0100	done dumping app.settings (1 document)

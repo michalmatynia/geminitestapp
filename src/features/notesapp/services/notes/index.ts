@@ -66,7 +66,7 @@ const populateRelations = <T extends NoteWithRelations | NoteWithRelations[] | n
             relations: buildRelations(note)
         })) as unknown as T;
     }
-    const note = data;
+    const note = data as NoteWithRelations;
     return {
         ...note,
         relations: buildRelations(note)

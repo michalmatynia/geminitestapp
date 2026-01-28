@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import { SystemLogsPage } from "@/features/observability";
 
 export default function Page() {
-  return <SystemLogsPage />;
+  return (
+    <Suspense fallback={null}>
+      <SystemLogsPage />
+    </Suspense>
+  );
 }

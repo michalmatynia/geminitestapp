@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import { DatabasePreviewPage } from "@/features/database";
 
 export default function Page() {
-  return <DatabasePreviewPage />;
+  return (
+    <Suspense fallback={null}>
+      <DatabasePreviewPage />
+    </Suspense>
+  );
 }

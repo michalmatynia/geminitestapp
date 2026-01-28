@@ -239,6 +239,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const lastDropTimerRef = useRef<number | null>(null);
   const loadAttemptRef = useRef<number | null>(null);
   const loadInFlightRef = useRef(false);
+  const lastPrefsPayloadRef = useRef<string>("");
   const queryClient = useQueryClient();
   const updateSettingMutation = useUpdateSetting();
   const updatePreferencesMutation = useMutation({
@@ -522,6 +523,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         typeof raw.queryTemplate === "string" && raw.queryTemplate.trim()
           ? raw.queryTemplate
           : "{\n  \"_id\": \"{{value}}\"\n}",
+      updateTemplate:
+        typeof raw.updateTemplate === "string" ? raw.updateTemplate : "",
       createdAt: raw.createdAt ?? now,
       updatedAt: raw.updatedAt ?? now,
     };
@@ -607,11 +610,18 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
 
   const modelOptions = useMemo(() => {
     const apiModels = modelsQuery.data?.models;
-    const merged = Array.from(
-      new Set([...DEFAULT_MODELS, ...(Array.isArray(apiModels) ? apiModels : [])])
+    const savedModels = nodes
+      .filter((node) => node.type === "model")
+      .map((node) => node.config?.model?.modelId)
+      .filter((modelId): modelId is string => Boolean(modelId && modelId.trim()));
+    return Array.from(
+      new Set([
+        ...DEFAULT_MODELS,
+        ...(Array.isArray(apiModels) ? apiModels : []),
+        ...savedModels,
+      ])
     );
-    return merged;
-  }, [modelsQuery.data]);
+  }, [modelsQuery.data, nodes]);
 
   const sessionQuery = useQuery({
     queryKey: ["auth-session"],
@@ -880,6 +890,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       aiPathsExpandedGroups: Array.from(expandedPaletteGroups),
       aiPathsPaletteCollapsed: paletteCollapsed,
     };
+    const payloadKey = JSON.stringify(payload);
+    if (payloadKey === lastPrefsPayloadRef.current) return;
+    lastPrefsPayloadRef.current = payloadKey;
     const timeout = setTimeout(() => {
       updatePreferencesMutation.mutate(payload);
     }, 200);
@@ -2648,8 +2661,6 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       edges,
       parserSamples,
       updaterSamples,
-      runtimeState,
-      lastRunAt,
     });
 
   const persistPathConfig = async (options?: { silent?: boolean }) => {

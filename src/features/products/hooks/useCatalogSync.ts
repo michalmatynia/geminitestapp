@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { logger } from "@/shared/utils/logger";
 import type { Catalog } from "@/features/products/types";
 import type { PriceGroupWithDetails } from "@/features/products/types";
 
 type LanguageRecord = { id: string; code: string; name: string };
 type LanguageOption = { value: "name_en" | "name_pl" | "name_de"; label: string };
+type CurrencyRecord = { code?: string | null };
 
 const supportedLanguageMap: Record<string, LanguageOption> = {
   EN: { value: "name_en", label: "English" },
@@ -14,21 +16,104 @@ const supportedLanguageMap: Record<string, LanguageOption> = {
   DE: { value: "name_de", label: "German" },
 };
 
+// Query keys for cache management
+const catalogSyncQueryKeys = {
+  catalogs: ["catalogs"] as const,
+  priceGroups: ["price-groups"] as const,
+  languages: ["languages"] as const,
+  currencies: ["currencies"] as const,
+};
+
+// API fetch functions
+async function fetchCatalogs(): Promise<Catalog[]> {
+  const res = await fetch("/api/catalogs");
+  if (!res.ok) {
+    const payload = (await res.json()) as { error?: string };
+    throw new Error(payload?.error || "Failed to load catalogs");
+  }
+  return res.json() as Promise<Catalog[]>;
+}
+
+async function fetchPriceGroups(): Promise<PriceGroupWithDetails[]> {
+  const res = await fetch("/api/price-groups");
+  if (!res.ok) {
+    throw new Error("Failed to load price groups");
+  }
+  return res.json() as Promise<PriceGroupWithDetails[]>;
+}
+
+async function fetchLanguages(): Promise<LanguageRecord[]> {
+  const res = await fetch("/api/languages");
+  if (!res.ok) {
+    throw new Error("Failed to load languages");
+  }
+  return res.json() as Promise<LanguageRecord[]>;
+}
+
+async function fetchCurrencies(): Promise<CurrencyRecord[]> {
+  const res = await fetch("/api/currencies");
+  if (!res.ok) {
+    throw new Error("Failed to load currencies");
+  }
+  return res.json() as Promise<CurrencyRecord[]>;
+}
+
 export function useCatalogSync(catalogFilter: string) {
-  const [rawCatalogs, setRawCatalogs] = useState<Catalog[]>([]);
-  const [catalogsLoading, setCatalogsLoading] = useState(true);
-  const [catalogsError, setCatalogsError] = useState<string | null>(null);
-
   const [currencyCode, setCurrencyCode] = useState<string>("");
-  const [currencyOptions, setCurrencyOptions] = useState<string[]>([]);
-  const [priceGroups, setPriceGroups] = useState<PriceGroupWithDetails[]>([]);
-  const [currencyPriceGroups, setCurrencyPriceGroups] = useState<
-    Array<{ id: string; isDefault: boolean; currency?: { code?: string } | null }>
-  >([]);
-  const [allowedCurrencyCodes, setAllowedCurrencyCodes] = useState<string[]>([]);
-  const [languages, setLanguages] = useState<LanguageRecord[]>([]);
-
   const catalogFilterInitialized = useRef(false);
+
+  // Parallel queries for all data sources
+  const catalogsQuery = useQuery({
+    queryKey: catalogSyncQueryKeys.catalogs,
+    queryFn: fetchCatalogs,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  const priceGroupsQuery = useQuery({
+    queryKey: catalogSyncQueryKeys.priceGroups,
+    queryFn: fetchPriceGroups,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const languagesQuery = useQuery({
+    queryKey: catalogSyncQueryKeys.languages,
+    queryFn: fetchLanguages,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const currenciesQuery = useQuery({
+    queryKey: catalogSyncQueryKeys.currencies,
+    queryFn: fetchCurrencies,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // Log errors
+  if (catalogsQuery.error) {
+    logger.error("Failed to load catalogs:", catalogsQuery.error);
+  }
+  if (priceGroupsQuery.error) {
+    logger.error("Failed to load price groups:", priceGroupsQuery.error);
+  }
+  if (languagesQuery.error) {
+    logger.error("Failed to load languages:", languagesQuery.error);
+  }
+  if (currenciesQuery.error) {
+    logger.error("Failed to load currencies:", currenciesQuery.error);
+  }
+
+  // Extract data with defaults
+  const rawCatalogs = catalogsQuery.data ?? [];
+  const priceGroups = priceGroupsQuery.data ?? [];
+  const languages = languagesQuery.data ?? [];
+  const currencyPriceGroups = priceGroups;
+
+  // Compute allowed currency codes
+  const allowedCurrencyCodes = useMemo(() => {
+    const data = currenciesQuery.data ?? [];
+    return data
+      .map((entry) => entry.code?.trim().toUpperCase())
+      .filter((code): code is string => Boolean(code));
+  }, [currenciesQuery.data]);
 
   // Memoize catalog transformation to prevent new references
   const catalogs = useMemo(() =>
@@ -40,97 +125,9 @@ export function useCatalogSync(catalogFilter: string) {
     [rawCatalogs]
   );
 
-  // Load Catalogs
-  useEffect(() => {
-    let cancelled = false;
-    const loadCatalogs = async () => {
-      try {
-        setCatalogsLoading(true);
-        const res = await fetch("/api/catalogs");
-        if (!res.ok) {
-          const payload = (await res.json()) as { error?: string; errorId?: string };
-          throw new Error(payload?.error || "Failed to load catalogs");
-        }
-        const data = (await res.json()) as Catalog[];
-        if (!cancelled) {
-          setRawCatalogs(data);
-        }
-      } catch (error) {
-        logger.error("Failed to load catalogs:", error);
-        if (!cancelled) {
-          setCatalogsError(error instanceof Error ? error.message : "Failed to load catalogs");
-        }
-      } finally {
-        if (!cancelled) {
-          setCatalogsLoading(false);
-        }
-      }
-    };
-    void loadCatalogs();
-    return () => { cancelled = true; };
-  }, []);
-
-  // Load Price Groups
-  useEffect(() => {
-    let mounted = true;
-    const loadPriceGroups = async () => {
-      try {
-        const res = await fetch("/api/price-groups");
-        if (!res.ok) return;
-        const data = await res.json() as PriceGroupWithDetails[];
-        if (!mounted) return;
-        setPriceGroups(data);
-        setCurrencyPriceGroups(data);
-      } catch (error) {
-        logger.error("Failed to load price groups:", error);
-      }
-    };
-    void loadPriceGroups();
-    return () => { mounted = false; };
-  }, []);
-
-  // Load languages for catalog-scoped language selection.
-  useEffect(() => {
-    let mounted = true;
-    const loadLanguages = async () => {
-      try {
-        const res = await fetch("/api/languages");
-        if (!res.ok) return;
-        const data = (await res.json()) as LanguageRecord[];
-        if (!mounted) return;
-        setLanguages(data);
-      } catch (error) {
-        logger.error("Failed to load languages:", error);
-      }
-    };
-    void loadLanguages();
-    return () => { mounted = false; };
-  }, []);
-
-  // Load allowed currencies to avoid displaying invalid codes.
-  useEffect(() => {
-    let mounted = true;
-    const loadCurrencies = async () => {
-      try {
-        const res = await fetch("/api/currencies");
-        if (!res.ok) return;
-        const data = await res.json() as Array<{ code?: string | null }>;
-        if (!mounted) return;
-        const codes = data
-          .map((entry) => entry.code?.trim().toUpperCase())
-          .filter((code): code is string => Boolean(code));
-        setAllowedCurrencyCodes(Array.from(new Set(codes)));
-      } catch (error) {
-        logger.error("Failed to load currencies:", error);
-      }
-    };
-    void loadCurrencies();
-    return () => { mounted = false; };
-  }, []);
-
   // Memoize currency options to prevent unnecessary re-renders
   const { codes, fallbackCode } = useMemo(() => {
-    if (currencyPriceGroups.length === 0) return { codes: [], fallbackCode: "" };
+    if (currencyPriceGroups.length === 0) return { codes: [] as string[], fallbackCode: "" };
 
     const isCatalogScoped = catalogFilter !== "all" && catalogFilter !== "unassigned";
     const catalog = isCatalogScoped ? catalogs.find((entry) => entry.id === catalogFilter) : undefined;
@@ -168,8 +165,9 @@ export function useCatalogSync(catalogFilter: string) {
   }, [catalogFilter, catalogs, currencyPriceGroups, allowedCurrencyCodes]);
 
   // Sync Currency Options based on Catalog
+  const currencyOptions = codes;
+
   useEffect(() => {
-    setCurrencyOptions(codes);
     setCurrencyCode((prev) => (prev && codes.includes(prev) ? prev : fallbackCode));
   }, [codes, fallbackCode]);
 
@@ -213,8 +211,8 @@ export function useCatalogSync(catalogFilter: string) {
 
   return {
     catalogs,
-    catalogsLoading,
-    catalogsError,
+    catalogsLoading: catalogsQuery.isLoading,
+    catalogsError: catalogsQuery.error ? (catalogsQuery.error as Error).message : null,
     currencyCode,
     setCurrencyCode,
     currencyOptions,

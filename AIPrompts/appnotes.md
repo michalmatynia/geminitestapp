@@ -1,28 +1,16 @@
 
-* In Database Schema Node, the selections are not retained and auto-saved
+I'm trying to RUN my database Query Node to update the database, but I get the message "Run is available for read and aggregate actions only."
 
 * In Presets Tab, I only want a list of query presets, I don't want Database Presets
 
-Constructor
-* In Template Snippet, when I click template snippets like logical operators, it says it has been added, but I don't see it added to the query. It Either needs to be added to the query, or added 
+* When I open a Database Query Node and the last selection was Update, it is only showing me the Filter Query Panel, I need to select some other operation and go back to Update to make the other  Textfield below Filter Query Panel visible again. Also when I redirect the page, my query from the other textfield is removed.
 
-* Query -> Update Document field has these nice placholder templates which appear as I cycle through operation type, keep those template in my Query Text field and remove Update Document field as it's duplicating the Query textfield
+* I want to be able to view my query presets in the query list, I need an icon to view them, malso y query preset is not saving both query panels (the other one referring to update is not saved, only filter) only one of them is saved
 
-* When I hover over Context placeholders, I want a tooltip to see them in resolved state, for example, when  hover over {{s schema: products }}, I want to see something like this  {{schema:Collection "products" with fields: _id: string, asin: null | string, baseProductId: string, catalogs: array, createdAt: date, defaultPriceGroupId: string, description_de: null | string, description_en: string, description_pl: null | string, ean: null | string, gtin: null | string, id: string, imageLinks: array, images: array, length: number, name_de: null | string, name_en: string, name_pl: null | string, price: number, priceComment: null | string, sizeLength: null | number, sizeWidth: null | number, sku: string, stock: number, supplierLink: null | string, supplierName: null | string, updatedAt: date, weight: number}}*
-
-* In Parameter mapping, remove Pick a source field
-
-* In Database Query Node, when I run Query with placeholders, it doesn't actually resolve the placeholders.
-
-* My field mapping In my Node Database Query, as soon as the parameter mapping is done, the mapped parameterd should become instantly available as a placeholder.
-
-* In Database Query Node in AI reply, I need little arrows that automatically detect ``` code snippets and let me cycle up and down through code snippets in AI Reply, through cycling  code snippets are hightlighted, If I accept with highlighted code snippet, only the targater code snippet is added to a query, not the whole text around it.   
 
 * remove "ID Field
 entityId
 The selected input will be used as the entity ID to delete." from Delete section in Database Query Node
-
-* When I select a preset, the query from preset doesn't show in Query textfield are
 
 * For context placeholders (Context placeholders:) when I have the database schema connected that provides a context, show the placeholder as Schema: <Nameofcollection>. Placeholder {Collection: products} is actually giving Products name only and is useless when providing deeper context.
 

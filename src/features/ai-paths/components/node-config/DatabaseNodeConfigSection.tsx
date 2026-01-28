@@ -810,16 +810,18 @@ export function DatabaseNodeConfigSection({
                   options?: { forceNew?: boolean }
                 ) => {
                   const name = (overrideName ?? queryPresetName).trim();
-                  const presetTemplateSource = isUpdateAction
-                    ? queryTemplateValue
-                    : activeQueryValue;
-                  const template = presetTemplateSource.trim();
+                  const filterTemplate = queryTemplateValue.trim();
+                  const updateTemplate = (databaseConfig.updateTemplate ?? "").trim();
+                  const requiredTemplate = isUpdateAction ? updateTemplate : filterTemplate;
                   if (!name) {
                     toast("Query preset name is required.", { variant: "error" });
                     return;
                   }
-                  if (!template) {
-                    toast("Query template is empty.", { variant: "error" });
+                  if (!requiredTemplate) {
+                    toast(
+                      isUpdateAction ? "Update document is empty." : "Query template is empty.",
+                      { variant: "error" }
+                    );
                     return;
                   }
                   setQueryPresetName(name);
@@ -835,14 +837,16 @@ export function DatabaseNodeConfigSection({
                     nextPresets[existingIndex] = {
                       ...existingPreset,
                       name,
-                      queryTemplate: template,
+                      queryTemplate: filterTemplate || existingPreset.queryTemplate,
+                      updateTemplate,
                       updatedAt: now,
                     };
                   } else {
                     const newPreset: DbQueryPreset = {
                       id: createPresetId(),
                       name,
-                      queryTemplate: template,
+                      queryTemplate: filterTemplate || "{\n  \"_id\": \"{{value}}\"\n}",
+                      updateTemplate,
                       createdAt: now,
                       updatedAt: now,
                     };
@@ -906,6 +910,9 @@ export function DatabaseNodeConfigSection({
                   updateSelectedNodeConfig({
                     database: {
                       ...databaseConfig,
+                      ...(preset.updateTemplate?.trim()
+                        ? { updateTemplate: preset.updateTemplate }
+                        : {}),
                       query: {
                         ...queryConfig,
                         queryTemplate: preset.queryTemplate,
@@ -920,16 +927,18 @@ export function DatabaseNodeConfigSection({
                 };
                 const handleSaveQueryPresetFromModal = async () => {
                   const name = newQueryPresetName.trim();
-                  const presetTemplateSource = isUpdateAction
-                    ? queryTemplateValue
-                    : activeQueryValue;
-                  const template = presetTemplateSource.trim();
+                  const filterTemplate = queryTemplateValue.trim();
+                  const updateTemplate = (databaseConfig.updateTemplate ?? "").trim();
+                  const requiredTemplate = isUpdateAction ? updateTemplate : filterTemplate;
                   if (!name) {
                     toast("Query preset name is required.", { variant: "error" });
                     return;
                   }
-                  if (!template) {
-                    toast("Query template is empty.", { variant: "error" });
+                  if (!requiredTemplate) {
+                    toast(
+                      isUpdateAction ? "Update document is empty." : "Query template is empty.",
+                      { variant: "error" }
+                    );
                     return;
                   }
                   await handleSaveQueryPreset(name, { forceNew: true });

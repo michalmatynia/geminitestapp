@@ -128,6 +128,15 @@ async function PATCH_handler(req: NextRequest) {
     const updated = await updateUserPreferences(userId, data);
     return NextResponse.json(updated);
   } catch (error) {
+    const isAbort =
+      req.signal.aborted ||
+      (typeof DOMException !== "undefined" &&
+        error instanceof DOMException &&
+        error.name === "AbortError") ||
+      (error instanceof Error && (error as { code?: string }).code === "ECONNRESET");
+    if (isAbort) {
+      return new NextResponse(null, { status: 204 });
+    }
     // If foreign key constraint fails (no user exists), return success anyway
     // This allows the app to work without authentication
     const isPrismaFKError = error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003";

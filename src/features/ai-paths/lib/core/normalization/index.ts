@@ -341,9 +341,10 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
         ...defaultQuery,
         ...(node.config?.database?.query ?? node.config?.dbQuery ?? {}),
       };
+      const databaseConfig = node.config?.database ?? {};
       const mappings = 
-        node.config?.database?.mappings && node.config.database.mappings.length > 0
-          ? node.config.database.mappings
+        databaseConfig.mappings && databaseConfig.mappings.length > 0
+          ? databaseConfig.mappings
           : [
               {
                 targetPath: "content_en",
@@ -358,15 +359,42 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
         config: {
           ...node.config,
           database: {
-            operation: node.config?.database?.operation ?? "query",
-            entityType: node.config?.database?.entityType ?? "product",
-            idField: node.config?.database?.idField ?? "entityId",
-            mode: node.config?.database?.mode ?? "replace",
+            ...databaseConfig,
+            operation: databaseConfig.operation ?? "query",
+            entityType: databaseConfig.entityType ?? "product",
+            idField: databaseConfig.idField ?? "entityId",
+            mode: databaseConfig.mode ?? "replace",
+            updateStrategy: databaseConfig.updateStrategy ?? "one",
+            useMongoActions: databaseConfig.useMongoActions ?? false,
+            actionCategory: databaseConfig.actionCategory,
+            action: databaseConfig.action,
+            distinctField: databaseConfig.distinctField ?? "",
+            updateTemplate: databaseConfig.updateTemplate ?? "",
             mappings,
-            dryRun: node.config?.database?.dryRun ?? false,
-            skipEmpty: node.config?.database?.skipEmpty ?? false,
-            trimStrings: node.config?.database?.trimStrings ?? false,
-            aiPrompt: node.config?.database?.aiPrompt ?? "",
+            query: queryConfig,
+            writeSource: databaseConfig.writeSource ?? "bundle",
+            writeSourcePath: databaseConfig.writeSourcePath ?? "",
+            dryRun: databaseConfig.dryRun ?? false,
+            presetId: databaseConfig.presetId,
+            skipEmpty: databaseConfig.skipEmpty ?? false,
+            trimStrings: databaseConfig.trimStrings ?? false,
+            aiPrompt: databaseConfig.aiPrompt ?? "",
+          },
+        },
+      };
+    }
+    if (node.type === "db_schema") {
+      const schemaConfig = node.config?.db_schema;
+      return {
+        ...node,
+        config: {
+          ...node.config,
+          db_schema: {
+            mode: schemaConfig?.mode ?? "all",
+            collections: schemaConfig?.collections ?? [],
+            includeFields: schemaConfig?.includeFields ?? true,
+            includeRelations: schemaConfig?.includeRelations ?? true,
+            formatAs: schemaConfig?.formatAs ?? "text",
           },
         },
       };
@@ -398,11 +426,18 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
             entityType: node.config?.database?.entityType ?? "product",
             idField: node.config?.database?.idField ?? "entityId",
             mode: node.config?.database?.mode ?? "replace",
+            updateStrategy: node.config?.database?.updateStrategy ?? "one",
+            useMongoActions: node.config?.database?.useMongoActions ?? false,
+            actionCategory: node.config?.database?.actionCategory,
+            action: node.config?.database?.action,
+            distinctField: node.config?.database?.distinctField ?? "",
+            updateTemplate: node.config?.database?.updateTemplate ?? "",
             mappings: node.config?.database?.mappings ?? [],
             query: dbQuery,
             writeSource: node.config?.database?.writeSource ?? "bundle",
             writeSourcePath: node.config?.database?.writeSourcePath ?? "",
             dryRun: node.config?.database?.dryRun ?? false,
+            presetId: node.config?.database?.presetId,
             skipEmpty: node.config?.database?.skipEmpty ?? false,
             trimStrings: node.config?.database?.trimStrings ?? false,
             aiPrompt: node.config?.database?.aiPrompt ?? "",
@@ -719,6 +754,8 @@ export const getDefaultConfigForType = (
         entityType: "product",
         idField: "entityId",
         mode: "replace",
+        updateStrategy: "one",
+        useMongoActions: false,
         mappings: [
           {
             targetPath: "content_en",
@@ -741,6 +778,17 @@ export const getDefaultConfigForType = (
         writeSource: "bundle",
         writeSourcePath: "",
         dryRun: false,
+      },
+    };
+  }
+  if (type === "db_schema") {
+    return {
+      db_schema: {
+        mode: "all",
+        collections: [],
+        includeFields: true,
+        includeRelations: true,
+        formatAs: "text",
       },
     };
   }

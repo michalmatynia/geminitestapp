@@ -1,7 +1,8 @@
 "use client";
 
-import { Button, Input, Label } from "@/shared/ui";
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label, Textarea } from "@/shared/ui";
 import React from "react";
+import { Eye } from "lucide-react";
 
 import type { DbQueryPreset } from "@/features/ai-paths/lib";
 
@@ -17,6 +18,10 @@ export function DatabasePresetsTab({
   onDeleteQueryPreset,
 }: DatabasePresetsTabProps) {
   const [queryNameDrafts, setQueryNameDrafts] = React.useState<Record<string, string>>({});
+  const [viewPresetId, setViewPresetId] = React.useState<string | null>(null);
+  const activePreset = viewPresetId
+    ? dbQueryPresets.find((preset) => preset.id === viewPresetId) ?? null
+    : null;
 
   React.useEffect(() => {
     setQueryNameDrafts((prev) => {
@@ -80,6 +85,14 @@ export function DatabasePresetsTab({
                     />
                     <Button
                       type="button"
+                      className="h-7 rounded-md border border-sky-500/40 px-2 text-[10px] text-sky-200 hover:bg-sky-500/10"
+                      onClick={() => setViewPresetId(preset.id)}
+                      title="View preset"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      type="button"
                       className="h-7 rounded-md border border-emerald-500/40 px-2 text-[10px] text-emerald-200 hover:bg-emerald-500/10"
                       disabled={!nameChanged}
                       onClick={() => void handleRename(preset.id, draftName)}
@@ -100,6 +113,41 @@ export function DatabasePresetsTab({
           </div>
         )}
       </div>
+
+      <Dialog
+        open={Boolean(activePreset)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setViewPresetId(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-2xl border border-border bg-card text-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg">
+              {activePreset?.name ?? "Query Preset"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label className="text-xs text-gray-400">Filter Query</Label>
+              <Textarea
+                className="min-h-[120px] w-full rounded-md border border-border bg-card/70 text-xs text-white"
+                value={activePreset?.queryTemplate ?? ""}
+                readOnly
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-gray-400">Update Document</Label>
+              <Textarea
+                className="min-h-[120px] w-full rounded-md border border-border bg-card/70 text-xs text-white"
+                value={activePreset?.updateTemplate?.trim() ? activePreset.updateTemplate : "// Not set"}
+                readOnly
+              />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

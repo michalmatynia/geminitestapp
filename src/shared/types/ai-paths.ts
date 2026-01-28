@@ -346,6 +346,7 @@ export type DbQueryPreset = {
   id: string;
   name: string;
   queryTemplate: string;
+  updateTemplate?: string;
   createdAt: string;
   updatedAt: string;
 };

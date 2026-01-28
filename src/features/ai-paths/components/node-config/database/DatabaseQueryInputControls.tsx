@@ -148,13 +148,31 @@ export function DatabaseQueryInputControls({
           />
         </div>
       ) : null}
-      <Textarea
-        ref={queryTemplateRef}
-        className="min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
-        value={queryTemplateValue}
-        onChange={(event) => onQueryChange(event.target.value)}
-        placeholder={queryTemplateValue.trim() === "" ? queryPlaceholder : undefined}
-      />
+      {showFilterInput ? (
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] uppercase tracking-wide text-gray-500">
+              Update Document
+            </span>
+            <span className="text-[9px] text-gray-500">Applies to matched docs</span>
+          </div>
+          <Textarea
+            ref={queryTemplateRef}
+            className="min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+            value={queryTemplateValue}
+            onChange={(event) => onQueryChange(event.target.value)}
+            placeholder={queryTemplateValue.trim() === "" ? queryPlaceholder : undefined}
+          />
+        </div>
+      ) : (
+        <Textarea
+          ref={queryTemplateRef}
+          className="min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+          value={queryTemplateValue}
+          onChange={(event) => onQueryChange(event.target.value)}
+          placeholder={queryTemplateValue.trim() === "" ? queryPlaceholder : undefined}
+        />
+      )}
     </div>
   );
 }

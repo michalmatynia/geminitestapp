@@ -28,6 +28,11 @@ export function ModelNodeConfigSection({
     vision: selectedNode.inputs.includes("images"),
   };
 
+  const mergedModelOptions =
+    modelConfig.modelId && !modelOptions.includes(modelConfig.modelId)
+      ? [modelConfig.modelId, ...modelOptions]
+      : modelOptions;
+
   return (
     <div className="space-y-4">
       <div>
@@ -44,7 +49,7 @@ export function ModelNodeConfigSection({
             <SelectValue placeholder="Select model" />
           </SelectTrigger>
           <SelectContent className="border-border bg-gray-900">
-            {modelOptions.map((model) => (
+            {mergedModelOptions.map((model) => (
               <SelectItem key={model} value={model}>
                 {model}
               </SelectItem>

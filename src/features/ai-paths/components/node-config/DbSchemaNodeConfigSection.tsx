@@ -79,18 +79,19 @@ export function DbSchemaNodeConfigSection({
 
   if (selectedNode.type !== "db_schema") return null;
 
-  const schemaConfig = selectedNode.config?.db_schema ?? {
+  const schemaConfig = {
     mode: "all" as const,
     collections: [] as string[],
     includeFields: true,
     includeRelations: true,
     formatAs: "text" as const,
+    ...(selectedNode.config?.db_schema ?? {}),
   };
 
   const updateSchemaConfig = (patch: Partial<typeof schemaConfig>) => {
-    // Pass only the patch - parent does deep merge to prevent stale closure issues
+    const nextConfig = { ...schemaConfig, ...patch };
     updateSelectedNodeConfig({
-      db_schema: patch,
+      db_schema: nextConfig,
     });
   };
 

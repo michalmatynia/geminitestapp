@@ -7,5 +7,5 @@ export { GET as AgentCreatorAgentRunLogsGET } from "./api/agent/[runId]/logs/rou
 export { POST as AgentCreatorAgentRunControlsPOST } from "./api/agent/[runId]/controls/route";
 export { GET as AgentCreatorAgentRunAuditsGET } from "./api/agent/[runId]/audits/route";
 export { GET as AgentCreatorAgentRunSnapshotsGET } from "./api/agent/[runId]/snapshots/route";
-export { runtime as AgentCreatorAgentRunStreamRuntime, GET as AgentCreatorAgentRunStreamGET } from "./api/agent/[runId]/stream/route";
-export { runtime as AgentCreatorAgentRunAssetsRuntime, GET as AgentCreatorAgentRunAssetsGET } from "./api/agent/[runId]/assets/[file]/route";
+export { GET as AgentCreatorAgentRunStreamGET } from "./api/agent/[runId]/stream/route";
+export { GET as AgentCreatorAgentRunAssetsGET } from "./api/agent/[runId]/assets/[file]/route";

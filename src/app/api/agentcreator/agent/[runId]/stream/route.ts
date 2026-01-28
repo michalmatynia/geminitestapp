@@ -1,2 +1,3 @@
-export { AgentCreatorAgentRunStreamGET as GET } from "@/features/agentcreator/server";
+import { GET as handler } from "@/features/agentcreator/api/agent/[runId]/stream/route";
+export const GET = handler;
 export const runtime = "nodejs";

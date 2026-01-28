@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getIntegrationRepository } from "@/features/integrations";
-import { decryptSecret, encryptSecret } from "@/features/integrations";
+import { getIntegrationRepository } from "@/features/integrations/server";
+import { decryptSecret, encryptSecret } from "@/features/integrations/server";
 import { chromium, devices } from "playwright";
 import { mkdir, readdir, stat, unlink, writeFile } from "fs/promises";
 import path from "path";

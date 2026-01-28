@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/shared/lib/db/prisma";
-import { runAgentBrowserControl } from "@/features/agent-runtime";
+import { runAgentBrowserControl } from "@/features/agent-runtime/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, internalError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";

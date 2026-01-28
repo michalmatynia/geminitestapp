@@ -1,11 +1,16 @@
-import { path from "path";
-import, NextResponse } from "next/server";
+import path from "path";
+import { NextResponse } from "next/server";
 import { Client } from "pg";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, internalError } from "@/shared/errors/app-error";
 
 import {
-  backupsDir, ensureBackupsDir, assertValidBackupName, getPgRestoreCommand, execFileAsync } from "@/features/database";
+  pgBackupsDir,
+  ensurePgBackupsDir,
+  assertValidPgBackupName,
+  getPgRestoreCommand,
+  pgExecFileAsync,
+} from "@/features/database/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 
 async function POST_handler(req: Request) {
@@ -44,8 +49,8 @@ async function POST_handler(req: Request) {
 
     stage = "validate";
     if (previewMode === "backup") {
-      assertValidBackupName(backupName ?? "");
-      await ensureBackupsDir();
+      assertValidPgBackupName(backupName ?? "");
+      await ensurePgBackupsDir();
     }
 
     const dbUrl = process.env.DATABASE_URL ?? "";
@@ -59,11 +64,11 @@ async function POST_handler(req: Request) {
     let output = "";
     if (previewMode === "backup") {
       stage = "pg_restore_list";
-      const backupPath = path.join(backupsDir, backupName ?? "");
+      const backupPath = path.join(pgBackupsDir, backupName ?? "");
       let stdout = "";
       let stderr = "";
       try {
-        const result = await execFileAsync(getPgRestoreCommand(), [
+        const result = await pgExecFileAsync(getPgRestoreCommand(), [
           "--list",
           backupPath,
         ]);
@@ -157,8 +162,8 @@ async function POST_handler(req: Request) {
 
       if (previewMode === "backup") {
         stage = "pg_restore_data";
-        const backupPath = path.join(backupsDir, backupName ?? "");
-        await execFileAsync(getPgRestoreCommand(), [
+        const backupPath = path.join(pgBackupsDir, backupName ?? "");
+        await pgExecFileAsync(getPgRestoreCommand(), [
           "--no-owner",
           "--no-privileges",
           "--single-transaction",

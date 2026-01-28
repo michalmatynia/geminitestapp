@@ -1,4 +1,4 @@
-import { ProductPublicPage } from "@/features/products";
+import { ProductPublicPage } from "@/features/products/server";
 
 export default async function Page({
   params,

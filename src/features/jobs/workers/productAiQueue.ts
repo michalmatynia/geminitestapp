@@ -1,21 +1,29 @@
-import { OpenAI from "openai";
-import type, ChatCompletionContentPart } from "openai/resources/chat/completions";
-import prisma from "@/shared/lib/db/prisma";
-import { generateProductDescription, getSettingValue } from "@/features/products";
-import { translateProduct } from "@/features/products";
-import type { ProductFormData } from "@/features/products";
-import { getProductRepository } from "@/features/products";
-import { defaultLanguages } from "@/features/internationalization";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import OpenAI from "openai";
+import type { ChatCompletionContentPart } from "openai/resources/chat/completions";
+import fs from "fs/promises";
+import path from "path";
 import { ObjectId } from "mongodb";
-import { getProductDataProvider } from "@/features/products";
+import { defaultLanguages } from "@/features/internationalization/server";
+import { getImageFileRepository } from "@/features/files/server";
+import {
+  badRequestError,
+  configurationError,
+  notFoundError,
+  operationFailedError,
+} from "@/shared/errors/app-error";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import prisma from "@/shared/lib/db/prisma";
+import { ErrorSystem } from "@/features/observability/server";
+import {
+  generateProductDescription,
+  getProductDataProvider,
+  getProductRepository,
+  getSettingValue,
+  translateProduct,
+} from "@/features/products/server";
+import type { ProductFormData } from "@/features/products/server";
 import { getProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository";
 import type { ProductAiJobRecord } from "@/features/jobs/types/product-ai-job-repository";
-import { getImageFileRepository } from "@/features/files";
-import { fs from "fs/promises";
-import path from "path";
-import, badRequestError, configurationError, notFoundError, operationFailedError, } from "@/shared/errors/app-error";
-import { ErrorSystem } from "@/features/observability";
 
 type LanguageRecord = {
   id: string;

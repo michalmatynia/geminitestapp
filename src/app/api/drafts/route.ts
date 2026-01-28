@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { listDrafts, createDraft } from "@/features/drafter";
-import type { CreateProductDraftInput } from "@/features/products";
+import type { CreateProductDraftInput } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products";
+import { parseJsonBody } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 
 const createDraftSchema = z.object({

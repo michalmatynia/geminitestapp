@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/features/auth";
-import { parseJsonBody } from "@/features/products";
+import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { conflictError, authError, validationError } from "@/shared/errors/app-error";
 import { getAuthSecurityProfile, updateAuthSecurityProfile } from "@/features/auth";

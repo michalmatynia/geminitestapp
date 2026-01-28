@@ -12,7 +12,7 @@ import {
 } from "@/features/auth";
 import { getAuthSecurityProfile } from "@/features/auth";
 import { getAuthUserPageSettings } from "@/features/auth";
-import { parseJsonBody } from "@/features/products";
+import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { internalError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";

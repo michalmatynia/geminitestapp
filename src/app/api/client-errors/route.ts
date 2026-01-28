@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { parseJsonBody } from "@/features/products";
+import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { ErrorSystem } from "@/features/observability";
+import { ErrorSystem } from "@/features/observability/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";

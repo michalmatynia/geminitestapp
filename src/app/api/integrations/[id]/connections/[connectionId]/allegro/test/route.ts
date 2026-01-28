@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getIntegrationRepository } from "@/features/integrations";
-import { decryptSecret, encryptSecret } from "@/features/integrations";
+import { getIntegrationRepository } from "@/features/integrations/server";
+import { decryptSecret, encryptSecret } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { AppErrorCodes, createAppError } from "@/shared/errors/app-error";
 import { mapStatusToAppError } from "@/shared/errors/error-mapper";

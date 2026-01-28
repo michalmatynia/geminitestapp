@@ -3,10 +3,10 @@ import { z } from "zod";
 import {
   getExportImageRetryPresets,
   setExportImageRetryPresets,
-} from "@/features/integrations";
+} from "@/features/integrations/server";
 import { normalizeImageRetryPresets } from "@/features/data-import-export";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products";
+import { parseJsonBody } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 
 const transformSchema = z.object({

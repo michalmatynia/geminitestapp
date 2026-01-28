@@ -2,9 +2,9 @@ import fs from "fs/promises";
 import path from "path";
 
 import { getImageFileRepository } from "@/features/files/services/image-file-repository";
-import { noteService } from "@/features/notesapp";
+import { noteService } from "@/features/notesapp/server";
 import type { NoteFileRecord } from "@/shared/types/notes";
-import { ErrorSystem } from "@/features/observability";
+import { ErrorSystem } from "@/features/observability/server";
 
 const uploadsRoot = path.join(process.cwd(), "public", "uploads");
 const productsRoot = path.join(uploadsRoot, "products");

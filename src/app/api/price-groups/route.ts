@@ -3,10 +3,10 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getProductDataProvider } from "@/features/products";
-import { fallbackCurrencies } from "@/features/internationalization";
+import { getProductDataProvider } from "@/features/products/server";
+import { fallbackCurrencies } from "@/features/internationalization/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products";
+import { parseJsonBody } from "@/features/products/server";
 import { conflictError, internalError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 

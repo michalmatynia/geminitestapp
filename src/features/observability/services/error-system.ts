@@ -1,5 +1,5 @@
 import { logger } from "@/shared/utils/logger";
-import { logAgentAudit } from "@/features/agent-runtime";
+import { logAgentAudit } from "@/features/agent-runtime/server";
 
 export interface ErrorContext {
   service?: string;

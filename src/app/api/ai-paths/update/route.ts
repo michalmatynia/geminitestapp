@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { apiHandler } from "@/shared/lib/api/api-handler";
-import { parseJsonBody } from "@/features/products";
+import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError, validationError } from "@/shared/errors/app-error";
-import { productUpdateSchema } from "@/features/products";
+import { productUpdateSchema } from "@/features/products/server";
 import { noteUpdateSchema } from "@/features/notesapp";
-import { getProductRepository } from "@/features/products";
-import { noteService } from "@/features/notesapp";
+import { getProductRepository } from "@/features/products/server";
+import { noteService } from "@/features/notesapp/server";
 import { removeUndefined } from "@/shared/utils";
 import { NoteUpdateInput } from "@/shared/types/notes";
 

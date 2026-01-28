@@ -81,8 +81,13 @@ const layerBoundaryConfigs = [
     rules: {
       "no-restricted-imports": buildRestrictedImportsRule([
         {
-          group: ["@/features/*/**"],
-          message: "Import feature public APIs only (use '@/features/<name>').",
+          group: [
+            "@/features/*/!(server)",
+            "@/features/*/!(server)/**",
+            "@/features/*/server/**",
+          ],
+          message:
+            "Import feature public APIs only (use '@/features/<name>' or '@/features/<name>/server').",
         },
       ]),
     },
@@ -108,9 +113,13 @@ const layerBoundaryConfigs = [
       "no-restricted-imports": buildRestrictedImportsRule([
         ...featureBaseRestrictions,
         {
-          group: [`@/features/!(${feature})/**`],
+          group: [
+            `@/features/!(${feature})/!(server)`,
+            `@/features/!(${feature})/!(server)/**`,
+            `@/features/!(${feature})/server/**`,
+          ],
           message:
-            "Import other features via their public API (use '@/features/<name>').",
+            "Import other features via their public API (use '@/features/<name>' or '@/features/<name>/server').",
         },
       ]),
     },

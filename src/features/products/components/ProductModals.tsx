@@ -4,7 +4,7 @@ import React from "react";
 
 
 
-import FileManager from "@/features/files";
+import { FileManager } from "@/features/files";
 import ProductForm from "@/features/products/components/ProductForm";
 import { ProductListingsModal } from "@/features/integrations";
 import { ListProductModal } from "@/features/integrations";

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { noteService } from "@/features/notesapp";
-import { parseJsonBody } from "@/features/products";
+import { noteService } from "@/features/notesapp/server";
+import { parseJsonBody } from "@/features/products/server";
 import { themeCreateSchema } from "@/features/notesapp";
 import type { ThemeCreateInput } from "@/shared/types/notes";
 import { removeUndefined } from "@/shared/utils";

@@ -4,13 +4,13 @@ import path from "path";
 import fs from "fs/promises";
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getProductDataProvider } from "@/features/products";
-import { getCatalogRepository } from "@/features/products";
-import { getImageFileRepository } from "@/features/files";
-import { getProductRepository } from "@/features/products";
-import { getImportTemplate } from "@/features/integrations";
-import { getIntegrationRepository } from "@/features/integrations";
-import { decryptSecret } from "@/features/integrations";
+import { getProductDataProvider } from "@/features/products/server";
+import { getCatalogRepository } from "@/features/products/server";
+import { getImageFileRepository } from "@/features/files/server";
+import { getProductRepository } from "@/features/products/server";
+import { getImportTemplate } from "@/features/integrations/server";
+import { getIntegrationRepository } from "@/features/integrations/server";
+import { decryptSecret } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {
   fetchBaseAllWarehouses,
@@ -22,11 +22,11 @@ import {
   fetchBaseProducts,
   fetchBaseProductIds,
   fetchBaseProductDetails,
-} from "@/features/integrations";
-import { extractBaseImageUrls, mapBaseProduct } from "@/features/integrations";
-import { productCreateSchema } from "@/features/products";
+} from "@/features/integrations/server";
+import { extractBaseImageUrls, mapBaseProduct } from "@/features/integrations/server";
+import { productCreateSchema } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ProductWithImages } from "@/features/products";
+import type { ProductWithImages } from "@/features/products/server";
 
 export const runtime = "nodejs";
 

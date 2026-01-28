@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getProductDataProvider } from "@/features/products";
-import { fallbackCurrencies } from "@/features/internationalization";
+import { getProductDataProvider } from "@/features/products/server";
+import { fallbackCurrencies } from "@/features/internationalization/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {
   badRequestError,

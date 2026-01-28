@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createMongoBackup, createPostgresBackup } from "@/features/database";
+import { createMongoBackup, createPostgresBackup } from "@/features/database/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 

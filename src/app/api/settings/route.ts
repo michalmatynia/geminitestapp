@@ -5,10 +5,10 @@ import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { APP_DB_PROVIDER_SETTING_KEY, getAppDbProvider } from "@/shared/lib/db/app-db-provider";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products";
+import { parseJsonBody } from "@/features/products/server";
 import { internalError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
-import { ErrorSystem } from "@/features/observability";
+import { ErrorSystem } from "@/features/observability/server";
 
 const shouldLog = () => process.env.DEBUG_SETTINGS === "true";
 

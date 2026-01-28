@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import type { Document, Filter } from "mongodb";
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getProductDataProvider } from "@/features/products";
+import { getProductDataProvider } from "@/features/products/server";
 
 type ImportTemplateProvider = "mongodb" | "prisma";
 

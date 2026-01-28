@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateProductDescription } from "@/features/products";
-import type { ProductFormData } from "@/features/products";
+import { generateProductDescription } from "@/features/products/server";
+import type { ProductFormData } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { validationError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";

@@ -33,7 +33,7 @@ import { prepareRunContext } from "@/features/agent-runtime/execution/context";
 import { initializePlanState } from "@/features/agent-runtime/execution/plan";
 import { runPlanStepLoop } from "@/features/agent-runtime/execution/step-runner";
 import { finalizeAgentRun } from "@/features/agent-runtime/execution/finalize";
-import { ErrorSystem } from "@/features/observability";
+import { ErrorSystem } from "@/features/observability/server";
 
 export async function runAgentControlLoop(runId: string) {
   let sharedBrowser: Browser | null = null;

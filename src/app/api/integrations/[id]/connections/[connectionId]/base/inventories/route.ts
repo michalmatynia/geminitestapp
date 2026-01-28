@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getIntegrationRepository } from "@/features/integrations";
-import { decryptSecret } from "@/features/integrations";
-import { fetchBaseInventories } from "@/features/integrations";
+import { getIntegrationRepository } from "@/features/integrations/server";
+import { decryptSecret } from "@/features/integrations/server";
+import { fetchBaseInventories } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";

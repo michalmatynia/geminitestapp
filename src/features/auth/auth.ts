@@ -1,4 +1,4 @@
-import { ErrorSystem } from "@/features/observability";
+import { ErrorSystem } from "@/features/observability/server";
 import NextAuth, { type Session, type User } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";

@@ -1,4 +1,4 @@
-import { ProductEditPage } from "@/features/products";
+import { ProductEditPage } from "@/features/products/server";
 
 export default async function Page({
   params,

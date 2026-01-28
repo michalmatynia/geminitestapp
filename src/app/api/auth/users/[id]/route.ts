@@ -6,7 +6,7 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { getAuthDataProvider } from "@/features/auth";
 import { normalizeAuthEmail } from "@/features/auth";
 import { auth } from "@/features/auth";
-import { parseJsonBody } from "@/features/products";
+import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { authError, conflictError, internalError, notFoundError } from "@/shared/errors/app-error";
 import type { AuthUserSummary } from "@/features/auth";

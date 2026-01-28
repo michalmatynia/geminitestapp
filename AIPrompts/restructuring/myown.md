@@ -1,52 +1,6 @@
-1. App structure → run a code organisation and segmentation strategy
-
--->continue with features restructuring and even stricter separation
-
-<!-- <NAMEOFSECTION> - can be products, AI PATHS, etc. -->
-
-Use a feature-first split with hard boundaries:
-
-src/features/<NAMEOFSECTION>/* (domain feature: UI + state + hooks + types + api)
-
-src/shared/* (truly cross-feature: UI primitives, utils, hooks, types)
-
-src/app/* (routing, providers, bootstrapping)
-
-# Inside features/<NAMEOFSECTION>:
-
-components/ (feature-specific UI)
-
-pages/ (route-level containers)
-
-hooks/ (feature hooks)
-
-validations/ (for feature related zod validators)
-
-api/ (requests, query keys)
-
-types/ (local types + re-exports) <!-- move from types folder, but only those Products specific types -->
-
-utils/ (feature helpers)
-
-Rule of thumb: if a component is used by 2+ features → move to shared/.
 
 
-# Establish Hard module boundaries (enforced by ESLint)
-
-// I want to establish Hard module boundaries (enforced by ESLint). Define layers and enforce import rules: app/* can import features/* + shared/* , features/* can import shared/*, but not other features (except via public APIs), shared/* must never import features/* , keep Next App Router projects from turning into “everything imports everything”. Expose only a single point of entry for each module.  Public API per module (ban deep imports) Each module exposes a single entry: features/<NAMEOFSECTION>/index.ts or shared/ui/index.ts if it's s shared component. Ban imports like features/<NAMEOFSECTION>/components/X → only features/<NAMEOFSECTION>.
-
-
-
-
-Define layers and enforce import rules:
-
-app/* can import features/* + shared/*
-
-features/* can import shared/*, but not other features (except via public APIs)
-
-shared/* must never import features/*
-
-This keeps Next App Router projects from turning into “everything imports everything”.
+› analyze the code deeply and continue implementing  proper database access paths and server and client separations
 
 2. Public API per module (ban deep imports)
 
@@ -59,6 +13,9 @@ shared/ui/index.ts
 Ban imports like features/<NAMEOFSECTION>/components/X → only features/<NAMEOFSECTION>.
 
 # Types & “Type Clusters” → migrate safely
+
+
+HERE NOW
 
 A practical way to scan and move types without breaking imports:
 
@@ -96,7 +53,7 @@ Everything else (components, hooks, queries, types) lives in features/<NAMEOFSEC
 
 When reviewing components, classify them:
 
-UI primitive (Button-ish, Modal-ish) → shared/ui
+UI primitive (Button-ish, Modal-ish) → shared/ui - scan for unified
 
 Composable pattern (SearchBar, Pagination, FilterPanel) → shared/components
 

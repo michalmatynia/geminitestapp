@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { uploadNoteFile } from "@/features/files";
-import { noteService } from "@/features/notesapp";
+import { uploadNoteFile } from "@/features/files/server";
+import { noteService } from "@/features/notesapp/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, conflictError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";

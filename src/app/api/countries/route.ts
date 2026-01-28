@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/shared/lib/db/prisma";
-import { ensureInternationalizationDefaults } from "@/features/internationalization";
-import { fallbackCountries } from "@/features/internationalization";
 import {
+  ensureInternationalizationDefaults,
+  fallbackCountries,
   countryMappings,
   defaultCountries,
   defaultCurrencies,
-} from "@/features/internationalization";
-import { getProductDataProvider } from "@/features/products";
+} from "@/features/internationalization/server";
+import { getProductDataProvider } from "@/features/products/server";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products";
+import { parseJsonBody } from "@/features/products/server";
 import { conflictError, internalError } from "@/shared/errors/app-error";
-import { logSystemEvent } from "@/features/observability";
+import { logSystemEvent } from "@/features/observability/server";
 import type { CountryCode } from "@prisma/client";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 

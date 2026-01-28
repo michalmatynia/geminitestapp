@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { parseJsonBody } from "@/features/products";
+import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { updateAuthSecurityProfile, getAuthSecurityProfile } from "@/features/auth";
 import { internalError, authError } from "@/shared/errors/app-error";

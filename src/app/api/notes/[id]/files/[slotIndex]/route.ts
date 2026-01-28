@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { deleteNoteFile } from "@/features/files";
-import { noteService } from "@/features/notesapp";
+import { deleteNoteFile } from "@/features/files/server";
+import { noteService } from "@/features/notesapp/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, internalError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";

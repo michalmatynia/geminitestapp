@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { productService } from "@/features/products";
+import { productService } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";

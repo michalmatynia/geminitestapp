@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getProductRepository } from "@/features/products";
-import { getIntegrationRepository } from "@/features/integrations";
-import { getProductListingRepository } from "@/features/integrations";
+import { getProductRepository } from "@/features/products/server";
+import { getIntegrationRepository } from "@/features/integrations/server";
+import { getProductListingRepository } from "@/features/integrations/server";
 import {
   getExportWarehouseId,
-} from "@/features/integrations";
+} from "@/features/integrations/server";
 import {
   getExportDefaultInventoryId,
   getExportStockFallbackEnabled,
   listExportTemplates,
-} from "@/features/integrations";
+} from "@/features/integrations/server";
 import {
   buildBaseProductData,
   collectProductImageDiagnostics,
@@ -21,11 +21,11 @@ import {
   type ImageBase64Mode,
   type ImageExportDiagnostics,
   type ImageTransformOptions,
-} from "@/features/integrations";
-import { checkBaseSkuExists, fetchBaseWarehouses } from "@/features/integrations";
-import { decryptSecret } from "@/features/integrations";
-import { LogCapture } from "@/features/integrations";
-import { parseJsonBody } from "@/features/products";
+} from "@/features/integrations/server";
+import { checkBaseSkuExists, fetchBaseWarehouses } from "@/features/integrations/server";
+import { decryptSecret } from "@/features/integrations/server";
+import { LogCapture } from "@/features/integrations/server";
+import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {
   badRequestError,

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/shared/lib/db/prisma";
-import { startAgentQueue } from "@/features/jobs";
-import { logAgentAudit } from "@/features/agent-runtime";
+import { startAgentQueue } from "@/features/jobs/server";
+import { logAgentAudit } from "@/features/agent-runtime/server";
 import { promises as fs } from "fs";
 import path from "path";
 import { AgentRunStatus } from "@prisma/client";

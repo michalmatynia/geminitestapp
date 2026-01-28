@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Papa from "papaparse";
 
-import { getProductRepository } from "@/features/products";
-import { productCreateSchema } from "@/features/products";
+import { getProductRepository, productCreateSchema } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";

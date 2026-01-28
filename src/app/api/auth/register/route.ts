@@ -8,7 +8,7 @@ import { normalizeAuthEmail } from "@/features/auth";
 import { getAuthSecurityPolicy, validatePasswordStrength } from "@/features/auth";
 import { getAuthUserPageSettings } from "@/features/auth";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products";
+import { parseJsonBody } from "@/features/products/server";
 import { conflictError, internalError, validationError, forbiddenError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 

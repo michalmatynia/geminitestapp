@@ -1,4 +1,4 @@
-import { productService } from "@/features/products";
+import { productService } from "@/features/products/server";
 import { getProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository";
 import { invalidStateError, notFoundError } from "@/shared/errors/app-error";
 import type { ProductAiJobUpdate } from "@/features/jobs/types/product-ai-job-repository";

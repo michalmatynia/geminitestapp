@@ -1,1 +1,1 @@
-export { AgentCreatorAgentRunSnapshotsGET as GET } from "@/features/agentcreator";
+export { AgentCreatorAgentRunSnapshotsGET as GET } from "@/features/agentcreator/server";

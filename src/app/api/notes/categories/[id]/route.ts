@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { noteService } from "@/features/notesapp";
-import { parseJsonBody } from "@/features/products";
+import { noteService } from "@/features/notesapp/server";
+import { parseJsonBody } from "@/features/products/server";
 import { categoryUpdateSchema } from "@/features/notesapp";
 import { removeUndefined } from "@/shared/utils";
 import type { CategoryUpdateInput } from "@/shared/types/notes";

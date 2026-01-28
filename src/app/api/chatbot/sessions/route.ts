@@ -3,7 +3,7 @@ import { z } from "zod";
 import { chatbotSessionRepository } from "@/features/chatbot";
 import type { ChatSession, UpdateSessionInput } from "@/shared/types/chatbot";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products";
+import { parseJsonBody } from "@/features/products/server";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 

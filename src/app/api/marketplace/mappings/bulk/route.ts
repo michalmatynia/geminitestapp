@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCategoryMappingRepository } from "@/features/integrations";
+import { getCategoryMappingRepository } from "@/features/integrations/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, validationError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";

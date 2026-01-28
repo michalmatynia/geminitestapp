@@ -1,25 +1,9 @@
-// Auto-generated public API for feature. Edit with care.
-export * from "./api/parse-json";
 export { default as ProductCard } from "./components/ProductCard";
 export * from "./pages/AdminProductsPage";
 export * from "./pages/ProductConstructorPage";
-export { default as ProductEditPage } from "./pages/ProductEditPage";
 export * from "./pages/ProductPreferencesPage";
-export * from "./pages/ProductPublicPage";
 export * from "./pages/ProductSettingsPage";
-export * from "./services/aiDescriptionService";
-export { default as OpenAI from "openai";
-import type } from "./services/aiDescriptionService";
-export * from "./services/aiTranslationService";
-export * from "./services/catalog-repository";
-export * from "./services/product-migration";
-export * from "./services/product-provider";
-export { default as prisma from "@/shared/lib/db/prisma";
-import } from "./services/product-provider";
-export * from "./services/product-repository";
-export * from "./services/productService";
-export { default as Link from "next/link";
-import } from "./services/productService";
+export * from "./api";
 export * from "./types";
 export * from "./types/drafts";
 export * from "./types/products-ui";

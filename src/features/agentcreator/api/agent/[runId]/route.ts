@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 import prisma from "@/shared/lib/db/prisma";
-import { logAgentAudit } from "@/features/agent-runtime";
-import { startAgentQueue } from "@/features/jobs";
+import { logAgentAudit } from "@/features/agent-runtime/server";
+import { startAgentQueue } from "@/features/jobs/server";
 import { promises as fs } from "fs";
 import path from "path";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";

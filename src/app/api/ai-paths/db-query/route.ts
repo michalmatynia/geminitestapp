@@ -3,7 +3,7 @@ import { z } from "zod";
 import { ObjectId, Sort } from "mongodb";
 
 import { apiHandler } from "@/shared/lib/api/api-handler";
-import { parseJsonBody } from "@/features/products";
+import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { internalError } from "@/shared/errors/app-error";

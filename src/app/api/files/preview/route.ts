@@ -1,10 +1,10 @@
-import { fs from "fs";
+import fs from "fs";
 import path from "path";
 
 import mime from "mime-types";
-import, NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-import { getImageFileRepository } from "@/features/files";
+import { getImageFileRepository } from "@/features/files/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";

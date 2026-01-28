@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { productService } from "@/features/products";
+import { productService } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 

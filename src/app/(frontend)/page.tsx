@@ -1,8 +1,8 @@
-import { Link from "next/link";
-import, redirect } from "next/navigation";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { productService } from "@/features/products";
+import { productService } from "@/features/products/server";
 import { ProductCard } from "@/features/products";
 import type { ProductWithImages } from "@/features/products";
 

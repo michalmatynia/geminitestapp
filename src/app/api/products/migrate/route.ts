@@ -4,9 +4,9 @@ import {
   getProductMigrationTotal,
   migrateProductBatch,
   type MigrationDirection,
-} from "@/features/products";
-import { createFullDatabaseBackup } from "@/features/database";
-import { parseJsonBody } from "@/features/products";
+} from "@/features/products/server";
+import { createFullDatabaseBackup } from "@/features/database/server";
+import { parseJsonBody } from "@/features/products/server";
 import { removeUndefined } from "@/shared/utils";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";

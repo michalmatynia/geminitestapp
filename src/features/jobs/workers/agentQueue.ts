@@ -1,7 +1,6 @@
-import { prisma from "@/shared/lib/db/prisma";
-import, randomUUID } from "crypto";
-import { runAgentControlLoop } from "@/features/agent-runtime";
-import { logAgentAudit } from "@/features/agent-runtime";
+import prisma from "@/shared/lib/db/prisma";
+import { randomUUID } from "crypto";
+import { logAgentAudit, runAgentControlLoop } from "@/features/agent-runtime/server";
 
 type AgentQueueState = {
   running: boolean;

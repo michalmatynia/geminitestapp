@@ -1,8 +1,15 @@
-import { path from "path";
+import path from "path";
 import fs from "fs/promises";
-import, NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-import { backupsDir, ensureBackupsDir, assertValidBackupName } from "@/features/database";
+import {
+  pgBackupsDir,
+  ensurePgBackupsDir,
+  assertValidPgBackupName,
+  mongoBackupsDir,
+  ensureMongoBackupsDir,
+  assertValidMongoBackupName,
+} from "@/features/database/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
@@ -11,13 +18,22 @@ async function POST_handler(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
+    const type = formData.get("type") as string | null;
 
     if (!file) {
       throw badRequestError("No file provided");
     }
 
-    assertValidBackupName(file.name);
-    await ensureBackupsDir();
+    const dbType = type === "mongodb" ? "mongodb" : "postgresql";
+    const backupsDir =
+      dbType === "mongodb" ? mongoBackupsDir : pgBackupsDir;
+    if (dbType === "mongodb") {
+      assertValidMongoBackupName(file.name);
+      await ensureMongoBackupsDir();
+    } else {
+      assertValidPgBackupName(file.name);
+      await ensurePgBackupsDir();
+    }
 
     const backupPath = path.join(backupsDir, file.name);
     const fileBuffer = Buffer.from(await file.arrayBuffer());

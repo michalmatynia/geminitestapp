@@ -1,11 +1,12 @@
 "use client";
 
-import { useToast } from "@/shared/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ProfilerOnRenderCallback } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 
+import { useToast } from "@/shared/ui";
 import { ProductTableSkeleton } from "@/features/products/components/list/ProductTableSkeleton";
 import { useProductData } from "@/features/products/hooks/useProductData";
 import { useProductOperations } from "@/features/products/hooks/useProductOperations";
@@ -20,6 +21,7 @@ import type { RowSelectionState } from "@tanstack/react-table";
 import type { ProductDraft } from "@/features/products/types/drafts";
 import type { ProductWithImages } from "@/features/products/types";
 import { logger } from "@/shared/utils/logger";
+import { useDrafts, draftKeys } from "@/features/drafter/hooks/useDrafts";
 
 const SelectIntegrationModal = dynamic(
   () => import("@/features/integrations").then((mod) => mod.SelectIntegrationModal),
@@ -32,8 +34,11 @@ export function AdminProductsPage() {
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const { toast } = useToast();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [activeDrafts, setActiveDrafts] = useState<ProductDraft[]>([]);
   const [createDraft, setCreateDraft] = useState<ProductDraft | null>(null);
+  const queryClient = useQueryClient();
+
+  const { data: allDrafts = [] } = useDrafts();
+  const activeDrafts = useMemo(() => allDrafts.filter((d) => d.active !== false), [allDrafts]);
 
   // Load user preferences
   const {
@@ -177,29 +182,17 @@ export function AdminProductsPage() {
     updateNameLocale(nextLocale);
   }, [languageOptions, fallbackNameLocale, preferences.nameLocale, updateNameLocale]);
 
-  // Load active drafts
-  useEffect(() => {
-    const loadActiveDrafts = async () => {
-      try {
-        const res = await fetch("/api/drafts");
-        if (res.ok) {
-          const drafts = await res.json() as ProductDraft[];
-          setActiveDrafts(drafts.filter((d) => d.active !== false));
-        }
-      } catch (error) {
-        console.error("Failed to load active drafts:", error);
-      }
-    };
-    void loadActiveDrafts();
-  }, []);
-
   const handleCreateFromDraft = useCallback((draftId: string) => {
     const run = async () => {
       try {
-        const res = await fetch(`/api/drafts/${draftId}`);
-        if (!res.ok) throw new Error("Failed to load draft");
-
-        const draft = (await res.json()) as ProductDraft;
+        const draft = await queryClient.fetchQuery({
+            queryKey: draftKeys.detail(draftId),
+            queryFn: async () => {
+                const res = await fetch(`/api/drafts/${draftId}`);
+                if (!res.ok) throw new Error("Failed to load draft");
+                return (await res.json()) as ProductDraft;
+            }
+        });
         setCreateDraft(draft);
         handleOpenCreateFromDraft(draft);
         toast(`Creating product from draft: ${draft.name}`, { variant: "success" });
@@ -209,7 +202,7 @@ export function AdminProductsPage() {
       }
     };
     void run();
-  }, [handleOpenCreateFromDraft, toast]);
+  }, [handleOpenCreateFromDraft, toast, queryClient]);
 
   const handleCloseCreate = useCallback(() => {
     setIsCreateOpen(false);

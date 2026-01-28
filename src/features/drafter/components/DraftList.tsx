@@ -1,11 +1,8 @@
 "use client";
 import { Button, ListPanel, useToast, SectionHeader } from "@/shared/ui";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useDrafts, useDeleteDraft } from "@/features/drafter/hooks/useDrafts";
 
-
-
-
-import { ProductDraft } from "@/features/products";
 import {
   PlusIcon,
   Edit2Icon,
@@ -29,7 +26,7 @@ import {
 interface DraftListProps {
   onEdit: (id: string) => void;
   onCreateNew: () => void;
-  refreshTrigger: number;
+  refreshTrigger?: number;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -47,30 +44,11 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   sparkles: Sparkles,
 };
 
-export function DraftList({ onEdit, onCreateNew, refreshTrigger }: DraftListProps) {
-  const [drafts, setDrafts] = useState<ProductDraft[]>([]);
-  const [loading, setLoading] = useState(true);
+export function DraftList({ onEdit, onCreateNew }: DraftListProps) {
+  const { data: drafts = [], isLoading: loading } = useDrafts();
+  const deleteDraftMutation = useDeleteDraft();
   const [deleting, setDeleting] = useState<string | null>(null);
   const { toast } = useToast();
-
-  useEffect(() => {
-    const loadDrafts = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch("/api/drafts");
-        if (!res.ok) throw new Error("Failed to load drafts");
-        const data = (await res.json()) as ProductDraft[];
-        setDrafts(data);
-      } catch (error) {
-        console.error("Failed to load drafts:", error);
-        toast("Failed to load drafts", { variant: "error" });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void loadDrafts();
-  }, [refreshTrigger, toast]);
 
   const handleDelete = async (id: string) => {
     const confirmed = window.confirm("Are you sure you want to delete this draft?");
@@ -78,13 +56,7 @@ export function DraftList({ onEdit, onCreateNew, refreshTrigger }: DraftListProp
 
     try {
       setDeleting(id);
-      const res = await fetch(`/api/drafts/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) throw new Error("Failed to delete draft");
-
-      setDrafts((prev) => prev.filter((draft) => draft.id !== id));
+      await deleteDraftMutation.mutateAsync(id);
       toast("Draft deleted successfully", { variant: "success" });
     } catch (error) {
       console.error("Failed to delete draft:", error);

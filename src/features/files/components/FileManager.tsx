@@ -2,13 +2,10 @@
 import { FilePreviewModal, Button, useToast, Input } from "@/shared/ui";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, useCallback } from "react";
+import { useState, useMemo } from "react";
 import type { ImageFileSelection } from "@/shared/types/files";
 import type { ExpandedImageFile } from "@/features/products";
-
-
-
-
+import { useFiles, useDeleteFile } from "@/features/files/hooks/useFiles";
 
 interface FileManagerProps {
   onSelectFile?: (files: ImageFileSelection[]) => void;
@@ -22,14 +19,14 @@ export default function FileManager({
   onSelectFile,
   mode = "select",
 }: FileManagerProps) {
-  const [files, setFiles] = useState<ExpandedImageFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<ImageFileSelection[]>([]);
   const [filenameSearch, setFilenameSearch] = useState("");
   const [productNameSearch, setProductNameSearch] = useState("");
   const [previewFile, setPreviewFile] = useState<ExpandedImageFile | null>(null);
   const { toast } = useToast();
+  const deleteFileMutation = useDeleteFile();
 
-  const fetchFiles = useCallback(async () => {
+  const queryParams = useMemo(() => {
     const query = new URLSearchParams();
     if (filenameSearch) {
       query.append("filename", filenameSearch);
@@ -37,25 +34,10 @@ export default function FileManager({
     if (productNameSearch) {
       query.append("productName", productNameSearch);
     }
-    try {
-      const res = await fetch(`/api/files?${query.toString()}`);
-      if (!res.ok) throw new Error("Failed to fetch files");
-      const data = (await res.json()) as ExpandedImageFile[];
-      setFiles(data);
-    } catch (error) {
-      console.error("Failed to fetch files:", error);
-      toast("Failed to load files.", { variant: "error" });
-    }
-  }, [filenameSearch, productNameSearch, toast]);
+    return query.toString();
+  }, [filenameSearch, productNameSearch]);
 
-  // This function fetches the files from the API based on the search criteria.
-  useEffect(() => {
-    if (mode === 'select') {
-      void fetchFiles();
-    } else if (mode === 'view') {
-      void fetchFiles();
-    }
-  }, [fetchFiles, mode]);
+  const { data: files = [], refetch } = useFiles(queryParams);
 
   const handleClick = (file: ExpandedImageFile) => {
     if (mode === "select") {
@@ -86,14 +68,8 @@ export default function FileManager({
   const handleDelete = async (fileId: string) => {
     if (confirm("Are you sure you want to delete this file?")) {
       try {
-        const res = await fetch(`/api/files/${fileId}`, {
-          method: "DELETE",
-        });
-        if (res.ok) {
-          void fetchFiles();
-        } else {
-          throw new Error("Failed to delete file");
-        }
+        await deleteFileMutation.mutateAsync(fileId);
+        toast("File deleted successfully.", { variant: "success" });
       } catch (error) {
         console.error("Failed to delete file:", error);
         toast("Failed to delete file.", { variant: "error" });

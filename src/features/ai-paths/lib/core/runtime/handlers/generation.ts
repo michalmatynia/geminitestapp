@@ -11,6 +11,7 @@ import {
   resolveJobProductId,
 } from "../utils";
 import type { NodeHandler } from "@/shared/types/ai-paths-runtime";
+import { aiJobsApi, aiGenerationApi } from "../../../api";
 
 export const handleTemplate: NodeHandler = ({ node, nodeInputs }) => {
   const templateConfig = node.config?.template ?? { template: "" };
@@ -189,36 +190,28 @@ export const handleModel: NodeHandler = async ({
   const productId = resolveJobProductId(nodeInputs, simulationEntityType, simulationEntityId, activePathId);
   let enqueuedJobId: string | undefined;
   try {
-    const enqueueRes = await fetch("/api/products/ai-jobs/enqueue", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        productId,
-        type: "graph_model",
-        payload,
-      }),
+    const enqueueResult = await aiJobsApi.enqueue({
+      productId,
+      type: "graph_model",
+      payload,
     });
-    const enqueueData = (await enqueueRes.json() as unknown) as {
-      error?: string;
-      jobId?: string;
-    };
-    if (!enqueueRes.ok || !enqueueData.jobId) {
-      throw new Error(enqueueData.error || "Failed to enqueue AI job.");
+    if (!enqueueResult.ok) {
+      throw new Error(enqueueResult.error || "Failed to enqueue AI job.");
     }
-    enqueuedJobId = enqueueData.jobId;
+    enqueuedJobId = enqueueResult.data.jobId;
     toast("AI model job queued.", { variant: "success" });
     executed.ai.add(node.id);
     if (!shouldWait) {
       return {
-        jobId: enqueueData.jobId,
+        jobId: enqueueResult.data.jobId,
         status: "queued",
         debugPayload: payload,
       };
     }
-    const result = await pollGraphJob(enqueueData.jobId);
+    const result = await pollGraphJob(enqueueResult.data.jobId);
     return {
       result,
-      jobId: enqueueData.jobId,
+      jobId: enqueueResult.data.jobId,
       status: "completed",
       debugPayload: payload,
     };
@@ -274,17 +267,12 @@ export const handleAiDescription: NodeHandler = async ({
     generationOutputEnabled: node.config?.description?.generationOutputEnabled,
   };
   try {
-    const res = await fetch("/api/generate-description", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) {
+    const result = await aiGenerationApi.generateDescription(body);
+    if (!result.ok) {
       throw new Error("AI description generation failed.");
     }
-    const data = (await res.json() as unknown) as { description?: string };
     executed.ai.add(node.id);
-    return { description_en: data.description ?? "" };
+    return { description_en: result.data.description ?? "" };
   } catch (error) {
     reportAiPathsError(
       error,
@@ -307,24 +295,14 @@ export const handleDescriptionUpdater: NodeHandler = async ({
   if (!productId || !description) {
     return {};
   }
-  try {
-    const formData = new FormData();
-    formData.append("description_en", description);
-    const res = await fetch(`/api/products/${encodeURIComponent(productId)}`, {
-      method: "PUT",
-      body: formData,
-    });
-    if (!res.ok) {
-      throw new Error("Failed to update product description.");
-    }
-    executed.updater.add(node.id);
-    return { description_en: description };
-  } catch (error) {
+  const updateResult = await aiGenerationApi.updateProductDescription(productId, description);
+  executed.updater.add(node.id);
+  if (!updateResult.ok) {
     reportAiPathsError(
-      error,
+      new Error(updateResult.error),
       { action: "updateDescription", productId, nodeId: node.id },
       "Failed to update description:"
     );
-    return { description_en: description };
   }
+  return { description_en: description };
 };

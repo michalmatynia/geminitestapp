@@ -496,6 +496,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
             entityType: updaterConfig.entityType ?? "product",
             idField: updaterConfig.idField ?? "productId",
             mode: updaterConfig.mode ?? "replace",
+            updateStrategy: "one",
             mappings: legacyMappings,
             query: {
               ...defaultQuery,

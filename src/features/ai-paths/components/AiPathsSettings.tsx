@@ -1,5 +1,6 @@
 "use client";
 import { Button, Input, Label, Textarea, useToast, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/ui";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -9,8 +10,9 @@ import { createPortal } from "react-dom";
 
 
 import { logClientError } from "@/features/observability";
+import { useUpdateSetting } from "@/shared/hooks/useSettings";
 import { DocsTabPanel, PathsTabPanel } from "./ui-panels";
-import { evaluateGraph } from "@/features/ai-paths/lib";
+import { evaluateGraph, dbApi, aiJobsApi, entityApi } from "@/features/ai-paths/lib";
 import { CanvasBoard } from "./canvas-board";
 import { CanvasSidebar } from "./canvas-sidebar";
 import { NodeConfigDialog } from "./node-config-dialog";
@@ -146,7 +148,6 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   >("idle");
   const [autoSaveAt, setAutoSaveAt] = useState<string | null>(null);
   const [configOpen, setConfigOpen] = useState(false);
-  const [modelOptions, setModelOptions] = useState<string[]>(DEFAULT_MODELS);
   // Initial view centered on the middle of the canvas where nodes are placed
   const [view, setView] = useState({ x: -600, y: -320, scale: 1 });
   const [connecting, setConnecting] = useState<{
@@ -175,16 +176,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const [parserSamples, setParserSamples] = useState<Record<string, ParserSampleState>>(
     {}
   );
-  const [parserSampleLoading, setParserSampleLoading] = useState(false);
   const [updaterSamples, setUpdaterSamples] = useState<Record<string, UpdaterSampleState>>(
     {}
   );
-  const [updaterSampleLoading, setUpdaterSampleLoading] = useState(false);
-  const [sessionUser, setSessionUser] = useState<{
-    id?: string;
-    name?: string | null;
-    email?: string | null;
-  } | null>(null);
   const [panState, setPanState] = useState<{
     startX: number;
     startY: number;
@@ -245,6 +239,209 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const lastDropTimerRef = useRef<number | null>(null);
   const loadAttemptRef = useRef<number | null>(null);
   const loadInFlightRef = useRef(false);
+  const queryClient = useQueryClient();
+  const updateSettingMutation = useUpdateSetting();
+  const updatePreferencesMutation = useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => {
+      const res = await fetch("/api/user/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to update preferences.");
+      }
+      return true;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["user-preferences"] });
+    },
+    onError: (error) => {
+      console.warn("[AI Paths] Failed to persist preferences.", error);
+    },
+  });
+  const settingsQuery = useQuery({
+    queryKey: ["settings"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings");
+      if (!res.ok) {
+        throw new Error("Failed to load AI Paths settings.");
+      }
+      return (await res.json()) as Array<{ key: string; value: string }>;
+    },
+    enabled: false,
+  });
+  const preferencesQuery = useQuery({
+    queryKey: ["user-preferences"],
+    queryFn: async () => {
+      const res = await fetch("/api/user/preferences");
+      if (!res.ok) {
+        throw new Error("Failed to load user preferences.");
+      }
+      return (await res.json()) as {
+        aiPathsActivePathId?: string | null;
+        aiPathsExpandedGroups?: string[] | null;
+        aiPathsPaletteCollapsed?: boolean | null;
+        aiPathsPathIndex?: PathMeta[] | null;
+        aiPathsPathConfigs?: Record<string, PathConfig> | string | null;
+      };
+    },
+    enabled: false,
+  });
+  const enqueueAiJobMutation = useMutation({
+    mutationFn: async (payload: { productId: string; type: string; payload: unknown }) => {
+      const result = await aiJobsApi.enqueue(payload);
+      if (!result.ok) {
+        throw new Error(result.error || "Failed to enqueue AI job.");
+      }
+      return result.data;
+    },
+  });
+
+  // Parser sample fetching mutation
+  const fetchParserSampleMutation = useMutation({
+    mutationFn: async ({
+      nodeId,
+      entityType,
+      entityId,
+    }: {
+      nodeId: string;
+      entityType: string;
+      entityId: string;
+    }) => {
+      if (!entityId.trim()) {
+        throw new Error("Enter an entity ID to load a sample.");
+      }
+      if (entityType === "custom") {
+        throw new Error("Use pasted JSON for custom samples.");
+      }
+      const normalized = entityType.toLowerCase();
+      let sample: Record<string, unknown> | null = null;
+      if (normalized === "product") {
+        sample = await queryClient.fetchQuery({
+          queryKey: ["products", entityId],
+          queryFn: async () => {
+            const result = await entityApi.getProduct(entityId);
+            return result.ok ? result.data : null;
+          },
+          staleTime: 0,
+        });
+      } else if (normalized === "note") {
+        sample = await queryClient.fetchQuery({
+          queryKey: ["notes", entityId],
+          queryFn: async () => {
+            const result = await entityApi.getNote(entityId);
+            return result.ok ? result.data : null;
+          },
+          staleTime: 0,
+        });
+      }
+      if (!sample) {
+        throw new Error("No sample found for that ID.");
+      }
+      return { nodeId, entityType, entityId, sample };
+    },
+    onSuccess: ({ nodeId, entityType, entityId, sample }) => {
+      setParserSamples((prev) => ({
+        ...prev,
+        [nodeId]: {
+          entityType,
+          entityId,
+          json: JSON.stringify(sample, null, 2),
+          mappingMode: prev[nodeId]?.mappingMode ?? "top",
+          depth: prev[nodeId]?.depth ?? 2,
+          keyStyle: prev[nodeId]?.keyStyle ?? "path",
+          includeContainers: prev[nodeId]?.includeContainers ?? false,
+        },
+      }));
+    },
+    onError: (error) => {
+      toast(error instanceof Error ? error.message : "Failed to fetch sample.", { variant: "error" });
+    },
+  });
+
+  // Updater sample fetching mutation
+  const fetchUpdaterSampleMutation = useMutation({
+    mutationFn: async ({
+      nodeId,
+      entityType,
+      entityId,
+    }: {
+      nodeId: string;
+      entityType: string;
+      entityId: string;
+    }) => {
+      if (entityType === "custom") {
+        throw new Error("Use pasted JSON for custom samples.");
+      }
+      let sample: unknown = null;
+      let fetchedId = entityId;
+
+      // If no entityId provided, fetch first document from collection
+      if (!entityId.trim()) {
+        const data = await queryClient.fetchQuery({
+          queryKey: ["db-browse-sample", entityType],
+          queryFn: async () => {
+            const result = await dbApi.browse(entityType, { limit: 1 });
+            if (!result.ok) return { documents: [] as Record<string, unknown>[] };
+            return { documents: result.data.documents ?? [] };
+          },
+          staleTime: 0,
+        });
+        const firstDoc = data.documents?.[0];
+        if (firstDoc) {
+          sample = firstDoc;
+          fetchedId = String(firstDoc._id ?? firstDoc.id ?? "");
+        }
+      } else {
+        const normalized = entityType.toLowerCase();
+        if (normalized === "product") {
+          sample = await queryClient.fetchQuery({
+            queryKey: ["products", entityId],
+            queryFn: async () => {
+              const result = await entityApi.getProduct(entityId);
+              return result.ok ? result.data : null;
+            },
+            staleTime: 0,
+          });
+        } else if (normalized === "note") {
+          sample = await queryClient.fetchQuery({
+            queryKey: ["notes", entityId],
+            queryFn: async () => {
+              const result = await entityApi.getNote(entityId);
+              return result.ok ? result.data : null;
+            },
+            staleTime: 0,
+          });
+        }
+      }
+
+      if (!sample) {
+        throw new Error("No sample found.");
+      }
+      return { nodeId, entityType, entityId: fetchedId, sample };
+    },
+    onSuccess: ({ nodeId, entityType, entityId, sample }) => {
+      setUpdaterSamples((prev) => ({
+        ...prev,
+        [nodeId]: {
+          entityType,
+          entityId,
+          json: JSON.stringify(sample, null, 2),
+          depth: prev[nodeId]?.depth ?? 2,
+          includeContainers: prev[nodeId]?.includeContainers ?? false,
+        },
+      }));
+      toast("Sample fetched.", { variant: "success" });
+    },
+    onError: (error) => {
+      toast(error instanceof Error ? error.message : "Failed to fetch sample.", { variant: "error" });
+    },
+  });
+
+  // Derived loading states from mutations
+  const parserSampleLoading = fetchParserSampleMutation.isPending;
+  const updaterSampleLoading = fetchUpdaterSampleMutation.isPending;
 
   // RAF throttling refs for drag performance
   const pendingDragRef = useRef<{ nodeId: string; x: number; y: number } | null>(null);
@@ -255,34 +452,23 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       payload: { message: string; time: string; pathId?: string | null } | null
     ) => {
       try {
-        await fetch("/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            key: AI_PATHS_LAST_ERROR_KEY,
-            value: payload ? JSON.stringify(payload) : "",
-          }),
+        await updateSettingMutation.mutateAsync({
+          key: AI_PATHS_LAST_ERROR_KEY,
+          value: payload ? JSON.stringify(payload) : "",
         });
       } catch (error) {
         console.warn("[AI Paths] Failed to persist last error.", error);
       }
     },
-    []
+    [updateSettingMutation]
   );
 
   const saveClusterPresets = async (nextPresets: ClusterPreset[]) => {
     try {
-      const res = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: CLUSTER_PRESETS_KEY,
-          value: JSON.stringify(nextPresets),
-        }),
+      await updateSettingMutation.mutateAsync({
+        key: CLUSTER_PRESETS_KEY,
+        value: JSON.stringify(nextPresets),
       });
-      if (!res.ok) {
-        throw new Error("Failed to save cluster presets.");
-      }
     } catch (error) {
       reportAiPathsError(error, { action: "saveClusterPresets" }, "Failed to save presets:");
       toast("Failed to save cluster presets.", { variant: "error" });
@@ -291,17 +477,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
 
   const saveDbQueryPresets = async (nextPresets: DbQueryPreset[]) => {
     try {
-      const res = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: DB_QUERY_PRESETS_KEY,
-          value: JSON.stringify(nextPresets),
-        }),
+      await updateSettingMutation.mutateAsync({
+        key: DB_QUERY_PRESETS_KEY,
+        value: JSON.stringify(nextPresets),
       });
-      if (!res.ok) {
-        throw new Error("Failed to save query presets.");
-      }
     } catch (error) {
       reportAiPathsError(error, { action: "saveDbQueryPresets" }, "Failed to save query presets:");
       toast("Failed to save query presets.", { variant: "error" });
@@ -310,17 +489,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
 
   const saveDbNodePresets = async (nextPresets: DbNodePreset[]) => {
     try {
-      const res = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: DB_NODE_PRESETS_KEY,
-          value: JSON.stringify(nextPresets),
-        }),
+      await updateSettingMutation.mutateAsync({
+        key: DB_NODE_PRESETS_KEY,
+        value: JSON.stringify(nextPresets),
       });
-      if (!res.ok) {
-        throw new Error("Failed to save database presets.");
-      }
     } catch (error) {
       reportAiPathsError(error, { action: "saveDbNodePresets" }, "Failed to save database presets:");
       toast("Failed to save database presets.", { variant: "error" });
@@ -418,6 +590,51 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     [activePathId, activeTab, edges.length, nodes.length, pathName, persistLastError]
   );
 
+  const modelsQuery = useQuery({
+    queryKey: ["ai-paths-models"],
+    queryFn: async () => {
+      const res = await fetch("/api/chatbot");
+      if (!res.ok) {
+        throw new Error("Failed to load models.");
+      }
+      return (await res.json()) as { models?: string[] };
+    },
+    staleTime: 1000 * 60 * 5,
+    onError: (error) => {
+      reportAiPathsError(error, { action: "loadModels" }, "Failed to load models:");
+    },
+  });
+
+  const modelOptions = useMemo(() => {
+    const apiModels = modelsQuery.data?.models;
+    const merged = Array.from(
+      new Set([...DEFAULT_MODELS, ...(Array.isArray(apiModels) ? apiModels : [])])
+    );
+    return merged;
+  }, [modelsQuery.data]);
+
+  const sessionQuery = useQuery({
+    queryKey: ["auth-session"],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/session", { cache: "no-store" });
+      if (!res.ok) return null;
+      return (await res.json()) as {
+        user?: { id?: string; name?: string | null; email?: string | null };
+      };
+    },
+    staleTime: 0,
+  });
+
+  const sessionUser = useMemo(() => {
+    const user = sessionQuery.data?.user;
+    if (!user) return null;
+    return {
+      id: user.id,
+      name: user.name ?? null,
+      email: user.email ?? null,
+    };
+  }, [sessionQuery.data]);
+
   useEffect(() => {
     if (loadInFlightRef.current) return;
     if (loadAttemptRef.current === loadNonce) return;
@@ -426,19 +643,19 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setLoading(true);
     const loadConfig = async () => {
       try {
-        const settingsRes = await fetch("/api/settings");
-        if (!settingsRes.ok) {
-          throw new Error("Failed to load AI Paths settings.");
+        const settingsResult = await settingsQuery.refetch();
+        if (settingsResult.error || !settingsResult.data) {
+          throw settingsResult.error ?? new Error("Failed to load AI Paths settings.");
         }
-        const data = (await settingsRes.json() as unknown) as Array<{ key: string; value: string }>;
+        const data = settingsResult.data as Array<{ key: string; value: string }>;
         let preferredPathId: string | null = null;
         let preferredGroups: string[] | null = null;
         let preferredPathIndex: PathMeta[] | null = null;
         let preferredPathConfigs: Record<string, PathConfig> | null = null;
         try {
-          const prefsRes = await fetch("/api/user/preferences");
-          if (prefsRes.ok) {
-            const prefs = (await prefsRes.json() as unknown) as {
+          const prefsResult = await preferencesQuery.refetch();
+          if (prefsResult.data) {
+            const prefs = prefsResult.data as {
               aiPathsActivePathId?: string | null;
               aiPathsExpandedGroups?: string[] | null;
               aiPathsPaletteCollapsed?: boolean | null;
@@ -473,6 +690,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
             if (typeof prefs.aiPathsPaletteCollapsed === "boolean") {
               setPaletteCollapsed(prefs.aiPathsPaletteCollapsed);
             }
+          } else if (prefsResult.error) {
+            console.warn("[AI Paths] Failed to load user preferences.", prefsResult.error);
           }
         } catch (error) {
           console.warn("[AI Paths] Failed to load user preferences.", error);
@@ -652,7 +871,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       }
     };
     void loadConfig();
-  }, [toast, reportAiPathsError, loadNonce]);
+  }, [toast, reportAiPathsError, loadNonce, settingsQuery.refetch, preferencesQuery.refetch]);
 
   useEffect(() => {
     if (!prefsLoaded) return;
@@ -662,57 +881,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       aiPathsPaletteCollapsed: paletteCollapsed,
     };
     const timeout = setTimeout(() => {
-      fetch("/api/user/preferences", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      }).catch((error) => {
-        console.warn("[AI Paths] Failed to persist preferences.", error);
-      });
+      updatePreferencesMutation.mutate(payload);
     }, 200);
     return () => clearTimeout(timeout);
-  }, [activePathId, expandedPaletteGroups, paletteCollapsed, prefsLoaded]);
-
-  useEffect(() => {
-    const loadModels = async () => {
-      try {
-        const res = await fetch("/api/chatbot");
-        if (!res.ok) return;
-        const data = (await res.json() as unknown) as { models?: string[] };
-        if (Array.isArray(data.models)) {
-          const merged = Array.from(new Set([...DEFAULT_MODELS, ...data.models]));
-          setModelOptions(merged);
-        }
-      } catch (error) {
-        // Ignore model loading errors and fallback to defaults
-        reportAiPathsError(error, { action: "loadModels" }, "Failed to load models:");
-      }
-    };
-    void loadModels();
-  }, [reportAiPathsError]);
-
-  useEffect(() => {
-    const loadSession = async () => {
-      try {
-        const res = await fetch("/api/auth/session", { cache: "no-store" });
-        if (!res.ok) return;
-        const data = (await res.json()) as {
-          user?: { id?: string; name?: string | null; email?: string | null };
-        };
-        if (data?.user) {
-          const newUser: { id?: string; name?: string | null; email?: string | null } = {
-            name: data.user.name ?? null,
-            email: data.user.email ?? null,
-          };
-          if (data.user.id) newUser.id = data.user.id;
-          setSessionUser(newUser);
-        }
-      } catch {
-        // ignore session load failures
-      }
-    };
-    void loadSession();
-  }, []);
+  }, [activePathId, expandedPaletteGroups, paletteCollapsed, prefsLoaded, updatePreferencesMutation]);
 
   useEffect(() => {
     const handlePointerUp = () => {
@@ -1181,17 +1353,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setPathConfigs(nextConfigs);
     try {
       const safeConfigs = serializePathConfigs(nextConfigs);
-      const res = await fetch("/api/user/preferences", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          aiPathsPathIndex: paths,
-          aiPathsPathConfigs: safeConfigs,
-        }),
+      await updatePreferencesMutation.mutateAsync({
+        aiPathsPathIndex: paths,
+        aiPathsPathConfigs: safeConfigs,
       });
-      if (!res.ok) {
-        throw new Error("Failed to clear wires.");
-      }
       toast("Wires cleared.", { variant: "success" });
     } catch (error) {
       reportAiPathsError(error, { action: "clearWires" }, "Failed to clear wires:");
@@ -1328,22 +1493,47 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   };
 
   const updateSelectedNodeConfig = (patch: NodeConfig) => {
-    if (!selectedNode) return;
-    updateSelectedNode({
-      config: {
-        ...selectedNode.config,
-        ...patch,
-      },
+    if (!selectedNodeId) return;
+    setNodes((prev) => {
+      const currentNode = prev.find((node) => node.id === selectedNodeId);
+      if (!currentNode) return prev;
+      return prev.map((node) => {
+        if (node.id !== selectedNodeId) return node;
+        // Deep merge for nested config objects to prevent stale closure issues
+        const currentConfig = node.config ?? {};
+        const mergedConfig = { ...currentConfig };
+        for (const key of Object.keys(patch) as Array<keyof NodeConfig>) {
+          const patchValue = patch[key];
+          const currentValue = currentConfig[key];
+          // Deep merge objects (but not arrays)
+          if (
+            patchValue &&
+            typeof patchValue === "object" &&
+            !Array.isArray(patchValue) &&
+            currentValue &&
+            typeof currentValue === "object" &&
+            !Array.isArray(currentValue)
+          ) {
+            mergedConfig[key] = { ...currentValue, ...patchValue } as typeof currentValue;
+          } else {
+            mergedConfig[key] = patchValue as typeof currentValue;
+          }
+        }
+        return { ...node, config: mergedConfig };
+      });
     });
   };
 
   const fetchProductById = async (productId: string) => {
     try {
-      const res = await fetch(`/api/products/${encodeURIComponent(productId)}`, {
-        cache: "no-store",
+      return await queryClient.fetchQuery({
+        queryKey: ["products", productId],
+        queryFn: async () => {
+          const result = await entityApi.getProduct(productId);
+          return result.ok ? result.data : null;
+        },
+        staleTime: 0,
       });
-      if (!res.ok) return null;
-      return (await res.json() as unknown) as Record<string, unknown>;
     } catch (error) {
       reportAiPathsError(error, { action: "fetchProduct", productId }, "Failed to fetch product:");
       return null;
@@ -1352,11 +1542,14 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
 
   const fetchNoteById = async (noteId: string) => {
     try {
-      const res = await fetch(`/api/notes/${encodeURIComponent(noteId)}`, {
-        cache: "no-store",
+      return await queryClient.fetchQuery({
+        queryKey: ["notes", noteId],
+        queryFn: async () => {
+          const result = await entityApi.getNote(noteId);
+          return result.ok ? result.data : null;
+        },
+        staleTime: 0,
       });
-      if (!res.ok) return null;
-      return (await res.json() as unknown) as Record<string, unknown>;
     } catch (error) {
       reportAiPathsError(error, { action: "fetchNote", noteId }, "Failed to fetch note:");
       return null;
@@ -1375,90 +1568,21 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     return null;
   };
 
-  const handleFetchParserSample = async (
+  // Handler functions that trigger the mutations
+  const handleFetchParserSample = (
     nodeId: string,
     entityType: string,
     entityId: string
   ) => {
-    if (!entityId.trim()) {
-      toast("Enter an entity ID to load a sample.", { variant: "error" });
-      return;
-    }
-    if (entityType === "custom") {
-      toast("Use pasted JSON for custom samples.", { variant: "error" });
-      return;
-    }
-    setParserSampleLoading(true);
-    try {
-      const sample = await fetchEntityByType(entityType, entityId);
-      if (!sample) {
-        toast("No sample found for that ID.", { variant: "error" });
-        return;
-      }
-      setParserSamples((prev) => ({
-        ...prev,
-        [nodeId]: {
-          entityType,
-          entityId,
-          json: JSON.stringify(sample, null, 2),
-          mappingMode: prev[nodeId]?.mappingMode ?? "top",
-          depth: prev[nodeId]?.depth ?? 2,
-          keyStyle: prev[nodeId]?.keyStyle ?? "path",
-          includeContainers: prev[nodeId]?.includeContainers ?? false,
-        },
-      }));
-    } finally {
-      setParserSampleLoading(false);
-    }
+    fetchParserSampleMutation.mutate({ nodeId, entityType, entityId });
   };
 
-  const handleFetchUpdaterSample = async (
+  const handleFetchUpdaterSample = (
     nodeId: string,
     entityType: string,
     entityId: string
   ) => {
-    if (entityType === "custom") {
-      toast("Use pasted JSON for custom samples.", { variant: "error" });
-      return;
-    }
-    setUpdaterSampleLoading(true);
-    try {
-      let sample: unknown = null;
-      let fetchedId = entityId;
-
-      // If no entityId provided, fetch first document from collection
-      if (!entityId.trim()) {
-        const res = await fetch(`/api/databases/browse?collection=${encodeURIComponent(entityType)}&limit=1`);
-        if (res.ok) {
-          const data = await res.json() as { documents?: Record<string, unknown>[]; _id?: string; id?: string };
-          const firstDoc = data.documents?.[0];
-          if (firstDoc) {
-            sample = firstDoc;
-            fetchedId = ((firstDoc._id ?? firstDoc.id ?? "") as string);
-          }
-        }
-      } else {
-        sample = await fetchEntityByType(entityType, entityId);
-      }
-
-      if (!sample) {
-        toast("No sample found.", { variant: "error" });
-        return;
-      }
-      setUpdaterSamples((prev) => ({
-        ...prev,
-        [nodeId]: {
-          entityType,
-          entityId: fetchedId,
-          json: JSON.stringify(sample, null, 2),
-          depth: prev[nodeId]?.depth ?? 2,
-          includeContainers: prev[nodeId]?.includeContainers ?? false,
-        },
-      }));
-      toast("Sample fetched.", { variant: "success" });
-    } finally {
-      setUpdaterSampleLoading(false);
-    }
+    fetchUpdaterSampleMutation.mutate({ nodeId, entityType, entityId });
   };
 
   const getDomSelector = (element: Element | null) => {
@@ -1742,15 +1866,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     let lastBundle: Record<string, unknown> | null = null;
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       const payload = buildDbQueryPayload(nodeInputs, config.dbQuery);
-      const res = await fetch("/api/ai-paths/db-query", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
+      const queryResult = await dbApi.query<{ item?: unknown; items?: unknown[] }>(payload);
+      if (!queryResult.ok) {
         throw new Error("Failed to execute database query.");
       }
-      const data = (await res.json() as unknown) as { item?: unknown; items?: unknown[] };
+      const data = queryResult.data;
       const resultCandidate = payload.single ? data.item : data.items;
       lastBundle = {
         ...(payload.single ? { item: data.item } : { items: data.items }),
@@ -1802,17 +1922,14 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     const maxAttempts = options?.maxAttempts ?? 60;
     const intervalMs = options?.intervalMs ?? 2000;
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-      const statusRes = await fetch(`/api/products/ai-jobs/${jobId}`);
-      if (!statusRes.ok) {
+      const pollResult = await aiJobsApi.poll(jobId);
+      if (!pollResult.ok) {
         throw new Error("Failed to fetch job status.");
       }
-      const payload = (await statusRes.json() as unknown) as {
-        job?: { status?: string; result?: unknown; errorMessage?: string | null };
-      };
-      const job = payload.job;
-      if (!job) continue;
-      if (job.status === "completed") {
-        const result = job.result as
+      const { status, result: jobResult, error: jobError } = pollResult.data;
+      if (!status) continue;
+      if (status === "completed") {
+        const result = jobResult as
           | { result?: string }
           | string
           | null
@@ -1822,10 +1939,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         }
         return typeof result === "string" ? result : JSON.stringify(result ?? "");
       }
-      if (job.status === "failed") {
-        throw new Error(job.errorMessage || "AI job failed.");
+      if (status === "failed") {
+        throw new Error(jobError || "AI job failed.");
       }
-      if (job.status === "canceled") {
+      if (status === "canceled") {
         throw new Error("AI job was canceled.");
       }
       if (attempt < maxAttempts - 1) {
@@ -2125,22 +2242,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           nodeTitle: aiNode.title,
         },
       };
-      const enqueueRes = await fetch("/api/products/ai-jobs/enqueue", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId: activePathId ?? "direct",
-          type: "graph_model",
-          payload,
-        }),
+      const enqueueData = await enqueueAiJobMutation.mutateAsync({
+        productId: activePathId ?? "direct",
+        type: "graph_model",
+        payload,
       });
-      const enqueueData = (await enqueueRes.json()) as {
-        error?: string;
-        jobId?: string;
-      };
-      if (!enqueueRes.ok || !enqueueData.jobId) {
-        throw new Error(enqueueData.error || "Failed to enqueue AI job.");
-      }
       toast("AI job queued. Waiting for result...", { variant: "success" });
       const result = await pollGraphJob(enqueueData.jobId);
       // Update runtime state with the result
@@ -2560,17 +2666,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       setPathConfigs(nextConfigs);
       setPaths(nextPaths);
       const safeConfigs = serializePathConfigs(nextConfigs);
-      const prefsRes = await fetch("/api/user/preferences", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          aiPathsPathIndex: nextPaths,
-          aiPathsPathConfigs: safeConfigs,
-        }),
+      await updatePreferencesMutation.mutateAsync({
+        aiPathsPathIndex: nextPaths,
+        aiPathsPathConfigs: safeConfigs,
       });
-      if (!prefsRes.ok) {
-        throw new Error("Failed to save AI Path settings.");
-      }
       setLastError(null);
       void persistLastError(null);
       lastSavedSnapshotRef.current = buildPathSnapshot();
@@ -2789,17 +2888,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     }
     try {
       const safeConfigs = serializePathConfigs(nextConfigs);
-      const res = await fetch("/api/user/preferences", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          aiPathsPathIndex: nextPaths,
-          aiPathsPathConfigs: safeConfigs,
-        }),
+      await updatePreferencesMutation.mutateAsync({
+        aiPathsPathIndex: nextPaths,
+        aiPathsPathConfigs: safeConfigs,
       });
-      if (!res.ok) {
-        throw new Error("Failed to update path index.");
-      }
       toast("Path removed from the index.", { variant: "success" });
     } catch (error) {
       reportAiPathsError(error, { action: "deletePath", pathId: targetId }, "Failed to update path index:");
@@ -2827,17 +2919,10 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const savePathIndex = async (nextPaths: PathMeta[]) => {
     try {
       const safeConfigs = serializePathConfigs(pathConfigs);
-      const res = await fetch("/api/user/preferences", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          aiPathsPathIndex: nextPaths,
-          aiPathsPathConfigs: safeConfigs,
-        }),
+      await updatePreferencesMutation.mutateAsync({
+        aiPathsPathIndex: nextPaths,
+        aiPathsPathConfigs: safeConfigs,
       });
-      if (!res.ok) {
-        throw new Error("Failed to save path index.");
-      }
       toast("Path list saved.", { variant: "success" });
     } catch (error) {
       reportAiPathsError(error, { action: "savePathIndex" }, "Failed to save path list:");

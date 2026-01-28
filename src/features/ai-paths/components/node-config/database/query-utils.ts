@@ -22,6 +22,42 @@ export const getQueryPlaceholderByOperation = (operation: string): string => {
   }
 };
 
+export const getQueryPlaceholderByAction = (action?: string): string => {
+  switch (action) {
+    case "aggregate":
+      return '[\n  { "$match": { "_id": "{{value}}" } }\n]';
+    case "countDocuments":
+      return '{\n  "status": "{{value}}"\n}';
+    case "distinct":
+      return '{\n  "status": "{{value}}"\n}';
+    case "findOne":
+      return '{\n  "_id": "{{value}}"\n}';
+    case "find":
+      return '{\n  "_id": "{{value}}"\n}';
+    case "updateOne":
+    case "updateMany":
+    case "replaceOne":
+    case "findOneAndUpdate":
+    case "deleteOne":
+    case "deleteMany":
+    case "findOneAndDelete":
+      return '{\n  "_id": "{{value}}"\n}';
+    case "insertOne":
+      return '{\n  "fieldName": "value"\n}';
+    case "insertMany":
+      return '[\n  { "fieldName": "value" }\n]';
+    default:
+      return '{\n  "_id": "{{value}}"\n}';
+  }
+};
+
+export const getUpdatePlaceholderByAction = (action?: string): string => {
+  if (action === "replaceOne") {
+    return '{\n  "fieldName": "value"\n}';
+  }
+  return '{\n  "$set": {\n    "fieldName": "{{value}}"\n  }\n}';
+};
+
 export const formatAndFixMongoQuery = (value: string): string => {
   let fixed = value ?? "";
 

@@ -1,12 +1,22 @@
 
+* In Database Schema Node, the selections are not retained and auto-saved
+
+* In Presets Tab, I only want a list of query presets, I don't want Database Presets
+
+Constructor
+* In Template Snippet, when I click template snippets like logical operators, it says it has been added, but I don't see it added to the query. It Either needs to be added to the query, or added 
+
+* Query -> Update Document field has these nice placholder templates which appear as I cycle through operation type, keep those template in my Query Text field and remove Update Document field as it's duplicating the Query textfield
+
+* When I hover over Context placeholders, I want a tooltip to see them in resolved state, for example, when  hover over {{s schema: products }}, I want to see something like this  {{schema:Collection "products" with fields: _id: string, asin: null | string, baseProductId: string, catalogs: array, createdAt: date, defaultPriceGroupId: string, description_de: null | string, description_en: string, description_pl: null | string, ean: null | string, gtin: null | string, id: string, imageLinks: array, images: array, length: number, name_de: null | string, name_en: string, name_pl: null | string, price: number, priceComment: null | string, sizeLength: null | number, sizeWidth: null | number, sku: string, stock: number, supplierLink: null | string, supplierName: null | string, updatedAt: date, weight: number}}*
+
+* In Parameter mapping, remove Pick a source field
 
 * In Database Query Node, when I run Query with placeholders, it doesn't actually resolve the placeholders.
 
 * My field mapping In my Node Database Query, as soon as the parameter mapping is done, the mapped parameterd should become instantly available as a placeholder.
 
 * In Database Query Node in AI reply, I need little arrows that automatically detect ``` code snippets and let me cycle up and down through code snippets in AI Reply, through cycling  code snippets are hightlighted, If I accept with highlighted code snippet, only the targater code snippet is added to a query, not the whole text around it.   
-
-* In my Database Query Node {{result}} shouldn't be available as a placeholder
 
 * remove "ID Field
 entityId
@@ -25,14 +35,9 @@ The selected input will be used as the entity ID to delete." from Delete section
 
 * In Database Query Node, auto mapper / parameter mapper should be available in Query section as well and not only in Update section
 
-LATER - DTbAE Auto-map from inputs - I DONT REALLY GET IT it needs to be described in Docs, infer from sample, my targets turned into placeholders, also create a database note that Is an API that asks
-Database Query is not being auto-saved
-
 * AI Prompt needs to be sent on pressing the return button in Database Query Node.
 
-The AI Callback reply is not getting saved, or auto-saved, no retention, as soon as I close the node and redirect to a different page, the node result disappears
-
-If nothing is connected in the value input, the {{value}} placeholder shouldn't be active at all
+* If nothing is connected in the value input, the {{value}} placeholder shouldn't be active at all
 
 images still flicker
 DB query fielf provider is nit saving

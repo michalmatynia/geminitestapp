@@ -16,6 +16,7 @@ export * from "./table";
 export * from "./tabs";
 export * from "./textarea";
 export * from "./toast";
+export * from "./tooltip";
 
 export { default as FilePreviewModal } from "./file-preview-modal";
 export { default as MissingImagePlaceholder } from "./missing-image-placeholder";

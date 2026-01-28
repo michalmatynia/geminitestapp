@@ -1,6 +1,8 @@
 "use client";
 
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { dbApi } from "@/features/ai-paths/lib/api";
 import React from "react";
 
 
@@ -26,39 +28,54 @@ export function DbSchemaNodeConfigSection({
   selectedNode,
   updateSelectedNodeConfig,
 }: DbSchemaNodeConfigSectionProps) {
-  const [fetchedDbSchema, setFetchedDbSchema] = React.useState<SchemaData | null>(null);
-  const [schemaLoading, setSchemaLoading] = React.useState(false);
-
   // Data Browser state
   const [browseCollection, setBrowseCollection] = React.useState<string | null>(null);
-  const [browseDocuments, setBrowseDocuments] = React.useState<Record<string, unknown>[]>([]);
-  const [browseTotal, setBrowseTotal] = React.useState(0);
   const [browseSkip, setBrowseSkip] = React.useState(0);
   const [browseSearch, setBrowseSearch] = React.useState("");
-  const [browseLoading, setBrowseLoading] = React.useState(false);
+  const [browseQuery, setBrowseQuery] = React.useState("");
   const [expandedDocId, setExpandedDocId] = React.useState<string | null>(null);
   const browseLimit = 10;
 
-  React.useEffect(() => {
-    if (selectedNode.type !== "db_schema") {
-      setFetchedDbSchema(null);
-      return;
-    }
+  const schemaQuery = useQuery({
+    queryKey: ["db-schema"],
+    queryFn: async () => {
+      const result = await dbApi.schema();
+      if (!result.ok) {
+        throw new Error(result.error || "Failed to fetch schema.");
+      }
+      return result.data as SchemaData;
+    },
+    enabled: selectedNode.type === "db_schema",
+  });
 
-    setSchemaLoading(true);
-    fetch("/api/databases/schema")
-      .then((res) => res.json())
-      .then((data) => {
-        setFetchedDbSchema(data as SchemaData);
-      })
-      .catch((err) => {
-        console.error("Failed to fetch schema:", err);
-        setFetchedDbSchema(null);
-      })
-      .finally(() => {
-        setSchemaLoading(false);
+  const browseQueryResult = useQuery({
+    queryKey: ["db-browse", browseCollection, browseSkip, browseQuery],
+    queryFn: async () => {
+      if (!browseCollection) {
+        return { documents: [], total: 0 } as { documents: Record<string, unknown>[]; total: number };
+      }
+      const result = await dbApi.browse(browseCollection, {
+        limit: browseLimit,
+        skip: browseSkip,
+        query: browseQuery.trim() || undefined,
       });
-  }, [selectedNode.id, selectedNode.type]);
+      if (!result.ok) {
+        throw new Error(result.error || "Failed to browse collection.");
+      }
+      return {
+        documents: result.data.documents ?? [],
+        total: result.data.total ?? 0,
+      };
+    },
+    enabled: Boolean(browseCollection),
+    placeholderData: keepPreviousData,
+  });
+
+  const fetchedDbSchema = schemaQuery.data ?? null;
+  const schemaLoading = schemaQuery.isFetching;
+  const browseDocuments = browseQueryResult.data?.documents ?? [];
+  const browseTotal = browseQueryResult.data?.total ?? 0;
+  const browseLoading = browseQueryResult.isFetching;
 
   if (selectedNode.type !== "db_schema") return null;
 
@@ -71,8 +88,9 @@ export function DbSchemaNodeConfigSection({
   };
 
   const updateSchemaConfig = (patch: Partial<typeof schemaConfig>) => {
+    // Pass only the patch - parent does deep merge to prevent stale closure issues
     updateSelectedNodeConfig({
-      db_schema: { ...schemaConfig, ...patch },
+      db_schema: patch,
     });
   };
 
@@ -243,21 +261,10 @@ export function DbSchemaNodeConfigSection({
                     value={browseCollection ?? ""}
                     onValueChange={(value) => {
                       setBrowseCollection(value || null);
-                      setBrowseDocuments([]);
                       setBrowseSkip(0);
                       setBrowseSearch("");
+                      setBrowseQuery("");
                       setExpandedDocId(null);
-                      if (value) {
-                        setBrowseLoading(true);
-                        fetch(`/api/databases/browse?collection=${encodeURIComponent(value)}&limit=${browseLimit}&skip=0`)
-                          .then((res) => res.json())
-                          .then((data) => {
-                            setBrowseDocuments((data as { documents: Record<string, unknown>[] }).documents ?? []);
-                            setBrowseTotal((data as { total: number }).total ?? 0);
-                          })
-                          .catch((err) => console.error("Failed to browse:", err))
-                          .finally(() => setBrowseLoading(false));
-                      }
                     }}
                   >
                     <SelectTrigger className="flex-1 border-border bg-card/70 text-sm text-white">
@@ -277,10 +284,9 @@ export function DbSchemaNodeConfigSection({
                       className="rounded border px-3 text-xs text-gray-300 hover:bg-muted/50"
                       onClick={() => {
                         setBrowseCollection(null);
-                        setBrowseDocuments([]);
-                        setBrowseTotal(0);
                         setBrowseSkip(0);
                         setBrowseSearch("");
+                        setBrowseQuery("");
                         setExpandedDocId(null);
                       }}
                     >
@@ -301,17 +307,8 @@ export function DbSchemaNodeConfigSection({
                       onChange={(e) => setBrowseSearch(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
-                          setBrowseLoading(true);
                           setBrowseSkip(0);
-                          const searchQuery = browseSearch.trim() ? `&query=${encodeURIComponent(browseSearch)}` : "";
-                          fetch(`/api/databases/browse?collection=${encodeURIComponent(browseCollection)}&limit=${browseLimit}&skip=0${searchQuery}`)
-                            .then((res) => res.json())
-                            .then((data) => {
-                              setBrowseDocuments((data as { documents: Record<string, unknown>[] }).documents ?? []);
-                              setBrowseTotal((data as { total: number }).total ?? 0);
-                            })
-                            .catch((err) => console.error("Failed to search:", err))
-                            .finally(() => setBrowseLoading(false));
+                          setBrowseQuery(browseSearch.trim());
                         }
                       }}
                     />
@@ -319,17 +316,8 @@ export function DbSchemaNodeConfigSection({
                       type="button"
                       className="rounded border border-cyan-700 px-3 text-xs text-cyan-300 hover:bg-cyan-500/10"
                       onClick={() => {
-                        setBrowseLoading(true);
                         setBrowseSkip(0);
-                        const searchQuery = browseSearch.trim() ? `&query=${encodeURIComponent(browseSearch)}` : "";
-                        fetch(`/api/databases/browse?collection=${encodeURIComponent(browseCollection)}&limit=${browseLimit}&skip=0${searchQuery}`)
-                          .then((res) => res.json())
-                          .then((data) => {
-                            setBrowseDocuments((data as { documents: Record<string, unknown>[] }).documents ?? []);
-                            setBrowseTotal((data as { total: number }).total ?? 0);
-                          })
-                          .catch((err) => console.error("Failed to search:", err))
-                          .finally(() => setBrowseLoading(false));
+                        setBrowseQuery(browseSearch.trim());
                       }}
                     >
                       Search
@@ -398,48 +386,28 @@ export function DbSchemaNodeConfigSection({
                       <Button
                         type="button"
                         disabled={browseSkip === 0}
-                        className="rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50"
-                        onClick={() => {
-                          const newSkip = Math.max(0, browseSkip - browseLimit);
-                          setBrowseSkip(newSkip);
-                          setBrowseLoading(true);
-                          const searchQuery = browseSearch.trim() ? `&query=${encodeURIComponent(browseSearch)}` : "";
-                          fetch(`/api/databases/browse?collection=${encodeURIComponent(browseCollection)}&limit=${browseLimit}&skip=${newSkip}${searchQuery}`)
-                            .then((res) => res.json())
-                            .then((data) => {
-                              setBrowseDocuments((data as { documents: Record<string, unknown>[] }).documents ?? []);
-                              setBrowseTotal((data as { total: number }).total ?? 0);
-                            })
-                            .catch((err) => console.error("Failed to paginate:", err))
-                            .finally(() => setBrowseLoading(false));
-                        }}
-                      >
-                        Previous
-                      </Button>
+                      className="rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50"
+                      onClick={() => {
+                        const newSkip = Math.max(0, browseSkip - browseLimit);
+                        setBrowseSkip(newSkip);
+                      }}
+                    >
+                      Previous
+                    </Button>
                       <span className="text-[10px] text-gray-500">
                         Page {Math.floor(browseSkip / browseLimit) + 1} of {Math.ceil(browseTotal / browseLimit)}
                       </span>
                       <Button
                         type="button"
                         disabled={browseSkip + browseLimit >= browseTotal}
-                        className="rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50"
-                        onClick={() => {
-                          const newSkip = browseSkip + browseLimit;
-                          setBrowseSkip(newSkip);
-                          setBrowseLoading(true);
-                          const searchQuery = browseSearch.trim() ? `&query=${encodeURIComponent(browseSearch)}` : "";
-                          fetch(`/api/databases/browse?collection=${encodeURIComponent(browseCollection)}&limit=${browseLimit}&skip=${newSkip}${searchQuery}`)
-                            .then((res) => res.json())
-                            .then((data) => {
-                              setBrowseDocuments((data as { documents: Record<string, unknown>[] }).documents ?? []);
-                              setBrowseTotal((data as { total: number }).total ?? 0);
-                            })
-                            .catch((err) => console.error("Failed to paginate:", err))
-                            .finally(() => setBrowseLoading(false));
-                        }}
-                      >
-                        Next
-                      </Button>
+                      className="rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50"
+                      onClick={() => {
+                        const newSkip = browseSkip + browseLimit;
+                        setBrowseSkip(newSkip);
+                      }}
+                    >
+                      Next
+                    </Button>
                     </div>
                   )}
                 </div>
@@ -455,12 +423,7 @@ export function DbSchemaNodeConfigSection({
               type="button"
               className="w-full rounded-md border border-purple-700 text-xs text-purple-200 hover:bg-purple-500/10"
               onClick={() => {
-                setSchemaLoading(true);
-                fetch("/api/databases/schema")
-                  .then((res) => res.json())
-                  .then((data) => setFetchedDbSchema(data as typeof fetchedDbSchema))
-                  .catch((err) => console.error("Failed to fetch schema:", err))
-                  .finally(() => setSchemaLoading(false));
+                void schemaQuery.refetch();
               }}
             >
               Fetch Schema

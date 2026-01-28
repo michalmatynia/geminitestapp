@@ -1,6 +1,8 @@
 "use client";
 
 import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { dbApi } from "@/features/ai-paths/lib/api";
 import React from "react";
 
 
@@ -10,8 +12,9 @@ import React from "react";
 
 import type {
   AiNode,
+  DatabaseAction,
+  DatabaseActionCategory,
   DatabaseConfig,
-  DatabaseOperation,
   DbNodePreset,
   DbQueryConfig,
   DbQueryPreset,
@@ -44,9 +47,16 @@ import { DatabaseSettingsTab } from "./database/DatabaseSettingsTab";
 import {
   buildMongoQueryValidation,
   formatAndFixMongoQuery,
-  getQueryPlaceholderByOperation,
+  getQueryPlaceholderByAction,
+  getUpdatePlaceholderByAction,
 } from "./database/query-utils";
 import type { AiQuery, DatabasePresetOption, SchemaData } from "./database/types";
+
+type SchemaConfig = {
+  mode?: "all" | "selected";
+  collections?: string[];
+  includeFields?: boolean;
+};
 
 type DatabaseNodeConfigSectionProps = {
   selectedNode: AiNode;
@@ -95,21 +105,75 @@ export function DatabaseNodeConfigSection({
   const [queryPresetName, setQueryPresetName] = React.useState<string>("");
   const [saveQueryPresetModalOpen, setSaveQueryPresetModalOpen] = React.useState(false);
   const [newQueryPresetName, setNewQueryPresetName] = React.useState<string>("");
-  const [selectedDbPresetId, setSelectedDbPresetId] = React.useState<string>("");
-  const [dbPresetName, setDbPresetName] = React.useState<string>("");
-  const [dbPresetDescription, setDbPresetDescription] = React.useState<string>("");
   const [databaseTab, setDatabaseTab] = React.useState<"settings" | "constructor" | "presets">("settings");
   const [pendingAiQuery, setPendingAiQuery] = React.useState<string>("");
   const [aiQueries, setAiQueries] = React.useState<AiQuery[]>([]);
   const [selectedAiQueryId, setSelectedAiQueryId] = React.useState<string>("");
-  const [fetchedDbSchema, setFetchedDbSchema] = React.useState<SchemaData | null>(null);
-  const [schemaLoading, setSchemaLoading] = React.useState(false);
   const [testQueryResult, setTestQueryResult] = React.useState<string>("");
   const [testQueryLoading, setTestQueryLoading] = React.useState(false);
   const queryTemplateRef = React.useRef<HTMLTextAreaElement | null>(null);
   const aiPromptRef = React.useRef<HTMLTextAreaElement | null>(null);
   const lastInjectedResponseRef = React.useRef<string>("");
   const lastAutoFetchedRef = React.useRef<string>("");
+  const incomingEdges = React.useMemo(
+    () => edges.filter((edge) => edge.to === selectedNode.id),
+    [edges, selectedNode.id]
+  );
+  const schemaConnection = React.useMemo(() => {
+    if (selectedNode.type !== "database") {
+      return { hasSchemaConnection: false, schemaConfig: null as SchemaConfig | null };
+    }
+    const schemaEdge = edges.find((edge) => {
+      if (edge.to !== selectedNode.id) return false;
+      const fromNode = nodes.find((node) => node.id === edge.from);
+      return fromNode?.type === "db_schema";
+    });
+    if (!schemaEdge) {
+      return { hasSchemaConnection: false, schemaConfig: null as SchemaConfig | null };
+    }
+    const schemaNode = nodes.find((node) => node.id === schemaEdge.from);
+    return {
+      hasSchemaConnection: Boolean(schemaNode?.type === "db_schema"),
+      schemaConfig: (schemaNode?.config?.db_schema ?? null) as SchemaConfig | null,
+    };
+  }, [edges, nodes, selectedNode.id, selectedNode.type]);
+
+  const schemaQuery = useQuery({
+    queryKey: ["db-schema"],
+    queryFn: async () => {
+      const result = await dbApi.schema();
+      if (!result.ok) {
+        throw new Error(result.error || "Failed to fetch schema.");
+      }
+      return result.data as SchemaData;
+    },
+    enabled: schemaConnection.hasSchemaConnection && selectedNode.type === "database",
+  });
+
+  const fetchedDbSchema = React.useMemo(() => {
+    if (!schemaConnection.hasSchemaConnection || !schemaQuery.data) return null;
+    const schemaConfig = schemaConnection.schemaConfig;
+    let collections = schemaQuery.data.collections;
+    if (schemaConfig?.mode === "selected" && schemaConfig.collections?.length) {
+      const selectedCollections = new Set(schemaConfig.collections);
+      collections = collections.filter((c) => selectedCollections.has(c.name));
+    }
+    if (schemaConfig?.includeFields === false) {
+      collections = collections.map((c) => ({ ...c, fields: [] }));
+    }
+    return { ...schemaQuery.data, collections };
+  }, [schemaConnection.hasSchemaConnection, schemaConnection.schemaConfig, schemaQuery.data]);
+  const schemaLoading = schemaQuery.isFetching;
+
+  const dbActionMutation = useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => {
+      const result = await dbApi.action<Record<string, unknown>>(payload as Parameters<typeof dbApi.action>[0]);
+      if (!result.ok) {
+        throw new Error(result.error || "Query failed");
+      }
+      return result.data;
+    },
+  });
 
   // Auto-intercept incoming signal data and fetch sample for Field Mapping
   React.useEffect(() => {
@@ -174,6 +238,15 @@ export function DatabaseNodeConfigSection({
   }, [selectedNode.id, selectedNode.type, selectedNode.config?.database, runtimeState, updaterSamples, handleFetchUpdaterSample]);
 
   React.useEffect(() => {
+    setSelectedQueryPresetId("");
+    setQueryPresetName("");
+    setDatabaseTab("settings");
+    setQueryValidatorEnabled(false);
+    setPendingAiQuery("");
+    lastInjectedResponseRef.current = "";
+  }, [selectedNode.id]);
+
+  React.useEffect(() => {
     if (selectedNode.type !== "database") return;
     const callbackValue = runtimeState.inputs[selectedNode.id]?.queryCallback
       ?? runtimeState.outputs[selectedNode.id]?.queryCallback;
@@ -188,83 +261,12 @@ export function DatabaseNodeConfigSection({
   }, [selectedNode.id, selectedNode.type, runtimeState, toast]);
 
   React.useEffect(() => {
-    if (selectedNode.type !== "database") {
-      setFetchedDbSchema(null);
-      return;
-    }
-
-    const schemaEdge = edges.find((edge) => {
-      if (edge.to !== selectedNode.id) return false;
-      const fromNode = nodes.find((node) => node.id === edge.from);
-      return fromNode?.type === "db_schema";
-    });
-
-    if (!schemaEdge) {
-      setFetchedDbSchema(null);
-      return;
-    }
-
-    const schemaNode = nodes.find((node) => node.id === schemaEdge.from);
-    const schemaConfig = schemaNode?.config?.db_schema;
-
-    setSchemaLoading(true);
-    fetch("/api/databases/schema")
-      .then((res) => res.json())
-      .then((rawData) => {
-        const data = rawData as SchemaData;
-        if (schemaConfig?.mode === "selected" && schemaConfig.collections?.length > 0) {
-          const selectedCollections = new Set(schemaConfig.collections);
-          data.collections = data.collections.filter((c) =>
-            selectedCollections.has(c.name)
-          );
-        }
-
-        if (schemaConfig?.includeFields === false) {
-          data.collections = data.collections.map((c) => ({
-            ...c,
-            fields: [],
-          }));
-        }
-
-        setFetchedDbSchema(data);
-      })
-      .catch((err) => {
-        console.error("Failed to fetch schema:", err);
-        setFetchedDbSchema(null);
-      })
-      .finally(() => {
-        setSchemaLoading(false);
-      });
-  }, [selectedNode.id, selectedNode.type, edges, nodes]);
-
-  React.useEffect(() => {
-    setSelectedQueryPresetId("");
-    setQueryPresetName("");
-    setSelectedDbPresetId("");
-    setDbPresetName("");
-    setDbPresetDescription("");
-    setDatabaseTab("settings");
-    setQueryValidatorEnabled(false);
-    setPendingAiQuery("");
-    lastInjectedResponseRef.current = "";
-  }, [selectedNode.id]);
-
-  React.useEffect(() => {
     if (!selectedQueryPresetId) return;
     const preset = dbQueryPresets.find((item) => item.id === selectedQueryPresetId);
     if (preset) {
       setQueryPresetName(preset.name);
     }
   }, [selectedQueryPresetId, dbQueryPresets]);
-
-  React.useEffect(() => {
-    if (!selectedDbPresetId) return;
-    const preset = dbNodePresets.find((item) => item.id === selectedDbPresetId);
-    if (preset) {
-      setDbPresetName(preset.name);
-      setDbPresetDescription(preset.description ?? "");
-    }
-  }, [selectedDbPresetId, dbNodePresets]);
 
   if (selectedNode.type !== "database") return null;
 
@@ -293,6 +295,12 @@ export function DatabaseNodeConfigSection({
                   entityType: persistedDatabase?.entityType ?? "product",
                   idField: persistedDatabase?.idField ?? "entityId",
                   mode: persistedDatabase?.mode ?? "replace",
+                  updateStrategy: persistedDatabase?.updateStrategy ?? "one",
+                  useMongoActions: persistedDatabase?.useMongoActions ?? false,
+                  actionCategory: persistedDatabase?.actionCategory,
+                  action: persistedDatabase?.action,
+                  distinctField: persistedDatabase?.distinctField ?? "",
+                  updateTemplate: persistedDatabase?.updateTemplate ?? "",
                   mappings:
                     persistedDatabase?.mappings && persistedDatabase.mappings.length > 0
                       ? persistedDatabase.mappings
@@ -311,9 +319,44 @@ export function DatabaseNodeConfigSection({
                   trimStrings: persistedDatabase?.trimStrings ?? false,
                   aiPrompt: persistedDatabase?.aiPrompt ?? "",
                 };
-                const operation = databaseConfig.operation ?? "query";
+                const deriveCategoryFromOperation = (op: string) => {
+                  if (op === "insert") return "create";
+                  if (op === "update") return "update";
+                  if (op === "delete") return "delete";
+                  return "read";
+                };
                 const queryConfig = databaseConfig.query ?? defaultQuery;
-                const incomingEdges = edges.filter((edge) => edge.to === selectedNode.id);
+                const deriveActionFromCategory = (category: string, single: boolean) => {
+                  switch (category) {
+                    case "create":
+                      return "insertOne";
+                    case "update":
+                      return "updateOne";
+                    case "delete":
+                      return "deleteOne";
+                    case "aggregate":
+                      return "aggregate";
+                    default:
+                      return single ? "findOne" : "find";
+                  }
+                };
+                const derivedCategory = deriveCategoryFromOperation(databaseConfig.operation ?? "query");
+                const actionCategory =
+                  databaseConfig.useMongoActions
+                    ? databaseConfig.actionCategory ?? derivedCategory
+                    : derivedCategory;
+                const action =
+                  databaseConfig.useMongoActions
+                    ? databaseConfig.action ?? deriveActionFromCategory(actionCategory, queryConfig.single ?? false)
+                    : deriveActionFromCategory(actionCategory, queryConfig.single ?? false);
+                const operation =
+                  actionCategory === "create"
+                    ? "insert"
+                    : actionCategory === "update"
+                      ? "update"
+                        : actionCategory === "delete"
+                          ? "delete"
+                          : "query";
                 const incomingPorts = Array.from(
                   new Set(
                     incomingEdges
@@ -370,10 +413,7 @@ export function DatabaseNodeConfigSection({
                   connectedPlaceholders.push(trimmed);
                 };
                 // Check if db_schema node is connected
-                const hasSchemaConnection = incomingEdges.some((edge) => {
-                  const fromNode = nodes.find((node) => node.id === edge.from);
-                  return fromNode?.type === "db_schema";
-                });
+                const hasSchemaConnection = schemaConnection.hasSchemaConnection;
                 // Add direct port connections
                 incomingPorts.forEach((port) => {
                   if (port === "bundle") {
@@ -407,21 +447,22 @@ export function DatabaseNodeConfigSection({
                   addPlaceholder("{{meta.pathId}}");
                   addPlaceholder("{{meta.trigger}}");
                 }
-                // Add placeholders derived from mappings so they appear immediately
+                // Add placeholders derived from mappings only when they map to a connected port
                 mappings.forEach((mapping) => {
                   const sourcePort = mapping.sourcePort?.trim();
-                  if (!sourcePort) return;
                   const sourcePath = mapping.sourcePath?.trim();
+                  if (!sourcePort || !incomingPorts.includes(sourcePort)) return;
+                  if (sourcePort === "result") return;
+
                   if (sourcePath) {
-                    const normalizedPath = sourcePath.startsWith(`${sourcePort}.`)
-                      ? sourcePath
-                      : `${sourcePort}.${sourcePath}`;
-                    addPlaceholder(`{{${normalizedPath}}}`);
+                    const prefix = sourcePort === "bundle" ? "bundle" : sourcePort;
+                    addPlaceholder(`{{${prefix}.${sourcePath}}}`);
                     return;
                   }
-                  if (sourcePort === "bundle") return;
-                  if (sourcePort === "result") return; // result is not a valid placeholder
-                  addPlaceholder(`{{${sourcePort}}}`);
+
+                  if (sourcePort !== "bundle") {
+                    addPlaceholder(`{{${sourcePort}}}`);
+                  }
                 });
                 const sampleState =
                   updaterSamples[selectedNode.id] ?? {
@@ -513,113 +554,40 @@ export function DatabaseNodeConfigSection({
                                     }
                                   };
                                   const presetOptions: DatabasePresetOption[] = [
-                                    {
-                                      id: "custom",                  label: "Custom",
+                  {
+                    id: "custom",
+                    label: "Custom",
                     description: "Keep current settings and customize manually.",
                   },
                   {
-                    id: "query_by_entity",
-                    label: "Query products by entityId",
-                    description: "Preset query using the connected entityId input.",
-                  },
-                  {
-                    id: "query_by_product",
-                    label: "Query products by productId",
-                    description: "Preset query using the connected productId input.",
-                  },
-                  {
                     id: "query_by_id",
-                    label: "Query product by id (flexible)",
-                    description:
-                      "Uses by_id preset so UUIDs resolve against id and ObjectIds use _id.",
+                    label: "Query by ID",
+                    description: "Flexible ID query (supports UUID, ObjectId, entityId).",
                   },
                   {
                     id: "query_recent_products",
-                    label: "Query recent products",
-                    description: "Fetches newest products sorted by createdAt desc.",
-                  },
-                  {
-                    id: "query_recent_updates",
-                    label: "Query recently updated products",
-                    description: "Fetches products sorted by updatedAt desc.",
-                  },
-                  {
-                    id: "query_by_sku",
-                    label: "Query product by SKU",
-                    description: "Looks up a product by SKU using the value input.",
+                    label: "Query recent",
+                    description: "Fetches newest documents sorted by createdAt.",
                   },
                   {
                     id: "query_name_contains",
-                    label: "Query products by name contains",
-                    description: "Uses a regex search on name (value input).",
-                  },
-                  {
-                    id: "query_listings_by_product",
-                    label: "Query listings by productId",
-                    description: "Fetches product listings for a productId.",
-                  },
-                  {
-                    id: "query_images_by_product",
-                    label: "Query images by productId",
-                    description: "Fetches image files linked to a productId.",
-                  },
-                  {
-                    id: "query_ai_jobs_by_status",
-                    label: "Query AI jobs by status",
-                    description: "Searches AI jobs by status (value input).",
-                  },
-                  {
-                    id: "query_notes_by_entity",
-                    label: "Query notes by entityId",
-                    description: "Fetches notes linked to an entityId.",
-                  },
-                  {
-                    id: "update_description_from_model",
-                    label: "Update description_en from model result",
-                    description: "Writes model result into description_en for the product.",
+                    label: "Search by name",
+                    description: "Regex search on name field.",
                   },
                   {
                     id: "update_content_en_from_result",
-                    label: "Update content_en from result (entityId)",
-                    description:
-                      "Updates product content_en using the incoming result and the connected entityId.",
-                  },
-                  {
-                    id: "update_description_en_from_result",
-                    label: "Update description_en from result",
-                    description:
-                      "Updates product description_en using the incoming result and any connected id.",
-                  },
-                  {
-                    id: "update_description_en_from_result_by_entity",
-                    label: "Update description_en from result (entityId)",
-                    description:
-                      "Updates product description_en using the incoming result and the connected entityId.",
-                  },
-                  {
-                    id: "append_description_from_result",
-                    label: "Append description from result",
-                    description: "Appends the result to content_en.",
-                  },
-                  {
-                    id: "update_name_en_from_value",
-                    label: "Update name_en from value",
-                    description: "Updates product name_en using the value input.",
+                    label: "Update from result",
+                    description: "Updates document field using incoming result.",
                   },
                   {
                     id: "delete_product_by_entity",
-                    label: "Delete product by entityId",
-                    description: "Deletes a product using the entityId input.",
+                    label: "Delete by ID",
+                    description: "Deletes document using connected ID input.",
                   },
                   {
                     id: "insert_from_bundle",
-                    label: "Insert product from bundle",
-                    description: "Creates a new product using the bundle payload.",
-                  },
-                  {
-                    id: "insert_note_from_bundle",
-                    label: "Insert note from bundle",
-                    description: "Creates a note using the bundle payload.",
+                    label: "Insert from bundle",
+                    description: "Creates new document from bundle payload.",
                   },
                 ];
                 const applyDatabasePreset = (presetId: string) => {
@@ -628,42 +596,6 @@ export function DatabaseNodeConfigSection({
                       database: {
                         ...databaseConfig,
                         presetId,
-                      },
-                    });
-                    return;
-                  }
-                  if (presetId === "query_by_entity") {
-                    updateSelectedNodeConfig({
-                      database: {
-                        ...databaseConfig,
-                        presetId,
-                        operation: "query",
-                        entityType: "product",
-                        idField: "entityId",
-                        query: {
-                          ...defaultQuery,
-                          ...(databaseConfig.query ?? {}),
-                          mode: "preset",
-                          preset: "by_entityId",
-                        },
-                      },
-                    });
-                    return;
-                  }
-                  if (presetId === "query_by_product") {
-                    updateSelectedNodeConfig({
-                      database: {
-                        ...databaseConfig,
-                        presetId,
-                        operation: "query",
-                        entityType: "product",
-                        idField: "productId",
-                        query: {
-                          ...defaultQuery,
-                          ...(databaseConfig.query ?? {}),
-                          mode: "preset",
-                          preset: "by_productId",
-                        },
                       },
                     });
                     return;
@@ -705,43 +637,6 @@ export function DatabaseNodeConfigSection({
                     });
                     return;
                   }
-                  if (presetId === "query_recent_updates") {
-                    updateSelectedNodeConfig({
-                      database: {
-                        ...databaseConfig,
-                        presetId,
-                        operation: "query",
-                        entityType: "product",
-                        query: {
-                          ...defaultQuery,
-                          collection: "products",
-                          mode: "custom",
-                          queryTemplate: "{}",
-                          sort: "{\n  \"updatedAt\": -1\n}",
-                          limit: 10,
-                        },
-                      },
-                    });
-                    return;
-                  }
-                  if (presetId === "query_by_sku") {
-                    updateSelectedNodeConfig({
-                      database: {
-                        ...databaseConfig,
-                        presetId,
-                        operation: "query",
-                        entityType: "product",
-                        query: {
-                          ...defaultQuery,
-                          collection: "products",
-                          mode: "preset",
-                          preset: "by_field",
-                          field: "sku",
-                        },
-                      },
-                    });
-                    return;
-                  }
                   if (presetId === "query_name_contains") {
                     updateSelectedNodeConfig({
                       database: {
@@ -756,100 +651,6 @@ export function DatabaseNodeConfigSection({
                           queryTemplate:
                             "{\n  \"name\": { \"$regex\": \"{{value}}\", \"$options\": \"i\" }\n}",
                         },
-                      },
-                    });
-                    return;
-                  }
-                  if (presetId === "query_listings_by_product") {
-                    updateSelectedNodeConfig({
-                      database: {
-                        ...databaseConfig,
-                        presetId,
-                        operation: "query",
-                        entityType: "product",
-                        query: {
-                          ...defaultQuery,
-                          collection: "product_listings",
-                          mode: "preset",
-                          preset: "by_productId",
-                        },
-                      },
-                    });
-                    return;
-                  }
-                  if (presetId === "query_images_by_product") {
-                    updateSelectedNodeConfig({
-                      database: {
-                        ...databaseConfig,
-                        presetId,
-                        operation: "query",
-                        entityType: "product",
-                        query: {
-                          ...defaultQuery,
-                          collection: "image_files",
-                          mode: "preset",
-                          preset: "by_productId",
-                        },
-                      },
-                    });
-                    return;
-                  }
-                  if (presetId === "query_ai_jobs_by_status") {
-                    updateSelectedNodeConfig({
-                      database: {
-                        ...databaseConfig,
-                        presetId,
-                        operation: "query",
-                        entityType: "product",
-                        query: {
-                          ...defaultQuery,
-                          collection: "product_ai_jobs",
-                          mode: "custom",
-                          queryTemplate: "{\n  \"status\": \"{{value}}\"\n}",
-                          sort: "{\n  \"createdAt\": -1\n}",
-                          limit: 10,
-                        },
-                      },
-                    });
-                    return;
-                  }
-                  if (presetId === "query_notes_by_entity") {
-                    updateSelectedNodeConfig({
-                      database: {
-                        ...databaseConfig,
-                        presetId,
-                        operation: "query",
-                        entityType: "note",
-                        query: {
-                          ...defaultQuery,
-                          collection: "notes",
-                          mode: "preset",
-                          preset: "by_entityId",
-                        },
-                      },
-                    });
-                    return;
-                  }
-                  if (presetId === "update_description_from_model") {
-                    updateSelectedNodeConfig({
-                      database: {
-                        ...databaseConfig,
-                        presetId,
-                        operation: "update",
-                        entityType: "product",
-                        idField: "productId",
-                        mode: "replace",
-                        mappings: [
-                          {
-                            targetPath: "description_en",
-                            sourcePort: selectedNode.inputs.includes("result")
-                              ? "result"
-                              : "description_en",
-                            sourcePath: "",
-                          },
-                        ],
-                        writeSource: databaseConfig.writeSource ?? "bundle",
-                        writeSourcePath: databaseConfig.writeSourcePath ?? "",
                       },
                     });
                     return;
@@ -878,98 +679,6 @@ export function DatabaseNodeConfigSection({
                     });
                     return;
                   }
-                  if (presetId === "update_description_en_from_result") {
-                    updateSelectedNodeConfig({
-                      database: {
-                        ...databaseConfig,
-                        presetId,
-                        operation: "update",
-                        entityType: "product",
-                        idField: "productId",
-                        mode: "replace",
-                        mappings: [
-                          {
-                            targetPath: "description_en",
-                            sourcePort: selectedNode.inputs.includes("result")
-                              ? "result"
-                              : "description_en",
-                            sourcePath: "",
-                          },
-                        ],
-                        writeSource: databaseConfig.writeSource ?? "bundle",
-                        writeSourcePath: databaseConfig.writeSourcePath ?? "",
-                      },
-                    });
-                    return;
-                  }
-                  if (presetId === "update_description_en_from_result_by_entity") {
-                    updateSelectedNodeConfig({
-                      database: {
-                        ...databaseConfig,
-                        presetId,
-                        operation: "update",
-                        entityType: "product",
-                        idField: "entityId",
-                        mode: "replace",
-                        mappings: [
-                          {
-                            targetPath: "description_en",
-                            sourcePort: selectedNode.inputs.includes("result")
-                              ? "result"
-                              : "description_en",
-                            sourcePath: "",
-                          },
-                        ],
-                        writeSource: databaseConfig.writeSource ?? "bundle",
-                        writeSourcePath: databaseConfig.writeSourcePath ?? "",
-                      },
-                    });
-                    return;
-                  }
-                  if (presetId === "append_description_from_result") {
-                    updateSelectedNodeConfig({
-                      database: {
-                        ...databaseConfig,
-                        presetId,
-                        operation: "update",
-                        entityType: "product",
-                        idField: "entityId",
-                        mode: "append",
-                        mappings: [
-                          {
-                            targetPath: "content_en",
-                            sourcePort: selectedNode.inputs.includes("result")
-                              ? "result"
-                              : "content_en",
-                            sourcePath: "",
-                          },
-                        ],
-                      },
-                    });
-                    return;
-                  }
-                  if (presetId === "update_name_en_from_value") {
-                    updateSelectedNodeConfig({
-                      database: {
-                        ...databaseConfig,
-                        presetId,
-                        operation: "update",
-                        entityType: "product",
-                        idField: "entityId",
-                        mode: "replace",
-                        mappings: [
-                          {
-                            targetPath: "name_en",
-                            sourcePort: selectedNode.inputs.includes("value")
-                              ? "value"
-                              : "result",
-                            sourcePath: "",
-                          },
-                        ],
-                      },
-                    });
-                    return;
-                  }
                   if (presetId === "delete_product_by_entity") {
                     updateSelectedNodeConfig({
                       database: {
@@ -989,18 +698,6 @@ export function DatabaseNodeConfigSection({
                         presetId,
                         operation: "insert",
                         entityType: "product",
-                        writeSource: "bundle",
-                        writeSourcePath: "",
-                      },
-                    });
-                  }
-                  if (presetId === "insert_note_from_bundle") {
-                    updateSelectedNodeConfig({
-                      database: {
-                        ...databaseConfig,
-                        presetId,
-                        operation: "insert",
-                        entityType: "note",
                         writeSource: "bundle",
                         writeSourcePath: "",
                       },
@@ -1047,9 +744,6 @@ export function DatabaseNodeConfigSection({
                   : queryConfig.mode === "preset"
                     ? presetQueryTemplate
                     : rawQueryTemplate;
-                const queryValidation = queryValidatorEnabled
-                  ? buildMongoQueryValidation(queryTemplateValue)
-                  : null;
                 const updateQueryConfig = (
                   patch: Partial<DbQueryConfig>,
                   options?: { syncPreset?: boolean }
@@ -1065,9 +759,6 @@ export function DatabaseNodeConfigSection({
                     },
                   });
                 };
-                const selectedDbPreset = dbNodePresets.find(
-                  (preset) => preset.id === selectedDbPresetId
-                );
                 const handleApplyDbPreset = (preset: DbNodePreset) => {
                   updateSelectedNodeConfig({
                     database: {
@@ -1081,78 +772,48 @@ export function DatabaseNodeConfigSection({
                     },
                   });
                 };
-                const handleSaveDbPreset = async () => {
-                  const name = dbPresetName.trim();
-                  if (!name) {
+                const handleRenameDbPreset = async (presetId: string, nextName: string) => {
+                  const trimmed = nextName.trim();
+                  if (!trimmed) {
                     toast("Preset name is required.", { variant: "error" });
                     return;
                   }
+                  const target = dbNodePresets.find((preset) => preset.id === presetId);
+                  if (!target) return;
+                  if (target.name.trim() === trimmed) return;
                   const now = new Date().toISOString();
-                  const payload: DatabaseConfig = {
-                    operation: databaseConfig.operation ?? "query",
-                    entityType: databaseConfig.entityType ?? "product",
-                    idField: databaseConfig.idField ?? "entityId",
-                    mode: databaseConfig.mode ?? "replace",
-                    mappings,
-                    query: { ...queryConfig, queryTemplate: queryTemplateValue },
-                    writeSource: databaseConfig.writeSource ?? "bundle",
-                    writeSourcePath: databaseConfig.writeSourcePath ?? "",
-                    dryRun: databaseConfig.dryRun ?? false,
-                    ...(databaseConfig.presetId ? { presetId: databaseConfig.presetId } : {}),
-                    skipEmpty: databaseConfig.skipEmpty ?? false,
-                    trimStrings: databaseConfig.trimStrings ?? false,
-                  };
-                  let nextPresets = [...dbNodePresets];
-                  const existingIndex = nextPresets.findIndex(
-                    (preset) => preset.id === selectedDbPresetId
+                  const nextPresets = dbNodePresets.map((preset) =>
+                    preset.id === presetId
+                      ? { ...preset, name: trimmed, updatedAt: now }
+                      : preset
                   );
-                  if (existingIndex >= 0) {
-                    const existingPreset = nextPresets[existingIndex]!;
-                    nextPresets[existingIndex] = {
-                      ...existingPreset,
-                      name,
-                      description: dbPresetDescription.trim(),
-                      config: payload,
-                      updatedAt: now,
-                    };
-                  } else {
-                    const newPreset: DbNodePreset = {
-                      id: createPresetId(),
-                      name,
-                      description: dbPresetDescription.trim(),
-                      config: payload,
-                      createdAt: now,
-                      updatedAt: now,
-                    };
-                    nextPresets = [...nextPresets, newPreset];
-                    setSelectedDbPresetId(newPreset.id);
-                  }
                   setDbNodePresets(nextPresets);
                   await saveDbNodePresets(nextPresets);
-                  toast("Database preset saved.", { variant: "success" });
+                  toast("Database preset renamed.", { variant: "success" });
                 };
-                const handleDeleteDbPreset = async () => {
-                  if (!selectedDbPreset) return;
+                const handleDeleteDbPresetById = async (presetId: string) => {
+                  const target = dbNodePresets.find((preset) => preset.id === presetId);
+                  if (!target) return;
                   const confirmed = window.confirm(
-                    `Delete database preset \"${selectedDbPreset.name}\"?`
+                    `Delete database preset \"${target.name}\"?`
                   );
                   if (!confirmed) return;
                   const nextPresets = dbNodePresets.filter(
-                    (preset) => preset.id !== selectedDbPreset.id
+                    (preset) => preset.id !== presetId
                   );
                   setDbNodePresets(nextPresets);
                   await saveDbNodePresets(nextPresets);
-                  setSelectedDbPresetId("");
-                  setDbPresetName("");
-                  setDbPresetDescription("");
                   toast("Database preset deleted.", { variant: "success" });
                 };
-                const selectedQueryPreset = dbQueryPresets.find(
-                  (preset) => preset.id === selectedQueryPresetId
-                );
-                const handleSaveQueryPreset = async (overrideName?: string) => {
+                const handleSaveQueryPreset = async (
+                  overrideName?: string,
+                  options?: { forceNew?: boolean }
+                ) => {
                   const name = (overrideName ?? queryPresetName).trim();
-                  const template = queryTemplateValue.trim();
+                  const presetTemplateSource = isUpdateAction
+                    ? queryTemplateValue
+                    : activeQueryValue;
+                  const template = presetTemplateSource.trim();
                   if (!name) {
                     toast("Query preset name is required.", { variant: "error" });
                     return;
@@ -1164,9 +825,11 @@ export function DatabaseNodeConfigSection({
                   setQueryPresetName(name);
                   const now = new Date().toISOString();
                   let nextPresets = [...dbQueryPresets];
-                  const existingIndex = nextPresets.findIndex(
-                    (preset) => preset.id === selectedQueryPresetId
-                  );
+                  const existingIndex = options?.forceNew
+                    ? -1
+                    : nextPresets.findIndex(
+                        (preset) => preset.id === selectedQueryPresetId
+                      );
                   if (existingIndex >= 0) {
                     const existingPreset = nextPresets[existingIndex]!;
                     nextPresets[existingIndex] = {
@@ -1190,20 +853,66 @@ export function DatabaseNodeConfigSection({
                   await saveDbQueryPresets(nextPresets);
                   toast("Query preset saved.", { variant: "success" });
                 };
-                const handleDeleteQueryPreset = async () => {
-                  if (!selectedQueryPreset) return;
-                  const confirmed = window.confirm(
-                    `Delete query preset \"${selectedQueryPreset.name}\"?`
-                  );
-                  if (!confirmed) return;
-                  const nextPresets = dbQueryPresets.filter(
-                    (preset) => preset.id !== selectedQueryPreset.id
+                const handleRenameQueryPreset = async (presetId: string, nextName: string) => {
+                  const trimmed = nextName.trim();
+                  if (!trimmed) {
+                    toast("Query preset name is required.", { variant: "error" });
+                    return;
+                  }
+                  const target = dbQueryPresets.find((preset) => preset.id === presetId);
+                  if (!target) return;
+                  if (target.name.trim() === trimmed) return;
+                  const now = new Date().toISOString();
+                  const nextPresets = dbQueryPresets.map((preset) =>
+                    preset.id === presetId
+                      ? { ...preset, name: trimmed, updatedAt: now }
+                      : preset
                   );
                   setDbQueryPresets(nextPresets);
                   await saveDbQueryPresets(nextPresets);
-                  setSelectedQueryPresetId("");
-                  setQueryPresetName("");
+                  if (selectedQueryPresetId === presetId) {
+                    setQueryPresetName(trimmed);
+                  }
+                  toast("Query preset renamed.", { variant: "success" });
+                };
+                const handleDeleteQueryPresetById = async (presetId: string) => {
+                  const target = dbQueryPresets.find((preset) => preset.id === presetId);
+                  if (!target) return;
+                  const confirmed = window.confirm(
+                    `Delete query preset \"${target.name}\"?`
+                  );
+                  if (!confirmed) return;
+                  const nextPresets = dbQueryPresets.filter(
+                    (preset) => preset.id !== presetId
+                  );
+                  setDbQueryPresets(nextPresets);
+                  await saveDbQueryPresets(nextPresets);
+                  if (selectedQueryPresetId === presetId) {
+                    setSelectedQueryPresetId("");
+                    setQueryPresetName("");
+                  }
                   toast("Query preset deleted.", { variant: "success" });
+                };
+                const handleApplyDbPresetById = (presetId: string) => {
+                  const preset = dbNodePresets.find((item) => item.id === presetId);
+                  if (!preset) return;
+                  handleApplyDbPreset(preset);
+                };
+                const handleApplyQueryPresetById = (presetId: string) => {
+                  const preset = dbQueryPresets.find((item) => item.id === presetId);
+                  if (!preset) return;
+                  setSelectedQueryPresetId(preset.id);
+                  setQueryPresetName(preset.name);
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      query: {
+                        ...queryConfig,
+                        queryTemplate: preset.queryTemplate,
+                        mode: "custom",
+                      },
+                    },
+                  });
                 };
                 const closeSaveQueryPresetModal = () => {
                   setSaveQueryPresetModalOpen(false);
@@ -1211,7 +920,10 @@ export function DatabaseNodeConfigSection({
                 };
                 const handleSaveQueryPresetFromModal = async () => {
                   const name = newQueryPresetName.trim();
-                  const template = queryTemplateValue.trim();
+                  const presetTemplateSource = isUpdateAction
+                    ? queryTemplateValue
+                    : activeQueryValue;
+                  const template = presetTemplateSource.trim();
                   if (!name) {
                     toast("Query preset name is required.", { variant: "error" });
                     return;
@@ -1220,47 +932,166 @@ export function DatabaseNodeConfigSection({
                     toast("Query template is empty.", { variant: "error" });
                     return;
                   }
-                  await handleSaveQueryPreset(name);
+                  await handleSaveQueryPreset(name, { forceNew: true });
                   closeSaveQueryPresetModal();
                 };
                 const openSaveQueryPresetModal = () => {
                   setNewQueryPresetName("");
                   setSaveQueryPresetModalOpen(true);
                 };
-                const showQueryExtras = operation === "query";
-                const queryPlaceholder = getQueryPlaceholderByOperation(operation);
-                const handleOperationChange = (value: DatabaseOperation) => {
+                const actionCategoryOptions = [
+                  { value: "create", label: "Create" },
+                  { value: "read", label: "Read" },
+                  { value: "update", label: "Update" },
+                  { value: "delete", label: "Delete" },
+                  { value: "aggregate", label: "Aggregate" },
+                ] as const;
+                const actionOptionsByCategory = {
+                  create: [
+                    { value: "insertOne", label: "insertOne" },
+                    { value: "insertMany", label: "insertMany" },
+                  ],
+                  read: [
+                    { value: "find", label: "find" },
+                    { value: "findOne", label: "findOne" },
+                    { value: "countDocuments", label: "countDocuments" },
+                    { value: "distinct", label: "distinct" },
+                  ],
+                  update: [
+                    { value: "updateOne", label: "updateOne" },
+                    { value: "updateMany", label: "updateMany" },
+                    { value: "replaceOne", label: "replaceOne" },
+                    { value: "findOneAndUpdate", label: "findOneAndUpdate" },
+                  ],
+                  delete: [
+                    { value: "deleteOne", label: "deleteOne" },
+                    { value: "deleteMany", label: "deleteMany" },
+                    { value: "findOneAndDelete", label: "findOneAndDelete" },
+                  ],
+                  aggregate: [{ value: "aggregate", label: "aggregate" }],
+                } as const;
+                const actionOptions =
+                  actionOptionsByCategory[
+                    actionCategory as keyof typeof actionOptionsByCategory
+                  ] ?? actionOptionsByCategory.read;
+                const isReadAction = actionCategory === "read";
+                const showFindControls = isReadAction && action === "find";
+                const showFindOneControls = isReadAction && action === "findOne";
+                const showQueryExtras = showFindControls || showFindOneControls;
+                const showLimit = showFindControls;
+                const showSort = showFindControls;
+                const showProjection = showQueryExtras;
+                const showSingleToggle = showFindControls;
+                const showDistinctField =
+                  databaseConfig.useMongoActions && isReadAction && action === "distinct";
+                const isUpdateAction =
+                  databaseConfig.useMongoActions &&
+                  actionCategory === "update" &&
+                  ["updateOne", "updateMany", "replaceOne", "findOneAndUpdate"].includes(action);
+                const queryPlaceholder = getQueryPlaceholderByAction(action);
+                const updateTemplateValue = databaseConfig.updateTemplate ?? "";
+                const updatePlaceholder = getUpdatePlaceholderByAction(action);
+                const activeQueryValue = isUpdateAction
+                  ? updateTemplateValue
+                  : queryTemplateValue;
+                const activeQueryPlaceholder = isUpdateAction
+                  ? updatePlaceholder
+                  : queryPlaceholder;
+                const queryValidation = queryValidatorEnabled
+                  ? buildMongoQueryValidation(activeQueryValue)
+                  : null;
+                const applyActionConfig = (
+                  nextCategory: DatabaseActionCategory,
+                  nextAction: DatabaseAction
+                ) => {
+                  const nextOperation =
+                    nextCategory === "create"
+                      ? "insert"
+                      : nextCategory === "update"
+                        ? "update"
+                        : nextCategory === "delete"
+                          ? "delete"
+                          : "query";
+                  const nextQueryPatch: Partial<DbQueryConfig> = {};
+                  if (nextCategory === "read") {
+                    if (nextAction === "findOne") {
+                      nextQueryPatch.single = true;
+                    } else if (nextAction === "find") {
+                      nextQueryPatch.single = false;
+                    }
+                  }
+                  if (nextCategory === "aggregate") {
+                    nextQueryPatch.single = false;
+                    nextQueryPatch.mode = "custom";
+                    if (!queryConfig.queryTemplate?.trim() || queryConfig.mode === "preset") {
+                      nextQueryPatch.queryTemplate = "[]";
+                    }
+                  }
+                  const nextUpdateStrategy =
+                    nextAction === "updateMany"
+                      ? "many"
+                      : nextAction === "updateOne" ||
+                        nextAction === "replaceOne" ||
+                        nextAction === "findOneAndUpdate"
+                        ? "one"
+                        : databaseConfig.updateStrategy ?? "one";
                   updateSelectedNodeConfig({
                     database: {
                       ...databaseConfig,
-                      operation: value,
+                      useMongoActions: true,
+                      actionCategory: nextCategory as DatabaseActionCategory,
+                      action: nextAction as DatabaseAction,
+                      operation: nextOperation,
+                      updateStrategy: nextUpdateStrategy,
+                      query: {
+                        ...queryConfig,
+                        ...nextQueryPatch,
+                      },
                     },
                   });
                 };
+                const handleActionCategoryChange = (value: DatabaseActionCategory) => {
+                  const defaultAction =
+                    actionOptionsByCategory[value as keyof typeof actionOptionsByCategory]?.[0]
+                      ?.value ?? "find";
+                  applyActionConfig(value, defaultAction as DatabaseAction);
+                };
+                const handleActionChange = (value: DatabaseAction) => {
+                  applyActionConfig(actionCategory as DatabaseActionCategory, value);
+                };
                 const handleFormatClick = () => {
                   if (queryFormatterEnabled) {
-                    const formatted = formatAndFixMongoQuery(queryTemplateValue);
-                    const currentPresetId = databaseConfig.presetId ?? "custom";
-                    const currentAiQueryId = selectedAiQueryId;
-
-                    if (currentPresetId !== "custom" || currentAiQueryId) {
-                      setSelectedAiQueryId("");
+                    const formatted = formatAndFixMongoQuery(activeQueryValue);
+                    if (isUpdateAction) {
                       updateSelectedNodeConfig({
                         database: {
                           ...databaseConfig,
-                          presetId: "custom",
-                          query: {
-                            ...queryConfig,
-                            mode: "custom",
-                            queryTemplate: formatted,
-                          },
+                          updateTemplate: formatted,
                         },
                       });
                     } else {
-                      updateQueryConfig({
-                        mode: "custom",
-                        queryTemplate: formatted,
-                      });
+                      const currentPresetId = databaseConfig.presetId ?? "custom";
+                      const currentAiQueryId = selectedAiQueryId;
+
+                      if (currentPresetId !== "custom" || currentAiQueryId) {
+                        setSelectedAiQueryId("");
+                        updateSelectedNodeConfig({
+                          database: {
+                            ...databaseConfig,
+                            presetId: "custom",
+                            query: {
+                              ...queryConfig,
+                              mode: "custom",
+                              queryTemplate: formatted,
+                            },
+                          },
+                        });
+                      } else {
+                        updateQueryConfig({
+                          mode: "custom",
+                          queryTemplate: formatted,
+                        });
+                      }
                     }
                     if (queryValidation && queryValidation.status === "error") {
                       toast("Query auto-corrected based on validation.", { variant: "success" });
@@ -1278,8 +1109,8 @@ export function DatabaseNodeConfigSection({
                 };
                 const handleToggleValidator = () => setQueryValidatorEnabled((prev) => !prev);
                 const handleRunQuery = async () => {
-                  if (!queryTemplateValue.trim()) {
-                    toast("Query is empty", { variant: "error" });
+                  if (actionCategory !== "read" && actionCategory !== "aggregate") {
+                    toast("Run is available for read and aggregate actions only.", { variant: "error" });
                     return;
                   }
                   setTestQueryLoading(true);
@@ -1300,35 +1131,68 @@ export function DatabaseNodeConfigSection({
                       currentValue ?? ""
                     );
                     const parsedQuery = safeParseJson(renderedQuery);
-                    if (parsedQuery.error || !parsedQuery.value || typeof parsedQuery.value !== "object") {
+                    const parsedValue = parsedQuery.value ?? {};
+                    if (parsedQuery.error && actionCategory !== "read" && actionCategory !== "aggregate") {
                       const message = parsedQuery.error || "Query template must be valid JSON.";
                       setTestQueryResult(JSON.stringify({ error: message }, null, 2));
                       toast(message, { variant: "error" });
                       setTestQueryLoading(false);
                       return;
                     }
-                    const queryObj = parsedQuery.value as Record<string, unknown>;
-                    const response = await fetch("/api/ai-paths/db-query", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        collection: queryConfig.collection ?? "products",
-                        query: queryObj,
-                        limit: queryConfig.limit ?? 20,
-                        single: queryConfig.single ?? false,
-                        idType: queryConfig.idType ?? "string",
-                      }),
-                    });
-                    const data = await response.json();
-                    if (!response.ok) {
-                      setTestQueryResult(JSON.stringify({ error: data.error || "Query failed" }, null, 2));
-                      toast("Query failed", { variant: "error" });
-                    } else {
-                      const resultData = data.item ?? data.items ?? data;
-                      setTestQueryResult(JSON.stringify(resultData, null, 2));
-                      const count = data.count ?? (Array.isArray(resultData) ? resultData.length : 1);
-                      toast(`Query returned ${count} result(s)`, { variant: "success" });
+                    if (
+                      actionCategory === "read" &&
+                      (!parsedValue || typeof parsedValue !== "object" || Array.isArray(parsedValue))
+                    ) {
+                      const message = "Read filter must be a JSON object.";
+                      setTestQueryResult(JSON.stringify({ error: message }, null, 2));
+                      toast(message, { variant: "error" });
+                      setTestQueryLoading(false);
+                      return;
                     }
+                    if (actionCategory === "aggregate" && !Array.isArray(parsedValue)) {
+                      const message = parsedQuery.error || "Aggregation pipeline must be a JSON array.";
+                      setTestQueryResult(JSON.stringify({ error: message }, null, 2));
+                      toast(message, { variant: "error" });
+                      setTestQueryLoading(false);
+                      return;
+                    }
+                    if (action === "distinct" && !databaseConfig.distinctField?.trim()) {
+                      const message = "Distinct requires a field name.";
+                      setTestQueryResult(JSON.stringify({ error: message }, null, 2));
+                      toast(message, { variant: "error" });
+                      setTestQueryLoading(false);
+                      return;
+                    }
+                    const parsedProjection = queryConfig.projection
+                      ? safeParseJson(queryConfig.projection).value
+                      : null;
+                    const parsedSort = queryConfig.sort
+                      ? safeParseJson(queryConfig.sort).value
+                      : null;
+                    const projection =
+                      parsedProjection && typeof parsedProjection === "object"
+                        ? parsedProjection
+                        : undefined;
+                    const sort =
+                      parsedSort && typeof parsedSort === "object" ? parsedSort : undefined;
+                    const data = await dbActionMutation.mutateAsync({
+                      action,
+                      collection: queryConfig.collection ?? "products",
+                      filter: actionCategory === "aggregate" ? undefined : parsedValue,
+                      pipeline: actionCategory === "aggregate" ? parsedValue : undefined,
+                      projection,
+                      sort,
+                      limit: queryConfig.limit ?? 20,
+                      idType: queryConfig.idType ?? "string",
+                      distinctField: databaseConfig.distinctField?.trim() || undefined,
+                    });
+                    const resultData =
+                      data.item ?? data.items ?? data.values ?? data.result ?? data;
+                    setTestQueryResult(JSON.stringify(resultData, null, 2));
+                    const count =
+                      (data as { count?: number }).count ??
+                      (Array.isArray(resultData) ? resultData.length : 1);
+                    toast(`Query returned ${count} result(s)`, { variant: "success" });
                   } catch (err) {
                     const errorMessage = err instanceof Error ? err.message : "Failed to execute query";
                     setTestQueryResult(JSON.stringify({ error: errorMessage }, null, 2));
@@ -1338,6 +1202,39 @@ export function DatabaseNodeConfigSection({
                   }
                 };
                 const handleQueryChange = (value: string) => {
+                  if (isUpdateAction) {
+                    updateSelectedNodeConfig({
+                      database: {
+                        ...databaseConfig,
+                        updateTemplate: value,
+                      },
+                    });
+                    return;
+                  }
+                  const currentPresetId = databaseConfig.presetId ?? "custom";
+                  const currentAiQueryId = selectedAiQueryId;
+
+                  if (currentPresetId !== "custom" || currentAiQueryId) {
+                    setSelectedAiQueryId("");
+                    updateSelectedNodeConfig({
+                      database: {
+                        ...databaseConfig,
+                        presetId: "custom",
+                        query: {
+                          ...queryConfig,
+                          mode: "custom",
+                          queryTemplate: value,
+                        },
+                      },
+                    });
+                  } else {
+                    updateQueryConfig({
+                      mode: "custom",
+                      queryTemplate: value,
+                    });
+                  }
+                };
+                const handleFilterChange = (value: string) => {
                   const currentPresetId = databaseConfig.presetId ?? "custom";
                   const currentAiQueryId = selectedAiQueryId;
 
@@ -1364,15 +1261,23 @@ export function DatabaseNodeConfigSection({
                 // Shared query input controls (used in both Query and Constructor tabs)
                 const queryInputControls = (
                   <DatabaseQueryInputControls
-                    operation={operation}
-                    queryTemplateValue={queryTemplateValue}
-                    queryPlaceholder={queryPlaceholder}
+                    actionCategory={actionCategory as DatabaseActionCategory}
+                    action={action as DatabaseAction}
+                    actionCategoryOptions={[...actionCategoryOptions]}
+                    actionOptions={[...actionOptions]}
+                    queryTemplateValue={activeQueryValue}
+                    queryPlaceholder={activeQueryPlaceholder}
+                    showFilterInput={isUpdateAction}
+                    filterTemplateValue={queryTemplateValue}
+                    filterPlaceholder={queryPlaceholder}
+                    onFilterChange={handleFilterChange}
                     queryValidation={queryValidation}
                     queryFormatterEnabled={queryFormatterEnabled}
                     queryValidatorEnabled={queryValidatorEnabled}
                     testQueryLoading={testQueryLoading}
                     queryTemplateRef={queryTemplateRef}
-                    onOperationChange={handleOperationChange}
+                    onActionCategoryChange={(value) => handleActionCategoryChange(value)}
+                    onActionChange={(value) => handleActionChange(value)}
                     onFormatClick={handleFormatClick}
                     onFormatContextMenu={handleFormatContextMenu}
                     onToggleValidator={handleToggleValidator}
@@ -1472,7 +1377,7 @@ export function DatabaseNodeConfigSection({
                         )}
                       </div>
                     </div>
-                    {showQueryExtras && (
+                    {showLimit && (
                       <div>
                         <Label className="text-xs text-gray-400">Limit</Label>
                         <Input
@@ -1488,7 +1393,7 @@ export function DatabaseNodeConfigSection({
                         />
                       </div>
                     )}
-                    {showQueryExtras && (
+                    {showSort && (
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div>
                           <Label className="text-xs text-gray-400">Sort preset</Label>
@@ -1532,6 +1437,7 @@ export function DatabaseNodeConfigSection({
                             <span className="text-gray-300">{`{ "createdAt": -1 }`}</span>
                           </p>
                         </div>
+                        {showProjection && (
                         <div>
                           <Label className="text-xs text-gray-400">Projection preset</Label>
                           <Select
@@ -1576,9 +1482,74 @@ export function DatabaseNodeConfigSection({
                             <span className="text-gray-300">{`{ "title": 1, "price": 1 }`}</span>
                           </p>
                         </div>
+                        )}
                       </div>
                     )}
-                    {showQueryExtras && (
+                    {showProjection && !showSort && (
+                      <div>
+                        <Label className="text-xs text-gray-400">Projection preset</Label>
+                        <Select
+                          value={projectionPresetId}
+                          onValueChange={(value) => {
+                            if (value === "custom") return;
+                            const preset = PROJECTION_PRESETS.find((item) => item.id === value);
+                            if (!preset) return;
+                            updateQueryConfig({
+                              projection: preset.value,
+                              projectionPresetId: preset.id,
+                            });
+                          }}
+                        >
+                          <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
+                            <SelectValue placeholder="Select preset" />
+                          </SelectTrigger>
+                          <SelectContent className="border-border bg-gray-900">
+                            <SelectItem value="custom">Custom</SelectItem>
+                            {PROJECTION_PRESETS.map((preset) => (
+                              <SelectItem key={preset.id} value={preset.id}>
+                                {preset.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Label className="mt-3 text-xs text-gray-400">
+                          Projection (JSON)
+                        </Label>
+                        <Textarea
+                          className="mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                          value={queryConfig.projection}
+                          onChange={(event) =>
+                            updateQueryConfig({
+                              projection: event.target.value,
+                              projectionPresetId: "custom",
+                            })
+                          }
+                        />
+                        <p className="mt-2 text-[11px] text-gray-500">
+                          Example:{" "}
+                          <span className="text-gray-300">{`{ "title": 1, "price": 1 }`}</span>
+                        </p>
+                      </div>
+                    )}
+                    {showDistinctField && (
+                      <div>
+                        <Label className="text-xs text-gray-400">Distinct field</Label>
+                        <Input
+                          className="mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                          value={databaseConfig.distinctField ?? ""}
+                          onChange={(event) =>
+                            updateSelectedNodeConfig({
+                              database: {
+                                ...databaseConfig,
+                                distinctField: event.target.value,
+                              },
+                            })
+                          }
+                          placeholder="fieldName"
+                        />
+                      </div>
+                    )}
+                    {showSingleToggle && (
                       <div className="flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300">
                         <span>Single result</span>
                         <Button
@@ -1642,7 +1613,7 @@ export function DatabaseNodeConfigSection({
                     databaseConfig={databaseConfig}
                     queryConfig={queryConfig}
                     operation={operation}
-                    queryTemplateValue={queryTemplateValue}
+                    queryTemplateValue={activeQueryValue}
                     queryTemplateRef={queryTemplateRef}
                     sampleState={sampleState}
                     parsedSampleError={parsedSample.error}
@@ -1676,31 +1647,9 @@ export function DatabaseNodeConfigSection({
                 </TabsContent>
                 <TabsContent value="presets">
                   <DatabasePresetsTab
-                    dbNodePresets={dbNodePresets}
-                    selectedDbPresetId={selectedDbPresetId}
-                    setSelectedDbPresetId={setSelectedDbPresetId}
-                    dbPresetName={dbPresetName}
-                    setDbPresetName={setDbPresetName}
-                    dbPresetDescription={dbPresetDescription}
-                    setDbPresetDescription={setDbPresetDescription}
-                    selectedDbPreset={selectedDbPreset}
-                    handleApplyDbPreset={handleApplyDbPreset}
-                    handleSaveDbPreset={handleSaveDbPreset}
-                    handleDeleteDbPreset={handleDeleteDbPreset}
                     dbQueryPresets={dbQueryPresets}
-                    selectedQueryPresetId={selectedQueryPresetId}
-                    setSelectedQueryPresetId={setSelectedQueryPresetId}
-                    queryPresetName={queryPresetName}
-                    setQueryPresetName={setQueryPresetName}
-                    selectedQueryPreset={selectedQueryPreset}
-                    handleSaveQueryPreset={handleSaveQueryPreset}
-                    handleDeleteQueryPreset={handleDeleteQueryPreset}
-                    queryTemplateValue={queryTemplateValue}
-                    queryTemplateRef={queryTemplateRef}
-                    setDatabaseTab={setDatabaseTab}
-                    updateSelectedNodeConfig={updateSelectedNodeConfig}
-                    databaseConfig={databaseConfig}
-                    queryConfig={queryConfig}
+                    onRenameQueryPreset={handleRenameQueryPreset}
+                    onDeleteQueryPreset={handleDeleteQueryPresetById}
                   />
                 </TabsContent>
               </Tabs>

@@ -17,7 +17,7 @@ Run npm run test and/or npm run test:e2e.
 run npx tsc and resolve typescript issues one by one
 
 Prepare a suite tests in vitests
-* implement tanstack query all across application
+ implement tanstack query all across application
 
 Connect tanstack queries to a unified error logging and handling system.
 connect all API to Error logging and handling system

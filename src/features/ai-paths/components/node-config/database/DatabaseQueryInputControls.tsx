@@ -5,19 +5,27 @@ import React from "react";
 
 
 
-import type { DatabaseOperation } from "@/features/ai-paths/lib";
+import type { DatabaseAction, DatabaseActionCategory } from "@/features/ai-paths/lib";
 import type { QueryValidationResult } from "./query-utils";
 
 type DatabaseQueryInputControlsProps = {
-  operation: DatabaseOperation;
+  actionCategory: DatabaseActionCategory;
+  action: DatabaseAction;
+  actionCategoryOptions: Array<{ value: DatabaseActionCategory; label: string }>;
+  actionOptions: Array<{ value: DatabaseAction; label: string }>;
   queryTemplateValue: string;
   queryPlaceholder: string;
+  showFilterInput?: boolean;
+  filterTemplateValue?: string;
+  filterPlaceholder?: string;
+  onFilterChange?: (value: string) => void;
   queryValidation: QueryValidationResult | null;
   queryFormatterEnabled: boolean;
   queryValidatorEnabled: boolean;
   testQueryLoading: boolean;
   queryTemplateRef?: React.RefObject<HTMLTextAreaElement | null>;
-  onOperationChange: (value: DatabaseOperation) => void;
+  onActionCategoryChange: (value: DatabaseActionCategory) => void;
+  onActionChange: (value: DatabaseAction) => void;
   onFormatClick: () => void;
   onFormatContextMenu: (event: React.MouseEvent<HTMLButtonElement>) => void;
   onToggleValidator: () => void;
@@ -26,15 +34,23 @@ type DatabaseQueryInputControlsProps = {
 };
 
 export function DatabaseQueryInputControls({
-  operation,
+  actionCategory,
+  action,
+  actionCategoryOptions,
+  actionOptions,
   queryTemplateValue,
   queryPlaceholder,
+  showFilterInput,
+  filterTemplateValue,
+  filterPlaceholder,
+  onFilterChange,
   queryValidation,
   queryFormatterEnabled,
   queryValidatorEnabled,
   testQueryLoading,
   queryTemplateRef,
-  onOperationChange,
+  onActionCategoryChange,
+  onActionChange,
   onFormatClick,
   onFormatContextMenu,
   onToggleValidator,
@@ -46,17 +62,33 @@ export function DatabaseQueryInputControls({
       <div className="flex items-center justify-between">
         <div className="flex gap-2 items-center">
           <Select
-            value={operation}
-            onValueChange={(value: DatabaseOperation) => onOperationChange(value)}
+            value={actionCategory}
+            onValueChange={(value: DatabaseActionCategory) => onActionCategoryChange(value)}
           >
             <SelectTrigger className="h-7 w-[140px] border-border bg-card/70 text-xs text-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="border-border bg-gray-900">
-              <SelectItem value="query">Query</SelectItem>
-              <SelectItem value="update">Update</SelectItem>
-              <SelectItem value="insert">Insert</SelectItem>
-              <SelectItem value="delete">Delete</SelectItem>
+              {actionCategoryOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={action}
+            onValueChange={(value: DatabaseAction) => onActionChange(value)}
+          >
+            <SelectTrigger className="h-7 w-[170px] border-border bg-card/70 text-xs text-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="border-border bg-gray-900 max-h-72">
+              {actionOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -100,6 +132,22 @@ export function DatabaseQueryInputControls({
           </Button>
         </div>
       </div>
+      {showFilterInput ? (
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] uppercase tracking-wide text-gray-500">
+              Filter
+            </span>
+            <span className="text-[9px] text-gray-500">Matches documents</span>
+          </div>
+          <Textarea
+            className="min-h-[110px] w-full rounded-md border border-border bg-card/70 text-xs text-white"
+            value={filterTemplateValue ?? ""}
+            onChange={(event) => onFilterChange?.(event.target.value)}
+            placeholder={(filterTemplateValue ?? "").trim() === "" ? filterPlaceholder : undefined}
+          />
+        </div>
+      ) : null}
       <Textarea
         ref={queryTemplateRef}
         className="min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white"

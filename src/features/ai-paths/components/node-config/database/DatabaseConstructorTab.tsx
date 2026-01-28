@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input, Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/ui";
+import { Button, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input, Dialog, DialogContent, DialogHeader, DialogTitle, Tooltip } from "@/shared/ui";
 import { ChevronUp, ChevronDown, LayoutGrid } from "lucide-react";
 import React from "react";
 
@@ -31,7 +31,7 @@ import type {
   UpdaterSampleState,
 } from "@/features/ai-paths/lib";
 import { formatPortLabel } from "@/features/ai-paths/utils/ui-utils";
-import { TEMPLATE_SNIPPETS, SORT_PRESETS, PROJECTION_PRESETS } from "@/features/ai-paths/config/query-presets";
+import { TEMPLATE_SNIPPETS, SORT_PRESETS, PROJECTION_PRESETS, READ_QUERY_TYPES, QUERY_OPERATOR_GROUPS, UPDATE_OPERATOR_GROUPS, AGGREGATION_STAGE_SNIPPETS } from "@/features/ai-paths/config/query-presets";
 import type { AiQuery, DatabasePresetOption, SchemaData } from "./types";
 
 type DatabaseConstructorTabProps = {
@@ -127,6 +127,8 @@ export function DatabaseConstructorTab({
   availablePorts,
   uniqueTargetPathOptions,
 }: DatabaseConstructorTabProps) {
+  const isUpdateAction =
+    databaseConfig.useMongoActions && databaseConfig.actionCategory === "update";
   // State for code snippet navigation in AI responses
   const [selectedSnippetIndex, setSelectedSnippetIndex] = React.useState<number>(-1);
   // State for template snippets modal
@@ -144,6 +146,15 @@ export function DatabaseConstructorTab({
   }, [pendingAiQuery, codeSnippets.length]);
 
   const applyQueryTemplateUpdate = (nextQuery: string) => {
+    if (isUpdateAction) {
+      updateSelectedNodeConfig({
+        database: {
+          ...databaseConfig,
+          updateTemplate: nextQuery,
+        },
+      });
+      return;
+    }
     const currentPresetId = databaseConfig.presetId ?? "custom";
     const currentAiQueryId = selectedAiQueryId;
 
@@ -185,6 +196,28 @@ export function DatabaseConstructorTab({
       const node = queryTemplateRef?.current;
       if (!node) return;
       const cursorPosition = rangeStart + placeholder.length;
+      node.focus();
+      node.setSelectionRange(cursorPosition, cursorPosition);
+    }, 0);
+  };
+
+  const insertTemplateSnippet = (snippet: string) => {
+    const currentTemplate = queryTemplateValue ?? "";
+    const textArea = queryTemplateRef?.current;
+    const selectionStart =
+      typeof textArea?.selectionStart === "number" ? textArea.selectionStart : currentTemplate.length;
+    const selectionEnd =
+      typeof textArea?.selectionEnd === "number" ? textArea.selectionEnd : currentTemplate.length;
+    const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentTemplate.length));
+    const rangeEnd = Math.max(rangeStart, Math.min(Math.max(selectionStart, selectionEnd), currentTemplate.length));
+    const nextTemplate = `${currentTemplate.slice(0, rangeStart)}${snippet}${currentTemplate.slice(rangeEnd)}`;
+
+    applyQueryTemplateUpdate(nextTemplate);
+
+    window.setTimeout(() => {
+      const node = queryTemplateRef?.current;
+      if (!node) return;
+      const cursorPosition = rangeStart + snippet.length;
       node.focus();
       node.setSelectionRange(cursorPosition, cursorPosition);
     }, 0);
@@ -414,22 +447,32 @@ export function DatabaseConstructorTab({
                 Click to set collection or insert field:
               </div>
               <div className="flex flex-wrap gap-1">
-                {fetchedDbSchema.collections.map((coll) => (
-                  <Button
-                    key={coll.name}
-                    type="button"
-                    className="rounded-md border border-purple-700/50 bg-purple-500/10 px-2 py-1 text-[10px] text-purple-300 hover:bg-purple-500/20"
-                    onClick={() => {
-                      updateQueryConfig({
-                        mode: "custom",
-                        collection: coll.name,
-                      });
-                      toast(`Collection set to: ${coll.name}`, { variant: "success" });
-                    }}
-                  >
-                    {coll.name}
-                  </Button>
-                ))}
+                {fetchedDbSchema.collections.map((coll) => {
+                  const schemaFields = coll.fields?.map((f) => `${f.name}: ${f.type}`).join(", ") ?? "";
+                  const resolvedTooltip = `{{schema:Collection "${coll.name}" with fields: ${schemaFields || "unknown"}}}`;
+                  return (
+                    <Tooltip
+                      key={coll.name}
+                      content={resolvedTooltip}
+                      side="bottom"
+                      maxWidth="500px"
+                    >
+                      <Button
+                        type="button"
+                        className="rounded-md border border-purple-700/50 bg-purple-500/10 px-2 py-1 text-[10px] text-purple-300 hover:bg-purple-500/20"
+                        onClick={() => {
+                          updateQueryConfig({
+                            mode: "custom",
+                            collection: coll.name,
+                          });
+                          toast(`Collection set to: ${coll.name}`, { variant: "success" });
+                        }}
+                      >
+                        {coll.name}
+                      </Button>
+                    </Tooltip>
+                  );
+                })}
               </div>
               {(() => {
                 const currentColl = fetchedDbSchema.collections.find(
@@ -462,11 +505,7 @@ export function DatabaseConstructorTab({
                             } else {
                               newQuery = `${current}\n  ${fieldQuery}`;
                             }
-                            setSelectedAiQueryId("");
-                            updateQueryConfig({
-                              mode: "custom",
-                              queryTemplate: newQuery,
-                            });
+                            applyQueryTemplateUpdate(newQuery);
                           }}
                           title={`Type: ${field.type}`}
                         >
@@ -534,6 +573,110 @@ export function DatabaseConstructorTab({
                   >
                     <span className="text-[11px] font-medium text-emerald-200">{snippet.label}</span>
                     <pre className="text-[9px] text-gray-400 whitespace-pre-wrap break-all line-clamp-2">{snippet.value}</pre>
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Read Query Types */}
+            <div className="space-y-2">
+              <Label className="text-xs text-gray-400 uppercase tracking-wide">Read Query Types</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {READ_QUERY_TYPES.map((snippet) => (
+                  <Button
+                    key={snippet.label}
+                    type="button"
+                    disabled={snippet.disabled}
+                    className={`h-auto flex-col items-start gap-1 rounded-md border p-3 text-left ${
+                      snippet.disabled
+                        ? "border-gray-700 bg-gray-800/30 text-gray-500"
+                        : "border-indigo-600/50 bg-indigo-500/10 hover:bg-indigo-500/20"
+                    }`}
+                    onClick={() => {
+                      if (snippet.disabled) return;
+                      insertTemplateSnippet(snippet.value);
+                      toast(`Inserted: ${snippet.label}`, { variant: "success" });
+                    }}
+                    title={snippet.note ?? undefined}
+                  >
+                    <span className="text-[11px] font-medium text-indigo-200">{snippet.label}</span>
+                    {snippet.note ? (
+                      <span className="text-[9px] text-gray-400">{snippet.note}</span>
+                    ) : null}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Query Operators */}
+            <div className="space-y-2">
+              <Label className="text-xs text-gray-400 uppercase tracking-wide">Query Operators</Label>
+              <div className="space-y-3">
+                {QUERY_OPERATOR_GROUPS.map((group) => (
+                  <div key={group.label} className="space-y-1">
+                    <div className="text-[10px] text-gray-500">{group.label}</div>
+                    <div className="flex flex-wrap gap-2">
+                      {group.items.map((item) => (
+                        <Button
+                          key={item.label}
+                          type="button"
+                          className="h-6 rounded-md border border-emerald-600/50 bg-emerald-500/10 px-2 text-[10px] text-emerald-200 hover:bg-emerald-500/20"
+                          onClick={() => {
+                            insertTemplateSnippet(item.value);
+                            toast(`Inserted ${item.label}`, { variant: "success" });
+                          }}
+                        >
+                          {item.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Update Operators */}
+            <div className="space-y-2">
+              <Label className="text-xs text-gray-400 uppercase tracking-wide">Update Operators</Label>
+              <div className="space-y-3">
+                {UPDATE_OPERATOR_GROUPS.map((group) => (
+                  <div key={group.label} className="space-y-1">
+                    <div className="text-[10px] text-gray-500">{group.label}</div>
+                    <div className="flex flex-wrap gap-2">
+                      {group.items.map((item) => (
+                        <Button
+                          key={item.label}
+                          type="button"
+                          className="h-6 rounded-md border border-sky-600/50 bg-sky-500/10 px-2 text-[10px] text-sky-200 hover:bg-sky-500/20"
+                          onClick={() => {
+                            insertTemplateSnippet(item.value);
+                            toast(`Inserted ${item.label}`, { variant: "success" });
+                          }}
+                        >
+                          {item.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Aggregation Stages */}
+            <div className="space-y-2">
+              <Label className="text-xs text-gray-400 uppercase tracking-wide">Aggregation Stages</Label>
+              <div className="flex flex-wrap gap-2">
+                {AGGREGATION_STAGE_SNIPPETS.map((stage) => (
+                  <Button
+                    key={stage.label}
+                    type="button"
+                    className="h-6 rounded-md border border-amber-600/50 bg-amber-500/10 px-2 text-[10px] text-amber-200 hover:bg-amber-500/20"
+                    onClick={() => {
+                      insertTemplateSnippet(stage.value);
+                      toast(`Inserted ${stage.label}`, { variant: "success" });
+                    }}
+                  >
+                    {stage.label}
                   </Button>
                 ))}
               </div>
@@ -619,52 +762,15 @@ export function DatabaseConstructorTab({
         />
         <div className="flex flex-wrap gap-2">
           <div className="text-[11px] text-gray-400">Context placeholders:</div>
-          <Button
-            type="button"
-            className="rounded-md border border-emerald-700 bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/20"
-            onClick={() => {
-              const placeholder = `{{operation:${operation}}}`;
-              const currentValue = databaseConfig.aiPrompt ?? "";
-              updateSelectedNodeConfig({
-                database: {
-                  ...databaseConfig,
-                  aiPrompt: currentValue + placeholder,
-                },
-              });
-            }}
+          <Tooltip
+            content={`{{operation:${operation}}}`}
+            side="bottom"
           >
-            Operation: {operation}
-          </Button>
-          {hasSchemaConnection && fetchedDbSchema?.collections && fetchedDbSchema.collections.length > 0 ? (
-            fetchedDbSchema.collections.map((coll) => {
-              const schemaFields = coll.fields?.map((f) => `${f.name}: ${f.type}`).join(", ") ?? "";
-              const schemaContext = `Collection "${coll.name}" with fields: ${schemaFields || "unknown"}`;
-              return (
-                <Button
-                  key={coll.name}
-                  type="button"
-                  className="rounded-md border border-cyan-700 bg-cyan-500/10 px-2 py-1 text-[10px] text-cyan-200 hover:bg-cyan-500/20"
-                  onClick={() => {
-                    const placeholder = `{{schema:${schemaContext}}}`;
-                    const currentValue = databaseConfig.aiPrompt ?? "";
-                    updateSelectedNodeConfig({
-                      database: {
-                        ...databaseConfig,
-                        aiPrompt: currentValue + placeholder,
-                      },
-                    });
-                  }}
-                >
-                  Schema: {coll.name}
-                </Button>
-              );
-            })
-          ) : (
             <Button
               type="button"
-              className="rounded-md border border-blue-700 bg-blue-500/10 px-2 py-1 text-[10px] text-blue-200 hover:bg-blue-500/20"
+              className="rounded-md border border-emerald-700 bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/20"
               onClick={() => {
-                const placeholder = `{{collection:${queryConfig.collection}}}`;
+                const placeholder = `{{operation:${operation}}}`;
                 const currentValue = databaseConfig.aiPrompt ?? "";
                 updateSelectedNodeConfig({
                   database: {
@@ -674,26 +780,84 @@ export function DatabaseConstructorTab({
                 });
               }}
             >
-              Collection: {queryConfig.collection}
+              Operation: {operation}
             </Button>
+          </Tooltip>
+          {hasSchemaConnection && fetchedDbSchema?.collections && fetchedDbSchema.collections.length > 0 ? (
+            fetchedDbSchema.collections.map((coll) => {
+              const schemaFields = coll.fields?.map((f) => `${f.name}: ${f.type}`).join(", ") ?? "";
+              const resolvedPlaceholder = `{{schema:Collection "${coll.name}" with fields: ${schemaFields || "unknown"}}}`;
+              return (
+                <Tooltip
+                  key={coll.name}
+                  content={resolvedPlaceholder}
+                  side="bottom"
+                  maxWidth="500px"
+                >
+                  <Button
+                    type="button"
+                    className="rounded-md border border-cyan-700 bg-cyan-500/10 px-2 py-1 text-[10px] text-cyan-200 hover:bg-cyan-500/20"
+                    onClick={() => {
+                      const placeholder = `{{ schema: ${coll.name} }}`;
+                      const currentValue = databaseConfig.aiPrompt ?? "";
+                      updateSelectedNodeConfig({
+                        database: {
+                          ...databaseConfig,
+                          aiPrompt: currentValue + placeholder,
+                        },
+                      });
+                    }}
+                  >
+                    Schema: {coll.name}
+                  </Button>
+                </Tooltip>
+              );
+            })
+          ) : (
+            <Tooltip
+              content={`{{collection:${queryConfig.collection}}}`}
+              side="bottom"
+            >
+              <Button
+                type="button"
+                className="rounded-md border border-blue-700 bg-blue-500/10 px-2 py-1 text-[10px] text-blue-200 hover:bg-blue-500/20"
+                onClick={() => {
+                  const placeholder = `{{collection:${queryConfig.collection}}}`;
+                  const currentValue = databaseConfig.aiPrompt ?? "";
+                  updateSelectedNodeConfig({
+                    database: {
+                      ...databaseConfig,
+                      aiPrompt: currentValue + placeholder,
+                    },
+                  });
+                }}
+              >
+                Collection: {queryConfig.collection}
+              </Button>
+            </Tooltip>
           )}
-          <Button
-            type="button"
-            className="rounded-md border border-purple-700 bg-purple-500/10 px-2 py-1 text-[10px] text-purple-200 hover:bg-purple-500/20"
-            onClick={() => {
-              const providerName = queryConfig.provider === "auto" ? "auto-detect" : queryConfig.provider;
-              const placeholder = `{{provider:${providerName}}}`;
-              const currentValue = databaseConfig.aiPrompt ?? "";
-              updateSelectedNodeConfig({
-                database: {
-                  ...databaseConfig,
-                  aiPrompt: currentValue + placeholder,
-                },
-              });
-            }}
+          <Tooltip
+            content={`{{provider:${queryConfig.provider === "auto" ? "auto-detect" : queryConfig.provider}}}`}
+            side="bottom"
           >
-            Provider: {queryConfig.provider === "auto" ? "auto" : queryConfig.provider}
-          </Button>
+            <Button
+              type="button"
+              className="rounded-md border border-purple-700 bg-purple-500/10 px-2 py-1 text-[10px] text-purple-200 hover:bg-purple-500/20"
+              onClick={() => {
+                const providerName = queryConfig.provider === "auto" ? "auto-detect" : queryConfig.provider;
+                const placeholder = `{{provider:${providerName}}}`;
+                const currentValue = databaseConfig.aiPrompt ?? "";
+                updateSelectedNodeConfig({
+                  database: {
+                    ...databaseConfig,
+                    aiPrompt: currentValue + placeholder,
+                  },
+                });
+              }}
+            >
+              Provider: {queryConfig.provider === "auto" ? "auto" : queryConfig.provider}
+            </Button>
+          </Tooltip>
         </div>
         {(() => {
           const aiPromptEdges = edges.filter(
@@ -930,134 +1094,60 @@ export function DatabaseConstructorTab({
         <div className="space-y-3">
           {mappings.map((mapping, index) => {
             const targetValue = mapping.targetPath ?? "";
-            const hasSourceSelected = !!mapping.sourcePort;
+            const customValue = mapping.sourcePath ?? "";
+            // Schema selection = targetValue matches a schema option
+            const hasSchemaSelection = uniqueTargetPathOptions.some(opt => opt.value === targetValue) && targetValue.trim().length > 0;
+
             return (
               <div
-                key={`${mapping.targetPath}-${index}`}
+                key={`mapping-${index}`}
                 className="flex flex-wrap gap-2 items-start"
               >
-                {/* Step 1: Pick source field first */}
-                <div className="space-y-2 min-w-[140px]">
+                {/* "Pick from schema" dropdown - ALWAYS visible */}
+                <div className="space-y-2 min-w-[180px]">
                   <Select
-                    value={mapping.sourcePort}
-                    onValueChange={(value) =>
-                      updateMapping(index, { sourcePort: value })
-                    }
+                    value={hasSchemaSelection ? targetValue : ""}
+                    onValueChange={(value) => {
+                      if (value && value !== "__empty__") {
+                        updateMapping(index, { targetPath: value, sourcePort: "", sourcePath: "" });
+                      } else {
+                        updateMapping(index, { targetPath: "", sourcePort: "", sourcePath: "" });
+                      }
+                    }}
                   >
                     <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
-                      <SelectValue placeholder="Pick source field" />
+                      <SelectValue placeholder="Pick from schema" />
                     </SelectTrigger>
                     <SelectContent className="border-border bg-gray-900">
-                      {availablePorts.map((port) => (
-                        <SelectItem key={port} value={port}>
-                          {formatPortLabel(port)}
+                      <SelectItem value="__empty__">— None —</SelectItem>
+                      {uniqueTargetPathOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {mapping.sourcePort === "bundle" && (() => {
-                    const sourcePath = mapping.sourcePath ?? "";
-                    // Check if sourcePath is from dropdown (matches a bundle key)
-                    const isFromBundleDropdown = bundleKeys.has(sourcePath) && sourcePath.trim() !== "";
-                    const hasCustomSourcePath = sourcePath.trim() !== "" && !isFromBundleDropdown;
-
-                    return (
-                      <>
-                        {/* Show text input only if dropdown value is not selected */}
-                        {!isFromBundleDropdown && (
-                          <Input
-                            className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
-                            value={sourcePath}
-                            onChange={(event) =>
-                              updateMapping(index, {
-                                sourcePath: event.target.value,
-                              })
-                            }
-                            placeholder="Bundle path"
-                          />
-                        )}
-                        {/* Show dropdown only if custom text is not entered */}
-                        {!hasCustomSourcePath && (
-                          <Select
-                            value={isFromBundleDropdown ? sourcePath : ""}
-                            onValueChange={(value) =>
-                              updateMapping(index, { sourcePath: value })
-                            }
-                          >
-                            <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
-                              <SelectValue placeholder="Pick bundle key" />
-                            </SelectTrigger>
-                            <SelectContent className="border-border bg-gray-900">
-                              {Array.from(bundleKeys).map((key) => (
-                                <SelectItem key={key} value={key}>
-                                  {formatPortLabel(key)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                        {/* Show clear button when a selection is made */}
-                        {(isFromBundleDropdown || hasCustomSourcePath) && (
-                          <Button
-                            type="button"
-                            className="h-6 rounded-md border border-gray-600 px-2 text-[9px] text-gray-400 hover:bg-muted/50"
-                            onClick={() => updateMapping(index, { sourcePath: "" })}
-                          >
-                            Clear to switch input
-                          </Button>
-                        )}
-                      </>
-                    );
-                  })()}
                 </div>
 
-                {/* Step 2: Remap options appear only after source is selected */}
-                {hasSourceSelected && (() => {
-                  // Only set Select value if it matches a valid option
-                  const selectValue = uniqueTargetPathOptions.some(
-                    (opt) => opt.value === targetValue
-                  ) ? targetValue : "";
-
-                  return (
-                    <div className="flex-1 space-y-2 min-w-[180px]">
-                      <div className="flex items-center gap-1 text-[10px] text-gray-500">
-                        <span>→</span>
-                        <span>Remap to:</span>
-                      </div>
-                      <Input
-                        className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
-                        value={targetValue}
-                        onChange={(event) =>
-                          updateMapping(index, {
-                            targetPath: event.target.value,
-                          })
-                        }
-                        placeholder="Custom placeholder name"
-                      />
-                      <Select
-                        value={selectValue}
-                        onValueChange={(value) =>
-                          updateMapping(index, { targetPath: value })
-                        }
-                      >
-                        <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
-                          <SelectValue placeholder="Or pick from schema" />
-                        </SelectTrigger>
-                        <SelectContent className="border-border bg-gray-900">
-                          {uniqueTargetPathOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  );
-                })()}
+                {/* Custom value text field - shown after schema selection */}
+                {hasSchemaSelection && (
+                  <div className="space-y-2 min-w-[140px]">
+                    <Input
+                      className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                      value={customValue}
+                      onChange={(event) =>
+                        updateMapping(index, {
+                          sourcePath: event.target.value,
+                        })
+                      }
+                      placeholder="Custom value (optional)"
+                    />
+                  </div>
+                )}
 
                 <Button
                   type="button"
-                  className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60 self-start mt-6"
+                  className="rounded-md border text-[10px] text-gray-200 hover:bg-muted/60 self-start"
                   disabled={mappings.length <= 1}
                   onClick={() => removeMapping(index)}
                 >

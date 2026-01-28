@@ -23,6 +23,7 @@ import type {
   DbQueryConfig,
   RuntimePortValues,
 } from "@/shared/types/ai-paths";
+import { aiJobsApi, dbApi } from "../../api";
 
 export const looksLikeObjectId = (value: unknown) =>
   typeof value === "string" && /^[0-9a-fA-F]{24}$/.test(value);
@@ -239,17 +240,14 @@ export const pollGraphJob = async (
   const maxAttempts = options?.maxAttempts ?? 60;
   const intervalMs = options?.intervalMs ?? 2000;
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const statusRes = await fetch(`/api/products/ai-jobs/${jobId}`);
-    if (!statusRes.ok) {
+    const pollResult = await aiJobsApi.poll(jobId);
+    if (!pollResult.ok) {
       throw new Error("Failed to fetch job status.");
     }
-    const payload = (await statusRes.json() as unknown) as {
-      job?: { status?: string; result?: unknown; errorMessage?: string | null };
-    };
-    const job = payload.job;
-    if (!job) continue;
-    if (job.status === "completed") {
-      const result = job.result as
+    const { status, result: jobResult, error: jobError } = pollResult.data;
+    if (!status) continue;
+    if (status === "completed") {
+      const result = jobResult as
         | { result?: string }
         | string
         | null
@@ -259,10 +257,10 @@ export const pollGraphJob = async (
       }
       return typeof result === "string" ? result : JSON.stringify(result ?? "");
     }
-    if (job.status === "failed") {
-      throw new Error(job.errorMessage || "AI job failed.");
+    if (status === "failed") {
+      throw new Error(jobError || "AI job failed.");
     }
-    if (job.status === "canceled") {
+    if (status === "canceled") {
       throw new Error("AI job was canceled.");
     }
     if (attempt < maxAttempts - 1) {
@@ -380,19 +378,15 @@ export const pollDatabaseQuery = async (
   let lastBundle: Record<string, unknown> = {};
   for (let attempt = 0; attempt < config.maxAttempts; attempt += 1) {
     const payload = buildDbQueryPayload(nodeInputs, config.dbQuery);
-    const res = await fetch("/api/ai-paths/db-query", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) {
-      throw new Error("Database poll query failed.");
-    }
-    const data = (await res.json() as unknown) as {
+    const queryResult = await dbApi.query<{
       items?: unknown[];
       item?: unknown;
       count?: number;
-    };
+    }>(payload);
+    if (!queryResult.ok) {
+      throw new Error("Database poll query failed.");
+    }
+    const data = queryResult.data;
     const result: unknown = config.dbQuery.single ? data.item ?? null : data.items ?? [];
     const bundle = {
       count: data.count ?? (Array.isArray(result) ? result.length : result ? 1 : 0),

@@ -87,7 +87,19 @@ async function PATCH_handler(req: NextRequest) {
   try {
     const session = await auth();
     userId = session?.user?.id ?? DEFAULT_USER_ID;
-    const body: unknown = await req.json();
+    const rawBody = await req.text();
+    let body: unknown = {};
+    if (rawBody) {
+      try {
+        body = JSON.parse(rawBody);
+      } catch (parseError) {
+        if (parseError instanceof SyntaxError) {
+          body = {};
+        } else {
+          throw parseError;
+        }
+      }
+    }
     const parsed = updatePreferencesSchema.parse(body);
 
     // Type assertion to handle exactOptionalPropertyTypes

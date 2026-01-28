@@ -61,12 +61,39 @@ export type UpdaterMapping = {
 };
 
 export type DatabaseOperation = "query" | "update" | "insert" | "delete";
+export type DatabaseActionCategory =
+  | "create"
+  | "read"
+  | "update"
+  | "delete"
+  | "aggregate";
+export type DatabaseAction =
+  | "insertOne"
+  | "insertMany"
+  | "find"
+  | "findOne"
+  | "countDocuments"
+  | "distinct"
+  | "aggregate"
+  | "updateOne"
+  | "updateMany"
+  | "replaceOne"
+  | "findOneAndUpdate"
+  | "deleteOne"
+  | "deleteMany"
+  | "findOneAndDelete";
 
 export type DatabaseConfig = {
   operation: DatabaseOperation;
   entityType?: string;
   idField?: string;
   mode?: "replace" | "append";
+  updateStrategy?: "one" | "many";
+  useMongoActions?: boolean;
+  actionCategory?: DatabaseActionCategory;
+  action?: DatabaseAction;
+  distinctField?: string;
+  updateTemplate?: string;
   mappings?: UpdaterMapping[];
   query?: DbQueryConfig;
   writeSource?: string;

@@ -263,10 +263,12 @@ export const handleAiDescription: NodeHandler = async ({
     })
     .filter((item): item is string => Boolean(item));
   const body = {
-    productData: entityJson,
+    entityJson,
     imageUrls,
-    visionOutputEnabled: node.config?.description?.visionOutputEnabled,
-    generationOutputEnabled: node.config?.description?.generationOutputEnabled,
+    descriptionConfig: {
+      visionOutputEnabled: node.config?.description?.visionOutputEnabled,
+      generationOutputEnabled: node.config?.description?.generationOutputEnabled,
+    },
   };
   try {
     const result = await aiGenerationApi.generateDescription(body);

@@ -32,9 +32,9 @@ async function POST_handler(req: Request) {
 
     if (targetRunIds.length === 0) {
       const { runs } = await repo.listRuns({
-        pathId,
+        ...(pathId ? { pathId } : {}),
         status: "dead_lettered",
-        limit,
+        ...(limit ? { limit } : {}),
       });
       targetRunIds = runs.map((run) => run.id);
     }

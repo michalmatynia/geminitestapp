@@ -9,7 +9,6 @@ import {
   fetchOllamaModels,
   fetchChatbotMemory,
 } from "../api";
-import type { ChatSession } from "@/shared/types/chatbot";
 import type { ChatbotSessionListItem } from "../types";
 
 /**
@@ -35,7 +34,7 @@ export function useChatbotSessionIds(query?: string, options?: { enabled?: boole
     queryFn: async () => {
       const data = await fetchChatbotSessions<ChatbotSessionListItem>({
         scope: "ids",
-        query,
+        ...(query ? { query } : {}),
       });
       return data.ids ?? [];
     },
@@ -63,8 +62,8 @@ export function useChatbotSession(sessionId: string | null, options?: { enabled?
 export function useChatbotSettings(key?: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: chatbotQueryKeys.settings(key),
-    queryFn: () => fetchChatbotSettings(key),
-    enabled: options?.enabled ?? true,
+    queryFn: () => key ? fetchChatbotSettings(key) : Promise.resolve({ settings: null }),
+    enabled: (options?.enabled ?? true) && !!key,
   });
 }
 
@@ -105,7 +104,7 @@ export function useOllamaModels(baseUrl: string, options?: { enabled?: boolean }
 export function useChatbotMemory(query?: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: chatbotQueryKeys.memory(query),
-    queryFn: () => fetchChatbotMemory(query),
+    queryFn: () => fetchChatbotMemory(query ?? ""),
     enabled: options?.enabled ?? true,
   });
 }

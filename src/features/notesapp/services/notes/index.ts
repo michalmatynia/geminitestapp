@@ -61,12 +61,12 @@ const buildRelations = (note: NoteWithRelations): RelatedNote[] => {
 const populateRelations = <T extends NoteWithRelations | NoteWithRelations[] | null>(data: T): T => {
     if (!data) return data;
     if (Array.isArray(data)) {
-        return (data).map(note => ({
+        return (data as NoteWithRelations[]).map((note: NoteWithRelations) => ({
             ...note,
             relations: buildRelations(note)
         })) as unknown as T;
     }
-    const note = data;
+    const note = data as NoteWithRelations;
     return {
         ...note,
         relations: buildRelations(note)

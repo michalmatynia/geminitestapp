@@ -9,7 +9,6 @@ import type {
 import type {
   AiPathRunCreateInput,
   AiPathRunEventCreateInput,
-  AiPathRunNodeUpdate,
   AiPathRunListOptions,
   AiPathRunRepository,
   AiPathRunUpdate,
@@ -19,10 +18,11 @@ const prismaAny = prisma as unknown as {
   aiPathRun?: {
     create: (args: unknown) => Promise<unknown>;
     update: (args: unknown) => Promise<unknown>;
-    findUnique: (args: unknown) => Promise<unknown | null>;
+    findUnique: (args: unknown) => Promise<unknown>;
     findMany: (args: unknown) => Promise<unknown[]>;
-    findFirst: (args: unknown) => Promise<unknown | null>;
+    findFirst: (args: unknown) => Promise<unknown>;
     count: (args: unknown) => Promise<number>;
+    updateMany: (args: unknown) => Promise<unknown>;
   };
   aiPathRunNode?: {
     createMany: (args: unknown) => Promise<unknown>;
@@ -35,55 +35,64 @@ const prismaAny = prisma as unknown as {
   };
 };
 
-const mapRun = (run: any): AiPathRunRecord => ({
-  id: run.id,
-  pathId: run.pathId,
-  pathName: run.pathName ?? null,
-  status: run.status,
-  triggerEvent: run.triggerEvent ?? null,
-  triggerNodeId: run.triggerNodeId ?? null,
-  triggerContext: (run.triggerContext as AiPathRunRecord["triggerContext"]) ?? null,
-  graph: (run.graph as AiPathRunRecord["graph"]) ?? null,
-  runtimeState: (run.runtimeState as AiPathRunRecord["runtimeState"]) ?? null,
-  meta: (run.meta as AiPathRunRecord["meta"]) ?? null,
-  entityId: run.entityId ?? null,
-  entityType: run.entityType ?? null,
-  errorMessage: run.errorMessage ?? null,
-  retryCount: run.retryCount ?? 0,
-  maxAttempts: run.maxAttempts ?? 3,
-  nextRetryAt: run.nextRetryAt ?? null,
-  deadLetteredAt: run.deadLetteredAt ?? null,
-  createdAt: run.createdAt,
-  updatedAt: run.updatedAt ?? null,
-  startedAt: run.startedAt ?? null,
-  finishedAt: run.finishedAt ?? null,
-});
+const mapRun = (run: unknown): AiPathRunRecord => {
+  const r = run as Record<string, unknown>;
+  return {
+    id: String(r.id),
+    pathId: String(r.pathId),
+    pathName: (r.pathName as string) ?? null,
+    status: r.status as AiPathRunRecord["status"],
+    triggerEvent: (r.triggerEvent as string) ?? null,
+    triggerNodeId: (r.triggerNodeId as string) ?? null,
+    triggerContext: (r.triggerContext as AiPathRunRecord["triggerContext"]) ?? null,
+    graph: (r.graph as AiPathRunRecord["graph"]) ?? null,
+    runtimeState: (r.runtimeState as AiPathRunRecord["runtimeState"]) ?? null,
+    meta: (r.meta as AiPathRunRecord["meta"]) ?? null,
+    entityId: (r.entityId as string) ?? null,
+    entityType: (r.entityType as string) ?? null,
+    errorMessage: (r.errorMessage as string) ?? null,
+    retryCount: (r.retryCount as number) ?? 0,
+    maxAttempts: (r.maxAttempts as number) ?? 3,
+    nextRetryAt: (r.nextRetryAt as Date) ?? null,
+    deadLetteredAt: (r.deadLetteredAt as Date) ?? null,
+    createdAt: r.createdAt as Date,
+    updatedAt: (r.updatedAt as Date) ?? null,
+    startedAt: (r.startedAt as Date) ?? null,
+    finishedAt: (r.finishedAt as Date) ?? null,
+  };
+};
 
-const mapNode = (node: any): AiPathRunNodeRecord => ({
-  id: node.id,
-  runId: node.runId,
-  nodeId: node.nodeId,
-  nodeType: node.nodeType,
-  nodeTitle: node.nodeTitle ?? null,
-  status: node.status,
-  attempt: node.attempt ?? 0,
-  inputs: (node.inputs as AiPathRunNodeRecord["inputs"]) ?? null,
-  outputs: (node.outputs as AiPathRunNodeRecord["outputs"]) ?? null,
-  errorMessage: node.errorMessage ?? null,
-  createdAt: node.createdAt,
-  updatedAt: node.updatedAt ?? null,
-  startedAt: node.startedAt ?? null,
-  finishedAt: node.finishedAt ?? null,
-});
+const mapNode = (node: unknown): AiPathRunNodeRecord => {
+  const n = node as Record<string, unknown>;
+  return {
+    id: String(n.id),
+    runId: String(n.runId),
+    nodeId: String(n.nodeId),
+    nodeType: String(n.nodeType),
+    nodeTitle: (n.nodeTitle as string) ?? null,
+    status: n.status as AiPathRunNodeRecord["status"],
+    attempt: (n.attempt as number) ?? 0,
+    inputs: (n.inputs as AiPathRunNodeRecord["inputs"]) ?? null,
+    outputs: (n.outputs as AiPathRunNodeRecord["outputs"]) ?? null,
+    errorMessage: (n.errorMessage as string) ?? null,
+    createdAt: n.createdAt as Date,
+    updatedAt: (n.updatedAt as Date) ?? null,
+    startedAt: (n.startedAt as Date) ?? null,
+    finishedAt: (n.finishedAt as Date) ?? null,
+  };
+};
 
-const mapEvent = (event: any): AiPathRunEventRecord => ({
-  id: event.id,
-  runId: event.runId,
-  level: event.level,
-  message: event.message,
-  metadata: (event.metadata as AiPathRunEventRecord["metadata"]) ?? null,
-  createdAt: event.createdAt,
-});
+const mapEvent = (event: unknown): AiPathRunEventRecord => {
+  const e = event as Record<string, unknown>;
+  return {
+    id: String(e.id),
+    runId: String(e.runId),
+    level: e.level as AiPathRunEventRecord["level"],
+    message: String(e.message),
+    metadata: (e.metadata as AiPathRunEventRecord["metadata"]) ?? null,
+    createdAt: e.createdAt as Date,
+  };
+};
 
 const ensureModels = () => {
   if (!prismaAny.aiPathRun || !prismaAny.aiPathRunNode || !prismaAny.aiPathRunEvent) {
@@ -153,13 +162,13 @@ export const prismaPathRunRepository: AiPathRunRepository = {
   async claimNextQueuedRun() {
     ensureModels();
     const now = new Date();
-    const run = await prismaAny.aiPathRun!.findFirst({
+    const run = (await prismaAny.aiPathRun!.findFirst({
       where: {
         status: "queued",
         OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
       },
       orderBy: { createdAt: "asc" },
-    });
+    })) as Record<string, unknown> | null;
     if (!run) return null;
     const updated = await prismaAny.aiPathRun!.update({
       where: { id: run.id },

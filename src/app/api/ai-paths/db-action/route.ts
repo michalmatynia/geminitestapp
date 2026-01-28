@@ -212,7 +212,7 @@ async function POST_handler(req: Request) {
       if (!pipeline || pipeline.length === 0) {
         throw badRequestError("Aggregation pipeline is required");
       }
-      const items = await collectionRef.aggregate(pipeline).toArray();
+      const items = await collectionRef.aggregate(pipeline as Document[]).toArray();
       return NextResponse.json({ items, count: items.length });
     }
 
@@ -250,7 +250,7 @@ async function POST_handler(req: Request) {
       if (!replacement) {
         throw badRequestError("Replacement document is required");
       }
-      const result = await collectionRef.replaceOne(normalizedFilter, replacement, { upsert });
+      const result = await collectionRef.replaceOne(normalizedFilter, replacement, { upsert: !!upsert });
       return NextResponse.json({
         matchedCount: result.matchedCount,
         modifiedCount: result.modifiedCount,
@@ -266,7 +266,7 @@ async function POST_handler(req: Request) {
       const result = await collectionRef.findOneAndUpdate(
         normalizedFilter,
         updateDoc as Record<string, unknown> | Record<string, unknown>[],
-        { returnDocument, upsert }
+        { returnDocument, upsert: !!upsert, includeResultMetadata: true }
       );
       return NextResponse.json({
         value: result.value ?? null,
@@ -284,12 +284,12 @@ async function POST_handler(req: Request) {
           ? await collectionRef.updateOne(
               normalizedFilter,
               updateDoc as Record<string, unknown> | Record<string, unknown>[],
-              { upsert }
+              { upsert: !!upsert }
             )
           : await collectionRef.updateMany(
               normalizedFilter,
               updateDoc as Record<string, unknown> | Record<string, unknown>[],
-              { upsert }
+              { upsert: !!upsert }
             );
       return NextResponse.json({
         matchedCount: result.matchedCount,
@@ -307,10 +307,10 @@ async function POST_handler(req: Request) {
     }
 
     if (action === "findOneAndDelete") {
-      const result = await collectionRef.findOneAndDelete(normalizedFilter);
+      const result = await collectionRef.findOneAndDelete(normalizedFilter, { includeResultMetadata: true });
       return NextResponse.json({
-        value: (result as { value?: unknown }).value ?? null,
-        ok: (result as { ok?: number }).ok ?? 1,
+        value: result.value ?? null,
+        ok: result.ok ?? 1,
       });
     }
 

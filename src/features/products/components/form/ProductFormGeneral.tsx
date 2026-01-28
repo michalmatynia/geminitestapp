@@ -20,8 +20,11 @@ import type {
   PathConfig,
   PathMeta,
   PathDebugSnapshot,
+  PathDebugEntry,
 } from "@/features/ai-paths";
-import { evaluateGraph } from "@/features/ai-paths";
+import {
+  evaluateGraph,
+} from "@/features/ai-paths";
 import {
   PATH_CONFIG_PREFIX,
   PATH_DEBUG_PREFIX,
@@ -423,7 +426,7 @@ export default function ProductFormGeneral() {
         };
         const debugEntries = nodes
           .filter((node) => node.type === "database")
-          .map((node) => {
+          .map((node): PathDebugEntry | null => {
             const output = runtimeState.outputs[node.id] as
               | { debugPayload?: unknown }
               | undefined;
@@ -435,9 +438,7 @@ export default function ProductFormGeneral() {
               debug: debugPayload,
             };
           })
-          .filter(
-            (entry): entry is PathDebugSnapshot["entries"][number] => Boolean(entry)
-          );
+          .filter((entry): entry is PathDebugEntry => Boolean(entry));
         const debugSnapshot: PathDebugSnapshot | null = debugEntries.length
           ? {
               pathId: updatedConfig.id,

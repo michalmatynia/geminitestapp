@@ -183,6 +183,7 @@ export function ViewerNodeConfigSection({
                           key={`${url}-${index}`}
                           className="overflow-hidden rounded border border-emerald-500/30 bg-black/30"
                         >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={url}
                             alt={`Image ${index + 1}`}

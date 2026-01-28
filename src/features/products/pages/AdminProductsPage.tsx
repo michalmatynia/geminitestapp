@@ -171,7 +171,7 @@ export function AdminProductsPage() {
     if (!languageOptions.length) return;
     const allowed = new Set(languageOptions.map((option) => option.value));
     if (allowed.has(preferences.nameLocale)) return;
-    const nextLocale = allowed.has(fallbackNameLocale)
+    const nextLocale = (fallbackNameLocale && allowed.has(fallbackNameLocale))
       ? fallbackNameLocale
       : languageOptions[0]!.value;
     updateNameLocale(nextLocale);

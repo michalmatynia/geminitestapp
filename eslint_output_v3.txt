@@ -1,0 +1,128 @@
+
+> libapp2@0.1.0 lint
+> eslint .
+
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/databases.test.ts
+  61:49  error  Unsafe argument of type `any` assigned to a parameter of type `Dirent<NonSharedBuffer>[]`  @typescript-eslint/no-unsafe-argument
+  64:12  error  Unexpected any. Specify a different type                                                   @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/scripts/cleanup-db-provider-settings.ts
+  38:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/scripts/create-superuser.ts
+  92:15  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  92:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/languages/[id]/route.ts
+  215:20  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  215:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai-paths/components/AiPathsSettings.tsx
+    63:3   error  'getValueAtMappingPath' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+    64:3   error  'parseJsonSafe' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+    65:3   error  'renderTemplate' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+    81:3   error  'toJsonSafe' is defined but never used. Allowed unused vars must match /^_/u                  @typescript-eslint/no-unused-vars
+    84:3   error  'buildPersistedRuntimeState' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+    86:3   error  'sanitizePathConfigs' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+    88:3   error  'buildDbQueryPayload' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+   680:30  error  Unexpected any. Specify a different type                                                      @typescript-eslint/no-explicit-any
+   681:13  error  Unsafe assignment of an `any` value                                                           @typescript-eslint/no-unsafe-assignment
+   681:26  error  Unsafe member access .state on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+   682:26  error  Unsafe member access .ok on an `any` value                                                    @typescript-eslint/no-unsafe-member-access
+   683:26  error  Unsafe member access .data on an `any` value                                                  @typescript-eslint/no-unsafe-member-access
+  1647:13  error  Unsafe assignment of an `any` value                                                           @typescript-eslint/no-unsafe-assignment
+  1647:71  error  Unexpected any. Specify a different type                                                      @typescript-eslint/no-explicit-any
+  1649:13  error  Unsafe assignment of an `any` value                                                           @typescript-eslint/no-unsafe-assignment
+  1649:47  error  Unexpected any. Specify a different type                                                      @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai-paths/components/node-config/DatabaseNodeConfigSection.tsx
+  100:3  error  'dbNodePresets' is defined but never used. Allowed unused args must match /^_/u      @typescript-eslint/no-unused-vars
+  101:3  error  'setDbNodePresets' is defined but never used. Allowed unused args must match /^_/u   @typescript-eslint/no-unused-vars
+  102:3  error  'saveDbNodePresets' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai-paths/components/node-config/DbSchemaNodeConfigSection.tsx
+  344:113  error  Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  344:118  error  Unsafe member access .toString on an `any` value                                                                @typescript-eslint/no-unsafe-member-access
+  345:74   error  'rawId' will use Object's default stringification format ('[object Object]') when stringified                   @typescript-eslint/no-base-to-string
+  353:84   error  'displayNameValue ?? ""' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai-paths/components/node-config/ParserNodeConfigSection.tsx
+  49:3  error  'updateSelectedNodeConfig' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai-paths/lib/core/runtime/handlers/integration.ts
+   500:21  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+   841:29  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+  1167:59  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai-paths/pages/AdminAiPathsDeadLetterPage.tsx
+  218:10  error  Unknown property '  return ' found  react/no-unknown-property
+  223:16  error  Unknown property 'ns={
+    ' found  react/no-unknown-property
+  243:14  error  Unknown property ' p-6">
+  ' found  react/no-unknown-property
+  244:16  error  Unknown property '00">
+    ' found  react/no-unknown-property
+  248:16  error  Unknown property 'div>
+    ' found  react/no-unknown-property
+  284:14  error  Unknown property '/div>
+
+  ' found  react/no-unknown-property
+  314:26  error  Unknown property '         ' found  react/no-unknown-property
+  316:28  error  Unknown property '         ' found  react/no-unknown-property
+  323:26  error  Unknown property '         ' found  react/no-unknown-property
+  339:26  error  Unknown property '         ' found  react/no-unknown-property
+  369:14  error  Unknown property '/div>
+
+  ' found  react/no-unknown-property
+  371:16  error  Unknown property 'pan>
+    ' found  react/no-unknown-property
+  409:18  error  Unknown property ' (
+      ' found  react/no-unknown-property
+  411:18  error  Unknown property ' (
+      ' found  react/no-unknown-property
+  415:18  error  Unknown property ' (
+      ' found  react/no-unknown-property
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai-paths/services/path-run-repository/prisma-path-run-repository.ts
+  174:16  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/hooks/useIntegrationMutations.ts
+   81:7   error  Unsafe return of a value of type `any`  @typescript-eslint/no-unsafe-return
+  104:26  error  Expected an error object to be thrown   @typescript-eslint/only-throw-error
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/pages/CategoryMapperPage.tsx
+  45:30  error  Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output.
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/pages/CategoryMapperPage.tsx:45:30
+  43 |   }, [integrations, selectedConnectionIdOverride]);
+  44 |
+> 45 |   const selectedConnection = useMemo(() => {
+     |                              ^^^^^^^^^^^^^^^
+> 46 |     if (!selectedConnectionId) return null;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 47 |     for (const integration of integrations) {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 48 |       const connection = integration.connections.find((c) => c.id === selectedConnectionId);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 49 |       if (connection) {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 50 |         return { ...connection, integration };
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 51 |       }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 52 |     }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 53 |     return null;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 54 |   }, [integrations, selectedConnectionId]);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Could not preserve existing memoization
+  55 |
+  56 |   const isBaseConnection = useMemo(() => {
+  57 |     if (!selectedConnection) return false;  react-hooks/preserve-manual-memoization
+
+✖ 53 problems (53 errors, 0 warnings)
+  3 errors and 0 warnings potentially fixable with the `--fix` option.
+

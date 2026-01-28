@@ -70,12 +70,12 @@ export function Admin3DAssetsPage() {
   const categories = categoriesQuery.data ?? [];
   const allTags = tagsQuery.data ?? [];
 
-  const handleUpload = (asset: Asset3DRecord) => {
+  const handleUpload = (_asset: Asset3DRecord) => {
     setShowUploader(false);
     void queryClient.invalidateQueries({ queryKey: ["assets3d"] });
   };
 
-  const handleEdit = (updated: Asset3DRecord) => {
+  const handleEdit = (_updated: Asset3DRecord) => {
     void queryClient.invalidateQueries({ queryKey: ["assets3d"] });
   };
 

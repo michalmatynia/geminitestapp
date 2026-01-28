@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
 
-import { apiHandler } from "@/shared/lib/api/api-handler";
+import { apiHandlerWithParams, ApiHandlerContext } from "@/shared/lib/api/api-handler";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 import { getPathRunRepository } from "@/features/ai-paths/services/path-run-repository";
 
 async function GET_handler(
   _req: Request,
-  context: { params: { runId: string } }
+  _ctx: ApiHandlerContext,
+  params: { runId: string }
 ) {
   try {
-    const runId = context.params.runId;
+    const runId = params.runId;
     const repo = await getPathRunRepository();
     const run = await repo.findRunById(runId);
     if (!run) {
@@ -28,4 +29,4 @@ async function GET_handler(
   }
 }
 
-export const GET = apiHandler(GET_handler, { source: "ai-paths.runs.detail" });
+export const GET = apiHandlerWithParams(GET_handler, { source: "ai-paths.runs.detail" });

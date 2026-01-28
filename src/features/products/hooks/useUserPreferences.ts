@@ -113,7 +113,7 @@ export function useUserPreferences() {
 
       return { previousPreferences };
     },
-    onError: (error, { key }, context) => {
+    onError: (error, { key }) => {
       console.warn(`Preference update failed for ${key}.`, error);
       // Keep the optimistic update - don't rollback so UI stays responsive
     },
@@ -144,7 +144,7 @@ export function useUserPreferences() {
   return {
     preferences,
     loading: preferencesQuery.isLoading,
-    error: preferencesQuery.error ? (preferencesQuery.error as Error).message : null,
+    error: preferencesQuery.error ? preferencesQuery.error.message : null,
     setNameLocale,
     setCatalogFilter,
     setCurrencyCode,

@@ -59,7 +59,7 @@ export type EntityUpdatePayload = {
 };
 
 export type SchemaResponse = {
-  provider: string;
+  provider: "prisma" | "mongodb";
   collections: Array<{
     name: string;
     fields?: Array<{ name: string; type: string }>;
@@ -307,8 +307,8 @@ export const aiJobsApi = {
       ok: true,
       data: {
         status: job?.status ?? "",
-        result: job?.result,
-        error: job?.errorMessage ?? undefined,
+        ...(job?.result !== undefined ? { result: job.result } : {}),
+        ...(job?.errorMessage ? { error: job.errorMessage } : {}),
       },
     };
   },
@@ -375,7 +375,7 @@ export const httpApi = {
     try {
       const fetchInit: RequestInit = {
         method: options.method,
-        headers: options.headers,
+        ...(options.headers ? { headers: options.headers } : {}),
       };
       if (options.body !== undefined) {
         fetchInit.body = options.body;

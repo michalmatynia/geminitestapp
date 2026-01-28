@@ -67,7 +67,7 @@ export const handleParser: NodeHandler = ({
     contextEntity ??
     (resolvedEntity ?? undefined) ??
     (fallbackEntityId ? buildFallbackEntity(fallbackEntityId) : undefined)
-  ) as Record<string, any> | undefined;
+  ) as Record<string, unknown> | undefined;
 
   if (!source) {
     return {};
@@ -86,22 +86,22 @@ export const handleParser: NodeHandler = ({
     const normalized = key.trim().toLowerCase();
     if (normalized === "title" || normalized === "name") {
       return (
-        (source.title) ??
-        (source.name as unknown) ??
-        (source.name_en as unknown) ??
-        (source.name_pl as unknown) ??
-        (source.label as unknown) ??
-        (source.productName as unknown)
+        source["title"] ??
+        source["name"] ??
+        source["name_en"] ??
+        source["name_pl"] ??
+        source["label"] ??
+        source["productName"]
       );
     }
     if (normalized === "images" || normalized === "imageurls") {
       return (
-        (source.images) ??
-        (source.imageLinks as unknown) ??
-        (source.media as unknown) ??
-        (source.gallery as unknown) ??
-        (source.imageFiles as unknown) ??
-        (source.photos as unknown)
+        source["images"] ??
+        source["imageLinks"] ??
+        source["media"] ??
+        source["gallery"] ??
+        source["imageFiles"] ??
+        source["photos"]
       );
     }
     if (
@@ -110,18 +110,18 @@ export const handleParser: NodeHandler = ({
       normalized === "id"
     ) {
       return (
-        (source.id) ??
-        (source._id as unknown) ??
-        (source.productId as unknown) ??
-        (source.entityId as unknown)
+        source["id"] ??
+        source["_id"] ??
+        source["productId"] ??
+        source["entityId"]
       );
     }
     if (normalized === "content_en" || normalized === "description_en") {
       return (
-        (source.content_en) ??
-        (source.description_en as unknown) ??
-        (source.description as unknown) ??
-        (source.content as unknown)
+        source["content_en"] ??
+        source["description_en"] ??
+        source["description"] ??
+        source["content"]
       );
     }
     return undefined;
@@ -134,7 +134,7 @@ export const handleParser: NodeHandler = ({
     const mapping = mappings[output]?.trim() ?? "";
     const value = mapping
       ? getValueAtMappingPath(source, mapping)
-      : (source as Record<string, unknown>)[key];
+      : source[key];
     const resolved =
       isEmptyValue(value) ? fallbackForKey(key) ?? value : value;
     if (resolved !== undefined) {

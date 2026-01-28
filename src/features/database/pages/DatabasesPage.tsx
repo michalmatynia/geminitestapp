@@ -293,7 +293,7 @@ export default function DatabasesPage() {
           columns={getDatabaseColumns({
             onPreview: handlePreview,
             onRestoreRequest: handleRestoreRequest,
-            onDeleteRequest: handleDeleteRequest,
+            onDeleteRequest: (name) => { void handleDeleteRequest(name); },
           })}
           data={data}
           initialSorting={[{ id: "lastModifiedAt", desc: true }]}

@@ -2,7 +2,6 @@ import { DELAY_OUTPUT_PORTS, ROUTER_OUTPUT_PORTS } from "../../constants";
 import {
   coerceInput,
   coerceInputArray,
-  createViewerOutputs,
   safeStringify,
 } from "../../utils";
 import type { NodeHandler } from "@/shared/types/ai-paths-runtime";
@@ -220,7 +219,7 @@ export const handleDelay: NodeHandler = async ({
   return delayed;
 };
 
-export const handleViewer: NodeHandler = ({ node, nodeInputs, prevOutputs }) => {
+export const handleViewer: NodeHandler = ({ node, nodeInputs: _nodeInputs, prevOutputs }) => {
   // Viewer mainly displays data in UI, runtime behavior is pass-through or sync
   // Assuming it might pass through inputs to outputs if connected, but standard viewer has no outputs.
   // We check if it has outputs configured (custom viewer?)

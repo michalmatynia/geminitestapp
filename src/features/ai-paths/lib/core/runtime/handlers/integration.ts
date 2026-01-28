@@ -19,7 +19,6 @@ import {
   resolveEntityIdFromInputs,
 } from "../utils";
 import type { NodeHandler } from "@/shared/types/ai-paths-runtime";
-import type { DbQueryConfig } from "@/shared/types/ai-paths";
 import { dbApi, entityApi } from "../../../api";
 
 export const handleTrigger: NodeHandler = ({
@@ -28,7 +27,7 @@ export const handleTrigger: NodeHandler = ({
   triggerNodeId,
   triggerEvent,
   simulationEntityType,
-  simulationEntityId,
+  simulationEntityId: _simulationEntityId,
   triggerContext,
   activePathId,
   resolvedEntity,
@@ -498,7 +497,7 @@ export const handleDatabase: NodeHandler = async ({
     if (bundleValue && typeof bundleValue === "object") {
       applyFromObject(bundleValue as Record<string, unknown>);
     }
-    pickFromContext(triggerContext as Record<string, unknown> | null | undefined);
+    pickFromContext(triggerContext);
     if (next.entityId === undefined && fallbackEntityId) {
       next.entityId = fallbackEntityId;
     }
@@ -685,8 +684,8 @@ export const handleDatabase: NodeHandler = async ({
       const insertResult = await dbApi.action({
         action,
         collection,
-        document: action === "insertOne" ? payloadObject : undefined,
-        documents: action === "insertMany" ? (Array.isArray(payload) ? payload : [payload]) : undefined,
+        ...(action === "insertOne" && payloadObject ? { document: payloadObject } : {}),
+        ...(action === "insertMany" ? { documents: Array.isArray(payload) ? payload : [payload] } : {}),
       });
       executed.updater.add(node.id);
       if (!insertResult.ok) {
@@ -839,7 +838,7 @@ export const handleDatabase: NodeHandler = async ({
         return { result: null, bundle: { error: "Update failed" }, debugPayload, aiPrompt };
       }
       toast("Update completed.", { variant: "success" });
-      const primaryValue = (updates as Record<string, unknown>)[primaryTarget];
+      const primaryValue = updates[primaryTarget];
       return {
         content_en:
           primaryTarget === "content_en"
@@ -1165,7 +1164,7 @@ export const handleDatabase: NodeHandler = async ({
       const queryPayload = buildDbQueryPayload(nodeInputs, queryConfig);
       const query = queryPayload.query ?? {};
       const hasQuery =
-        query && typeof query === "object" && Object.keys(query as Record<string, unknown>).length > 0;
+        query && typeof query === "object" && Object.keys(query).length > 0;
 
       if (hasUpdates && dbConfig.mode === "append" && !executed.updater.has(node.id)) {
         reportAiPathsError(
@@ -1250,7 +1249,7 @@ export const handleDatabase: NodeHandler = async ({
           try {
             const entityUpdateResult = await entityApi.update({
               entityType,
-              entityId: entityId || undefined,
+              ...(entityId ? { entityId } : {}),
               updates,
               mode: dbConfig.mode ?? "replace",
             });
@@ -1499,7 +1498,7 @@ type FieldInfo = {
 
 type CollectionSchema = {
   name: string;
-  fields: FieldInfo[];
+  fields?: FieldInfo[];
   relations?: string[];
 };
 
@@ -1519,7 +1518,7 @@ function formatSchemaAsText(schema: SchemaResponse): string {
   for (const collection of schema.collections) {
     lines.push(`Collection: ${collection.name}`);
     lines.push("Fields:");
-    for (const field of collection.fields) {
+    for (const field of (collection.fields ?? [])) {
       const markers: string[] = [];
       if (field.isId) markers.push("ID");
       if (field.isRequired) markers.push("required");
@@ -1600,7 +1599,7 @@ export const handleDbSchema: NodeHandler = async ({
     schema.collections = schema.collections.map((c) => {
       const result: CollectionSchema = {
         name: c.name,
-        fields: config.includeFields ? c.fields : [],
+        fields: config.includeFields ? (c.fields ?? []) : [],
       };
       if (config.includeRelations && c.relations) {
         result.relations = c.relations;

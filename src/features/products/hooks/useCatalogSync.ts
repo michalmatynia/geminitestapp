@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { logger } from "@/shared/utils/logger";
 import type { Catalog } from "@/features/products/types";
@@ -59,7 +59,6 @@ async function fetchCurrencies(): Promise<CurrencyRecord[]> {
 }
 
 export function useCatalogSync(catalogFilter: string) {
-  const [currencyCode, setCurrencyCode] = useState<string>("");
   const catalogFilterInitialized = useRef(false);
 
   // Parallel queries for all data sources
@@ -102,9 +101,9 @@ export function useCatalogSync(catalogFilter: string) {
   }
 
   // Extract data with defaults
-  const rawCatalogs = catalogsQuery.data ?? [];
-  const priceGroups = priceGroupsQuery.data ?? [];
-  const languages = languagesQuery.data ?? [];
+  const rawCatalogs = useMemo(() => catalogsQuery.data ?? [], [catalogsQuery.data]);
+  const priceGroups = useMemo(() => priceGroupsQuery.data ?? [], [priceGroupsQuery.data]);
+  const languages = useMemo(() => languagesQuery.data ?? [], [languagesQuery.data]);
   const currencyPriceGroups = priceGroups;
 
   // Compute allowed currency codes
@@ -142,7 +141,7 @@ export function useCatalogSync(catalogFilter: string) {
       new Set(
         candidateGroups
           .map((group) => group.currency?.code)
-          .filter((code): code is string => Boolean(code))
+          .filter((code): code is NonNullable<typeof code> => Boolean(code))
       )
     ).map((code) => code.trim().toUpperCase());
 
@@ -167,9 +166,31 @@ export function useCatalogSync(catalogFilter: string) {
   // Sync Currency Options based on Catalog
   const currencyOptions = codes;
 
-  useEffect(() => {
-    setCurrencyCode((prev) => (prev && codes.includes(prev) ? prev : fallbackCode));
-  }, [codes, fallbackCode]);
+  // Derived state for currencyCode to avoid set-state-in-effect
+  // If the current user selection is valid for the current catalog, keep it.
+  // Otherwise, fallback to the catalog's default.
+  // We use a piece of state to track the user's *explicit* selection if any.
+  // Note: We use 'currencyCode' state here to track the *effective* code if possible,
+  // but to match the "derived" pattern we need to know if the state value is "stale".
+  // Actually, the simplest way is to just let the user set a preference, and validate it on read.
+  const [userCurrencyCode, setUserCurrencyCode] = useState<string | null>(null);
+
+  const currencyCode = userCurrencyCode && codes.includes(userCurrencyCode)
+    ? userCurrencyCode
+    : fallbackCode;
+
+  const setCurrencyCode = (action: string | ((prev: string) => string)) => {
+    // Wrap the setter to handle functional updates correctly with the derived value
+    if (typeof action === "function") {
+      setUserCurrencyCode((_prev) => {
+        // We use the *derived* currencyCode as the base for the update
+        const newVal = action(currencyCode);
+        return newVal;
+      });
+    } else {
+      setUserCurrencyCode(action);
+    }
+  };
 
   const { languageOptions, fallbackNameLocale } = useMemo(() => {
     const options: LanguageOption[] = [];
@@ -204,7 +225,7 @@ export function useCatalogSync(catalogFilter: string) {
     const defaultOption = defaultLang
       ? supportedLanguageMap[defaultLang.code?.trim().toUpperCase() || ""]
       : undefined;
-    const fallbackNameLocale = defaultOption?.value ?? options[0]!.value;
+    const fallbackNameLocale = defaultOption?.value ?? options[0]?.value;
 
     return { languageOptions: options, fallbackNameLocale };
   }, [catalogFilter, catalogs, languages]);
@@ -212,7 +233,7 @@ export function useCatalogSync(catalogFilter: string) {
   return {
     catalogs,
     catalogsLoading: catalogsQuery.isLoading,
-    catalogsError: catalogsQuery.error ? (catalogsQuery.error as Error).message : null,
+    catalogsError: catalogsQuery.error ? catalogsQuery.error.message : null,
     currencyCode,
     setCurrencyCode,
     currencyOptions,

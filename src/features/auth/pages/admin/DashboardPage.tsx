@@ -34,7 +34,7 @@ export default function AuthDashboardPage() {
     toast("Failed to load auth settings", { variant: "error" });
   }, [settingsQuery.error, toast]);
 
-  const users = (authUsersQuery.data?.users ?? []);
+  const users = useMemo(() => (authUsersQuery.data?.users ?? []), [authUsersQuery.data?.users]);
   const provider = authUsersQuery.data?.provider ?? "prisma";
   const roles = useMemo(() => {
     const storedRoles = parseJsonSetting<AuthRole[]>(

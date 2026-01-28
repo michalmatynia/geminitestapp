@@ -14,8 +14,8 @@ export function useCreateIntegration() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        const error = await res.json().catch(() => null);
-        throw new Error(error?.error || "Failed to create integration");
+        const error = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+        throw new Error((error?.error as string) || "Failed to create integration");
       }
       return (await res.json()) as Integration;
     },
@@ -36,7 +36,7 @@ export function useUpsertConnection() {
     }: { 
       integrationId: string; 
       connectionId?: string | null; 
-      payload: any 
+      payload: Record<string, unknown> 
     }) => {
       const url = connectionId
         ? `/api/integrations/connections/${connectionId}`
@@ -49,8 +49,8 @@ export function useUpsertConnection() {
       });
       
       if (!res.ok) {
-        const error = await res.json().catch(() => null);
-        throw new Error(error?.error || "Failed to save connection");
+        const error = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+        throw new Error((error?.error as string) || "Failed to save connection");
       }
       return (await res.json()) as IntegrationConnection;
     },
@@ -65,7 +65,7 @@ export function useDeleteConnection() {
 
   return useMutation({
     mutationFn: async ({ 
-      integrationId, 
+      integrationId: _integrationId, 
       connectionId 
     }: { 
       integrationId: string; 
@@ -75,10 +75,10 @@ export function useDeleteConnection() {
         method: "DELETE",
       });
       if (!res.ok) {
-        const error = await res.json().catch(() => null);
-        throw new Error(error?.error || "Failed to delete connection");
+        const error = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+        throw new Error((error?.error as string) || "Failed to delete connection");
       }
-      return (await res.json());
+      return (await res.json()) as Record<string, unknown>;
     },
     onSuccess: (data, variables) => {
       void queryClient.invalidateQueries({ queryKey: ["integration-connections", variables.integrationId] });
@@ -100,8 +100,13 @@ export function useTestConnection() {
       const res = await fetch(`/api/integrations/${integrationId}/connections/${connectionId}/${type}`, {
         method: "POST",
       });
-      const data = await res.json();
-      if (!res.ok) throw { ...data, status: res.status, statusText: res.statusText };
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) {
+        const message = (data.error as string) || (data.message as string) || res.statusText || "Connection test failed";
+        const error = new Error(message);
+        Object.assign(error, { data, status: res.status });
+        throw error;
+      }
       return data;
     },
   });

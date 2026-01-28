@@ -694,7 +694,7 @@ export function DatabaseConstructorTab({
                     onClick={() => {
                       updateQueryConfig({
                         mode: "custom",
-                        sortTemplate: preset.value,
+                        sort: preset.value,
                       });
                       setSnippetsModalOpen(false);
                       toast(`Applied sort: ${preset.label}`, { variant: "success" });
@@ -719,7 +719,7 @@ export function DatabaseConstructorTab({
                     onClick={() => {
                       updateQueryConfig({
                         mode: "custom",
-                        projectionTemplate: preset.value,
+                        projection: preset.value,
                       });
                       setSnippetsModalOpen(false);
                       toast(`Applied projection: ${preset.label}`, { variant: "success" });
@@ -1141,8 +1141,7 @@ export function DatabaseConstructorTab({
                     onValueChange={(value) =>
                       updateMapping(index, {
                         sourcePort: value,
-                        sourcePath:
-                          value === "bundle" ? (mapping.sourcePath ?? "") : mapping.sourcePath,
+                        sourcePath: mapping.sourcePath ?? "",
                       })
                     }
                   >

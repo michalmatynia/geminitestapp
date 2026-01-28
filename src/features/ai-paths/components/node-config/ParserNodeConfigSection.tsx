@@ -46,7 +46,7 @@ export function ParserNodeConfigSection({
   setParserSamples,
   parserSampleLoading,
   updateSelectedNode,
-  updateSelectedNodeConfig,
+  updateSelectedNodeConfig: _updateSelectedNodeConfig,
   handleFetchParserSample,
   toast,
 }: ParserNodeConfigSectionProps) {
@@ -67,7 +67,12 @@ export function ParserNodeConfigSection({
         parserDraftTimerRef.current = null;
       }
     };
-  }, [selectedNode.id, selectedNode.type]);
+  }, [
+    selectedNode.id,
+    selectedNode.type,
+    selectedNode.config?.parser?.mappings,
+    selectedNode.outputs,
+  ]);
 
   if (selectedNode.type !== "parser") return null;
 

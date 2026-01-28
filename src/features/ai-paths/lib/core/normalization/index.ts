@@ -23,7 +23,7 @@ import {
   TRIGGER_OUTPUT_PORTS,
   VIEWER_INPUT_PORTS,
 } from "../constants";
-import type { AiNode, NodeConfig, NodeType } from "@/shared/types/ai-paths";
+import type { AiNode, NodeConfig, NodeType, DatabaseConfig } from "@/shared/types/ai-paths";
 import {
   createParserMappings,
   createViewerOutputs,
@@ -341,7 +341,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
         ...defaultQuery,
         ...(node.config?.database?.query ?? node.config?.dbQuery ?? {}),
       };
-      const databaseConfig = node.config?.database ?? {};
+      const databaseConfig: DatabaseConfig = node.config?.database ?? { operation: "query" };
       const mappings = 
         databaseConfig.mappings && databaseConfig.mappings.length > 0
           ? databaseConfig.mappings
@@ -369,8 +369,8 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
             mode: databaseConfig.mode ?? "replace",
             updateStrategy: databaseConfig.updateStrategy ?? "one",
             useMongoActions: inferredUseMongoActions,
-            actionCategory: databaseConfig.actionCategory,
-            action: databaseConfig.action,
+            ...(databaseConfig.actionCategory ? { actionCategory: databaseConfig.actionCategory } : {}),
+            ...(databaseConfig.action ? { action: databaseConfig.action } : {}),
             distinctField: databaseConfig.distinctField ?? "",
             updateTemplate: databaseConfig.updateTemplate ?? "",
             mappings,
@@ -378,7 +378,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
             writeSource: databaseConfig.writeSource ?? "bundle",
             writeSourcePath: databaseConfig.writeSourcePath ?? "",
             dryRun: databaseConfig.dryRun ?? false,
-            presetId: databaseConfig.presetId,
+            ...(databaseConfig.presetId ? { presetId: databaseConfig.presetId } : {}),
             skipEmpty: databaseConfig.skipEmpty ?? false,
             trimStrings: databaseConfig.trimStrings ?? false,
             aiPrompt: databaseConfig.aiPrompt ?? "",
@@ -417,7 +417,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
         projection: node.config?.dbQuery?.projection ?? "",
         single: node.config?.dbQuery?.single ?? false,
       };
-      const legacyDbConfig = node.config?.database ?? {};
+      const legacyDbConfig: DatabaseConfig = node.config?.database ?? { operation: "query" };
       const inferredUseMongoActions =
         legacyDbConfig.useMongoActions ?? Boolean(legacyDbConfig.actionCategory || legacyDbConfig.action);
       return {
@@ -434,8 +434,8 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
             mode: legacyDbConfig.mode ?? "replace",
             updateStrategy: legacyDbConfig.updateStrategy ?? "one",
             useMongoActions: inferredUseMongoActions,
-            actionCategory: legacyDbConfig.actionCategory,
-            action: legacyDbConfig.action,
+            ...(legacyDbConfig.actionCategory ? { actionCategory: legacyDbConfig.actionCategory } : {}),
+            ...(legacyDbConfig.action ? { action: legacyDbConfig.action } : {}),
             distinctField: legacyDbConfig.distinctField ?? "",
             updateTemplate: legacyDbConfig.updateTemplate ?? "",
             mappings: legacyDbConfig.mappings ?? [],
@@ -443,7 +443,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
             writeSource: legacyDbConfig.writeSource ?? "bundle",
             writeSourcePath: legacyDbConfig.writeSourcePath ?? "",
             dryRun: legacyDbConfig.dryRun ?? false,
-            presetId: legacyDbConfig.presetId,
+            ...(legacyDbConfig.presetId ? { presetId: legacyDbConfig.presetId } : {}),
             skipEmpty: legacyDbConfig.skipEmpty ?? false,
             trimStrings: legacyDbConfig.trimStrings ?? false,
             aiPrompt: legacyDbConfig.aiPrompt ?? "",
@@ -500,7 +500,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
       };
     }
     if (nodeType === "updater") {
-      const updaterConfig =
+      const updaterConfig: LegacyUpdaterConfig =
         (node.config as { updater?: LegacyUpdaterConfig } | undefined)?.updater ?? {};
       const legacyTarget = updaterConfig.targetField ?? node.outputs[0] ?? "content_en";
       const legacyMappings =

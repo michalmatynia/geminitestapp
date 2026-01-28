@@ -10,7 +10,6 @@ import type {
 import type {
   AiPathRunCreateInput,
   AiPathRunEventCreateInput,
-  AiPathRunNodeUpdate,
   AiPathRunListOptions,
   AiPathRunRepository,
   AiPathRunUpdate,

@@ -57,7 +57,7 @@ export function DbSchemaNodeConfigSection({
       const result = await dbApi.browse(browseCollection, {
         limit: browseLimit,
         skip: browseSkip,
-        query: browseQuery.trim() || undefined,
+        ...(browseQuery.trim() ? { query: browseQuery.trim() } : {}),
       });
       if (!result.ok) {
         throw new Error(result.error || "Failed to browse collection.");
@@ -338,10 +338,35 @@ export function DbSchemaNodeConfigSection({
                   ) : browseDocuments.length > 0 ? (
                     <div className="max-h-[300px] space-y-2 overflow-y-auto">
                                                           {browseDocuments.map((doc, idx) => {
-                                                            const docId = String(doc._id?.toString?.() ?? doc._id ?? doc.id?.toString?.() ?? doc.id ?? `doc-${idx}`);
+                                                            const rawId = doc._id ?? doc.id;
+                                                            let docId: string;
+                                                            if (typeof rawId === "string") {
+                                                              docId = rawId;
+                                                            } else if (typeof rawId === "number") {
+                                                              docId = String(rawId);
+                                                            } else if (
+                                                              rawId &&
+                                                              typeof rawId === "object" &&
+                                                              "toString" in rawId &&
+                                                              typeof rawId.toString === "function" &&
+                                                              rawId.toString !== Object.prototype.toString
+                                                            ) {
+                                                              docId = (rawId as { toString(): string }).toString();
+                                                            } else {
+                                                              docId = `doc-${idx}`;
+                                                            }
                                                             const isExpanded = expandedDocId === docId;
                                                             const displayNameValue = doc.name ?? doc.title ?? doc.name_en ?? doc.sku ?? docId;
-                                                            const displayName = typeof displayNameValue === 'object' ? JSON.stringify(displayNameValue) : String(displayNameValue);
+                                                            let displayName: string;
+                                                            if (typeof displayNameValue === "string") {
+                                                              displayName = displayNameValue;
+                                                            } else if (typeof displayNameValue === "number" || typeof displayNameValue === "boolean") {
+                                                              displayName = String(displayNameValue);
+                                                            } else if (typeof displayNameValue === "object" && displayNameValue !== null) {
+                                                              displayName = JSON.stringify(displayNameValue);
+                                                            } else {
+                                                              displayName = "";
+                                                            }
                                                             return (
                                                               <div
                                                                 key={docId}

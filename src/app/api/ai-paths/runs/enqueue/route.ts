@@ -7,6 +7,7 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 import { enqueuePathRun } from "@/features/ai-paths/services/path-run-service";
 import { startAiPathRunQueue } from "@/features/jobs/server";
+import type { AiNode, Edge } from "@/shared/types/ai-paths";
 
 const enqueueSchema = z.object({
   pathId: z.string().trim().min(1),
@@ -37,9 +38,19 @@ async function POST_handler(req: Request) {
     }
 
     const run = await enqueuePathRun({
-      ...rest,
-      nodes: nodes as any,
-      edges: edges as any,
+      pathId: rest.pathId,
+      pathName: rest.pathName ?? null,
+      nodes: nodes as AiNode[],
+      edges: edges as Edge[],
+      ...(rest.triggerEvent ? { triggerEvent: rest.triggerEvent } : {}),
+      ...(rest.triggerNodeId ? { triggerNodeId: rest.triggerNodeId } : {}),
+      triggerContext: rest.triggerContext ?? null,
+      entityId: rest.entityId ?? null,
+      entityType: rest.entityType ?? null,
+      ...(rest.maxAttempts !== undefined ? { maxAttempts: rest.maxAttempts } : {}),
+      ...(rest.backoffMs !== undefined ? { backoffMs: rest.backoffMs } : {}),
+      ...(rest.backoffMaxMs !== undefined ? { backoffMaxMs: rest.backoffMaxMs } : {}),
+      meta: rest.meta ?? null,
     });
     startAiPathRunQueue();
     return NextResponse.json({ run });

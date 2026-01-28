@@ -37,10 +37,11 @@ const toJsonSafe = (value: unknown): unknown => {
     if (val instanceof Set) return Array.from(val.values()) as unknown[];
     if (val instanceof Map) return Object.fromEntries(val.entries()) as Record<string, unknown>;
     if (typeof val === "function" || typeof val === "symbol") return undefined;
-    if (val && typeof val === "object") {
-      if (seen.has(val as object)) return undefined;
-      seen.add(val as object);
-    }
+          if (val && typeof val === "object") {
+            if (seen.has(val)) return undefined;
+            seen.add(val);
+          }
+    
     return val;
   };
   try {
@@ -215,9 +216,9 @@ export const executePathRun = async (run: AiPathRunRecord) => {
       nodes,
       edges,
       activePathId: run.pathId,
-      triggerNodeId,
-      triggerEvent: run.triggerEvent ?? undefined,
-      triggerContext: run.triggerContext ?? undefined,
+      ...(triggerNodeId ? { triggerNodeId } : {}),
+      ...(run.triggerEvent ? { triggerEvent: run.triggerEvent } : {}),
+      ...(run.triggerContext ? { triggerContext: run.triggerContext } : {}),
       seedOutputs: runtimeState.outputs,
       skipNodeIds: skipNodes,
       fetchEntityByType,

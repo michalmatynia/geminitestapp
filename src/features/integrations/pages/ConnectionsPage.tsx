@@ -353,7 +353,7 @@ function IntegrationsContent() {
     try {
       await upsertConnectionMutation.mutateAsync({
         integrationId: activeIntegration.id,
-        connectionId: editingConnectionId ?? undefined,
+        ...(editingConnectionId ? { connectionId: editingConnectionId } : {}),
         payload,
       });
       setConnectionForm({ name: "", username: "", password: "" });

@@ -97,9 +97,9 @@ export function DatabaseNodeConfigSection({
   dbQueryPresets,
   setDbQueryPresets,
   saveDbQueryPresets,
-  _dbNodePresets,
-  _setDbNodePresets,
-  _saveDbNodePresets,
+  dbNodePresets: _dbNodePresets,
+  setDbNodePresets: _setDbNodePresets,
+  saveDbNodePresets: _saveDbNodePresets,
   toast,
 }: DatabaseNodeConfigSectionProps) {
   const [queryValidatorEnabled, setQueryValidatorEnabled] = React.useState(false);
@@ -304,8 +304,8 @@ export function DatabaseNodeConfigSection({
                   mode: persistedDatabase?.mode ?? "replace",
                   updateStrategy: persistedDatabase?.updateStrategy ?? "one",
                   useMongoActions: inferredUseMongoActions,
-                  actionCategory: persistedDatabase?.actionCategory,
-                  action: persistedDatabase?.action,
+                  ...(persistedDatabase?.actionCategory ? { actionCategory: persistedDatabase.actionCategory } : {}),
+                  ...(persistedDatabase?.action ? { action: persistedDatabase.action } : {}),
                   distinctField: persistedDatabase?.distinctField ?? "",
                   updateTemplate: persistedDatabase?.updateTemplate ?? "",
                   mappings:
@@ -767,7 +767,10 @@ export function DatabaseNodeConfigSection({
                     },
                   });
                 };
-                const handleRenameDbPreset = async (presetId: string, nextName: string) => {
+                const handleSaveQueryPreset = async (
+                  overrideName?: string,
+                  options?: { forceNew?: boolean }
+                ) => {
                   const name = (overrideName ?? queryPresetName).trim();
                   const filterTemplate = queryTemplateValue.trim();
                   const updateTemplate = (databaseConfig.updateTemplate ?? "").trim();

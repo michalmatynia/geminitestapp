@@ -32,7 +32,12 @@ async function GET_handler(req: Request) {
     const offset =
       Number.isFinite(offsetRaw) && offsetRaw >= 0 ? offsetRaw : undefined;
     const repo = await getPathRunRepository();
-    const result = await repo.listRuns({ pathId, status, limit, offset });
+    const result = await repo.listRuns({
+      ...(pathId ? { pathId } : {}),
+      ...(status ? { status } : {}),
+      ...(limit !== undefined ? { limit } : {}),
+      ...(offset !== undefined ? { offset } : {}),
+    });
     return NextResponse.json(result);
   } catch (error) {
     return createErrorResponse(error, {

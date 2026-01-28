@@ -29,7 +29,7 @@ export function AdminNotesTagsPage() {
   const updateTag = useUpdateNoteTag();
   const deleteTag = useDeleteNoteTag();
 
-  const tags = tagsQuery.data ?? [];
+  const tags = useMemo(() => tagsQuery.data ?? [], [tagsQuery.data]);
   const loading = tagsQuery.isPending;
 
   // Query handles tag loading

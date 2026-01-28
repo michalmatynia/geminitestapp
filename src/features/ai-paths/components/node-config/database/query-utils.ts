@@ -105,14 +105,14 @@ export const formatAndFixMongoQuery = (value: string): string => {
 
   // Try to parse and pretty-print
   try {
-    const parsed = JSON.parse(fixed);
+    const parsed: unknown = JSON.parse(fixed);
     return JSON.stringify(parsed, null, 2);
   } catch {
     // If still invalid, return the partially fixed version with basic formatting
     try {
       // Try one more time with more aggressive fixes
       fixed = fixed.replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g, '$1"$2":');
-      const parsed = JSON.parse(fixed);
+      const parsed: unknown = JSON.parse(fixed);
       return JSON.stringify(parsed, null, 2);
     } catch {
       return fixed;

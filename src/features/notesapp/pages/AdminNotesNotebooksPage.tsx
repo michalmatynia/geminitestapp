@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, useToast, Input, Label, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { MoreVertical } from "lucide-react";
 
 
@@ -29,7 +29,7 @@ export function AdminNotesNotebooksPage() {
   const [menuNotebookId, setMenuNotebookId] = useState<string | null>(null);
 
   const notebooksQuery = useNotebooks();
-  const notebooks = notebooksQuery.data ?? [];
+  const notebooks = useMemo(() => notebooksQuery.data ?? [], [notebooksQuery.data]);
   const loading = notebooksQuery.isPending;
 
   const createNotebook = useCreateNotebook();

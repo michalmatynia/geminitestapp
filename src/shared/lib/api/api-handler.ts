@@ -13,6 +13,13 @@ import type {
   ApiRouteHandlerWithParams,
 } from "@/shared/types/api";
 
+export type {
+  ApiHandlerOptions,
+  ApiHandlerContext,
+  ApiRouteHandler,
+  ApiRouteHandlerWithParams,
+};
+
 /**
  * Wraps an API route handler with automatic error handling, logging, and request tracking.
  *

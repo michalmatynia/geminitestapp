@@ -413,26 +413,29 @@ export default function AuthUsersPage() {
                       )}
                     </TableCell>
                     <TableCell className="min-w-[180px]">
-                      <Select
-                        value={
-                          roles.some((role) => role.id === userRoles[user.id])
-                            ? userRoles[user.id]
-                            : "none"
-                        }
-                        onValueChange={(value) => handleRoleChange(user.id, value)}
-                      >
-                        <SelectTrigger className="h-8 bg-gray-900 border text-white">
-                          <SelectValue placeholder="Select role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">Unassigned</SelectItem>
-                          {roles.map((role) => (
-                            <SelectItem key={role.id} value={role.id}>
-                              {role.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {(() => {
+                        const currentRoleId = userRoles[user.id];
+                        const isValidRole = currentRoleId && roles.some((r) => r.id === currentRoleId);
+                        const selectValue = isValidRole ? currentRoleId : "none";
+                        return (
+                          <Select
+                            value={selectValue}
+                            onValueChange={(value) => handleRoleChange(user.id, value)}
+                          >
+                            <SelectTrigger className="h-8 bg-gray-900 border text-white">
+                              <SelectValue placeholder="Select role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Unassigned</SelectItem>
+                              {roles.map((role) => (
+                                <SelectItem key={role.id} value={role.id}>
+                                  {role.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(user)}>

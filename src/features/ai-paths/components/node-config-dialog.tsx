@@ -227,7 +227,7 @@ export function NodeConfigDialog({
           nodes={nodes}
           edges={edges}
           runtimeState={runtimeState}
-          pathDebugSnapshot={pathDebugSnapshot}
+          pathDebugSnapshot={pathDebugSnapshot ?? null}
           updateSelectedNodeConfig={updateSelectedNodeConfig}
           {...(onSendToAi && { onSendToAi })}
           {...(sendingToAi !== undefined && { sendingToAi })}

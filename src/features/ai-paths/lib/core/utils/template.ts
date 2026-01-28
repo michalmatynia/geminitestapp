@@ -38,9 +38,9 @@ export const renderJsonTemplate = (
   };
   const escapeQuoted = (input: string) => {
     const replaceQuoted = (text: string, pattern: RegExp) =>
-      text.replace(pattern, (_match, token) => {
-        const value = resolveToken(token);
-        const asString =
+      text.replace(pattern, (_match: string, token: string) => {
+        const value: unknown = resolveToken(token);
+        const asString: string =
           value === undefined || value === null
             ? ""
             : typeof value === "string"

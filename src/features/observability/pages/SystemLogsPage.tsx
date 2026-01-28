@@ -68,11 +68,6 @@ export default function SystemLogsPage() {
   const [page, setPage] = useState(1);
   const pageSize = 50;
 
-  // Reset page when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [level, query, source, fromDate, toDate]);
-
   const buildLogParams = useCallback(() => {
     const params = new URLSearchParams();
     params.set("page", String(page));
@@ -99,7 +94,12 @@ export default function SystemLogsPage() {
     return params;
   }, [level, query, source, fromDate, toDate]);
 
-  const logsQuery = useQuery({
+  const logsQuery = useQuery<{
+    logs?: SystemLogRecord[];
+    total?: number;
+    page?: number;
+    pageSize?: number;
+  }>({
     queryKey: ["system-logs", page, pageSize, level, query, source, fromDate, toDate],
     queryFn: async () => {
       const params = buildLogParams();
@@ -112,10 +112,9 @@ export default function SystemLogsPage() {
         pageSize?: number;
       };
     },
-    keepPreviousData: true,
   });
 
-  const metricsQuery = useQuery({
+  const metricsQuery = useQuery<{ metrics?: SystemLogMetrics }>({
     queryKey: ["system-log-metrics", level, query, source, fromDate, toDate],
     queryFn: async () => {
       const params = buildMetricsParams();

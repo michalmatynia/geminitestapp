@@ -9,7 +9,7 @@ import { useIntegrationsWithConnections } from "@/features/integrations/hooks/us
 import type { IntegrationWithConnections } from "@/features/integrations/types/listings";
 
 export default function CategoryMapperPage() {
-  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
+  const [selectedConnectionIdOverride, setSelectedConnectionIdOverride] = useState<string | null>(null);
   const { toast } = useToast();
   const integrationsQuery = useIntegrationsWithConnections();
 
@@ -29,16 +29,18 @@ export default function CategoryMapperPage() {
     );
   }, [integrationsQuery.data]);
 
-  // Auto-select first connection if none selected
-  // Done during render to avoid useEffect state sync warnings
-  if (!selectedConnectionId && integrations.length > 0) {
+  const selectedConnectionId = useMemo(() => {
+    if (selectedConnectionIdOverride) {
+      const exists = integrations.some((i) =>
+        i.connections.some((c) => c.id === selectedConnectionIdOverride)
+      );
+      if (exists) return selectedConnectionIdOverride;
+    }
     const firstConnection = integrations
       .flatMap((i) => i.connections)
       .find((c) => c);
-    if (firstConnection) {
-      setSelectedConnectionId(firstConnection.id);
-    }
-  }
+    return firstConnection?.id ?? null;
+  }, [integrations, selectedConnectionIdOverride]);
 
   const selectedConnection = useMemo(() => {
     if (!selectedConnectionId) return null;
@@ -73,7 +75,7 @@ export default function CategoryMapperPage() {
               integrations={integrations}
               loading={integrationsQuery.isLoading}
               selectedConnectionId={selectedConnectionId}
-              onSelectConnection={setSelectedConnectionId}
+              onSelectConnection={setSelectedConnectionIdOverride}
             />
           </SectionPanel>
 

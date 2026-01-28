@@ -43,12 +43,12 @@ export function AdminAiPathsDeadLetterPage() {
   const normalizedPathId = pathId.trim();
   const offset = (page - 1) * pageSize;
 
-  const runsQuery = useQuery({
+  const runsQuery = useQuery<{ runs: AiPathRunRecord[]; total: number }>({
     queryKey: ["ai-paths-dead-letter", normalizedPathId, page, pageSize],
     queryFn: async () => {
       const response = await runsApi.list({
         status: "dead_lettered",
-        pathId: normalizedPathId || undefined,
+        ...(normalizedPathId ? { pathId: normalizedPathId } : {}),
         limit: pageSize,
         offset,
       });
@@ -57,12 +57,11 @@ export function AdminAiPathsDeadLetterPage() {
       }
       return response.data as { runs: AiPathRunRecord[]; total: number };
     },
-    keepPreviousData: true,
   });
 
   const total = runsQuery.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const runs = runsQuery.data?.runs ?? [];
+  const runs = useMemo(() => runsQuery.data?.runs ?? [], [runsQuery.data?.runs]);
 
   useEffect(() => {
     setPage(1);
@@ -127,7 +126,10 @@ export function AdminAiPathsDeadLetterPage() {
 
   const clearSelection = () => setSelectedIds(new Set());
 
-  const requeueSelectedMutation = useMutation({
+  const requeueSelectedMutation = useMutation<
+    { requeued: number },
+    Error
+  >({
     mutationFn: async () => {
       const response = await runsApi.requeueDeadLetter({
         runIds: Array.from(selectedIds),
@@ -136,7 +138,7 @@ export function AdminAiPathsDeadLetterPage() {
       if (!response.ok) {
         throw new Error(response.error || "Failed to requeue selected runs.");
       }
-      return response.data;
+      return response.data as { requeued: number };
     },
     onSuccess: (data) => {
       toast(`Requeued ${data.requeued} run(s).`, { variant: "success" });
@@ -150,7 +152,10 @@ export function AdminAiPathsDeadLetterPage() {
     },
   });
 
-  const requeueAllMutation = useMutation({
+  const requeueAllMutation = useMutation<
+    { requeued: number },
+    Error
+  >({
     mutationFn: async () => {
       const response = await runsApi.requeueDeadLetter({
         pathId: normalizedPathId || null,
@@ -159,7 +164,7 @@ export function AdminAiPathsDeadLetterPage() {
       if (!response.ok) {
         throw new Error(response.error || "Failed to requeue dead-letter runs.");
       }
-      return response.data;
+      return response.data as { requeued: number };
     },
     onSuccess: (data) => {
       toast(`Requeued ${data.requeued} run(s).`, { variant: "success" });
@@ -225,7 +230,7 @@ export function AdminAiPathsDeadLetterPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => void runsQuery.refetch()}
+              onClick={() => { void runsQuery.refetch(); }}
               disabled={runsQuery.isFetching}
             >
               {runsQuery.isFetching ? "Refreshing..." : "Refresh"}
@@ -260,7 +265,7 @@ export function AdminAiPathsDeadLetterPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => void requeueSelectedMutation.mutateAsync()}
+              onClick={() => { void requeueSelectedMutation.mutateAsync(); }}
               disabled={selectedCount === 0 || requeueSelectedMutation.isPending}
             >
               {requeueSelectedMutation.isPending ? "Requeueing..." : "Requeue selected"}
@@ -268,7 +273,7 @@ export function AdminAiPathsDeadLetterPage() {
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => void requeueAllMutation.mutateAsync()}
+              onClick={() => { void requeueAllMutation.mutateAsync(); }}
               disabled={requeueAllMutation.isPending || total === 0}
             >
               {requeueAllMutation.isPending ? "Requeueing..." : "Requeue all filtered"}
@@ -335,14 +340,14 @@ export function AdminAiPathsDeadLetterPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => void handleOpenDetail(run.id)}
+                        onClick={() => { void handleOpenDetail(run.id); }}
                       >
                         View
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => void handleRequeueSingle(run.id)}
+                        onClick={() => { void handleRequeueSingle(run.id); }}
                       >
                         Requeue
                       </Button>
@@ -395,15 +400,15 @@ export function AdminAiPathsDeadLetterPage() {
       </SectionPanel>
 
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl border border-border bg-card text-white">
           <DialogHeader>
             <DialogTitle>Run Details</DialogTitle>
-            <DialogDescription>Inspect the run state, node statuses, and events.</DialogDescription>
+            <DialogDescription className="text-gray-400">Inspect the run state, node statuses, and events.</DialogDescription>
           </DialogHeader>
           {detailLoading ? (
             <div className="text-sm text-gray-400">Loading run details...</div>
           ) : detail ? (
-            <pre className="max-h-[60vh] overflow-auto rounded-md bg-black/40 p-4 text-xs text-gray-200">
+            <pre className="max-h-[60vh] overflow-auto rounded-md bg-black/40 p-4 text-xs text-gray-200 whitespace-pre-wrap">
               {JSON.stringify(detail, null, 2)}
             </pre>
           ) : (

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { apiHandler } from "@/shared/lib/api/api-handler";
+import { apiHandlerWithParams, ApiHandlerContext } from "@/shared/lib/api/api-handler";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { resumePathRun } from "@/features/ai-paths/services/path-run-service";
@@ -13,7 +13,8 @@ const resumeSchema = z.object({
 
 async function POST_handler(
   req: Request,
-  context: { params: { runId: string } }
+  _ctx: ApiHandlerContext,
+  params: { runId: string }
 ) {
   try {
     const parsed = await parseJsonBody(req, resumeSchema, {
@@ -21,7 +22,7 @@ async function POST_handler(
     });
     if (!parsed.ok) return parsed.response;
 
-    const runId = context.params.runId;
+    const runId = params.runId;
     const mode = parsed.data.mode ?? "resume";
     const run = await resumePathRun(runId, mode);
     startAiPathRunQueue();
@@ -35,4 +36,4 @@ async function POST_handler(
   }
 }
 
-export const POST = apiHandler(POST_handler, { source: "ai-paths.runs.resume" });
+export const POST = apiHandlerWithParams(POST_handler, { source: "ai-paths.runs.resume" });

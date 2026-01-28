@@ -1,4 +1,4 @@
-import BlocksPage from "@/features/cms/pages/blocks/BlocksPage";
+import { BlocksPage } from "@/features/cms";
 
 export default function Page() {
   return <BlocksPage />;

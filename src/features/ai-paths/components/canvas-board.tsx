@@ -1,5 +1,6 @@
+import { Button } from "@/shared/ui";
 import React from "react";
-import { Button } from "@/shared/ui/button";
+
 import type { AiNode, Edge, RuntimeState } from "@/features/ai-paths/lib";
 import {
   CANVAS_HEIGHT,

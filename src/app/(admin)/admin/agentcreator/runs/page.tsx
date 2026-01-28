@@ -1,4 +1,4 @@
-import AgentRunsPage from "@/features/agentcreator/pages/AgentRunsPage";
+import { AgentRunsPage } from "@/features/agentcreator";
 
 export default function Page() {
   return <AgentRunsPage />;

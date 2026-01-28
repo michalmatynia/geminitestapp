@@ -1,9 +1,9 @@
 "use client";
-
+import { Button } from "@/shared/ui";
 import { useEffect } from "react";
 import Link from "next/link";
-import { Button } from "@/shared/ui/button";
-import { logClientError } from "@/features/observability/utils/client-error-logger";
+
+import { logClientError } from "@/features/observability";
 
 export default function GlobalError({
   error,

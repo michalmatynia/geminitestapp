@@ -1,19 +1,14 @@
 "use client";
 
+import { useToast, Button, AppModal, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { useToast } from "@/shared/ui/toast";
-import { Button } from "@/shared/ui/button";
-import { AppModal } from "@/shared/ui/app-modal";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
+
+
+
+
+
+
 import type { CatalogRecord } from "@/features/products/types";
 import type { ProductParameter } from "@/features/products/types";
 

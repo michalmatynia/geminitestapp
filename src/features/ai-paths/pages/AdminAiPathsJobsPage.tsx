@@ -1,4 +1,4 @@
-import { ProductAiJobsPanelSuspense } from "@/features/jobs/components/ProductAiJobsPanel";
+import { ProductAiJobsPanelSuspense } from "@/features/jobs";
 
 export function AdminAiPathsJobsPage() {
   return (

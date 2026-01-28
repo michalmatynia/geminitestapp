@@ -1,9 +1,10 @@
 "use client";
 
+import { Tabs, TabsContent, TabsList, TabsTrigger, SectionPanel } from "@/shared/ui";
 import React, { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
 import { useChatbotLogic } from "../hooks/useChatbotLogic";
 import { ChatInterface } from "../components/ChatInterface";
 import { SettingsTab } from "../components/SettingsTab";

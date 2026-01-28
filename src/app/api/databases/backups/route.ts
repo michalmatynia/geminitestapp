@@ -1,17 +1,17 @@
-import path from "path";
-import { promises as fs } from "fs";
+import { path from "path";
+import, promises as fs } from "fs";
 import { NextResponse } from "next/server";
-import type { DatabaseInfo } from "@/features/database/types";
+import type { DatabaseInfo } from "@/features/database";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 
 import {
   backupsDir as pgBackupsDir,
   ensureBackupsDir as ensurePgBackupsDir,
-} from "@/features/database/utils/postgres";
+} from "@/features/database";
 import {
   backupsDir as mongoBackupsDir,
   ensureBackupsDir as ensureMongoBackupsDir,
-} from "@/features/database/utils/mongo";
+} from "@/features/database";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 
 async function getBackups(type: "postgresql" | "mongodb"): Promise<DatabaseInfo[]> {

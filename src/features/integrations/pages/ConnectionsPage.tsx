@@ -1,8 +1,9 @@
 "use client";
 
+import { useToast } from "@/shared/ui";
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useToast } from "@/shared/ui/toast";
+
 import {
   Integration,
   IntegrationConnection,
@@ -11,13 +12,13 @@ import {
   TestConnectionResponse,
   integrationDefinitions,
 } from "@/features/integrations/types/integrations-ui";
-import { defaultPlaywrightSettings } from "@/features/playwright/constants/playwright";
-import type { PlaywrightPersona } from "@/features/playwright/types";
+import { defaultPlaywrightSettings } from "@/features/playwright";
+import type { PlaywrightPersona } from "@/features/playwright";
 import {
   buildPlaywrightSettings,
   fetchPlaywrightPersonas,
   findPlaywrightPersonaMatch,
-} from "@/features/playwright/utils/personas";
+} from "@/features/playwright";
 import { normalizeSteps } from "@/features/integrations/utils/connections";
 import { IntegrationList } from "@/features/integrations/components/connections/IntegrationList";
 import { IntegrationModal } from "@/features/integrations/components/connections/IntegrationModal";

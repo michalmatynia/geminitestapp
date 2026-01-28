@@ -1,13 +1,13 @@
 "use client";
 
+import { useToast, Button, Input } from "@/shared/ui";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Folder, FolderOpen, ChevronRight, ChevronDown, FilePlus, FolderPlus, Edit2, Trash2 } from "lucide-react";
-import { useToast } from "@/shared/ui/toast";
+
 import type { CategoryWithChildren } from "@/shared/types/notes";
 import type { FolderNodeProps } from "@/features/foldertree/types/folder-tree-ui";
 import { NoteItem } from "./NoteItem";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
+
 
 export const FolderNode = React.memo(function FolderNode({
   folder,

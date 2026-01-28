@@ -1,4 +1,4 @@
-import DatabasePreviewPage from "@/features/database/pages/DatabasePreviewPage";
+import { DatabasePreviewPage } from "@/features/database";
 
 export default function Page() {
   return <DatabasePreviewPage />;

@@ -1,23 +1,17 @@
 "use client";
-
+import { Button, Input, Label, Textarea, Switch, Tabs, TabsContent, TabsList, TabsTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast } from "@/shared/ui";
 import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Textarea } from "@/shared/ui/textarea";
-import { Switch } from "@/shared/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
-import { useToast } from "@/shared/ui/toast";
-import { ProductDraft, CreateProductDraftInput } from "@/features/products/types/drafts";
-import type { CatalogRecord } from "@/features/products/types";
-import type { ProductCategory, ProductTag, ProductParameter, ProductParameterValue } from "@/features/products/types";
+
+
+
+
+
+
+
+
+import { ProductDraft, CreateProductDraftInput } from "@/features/products";
+import type { CatalogRecord } from "@/features/products";
+import type { ProductCategory, ProductTag, ProductParameter, ProductParameterValue } from "@/features/products";
 import {
   Package,
   ShoppingCart,

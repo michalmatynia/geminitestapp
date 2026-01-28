@@ -1,18 +1,10 @@
 "use client";
 
+import { Button, Label, Select, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectTrigger, SelectValue, useToast } from "@/shared/ui";
 import { useState, useEffect } from "react";
-import { Button } from "@/shared/ui/button";
-import { Label } from "@/shared/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectGroup,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
-import { useToast } from "@/shared/ui/toast";
+
+
+
 
 const STATIC_TRANSLATION_MODELS = [
   { id: "gpt-4o", name: "GPT-4o" },

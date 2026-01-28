@@ -1,15 +1,15 @@
 "use client";
 
+import { Button, useToast, Input, Label, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useCallback, useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
-import { Button } from "@/shared/ui/button";
-import { useToast } from "@/shared/ui/toast";
+
+
 import { useNoteSettings } from "@/features/notesapp/hooks/NoteSettingsContext";
 import type { TagRecord } from "@/shared/types/notes";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
+
 
 export function AdminNotesTagsPage() {
   const { toast } = useToast();

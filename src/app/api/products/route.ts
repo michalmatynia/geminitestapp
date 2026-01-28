@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { productService } from "@/features/products/services/productService";
+import { productService } from "@/features/products";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
-import { ErrorSystem } from "@/features/observability/services/error-system";
+import { ErrorSystem } from "@/features/observability";
 
 /**
  * GET /api/products

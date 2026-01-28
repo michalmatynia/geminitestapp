@@ -1,4 +1,4 @@
-import AllegroConnectionsPage from "@/features/integrations/pages/marketplaces/allegro/AllegroConnectionsPage";
+import { AllegroConnectionsPage } from "@/features/integrations";
 
 export default function Page() {
   return <AllegroConnectionsPage />;

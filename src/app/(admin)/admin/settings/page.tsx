@@ -1,4 +1,4 @@
-import { AdminSettingsHomePage } from "@/features/admin/pages/AdminSettingsHomePage";
+import { AdminSettingsHomePage } from "@/features/admin";
 
 export default function Page() {
   return <AdminSettingsHomePage />;

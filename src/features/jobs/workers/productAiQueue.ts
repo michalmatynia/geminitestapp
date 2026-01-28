@@ -1,26 +1,21 @@
-import OpenAI from "openai";
-import type { ChatCompletionContentPart } from "openai/resources/chat/completions";
+import { OpenAI from "openai";
+import type, ChatCompletionContentPart } from "openai/resources/chat/completions";
 import prisma from "@/shared/lib/db/prisma";
-import { generateProductDescription, getSettingValue } from "@/features/products/services/aiDescriptionService";
-import { translateProduct } from "@/features/products/services/aiTranslationService";
-import type { ProductFormData } from "@/features/products/types";
-import { getProductRepository } from "@/features/products/services/product-repository";
-import { defaultLanguages } from "@/features/internationalization/lib/internationalizationDefaults";
+import { generateProductDescription, getSettingValue } from "@/features/products";
+import { translateProduct } from "@/features/products";
+import type { ProductFormData } from "@/features/products";
+import { getProductRepository } from "@/features/products";
+import { defaultLanguages } from "@/features/internationalization";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { ObjectId } from "mongodb";
-import { getProductDataProvider } from "@/features/products/services/product-provider";
+import { getProductDataProvider } from "@/features/products";
 import { getProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository";
 import type { ProductAiJobRecord } from "@/features/jobs/types/product-ai-job-repository";
-import { getImageFileRepository } from "@/features/files/services/image-file-repository";
-import fs from "fs/promises";
+import { getImageFileRepository } from "@/features/files";
+import { fs from "fs/promises";
 import path from "path";
-import {
-  badRequestError,
-  configurationError,
-  notFoundError,
-  operationFailedError,
-} from "@/shared/errors/app-error";
-import { ErrorSystem } from "@/features/observability/services/error-system";
+import, badRequestError, configurationError, notFoundError, operationFailedError, } from "@/shared/errors/app-error";
+import { ErrorSystem } from "@/features/observability";
 
 type LanguageRecord = {
   id: string;

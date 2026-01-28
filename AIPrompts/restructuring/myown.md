@@ -1,39 +1,6 @@
 1. App structure → run a code organisation and segmentation strategy
 
-* do restructuring src/shared/lib/agent and create a new folder src/features/agent-runtime and restructure everything pertaining to agent runtime.
-
-* do the same restructuring for my products importer and exporter. products importer and exporter should be treated as a generic data import export module and moved to a separate feature
-
-* do the same restructuring for my Folder tree feature from notesapp that enables the user to manage notes and folders as if they were regular files to a separate feature to be used across the app
-
-* run through src/lib folder check the libraries and their functions and assign them to their localised lib folders in features or shared/lib
-
-* run through src/shared/lib/utils and assign utilites either to src/shared/utils or their respective localised folders in features.
-
-* src/app/* (only routing, providers, bootstrapping)
- and app/(routes)/<NAMEOFSECTION>/* should contain only page.tsx, layout.tsx, loading.tsx, error.tsx and wiring, move other files to their respective localised features or shared folder  as everything else (components, hooks, queries, types) lives in features/<NAMEOFSECTION>/*
-
-* run through src/types designate their functions and distribute them into localised types folders in their respective features or a shared/types folder
-
-* unify components (like the list component, modals) and types
-* unify list component using Product list component as a reference, all list components should stem from the product list
-  component (although with their own flavours).
-* do the same for modals and unify modal component using Product modal component as a reference, all modal components should stem from the product modal
-  component (although with their own flavours).
-
-* do another restructure and move drafter away from admin into its own separate feature
-
-* do a deep segmentation of node-config-dialog.tsx component into smaller thematic components, the file is huge
-
-* unify components (Modal and List are already unified) using Products components as a reference to achieve a unifying look across the application. There may be some individual components that can't be unified, don't force it, but strive for general unified look across the application.
-
-Database feature seems not to have a unified list, the same geos for jobs and agents
-
-continue with features restructuring and even stricter separation
-
-expose a single point of entry
-
----done
+-->continue with features restructuring and even stricter separation
 
 <!-- <NAMEOFSECTION> - can be products, AI PATHS, etc. -->
 
@@ -65,6 +32,11 @@ Rule of thumb: if a component is used by 2+ features → move to shared/.
 
 
 # Establish Hard module boundaries (enforced by ESLint)
+
+// I want to establish Hard module boundaries (enforced by ESLint). Define layers and enforce import rules: app/* can import features/* + shared/* , features/* can import shared/*, but not other features (except via public APIs), shared/* must never import features/* , keep Next App Router projects from turning into “everything imports everything”. Expose only a single point of entry for each module.  Public API per module (ban deep imports) Each module exposes a single entry: features/<NAMEOFSECTION>/index.ts or shared/ui/index.ts if it's s shared component. Ban imports like features/<NAMEOFSECTION>/components/X → only features/<NAMEOFSECTION>.
+
+
+
 
 Define layers and enforce import rules:
 
@@ -112,7 +84,7 @@ Update imports gradually
 Add an ESLint rule later to prevent deep imports (optional)
 
 
-3) App Router rule: route ≠ feature
+3) App Router rule: route ≠ feature - DONE
 
 Keep app/ thin:
 

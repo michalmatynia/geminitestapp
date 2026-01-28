@@ -1,4 +1,4 @@
-import AuthUsersPage from "@/features/auth/pages/admin/UsersPage";
+import { AuthUsersPage } from "@/features/auth";
 
 export default function Page() {
   return <AuthUsersPage />;

@@ -1,4 +1,4 @@
-import { ErrorSystem } from "@/features/observability/services/error-system";
+import { ErrorSystem } from "@/features/observability";
 // This service encapsulates all business logic for managing products.
 
 import fs from "fs/promises";
@@ -7,10 +7,10 @@ import {
   productCreateSchema,
   productUpdateSchema,
 } from "@/features/products/validations";
-import { getDiskPathFromPublicPath, uploadFile } from "@/features/files/utils/fileUploader";
+import { getDiskPathFromPublicPath, uploadFile } from "@/features/files";
 import { getProductRepository } from "@/features/products/services/product-repository";
 import type { ProductFilters } from "@/features/products/types/services/product-repository";
-import { getImageFileRepository } from "@/features/files/services/image-file-repository";
+import { getImageFileRepository } from "@/features/files";
 import { getCatalogRepository } from "@/features/products/services/catalog-repository";
 import { badRequestError } from "@/shared/errors/app-error";
 

@@ -1,20 +1,14 @@
 "use client";
-
+import { Button, Input, Label, Textarea, useToast, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/ui";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Textarea } from "@/shared/ui/textarea";
-import { useToast } from "@/shared/ui/toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/shared/ui/dialog";
-import { logClientError } from "@/features/observability/utils/client-error-logger";
+
+
+
+
+
+
+import { logClientError } from "@/features/observability";
 import { DocsTabPanel, PathsTabPanel } from "./ui-panels";
 import { evaluateGraph } from "@/features/ai-paths/lib";
 import { CanvasBoard } from "./canvas-board";

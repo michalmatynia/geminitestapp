@@ -1,14 +1,15 @@
 "use client";
 
+import { useToast } from "@/shared/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ProfilerOnRenderCallback } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
-import { useToast } from "@/shared/ui/toast";
+
 import { ProductTableSkeleton } from "@/features/products/components/list/ProductTableSkeleton";
 import { useProductData } from "@/features/products/hooks/useProductData";
 import { useProductOperations } from "@/features/products/hooks/useProductOperations";
-import { useIntegrationOperations } from "@/features/integrations/hooks/useIntegrationOperations";
+import { useIntegrationOperations } from "@/features/integrations";
 import { useCatalogSync } from "@/features/products/hooks/useCatalogSync";
 import { useUserPreferences } from "@/features/products/hooks/useUserPreferences";
 import { ProductListPanel } from "@/features/products/components/ProductListPanel";
@@ -21,7 +22,7 @@ import type { ProductWithImages } from "@/features/products/types";
 import { logger } from "@/shared/utils/logger";
 
 const SelectIntegrationModal = dynamic(
-  () => import("@/features/integrations/components/listings/SelectIntegrationModal"),
+  () => import("@/features/integrations").then((mod) => mod.SelectIntegrationModal),
   { ssr: false }
 );
 

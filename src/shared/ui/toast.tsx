@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/shared/ui";
 import {
   createContext,
   useCallback,
@@ -9,7 +10,6 @@ import {
   useState,
 } from "react";
 import { X, CheckCircle, AlertCircle, Info } from "lucide-react";
-import { Button } from "@/shared/ui/button";
 
 type ToastVariant = "success" | "error" | "info";
 

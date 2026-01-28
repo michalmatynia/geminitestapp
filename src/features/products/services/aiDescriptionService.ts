@@ -1,8 +1,8 @@
-import OpenAI from "openai";
-import type { ChatCompletionContentPart } from "openai/resources/chat/completions";
+import { OpenAI from "openai";
+import type, ChatCompletionContentPart } from "openai/resources/chat/completions";
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getImageFileRepository } from "@/features/files/services/image-file-repository";
+import { getImageFileRepository } from "@/features/files";
 import type { ProductFormData } from "@/features/products/types";
 import fs from "fs/promises";
 import path from "path";

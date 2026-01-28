@@ -1,13 +1,13 @@
 "use client";
 
+import { Button, Input, Label, Checkbox, SectionPanel } from "@/shared/ui";
 import { Dispatch, SetStateAction } from "react";
 import type { PlaywrightSettings } from "@/features/playwright/types";
 import { playwrightDeviceOptions } from "@/features/playwright/constants/playwright";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Checkbox } from "@/shared/ui/checkbox";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
+
+
 
 type PlaywrightSettingsProps = {
   settings: PlaywrightSettings;

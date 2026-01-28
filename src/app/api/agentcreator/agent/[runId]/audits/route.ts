@@ -1,1 +1,1 @@
-export { GET } from "@/features/agentcreator/api/agent/[runId]/audits/route";
+export { AgentCreatorAgentRunAuditsGET as GET } from "@/features/agentcreator";

@@ -2,17 +2,17 @@
 
 /* eslint-disable @next/next/no-img-element */
 
+import { Button, Input, Tabs, TabsContent, TabsList, TabsTrigger, useToast, ModalShell, AppModal, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
-import { useToast } from "@/shared/ui/toast";
-import ModalShell from "@/shared/components/modal-shell";
-import { AppModal } from "@/shared/ui/app-modal";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
+
+
+
+
+
 
 type AgentRun = {
   id: string;

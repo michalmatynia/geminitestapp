@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getProductListingRepository } from "@/features/integrations/services/product-listing-repository";
+import { getProductListingRepository } from "@/features/integrations";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";

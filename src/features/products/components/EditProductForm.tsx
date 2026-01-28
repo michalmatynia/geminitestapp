@@ -1,9 +1,9 @@
 "use client";
-
+import { Button } from "@/shared/ui";
 import { useRouter } from "next/navigation";
-import FileManager from "@/features/files/components/FileManager";
+import FileManager from "@/features/files";
 import ProductForm from "@/features/products/components/ProductForm";
-import { Button } from "@/shared/ui/button";
+
 import {
   ProductFormProvider,
   useProductFormContext,

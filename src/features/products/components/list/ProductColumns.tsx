@@ -1,22 +1,18 @@
 "use client";
 
+import { Button, Checkbox, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, useToast } from "@/shared/ui";
+import type { PriceGroupForCalculation } from "@/shared/ui";
 import type { ColumnDef, Row } from "@tanstack/react-table";
 import { ArrowUpDown, Bold, Download, MoreVertical, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@/shared/ui/button";
-import { Checkbox } from "@/shared/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
-import { useToast } from "@/shared/ui/toast";
+
+
+
+
 import { EditableCell } from "@/features/products/components/EditableCell";
 import { ProductImageCell } from "@/features/products/components/cells/ProductImageCell";
 import type { ProductWithImages } from "@/features/products/types";
-import type { PriceGroupForCalculation } from "@/shared/components/data-table";
 
 // Keep the exported name `Product` in case other files import it from here.
 export type Product = ProductWithImages;

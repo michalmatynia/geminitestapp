@@ -1,4 +1,4 @@
-import { ProductConstructorPage } from "@/features/products/pages/ProductConstructorPage";
+import { ProductConstructorPage } from "@/features/products";
 
 export default function Page() {
   return (

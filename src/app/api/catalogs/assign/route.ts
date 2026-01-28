@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCatalogRepository } from "@/features/products/services/catalog-repository";
-import { getProductRepository } from "@/features/products/services/product-repository";
+import { getCatalogRepository } from "@/features/products";
+import { getProductRepository } from "@/features/products";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products/api/parse-json";
+import { parseJsonBody } from "@/features/products";
 import { badRequestError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 

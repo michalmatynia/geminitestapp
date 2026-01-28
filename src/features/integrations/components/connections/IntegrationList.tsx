@@ -1,12 +1,12 @@
 "use client";
 
+import { Button, ListPanel, SectionHeader, SectionPanel } from "@/shared/ui";
 import Link from "next/link";
 import { PlusIcon, SettingsIcon } from "lucide-react";
 import { Integration, integrationDefinitions } from "@/features/integrations/types/integrations-ui";
-import { Button } from "@/shared/ui/button";
-import { ListPanel } from "@/shared/components/list-panel";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
+
 
 type IntegrationListProps = {
   integrations: Integration[];

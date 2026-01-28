@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getProductListingRepository } from "@/features/integrations/services/product-listing-repository";
+import { getProductListingRepository } from "@/features/integrations";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products/api/parse-json";
+import { parseJsonBody } from "@/features/products";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 

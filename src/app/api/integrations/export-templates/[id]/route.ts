@@ -4,9 +4,9 @@ import {
   deleteExportTemplate,
   getExportTemplate,
   updateExportTemplate,
-} from "@/features/integrations/services/export-template-repository";
+} from "@/features/integrations";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products/api/parse-json";
+import { parseJsonBody } from "@/features/products";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 

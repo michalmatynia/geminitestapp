@@ -1,11 +1,12 @@
 "use client";
 
+import { DataTable, Button, ListPanel } from "@/shared/ui";
 import { memo, Profiler, useMemo } from "react";
 import type { ProfilerOnRenderCallback } from "react";
 import dynamic from "next/dynamic";
-import { DataTable } from "@/shared/components/data-table";
-import { Button } from "@/shared/ui/button";
-import { ListPanel } from "@/shared/components/list-panel";
+
+
+
 import type { ColumnDef, RowSelectionState, OnChangeFn } from "@tanstack/react-table";
 import type { ProductDraft } from "@/features/products/types/drafts";
 import type { Catalog } from "@/features/products/types";

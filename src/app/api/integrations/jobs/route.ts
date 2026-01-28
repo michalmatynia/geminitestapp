@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getProductListingRepository } from "@/features/integrations/services/product-listing-repository";
-import { getProductRepository } from "@/features/products/services/product-repository";
+import { getProductListingRepository } from "@/features/integrations";
+import { getProductRepository } from "@/features/products";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 

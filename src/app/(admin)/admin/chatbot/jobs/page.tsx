@@ -1,4 +1,4 @@
-import ChatbotJobsPage from "@/features/jobs/pages/ChatbotJobsPage";
+import { ChatbotJobsPage } from "@/features/jobs";
 
 export default function Page() {
   return <ChatbotJobsPage />;

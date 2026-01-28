@@ -1,15 +1,16 @@
 "use client";
 
+import { AppModal, ModalShell, Button, Input, Label, Textarea, Checkbox, RadioGroup, RadioGroupItem, useToast } from "@/shared/ui";
 import React from "react";
-import { AppModal } from "@/shared/ui/app-modal";
-import ModalShell from "@/shared/components/modal-shell";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Textarea } from "@/shared/ui/textarea";
-import { Checkbox } from "@/shared/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
-import { useToast } from "@/shared/ui/toast";
+
+
+
+
+
+
+
+
+
 import type { PriceGroup, PriceGroupType } from "@/features/products/types";
 import type { CurrencyOption } from "@/shared/types/internationalization";
 

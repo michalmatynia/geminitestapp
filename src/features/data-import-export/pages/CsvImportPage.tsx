@@ -1,10 +1,10 @@
 
 'use client';
 
+import { Button, Input } from "@/shared/ui";
 import React, { useState } from 'react';
 
-import { Button } from '@/shared/ui/button';
-import { Input } from '@/shared/ui/input';
+
 
 const CSVImportPage = () => {
   const [file, setFile] = useState<File | null>(null);

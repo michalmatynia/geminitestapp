@@ -1,8 +1,9 @@
+import { Button, Input, Label, Textarea } from "@/shared/ui";
 import React from "react";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Textarea } from "@/shared/ui/textarea";
+
+
+
+
 import type { AiNode, Edge, NodeDefinition } from "@/features/ai-paths/lib";
 import { createParserMappings } from "@/features/ai-paths/lib";
 import { formatPlaceholderLabel, formatPortLabel } from "../utils/ui-utils";

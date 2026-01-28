@@ -1,4 +1,4 @@
-import { AdminNotesThemesPage } from "@/features/notesapp/pages/AdminNotesThemesPage";
+import { AdminNotesThemesPage } from "@/features/notesapp";
 
 export default function Page() {
   return <AdminNotesThemesPage />;

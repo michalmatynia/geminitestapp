@@ -1,8 +1,9 @@
 "use client";
 
-import { Button } from "@/shared/ui/button";
-import { Label } from "@/shared/ui/label";
-import { Textarea } from "@/shared/ui/textarea";
+
+
+
+import { Button, Label, Textarea } from "@/shared/ui";
 import type { AiNode, Edge, NodeConfig, PromptConfig, RuntimeState } from "@/features/ai-paths/lib";
 import { createParserMappings, formatRuntimeValue } from "@/features/ai-paths/lib";
 import { formatPlaceholderLabel } from "@/features/ai-paths/utils/ui-utils";

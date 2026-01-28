@@ -1,16 +1,17 @@
 "use client";
 
+import { Button, Input, useToast, Label, Checkbox, ListPanel, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { useToast } from "@/shared/ui/toast";
-import { Label } from "@/shared/ui/label";
-import { Checkbox } from "@/shared/ui/checkbox";
-import { ListPanel } from "@/shared/components/list-panel";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
+
+
+
+
+
+
 import type { ChatbotSessionListItem } from "../types";
 import * as chatbotApi from "../api";
 

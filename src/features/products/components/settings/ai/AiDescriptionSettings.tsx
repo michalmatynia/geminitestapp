@@ -1,30 +1,16 @@
 "use client";
 
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectTrigger, SelectValue, Textarea, useToast, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, Checkbox } from "@/shared/ui";
 import { useState, useEffect } from "react";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectGroup,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
-import { Textarea } from "@/shared/ui/textarea";
-import { useToast } from "@/shared/ui/toast";
+
+
+
+
+
+
 import { CopyIcon, InfoIcon, PlayIcon, RefreshCcw, XCircle } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/shared/ui/dialog";
-import { Checkbox } from "@/shared/ui/checkbox";
+
+
 import { ProductWithImages } from "@/features/products/types";
 
 const STATIC_VISION_MODELS = [

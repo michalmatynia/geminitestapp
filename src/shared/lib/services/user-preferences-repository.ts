@@ -1,14 +1,14 @@
-import prisma from "@/shared/lib/db/prisma";
 import { Prisma } from "@prisma/client";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { ObjectId } from "mongodb";
-import { getProductDataProvider } from "@/features/products/services/product-provider";
+import { operationFailedError } from "@/shared/errors/app-error";
+import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
+import prisma from "@/shared/lib/db/prisma";
 
 const toMongoId = (id: string) => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
   return id;
 };
-import { operationFailedError } from "@/shared/errors/app-error";
 
 export type UserPreferencesData = {
   productListNameLocale?: string | null;
@@ -73,7 +73,7 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferences => ({
 });
 
 const resolvePreferencesProvider = async (): Promise<"mongodb" | "prisma"> => {
-  const provider = await getProductDataProvider();
+  const provider = await getAppDbProvider();
   if (provider === "mongodb" && process.env.MONGODB_URI) return "mongodb";
   return "prisma";
 };

@@ -1,10 +1,10 @@
 "use client";
 
+import { Tabs, TabsList, TabsTrigger, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useEffect, useState } from "react";
 import { AiPathsSettings } from "../components/AiPathsSettings";
-import { Tabs, TabsList, TabsTrigger } from "@/shared/ui/tabs";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
 
 export function AdminAiPathsPage() {
   const [activeTab, setActiveTab] = useState<"canvas" | "paths" | "docs">(

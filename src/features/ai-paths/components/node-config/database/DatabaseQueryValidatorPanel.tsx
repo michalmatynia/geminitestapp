@@ -1,7 +1,8 @@
 "use client";
 
+import { Button } from "@/shared/ui";
 import React from "react";
-import { Button } from "@/shared/ui/button";
+
 import type { AiNode, DatabaseConfig, DatabaseOperation, DbQueryConfig, Edge, NodeConfig } from "@/features/ai-paths/lib";
 import type { QueryValidationResult } from "./query-utils";
 

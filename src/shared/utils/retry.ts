@@ -5,7 +5,7 @@ import {
   timeoutError,
   wrapError,
 } from "@/shared/errors/app-error";
-import { logSystemEvent } from "@/features/observability/services/system-logger";
+import { logSystemEvent } from "@/shared/lib/observability/system-logger";
 
 /**
  * Configuration for retry behavior.

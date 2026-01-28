@@ -1,4 +1,4 @@
-import { AdminAiPathsJobsPage } from "@/features/ai-paths/pages/AdminAiPathsJobsPage";
+import { AdminAiPathsJobsPage } from "@/features/ai-paths";
 
 export default function Page() {
   return <AdminAiPathsJobsPage />;

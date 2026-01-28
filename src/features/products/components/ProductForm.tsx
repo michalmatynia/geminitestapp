@@ -1,9 +1,10 @@
 "use client";
 
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui/tabs";
+
 import { useProductFormContext } from "@/features/products/context/ProductFormContext";
 import DebugPanel from "@/features/products/components/DebugPanel";
 import ProductFormGeneral from "./form/ProductFormGeneral";

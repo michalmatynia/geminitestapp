@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/shared/lib/db/prisma";
-import type { ProductCategoryWithChildren } from "@/features/products/types";
-import { getProductDataProvider } from "@/features/products/services/product-provider";
+import type { ProductCategoryWithChildren } from "@/features/products";
+import { getProductDataProvider } from "@/features/products";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, internalError } from "@/shared/errors/app-error";

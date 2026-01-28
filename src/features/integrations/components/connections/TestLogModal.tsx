@@ -1,8 +1,8 @@
 "use client";
 
+import { AppModal, ModalShell } from "@/shared/ui";
 import { TestLogEntry } from "@/features/integrations/types/integrations-ui";
-import { AppModal } from "@/shared/ui/app-modal";
-import ModalShell from "@/shared/components/modal-shell";
+
 
 type TestLogModalProps = {
   selectedStep: (TestLogEntry & { status: "ok" | "failed" }) | null;

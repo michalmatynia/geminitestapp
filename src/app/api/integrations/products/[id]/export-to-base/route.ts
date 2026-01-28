@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getProductRepository } from "@/features/products/services/product-repository";
-import { getIntegrationRepository } from "@/features/integrations/services/integration-repository";
-import { getProductListingRepository } from "@/features/integrations/services/product-listing-repository";
+import { getProductRepository } from "@/features/products";
+import { getIntegrationRepository } from "@/features/integrations";
+import { getProductListingRepository } from "@/features/integrations";
 import {
   getExportWarehouseId,
-} from "@/features/integrations/services/import-template-repository";
+} from "@/features/integrations";
 import {
   getExportDefaultInventoryId,
   getExportStockFallbackEnabled,
   listExportTemplates,
-} from "@/features/integrations/services/export-template-repository";
+} from "@/features/integrations";
 import {
   buildBaseProductData,
   collectProductImageDiagnostics,
@@ -21,11 +21,11 @@ import {
   type ImageBase64Mode,
   type ImageExportDiagnostics,
   type ImageTransformOptions,
-} from "@/features/integrations/services/exports/base-exporter";
-import { checkBaseSkuExists, fetchBaseWarehouses } from "@/features/integrations/services/imports/base-client";
-import { decryptSecret } from "@/features/integrations/utils/encryption";
-import { LogCapture } from "@/features/integrations/services/exports/log-capture";
-import { parseJsonBody } from "@/features/products/api/parse-json";
+} from "@/features/integrations";
+import { checkBaseSkuExists, fetchBaseWarehouses } from "@/features/integrations";
+import { decryptSecret } from "@/features/integrations";
+import { LogCapture } from "@/features/integrations";
+import { parseJsonBody } from "@/features/products";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {
   badRequestError,

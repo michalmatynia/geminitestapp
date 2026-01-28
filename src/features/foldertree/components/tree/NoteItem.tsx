@@ -1,11 +1,11 @@
 "use client";
 
+import { useToast, Button, Input } from "@/shared/ui";
 import React, { useState, useRef, useEffect } from "react";
 import { FileText, Edit2, Copy, Trash2, FilePlus } from "lucide-react";
-import { useToast } from "@/shared/ui/toast";
+
 import type { NoteItemProps } from "@/features/foldertree/types/folder-tree-ui";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
+
 
 export const NoteItem = React.memo(function NoteItem({
   note,

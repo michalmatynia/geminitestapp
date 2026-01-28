@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import AdminLayout from "@/app/(admin)/layout";
+import { AdminLayout } from "@/features/admin";
 import CmsSideMenu from "@/features/cms/components/CmsSideMenu";
 import type { Page } from "@/features/cms/types";
 

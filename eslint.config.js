@@ -1,4 +1,5 @@
-import { dirname } from "path";
+import { readdirSync } from "fs";
+import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { FlatCompat } from "@eslint/eslintrc";
 import importPlugin from "eslint-plugin-import";
@@ -10,6 +11,111 @@ const __dirname = dirname(__filename);
 const compat = new FlatCompat({
   baseDirectory: __dirname,
 });
+
+const featureNames = readdirSync(join(__dirname, "src", "features"), {
+  withFileTypes: true,
+})
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => entry.name);
+
+const sharedUiRestrictions = [
+  {
+    group: ["@/shared/ui/**", "@/shared/components/**"],
+    message: "Import shared UI from '@/shared/ui'.",
+  },
+];
+
+const sharedUiPathRestrictions = [
+  {
+    name: "@/shared/components",
+    message: "Import shared UI from '@/shared/ui'.",
+  },
+];
+
+const buildRestrictedImportsRule = (extraPatterns = [], extraPaths = []) => [
+  "error",
+  {
+    paths: [...sharedUiPathRestrictions, ...extraPaths],
+    patterns: [...sharedUiRestrictions, ...extraPatterns],
+  },
+];
+
+const featureBaseRestrictions = [
+  {
+    group: ["@/app/**"],
+    message: "Features must not import from app.",
+  },
+];
+
+const layerBoundaryConfigs = [
+  {
+    files: ["src/**/*.{ts,tsx,js,jsx}"],
+    rules: {
+      "no-restricted-imports": buildRestrictedImportsRule(),
+      "import/no-restricted-paths": [
+        "error",
+        {
+          zones: [
+            {
+              target: "./src/features",
+              from: "./src/shared",
+              message: "Shared layer must not import from features.",
+            },
+            {
+              target: "./src/app",
+              from: "./src/shared",
+              message: "Shared layer must not import from app.",
+            },
+            {
+              target: "./src/app",
+              from: "./src/features",
+              message: "Features must not import from app.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/app/**/*.{ts,tsx,js,jsx}"],
+    rules: {
+      "no-restricted-imports": buildRestrictedImportsRule([
+        {
+          group: ["@/features/*/**"],
+          message: "Import feature public APIs only (use '@/features/<name>').",
+        },
+      ]),
+    },
+  },
+  {
+    files: ["src/shared/**/*.{ts,tsx,js,jsx}"],
+    rules: {
+      "no-restricted-imports": buildRestrictedImportsRule([
+        {
+          group: ["@/features/**"],
+          message: "Shared layer must not import from features.",
+        },
+        {
+          group: ["@/app/**"],
+          message: "Shared layer must not import from app.",
+        },
+      ]),
+    },
+  },
+  ...featureNames.map((feature) => ({
+    files: [`src/features/${feature}/**/*.{ts,tsx,js,jsx}`],
+    rules: {
+      "no-restricted-imports": buildRestrictedImportsRule([
+        ...featureBaseRestrictions,
+        {
+          group: [`@/features/!(${feature})/**`],
+          message:
+            "Import other features via their public API (use '@/features/<name>').",
+        },
+      ]),
+    },
+  })),
+];
 
 const configFiles = [
   "eslint.config.js",
@@ -88,6 +194,7 @@ const eslintConfig = [
       },
     },
   },
+  ...layerBoundaryConfigs,
   {
     files: ["lib/generated/prisma/**/*.ts", "lib/generated/prisma/**/*.js"],
     rules: {

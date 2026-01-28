@@ -2,12 +2,12 @@ import { randomUUID } from "crypto";
 import { ObjectId } from "mongodb";
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getProductDataProvider } from "@/features/products/services/product-provider";
+import { getProductDataProvider } from "@/features/products";
 import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
-} from "@/features/data-import-export/utils/image-retry-presets";
-import type { ImageRetryPreset } from "@/features/data-import-export/types/imports";
+} from "@/features/data-import-export";
+import type { ImageRetryPreset } from "@/features/data-import-export";
 
 type SettingRecord = { _id: string | ObjectId; key?: string; value?: string };
 

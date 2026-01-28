@@ -4,10 +4,10 @@ import {
   deleteImportTemplate,
   getImportTemplate,
   updateImportTemplate,
-} from "@/features/integrations/services/import-template-repository";
+} from "@/features/integrations";
 import { removeUndefined } from "@/shared/utils";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products/api/parse-json";
+import { parseJsonBody } from "@/features/products";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 

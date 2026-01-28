@@ -1,5 +1,5 @@
+import { useToast } from "@/shared/ui";
 import { useState, useEffect } from "react";
-import { useToast } from "@/shared/ui/toast";
 
 // Why: Editor mode (markdown/wysiwyg) has complex migration logic:
 // - Existing notes lock to their type

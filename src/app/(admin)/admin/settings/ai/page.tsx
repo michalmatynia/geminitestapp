@@ -1,13 +1,14 @@
 "use client";
 
+import { Button, Input, Label, useToast, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui";
 import React, { useEffect, useState } from "react";
 import { ChevronLeftIcon, SaveIcon } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { useToast } from "@/shared/ui/toast";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
+
+
+
+
+
 import { useSettings, useUpdateSetting } from "@/shared/hooks/useSettings";
 
 export default function AiApiSettingsPage() {

@@ -1,9 +1,10 @@
 "use client";
 
+import { Button, Input, Label } from "@/shared/ui";
 import { useProductFormContext } from "@/features/products/context/ProductFormContext";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
+
+
+
 import ProductImageManager from "../ProductImageManager";
 
 export default function ProductFormImages() {

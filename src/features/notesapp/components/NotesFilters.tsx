@@ -1,10 +1,10 @@
 "use client";
 
+import { Button, Input } from "@/shared/ui";
 import React from "react";
 import { Search, FileText, Heading, X, ArrowUp, ArrowDown, Eye, EyeOff, LayoutGrid, List, ChevronDown, Check } from "lucide-react";
 import type { NotesFiltersProps } from "@/features/notesapp/types/notes-ui";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
+
 
 export function NotesFilters({
   selectedFolderId,

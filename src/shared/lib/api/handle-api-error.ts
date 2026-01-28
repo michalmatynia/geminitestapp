@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { resolveError } from "@/shared/errors/resolve-error";
-import { getErrorFingerprint, logSystemEvent } from "@/features/observability/services/system-logger";
+import { getErrorFingerprint, logSystemEvent } from "@/shared/lib/observability/system-logger";
 import { validationError } from "@/shared/errors/app-error";
 
 type ApiErrorOptions = {

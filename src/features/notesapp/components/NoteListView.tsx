@@ -1,7 +1,8 @@
+import { Button, ListPanel } from "@/shared/ui";
 import React from "react";
 import { Plus, Pin, Archive, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/shared/ui/button";
-import { ListPanel } from "@/shared/components/list-panel";
+
+
 import { NotesFilters } from "./NotesFilters";
 import { NoteCard } from "./NoteCard";
 import { buildBreadcrumbPath } from "../utils";

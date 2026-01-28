@@ -1,13 +1,14 @@
 "use client";
 
+import { Button } from "@/shared/ui";
 import Link from "next/link";
 import { ChevronLeftIcon } from "lucide-react";
 import { useEffect } from "react";
 import { AdminLayoutProvider, useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
-import { NoteSettingsProvider } from "@/features/notesapp/hooks/NoteSettingsContext";
+import { NoteSettingsProvider } from "@/features/notesapp";
 import { usePathname } from "next/navigation";
 import { UserNav } from "@/features/admin/components/UserNav";
-import { Button } from "@/shared/ui/button";
+
 import Menu from "@/features/admin/components/Menu";
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {

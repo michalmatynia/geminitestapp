@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import type { NoteWithRelations } from "@/shared/types/notes";
 import type { UseNoteOperationsProps } from "@/features/notesapp/types/notes-hooks";
-import { findFolderParentId, findFolderById } from "@/features/foldertree/utils/tree";
+import { findFolderParentId, findFolderById } from "@/features/foldertree";
 
 export function useNoteOperations({
   selectedNotebookId,

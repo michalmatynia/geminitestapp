@@ -4,7 +4,7 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { conflictError } from "@/shared/errors/app-error";
 import type { ProductRecord, ProductWithImages } from "@/features/products/types";
 import { mongoCatalogRepository } from "@/features/products/services/catalog-repository/mongo-catalog-repository";
-import { mongoImageFileRepository } from "@/features/files/services/image-file-repository/mongo-image-file-repository";
+import { mongoImageFileRepository } from "@/features/files";
 import type {
   CreateProductInput,
   ProductFilters,

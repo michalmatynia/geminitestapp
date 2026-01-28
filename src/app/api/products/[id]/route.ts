@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { productService } from "@/features/products/services/productService";
+import { productService } from "@/features/products";
 import { z } from "zod";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
-import { parseJsonBody } from "@/features/products/api/parse-json";
+import { parseJsonBody } from "@/features/products";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import { ErrorSystem } from "@/features/observability/services/error-system";
+import { ErrorSystem } from "@/features/observability";
 
 /**
  * GET /api/products/[id]

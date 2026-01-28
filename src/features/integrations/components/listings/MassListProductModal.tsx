@@ -1,20 +1,15 @@
 "use client";
 
+import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, ModalShell, Checkbox } from "@/shared/ui";
 import { useState } from "react";
-import { Button } from "@/shared/ui/button";
-import { Label } from "@/shared/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
-import ModalShell from "@/shared/components/modal-shell";
+
+
+
+
 import { logger } from "@/shared/utils/logger";
 import { ExportLogViewer } from "./ExportLogViewer";
 import type { CapturedLog } from "@/features/integrations/services/exports/log-capture";
-import { Checkbox } from "@/shared/ui/checkbox";
+
 import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
 import { useBaseComSettings } from "./hooks/useBaseComSettings";
 

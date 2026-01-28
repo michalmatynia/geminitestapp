@@ -1,23 +1,17 @@
 "use client";
 
+import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Label, ListPanel, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
-import { useToast } from "@/shared/ui/toast";
+
+
+
+
 import { RefreshCcw, Trash2, Download } from "lucide-react";
 import type { SystemLogMetrics, SystemLogRecord, SystemLogLevel } from "@/shared/types/system-logs";
-import { Label } from "@/shared/ui/label";
-import { ListPanel } from "@/shared/components/list-panel";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
+
 
 const levelOptions: Array<{ value: SystemLogLevel | "all"; label: string }> = [
   { value: "all", label: "All levels" },

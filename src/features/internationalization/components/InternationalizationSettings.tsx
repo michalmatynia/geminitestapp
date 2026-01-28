@@ -1,15 +1,10 @@
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Button, Input } from "@/shared/ui";
 import React from "react";
 import { MoreVertical } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
+
 import type { CurrencyOption, CountryOption, Language } from "@/shared/types/internationalization";
 import { countryFlagMap } from "@/shared/constants/internationalization";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
+
 
 type InternationalizationSettingsProps = {
   loadingCurrencies: boolean;

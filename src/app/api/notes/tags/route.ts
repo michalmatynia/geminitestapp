@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { noteService } from "@/features/notesapp/services/notes";
-import { parseJsonBody } from "@/features/products/api/parse-json";
-import { tagCreateSchema } from "@/features/notesapp/validations/notes";
+import { noteService } from "@/features/notesapp";
+import { parseJsonBody } from "@/features/products";
+import { tagCreateSchema } from "@/features/notesapp";
 import { removeUndefined } from "@/shared/utils";
 import type { TagCreateInput } from "@/shared/types/notes";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";

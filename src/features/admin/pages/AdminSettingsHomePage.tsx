@@ -1,5 +1,6 @@
 "use client";
 
+import { Card, Button, SectionHeader, SectionPanel } from "@/shared/ui";
 import Link from "next/link";
 import {
   BellIcon,
@@ -10,10 +11,9 @@ import {
   Activity,
   MonitorPlay,
 } from "lucide-react";
-import { Card } from "@/shared/ui/card";
-import { Button } from "@/shared/ui/button";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
+
 
 type SettingsOption = {
   id: string;

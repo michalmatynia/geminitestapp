@@ -1,1 +1,1 @@
-export { POST } from "@/features/data-import-export/api/import/route";
+export { DataImportExportImportPOST as POST } from "@/features/data-import-export";

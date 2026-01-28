@@ -1,4 +1,4 @@
-import CmsHomePage from "@/features/cms/pages/CmsHomePage";
+import { CmsHomePage } from "@/features/cms";
 
 export default function Page() {
   return <CmsHomePage />;

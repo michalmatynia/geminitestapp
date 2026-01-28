@@ -1,4 +1,4 @@
-import AllegroListingTemplatesPage from "@/features/integrations/pages/marketplaces/allegro/AllegroListingTemplatesPage";
+import { AllegroListingTemplatesPage } from "@/features/integrations";
 
 export default function Page() {
   return <AllegroListingTemplatesPage />;

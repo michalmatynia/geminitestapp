@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { noteService } from "@/features/notesapp/services/notes";
+import { noteService } from "@/features/notesapp";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 

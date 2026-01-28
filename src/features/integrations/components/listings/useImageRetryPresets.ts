@@ -1,11 +1,10 @@
 "use client";
-
 import { useEffect, useState } from "react";
-import type { ImageRetryPreset } from "@/features/data-import-export/types/imports";
+import type { ImageRetryPreset } from "@/features/data-import-export";
 import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
-} from "@/features/data-import-export/utils/image-retry-presets";
+} from "@/features/data-import-export";
 
 export const useImageRetryPresets = () => {
   const [presets, setPresets] = useState<ImageRetryPreset[]>(

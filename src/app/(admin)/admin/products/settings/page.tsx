@@ -1,4 +1,4 @@
-import { ProductSettingsPage } from "@/features/products/pages/ProductSettingsPage";
+import { ProductSettingsPage } from "@/features/products";
 
 export default function Page() {
   return (

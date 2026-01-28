@@ -1,7 +1,6 @@
 "use client";
 
-import { AppModal } from "@/shared/ui/app-modal";
-import ModalShell from "@/shared/components/modal-shell";
+
 
 type SessionCookie = {
   name?: string;
@@ -125,3 +124,4 @@ export function SessionModal({
     </AppModal>
   );
 }
+import { AppModal, ModalShell } from "@/shared/ui";

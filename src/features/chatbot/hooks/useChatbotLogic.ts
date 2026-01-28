@@ -1,5 +1,5 @@
 "use client";
-
+import { useToast } from "@/shared/ui";
 import {
   useState,
   useEffect,
@@ -7,7 +7,7 @@ import {
   useCallback,
   useRef,
 } from "react";
-import { useToast } from "@/shared/ui/toast";
+
 import {
   ChatMessage,
   ChatbotSettingsPayload,
@@ -17,7 +17,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from "../utils/constants";
 import * as chatbotApi from "../api";
-import { useAgentCreatorSettings } from "@/features/agentcreator/hooks/useAgentCreatorSettings";
+import { useAgentCreatorSettings } from "@/features/agentcreator";
 
 export const useChatbotLogic = () => {
   const { toast } = useToast();

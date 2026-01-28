@@ -1,5 +1,6 @@
 "use client";
 
+import { useToast } from "@/shared/ui";
 import type { Language } from "@prisma/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -37,7 +38,7 @@ import {
   productCreateSchema,
   productUpdateSchema,
 } from "@/features/products/validations";
-import { useToast } from "@/shared/ui/toast";
+
 import { useProductImages } from "@/features/products/hooks/useProductImages";
 import { useProductMetadata } from "@/features/products/hooks/useProductMetadata";
 

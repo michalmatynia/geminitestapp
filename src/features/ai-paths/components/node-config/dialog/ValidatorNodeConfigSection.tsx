@@ -1,14 +1,9 @@
 "use client";
 
-import { Label } from "@/shared/ui/label";
-import { Textarea } from "@/shared/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
+
+
+
+import { Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import type { AiNode, NodeConfig } from "@/features/ai-paths/lib";
 import { parsePathList } from "@/features/ai-paths/lib";
 

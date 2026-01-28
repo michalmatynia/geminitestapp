@@ -1,5 +1,6 @@
+import { useToast } from "@/shared/ui";
 import { useState, useMemo } from "react";
-import { useToast } from "@/shared/ui/toast";
+
 import type { TagRecord } from "@/shared/types/notes";
 
 // Why: Tag selection has complex state:

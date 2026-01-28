@@ -1,20 +1,14 @@
 "use client";
 
+import { useToast, Button, AppModal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input, Label } from "@/shared/ui";
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { useToast } from "@/shared/ui/toast";
-import { Button } from "@/shared/ui/button";
-import { AppModal } from "@/shared/ui/app-modal";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
+
+
+
+
 import type { Catalog, ProductTag } from "@/features/products/types";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
+
 
 type TagsSettingsProps = {
   loading: boolean;

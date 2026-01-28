@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { noteService } from "@/features/notesapp/services/notes";
-import { parseJsonBody } from "@/features/products/api/parse-json";
-import { notebookUpdateSchema } from "@/features/notesapp/validations/notes";
+import { noteService } from "@/features/notesapp";
+import { parseJsonBody } from "@/features/products";
+import { notebookUpdateSchema } from "@/features/notesapp";
 import { removeUndefined } from "@/shared/utils";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, ModalShell, Input, AppModal, Label, ListPanel, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
@@ -12,15 +13,14 @@ import {
   Trash2,
   Eye,
 } from "lucide-react";
-import { Button } from "@/shared/ui/button";
-import ModalShell from "@/shared/components/modal-shell";
-import { Input } from "@/shared/ui/input";
-import { AppModal } from "@/shared/ui/app-modal";
+
+
+
+
 import type { ListingJob, ListingAttempt, ProductJob } from "@/shared/types/listing-jobs";
-import { Label } from "@/shared/ui/label";
-import { ListPanel } from "@/shared/components/list-panel";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
+
 
 type ProductListingJobsPanelProps = {
   showBackToProducts?: boolean;

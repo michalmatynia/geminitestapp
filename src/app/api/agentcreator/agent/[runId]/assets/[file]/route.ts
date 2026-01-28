@@ -1,1 +1,1 @@
-export { runtime, GET } from "@/features/agentcreator/api/agent/[runId]/assets/[file]/route";
+export { AgentCreatorAgentRunAssetsRuntime as runtime, AgentCreatorAgentRunAssetsGET as GET } from "@/features/agentcreator";

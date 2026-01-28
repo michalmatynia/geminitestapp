@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/shared/ui/button";
 
 type ModalShellProps = {
   title: string;
@@ -57,3 +56,4 @@ export default function ModalShell({
     </div>
   );
 }
+import { Button } from "@/shared/ui";

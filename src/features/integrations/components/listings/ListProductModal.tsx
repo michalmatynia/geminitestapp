@@ -1,33 +1,21 @@
 "use client";
-
+import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label, ModalShell, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Checkbox } from "@/shared/ui";
 import { useState } from "react";
-import { Button } from "@/shared/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
-import { Label } from "@/shared/ui/label";
-import ModalShell from "@/shared/components/modal-shell";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
-import { ProductWithImages } from "@/features/products/types";
+
+
+
+
+
+import { ProductWithImages } from "@/features/products";
 import type {
   ImageRetryPreset,
   ImageTransformOptions,
-} from "@/features/data-import-export/types/imports";
+} from "@/features/data-import-export";
 import { ExportLogViewer } from "./ExportLogViewer";
 import type { CapturedLog } from "@/features/integrations/services/exports/log-capture";
 import { useImageRetryPresets } from "./useImageRetryPresets";
 import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
 import { useBaseComSettings } from "./hooks/useBaseComSettings";
-import { Checkbox } from "@/shared/ui/checkbox";
 
 import { isImageExportError } from "./utils";
 

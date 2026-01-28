@@ -1,31 +1,20 @@
 "use client";
-
+import { ModalShell, Button, Input, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label } from "@/shared/ui";
 import { useCallback, useEffect, useState } from "react";
-import ModalShell from "@/shared/components/modal-shell";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
-import type { ProductWithImages } from "@/features/products/types";
+
+
+
+
+
+import type { ProductWithImages } from "@/features/products";
 import type { ProductListingWithDetails } from "@/features/integrations/types/listings";
-import { SyncDirection } from "@/features/products/types";
+import { SyncDirection } from "@/features/products";
 import { Trash2, ArrowRight, ArrowLeft, ArrowLeftRight, Check, X } from "lucide-react";
 import { ExportLogViewer } from "./ExportLogViewer";
 import type { CapturedLog } from "@/features/integrations/services/exports/log-capture";
-import type { ImageRetryPreset, ImageTransformOptions } from "@/features/data-import-export/types/imports";
+import type { ImageRetryPreset, ImageTransformOptions } from "@/features/data-import-export";
 import { useImageRetryPresets } from "./useImageRetryPresets";
-import { Label } from "@/shared/ui/label";
+
 import { isImageExportError } from "./utils";
 import { useIntegrationSelection } from "./hooks/useIntegrationSelection";
 

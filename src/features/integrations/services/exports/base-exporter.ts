@@ -1,10 +1,10 @@
-import type { ProductWithImages } from "@/features/products/types";
+import type { ProductWithImages } from "@/features/products";
 import type { BaseProductRecord } from "@/features/integrations/services/imports/base-client";
 import { callBaseApi } from "@/features/integrations/services/imports/base-client";
-import fs from "fs/promises";
+import { fs from "fs/promises";
 import path from "path";
 import sharp from "sharp";
-import { getDiskPathFromPublicPath } from "@/features/files/utils/fileUploader";
+import, getDiskPathFromPublicPath } from "@/features/files";
 
 type ExportTemplateMapping = {
   sourceKey: string;  // Internal product field

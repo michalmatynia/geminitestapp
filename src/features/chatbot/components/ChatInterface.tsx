@@ -1,9 +1,9 @@
 "use client";
 
+import { Button, Input } from "@/shared/ui";
 import React, { useRef, useEffect } from "react";
 import { ChatMessage } from "@/shared/types/chatbot";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
+
 
 interface ChatInterfaceProps {
   messages: ChatMessage[];

@@ -1,4 +1,4 @@
-import { PlaywrightPersonasPage } from "@/features/playwright/pages/PlaywrightPersonasPage";
+import { PlaywrightPersonasPage } from "@/features/playwright";
 
 export default function Page() {
   return <PlaywrightPersonasPage />;

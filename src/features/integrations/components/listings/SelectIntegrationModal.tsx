@@ -1,18 +1,12 @@
 "use client";
 
+import { AppModal, ModalShell, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Button, Label } from "@/shared/ui";
 import { useEffect, useState } from "react";
-import { AppModal } from "@/shared/ui/app-modal";
-import ModalShell from "@/shared/components/modal-shell";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
+
+
+
 import type { IntegrationWithConnections } from "@/features/integrations/types/listings";
-import { Button } from "@/shared/ui/button";
-import { Label } from "@/shared/ui/label";
+
 
 type SelectIntegrationModalProps = {
   onClose: () => void;

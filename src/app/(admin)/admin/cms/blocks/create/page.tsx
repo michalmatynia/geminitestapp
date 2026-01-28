@@ -1,4 +1,4 @@
-import CreateBlockPage from "@/features/cms/pages/blocks/CreateBlockPage";
+import { CreateBlockPage } from "@/features/cms";
 
 export default function Page() {
   return <CreateBlockPage />;

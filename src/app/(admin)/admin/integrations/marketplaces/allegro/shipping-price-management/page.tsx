@@ -1,4 +1,4 @@
-import AllegroShippingPriceManagementPage from "@/features/integrations/pages/marketplaces/allegro/AllegroShippingPriceManagementPage";
+import { AllegroShippingPriceManagementPage } from "@/features/integrations";
 
 export default function Page() {
   return <AllegroShippingPriceManagementPage />;

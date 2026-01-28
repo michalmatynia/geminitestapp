@@ -1,5 +1,4 @@
-import { Skeleton } from "@/shared/ui/skeleton";
-import { TableRow, TableCell } from "@/shared/ui/table";
+
 
 interface ProductTableSkeletonProps {
   rows?: number;
@@ -63,3 +62,4 @@ export function ProductTableSkeleton({
     </>
   );
 }
+import { Skeleton, TableRow, TableCell } from "@/shared/ui";

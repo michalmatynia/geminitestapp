@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import { memo } from "react";
 import {
   PlusIcon,
@@ -19,14 +20,8 @@ import {
   Sparkles,
   Pin,
 } from "lucide-react";
-import { Button } from "@/shared/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
+
+
 import type { Catalog } from "@/features/products/types";
 import type { ProductDraft } from "@/features/products/types/drafts";
 

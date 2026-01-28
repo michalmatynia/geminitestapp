@@ -1,4 +1,4 @@
-import type { ProductCreateData } from "@/features/products/validations";
+import type { ProductCreateData } from "@/features/products";
 import type { BaseProductRecord } from "@/features/integrations/services/imports/base-client";
 
 const toTrimmedString = (value: unknown): string | null => {

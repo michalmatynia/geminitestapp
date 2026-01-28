@@ -1,4 +1,4 @@
-import { AdminProductsPage } from "@/features/products/pages/AdminProductsPage";
+import { AdminProductsPage } from "@/features/products";
 
 export default function Page() {
   return <AdminProductsPage />;

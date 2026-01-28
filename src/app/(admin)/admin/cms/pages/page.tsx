@@ -1,4 +1,4 @@
-import PagesPage from "@/features/cms/pages/pages/PagesPage";
+import { PagesPage } from "@/features/cms";
 
 export default function Page() {
   return <PagesPage />;

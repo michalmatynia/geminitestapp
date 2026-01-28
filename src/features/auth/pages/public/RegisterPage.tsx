@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, Input, Label } from "@/shared/ui";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
@@ -8,9 +9,8 @@ import { DEFAULT_AUTH_USER_PAGE_SETTINGS } from "@/features/auth/utils/auth-user
 import { DEFAULT_AUTH_SECURITY_POLICY } from "@/features/auth/utils/auth-security";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { registerUser } from "@/features/auth/api/register";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
+
+
 
 export default function RegisterPage() {
   const [name, setName] = useState("");

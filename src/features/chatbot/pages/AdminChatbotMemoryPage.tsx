@@ -1,12 +1,13 @@
 "use client";
 
+import { Button, Input, Label, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
+
+
+
 import type { ChatbotMemoryItem } from "../types";
 import * as chatbotApi from "../api";
 

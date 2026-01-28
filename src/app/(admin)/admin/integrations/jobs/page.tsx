@@ -1,6 +1,5 @@
 "use client";
-
-import { ProductListingJobsPage } from "@/features/jobs/pages/ProductListingJobsPage";
+import { ProductListingJobsPage } from "@/features/jobs";
 
 export default function Page() {
   return <ProductListingJobsPage />;

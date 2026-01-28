@@ -1,16 +1,10 @@
 "use client";
 
+import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Checkbox } from "@/shared/ui";
 import React from "react";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
-import { Checkbox } from "@/shared/ui/checkbox";
+
+
+
 
 type AgentCreatorSettingsSectionProps = {
   agentModeEnabled: boolean;

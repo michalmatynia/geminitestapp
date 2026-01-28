@@ -1,15 +1,15 @@
 import { randomUUID } from "crypto";
+import { Prisma } from "@prisma/client";
 import { ObjectId, type Filter } from "mongodb";
+import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import prisma from "@/shared/lib/db/prisma";
+import type { SystemLogLevel, SystemLogMetrics, SystemLogRecord } from "@/shared/types/system-logs";
 
 const toMongoId = (id: string) => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
   return id;
 };
-import { Prisma } from "@prisma/client";
-import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getProductDataProvider } from "@/features/products/services/product-provider";
-import type { SystemLogLevel, SystemLogMetrics, SystemLogRecord } from "@/shared/types/system-logs";
 
 export type CreateSystemLogInput = {
   level?: SystemLogLevel | undefined;
@@ -246,7 +246,7 @@ const getMongoSystemLogMetrics = async (filter: Filter<MongoSystemLogDoc>): Prom
 export async function createSystemLog(
   input: CreateSystemLogInput
 ): Promise<SystemLogRecord> {
-  const provider = await getProductDataProvider();
+  const provider = await getAppDbProvider();
   const payload = {
     id: randomUUID(),
     level: input.level ?? "error",
@@ -310,7 +310,7 @@ export async function createSystemLog(
 export async function listSystemLogs(
   input: ListSystemLogsInput
 ): Promise<ListSystemLogsResult> {
-  const provider = await getProductDataProvider();
+  const provider = await getAppDbProvider();
   const page = Math.max(1, input.page ?? 1);
   const pageSize = Math.min(200, Math.max(1, input.pageSize ?? 50));
 
@@ -379,7 +379,7 @@ export async function listSystemLogs(
 export async function getSystemLogMetrics(
   input: ListSystemLogsInput
 ): Promise<SystemLogMetrics> {
-  const provider = await getProductDataProvider();
+  const provider = await getAppDbProvider();
   const now = new Date();
 
   if (provider === "mongodb") {
@@ -465,7 +465,7 @@ export async function getSystemLogMetrics(
 }
 
 export async function clearSystemLogs(before?: Date | null) {
-  const provider = await getProductDataProvider();
+  const provider = await getAppDbProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     const filter = before ? { createdAt: { $lte: before } } : {};

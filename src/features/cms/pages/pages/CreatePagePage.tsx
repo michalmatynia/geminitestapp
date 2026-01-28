@@ -1,21 +1,15 @@
 "use client";
 
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SectionHeader } from "@/shared/ui";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
+
+
+
+
 import { createPage } from "@/features/cms/api/pages";
 import { fetchSlugs } from "@/features/cms/api/slugs";
 import type { Slug } from "@/features/cms/types";
-import { SectionHeader } from "@/shared/components/section-header";
 
 export default function CreatePagePage() {
   const [name, setName] = useState("");

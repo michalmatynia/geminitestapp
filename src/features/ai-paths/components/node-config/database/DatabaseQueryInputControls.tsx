@@ -1,15 +1,10 @@
 "use client";
 
+import { Button, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import React from "react";
-import { Button } from "@/shared/ui/button";
-import { Textarea } from "@/shared/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
+
+
+
 import type { DatabaseOperation } from "@/features/ai-paths/lib";
 import type { QueryValidationResult } from "./query-utils";
 

@@ -1,12 +1,11 @@
 "use client";
-
+import { Button, useToast, Textarea, Label } from "@/shared/ui";
 import { useEffect, useState } from "react";
-import { Button } from "@/shared/ui/button";
-import { useToast } from "@/shared/ui/toast";
-import { CLIENT_LOGGING_KEYS } from "@/features/observability/constants/client-logging";
+
+
+import { CLIENT_LOGGING_KEYS } from "@/features/observability";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
-import { Textarea } from "@/shared/ui/textarea";
-import { Label } from "@/shared/ui/label";
+
 
 export default function LoggingSettingsPage() {
   const { toast } = useToast();

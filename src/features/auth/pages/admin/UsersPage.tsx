@@ -1,16 +1,17 @@
 "use client";
 
+import { Button, ListPanel, SectionHeader, SectionPanel, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, useToast, Textarea, Checkbox } from "@/shared/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "@/shared/ui/button";
-import { ListPanel } from "@/shared/components/list-panel";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
-import { useToast } from "@/shared/ui/toast";
+
+
+
+
+
+
+
+
+
+
 import {
   AUTH_SETTINGS_KEYS,
   DEFAULT_AUTH_ROLES,
@@ -21,8 +22,8 @@ import {
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { DEFAULT_AUTH_SECURITY_POLICY } from "@/features/auth/utils/auth-security";
 import type { AuthUserSummary } from "@/features/auth/types";
-import { Textarea } from "@/shared/ui/textarea";
-import { Checkbox } from "@/shared/ui/checkbox";
+
+
 import {
   fetchAuthUserSecurity,
   fetchAuthUsers,

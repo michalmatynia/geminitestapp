@@ -4,9 +4,9 @@ import {
   clearSystemLogs,
   createSystemLog,
   listSystemLogs,
-} from "@/features/observability/services/system-log-repository";
+} from "@/features/observability";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products/api/parse-json";
+import { parseJsonBody } from "@/features/products";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 
 const levelSchema = z.enum(["info", "warn", "error"]);

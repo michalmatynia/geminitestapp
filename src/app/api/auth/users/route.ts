@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import type { ObjectId } from "mongodb";
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getAuthDataProvider } from "@/features/auth/services/auth-provider";
-import { auth } from "@/features/auth/auth";
+import { getAuthDataProvider } from "@/features/auth";
+import { auth } from "@/features/auth";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { authError, internalError } from "@/shared/errors/app-error";
-import type { AuthUserSummary } from "@/features/auth/types";
+import type { AuthUserSummary } from "@/features/auth";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";

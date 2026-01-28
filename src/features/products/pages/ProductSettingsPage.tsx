@@ -1,11 +1,11 @@
 "use client";
 
+import { useToast, Button, SectionHeader, SectionPanel } from "@/shared/ui";
 import React, {
   useCallback,
   useEffect,
   useState,
 } from "react";
-import { useToast } from "@/shared/ui/toast";
 
 import {
   settingSections,
@@ -34,10 +34,9 @@ import { PriceGroupsSettings } from "@/features/products/components/settings/pri
 import { CatalogsSettings } from "@/features/products/components/settings/catalogs/CatalogsSettings";
 import { CategoriesSettings } from "@/features/products/components/settings/CategoriesSettings";
 import { TagsSettings } from "@/features/products/components/settings/TagsSettings";
-import { InternationalizationSettings } from "@/features/internationalization/components/InternationalizationSettings";
+import { InternationalizationSettings } from "@/features/internationalization";
 import { AiDescriptionSettings } from "@/features/products/components/settings/ai/AiDescriptionSettings";
 import { AiTranslationSettings } from "@/features/products/components/settings/ai/AiTranslationSettings";
-import { Button } from "@/shared/ui/button";
 
 // New Modals
 import { CatalogModal } from "@/features/products/components/settings/modals/CatalogModal";
@@ -45,8 +44,7 @@ import { LanguageModal } from "@/features/products/components/settings/modals/La
 import { PriceGroupModal } from "@/features/products/components/settings/modals/PriceGroupModal";
 import { CurrencyModal } from "@/features/products/components/settings/modals/CurrencyModal";
 import { CountryModal } from "@/features/products/components/settings/modals/CountryModal";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
 
 export function ProductSettingsPage() {
   const [activeSection, setActiveSection] =

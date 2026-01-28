@@ -1,8 +1,7 @@
 "use client";
-
 import { useState, useEffect, useCallback } from "react";
 import { logger } from "@/shared/utils/logger";
-import type { ProductWithImages } from "@/features/products/types";
+import type { ProductWithImages } from "@/features/products";
 
 export function useIntegrationOperations() {
   // Integrations state

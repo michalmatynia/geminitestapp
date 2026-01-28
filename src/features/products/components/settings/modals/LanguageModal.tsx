@@ -1,13 +1,14 @@
 "use client";
 
+import { AppModal, ModalShell, Button, Input, Label, Checkbox, useToast } from "@/shared/ui";
 import React from "react";
-import { AppModal } from "@/shared/ui/app-modal";
-import ModalShell from "@/shared/components/modal-shell";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Checkbox } from "@/shared/ui/checkbox";
-import { useToast } from "@/shared/ui/toast";
+
+
+
+
+
+
+
 import type { Language, CountryOption } from "@/shared/types/internationalization";
 
 interface LanguageModalProps {

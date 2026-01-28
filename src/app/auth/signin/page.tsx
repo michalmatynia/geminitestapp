@@ -1,4 +1,4 @@
-import SignInPage from "@/features/auth/pages/public/SignInPage";
+import { SignInPage } from "@/features/auth";
 
 export default function Page() {
   return <SignInPage />;

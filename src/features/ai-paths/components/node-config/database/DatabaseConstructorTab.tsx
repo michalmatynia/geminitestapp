@@ -1,16 +1,11 @@
 "use client";
 
+import { Button, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input } from "@/shared/ui";
 import React from "react";
-import { Button } from "@/shared/ui/button";
-import { Label } from "@/shared/ui/label";
-import { Textarea } from "@/shared/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
+
+
+
+
 import type {
   AiNode,
   DatabaseConfig,
@@ -24,7 +19,6 @@ import type {
 import { formatPortLabel } from "@/features/ai-paths/utils/ui-utils";
 import { TEMPLATE_SNIPPETS } from "@/features/ai-paths/config/query-presets";
 import type { AiQuery, DatabasePresetOption, SchemaData } from "./types";
-import { Input } from "@/shared/ui/input";
 
 type DatabaseConstructorTabProps = {
   queryInputControls: React.ReactNode;

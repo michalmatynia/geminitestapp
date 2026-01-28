@@ -1,11 +1,12 @@
 "use client";
 
+import { Button, Input, Label, Switch, useToast } from "@/shared/ui";
 import { useEffect, useState } from "react";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Switch } from "@/shared/ui/switch";
-import { useToast } from "@/shared/ui/toast";
+
+
+
+
+
 import {
   DEFAULT_TRANSIENT_RECOVERY_SETTINGS,
   TRANSIENT_RECOVERY_KEYS,

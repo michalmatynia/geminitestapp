@@ -1,22 +1,15 @@
 "use client";
-
+import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Checkbox, useToast } from "@/shared/ui";
 import React from "react";
 import Link from "next/link";
-import { Button } from "@/shared/ui/button";
-import { Label } from "@/shared/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
+
+
+
 import { useChatbotLogic } from "../hooks/useChatbotLogic";
-import { Checkbox } from "@/shared/ui/checkbox";
-import { AgentCreatorSettingsSection } from "@/features/agentcreator/components/AgentCreatorSettingsSection";
-import { useToast } from "@/shared/ui/toast";
-import type { PlaywrightPersona } from "@/features/playwright/types";
-import { fetchPlaywrightPersonas } from "@/features/playwright/utils/personas";
+
+import { AgentCreatorSettingsSection } from "@/features/agentcreator";
+import type { PlaywrightPersona } from "@/features/playwright";
+import { fetchPlaywrightPersonas } from "@/features/playwright";
 
 type SettingsTabProps = ReturnType<typeof useChatbotLogic>;
 

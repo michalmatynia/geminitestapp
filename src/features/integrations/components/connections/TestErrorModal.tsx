@@ -1,8 +1,7 @@
 "use client";
 
-import { Button } from "@/shared/ui/button";
-import { AppModal } from "@/shared/ui/app-modal";
-import ModalShell from "@/shared/components/modal-shell";
+
+
 
 type TestErrorModalProps = {
   testError: string | null;
@@ -122,3 +121,4 @@ export function TestErrorModal({
     </AppModal>
   );
 }
+import { Button, AppModal, ModalShell } from "@/shared/ui";

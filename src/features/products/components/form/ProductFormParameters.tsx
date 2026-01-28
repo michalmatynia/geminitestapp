@@ -1,17 +1,12 @@
 "use client";
 
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import { useMemo } from "react";
 import { useProductFormContext } from "@/features/products/context/ProductFormContext";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
+
+
+
+
 import { X } from "lucide-react";
 
 const getParameterLabel = (

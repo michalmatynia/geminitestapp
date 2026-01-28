@@ -1,9 +1,9 @@
 "use client";
 
+import { Button, Input } from "@/shared/ui";
 import { useEffect, useState } from "react";
 import { IntegrationConnection } from "@/features/integrations/types/integrations-ui";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
+
 
 type BaselinkerSettingsProps = {
   activeConnection: IntegrationConnection | null;

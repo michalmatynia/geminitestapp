@@ -1,8 +1,9 @@
 "use client";
 
+import { Input, Label } from "@/shared/ui";
 import { useFormContext } from "react-hook-form";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
+
+
 import { ProductFormData } from "@/features/products/types";
 
 export default function ProductFormImportInfo() {

@@ -1,9 +1,9 @@
 "use client";
 
+import { Button, AppModal } from "@/shared/ui";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { Button } from "@/shared/ui/button";
-import { AppModal } from "@/shared/ui/app-modal";
+
 
 type LogModalProps = {
   content: string;

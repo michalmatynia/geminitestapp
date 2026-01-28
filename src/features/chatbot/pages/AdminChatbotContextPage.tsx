@@ -1,20 +1,21 @@
 "use client";
 
+import { Button, Input, Textarea, ModalShell, AppModal, useToast, Label, Checkbox, SectionHeader, SectionPanel } from "@/shared/ui";
 import Link from "next/link";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { PlusIcon } from "lucide-react";
 
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Textarea } from "@/shared/ui/textarea";
-import ModalShell from "@/shared/components/modal-shell";
-import { AppModal } from "@/shared/ui/app-modal";
-import { useToast } from "@/shared/ui/toast";
-import { Label } from "@/shared/ui/label";
-import { Checkbox } from "@/shared/ui/checkbox";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
+
+
+
+
+
+
+
+
 import * as chatbotApi from "../api";
 
 type ContextItem = {

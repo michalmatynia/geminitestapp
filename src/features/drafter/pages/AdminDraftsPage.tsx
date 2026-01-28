@@ -1,12 +1,12 @@
 "use client";
 
+import { ModalShell, Button, AppModal, SectionHeader } from "@/shared/ui";
 import { useRef, useState } from "react";
 import { DraftList } from "../components/DraftList";
 import { DraftCreator } from "../components/DraftCreator";
-import ModalShell from "@/shared/components/modal-shell";
-import { Button } from "@/shared/ui/button";
-import { AppModal } from "@/shared/ui/app-modal";
-import { SectionHeader } from "@/shared/components/section-header";
+
+
+
 
 export function AdminDraftsPage() {
   const [isCreatorOpen, setIsCreatorOpen] = useState(false);

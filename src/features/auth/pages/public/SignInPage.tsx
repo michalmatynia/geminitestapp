@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, Input, Label } from "@/shared/ui";
 import Link from "next/link";
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -8,9 +9,8 @@ import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
 import { DEFAULT_AUTH_USER_PAGE_SETTINGS } from "@/features/auth/utils/auth-user-pages";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
 import { verifyCredentials } from "@/features/auth/api/credentials";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
+
+
 
 function SignInContent() {
   const searchParams = useSearchParams();

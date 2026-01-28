@@ -1,1 +1,1 @@
-export { POST } from "@/features/agentcreator/api/agent/[runId]/controls/route";
+export { AgentCreatorAgentRunControlsPOST as POST } from "@/features/agentcreator";

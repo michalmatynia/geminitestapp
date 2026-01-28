@@ -1,4 +1,4 @@
-import CategoryMapperPage from "@/features/integrations/pages/CategoryMapperPage";
+import { CategoryMapperPage } from "@/features/integrations";
 
 export default function Page() {
   return <CategoryMapperPage />;

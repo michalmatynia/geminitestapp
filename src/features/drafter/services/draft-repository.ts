@@ -1,8 +1,8 @@
-import type { ProductDraft, CreateProductDraftInput, UpdateProductDraftInput } from "@/features/products/types/drafts";
-import type { ProductParameterValue } from "@/features/products/types";
+import type { ProductDraft, CreateProductDraftInput, UpdateProductDraftInput } from "@/features/products";
+import type { ProductParameterValue } from "@/features/products";
 import { randomUUID } from "crypto";
 import { Prisma } from "@prisma/client";
-import { getProductDataProvider } from "@/features/products/services/product-provider";
+import { getProductDataProvider } from "@/features/products";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { ObjectId } from "mongodb";
 import prisma from "@/shared/lib/db/prisma";

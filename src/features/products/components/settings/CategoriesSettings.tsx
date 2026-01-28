@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, AppModal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Input, Textarea, Label } from "@/shared/ui";
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   ChevronRight,
@@ -8,20 +9,13 @@ import {
   Trash2,
   FolderPlus,
 } from "lucide-react";
-import { Button } from "@/shared/ui/button";
-import { AppModal } from "@/shared/ui/app-modal";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
-import { useToast } from "@/shared/ui/toast";
+
+
+
+
 import type { ProductCategoryWithChildren, Catalog } from "@/features/products/types";
-import { Input } from "@/shared/ui/input";
-import { Textarea } from "@/shared/ui/textarea";
-import { Label } from "@/shared/ui/label";
+
+
 
 type CategoriesSettingsProps = {
   loading: boolean;

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { enqueueProductAiJob } from "@/features/jobs/services/productAiService";
+import { enqueueProductAiJob } from "@/features/jobs";
 import type { ProductAiJobType } from "@/shared/types/jobs";
-import { startProductAiJobQueue } from "@/features/jobs/workers/productAiQueue";
-import { getProductRepository } from "@/features/products/services/product-repository";
+import { startProductAiJobQueue } from "@/features/jobs";
+import { getProductRepository } from "@/features/products";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products/api/parse-json";
+import { parseJsonBody } from "@/features/products";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 
 const bulkJobSchema = z.object({

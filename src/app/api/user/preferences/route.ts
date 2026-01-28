@@ -4,7 +4,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
-import { auth } from "@/features/auth/auth";
+import { auth } from "@/features/auth";
 
 export const runtime = "nodejs";
 

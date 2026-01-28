@@ -1,21 +1,13 @@
 "use client";
 
+import { Button, useToast, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/shared/ui";
 import React, { memo } from "react";
 import { Table as ReactTable } from "@tanstack/react-table";
-import { Button } from "@/shared/ui/button";
+
 import { ProductWithImages } from "@/features/products/types";
 import { logger } from "@/shared/utils/logger";
-import { useToast } from "@/shared/ui/toast";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
+
+
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
 

@@ -1,12 +1,12 @@
 import { createHash } from "crypto";
 import type { SystemLogLevel } from "@/shared/types/system-logs";
-import { createSystemLog } from "@/features/observability/services/system-log-repository";
-import { notifyCriticalError } from "@/features/observability/services/critical-error-notifier";
+import { notifyCriticalError } from "@/shared/lib/observability/critical-error-notifier";
+import { createSystemLog } from "@/shared/lib/observability/system-log-repository";
 import {
   isSensitiveKey,
   REDACTED_VALUE,
   truncateString,
-} from "@/features/observability/utils/log-redaction";
+} from "@/shared/lib/observability/log-redaction";
 
 const MAX_CONTEXT_SIZE = 12000;
 const MAX_VALUE_LENGTH = 4000;

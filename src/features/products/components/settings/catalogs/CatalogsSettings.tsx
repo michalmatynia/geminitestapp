@@ -1,14 +1,9 @@
+import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/ui";
 import React from "react";
 import { MoreVertical } from "lucide-react";
 import { Catalog } from "@/features/products/types";
 import type { Language } from "@/shared/types/internationalization";
-import { Button } from "@/shared/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
+
 
 type CatalogsSettingsProps = {
   loadingCatalogs: boolean;

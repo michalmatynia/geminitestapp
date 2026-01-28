@@ -3,13 +3,13 @@ import { ObjectId } from "mongodb";
 import { z } from "zod";
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getAuthDataProvider } from "@/features/auth/services/auth-provider";
-import { normalizeAuthEmail } from "@/features/auth/services/auth-user-repository";
-import { auth } from "@/features/auth/auth";
-import { parseJsonBody } from "@/features/products/api/parse-json";
+import { getAuthDataProvider } from "@/features/auth";
+import { normalizeAuthEmail } from "@/features/auth";
+import { auth } from "@/features/auth";
+import { parseJsonBody } from "@/features/products";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { authError, conflictError, internalError, notFoundError } from "@/shared/errors/app-error";
-import type { AuthUserSummary } from "@/features/auth/types";
+import type { AuthUserSummary } from "@/features/auth";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";

@@ -1,17 +1,12 @@
 "use client";
 
+import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import React from "react";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Textarea } from "@/shared/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
+
+
+
+
+
 import type { AiNode, NodeConfig, RuntimeState } from "@/features/ai-paths/lib";
 import {
   DEFAULT_CONTEXT_ROLE,

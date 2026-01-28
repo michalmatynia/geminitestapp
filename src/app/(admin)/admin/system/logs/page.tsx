@@ -1,4 +1,4 @@
-import SystemLogsPage from "@/features/observability/pages/SystemLogsPage";
+import { SystemLogsPage } from "@/features/observability";
 
 export default function Page() {
   return <SystemLogsPage />;

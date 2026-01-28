@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getIntegrationRepository } from "@/features/integrations/services/integration-repository";
-import { decryptSecret, encryptSecret } from "@/features/integrations/utils/encryption";
-import { logSystemEvent } from "@/features/observability/services/system-logger";
+import { getIntegrationRepository } from "@/features/integrations";
+import { decryptSecret, encryptSecret } from "@/features/integrations";
+import { logSystemEvent } from "@/features/observability";
 import { mapErrorToAppError } from "@/shared/errors/error-mapper";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 

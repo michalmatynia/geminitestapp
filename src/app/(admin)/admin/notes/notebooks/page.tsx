@@ -1,4 +1,4 @@
-import { AdminNotesNotebooksPage } from "@/features/notesapp/pages/AdminNotesNotebooksPage";
+import { AdminNotesNotebooksPage } from "@/features/notesapp";
 
 export default function Page() {
   return <AdminNotesNotebooksPage />;

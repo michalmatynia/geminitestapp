@@ -1,9 +1,10 @@
 "use client";
 
+import { Button, useToast } from "@/shared/ui";
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { Folder, Plus, ChevronRight, ChevronDown, ChevronLeft, Star, Upload } from "lucide-react";
-import { Button } from "@/shared/ui/button";
-import { useToast } from "@/shared/ui/toast";
+
+
 import type { CategoryWithChildren } from "@/shared/types/notes";
 import type { FolderTreeProps } from "@/features/foldertree/types/folder-tree-ui";
 import { FolderNode } from "./tree/FolderNode";

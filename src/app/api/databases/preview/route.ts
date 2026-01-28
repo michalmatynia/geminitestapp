@@ -1,16 +1,11 @@
-import path from "path";
-import { NextResponse } from "next/server";
+import { path from "path";
+import, NextResponse } from "next/server";
 import { Client } from "pg";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, internalError } from "@/shared/errors/app-error";
 
 import {
-  backupsDir,
-  ensureBackupsDir,
-  assertValidBackupName,
-  getPgRestoreCommand,
-  execFileAsync,
-} from "@/features/database/utils/postgres";
+  backupsDir, ensureBackupsDir, assertValidBackupName, getPgRestoreCommand, execFileAsync } from "@/features/database";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 
 async function POST_handler(req: Request) {

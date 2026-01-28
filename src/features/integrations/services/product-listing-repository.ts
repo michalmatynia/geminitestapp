@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import prisma from "@/shared/lib/db/prisma";
 import { Prisma } from "@prisma/client";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getProductDataProvider } from "@/features/products/services/product-provider";
+import { getProductDataProvider } from "@/features/products";
 import { getIntegrationDataProvider } from "@/features/integrations/services/integration-provider";
 import type {
   ProductListingRecord,

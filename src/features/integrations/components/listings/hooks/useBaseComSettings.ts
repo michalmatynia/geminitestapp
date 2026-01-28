@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { Template, BaseInventory } from "@/features/data-import-export/types/imports";
+import type { Template, BaseInventory } from "@/features/data-import-export";
 
 // Why: Base.com has complex, interconnected setup:
 // - Templates define field mapping

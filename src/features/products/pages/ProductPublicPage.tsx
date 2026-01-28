@@ -1,6 +1,7 @@
+import { MissingImagePlaceholder } from "@/shared/ui";
 import { productService } from "@/features/products/services/productService";
 import Image from "next/image";
-import MissingImagePlaceholder from "@/shared/ui/missing-image-placeholder";
+
 import { notFound } from "next/navigation";
 
 export async function ProductPublicPage({

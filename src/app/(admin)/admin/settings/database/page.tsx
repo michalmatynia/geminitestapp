@@ -1,9 +1,9 @@
 "use client";
 
+import { useToast, Button, Label } from "@/shared/ui";
 import { useEffect, useMemo, useState } from "react";
-import { useToast } from "@/shared/ui/toast";
-import { Button } from "@/shared/ui/button";
-import { Label } from "@/shared/ui/label";
+
+
 
 const providerOptions = [
   {

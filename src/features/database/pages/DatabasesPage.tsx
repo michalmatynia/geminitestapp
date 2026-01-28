@@ -1,12 +1,13 @@
 "use client";
 
+import { DataTable, Button, useToast, Input, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useEffect, useState, useRef } from "react";
-import { DataTable } from "@/shared/components/data-table";
-import { Button } from "@/shared/ui/button";
-import { useToast } from "@/shared/ui/toast";
-import { Input } from "@/shared/ui/input";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
+
+
+
+
 import { getDatabaseColumns } from "../components/DatabaseColumns";
 import { LogModal } from "../components/LogModal";
 import { RestoreModal } from "../components/RestoreModal";

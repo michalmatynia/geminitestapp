@@ -1,7 +1,8 @@
 "use client";
 
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
+
+
+import { Input, Label } from "@/shared/ui";
 import type { AiNode, NodeConfig } from "@/features/ai-paths/lib";
 import { toNumber } from "@/features/ai-paths/lib";
 

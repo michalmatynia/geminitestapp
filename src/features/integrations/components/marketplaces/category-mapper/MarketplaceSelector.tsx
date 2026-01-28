@@ -1,8 +1,8 @@
 "use client";
 
+import { Button } from "@/shared/ui";
 import React from "react";
 import { Store } from "lucide-react";
-import { Button } from "@/shared/ui/button";
 
 type Integration = {
   id: string;

@@ -1,8 +1,8 @@
 "use client";
 
+import { Input, useToast } from "@/shared/ui";
 import { useState, useEffect, useRef, KeyboardEvent, memo } from "react";
-import { Input } from "@/shared/ui/input";
-import { useToast } from "@/shared/ui/toast";
+
 
 type EditableCellProps = {
   value: number | null;

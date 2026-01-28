@@ -1,15 +1,14 @@
 "use client";
-
+import { FilePreviewModal, Button, useToast, Input } from "@/shared/ui";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
 import type { ImageFileSelection } from "@/shared/types/files";
-import type { ExpandedImageFile } from "@/features/products/types/products-ui";
+import type { ExpandedImageFile } from "@/features/products";
 
-import FilePreviewModal from "@/shared/ui/file-preview-modal";
-import { Button } from "@/shared/ui/button";
-import { useToast } from "@/shared/ui/toast";
-import { Input } from "@/shared/ui/input";
+
+
+
 
 interface FileManagerProps {
   onSelectFile?: (files: ImageFileSelection[]) => void;

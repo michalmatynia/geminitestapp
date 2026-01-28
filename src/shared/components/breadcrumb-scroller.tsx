@@ -1,8 +1,8 @@
 "use client";
 
+import { Button } from "@/shared/ui";
 import React, { useState, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/shared/ui/button";
 
 export function BreadcrumbScroller({
   backgroundColor,

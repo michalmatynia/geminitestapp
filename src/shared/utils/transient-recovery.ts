@@ -1,5 +1,5 @@
 import { isRetryableError } from "@/shared/errors/app-error";
-import { logSystemEvent } from "@/features/observability/services/system-logger";
+import { logSystemEvent } from "@/shared/lib/observability/system-logger";
 import { withRetry, type RetryOptions, withCircuitBreaker, type CircuitBreakerOptions } from "@/shared/utils/retry";
 import { getTransientRecoverySettings } from "@/shared/lib/transient-recovery/settings";
 

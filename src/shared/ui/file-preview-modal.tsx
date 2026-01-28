@@ -1,8 +1,8 @@
 "use client";
 
+import { AppModal } from "@/shared/ui";
 import { XIcon } from "lucide-react";
 import Image from "next/image";
-import { AppModal } from "@/shared/ui/app-modal";
 
 export interface FilePreviewData {
   filename: string;

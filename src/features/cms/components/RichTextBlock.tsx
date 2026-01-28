@@ -1,8 +1,7 @@
 "use client";
 
-import { Input } from "@/shared/ui/input";
-import { Textarea } from "@/shared/ui/textarea";
-import { Label } from "@/shared/ui/label";
+
+
 
 interface RichTextContent {
   heading?: string;
@@ -53,3 +52,4 @@ export default function RichTextBlock({ content, onChange }: RichTextBlockProps)
     </div>
   );
 }
+import { Input, Textarea, Label } from "@/shared/ui";

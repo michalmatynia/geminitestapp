@@ -1,1 +1,1 @@
-export { runtime, GET } from "@/features/agentcreator/api/agent/[runId]/stream/route";
+export { AgentCreatorAgentRunStreamRuntime as runtime, AgentCreatorAgentRunStreamGET as GET } from "@/features/agentcreator";

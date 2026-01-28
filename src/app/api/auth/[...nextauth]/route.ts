@@ -1,4 +1,4 @@
-import { handlers } from "@/features/auth/auth";
+import { handlers } from "@/features/auth";
 import { NextRequest } from "next/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";

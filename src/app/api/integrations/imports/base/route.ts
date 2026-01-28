@@ -4,13 +4,13 @@ import path from "path";
 import fs from "fs/promises";
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { getProductDataProvider } from "@/features/products/services/product-provider";
-import { getCatalogRepository } from "@/features/products/services/catalog-repository";
-import { getImageFileRepository } from "@/features/files/services/image-file-repository";
-import { getProductRepository } from "@/features/products/services/product-repository";
-import { getImportTemplate } from "@/features/integrations/services/import-template-repository";
-import { getIntegrationRepository } from "@/features/integrations/services/integration-repository";
-import { decryptSecret } from "@/features/integrations/utils/encryption";
+import { getProductDataProvider } from "@/features/products";
+import { getCatalogRepository } from "@/features/products";
+import { getImageFileRepository } from "@/features/files";
+import { getProductRepository } from "@/features/products";
+import { getImportTemplate } from "@/features/integrations";
+import { getIntegrationRepository } from "@/features/integrations";
+import { decryptSecret } from "@/features/integrations";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {
   fetchBaseAllWarehouses,
@@ -22,11 +22,11 @@ import {
   fetchBaseProducts,
   fetchBaseProductIds,
   fetchBaseProductDetails,
-} from "@/features/integrations/services/imports/base-client";
-import { extractBaseImageUrls, mapBaseProduct } from "@/features/integrations/services/imports/base-mapper";
-import { productCreateSchema } from "@/features/products/validations";
+} from "@/features/integrations";
+import { extractBaseImageUrls, mapBaseProduct } from "@/features/integrations";
+import { productCreateSchema } from "@/features/products";
 import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { ProductWithImages } from "@/features/products/types";
+import type { ProductWithImages } from "@/features/products";
 
 export const runtime = "nodejs";
 

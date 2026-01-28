@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getIntegrationRepository } from "@/features/integrations/services/integration-repository";
+import { getIntegrationRepository } from "@/features/integrations";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products/api/parse-json";
+import { parseJsonBody } from "@/features/products";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 
 const integrationSchema = z.object({

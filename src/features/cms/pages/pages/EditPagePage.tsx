@@ -1,8 +1,9 @@
 "use client";
 
+import { Button } from "@/shared/ui";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Button } from "@/shared/ui/button";
+
 import CmsEditorLayout from "@/features/cms/components/CmsEditorLayout";
 import { fetchPage, updatePage } from "@/features/cms/api/pages";
 import type { Page } from "@/features/cms/types";

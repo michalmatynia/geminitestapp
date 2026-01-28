@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { chatbotSessionRepository } from "@/features/chatbot/services/chatbot-session-repository";
+import { chatbotSessionRepository } from "@/features/chatbot";
 import type { ChatSession, UpdateSessionInput } from "@/shared/types/chatbot";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products/api/parse-json";
+import { parseJsonBody } from "@/features/products";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 

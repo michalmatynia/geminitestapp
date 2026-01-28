@@ -1,4 +1,4 @@
-import AdminChatbotPage from "@/features/chatbot/pages/AdminChatbotPage";
+import { AdminChatbotPage } from "@/features/chatbot";
 
 export default function Page() {
   return <AdminChatbotPage />;

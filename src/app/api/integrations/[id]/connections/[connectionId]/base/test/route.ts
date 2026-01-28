@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getIntegrationRepository } from "@/features/integrations/services/integration-repository";
-import { decryptSecret, encryptSecret } from "@/features/integrations/utils/encryption";
-import { fetchBaseInventories } from "@/features/integrations/services/imports/base-client";
+import { getIntegrationRepository } from "@/features/integrations";
+import { decryptSecret, encryptSecret } from "@/features/integrations";
+import { fetchBaseInventories } from "@/features/integrations";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { AppErrorCodes, createAppError } from "@/shared/errors/app-error";
 import { mapStatusToAppError } from "@/shared/errors/error-mapper";

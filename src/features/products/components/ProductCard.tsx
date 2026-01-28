@@ -1,14 +1,8 @@
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, MissingImagePlaceholder } from "@/shared/ui";
 import Image from "next/image";
 import Link from "next/link";
 import type { ProductWithImages } from "@/features/products/types";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/shared/ui/card";
-import MissingImagePlaceholder from "@/shared/ui/missing-image-placeholder";
+
 
 interface ProductCardProps {
   product: ProductWithImages;

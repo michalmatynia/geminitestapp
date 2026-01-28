@@ -1,4 +1,4 @@
-import CreatePagePage from "@/features/cms/pages/pages/CreatePagePage";
+import { CreatePagePage } from "@/features/cms";
 
 export default function Page() {
   return <CreatePagePage />;

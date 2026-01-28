@@ -1,10 +1,6 @@
-import OpenAI from "openai";
-import {
-  apiKeyInvalidError,
-  configurationError,
-  operationFailedError,
-} from "@/shared/errors/app-error";
-import { ErrorSystem } from "@/features/observability/services/error-system";
+import { OpenAI from "openai";
+import, apiKeyInvalidError, configurationError, operationFailedError, } from "@/shared/errors/app-error";
+import { ErrorSystem } from "@/features/observability";
 import { getSettingValue } from "./aiDescriptionService";
 
 interface TranslateProductParams {

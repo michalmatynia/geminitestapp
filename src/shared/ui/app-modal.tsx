@@ -1,8 +1,9 @@
 "use client";
 
+import { Dialog, DialogContent, DialogTitle } from "@/shared/ui";
 import * as React from "react";
 
-import { Dialog, DialogContent, DialogTitle } from "@/shared/ui/dialog";
+
 import { cn } from "@/shared/utils";
 
 type AppModalProps = {

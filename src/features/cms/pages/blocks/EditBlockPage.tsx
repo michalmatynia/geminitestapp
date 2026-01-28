@@ -1,14 +1,14 @@
 "use client";
 
+import { Button, Input, Label, Textarea, SectionHeader } from "@/shared/ui";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Textarea } from "@/shared/ui/textarea";
+
+
+
+
 import { fetchBlock, updateBlock } from "@/features/cms/api/blocks";
 import type { BlockForm } from "@/features/cms/types";
-import { SectionHeader } from "@/shared/components/section-header";
 
 export default function EditBlockPage() {
   const [block, setBlock] = useState<BlockForm | null>(null);

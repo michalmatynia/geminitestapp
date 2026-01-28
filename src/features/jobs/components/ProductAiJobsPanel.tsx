@@ -1,17 +1,18 @@
 "use client";
 
+import { Button, Input, Tabs, TabsContent, TabsList, TabsTrigger, useToast, AppModal, ModalShell, SectionHeader, SectionPanel } from "@/shared/ui";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
-import { useToast } from "@/shared/ui/toast";
+
+
+
+
 import { Loader2, RefreshCcw, Trash2, XCircle, Eye } from "lucide-react";
-import { AppModal } from "@/shared/ui/app-modal";
-import ModalShell from "@/shared/components/modal-shell";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
+
+
 import ProductListingJobsPanel from "@/features/jobs/components/ProductListingJobsPanel";
 import type { ProductAiJob } from "@/shared/types/jobs";
 import type { ProductAiJobsPanelProps } from "@/features/jobs/types/jobs-ui";

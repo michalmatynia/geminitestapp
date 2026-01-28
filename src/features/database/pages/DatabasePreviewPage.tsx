@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, Input, Label, SectionHeader, SectionPanel } from "@/shared/ui";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -17,11 +18,11 @@ import {
   TableIcon,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
+
+
+
 import type {
   DatabasePreviewGroup,
   DatabasePreviewMode,

@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import prisma from "@/shared/lib/db/prisma";
-import { parseJsonBody } from "@/features/products/api/parse-json";
-import { getProductDataProvider } from "@/features/products/services/product-provider";
+import { parseJsonBody } from "@/features/products";
+import { getProductDataProvider } from "@/features/products";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {

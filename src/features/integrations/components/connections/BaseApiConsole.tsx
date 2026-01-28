@@ -1,10 +1,10 @@
 "use client";
 
+import { Button, Input, Textarea, Label } from "@/shared/ui";
 import { IntegrationConnection } from "@/features/integrations/types/integrations-ui";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Textarea } from "@/shared/ui/textarea";
-import { Label } from "@/shared/ui/label";
+
+
+
 
 type BaseApiConsoleProps = {
   activeConnection: IntegrationConnection | null;

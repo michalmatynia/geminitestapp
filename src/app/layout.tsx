@@ -1,11 +1,12 @@
+import { ToastProvider } from "@/shared/ui";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Suspense } from "react";
 
 import { ThemeProvider } from "@/shared/providers/theme-provider";
-import { ToastProvider } from "@/shared/ui/toast";
+
 import { QueryProvider } from "@/shared/providers/QueryProvider";
-import ClientErrorReporter from "@/features/observability/components/ClientErrorReporter";
+import ClientErrorReporter from "@/features/observability";
 import { SessionProvider } from "next-auth/react";
 import { cn } from "@/shared/utils";
 

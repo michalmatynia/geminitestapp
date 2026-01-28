@@ -1,10 +1,10 @@
 "use client";
 
+import { Button, Input, Label } from "@/shared/ui";
 import { Dispatch, SetStateAction } from "react";
 import { Integration, IntegrationConnection, TestLogEntry } from "@/features/integrations/types/integrations-ui";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
+
+
 
 type ConnectionManagerProps = {
   activeIntegration: Integration;

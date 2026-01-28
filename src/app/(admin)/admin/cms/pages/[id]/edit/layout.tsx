@@ -1,3 +1,3 @@
 "use client";
 
-export { default } from "@/features/cms/components/CmsEditorLayout";
+export { CmsEditorLayout as default } from "@/features/cms";

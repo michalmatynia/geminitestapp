@@ -1,12 +1,12 @@
 "use client";
 
+import { useToast, Button, Label } from "@/shared/ui";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Download, RefreshCw, Save, ChevronRight, ChevronDown, Check } from "lucide-react";
-import { useToast } from "@/shared/ui/toast";
+
 import type { ExternalCategory, CategoryMappingWithDetails } from "@/features/integrations/types/category-mapping";
-import type { ProductCategory, Catalog } from "@/features/products/types";
-import { Button } from "@/shared/ui/button";
-import { Label } from "@/shared/ui/label";
+import type { ProductCategory, Catalog } from "@/features/products";
+
 
 type BaseCategoryMapperProps = {
   connectionId: string;

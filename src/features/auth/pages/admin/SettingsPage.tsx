@@ -1,15 +1,16 @@
 "use client";
 
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, SectionHeader, SectionPanel, Checkbox } from "@/shared/ui";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import { useToast } from "@/shared/ui/toast";
+
+
+
+
+
 import { useSession } from "next-auth/react";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
 import {
   AUTH_SETTINGS_KEYS,
   DEFAULT_AUTH_ROLES,
@@ -17,7 +18,7 @@ import {
   type AuthRole,
 } from "@/features/auth/utils/auth-management";
 import { parseJsonSetting } from "@/shared/utils/settings-json";
-import { Checkbox } from "@/shared/ui/checkbox";
+
 import {
   DEFAULT_AUTH_SECURITY_POLICY,
   normalizeAuthSecurityPolicy,

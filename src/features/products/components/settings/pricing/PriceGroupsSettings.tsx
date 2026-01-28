@@ -1,7 +1,7 @@
+import { Button, Label } from "@/shared/ui";
 import React from "react";
 import { PriceGroup } from "@/features/products/types";
-import { Button } from "@/shared/ui/button";
-import { Label } from "@/shared/ui/label";
+
 
 type PriceGroupsSettingsProps = {
   loadingGroups: boolean;

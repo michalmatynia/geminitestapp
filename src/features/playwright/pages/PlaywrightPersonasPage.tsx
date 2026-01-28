@@ -1,19 +1,19 @@
 "use client";
 
+import { Button, AppModal, Input, Label, ModalShell, Textarea, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { MonitorPlay, Pencil, Plus, Trash2 } from "lucide-react";
 
-import { Button } from "@/shared/ui/button";
-import { AppModal } from "@/shared/ui/app-modal";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import ModalShell from "@/shared/components/modal-shell";
-import { Textarea } from "@/shared/ui/textarea";
-import { useToast } from "@/shared/ui/toast";
+
+
+
+
+
+
+
 import { serializeSetting } from "@/shared/utils/settings-json";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
 
 import { PlaywrightSettingsForm } from "@/features/playwright/components/PlaywrightSettingsForm";
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from "@/features/playwright/constants/playwright";

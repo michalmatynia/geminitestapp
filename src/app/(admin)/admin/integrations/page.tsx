@@ -1,4 +1,4 @@
-import ConnectionsPage from "@/features/integrations/pages/ConnectionsPage";
+import { ConnectionsPage } from "@/features/integrations";
 
 export default function Page() {
   return <ConnectionsPage />;

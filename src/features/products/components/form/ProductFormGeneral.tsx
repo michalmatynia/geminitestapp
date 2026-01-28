@@ -1,31 +1,25 @@
 "use client";
 
+import { Button, Input, Label, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast } from "@/shared/ui";
 import { useState, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { useProductFormContext } from "@/features/products/context/ProductFormContext";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Textarea } from "@/shared/ui/textarea";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
+
+
+
+
+
+
 import { logger } from "@/shared/utils/logger";
 import { cn } from "@/shared/utils";
 import { ProductFormData } from "@/features/products/types";
-import { useToast } from "@/shared/ui/toast";
 import type { ProductAiJob } from "@/shared/types/jobs";
 import type {
   AiNode,
   PathConfig,
   PathMeta,
-} from "@/features/ai-paths/lib";
-import { evaluateGraph } from "@/features/ai-paths/lib";
+} from "@/features/ai-paths";
+import { evaluateGraph } from "@/features/ai-paths";
 import {
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
@@ -33,7 +27,7 @@ import {
   createDefaultPathConfig,
   normalizeNodes,
   sanitizeEdges,
-} from "@/features/ai-paths/lib";
+} from "@/features/ai-paths";
 
 export default function ProductFormGeneral() {
   const safeJsonStringify = (value: unknown) => {

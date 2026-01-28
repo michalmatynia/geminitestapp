@@ -1,4 +1,4 @@
-import { AdminAiPathsPage } from "@/features/ai-paths/pages/AdminAiPathsPage";
+import { AdminAiPathsPage } from "@/features/ai-paths";
 
 export default function Page() {
   return <AdminAiPathsPage />;

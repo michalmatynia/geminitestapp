@@ -1,13 +1,13 @@
 "use client";
 
+import { Button, Input, Label, SectionHeader } from "@/shared/ui";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
+
+
+
 import { createSlug } from "@/features/cms/api/slugs";
 import { SLUG_REGEX } from "@/features/cms/validations/slug";
-import { SectionHeader } from "@/shared/components/section-header";
 
 export default function CreateSlugPage() {
   const [slug, setSlug] = useState("");

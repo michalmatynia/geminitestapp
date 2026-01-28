@@ -1,10 +1,10 @@
 "use client";
 
+import { Button, Label, Checkbox, AppModal } from "@/shared/ui";
 import { useState } from "react";
-import { Button } from "@/shared/ui/button";
-import { Label } from "@/shared/ui/label";
-import { Checkbox } from "@/shared/ui/checkbox";
-import { AppModal } from "@/shared/ui/app-modal";
+
+
+
 
 type RestoreModalProps = {
   backupName: string;

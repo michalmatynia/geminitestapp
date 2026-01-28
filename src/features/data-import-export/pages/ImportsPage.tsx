@@ -1,16 +1,16 @@
 "use client";
-
+import { Button, Input, Tabs, TabsContent, TabsList, TabsTrigger, useToast, Checkbox, Label, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { GripVertical, Trash2 } from "lucide-react";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
-import { useToast } from "@/shared/ui/toast";
+
+
+
+
 import type {
   IntegrationConnectionBasic,
   IntegrationWithConnections,
-} from "@/features/integrations/types/listings";
+} from "@/features/integrations";
 import { ImportTab } from "@/features/data-import-export/components/imports/ImportTab";
 import { ExportTab } from "@/features/data-import-export/components/imports/ExportTab";
 import {
@@ -31,14 +31,13 @@ import type {
   WarehouseOption,
   ImageRetryPreset,
 } from "@/features/data-import-export/types/imports";
-import { Checkbox } from "@/shared/ui/checkbox";
-import { Label } from "@/shared/ui/label";
+
+
 import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
 } from "@/features/data-import-export/utils/image-retry-presets";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
 
 export default function ImportsPage() {
   const { toast } = useToast();

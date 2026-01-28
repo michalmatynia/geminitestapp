@@ -1,10 +1,9 @@
 "use client";
-
+import { useToast, SectionPanel } from "@/shared/ui";
 import React, { useState, useCallback, useMemo } from "react";
-import { useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
+import { useAdminLayout } from "@/features/admin";
 import { useNoteSettings } from "@/features/notesapp/hooks/NoteSettingsContext";
-import { useToast } from "@/shared/ui/toast";
-import { FolderTree } from "@/features/foldertree/components/FolderTree";
+import { FolderTree } from "@/features/foldertree";
 import { NoteListView } from "@/features/notesapp/components/NoteListView";
 import { NoteDetailView } from "@/features/notesapp/components/NoteDetailView";
 import { CreateNoteModal } from "@/features/notesapp/components/CreateNoteModal";
@@ -14,7 +13,6 @@ import { useNoteOperations } from "@/features/notesapp/hooks/useNoteOperations";
 import { useNoteTheme } from "@/features/notesapp/hooks/useNoteTheme";
 import type { NoteWithRelations } from "@/shared/types/notes";
 import type { UndoAction } from "@/features/notesapp/types/notes-hooks";
-import { SectionPanel } from "@/shared/components/section-panel";
 
 export function AdminNotesPage() {
   const { isMenuCollapsed } = useAdminLayout();

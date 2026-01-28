@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/shared/ui";
 import Link from "next/link";
 import {
   PackageIcon,
@@ -18,7 +19,7 @@ import {
 import CollapsibleMenu from "@/features/admin/components/CollapsibleMenu";
 import { useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
 import { useRouter } from "next/navigation";
-import { Button } from "@/shared/ui/button";
+
 import { useEffect, useState } from "react";
 
 export default function Menu() {

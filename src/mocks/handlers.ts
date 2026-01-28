@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { NoteCreateData } from '@/features/notesapp/validations/notes';
+import { NoteCreateData } from "@/features/notesapp";
 
 // Mock data
 const mockProducts = [

@@ -1,12 +1,13 @@
 "use client";
 
+import { Button, useToast, Input, Label } from "@/shared/ui";
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
 import type { CategoryWithChildren, NoteWithRelations, NoteFileRecord } from "@/shared/types/notes";
 import type { NoteFormProps } from "@/features/notesapp/types/notes-ui";
-import { Button } from "@/shared/ui/button";
-import { useToast } from "@/shared/ui/toast";
+
+
 import { autoformatMarkdown } from "../utils";
 import { useUndo } from "@/shared/hooks/use-undo";
 import { useNoteMetadata } from "../hooks/useNoteMetadata";
@@ -19,8 +20,7 @@ import { FileAttachments } from "./editor/FileAttachments";
 import { NoteMetadata } from "./editor/NoteMetadata";
 import { MarkdownEditor } from "./editor/MarkdownEditor";
 import { WysiwygEditor } from "./editor/WysiwygEditor";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
+
 
 // Hardcoded dark mode fallback theme - consistent with page styling
 const FALLBACK_THEME = {

@@ -1,8 +1,8 @@
-import fs from "fs/promises";
-import { NextRequest } from "next/server";
+import { fs from "fs/promises";
+import, NextRequest } from "next/server";
 
-import { getDiskPathFromPublicPath } from "@/features/files/utils/fileUploader";
-import { getImageFileRepository } from "@/features/files/services/image-file-repository";
+import { getDiskPathFromPublicPath } from "@/features/files";
+import { getImageFileRepository } from "@/features/files";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";

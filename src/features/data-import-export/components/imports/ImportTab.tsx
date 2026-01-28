@@ -1,9 +1,10 @@
 "use client";
 
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Checkbox } from "@/shared/ui/checkbox";
+
+
+
+
+import { Button, Input, Label, Checkbox } from "@/shared/ui";
 import NextImage from "next/image";
 import type {
   CatalogOption,

@@ -1,9 +1,9 @@
 "use client";
 
+import { useToast, Textarea } from "@/shared/ui";
 import React from "react";
-import { useToast } from "@/shared/ui/toast";
+
 import { renderMarkdownToHtml } from "../../utils";
-import { Textarea } from "@/shared/ui/textarea";
 
 interface MarkdownEditorProps {
   content: string;

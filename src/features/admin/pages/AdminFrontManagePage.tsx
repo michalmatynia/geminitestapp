@@ -1,13 +1,13 @@
 "use client";
 
+import { Button, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
 import React, { useEffect, useMemo, useState } from "react";
 import { SaveIcon } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/shared/ui/button";
-import { useToast } from "@/shared/ui/toast";
+
+
 import { cn } from "@/shared/utils";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
 
 type FrontAppOption = "products" | "chatbot" | "notes";
 

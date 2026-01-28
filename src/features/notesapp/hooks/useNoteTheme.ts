@@ -1,7 +1,7 @@
 import { useMemo, useCallback } from "react";
 import type { NoteWithRelations, NotebookRecord } from "@/shared/types/notes";
 import type { UseNoteThemeProps } from "@/features/notesapp/types/notes-hooks";
-import { findFolderById } from "@/features/foldertree/utils/tree";
+import { findFolderById } from "@/features/foldertree";
 
 export function useNoteTheme({
   themes,

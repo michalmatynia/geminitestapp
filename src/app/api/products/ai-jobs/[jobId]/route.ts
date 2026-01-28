@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getProductAiJob, cancelProductAiJob, deleteProductAiJob } from "@/features/jobs/services/productAiService";
+import { getProductAiJob, cancelProductAiJob, deleteProductAiJob } from "@/features/jobs";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products/api/parse-json";
+import { parseJsonBody } from "@/features/products";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 

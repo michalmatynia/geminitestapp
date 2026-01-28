@@ -1,13 +1,13 @@
 "use client";
 
+import { BreadcrumbScroller, Button } from "@/shared/ui";
 import React from "react";
 import Image from "next/image";
 import { ChevronRight, Pin, Star, Copy, Check } from "lucide-react";
 import type { ThemeRecord } from "@/shared/types/notes";
 import type { NoteCardProps } from "@/features/notesapp/types/notes-ui";
-import { BreadcrumbScroller } from "@/shared/components/breadcrumb-scroller";
+
 import { darkenColor, renderMarkdownToHtml } from "../utils";
-import { Button } from "@/shared/ui/button";
 
 // Hardcoded dark mode fallback theme - consistent with page styling
 const FALLBACK_THEME: Omit<ThemeRecord, "id" | "createdAt" | "updatedAt" | "name" | "notebookId"> = {

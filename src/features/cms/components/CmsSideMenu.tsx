@@ -1,7 +1,8 @@
 "use client";
 
+import { Button } from "@/shared/ui";
 import * as React from "react";
-import { Button } from "@/shared/ui/button";
+
 import RichTextBlock from "./RichTextBlock";
 import type { PageComponent, Page } from "@/features/cms/types";
 

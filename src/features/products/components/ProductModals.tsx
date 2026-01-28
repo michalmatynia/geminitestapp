@@ -1,14 +1,14 @@
 "use client";
-
+import { ModalShell, Button, AppModal } from "@/shared/ui";
 import React from "react";
-import ModalShell from "@/shared/components/modal-shell";
-import { Button } from "@/shared/ui/button";
-import { AppModal } from "@/shared/ui/app-modal";
-import FileManager from "@/features/files/components/FileManager";
+
+
+
+import FileManager from "@/features/files";
 import ProductForm from "@/features/products/components/ProductForm";
-import ProductListingsModal from "@/features/integrations/components/listings/ProductListingsModal";
-import ListProductModal from "@/features/integrations/components/listings/ListProductModal";
-import MassListProductModal from "@/features/integrations/components/listings/MassListProductModal";
+import { ProductListingsModal } from "@/features/integrations";
+import { ListProductModal } from "@/features/integrations";
+import { MassListProductModal } from "@/features/integrations";
 import {
   ProductFormProvider,
   useProductFormContext,

@@ -1,10 +1,11 @@
 "use client";
 
+import { Button, ListPanel, SectionHeader } from "@/shared/ui";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Button } from "@/shared/ui/button";
-import { ListPanel } from "@/shared/components/list-panel";
-import { SectionHeader } from "@/shared/components/section-header";
+
+
+
 import { deleteSlug, fetchSlugs } from "@/features/cms/api/slugs";
 import type { Slug } from "@/features/cms/types";
 

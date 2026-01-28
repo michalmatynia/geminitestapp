@@ -1,12 +1,12 @@
 "use client";
 
+import { useToast, Button, SectionHeader, SectionPanel } from "@/shared/ui";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/shared/ui/toast";
-import { Button } from "@/shared/ui/button";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
+
 
 const integrations = [
   {

@@ -1,7 +1,6 @@
 "use client";
 
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
 
 export default function TraderaSettingsPage() {
   return (
@@ -19,3 +18,4 @@ export default function TraderaSettingsPage() {
     </div>
   );
 }
+import { SectionHeader, SectionPanel } from "@/shared/ui";

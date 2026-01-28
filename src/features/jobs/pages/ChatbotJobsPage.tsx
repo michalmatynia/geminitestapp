@@ -1,13 +1,13 @@
 "use client";
 
+import { Button, Input, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { useToast } from "@/shared/ui/toast";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
+
+
 
 type ChatbotJob = {
   id: string;

@@ -1,8 +1,8 @@
 "use client";
 
+import { SectionHeader, SectionPanel } from "@/shared/ui";
 import Link from "next/link";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
 
 const cards = [
   {

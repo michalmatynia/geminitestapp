@@ -1,8 +1,9 @@
 "use client";
 
-import { Button } from "@/shared/ui/button";
-import { Label } from "@/shared/ui/label";
-import { Textarea } from "@/shared/ui/textarea";
+
+
+
+import { Button, Label, Textarea } from "@/shared/ui";
 import type { AiNode, NodeConfig } from "@/features/ai-paths/lib";
 import { parsePathList } from "@/features/ai-paths/lib";
 

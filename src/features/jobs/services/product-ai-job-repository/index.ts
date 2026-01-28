@@ -1,4 +1,4 @@
-import { getProductDataProvider } from "@/features/products/services/product-provider";
+import { getProductDataProvider } from "@/features/products";
 import { mongoProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository/mongo-product-ai-job-repository";
 import { prismaProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository/prisma-product-ai-job-repository";
 import type { ProductAiJobRepository } from "@/features/jobs/types/product-ai-job-repository";

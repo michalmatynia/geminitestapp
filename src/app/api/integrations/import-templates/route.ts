@@ -3,9 +3,9 @@ import { z } from "zod";
 import {
   createImportTemplate,
   listImportTemplates,
-} from "@/features/integrations/services/import-template-repository";
+} from "@/features/integrations";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products/api/parse-json";
+import { parseJsonBody } from "@/features/products";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";

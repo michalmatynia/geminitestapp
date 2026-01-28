@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCatalogRepository } from "@/features/products/services/catalog-repository";
-import { getProductDataProvider } from "@/features/products/services/product-provider";
+import { getCatalogRepository } from "@/features/products";
+import { getProductDataProvider } from "@/features/products";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import prisma from "@/shared/lib/db/prisma";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products/api/parse-json";
+import { parseJsonBody } from "@/features/products";
 import { badRequestError } from "@/shared/errors/app-error";
-import { logSystemEvent } from "@/features/observability/services/system-logger";
+import { logSystemEvent } from "@/features/observability";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 
 const catalogSchema = z.object({

@@ -1,1 +1,1 @@
-export { GET, POST, DELETE } from "@/features/agentcreator/api/agent/[runId]/route";
+export { AgentCreatorAgentRunGET as GET, AgentCreatorAgentRunPOST as POST, AgentCreatorAgentRunDELETE as DELETE } from "@/features/agentcreator";

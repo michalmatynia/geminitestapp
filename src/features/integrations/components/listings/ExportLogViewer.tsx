@@ -1,8 +1,8 @@
 "use client";
 
+import { Button } from "@/shared/ui";
 import { useMemo, useState } from "react";
 import { ChevronDown, Copy, Check } from "lucide-react";
-import { Button } from "@/shared/ui/button";
 
 interface ExportLog {
   timestamp: string;

@@ -1,4 +1,4 @@
-import EditSlugPage from "@/features/cms/pages/slugs/EditSlugPage";
+import { EditSlugPage } from "@/features/cms";
 
 export default function Page() {
   return <EditSlugPage />;

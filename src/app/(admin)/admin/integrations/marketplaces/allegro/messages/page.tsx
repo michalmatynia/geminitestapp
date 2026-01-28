@@ -1,4 +1,4 @@
-import AllegroMessagesPage from "@/features/integrations/pages/marketplaces/allegro/AllegroMessagesPage";
+import { AllegroMessagesPage } from "@/features/integrations";
 
 export default function Page() {
   return <AllegroMessagesPage />;

@@ -1,20 +1,14 @@
 "use client";
 
+import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, useToastSettings, SectionHeader, SectionPanel } from "@/shared/ui";
 import Link from "next/link";
 import { useState } from "react";
 
-import { Button } from "@/shared/ui/button";
-import { Label } from "@/shared/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
-import { useToast, useToastSettings } from "@/shared/ui/toast";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
+
+
+
 
 const positionOptions = [
   { value: "top-right", label: "Top Right", desc: "Corner top right" },

@@ -1,6 +1,7 @@
 "use client";
 
-import { Button } from "@/shared/ui/button";
+
+import { Button } from "@/shared/ui";
 import type { AiNode, NodeConfig } from "@/features/ai-paths/lib";
 
 type AiDescriptionNodeConfigSectionProps = {

@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getIntegrationRepository } from "@/features/integrations/services/integration-repository";
-import { decryptSecret } from "@/features/integrations/utils/encryption";
-import { callBaseApi } from "@/features/integrations/services/imports/base-client";
+import { getIntegrationRepository } from "@/features/integrations";
+import { decryptSecret } from "@/features/integrations";
+import { callBaseApi } from "@/features/integrations";
 import {
   getImportParameterCache,
   setImportParameterCache,
-} from "@/features/integrations/services/import-template-repository";
+} from "@/features/integrations";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products/api/parse-json";
+import { parseJsonBody } from "@/features/products";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 

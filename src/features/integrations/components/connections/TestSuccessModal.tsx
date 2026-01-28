@@ -1,7 +1,6 @@
 "use client";
 
-import { AppModal } from "@/shared/ui/app-modal";
-import ModalShell from "@/shared/components/modal-shell";
+
 
 type TestSuccessModalProps = {
   message: string | null;
@@ -27,3 +26,4 @@ export function TestSuccessModal({ message, onClose }: TestSuccessModalProps) {
     </AppModal>
   );
 }
+import { AppModal, ModalShell } from "@/shared/ui";

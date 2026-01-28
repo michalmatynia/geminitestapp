@@ -1,4 +1,4 @@
-import ImportsPage from "@/features/data-import-export/pages/ImportsPage";
+import { ImportsPage } from "@/features/data-import-export";
 
 export default function Page() {
   return (

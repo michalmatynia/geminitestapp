@@ -1,8 +1,8 @@
 "use client";
 
+import { MissingImagePlaceholder } from "@/shared/ui";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import MissingImagePlaceholder from "@/shared/ui/missing-image-placeholder";
 
 interface ProductImageCellProps {
   imageUrl: string | null;

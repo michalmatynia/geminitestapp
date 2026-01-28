@@ -1,11 +1,11 @@
 "use client";
-
+import { Button, ListPanel, useToast, SectionHeader } from "@/shared/ui";
 import { useEffect, useState } from "react";
-import { Button } from "@/shared/ui/button";
-import { ListPanel } from "@/shared/components/list-panel";
-import { useToast } from "@/shared/ui/toast";
-import { SectionHeader } from "@/shared/components/section-header";
-import { ProductDraft } from "@/features/products/types/drafts";
+
+
+
+
+import { ProductDraft } from "@/features/products";
 import {
   PlusIcon,
   Edit2Icon,

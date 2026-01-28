@@ -1,15 +1,16 @@
 "use client";
 
+import { Tabs, TabsContent, TabsList, TabsTrigger, Button, Card, ModalShell, AppModal, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
 import { Dispatch, SetStateAction, useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
+
 import {
   Integration,
   IntegrationConnection,
   TestLogEntry,
 } from "@/features/integrations/types/integrations-ui";
 import { ConnectionManager } from "./ConnectionManager";
-import { PlaywrightSettingsForm } from "@/features/playwright/components/PlaywrightSettingsForm";
-import type { PlaywrightPersona, PlaywrightSettings } from "@/features/playwright/types";
+import { PlaywrightSettingsForm } from "@/features/playwright";
+import type { PlaywrightPersona, PlaywrightSettings } from "@/features/playwright";
 import { BaseApiConsole } from "./BaseApiConsole";
 import { AllegroApiConsole } from "./AllegroApiConsole";
 import { AllegroSettings } from "./AllegroSettings";
@@ -18,19 +19,12 @@ import { TestLogModal } from "./TestLogModal";
 import { TestErrorModal } from "./TestErrorModal";
 import { TestSuccessModal } from "./TestSuccessModal";
 import { SessionModal } from "./SessionModal";
-import { Button } from "@/shared/ui/button";
-import { Card } from "@/shared/ui/card";
-import ModalShell from "@/shared/components/modal-shell";
-import { AppModal } from "@/shared/ui/app-modal";
+
+
+
+
 import Link from "next/link";
-import { Label } from "@/shared/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
+
 
 type IntegrationModalProps = {
   activeIntegration: Integration;

@@ -1,9 +1,9 @@
 "use client";
 
+import { Button, Label, Checkbox } from "@/shared/ui";
 import { IntegrationConnection } from "@/features/integrations/types/integrations-ui";
-import { Button } from "@/shared/ui/button";
-import { Label } from "@/shared/ui/label";
-import { Checkbox } from "@/shared/ui/checkbox";
+
+
 
 type AllegroSettingsProps = {
   activeConnection: IntegrationConnection | null;

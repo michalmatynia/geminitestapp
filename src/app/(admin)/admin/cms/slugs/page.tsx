@@ -1,4 +1,4 @@
-import SlugsPage from "@/features/cms/pages/slugs/SlugsPage";
+import { SlugsPage } from "@/features/cms";
 
 export default function Page() {
   return <SlugsPage />;

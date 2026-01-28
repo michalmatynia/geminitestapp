@@ -1,7 +1,8 @@
 "use client";
 
+import { useToast } from "@/shared/ui";
 import { useState } from "react";
-import { useToast } from "@/shared/ui/toast";
+
 import type { ProductWithImages } from "@/features/products/types";
 import type { ProductDraft } from "@/features/products/types/drafts";
 

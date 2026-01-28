@@ -1,7 +1,8 @@
 "use client";
 
-import { Label } from "@/shared/ui/label";
-import { Textarea } from "@/shared/ui/textarea";
+
+
+import { Label, Textarea } from "@/shared/ui";
 import type { AiNode, NodeConfig, TemplateConfig } from "@/features/ai-paths/lib";
 
 type TemplateNodeConfigSectionProps = {

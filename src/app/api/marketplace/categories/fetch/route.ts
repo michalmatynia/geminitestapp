@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/shared/lib/db/prisma";
-import { fetchBaseCategories } from "@/features/integrations/services/imports/base-client";
-import { getExternalCategoryRepository } from "@/features/integrations/services/external-category-repository";
+import { fetchBaseCategories } from "@/features/integrations";
+import { getExternalCategoryRepository } from "@/features/integrations";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";

@@ -1,14 +1,15 @@
 "use client";
 
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Checkbox, Input, Label, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/shared/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
-import { Checkbox } from "@/shared/ui/checkbox";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { useToast } from "@/shared/ui/toast";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
+
+
+
+
+
+
 import {
   AUTH_SETTINGS_KEYS,
   DEFAULT_AUTH_PERMISSIONS,

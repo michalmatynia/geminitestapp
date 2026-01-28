@@ -1,24 +1,18 @@
 "use client";
 
+import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useToast, Label, Checkbox, RadioGroup, RadioGroupItem, SectionHeader, SectionPanel } from "@/shared/ui";
 import Link from "next/link";
 import { RotateCcw } from "lucide-react";
 
-import { Button } from "@/shared/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
-import { useToast } from "@/shared/ui/toast";
+
+
+
 import { useNoteSettings, DEFAULT_NOTE_SETTINGS } from "@/features/notesapp/hooks/NoteSettingsContext";
 import type { NoteSettings } from "@/features/notesapp/types/notes-settings";
-import { Label } from "@/shared/ui/label";
-import { Checkbox } from "@/shared/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
+
+
 
 const sortByOptions = [
   { value: "created", label: "Created Date" },

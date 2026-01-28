@@ -1,11 +1,11 @@
 "use client";
-
+import { Button, ListPanel, SectionHeader } from "@/shared/ui";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Button } from "@/shared/ui/button";
-import { ListPanel } from "@/shared/components/list-panel";
-import { SectionHeader } from "@/shared/components/section-header";
-import { useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
+
+
+
+import { useAdminLayout } from "@/features/admin";
 import { useRouter } from "next/navigation";
 import { deletePage, fetchPages } from "@/features/cms/api/pages";
 import type { PageSummary } from "@/features/cms/types";

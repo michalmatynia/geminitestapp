@@ -1,4 +1,4 @@
-import { AdminNotificationsSettingsPage } from "@/features/admin/pages/AdminNotificationsSettingsPage";
+import { AdminNotificationsSettingsPage } from "@/features/admin";
 
 export default function Page() {
   return <AdminNotificationsSettingsPage />;

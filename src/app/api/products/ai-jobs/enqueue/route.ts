@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { enqueueProductAiJob } from "@/features/jobs/services/productAiService";
+import { enqueueProductAiJob } from "@/features/jobs";
 import type { ProductAiJobType } from "@/shared/types/jobs";
-import { startProductAiJobQueue, processSingleJob } from "@/features/jobs/workers/productAiQueue";
+import { startProductAiJobQueue, processSingleJob } from "@/features/jobs";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products/api/parse-json";
+import { parseJsonBody } from "@/features/products";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 
 const enqueueSchema = z.object({

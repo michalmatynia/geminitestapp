@@ -1,8 +1,9 @@
 "use client";
 
+import { Button, Input, Checkbox, Label } from "@/shared/ui";
 import Link from "next/link";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
+
+
 import type {
   InventoryOption,
   Template,
@@ -10,9 +11,9 @@ import type {
   DebugWarehouses,
   ImageRetryPreset,
 } from "@/features/data-import-export/types/imports";
-import type { IntegrationConnectionBasic } from "@/features/integrations/types/listings";
-import { Checkbox } from "@/shared/ui/checkbox";
-import { Label } from "@/shared/ui/label";
+import type { IntegrationConnectionBasic } from "@/features/integrations";
+
+
 import {
   getDefaultImageRetryPresets,
   withImageRetryPresetLabels,

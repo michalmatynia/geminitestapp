@@ -1,16 +1,9 @@
 "use client";
 
+import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/shared/ui";
 import { memo, useCallback, useMemo } from "react";
-import { Button } from "@/shared/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
+
+
 import { CheckSquare, Settings2, Trash2, Store } from "lucide-react";
 import type { ProductWithImages } from "@/features/products/types";
 import type { RowSelectionState } from "@tanstack/react-table";

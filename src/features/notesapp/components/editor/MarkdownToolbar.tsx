@@ -1,11 +1,11 @@
 "use client";
 
+import { Button, Input, Label } from "@/shared/ui";
 import React from "react";
 import { Undo, Redo } from "lucide-react";
 import type { NoteFileRecord } from "@/shared/types/notes";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
+
+
 
 interface MarkdownToolbarProps {
   noteFiles: NoteFileRecord[];

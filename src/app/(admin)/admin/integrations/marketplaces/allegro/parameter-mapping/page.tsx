@@ -1,4 +1,4 @@
-import AllegroParameterMappingPage from "@/features/integrations/pages/marketplaces/allegro/AllegroParameterMappingPage";
+import { AllegroParameterMappingPage } from "@/features/integrations";
 
 export default function Page() {
   return <AllegroParameterMappingPage />;

@@ -1,13 +1,14 @@
 "use client";
 
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Label, Switch, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
 import { useEffect, useState } from "react";
-import { Button } from "@/shared/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
-import { Label } from "@/shared/ui/label";
-import { Switch } from "@/shared/ui/switch";
-import { useToast } from "@/shared/ui/toast";
-import { SectionHeader } from "@/shared/components/section-header";
-import { SectionPanel } from "@/shared/components/section-panel";
+
+
+
+
+
+
+
 import { AUTH_SETTINGS_KEYS } from "@/features/auth/utils/auth-management";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import {

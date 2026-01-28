@@ -1,8 +1,9 @@
 "use client";
 
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Textarea } from "@/shared/ui/textarea";
+
+
+
+import { Input, Label, Textarea } from "@/shared/ui";
 import type { AiNode, NodeConfig } from "@/features/ai-paths/lib";
 
 type MutatorNodeConfigSectionProps = {

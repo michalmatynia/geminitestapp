@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getProductListingRepository } from "@/features/integrations/services/product-listing-repository";
-import { getIntegrationRepository } from "@/features/integrations/services/integration-repository";
-import { deleteBaseProduct } from "@/features/integrations/services/imports/base-client";
-import { decryptSecret } from "@/features/integrations/utils/encryption";
+import { getProductListingRepository } from "@/features/integrations";
+import { getIntegrationRepository } from "@/features/integrations";
+import { deleteBaseProduct } from "@/features/integrations";
+import { decryptSecret } from "@/features/integrations";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products/api/parse-json";
+import { parseJsonBody } from "@/features/products";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 

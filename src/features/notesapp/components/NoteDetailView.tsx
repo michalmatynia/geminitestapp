@@ -1,11 +1,11 @@
+import { Button, useToast } from "@/shared/ui";
 import React, { useState, useEffect, useMemo } from "react";
 import { ChevronLeft, ChevronRight, Star, X } from "lucide-react";
-import { Button } from "@/shared/ui/button";
+
 import { NoteForm } from "./NoteForm";
 import { buildBreadcrumbPath, renderMarkdownToHtml } from "../utils";
 import type { NoteWithRelations } from "@/shared/types/notes";
 import type { NoteDetailViewProps } from "@/features/notesapp/types/notes-ui";
-import { useToast } from "@/shared/ui/toast";
 
 export function NoteDetailView({
   selectedNote,

@@ -1,7 +1,8 @@
 "use client";
 
+import { Button } from "@/shared/ui";
 import type { ColumnDef, Column } from "@tanstack/react-table";
-import { Button } from "@/shared/ui/button";
+
 import type { DatabaseInfo, DatabaseType } from "../types";
 import { deleteDatabaseBackup } from "../api";
 

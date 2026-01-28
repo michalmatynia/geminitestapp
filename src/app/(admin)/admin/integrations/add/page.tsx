@@ -1,4 +1,4 @@
-import AddIntegrationPage from "@/features/integrations/pages/AddIntegrationPage";
+import { AddIntegrationPage } from "@/features/integrations";
 
 export default function Page() {
   return <AddIntegrationPage />;

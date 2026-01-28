@@ -1,4 +1,4 @@
-import AuthHomePage from "@/features/auth/pages/admin/AuthHomePage";
+import { AuthHomePage } from "@/features/auth";
 
 export default function Page() {
   return <AuthHomePage />;

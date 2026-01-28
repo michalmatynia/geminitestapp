@@ -10,7 +10,7 @@ import {
   type AuthSecurityPolicy,
 } from "@/features/auth/utils/auth-security";
 import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";
-import { logSystemEvent } from "@/features/observability/services/system-logger";
+import { logSystemEvent } from "@/features/observability";
 
 type SettingRecord = { _id: string; key: string; value: string };
 

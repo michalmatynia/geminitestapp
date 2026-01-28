@@ -352,6 +352,9 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
               },
             ];
       const forcedInputs = ["result", "content_en", "productId", "entityId"];
+      const inferredUseMongoActions =
+        databaseConfig.useMongoActions ??
+        Boolean(databaseConfig.actionCategory || databaseConfig.action);
       return {
         ...node,
         inputs: ensureUniquePorts(node.inputs, [...DATABASE_INPUT_PORTS, ...forcedInputs]),
@@ -365,7 +368,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
             idField: databaseConfig.idField ?? "entityId",
             mode: databaseConfig.mode ?? "replace",
             updateStrategy: databaseConfig.updateStrategy ?? "one",
-            useMongoActions: databaseConfig.useMongoActions ?? false,
+            useMongoActions: inferredUseMongoActions,
             actionCategory: databaseConfig.actionCategory,
             action: databaseConfig.action,
             distinctField: databaseConfig.distinctField ?? "",
@@ -414,6 +417,9 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
         projection: node.config?.dbQuery?.projection ?? "",
         single: node.config?.dbQuery?.single ?? false,
       };
+      const legacyDbConfig = node.config?.database ?? {};
+      const inferredUseMongoActions =
+        legacyDbConfig.useMongoActions ?? Boolean(legacyDbConfig.actionCategory || legacyDbConfig.action);
       return {
         ...node,
         type: "database",
@@ -423,24 +429,24 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
           ...node.config,
           database: {
             operation: "query",
-            entityType: node.config?.database?.entityType ?? "product",
-            idField: node.config?.database?.idField ?? "entityId",
-            mode: node.config?.database?.mode ?? "replace",
-            updateStrategy: node.config?.database?.updateStrategy ?? "one",
-            useMongoActions: node.config?.database?.useMongoActions ?? false,
-            actionCategory: node.config?.database?.actionCategory,
-            action: node.config?.database?.action,
-            distinctField: node.config?.database?.distinctField ?? "",
-            updateTemplate: node.config?.database?.updateTemplate ?? "",
-            mappings: node.config?.database?.mappings ?? [],
+            entityType: legacyDbConfig.entityType ?? "product",
+            idField: legacyDbConfig.idField ?? "entityId",
+            mode: legacyDbConfig.mode ?? "replace",
+            updateStrategy: legacyDbConfig.updateStrategy ?? "one",
+            useMongoActions: inferredUseMongoActions,
+            actionCategory: legacyDbConfig.actionCategory,
+            action: legacyDbConfig.action,
+            distinctField: legacyDbConfig.distinctField ?? "",
+            updateTemplate: legacyDbConfig.updateTemplate ?? "",
+            mappings: legacyDbConfig.mappings ?? [],
             query: dbQuery,
-            writeSource: node.config?.database?.writeSource ?? "bundle",
-            writeSourcePath: node.config?.database?.writeSourcePath ?? "",
-            dryRun: node.config?.database?.dryRun ?? false,
-            presetId: node.config?.database?.presetId,
-            skipEmpty: node.config?.database?.skipEmpty ?? false,
-            trimStrings: node.config?.database?.trimStrings ?? false,
-            aiPrompt: node.config?.database?.aiPrompt ?? "",
+            writeSource: legacyDbConfig.writeSource ?? "bundle",
+            writeSourcePath: legacyDbConfig.writeSourcePath ?? "",
+            dryRun: legacyDbConfig.dryRun ?? false,
+            presetId: legacyDbConfig.presetId,
+            skipEmpty: legacyDbConfig.skipEmpty ?? false,
+            trimStrings: legacyDbConfig.trimStrings ?? false,
+            aiPrompt: legacyDbConfig.aiPrompt ?? "",
           },
         },
       };

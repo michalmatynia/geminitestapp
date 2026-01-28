@@ -5,15 +5,20 @@ import React from "react";
 import { Eye } from "lucide-react";
 
 import type { DbQueryPreset } from "@/features/ai-paths/lib";
+import type { DatabasePresetOption } from "./types";
 
 type DatabasePresetsTabProps = {
   dbQueryPresets: DbQueryPreset[];
+  builtInPresets?: DatabasePresetOption[];
+  onApplyBuiltInPreset?: (presetId: string) => void;
   onRenameQueryPreset: (presetId: string, nextName: string) => Promise<void> | void;
   onDeleteQueryPreset: (presetId: string) => Promise<void> | void;
 };
 
 export function DatabasePresetsTab({
   dbQueryPresets,
+  builtInPresets,
+  onApplyBuiltInPreset,
   onRenameQueryPreset,
   onDeleteQueryPreset,
 }: DatabasePresetsTabProps) {
@@ -48,9 +53,48 @@ export function DatabasePresetsTab({
 
   return (
     <div className="space-y-4">
+      {/* Built-in Presets Section */}
+      {builtInPresets && builtInPresets.length > 0 && (
+        <div className="rounded-md border border-border bg-card/50 p-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-gray-400">Built-in Presets</Label>
+            <span className="text-[10px] text-gray-500">
+              {builtInPresets.filter((p) => p.id !== "custom").length} presets
+            </span>
+          </div>
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {builtInPresets
+              .filter((preset) => preset.id !== "custom")
+              .map((preset) => (
+                <div
+                  key={preset.id}
+                  className="rounded-md border border-border bg-card/60 p-2"
+                >
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-white">{preset.label}</span>
+                      {onApplyBuiltInPreset && (
+                        <Button
+                          type="button"
+                          className="h-6 rounded-md border border-emerald-500/40 px-2 text-[10px] text-emerald-200 hover:bg-emerald-500/10"
+                          onClick={() => onApplyBuiltInPreset(preset.id)}
+                        >
+                          Apply
+                        </Button>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-gray-400">{preset.description}</span>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* User Query Presets Section */}
       <div className="rounded-md border border-border bg-card/50 p-3">
         <div className="flex items-center justify-between">
-          <Label className="text-xs text-gray-400">Query Presets</Label>
+          <Label className="text-xs text-gray-400">Saved Query Presets</Label>
           <span className="text-[10px] text-gray-500">
             {dbQueryPresets.length} presets
           </span>

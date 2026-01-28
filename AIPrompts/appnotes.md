@@ -5,35 +5,9 @@ I want the RUN button to work on ALL of the queries.
 { "$set":{"fieldName": "{{value}}"}
 }
 
-* All of the individual node settings and changes per node should be moved and retained in mongoDB in in Path Settings. ALL of my individual Node Settings, Path settings, they should all be saved within Path Project, so that when I redirect the page and go back, everything stays the same.
-
-* In Presets Tab, I only want a list of query presets, I don't want Database Presets
-
-When I open a Database Query Node and the last selection was Update, it is only showing me the Filter Query Panel, I need to select some other operation and go back to Update to make the other  Textfield below Filter Query Panel visible again. Also when I redirect the page, my query from the other textfield is removed.
-
-* I want to be able to view my query presets in the query list, I need an icon to view them, malso y query preset is not saving both query panels (the other one referring to update is not saved, only filter) only one of them is saved
-
-* remove "ID Field
-entityId
-The selected input will be used as the entity ID to delete." from Delete section in Database Query Node
-
-* For context placeholders (Context placeholders:) when I have the database schema connected that provides a context, show the placeholder as Schema: <Nameofcollection>. Placeholder {Collection: products} is actually giving Products name only and is useless when providing deeper context.
-
-* In Database Query Node, When I highlight a piece of text in my Query textfield, and then click on a placeholder, the highlighted text should be replaced by the placeholder.
-
-
-* In Database Query Node, I want Template Snippets to Have like a one button, which, when I click it, opens up a whole modal matrix of snippets that I can choose from.
-
-* In Database Query Node, for Provider in Provider Dropdown I want to see only MongoDB and nothing else
-
-* In Database Query Node, auto mapper / parameter mapper should be available in Query section as well and not only in Update section
-
 * AI Prompt needs to be sent on pressing the return button in Database Query Node.
 
-* If nothing is connected in the value input, the {{value}} placeholder shouldn't be active at all
-
 images still flicker
-DB query fielf provider is nit saving
 
 LATER - All Jobs / runners should be in one place 
 * In Products, When I enter Marketplaces I need Category Mapper page for each marketplace. It is a page Where I can Set up category Mappings from my platfrom to an external pages for proper Export and Import (in the case of Base.com cause it's an integrator). The first Page will be Base.com but there will be others. I need a page within Category Mapper - Base.com where I can download current category list for a given catalog through API. Then, I can select which categories (or maybe all of them) I want to consider during my mappings, finally, I need a mapping engine, where I can one by one map each Base.com Category to a Category in my Catalog.
@@ -52,9 +26,6 @@ In Product List - Operations - I need an Option to Mass Export Products to Base.
 
 
 * Import table should have a search field and should have checkmarks so that I can select which products are to be imported
-
-
-LATER - add other GEminiInstructions (especially for the use of tanstack query and schadcn/ui all across application) 
 
 Note APP, simplified NoTE editing, which allows me to edit, delete text right in the note preview. Unless I want a deeper edit. Note Should Auto Save
 

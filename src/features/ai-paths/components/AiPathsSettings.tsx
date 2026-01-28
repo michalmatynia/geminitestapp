@@ -93,7 +93,7 @@ const DEFAULT_DB_QUERY: DbQueryConfig = {
   projection: "",
   single: false,
 };
-const AUTO_SAVE_DEBOUNCE_MS = 1500;
+const AUTO_SAVE_DEBOUNCE_MS = 100; // Very short debounce for near-immediate saves
 
 export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPathsSettingsProps) {
   const { toast } = useToast();
@@ -209,6 +209,19 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const lastSavedSnapshotRef = useRef<string | null>(null);
   const autoSaveTimerRef = useRef<number | null>(null);
   const autoSaveInFlightRef = useRef(false);
+  // Refs to track current state for beforeunload handler (avoids stale closure)
+  const currentNodesRef = useRef<AiNode[]>(initialNodes);
+  const currentEdgesRef = useRef<Edge[]>(initialEdges);
+  const currentPathsRef = useRef<PathMeta[]>([]);
+  const currentPathConfigsRef = useRef<Record<string, PathConfig>>({});
+  const currentActivePathIdRef = useRef<string | null>(null);
+  const currentPathNameRef = useRef("AI Description Path");
+  const currentPathDescriptionRef = useRef("");
+  const currentActiveTriggerRef = useRef(triggers[0] ?? "Product Modal - Context Filter");
+  const currentParserSamplesRef = useRef<Record<string, ParserSampleState>>({});
+  const currentUpdaterSamplesRef = useRef<Record<string, UpdaterSampleState>>({});
+  const currentRuntimeStateRef = useRef<RuntimeState>({ inputs: {}, outputs: {} });
+  const currentLastRunAtRef = useRef<string | null>(null);
   const lastGraphModelPayload = useMemo(() => {
     for (let index = nodes.length - 1; index >= 0; index -= 1) {
       const node = nodes[index];
@@ -1573,7 +1586,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     setNodes((prev) => {
       const currentNode = prev.find((node) => node.id === selectedNodeId);
       if (!currentNode) return prev;
-      return prev.map((node) => {
+      const next = prev.map((node) => {
         if (node.id !== selectedNodeId) return node;
         // Deep merge for nested config objects to prevent stale closure issues
         const currentConfig = node.config ?? {};
@@ -1597,6 +1610,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         }
         return { ...node, config: mergedConfig };
       });
+      // Update ref synchronously so beforeunload has latest value
+      currentNodesRef.current = next;
+      return next;
     });
   };
 
@@ -2856,6 +2872,157 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     buildPathSnapshot,
     persistPathConfig,
   ]);
+
+  // Keep refs in sync with state (for beforeunload handler which can't use stale closures)
+  useEffect(() => { currentNodesRef.current = nodes; }, [nodes]);
+  useEffect(() => { currentEdgesRef.current = edges; }, [edges]);
+  useEffect(() => { currentPathsRef.current = paths; }, [paths]);
+  useEffect(() => { currentPathConfigsRef.current = pathConfigs; }, [pathConfigs]);
+  useEffect(() => { currentActivePathIdRef.current = activePathId; }, [activePathId]);
+  useEffect(() => { currentPathNameRef.current = pathName; }, [pathName]);
+  useEffect(() => { currentPathDescriptionRef.current = pathDescription; }, [pathDescription]);
+  useEffect(() => { currentActiveTriggerRef.current = activeTrigger; }, [activeTrigger]);
+  useEffect(() => { currentParserSamplesRef.current = parserSamples; }, [parserSamples]);
+  useEffect(() => { currentUpdaterSamplesRef.current = updaterSamples; }, [updaterSamples]);
+  useEffect(() => { currentRuntimeStateRef.current = runtimeState; }, [runtimeState]);
+  useEffect(() => { currentLastRunAtRef.current = lastRunAt; }, [lastRunAt]);
+
+  // Save immediately when page is about to unload or tab loses focus
+  useEffect(() => {
+    const flushPendingSaveAsync = () => {
+      if (!currentActivePathIdRef.current || loading) return;
+      // Clear any pending debounced save
+      if (autoSaveTimerRef.current) {
+        window.clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = null;
+      }
+      // Check if there are unsaved changes
+      const snapshot = buildPathSnapshot();
+      if (snapshot === lastSavedSnapshotRef.current) return;
+      if (autoSaveInFlightRef.current) return;
+      // Trigger immediate save
+      autoSaveInFlightRef.current = true;
+      void persistPathConfig({ silent: true }).finally(() => {
+        autoSaveInFlightRef.current = false;
+      });
+    };
+
+    // Synchronous save using sendBeacon for beforeunload (async won't complete)
+    // Uses refs to get the LATEST state values, not stale closure values
+    const flushPendingSaveSync = () => {
+      const pathId = currentActivePathIdRef.current;
+      if (!pathId) return;
+      // Clear any pending debounced save
+      if (autoSaveTimerRef.current) {
+        window.clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = null;
+      }
+
+      // Always save on navigation - don't skip even if snapshot matches
+      // Build the payload using refs (latest values)
+      const updatedAt = new Date().toISOString();
+      const config: PathConfig = {
+        id: pathId,
+        version: STORAGE_VERSION,
+        name: currentPathNameRef.current,
+        description: currentPathDescriptionRef.current,
+        trigger: currentActiveTriggerRef.current,
+        nodes: currentNodesRef.current,
+        edges: currentEdgesRef.current,
+        updatedAt,
+        parserSamples: currentParserSamplesRef.current,
+        updaterSamples: currentUpdaterSamplesRef.current,
+        runtimeState: currentRuntimeStateRef.current,
+        lastRunAt: currentLastRunAtRef.current,
+      };
+      const currentPaths = currentPathsRef.current;
+      const nextPaths = currentPaths.map((path) =>
+        path.id === pathId ? { ...path, name: currentPathNameRef.current, updatedAt } : path
+      );
+      const nextConfigs = { ...currentPathConfigsRef.current, [pathId]: config };
+      const safeConfigs = serializePathConfigs(nextConfigs);
+
+      // Use sendBeacon for reliable delivery during page unload
+      const prefsPayload = JSON.stringify({
+        aiPathsPathIndex: nextPaths,
+        aiPathsPathConfigs: safeConfigs,
+      });
+
+      // Save to preferences
+      try {
+        navigator.sendBeacon(
+          "/api/user/preferences",
+          new Blob([prefsPayload], { type: "application/json" })
+        );
+      } catch {
+        void fetch("/api/user/preferences", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: prefsPayload,
+          keepalive: true,
+        });
+      }
+
+      // Also save to settings (the primary storage)
+      const sanitizedConfig = sanitizePathConfig(config);
+      const indexPayload = JSON.stringify({ key: PATH_INDEX_KEY, value: JSON.stringify(nextPaths) });
+      const configPayload = JSON.stringify({ key: `${PATH_CONFIG_PREFIX}${pathId}`, value: JSON.stringify(sanitizedConfig) });
+
+      try {
+        navigator.sendBeacon(
+          "/api/settings",
+          new Blob([indexPayload], { type: "application/json" })
+        );
+        navigator.sendBeacon(
+          "/api/settings",
+          new Blob([configPayload], { type: "application/json" })
+        );
+      } catch {
+        void fetch("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: indexPayload,
+          keepalive: true,
+        });
+        void fetch("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: configPayload,
+          keepalive: true,
+        });
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      flushPendingSaveSync();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        flushPendingSaveAsync();
+      }
+    };
+
+    // Intercept clicks on links to save before Next.js client-side navigation
+    const handleLinkClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      const anchor = target.closest("a");
+      if (anchor && anchor.href && !anchor.href.startsWith("javascript:")) {
+        // This is a link click - flush save immediately
+        flushPendingSaveSync();
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("click", handleLinkClick, true); // Use capture phase
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("click", handleLinkClick, true);
+    };
+  }, [loading, buildPathSnapshot, persistPathConfig, sanitizePathConfig, serializePathConfigs]);
 
   const handleReset = () => {
     if (!activePathId) return;

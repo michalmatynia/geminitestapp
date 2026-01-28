@@ -6,7 +6,6 @@ import React from "react";
 
 import type {
   AiNode,
-  DatabaseConfig,
   DbNodePreset,
   DbQueryPreset,
   Edge,
@@ -111,39 +110,14 @@ export function NodeConfigDialog({
             <DialogTitle className="text-lg">
               Configure {selectedNode.title}
             </DialogTitle>
-            <div className="flex items-center gap-2">
-              {selectedNode.type === "database" && selectedNode.config?.database && (
-                <Button
-                  type="button"
-                  size="sm"
-                  className={`rounded border px-3 py-1 text-xs ${
-                    selectedNode.config.database.dryRun
-                      ? "text-emerald-200 hover:bg-emerald-500/10"
-                      : "text-gray-300 hover:bg-muted/50"
-                  }`}
-                  onClick={() => {
-                    const dbConfig = selectedNode.config?.database;
-                    if (!dbConfig) return;
-                    updateSelectedNodeConfig({
-                      database: {
-                        ...dbConfig,
-                        dryRun: !dbConfig.dryRun,
-                      } as DatabaseConfig,
-                    });
-                  }}
-                >
-                  Dry Run
-                </Button>
-              )}
-              <Button
-                type="button"
-                size="sm"
-                className="rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50"
-                onClick={() => setConfigOpen(false)}
-              >
-                Close
-              </Button>
-            </div>
+            <Button
+              type="button"
+              size="sm"
+              className="rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50"
+              onClick={() => setConfigOpen(false)}
+            >
+              Close
+            </Button>
           </div>
         </DialogHeader>
 

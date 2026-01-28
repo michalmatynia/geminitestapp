@@ -285,6 +285,9 @@ export function DatabaseNodeConfigSection({
                   single: false,
                 };
                 const persistedDatabase = selectedNode.config?.database;
+                const inferredUseMongoActions =
+                  persistedDatabase?.useMongoActions ??
+                  Boolean(persistedDatabase?.actionCategory || persistedDatabase?.action);
                 const defaultMappings: UpdaterMapping[] = [
                   {
                     targetPath: "content_en",
@@ -297,7 +300,7 @@ export function DatabaseNodeConfigSection({
                   idField: persistedDatabase?.idField ?? "entityId",
                   mode: persistedDatabase?.mode ?? "replace",
                   updateStrategy: persistedDatabase?.updateStrategy ?? "one",
-                  useMongoActions: persistedDatabase?.useMongoActions ?? false,
+                  useMongoActions: inferredUseMongoActions,
                   actionCategory: persistedDatabase?.actionCategory,
                   action: persistedDatabase?.action,
                   distinctField: persistedDatabase?.distinctField ?? "",
@@ -309,6 +312,7 @@ export function DatabaseNodeConfigSection({
                   query: {
                     ...defaultQuery,
                     ...(persistedDatabase?.query ?? {}),
+                    provider: "mongodb",
                   } as DbQueryConfig,
                   writeSource: persistedDatabase?.writeSource ?? "bundle",
                   writeSourcePath: persistedDatabase?.writeSourcePath ?? "",
@@ -922,7 +926,6 @@ export function DatabaseNodeConfigSection({
                 const showDistinctField =
                   databaseConfig.useMongoActions && isReadAction && action === "distinct";
                 const isUpdateAction =
-                  databaseConfig.useMongoActions &&
                   actionCategory === "update" &&
                   ["updateOne", "updateMany", "replaceOne", "findOneAndUpdate"].includes(action);
                 const queryPlaceholder = getQueryPlaceholderByAction(action);
@@ -1511,12 +1514,7 @@ export function DatabaseNodeConfigSection({
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div>
                         <Label className="text-xs text-gray-400">Provider</Label>
-                        <Select
-                          value={queryConfig.provider}
-                          onValueChange={(value) =>
-                            updateQueryConfig({ provider: value as DbQueryConfig["provider"] })
-                          }
-                        >
+                        <Select value="mongodb" disabled>
                           <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
                             <SelectValue placeholder="Select provider" />
                           </SelectTrigger>
@@ -1830,6 +1828,8 @@ export function DatabaseNodeConfigSection({
                 <TabsContent value="presets">
                   <DatabasePresetsTab
                     dbQueryPresets={dbQueryPresets}
+                    builtInPresets={presetOptions}
+                    onApplyBuiltInPreset={applyDatabasePreset}
                     onRenameQueryPreset={handleRenameQueryPreset}
                     onDeleteQueryPreset={handleDeleteQueryPresetById}
                   />

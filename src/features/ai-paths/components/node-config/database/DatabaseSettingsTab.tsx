@@ -58,31 +58,6 @@ export function DatabaseSettingsTab({
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label className="text-xs text-gray-400">Update Scope</Label>
-            <Select
-              value={databaseConfig.updateStrategy ?? "one"}
-              onValueChange={(value) =>
-                updateSelectedNodeConfig({
-                  database: {
-                    ...databaseConfig,
-                    updateStrategy: value as "one" | "many",
-                  },
-                })
-              }
-            >
-              <SelectTrigger className="mt-2 w-full border-border bg-card/70 text-sm text-white">
-                <SelectValue placeholder="Select update scope" />
-              </SelectTrigger>
-              <SelectContent className="border-border bg-gray-900">
-                <SelectItem value="one">Update One</SelectItem>
-                <SelectItem value="many">Update Many</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="mt-2 text-[11px] text-gray-500">
-              Update One uses the entity ID input. Update Many applies the Query tab filter.
-            </p>
-          </div>
         </div>
       )}
 

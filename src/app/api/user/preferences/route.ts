@@ -167,3 +167,5 @@ async function PATCH_handler(req: NextRequest) {
 
 export const GET = apiHandler(GET_handler, { source: "user.preferences.GET" });
 export const PATCH = apiHandler(PATCH_handler, { source: "user.preferences.PATCH" });
+// POST handler for sendBeacon (used during page unload to save AI Paths settings)
+export const POST = apiHandler(PATCH_handler, { source: "user.preferences.POST" });

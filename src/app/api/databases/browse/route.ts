@@ -57,7 +57,7 @@ async function browseMongoCollection(params: BrowseParams): Promise<BrowseRespon
       } else if (value instanceof Date) {
         serialized[key] = value.toISOString();
       } else if (Array.isArray(value)) {
-        serialized[key] = value.map((item) => {
+        serialized[key] = (value as unknown[]).map((item) => {
           if (item instanceof ObjectId) {
             return item.toString();
           }
@@ -103,10 +103,11 @@ async function browsePrismaCollection(params: BrowseParams): Promise<BrowseRespo
 
   // Build where clause if query provided
   let where: Record<string, unknown> = {};
-  if (query) {
-    try {
-      where = JSON.parse(query);
-    } catch {
+      if (query) {
+        try {
+          where = JSON.parse(query) as Record<string, unknown>;
+        } catch {
+  
       // Try to search by common fields
       where = {
         OR: [

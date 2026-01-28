@@ -35,10 +35,10 @@ async function cleanupMongo() {
       .collection("settings")
       .deleteMany({
         $or: [
-          { _id: { $in: LEGACY_KEYS as any } },
+          { _id: { $in: LEGACY_KEYS } },
           { key: { $in: LEGACY_KEYS } },
         ],
-      } as any);
+      });
     console.log(`[cleanup] Mongo deleted ${result.deletedCount ?? 0} legacy settings`);
     return { count: result.deletedCount ?? 0 };
   } catch (error) {

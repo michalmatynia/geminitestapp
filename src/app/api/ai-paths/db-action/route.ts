@@ -95,8 +95,8 @@ const normalizeObjectId = (query: Record<string, unknown>, idType?: string) => {
   return next;
 };
 
-const normalizeUpdateDoc = (update: unknown) => {
-  if (Array.isArray(update)) return update;
+const normalizeUpdateDoc = (update: unknown): Record<string, unknown> | unknown[] | null => {
+  if (Array.isArray(update)) return update as unknown[];
   if (update && typeof update === "object") {
     const keys = Object.keys(update as Record<string, unknown>);
     if (keys.some((key) => key.startsWith("$"))) {
@@ -309,8 +309,8 @@ async function POST_handler(req: Request) {
     if (action === "findOneAndDelete") {
       const result = await collectionRef.findOneAndDelete(normalizedFilter);
       return NextResponse.json({
-        value: result.value ?? null,
-        ok: result.ok ?? 1,
+        value: (result as { value?: unknown }).value ?? null,
+        ok: (result as { ok?: number }).ok ?? 1,
       });
     }
 

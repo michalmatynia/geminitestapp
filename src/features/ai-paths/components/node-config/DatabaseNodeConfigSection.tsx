@@ -94,9 +94,9 @@ export function DatabaseNodeConfigSection({
   dbQueryPresets,
   setDbQueryPresets,
   saveDbQueryPresets,
-  dbNodePresets,
-  setDbNodePresets,
-  saveDbNodePresets,
+  _dbNodePresets,
+  _setDbNodePresets,
+  _saveDbNodePresets,
   toast,
 }: DatabaseNodeConfigSectionProps) {
   const [queryValidatorEnabled, setQueryValidatorEnabled] = React.useState(false);
@@ -111,6 +111,7 @@ export function DatabaseNodeConfigSection({
   const [selectedAiQueryId, setSelectedAiQueryId] = React.useState<string>("");
   const [testQueryResult, setTestQueryResult] = React.useState<string>("");
   const [testQueryLoading, setTestQueryLoading] = React.useState(false);
+  const [testQueryDryRun, setTestQueryDryRun] = React.useState(false);
   const queryTemplateRef = React.useRef<HTMLTextAreaElement | null>(null);
   const aiPromptRef = React.useRef<HTMLTextAreaElement | null>(null);
   const lastInjectedResponseRef = React.useRef<string>("");
@@ -180,7 +181,6 @@ export function DatabaseNodeConfigSection({
     if (selectedNode.type !== "database") return;
 
     const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
-    const runtimeOutputs = runtimeState.outputs[selectedNode.id] ?? {};
 
     // Extract potential entityId/productId from various sources
     let detectedId: string | undefined;
@@ -244,6 +244,7 @@ export function DatabaseNodeConfigSection({
     setQueryValidatorEnabled(false);
     setPendingAiQuery("");
     lastInjectedResponseRef.current = "";
+    setTestQueryDryRun(false);
   }, [selectedNode.id]);
 
   React.useEffect(() => {
@@ -759,56 +760,7 @@ export function DatabaseNodeConfigSection({
                     },
                   });
                 };
-                const handleApplyDbPreset = (preset: DbNodePreset) => {
-                  updateSelectedNodeConfig({
-                    database: {
-                      ...databaseConfig,
-                      ...preset.config,
-                      mappings:
-                        preset.config.mappings && preset.config.mappings.length > 0
-                          ? preset.config.mappings
-                          : mappings,
-                      query: preset.config.query ?? queryConfig,
-                    },
-                  });
-                };
                 const handleRenameDbPreset = async (presetId: string, nextName: string) => {
-                  const trimmed = nextName.trim();
-                  if (!trimmed) {
-                    toast("Preset name is required.", { variant: "error" });
-                    return;
-                  }
-                  const target = dbNodePresets.find((preset) => preset.id === presetId);
-                  if (!target) return;
-                  if (target.name.trim() === trimmed) return;
-                  const now = new Date().toISOString();
-                  const nextPresets = dbNodePresets.map((preset) =>
-                    preset.id === presetId
-                      ? { ...preset, name: trimmed, updatedAt: now }
-                      : preset
-                  );
-                  setDbNodePresets(nextPresets);
-                  await saveDbNodePresets(nextPresets);
-                  toast("Database preset renamed.", { variant: "success" });
-                };
-                const handleDeleteDbPresetById = async (presetId: string) => {
-                  const target = dbNodePresets.find((preset) => preset.id === presetId);
-                  if (!target) return;
-                  const confirmed = window.confirm(
-                    `Delete database preset \"${target.name}\"?`
-                  );
-                  if (!confirmed) return;
-                  const nextPresets = dbNodePresets.filter(
-                    (preset) => preset.id !== presetId
-                  );
-                  setDbNodePresets(nextPresets);
-                  await saveDbNodePresets(nextPresets);
-                  toast("Database preset deleted.", { variant: "success" });
-                };
-                const handleSaveQueryPreset = async (
-                  overrideName?: string,
-                  options?: { forceNew?: boolean }
-                ) => {
                   const name = (overrideName ?? queryPresetName).trim();
                   const filterTemplate = queryTemplateValue.trim();
                   const updateTemplate = (databaseConfig.updateTemplate ?? "").trim();
@@ -896,30 +848,6 @@ export function DatabaseNodeConfigSection({
                     setQueryPresetName("");
                   }
                   toast("Query preset deleted.", { variant: "success" });
-                };
-                const handleApplyDbPresetById = (presetId: string) => {
-                  const preset = dbNodePresets.find((item) => item.id === presetId);
-                  if (!preset) return;
-                  handleApplyDbPreset(preset);
-                };
-                const handleApplyQueryPresetById = (presetId: string) => {
-                  const preset = dbQueryPresets.find((item) => item.id === presetId);
-                  if (!preset) return;
-                  setSelectedQueryPresetId(preset.id);
-                  setQueryPresetName(preset.name);
-                  updateSelectedNodeConfig({
-                    database: {
-                      ...databaseConfig,
-                      ...(preset.updateTemplate?.trim()
-                        ? { updateTemplate: preset.updateTemplate }
-                        : {}),
-                      query: {
-                        ...queryConfig,
-                        queryTemplate: preset.queryTemplate,
-                        mode: "custom",
-                      },
-                    },
-                  });
                 };
                 const closeSaveQueryPresetModal = () => {
                   setSaveQueryPresetModalOpen(false);
@@ -1048,8 +976,8 @@ export function DatabaseNodeConfigSection({
                     database: {
                       ...databaseConfig,
                       useMongoActions: true,
-                      actionCategory: nextCategory as DatabaseActionCategory,
-                      action: nextAction as DatabaseAction,
+                      actionCategory: nextCategory,
+                      action: nextAction,
                       operation: nextOperation,
                       updateStrategy: nextUpdateStrategy,
                       query: {
@@ -1061,12 +989,12 @@ export function DatabaseNodeConfigSection({
                 };
                 const handleActionCategoryChange = (value: DatabaseActionCategory) => {
                   const defaultAction =
-                    actionOptionsByCategory[value as keyof typeof actionOptionsByCategory]?.[0]
+                    actionOptionsByCategory[value]?.[0]
                       ?.value ?? "find";
                   applyActionConfig(value, defaultAction as DatabaseAction);
                 };
                 const handleActionChange = (value: DatabaseAction) => {
-                  applyActionConfig(actionCategory as DatabaseActionCategory, value);
+                  applyActionConfig(actionCategory, value);
                 };
                 const handleFormatClick = () => {
                   if (queryFormatterEnabled) {
@@ -1118,22 +1046,264 @@ export function DatabaseNodeConfigSection({
                 };
                 const handleToggleValidator = () => setQueryValidatorEnabled((prev) => !prev);
                 const handleRunQuery = async () => {
-                  if (actionCategory !== "read" && actionCategory !== "aggregate") {
-                    toast("Run is available for read and aggregate actions only.", { variant: "error" });
+                  if (!["read", "aggregate", "update", "create", "delete"].includes(actionCategory)) {
+                    toast("Run is available for read, aggregate, create, update, and delete actions only.", { variant: "error" });
                     return;
                   }
                   setTestQueryLoading(true);
                   setTestQueryResult("");
                   try {
-                    const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
-                    const runtimeOutputs = runtimeState.outputs[selectedNode.id] ?? {};
+                    const runtimeInputs = (runtimeState.inputs[selectedNode.id] ?? {}) as Record<string, unknown>;
+                    const runtimeOutputs = (runtimeState.outputs[selectedNode.id] ?? {}) as Record<string, unknown>;
                     const templateContext = { ...runtimeOutputs, ...runtimeInputs };
                     const rawValue =
                       runtimeInputs.value ??
                       runtimeInputs.jobId ??
                       runtimeOutputs.value ??
                       runtimeOutputs.jobId;
-                    const currentValue = Array.isArray(rawValue) ? rawValue[0] : rawValue;
+                    const currentValue = Array.isArray(rawValue) ? (rawValue as unknown[])[0] : rawValue;
+                    const collectionName = queryConfig.collection ?? "products";
+                    const serializePreview = (value: unknown) => {
+                      try {
+                        const raw = JSON.stringify(value, null, 2);
+                        return raw.length > 600 ? `${raw.slice(0, 600)}...` : raw;
+                      } catch {
+                        return String(value);
+                      }
+                    };
+                    const confirmWriteAction = (summary: string) => {
+                      if (testQueryDryRun) return true;
+                      return window.confirm(`${summary}\n\nProceed?`);
+                    };
+                    if (actionCategory === "create") {
+                      const renderedPayload = renderTemplate(
+                        activeQueryValue,
+                        templateContext as Record<string, unknown>,
+                        currentValue ?? ""
+                      );
+                      const parsedPayload = safeParseJson(renderedPayload);
+                      const payloadValue = parsedPayload.value ?? null;
+                      if (parsedPayload.error) {
+                        const message = parsedPayload.error || "Insert payload must be valid JSON.";
+                        setTestQueryResult(JSON.stringify({ error: message }, null, 2));
+                        toast(message, { variant: "error" });
+                        setTestQueryLoading(false);
+                        return;
+                      }
+                      if (action === "insertOne") {
+                        if (!payloadValue || typeof payloadValue !== "object" || Array.isArray(payloadValue)) {
+                          const message = "insertOne requires a JSON object payload.";
+                          setTestQueryResult(JSON.stringify({ error: message }, null, 2));
+                          toast(message, { variant: "error" });
+                          setTestQueryLoading(false);
+                          return;
+                        }
+                      } else if (action === "insertMany") {
+                        if (!Array.isArray(payloadValue)) {
+                          const message = "insertMany requires a JSON array payload.";
+                          setTestQueryResult(JSON.stringify({ error: message }, null, 2));
+                          toast(message, { variant: "error" });
+                          setTestQueryLoading(false);
+                          return;
+                        }
+                      }
+                      if (testQueryDryRun) {
+                        const preview = {
+                          dryRun: true,
+                          action,
+                          collection: collectionName,
+                          payload: payloadValue,
+                        };
+                        setTestQueryResult(JSON.stringify(preview, null, 2));
+                        toast("Dry run preview generated.", { variant: "success" });
+                        setTestQueryLoading(false);
+                        return;
+                      }
+                      const payloadSummary = serializePreview(payloadValue);
+                      const confirmed = confirmWriteAction(
+                        `Run ${action} on ${collectionName}?\n\nPayload:\n${payloadSummary}`
+                      );
+                      if (!confirmed) {
+                        toast("Run cancelled.", { variant: "success" });
+                        setTestQueryLoading(false);
+                        return;
+                      }
+                      const data = await dbActionMutation.mutateAsync({
+                        action,
+                        collection: collectionName,
+                        document: action === "insertOne" ? (payloadValue as Record<string, unknown>) : undefined,
+                        documents: action === "insertMany" ? (payloadValue as unknown[]) : undefined,
+                      });
+                      setTestQueryResult(JSON.stringify(data, null, 2));
+                      const insertedCount =
+                        (data as { insertedCount?: number }).insertedCount ??
+                        (Array.isArray(payloadValue) ? payloadValue.length : 1);
+                      toast(`Inserted ${insertedCount} document${insertedCount === 1 ? "" : "s"}.`, { variant: "success" });
+                      setTestQueryLoading(false);
+                      return;
+                    }
+
+                    if (actionCategory === "delete") {
+                      const renderedFilter = renderTemplate(
+                        queryTemplateValue,
+                        templateContext as Record<string, unknown>,
+                        currentValue ?? ""
+                      );
+                      const parsedFilter = safeParseJson(renderedFilter);
+                      const filterValue = parsedFilter.value ?? {};
+                      if (parsedFilter.error) {
+                        const message = parsedFilter.error || "Filter must be valid JSON.";
+                        setTestQueryResult(JSON.stringify({ error: message }, null, 2));
+                        toast(message, { variant: "error" });
+                        setTestQueryLoading(false);
+                        return;
+                      }
+                      if (!filterValue || typeof filterValue !== "object" || Array.isArray(filterValue)) {
+                        const message = "Filter must be a JSON object.";
+                        setTestQueryResult(JSON.stringify({ error: message }, null, 2));
+                        toast(message, { variant: "error" });
+                        setTestQueryLoading(false);
+                        return;
+                      }
+                      if (Object.keys(filterValue as Record<string, unknown>).length === 0) {
+                        const message = "Delete requires a non-empty filter.";
+                        setTestQueryResult(JSON.stringify({ error: message }, null, 2));
+                        toast(message, { variant: "error" });
+                        setTestQueryLoading(false);
+                        return;
+                      }
+                      if (testQueryDryRun) {
+                        const preview = {
+                          dryRun: true,
+                          action,
+                          collection: collectionName,
+                          filter: filterValue,
+                        };
+                        setTestQueryResult(JSON.stringify(preview, null, 2));
+                        toast("Dry run preview generated.", { variant: "success" });
+                        setTestQueryLoading(false);
+                        return;
+                      }
+                      const filterSummary = serializePreview(filterValue);
+                      const confirmed = confirmWriteAction(
+                        `Run ${action} on ${collectionName}?\n\nFilter:\n${filterSummary}`
+                      );
+                      if (!confirmed) {
+                        toast("Run cancelled.", { variant: "success" });
+                        setTestQueryLoading(false);
+                        return;
+                      }
+                      const data = await dbActionMutation.mutateAsync({
+                        action,
+                        collection: collectionName,
+                        filter: filterValue,
+                        idType: queryConfig.idType ?? "string",
+                      });
+                      setTestQueryResult(JSON.stringify(data, null, 2));
+                      const deletedCount =
+                        (data as { deletedCount?: number }).deletedCount ??
+                        ((data as { value?: unknown }).value ? 1 : 0);
+                      toast(`Deleted ${deletedCount} document${deletedCount === 1 ? "" : "s"}.`, { variant: "success" });
+                      setTestQueryLoading(false);
+                      return;
+                    }
+
+                    if (actionCategory === "update") {
+                      const renderedFilter = renderTemplate(
+                        queryTemplateValue,
+                        templateContext as Record<string, unknown>,
+                        currentValue ?? ""
+                      );
+                      const parsedFilter = safeParseJson(renderedFilter);
+                      const filterValue = parsedFilter.value ?? {};
+                      if (parsedFilter.error) {
+                        const message = parsedFilter.error || "Filter must be valid JSON.";
+                        setTestQueryResult(JSON.stringify({ error: message }, null, 2));
+                        toast(message, { variant: "error" });
+                        setTestQueryLoading(false);
+                        return;
+                      }
+                      if (!filterValue || typeof filterValue !== "object" || Array.isArray(filterValue)) {
+                        const message = "Filter must be a JSON object.";
+                        setTestQueryResult(JSON.stringify({ error: message }, null, 2));
+                        toast(message, { variant: "error" });
+                        setTestQueryLoading(false);
+                        return;
+                      }
+                      if (Object.keys(filterValue as Record<string, unknown>).length === 0) {
+                        const message = "Update requires a non-empty filter.";
+                        setTestQueryResult(JSON.stringify({ error: message }, null, 2));
+                        toast(message, { variant: "error" });
+                        setTestQueryLoading(false);
+                        return;
+                      }
+                      const renderedUpdate = renderTemplate(
+                        activeQueryValue,
+                        templateContext as Record<string, unknown>,
+                        currentValue ?? ""
+                      );
+                      const parsedUpdate = safeParseJson(renderedUpdate);
+                      const updateValue = parsedUpdate.value ?? null;
+                      if (parsedUpdate.error) {
+                        const message = parsedUpdate.error || "Update document must be valid JSON.";
+                        setTestQueryResult(JSON.stringify({ error: message }, null, 2));
+                        toast(message, { variant: "error" });
+                        setTestQueryLoading(false);
+                        return;
+                      }
+                      if (!updateValue || (typeof updateValue !== "object" && !Array.isArray(updateValue))) {
+                        const message = "Update document must be a JSON object or pipeline array.";
+                        setTestQueryResult(JSON.stringify({ error: message }, null, 2));
+                        toast(message, { variant: "error" });
+                        setTestQueryLoading(false);
+                        return;
+                      }
+                      if (action === "replaceOne" && Array.isArray(updateValue)) {
+                        const message = "replaceOne requires a JSON object (not a pipeline array).";
+                        setTestQueryResult(JSON.stringify({ error: message }, null, 2));
+                        toast(message, { variant: "error" });
+                        setTestQueryLoading(false);
+                        return;
+                      }
+                      if (testQueryDryRun) {
+                        const preview = {
+                          dryRun: true,
+                          action,
+                          collection: collectionName,
+                          filter: filterValue,
+                          update: updateValue,
+                        };
+                        setTestQueryResult(JSON.stringify(preview, null, 2));
+                        toast("Dry run preview generated.", { variant: "success" });
+                        setTestQueryLoading(false);
+                        return;
+                      }
+                      const filterSummary = serializePreview(filterValue);
+                      const updateSummary = serializePreview(updateValue);
+                      const confirmed = confirmWriteAction(
+                        `Run ${action} on ${collectionName}?\n\nFilter:\n${filterSummary}\n\nUpdate:\n${updateSummary}`
+                      );
+                      if (!confirmed) {
+                        toast("Run cancelled.", { variant: "success" });
+                        setTestQueryLoading(false);
+                        return;
+                      }
+                      const data = await dbActionMutation.mutateAsync({
+                        action,
+                        collection: collectionName,
+                        filter: filterValue,
+                        update: updateValue,
+                        idType: queryConfig.idType ?? "string",
+                      });
+                      setTestQueryResult(JSON.stringify(data, null, 2));
+                      const matched = (data as { matchedCount?: number }).matchedCount ?? 0;
+                      const modified = (data as { modifiedCount?: number }).modifiedCount;
+                      const count = modified ?? matched;
+                      toast(`Update processed ${count} document${count === 1 ? "" : "s"}.`, { variant: "success" });
+                      setTestQueryLoading(false);
+                      return;
+                    }
+
                     const renderedQuery = renderTemplate(
                       queryTemplateValue,
                       templateContext as Record<string, unknown>,
@@ -1268,11 +1438,12 @@ export function DatabaseNodeConfigSection({
                   }
                 };
                 // Shared query input controls (used in both Query and Constructor tabs)
-                const queryInputControls = (
-                  <DatabaseQueryInputControls
-                    actionCategory={actionCategory as DatabaseActionCategory}
-                    action={action as DatabaseAction}
-                    actionCategoryOptions={[...actionCategoryOptions]}
+                                  const queryInputControls = (
+                                    <DatabaseQueryInputControls
+                                      actionCategory={actionCategory}
+                                      action={action}
+                                      actionCategoryOptions={[...actionCategoryOptions]}
+                
                     actionOptions={[...actionOptions]}
                     queryTemplateValue={activeQueryValue}
                     queryPlaceholder={activeQueryPlaceholder}
@@ -1280,6 +1451,8 @@ export function DatabaseNodeConfigSection({
                     filterTemplateValue={queryTemplateValue}
                     filterPlaceholder={queryPlaceholder}
                     onFilterChange={handleFilterChange}
+                    runDry={testQueryDryRun}
+                    onToggleRunDry={() => setTestQueryDryRun((prev) => !prev)}
                     queryValidation={queryValidation}
                     queryFormatterEnabled={queryFormatterEnabled}
                     queryValidatorEnabled={queryValidatorEnabled}

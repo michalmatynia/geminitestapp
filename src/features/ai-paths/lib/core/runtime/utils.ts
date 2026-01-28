@@ -275,11 +275,30 @@ export const buildDbQueryPayload = (
   queryConfig: DbQueryConfig
 ) => {
   const inputQuery = coerceInput(nodeInputs.query);
+  const aiQueryInput = coerceInput(nodeInputs.aiQuery ?? nodeInputs.queryCallback);
   const inputValue = coerceInput(nodeInputs.value) ?? coerceInput(nodeInputs.jobId);
   const entityIdInput = coerceInput(nodeInputs.entityId);
   const productIdInput = coerceInput(nodeInputs.productId);
   let query: Record<string, unknown> = {};
-  if (queryConfig.mode === "preset") {
+  const parseQueryInput = (value: unknown) => {
+    if (!value) return null;
+    if (typeof value === "object" && !Array.isArray(value)) {
+      return value as Record<string, unknown>;
+    }
+    if (typeof value === "string") {
+      const match = value.match(/```(?:json)?\s*([\s\S]*?)```/);
+      const jsonStr = match ? match[1]!.trim() : value.trim();
+      const parsed = parseJsonSafe(jsonStr);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    }
+    return null;
+  };
+  const inlineQuery = parseQueryInput(aiQueryInput ?? inputQuery);
+  if (inlineQuery) {
+    query = inlineQuery;
+  } else if (queryConfig.mode === "preset") {
     const presetValue =
       queryConfig.preset === "by_productId"
         ? productIdInput ?? inputValue
@@ -300,8 +319,6 @@ export const buildDbQueryPayload = (
       }
       query = { [field]: presetValue };
     }
-  } else if (inputQuery && typeof inputQuery === "object") {
-    query = inputQuery as Record<string, unknown>;
   } else {
     const rendered = renderTemplate(
       queryConfig.queryTemplate ?? "{}",

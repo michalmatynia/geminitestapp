@@ -1,12 +1,17 @@
 
-I'm trying to RUN my database Query Node to update the database, but I get the message "Run is available for read and aggregate actions only."
+* I'm trying to RUN my database Query Node to update the database, but I get the message "Run is available for read and aggregate actions only.". 
+I want the RUN button to work on ALL of the queries. 
+
+{ "$set":{"fieldName": "{{value}}"}
+}
+
+* All of the individual node settings and changes per node should be moved and retained in mongoDB in in Path Settings. ALL of my individual Node Settings, Path settings, they should all be saved within Path Project, so that when I redirect the page and go back, everything stays the same.
 
 * In Presets Tab, I only want a list of query presets, I don't want Database Presets
 
-* When I open a Database Query Node and the last selection was Update, it is only showing me the Filter Query Panel, I need to select some other operation and go back to Update to make the other  Textfield below Filter Query Panel visible again. Also when I redirect the page, my query from the other textfield is removed.
+When I open a Database Query Node and the last selection was Update, it is only showing me the Filter Query Panel, I need to select some other operation and go back to Update to make the other  Textfield below Filter Query Panel visible again. Also when I redirect the page, my query from the other textfield is removed.
 
 * I want to be able to view my query presets in the query list, I need an icon to view them, malso y query preset is not saving both query panels (the other one referring to update is not saved, only filter) only one of them is saved
-
 
 * remove "ID Field
 entityId

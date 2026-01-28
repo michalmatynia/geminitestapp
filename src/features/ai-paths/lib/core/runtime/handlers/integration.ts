@@ -786,13 +786,30 @@ export const handleDatabase: NodeHandler = async ({
 
   if (operation === "query") {
     const inputQuery = coerceInput(nodeInputs.query);
-    const callbackInput = coerceInput(nodeInputs.callback);
+    const callbackInput = coerceInput(nodeInputs.queryCallback);
     const aiQueryInput = coerceInput(nodeInputs.aiQuery);
     const resolvedEntityId = resolveEntityIdFromInputs(nodeInputs, undefined, simulationEntityType, simulationEntityId);
     const inputValue = coerceInput(nodeInputs.value);
     const entityIdInput = coerceInput(nodeInputs.entityId);
     const productIdInput = coerceInput(nodeInputs.productId);
     const _entityId = entityIdInput ?? resolvedEntityId;
+    const parseQueryInput = (value: unknown) => {
+      if (!value) return null;
+      if (typeof value === "object" && !Array.isArray(value)) {
+        return value as Record<string, unknown>;
+      }
+      if (typeof value === "string") {
+        const parsed = parseJsonSafe(value);
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          return parsed as Record<string, unknown>;
+        }
+      }
+      return null;
+    };
+    const callbackTemplate =
+      typeof callbackInput === "string" && callbackInput.trim()
+        ? callbackInput
+        : null;
     let query: Record<string, unknown> = {};
 
     // Priority 1: AI-generated query from model output
@@ -833,58 +850,67 @@ export const handleDatabase: NodeHandler = async ({
           aiPrompt,
         };
       }
-    } else if (queryConfig.mode === "preset") {
-      const presetValue =
-        queryConfig.preset === "by_productId"
-          ? productIdInput ?? inputValue
-          : queryConfig.preset === "by_entityId"
-            ? entityIdInput ?? inputValue ?? resolvedEntityId
-            : inputValue ?? resolvedEntityId ?? entityIdInput ?? productIdInput;
-      if (presetValue !== undefined) {
-        let field =
-          queryConfig.preset === "by_productId"
-            ? "productId"
-            : queryConfig.preset === "by_entityId"
-              ? "entityId"
-              : queryConfig.preset === "by_field"
-                ? queryConfig.field || "id"
-                : "_id";
-        if (
-          queryConfig.preset === "by_id" &&
-          field === "_id" &&
-          !looksLikeObjectId(presetValue)
-        ) {
-          field = "id";
-        }
-        query = { [field]: presetValue };
-      } else {
-        toast("Database query needs an ID/value input.", { variant: "error" });
-        return {
-          result: null,
-          bundle: {
-            count: 0,
-            query: {},
-            collection: queryConfig.collection,
-            error: "Missing query value",
-          },
-          aiPrompt,
-        };
-      }
-    } else if (inputQuery && typeof inputQuery === "object") {
-      query = inputQuery as Record<string, unknown>;
     } else {
-      const templateToUse = (typeof callbackInput === "string" && callbackInput.trim())
-        ? callbackInput
-        : (queryConfig.queryTemplate ?? "{}");
-        
-      const rendered = renderTemplate(
-        templateToUse,
-        nodeInputs as Record<string, unknown>,
-        inputValue ?? ""
-      );
-      const parsed = parseJsonSafe(rendered);
-      if (parsed && typeof parsed === "object") {
-        query = parsed as Record<string, unknown>;
+      const inlineQuery = parseQueryInput(inputQuery ?? callbackInput);
+      if (inlineQuery) {
+        query = inlineQuery;
+      } else if (callbackTemplate) {
+        const rendered = renderTemplate(
+          callbackTemplate,
+          nodeInputs as Record<string, unknown>,
+          inputValue ?? ""
+        );
+        const parsed = parseJsonSafe(rendered);
+        if (parsed && typeof parsed === "object") {
+          query = parsed as Record<string, unknown>;
+        }
+      } else if (queryConfig.mode === "preset") {
+        const presetValue =
+          queryConfig.preset === "by_productId"
+            ? productIdInput ?? inputValue
+            : queryConfig.preset === "by_entityId"
+              ? entityIdInput ?? inputValue ?? resolvedEntityId
+              : inputValue ?? resolvedEntityId ?? entityIdInput ?? productIdInput;
+        if (presetValue !== undefined) {
+          let field =
+            queryConfig.preset === "by_productId"
+              ? "productId"
+              : queryConfig.preset === "by_entityId"
+                ? "entityId"
+                : queryConfig.preset === "by_field"
+                  ? queryConfig.field || "id"
+                  : "_id";
+          if (
+            queryConfig.preset === "by_id" &&
+            field === "_id" &&
+            !looksLikeObjectId(presetValue)
+          ) {
+            field = "id";
+          }
+          query = { [field]: presetValue };
+        } else {
+          toast("Database query needs an ID/value input.", { variant: "error" });
+          return {
+            result: null,
+            bundle: {
+              count: 0,
+              query: {},
+              collection: queryConfig.collection,
+              error: "Missing query value",
+            },
+            aiPrompt,
+          };
+        }
+      } else {
+        const rendered = renderTemplate(
+          queryConfig.queryTemplate ?? "{}",
+          nodeInputs as Record<string, unknown>,
+          inputValue ?? ""
+        );
+        const parsed = parseJsonSafe(rendered);
+        if (parsed && typeof parsed === "object") {
+          query = parsed as Record<string, unknown>;
+        }
       }
     }
     const projection = parseJsonSafe(queryConfig.projection ?? "") as

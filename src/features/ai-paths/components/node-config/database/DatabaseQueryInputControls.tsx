@@ -19,6 +19,8 @@ type DatabaseQueryInputControlsProps = {
   filterTemplateValue?: string;
   filterPlaceholder?: string;
   onFilterChange?: (value: string) => void;
+  runDry?: boolean;
+  onToggleRunDry?: () => void;
   queryValidation: QueryValidationResult | null;
   queryFormatterEnabled: boolean;
   queryValidatorEnabled: boolean;
@@ -44,6 +46,8 @@ export function DatabaseQueryInputControls({
   filterTemplateValue,
   filterPlaceholder,
   onFilterChange,
+  runDry,
+  onToggleRunDry,
   queryValidation,
   queryFormatterEnabled,
   queryValidatorEnabled,
@@ -118,6 +122,19 @@ export function DatabaseQueryInputControls({
           >
             {queryValidatorEnabled ? "Hide validator" : "Validate"}
           </Button>
+          {onToggleRunDry ? (
+            <Button
+              type="button"
+              className={`h-7 rounded-md border px-2 text-[10px] ${
+                runDry
+                  ? "border-amber-700 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20"
+                  : "border-gray-700 text-gray-300 hover:bg-muted/60"
+              }`}
+              onClick={onToggleRunDry}
+            >
+              {runDry ? "Dry Run: On" : "Dry Run"}
+            </Button>
+          ) : null}
           <Button
             type="button"
             className={`h-7 rounded-md border px-3 text-[10px] font-medium ${

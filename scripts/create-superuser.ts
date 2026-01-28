@@ -90,7 +90,7 @@ async function main() {
     // Fetch existing roles map
     const rolesDoc = await settingsCollection.findOne({ 
       $or: [{ _id: AUTH_SETTINGS_KEYS.userRoles }, { key: AUTH_SETTINGS_KEYS.userRoles }] 
-    } as any);
+    });
     
     const userRoles = parseJsonSetting<Record<string, string>>(rolesDoc?.value as string, {});
     userRoles[userId] = "super_admin";

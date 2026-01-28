@@ -117,9 +117,6 @@ export async function evaluateGraph({
     const adjacency = new Map<string, Set<string>>();
     edges.forEach((edge) => {
       if (!edge.from || !edge.to) return;
-      if (edge.fromPort === "aiPrompt" || edge.toPort === "queryCallback") {
-        return;
-      }
       const fromSet = adjacency.get(edge.from) ?? new Set<string>();
       fromSet.add(edge.to);
       adjacency.set(edge.from, fromSet);
@@ -239,9 +236,6 @@ export async function evaluateGraph({
     edges.forEach((edge) => {
       const fromOutput = outputs[edge.from];
       if (!fromOutput || !edge.fromPort || !edge.toPort) return;
-      if (edge.fromPort === "aiPrompt" || edge.toPort === "queryCallback") {
-        return; // manual-only AI helper wiring
-      }
       const value = fromOutput[edge.fromPort];
       if (value === undefined) return;
       const existing = nextInputs[edge.to]?.[edge.toPort];

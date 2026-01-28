@@ -10,7 +10,7 @@ import { createPortal } from "react-dom";
 
 
 import { logClientError } from "@/features/observability";
-import { useUpdateSetting } from "@/shared/hooks/useSettings";
+import { useUpdateSetting, useUpdateSettingsBulk } from "@/shared/hooks/useSettings";
 import { DocsTabPanel, PathsTabPanel } from "./ui-panels";
 import { evaluateGraph, dbApi, aiJobsApi, entityApi } from "@/features/ai-paths/lib";
 import { CanvasBoard } from "./canvas-board";
@@ -240,8 +240,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
   const loadAttemptRef = useRef<number | null>(null);
   const loadInFlightRef = useRef(false);
   const lastPrefsPayloadRef = useRef<string>("");
+  const lastPathSavePayloadRef = useRef<string>("");
+  const lastSettingsPayloadRef = useRef<string>("");
   const queryClient = useQueryClient();
   const updateSettingMutation = useUpdateSetting();
+  const updateSettingsBulkMutation = useUpdateSettingsBulk();
   const updatePreferencesMutation = useMutation({
     mutationFn: async (payload: Record<string, unknown>) => {
       const res = await fetch("/api/user/preferences", {
@@ -392,7 +395,8 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         const firstDoc = data.documents?.[0];
         if (firstDoc) {
           sample = firstDoc;
-          fetchedId = String(firstDoc._id ?? firstDoc.id ?? "");
+          const rawId = firstDoc._id ?? firstDoc.id;
+          fetchedId = (rawId as { toString?: () => string })?.toString?.() ?? "";
         }
       } else {
         const normalized = entityType.toLowerCase();
@@ -593,7 +597,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     [activePathId, activeTab, edges.length, nodes.length, pathName, persistLastError]
   );
 
-  const modelsQuery = useQuery({
+  const modelsQuery = useQuery<{ models?: string[] }>({
     queryKey: ["ai-paths-models"],
     queryFn: async () => {
       const res = await fetch("/api/chatbot");
@@ -603,9 +607,6 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       return (await res.json()) as { models?: string[] };
     },
     staleTime: 1000 * 60 * 5,
-    onError: (error) => {
-      reportAiPathsError(error, { action: "loadModels" }, "Failed to load models:");
-    },
   });
 
   const modelOptions = useMemo(() => {
@@ -713,7 +714,9 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         const queryPresetsRaw = map.get(DB_QUERY_PRESETS_KEY);
         const dbNodePresetsRaw = map.get(DB_NODE_PRESETS_KEY);
         const configs: Record<string, PathConfig> = {};
+        const settingsConfigs: Record<string, PathConfig> = {};
         let metas: PathMeta[] = [];
+        let settingsMetas: PathMeta[] = [];
         let loadedLastError: { message: string; time: string; pathId?: string | null } | null = null;
         if (lastErrorRaw) {
           try {
@@ -769,11 +772,53 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         if (indexRaw) {
           const parsedIndex = JSON.parse(indexRaw) as PathMeta[];
           if (Array.isArray(parsedIndex)) {
-            metas = parsedIndex;
+            settingsMetas = parsedIndex;
           }
         }
 
-        if (preferredPathConfigs && Object.keys(preferredPathConfigs).length > 0) {
+        if (settingsMetas.length > 0) {
+          settingsMetas.forEach((meta) => {
+            const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
+            if (configRaw) {
+              try {
+                const parsedConfig = JSON.parse(configRaw) as PathConfig;
+                settingsConfigs[meta.id] = {
+                  ...parsedConfig,
+                  id: meta.id,
+                  name: parsedConfig.name || meta.name,
+                };
+              } catch {
+                settingsConfigs[meta.id] = createDefaultPathConfig(meta.id);
+              }
+            } else {
+              settingsConfigs[meta.id] = createDefaultPathConfig(meta.id);
+            }
+          });
+        }
+
+        const shouldPreferPrefs =
+          preferredPathConfigs &&
+          Object.keys(preferredPathConfigs).length > 0 &&
+          (settingsMetas.length === 0 ||
+            Object.keys(preferredPathConfigs).some((id) => {
+              if (!settingsConfigs[id]) return true;
+              const prefUpdated =
+                typeof preferredPathConfigs[id]?.updatedAt === "string"
+                  ? preferredPathConfigs[id]?.updatedAt
+                  : "";
+              const settingsUpdated =
+                typeof settingsConfigs[id]?.updatedAt === "string"
+                  ? settingsConfigs[id]?.updatedAt
+                  : "";
+              if (!settingsUpdated && prefUpdated) return true;
+              if (!prefUpdated) return false;
+              return prefUpdated > settingsUpdated;
+            }));
+
+        if (!shouldPreferPrefs && settingsMetas.length > 0) {
+          Object.assign(configs, settingsConfigs);
+          metas = settingsMetas;
+        } else if (shouldPreferPrefs && preferredPathConfigs && Object.keys(preferredPathConfigs).length > 0) {
           Object.entries(preferredPathConfigs).forEach(([id, config]) => {
             const fallback = createDefaultPathConfig(id);
             configs[id] = {
@@ -794,24 +839,21 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
             preferredPathIndex && preferredPathIndex.length > 0
               ? preferredPathIndex.filter((meta) => configs[meta.id])
               : Object.values(configs).map(createPathMeta);
-        } else if (metas.length > 0) {
-          metas.forEach((meta) => {
-            const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
-            if (configRaw) {
-              try {
-                const parsedConfig = JSON.parse(configRaw) as PathConfig;
-                configs[meta.id] = {
-                  ...parsedConfig,
-                  id: meta.id,
-                  name: parsedConfig.name || meta.name,
-                };
-              } catch {
-                configs[meta.id] = createDefaultPathConfig(meta.id);
-              }
-            } else {
-              configs[meta.id] = createDefaultPathConfig(meta.id);
+          if (metas.length > 0) {
+            try {
+              const settingsPayloads = metas.map((meta) => ({
+                key: `${PATH_CONFIG_PREFIX}${meta.id}`,
+                value: JSON.stringify(sanitizePathConfig(configs[meta.id])),
+              }));
+              settingsPayloads.push({
+                key: PATH_INDEX_KEY,
+                value: JSON.stringify(metas),
+              });
+              await updateSettingsBulkMutation.mutateAsync(settingsPayloads);
+            } catch (error) {
+              console.warn("[AI Paths] Failed to migrate path configs to settings.", error);
             }
-          });
+          }
         } else {
           const legacyRaw = map.get(`${PATH_CONFIG_PREFIX}default`) ?? map.get("ai_paths_config");
           if (legacyRaw) {
@@ -846,6 +888,11 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
 
         setPaths(metas);
         setPathConfigs(configs);
+        const initialConfigs = serializePathConfigs(configs);
+        lastPathSavePayloadRef.current = JSON.stringify({
+          aiPathsPathIndex: metas,
+          aiPathsPathConfigs: initialConfigs,
+        });
         if (preferredGroups !== null) {
           setExpandedPaletteGroups(new Set(preferredGroups));
         }
@@ -854,6 +901,14 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
           preferredPathId && configs[preferredPathId]
             ? preferredPathId
             : firstPathCandidate;
+        const firstConfigForSettings = configs[firstPath];
+        if (firstConfigForSettings) {
+          lastSettingsPayloadRef.current = JSON.stringify({
+            index: metas,
+            configId: firstPath,
+            config: sanitizePathConfig(firstConfigForSettings),
+          });
+        }
         setActivePathId(firstPath);
         const activeConfig = configs[firstPath] ?? createDefaultPathConfig(firstPath);
         const normalizedNodes = normalizeNodes(activeConfig.nodes);
@@ -881,7 +936,14 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       }
     };
     void loadConfig();
-  }, [toast, reportAiPathsError, loadNonce, settingsQuery.refetch, preferencesQuery.refetch]);
+  }, [
+    toast,
+    reportAiPathsError,
+    loadNonce,
+    settingsQuery.refetch,
+    preferencesQuery.refetch,
+    updateSettingsBulkMutation,
+  ]);
 
   useEffect(() => {
     if (!prefsLoaded) return;
@@ -1370,6 +1432,7 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         aiPathsPathIndex: paths,
         aiPathsPathConfigs: safeConfigs,
       });
+      await persistPathSettings(paths, activePathId, config);
       toast("Wires cleared.", { variant: "success" });
     } catch (error) {
       reportAiPathsError(error, { action: "clearWires" }, "Failed to clear wires:");
@@ -2651,6 +2714,28 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     lastRunAt,
   });
 
+  const persistPathSettings = async (
+    nextPaths: PathMeta[],
+    configId: string,
+    config: PathConfig
+  ) => {
+    const sanitizedConfig = sanitizePathConfig(config);
+    const payloadKey = JSON.stringify({
+      index: nextPaths,
+      configId,
+      config: sanitizedConfig,
+    });
+    if (payloadKey === lastSettingsPayloadRef.current) return;
+    await updateSettingsBulkMutation.mutateAsync([
+      { key: PATH_INDEX_KEY, value: JSON.stringify(nextPaths) },
+      {
+        key: `${PATH_CONFIG_PREFIX}${configId}`,
+        value: JSON.stringify(sanitizedConfig),
+      },
+    ]);
+    lastSettingsPayloadRef.current = payloadKey;
+  };
+
   const buildPathSnapshot = () =>
     JSON.stringify({
       activePathId,
@@ -2677,10 +2762,18 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
       setPathConfigs(nextConfigs);
       setPaths(nextPaths);
       const safeConfigs = serializePathConfigs(nextConfigs);
-      await updatePreferencesMutation.mutateAsync({
+      const payloadKey = JSON.stringify({
         aiPathsPathIndex: nextPaths,
         aiPathsPathConfigs: safeConfigs,
       });
+      if (payloadKey !== lastPathSavePayloadRef.current) {
+        await updatePreferencesMutation.mutateAsync({
+          aiPathsPathIndex: nextPaths,
+          aiPathsPathConfigs: safeConfigs,
+        });
+        lastPathSavePayloadRef.current = payloadKey;
+      }
+      await persistPathSettings(nextPaths, activePathId, config);
       setLastError(null);
       void persistLastError(null);
       lastSavedSnapshotRef.current = buildPathSnapshot();
@@ -2758,8 +2851,6 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
     parserSamples,
     pathDescription,
     pathName,
-    runtimeState,
-    lastRunAt,
     saving,
     updaterSamples,
     buildPathSnapshot,
@@ -2903,6 +2994,14 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         aiPathsPathIndex: nextPaths,
         aiPathsPathConfigs: safeConfigs,
       });
+      if (nextId) {
+        const nextConfig = nextConfigs[nextId] ?? createDefaultPathConfig(nextId);
+        await persistPathSettings(nextPaths, nextId, nextConfig);
+      } else {
+        await updateSettingsBulkMutation.mutateAsync([
+          { key: PATH_INDEX_KEY, value: JSON.stringify(nextPaths) },
+        ]);
+      }
       toast("Path removed from the index.", { variant: "success" });
     } catch (error) {
       reportAiPathsError(error, { action: "deletePath", pathId: targetId }, "Failed to update path index:");
@@ -2934,6 +3033,14 @@ export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPat
         aiPathsPathIndex: nextPaths,
         aiPathsPathConfigs: safeConfigs,
       });
+      if (activePathId) {
+        const activeConfig = pathConfigs[activePathId] ?? createDefaultPathConfig(activePathId);
+        await persistPathSettings(nextPaths, activePathId, activeConfig);
+      } else {
+        await updateSettingsBulkMutation.mutateAsync([
+          { key: PATH_INDEX_KEY, value: JSON.stringify(nextPaths) },
+        ]);
+      }
       toast("Path list saved.", { variant: "success" });
     } catch (error) {
       reportAiPathsError(error, { action: "savePathIndex" }, "Failed to save path list:");

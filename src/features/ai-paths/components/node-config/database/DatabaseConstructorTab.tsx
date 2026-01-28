@@ -1097,6 +1097,11 @@ export function DatabaseConstructorTab({
             const customValue = mapping.sourcePath ?? "";
             // Schema selection = targetValue matches a schema option
             const hasSchemaSelection = uniqueTargetPathOptions.some(opt => opt.value === targetValue) && targetValue.trim().length > 0;
+            const sourcePort = mapping.sourcePort ?? "";
+            const sourcePortOptions =
+              sourcePort && !availablePorts.includes(sourcePort)
+                ? [sourcePort, ...availablePorts]
+                : availablePorts;
 
             return (
               <div
@@ -1109,9 +1114,9 @@ export function DatabaseConstructorTab({
                     value={hasSchemaSelection ? targetValue : ""}
                     onValueChange={(value) => {
                       if (value && value !== "__empty__") {
-                        updateMapping(index, { targetPath: value, sourcePort: "", sourcePath: "" });
+                        updateMapping(index, { targetPath: value });
                       } else {
-                        updateMapping(index, { targetPath: "", sourcePort: "", sourcePath: "" });
+                        updateMapping(index, { targetPath: "" });
                       }
                     }}
                   >
@@ -1129,19 +1134,66 @@ export function DatabaseConstructorTab({
                   </Select>
                 </div>
 
-                {/* Custom value text field - shown after schema selection */}
-                {hasSchemaSelection && (
+                {/* Source port selector */}
+                <div className="space-y-2 min-w-[160px]">
+                  <Select
+                    value={sourcePort}
+                    onValueChange={(value) =>
+                      updateMapping(index, {
+                        sourcePort: value,
+                        sourcePath:
+                          value === "bundle" ? (mapping.sourcePath ?? "") : mapping.sourcePath,
+                      })
+                    }
+                  >
+                    <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
+                      <SelectValue placeholder="Select input" />
+                    </SelectTrigger>
+                    <SelectContent className="border-border bg-gray-900">
+                      {sourcePortOptions.map((port) => (
+                        <SelectItem key={port} value={port}>
+                          {formatPortLabel(port)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Source path input */}
+                {hasSchemaSelection && sourcePort && (
                   <div className="space-y-2 min-w-[140px]">
-                    <Input
-                      className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
-                      value={customValue}
-                      onChange={(event) =>
-                        updateMapping(index, {
-                          sourcePath: event.target.value,
-                        })
-                      }
-                      placeholder="Custom value (optional)"
-                    />
+                    {sourcePort === "bundle" && bundleKeys.size > 0 ? (
+                      <Select
+                        value={customValue}
+                        onValueChange={(value) =>
+                          updateMapping(index, {
+                            sourcePath: value,
+                          })
+                        }
+                      >
+                        <SelectTrigger className="border-border bg-card/70 text-[10px] text-gray-200">
+                          <SelectValue placeholder="Pick bundle key" />
+                        </SelectTrigger>
+                        <SelectContent className="border-border bg-gray-900">
+                          {Array.from(bundleKeys).map((key) => (
+                            <SelectItem key={key} value={key}>
+                              {formatPortLabel(key)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        className="w-full rounded-md border border-border bg-card/70 text-sm text-white"
+                        value={customValue}
+                        onChange={(event) =>
+                          updateMapping(index, {
+                            sourcePath: event.target.value,
+                          })
+                        }
+                        placeholder="Source path (optional)"
+                      />
+                    )}
                   </div>
                 )}
 

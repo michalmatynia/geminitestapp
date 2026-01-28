@@ -1388,6 +1388,10 @@ export function DatabaseNodeConfigSection({
                     updateSelectedNodeConfig({
                       database: {
                         ...databaseConfig,
+                        useMongoActions: true,
+                        actionCategory,
+                        action,
+                        operation: "update",
                         updateTemplate: value,
                       },
                     });
@@ -1410,6 +1414,23 @@ export function DatabaseNodeConfigSection({
                       },
                     });
                   } else {
+                    if (isUpdateAction) {
+                      updateSelectedNodeConfig({
+                        database: {
+                          ...databaseConfig,
+                          useMongoActions: true,
+                          actionCategory,
+                          action,
+                          operation: "update",
+                          query: {
+                            ...queryConfig,
+                            mode: "custom",
+                            queryTemplate: value,
+                          },
+                        },
+                      });
+                      return;
+                    }
                     updateQueryConfig({
                       mode: "custom",
                       queryTemplate: value,
@@ -1425,6 +1446,14 @@ export function DatabaseNodeConfigSection({
                     updateSelectedNodeConfig({
                       database: {
                         ...databaseConfig,
+                        ...(isUpdateAction
+                          ? {
+                              useMongoActions: true,
+                              actionCategory,
+                              action,
+                              operation: "update",
+                            }
+                          : null),
                         presetId: "custom",
                         query: {
                           ...queryConfig,
@@ -1762,11 +1791,27 @@ export function DatabaseNodeConfigSection({
                     onValueChange={(value) => setDatabaseTab(value as "settings" | "constructor" | "presets")}
                     className="space-y-4"
                   >
-                    <TabsList className="w-full justify-start border border-border bg-card/60">
-                    <TabsTrigger value="settings">Query</TabsTrigger>
-                    <TabsTrigger value="constructor">Constructor</TabsTrigger>
-                    <TabsTrigger value="presets">Presets</TabsTrigger>
-                  </TabsList>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <TabsList className="justify-start border border-border bg-card/60">
+                        <TabsTrigger value="settings">Query</TabsTrigger>
+                        <TabsTrigger value="constructor">Constructor</TabsTrigger>
+                        <TabsTrigger value="presets">Presets</TabsTrigger>
+                      </TabsList>
+                      <div
+                        className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-wide ${
+                          databaseConfig.useMongoActions
+                            ? "border-emerald-700/60 bg-emerald-500/10 text-emerald-200"
+                            : "border-amber-700/60 bg-amber-500/10 text-amber-200"
+                        }`}
+                        title={
+                          databaseConfig.useMongoActions
+                            ? "Mongo Actions enabled (filter + update document)"
+                            : "Legacy update mode (mappings only)"
+                        }
+                      >
+                        Mongo Actions: {databaseConfig.useMongoActions ? "On" : "Off"}
+                      </div>
+                    </div>
                     <TabsContent value="settings">
                       <DatabaseSettingsTab
                         queryEditor={queryEditor}

@@ -3,6 +3,7 @@ import {
   coerceInput,
   getValueAtMappingPath,
   parseJsonSafe,
+  renderJsonTemplate,
   renderTemplate,
   safeStringify,
 } from "../../utils";
@@ -446,6 +447,41 @@ export const handleDatabase: NodeHandler = async ({
   simulationEntityType,
   simulationEntityId,
 }) => {
+  const resolveDatabaseInputs = (inputs: Record<string, unknown>) => {
+    const next = { ...inputs };
+    const pickString = (value: unknown) =>
+      typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined;
+    const applyFromObject = (record: Record<string, unknown>) => {
+      const entityId =
+        pickString(record.entityId) ??
+        pickString(record.productId) ??
+        pickString(record.id) ??
+        pickString(record._id);
+      const productId =
+        pickString(record.productId) ??
+        pickString(record.entityId) ??
+        pickString(record.id) ??
+        pickString(record._id);
+      const entityType = pickString(record.entityType);
+      if (next.entityId === undefined && entityId) next.entityId = entityId;
+      if (next.productId === undefined && productId) next.productId = productId;
+      if (next.entityType === undefined && entityType) next.entityType = entityType;
+    };
+    const contextValue = coerceInput(inputs.context);
+    if (contextValue && typeof contextValue === "object") {
+      applyFromObject(contextValue as Record<string, unknown>);
+    }
+    const metaValue = coerceInput(inputs.meta);
+    if (metaValue && typeof metaValue === "object") {
+      applyFromObject(metaValue as Record<string, unknown>);
+    }
+    const bundleValue = coerceInput(inputs.bundle);
+    if (bundleValue && typeof bundleValue === "object") {
+      applyFromObject(bundleValue as Record<string, unknown>);
+    }
+    return next;
+  };
+  const resolvedInputs = resolveDatabaseInputs(nodeInputs as Record<string, unknown>);
   const defaultQuery = DEFAULT_DB_QUERY;
   const dbConfig = node.config?.database ?? {
     operation: "query",
@@ -470,8 +506,9 @@ export const handleDatabase: NodeHandler = async ({
   if (useMongoActions) {
     const actionCategory = dbConfig.actionCategory ?? "read";
     const action = dbConfig.action ?? "find";
-    const inputValue = coerceInput(nodeInputs.value) ?? coerceInput(nodeInputs.jobId);
-    const queryPayload = buildDbQueryPayload(nodeInputs, queryConfig);
+    const inputValue =
+      coerceInput(resolvedInputs.value) ?? coerceInput(resolvedInputs.jobId);
+    const queryPayload = buildDbQueryPayload(resolvedInputs, queryConfig);
     const filter = queryPayload.query ?? {};
     const projection = queryPayload.projection;
     const sort = queryPayload.sort;
@@ -481,14 +518,14 @@ export const handleDatabase: NodeHandler = async ({
     const distinctField = dbConfig.distinctField?.trim() || undefined;
     const updateTemplate = dbConfig.updateTemplate?.trim() ?? "";
 
-    const renderJsonTemplate = (template: string) => {
-      const rendered = renderTemplate(
-        template,
-        nodeInputs as Record<string, unknown>,
-        inputValue ?? ""
+    const parseJsonTemplate = (template: string) =>
+      parseJsonSafe(
+        renderJsonTemplate(
+          template,
+          resolvedInputs as Record<string, unknown>,
+          inputValue ?? ""
+        )
       );
-      return parseJsonSafe(rendered);
-    };
 
     if (actionCategory === "read" || actionCategory === "aggregate") {
       if (action === "distinct" && !distinctField) {
@@ -496,7 +533,7 @@ export const handleDatabase: NodeHandler = async ({
         return { result: null, bundle: { error: "Missing distinct field" }, aiPrompt };
       }
       if (action === "aggregate") {
-        const parsedPipeline = renderJsonTemplate(queryConfig.queryTemplate ?? "[]");
+        const parsedPipeline = parseJsonTemplate(queryConfig.queryTemplate ?? "[]");
         if (!Array.isArray(parsedPipeline)) {
           toast("Aggregation pipeline must be a JSON array.", { variant: "error" });
           return { result: null, bundle: { error: "Invalid pipeline" }, aiPrompt };
@@ -570,7 +607,7 @@ export const handleDatabase: NodeHandler = async ({
 
     if (actionCategory === "create") {
       const payloadTemplate = queryConfig.queryTemplate?.trim() ?? "";
-      const parsedPayload = payloadTemplate ? renderJsonTemplate(payloadTemplate) : null;
+      const parsedPayload = payloadTemplate ? parseJsonTemplate(payloadTemplate) : null;
       if (payloadTemplate && (!parsedPayload || (typeof parsedPayload !== "object" && !Array.isArray(parsedPayload)))) {
         toast("Insert template must be valid JSON.", { variant: "error" });
         return { result: null, bundle: { error: "Invalid insert template" }, aiPrompt };
@@ -578,7 +615,8 @@ export const handleDatabase: NodeHandler = async ({
       const payloadFromTemplate =
         parsedPayload && typeof parsedPayload === "object" ? parsedPayload : null;
       const rawPayload =
-        payloadFromTemplate ?? coerceInput(nodeInputs[dbConfig.writeSource ?? "bundle"]);
+        payloadFromTemplate ??
+        coerceInput(resolvedInputs[dbConfig.writeSource ?? "bundle"]);
       const coercePayloadObject = (value: unknown) => {
         if (!value) return null;
         if (typeof value === "string") {
@@ -636,6 +674,17 @@ export const handleDatabase: NodeHandler = async ({
     }
 
     if (actionCategory === "update") {
+      let resolvedFilter = filter;
+      if (queryConfig.queryTemplate?.trim()) {
+        const parsedFilter = parseJsonTemplate(queryConfig.queryTemplate);
+        if (
+          parsedFilter &&
+          typeof parsedFilter === "object" &&
+          !Array.isArray(parsedFilter)
+        ) {
+          resolvedFilter = parsedFilter as Record<string, unknown>;
+        }
+      }
       const buildUpdatesFromMappings = () => {
         const fallbackTarget = dbConfig.mappings?.[0]?.targetPath ?? "content_en";
         const mappings =
@@ -644,7 +693,7 @@ export const handleDatabase: NodeHandler = async ({
             : [
                 {
                   targetPath: fallbackTarget,
-                  sourcePort: nodeInputs.result ? "result" : "content_en",
+                  sourcePort: resolvedInputs.result ? "result" : "content_en",
                 },
               ];
         const trimStrings = dbConfig.trimStrings ?? false;
@@ -658,7 +707,7 @@ export const handleDatabase: NodeHandler = async ({
         mappings.forEach((mapping) => {
           const sourcePort = mapping.sourcePort;
           if (!sourcePort) return;
-          const sourceValue = nodeInputs[sourcePort];
+          const sourceValue = resolvedInputs[sourcePort];
           if (sourceValue === undefined) return;
           let value = coerceInput(sourceValue);
           if (value && typeof value === "object" && mapping.sourcePath) {
@@ -695,7 +744,7 @@ export const handleDatabase: NodeHandler = async ({
         return { updates, primaryTarget: mappings.find((m) => m.targetPath)?.targetPath ?? fallbackTarget };
       };
 
-      const parsedUpdate = updateTemplate ? renderJsonTemplate(updateTemplate) : null;
+      const parsedUpdate = updateTemplate ? parseJsonTemplate(updateTemplate) : null;
       if (updateTemplate && (!parsedUpdate || (typeof parsedUpdate !== "object" && !Array.isArray(parsedUpdate)))) {
         toast("Update template must be valid JSON.", { variant: "error" });
         return { result: null, bundle: { error: "Invalid update template" }, aiPrompt };
@@ -728,7 +777,7 @@ export const handleDatabase: NodeHandler = async ({
       const updateResult = await dbApi.action({
         action,
         collection,
-        filter,
+        filter: resolvedFilter,
         update: updateDoc,
         idType,
       });
@@ -785,13 +834,18 @@ export const handleDatabase: NodeHandler = async ({
   }
 
   if (operation === "query") {
-    const inputQuery = coerceInput(nodeInputs.query);
-    const callbackInput = coerceInput(nodeInputs.queryCallback);
-    const aiQueryInput = coerceInput(nodeInputs.aiQuery);
-    const resolvedEntityId = resolveEntityIdFromInputs(nodeInputs, undefined, simulationEntityType, simulationEntityId);
-    const inputValue = coerceInput(nodeInputs.value);
-    const entityIdInput = coerceInput(nodeInputs.entityId);
-    const productIdInput = coerceInput(nodeInputs.productId);
+    const inputQuery = coerceInput(resolvedInputs.query);
+    const callbackInput = coerceInput(resolvedInputs.queryCallback);
+    const aiQueryInput = coerceInput(resolvedInputs.aiQuery);
+    const resolvedEntityId = resolveEntityIdFromInputs(
+      resolvedInputs,
+      undefined,
+      simulationEntityType,
+      simulationEntityId
+    );
+    const inputValue = coerceInput(resolvedInputs.value);
+    const entityIdInput = coerceInput(resolvedInputs.entityId);
+    const productIdInput = coerceInput(resolvedInputs.productId);
     const _entityId = entityIdInput ?? resolvedEntityId;
     const parseQueryInput = (value: unknown) => {
       if (!value) return null;
@@ -855,12 +909,13 @@ export const handleDatabase: NodeHandler = async ({
       if (inlineQuery) {
         query = inlineQuery;
       } else if (callbackTemplate) {
-        const rendered = renderTemplate(
-          callbackTemplate,
-          nodeInputs as Record<string, unknown>,
-          inputValue ?? ""
+        const parsed = parseJsonSafe(
+          renderJsonTemplate(
+            callbackTemplate,
+            resolvedInputs as Record<string, unknown>,
+            inputValue ?? ""
+          )
         );
-        const parsed = parseJsonSafe(rendered);
         if (parsed && typeof parsed === "object") {
           query = parsed as Record<string, unknown>;
         }
@@ -902,12 +957,13 @@ export const handleDatabase: NodeHandler = async ({
           };
         }
       } else {
-        const rendered = renderTemplate(
-          queryConfig.queryTemplate ?? "{}",
-          nodeInputs as Record<string, unknown>,
-          inputValue ?? ""
+        const parsed = parseJsonSafe(
+          renderJsonTemplate(
+            queryConfig.queryTemplate ?? "{}",
+            resolvedInputs as Record<string, unknown>,
+            inputValue ?? ""
+          )
         );
-        const parsed = parseJsonSafe(rendered);
         if (parsed && typeof parsed === "object") {
           query = parsed as Record<string, unknown>;
         }
@@ -987,7 +1043,7 @@ export const handleDatabase: NodeHandler = async ({
         : [
             {
               targetPath: fallbackTarget,
-              sourcePort: nodeInputs.result ? "result" : "content_en",
+              sourcePort: resolvedInputs.result ? "result" : "content_en",
             },
           ];
     const trimStrings = dbConfig.trimStrings ?? false;
@@ -1001,7 +1057,7 @@ export const handleDatabase: NodeHandler = async ({
     mappings.forEach((mapping) => {
       const sourcePort = mapping.sourcePort;
       if (!sourcePort) return;
-      const sourceValue = nodeInputs[sourcePort];
+      const sourceValue = resolvedInputs[sourcePort];
       if (sourceValue === undefined) return;
       let value = coerceInput(sourceValue);
       if (value && typeof value === "object" && mapping.sourcePath) {
@@ -1038,7 +1094,12 @@ export const handleDatabase: NodeHandler = async ({
     const updateStrategy = dbConfig.updateStrategy ?? "one";
     const entityType = (dbConfig.entityType ?? "product").trim().toLowerCase();
     const idField = dbConfig.idField ?? "entityId";
-    const entityId = resolveEntityIdFromInputs(nodeInputs, idField, simulationEntityType, simulationEntityId);
+    const entityId = resolveEntityIdFromInputs(
+      resolvedInputs,
+      idField,
+      simulationEntityType,
+      simulationEntityId
+    );
     const hasUpdates = Object.keys(updates).length > 0;
     const needsEntityId = entityType !== "custom";
     let updateResult: unknown = updates;

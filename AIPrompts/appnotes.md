@@ -5,6 +5,10 @@ I want the RUN button to work on ALL of the queries.
 { "$set":{"fieldName": "{{value}}"}
 }
 
+the mapper can assign the object {"fieldName": "{{value}}"}, this should also be helpful
+
+"{{result}}" (escaped JSON object) {{result}} (JSON object ) write it somewhere
+
 * AI Prompt needs to be sent on pressing the return button in Database Query Node.
 
 When AI model generates content, it keeps on appearing in my prompt suggestion in Database, maybe for suggestions I need another  channel ?

@@ -23,3 +23,34 @@ export const renderTemplate = (
       const resolved = getValueAtMappingPath(context, key);
       return safeStringify(resolved);
     });
+
+export const renderJsonTemplate = (
+  template: string,
+  context: Record<string, unknown>,
+  currentValue: unknown
+) => {
+  const resolveToken = (token: string) => {
+    const key = String(token).trim();
+    if (key === "value" || key === "current") {
+      return currentValue;
+    }
+    return getValueAtMappingPath(context, key);
+  };
+  const escapeQuoted = (input: string) => {
+    const replaceQuoted = (text: string, pattern: RegExp) =>
+      text.replace(pattern, (_match, token) => {
+        const value = resolveToken(token);
+        const asString =
+          value === undefined || value === null
+            ? ""
+            : typeof value === "string"
+              ? value
+              : JSON.stringify(value);
+        return JSON.stringify(asString);
+      });
+    let next = replaceQuoted(input, /"{{\s*([^}]+)\s*}}"/g);
+    next = replaceQuoted(next, /"\[\s*([^\]]+)\s*\]"/g);
+    return next;
+  };
+  return renderTemplate(escapeQuoted(template), context, currentValue);
+};

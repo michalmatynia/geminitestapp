@@ -13,6 +13,7 @@ import {
   omitByPaths,
   parseJsonSafe,
   pickByPaths,
+  renderJsonTemplate,
   renderTemplate,
   safeStringify,
   setValueAtMappingPath,
@@ -320,12 +321,13 @@ export const buildDbQueryPayload = (
       query = { [field]: presetValue };
     }
   } else {
-    const rendered = renderTemplate(
-      queryConfig.queryTemplate ?? "{}",
-      nodeInputs as Record<string, unknown>,
-      inputValue ?? ""
+    const parsed = parseJsonSafe(
+      renderJsonTemplate(
+        queryConfig.queryTemplate ?? "{}",
+        nodeInputs as Record<string, unknown>,
+        inputValue ?? ""
+      )
     );
-    const parsed = parseJsonSafe(rendered);
     if (parsed && typeof parsed === "object") {
       query = parsed as Record<string, unknown>;
     }

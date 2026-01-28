@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { GET, POST } from "@/app/api/price-groups/route";
-import prisma from "@/lib/prisma";
+import prisma from "@/shared/lib/db/prisma";
 
 type PriceGroupResponse = {
   id: string;

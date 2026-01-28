@@ -1,3 +1,5 @@
+import "server-only";
+
 import prisma from "@/shared/lib/db/prisma";
 import type {
   ThemeRecord,

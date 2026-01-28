@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { GET, POST } from "@/app/api/cms/slugs/route";
 import { DELETE } from "@/app/api/cms/slugs/[id]/route";
 
-import prisma from "@/lib/prisma";
+import prisma from "@/shared/lib/db/prisma";
 import { Slug } from "@prisma/client";
 
 describe("CMS API", () => {

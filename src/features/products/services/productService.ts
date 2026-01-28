@@ -1,3 +1,5 @@
+import "server-only";
+
 import { ErrorSystem } from "@/features/observability/server";
 // This service encapsulates all business logic for managing products.
 

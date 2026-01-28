@@ -4,7 +4,7 @@ import {
   PATCH as PATCH_NOTE,
   DELETE as DELETE_NOTE,
 } from "@/app/api/notes/[id]/route";
-import prisma from "@/lib/prisma";
+import prisma from "@/shared/lib/db/prisma";
 import { NextRequest } from "next/server";
 import {
   Note,

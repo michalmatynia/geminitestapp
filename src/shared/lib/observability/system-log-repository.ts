@@ -1,3 +1,5 @@
+import "server-only";
+
 import { randomUUID } from "crypto";
 import { Prisma } from "@prisma/client";
 import { ObjectId, type Filter } from "mongodb";
@@ -264,7 +266,7 @@ export async function createSystemLog(
 
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
-    await mongo.collection(SYSTEM_LOGS_COLLECTION).insertOne({
+    await mongo.collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION).insertOne({
       _id: toMongoId(payload.id),
       ...payload,
     });
@@ -297,7 +299,7 @@ export async function createSystemLog(
   } catch (error) {
     if (isMissingPrismaTable(error) && process.env.MONGODB_URI) {
       const mongo = await getMongoDb();
-      await mongo.collection(SYSTEM_LOGS_COLLECTION).insertOne({
+      await mongo.collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION).insertOne({
         _id: toMongoId(payload.id),
         ...payload,
       });
@@ -470,7 +472,7 @@ export async function clearSystemLogs(before?: Date | null) {
     const mongo = await getMongoDb();
     const filter = before ? { createdAt: { $lte: before } } : {};
     const result = await mongo
-      .collection(SYSTEM_LOGS_COLLECTION)
+      .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
       .deleteMany(filter);
     return { deleted: result.deletedCount ?? 0 };
   }
@@ -484,7 +486,7 @@ export async function clearSystemLogs(before?: Date | null) {
       const mongo = await getMongoDb();
       const filter = before ? { createdAt: { $lte: before } } : {};
       const result = await mongo
-        .collection(SYSTEM_LOGS_COLLECTION)
+        .collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION)
         .deleteMany(filter);
       return { deleted: result.deletedCount ?? 0 };
     }

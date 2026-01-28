@@ -3,15 +3,15 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { findAuthUserByEmail } from "@/features/auth";
-import { getAuthSecurityProfile } from "@/features/auth";
+import { findAuthUserByEmail } from "@/features/auth/server";
+import { getAuthSecurityProfile } from "@/features/auth/server";
 import {
   checkLoginAllowed,
   extractClientIp,
   recordLoginFailure,
-} from "@/features/auth";
-import { getAuthUserPageSettings } from "@/features/auth";
-import { createLoginChallenge } from "@/features/auth";
+} from "@/features/auth/server";
+import { getAuthUserPageSettings } from "@/features/auth/server";
+import { createLoginChallenge } from "@/features/auth/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";

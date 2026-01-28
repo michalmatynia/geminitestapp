@@ -1,3 +1,5 @@
+import "server-only";
+
 import { randomUUID } from "crypto";
 import type { Document, Filter } from "mongodb";
 import prisma from "@/shared/lib/db/prisma";

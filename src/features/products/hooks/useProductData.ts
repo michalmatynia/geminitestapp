@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { getProducts, countProducts } from "@/features/products/api";
-import { ProductWithImages, PriceGroupWithDetails } from "@/features/products/types";
-import { logger } from "@/shared/utils/logger";
+import { PriceGroupWithDetails } from "@/features/products/types";
+import { useProductsWithCount } from "@/features/products/hooks/useProductsQuery";
 
 interface UseProductDataProps {
   refreshTrigger: number;
@@ -60,10 +59,6 @@ export function useProductData({
   priceGroups,
   searchLanguage,
 }: UseProductDataProps) {
-  const [data, setData] = useState<ProductWithImages[]>([]);
-  const [total, setTotal] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-
   // Filter state
   const [search, setSearch] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
@@ -78,8 +73,6 @@ export function useProductData({
   // Pagination state
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(initialPageSize);
-
-  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Track whether initial sync from preferences has completed
   const [initialSyncComplete, setInitialSyncComplete] = useState(false);
@@ -125,19 +118,18 @@ export function useProductData({
     return () => clearTimeout(t);
   }, [debouncedSearch, debouncedSku, minPrice, maxPrice, startDate, endDate, catalogFilter]);
 
-  // Load products - wait for preferences to load AND initial sync to complete
-  useEffect(() => {
-    // Don't fetch until preferences are loaded AND synced to local state
-    // This prevents a double fetch when preferences differ from initial values
-    if (!preferencesLoaded || !initialSyncComplete) {
-      return;
-    }
+  const convertedMinPrice = useMemo(
+    () => convertPriceFilterToBase(minPrice, currencyCode, priceGroups),
+    [minPrice, currencyCode, priceGroups]
+  );
 
-    // Convert price filters from display currency to base currency for correct DB queries
-    const convertedMinPrice = convertPriceFilterToBase(minPrice, currencyCode, priceGroups);
-    const convertedMaxPrice = convertPriceFilterToBase(maxPrice, currencyCode, priceGroups);
+  const convertedMaxPrice = useMemo(
+    () => convertPriceFilterToBase(maxPrice, currencyCode, priceGroups),
+    [maxPrice, currencyCode, priceGroups]
+  );
 
-    const filters = {
+  const filters = useMemo(
+    () => ({
       search: debouncedSearch,
       sku: debouncedSku,
       minPrice: convertedMinPrice,
@@ -148,39 +140,41 @@ export function useProductData({
       pageSize,
       catalogId: catalogFilter === "all" ? undefined : catalogFilter,
       searchLanguage,
-    };
-    let cancelled = false;
-    const loadProducts = async () => {
-      setIsLoading(true);
-      setLoadError(null);
-      try {
-        const [products, productCount] = await Promise.all([
-          getProducts(filters),
-          countProducts(filters),
-        ]);
-        if (!cancelled) {
-          setData(products);
-          setTotal(productCount);
-        }
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Failed to load products";
-        logger.error("Failed to load products:", error);
-        if (!cancelled) {
-          setLoadError(message);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    };
+    }),
+    [
+      debouncedSearch,
+      debouncedSku,
+      convertedMinPrice,
+      convertedMaxPrice,
+      startDate,
+      endDate,
+      page,
+      pageSize,
+      catalogFilter,
+      searchLanguage,
+    ]
+  );
 
-    void loadProducts();
-    return () => {
-      cancelled = true;
-    };
-  }, [debouncedSearch, debouncedSku, minPrice, maxPrice, startDate, endDate, page, pageSize, catalogFilter, refreshTrigger, preferencesLoaded, initialSyncComplete, currencyCode, priceGroups, searchLanguage]);
+  const {
+    products: data,
+    total,
+    isLoading,
+    error,
+    refetch,
+  } = useProductsWithCount(filters, {
+    enabled: preferencesLoaded && initialSyncComplete,
+  });
+
+  useEffect(() => {
+    if (refreshTrigger > 0) {
+      void refetch();
+    }
+  }, [refreshTrigger, refetch]);
+
+  const loadError = useMemo(() => {
+    if (!error) return null;
+    return error instanceof Error ? error.message : "Failed to load products";
+  }, [error]);
 
   const totalPages = useMemo(() => {
     return Math.max(1, Math.ceil(total / pageSize));

@@ -1,6 +1,6 @@
 "use client";
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import {
   ColumnDef,
   flexRender,

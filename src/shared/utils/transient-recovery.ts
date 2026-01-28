@@ -1,3 +1,5 @@
+import "server-only";
+
 import { isRetryableError } from "@/shared/errors/app-error";
 import { logSystemEvent } from "@/shared/lib/observability/system-logger";
 import { withRetry, type RetryOptions, withCircuitBreaker, type CircuitBreakerOptions } from "@/shared/utils/retry";

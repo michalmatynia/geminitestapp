@@ -1,3 +1,5 @@
+import "server-only";
+
 import { randomUUID } from "crypto";
 import type { Prisma } from "@prisma/client";
 import type { WithId } from "mongodb";

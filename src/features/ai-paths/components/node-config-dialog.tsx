@@ -158,7 +158,9 @@ export function NodeConfigDialog({
         />
         <ContextNodeConfigSection
           selectedNode={selectedNode}
+          runtimeState={runtimeState}
           updateSelectedNodeConfig={updateSelectedNodeConfig}
+          toast={toast}
         />
         <ParserNodeConfigSection
           selectedNode={selectedNode}
@@ -233,8 +235,8 @@ export function NodeConfigDialog({
           edges={edges}
           runtimeState={runtimeState}
           updateSelectedNodeConfig={updateSelectedNodeConfig}
-          onSendToAi={onSendToAi}
-          sendingToAi={sendingToAi}
+          {...(onSendToAi && { onSendToAi })}
+          {...(sendingToAi !== undefined && { sendingToAi })}
         />
         <ModelNodeConfigSection
           selectedNode={selectedNode}
@@ -247,8 +249,8 @@ export function NodeConfigDialog({
           edges={edges}
           runtimeState={runtimeState}
           updateSelectedNodeConfig={updateSelectedNodeConfig}
-          onSendToAi={onSendToAi}
-          sendingToAi={sendingToAi}
+          {...(onSendToAi && { onSendToAi })}
+          {...(sendingToAi !== undefined && { sendingToAi })}
           updaterSamples={updaterSamples}
           setUpdaterSamples={setUpdaterSamples}
           updaterSampleLoading={updaterSampleLoading}
@@ -271,7 +273,7 @@ export function NodeConfigDialog({
           edges={edges}
           runtimeState={runtimeState}
           updateSelectedNodeConfig={updateSelectedNodeConfig}
-          clearRuntimeForNode={clearRuntimeForNode}
+          {...(clearRuntimeForNode && { clearRuntimeForNode })}
         />
         <AiDescriptionNodeConfigSection
           selectedNode={selectedNode}

@@ -1,6 +1,7 @@
 "use client";
 import { ModalShell, Button, Input, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label } from "@/shared/ui";
-import { useCallback, useEffect, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 
 
@@ -40,8 +41,7 @@ export default function ProductListingsModal({
   filterIntegrationSlug,
   onListingsUpdated,
 }: ProductListingsModalProps) {
-  const [listings, setListings] = useState<ProductListingWithDetails[]>([]);
-  const [loadingListings, setLoadingListings] = useState(true);
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [deletingFromBase, setDeletingFromBase] = useState<string | null>(null);
   const [purgingListing, setPurgingListing] = useState<string | null>(null);
@@ -67,26 +67,26 @@ export default function ProductListingsModal({
   const productName =
     product.name_en || product.name_pl || product.name_de || "Unnamed Product";
 
-  const fetchListings = useCallback(async () => {
-    try {
-      setLoadingListings(true);
-      setError(null);
+  const listingsQuery = useQuery({
+    queryKey: ["integrations", "product-listings", product.id],
+    queryFn: async () => {
       const res = await fetch(`/api/integrations/products/${product.id}/listings`);
       if (!res.ok) {
         throw new Error("Failed to fetch listings");
       }
-      const data = (await res.json()) as ProductListingWithDetails[];
-      setListings(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load listings");
-    } finally {
-      setLoadingListings(false);
-    }
-  }, [product.id]);
+      return (await res.json()) as ProductListingWithDetails[];
+    },
+    enabled: Boolean(product.id),
+  });
 
-  useEffect(() => {
-    void fetchListings();
-  }, [fetchListings]);
+  const listings = listingsQuery.data ?? [];
+  const loadingListings = listingsQuery.isPending;
+  const listingsError = listingsQuery.error;
+  const combinedError = useMemo(() => {
+    if (error) return error;
+    if (!listingsError) return null;
+    return listingsError instanceof Error ? listingsError.message : "Failed to load listings";
+  }, [error, listingsError]);
 
   const filteredListings = filterIntegrationSlug
     ? listings.filter((listing) => listing.integration.slug === filterIntegrationSlug)
@@ -395,12 +395,14 @@ export default function ProductListingsModal({
         const payload = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(payload.error || "Failed to delete from Base.com");
       }
-      setListings((prev) =>
-        prev.map((item) =>
-          item.id === listingId
-            ? { ...item, status: "removed", updatedAt: new Date() }
-            : item
-        )
+      queryClient.setQueryData<ProductListingWithDetails[]>(
+        ["integrations", "product-listings", product.id],
+        (prev = []) =>
+          prev.map((item) =>
+            item.id === listingId
+              ? { ...item, status: "removed", updatedAt: new Date() }
+              : item
+          )
       );
       onListingsUpdated?.();
     } catch (err) {
@@ -426,7 +428,10 @@ export default function ProductListingsModal({
       if (!res.ok) {
         throw new Error("Failed to remove listing history");
       }
-      setListings((prev) => prev.filter((item) => item.id !== listingId));
+      queryClient.setQueryData<ProductListingWithDetails[]>(
+        ["integrations", "product-listings", product.id],
+        (prev = []) => prev.filter((item) => item.id !== listingId)
+      );
       onListingsUpdated?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to remove listing history");
@@ -456,12 +461,14 @@ export default function ProductListingsModal({
         const payload = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(payload.error || "Failed to save inventory ID");
       }
-      setListings((prev) =>
-        prev.map((item) =>
-          item.id === listingId
-            ? { ...item, inventoryId: value, updatedAt: new Date() }
-            : item
-        )
+      queryClient.setQueryData<ProductListingWithDetails[]>(
+        ["integrations", "product-listings", product.id],
+        (prev = []) =>
+          prev.map((item) =>
+            item.id === listingId
+              ? { ...item, inventoryId: value, updatedAt: new Date() }
+              : item
+          )
       );
       setInventoryOverrides((prev) => {
         const next = { ...prev };
@@ -579,7 +586,9 @@ export default function ProductListingsModal({
       setExportLogs([]);
       setLogsOpen(true);
       await exportListingToBase(listingId);
-      await fetchListings();
+      await queryClient.invalidateQueries({
+        queryKey: ["integrations", "product-listings", product.id],
+      });
       onListingsUpdated?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to export product");
@@ -602,7 +611,9 @@ export default function ProductListingsModal({
         imageBase64Mode: preset.imageBase64Mode,
         imageTransform: preset.transform,
       } : undefined);
-      await fetchListings();
+      await queryClient.invalidateQueries({
+        queryKey: ["integrations", "product-listings", product.id],
+      });
       onListingsUpdated?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to export product images");
@@ -622,7 +633,9 @@ export default function ProductListingsModal({
         imageBase64Mode: preset.imageBase64Mode,
         imageTransform: preset.transform,
       });
-      await fetchListings();
+      await queryClient.invalidateQueries({
+        queryKey: ["integrations", "product-listings", product.id],
+      });
       onListingsUpdated?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to export product");
@@ -642,11 +655,11 @@ export default function ProductListingsModal({
       <div className="space-y-4">
         {loading ? (
           <p className="text-sm text-gray-400">Loading listings...</p>
-        ) : error ? (
+        ) : combinedError ? (
           <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
             <div className="flex flex-col gap-3">
-              <span>{error}</span>
-              {isImageExportError(error) && lastExportListingId ? (
+              <span>{combinedError}</span>
+              {isImageExportError(combinedError) && lastExportListingId ? (
                 <div className="flex flex-wrap items-center gap-2">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

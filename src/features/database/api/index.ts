@@ -119,13 +119,15 @@ export const fetchDatabasePreview = async (input: {
   const groups = normalizeGroups(raw.groups ?? raw.stats?.groups);
   const tables = raw.tables ?? raw.stats?.tables ?? [];
   const tableRows = raw.tableRows ?? raw.data ?? [];
+  const finalPage = raw.page ?? input.page;
+  const finalPageSize = raw.pageSize ?? input.pageSize;
   const payload: DatabasePreviewPayload = {
     ...raw,
     groups,
     tables,
     tableRows,
-    page: raw.page ?? input.page,
-    pageSize: raw.pageSize ?? input.pageSize,
+    ...(finalPage !== undefined ? { page: finalPage } : {}),
+    ...(finalPageSize !== undefined ? { pageSize: finalPageSize } : {}),
   };
   return { ok: res.ok, payload };
 };

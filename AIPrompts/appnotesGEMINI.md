@@ -6,22 +6,20 @@ find components that are similar enough so that they can be reused and try to us
 
 Scan  Types and Type Clusters and move them over to the respective features localised or shared types folder.
 Scan for optimization opportunities Optimization and speed up processes
+check Product section optimization opportunities and avoidance of unnecessary re-renders.
 
 * npx tsc < -- here now
 npx eslint
 add tests
-check Product section optimization opportunities and avoidance of unnecessary re-renders.
 Run npm run lint.
 Run npm run test and/or npm run test:e2e.
 
-user activity logg
 run npx tsc and resolve typescript issues one by one
 
 Prepare a suite tests in vitests
-implement tanstack query all across application
+* implement tanstack query all across application
 
 Connect tanstack queries to a unified error logging and handling system.
-Mimize tanstack queries, it's enough if I just send the collection name in many cases
 connect all API to Error logging and handling system
 
 TESTS

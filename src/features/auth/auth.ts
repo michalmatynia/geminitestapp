@@ -1,3 +1,5 @@
+import "server-only";
+
 import { ErrorSystem } from "@/features/observability/server";
 import NextAuth, { type Session, type User } from "next-auth";
 import type { JWT } from "next-auth/jwt";
@@ -254,7 +256,7 @@ const buildProviders = () => {
   return providers;
 };
 
-export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
+const buildAuthConfig = async () => {
   try {
     await ErrorSystem.logInfo("[AUTH] Starting configuration...", { service: "auth" });
     const provider = await getAuthDataProvider();
@@ -319,12 +321,39 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
       },
       debug: true,
     };
-      } catch (error) {
-      await ErrorSystem.captureException(error, {
-        service: "auth",
-        action: "configuration",
-      });
-      throw error;
-    }
-  });
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: "auth",
+      action: "configuration",
+    });
+    throw error;
+  }
+};
+
+const AUTH_CONFIG_TTL_MS = 30_000;
+let cachedAuthConfig: Awaited<ReturnType<typeof buildAuthConfig>> | null = null;
+let cachedAuthConfigAt = 0;
+let cachedAuthConfigPromise: Promise<Awaited<ReturnType<typeof buildAuthConfig>>> | null = null;
+
+const getAuthConfig = async () => {
+  const now = Date.now();
+  if (cachedAuthConfig && now - cachedAuthConfigAt < AUTH_CONFIG_TTL_MS) {
+    return cachedAuthConfig;
+  }
+  if (cachedAuthConfigPromise) {
+    return cachedAuthConfigPromise;
+  }
+  cachedAuthConfigPromise = buildAuthConfig()
+    .then((config) => {
+      cachedAuthConfig = config;
+      cachedAuthConfigAt = Date.now();
+      return config;
+    })
+    .finally(() => {
+      cachedAuthConfigPromise = null;
+    });
+  return cachedAuthConfigPromise;
+};
+
+export const { handlers, auth, signIn, signOut } = NextAuth(getAuthConfig);
   

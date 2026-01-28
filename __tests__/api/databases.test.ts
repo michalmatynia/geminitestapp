@@ -10,11 +10,11 @@ import { GET as GET_BACKUPS } from "@/app/api/databases/backups/route";
 import { POST as POST_UPLOAD } from "@/app/api/databases/upload/route";
 import { POST as POST_DELETE } from "@/app/api/databases/delete/route";
 import fs from "fs/promises";
-import { execFileAsync } from "@/app/api/databases/_utils";
+import { execFileAsync } from "@/features/database/utils/postgres";
 import { Stats } from "fs";
 
-vi.mock("@/app/api/databases/_utils", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/app/api/databases/_utils")>();
+vi.mock("@/features/database/utils/postgres", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/features/database/utils/postgres")>();
   return {
     ...actual,
     execFileAsync: vi.fn().mockResolvedValue({ stdout: "stdout", stderr: "stderr" }),
@@ -61,7 +61,7 @@ describe("Databases API", () => {
       vi.spyOn(fs, "readdir").mockResolvedValue([
         "stardb-backup-123.dump",
         "restore-log.json",
-      ] as unknown as string[]);
+      ] as any);
       vi.spyOn(fs, "readFile").mockResolvedValue("{}");
       vi.spyOn(fs, "stat").mockResolvedValue({
         size: 1024,

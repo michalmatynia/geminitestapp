@@ -50,7 +50,7 @@ type DatabaseConstructorTabProps = {
   mapInputsToTargets: () => void;
   bundleKeys: Set<string>;
   toast: (message: string, options?: { variant?: "success" | "error" }) => void;
-  aiPromptRef?: React.RefObject<HTMLTextAreaElement>;
+  aiPromptRef?: React.RefObject<HTMLTextAreaElement | null>;
   mappings: UpdaterMapping[];
   updateMapping: (index: number, patch: Partial<UpdaterMapping>) => void;
   removeMapping: (index: number) => void;

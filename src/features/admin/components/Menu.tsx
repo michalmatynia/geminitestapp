@@ -15,6 +15,7 @@ import {
   HomeIcon,
   GitBranchIcon,
   Plug,
+  Box,
 } from "lucide-react";
 import CollapsibleMenu from "@/features/admin/components/CollapsibleMenu";
 import { useAdminLayout } from "@/features/admin/context/AdminLayoutContext";
@@ -214,6 +215,24 @@ export default function Menu() {
         <FileIcon className="mr-2" />
         {!isMenuCollapsed && "Files"}
       </Link>
+      <CollapsibleMenu
+        title="3D Assets"
+        icon={<Box />}
+        href="/admin/3d-assets"
+      >
+        <Link
+          href="/admin/3d-assets"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Manage
+        </Link>
+        <Link
+          href="/admin/3d-assets/list"
+          className="block hover:bg-gray-700 p-2 rounded"
+        >
+          Asset List
+        </Link>
+      </CollapsibleMenu>
       <Link
         href="/admin/databases"
         className="flex items-center hover:bg-gray-700 p-2 rounded"

@@ -1,3 +1,5 @@
+import "server-only";
+
 import { randomUUID } from "crypto";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import type {

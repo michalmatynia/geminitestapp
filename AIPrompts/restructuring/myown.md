@@ -1,7 +1,3 @@
-
-
-› analyze the code deeply and continue implementing  proper database access paths and server and client separations
-
 2. Public API per module (ban deep imports)
 
 Each module exposes a single entry:
@@ -39,7 +35,6 @@ Move types → create index.ts exports
 Update imports gradually
 
 Add an ESLint rule later to prevent deep imports (optional)
-
 
 3) App Router rule: route ≠ feature - DONE
 

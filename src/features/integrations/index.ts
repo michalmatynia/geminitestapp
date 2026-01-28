@@ -15,6 +15,7 @@ export { default as AllegroMarketplacePage } from "./pages/marketplaces/allegro/
 export { default as AllegroMessagesPage } from "./pages/marketplaces/allegro/AllegroMessagesPage";
 export { default as AllegroParameterMappingPage } from "./pages/marketplaces/allegro/AllegroParameterMappingPage";
 export { default as AllegroShippingPriceManagementPage } from "./pages/marketplaces/allegro/AllegroShippingPriceManagementPage";
+export type { BaseCategory } from "./types/category-mapping";
 export * from "./types/category-mapping";
 export * from "./types/integrations";
 export * from "./types/integrations-ui";

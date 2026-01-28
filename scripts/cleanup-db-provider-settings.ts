@@ -1,4 +1,4 @@
-import { getMongoDb } from "@/lib/db/mongo-client";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
 
 const LEGACY_KEYS = [
   "product_db_provider",
@@ -12,7 +12,7 @@ async function cleanupPrisma() {
     return { count: 0 };
   }
   try {
-    const { default: prisma } = await import("@/lib/prisma");
+    const { default: prisma } = await import("@/shared/lib/db/prisma");
     const result = await prisma.setting.deleteMany({
       where: { key: { in: LEGACY_KEYS } },
     });
@@ -35,10 +35,10 @@ async function cleanupMongo() {
       .collection("settings")
       .deleteMany({
         $or: [
-          { _id: { $in: LEGACY_KEYS as unknown as string[] } },
+          { _id: { $in: LEGACY_KEYS as any } },
           { key: { $in: LEGACY_KEYS } },
         ],
-      });
+      } as any);
     console.log(`[cleanup] Mongo deleted ${result.deletedCount ?? 0} legacy settings`);
     return { count: result.deletedCount ?? 0 };
   } catch (error) {

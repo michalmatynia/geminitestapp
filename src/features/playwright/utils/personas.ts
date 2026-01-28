@@ -57,7 +57,7 @@ export const normalizePlaywrightPersonas = (
         settings,
         createdAt,
         updatedAt,
-      };
+      } as PlaywrightPersona;
     })
     .filter((item): item is PlaywrightPersona => Boolean(item));
 };

@@ -1,3 +1,5 @@
+import "server-only";
+
 import type { ProductDraft, CreateProductDraftInput, UpdateProductDraftInput } from "@/features/products/server";
 import type { ProductParameterValue } from "@/features/products/server";
 import { randomUUID } from "crypto";

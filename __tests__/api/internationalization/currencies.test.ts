@@ -1,5 +1,5 @@
 import { GET, POST } from "@/app/api/currencies/route";
-import prisma from "@/lib/prisma";
+import prisma from "@/shared/lib/db/prisma";
 import { NextRequest } from "next/server";
 
 type CurrencyResponse = {

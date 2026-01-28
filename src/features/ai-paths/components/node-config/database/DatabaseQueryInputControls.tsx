@@ -16,7 +16,7 @@ type DatabaseQueryInputControlsProps = {
   queryFormatterEnabled: boolean;
   queryValidatorEnabled: boolean;
   testQueryLoading: boolean;
-  queryTemplateRef?: React.RefObject<HTMLTextAreaElement>;
+  queryTemplateRef?: React.RefObject<HTMLTextAreaElement | null>;
   onOperationChange: (value: DatabaseOperation) => void;
   onFormatClick: () => void;
   onFormatContextMenu: (event: React.MouseEvent<HTMLButtonElement>) => void;

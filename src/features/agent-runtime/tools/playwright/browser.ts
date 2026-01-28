@@ -1,3 +1,5 @@
+import "server-only";
+
 import { chromium, firefox, webkit } from "playwright";
 import type { Browser, BrowserContext, Page } from "playwright";
 import prisma from "@/shared/lib/db/prisma";

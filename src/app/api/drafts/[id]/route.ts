@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getDraft, updateDraft, deleteDraft } from "@/features/drafter";
+import { getDraft, updateDraft, deleteDraft } from "@/features/drafter/server";
 import type { UpdateProductDraftInput } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";

@@ -6,7 +6,7 @@ import {
   PATCH as PATCH_TAG,
   DELETE as DELETE_TAG,
 } from "@/app/api/notes/tags/[id]/route";
-import prisma from "@/lib/prisma";
+import prisma from "@/shared/lib/db/prisma";
 import { Tag } from "@prisma/client";
 import { NextRequest } from "next/server";
 

@@ -23,4 +23,6 @@ export { default as MissingImagePlaceholder } from "./missing-image-placeholder"
 export { SectionHeader } from "../components/section-header";
 export { SectionPanel } from "../components/section-panel";
 export { ListPanel } from "../components/list-panel";
+export { DataTable, type PriceGroupForCalculation } from "../components/data-table";
 export { default as ModalShell } from "../components/modal-shell";
+export { BreadcrumbScroller } from "../components/breadcrumb-scroller";

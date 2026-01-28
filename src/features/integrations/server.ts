@@ -1,6 +1,7 @@
 import "server-only";
 
 export * from "./services/category-mapping-repository";
+export type { Template, TemplateMapping } from "./services/export-template-repository";
 export * from "./services/export-template-repository";
 export * from "./services/exports/base-exporter";
 export * from "./services/exports/log-capture";

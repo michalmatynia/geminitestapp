@@ -1,3 +1,5 @@
+import "server-only";
+
 import { Prisma } from "@prisma/client";
 import prisma from "@/shared/lib/db/prisma";
 import { randomUUID } from "crypto";

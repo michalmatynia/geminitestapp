@@ -2,16 +2,16 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
-import { normalizeAuthEmail } from "@/features/auth";
-import { auth } from "@/features/auth";
+import { normalizeAuthEmail } from "@/features/auth/server";
+import { auth } from "@/features/auth/server";
 import {
   checkLoginAllowed,
   extractClientIp,
   recordLoginFailure,
   recordLoginSuccess,
-} from "@/features/auth";
-import { getAuthSecurityProfile } from "@/features/auth";
-import { getAuthUserPageSettings } from "@/features/auth";
+} from "@/features/auth/server";
+import { getAuthSecurityProfile } from "@/features/auth/server";
+import { getAuthUserPageSettings } from "@/features/auth/server";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { internalError } from "@/shared/errors/app-error";

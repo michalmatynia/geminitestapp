@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createHash } from "crypto";
 import type { SystemLogLevel, SystemLogRecord } from "@/shared/types/system-logs";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";

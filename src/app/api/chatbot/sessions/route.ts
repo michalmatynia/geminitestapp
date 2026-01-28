@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { chatbotSessionRepository } from "@/features/chatbot";
+import { chatbotSessionRepository } from "@/features/chatbot/server";
 import type { ChatSession, UpdateSessionInput } from "@/shared/types/chatbot";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";

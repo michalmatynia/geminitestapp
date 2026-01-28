@@ -1,3 +1,5 @@
+import "server-only";
+
 import crypto from "crypto";
 
 const KEY_ENV = "INTEGRATION_ENCRYPTION_KEY";

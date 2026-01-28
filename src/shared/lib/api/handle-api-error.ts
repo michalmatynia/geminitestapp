@@ -1,3 +1,5 @@
+import "server-only";
+
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { resolveError } from "@/shared/errors/resolve-error";

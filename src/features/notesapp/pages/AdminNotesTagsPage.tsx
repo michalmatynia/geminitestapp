@@ -1,11 +1,13 @@
 "use client";
 
 import { Button, useToast, Input, Label, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
 
 
 import { useNoteSettings } from "@/features/notesapp/hooks/NoteSettingsContext";
+import { useNotebooks, useNoteTags } from "@/features/notesapp/api/useNoteQueries";
+import { useCreateNoteTag, useDeleteNoteTag, useUpdateNoteTag } from "@/features/notesapp/api/useNoteMutations";
 import type { TagRecord } from "@/shared/types/notes";
 
 
@@ -15,103 +17,51 @@ export function AdminNotesTagsPage() {
   const { toast } = useToast();
   const { settings, updateSettings } = useNoteSettings();
   const { selectedNotebookId } = settings;
-  const [tags, setTags] = useState<TagRecord[]>([]);
-  const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
   const [color, setColor] = useState("#3b82f6");
-  const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [editingColor, setEditingColor] = useState("#3b82f6");
-  const [isUpdating, setIsUpdating] = useState(false);
+  const notebooksQuery = useNotebooks();
+  const tagsQuery = useNoteTags(selectedNotebookId ?? undefined);
+  const createTag = useCreateNoteTag();
+  const updateTag = useUpdateNoteTag();
+  const deleteTag = useDeleteNoteTag();
 
-  const fetchTags = useCallback(async () => {
-    setLoading(true);
-    try {
-      if (!selectedNotebookId) {
-        setLoading(false);
-        return;
-      }
-      const params = new URLSearchParams({ notebookId: selectedNotebookId });
-      const response = await fetch(`/api/notes/tags?${params.toString()}`, { cache: "no-store" });
-      if (!response.ok) {
-        toast("Failed to load tags", { variant: "error" });
-        return;
-      }
-      const data = (await response.json()) as TagRecord[];
-      setTags(data);
-    } catch (error) {
-      console.error("Failed to load tags:", error);
-      toast("Failed to load tags", { variant: "error" });
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedNotebookId, toast]);
+  const tags = tagsQuery.data ?? [];
+  const loading = tagsQuery.isPending;
 
-  useEffect(() => {
-    void fetchTags();
-  }, [fetchTags]);
+  // Query handles tag loading
 
   useEffect(() => {
     if (selectedNotebookId) return;
-    let isActive = true;
-    const loadNotebooks = async () => {
-      try {
-        const response = await fetch("/api/notes/notebooks", { cache: "no-store" });
-        if (!response.ok) return;
-        const data = (await response.json()) as Array<{ id: string }>;
-        const firstId = data[0]?.id;
-        if (isActive && firstId) {
-          updateSettings({ selectedNotebookId: firstId });
-        }
-      } catch (error) {
-        console.error("Failed to load notebooks:", error);
-      }
-    };
-    void loadNotebooks();
-    return () => {
-      isActive = false;
-    };
-  }, [selectedNotebookId, updateSettings]);
+    const firstId = notebooksQuery.data?.[0]?.id;
+    if (firstId) {
+      updateSettings({ selectedNotebookId: firstId });
+    }
+  }, [selectedNotebookId, updateSettings, notebooksQuery.data]);
 
   const handleCreate = async () => {
     if (!name.trim()) {
       toast("Tag name is required", { variant: "error" });
       return;
     }
-    setIsSaving(true);
     try {
       if (!selectedNotebookId) return;
-      const response = await fetch("/api/notes/tags", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), color, notebookId: selectedNotebookId }),
-      });
-      if (!response.ok) {
-        toast("Failed to create tag", { variant: "error" });
-        return;
-      }
+      await createTag.mutateAsync({ name: name.trim(), color, notebookId: selectedNotebookId });
       setName("");
-      await fetchTags();
       toast("Tag created", { variant: "success" });
     } catch (error) {
       console.error("Failed to create tag:", error);
       toast("Failed to create tag", { variant: "error" });
-    } finally {
-      setIsSaving(false);
     }
   };
 
   const handleDelete = async (tagId: string) => {
     if (!confirm("Delete this tag? It will be removed from all notes.")) return;
     try {
-      const response = await fetch(`/api/notes/tags/${tagId}`, { method: "DELETE" });
-      if (!response.ok) {
-        toast("Failed to delete tag", { variant: "error" });
-        return;
-      }
-      setTags((prev) => prev.filter((tag) => tag.id !== tagId));
+      await deleteTag.mutateAsync(tagId);
       toast("Tag deleted", { variant: "success" });
     } catch (error) {
       console.error("Failed to delete tag:", error);
@@ -136,34 +86,22 @@ export function AdminNotesTagsPage() {
       toast("Tag name is required", { variant: "error" });
       return;
     }
-    setIsUpdating(true);
     try {
-      const response = await fetch(`/api/notes/tags/${tagId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: editingName.trim(),
-          color: editingColor,
-        }),
+      await updateTag.mutateAsync({
+        id: tagId,
+        data: { name: editingName.trim(), color: editingColor },
       });
-      if (!response.ok) {
-        toast("Failed to update tag", { variant: "error" });
-        return;
-      }
-      const updated = (await response.json()) as TagRecord;
-      setTags((prev) => prev.map((tag) => (tag.id === tagId ? updated : tag)));
       toast("Tag updated", { variant: "success" });
       handleEditCancel();
     } catch (error) {
       console.error("Failed to update tag:", error);
       toast("Failed to update tag", { variant: "error" });
-    } finally {
-      setIsUpdating(false);
     }
   };
 
-  const filteredTags = tags.filter((tag) =>
-    tag.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
+  const filteredTags = useMemo(
+    () => tags.filter((tag) => tag.name.toLowerCase().includes(searchQuery.trim().toLowerCase())),
+    [tags, searchQuery]
   );
 
   return (
@@ -211,8 +149,8 @@ export function AdminNotesTagsPage() {
                 className="h-10 w-20"
               />
             </div>
-            <Button onClick={() => { void handleCreate(); }} disabled={isSaving}>
-              {isSaving ? "Saving..." : "Create"}
+            <Button onClick={() => { void handleCreate(); }} disabled={createTag.isPending}>
+              {createTag.isPending ? "Saving..." : "Create"}
             </Button>
           </div>
         </SectionPanel>
@@ -223,7 +161,7 @@ export function AdminNotesTagsPage() {
             size="sm"
             className="mb-4"
             actions={(
-              <Button variant="outline" onClick={() => { void fetchTags(); }}>
+              <Button variant="outline" onClick={() => { void tagsQuery.refetch(); }}>
                 Refresh
               </Button>
             )}
@@ -272,7 +210,7 @@ export function AdminNotesTagsPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => { void handleUpdate(tag.id); }}
-                            disabled={isUpdating}
+                            disabled={updateTag.isPending}
                           >
                             Save
                           </Button>

@@ -1,3 +1,5 @@
+import "server-only";
+
 import crypto from "crypto";
 
 const AUTH_KEY_ENV = "AUTH_ENCRYPTION_KEY";

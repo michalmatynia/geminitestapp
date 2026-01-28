@@ -29,6 +29,16 @@ export function DbSchemaNodeConfigSection({
   const [fetchedDbSchema, setFetchedDbSchema] = React.useState<SchemaData | null>(null);
   const [schemaLoading, setSchemaLoading] = React.useState(false);
 
+  // Data Browser state
+  const [browseCollection, setBrowseCollection] = React.useState<string | null>(null);
+  const [browseDocuments, setBrowseDocuments] = React.useState<Record<string, unknown>[]>([]);
+  const [browseTotal, setBrowseTotal] = React.useState(0);
+  const [browseSkip, setBrowseSkip] = React.useState(0);
+  const [browseSearch, setBrowseSearch] = React.useState("");
+  const [browseLoading, setBrowseLoading] = React.useState(false);
+  const [expandedDocId, setExpandedDocId] = React.useState<string | null>(null);
+  const browseLimit = 10;
+
   React.useEffect(() => {
     if (selectedNode.type !== "db_schema") {
       setFetchedDbSchema(null);

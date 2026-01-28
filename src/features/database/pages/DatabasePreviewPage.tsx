@@ -365,9 +365,9 @@ function DatabasePreviewPageInner() {
                 >
                   Next
                 </Button>
+              </div>
             </div>
           </div>
-        </SectionPanel>
           {!loading && !error && tableRows.length === 0 && (
             <p className="mt-3 text-xs text-gray-500">
               No table rows available in this backup.
@@ -472,7 +472,7 @@ function DatabasePreviewPageInner() {
           <p className="mt-3 text-xs text-gray-500">
             Rows are extracted from a temporary restore of the backup.
           </p>
-        </div>
+        </SectionPanel>
 
         <div className="rounded-lg border border-border bg-card p-5">
           <div className="flex items-center justify-between">

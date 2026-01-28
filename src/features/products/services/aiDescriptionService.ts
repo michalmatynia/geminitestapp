@@ -1,3 +1,5 @@
+import "server-only";
+
 import OpenAI from "openai";
 import type { ChatCompletionContentPart } from "openai/resources/chat/completions";
 import prisma from "@/shared/lib/db/prisma";

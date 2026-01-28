@@ -23,7 +23,7 @@ type DatabasePresetsTabProps = {
   setDbPresetName: React.Dispatch<React.SetStateAction<string>>;
   dbPresetDescription: string;
   setDbPresetDescription: React.Dispatch<React.SetStateAction<string>>;
-  selectedDbPreset?: DbNodePreset;
+  selectedDbPreset?: DbNodePreset | undefined;
   handleApplyDbPreset: (preset: DbNodePreset) => void;
   handleSaveDbPreset: () => Promise<void> | void;
   handleDeleteDbPreset: () => Promise<void> | void;
@@ -32,11 +32,11 @@ type DatabasePresetsTabProps = {
   setSelectedQueryPresetId: React.Dispatch<React.SetStateAction<string>>;
   queryPresetName: string;
   setQueryPresetName: React.Dispatch<React.SetStateAction<string>>;
-  selectedQueryPreset?: DbQueryPreset;
+  selectedQueryPreset?: DbQueryPreset | undefined;
   handleSaveQueryPreset: () => Promise<void> | void;
   handleDeleteQueryPreset: () => Promise<void> | void;
   queryTemplateValue: string;
-  queryTemplateRef: React.RefObject<HTMLTextAreaElement>;
+  queryTemplateRef: React.RefObject<HTMLTextAreaElement | null>;
   setDatabaseTab: React.Dispatch<React.SetStateAction<"settings" | "constructor" | "presets">>;
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
   databaseConfig: DatabaseConfig;

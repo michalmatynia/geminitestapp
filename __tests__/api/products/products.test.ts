@@ -5,7 +5,7 @@ import { POST as POST_DUPLICATE } from "@/app/api/products/[id]/duplicate/route"
 import { GET as GET_PUBLIC } from "@/app/api/public/products/[id]/route";
 import { NextRequest } from "next/server";
 import { createMockProduct } from "@/features/products/utils/productUtils";
-import prisma from "@/lib/prisma";
+import prisma from "@/shared/lib/db/prisma";
 import { Product } from "@prisma/client";
 
 describe("Products API", () => {

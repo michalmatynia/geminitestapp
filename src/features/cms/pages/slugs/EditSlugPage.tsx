@@ -49,7 +49,7 @@ export default function EditSlugPage() {
         <div className="mb-4 flex items-center">
           <Switch
             id="isDefault"
-            checked={slug.isDefault}
+            checked={Boolean(slug.isDefault)}
             onCheckedChange={(checked) => setSlug({ ...slug, isDefault: checked })}
           />
           <Label htmlFor="isDefault" className="ml-2">

@@ -1,3 +1,5 @@
+import "server-only";
+
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { ObjectId } from "mongodb";
 import type {

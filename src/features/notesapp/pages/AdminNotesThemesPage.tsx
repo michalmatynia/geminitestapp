@@ -1,11 +1,13 @@
 "use client";
 
 import { Button, useToast, Input, Label, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
 
 
 import { useNoteSettings } from "@/features/notesapp/hooks/NoteSettingsContext";
+import { useNotebooks, useNoteThemes } from "@/features/notesapp/api/useNoteQueries";
+import { useCreateNoteTheme, useDeleteNoteTheme, useUpdateNoteTheme } from "@/features/notesapp/api/useNoteMutations";
 import type { ThemeRecord } from "@/shared/types/notes";
 
 
@@ -30,102 +32,65 @@ export function AdminNotesThemesPage() {
   const { toast } = useToast();
   const { settings, updateSettings } = useNoteSettings();
   const { selectedNotebookId } = settings;
-  const [themes, setThemes] = useState<ThemeRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [form, setForm] = useState(defaultTheme);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingForm, setEditingForm] = useState(defaultTheme);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const notebooksQuery = useNotebooks();
+  const themesQuery = useNoteThemes(selectedNotebookId ?? undefined);
+  const createTheme = useCreateNoteTheme();
+  const updateTheme = useUpdateNoteTheme();
+  const deleteTheme = useDeleteNoteTheme();
 
-  const fetchThemes = useCallback(async () => {
-    setLoading(true);
-    try {
-      if (!selectedNotebookId) {
-        setLoading(false);
-        return;
-      }
-      const params = new URLSearchParams({ notebookId: selectedNotebookId });
-      const response = await fetch(`/api/notes/themes?${params.toString()}`, {
-        cache: "no-store",
-      });
-      if (!response.ok) {
-        toast("Failed to load themes", { variant: "error" });
-        return;
-      }
-      const data = (await response.json()) as ThemeRecord[];
-      setThemes(data);
-    } catch (error) {
-      console.error("Failed to load themes:", error);
-      toast("Failed to load themes", { variant: "error" });
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedNotebookId, toast]);
+  const themes = themesQuery.data ?? [];
+  const loading = themesQuery.isPending;
+  const isSaving = createTheme.isPending;
+  const isUpdating = updateTheme.isPending;
 
-  useEffect(() => {
-    void fetchThemes();
-  }, [fetchThemes]);
+  // Query handles theme loading
 
   useEffect(() => {
     if (selectedNotebookId) return;
-    let isActive = true;
-    const loadNotebooks = async () => {
-      try {
-        const response = await fetch("/api/notes/notebooks", { cache: "no-store" });
-        if (!response.ok) return;
-        const data = (await response.json()) as Array<{ id: string }>;
-        const firstId = data[0]?.id;
-        if (isActive && firstId) {
-          updateSettings({ selectedNotebookId: firstId });
-        }
-      } catch (error) {
-        console.error("Failed to load notebooks:", error);
-      }
-    };
-    void loadNotebooks();
-    return () => {
-      isActive = false;
-    };
-  }, [selectedNotebookId, updateSettings]);
+    const firstId = notebooksQuery.data?.[0]?.id;
+    if (firstId) {
+      updateSettings({ selectedNotebookId: firstId });
+    }
+  }, [selectedNotebookId, updateSettings, notebooksQuery.data]);
 
   const handleCreate = async () => {
     if (!form.name.trim()) {
       toast("Theme name is required", { variant: "error" });
       return;
     }
-    setIsSaving(true);
     try {
       if (!selectedNotebookId) return;
-      const response = await fetch("/api/notes/themes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, name: form.name.trim(), notebookId: selectedNotebookId }),
+      await createTheme.mutateAsync({
+        name: form.name.trim(),
+        notebookId: selectedNotebookId,
+        colors: {
+          textColor: form.textColor,
+          backgroundColor: form.backgroundColor,
+          markdownHeadingColor: form.markdownHeadingColor,
+          markdownLinkColor: form.markdownLinkColor,
+          markdownCodeBackground: form.markdownCodeBackground,
+          markdownCodeText: form.markdownCodeText,
+          relatedNoteBorderWidth: String(form.relatedNoteBorderWidth ?? 1),
+          relatedNoteBorderColor: form.relatedNoteBorderColor,
+          relatedNoteBackgroundColor: form.relatedNoteBackgroundColor,
+          relatedNoteTextColor: form.relatedNoteTextColor,
+        },
       });
-      if (!response.ok) {
-        toast("Failed to create theme", { variant: "error" });
-        return;
-      }
       setForm(defaultTheme);
-      await fetchThemes();
       toast("Theme created", { variant: "success" });
     } catch (error) {
       console.error("Failed to create theme:", error);
       toast("Failed to create theme", { variant: "error" });
-    } finally {
-      setIsSaving(false);
     }
   };
 
   const handleDelete = async (themeId: string) => {
     if (!confirm("Delete this theme?")) return;
     try {
-      const response = await fetch(`/api/notes/themes/${themeId}`, { method: "DELETE" });
-      if (!response.ok) {
-        toast("Failed to delete theme", { variant: "error" });
-        return;
-      }
-      setThemes((prev) => prev.filter((theme) => theme.id !== themeId));
+      await deleteTheme.mutateAsync(themeId);
       toast("Theme deleted", { variant: "success" });
     } catch (error) {
       console.error("Failed to delete theme:", error);
@@ -161,26 +126,16 @@ export function AdminNotesThemesPage() {
       toast("Theme name is required", { variant: "error" });
       return;
     }
-    setIsUpdating(true);
     try {
-      const response = await fetch(`/api/notes/themes/${themeId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...editingForm, name: editingForm.name.trim() }),
+      await updateTheme.mutateAsync({
+        id: themeId,
+        data: { ...editingForm, name: editingForm.name.trim() },
       });
-      if (!response.ok) {
-        toast("Failed to update theme", { variant: "error" });
-        return;
-      }
-      const updated = (await response.json()) as ThemeRecord;
-      setThemes((prev) => prev.map((theme) => (theme.id === themeId ? updated : theme)));
       toast("Theme updated", { variant: "success" });
       handleEditCancel();
     } catch (error) {
       console.error("Failed to update theme:", error);
       toast("Failed to update theme", { variant: "error" });
-    } finally {
-      setIsUpdating(false);
     }
   };
 
@@ -360,7 +315,7 @@ export function AdminNotesThemesPage() {
             size="sm"
             className="mb-4"
             actions={(
-              <Button variant="outline" onClick={() => { void fetchThemes(); }}>
+              <Button variant="outline" onClick={() => { void themesQuery.refetch(); }}>
                 Refresh
               </Button>
             )}

@@ -29,7 +29,7 @@ export function AppModal({
   children,
 }: AppModalProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} {...(onOpenChange ? { onOpenChange } : {})}>
       <DialogContent className={cn(DEFAULT_CONTENT_CLASS, contentClassName)}>
         <DialogTitle
           className={cn(titleHidden && "sr-only", titleClassName)}

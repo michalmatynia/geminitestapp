@@ -254,7 +254,7 @@ export function ProductPreferencesPage() {
                 </p>
               </div>
             </div>
-          </div>
+          </SectionPanel>
 
           {/* Action Buttons */}
           <div className="flex justify-between gap-3">
@@ -278,7 +278,7 @@ export function ProductPreferencesPage() {
                 {saving ? "Saving..." : "Save Preferences"}
               </Button>
             </div>
-          </SectionPanel>
+          </div>
         </div>
       </SectionPanel>
     </div>

@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { GET } from "@/app/api/files/route";
 import { DELETE } from "@/app/api/files/[id]/route";
 import { createMockProduct } from "@/features/products/utils/productUtils";
-import prisma from "@/lib/prisma";
+import prisma from "@/shared/lib/db/prisma";
 import fs from "fs/promises";
 import path from "path";
 import { Product, ImageFile } from "@prisma/client";

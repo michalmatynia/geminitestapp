@@ -1,3 +1,5 @@
+import "server-only";
+
 import type { ProductWithImages } from "@/features/products";
 import type { BaseProductRecord } from "@/features/integrations/services/imports/base-client";
 import { callBaseApi } from "@/features/integrations/services/imports/base-client";

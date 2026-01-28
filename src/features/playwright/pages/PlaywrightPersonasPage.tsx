@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, AppModal, Input, Label, ModalShell, Textarea, useToast, SectionHeader, SectionPanel } from "@/shared/ui";
+import { Button, AppModal, Input, Label, ModalShell, Textarea, useToast, SectionHeader, SectionPanel, Card } from "@/shared/ui";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { MonitorPlay, Pencil, Plus, Trash2 } from "lucide-react";

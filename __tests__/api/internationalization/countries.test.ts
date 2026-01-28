@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { GET, POST } from "@/app/api/countries/route";
 import { PUT } from "@/app/api/countries/[id]/route";
-import prisma from "@/lib/prisma";
+import prisma from "@/shared/lib/db/prisma";
 
 type CountryResponse = {
   id: string;

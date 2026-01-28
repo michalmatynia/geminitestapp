@@ -1,3 +1,5 @@
+import "server-only";
+
 import type { NoteRepository } from "@/features/notesapp/services/notes/types/note-repository";
 import type { NoteWithRelations, RelatedNote } from "@/shared/types/notes";
 import { cleanupNoteFile } from "./file-cleanup";
@@ -59,16 +61,16 @@ const buildRelations = (note: NoteWithRelations): RelatedNote[] => {
 const populateRelations = <T extends NoteWithRelations | NoteWithRelations[] | null>(data: T): T => {
     if (!data) return data;
     if (Array.isArray(data)) {
-        return data.map(note => ({
+        return (data as NoteWithRelations[]).map(note => ({
             ...note,
             relations: buildRelations(note)
-        })) as T;
+        })) as unknown as T;
     }
-    const note = data;
+    const note = data as NoteWithRelations;
     return {
         ...note,
         relations: buildRelations(note)
-    } as T;
+    } as unknown as T;
 };
 
 export const noteService: NoteRepository = {

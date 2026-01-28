@@ -1,11 +1,17 @@
 "use client";
 
 import { Button, useToast, Input, Label, SectionHeader, SectionPanel } from "@/shared/ui";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { MoreVertical } from "lucide-react";
 
 
 import { useNoteSettings } from "@/features/notesapp/hooks/NoteSettingsContext";
+import { useNotebooks } from "@/features/notesapp/api/useNoteQueries";
+import {
+  useCreateNotebook,
+  useUpdateNotebook,
+  useDeleteNotebook,
+} from "@/features/notesapp/api/useNoteMutations";
 import type { NotebookRecord } from "@/shared/types/notes";
 import { useRouter } from "next/navigation";
 
@@ -17,39 +23,18 @@ export function AdminNotesNotebooksPage() {
   const { settings, updateSettings } = useNoteSettings();
   const { selectedNotebookId } = settings;
   const router = useRouter();
-  const [notebooks, setNotebooks] = useState<NotebookRecord[]>([]);
-  const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
-  const [isUpdating, setIsUpdating] = useState(false);
   const [menuNotebookId, setMenuNotebookId] = useState<string | null>(null);
 
-  const fetchNotebooks = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/notes/notebooks", { cache: "no-store" });
-      if (!response.ok) {
-        toast("Failed to load notebooks", { variant: "error" });
-        return;
-      }
-      const data = (await response.json()) as NotebookRecord[];
-      setNotebooks(data);
-      if (!selectedNotebookId && data[0]?.id) {
-        updateSettings({ selectedNotebookId: data[0].id });
-      }
-    } catch (error) {
-      console.error("Failed to load notebooks:", error);
-      toast("Failed to load notebooks", { variant: "error" });
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedNotebookId, toast, updateSettings]);
+  const notebooksQuery = useNotebooks();
+  const notebooks = notebooksQuery.data ?? [];
+  const loading = notebooksQuery.isPending;
 
-  useEffect(() => {
-    void fetchNotebooks();
-  }, [fetchNotebooks]);
+  const createNotebook = useCreateNotebook();
+  const updateNotebook = useUpdateNotebook();
+  const deleteNotebook = useDeleteNotebook();
 
   useEffect(() => {
     if (!selectedNotebookId && notebooks.length > 0) {
@@ -62,25 +47,13 @@ export function AdminNotesNotebooksPage() {
       toast("Notebook name is required", { variant: "error" });
       return;
     }
-    setIsSaving(true);
     try {
-      const response = await fetch("/api/notes/notebooks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim() }),
-      });
-      if (!response.ok) {
-        toast("Failed to create notebook", { variant: "error" });
-        return;
-      }
+      await createNotebook.mutateAsync({ name: name.trim() });
       setName("");
-      await fetchNotebooks();
       toast("Notebook created", { variant: "success" });
     } catch (error) {
       console.error("Failed to create notebook:", error);
       toast("Failed to create notebook", { variant: "error" });
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -100,38 +73,20 @@ export function AdminNotesNotebooksPage() {
       toast("Notebook name is required", { variant: "error" });
       return;
     }
-    setIsUpdating(true);
     try {
-      const response = await fetch(`/api/notes/notebooks/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editingName.trim() }),
-      });
-      if (!response.ok) {
-        toast("Failed to update notebook", { variant: "error" });
-        return;
-      }
-      const updated = (await response.json()) as NotebookRecord;
-      setNotebooks((prev) => prev.map((item) => (item.id === id ? updated : item)));
+      await updateNotebook.mutateAsync({ id, name: editingName.trim() });
       toast("Notebook updated", { variant: "success" });
       handleEditCancel();
     } catch (error) {
       console.error("Failed to update notebook:", error);
       toast("Failed to update notebook", { variant: "error" });
-    } finally {
-      setIsUpdating(false);
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this notebook and all its notes/tags/folders?")) return;
     try {
-      const response = await fetch(`/api/notes/notebooks/${id}`, { method: "DELETE" });
-      if (!response.ok) {
-        toast("Failed to delete notebook", { variant: "error" });
-        return;
-      }
-      setNotebooks((prev) => prev.filter((item) => item.id !== id));
+      await deleteNotebook.mutateAsync(id);
       if (selectedNotebookId === id) {
         updateSettings({ selectedNotebookId: null });
       }
@@ -153,18 +108,7 @@ export function AdminNotesNotebooksPage() {
     const nextNumber = existing.length > 0 ? Math.max(...existing) + 1 : 1;
     const newName = `${baseName} (${nextNumber})`;
     try {
-      const response = await fetch("/api/notes/notebooks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newName,
-        }),
-      });
-      if (!response.ok) {
-        toast("Failed to duplicate notebook", { variant: "error" });
-        return;
-      }
-      await fetchNotebooks();
+      await createNotebook.mutateAsync({ name: newName });
       toast("Notebook duplicated", { variant: "success" });
     } catch (error) {
       console.error("Failed to duplicate notebook:", error);
@@ -198,8 +142,8 @@ export function AdminNotesNotebooksPage() {
                 placeholder="Enter notebook name"
               />
             </div>
-            <Button onClick={() => { void handleCreate(); }} disabled={isSaving}>
-              {isSaving ? "Saving..." : "Create"}
+            <Button onClick={() => { void handleCreate(); }} disabled={createNotebook.isPending}>
+              {createNotebook.isPending ? "Saving..." : "Create"}
             </Button>
           </div>
         </SectionPanel>
@@ -210,7 +154,7 @@ export function AdminNotesNotebooksPage() {
             size="sm"
             className="mb-4"
             actions={(
-              <Button variant="outline" onClick={() => { void fetchNotebooks(); }}>
+              <Button variant="outline" onClick={() => { void notebooksQuery.refetch(); }}>
                 Refresh
               </Button>
             )}
@@ -265,7 +209,7 @@ export function AdminNotesNotebooksPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => { void handleUpdate(notebook.id); }}
-                            disabled={isUpdating}
+                            disabled={updateNotebook.isPending}
                           >
                             Save
                           </Button>

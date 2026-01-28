@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import prisma from "@/lib/prisma";
+import prisma from "@/shared/lib/db/prisma";
 import { ChatbotAgentRun, AgentBrowserLog, AgentAuditLog } from "@prisma/client";
 import { GET as listRuns, POST as createRun } from "@/app/api/chatbot/agent/route";
 import { GET as getLogs } from "@/app/api/chatbot/agent/[runId]/logs/route";

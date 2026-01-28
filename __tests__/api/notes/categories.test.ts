@@ -7,7 +7,7 @@ import {
   DELETE as DELETE_CATEGORY,
 } from "@/app/api/notes/categories/[id]/route";
 import { GET as GET_TREE } from "@/app/api/notes/categories/tree/route";
-import prisma from "@/lib/prisma";
+import prisma from "@/shared/lib/db/prisma";
 import { Category, Note } from "@prisma/client";
 import { NextRequest } from "next/server";
 

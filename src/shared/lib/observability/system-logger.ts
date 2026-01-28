@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createHash } from "crypto";
 import type { SystemLogLevel } from "@/shared/types/system-logs";
 import { notifyCriticalError } from "@/shared/lib/observability/critical-error-notifier";

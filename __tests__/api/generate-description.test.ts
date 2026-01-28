@@ -7,7 +7,7 @@ import { NextRequest } from "next/server";
 import { POST } from "@/app/api/generate-description/route";
 import OpenAI from "openai";
 
-import prisma from "@/lib/prisma";
+import prisma from "@/shared/lib/db/prisma";
 
 const { mockCreate } = vi.hoisted(() => {
   return {

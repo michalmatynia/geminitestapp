@@ -1,0 +1,91 @@
+import fs from "fs/promises";
+import path from "path";
+import { getAsset3DRepository } from "@/features/viewer3d/services/asset3d-repository";
+import { ErrorSystem } from "@/features/observability/server";
+import type { Asset3DRecord } from "@/features/viewer3d/types";
+import { isValid3DAsset } from "./validateAsset3d";
+
+const uploadsRoot = path.join(process.cwd(), "public", "uploads");
+const assets3dRoot = path.join(uploadsRoot, "assets3d");
+
+export function getDiskPathFromPublicPath(publicPath: string) {
+  return path.join(process.cwd(), "public", publicPath.replace(/^\/+/, ""));
+}
+
+export async function uploadAsset3D(
+  file: File,
+  options?: {
+    name?: string;
+    description?: string;
+    category?: string;
+    tags?: string[];
+    isPublic?: boolean;
+    metadata?: Record<string, unknown>;
+  }
+): Promise<Asset3DRecord> {
+  if (!isValid3DAsset(file)) {
+    throw new Error("Invalid 3D asset file type. Supported: .glb, .gltf");
+  }
+
+  const fileBuffer = Buffer.from(await file.arrayBuffer());
+  const filename = `${Date.now()}-${path.basename(file.name)}`;
+  const diskDir = assets3dRoot;
+  const publicDir = `/uploads/assets3d`;
+  const filepath = path.join(diskDir, filename);
+
+  try {
+    await fs.mkdir(diskDir, { recursive: true });
+    await fs.writeFile(filepath, fileBuffer);
+
+    const repository = getAsset3DRepository();
+    const asset = await repository.createAsset3D({
+      filename,
+      filepath: `${publicDir}/${filename}`,
+      mimetype: file.type || "application/octet-stream",
+      size: file.size,
+      tags: options?.tags ?? [],
+      isPublic: options?.isPublic ?? false,
+      ...(options?.name && { name: options.name }),
+      ...(options?.description && { description: options.description }),
+      ...(options?.category && { category: options.category }),
+      ...(options?.metadata && { metadata: options.metadata }),
+    });
+
+    return asset;
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: "asset3dUploader",
+      action: "uploadAsset3D",
+      filename,
+      diskDir,
+    });
+    throw error;
+  }
+}
+
+export async function deleteAsset3D(id: string): Promise<boolean> {
+  try {
+    const repository = getAsset3DRepository();
+    const asset = await repository.getAsset3DById(id);
+
+    if (!asset) {
+      return false;
+    }
+
+    // Delete file from disk
+    const diskPath = getDiskPathFromPublicPath(asset.filepath);
+    await fs.unlink(diskPath).catch(() => {});
+
+    // Delete from database
+    await repository.deleteAsset3D(id);
+
+    return true;
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: "asset3dUploader",
+      action: "deleteAsset3D",
+      id,
+    });
+    return false;
+  }
+}

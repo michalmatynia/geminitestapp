@@ -7,7 +7,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { AdminNotesPage } from "@/features/notesapp/pages/AdminNotesPage";
-import { AdminLayoutProvider } from "@/lib/context/AdminLayoutContext";
+import { AdminLayoutProvider } from "@/features/admin/context/AdminLayoutContext";
 import { NoteSettingsProvider } from "@/features/notesapp/hooks/NoteSettingsContext";
 import { ToastProvider } from "@/shared/ui/toast";
 import type { NoteWithRelations, TagRecord, CategoryRecord } from "@/shared/types/notes";

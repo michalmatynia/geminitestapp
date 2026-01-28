@@ -1,3 +1,5 @@
+import "server-only";
+
 import { randomUUID } from "crypto";
 import { ObjectId } from "mongodb";
 import prisma from "@/shared/lib/db/prisma";
@@ -9,7 +11,7 @@ import {
 } from "@/features/data-import-export";
 import type { ImageRetryPreset } from "@/features/data-import-export";
 
-type SettingRecord = { _id: string | ObjectId; key?: string; value?: string };
+type SettingDoc = { _id: string | ObjectId; key?: string; value?: string; updatedAt?: Date; createdAt?: Date };
 
 const toMongoId = (id: string) => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
@@ -79,7 +81,7 @@ const readTemplatesValue = async (): Promise<string | null> => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<SettingRecord>("settings")
+      .collection<SettingDoc>("settings")
       .findOne({
         $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }],
       });
@@ -106,7 +108,7 @@ const readActiveTemplateValue = async (): Promise<string | null> => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<{ _id: string; key?: string; value?: string }>("settings")
+      .collection<SettingDoc>("settings")
       .findOne({
         $or: [{ _id: toMongoId(ACTIVE_TEMPLATE_KEY) }, { key: ACTIVE_TEMPLATE_KEY }],
       });
@@ -124,7 +126,7 @@ const readDefaultInventoryValue = async (): Promise<string | null> => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<{ _id: string; key?: string; value?: string }>("settings")
+      .collection<SettingDoc>("settings")
       .findOne({
         $or: [{ _id: toMongoId(DEFAULT_INVENTORY_KEY) }, { key: DEFAULT_INVENTORY_KEY }],
       });
@@ -142,7 +144,7 @@ const readStockFallbackValue = async (): Promise<string | null> => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<{ _id: string; key?: string; value?: string }>("settings")
+      .collection<SettingDoc>("settings")
       .findOne({
         $or: [{ _id: toMongoId(STOCK_FALLBACK_KEY) }, { key: STOCK_FALLBACK_KEY }],
       });
@@ -160,7 +162,7 @@ const readDefaultConnectionValue = async (): Promise<string | null> => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<{ _id: string; key?: string; value?: string }>("settings")
+      .collection<SettingDoc>("settings")
       .findOne({
         $or: [{ _id: toMongoId(DEFAULT_CONNECTION_KEY) }, { key: DEFAULT_CONNECTION_KEY }],
       });
@@ -178,7 +180,7 @@ const readImageRetryPresetsValue = async (): Promise<string | null> => {
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
     const doc = await mongo
-      .collection<{ _id: string; key?: string; value?: string }>("settings")
+      .collection<SettingDoc>("settings")
       .findOne({
         $or: [{ _id: toMongoId(IMAGE_RETRY_PRESETS_KEY) }, { key: IMAGE_RETRY_PRESETS_KEY }],
       });
@@ -196,7 +198,7 @@ const writeTemplatesValue = async (value: string) => {
   console.log(`[ExportTemplateRepository] Writing templates... Length: ${value.length}`);
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
-    await mongo.collection("settings").updateMany(
+    await mongo.collection<SettingDoc>("settings").updateMany(
       { $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }] },
       {
         $set: {
@@ -222,7 +224,7 @@ const writeActiveTemplateValue = async (value: string) => {
   const provider = await getExportTemplateProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
-    await mongo.collection("settings").updateOne(
+    await mongo.collection<SettingDoc>("settings").updateOne(
       { $or: [{ _id: toMongoId(ACTIVE_TEMPLATE_KEY) }, { key: ACTIVE_TEMPLATE_KEY }] },
       {
         $set: {
@@ -247,7 +249,7 @@ const writeDefaultInventoryValue = async (value: string) => {
   const provider = await getExportTemplateProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
-    await mongo.collection("settings").updateOne(
+    await mongo.collection<SettingDoc>("settings").updateOne(
       { $or: [{ _id: toMongoId(DEFAULT_INVENTORY_KEY) }, { key: DEFAULT_INVENTORY_KEY }] },
       {
         $set: {
@@ -272,7 +274,7 @@ const writeStockFallbackValue = async (value: string) => {
   const provider = await getExportTemplateProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
-    await mongo.collection("settings").updateOne(
+    await mongo.collection<SettingDoc>("settings").updateOne(
       { $or: [{ _id: toMongoId(STOCK_FALLBACK_KEY) }, { key: STOCK_FALLBACK_KEY }] },
       {
         $set: {
@@ -297,7 +299,7 @@ const writeDefaultConnectionValue = async (value: string) => {
   const provider = await getExportTemplateProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
-    await mongo.collection("settings").updateOne(
+    await mongo.collection<SettingDoc>("settings").updateOne(
       { $or: [{ _id: toMongoId(DEFAULT_CONNECTION_KEY) }, { key: DEFAULT_CONNECTION_KEY }] },
       {
         $set: {
@@ -322,7 +324,7 @@ const writeImageRetryPresetsValue = async (value: string) => {
   const provider = await getExportTemplateProvider();
   if (provider === "mongodb") {
     const mongo = await getMongoDb();
-    await mongo.collection("settings").updateOne(
+    await mongo.collection<SettingDoc>("settings").updateOne(
       { $or: [{ _id: toMongoId(IMAGE_RETRY_PRESETS_KEY) }, { key: IMAGE_RETRY_PRESETS_KEY }] },
       {
         $set: {

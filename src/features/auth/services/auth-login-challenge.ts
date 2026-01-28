@@ -1,3 +1,5 @@
+import "server-only";
+
 import crypto from "crypto";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 

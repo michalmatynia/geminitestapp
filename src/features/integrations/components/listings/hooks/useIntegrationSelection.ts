@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { IntegrationWithConnections } from "@/features/integrations/types/listings";
 
 // Why: Integration selection has complex side effects:
@@ -10,49 +11,37 @@ export function useIntegrationSelection(
   initialIntegrationId?: string | null,
   initialConnectionId?: string | null
 ) {
-  const [integrations, setIntegrations] = useState<IntegrationWithConnections[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>("");
   const [selectedConnectionId, setSelectedConnectionId] = useState<string>("");
   const [appliedInitialSelection, setAppliedInitialSelection] = useState(false);
-  const [preferredConnectionId, setPreferredConnectionId] = useState<string | null>(null);
-  const previousIntegrationId = useRef<string>("");
 
-  // Load preferred connection from export settings
-  useEffect(() => {
-    void (async () => {
-      try {
-        const res = await fetch("/api/integrations/exports/base/default-connection");
-        if (!res.ok) {
-          console.log('[useIntegrationSelection] Failed to load preferred connection');
-          return;
-        }
-        const payload = (await res.json()) as { connectionId?: string | null };
-        console.log('[useIntegrationSelection] Loaded preferred connection:', payload.connectionId);
-        setPreferredConnectionId(payload.connectionId ?? null);
-      } catch (error) {
-        console.error('[useIntegrationSelection] Error loading preferred connection:', error);
+  const preferredConnectionQuery = useQuery({
+    queryKey: ["integrations", "base", "default-connection"],
+    queryFn: async () => {
+      const res = await fetch("/api/integrations/exports/base/default-connection");
+      if (!res.ok) {
+        throw new Error("Failed to load preferred connection");
       }
-    })();
-  }, []);
+      return (await res.json()) as { connectionId?: string | null };
+    },
+  });
 
-  // Load integrations on mount
-  useEffect(() => {
-    void (async () => {
-      try {
-        const res = await fetch("/api/integrations/with-connections");
-        if (!res.ok) throw new Error("Failed to load integrations");
-        const data = (await res.json()) as IntegrationWithConnections[];
-        // Ensure integrations is always an array and filter to only those with connections
-        setIntegrations(Array.isArray(data) ? data.filter((i) => i.connections.length > 0) : []);
-      } catch (error) {
-        console.error("Failed to load integrations:", error);
-        setIntegrations([]);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+  const integrationsQuery = useQuery({
+    queryKey: ["integrations", "with-connections"],
+    queryFn: async () => {
+      const res = await fetch("/api/integrations/with-connections");
+      if (!res.ok) throw new Error("Failed to load integrations");
+      return (await res.json()) as IntegrationWithConnections[];
+    },
+  });
+
+  const loading = integrationsQuery.isPending;
+  const integrations = useMemo(() => {
+    const data = integrationsQuery.data ?? [];
+    return Array.isArray(data) ? data.filter((i) => i.connections.length > 0) : [];
+  }, [integrationsQuery.data]);
+
+  const preferredConnectionId = preferredConnectionQuery.data?.connectionId ?? null;
 
   // Apply initial selection from props OR preferred connection
   useEffect(() => {
@@ -82,35 +71,40 @@ export function useIntegrationSelection(
     setAppliedInitialSelection(true);
   }, [integrations, loading, initialIntegrationId, initialConnectionId, preferredConnectionId, appliedInitialSelection]);
 
-  // Auto-select preferred connection when integration changes
+  // Auto-select preferred connection when integration is selected or preference loads
   useEffect(() => {
-    if (previousIntegrationId.current === selectedIntegrationId) return;
+    if (!selectedIntegrationId || !integrations.length) return;
 
-    const isInitialMount = previousIntegrationId.current === "";
-    previousIntegrationId.current = selectedIntegrationId;
+    const integration = (integrations || []).find((i) => i.id === selectedIntegrationId);
+    if (!integration) return;
 
-    // Don't auto-select on initial mount (that's handled by the initial selection effect)
-    if (isInitialMount) return;
+    const connectionIds = integration.connections?.map((conn) => conn.id) ?? [];
+    const selectedIsValid =
+      Boolean(selectedConnectionId) && connectionIds.includes(selectedConnectionId);
 
-    // User manually changed the integration - try to auto-select preferred connection
-    if (preferredConnectionId && selectedIntegrationId) {
-      const integration = (integrations || []).find((i) => i.id === selectedIntegrationId);
-      const preferredConnection = integration?.connections?.find(
-        (conn) => conn.id === preferredConnectionId
+    if (selectedIsValid) return;
+
+    if (preferredConnectionId && connectionIds.includes(preferredConnectionId)) {
+      console.log(
+        "[useIntegrationSelection] ✓ Auto-selecting preferred connection:",
+        preferredConnectionId
       );
+      setSelectedConnectionId(preferredConnectionId);
+      return;
+    }
 
-      if (preferredConnection) {
-        console.log('[useIntegrationSelection] ✓ Auto-selecting preferred connection on integration change:', preferredConnection.name);
-        setSelectedConnectionId(preferredConnectionId);
-      } else {
-        console.log('[useIntegrationSelection] ✗ Preferred connection not in this integration - clearing');
-        setSelectedConnectionId("");
-      }
-    } else {
-      // No preferred connection - just clear
+    if (selectedConnectionId) {
+      console.log(
+        "[useIntegrationSelection] ✗ Clearing invalid connection selection"
+      );
       setSelectedConnectionId("");
     }
-  }, [selectedIntegrationId, preferredConnectionId, integrations]);
+  }, [
+    selectedIntegrationId,
+    preferredConnectionId,
+    integrations,
+    selectedConnectionId,
+  ]);
 
   const selectedIntegration = (integrations || []).find((i) => i.id === selectedIntegrationId);
   const isBaseComIntegration = ["baselinker", "base-com"].includes(

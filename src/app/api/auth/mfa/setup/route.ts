@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/features/auth";
-import { getAuthSecurityProfile, updateAuthSecurityProfile } from "@/features/auth";
-import { buildOtpAuthUrl, generateTotpSecret } from "@/features/auth";
-import { encryptAuthSecret } from "@/features/auth";
+import { auth } from "@/features/auth/server";
+import { getAuthSecurityProfile, updateAuthSecurityProfile } from "@/features/auth/server";
+import { buildOtpAuthUrl, generateTotpSecret } from "@/features/auth/server";
+import { encryptAuthSecret } from "@/features/auth/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { conflictError, authError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";

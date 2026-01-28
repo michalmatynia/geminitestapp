@@ -1,3 +1,5 @@
+import "server-only";
+
 import prisma from "@/shared/lib/db/prisma";
 import { randomUUID } from "crypto";
 import { logAgentAudit, runAgentControlLoop } from "@/features/agent-runtime/server";

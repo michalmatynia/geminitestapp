@@ -1,3 +1,5 @@
+import "server-only";
+
 import { getProductDataProvider } from "@/features/products/server";
 import { mongoProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository/mongo-product-ai-job-repository";
 import { prismaProductAiJobRepository } from "@/features/jobs/services/product-ai-job-repository/prisma-product-ai-job-repository";

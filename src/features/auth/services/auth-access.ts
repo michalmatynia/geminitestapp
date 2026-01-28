@@ -1,3 +1,5 @@
+import "server-only";
+
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { getAppDbProvider } from "@/shared/lib/db/app-db-provider";

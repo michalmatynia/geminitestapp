@@ -1,3 +1,5 @@
+import "server-only";
+
 import { Prisma } from "@prisma/client";
 import { ObjectId } from "mongodb";
 import { operationFailedError } from "@/shared/errors/app-error";
@@ -16,10 +18,10 @@ export type UserPreferencesData = {
   productListCurrencyCode?: string | null;
   productListPageSize?: number | null;
   aiPathsActivePathId?: string | null;
-  aiPathsExpandedGroups?: string[] | null;
+  aiPathsExpandedGroups?: string[];
   aiPathsPaletteCollapsed?: boolean | null;
-  aiPathsPathIndex?: Prisma.JsonValue | null;
-  aiPathsPathConfigs?: Prisma.JsonValue | null;
+  aiPathsPathIndex?: Prisma.InputJsonValue | null;
+  aiPathsPathConfigs?: Prisma.InputJsonValue | null;
 };
 
 export type UserPreferences = {
@@ -30,7 +32,7 @@ export type UserPreferences = {
   productListCurrencyCode: string | null;
   productListPageSize: number | null;
   aiPathsActivePathId: string | null;
-  aiPathsExpandedGroups: string[] | null;
+  aiPathsExpandedGroups: string[];
   aiPathsPaletteCollapsed: boolean | null;
   aiPathsPathIndex: Prisma.JsonValue | null;
   aiPathsPathConfigs: Prisma.JsonValue | null;
@@ -39,14 +41,14 @@ export type UserPreferences = {
 };
 
 type UserPreferencesDocument = {
-  _id: string;
+  _id: string | ObjectId;
   userId: string;
   productListNameLocale: string | null;
   productListCatalogFilter: string | null;
   productListCurrencyCode: string | null;
   productListPageSize: number | null;
   aiPathsActivePathId: string | null;
-  aiPathsExpandedGroups: string[] | null;
+  aiPathsExpandedGroups: string[];
   aiPathsPaletteCollapsed: boolean | null;
   aiPathsPathIndex: Prisma.JsonValue | null;
   aiPathsPathConfigs: Prisma.JsonValue | null;
@@ -57,14 +59,14 @@ type UserPreferencesDocument = {
 const USER_PREFERENCES_COLLECTION = "user_preferences";
 
 const toUserPreferences = (doc: UserPreferencesDocument): UserPreferences => ({
-  id: doc._id,
+  id: String(doc._id),
   userId: doc.userId,
   productListNameLocale: doc.productListNameLocale,
   productListCatalogFilter: doc.productListCatalogFilter,
   productListCurrencyCode: doc.productListCurrencyCode,
   productListPageSize: doc.productListPageSize,
   aiPathsActivePathId: doc.aiPathsActivePathId ?? null,
-  aiPathsExpandedGroups: doc.aiPathsExpandedGroups ?? null,
+  aiPathsExpandedGroups: doc.aiPathsExpandedGroups ?? [],
   aiPathsPaletteCollapsed: doc.aiPathsPaletteCollapsed ?? false,
   aiPathsPathIndex: doc.aiPathsPathIndex ?? null,
   aiPathsPathConfigs: doc.aiPathsPathConfigs ?? null,
@@ -158,8 +160,8 @@ export async function getUserPreferences(userId: string): Promise<UserPreference
       aiPathsActivePathId: null,
       aiPathsExpandedGroups: ["Triggers"],
       aiPathsPaletteCollapsed: false,
-      aiPathsPathIndex: null,
-      aiPathsPathConfigs: null,
+      aiPathsPathIndex: Prisma.JsonNull,
+      aiPathsPathConfigs: Prisma.JsonNull,
     },
   });
   return created as unknown as UserPreferences;

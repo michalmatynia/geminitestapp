@@ -937,3 +937,22 @@ model CategoryMapping {
   @@index([connectionId])
   @@index([internalCategoryId])
 }
+
+model Asset3D {
+  id          String   @id @default(cuid())
+  name        String?
+  description String?
+  filename    String
+  filepath    String
+  mimetype    String
+  size        Int
+  tags        String[] @default([])
+  category    String?
+  metadata    Json?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([isPublic])
+}

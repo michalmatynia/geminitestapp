@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { getMongoDb } from "@/lib/db/mongo-client";
+import { getMongoDb } from "@/shared/lib/db/mongo-client";
 
 async function main() {
   if (!process.env.MONGODB_URI) {

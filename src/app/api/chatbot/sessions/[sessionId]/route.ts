@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { chatbotSessionRepository } from "@/features/chatbot";
+import { chatbotSessionRepository } from "@/features/chatbot/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";

@@ -214,6 +214,8 @@ export function NodeConfigDialog({
         />
         <ModelNodeConfigSection
           selectedNode={selectedNode}
+          nodes={nodes}
+          edges={edges}
           modelOptions={modelOptions}
           updateSelectedNodeConfig={updateSelectedNodeConfig}
         />

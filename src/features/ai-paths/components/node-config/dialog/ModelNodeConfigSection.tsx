@@ -5,17 +5,21 @@
 
 
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
-import type { AiNode, ModelConfig, NodeConfig } from "@/features/ai-paths/lib";
+import type { AiNode, Edge, ModelConfig, NodeConfig } from "@/features/ai-paths/lib";
 import { DEFAULT_MODELS, toNumber } from "@/features/ai-paths/lib";
 
 type ModelNodeConfigSectionProps = {
   selectedNode: AiNode;
+  nodes: AiNode[];
+  edges: Edge[];
   modelOptions: string[];
   updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
 };
 
 export function ModelNodeConfigSection({
   selectedNode,
+  nodes,
+  edges,
   modelOptions,
   updateSelectedNodeConfig,
 }: ModelNodeConfigSectionProps) {
@@ -32,6 +36,12 @@ export function ModelNodeConfigSection({
     modelConfig.modelId && !modelOptions.includes(modelConfig.modelId)
       ? [modelConfig.modelId, ...modelOptions]
       : modelOptions;
+  const hasPollConsumer = edges.some((edge) => {
+    if (edge.from !== selectedNode.id) return false;
+    if (edge.fromPort !== "jobId") return false;
+    const targetNode = nodes.find((node) => node.id === edge.to);
+    return targetNode?.type === "poll";
+  });
 
   return (
     <div className="space-y-4">
@@ -138,6 +148,13 @@ export function ModelNodeConfigSection({
           {modelConfig.waitForResult === false ? "Disabled" : "Enabled"}
         </Button>
       </div>
+      {hasPollConsumer && (
+        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
+          {modelConfig.waitForResult === false
+            ? "Poll is connected to this Model's jobId. The Model will emit only jobId, so use Poll.result for your Viewer."
+            : "Poll is connected to this Model's jobId. Wait for result is enabled, so the Model will still emit result; Poll will also fetch the job."}
+        </div>
+      )}
       <p className="text-[11px] text-gray-500">
         When enabled, the Model node polls the job until completion and emits
         <span className="text-gray-300"> result</span>. Disable to emit only{" "}

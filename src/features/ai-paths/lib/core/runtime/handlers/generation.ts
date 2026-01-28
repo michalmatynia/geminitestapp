@@ -134,10 +134,12 @@ export const handleModel: NodeHandler = async ({
     const targetNode = nodes.find((item) => item.id === edge.to);
     return targetNode?.type === "poll";
   });
-  let shouldWait =
-    !hasPollConsumer &&
-    (modelConfig.waitForResult ?? hasResultConsumers);
-  if (!hasPollConsumer && modelConfig.waitForResult === false && hasResultConsumers) {
+  const waitPreference = modelConfig.waitForResult;
+  let shouldWait = !hasPollConsumer && (waitPreference ?? hasResultConsumers);
+  if (!hasPollConsumer && waitPreference === false && hasResultConsumers) {
+    shouldWait = true;
+  }
+  if (waitPreference === true) {
     shouldWait = true;
   }
   const prompt =

@@ -7,6 +7,8 @@ I want the RUN button to work on ALL of the queries.
 
 * AI Prompt needs to be sent on pressing the return button in Database Query Node.
 
+When AI model generates content, it keeps on appearing in my prompt suggestion in Database, maybe for suggestions I need another  channel ?
+
 images still flicker
 
 LATER - All Jobs / runners should be in one place 

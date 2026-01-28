@@ -425,7 +425,7 @@ export function DatabaseNodeConfigSection({
                     // Bundle keys are handled separately below
                     return;
                   }
-                  if (port === "result") {
+                  if (port === "result" && operation !== "update") {
                     // result is not a valid placeholder for database queries
                     return;
                   }
@@ -457,7 +457,7 @@ export function DatabaseNodeConfigSection({
                   const sourcePort = mapping.sourcePort?.trim();
                   const sourcePath = mapping.sourcePath?.trim();
                   if (!sourcePort || !incomingPorts.includes(sourcePort)) return;
-                  if (sourcePort === "result") return;
+                  if (sourcePort === "result" && operation !== "update") return;
 
                   if (sourcePath) {
                     const prefix = sourcePort === "bundle" ? "bundle" : sourcePort;

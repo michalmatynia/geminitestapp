@@ -50,7 +50,7 @@ const featureBaseRestrictions = [
 const commonRestrictedSyntax = [
   {
     selector:
-      "Property[key.name='_id'] > ObjectExpression > Property[key.name='$in'] > :not(TSAsExpression, CallExpression)",
+      "Property[key.name='_id'] > ObjectExpression > Property[key.name='$in'] > .value:not(TSAsExpression, CallExpression)",
     message:
       "MongoDB _id with $in detected. Ensure values are ObjectIds or the collection is explicitly typed (e.g. collection<{_id: string}>) to avoid TypeScript errors. Use 'as any' only if you are sure the DB uses string IDs.",
   },

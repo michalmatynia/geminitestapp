@@ -209,7 +209,7 @@ const fetchLanguagesByIds = async (ids: string[]): Promise<LanguageRecord[]> => 
       .collection<Record<string, unknown>>("languages")
       .find({
         $or: [
-          ...(objectIds.length ? [{ _id: { $in: objectIds } }] : []),
+          ...(objectIds.length ? [{ _id: { $in: Array.from(objectIds) } }] : []),
           { id: { $in: normalizedIds } },
           { code: { $in: normalizedIds } },
         ],

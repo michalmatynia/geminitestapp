@@ -84,7 +84,7 @@ export const mongoImageFileRepository: ImageFileRepository = {
     const db = await getMongoDb();
     const docs = await db
       .collection<ImageFileDocument>(IMAGE_FILE_COLLECTION)
-      .find({ $or: [{ _id: { $in: ids } }, { id: { $in: ids } }] })
+      .find({ $or: [{ _id: { $in: Array.from(ids) } }, { id: { $in: ids } }] })
       .toArray();
     return docs.map((doc) => toRecord({ ...doc, _id: doc._id }));
   },

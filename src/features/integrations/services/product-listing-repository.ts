@@ -192,12 +192,12 @@ const mongoRepository: ProductListingRepository = {
 
     const integrations = await db
       .collection<{ _id: string; name: string; slug: string }>("integrations")
-      .find({ _id: { $in: integrationIds } })
+      .find({ _id: { $in: Array.from(integrationIds) } })
       .toArray();
 
     const connections = await db
       .collection<{ _id: string; name: string }>("integration_connections")
-      .find({ _id: { $in: connectionIds } })
+      .find({ _id: { $in: Array.from(connectionIds) } })
       .toArray();
 
     const integrationMap = new Map(integrations.map((i) => [i._id, i]));

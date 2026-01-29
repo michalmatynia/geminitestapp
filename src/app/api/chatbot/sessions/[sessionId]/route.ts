@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { chatbotSessionRepository } from "@/features/chatbot/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { notFoundError } from "@/shared/errors/app-error";
-import {  apiHandlerWithParams , type ApiHandlerContext } from "@/shared/lib/api/api-handler";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -37,8 +38,4 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
   }
 }
 
-export const GET = apiHandlerWithParams<{ sessionId: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { sessionId: string }): Promise<Response> =>
-    GET_handler(req, { params: Promise.resolve(params) }),
-  { source: "chatbot.sessions.[sessionId].GET" }
-);
+export const GET = apiHandlerWithParams<{ sessionId: string }>(GET_handler, { source: "chatbot.sessions.[sessionId].GET" });

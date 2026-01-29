@@ -185,7 +185,4 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
   }
 }
 
-export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> => POST_handler(req, { params: Promise.resolve(params) }),
-  { source: "integrations.[id].connections.[connectionId].allegro.request.POST" }
-);
+export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(POST_handler, { source: "integrations.[id].connections.[connectionId].allegro.request.POST" });

@@ -29,7 +29,4 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => GET_handler(req, { params: Promise.resolve(params) }),
-  { source: "public.products.[id].GET" }
-);
+export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: "public.products.[id].GET" });

@@ -18,7 +18,7 @@ const parseJsonObject = (content: string): unknown => {
   }
 };
 
-export function requiresHumanApproval(step: PlanStep, prompt: string) {
+export function requiresHumanApproval(step: PlanStep, prompt: string): boolean {
   if (step.tool === "none") return false;
   const text = `${step.title} ${prompt}`.toLowerCase();
   return /login|log in|sign in|signup|register|checkout|purchase|pay|payment|card|delete|remove|cancel|unsubscribe|transfer|withdraw|submit order|place order|invoice|billing|confirm|approve|admin/i.test(

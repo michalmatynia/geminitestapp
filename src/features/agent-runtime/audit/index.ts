@@ -21,7 +21,7 @@ function toPrismaJson(
   // - convert Date to ISO (via toJSON)
   // - remove undefined/functions/symbols
   // - throw on BigInt unless we handle it
-  const jsonString = JSON.stringify(value, (_key, v) => {
+  const jsonString = JSON.stringify(value, (_key: string, v: unknown) => {
     if (typeof v === "bigint") return v.toString();
     return v as unknown; // ✅ avoids returning `any`
   });
@@ -36,7 +36,7 @@ export async function logAgentAudit(
   level: AuditLevel,
   message: string,
   metadata?: Record<string, unknown>
-) {
+): Promise<void> {
   if (!("agentAuditLog" in prisma)) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][audit] Audit table not initialized.");

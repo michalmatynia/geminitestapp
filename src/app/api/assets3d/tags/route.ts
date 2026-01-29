@@ -10,5 +10,5 @@ async function GET_handler(): Promise<Response> {
 }
 
 export const GET = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(),
  { source: "assets3d/tags.GET" });

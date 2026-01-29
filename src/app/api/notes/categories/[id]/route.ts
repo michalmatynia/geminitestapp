@@ -60,13 +60,5 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params:
   }
 }
 
-export const PATCH = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
-    PATCH_handler(req, { params: Promise.resolve(params) }),
-  { source: "notes.categories.[id].PATCH" }
-);
-export const DELETE = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
-    DELETE_handler(req, { params: Promise.resolve(params) }),
-  { source: "notes.categories.[id].DELETE" }
-);
+export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, { source: "notes.categories.[id].PATCH" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: "notes.categories.[id].DELETE" });

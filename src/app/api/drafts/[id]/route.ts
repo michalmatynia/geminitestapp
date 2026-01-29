@@ -5,7 +5,8 @@ import type { UpdateProductDraftInput } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { notFoundError } from "@/shared/errors/app-error";
-import { apiHandlerWithParams, type ApiHandlerContext } from "@/shared/lib/api/api-handler";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const updateDraftSchema = z.object({
   name: z.string().min(1).optional(),
@@ -132,18 +133,6 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params:
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
-    GET_handler(req, { params: Promise.resolve(params) }),
-  { source: "drafts.[id].GET" }
-);
-export const PUT = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
-    PUT_handler(req, { params: Promise.resolve(params) }),
-  { source: "drafts.[id].PUT" }
-);
-export const DELETE = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
-    DELETE_handler(req, { params: Promise.resolve(params) }),
-  { source: "drafts.[id].DELETE" }
-);
+export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: "drafts.[id].GET" });
+export const PUT = apiHandlerWithParams<{ id: string }>(PUT_handler, { source: "drafts.[id].PUT" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: "drafts.[id].DELETE" });

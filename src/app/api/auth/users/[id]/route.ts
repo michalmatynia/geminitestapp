@@ -10,7 +10,8 @@ import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { authError, conflictError, internalError, notFoundError } from "@/shared/errors/app-error";
 import type { AuthUserSummary } from "@/features/auth/server";
-import { apiHandlerWithParams, type ApiHandlerContext } from "@/shared/lib/api/api-handler";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 export const runtime = "nodejs";
 
@@ -29,9 +30,7 @@ type MongoUserDoc = {
   updatedAt?: Date | null;
 };
 
-async function PATCH_handler(req: NextRequest,
-  context: { params: Promise<{ id: string }> }
-): Promise<Response> {
+async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
     const session = await auth();
     const hasAccess =
@@ -56,7 +55,7 @@ async function PATCH_handler(req: NextRequest,
     }
 
     const provider = await getAuthDataProvider();
-    const { id: userId } = await context.params;
+    const { id: userId } = params;
 
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
@@ -174,8 +173,4 @@ async function PATCH_handler(req: NextRequest,
   }
 }
 
-export const PATCH = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
-    PATCH_handler(req, { params: Promise.resolve(params) }),
-  { source: "auth.users.[id].PATCH" }
-);
+export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, { source: "auth.users.[id].PATCH" });

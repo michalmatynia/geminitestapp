@@ -1,7 +1,13 @@
 import prisma from "@/shared/lib/db/prisma";
 import { DEBUG_CHATBOT } from "@/features/agent-runtime/core/config";
 
-export async function getBrowserContextSummary(runId: string) {
+export async function getBrowserContextSummary(runId: string): Promise<{
+  url: string;
+  title: string | null;
+  domTextSample: string;
+  logs: { level: string; message: string }[];
+  uiInventory: unknown;
+} | null> {
   if (!("agentBrowserSnapshot" in prisma) || !("agentBrowserLog" in prisma)) {
     return null;
   }

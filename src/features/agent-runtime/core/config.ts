@@ -28,7 +28,7 @@ export const clampInt = (
   min: number,
   max: number,
   fallback: number
-) => {
+): number => {
   const numeric =
     typeof value === "number"
       ? value

@@ -30,7 +30,4 @@ async function GET_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<{ runId: string }>(
-  async (req: NextRequest, ctx: ApiHandlerContext, params: { runId: string }): Promise<Response> => GET_handler(req, ctx, params),
-  { source: "ai-paths.runs.detail" }
-);
+export const GET = apiHandlerWithParams<{ runId: string }>(GET_handler, { source: "ai-paths.runs.detail" });

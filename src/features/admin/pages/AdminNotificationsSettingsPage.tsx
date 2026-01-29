@@ -28,18 +28,18 @@ const accentOptions = [
 type PositionType = (typeof positionOptions)[number]["value"];
 type AccentType = (typeof accentOptions)[number]["value"];
 
-export function AdminNotificationsSettingsPage() {
+export function AdminNotificationsSettingsPage(): React.ReactNode {
   const { settings, updateSettings } = useToastSettings();
   const { toast } = useToast();
   const [position, setPosition] = useState<PositionType>(settings.position);
   const [accent, setAccent] = useState<AccentType>(settings.accent);
 
-  const handleSave = () => {
+  const handleSave = (): void => {
     updateSettings({ position, accent });
     toast("Notification settings saved successfully", { variant: "success" });
   };
 
-  const showPreview = (variant: "success" | "error" | "info") => {
+  const showPreview = (variant: "success" | "error" | "info"): void => {
     const messages = {
       success: "This is a success notification",
       error: "This is an error notification",
@@ -80,12 +80,12 @@ export function AdminNotificationsSettingsPage() {
                 <Label htmlFor="position" className="mb-3 block text-sm font-semibold">
                   Toast Position
                 </Label>
-                <Select value={position} onValueChange={(val) => setPosition(val as PositionType)}>
+                <Select value={position} onValueChange={(val: string) => setPosition(val as PositionType)}>
                   <SelectTrigger id="position">
                     <SelectValue placeholder="Select position" />
                   </SelectTrigger>
                   <SelectContent>
-                    {positionOptions.map((option) => (
+                    {positionOptions.map((option: { value: string; label: string; desc: string }) => (
                       <SelectItem key={option.value} value={option.value}>
                         <div>
                           <p className="font-medium">{option.label}</p>
@@ -105,12 +105,12 @@ export function AdminNotificationsSettingsPage() {
                 <Label htmlFor="accent" className="mb-3 block text-sm font-semibold">
                   Accent Color
                 </Label>
-                <Select value={accent} onValueChange={(val) => setAccent(val as AccentType)}>
+                <Select value={accent} onValueChange={(val: string) => setAccent(val as AccentType)}>
                   <SelectTrigger id="accent">
                     <SelectValue placeholder="Select accent color" />
                   </SelectTrigger>
                   <SelectContent>
-                    {accentOptions.map((option) => (
+                    {accentOptions.map((option: { value: string; label: string; color: string }) => (
                       <SelectItem key={option.value} value={option.value}>
                         <div className="flex items-center gap-2">
                           <div className={`size-3 rounded-full ${option.color}`} />
@@ -129,7 +129,7 @@ export function AdminNotificationsSettingsPage() {
               <div className="pt-2">
                 <Label className="mb-3 block text-sm font-semibold">Available Colors</Label>
                 <div className="grid grid-cols-5 gap-2">
-                  {accentOptions.map((option) => (
+                  {accentOptions.map((option: { value: string; label: string; color: string }) => (
                     <Button
                       key={option.value}
                       onClick={() => setAccent(option.value)}

@@ -5,7 +5,8 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { updateAuthSecurityProfile, getAuthSecurityProfile } from "@/features/auth/server";
 import { internalError, authError } from "@/shared/errors/app-error";
 import { auth } from "@/features/auth/server";
-import { apiHandlerWithParams, type ApiHandlerContext } from "@/shared/lib/api/api-handler";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 export const runtime = "nodejs";
 
@@ -25,7 +26,7 @@ async function GET_handler(_req: Request, context: { params: Promise<{ id: strin
     if (!hasAccess) {
       throw authError("Unauthorized.");
     }
-    const { id } = await context.params;
+    const { id } = params;
     if (!id) {
       throw internalError("Missing user id.");
     }
@@ -45,7 +46,7 @@ async function GET_handler(_req: Request, context: { params: Promise<{ id: strin
   }
 }
 
-async function PATCH_handler(req: NextRequest, context: { params: Promise<{ id: string }> }): Promise<Response> {
+async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
     const session = await auth();
     const hasAccess =
@@ -54,7 +55,7 @@ async function PATCH_handler(req: NextRequest, context: { params: Promise<{ id: 
     if (!hasAccess) {
       throw authError("Unauthorized.");
     }
-    const { id } = await context.params;
+    const { id } = params;
     if (!id) {
       throw internalError("Missing user id.");
     }
@@ -98,13 +99,5 @@ async function PATCH_handler(req: NextRequest, context: { params: Promise<{ id: 
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
-    GET_handler(req, { params: Promise.resolve(params) }),
-  { source: "auth.users.[id].security.GET" }
-);
-export const PATCH = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
-    PATCH_handler(req, { params: Promise.resolve(params) }),
-  { source: "auth.users.[id].security.PATCH" }
-);
+export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: "auth.users.[id].security.GET" });
+export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, { source: "auth.users.[id].security.PATCH" });

@@ -109,7 +109,7 @@ const colorClasses: Record<string, { border: string; text: string }> = {
   },
 };
 
-export function AdminSettingsHomePage() {
+export function AdminSettingsHomePage(): React.ReactNode {
   return (
     <div className="container mx-auto py-10">
       {/* Header */}
@@ -121,7 +121,7 @@ export function AdminSettingsHomePage() {
 
       {/* Settings Grid */}
       <div className="grid gap-4 md:grid-cols-2">
-        {settings.map((setting) => {
+        {settings.map((setting: SettingsOption) => {
           const Icon = setting.icon;
           const colors = colorClasses[setting.color] || colorClasses.emerald!;
 

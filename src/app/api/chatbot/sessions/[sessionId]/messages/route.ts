@@ -4,7 +4,8 @@ import prisma from "@/shared/lib/db/prisma";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, internalError, notFoundError } from "@/shared/errors/app-error";
-import {  apiHandlerWithParams , type ApiHandlerContext } from "@/shared/lib/api/api-handler";
+import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -126,13 +127,5 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
   }
 }
 
-export const GET = apiHandlerWithParams<{ sessionId: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { sessionId: string }): Promise<Response> =>
-    GET_handler(req, { params: Promise.resolve(params) }),
-  { source: "chatbot.sessions.[sessionId].messages.GET" }
-);
-export const POST = apiHandlerWithParams<{ sessionId: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { sessionId: string }): Promise<Response> =>
-    POST_handler(req, { params: Promise.resolve(params) }),
-  { source: "chatbot.sessions.[sessionId].messages.POST" }
-);
+export const GET = apiHandlerWithParams<{ sessionId: string }>(GET_handler, { source: "chatbot.sessions.[sessionId].messages.GET" });
+export const POST = apiHandlerWithParams<{ sessionId: string }>(POST_handler, { source: "chatbot.sessions.[sessionId].messages.POST" });

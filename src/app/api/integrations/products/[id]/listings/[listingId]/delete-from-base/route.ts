@@ -129,8 +129,4 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
   }
 }
 
-export const POST = apiHandlerWithParams<{ id: string; listingId: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> =>
-    POST_handler(req, { params: Promise.resolve(params) }),
-  { source: "integrations.products.[id].listings.[listingId].delete-from-base.POST" }
-);
+export const POST = apiHandlerWithParams<{ id: string; listingId: string }>(POST_handler, { source: "integrations.products.[id].listings.[listingId].delete-from-base.POST" });

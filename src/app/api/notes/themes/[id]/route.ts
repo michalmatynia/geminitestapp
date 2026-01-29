@@ -81,18 +81,6 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params:
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
-    GET_handler(req, { params: Promise.resolve(params) }),
-  { source: "notes.themes.[id].GET" }
-);
-export const PATCH = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
-    PATCH_handler(req, { params: Promise.resolve(params) }),
-  { source: "notes.themes.[id].PATCH" }
-);
-export const DELETE = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> =>
-    DELETE_handler(req, { params: Promise.resolve(params) }),
-  { source: "notes.themes.[id].DELETE" }
-);
+export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, { source: "notes.themes.[id].GET" });
+export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, { source: "notes.themes.[id].PATCH" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: "notes.themes.[id].DELETE" });

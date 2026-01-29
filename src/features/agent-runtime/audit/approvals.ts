@@ -4,6 +4,6 @@ export type ApprovalRequest = {
   reason: string;
 };
 
-export function requiresApproval(_request: ApprovalRequest) {
+export function requiresApproval(_request: ApprovalRequest): boolean {
   return true;
 }

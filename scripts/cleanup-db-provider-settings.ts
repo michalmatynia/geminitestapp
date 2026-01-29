@@ -31,15 +31,18 @@ async function cleanupMongo() {
   }
   try {
     const db = await getMongoDb();
-          const result = await db
-            .collection<{ _id: string; key: string }>("settings")
-            .deleteMany({
-              $or: [
-                { _id: { $in: Array.from(LEGACY_KEYS) } },
-                { key: { $in: LEGACY_KEYS } },
-              ],
-            });
-        console.log(`[cleanup] Mongo deleted ${result.deletedCount ?? 0} legacy settings`);
+    const result = await db
+      .collection<{ _id: string; key: string }>("settings")
+      .deleteMany({
+        // am I here ?
+        $or: [
+          { _id: { $in: Array.from(LEGACY_KEYS) } },
+          { key: { $in: LEGACY_KEYS } },
+        ],
+      });
+    console.log(
+      `[cleanup] Mongo deleted ${result.deletedCount ?? 0} legacy settings`,
+    );
     return { count: result.deletedCount ?? 0 };
   } catch (error) {
     console.error("[cleanup] Mongo cleanup failed:", error);

@@ -20,8 +20,9 @@ const providerOptions = [
 ] as const;
 
 type ProviderValue = (typeof providerOptions)[number]["value"];
+import type { JSX } from "react";
 
-export default function DatabaseSettingsPage() {
+export default function DatabaseSettingsPage(): JSX.Element {
   const settingsQuery = useSettingsMap();
 
   if (settingsQuery.isLoading || !settingsQuery.data) {
@@ -34,7 +35,7 @@ export default function DatabaseSettingsPage() {
   return <DatabaseSettingsForm initialProvider={initialProvider} />;
 }
 
-function DatabaseSettingsForm({ initialProvider }: { initialProvider: ProviderValue }) {
+function DatabaseSettingsForm({ initialProvider }: { initialProvider: ProviderValue }): JSX.Element {
   const { toast } = useToast();
   const [provider, setProvider] = useState<ProviderValue>(initialProvider);
   const [dirty, setDirty] = useState(false);

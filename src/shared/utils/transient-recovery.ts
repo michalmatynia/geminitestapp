@@ -4,6 +4,7 @@ import { isRetryableError } from "@/shared/errors/app-error";
 import { logSystemEvent } from "@/shared/lib/observability/system-logger";
 import { withRetry, type RetryOptions, withCircuitBreaker, type CircuitBreakerOptions } from "@/shared/utils/retry";
 import { getTransientRecoverySettings } from "@/shared/lib/transient-recovery/settings";
+import type { TransientRecoverySettings } from "@/shared/lib/transient-recovery/constants";
 
 export type TransientRecoveryOptions = {
   source?: string;
@@ -16,7 +17,7 @@ export type TransientRecoveryOptions = {
 export const isTransientError = (error: unknown): boolean => {
   if (isRetryableError(error)) return true;
   if (!(error instanceof Error)) return false;
-  const message = error.message.toLowerCase();
+  const message: string = error.message.toLowerCase();
   return (
     message.includes("timeout") ||
     message.includes("timed out") ||
@@ -32,14 +33,14 @@ export async function withTransientRecovery<T>(
   operation: () => Promise<T>,
   options?: TransientRecoveryOptions
 ): Promise<T> {
-  const retryOptions = options?.retry;
-  const circuitId = options?.circuitId;
-  const settings = await getTransientRecoverySettings();
+  const retryOptions: RetryOptions | undefined = options?.retry;
+  const circuitId: string | undefined = options?.circuitId;
+  const settings: TransientRecoverySettings = await getTransientRecoverySettings();
   if (!settings.enabled) {
     return operation();
   }
 
-  const execute = async () => {
+  const execute = async (): Promise<T> => {
     if (!settings.retry.enabled) {
       return operation();
     }

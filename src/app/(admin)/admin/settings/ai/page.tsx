@@ -22,7 +22,7 @@ import { useSettings, useUpdateSetting, type SystemSetting } from "@/shared/hook
 
 
 
-export default function AiApiSettingsPage() {
+export default function AiApiSettingsPage(): JSX.Element {
 
   const { toast } = useToast();
 

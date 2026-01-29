@@ -14,6 +14,7 @@ import {
 } from "@/shared/lib/transient-recovery/constants";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
+import type { JSX } from "react";
 
 const toNumber = (value: string, fallback: number, min: number = 0) => {
   const parsed = Number(value);
@@ -21,7 +22,7 @@ const toNumber = (value: string, fallback: number, min: number = 0) => {
   return parsed;
 };
 
-export default function TransientRecoverySettingsPage() {
+export default function TransientRecoverySettingsPage(): JSX.Element {
   const settingsQuery = useSettingsMap();
 
   if (settingsQuery.isLoading || !settingsQuery.data) {
@@ -75,7 +76,7 @@ function TransientRecoverySettingsForm({
   initialSettings,
 }: {
   initialSettings: TransientRecoverySettings;
-}) {
+}): JSX.Element {
   const { toast } = useToast();
   const [settings, setSettings] = useState<TransientRecoverySettings>(initialSettings);
   const [dirty, setDirty] = useState(false);

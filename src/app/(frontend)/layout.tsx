@@ -1,10 +1,11 @@
 import Link from "next/link";
+import type { JSX } from "react";
 
 export default function FrontendLayout({
   children,
 }: {
   children: React.ReactNode;
-}) {
+}): JSX.Element {
   return (
     <div>
       <nav className="bg-gray-900 text-white p-4">

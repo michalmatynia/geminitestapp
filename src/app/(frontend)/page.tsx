@@ -6,6 +6,7 @@ import { productService } from "@/features/products/server";
 import { ProductCard } from "@/features/products";
 import type { ProductWithImages } from "@/features/products";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
+import type { Slug } from "@/features/cms/types";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ type SettingDocument = {
   value?: string;
 };
 
-const canUsePrismaSettings = () =>
+const canUsePrismaSettings = (): boolean =>
   Boolean(process.env.DATABASE_URL) && "setting" in prisma;
 
 const getFrontPageSetting = async (): Promise<string | null> => {
@@ -41,7 +42,7 @@ const getFrontPageSetting = async (): Promise<string | null> => {
   return doc?.value ?? null;
 };
 
-export default async function HomePage() {
+export default async function HomePage(): Promise<JSX.Element> {
   const frontPageApp = await getFrontPageSetting();
 
   if (frontPageApp && FRONT_PAGE_ALLOWED.has(frontPageApp)) {
@@ -55,7 +56,7 @@ export default async function HomePage() {
 
   const cmsRepository = await getCmsRepository();
   const slugs = await cmsRepository.getSlugs();
-  const defaultSlug = slugs.find((s) => !!s.isDefault);
+  const defaultSlug = slugs.find((s: Slug) => !!s.isDefault);
 
   type MaybeImages = {
     images?: (ProductWithImages["images"][number] | null)[] | null;
@@ -192,7 +193,7 @@ export default async function HomePage() {
   );
 }
 
-function MountainIcon(props: React.SVGProps<SVGSVGElement>) {
+function MountainIcon(props: React.SVGProps<SVGSVGElement>): JSX.Element {
   return (
     <svg
       {...props}

@@ -29,7 +29,7 @@ type ApiErrorOptions = {
 export const createErrorResponse = (
   error: unknown,
   options?: ApiErrorOptions
-) => {
+): NextResponse => {
   const resolved = resolveError(error, {
     ...(options?.fallbackMessage ? { fallbackMessage: options.fallbackMessage } : {}),
   });
@@ -123,7 +123,7 @@ export const createSimpleErrorResponse = (
   message: string,
   status: number,
   code?: string
-) => {
+): NextResponse => {
   return NextResponse.json(
     {
       error: message,
@@ -139,7 +139,7 @@ export const createSimpleErrorResponse = (
 export const createValidationErrorResponse = (
   fieldErrors: Record<string, string[]>,
   options?: Pick<ApiErrorOptions, "request" | "source" | "requestId">
-) => {
+): NextResponse => {
   const error = validationError("Validation failed", { fields: fieldErrors });
   return createErrorResponse(error, options);
 };

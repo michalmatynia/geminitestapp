@@ -7,4 +7,4 @@ export const parseJsonSetting = <T>(value: string | null | undefined, fallback: 
   }
 };
 
-export const serializeSetting = (value: unknown) => JSON.stringify(value ?? null);
+export const serializeSetting = (value: unknown): string => JSON.stringify(value ?? null);

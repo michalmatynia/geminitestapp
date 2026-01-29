@@ -1,6 +1,7 @@
 import Link from "next/link";
+import type { JSX } from "react";
 
-export default function AgentCreatorPage() {
+export default function AgentCreatorPage(): JSX.Element {
   return (
     <div className="container mx-auto py-10">
       <div className="rounded-lg bg-gray-950 p-6 shadow-lg">

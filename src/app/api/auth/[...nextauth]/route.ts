@@ -5,7 +5,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
-async function GET_handler(req: NextRequest) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   console.log("[AUTH-API] GET request", req.url);
   try {
     return await handlers.GET(req);
@@ -18,7 +18,7 @@ async function GET_handler(req: NextRequest) {
   }
 }
 
-async function POST_handler(req: NextRequest) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   console.log("[AUTH-API] POST request", req.url);
   try {
     return await handlers.POST(req);

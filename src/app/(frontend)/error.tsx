@@ -3,6 +3,7 @@
 import { Button } from "@/shared/ui";
 import { useEffect } from "react";
 import Link from "next/link";
+import type { JSX } from "react";
 
 export default function FrontendError({
   error,
@@ -10,7 +11,7 @@ export default function FrontendError({
 }: {
   error: Error & { digest?: string };
   reset: () => void;
-}) {
+}): JSX.Element {
   useEffect(() => {
     console.error(error);
   }, [error]);

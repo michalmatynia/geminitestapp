@@ -69,7 +69,7 @@ const ALLOWED_COLLECTIONS = new Set([
   "auth_login_challenges",
 ]);
 
-const coerceQuery = (value: unknown) => {
+const coerceQuery = (value: unknown): Record<string, unknown> => {
   if (!value) return {};
   if (typeof value === "string") {
     try {
@@ -84,9 +84,9 @@ const coerceQuery = (value: unknown) => {
   return {};
 };
 
-const looksLikeObjectId = (value: string) => /^[0-9a-fA-F]{24}$/.test(value);
+const looksLikeObjectId = (value: string): boolean => /^[0-9a-fA-F]{24}$/.test(value);
 
-const normalizeObjectId = (query: Record<string, unknown>, idType?: string) => {
+const normalizeObjectId = (query: Record<string, unknown>, idType?: string): Record<string, unknown> => {
   if (idType !== "objectId") return query;
   const next = { ...query };
   if (typeof next._id === "string" && looksLikeObjectId(next._id)) {
@@ -107,7 +107,7 @@ const normalizeUpdateDoc = (update: unknown): Record<string, unknown> | unknown[
   return null;
 };
 
-const normalizeReplaceDoc = (update: unknown) => {
+const normalizeReplaceDoc = (update: unknown): Record<string, unknown> | null => {
   if (update && typeof update === "object" && !Array.isArray(update)) {
     const keys = Object.keys(update as Record<string, unknown>);
     if (keys.some((key: string) => key.startsWith("$"))) {
@@ -118,7 +118,7 @@ const normalizeReplaceDoc = (update: unknown) => {
   return null;
 };
 
-async function POST_handler(req: Request) {
+async function POST_handler(req: Request): Promise<NextResponse | Response> {
   try {
     const parsed = await parseJsonBody(req, actionSchema, {
       logPrefix: "ai-paths.db-action",

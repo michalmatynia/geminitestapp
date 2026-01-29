@@ -50,9 +50,9 @@ const featureBaseRestrictions = [
 const commonRestrictedSyntax = [
   {
     selector:
-      "Property[key.name='_id'] > ObjectExpression > Property[key.name='$in'] > ArrayExpression > Literal",
+      "Property[key.name='_id'] > ObjectExpression > Property[key.name='$in'] > :not(TSAsExpression, CallExpression)",
     message:
-      "MongoDB _id with $in using string literals. Ensure collection is typed or use ObjectId() to avoid 'string[] is not assignable to ObjectId[]' errors.",
+      "MongoDB _id with $in detected. Ensure values are ObjectIds or the collection is explicitly typed (e.g. collection<{_id: string}>) to avoid TypeScript errors. Use 'as any' only if you are sure the DB uses string IDs.",
   },
   {
     selector:
@@ -275,6 +275,7 @@ const eslintConfig = [
     },
     rules: {
       "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-explicit-any": "off",
     },
   },
 ];

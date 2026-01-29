@@ -5,6 +5,7 @@ import { Prisma } from "@prisma/client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import { auth } from "@/features/auth/server";
+import { isAbortError } from "@/features/chatbot/utils";
 
 export const runtime = "nodejs";
 
@@ -130,8 +131,7 @@ async function PATCH_handler(req: NextRequest) {
   } catch (error) {
     const isAbort =
       req.signal.aborted ||
-      (error instanceof Error && error.name === "AbortError") ||
-      (typeof DOMException !== "undefined" && error instanceof DOMException && error.name === "AbortError") ||
+      isAbortError(error) ||
       (error instanceof Error && (error as { code?: string }).code === "ECONNRESET");
     if (isAbort) {
       return new NextResponse(null, { status: 204 });

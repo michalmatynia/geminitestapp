@@ -60,17 +60,6 @@ async function GET_handler(req: Request) {
       throw internalError("Postgres is not configured.");
     }
 
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        image: true,
-        emailVerified: true,
-      },
-      orderBy: { email: "asc" },
-    });
-
     type PrismaUserSummary = {
       id: string;
       email: string | null;
@@ -79,16 +68,25 @@ async function GET_handler(req: Request) {
       emailVerified: Date | null;
     };
 
-    const payload: AuthUserSummary[] = (users as PrismaUserSummary[]).map(
-      (user) => ({
-        id: user.id,
-        email: user.email ?? null,
-        name: user.name ?? null,
-        image: user.image ?? null,
-        emailVerified: user.emailVerified ? user.emailVerified.toISOString() : null,
-        provider,
-      })
-    );
+    const users = (await prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        image: true,
+        emailVerified: true,
+      },
+      orderBy: { email: "asc" },
+    })) as PrismaUserSummary[];
+
+    const payload: AuthUserSummary[] = users.map((user) => ({
+      id: user.id,
+      email: user.email ?? null,
+      name: user.name ?? null,
+      image: user.image ?? null,
+      emailVerified: user.emailVerified ? user.emailVerified.toISOString() : null,
+      provider,
+    }));
 
     return NextResponse.json({ provider, users: payload });
   } catch (error) {

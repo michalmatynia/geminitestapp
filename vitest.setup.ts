@@ -7,6 +7,12 @@ import { server } from './src/mocks/server';
 // Force Prisma as the database provider for tests to ensure consistency with cleanup logic
 process.env.APP_DB_PROVIDER = 'prisma';
 
+vi.mock('@/shared/lib/db/app-db-provider', () => ({
+  getAppDbProvider: vi.fn().mockResolvedValue('prisma'),
+  getAppDbProviderSetting: vi.fn().mockResolvedValue('prisma'),
+  APP_DB_PROVIDER_SETTING_KEY: 'app_db_provider',
+}));
+
 // Mock next/image
 vi.mock('next/image', () => ({
   __esModule: true,

@@ -9,8 +9,8 @@ import { parseJsonBody } from "@/features/products/server";
 import { badRequestError } from "@/shared/errors/app-error";
 import { logSystemEvent } from "@/features/observability/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
-import type { Catalog } from "@/features/products/types";
-import { type Filter, type Document } from "mongodb";
+import type { CatalogRecord } from "@/features/products/types";
+import { type Filter } from "mongodb";
 
 const catalogSchema = z.object({
   name: z.string().trim().min(1),
@@ -46,7 +46,7 @@ async function GET_handler(req: Request) {
         });
 
         const missingIds = new Set<string>();
-        catalogs.forEach((catalog: Catalog) => {
+        catalogs.forEach((catalog: CatalogRecord) => {
           (catalog.languageIds ?? []).forEach((languageId: string) => {
             if (!languageCodeById.has(languageId)) {
               missingIds.add(languageId);
@@ -82,9 +82,9 @@ async function GET_handler(req: Request) {
           }
         }
 
-        const collection = mongo.collection("catalogs");
+        const collection = mongo.collection<{ _id: string; id: string }>("catalogs");
         catalogs = await Promise.all(
-          catalogs.map(async (catalog: Catalog) => {
+          catalogs.map(async (catalog: CatalogRecord) => {
             const nextLanguageIds =
               catalog.languageIds?.map(
                 (languageId: string) => languageCodeById.get(languageId) ?? languageId
@@ -103,7 +103,7 @@ async function GET_handler(req: Request) {
               nextDefaultLanguageId !== catalog.defaultLanguageId;
 
             if (languageIdsChanged || defaultChanged) {
-              const filter: Filter<Document> = { $or: [{ _id: catalog.id }, { id: catalog.id }] };
+              const filter: Filter<{ _id: string; id: string }> = { $or: [{ _id: catalog.id }, { id: catalog.id }] };
               await collection.updateOne(
                 filter,
                 {

@@ -207,6 +207,17 @@ export const prismaProductRepository: ProductRepository = {
           include: { imageFile: true },
           orderBy: { assignedAt: "desc" },
         },
+        catalogs: {
+          include: {
+            catalog: {
+              include: {
+                languages: {
+                  include: { language: true }
+                }
+              }
+            }
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
@@ -220,6 +231,12 @@ export const prismaProductRepository: ProductRepository = {
         imageFileId: image.imageFileId,
         assignedAt: image.assignedAt,
         imageFile: toImageFileRecord(image.imageFile),
+      })),
+      catalogs: product.catalogs.map((entry) => ({
+        productId: entry.productId,
+        catalogId: entry.catalogId,
+        assignedAt: entry.assignedAt,
+        catalog: toCatalogRecord(entry.catalog),
       })),
     }));
   },

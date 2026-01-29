@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { ChatbotJobStatus } from "@prisma/client";
 import prisma from "@/shared/lib/db/prisma";
 import { startChatbotJobQueue } from "@/features/jobs/server";
-import { ChatbotJobStatus } from "@prisma/client";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, internalError, notFoundError } from "@/shared/errors/app-error";
@@ -159,12 +159,8 @@ async function DELETE_handler(req: Request) {
     const url = new URL(req.url);
     const scope = url.searchParams.get("scope") ?? "terminal";
 
-    // IMPORTANT: Use Prisma enum values (typed, mutable array) — no "as const"
-    const terminalStatuses: ChatbotJobStatus[] = [
-      ChatbotJobStatus.completed,
-      ChatbotJobStatus.failed,
-      ChatbotJobStatus.canceled,
-    ];
+    // Why: We use string literals directly to avoid flaky Prisma enum import issues.
+    const terminalStatuses: ChatbotJobStatus[] = ["completed", "failed", "canceled"];
 
     if (scope !== "terminal") {
       return createErrorResponse(badRequestError("Unsupported delete scope."), {

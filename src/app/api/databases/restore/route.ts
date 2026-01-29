@@ -1,6 +1,6 @@
 import path from "path";
 import { promises as fs } from "fs";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/shared/lib/db/prisma";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
@@ -22,6 +22,7 @@ import {
   mongoExecFileAsync,
 } from "@/features/database/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 type ExecOutputishError = {
   stdout?: string;
@@ -307,4 +308,6 @@ async function POST_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-export const POST = apiHandler(POST_handler, { source: "databases.restore.POST" });
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+ { source: "databases.restore.POST" });

@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, configurationError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const chunkText = (text: string, maxChars: number): string[] => {
   const chunks: string[] = [];
@@ -93,4 +94,6 @@ async function POST_handler(req: NextRequest): Promise<NextResponse | Response> 
   }
 }
 
-export const POST = apiHandler(POST_handler, { source: "chatbot.context.POST" });
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+ { source: "chatbot.context.POST" });

@@ -54,3 +54,8 @@ export type ParseJsonOptions = {
   logPrefix?: string;
   allowEmpty?: boolean;
 };
+
+/**
+ * Standard response shape for successful DELETE operations.
+ */
+export type DeleteResponse = { success: true };

@@ -76,5 +76,9 @@ async function POST_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-export const GET = apiHandler(GET_handler, { source: "products.migrate.GET" });
-export const POST = apiHandler(POST_handler, { source: "products.migrate.POST" });
+export const GET = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
+ { source: "products.migrate.GET" });
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+ { source: "products.migrate.POST" });

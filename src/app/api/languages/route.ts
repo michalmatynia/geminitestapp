@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/shared/lib/db/prisma";
 import type { Prisma } from "@prisma/client";
@@ -262,5 +262,9 @@ async function POST_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-export const GET = apiHandler(GET_handler, { source: "languages.GET" });
-export const POST = apiHandler(POST_handler, { source: "languages.POST" });
+export const GET = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
+ { source: "languages.GET" });
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+ { source: "languages.POST" });

@@ -5,6 +5,7 @@ import type { CreateProductDraftInput } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const createDraftSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -87,5 +88,9 @@ async function POST_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-export const GET = apiHandler(GET_handler, { source: "drafts.GET" });
-export const POST = apiHandler(POST_handler, { source: "drafts.POST" });
+export const GET = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
+ { source: "drafts.GET" });
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+ { source: "drafts.POST" });

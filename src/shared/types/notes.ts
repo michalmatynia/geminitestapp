@@ -1,5 +1,3 @@
-import type { Note, Tag, Category, NoteTag, NoteCategory, NoteRelation } from "@prisma/client";
-
 export type NotebookRecord = {
   id: string;
   name: string;
@@ -27,8 +25,58 @@ export type ThemeRecord = {
   updatedAt: Date;
 };
 
-export type TagRecord = Tag & { notebookId?: string | null };
-export type CategoryRecord = Category & { notebookId?: string | null; themeId?: string | null };
+export type NoteRecord = {
+  id: string;
+  title: string;
+  content: string;
+  editorType: string;
+  color: string | null;
+  isPinned: boolean;
+  isArchived: boolean;
+  isFavorite: boolean;
+  notebookId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type TagRecord = {
+  id: string;
+  name: string;
+  color: string | null;
+  notebookId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type CategoryRecord = {
+  id: string;
+  name: string;
+  description: string | null;
+  color: string | null;
+  parentId: string | null;
+  notebookId: string | null;
+  themeId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type NoteTagRecord = {
+  noteId: string;
+  tagId: string;
+  assignedAt: Date;
+};
+
+export type NoteCategoryRecord = {
+  noteId: string;
+  categoryId: string;
+  assignedAt: Date;
+};
+
+export type NoteRelationRecord = {
+  sourceNoteId: string;
+  targetNoteId: string;
+  assignedAt: Date;
+};
 
 // Simple note type for related notes (without nested relations to avoid circular references)
 export type RelatedNote = {
@@ -37,28 +85,26 @@ export type RelatedNote = {
   color: string | null;
 };
 
-export type NoteRelationWithTarget = NoteRelation & {
+export type NoteRelationWithTarget = NoteRelationRecord & {
   targetNote: RelatedNote;
 };
 
-export type NoteRelationWithSource = NoteRelation & {
+export type NoteRelationWithSource = NoteRelationRecord & {
   sourceNote: RelatedNote;
 };
 
-export type NoteWithRelations = Note & {
-  tags: (NoteTag & { tag: Tag })[];
-  categories: (NoteCategory & { category: Category })[];
+export type NoteWithRelations = NoteRecord & {
+  tags: (NoteTagRecord & { tag: TagRecord })[];
+  categories: (NoteCategoryRecord & { category: CategoryRecord })[];
   relationsFrom?: NoteRelationWithTarget[];
   relationsTo?: NoteRelationWithSource[];
   relations?: RelatedNote[];
-  notebookId?: string | null;
   files?: NoteFileRecord[];
 };
 
-export type CategoryWithChildren = Category & {
+export type CategoryWithChildren = CategoryRecord & {
   children: CategoryWithChildren[];
-  notes: Note[];
-  themeId?: string | null;
+  notes: NoteRecord[];
 };
 
 export type NoteEditorType = "markdown" | "wysiwyg" | "code";

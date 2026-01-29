@@ -1,6 +1,6 @@
 import path from "path";
 import { promises as fs } from "fs";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import type { DatabaseInfo } from "@/features/database";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 
@@ -11,6 +11,7 @@ import {
   ensureMongoBackupsDir,
 } from "@/features/database/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 async function getBackups(type: "postgresql" | "mongodb"): Promise<DatabaseInfo[]> {
   const backupsDir = type === "mongodb" ? mongoBackupsDir : pgBackupsDir;
@@ -70,4 +71,6 @@ async function GET_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-export const GET = apiHandler(GET_handler, { source: "databases.backups.GET" });
+export const GET = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
+ { source: "databases.backups.GET" });

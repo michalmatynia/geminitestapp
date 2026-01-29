@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import prisma from "@/shared/lib/db/prisma";
@@ -150,5 +150,9 @@ async function POST_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-export const GET = apiHandler(GET_handler, { source: "products.tags.GET" });
-export const POST = apiHandler(POST_handler, { source: "products.tags.POST" });
+export const GET = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
+ { source: "products.tags.GET" });
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+ { source: "products.tags.POST" });

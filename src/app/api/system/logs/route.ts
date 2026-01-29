@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
   clearSystemLogs,
@@ -109,6 +109,12 @@ async function DELETE_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-export const GET = apiHandler(GET_handler, { source: "system.logs.GET" });
-export const POST = apiHandler(POST_handler, { source: "system.logs.POST" });
-export const DELETE = apiHandler(DELETE_handler, { source: "system.logs.DELETE" });
+export const GET = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
+ { source: "system.logs.GET" });
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+ { source: "system.logs.POST" });
+export const DELETE = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => DELETE_handler(req, ctx),
+ { source: "system.logs.DELETE" });

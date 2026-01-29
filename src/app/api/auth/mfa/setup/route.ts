@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/features/auth/server";
 import { getAuthSecurityProfile, updateAuthSecurityProfile } from "@/features/auth/server";
 import { buildOtpAuthUrl, generateTotpSecret } from "@/features/auth/server";
@@ -6,6 +6,7 @@ import { encryptAuthSecret } from "@/features/auth/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { conflictError, authError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 export const runtime = "nodejs";
 
@@ -56,4 +57,6 @@ async function POST_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-export const POST = apiHandler(POST_handler, { source: "auth.mfa.setup.POST" });
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+ { source: "auth.mfa.setup.POST" });

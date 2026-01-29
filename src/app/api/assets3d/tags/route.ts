@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getAsset3DRepository } from "@/features/viewer3d/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 async function GET_handler(): Promise<Response> {
   const repository = getAsset3DRepository();
@@ -8,4 +9,6 @@ async function GET_handler(): Promise<Response> {
   return NextResponse.json(tags);
 }
 
-export const GET = apiHandler(GET_handler, { source: "assets3d/tags.GET" });
+export const GET = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
+ { source: "assets3d/tags.GET" });

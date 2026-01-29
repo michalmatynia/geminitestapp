@@ -30,4 +30,6 @@ async function GET_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => GET_handler(req, { params: Promise.resolve(params) }), { source: "public.products.[id].GET" });
+export const GET = apiHandlerWithParams<{ id: string }>(
+  async (req: NextRequest, ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => async (req: NextRequest(req, { params: Promise.resolve(params) }),
+ _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => GET_handler(req, { params: Promise.resolve(params) }), { source: "public.products.[id].GET" });

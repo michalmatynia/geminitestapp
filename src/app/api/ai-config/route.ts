@@ -3,6 +3,7 @@ import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { configurationError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 async function POST_handler(req: NextRequest): Promise<Response> {
   try {
@@ -56,5 +57,9 @@ async function GET_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-export const POST = apiHandler(POST_handler, { source: "ai-config.POST" });
-export const GET = apiHandler(GET_handler, { source: "ai-config.GET" });
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+ { source: "ai-config.POST" });
+export const GET = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
+ { source: "ai-config.GET" });

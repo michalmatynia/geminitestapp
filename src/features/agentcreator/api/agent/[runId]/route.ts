@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 import prisma from "@/shared/lib/db/prisma";
 import { logAgentAudit } from "@/features/agent-runtime/server";
@@ -16,10 +16,9 @@ import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
-async function GET_handler(
-  req: Request,
+async function GET_handler(req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
-) {
+): Promise<Response> {
   const requestStart = Date.now();
   try {
     startAgentQueue();
@@ -58,10 +57,9 @@ async function GET_handler(
   }
 }
 
-async function POST_handler(
-  req: Request,
+async function POST_handler(req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
-) {
+): Promise<Response> {
   const requestStart = Date.now();
   try {
     if (!("chatbotAgentRun" in prisma)) {
@@ -420,10 +418,9 @@ async function POST_handler(
   }
 }
 
-async function DELETE_handler(
-  req: Request,
+async function DELETE_handler(req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
-) {
+): Promise<Response> {
   const requestStart = Date.now();
   try {
     if (!("chatbotAgentRun" in prisma)) {
@@ -480,6 +477,12 @@ async function DELETE_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<{ runId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].GET" });
-export const POST = apiHandlerWithParams<{ runId: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].POST" });
-export const DELETE = apiHandlerWithParams<{ runId: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].DELETE" });
+export const GET = apiHandlerWithParams<{ runId: string }>(
+  async (req: NextRequest, ctx: ApiHandlerContext, params: { runId: string }): Promise<Response> => async (req(req, { params: Promise.resolve(params) }),
+ _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].GET" });
+export const POST = apiHandlerWithParams<{ runId: string }>(
+  async (req: NextRequest, ctx: ApiHandlerContext, params: { runId: string }): Promise<Response> => async (req(req, { params: Promise.resolve(params) }),
+ _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].POST" });
+export const DELETE = apiHandlerWithParams<{ runId: string }>(
+  async (req: NextRequest, ctx: ApiHandlerContext, params: { runId: string }): Promise<Response> => async (req(req, { params: Promise.resolve(params) }),
+ _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].DELETE" });

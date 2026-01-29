@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { apiHandlerWithParams, ApiHandlerContext } from "@/shared/lib/api/api-handler";

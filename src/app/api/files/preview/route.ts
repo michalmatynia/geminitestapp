@@ -8,6 +8,7 @@ import { getImageFileRepository } from "@/features/files/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 async function GET_handler(req: NextRequest): Promise<NextResponse | Response> {
   const fileId = req.nextUrl.searchParams.get("fileId");
@@ -56,4 +57,6 @@ async function GET_handler(req: NextRequest): Promise<NextResponse | Response> {
   }
 }
 
-export const GET = apiHandler(GET_handler, { source: "files.preview.GET" });
+export const GET = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
+ { source: "files.preview.GET" });

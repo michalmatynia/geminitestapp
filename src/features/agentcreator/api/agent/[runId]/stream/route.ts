@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import prisma from "@/shared/lib/db/prisma";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { internalError } from "@/shared/errors/app-error";
@@ -6,10 +7,9 @@ import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 export const runtime = "nodejs";
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
-async function GET_handler(
-  req: Request,
+async function GET_handler(req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
-) {
+): Promise<Response> {
   try {
     if (!("agentBrowserSnapshot" in prisma)) {
       return createErrorResponse(internalError("Agent snapshots not initialized."), {
@@ -76,4 +76,6 @@ async function GET_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<{ runId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].stream.GET" });
+export const GET = apiHandlerWithParams<{ runId: string }>(
+  async (req: NextRequest, ctx: ApiHandlerContext, params: { runId: string }): Promise<Response> => async (req(req, { params: Promise.resolve(params) }),
+ _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].stream.GET" });

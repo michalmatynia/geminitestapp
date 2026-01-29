@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { parseJsonBody } from "@/features/products/server";
@@ -13,6 +13,7 @@ import {
 import { getAuthUserPageSettings } from "@/features/auth/server";
 import { createLoginChallenge } from "@/features/auth/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 export const runtime = "nodejs";
 
@@ -126,4 +127,6 @@ async function POST_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-export const POST = apiHandler(POST_handler, { source: "auth.verify-credentials.POST" });
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+ { source: "auth.verify-credentials.POST" });

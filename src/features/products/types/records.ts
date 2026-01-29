@@ -1,9 +1,33 @@
 import type { ProductParameterValue } from "@/features/products/types";
 import type { ImageFileRecord } from "@/shared/types/files";
-import type { PriceGroup, Currency } from "@prisma/client";
 
-export type PriceGroupWithDetails = PriceGroup & {
-  currency: Currency;
+export type CurrencyRecord = {
+  id: string;
+  code: string;
+  name: string;
+  symbol: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type PriceGroupRecord = {
+  id: string;
+  groupId: string;
+  isDefault: boolean;
+  name: string;
+  description: string | null;
+  currencyId: string;
+  type: string;
+  basePriceField: string;
+  sourceGroupId: string | null;
+  priceMultiplier: number;
+  addToPrice: number;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type PriceGroupWithDetails = PriceGroupRecord & {
+  currency: CurrencyRecord;
   currencyCode?: string;
 };
 

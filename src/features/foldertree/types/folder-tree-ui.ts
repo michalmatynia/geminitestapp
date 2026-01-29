@@ -1,5 +1,4 @@
-import type { Note } from "@prisma/client";
-import type { CategoryWithChildren } from "@/shared/types/notes";
+import type { CategoryWithChildren, NoteRecord } from "@/shared/types/notes";
 
 export interface FolderTreeProps {
   folders: CategoryWithChildren[];
@@ -64,7 +63,7 @@ export interface FolderNodeProps {
 }
 
 export interface NoteItemProps {
-  note: Note;
+  note: NoteRecord;
   level: number;
   isSelected: boolean;
   isRenaming: boolean;

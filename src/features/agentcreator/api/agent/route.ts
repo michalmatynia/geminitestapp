@@ -1,17 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/shared/lib/db/prisma";
 import { startAgentQueue } from "@/features/jobs/server";
 import { logAgentAudit } from "@/features/agent-runtime/server";
 import { promises as fs } from "fs";
 import path from "path";
-import { AgentRunStatus } from "@prisma/client";
+import type { AgentRunStatusType } from "@/features/agent-runtime/types/agent";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, internalError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   const requestStart = Date.now();
   try {
     startAgentQueue();
@@ -64,7 +65,7 @@ async function GET_handler(req: Request) {
   }
 }
 
-async function POST_handler(req: Request) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   const requestStart = Date.now();
   try {
     if (!("chatbotAgentRun" in prisma)) {
@@ -272,7 +273,7 @@ async function POST_handler(req: Request) {
   }
 }
 
-async function DELETE_handler(req: Request) {
+async function DELETE_handler(req: NextRequest): Promise<Response> {
   const requestStart = Date.now();
   try {
     if (!("chatbotAgentRun" in prisma)) {
@@ -285,11 +286,11 @@ async function DELETE_handler(req: Request) {
     }
     const url = new URL(req.url);
     const scope = url.searchParams.get("scope") ?? "terminal";
-    const terminalStatuses: AgentRunStatus[] = [
-      AgentRunStatus.completed,
-      AgentRunStatus.failed,
-      AgentRunStatus.stopped,
-      AgentRunStatus.waiting_human,
+    const terminalStatuses: AgentRunStatusType[] = [
+      "completed",
+      "failed",
+      "stopped",
+      "waiting_human",
     ];
     if (scope !== "terminal") {
       return createErrorResponse(badRequestError("Unsupported delete scope."), {
@@ -332,6 +333,12 @@ async function DELETE_handler(req: Request) {
   }
 }
 
-export const GET = apiHandler(GET_handler, { source: "chatbot.agent.GET" });
-export const POST = apiHandler(POST_handler, { source: "chatbot.agent.POST" });
-export const DELETE = apiHandler(DELETE_handler, { source: "chatbot.agent.DELETE" });
+export const GET = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
+ { source: "chatbot.agent.GET" });
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+ { source: "chatbot.agent.POST" });
+export const DELETE = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => DELETE_handler(req, ctx),
+ { source: "chatbot.agent.DELETE" });

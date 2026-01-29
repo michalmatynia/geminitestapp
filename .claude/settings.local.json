@@ -46,7 +46,9 @@
       "Bash(npx eslint src/lib/ai-paths/core/runtime/handlers/integration.ts src/lib/ai-paths/core/constants/index.ts)",
       "Bash(npx eslint src/app/\\\\\\(admin\\\\\\)/admin/ai-paths/components/node-config-dialog.tsx)",
       "Bash(npx eslint src/app/api/databases/browse/route.ts)",
-      "Bash(xargs sed:*)"
+      "Bash(xargs sed:*)",
+      "Bash(grep -r 'from \"\"@prisma/client\"\"' src/shared/types/ src/features/*/types/ src/features/*/hooks/ src/features/*/context/ src/features/*/components/ \"src/app/\\(admin\\)/\" \"src/app/\\(frontend\\)/\")",
+      "Bash(npx eslint src/shared/types/notes.ts src/features/products/types/records.ts src/features/products/hooks/useMetadata.ts src/features/chatbot/components/DebugPanel.tsx src/features/foldertree/types/folder-tree-ui.ts --no-cache)"
     ]
   }
 }

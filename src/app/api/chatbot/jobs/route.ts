@@ -156,6 +156,12 @@ async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): Promise
   }
 }
 
-export const GET = apiHandler(GET_handler, { source: "chatbot.jobs.GET" });
-export const POST = apiHandler(POST_handler, { source: "chatbot.jobs.POST" });
-export const DELETE = apiHandler(DELETE_handler, { source: "chatbot.jobs.DELETE" });
+export const GET = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
+ { source: "chatbot.jobs.GET" });
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+ { source: "chatbot.jobs.POST" });
+export const DELETE = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => DELETE_handler(req, ctx),
+ { source: "chatbot.jobs.DELETE" });

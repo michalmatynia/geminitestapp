@@ -45,16 +45,22 @@ async function DELETE_handler(_req: NextRequest, params: { id: string }): Promis
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }) => GET_handler(req, params),
+  async (req: NextRequest, ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => 
+  async (req: NextRequest(req, { params: Promise.resolve(params) }),
+ _ctx: ApiHandlerContext, params: { id: string }) => GET_handler(req, params),
   { source: "assets3d/[id].GET" }
 );
 
 export const PATCH = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }) => PATCH_handler(req, params),
+  async (req: NextRequest, ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => 
+  async (req: NextRequest(req, { params: Promise.resolve(params) }),
+ _ctx: ApiHandlerContext, params: { id: string }) => PATCH_handler(req, params),
   { source: "assets3d/[id].PATCH" }
 );
 
 export const DELETE = apiHandlerWithParams<{ id: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }) => DELETE_handler(req, params),
+  async (req: NextRequest, ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => 
+  async (req: NextRequest(req, { params: Promise.resolve(params) }),
+ _ctx: ApiHandlerContext, params: { id: string }) => DELETE_handler(req, params),
   { source: "assets3d/[id].DELETE" }
 );

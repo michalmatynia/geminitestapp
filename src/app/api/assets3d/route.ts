@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAsset3DRepository, uploadAsset3D, validate3DFile } from "@/features/viewer3d/server";
 import { apiHandler, getQueryParams } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 import { badRequestError } from "@/shared/errors/app-error";
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
@@ -67,5 +68,9 @@ async function POST_handler(req: NextRequest): Promise<Response> {
   return NextResponse.json(asset, { status: 201 });
 }
 
-export const GET = apiHandler(GET_handler, { source: "assets3d.GET" });
-export const POST = apiHandler(POST_handler, { source: "assets3d.POST" });
+export const GET = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
+ { source: "assets3d.GET" });
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+ { source: "assets3d.POST" });

@@ -76,4 +76,6 @@ async function POST_handler(request: NextRequest): Promise<Response> {
   }
 }
 
-export const POST = apiHandler(POST_handler, { source: "marketplace.categories.fetch.POST" });
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+ { source: "marketplace.categories.fetch.POST" });

@@ -1,7 +1,6 @@
 "use client";
 
 import { ChatbotDebugState } from "@/shared/types/chatbot";
-import type { AgentAuditLog } from "@prisma/client";
 
 interface LogEntry {
   id: string;
@@ -13,7 +12,6 @@ interface LogEntry {
 interface DebugPanelProps {
   debugState: ChatbotDebugState;
   agentRunLogs: LogEntry[];
-  _agentRunAudits: AgentAuditLog[];
 }
 
 export function DebugPanel({

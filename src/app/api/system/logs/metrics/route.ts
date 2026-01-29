@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSystemLogMetrics } from "@/features/observability/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
@@ -36,4 +36,6 @@ async function GET_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-export const GET = apiHandler(GET_handler, { source: "system.logs.metrics.GET" });
+export const GET = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
+ { source: "system.logs.metrics.GET" });

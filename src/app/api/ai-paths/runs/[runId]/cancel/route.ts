@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { apiHandlerWithParams, ApiHandlerContext } from "@/shared/lib/api/api-handler";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";

@@ -161,5 +161,9 @@ async function DELETE_handler(
   }
 }
 
-export const PUT = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: unknown, params: { id: string }) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "currencies.[id].PUT" });
-export const DELETE = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: unknown, params: { id: string }) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "currencies.[id].DELETE" });
+export const PUT = apiHandlerWithParams<{ id: string }>(
+  async (req: NextRequest, ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => async (req: NextRequest(req, { params: Promise.resolve(params) }),
+ _ctx: unknown, params: { id: string }) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "currencies.[id].PUT" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(
+  async (req: NextRequest, ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => async (req: NextRequest(req, { params: Promise.resolve(params) }),
+ _ctx: unknown, params: { id: string }) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "currencies.[id].DELETE" });

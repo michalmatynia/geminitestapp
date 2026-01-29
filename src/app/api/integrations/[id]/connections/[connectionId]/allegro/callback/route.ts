@@ -175,4 +175,6 @@ async function GET_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string; connectionId: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.callback.GET" });
+export const GET = apiHandlerWithParams<{ id: string; connectionId: string }>(
+  async (req: NextRequest, ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> => async (req: NextRequest(req, { params: Promise.resolve(params) }),
+ _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.callback.GET" });

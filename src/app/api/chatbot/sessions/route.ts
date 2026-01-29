@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { chatbotSessionRepository } from "@/features/chatbot/server";
 import type { ChatSession, UpdateSessionInput } from "@/shared/types/chatbot";
@@ -6,6 +6,7 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { notFoundError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -194,7 +195,15 @@ async function DELETE_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-export const POST = apiHandler(POST_handler, { source: "chatbot.sessions.POST" });
-export const GET = apiHandler(GET_handler, { source: "chatbot.sessions.GET" });
-export const PATCH = apiHandler(PATCH_handler, { source: "chatbot.sessions.PATCH" });
-export const DELETE = apiHandler(DELETE_handler, { source: "chatbot.sessions.DELETE" });
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+ { source: "chatbot.sessions.POST" });
+export const GET = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
+ { source: "chatbot.sessions.GET" });
+export const PATCH = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => PATCH_handler(req, ctx),
+ { source: "chatbot.sessions.PATCH" });
+export const DELETE = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => DELETE_handler(req, ctx),
+ { source: "chatbot.sessions.DELETE" });

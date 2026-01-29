@@ -31,4 +31,6 @@ async function DELETE_handler(req: NextRequest,
   }
 }
 
-export const DELETE = apiHandlerWithParams<{ id: string; listingId: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "integrations.products.[id].listings.[listingId].purge.DELETE" });
+export const DELETE = apiHandlerWithParams<{ id: string; listingId: string }>(
+  async (req: NextRequest, ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> => async (req: NextRequest(req, { params: Promise.resolve(params) }),
+ _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "integrations.products.[id].listings.[listingId].purge.DELETE" });

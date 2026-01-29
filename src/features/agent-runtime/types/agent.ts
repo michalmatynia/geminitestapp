@@ -147,3 +147,14 @@ export type AgentToolResult = {
   error?: string;
   observation?: string;
 };
+
+export type AgentRunStatusType = "queued" | "running" | "waiting_human" | "stopped" | "failed" | "completed";
+
+export type AgentAuditLogRecord = {
+  id: string;
+  runId: string | null;
+  level: string;
+  message: string;
+  metadata: unknown;
+  createdAt: Date;
+};

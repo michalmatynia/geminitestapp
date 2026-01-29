@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
 
 const slugSchema = z.object({
@@ -50,5 +51,9 @@ async function POST_handler(req: NextRequest): Promise<NextResponse | Response> 
   }
 }
 
-export const GET = apiHandler(GET_handler, { source: "cms.slugs.GET" });
-export const POST = apiHandler(POST_handler, { source: "cms.slugs.POST" });
+export const GET = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
+ { source: "cms.slugs.GET" });
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+ { source: "cms.slugs.POST" });

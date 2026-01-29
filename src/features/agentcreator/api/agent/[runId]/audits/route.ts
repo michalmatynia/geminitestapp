@@ -1,16 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/shared/lib/db/prisma";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { internalError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
-import type { AgentAuditLog } from "@prisma/client";
+import type { AgentAuditLogRecord } from "@/features/agent-runtime/types/agent";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
-async function GET_handler(
-  req: Request,
+async function GET_handler(req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
-) {
+): Promise<Response> {
   const requestStart = Date.now();
   try {
     if (!("agentAuditLog" in prisma)) {
@@ -32,7 +31,7 @@ async function GET_handler(
       take,
     });
     const filtered = stepId
-      ? audits.filter((audit: AgentAuditLog) => {
+      ? audits.filter((audit: AgentAuditLogRecord) => {
           const metadata = audit.metadata as
             | {
                 stepId?: string;
@@ -71,4 +70,6 @@ async function GET_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<{ runId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].audits.GET" });
+export const GET = apiHandlerWithParams<{ runId: string }>(
+  async (req: NextRequest, ctx: ApiHandlerContext, params: { runId: string }): Promise<Response> => async (req(req, { params: Promise.resolve(params) }),
+ _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].audits.GET" });

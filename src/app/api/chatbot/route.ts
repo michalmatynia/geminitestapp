@@ -516,5 +516,9 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<R
   }
 }
 
-export const GET = apiHandler(GET_handler, { source: "chatbot.GET" });
-export const POST = apiHandler(POST_handler, { source: "chatbot.POST" });
+export const GET = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
+ { source: "chatbot.GET" });
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+ { source: "chatbot.POST" });

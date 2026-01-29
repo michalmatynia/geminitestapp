@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import { promises as fs } from "fs";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
@@ -14,10 +14,9 @@ const getContentType = (filename: string) => {
   return "application/octet-stream";
 };
 
-async function GET_handler(
-  req: Request,
+async function GET_handler(req: NextRequest,
   { params }: { params: Promise<{ runId: string; file: string }> }
-) {
+): Promise<Response> {
   try {
     const { runId, file } = await params;
     const safeFile = path.basename(file);
@@ -47,4 +46,6 @@ async function GET_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<{ runId: string; file: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].assets.[file].GET" });
+export const GET = apiHandlerWithParams<{ runId: string; file: string }>(
+  async (req: NextRequest, ctx: ApiHandlerContext, params: { runId: string; file: string }): Promise<Response> => async (req(req, { params: Promise.resolve(params) }),
+ _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].assets.[file].GET" });

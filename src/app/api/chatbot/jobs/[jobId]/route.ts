@@ -146,6 +146,12 @@ async function DELETE_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<{ jobId: string }>(GET_handler, { source: "chatbot.jobs.[jobId].GET" });
-export const POST = apiHandlerWithParams<{ jobId: string }>(POST_handler, { source: "chatbot.jobs.[jobId].POST" });
-export const DELETE = apiHandlerWithParams<{ jobId: string }>(DELETE_handler, { source: "chatbot.jobs.[jobId].DELETE" });
+export const GET = apiHandlerWithParams<{ jobId: string }>(
+  async (req: NextRequest, ctx: ApiHandlerContext, params: { jobId: string }): Promise<Response> => GET_handler(req, { params: Promise.resolve(params) }),
+ { source: "chatbot.jobs.[jobId].GET" });
+export const POST = apiHandlerWithParams<{ jobId: string }>(
+  async (req: NextRequest, ctx: ApiHandlerContext, params: { jobId: string }): Promise<Response> => POST_handler(req, { params: Promise.resolve(params) }),
+ { source: "chatbot.jobs.[jobId].POST" });
+export const DELETE = apiHandlerWithParams<{ jobId: string }>(
+  async (req: NextRequest, ctx: ApiHandlerContext, params: { jobId: string }): Promise<Response> => DELETE_handler(req, { params: Promise.resolve(params) }),
+ { source: "chatbot.jobs.[jobId].DELETE" });

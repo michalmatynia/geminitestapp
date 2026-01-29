@@ -1,7 +1,7 @@
 "use client";
 
 import { useToast } from "@/shared/ui";
-import type { Language } from "@prisma/client";
+import type { Language } from "@/shared/types/internationalization";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import {

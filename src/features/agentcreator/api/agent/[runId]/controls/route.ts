@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/shared/lib/db/prisma";
 import { runAgentBrowserControl } from "@/features/agent-runtime/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
@@ -7,10 +7,9 @@ import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
-async function POST_handler(
-  req: Request,
+async function POST_handler(req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
-) {
+): Promise<Response> {
   try {
     if (!("chatbotAgentRun" in prisma)) {
       return createErrorResponse(
@@ -86,4 +85,6 @@ async function POST_handler(
   }
 }
 
-export const POST = apiHandlerWithParams<{ runId: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].controls.POST" });
+export const POST = apiHandlerWithParams<{ runId: string }>(
+  async (req: NextRequest, ctx: ApiHandlerContext, params: { runId: string }): Promise<Response> => async (req(req, { params: Promise.resolve(params) }),
+ _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.agent.[runId].controls.POST" });

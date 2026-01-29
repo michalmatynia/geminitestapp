@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { resumePathRun } from "@/features/ai-paths/services/path-run-service";
@@ -85,6 +86,8 @@ async function POST_handler(req: NextRequest): Promise<NextResponse | Response> 
   }
 }
 
-export const POST = apiHandler(POST_handler, {
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+ {
   source: "ai-paths.runs.dead-letter.requeue",
 });

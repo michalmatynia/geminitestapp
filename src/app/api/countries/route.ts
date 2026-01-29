@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { WithId } from "mongodb";
 import prisma from "@/shared/lib/db/prisma";
@@ -18,6 +18,7 @@ import { conflictError, internalError } from "@/shared/errors/app-error";
 import { logSystemEvent } from "@/features/observability/server";
 import type { CountryCode } from "@prisma/client";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 export const runtime = "nodejs";
 
@@ -289,5 +290,9 @@ async function POST_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-export const GET = apiHandler(GET_handler, { source: "countries.GET" });
-export const POST = apiHandler(POST_handler, { source: "countries.POST" });
+export const GET = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
+ { source: "countries.GET" });
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+ { source: "countries.POST" });

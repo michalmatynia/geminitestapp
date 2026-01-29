@@ -48,4 +48,6 @@ async function DELETE_handler(req: NextRequest,
   }
 }
 
-export const DELETE = apiHandlerWithParams<{ id: string; slotIndex: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; slotIndex: string }): Promise<Response> => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].files.[slotIndex].DELETE" });
+export const DELETE = apiHandlerWithParams<{ id: string; slotIndex: string }>(
+  async (req: NextRequest, ctx: ApiHandlerContext, params: { id: string; slotIndex: string }): Promise<Response> => async (req: NextRequest(req, { params: Promise.resolve(params) }),
+ _ctx: ApiHandlerContext, params: { id: string; slotIndex: string }): Promise<Response> => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "notes.[id].files.[slotIndex].DELETE" });

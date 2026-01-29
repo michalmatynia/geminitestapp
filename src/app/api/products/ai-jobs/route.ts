@@ -59,5 +59,9 @@ async function DELETE_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-export const GET = apiHandler(GET_handler, { source: "products.ai-jobs.GET" });
-export const DELETE = apiHandler(DELETE_handler, { source: "products.ai-jobs.DELETE" });
+export const GET = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
+ { source: "products.ai-jobs.GET" });
+export const DELETE = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => DELETE_handler(req, ctx),
+ { source: "products.ai-jobs.DELETE" });

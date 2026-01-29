@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/features/auth/server";
 import { parseJsonBody } from "@/features/products/server";
@@ -8,6 +8,7 @@ import { getAuthSecurityProfile, updateAuthSecurityProfile } from "@/features/au
 import { decryptAuthSecret } from "@/features/auth/server";
 import { hashRecoveryCode, verifyTotpToken } from "@/features/auth/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ApiHandlerContext } from "@/shared/types/api";
 
 export const runtime = "nodejs";
 
@@ -70,4 +71,6 @@ async function POST_handler(req: NextRequest): Promise<Response> {
   }
 }
 
-export const POST = apiHandler(POST_handler, { source: "auth.mfa.disable.POST" });
+export const POST = apiHandler(
+  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
+ { source: "auth.mfa.disable.POST" });

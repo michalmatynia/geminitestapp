@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueries } from "@tanstack/react-query";
-import type { Language } from "@prisma/client";
+import type { Language } from "@/shared/types/internationalization";
 import type { CatalogRecord, PriceGroupWithDetails } from "@/features/products/types";
 import type { ProductCategory, ProductTag, ProductParameter } from "@/features/products/types";
 

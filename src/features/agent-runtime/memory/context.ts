@@ -20,7 +20,7 @@ export async function addProblemSolutionMemory({
   model?: string | null;
   prompt?: string | null;
   summaryModel?: string | null;
-}) {
+}): Promise<void> {
   if (!memoryKey || !problem || !countermeasure) return;
   const summary = `Problem: ${problem} \u00b7 Countermeasure: ${countermeasure}`;
   await validateAndAddAgentLongTermMemory({

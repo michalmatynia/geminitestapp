@@ -37,7 +37,7 @@ import { runPlanStepLoop } from "@/features/agent-runtime/execution/step-runner"
 import { finalizeAgentRun } from "@/features/agent-runtime/execution/finalize";
 import { ErrorSystem } from "@/features/observability/server";
 
-export async function runAgentControlLoop(runId: string) {
+export async function runAgentControlLoop(runId: string): Promise<void> {
   let sharedBrowser: Browser | null = null;
   let sharedContext: BrowserContext | null = null;
   try {
@@ -286,7 +286,7 @@ export async function runAgentControlLoop(runId: string) {
             };
           }
         }
-        const stepSummary = planSteps.map((step) => ({
+        const stepSummary = planSteps.map((step: PlanStep) => ({
           title: step.title,
           status: step.status,
           phase: step.phase ?? null,
@@ -332,7 +332,7 @@ export async function runAgentControlLoop(runId: string) {
             summary,
             "Steps:",
             ...stepSummary.map(
-              (step, index) =>
+              (step: { title: string; status: string; phase: string | null; priority: number | null }, index: number) =>
                 `${index + 1}. ${step.title} (${step.status}${
                   step.phase ? `, ${step.phase}` : ""
                 })`
@@ -398,7 +398,7 @@ export async function runAgentControlLoop(runId: string) {
 
     if (decision.action === "respond") {
       if (planSteps.length > 0) {
-        planSteps = planSteps.map((step) => ({
+        planSteps = planSteps.map((step: PlanStep) => ({
           ...step,
           status: "completed",
         }));

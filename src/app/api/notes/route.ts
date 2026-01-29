@@ -84,7 +84,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       logPrefix: "notes.POST",
     });
     if (!parsed.ok) {
-      return parsed.response as Response;
+      return parsed.response;
     }
 
     const resolvedNotebookId =

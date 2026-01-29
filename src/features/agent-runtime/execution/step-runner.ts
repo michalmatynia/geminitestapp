@@ -142,7 +142,7 @@ export async function runPlanStepLoop(
 
   const maybeUpdateCheckpointBrief = async (
     activeStepIdForBrief: string | null
-  ) => {
+  ): Promise<void> => {
     if (!activeStepIdForBrief) return;
     if (
       checkpointBriefStepId === activeStepIdForBrief &&
@@ -191,7 +191,7 @@ export async function runPlanStepLoop(
   const logBranchAlternatives = async (
     meta: PlannerMeta | null | undefined,
     reason: string
-  ) => {
+  ): Promise<void> => {
     const branchAlternatives = buildBranchStepsFromAlternatives(
       meta?.alternatives ?? undefined,
       settings.maxStepAttempts,
@@ -297,7 +297,7 @@ export async function runPlanStepLoop(
       };
     }
     const attempts = (step.attempts ?? 0) + 1;
-    planSteps = planSteps.map((item) =>
+    planSteps = planSteps.map((item: PlanStep) =>
       item.id === step.id ? { ...item, status: "running", attempts } : item
     );
     await logAgentAudit(run.id, "info", "Plan updated.", {
@@ -319,7 +319,7 @@ export async function runPlanStepLoop(
     });
 
     if (step.tool === "none") {
-      planSteps = planSteps.map((item) =>
+      planSteps = planSteps.map((item: PlanStep) =>
         item.id === step.id ? { ...item, status: "completed" } : item
       );
       await logAgentAudit(run.id, "info", "Plan updated.", {
@@ -329,7 +329,7 @@ export async function runPlanStepLoop(
       });
       await maybeUpdateCheckpointBrief(step.id);
       const completedCount = planSteps.filter(
-        (item) => item.status === "completed"
+        (item: PlanStep) => item.status === "completed"
       ).length;
       if (
         completedCount >= summaryInterval &&
@@ -468,7 +468,7 @@ export async function runPlanStepLoop(
       consecutiveFailures = 0;
     }
 
-    planSteps = planSteps.map((item) =>
+    planSteps = planSteps.map((item: PlanStep) =>
       item.id === step.id
         ? {
             ...item,
@@ -701,7 +701,7 @@ export async function runPlanStepLoop(
           memory: memoryContext,
           browserContext: replanBrowserContext,
           lastError,
-          previousPlan: planSteps.map((item) => ({
+          previousPlan: planSteps.map((item: PlanStep) => ({
             id: item.id,
             title: item.title,
             status: item.status,
@@ -727,7 +727,7 @@ export async function runPlanStepLoop(
           maxStepAttempts: settings.maxStepAttempts,
         });
         if (branchResult.branchSteps?.length) {
-          const failedIndex = planSteps.findIndex((item) => item.id === step.id);
+          const failedIndex = planSteps.findIndex((item: PlanStep) => item.id === step.id);
           const insertAt =
             failedIndex === -1 ? planSteps.length : failedIndex + 1;
           planSteps = [
@@ -932,7 +932,7 @@ export async function runPlanStepLoop(
       break;
     }
     const completedCount = planSteps.filter(
-      (item) => item.status === "completed"
+      (item: PlanStep) => item.status === "completed"
     ).length;
     if (
       stagnationCount >= 2 &&

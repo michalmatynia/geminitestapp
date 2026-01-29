@@ -77,7 +77,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const parsed = await parseJsonBody(req, updateSchema, {
       logPrefix: "ai-paths.db-update",
     });
-    if (!parsed.ok) return parsed.response as Response;
+    if (!parsed.ok) return parsed.response;
     if (!process.env.MONGODB_URI) {
       return createErrorResponse(internalError("MongoDB is not configured"), {
         request: req,

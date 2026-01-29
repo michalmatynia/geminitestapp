@@ -136,7 +136,7 @@ async function PUT_handler(
       allowEmpty: true,
     });
     if (!parsed.ok) {
-      return parsed.response as Response;
+      return parsed.response;
     }
 
     const { name, description, color, parentId, catalogId } = parsed.data;

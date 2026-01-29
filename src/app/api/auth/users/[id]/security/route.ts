@@ -17,7 +17,7 @@ const updateSchema = z.object({
   disableMfa: z.boolean().optional(),
 });
 
-async function GET_handler(_req: Request, context: { params: Promise<{ id: string }> }): Promise<Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
     const session = await auth();
     const hasAccess =
@@ -26,7 +26,7 @@ async function GET_handler(_req: Request, context: { params: Promise<{ id: strin
     if (!hasAccess) {
       throw authError("Unauthorized.");
     }
-    const { id } = params;
+    const id = params.id;
     if (!id) {
       throw internalError("Missing user id.");
     }
@@ -40,6 +40,7 @@ async function GET_handler(_req: Request, context: { params: Promise<{ id: strin
     });
   } catch (error) {
     return createErrorResponse(error, {
+      request: req,
       source: "auth.users.[id].security.GET",
       fallbackMessage: "Failed to load security profile",
     });

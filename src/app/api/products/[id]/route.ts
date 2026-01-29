@@ -107,7 +107,7 @@ async function PATCH_handler(
       logPrefix: "products.PATCH",
     });
     if (!parsed.ok) {
-      return parsed.response as Response;
+      return parsed.response;
     }
     const data = parsed.data;
 

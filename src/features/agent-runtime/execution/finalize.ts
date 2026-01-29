@@ -32,7 +32,11 @@ type FinalizeRunInput = {
   memorySummarizationModel: string;
 };
 
-export async function finalizeAgentRun(input: FinalizeRunInput) {
+export async function finalizeAgentRun(input: FinalizeRunInput): Promise<{
+  verificationContext: Awaited<ReturnType<typeof getBrowserContextSummary>>;
+  verification: Awaited<ReturnType<typeof verifyPlanWithLLM>>;
+  improvementReview: Awaited<ReturnType<typeof buildSelfImprovementReviewWithLLM>>;
+}> {
   const {
     run,
     planSteps,

@@ -5,25 +5,17 @@ import { badRequestError } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
-type Params = { id: string; imageFileId: string };
-type Ctx = { params: Params | Promise<Params> };
-
-async function getParams(ctx: Ctx): Promise<Params> {
-  return await Promise.resolve(ctx.params);
-}
-
 /**
  * DELETE /api/products/[id]/images/[imageFileId]
  * Unlinks an image from a product.
  */
-async function DELETE_handler(req: NextRequest, ctx: Ctx): Promise<Response> {
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; imageFileId: string }): Promise<Response> {
   let productId: string | undefined;
   let imageFileId: string | undefined;
 
   try {
-    const p = await getParams(ctx);
-    productId = p.id;
-    imageFileId = p.imageFileId;
+    productId = params.id;
+    imageFileId = params.imageFileId;
 
     // This should never happen for this route shape, but keep the guard + logging
     if (!productId || !imageFileId) {

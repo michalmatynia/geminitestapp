@@ -10,7 +10,7 @@ const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
 export type MemoryScope = "session" | "longterm";
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
-const extractMessageContent = (payload: unknown) => {
+const extractMessageContent = (payload: unknown): string => {
   if (!payload || typeof payload !== "object") return "";
   const message = (payload as { message?: { content?: unknown } }).message;
   return typeof message?.content === "string" ? message.content : "";
@@ -33,7 +33,7 @@ export async function addAgentMemory(params: {
   scope: MemoryScope;
   content: string;
   metadata?: Record<string, unknown>;
-}) {
+}): Promise<Prisma.AgentMemoryItemGetPayload<{}> | null> {
   if (!("agentMemoryItem" in prisma)) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][memory] Memory table not initialized.");
@@ -65,7 +65,7 @@ export async function addAgentMemory(params: {
 export async function listAgentMemory(params: {
   runId?: string | null;
   scope?: MemoryScope;
-}) {
+}): Promise<Prisma.AgentMemoryItemGetPayload<{}>[]> {
   if (!("agentMemoryItem" in prisma)) {
     if (DEBUG_CHATBOT) {
       console.warn("[chatbot][agent][memory] Memory table not initialized.");

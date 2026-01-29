@@ -21,7 +21,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const parsed = await parseJsonBody(req, requeueSchema, {
       logPrefix: "ai-paths.runs.dead-letter.requeue",
     });
-    if (!parsed.ok) return parsed.response as Response;
+    if (!parsed.ok) return parsed.response;
 
     const runIds = Array.isArray(parsed.data.runIds) ? parsed.data.runIds : [];
     const pathId = parsed.data.pathId?.trim() || undefined;

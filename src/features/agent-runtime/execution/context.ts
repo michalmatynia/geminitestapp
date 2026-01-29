@@ -58,7 +58,7 @@ export async function prepareRunContext(
   });
 
   const memory = await listAgentMemory({ runId: run.id, scope: "session" });
-  const sessionContext = memory.map((item) => item.content).slice(-8);
+  const sessionContext = memory.map((item: { content: string }) => item.content).slice(-8);
   const longTermItems = memoryKey
     ? await listAgentLongTermMemory({ memoryKey, limit: 4 })
     : [];
@@ -77,7 +77,7 @@ export async function prepareRunContext(
       })
     : [];
   const selfImprovementPlaybook = buildSelfImprovementPlaybook(
-    longTermImprovementItems.map((item) => ({
+    longTermImprovementItems.map((item: { summary: string | null; content: string; metadata: unknown }) => ({
       summary: item.summary,
       content: item.content,
       metadata: jsonValueToRecord(item.metadata),
@@ -88,9 +88,9 @@ export async function prepareRunContext(
     ...longTermProblemItems,
     ...longTermImprovementItems,
   ]
-    .map((item) => item.summary || item.content)
+    .map((item: { summary: string | null; content: string }) => item.summary || item.content)
     .filter(Boolean)
-    .map((item) => `Long-term memory: ${item}`);
+    .map((item: string) => `Long-term memory: ${item}`);
   const memoryContext = [
     ...sessionContext,
     ...longTermContext,

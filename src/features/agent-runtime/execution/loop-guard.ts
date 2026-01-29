@@ -27,8 +27,8 @@ type PlanStepSpecInput = {
   subgoalId?: string | null;
 };
 
-const normalizePlanStepSpecs = (steps: PlanStepSpecInput[]) =>
-  steps.map((step) => {
+const normalizePlanStepSpecs = (steps: PlanStepSpecInput[]): PlanStepSpecInput[] =>
+  steps.map((step: PlanStepSpecInput) => {
     const {
       expectedObservation,
       successCriteria,
@@ -58,12 +58,12 @@ export const detectLoopPattern = (
   if (recent.length < 3) return null;
   const lastThree = recent.slice(-3);
   const lastFour = recent.slice(-4);
-  const titlesThree = lastThree.map((item) => item.title);
-  const titlesFour = lastFour.map((item) => item.title);
-  const urlsThree = lastThree.map((item) => item.url);
-  const statusesThree = lastThree.map((item) => item.status);
+  const titlesThree = lastThree.map((item: { title: string }) => item.title);
+  const titlesFour = lastFour.map((item: { title: string }) => item.title);
+  const urlsThree = lastThree.map((item: { url: string | null }) => item.url);
+  const statusesThree = lastThree.map((item: { status: PlanStep["status"] }) => item.status);
   const sameTitle =
-    new Set(titlesThree.map((title) => title.toLowerCase())).size === 1;
+    new Set(titlesThree.map((title: string) => title.toLowerCase())).size === 1;
   if (sameTitle) {
     return {
       reason: "Repeated the same step multiple times.",
@@ -74,21 +74,21 @@ export const detectLoopPattern = (
     };
   }
   if (lastFour.length === 4) {
-    const [a, b, c, d] = titlesFour.map((title) => title.toLowerCase());
+    const [a, b, c, d] = titlesFour.map((title: string) => title.toLowerCase());
     if (a === c && b === d && a !== b) {
       return {
         reason: "Alternating between the same two steps.",
         pattern: "alternate-two-steps",
         titles: titlesFour,
-        urls: lastFour.map((item) => item.url),
-        statuses: lastFour.map((item) => item.status),
+        urls: lastFour.map((item: { url: string | null }) => item.url),
+        statuses: lastFour.map((item: { status: PlanStep["status"] }) => item.status),
       };
     }
   }
   const stableUrl =
     urlsThree[0] &&
-    urlsThree.every((url) => url && url === urlsThree[0]) &&
-    statusesThree.filter((status) => status === "failed").length >= 2;
+    urlsThree.every((url: string | null) => url && url === urlsThree[0]) &&
+    statusesThree.filter((status: PlanStep["status"]) => status === "failed").length >= 2;
   if (stableUrl) {
     return {
       reason: "Repeated failures on the same URL.",
@@ -162,7 +162,7 @@ export async function buildLoopGuardReview({
               lastError,
               loopSignal,
               completedStepIndex: completedIndex,
-              currentPlan: currentPlan.map((step) => ({
+              currentPlan: currentPlan.map((step: PlanStep) => ({
                 title: step.title,
                 status: step.status,
                 tool: step.tool,

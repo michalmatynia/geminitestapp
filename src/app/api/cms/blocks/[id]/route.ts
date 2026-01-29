@@ -7,14 +7,6 @@ import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 import { getCmsRepository } from "@/features/cms/services/cms-repository";
 
-type Params = { id: string };
-type Ctx = { params: Params | Promise<Params> };
-
-async function getParams(ctx: Ctx): Promise<Params> {
-  // Works whether Next provides params as an object or a Promise.
-  return await Promise.resolve(ctx.params);
-}
-
 const blockUpdateSchema = z.object({
   name: z.string().trim().min(1),
   content: z["unknown"](),
@@ -24,9 +16,9 @@ const blockUpdateSchema = z.object({
  * GET /api/cms/blocks/[id]
  * Fetches a single block by its ID.
  */
-async function GET_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | Response> {
+async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
-    const { id } = await getParams(ctx);
+    const id = params.id;
     const cmsRepository = await getCmsRepository();
     const block = await cmsRepository.getBlockById(id);
 
@@ -48,15 +40,15 @@ async function GET_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | R
  * PUT /api/cms/blocks/[id]
  * Updates a block.
  */
-async function PUT_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | Response> {
+async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
-    const { id } = await getParams(ctx);
+    const id = params.id;
 
     const parsed = await parseJsonBody(req, blockUpdateSchema, {
       logPrefix: "cms-blocks",
     });
     if (!parsed.ok) {
-      return parsed.response;
+      return parsed.response as Response;
     }
     const { name, content } = parsed.data;
 
@@ -84,9 +76,9 @@ async function PUT_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | R
  * DELETE /api/cms/blocks/[id]
  * Deletes a block.
  */
-async function DELETE_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | Response> {
+async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   try {
-    const { id } = await getParams(ctx);
+    const id = params.id;
     const cmsRepository = await getCmsRepository();
     
     await cmsRepository.deleteBlock(id);

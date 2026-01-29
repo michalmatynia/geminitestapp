@@ -52,7 +52,7 @@ async function PATCH_handler(
       allowEmpty: true,
     });
     if (!parsed.ok) {
-      return parsed.response as Response;
+      return parsed.response;
     }
     const body = parsed.data;
     const note = await noteService.update(

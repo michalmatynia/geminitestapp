@@ -21,7 +21,7 @@ async function POST_handler(
     const parsed = await parseJsonBody(req, resumeSchema, {
       logPrefix: "ai-paths.runs.resume",
     });
-    if (!parsed.ok) return parsed.response as Response;
+    if (!parsed.ok) return parsed.response;
 
     const runId = params.runId;
     const mode = parsed.data.mode ?? "resume";

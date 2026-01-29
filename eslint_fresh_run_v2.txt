@@ -11,35 +11,8 @@ The file was not found in any of the provided project(s): debug-regex.cjs
   0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
 The file was not found in any of the provided project(s): fix-api-handlers-v4.cjs
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/ai-paths/db-query/route.ts
-  82:28  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/ai-paths/db-update/route.ts
-  80:28  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/ai-paths/runs/[runId]/resume/route.ts
-  24:28  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/ai-paths/runs/[runId]/retry-node/route.ts
-  24:28  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/ai-paths/runs/dead-letter/requeue/route.ts
-  24:28  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/assets3d/[id]/route.ts
-  5:15  error  'ApiHandlerContext' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/assets3d/tags/route.ts
-  13:10  error  'req' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
-  13:28  error  'ctx' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/auth/users/[id]/security/route.ts
-  20:43  error  'context' is defined but never used. Allowed unused args must match /^_/u     @typescript-eslint/no-unused-vars
-  29:11  error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
-  33:50  error  Unsafe argument of type error typed assigned to a parameter of type `string`  @typescript-eslint/no-unsafe-argument
-
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/blocks/[id]/route.ts
-  7:15  error  'ApiHandlerContext' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  51:14  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/cms/pages/[id]/route.ts
   7:15  error  'ApiHandlerContext' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
@@ -50,83 +23,10 @@ The file was not found in any of the provided project(s): fix-api-handlers-v4.cj
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/marketplace/mappings/[id]/route.ts
   6:15  error  'ApiHandlerContext' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/[id]/route.ts
-  55:14  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/route.ts
-  87:14  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/images/[imageFileId]/route.ts
-  6:15  error  'ApiHandlerContext' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/route.ts
-  110:14  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/categories/[id]/route.ts
-  139:14  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/settings/route.ts
-  142:14  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
-
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agent-runtime/audit/index.ts
   26:12  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agent-runtime/core/engine.ts
-   40:8   error  Missing return type on function           @typescript-eslint/explicit-function-return-type
-   40:8   error  Missing return type on function           @typescript-eslint/explicit-module-boundary-types
-  289:44  error  Expected step to have a type annotation   @typescript-eslint/typedef
-  335:16  error  Expected step to have a type annotation   @typescript-eslint/typedef
-  335:22  error  Expected index to have a type annotation  @typescript-eslint/typedef
-  401:36  error  Expected step to have a type annotation   @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agent-runtime/core/utils.ts
-   8:8   error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-   8:8   error  Missing return type on function             @typescript-eslint/explicit-module-boundary-types
-  13:8   error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-  13:8   error  Missing return type on function             @typescript-eslint/explicit-module-boundary-types
-  14:23  error  Expected resolve to have a type annotation  @typescript-eslint/typedef
-  17:8   error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-  17:8   error  Missing return type on function             @typescript-eslint/explicit-module-boundary-types
-  25:37  error  Missing return type on function             @typescript-eslint/explicit-function-return-type
-  28:20  error  Expected item to have a type annotation     @typescript-eslint/typedef
-  29:17  error  Expected item to have a type annotation     @typescript-eslint/typedef
-  40:65  error  Expected entry to have a type annotation    @typescript-eslint/typedef
-  44:8   error  Expected entry to have a type annotation    @typescript-eslint/typedef
-  46:69  error  Expected entry to have a type annotation    @typescript-eslint/typedef
-  50:8   error  Expected entry to have a type annotation    @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agent-runtime/execution/context.ts
-  61:38  error  Expected item to have a type annotation  @typescript-eslint/typedef
-  80:35  error  Expected item to have a type annotation  @typescript-eslint/typedef
-  91:11  error  Expected item to have a type annotation  @typescript-eslint/typedef
-  93:11  error  Expected item to have a type annotation  @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agent-runtime/execution/finalize.ts
-  35:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
-  35:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agent-runtime/execution/loop-guard.ts
-   30:61  error  Missing return type on function            @typescript-eslint/explicit-function-return-type
-   31:14  error  Expected step to have a type annotation    @typescript-eslint/typedef
-   61:38  error  Expected item to have a type annotation    @typescript-eslint/typedef
-   62:36  error  Expected item to have a type annotation    @typescript-eslint/typedef
-   63:36  error  Expected item to have a type annotation    @typescript-eslint/typedef
-   64:40  error  Expected item to have a type annotation    @typescript-eslint/typedef
-   66:30  error  Expected title to have a type annotation   @typescript-eslint/typedef
-   77:42  error  Expected title to have a type annotation   @typescript-eslint/typedef
-   83:29  error  Expected item to have a type annotation    @typescript-eslint/typedef
-   84:33  error  Expected item to have a type annotation    @typescript-eslint/typedef
-   90:22  error  Expected url to have a type annotation     @typescript-eslint/typedef
-   91:27  error  Expected status to have a type annotation  @typescript-eslint/typedef
-  165:45  error  Expected step to have a type annotation    @typescript-eslint/typedef
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agent-runtime/execution/plan.ts
-  157:10  error  Expected step to have a type annotation  @typescript-eslint/typedef
-  162:10  error  Expected step to have a type annotation  @typescript-eslint/typedef
-
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/agent-runtime/execution/step-runner.ts
-  145:5   error  Missing return type on function          @typescript-eslint/explicit-function-return-type
-  194:5   error  Missing return type on function          @typescript-eslint/explicit-function-return-type
   300:32  error  Expected item to have a type annotation  @typescript-eslint/typedef
   322:34  error  Expected item to have a type annotation  @typescript-eslint/typedef
   332:10  error  Expected item to have a type annotation  @typescript-eslint/typedef
@@ -6026,6 +5926,6 @@ The file was not found in any of the provided project(s): fix-api-handlers-v4.cj
   6:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
   6:8  error  Missing return type on function  @typescript-eslint/explicit-module-boundary-types
 
-✖ 5249 problems (5249 errors, 0 warnings)
-  11 errors and 0 warnings potentially fixable with the `--fix` option.
+✖ 5189 problems (5189 errors, 0 warnings)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
 

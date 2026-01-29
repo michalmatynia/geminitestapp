@@ -21,7 +21,7 @@ async function POST_handler(
     const parsed = await parseJsonBody(req, retrySchema, {
       logPrefix: "ai-paths.runs.retry-node",
     });
-    if (!parsed.ok) return parsed.response as Response;
+    if (!parsed.ok) return parsed.response;
 
     const runId = params.runId;
     const nodeId = parsed.data.nodeId;

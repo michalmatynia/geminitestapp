@@ -154,12 +154,12 @@ export async function initializePlanState(
     }
     if (!resumedWithNewPlan && checkpoint.activeStepId) {
       const activeIndex = planSteps.findIndex(
-        (step) => step.id === checkpoint.activeStepId
+        (step: PlanStep) => step.id === checkpoint.activeStepId
       );
       stepIndex = activeIndex === -1 ? 0 : activeIndex;
     } else {
       const firstPending = planSteps.findIndex(
-        (step) => step.status !== "completed"
+        (step: PlanStep) => step.status !== "completed"
       );
       stepIndex = firstPending === -1 ? 0 : firstPending;
     }

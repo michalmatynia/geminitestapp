@@ -5,13 +5,13 @@ export function jsonValueToRecord(value: unknown): Record<string, unknown> | nul
   return value as Record<string, unknown>;
 }
 
-export function reminderList(label: string, items: string[]) {
+export function reminderList(label: string, items: string[]): string | null {
   if (!items.length) return null;
   return `${label}: ${items.join(" | ")}`;
 }
 
-export function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+export function sleep(ms: number): Promise<void> {
+  return new Promise<void>((resolve: (value: void | PromiseLike<void>) => void) => setTimeout(resolve, ms));
 }
 
 export function buildSelfImprovementPlaybook(
@@ -20,13 +20,13 @@ export function buildSelfImprovementPlaybook(
     content?: string;
     metadata?: Record<string, unknown> | null;
   }>
-) {
+): string | null {
   if (!items.length) return null;
-  const collect = (values: unknown) =>
+  const collect = (values: unknown): string[] =>
     Array.isArray(values)
       ? values
-          .filter((item): item is string => typeof item === "string")
-          .map((item) => item.trim())
+          .filter((item: unknown): item is string => typeof item === "string")
+          .map((item: string) => item.trim())
           .filter(Boolean)
       : [];
   const mistakes = new Set<string>();
@@ -37,17 +37,17 @@ export function buildSelfImprovementPlaybook(
   for (const item of items) {
     if (item.summary) summaries.push(item.summary.trim());
     const meta = item.metadata ?? {};
-    collect((meta as { mistakes?: unknown }).mistakes).forEach((entry) =>
+    collect((meta as { mistakes?: unknown }).mistakes).forEach((entry: string) =>
       mistakes.add(entry)
     );
     collect((meta as { improvements?: unknown }).improvements).forEach(
-      (entry) => improvements.add(entry)
+      (entry: string) => improvements.add(entry)
     );
-    collect((meta as { guardrails?: unknown }).guardrails).forEach((entry) =>
+    collect((meta as { guardrails?: unknown }).guardrails).forEach((entry: string) =>
       guardrails.add(entry)
     );
     collect((meta as { toolAdjustments?: unknown }).toolAdjustments).forEach(
-      (entry) => toolAdjustments.add(entry)
+      (entry: string) => toolAdjustments.add(entry)
     );
   }
   const lines = [

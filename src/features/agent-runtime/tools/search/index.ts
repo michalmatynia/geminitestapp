@@ -8,7 +8,7 @@ const GOOGLE_SEARCH_API_URL =
 const SERPAPI_API_KEY = process.env.SERPAPI_API_KEY;
 const SERPAPI_API_URL = process.env.SERPAPI_API_URL || "https://serpapi.com/search.json";
 
-export const fetchDuckDuckGoResults = async (query: string) => {
+export const fetchDuckDuckGoResults = async (query: string): Promise<Array<{ title: string; url: string; snippet?: string }>> => {
   const searchUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
   const response = await fetch(searchUrl);
   if (!response.ok) {
@@ -42,7 +42,7 @@ export const fetchSearchResults = async (
   query: string,
   provider: string,
   log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>
-) => {
+): Promise<Array<{ title: string; url: string }>> => {
   const normalizedProvider = provider.toLowerCase();
   
   if (normalizedProvider === "brave") {
@@ -68,11 +68,11 @@ export const fetchSearchResults = async (
       };
       return (
         data.web?.results
-          ?.map((item) => ({
+          ?.map((item: { title?: string; url?: string }) => ({
             title: item.title || "Untitled",
             url: item.url || "",
           }))
-          .filter((item) => item.url) || []
+          .filter((item: { url: string }) => item.url) || []
       );
     } catch (error) {
       if (log) {
@@ -104,11 +104,11 @@ export const fetchSearchResults = async (
       };
       return (
         data.items
-          ?.map((item) => ({
+          ?.map((item: { title?: string; link?: string }) => ({
             title: item.title || "Untitled",
             url: item.link || "",
           }))
-          .filter((item) => item.url) || []
+          .filter((item: { url: string }) => item.url) || []
       );
     } catch (error) {
        if (log) {
@@ -140,11 +140,11 @@ export const fetchSearchResults = async (
       };
       return (
         data.organic_results
-          ?.map((item) => ({
+          ?.map((item: { title?: string; link?: string }) => ({
             title: item.title || "Untitled",
             url: item.link || "",
           }))
-          .filter((item) => item.url) || []
+          .filter((item: { url: string }) => item.url) || []
       );
     } catch (error) {
       if (log) {

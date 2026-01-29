@@ -5,7 +5,7 @@ import prisma from "@/shared/lib/db/prisma";
 import { randomUUID } from "crypto";
 import { promises as fs } from "fs";
 import path from "path";
-import type { Browser, BrowserContext, Page } from "playwright";
+import type { Browser, BrowserContext, Page, ConsoleMessage, Request, Response } from "playwright";
 import {
   extractTargetUrl,
   getTargetHostname,
@@ -300,14 +300,14 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
     }
 
     // Page event handlers
-    page.on("console", async (msg) => {
+    page.on("console", async (msg: ConsoleMessage) => {
       const type = msg.type();
       await log(type === "error" ? "error" : "info", `[console:${type}] ${msg.text()}`);
     });
-    page.on("pageerror", async (err) => {
+    page.on("pageerror", async (err: Error) => {
       await log("error", `Page error: ${err.message}`);
     });
-    page.on("requestfailed", async (req) => {
+    page.on("requestfailed", async (req: Request) => {
       await log("warning", `Request failed: ${req.url()}`, {
         error: req.failure()?.errorText,
       });
@@ -323,7 +323,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
           stepId: stepId ?? null,
         });
     };
-    page.on("response", async (res) => {
+    page.on("response", async (res: Response) => {
       const status = res.status();
       if (status === 403) {
         const url = res.url();
@@ -853,12 +853,12 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
                 }
                 const listingUrls = Array.isArray(recoveryPlan?.listingUrls)
                   ? recoveryPlan.listingUrls.filter(
-                      (url): url is string => typeof url === "string"
+                      (url: unknown): url is string => typeof url === "string"
                     )
                   : [];
                 if (listingUrls.length > 0) {
                   const recoveryUrls = targetHostname
-                    ? listingUrls.filter((url) =>
+                    ? listingUrls.filter((url: string) =>
                         isAllowedUrl(url, targetHostname)
                       )
                     : listingUrls;
@@ -1116,12 +1116,12 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
 
              const listingUrls = Array.isArray(recoveryPlan?.listingUrls)
                ? recoveryPlan.listingUrls.filter(
-                   (url): url is string => typeof url === "string"
+                   (url: unknown): url is string => typeof url === "string"
                  )
                : [];
              if (extractedNames.length === 0 && listingUrls.length > 0) {
                  const recoveryUrls = targetHostname
-                    ? listingUrls.filter((url) =>
+                    ? listingUrls.filter((url: string) =>
                         isAllowedUrl(url, targetHostname)
                       )
                     : listingUrls;

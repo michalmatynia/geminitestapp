@@ -1,10 +1,10 @@
 
-export const toDataUrl = (buffer: Buffer) =>
+export const toDataUrl = (buffer: Buffer): string =>
   `data:image/png;base64,${buffer.toString("base64")}`;
 
-export const safeText = (value: string | null | undefined) => value ?? "";
+export const safeText = (value: string | null | undefined): string => value ?? "";
 
-export const extractTargetUrl = (prompt?: string) => {
+export const extractTargetUrl = (prompt?: string): string | null => {
   if (!prompt) return null;
   const urlMatch = prompt.match(/https?:\/\/[^\s)]+/i);
   if (urlMatch) return urlMatch[0];
@@ -18,10 +18,10 @@ export const extractTargetUrl = (prompt?: string) => {
   return null;
 };
 
-export const hasExplicitUrl = (prompt?: string) =>
+export const hasExplicitUrl = (prompt?: string): boolean =>
   Boolean(prompt?.match(/https?:\/\/[^\s)]+/i));
 
-export const getTargetHostname = (prompt?: string) => {
+export const getTargetHostname = (prompt?: string): string | null => {
   const url = extractTargetUrl(prompt);
   if (!url) return null;
   try {
@@ -31,7 +31,7 @@ export const getTargetHostname = (prompt?: string) => {
   }
 };
 
-export const isAllowedUrl = (url: string, targetHostname: string | null) => {
+export const isAllowedUrl = (url: string, targetHostname: string | null): boolean => {
   if (!targetHostname) return true;
   try {
     const hostname = new URL(url).hostname.replace(/^www\./i, "");
@@ -41,19 +41,19 @@ export const isAllowedUrl = (url: string, targetHostname: string | null) => {
   }
 };
 
-export const normalizeProductNames = (items: string[]) => {
+export const normalizeProductNames = (items: string[]): string[] => {
   const seen = new Set<string>();
   const uiNoise =
     /^(add to cart|quick view|view details|view product|choose options|select options|in stock|out of stock|sold out|sale|new|buy now|learn more|load more|show more|filters?|sort by)$/i;
   return items
-    .map((item) => item.replace(/\s+/g, " ").trim())
+    .map((item: string) => item.replace(/\s+/g, " ").trim())
     .filter(Boolean)
-    .filter((item) => /[a-z]/i.test(item))
-    .filter((item) => !/^[a-f0-9]{16,}$/i.test(item))
-    .filter((item) => !/^[a-f0-9]{32,}$/i.test(item))
-    .filter((item) => !/^\$?\d+(?:\.\d+)?$/.test(item))
-    .filter((item) => !uiNoise.test(item))
-    .filter((item) => {
+    .filter((item: string) => /[a-z]/i.test(item))
+    .filter((item: string) => !/^[a-f0-9]{16,}$/i.test(item))
+    .filter((item: string) => !/^[a-f0-9]{32,}$/i.test(item))
+    .filter((item: string) => !/^\$?\d+(?:\.\d+)?$/.test(item))
+    .filter((item: string) => !uiNoise.test(item))
+    .filter((item: string) => {
       const key = item.toLowerCase();
       if (seen.has(key)) return false;
       seen.add(key);
@@ -61,20 +61,20 @@ export const normalizeProductNames = (items: string[]) => {
     });
 };
 
-export const normalizeEmailCandidates = (items: string[]) => {
+export const normalizeEmailCandidates = (items: string[]): string[] => {
   const seen = new Set<string>();
   const cleaned = items
-    .map((item) => item.trim().toLowerCase())
+    .map((item: string) => item.trim().toLowerCase())
     .filter(Boolean)
-    .filter((item) => /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(item));
-  return cleaned.filter((item) => {
+    .filter((item: string) => /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(item));
+  return cleaned.filter((item: string) => {
     if (seen.has(item)) return false;
     seen.add(item);
     return true;
   });
 };
 
-export const loadRobotsTxt = async (url: string) => {
+export const loadRobotsTxt = async (url: string): Promise<{ ok: boolean; status: number | null; content: string; error?: string }> => {
   try {
     const target = new URL(url);
     const robotsUrl = `${target.origin}/robots.txt`;
@@ -94,7 +94,7 @@ export const loadRobotsTxt = async (url: string) => {
   }
 };
 
-export const parseRobotsRules = (robotsTxt: string) => {
+export const parseRobotsRules = (robotsTxt: string): Map<string, Array<{ type: "allow" | "disallow"; path: string }>> => {
   const rules = new Map<string, Array<{ type: "allow" | "disallow"; path: string }>>();
   let currentAgents: string[] = [];
   const lines = robotsTxt.split(/\r?\n/);
@@ -119,7 +119,7 @@ export const parseRobotsRules = (robotsTxt: string) => {
       if (currentAgents.length === 0) continue;
       for (const agent of currentAgents) {
         const list = rules.get(agent) ?? [];
-        list.push({ type: key, path: value });
+        list.push({ type: key as "allow" | "disallow", path: value });
         rules.set(agent, list);
       }
     }
@@ -130,7 +130,7 @@ export const parseRobotsRules = (robotsTxt: string) => {
 export const evaluateRobotsRules = (
   rules: Array<{ type: "allow" | "disallow"; path: string }>,
   path: string
-) => {
+): { allowed: boolean; matchedRule: { type: "allow" | "disallow"; path: string } | null } => {
   let bestMatch: { type: "allow" | "disallow"; path: string } | null = null;
   for (const rule of rules) {
     if (!rule.path) {
@@ -158,7 +158,7 @@ export const evaluateRobotsRules = (
   };
 };
 
-export const parseCredentials = (prompt?: string) => {
+export const parseCredentials = (prompt?: string): { email?: string; username?: string; password?: string } | null => {
   if (!prompt) return null;
   const emailMatch = prompt.match(/email\s*[:=]\s*([^\s]+)/i);
   const userMatch = prompt.match(/(?:username|user|login)\s*[:=]\s*([^\s]+)/i);
@@ -170,7 +170,7 @@ export const parseCredentials = (prompt?: string) => {
   return { email, username, password };
 };
 
-export const parseExtractionRequest = (prompt?: string) => {
+export const parseExtractionRequest = (prompt?: string): { type: "product_names" | "emails"; count: number | null } | null => {
   if (!prompt) return null;
   const taskTypeHint = /task type:\s*extract_info/i.test(prompt);
   const wantsExtraction =
@@ -194,7 +194,7 @@ export const parseExtractionRequest = (prompt?: string) => {
   return null;
 };
 
-export const buildEvidenceSnippets = (items: string[], domText: string) => {
+export const buildEvidenceSnippets = (items: string[], domText: string): Array<{ item: string; snippet: string }> => {
   const evidence: Array<{ item: string; snippet: string }> = [];
   if (!domText) return evidence;
   const lowerText = domText.toLowerCase();

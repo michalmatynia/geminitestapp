@@ -7,11 +7,11 @@ export const collectUiInventory = async (
   label: string,
   log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>,
   activeStepId?: string | null
-) => {
+): Promise<any> => {
   if (!page) return null;
   try {
     const uiInventory = await page.evaluate(() => {
-      const cssPath = (el: Element) => {
+      const cssPath = (el: Element): string | null => {
         if (!(el instanceof Element)) return null;
         if (el.id) return `#${CSS.escape(el.id)}`;
         const parts: string[] = [];
@@ -31,7 +31,7 @@ export const collectUiInventory = async (
           const parent = node.parentElement;
           if (parent) {
             const siblings = Array.from(parent.children).filter(
-              (child) => child.tagName === node!.tagName
+              (child: Element) => child.tagName === node!.tagName
             );
             if (siblings.length > 1) {
               part += `:nth-of-type(${siblings.indexOf(node) + 1})`;
@@ -43,9 +43,9 @@ export const collectUiInventory = async (
         return parts.join(" > ");
       };
 
-      const visible = (el: Element) =>
+      const visible = (el: Element): boolean =>
         (el as HTMLElement).offsetParent !== null;
-      const describe = (el: Element) => ({
+      const describe = (el: Element): any => ({
         tag: el.tagName.toLowerCase(),
         id: (el as HTMLElement).id || null,
         name: (el as HTMLInputElement).name || null,
@@ -68,7 +68,7 @@ export const collectUiInventory = async (
         .map(describe);
       const links = Array.from(document.querySelectorAll("a[href]"))
         .filter(visible)
-        .map((el) => ({
+        .map((el: Element) => ({
           ...describe(el),
           href: (el as HTMLAnchorElement).href,
         }));
@@ -79,10 +79,10 @@ export const collectUiInventory = async (
         .map(describe);
       const forms = Array.from(document.querySelectorAll("form"))
         .filter(visible)
-        .map((el) => ({
+        .map((el: Element) => ({
           ...describe(el),
-          action: el.action || null,
-          method: el.method || null,
+          action: (el as HTMLFormElement).action || null,
+          method: (el as HTMLFormElement).method || null,
         }));
 
       const truncated = {

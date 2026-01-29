@@ -1358,6 +1358,7 @@ export async function summarizePlannerMemoryWithLLM({
       risks?: string[];
     } | null;
     if (!parsed?.summary) return null;
+    const { summary } = parsed;
     const decisions = Array.isArray(parsed.keyDecisions)
       ? parsed.keyDecisions.filter((item: unknown) => typeof item === "string")
       : [];

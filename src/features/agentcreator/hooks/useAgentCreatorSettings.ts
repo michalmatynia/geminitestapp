@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { DEFAULT_AGENT_SETTINGS } from "@/features/agentcreator/utils/constants";
 
-export const useAgentCreatorSettings = () => {
+export const useAgentCreatorSettings = (): any => {
   const [agentModeEnabled, setAgentModeEnabled] = useState(false);
   const [agentBrowser, setAgentBrowser] = useState(
     DEFAULT_AGENT_SETTINGS.agentBrowser

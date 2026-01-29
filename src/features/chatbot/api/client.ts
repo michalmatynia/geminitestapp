@@ -1,6 +1,6 @@
 const defaultErrorMessage = "Request failed.";
 
-export const readErrorResponse = async (res: Response) => {
+export const readErrorResponse = async (res: Response): Promise<{ message: string; errorId?: string }> => {
   try {
     const data = (await res.json()) as { error?: string; errorId?: string };
     return {
@@ -20,8 +20,8 @@ export const readErrorResponse = async (res: Response) => {
 export const fetchWithTimeout = async (
   input: RequestInfo | URL,
   init: RequestInit = {},
-  timeoutMs = 15000
-) => {
+  timeoutMs: number = 15000
+): Promise<Response> => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -34,7 +34,7 @@ export const fetchWithTimeout = async (
 export const readErrorMessage = async (
   res: Response,
   fallbackMessage: string
-) => {
+): Promise<string> => {
   const error = await readErrorResponse(res);
   const message =
     error.message && error.message !== defaultErrorMessage
@@ -48,7 +48,7 @@ export const requestJson = async <T>(
   input: RequestInfo | URL,
   init?: RequestInit,
   options?: { timeoutMs?: number; fallbackMessage?: string }
-) => {
+): Promise<T> => {
   const initOptions = init ?? {};
   const res = options?.timeoutMs
     ? await fetchWithTimeout(input, initOptions, options.timeoutMs)

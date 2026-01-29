@@ -4,7 +4,7 @@ export const sendChatbotMessage = async (payload: {
   messages: ChatMessage[];
   model: string;
   sessionId?: string | null;
-}) => {
+}): Promise<{ message?: string }> => {
   const res = await fetch("/api/chatbot", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

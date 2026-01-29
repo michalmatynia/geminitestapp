@@ -1,5 +1,22 @@
 import type { Page, Locator } from "playwright";
 
+export type LoginCandidate = {
+  tag: string;
+  id: string | null;
+  name: string | null;
+  type: string | null;
+  text: string | null;
+  placeholder: string | null;
+  ariaLabel: string | null;
+  selector: string | null;
+  score: number;
+};
+
+export type LoginCandidates = {
+  inputs: LoginCandidate[];
+  buttons: LoginCandidate[];
+};
+
 export const findFirstVisible = async (locator: Locator): Promise<Locator | null> => {
   const count = await locator.count();
   for (let i = 0; i < count; i += 1) {
@@ -57,7 +74,7 @@ export const inferLoginCandidates = async (
   page: Page,
   log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>,
   activeStepId?: string | null
-): Promise<any> => {
+): Promise<LoginCandidates | null> => {
   if (!page) return null;
   try {
     const candidates = await page.evaluate(() => {
@@ -116,7 +133,16 @@ export const inferLoginCandidates = async (
         return score;
       };
 
-      const describe = (el: Element): any => ({
+      const describe = (el: Element): {
+        tag: string;
+        id: string | null;
+        name: string | null;
+        type: string | null;
+        text: string | null;
+        placeholder: string | null;
+        ariaLabel: string | null;
+        selector: string | null;
+      } => ({
         tag: el.tagName.toLowerCase(),
         id: (el as HTMLElement).id || null,
         name: (el as HTMLInputElement).name || null,
@@ -136,7 +162,7 @@ export const inferLoginCandidates = async (
           score:
             el instanceof HTMLInputElement ? scoreInput(el) : 0,
         }))
-        .sort((a: any, b: any) => b.score - a.score)
+        .sort((a: { score: number }, b: { score: number }) => b.score - a.score)
         .slice(0, 12);
 
       const buttons = Array.from(
@@ -151,7 +177,7 @@ export const inferLoginCandidates = async (
             ? 5
             : 1,
         }))
-        .sort((a: any, b: any) => b.score - a.score)
+        .sort((a: { score: number }, b: { score: number }) => b.score - a.score)
         .slice(0, 12);
 
       return { inputs, buttons };
@@ -163,7 +189,7 @@ export const inferLoginCandidates = async (
         candidates,
       });
     }
-    return candidates;
+    return candidates as LoginCandidates;
   } catch (error) {
     if (log) {
       await log("warning", "Failed to infer login candidates.", {

@@ -19,7 +19,7 @@ export function Tooltip({
   contentClassName,
   side = "top",
   maxWidth = "400px",
-}: TooltipProps) {
+}: TooltipProps): React.JSX.Element {
   const [isVisible, setIsVisible] = React.useState(false);
 
   const sideStyles = {

@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "node server.cjs",
-    "build": "next build",
+    "postinstall": "prisma generate",
+    "build": "prisma generate && next build",
     "start": "NODE_ENV=production node server.cjs",
     "lint": "eslint .",
     "seed": "node prisma/seed.js",

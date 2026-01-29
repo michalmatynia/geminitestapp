@@ -50,7 +50,7 @@ const createDraftSchema = z.object({
  * GET /api/drafts
  * List all product drafts
  */
-async function GET_handler(req: NextRequest) {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     const drafts = await listDrafts();
     return NextResponse.json(drafts);
@@ -67,7 +67,7 @@ async function GET_handler(req: NextRequest) {
  * POST /api/drafts
  * Create a new product draft
  */
-async function POST_handler(req: NextRequest) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, createDraftSchema, {
       logPrefix: "drafts.POST",

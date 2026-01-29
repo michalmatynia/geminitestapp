@@ -7,7 +7,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 import { ErrorSystem } from "@/features/observability/server";
 import type { ImageFile } from "@prisma/client";
 
-async function GET_handler(req: Request) {
+async function GET_handler(req: Request): Promise<Response> {
   try {
     const { searchParams } = new URL(req.url);
 
@@ -19,7 +19,7 @@ async function GET_handler(req: Request) {
     const productRepository = await getProductRepository();
     const files = await imageFileRepository.listImageFiles({ filename });
 
-    const getProductDisplayName = (product: ProductWithImages) =>
+    const getProductDisplayName = (product: ProductWithImages): string =>
       product.name_en ?? product.name_pl ?? product.name_de ?? "Product";
 
     const products = await productRepository.getProducts(

@@ -9,7 +9,7 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 
-async function GET_handler(req: NextRequest) {
+async function GET_handler(req: NextRequest): Promise<NextResponse | Response> {
   const fileId = req.nextUrl.searchParams.get("fileId");
 
   if (!fileId) {

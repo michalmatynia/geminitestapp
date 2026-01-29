@@ -21,7 +21,7 @@ export const autoformatMarkdown = (text: string): string => {
   // Clean up excessive spaces within lines (but preserve intentional indentation)
   result = result
     .split("\n")
-    .map((line) => {
+    .map((line: string) => {
       // Preserve leading whitespace (indentation)
       const leadingSpaces = line.match(/^(\s*)/)?.[1] ?? "";
       const rest = line.slice(leadingSpaces.length);
@@ -34,7 +34,7 @@ export const autoformatMarkdown = (text: string): string => {
   // Convert bare URLs to markdown links (but not if already in markdown format)
   // Match URLs that are not already in [text](url) or <url> format
   const urlRegex = /(?<![(\[])(https?:\/\/[^\s<>\\[\]]+)(?![)\]])/g;
-  result = result.replace(urlRegex, (url) => {
+  result = result.replace(urlRegex, (url: string) => {
     // Try to extract a readable title from the URL
     try {
       const urlObj = new URL(url);

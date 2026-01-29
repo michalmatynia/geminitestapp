@@ -8,7 +8,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 /**
  * POST /api/generate-description
  */
-async function POST_handler(req: NextRequest) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const body = (await req.json()) as {
       productData?: ProductFormData;
@@ -19,7 +19,7 @@ async function POST_handler(req: NextRequest) {
 
     const productData = body.productData;
     const imageUrls = Array.isArray(body.imageUrls)
-      ? body.imageUrls.filter((item): item is string => typeof item === "string")
+      ? body.imageUrls.filter((item: string): item is string => typeof item === "string")
       : [];
 
     if (!productData?.name_en) {

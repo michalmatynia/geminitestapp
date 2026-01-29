@@ -181,7 +181,7 @@ const disableTypeCheckedForConfigFiles = compat
   }));
 
 const apiRouteConfig = {
-  files: ["src/app/api/**/route.{ts,tsx}"],
+  files: ["src/app/api/**/route.{ts,tsx}", "src/features/**/api/**/route.{ts,tsx}"],
   rules: {
     "no-restricted-syntax": [
       "error",

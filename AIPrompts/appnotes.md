@@ -1,8 +1,19 @@
+I'm having a following issue "Type error: Parameter 'tx' implicitly has an 'any' type.
+    138 |     }
+    139 |
+  > 140 |     const country = await prisma.$transaction(async (tx) => {
+        |                                                      ^
+    141 |       const updated = await tx.country.update({
+    142 |         where: { id },
+    143 |         data: {
+
+  " Move My internationalization, countries, lanugages and currencies to MongoDB and resolve this issue. Futureproof against
+  similar errors by adjusting typescript config and esling, address the issue and try to resolve it by assigning a correct type
+
+---
 
 Products 
 Changing currency doesn't work again
-
-Translation failed: No translations were completed successfully.
 
 ---
 I need to implement a persistent RUNTIME and decouple AI Model Nodes from their regular polling operations. They should start working within a general runtime framework

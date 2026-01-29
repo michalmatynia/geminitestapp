@@ -7,7 +7,7 @@ import { getCmsRepository } from "@/features/cms/services/cms-repository";
 
 const blockSchema = z.object({
   name: z.string().trim().min(1),
-  content: z.unknown(),
+  content: z["unknown"](),
 });
 
 /**

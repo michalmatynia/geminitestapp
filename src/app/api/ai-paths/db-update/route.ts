@@ -11,8 +11,8 @@ import { badRequestError, internalError } from "@/shared/errors/app-error";
 const updateSchema = z.object({
   provider: z.enum(["auto", "mongodb"]).optional(),
   collection: z.string().trim().min(1),
-  query: z.unknown().optional(),
-  updates: z.record(z.string(), z.unknown()).optional(),
+  query: z.record(z.string(), z["unknown"]()).optional(),
+  updates: z.record(z.string(), z["unknown"]()).optional(),
   single: z.boolean().optional(),
   idType: z.enum(["string", "objectId"]).optional(),
 });

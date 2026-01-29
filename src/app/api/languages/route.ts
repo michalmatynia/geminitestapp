@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/shared/lib/db/prisma";
+import type { Prisma } from "@prisma/client";
 import {
   ensureInternationalizationDefaults,
   fallbackLanguages,
   defaultLanguages,
   countryMappings,
 } from "@/features/internationalization/server";
-import { getProductDataProvider } from "@/features/products/server";
+import { getInternationalizationProvider } from "@/features/internationalization/services/internationalization-provider";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
@@ -101,7 +102,7 @@ const seedMongoLanguages = async (db: Awaited<ReturnType<typeof getMongoDb>>) =>
  */
 async function GET_handler(req: Request) {
   try {
-    const provider = await getProductDataProvider();
+    const provider = await getInternationalizationProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
         return createErrorResponse(internalError("MongoDB is not configured."), {
@@ -122,7 +123,7 @@ async function GET_handler(req: Request) {
     if (!process.env.DATABASE_URL) {
       return NextResponse.json(fallbackLanguages);
     }
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await ensureInternationalizationDefaults(tx);
     });
     const languages = await prisma.language.findMany({
@@ -163,7 +164,7 @@ async function POST_handler(req: Request) {
     const data = parsed.data;
     const code = data.code.toUpperCase();
 
-    const provider = await getProductDataProvider();
+    const provider = await getInternationalizationProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
         throw internalError("MongoDB is not configured.");

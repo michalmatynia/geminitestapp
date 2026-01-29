@@ -25,7 +25,7 @@ const createSchema = z.object({
   level: levelSchema.optional(),
   message: z.string().min(1),
   source: z.string().trim().optional(),
-  context: z.record(z.string(), z.unknown()).optional(),
+  context: z.record(z.string(), z["unknown"]()).optional(),
   stack: z.string().optional(),
   path: z.string().optional(),
   method: z.string().optional(),

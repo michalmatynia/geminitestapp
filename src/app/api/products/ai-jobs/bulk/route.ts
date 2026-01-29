@@ -10,7 +10,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 
 const bulkJobSchema = z.object({
   type: z.string().trim().min(1),
-  config: z.unknown().optional(),
+  config: z.record(z.string(), z["unknown"]()).optional(),
 });
 
 async function POST_handler(req: NextRequest) {

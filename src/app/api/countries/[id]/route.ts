@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/shared/lib/db/prisma";
-import { getProductDataProvider } from "@/features/products/server";
+import type { Prisma } from "@prisma/client";
+import { getInternationalizationProvider } from "@/features/internationalization/services/internationalization-provider";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {
@@ -41,8 +42,7 @@ const COUNTRIES_COLLECTION = "countries";
 const normalizeCountryResponse = (
   country: CountryDoc,
   currencyMap: Map<string, CurrencyDoc>
-) => ({
-  id: country.id,
+) => ({n  id: country.id,
   code: country.code,
   name: country.name,
   currencies: (country.currencyIds ?? [])
@@ -76,7 +76,7 @@ async function PUT_handler(
     const data = countrySchema.parse(body);
     const { currencyIds, ...countryData } = data;
 
-    const provider = await getProductDataProvider();
+    const provider = await getInternationalizationProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
         throw configurationError("MongoDB is not configured");
@@ -137,7 +137,7 @@ async function PUT_handler(
       );
     }
 
-    const country = await prisma.$transaction(async (tx) => {
+    const country = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const updated = await tx.country.update({
         where: { id },
         data: {

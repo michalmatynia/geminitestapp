@@ -11,8 +11,8 @@ import { internalError } from "@/shared/errors/app-error";
 const querySchema = z.object({
   provider: z.enum(["auto", "mongodb"]).optional(),
   collection: z.string().trim().min(1),
-  query: z.unknown().optional(),
-  projection: z.record(z.string(), z.unknown()).optional(),
+  query: z.record(z.string(), z["unknown"]()).optional(),
+  projection: z.record(z.string(), z["unknown"]()).optional(),
   sort: z.record(z.string(), z.union([z.number(), z.literal("asc"), z.literal("desc")])).optional(),
   limit: z.number().int().min(1).max(200).optional(),
   single: z.boolean().optional(),

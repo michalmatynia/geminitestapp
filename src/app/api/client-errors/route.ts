@@ -15,7 +15,7 @@ const payloadSchema = z.object({
   url: z.string().optional(),
   userAgent: z.string().optional(),
   componentStack: z.string().nullable().optional(),
-  context: z.record(z.string(), z.unknown()).nullable().optional(),
+  context: z.record(z.string(), z["unknown"]()).nullable().optional(),
   timestamp: z.string().optional(),
 });
 

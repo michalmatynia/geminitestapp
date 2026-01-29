@@ -15,7 +15,7 @@ import { NoteUpdateInput } from "@/shared/types/notes";
 const updateSchema = z.object({
   entityType: z.enum(["product", "note", "custom"]),
   entityId: z.string().trim().optional(),
-  updates: z.record(z.string(), z.unknown()).optional(),
+  updates: z.record(z.string(), z["unknown"]()).optional(),
   mode: z.enum(["replace", "append"]).optional(),
 });
 

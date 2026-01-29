@@ -16,7 +16,7 @@ async function getParams(ctx: Ctx): Promise<Params> {
 
 const blockUpdateSchema = z.object({
   name: z.string().trim().min(1),
-  content: z.unknown(),
+  content: z["unknown"](),
 });
 
 /**

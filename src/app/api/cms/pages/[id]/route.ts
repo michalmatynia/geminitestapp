@@ -20,7 +20,7 @@ const pageUpdateSchema = z.object({
   components: z.array(
     z.object({
       type: z.string().trim().min(1),
-      content: z.record(z.string(), z.unknown()),
+      content: z.record(z.string(), z["unknown"]()),
     })
   ),
 });

@@ -18,7 +18,7 @@ const normalizeParameters = (value: unknown): Record<string, unknown> => {
 const requestSchema = z
   .object({
     method: z.string().trim().min(1),
-    parameters: z.record(z.string(), z.unknown()).optional(),
+    parameters: z.record(z.string(), z["unknown"]()).optional(),
   })
   .passthrough();
 

@@ -25,7 +25,7 @@ type DeleteSessionBody = {
 
 const createSessionSchema = z.object({
   title: z.string().trim().optional(),
-  settings: z.unknown().optional(),
+  settings: z.record(z.string(), z["unknown"]()).optional(),
 });
 
 const updateSessionSchema = z.object({

@@ -10,7 +10,7 @@ import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 const requestSchema = z.object({
   method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).default("GET"),
   path: z.string().trim().min(1),
-  body: z.unknown().optional(),
+  body: z["unknown"]().optional(),
 });
 
 const PROD_BASE_URL = process.env.ALLEGRO_API_URL ?? "https://api.allegro.pl";

@@ -1,4 +1,5 @@
 Turn on stricter TypeScript - In Progress with Gemini
+Turn on stricter TypeScript
 
 ```
 strict: true

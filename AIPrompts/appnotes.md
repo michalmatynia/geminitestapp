@@ -1,31 +1,7 @@
-I have another issue I need to address "
-Failed to compile.
-15:48:12.639 
-15:48:12.639 
-./src/app/api/chatbot/settings/route.ts:4:10
-15:48:12.639 
-Type error: Module '"@prisma/client"' has no exported member 'Prisma'.
-15:48:12.639 
-15:48:12.639 
-  2 | import { z } from "zod";
-15:48:12.639 
-  3 | import prisma from "@/shared/lib/db/prisma";
-15:48:12.639 
-> 4 | import { Prisma } from "@prisma/client";
-15:48:12.639 
-    |          ^
-15:48:12.639 
-  5 | import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-15:48:12.640 
-  6 | import { parseJsonBody } from "@/features/products/server";
-15:48:12.640 
-  7 | import { badRequestError, internalError } from "@/shared/errors/app-error";
-15:48:12.737 
-Next.js build worker exited with code: 1 and signal: null
-15:48:12.795 
-Error: Command "npm run build" exited with 1
-"
+
 ---
+enable requiring explicit type annotations
+
 
 Products 
 Changing currency doesn't work again

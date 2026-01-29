@@ -272,15 +272,17 @@ const eslintConfig = [
     files: ["src/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/typedef": [
-        "warn",
+        "error",
         {
-          "parameter": false,
-          "arrowParameter": false,
+          "parameter": true,
+          "arrowParameter": true,
           "variableDeclaration": false,
           "memberVariableDeclaration": true,
           "propertyDeclaration": true
         }
       ],
+      "@typescript-eslint/explicit-function-return-type": "error",
+      "@typescript-eslint/explicit-module-boundary-types": "error",
     },
   },
   ...layerBoundaryConfigs,

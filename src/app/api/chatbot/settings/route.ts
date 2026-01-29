@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/shared/lib/db/prisma";
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, internalError } from "@/shared/errors/app-error";

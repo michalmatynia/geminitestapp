@@ -1,1 +1,0 @@
-src/app/api/catalogs/route.ts(13,1): error TS6192: All imports in import declaration are unused.

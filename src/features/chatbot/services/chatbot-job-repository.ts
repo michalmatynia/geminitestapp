@@ -25,7 +25,17 @@ function documentToJob(doc: ChatbotJobDocument): ChatbotJob {
   };
 }
 
-export const chatbotJobRepository = {
+export interface ChatbotJobRepository {
+  findAll(limit?: number): Promise<ChatbotJob[]>;
+  findById(id: string): Promise<ChatbotJob | null>;
+  findNextPending(): Promise<ChatbotJob | null>;
+  create(input: Omit<ChatbotJob, "id" | "createdAt" | "status">): Promise<ChatbotJob>;
+  update(id: string, update: Partial<Omit<ChatbotJob, "id" | "sessionId" | "createdAt">>): Promise<ChatbotJob | null>;
+  deleteMany(statusIn: ChatbotJobStatus[]): Promise<number>;
+  delete(id: string): Promise<boolean>;
+}
+
+export const chatbotJobRepository: ChatbotJobRepository = {
   async findAll(limit: number = 50): Promise<ChatbotJob[]> {
     const db = await getMongoDb();
     const docs = await db
@@ -58,9 +68,15 @@ export const chatbotJobRepository = {
     const db = await getMongoDb();
     const now = new Date();
     const doc: Omit<ChatbotJobDocument, "_id"> = {
-      ...input,
+      sessionId: input.sessionId,
       status: "pending",
+      model: input.model,
+      payload: input.payload,
+      resultText: input.resultText,
+      errorMessage: input.errorMessage,
       createdAt: now,
+      startedAt: input.startedAt,
+      finishedAt: input.finishedAt,
     };
 
     const result = await db
@@ -69,7 +85,15 @@ export const chatbotJobRepository = {
 
     return {
       id: result.insertedId.toString(),
-      ...doc,
+      sessionId: doc.sessionId,
+      status: doc.status,
+      model: doc.model,
+      payload: doc.payload,
+      resultText: doc.resultText,
+      errorMessage: doc.errorMessage,
+      createdAt: doc.createdAt,
+      startedAt: doc.startedAt,
+      finishedAt: doc.finishedAt,
     };
   },
 

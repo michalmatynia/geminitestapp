@@ -1,14 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { chatbotJobRepository } from "@/features/chatbot/services/chatbot-job-repository";
-import { parseJsonBody } from "@/features/products/server";
+import { parseJsonBody } from "@/shared/lib/api/parse-json";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {
   badRequestError,
   conflictError,
   notFoundError,
 } from "@/shared/errors/app-error";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import { apiHandlerWithParams, type ApiHandlerContext } from "@/shared/lib/api/api-handler";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
@@ -17,16 +17,18 @@ const jobActionSchema = z.object({
 });
 
 async function GET_handler(
-  req: Request,
-  { params }: { params: Promise<{ jobId: string }> }
+  req: NextRequest,
+  ctx: ApiHandlerContext,
+  params: { jobId: string }
 ) {
   try {
-    const { jobId } = await params;
+    const { jobId } = params;
     const job = await chatbotJobRepository.findById(jobId);
     if (!job) {
       return createErrorResponse(notFoundError("Job not found."), {
         request: req,
         source: "chatbot.jobs.[jobId].GET",
+        requestId: ctx.requestId,
       });
     }
     return NextResponse.json({ job });
@@ -35,26 +37,31 @@ async function GET_handler(
       request: req,
       source: "chatbot.jobs.[jobId].GET",
       fallbackMessage: "Failed to load job.",
+      requestId: ctx.requestId,
     });
   }
 }
 
 async function POST_handler(
-  req: Request,
-  { params }: { params: Promise<{ jobId: string }> }
+  req: NextRequest,
+  ctx: ApiHandlerContext,
+  params: { jobId: string }
 ) {
   try {
-    const { jobId } = await params;
-    const parsed = await parseJsonBody(req, jobActionSchema, {
+    const { jobId } = params;
+    const result = await parseJsonBody(req, jobActionSchema, {
       logPrefix: "chatbot.jobs.POST",
     });
-    if (!parsed.ok) {
-      return parsed.response;
+    if (!result.ok) {
+      return result.response;
     }
-    if (parsed.data.action !== "cancel") {
+    
+    const { data } = result;
+    if (data.action !== "cancel") {
       return createErrorResponse(badRequestError("Unsupported action."), {
         request: req,
         source: "chatbot.jobs.[jobId].POST",
+        requestId: ctx.requestId,
       });
     }
     const job = await chatbotJobRepository.findById(jobId);
@@ -62,6 +69,7 @@ async function POST_handler(
       return createErrorResponse(notFoundError("Job not found."), {
         request: req,
         source: "chatbot.jobs.[jobId].POST",
+        requestId: ctx.requestId,
       });
     }
     if (["completed", "failed", "canceled"].includes(job.status)) {
@@ -72,7 +80,10 @@ async function POST_handler(
       finishedAt: new Date(),
     });
     if (DEBUG_CHATBOT) {
-      console.info("[chatbot][jobs][POST] Canceled", { jobId });
+      console.info("[chatbot][jobs][POST] Canceled", { 
+        jobId,
+        requestId: ctx.requestId 
+      });
     }
     return NextResponse.json({ status: updated?.status });
   } catch (error) {
@@ -80,29 +91,35 @@ async function POST_handler(
       request: req,
       source: "chatbot.jobs.[jobId].POST",
       fallbackMessage: "Failed to cancel job.",
+      requestId: ctx.requestId,
     });
   }
 }
 
 async function DELETE_handler(
-  req: Request,
-  { params }: { params: Promise<{ jobId: string }> }
+  req: NextRequest,
+  ctx: ApiHandlerContext,
+  params: { jobId: string }
 ) {
   try {
-    const { jobId } = await params;
+    const { jobId } = params;
     const job = await chatbotJobRepository.findById(jobId);
     if (!job) {
       return createErrorResponse(notFoundError("Job not found."), {
         request: req,
         source: "chatbot.jobs.[jobId].DELETE",
+        requestId: ctx.requestId,
       });
     }
-    const url = new URL(req.url);
-    const force = url.searchParams.get("force") === "true";
+    const force = req.nextUrl.searchParams.get("force") === "true";
     if (job.status === "running" && !force) {
       return createErrorResponse(
         conflictError("Job is running. Cancel it before deleting."),
-        { request: req, source: "chatbot.jobs.[jobId].DELETE" }
+        { 
+          request: req, 
+          source: "chatbot.jobs.[jobId].DELETE",
+          requestId: ctx.requestId,
+        }
       );
     }
     if (job.status === "running" && force) {
@@ -113,7 +130,10 @@ async function DELETE_handler(
     }
     await chatbotJobRepository.delete(jobId);
     if (DEBUG_CHATBOT) {
-      console.info("[chatbot][jobs][DELETE] Deleted", { jobId });
+      console.info("[chatbot][jobs][DELETE] Deleted", { 
+        jobId,
+        requestId: ctx.requestId 
+      });
     }
     return NextResponse.json({ deleted: true });
   } catch (error) {
@@ -121,10 +141,11 @@ async function DELETE_handler(
       request: req,
       source: "chatbot.jobs.[jobId].DELETE",
       fallbackMessage: "Failed to delete job.",
+      requestId: ctx.requestId,
     });
   }
 }
 
-export const GET = apiHandlerWithParams<{ jobId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.jobs.[jobId].GET" });
-export const POST = apiHandlerWithParams<{ jobId: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.jobs.[jobId].POST" });
-export const DELETE = apiHandlerWithParams<{ jobId: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.jobs.[jobId].DELETE" });
+export const GET = apiHandlerWithParams<{ jobId: string }>(GET_handler, { source: "chatbot.jobs.[jobId].GET" });
+export const POST = apiHandlerWithParams<{ jobId: string }>(POST_handler, { source: "chatbot.jobs.[jobId].POST" });
+export const DELETE = apiHandlerWithParams<{ jobId: string }>(DELETE_handler, { source: "chatbot.jobs.[jobId].DELETE" });

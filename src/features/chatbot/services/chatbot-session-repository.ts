@@ -22,7 +22,16 @@ function documentToSession(doc: ChatSessionDocument): ChatSession {
   };
 }
 
-export const chatbotSessionRepository = {
+export interface ChatbotSessionRepository {
+  findAll(): Promise<ChatSession[]>;
+  findById(id: string): Promise<ChatSession | null>;
+  create(input: CreateSessionInput): Promise<ChatSession>;
+  update(id: string, input: UpdateSessionInput): Promise<ChatSession | null>;
+  delete(id: string): Promise<boolean>;
+  addMessage(id: string, message: ChatSession["messages"][0]): Promise<ChatSession | null>;
+}
+
+export const chatbotSessionRepository: ChatbotSessionRepository = {
   async findAll(): Promise<ChatSession[]> {
     const db = await getMongoDb();
     const docs = await db

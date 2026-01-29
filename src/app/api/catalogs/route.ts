@@ -1,14 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getCatalogRepository } from "@/features/products/server";
 import { getProductDataProvider } from "@/features/products/server";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import prisma from "@/shared/lib/db/prisma";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { parseJsonBody } from "@/features/products/server";
+import { parseJsonBody } from "@/shared/lib/api/parse-json";
 import { badRequestError } from "@/shared/errors/app-error";
 import { logSystemEvent } from "@/features/observability/server";
-import { apiHandler } from "@/shared/lib/api/api-handler";
+import { apiHandler, type ApiHandlerContext } from "@/shared/lib/api/api-handler";
 import type { CatalogRecord } from "@/features/products/types";
 import { type Filter } from "mongodb";
 
@@ -26,7 +26,7 @@ const catalogSchema = z.object({
  * GET /api/catalogs
  * Fetches all catalogs.
  */
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest, ctx: ApiHandlerContext) {
   try {
     const catalogRepository = await getCatalogRepository();
     let catalogs = await catalogRepository.listCatalogs();
@@ -77,6 +77,7 @@ async function GET_handler(req: Request) {
               source: "catalogs.GET",
               error,
               request: req,
+              requestId: ctx.requestId,
               context: { provider },
             });
           }
@@ -130,6 +131,7 @@ async function GET_handler(req: Request) {
           source: "catalogs.GET",
           error,
           request: req,
+          requestId: ctx.requestId,
           context: { provider },
         });
       }
@@ -140,6 +142,7 @@ async function GET_handler(req: Request) {
       request: req,
       source: "catalogs.GET",
       fallbackMessage: "Failed to fetch catalogs",
+      requestId: ctx.requestId,
     });
   }
 }
@@ -148,7 +151,7 @@ async function GET_handler(req: Request) {
  * POST /api/catalogs
  * Creates a catalog.
  */
-async function POST_handler(req: Request) {
+async function POST_handler(req: NextRequest, ctx: ApiHandlerContext) {
   try {
     const parsed = await parseJsonBody(req, catalogSchema, {
       logPrefix: "catalogs.POST",
@@ -204,6 +207,7 @@ async function POST_handler(req: Request) {
       request: req,
       source: "catalogs.POST",
       fallbackMessage: "Failed to create catalog",
+      requestId: ctx.requestId,
     });
   }
 }

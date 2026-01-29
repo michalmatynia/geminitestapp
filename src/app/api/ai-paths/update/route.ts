@@ -49,7 +49,7 @@ const mergeAppendValue = (current: unknown, next: unknown): unknown => {
 const applyAppendMode = (
   updates: Record<string, unknown>,
   current: Record<string, unknown>
-) => {
+): Record<string, unknown> => {
   const next: Record<string, unknown> = {};
   Object.entries(updates).forEach(([key, value]: [string, unknown]) => {
     next[key] = mergeAppendValue(current[key], value);
@@ -57,7 +57,7 @@ const applyAppendMode = (
   return next;
 };
 
-async function POST_handler(req: Request) {
+async function POST_handler(req: Request): Promise<NextResponse> {
   try {
     const parsed = await parseJsonBody(req, updateSchema, {
       logPrefix: "ai-paths.update",

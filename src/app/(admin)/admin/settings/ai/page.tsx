@@ -22,75 +22,147 @@ import { useSettings, useUpdateSetting, type SystemSetting } from "@/shared/hook
 
 
 
-export default function AiApiSettingsPage(): JSX.Element {
+export default function AiApiSettingsPage() {
+
+
 
   const { toast } = useToast();
 
+
+
   const { data: settings, isLoading } = useSettings();
+
+
 
   const updateSetting = useUpdateSetting();
 
 
 
+
+
+
+
   const [saving, setSaving] = useState(false);
+
+
 
   const [openaiApiKey, setOpenaiApiKey] = useState("");
 
+
+
   const [anthropicApiKey, setAnthropicApiKey] = useState("");
+
+
 
   const [geminiApiKey, setGeminiApiKey] = useState("");
 
 
 
+
+
+
+
   useEffect(() => {
+
+
 
     if (settings) {
 
+
+
       const settingsMap = new Map(settings.map((item: SystemSetting) => [item.key, item.value]));
+
+
 
       setOpenaiApiKey(settingsMap.get("openai_api_key") || "");
 
+
+
       setAnthropicApiKey(settingsMap.get("anthropic_api_key") || "");
+
+
 
       setGeminiApiKey(settingsMap.get("gemini_api_key") || "");
 
+
+
     }
+
+
 
   }, [settings]);
 
 
 
-  const handleSave = async () => {
+
+
+
+
+  const handleSave = async (): Promise<void> => {
+
+
 
     setSaving(true);
 
+
+
     try {
+
+
 
       await Promise.all([
 
+
+
         updateSetting.mutateAsync({ key: "openai_api_key", value: openaiApiKey }),
+
+
 
         updateSetting.mutateAsync({ key: "anthropic_api_key", value: anthropicApiKey }),
 
+
+
         updateSetting.mutateAsync({ key: "gemini_api_key", value: geminiApiKey }),
+
+
 
       ]);
 
+
+
       toast("API keys saved successfully", { variant: "success" });
+
+
 
     } catch (error: unknown) {
 
+
+
       console.error("Failed to save settings:", error);
+
+
 
       toast("Failed to save settings", { variant: "error" });
 
+
+
     } finally {
+
+
 
       setSaving(false);
 
+
+
     }
 
+
+
   };
+
+
+
+
 
 
 

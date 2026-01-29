@@ -45,7 +45,7 @@ const ALLOWED_COLLECTIONS = new Set([
   "auth_login_challenges",
 ]);
 
-const coerceQuery = (value: unknown) => {
+const coerceQuery = (value: unknown): Record<string, unknown> => {
   if (!value) return {};
   if (typeof value === "string") {
     try {
@@ -60,9 +60,9 @@ const coerceQuery = (value: unknown) => {
   return {};
 };
 
-const looksLikeObjectId = (value: string) => /^[0-9a-fA-F]{24}$/.test(value);
+const looksLikeObjectId = (value: string): boolean => /^[0-9a-fA-F]{24}$/.test(value);
 
-const normalizeObjectId = (query: Record<string, unknown>, idType?: string) => {
+const normalizeObjectId = (query: Record<string, unknown>, idType?: string): Record<string, unknown> => {
   if (idType !== "objectId") return query;
   const next = { ...query };
   if (typeof next._id === "string" && looksLikeObjectId(next._id)) {
@@ -71,7 +71,7 @@ const normalizeObjectId = (query: Record<string, unknown>, idType?: string) => {
   return next;
 };
 
-async function POST_handler(req: Request) {
+async function POST_handler(req: Request): Promise<NextResponse | Response> {
   try {
     const parsed = await parseJsonBody(req, updateSchema, {
       logPrefix: "ai-paths.db-update",

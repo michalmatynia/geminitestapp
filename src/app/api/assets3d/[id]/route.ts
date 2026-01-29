@@ -5,7 +5,7 @@ import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/lib/api/api-handler";
 import { notFoundError, badRequestError } from "@/shared/errors/app-error";
 
-async function GET_handler(_req: NextRequest, params: { id: string }) {
+async function GET_handler(_req: NextRequest, params: { id: string }): Promise<NextResponse> {
   const repository = getAsset3DRepository();
   const asset = await repository.getAsset3DById(params.id);
 
@@ -16,7 +16,7 @@ async function GET_handler(_req: NextRequest, params: { id: string }) {
   return NextResponse.json(asset);
 }
 
-async function PATCH_handler(req: NextRequest, params: { id: string }) {
+async function PATCH_handler(req: NextRequest, params: { id: string }): Promise<NextResponse> {
   let body: Asset3DUpdateInput;
   try {
     body = (await req.json()) as Asset3DUpdateInput;
@@ -34,7 +34,7 @@ async function PATCH_handler(req: NextRequest, params: { id: string }) {
   return NextResponse.json(asset);
 }
 
-async function DELETE_handler(_req: NextRequest, params: { id: string }) {
+async function DELETE_handler(_req: NextRequest, params: { id: string }): Promise<NextResponse> {
   const success = await deleteAsset3D(params.id);
 
   if (!success) {

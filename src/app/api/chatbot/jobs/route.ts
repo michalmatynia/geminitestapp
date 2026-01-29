@@ -31,7 +31,7 @@ const enqueueJobSchema = z.object({
   userMessage: z.string().trim().optional(),
 }) as z.ZodSchema<EnqueueJobRequest>;
 
-async function GET_handler(req: NextRequest, ctx: ApiHandlerContext) {
+async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<NextResponse> {
   try {
     const jobs: ChatbotJob[] = await chatbotJobRepository.findAll(50);
 
@@ -53,7 +53,7 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext) {
   }
 }
 
-async function POST_handler(req: NextRequest, ctx: ApiHandlerContext) {
+async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<NextResponse> {
   try {
     const result: JsonParseResult<EnqueueJobRequest> = await parseJsonBody<EnqueueJobRequest>(req, enqueueJobSchema, {
       logPrefix: "chatbot.jobs.POST",
@@ -122,7 +122,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext) {
   }
 }
 
-async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext) {
+async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<NextResponse> {
   try {
     const scope = req.nextUrl.searchParams.get("scope") ?? "terminal";
 

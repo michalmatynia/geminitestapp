@@ -6,10 +6,9 @@ import { useState, ChangeEvent } from "react";
 import { CLIENT_LOGGING_KEYS } from "@/features/observability";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { useSettingsMap, useUpdateSettingsBulk } from "@/shared/hooks/useSettings";
-import type { JSX } from "react";
 
 
-export default function LoggingSettingsPage(): JSX.Element {
+export default function LoggingSettingsPage() {
   const settingsQuery = useSettingsMap();
 
   if (settingsQuery.isLoading || !settingsQuery.data) {
@@ -39,7 +38,7 @@ function LoggingSettingsForm({
 }: {
   initialTags: string;
   initialFlags: string;
-}): JSX.Element {
+}) {
   const { toast } = useToast();
   const [clientTags, setClientTags] = useState(initialTags);
   const [clientFlags, setClientFlags] = useState(initialFlags);
@@ -47,7 +46,7 @@ function LoggingSettingsForm({
   
   const saveSettingsMutation = useUpdateSettingsBulk();
 
-  const saveSettings = async () => {
+  const saveSettings = async (): Promise<void> => {
     try {
       const parsedTags = clientTags.trim()
         ? (JSON.parse(clientTags) as Record<string, unknown>)

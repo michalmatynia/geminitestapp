@@ -2,7 +2,6 @@
 import { Button } from "@/shared/ui";
 import { useEffect } from "react";
 import Link from "next/link";
-import type { JSX } from "react";
 
 import { logClientError } from "@/features/observability";
 
@@ -12,7 +11,7 @@ export default function AdminError({
 }: {
   error: Error & { digest?: string };
   reset: () => void;
-}): JSX.Element {
+}) {
   useEffect(() => {
     console.error(error);
     logClientError(error, {

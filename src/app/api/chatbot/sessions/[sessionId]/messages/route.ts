@@ -16,7 +16,7 @@ const messageSchema = z.object({
 async function GET_handler(
   req: Request,
   { params }: { params: Promise<{ sessionId: string }> }
-) {
+): Promise<NextResponse> {
   const requestStart = Date.now();
   try {
     if (!("chatbotMessage" in prisma) || !("chatbotSession" in prisma)) {
@@ -62,7 +62,7 @@ async function GET_handler(
 async function POST_handler(
   req: Request,
   { params }: { params: Promise<{ sessionId: string }> }
-) {
+): Promise<NextResponse> {
   const requestStart = Date.now();
   try {
     if (!("chatbotMessage" in prisma) || !("chatbotSession" in prisma)) {
@@ -132,5 +132,5 @@ async function POST_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<{ sessionId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.sessions.[sessionId].messages.GET" });
-export const POST = apiHandlerWithParams<{ sessionId: string }>(async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.sessions.[sessionId].messages.POST" });
+export const GET = apiHandlerWithParams<{ sessionId: string }>(async (req: Request, _ctx: unknown, params: { sessionId: string }) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.sessions.[sessionId].messages.GET" });
+export const POST = apiHandlerWithParams<{ sessionId: string }>(async (req: Request, _ctx: unknown, params: { sessionId: string }) => POST_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.sessions.[sessionId].messages.POST" });

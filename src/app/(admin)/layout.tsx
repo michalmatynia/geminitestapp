@@ -1,6 +1,5 @@
 import { AdminLayout } from "@/features/admin";
-import type { JSX } from "react";
 
-export default function Layout({ children }: { children: React.ReactNode }): JSX.Element {
+export default function Layout({ children }: { children: React.ReactNode }) {
   return <AdminLayout>{children}</AdminLayout>;
 }

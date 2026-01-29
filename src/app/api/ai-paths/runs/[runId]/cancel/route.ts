@@ -8,7 +8,7 @@ async function POST_handler(
   req: Request,
   _ctx: ApiHandlerContext,
   params: { runId: string }
-) {
+): Promise<NextResponse | Response> {
   try {
     const runId = params.runId;
     const run = await cancelPathRun(runId);

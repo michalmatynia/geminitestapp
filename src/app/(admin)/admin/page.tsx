@@ -3,9 +3,8 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { useState } from "react";
-import type { JSX } from "react";
 
-export default function AdminDashboard(): JSX.Element {
+export default function AdminDashboard() {
   const [recentActivityOpen, setRecentActivityOpen] = useState(true);
 
   // useEffect(() => {

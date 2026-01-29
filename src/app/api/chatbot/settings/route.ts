@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/shared/lib/db/prisma";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { badRequestError, internalError } from "@/shared/errors/app-error";
@@ -15,7 +15,7 @@ const settingsSchema = z.object({
   settings: z.record(z.string(), z.any()).optional(),
 });
 
-async function GET_handler(req: Request) {
+async function GET_handler(req: Request): Promise<NextResponse> {
   const requestStart = Date.now();
   try {
     if (!("chatbotSettings" in prisma)) {
@@ -48,7 +48,7 @@ async function GET_handler(req: Request) {
   }
 }
 
-async function POST_handler(req: Request) {
+async function POST_handler(req: Request): Promise<NextResponse> {
   const requestStart = Date.now();
   try {
     if (!("chatbotSettings" in prisma)) {

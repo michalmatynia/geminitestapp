@@ -42,7 +42,7 @@ const getFrontPageSetting = async (): Promise<string | null> => {
   return doc?.value ?? null;
 };
 
-export default async function HomePage(): Promise<JSX.Element> {
+export default async function HomePage() {
   const frontPageApp = await getFrontPageSetting();
 
   if (frontPageApp && FRONT_PAGE_ALLOWED.has(frontPageApp)) {
@@ -193,7 +193,7 @@ export default async function HomePage(): Promise<JSX.Element> {
   );
 }
 
-function MountainIcon(props: React.SVGProps<SVGSVGElement>): JSX.Element {
+function MountainIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}

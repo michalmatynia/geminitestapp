@@ -2,7 +2,6 @@
 
 import { Button } from "@/shared/ui";
 import { useEffect } from "react";
-import type { JSX } from "react";
 
 export default function NotesError({
   error,
@@ -10,7 +9,7 @@ export default function NotesError({
 }: {
   error: Error & { digest?: string };
   reset: () => void;
-}): JSX.Element {
+}) {
   useEffect(() => {
     console.error(error);
   }, [error]);

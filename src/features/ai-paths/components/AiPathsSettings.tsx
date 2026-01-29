@@ -91,9 +91,9 @@ type AiPathsSettingsProps = {
 
 const AUTO_SAVE_DEBOUNCE_MS = 100; // Very short debounce for near-immediate saves
 
-export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPathsSettingsProps) {
+export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPathsSettingsProps): React.JSX.Element {
   const { toast } = useToast();
-  const normalizeTriggerLabel = (value?: string | null) =>
+  const normalizeTriggerLabel = (value?: string | null): string =>
     value === "Product Modal - Context Grabber"
       ? "Product Modal - Context Filter"
       : value ?? (triggers[0] ?? "Product Modal - Context Filter");

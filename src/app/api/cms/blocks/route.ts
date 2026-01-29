@@ -14,7 +14,7 @@ const blockSchema = z.object({
  * GET /api/cms/blocks
  * Fetches a list of all blocks.
  */
-async function GET_handler() {
+async function GET_handler(): Promise<NextResponse | Response> {
   try {
     console.log("--- [Debug] GET /api/cms/blocks: Fetching blocks from repository ---");
     const cmsRepository = await getCmsRepository();
@@ -34,7 +34,7 @@ async function GET_handler() {
  * POST /api/cms/blocks
  * Creates a new block.
  */
-async function POST_handler(req: Request) {
+async function POST_handler(req: Request): Promise<NextResponse | Response> {
   try {
     const parsed = await parseJsonBody(req, blockSchema, {
       logPrefix: "cms-blocks",

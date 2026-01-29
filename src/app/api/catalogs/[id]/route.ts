@@ -24,7 +24,7 @@ const catalogUpdateSchema = z.object({
 async function PUT_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<NextResponse | Response> {
   let catalogId = "";
   try {
     const { id } = await params;
@@ -95,7 +95,7 @@ async function PUT_handler(
 async function DELETE_handler(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<NextResponse | Response> {
   let catalogId = "";
   try {
     const { id } = await params;

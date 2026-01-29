@@ -14,15 +14,14 @@ import {
 } from "@/shared/lib/transient-recovery/constants";
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
-import type { JSX } from "react";
 
-const toNumber = (value: string, fallback: number, min: number = 0) => {
+const toNumber = (value: string, fallback: number, min: number = 0): number => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed < min) return fallback;
   return parsed;
 };
 
-export default function TransientRecoverySettingsPage(): JSX.Element {
+export default function TransientRecoverySettingsPage() {
   const settingsQuery = useSettingsMap();
 
   if (settingsQuery.isLoading || !settingsQuery.data) {
@@ -76,14 +75,14 @@ function TransientRecoverySettingsForm({
   initialSettings,
 }: {
   initialSettings: TransientRecoverySettings;
-}): JSX.Element {
+}) {
   const { toast } = useToast();
   const [settings, setSettings] = useState<TransientRecoverySettings>(initialSettings);
   const [dirty, setDirty] = useState(false);
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
 
-  const updateRetry = (key: keyof TransientRecoverySettings["retry"], value: number | boolean) => {
+  const updateRetry = (key: keyof TransientRecoverySettings["retry"], value: number | boolean): void => {
     setSettings((prev: TransientRecoverySettings) => ({
       ...prev,
       retry: {
@@ -97,7 +96,7 @@ function TransientRecoverySettingsForm({
   const updateCircuit = (
     key: keyof TransientRecoverySettings["circuit"],
     value: number | boolean
-  ) => {
+  ): void => {
     setSettings((prev: TransientRecoverySettings) => ({
       ...prev,
       circuit: {
@@ -108,7 +107,7 @@ function TransientRecoverySettingsForm({
     setDirty(true);
   };
 
-  const saveSettings = async () => {
+  const saveSettings = async (): Promise<void> => {
     try {
       const payload: TransientRecoverySettings = {
         enabled: settings.enabled,

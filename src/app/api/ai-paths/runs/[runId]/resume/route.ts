@@ -15,7 +15,7 @@ async function POST_handler(
   req: Request,
   _ctx: ApiHandlerContext,
   params: { runId: string }
-) {
+): Promise<NextResponse | Response> {
   try {
     const parsed = await parseJsonBody(req, resumeSchema, {
       logPrefix: "ai-paths.runs.resume",

@@ -9,7 +9,7 @@ async function GET_handler(
   _req: Request,
   _ctx: ApiHandlerContext,
   params: { runId: string }
-) {
+): Promise<NextResponse | Response> {
   try {
     const runId = params.runId;
     const repo = await getPathRunRepository();

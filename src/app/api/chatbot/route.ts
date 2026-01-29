@@ -29,95 +29,183 @@ const TEMP_CLEANUP_TTL_MS = 1000 * 60 * 60 * 24;
 const TEMP_CLEANUP_INTERVAL_MS = 1000 * 60 * 10;
 let lastTempCleanupAt = 0;
 
-const createErrorId = () => {
+const createErrorId = (): string => {
+
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+
     return crypto.randomUUID();
+
   }
+
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
 };
+
+
 
 // Why: Chatbot generates temp files (uploads, debug logs). Without cleanup, disk
+
 // fills up over time. We debounce cleanup (at most every 10 minutes) to avoid
+
 // expensive readdir/stat calls on every request while ensuring old files don't
+
 // persist beyond 24 hours. Errors are silent (best-effort) to avoid blocking chat.
-const cleanupChatbotTemp = async () => {
+
+const cleanupChatbotTemp = async (): Promise<void> => {
+
   const now = Date.now();
+
   if (now - lastTempCleanupAt < TEMP_CLEANUP_INTERVAL_MS) return;
+
   lastTempCleanupAt = now;
 
+
+
   try {
+
     await fs.mkdir(chatbotTempRoot, { recursive: true });
+
     const entries = await fs.readdir(chatbotTempRoot, { withFileTypes: true });
 
+
+
     await Promise.all(
+
       entries.map(async (entry: import("fs").Dirent) => {
+
         const fullPath = path.join(chatbotTempRoot, entry.name);
+
         try {
+
           const stats = await fs.stat(fullPath);
+
           if (now - stats.mtimeMs < TEMP_CLEANUP_TTL_MS) return;
 
+
+
           if (entry.isDirectory()) {
+
             await fs.rm(fullPath, { recursive: true, force: true });
+
           } else {
+
             await fs.unlink(fullPath);
+
           }
+
         } catch {
+
           // best-effort cleanup
+
         }
+
       })
+
     );
+
   } catch {
+
     // best-effort cleanup
+
   }
+
 };
 
-async function GET_handler(req: NextRequest, ctx: ApiHandlerContext) {
+
+
+async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<NextResponse> {
+
   const requestStart = Date.now();
 
   try {
+
     const res = await fetch(`${OLLAMA_BASE_URL}/api/tags`, {
+
       headers: { "Content-Type": "application/json" },
+
     });
+
+
 
     if (!res.ok) {
+
       const errorText = await res.text();
+
       return createErrorResponse(
+
         externalServiceError(
+
           `Failed to load models: ${errorText || res.statusText}`
+
         ),
+
         { request: req, source: "chatbot.GET" }
+
       );
+
     }
+
+
 
     const data = (await res.json()) as unknown as { models?: Array<{ name?: string }> };
+
     const models = (data.models || [])
+
       .map((model: { name?: string }) => model.name)
+
       .filter((name: string | undefined): name is string => Boolean(name));
 
+
+
     if (DEBUG_CHATBOT) {
+
       console.info("[chatbot][models] Loaded", {
+
         count: models.length,
+
         durationMs: Date.now() - requestStart,
+
         requestId: ctx.requestId,
+
       });
+
     }
 
+
+
     return NextResponse.json({ models });
+
   } catch (error) {
+
     const message =
+
       error instanceof Error ? error.message : "Failed to load models.";
+
     return createErrorResponse(error, {
+
       request: req,
+
       source: "chatbot.GET",
+
       fallbackMessage: message,
+
     });
+
   }
+
 }
 
-async function POST_handler(req: NextRequest, ctx: ApiHandlerContext) {
+
+
+async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<NextResponse> {
+
   const tempFiles: string[] = [];
+
   const tempDirs: string[] = [];
+
   const requestStart = Date.now(); // total request timer
+
+
 
   try {
     if (!OLLAMA_MODEL) {

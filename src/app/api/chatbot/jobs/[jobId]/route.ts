@@ -20,7 +20,7 @@ async function GET_handler(
   req: NextRequest,
   ctx: ApiHandlerContext,
   params: { jobId: string }
-) {
+): Promise<NextResponse> {
   try {
     const { jobId } = params;
     const job = await chatbotJobRepository.findById(jobId);
@@ -46,7 +46,7 @@ async function POST_handler(
   req: NextRequest,
   ctx: ApiHandlerContext,
   params: { jobId: string }
-) {
+): Promise<NextResponse> {
   try {
     const { jobId } = params;
     const result = await parseJsonBody(req, jobActionSchema, {
@@ -100,7 +100,7 @@ async function DELETE_handler(
   req: NextRequest,
   ctx: ApiHandlerContext,
   params: { jobId: string }
-) {
+): Promise<NextResponse> {
   try {
     const { jobId } = params;
     const job = await chatbotJobRepository.findById(jobId);

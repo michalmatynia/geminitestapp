@@ -1,6 +1,5 @@
 import { AuthDashboardPage } from "@/features/auth";
-import type { JSX } from "react";
 
-export default function Page(): JSX.Element {
+export default function Page() {
   return <AuthDashboardPage />;
 }

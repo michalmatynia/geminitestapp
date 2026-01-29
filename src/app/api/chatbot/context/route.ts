@@ -3,7 +3,7 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError, configurationError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 
-const chunkText = (text: string, maxChars: number) => {
+const chunkText = (text: string, maxChars: number): string[] => {
   const chunks: string[] = [];
   let cursor = 0;
   const cleaned = text.replace(/\r/g, "").trim();
@@ -16,7 +16,7 @@ const chunkText = (text: string, maxChars: number) => {
   return chunks.filter(Boolean);
 };
 
-async function POST_handler(req: Request) {
+async function POST_handler(req: Request): Promise<NextResponse | Response> {
   try {
     const formData = await req.formData();
     const file = formData.get("file");

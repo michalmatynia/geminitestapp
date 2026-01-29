@@ -10,7 +10,7 @@ const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 async function GET_handler(
   req: Request,
   props: { params: Promise<{ sessionId: string }> }
-) {
+): Promise<NextResponse> {
   try {
     const params = await props.params;
     const session = await chatbotSessionRepository.findById(params.sessionId);
@@ -40,4 +40,8 @@ async function GET_handler(
   }
 }
 
-export const GET = apiHandlerWithParams<{ sessionId: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.sessions.[sessionId].GET" });
+export const GET = apiHandlerWithParams<{ sessionId: string }>(
+  async (req: Request, _ctx: unknown, params: { sessionId: string }) =>
+    GET_handler(req, { params: Promise.resolve(params) }),
+  { source: "chatbot.sessions.[sessionId].GET" }
+);

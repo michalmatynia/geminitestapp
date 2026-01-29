@@ -1,7 +1,6 @@
 import { ProductConstructorPage } from "@/features/products";
-import type { JSX } from "react";
 
-export default function Page(): JSX.Element {
+export default function Page() {
   return (
     <div className="container mx-auto py-10">
       <div className="mb-6">

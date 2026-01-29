@@ -38,7 +38,7 @@ const deleteSessionSchema = z.object({
 });
 
 // POST /api/chatbot/sessions - Create new session
-async function POST_handler(req: Request) {
+async function POST_handler(req: Request): Promise<NextResponse> {
   const requestStart = Date.now();
   try {
     const parsed = await parseJsonBody(req, createSessionSchema, {
@@ -78,7 +78,7 @@ async function POST_handler(req: Request) {
 }
 
 // GET /api/chatbot/sessions - List all sessions
-async function GET_handler(req: Request) {
+async function GET_handler(req: Request): Promise<NextResponse> {
   const requestStart = Date.now();
   try {
     const sessions = await chatbotSessionRepository.findAll();
@@ -101,7 +101,7 @@ async function GET_handler(req: Request) {
 }
 
 // PATCH /api/chatbot/sessions - Update session (title)
-async function PATCH_handler(req: Request) {
+async function PATCH_handler(req: Request): Promise<NextResponse> {
   const requestStart = Date.now();
   try {
     const parsed = await parseJsonBody(req, updateSessionSchema, {
@@ -151,7 +151,7 @@ async function PATCH_handler(req: Request) {
 }
 
 // DELETE /api/chatbot/sessions - Delete session
-async function DELETE_handler(req: Request) {
+async function DELETE_handler(req: Request): Promise<NextResponse> {
   const requestStart = Date.now();
   try {
     const parsed = await parseJsonBody(req, deleteSessionSchema, {

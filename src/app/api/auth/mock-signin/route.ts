@@ -30,7 +30,7 @@ type MongoUserDoc = {
   emailVerified?: Date | null;
 };
 
-async function POST_handler(req: Request) {
+async function POST_handler(req: Request): Promise<NextResponse> {
   try {
     const session = await auth();
     const hasAccess =

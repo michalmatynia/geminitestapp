@@ -60,7 +60,7 @@ export class AppError extends Error {
 export const isAppError = (error: unknown): error is AppError =>
   error instanceof AppError;
 
-export const createAppError = (message: string, options: AppErrorOptions) =>
+export const createAppError = (message: string, options: AppErrorOptions): AppError =>
   new AppError(message, options);
 
 // ============================================================================
@@ -70,7 +70,7 @@ export const createAppError = (message: string, options: AppErrorOptions) =>
 export const validationError = (
   message: string,
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.validation,
     httpStatus: 400,
@@ -79,9 +79,9 @@ export const validationError = (
   });
 
 export const authError = (
-  message = "Unauthorized",
+  message: string = "Unauthorized",
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.unauthorized,
     httpStatus: 401,
@@ -90,9 +90,9 @@ export const authError = (
   });
 
 export const forbiddenError = (
-  message = "Forbidden",
+  message: string = "Forbidden",
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.forbidden,
     httpStatus: 403,
@@ -101,9 +101,9 @@ export const forbiddenError = (
   });
 
 export const notFoundError = (
-  message = "Not found",
+  message: string = "Not found",
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.notFound,
     httpStatus: 404,
@@ -112,9 +112,9 @@ export const notFoundError = (
   });
 
 export const conflictError = (
-  message = "Conflict",
+  message: string = "Conflict",
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.conflict,
     httpStatus: 409,
@@ -123,9 +123,9 @@ export const conflictError = (
   });
 
 export const badRequestError = (
-  message = "Bad request",
+  message: string = "Bad request",
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.badRequest,
     httpStatus: 400,
@@ -134,10 +134,10 @@ export const badRequestError = (
   });
 
 export const rateLimitedError = (
-  message = "Too many requests",
+  message: string = "Too many requests",
   retryAfterMs?: number,
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.rateLimited,
     httpStatus: 429,
@@ -148,9 +148,9 @@ export const rateLimitedError = (
   });
 
 export const payloadTooLargeError = (
-  message = "Payload too large",
+  message: string = "Payload too large",
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.payloadTooLarge,
     httpStatus: 413,
@@ -159,9 +159,9 @@ export const payloadTooLargeError = (
   });
 
 export const unprocessableEntityError = (
-  message = "Unprocessable entity",
+  message: string = "Unprocessable entity",
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.unprocessableEntity,
     httpStatus: 422,
@@ -174,9 +174,9 @@ export const unprocessableEntityError = (
 // ============================================================================
 
 export const internalError = (
-  message = "Unexpected error occurred",
+  message: string = "Unexpected error occurred",
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.internal,
     httpStatus: 500,
@@ -186,10 +186,10 @@ export const internalError = (
   });
 
 export const externalServiceError = (
-  message = "External service error",
+  message: string = "External service error",
   meta?: Record<string, unknown>,
   options?: { retryable?: boolean; retryAfterMs?: number }
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.externalService,
     httpStatus: 502,
@@ -200,10 +200,10 @@ export const externalServiceError = (
   });
 
 export const serviceUnavailableError = (
-  message = "Service temporarily unavailable",
+  message: string = "Service temporarily unavailable",
   retryAfterMs?: number,
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.serviceUnavailable,
     httpStatus: 503,
@@ -214,9 +214,9 @@ export const serviceUnavailableError = (
   });
 
 export const timeoutError = (
-  message = "Operation timed out",
+  message: string = "Operation timed out",
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.timeout,
     httpStatus: 504,
@@ -226,10 +226,10 @@ export const timeoutError = (
   });
 
 export const databaseError = (
-  message = "Database operation failed",
+  message: string = "Database operation failed",
   cause?: unknown,
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.databaseError,
     httpStatus: 500,
@@ -240,9 +240,9 @@ export const databaseError = (
   });
 
 export const configurationError = (
-  message = "Server configuration error",
+  message: string = "Server configuration error",
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.configurationError,
     httpStatus: 500,
@@ -256,9 +256,9 @@ export const configurationError = (
 // ============================================================================
 
 export const duplicateEntryError = (
-  message = "Duplicate entry",
+  message: string = "Duplicate entry",
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.duplicateEntry,
     httpStatus: 409,
@@ -267,9 +267,9 @@ export const duplicateEntryError = (
   });
 
 export const invalidStateError = (
-  message = "Invalid state for this operation",
+  message: string = "Invalid state for this operation",
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.invalidState,
     httpStatus: 409,
@@ -278,10 +278,10 @@ export const invalidStateError = (
   });
 
 export const operationFailedError = (
-  message = "Operation failed",
+  message: string = "Operation failed",
   cause?: unknown,
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.operationFailed,
     httpStatus: 500,
@@ -291,9 +291,9 @@ export const operationFailedError = (
   });
 
 export const resourceLockedError = (
-  message = "Resource is locked",
+  message: string = "Resource is locked",
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.resourceLocked,
     httpStatus: 423,
@@ -304,9 +304,9 @@ export const resourceLockedError = (
   });
 
 export const quotaExceededError = (
-  message = "Quota exceeded",
+  message: string = "Quota exceeded",
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.quotaExceeded,
     httpStatus: 429,
@@ -319,11 +319,11 @@ export const quotaExceededError = (
 // ============================================================================
 
 export const integrationError = (
-  message = "Integration error",
+  message: string = "Integration error",
   integrationName?: string,
   cause?: unknown,
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.integrationError,
     httpStatus: 502,
@@ -334,10 +334,10 @@ export const integrationError = (
   });
 
 export const apiKeyInvalidError = (
-  message = "Invalid or expired API key",
+  message: string = "Invalid or expired API key",
   integrationName?: string,
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.apiKeyInvalid,
     httpStatus: 401,
@@ -346,9 +346,9 @@ export const apiKeyInvalidError = (
   });
 
 export const webhookFailedError = (
-  message = "Webhook delivery failed",
+  message: string = "Webhook delivery failed",
   meta?: Record<string, unknown>
-) =>
+): AppError =>
   new AppError(message, {
     code: AppErrorCodes.webhookFailed,
     httpStatus: 502,
@@ -366,11 +366,11 @@ export const webhookFailedError = (
  */
 export const wrapError = (
   error: unknown,
-  fallbackMessage = "An error occurred"
+  fallbackMessage: string = "An error occurred"
 ): AppError => {
   if (isAppError(error)) return error;
 
-  const message =
+  const message: string =
     error instanceof Error ? error.message : String(error) || fallbackMessage;
 
   return new AppError(message, {

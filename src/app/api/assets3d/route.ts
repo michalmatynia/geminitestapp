@@ -5,7 +5,7 @@ import { badRequestError } from "@/shared/errors/app-error";
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
-async function GET_handler(req: NextRequest) {
+async function GET_handler(req: NextRequest): Promise<NextResponse> {
   const searchParams = getQueryParams(req);
   const filename = searchParams.get("filename");
   const category = searchParams.get("category");
@@ -25,7 +25,7 @@ async function GET_handler(req: NextRequest) {
   return NextResponse.json(assets);
 }
 
-async function POST_handler(req: NextRequest) {
+async function POST_handler(req: NextRequest): Promise<NextResponse> {
   let formData: FormData;
   try {
     formData = await req.formData();

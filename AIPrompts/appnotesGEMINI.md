@@ -28,5 +28,5 @@ TESTS
 PRISMA
 npx prisma generate
 npx prisma migrate dev
-prisma migrate reset
+npx prisma migrate reset
 npx prisma db push

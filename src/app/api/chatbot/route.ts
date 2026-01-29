@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import { chatbotSessionRepository } from "@/features/chatbot/server";
@@ -9,7 +9,7 @@ import {
   externalServiceError,
   internalError,
 } from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
+import { apiHandler, type ApiHandlerContext } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -71,7 +71,7 @@ const cleanupChatbotTemp = async () => {
   }
 };
 
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest, ctx: ApiHandlerContext) {
   const requestStart = Date.now();
 
   try {
@@ -89,7 +89,7 @@ async function GET_handler(req: Request) {
       );
     }
 
-    const data = (await res.json()) as { models?: Array<{ name?: string }> };
+    const data = (await res.json()) as unknown as { models?: Array<{ name?: string }> };
     const models = (data.models || [])
       .map((model) => model.name)
       .filter((name): name is string => Boolean(name));
@@ -98,6 +98,7 @@ async function GET_handler(req: Request) {
       console.info("[chatbot][models] Loaded", {
         count: models.length,
         durationMs: Date.now() - requestStart,
+        requestId: ctx.requestId,
       });
     }
 
@@ -113,7 +114,7 @@ async function GET_handler(req: Request) {
   }
 }
 
-async function POST_handler(req: Request) {
+async function POST_handler(req: NextRequest, ctx: ApiHandlerContext) {
   const tempFiles: string[] = [];
   const tempDirs: string[] = [];
   const requestStart = Date.now(); // total request timer
@@ -143,7 +144,7 @@ async function POST_handler(req: Request) {
       const rawMessages = formData.get("messages");
       if (rawMessages && typeof rawMessages === "string") {
         try {
-          messages = JSON.parse(rawMessages) as ChatMessage[];
+          messages = JSON.parse(rawMessages) as unknown as ChatMessage[];
         } catch (_error) {
           return createErrorResponse(
             badRequestError("Invalid messages payload."),
@@ -175,6 +176,7 @@ async function POST_handler(req: Request) {
           fileCount: files.length,
           imageCount: imageFiles.length,
           otherCount: otherFiles.length,
+          requestId: ctx.requestId,
         });
       }
 
@@ -221,9 +223,10 @@ async function POST_handler(req: Request) {
           })
         );
 
-        if (messages[targetIndex]) {
+        const targetMessage = messages[targetIndex];
+        if (targetMessage) {
           messages[targetIndex] = {
-            ...messages[targetIndex],
+            ...targetMessage,
             images: base64Images,
           };
         }
@@ -240,11 +243,12 @@ async function POST_handler(req: Request) {
             : messages.length - 1 - lastUserIndex;
 
         const fileList = otherFiles.map((file) => file.name).join(", ");
-        const existing = messages[targetIndex]?.content?.trim() || "";
+        const targetMessage = messages[targetIndex];
+        const existing = targetMessage?.content?.trim() || "";
 
-        if (messages[targetIndex]) {
+        if (targetMessage) {
           messages[targetIndex] = {
-            ...messages[targetIndex],
+            ...targetMessage,
             content: `${existing}\n\nAttached files: ${fileList}`.trim(),
           };
         }
@@ -256,7 +260,7 @@ async function POST_handler(req: Request) {
         sessionId?: string;
       };
       try {
-        body = (await req.json()) as typeof body;
+        body = (await req.json()) as unknown as typeof body;
       } catch (_error) {
         return createErrorResponse(badRequestError("Invalid JSON payload."), {
           request: req,
@@ -313,7 +317,8 @@ async function POST_handler(req: Request) {
         userContentChars: messages
           .filter((message) => message.role === "user")
           .reduce((sum, message) => sum + message.content.length, 0),
-        durationMs: Date.now() - requestStart, // <-- now safe
+        durationMs: Date.now() - requestStart,
+        requestId: ctx.requestId,
       });
     }
 
@@ -328,10 +333,10 @@ async function POST_handler(req: Request) {
         url: `${OLLAMA_BASE_URL}/api/chat`,
         model: requestPayload.model,
         messageCount: requestPayload.messages.length,
+        requestId: ctx.requestId,
       });
     }
 
-    // IMPORTANT: do NOT redeclare `requestStart` inside this block (TDZ issue).
     const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -346,7 +351,7 @@ async function POST_handler(req: Request) {
       );
     }
 
-    const data = (await res.json()) as {
+    const data = (await res.json()) as unknown as {
       message?: { content?: string };
       response?: string;
     };
@@ -362,18 +367,25 @@ async function POST_handler(req: Request) {
           });
         }
 
-        if (data.message?.content || data.response) {
+        const assistantReply = data.message?.content || data.response;
+        if (assistantReply) {
           await chatbotSessionRepository.addMessage(sessionId, {
             role: "assistant",
-            content: data.message?.content || data.response || "",
+            content: assistantReply,
           });
         }
 
         if (DEBUG_CHATBOT) {
-          console.info("[chatbot][chat] Saved to session", { sessionId });
+          console.info("[chatbot][chat] Saved to session", { 
+            sessionId,
+            requestId: ctx.requestId
+          });
         }
       } catch (error) {
-        console.error("[chatbot][chat] Failed to save session messages", error);
+        console.error("[chatbot][chat] Failed to save session messages", {
+          error,
+          requestId: ctx.requestId
+        });
       }
     }
 

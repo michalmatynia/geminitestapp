@@ -67,13 +67,16 @@ const getClient = (modelName: string, apiKey: string | null) => {
     if (!apiKey) {
       throw configurationError("OpenAI API key is missing for GPT model.");
     }
-    return new OpenAI({ apiKey });
+    return { openai: new OpenAI({ apiKey }), isOllama: false };
   }
 
-  return new OpenAI({
-    baseURL: `${OLLAMA_BASE_URL}/v1`,
-    apiKey: "ollama",
-  });
+  return {
+    openai: new OpenAI({
+      baseURL: `${OLLAMA_BASE_URL}/v1`,
+      apiKey: "ollama",
+    }),
+    isOllama: true
+  };
 };
 
 const buildImageParts = async (imageUrls: string[]) => {
@@ -146,34 +149,50 @@ async function processGraphModel(job: Job) {
     const fallback = visionFallback || "gemma3:27b";
     modelId = fallback;
   }
-  const client = getClient(modelId, apiKey);
+  const { openai: client, isOllama } = getClient(modelId, apiKey);
   const content: ChatCompletionContentPart[] = [{ type: "text", text: prompt }];
   if (attachImages) {
     const imageParts = await buildImageParts(imageUrls);
     content.push(...imageParts);
   }
 
-  const completion = await client.chat.completions.create({
-    model: modelId,
-    messages: [
-      { role: "system", content: "You are an AI assistant." },
-      { role: "user", content },
-    ],
-    temperature,
-    max_tokens: maxTokens,
-  });
-  const resultText = completion.choices[0]?.message.content?.trim() || "";
-  return {
-    result: resultText,
-    modelId,
-    prompt,
-    imageUrls,
-    temperature,
-    maxTokens,
-    source: payload.source ?? "ai_paths",
-    graph: payload.graph ?? undefined,
-    productId,
-  };
+  try {
+    const completion = await client.chat.completions.create({
+      model: modelId,
+      messages: [
+        { role: "system", content: "You are an AI assistant." },
+        { role: "user", content },
+      ],
+      temperature,
+      max_tokens: maxTokens,
+    });
+    const resultText = completion.choices[0]?.message.content?.trim() || "";
+    return {
+      result: resultText,
+      modelId,
+      prompt,
+      imageUrls,
+      temperature,
+      maxTokens,
+      source: payload.source ?? "ai_paths",
+      graph: payload.graph ?? undefined,
+      productId,
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const isConnectionError = errorMessage.includes("ECONNREFUSED") || 
+                             errorMessage.includes("fetch failed") || 
+                             errorMessage.includes("failed to fetch");
+
+    if (isOllama && isConnectionError) {
+      throw operationFailedError(
+        `AI Path Node failed: Could not connect to Ollama server at ${OLLAMA_BASE_URL}. Please ensure the Ollama server is running and accessible.`,
+        undefined,
+        { originalError: errorMessage, url: OLLAMA_BASE_URL, model: modelId }
+      );
+    }
+    throw error;
+  }
 }
 
 const normalizeLanguageDoc = (doc: Record<string, unknown>): LanguageRecord | null => {
@@ -525,7 +544,7 @@ async function processTranslation(job: Job) {
       catalogs.forEach((catalog) => {
         catalog.languages.forEach((cl) => {
           console.log(`[processTranslation] Checking language: ${cl.language.name} (${cl.language.code})`);
-          if (cl.language.code !== "EN") {
+          if (cl.language.code.toUpperCase() !== "EN") {
             languageSet.add(cl.language.name);
             console.log(`[processTranslation] Added ${cl.language.name} to target languages`);
           } else {
@@ -569,14 +588,23 @@ async function processTranslation(job: Job) {
   // Update product with translations
   const updateData: Record<string, string> = {};
 
-  for (const [lang, translation] of Object.entries(result.translations)) {
-    const langCode = lang.toLowerCase();
-    if (langCode === "polish" || langCode.includes("pol") || langCode === "pl") {
+  for (const [langName, translation] of Object.entries(result.translations)) {
+    const nameLower = langName.toLowerCase();
+    
+    // Polish
+    if (nameLower === "polish" || nameLower === "pl" || nameLower.includes("polsk")) {
       updateData.name_pl = translation.name;
       updateData.description_pl = translation.description;
-    } else if (langCode === "german" || langCode.includes("german") || langCode === "de") {
+    } 
+    // German
+    else if (nameLower === "german" || nameLower === "de" || nameLower.includes("deutsch")) {
       updateData.name_de = translation.name;
       updateData.description_de = translation.description;
+    }
+    // English (should not happen normally but for safety)
+    else if (nameLower === "english" || nameLower === "en") {
+      updateData.name_en = translation.name;
+      updateData.description_en = translation.description;
     }
     // Add more language mappings as needed
   }

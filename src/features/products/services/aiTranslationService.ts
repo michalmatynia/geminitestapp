@@ -50,6 +50,40 @@ function getClient(modelName: string, apiKey: string | null) {
   };
 }
 
+/**
+ * Extracts JSON from a string that might contain markdown blocks or other text.
+ */
+function extractJson(text: string): unknown {
+  try {
+    // 1. Try direct parse
+    return JSON.parse(text);
+  } catch (_e) {
+    // 2. Try to find JSON block
+    const match = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/```\s*([\s\S]*?)\s*```/);
+    if (match && match[1]) {
+      try {
+        return JSON.parse(match[1].trim());
+      } catch (_e2) {
+        // Continue to fallback
+      }
+    }
+
+    // 3. Try to find anything between { and }
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      const candidate = text.substring(firstBrace, lastBrace + 1);
+      try {
+        return JSON.parse(candidate);
+      } catch (_e3) {
+        // Continue to fallback
+      }
+    }
+    
+    throw new Error(`Failed to extract valid JSON from response: ${text.substring(0, 100)}...`);
+  }
+}
+
 export async function translateProduct(params: TranslateProductParams): Promise<TranslationResult> {
   const { sourceLanguage, targetLanguages, productName, productDescription } = params;
 
@@ -70,12 +104,15 @@ export async function translateProduct(params: TranslateProductParams): Promise<
     console.log(`[aiTranslationService] Using Ollama at: ${OLLAMA_BASE_URL}`);
   }
 
+  console.log(`[aiTranslationService] Target languages: ${targetLanguages.join(", ")}`);
+  console.log(`[aiTranslationService] Source language: ${sourceLanguage}`);
+
   const translations: Record<string, { name: string; description: string }> = {};
 
   // Translate to each target language
   for (const targetLang of targetLanguages) {
     if (targetLang.toLowerCase() === sourceLanguage.toLowerCase()) {
-      // Skip if target is same as source
+      console.log(`[aiTranslationService] Skipping ${targetLang} because it is the source language`);
       continue;
     }
 
@@ -101,7 +138,7 @@ Important:
     try {
       console.log(`[aiTranslationService] Translating to ${targetLang}...`);
 
-      const response = await openai.chat.completions.create({
+      const options: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming = {
         model: translationModel,
         messages: [
           {
@@ -110,17 +147,29 @@ Important:
           },
         ],
         temperature: 0.3,
-        response_format: { type: "json_object" },
-      });
+      };
+
+      // Only use response_format for OpenAI models, as Ollama models might not support it reliably via the SDK
+      const modelLower = translationModel.toLowerCase();
+      const supportsJsonMode = !isOllama && !modelLower.startsWith("o1-");
+      
+      if (supportsJsonMode) {
+        options.response_format = { type: "json_object" };
+      }
+
+      const response = await openai.chat.completions.create(options);
 
       const content = response.choices[0]?.message?.content;
       if (!content) {
+        console.error(`[aiTranslationService] No content in response for ${targetLang}`);
         throw operationFailedError(`No translation received for ${targetLang}`, undefined, {
           targetLanguage: targetLang,
         });
       }
 
-      const parsed = JSON.parse(content) as { name?: string; description?: string };
+      console.log(`[aiTranslationService] Received response for ${targetLang}`);
+
+      const parsed = extractJson(content) as { name?: string; description?: string };
       translations[targetLang.toLowerCase()] = {
         name: parsed.name || "",
         description: parsed.description || "",
@@ -128,14 +177,27 @@ Important:
 
       console.log(`[aiTranslationService] Successfully translated to ${targetLang}`);
     } catch (error) {
+      console.error(`[aiTranslationService] Error translating to ${targetLang}:`, error);
+      
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const isConnectionError = errorMessage.includes("ECONNREFUSED") || 
+                               errorMessage.includes("fetch failed") || 
+                               errorMessage.includes("failed to fetch");
+
+      if (isOllama && isConnectionError) {
+        throw operationFailedError(
+          `Translation failed: Could not connect to Ollama server at ${OLLAMA_BASE_URL}. Please ensure the Ollama server is running and accessible.`,
+          undefined,
+          { originalError: errorMessage, url: OLLAMA_BASE_URL }
+        );
+      }
+
       await ErrorSystem.captureException(error, {
         service: "ai-translation-service",
         targetLanguage: targetLang,
         productName
       });
       
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-
       // If this is an API key error, throw it to fail the entire job
       if (errorMessage.includes("API key") || errorMessage.includes("401") || errorMessage.includes("authentication")) {
         throw apiKeyInvalidError(

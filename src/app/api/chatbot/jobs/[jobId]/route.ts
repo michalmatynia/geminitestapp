@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/shared/lib/db/prisma";
+import { chatbotJobRepository } from "@/features/chatbot/services/chatbot-job-repository";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {
   badRequestError,
   conflictError,
-  internalError,
   notFoundError,
 } from "@/shared/errors/app-error";
 import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
@@ -22,16 +21,8 @@ async function GET_handler(
   { params }: { params: Promise<{ jobId: string }> }
 ) {
   try {
-    if (!("chatbotJob" in prisma)) {
-      return createErrorResponse(
-        internalError(
-          "Chatbot jobs not initialized. Run prisma generate/db push."
-        ),
-        { request: req, source: "chatbot.jobs.[jobId].GET" }
-      );
-    }
     const { jobId } = await params;
-    const job = await prisma.chatbotJob.findUnique({ where: { id: jobId } });
+    const job = await chatbotJobRepository.findById(jobId);
     if (!job) {
       return createErrorResponse(notFoundError("Job not found."), {
         request: req,
@@ -53,14 +44,6 @@ async function POST_handler(
   { params }: { params: Promise<{ jobId: string }> }
 ) {
   try {
-    if (!("chatbotJob" in prisma)) {
-      return createErrorResponse(
-        internalError(
-          "Chatbot jobs not initialized. Run prisma generate/db push."
-        ),
-        { request: req, source: "chatbot.jobs.[jobId].POST" }
-      );
-    }
     const { jobId } = await params;
     const parsed = await parseJsonBody(req, jobActionSchema, {
       logPrefix: "chatbot.jobs.POST",
@@ -74,7 +57,7 @@ async function POST_handler(
         source: "chatbot.jobs.[jobId].POST",
       });
     }
-    const job = await prisma.chatbotJob.findUnique({ where: { id: jobId } });
+    const job = await chatbotJobRepository.findById(jobId);
     if (!job) {
       return createErrorResponse(notFoundError("Job not found."), {
         request: req,
@@ -84,14 +67,14 @@ async function POST_handler(
     if (["completed", "failed", "canceled"].includes(job.status)) {
       return NextResponse.json({ status: job.status });
     }
-    const updated = await prisma.chatbotJob.update({
-      where: { id: jobId },
-      data: { status: "canceled", finishedAt: new Date() },
+    const updated = await chatbotJobRepository.update(jobId, {
+      status: "canceled",
+      finishedAt: new Date(),
     });
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][jobs][POST] Canceled", { jobId });
     }
-    return NextResponse.json({ status: updated.status });
+    return NextResponse.json({ status: updated?.status });
   } catch (error) {
     return createErrorResponse(error, {
       request: req,
@@ -106,16 +89,8 @@ async function DELETE_handler(
   { params }: { params: Promise<{ jobId: string }> }
 ) {
   try {
-    if (!("chatbotJob" in prisma)) {
-      return createErrorResponse(
-        internalError(
-          "Chatbot jobs not initialized. Run prisma generate/db push."
-        ),
-        { request: req, source: "chatbot.jobs.[jobId].DELETE" }
-      );
-    }
     const { jobId } = await params;
-    const job = await prisma.chatbotJob.findUnique({ where: { id: jobId } });
+    const job = await chatbotJobRepository.findById(jobId);
     if (!job) {
       return createErrorResponse(notFoundError("Job not found."), {
         request: req,
@@ -131,12 +106,12 @@ async function DELETE_handler(
       );
     }
     if (job.status === "running" && force) {
-      await prisma.chatbotJob.update({
-        where: { id: jobId },
-        data: { status: "failed", finishedAt: new Date() },
+      await chatbotJobRepository.update(jobId, {
+        status: "failed",
+        finishedAt: new Date(),
       });
     }
-    await prisma.chatbotJob.delete({ where: { id: jobId } });
+    await chatbotJobRepository.delete(jobId);
     if (DEBUG_CHATBOT) {
       console.info("[chatbot][jobs][DELETE] Deleted", { jobId });
     }

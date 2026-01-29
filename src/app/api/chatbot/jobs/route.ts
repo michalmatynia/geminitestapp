@@ -1,19 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { ChatbotJobStatus } from "@prisma/client";
-import prisma from "@/shared/lib/db/prisma";
+import { chatbotJobRepository } from "@/features/chatbot/services/chatbot-job-repository";
+import { chatbotSessionRepository } from "@/features/chatbot/services/chatbot-session-repository";
 import { startChatbotJobQueue } from "@/features/jobs/server";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
-import { badRequestError, internalError, notFoundError } from "@/shared/errors/app-error";
-import { apiHandler } from "@/shared/lib/api/api-handler";
+import { badRequestError, notFoundError } from "@/shared/errors/app-error";
+import { apiHandler, type ApiHandlerContext } from "@/shared/lib/api/api-handler";
+import type { ChatMessage, ChatbotJobStatus } from "@/shared/types/chatbot";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
-
-type ChatMessage = {
-  role: "user" | "assistant" | "system";
-  content: string;
-};
 
 const chatMessageSchema = z.object({
   role: z.enum(["user", "assistant", "system"]),
@@ -27,24 +23,15 @@ const enqueueJobSchema = z.object({
   userMessage: z.string().trim().optional(),
 });
 
-async function GET_handler(req: Request) {
+async function GET_handler(req: NextRequest, ctx: ApiHandlerContext) {
   try {
-    if (!("chatbotJob" in prisma)) {
-      return createErrorResponse(
-        internalError(
-          "Chatbot jobs not initialized. Run prisma generate/db push."
-        ),
-        { request: req, source: "chatbot.jobs.GET" }
-      );
-    }
-
-    const jobs = await prisma.chatbotJob.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    });
+    const jobs = await chatbotJobRepository.findAll(50);
 
     if (DEBUG_CHATBOT) {
-      console.info("[chatbot][jobs][GET] Listed", { count: jobs.length });
+      console.info("[chatbot][jobs][GET] Listed", { 
+        count: jobs.length,
+        requestId: ctx.requestId 
+      });
     }
 
     return NextResponse.json({ jobs });
@@ -57,28 +44,18 @@ async function GET_handler(req: Request) {
   }
 }
 
-async function POST_handler(req: Request) {
+async function POST_handler(req: NextRequest, ctx: ApiHandlerContext) {
   try {
-    if (!("chatbotJob" in prisma) || !("chatbotSession" in prisma)) {
-      return createErrorResponse(
-        internalError(
-          "Chatbot jobs not initialized. Run prisma generate/db push."
-        ),
-        { request: req, source: "chatbot.jobs.POST" }
-      );
-    }
-
-    const parsed = await parseJsonBody(req, enqueueJobSchema, {
+    const result = await parseJsonBody(req, enqueueJobSchema, {
       logPrefix: "chatbot.jobs.POST",
     });
-    if (!parsed.ok) {
-      return parsed.response;
+    
+    if (!result.ok) {
+      return result.response;
     }
 
-    const session = await prisma.chatbotSession.findUnique({
-      where: { id: parsed.data.sessionId },
-      select: { id: true },
-    });
+    const { data } = result;
+    const session = await chatbotSessionRepository.findById(data.sessionId);
 
     if (!session) {
       return createErrorResponse(notFoundError("Session not found."), {
@@ -87,42 +64,29 @@ async function POST_handler(req: Request) {
       });
     }
 
-    const trimmedUserMessage = parsed.data.userMessage?.trim();
+    const trimmedUserMessage = data.userMessage?.trim();
     if (trimmedUserMessage) {
-      const latest = await prisma.chatbotMessage.findFirst({
-        where: { sessionId: parsed.data.sessionId },
-        orderBy: { createdAt: "desc" },
-        select: { role: true, content: true },
-      });
+      const latest = session.messages[session.messages.length - 1];
 
       if (
         !latest ||
         latest.role !== "user" ||
         latest.content !== trimmedUserMessage
       ) {
-        await prisma.chatbotMessage.create({
-          data: {
-            sessionId: parsed.data.sessionId,
-            role: "user",
-            content: trimmedUserMessage,
-          },
-        });
-
-        await prisma.chatbotSession.update({
-          where: { id: parsed.data.sessionId },
-          data: { updatedAt: new Date() },
+        await chatbotSessionRepository.addMessage(session.id, {
+          role: "user",
+          content: trimmedUserMessage,
+          timestamp: new Date(),
         });
       }
     }
 
-    const job = await prisma.chatbotJob.create({
-      data: {
-        sessionId: parsed.data.sessionId,
-        model: parsed.data.model,
-        payload: {
-          model: parsed.data.model,
-          messages: parsed.data.messages as ChatMessage[],
-        },
+    const job = await chatbotJobRepository.create({
+      sessionId: session.id,
+      model: data.model,
+      payload: {
+        model: data.model,
+        messages: data.messages as ChatMessage[],
       },
     });
 
@@ -132,6 +96,7 @@ async function POST_handler(req: Request) {
       console.info("[chatbot][jobs][POST] Queued", {
         jobId: job.id,
         sessionId: job.sessionId,
+        requestId: ctx.requestId,
       });
     }
 
@@ -145,21 +110,11 @@ async function POST_handler(req: Request) {
   }
 }
 
-async function DELETE_handler(req: Request) {
+async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext) {
   try {
-    if (!("chatbotJob" in prisma)) {
-      return createErrorResponse(
-        internalError(
-          "Chatbot jobs not initialized. Run prisma generate/db push."
-        ),
-        { request: req, source: "chatbot.jobs.DELETE" }
-      );
-    }
-
     const url = new URL(req.url);
     const scope = url.searchParams.get("scope") ?? "terminal";
 
-    // Why: We use string literals directly to avoid flaky Prisma enum import issues.
     const terminalStatuses: ChatbotJobStatus[] = ["completed", "failed", "canceled"];
 
     if (scope !== "terminal") {
@@ -169,15 +124,16 @@ async function DELETE_handler(req: Request) {
       });
     }
 
-    const result = await prisma.chatbotJob.deleteMany({
-      where: { status: { in: terminalStatuses } },
-    });
+    const deletedCount = await chatbotJobRepository.deleteMany(terminalStatuses);
 
     if (DEBUG_CHATBOT) {
-      console.info("[chatbot][jobs][DELETE] Deleted", { count: result.count });
+      console.info("[chatbot][jobs][DELETE] Deleted", { 
+        count: deletedCount,
+        requestId: ctx.requestId 
+      });
     }
 
-    return NextResponse.json({ deleted: result.count });
+    return NextResponse.json({ deleted: deletedCount });
   } catch (error) {
     return createErrorResponse(error, {
       request: req,

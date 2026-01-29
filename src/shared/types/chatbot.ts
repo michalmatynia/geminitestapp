@@ -41,6 +41,34 @@ export interface ChatSessionDocument {
   settings?: ChatSession["settings"];
 }
 
+export type ChatbotJobStatus = "pending" | "running" | "completed" | "failed" | "canceled";
+
+export interface ChatbotJob {
+  id: string;
+  sessionId: string;
+  status: ChatbotJobStatus;
+  model?: string | undefined;
+  payload: ChatbotJobPayload;
+  resultText?: string | undefined;
+  errorMessage?: string | undefined;
+  createdAt: Date;
+  startedAt?: Date | undefined;
+  finishedAt?: Date | undefined;
+}
+
+export interface ChatbotJobDocument {
+  _id: ObjectId;
+  sessionId: string;
+  status: ChatbotJobStatus;
+  model?: string | undefined;
+  payload: ChatbotJobPayload;
+  resultText?: string | undefined;
+  errorMessage?: string | undefined;
+  createdAt: Date;
+  startedAt?: Date | undefined;
+  finishedAt?: Date | undefined;
+}
+
 export type ChatbotJobPayload = {
   messages: ChatMessage[];
   model: string;

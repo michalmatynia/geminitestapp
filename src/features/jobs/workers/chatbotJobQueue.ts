@@ -1,5 +1,5 @@
-import prisma from "@/shared/lib/db/prisma";
-import type { ChatbotJobPayload } from "@/shared/types/chatbot";
+import { chatbotJobRepository } from "@/features/chatbot/services/chatbot-job-repository";
+import { chatbotSessionRepository } from "@/features/chatbot/services/chatbot-session-repository";
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 const DEBUG_CHATBOT = process.env.NODE_ENV !== "production";
@@ -22,16 +22,11 @@ const fetchWithTimeout = async (url: string, init: RequestInit, timeoutMs: numbe
   }
 };
 
-const ensureJobModel = () =>
-  "chatbotJob" in prisma &&
-  "chatbotMessage" in prisma &&
-  "chatbotSession" in prisma;
-
 const processJob = async (jobId: string) => {
-  if (!ensureJobModel()) return;
-  const job = await prisma.chatbotJob.findUnique({ where: { id: jobId } });
+  const job = await chatbotJobRepository.findById(jobId);
   if (!job || job.status !== "running") return;
-  const payload = job.payload as unknown as ChatbotJobPayload;
+  
+  const payload = job.payload;
   if (!payload?.model || !Array.isArray(payload?.messages)) {
     throw new Error("Invalid job payload.");
   }
@@ -61,43 +56,30 @@ const processJob = async (jobId: string) => {
   };
   const reply = data.message?.content || data.response || "No response from model.";
 
-  await prisma.chatbotMessage.create({
-    data: {
-      sessionId: job.sessionId,
-      role: "assistant",
-      content: reply,
-    },
+  await chatbotSessionRepository.addMessage(job.sessionId, {
+    role: "assistant",
+    content: reply,
+    timestamp: new Date(),
   });
 
-  await prisma.chatbotSession.update({
-    where: { id: job.sessionId },
-    data: { updatedAt: new Date() },
-  });
-
-  await prisma.chatbotJob.update({
-    where: { id: job.id },
-    data: {
-      status: "completed",
-      finishedAt: new Date(),
-      resultText: reply.slice(0, 2000),
-    },
+  await chatbotJobRepository.update(job.id, {
+    status: "completed",
+    finishedAt: new Date(),
+    resultText: reply.slice(0, 2000),
   });
 };
 
 const pollQueue = async () => {
-  if (!ensureJobModel() || isProcessing) return;
+  if (isProcessing) return;
   isProcessing = true;
   try {
-    const nextJob = await prisma.chatbotJob.findFirst({
-      where: { status: "pending" },
-      orderBy: { createdAt: "asc" },
-    });
+    const nextJob = await chatbotJobRepository.findNextPending();
 
     if (!nextJob) return;
 
-    await prisma.chatbotJob.update({
-      where: { id: nextJob.id },
-      data: { status: "running", startedAt: new Date() },
+    await chatbotJobRepository.update(nextJob.id, {
+      status: "running",
+      startedAt: new Date(),
     });
 
     logDebug("Processing job", { jobId: nextJob.id });
@@ -107,13 +89,10 @@ const pollQueue = async () => {
       logDebug("Job completed", { jobId: nextJob.id });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Job failed.";
-      await prisma.chatbotJob.update({
-        where: { id: nextJob.id },
-        data: {
-          status: "failed",
-          finishedAt: new Date(),
-          errorMessage: message,
-        },
+      await chatbotJobRepository.update(nextJob.id, {
+        status: "failed",
+        finishedAt: new Date(),
+        errorMessage: message,
       });
       logDebug("Job failed", { jobId: nextJob.id, message });
     }

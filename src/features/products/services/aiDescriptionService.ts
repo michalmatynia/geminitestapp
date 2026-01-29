@@ -8,7 +8,11 @@ import { getImageFileRepository } from "@/features/files/server";
 import type { ProductFormData } from "@/features/products/types";
 import fs from "fs/promises";
 import path from "path";
-import { badRequestError, configurationError } from "@/shared/errors/app-error";
+import {
+  badRequestError,
+  configurationError,
+  operationFailedError,
+} from "@/shared/errors/app-error";
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 
@@ -87,14 +91,17 @@ function getClient(modelName: string, apiKey: string | null) {
     if (!apiKey) {
       throw configurationError("OpenAI API key is missing for GPT model.");
     }
-    return new OpenAI({ apiKey });
+    return { openai: new OpenAI({ apiKey }), isOllama: false };
   }
 
   // All other models use Ollama
-  return new OpenAI({
-    baseURL: `${OLLAMA_BASE_URL}/v1`,
-    apiKey: "ollama",
-  });
+  return {
+    openai: new OpenAI({
+      baseURL: `${OLLAMA_BASE_URL}/v1`,
+      apiKey: "ollama",
+    }),
+    isOllama: true
+  };
 }
 
 export async function generateProductDescription(params: {
@@ -197,68 +204,100 @@ export async function generateProductDescription(params: {
 
   let analysisInitial = "";
   let analysisFinal = "";
-  const visionClient = getClient(visionModel, apiKey);
+  const { openai: visionClient, isOllama: isVisionOllama } = getClient(visionModel, apiKey);
 
-  const prompt1_1 = processPrompt(visionInputPrompt);
-  const content1_1: ChatCompletionContentPart[] = [{ type: "text", text: prompt1_1.text }];
-  if (prompt1_1.attachImages) content1_1.push(...processedImages);
+  try {
+    const prompt1_1 = processPrompt(visionInputPrompt);
+    const content1_1: ChatCompletionContentPart[] = [{ type: "text", text: prompt1_1.text }];
+    if (prompt1_1.attachImages) content1_1.push(...processedImages);
 
-  const visionCompletion = await visionClient.chat.completions.create({
-    model: visionModel,
-    messages: [
-      { role: "system", content: "You are an AI assistant." },
-      { role: "user", content: content1_1 }
-    ],
-    max_tokens: 500,
-  });
-  analysisInitial = visionCompletion.choices[0]?.message.content?.trim() || "";
-
-  if (isVisionOutputEnabled && visionOutputPrompt) {
-    const prompt1_2 = processPrompt(visionOutputPrompt, analysisInitial, analysisInitial);
-    const content1_2: ChatCompletionContentPart[] = [{ type: "text", text: prompt1_2.text }];
-    if (prompt1_2.attachImages) content1_2.push(...processedImages);
-    const refineCompletion = await visionClient.chat.completions.create({
+    const visionCompletion = await visionClient.chat.completions.create({
       model: visionModel,
       messages: [
         { role: "system", content: "You are an AI assistant." },
-        { role: "user", content: content1_2 }
+        { role: "user", content: content1_1 }
       ],
       max_tokens: 500,
     });
-    analysisFinal = refineCompletion.choices[0]?.message.content?.trim() || "";
+    analysisInitial = visionCompletion.choices[0]?.message.content?.trim() || "";
+
+    if (isVisionOutputEnabled && visionOutputPrompt) {
+      const prompt1_2 = processPrompt(visionOutputPrompt, analysisInitial, analysisInitial);
+      const content1_2: ChatCompletionContentPart[] = [{ type: "text", text: prompt1_2.text }];
+      if (prompt1_2.attachImages) content1_2.push(...processedImages);
+      const refineCompletion = await visionClient.chat.completions.create({
+        model: visionModel,
+        messages: [
+          { role: "system", content: "You are an AI assistant." },
+          { role: "user", content: content1_2 }
+        ],
+        max_tokens: 500,
+      });
+      analysisFinal = refineCompletion.choices[0]?.message.content?.trim() || "";
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const isConnectionError = errorMessage.includes("ECONNREFUSED") || 
+                             errorMessage.includes("fetch failed") || 
+                             errorMessage.includes("failed to fetch");
+
+    if (isVisionOllama && isConnectionError) {
+      throw operationFailedError(
+        `Description generation failed: Could not connect to Ollama server at ${OLLAMA_BASE_URL}. Please ensure the Ollama server is running and accessible.`,
+        undefined,
+        { originalError: errorMessage, url: OLLAMA_BASE_URL, model: visionModel }
+      );
+    }
+    throw error;
   }
 
   const visionResultForNext = analysisFinal || analysisInitial;
-  const generationClient = getClient(generationModel, apiKey);
+  const { openai: generationClient, isOllama: isGenerationOllama } = getClient(generationModel, apiKey);
   let descriptionInitial = "";
   let descriptionFinal = "";
 
-  const prompt2_1 = processPrompt(generationInputPrompt, visionResultForNext, visionResultForNext);
-  const content2_1: ChatCompletionContentPart[] = [{ type: "text", text: prompt2_1.text }];
-  if (prompt2_1.attachImages) content2_1.push(...processedImages);
-  const genCompletion = await generationClient.chat.completions.create({
-    model: generationModel,
-    messages: [
-      { role: "system", content: "You are a helpful assistant." },
-      { role: "user", content: content2_1 }
-    ],
-    max_tokens: 1000,
-  });
-  descriptionInitial = genCompletion.choices[0]?.message.content?.trim() || "";
-
-  if (isGenerationOutputEnabled && generationOutputPrompt) {
-    const prompt2_2 = processPrompt(generationOutputPrompt, descriptionInitial, visionResultForNext, descriptionInitial);
-    const content2_2: ChatCompletionContentPart[] = [{ type: "text", text: prompt2_2.text }];
-    if (prompt2_2.attachImages) content2_2.push(...processedImages);
-    const refineGenCompletion = await generationClient.chat.completions.create({
+  try {
+    const prompt2_1 = processPrompt(generationInputPrompt, visionResultForNext, visionResultForNext);
+    const content2_1: ChatCompletionContentPart[] = [{ type: "text", text: prompt2_1.text }];
+    if (prompt2_1.attachImages) content2_1.push(...processedImages);
+    const genCompletion = await generationClient.chat.completions.create({
       model: generationModel,
       messages: [
         { role: "system", content: "You are a helpful assistant." },
-        { role: "user", content: content2_2 }
+        { role: "user", content: content2_1 }
       ],
       max_tokens: 1000,
     });
-    descriptionFinal = refineGenCompletion.choices[0]?.message.content?.trim() || "";
+    descriptionInitial = genCompletion.choices[0]?.message.content?.trim() || "";
+
+    if (isGenerationOutputEnabled && generationOutputPrompt) {
+      const prompt2_2 = processPrompt(generationOutputPrompt, descriptionInitial, visionResultForNext, descriptionInitial);
+      const content2_2: ChatCompletionContentPart[] = [{ type: "text", text: prompt2_2.text }];
+      if (prompt2_2.attachImages) content2_2.push(...processedImages);
+      const refineGenCompletion = await generationClient.chat.completions.create({
+        model: generationModel,
+        messages: [
+          { role: "system", content: "You are a helpful assistant." },
+          { role: "user", content: content2_2 }
+        ],
+        max_tokens: 1000,
+      });
+      descriptionFinal = refineGenCompletion.choices[0]?.message.content?.trim() || "";
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const isConnectionError = errorMessage.includes("ECONNREFUSED") || 
+                             errorMessage.includes("fetch failed") || 
+                             errorMessage.includes("failed to fetch");
+
+    if (isGenerationOllama && isConnectionError) {
+      throw operationFailedError(
+        `Description generation failed: Could not connect to Ollama server at ${OLLAMA_BASE_URL}. Please ensure the Ollama server is running and accessible.`,
+        undefined,
+        { originalError: errorMessage, url: OLLAMA_BASE_URL, model: generationModel }
+      );
+    }
+    throw error;
   }
 
   return {

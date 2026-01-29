@@ -49,7 +49,7 @@ async function browseMongoCollection(params: BrowseParams): Promise<BrowseRespon
   ]);
 
   // Convert ObjectId and Date to strings for JSON serialization
-  const serializedDocs = documents.map((doc) => {
+  const serializedDocs = (documents as Record<string, unknown>[]).map((doc: Record<string, unknown>) => {
     const serialized: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(doc)) {
       if (value instanceof ObjectId) {
@@ -57,7 +57,7 @@ async function browseMongoCollection(params: BrowseParams): Promise<BrowseRespon
       } else if (value instanceof Date) {
         serialized[key] = value.toISOString();
       } else if (Array.isArray(value)) {
-        serialized[key] = (value as unknown[]).map((item) => {
+        serialized[key] = (value as unknown[]).map((item: unknown) => {
           if (item instanceof ObjectId) {
             return item.toString();
           }

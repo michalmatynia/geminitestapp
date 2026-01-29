@@ -55,7 +55,7 @@ export default async function HomePage() {
 
   const cmsRepository = await getCmsRepository();
   const slugs = await cmsRepository.getSlugs();
-  const defaultSlug = slugs.find(s => s.isDefault);
+  const defaultSlug = slugs.find((s: { isDefault: boolean }) => s.isDefault);
 
   type MaybeImages = {
     images?: (ProductWithImages["images"][number] | null)[] | null;
@@ -159,7 +159,7 @@ export default async function HomePage() {
         <section className="w-full py-12">
           <div className="container px-4 md:px-6">
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {products.map((product) => (
+              {products.map((product: ProductWithImages) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>

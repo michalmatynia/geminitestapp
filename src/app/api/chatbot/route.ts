@@ -50,7 +50,7 @@ const cleanupChatbotTemp = async () => {
     const entries = await fs.readdir(chatbotTempRoot, { withFileTypes: true });
 
     await Promise.all(
-      entries.map(async (entry) => {
+      entries.map(async (entry: import("fs").Dirent) => {
         const fullPath = path.join(chatbotTempRoot, entry.name);
         try {
           const stats = await fs.stat(fullPath);
@@ -162,12 +162,12 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext) {
       const files = formData.getAll("files");
 
       const imageFiles = files.filter(
-        (file): file is File =>
+        (file: FormDataEntryValue): file is File =>
           file instanceof File && file.type.startsWith("image/")
       );
 
       const otherFiles = files.filter(
-        (file): file is File =>
+        (file: FormDataEntryValue): file is File =>
           file instanceof File && !file.type.startsWith("image/")
       );
 
@@ -287,7 +287,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext) {
     }
 
     const hasValidMessages = messages.every(
-      (message) =>
+      (message: ChatMessage) =>
         typeof message?.role === "string" &&
         typeof message?.content === "string" &&
         message.content.trim().length > 0
@@ -300,7 +300,7 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext) {
       });
     }
 
-    if (messages.some((message) => message.content.length > 10000)) {
+    if (messages.some((message: ChatMessage) => message.content.length > 10000)) {
       return createErrorResponse(badRequestError("Message content too large."), {
         request: req,
         source: "chatbot.POST",

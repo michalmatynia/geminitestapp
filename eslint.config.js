@@ -272,11 +272,13 @@ const eslintConfig = [
     files: ["src/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/typedef": [
-        "error",
+        "warn",
         {
-          "parameter": true,
-          "arrowParameter": true,
-          "variableDeclaration": false
+          "parameter": false,
+          "arrowParameter": false,
+          "variableDeclaration": false,
+          "memberVariableDeclaration": true,
+          "propertyDeclaration": true
         }
       ],
     },

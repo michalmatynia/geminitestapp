@@ -15,7 +15,7 @@ import {
 import { parseJsonSetting, serializeSetting } from "@/shared/utils/settings-json";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
 
-const toNumber = (value: string, fallback: number, min = 0) => {
+const toNumber = (value: string, fallback: number, min: number = 0) => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed < min) return fallback;
   return parsed;

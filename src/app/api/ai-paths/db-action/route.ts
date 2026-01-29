@@ -99,7 +99,7 @@ const normalizeUpdateDoc = (update: unknown): Record<string, unknown> | unknown[
   if (Array.isArray(update)) return update as unknown[];
   if (update && typeof update === "object") {
     const keys = Object.keys(update as Record<string, unknown>);
-    if (keys.some((key) => key.startsWith("$"))) {
+    if (keys.some((key: string) => key.startsWith("$"))) {
       return update as Record<string, unknown>;
     }
     return { $set: update } as Record<string, unknown>;
@@ -110,7 +110,7 @@ const normalizeUpdateDoc = (update: unknown): Record<string, unknown> | unknown[
 const normalizeReplaceDoc = (update: unknown) => {
   if (update && typeof update === "object" && !Array.isArray(update)) {
     const keys = Object.keys(update as Record<string, unknown>);
-    if (keys.some((key) => key.startsWith("$"))) {
+    if (keys.some((key: string) => key.startsWith("$"))) {
       return null;
     }
     return update as Record<string, unknown>;

@@ -30,10 +30,10 @@ async function getBackups(type: "postgresql" | "mongodb"): Promise<DatabaseInfo[
   }
 
   const files = await fs.readdir(backupsDir);
-  const backupFiles = files.filter((file) => file.endsWith(extension));
+  const backupFiles = files.filter((file: string) => file.endsWith(extension));
 
   const backups = await Promise.all(
-    backupFiles.map(async (file) => {
+    backupFiles.map(async (file: string) => {
       const filePath = path.join(backupsDir, file);
       const stats = await fs.stat(filePath);
       return {

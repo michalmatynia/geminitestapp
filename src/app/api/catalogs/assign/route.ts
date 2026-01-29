@@ -32,8 +32,8 @@ async function POST_handler(req: Request) {
     const catalogRepository = await getCatalogRepository();
     const existingCatalogs =
       await catalogRepository.getCatalogsByIds(uniqueCatalogIds);
-    const existingIds = new Set(existingCatalogs.map((entry) => entry.id));
-    const validCatalogIds = uniqueCatalogIds.filter((id) => existingIds.has(id));
+    const existingIds = new Set(existingCatalogs.map((entry: { id: string }) => entry.id));
+    const validCatalogIds = uniqueCatalogIds.filter((id: string) => existingIds.has(id));
     if (validCatalogIds.length === 0) {
       throw badRequestError("No valid catalogs found.", {
         catalogIds: uniqueCatalogIds,
@@ -49,14 +49,14 @@ async function POST_handler(req: Request) {
         continue;
       }
       const existingCatalogIds = product.catalogs.map(
-        (entry) => entry.catalogId
+        (entry: { catalogId: string }) => entry.catalogId
       );
       let nextCatalogIds = existingCatalogIds;
       if (mode === "replace") {
         nextCatalogIds = validCatalogIds;
       } else if (mode === "remove") {
         nextCatalogIds = existingCatalogIds.filter(
-          (catalogId) => !validCatalogIds.includes(catalogId)
+          (catalogId: string) => !validCatalogIds.includes(catalogId)
         );
       } else {
         nextCatalogIds = Array.from(

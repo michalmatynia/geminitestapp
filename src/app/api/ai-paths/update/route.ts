@@ -51,7 +51,7 @@ const applyAppendMode = (
   current: Record<string, unknown>
 ) => {
   const next: Record<string, unknown> = {};
-  Object.entries(updates).forEach(([key, value]) => {
+  Object.entries(updates).forEach(([key, value]: [string, unknown]) => {
     next[key] = mergeAppendValue(current[key], value);
   });
   return next;

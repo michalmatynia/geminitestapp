@@ -51,12 +51,12 @@ async function POST_handler(req: Request) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const result = await pdfParse(buffer);
     const rawText = result.text || "";
-    const pages = rawText.split("\f").map((chunk) => chunk.trim());
+    const pages = rawText.split("\f").map((chunk: string) => chunk.trim());
     const segments: Array<{ title: string; content: string }> = [];
 
     const baseName = file.name.replace(/\.pdf$/i, "");
     if (pages.length > 1) {
-      pages.forEach((pageText, index) => {
+      pages.forEach((pageText: string, index: number) => {
         if (!pageText) return;
         const chunks = chunkText(pageText, 2000);
         if (chunks.length <= 1) {
@@ -65,7 +65,7 @@ async function POST_handler(req: Request) {
             content: pageText,
           });
         } else {
-          chunks.forEach((chunk, chunkIndex) => {
+          chunks.forEach((chunk: string, chunkIndex: number) => {
             segments.push({
               title: `${baseName} (page ${index + 1}.${chunkIndex + 1})`,
               content: chunk,
@@ -75,7 +75,7 @@ async function POST_handler(req: Request) {
       });
     } else {
       const chunks = chunkText(rawText, 2000);
-      chunks.forEach((chunk, index) => {
+      chunks.forEach((chunk: string, index: number) => {
         segments.push({
           title: chunks.length === 1 ? baseName : `${baseName} (part ${index + 1})`,
           content: chunk,

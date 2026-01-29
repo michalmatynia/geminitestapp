@@ -36,7 +36,7 @@ async function POST_handler(req: Request) {
         status: "dead_lettered",
         ...(limit ? { limit } : {}),
       });
-      targetRunIds = runs.map((run) => run.id);
+      targetRunIds = runs.map((run: { id: string }) => run.id);
     }
 
     if (targetRunIds.length === 0) {

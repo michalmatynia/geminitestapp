@@ -97,7 +97,7 @@ async function getMongoSchema(): Promise<SchemaResponse> {
     }
 
     // Sort fields: _id first, then alphabetically
-    fields.sort((a, b) => {
+    fields.sort((a: FieldInfo, b: FieldInfo) => {
       if (a.name === "_id") return -1;
       if (b.name === "_id") return 1;
       return a.name.localeCompare(b.name);
@@ -106,55 +106,35 @@ async function getMongoSchema(): Promise<SchemaResponse> {
     collections.push({ name: collName, fields });
   }
 
-  collections.sort((a, b) => a.name.localeCompare(b.name));
+  collections.sort((a: CollectionSchema, b: CollectionSchema) => a.name.localeCompare(b.name));
   return { provider: "mongodb", collections };
 }
 
 function getPrismaSchema(): SchemaResponse {
-  // Access Prisma's DMMF (Data Model Meta Format)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-  const dmmf = ((prisma as any)._dmmf?.datamodel ?? (prisma as any)._baseDmmf?.datamodel) as
-    | DmmfDatamodel
-    | undefined;
-
-  if (!dmmf?.models) {
-    return { provider: "prisma", collections: [] };
-  }
-
+  // @ts-expect-error - Accessing internal DMMF for schema introspection
+  const dmmf = prisma._dmmf?.datamodel as DmmfDatamodel;
   const collections: CollectionSchema[] = [];
 
-  for (const model of dmmf.models) {
-    const fields: FieldInfo[] = [];
-    const relations: string[] = [];
-
-    for (const field of model.fields) {
-      if (field.relationName) {
-        relations.push(field.type);
-        continue;
-      }
-
-      const fieldInfo: FieldInfo = {
+  if (dmmf?.models) {
+    for (const model of dmmf.models) {
+      const fields: FieldInfo[] = model.fields.map((field: DmmfField) => ({
         name: field.name,
         type: field.type,
-      };
-      if (field.isRequired) fieldInfo.isRequired = field.isRequired;
-      if (field.isId) fieldInfo.isId = field.isId;
-      if (field.isUnique) fieldInfo.isUnique = field.isUnique;
-      if (field.hasDefaultValue) fieldInfo.hasDefault = field.hasDefaultValue;
-      fields.push(fieldInfo);
-    }
+        isRequired: field.isRequired,
+        isId: field.isId,
+        isUnique: field.isUnique,
+        hasDefault: field.hasDefaultValue,
+        relationTo: field.relationName,
+      }));
 
-    const collectionSchema: CollectionSchema = {
-      name: model.name,
-      fields,
-    };
-    if (relations.length > 0) {
-      collectionSchema.relations = [...new Set(relations)];
+      collections.push({
+        name: model.name,
+        fields,
+      });
     }
-    collections.push(collectionSchema);
   }
 
-  collections.sort((a, b) => a.name.localeCompare(b.name));
+  collections.sort((a: CollectionSchema, b: CollectionSchema) => a.name.localeCompare(b.name));
   return { provider: "prisma", collections };
 }
 

@@ -21,6 +21,7 @@ import {
   fetchBaseWarehousesDebug,
   fetchBaseProducts,
   fetchBaseProductIds,
+  fetchBaseWarehouses as fetchBaseWarehousesOrig,
   fetchBaseProductDetails,
 } from "@/features/integrations/server";
 import { extractBaseImageUrls, mapBaseProduct } from "@/features/integrations/server";
@@ -44,6 +45,26 @@ const requestSchema = z.object({
   allowDuplicateSku: z.boolean().optional(), // Allow importing products with duplicate SKUs
   selectedIds: z.array(z.string().trim().min(1)).optional(),
 });
+
+type BaseRecord = {
+  id?: string | number;
+  product_id?: string | number;
+  base_product_id?: string | number;
+  name?: string;
+  [key: string]: unknown;
+};
+
+type MappedItem = {
+  baseProductId: string | null;
+  name: string;
+  sku: string | null;
+  exists: boolean;
+  skuExists: boolean;
+  description: string;
+  price: number;
+  stock: number;
+  image: string | null;
+};
 
 async function POST_handler(req: Request) {
   try {
@@ -215,8 +236,8 @@ async function POST_handler(req: Request) {
         return null;
       };
 
-      const mappedList = products
-        .map((record: any) => {
+      const mappedList: MappedItem[] = (products as BaseRecord[])
+        .map((record) => {
           const mapped = mapBaseProduct(record);
           const images = extractBaseImageUrls(record);
           const baseProductId =
@@ -253,9 +274,9 @@ async function POST_handler(req: Request) {
             image: images[0] ?? null,
           };
         })
-        .filter((item: any) => item.baseProductId);
+        .filter((item): item is MappedItem => Boolean(item.baseProductId));
 
-      const skuDuplicateCount = mappedList.filter((item: any) => item.skuExists).length;
+      const skuDuplicateCount = mappedList.filter((item) => item.skuExists).length;
 
       return NextResponse.json({
         products: mappedList,
@@ -312,9 +333,9 @@ async function POST_handler(req: Request) {
 
         productsToImport = products.filter((record) => {
           const baseProductId =
-            toStringId(record.base_product_id) ??
-            toStringId(record.product_id) ??
-            toStringId(record.id);
+            toStringId((record as BaseRecord).base_product_id) ??
+            toStringId((record as BaseRecord).product_id) ??
+            toStringId((record as BaseRecord).id);
           return baseProductId ? !existingIds.has(baseProductId) : true;
         });
       }

@@ -7,10 +7,11 @@ import { getProductRepository } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
+import type { ProductWithImages } from "@/features/products/server";
 
 const bulkJobSchema = z.object({
   type: z.string().trim().min(1),
-  config: z.record(z.string(), z["unknown"]()).optional(),
+  config: z.record(z.string(), z.any()).optional(),
 });
 
 async function POST_handler(req: NextRequest) {
@@ -37,7 +38,7 @@ async function POST_handler(req: NextRequest) {
     // Create jobs in bulk (using a transaction or loop)
     // For now, simple loop using the service
     const jobs = await Promise.all(
-      products.map((p) =>
+      products.map((p: ProductWithImages) =>
         enqueueProductAiJob(p.id, type as ProductAiJobType, {
           ...(config as Record<string, unknown>),
           // We don't include full product data here, 

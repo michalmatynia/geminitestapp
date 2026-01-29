@@ -107,7 +107,7 @@ async function POST_handler(req: Request) {
     if (previewMode === "backup") {
       const lines = output.split("\n");
       for (const line of lines) {
-        const type = knownTypes.find((candidate) =>
+        const type = knownTypes.find((candidate: string) =>
           line.includes(` ${candidate} `)
         );
         if (!type) continue;
@@ -180,10 +180,10 @@ async function POST_handler(req: Request) {
       const tablesResult = await previewClient.query<{ tablename: string }>(
         "SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename"
       );
-      const tables = tablesResult.rows.map((row) => row.tablename);
+      const tables = tablesResult.rows.map((row: { tablename: string }) => row.tablename);
       if (previewMode === "current") {
         tableSet.clear();
-        tables.forEach((table) => tableSet.add(table));
+        tables.forEach((table: string) => tableSet.add(table));
       }
 
       if (tables.length > 0) {
@@ -200,9 +200,9 @@ async function POST_handler(req: Request) {
           [tables]
         );
         const rowMap = new Map(
-          estimateRows.rows.map((row) => [row.relname, Number(row.reltuples)])
+          estimateRows.rows.map((row: { relname: string; reltuples: number }) => [row.relname, Number(row.reltuples)])
         );
-        tableStats = tables.map((name) => ({
+        tableStats = tables.map((name: string) => ({
           name,
           rowEstimate: rowMap.get(name) ?? 0,
         }));

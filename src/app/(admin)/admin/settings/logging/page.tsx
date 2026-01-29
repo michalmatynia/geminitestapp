@@ -1,6 +1,6 @@
 "use client";
 import { Button, useToast, Textarea, Label } from "@/shared/ui";
-import { useState } from "react";
+import { useState, ChangeEvent } from "react";
 
 
 import { CLIENT_LOGGING_KEYS } from "@/features/observability";
@@ -104,7 +104,7 @@ function LoggingSettingsForm({
             <Textarea
               className="min-h-[180px] w-full rounded-md border border-gray-800 bg-gray-900 p-2 text-xs text-gray-200"
               value={clientFlags}
-              onChange={(event) => {
+              onChange={(event: ChangeEvent<HTMLTextAreaElement>) => {
                 setClientFlags(event.target.value);
                 setDirty(true);
               }}
@@ -115,7 +115,7 @@ function LoggingSettingsForm({
             <Textarea
               className="min-h-[180px] w-full rounded-md border border-gray-800 bg-gray-900 p-2 text-xs text-gray-200"
               value={clientTags}
-              onChange={(event) => {
+              onChange={(event: ChangeEvent<HTMLTextAreaElement>) => {
                 setClientTags(event.target.value);
                 setDirty(true);
               }}

@@ -5,6 +5,7 @@ import type { ProductWithImages } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import { ErrorSystem } from "@/features/observability/server";
+import type { ImageFile } from "@prisma/client";
 
 async function GET_handler(req: Request) {
   try {
@@ -50,10 +51,10 @@ async function GET_handler(req: Request) {
         : null;
 
     const result = files
-      .filter((file: any) =>
+      .filter((file: ImageFile) =>
         allowedImageFileIds ? allowedImageFileIds.has(file.id) : true
       )
-      .map((file: any) => ({
+      .map((file: ImageFile) => ({
         ...file,
         products: imageFileToProducts.get(file.id) ?? [],
       }));

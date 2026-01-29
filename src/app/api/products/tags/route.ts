@@ -42,7 +42,7 @@ async function GET_handler(req: Request) {
         .find({ catalogId })
         .sort({ name: 1 })
         .toArray();
-      const normalized = tags.map((tag: any) => {
+      const normalized = tags.map((tag: Record<string, unknown>) => {
         const { _id, ...rest } = tag as unknown as {
           _id?: { toString?: () => string };
         } & Record<string, unknown>;
@@ -143,7 +143,7 @@ async function POST_handler(req: Request) {
   } catch (error: unknown) {
     return createErrorResponse(error, {
       request: req,
-      source: "products.tags.POST",
+      source: "product-tags.POST",
       fallbackMessage: "Failed to create product tag",
     });
   }

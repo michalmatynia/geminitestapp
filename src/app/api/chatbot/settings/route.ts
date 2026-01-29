@@ -12,7 +12,7 @@ const DEFAULT_SETTINGS_KEY = "default";
 
 const settingsSchema = z.object({
   key: z.string().trim().optional(),
-  settings: z.record(z.string(), z.unknown()).optional(),
+  settings: z.record(z.string(), z.any()).optional(),
 });
 
 async function GET_handler(req: Request) {

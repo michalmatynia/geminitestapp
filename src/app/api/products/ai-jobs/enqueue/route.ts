@@ -10,7 +10,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 const enqueueSchema = z.object({
   productId: z.string().trim().min(1),
   type: z.string().trim().min(1),
-  payload: z.record(z.string(), z["unknown"]()).optional(),
+  payload: z.record(z.string(), z.unknown()).optional(),
 });
 
 async function POST_handler(req: NextRequest) {
@@ -39,7 +39,7 @@ async function POST_handler(req: NextRequest) {
 
       // Process the job asynchronously but log any errors
       processSingleJob(job.id)
-        .then(() => {
+        .then((): void => {
           console.log(`[api/products/ai-jobs/enqueue] Job ${job.id} processing initiated successfully`);
         })
         .catch((err: unknown) => {

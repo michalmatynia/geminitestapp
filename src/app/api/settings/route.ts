@@ -66,7 +66,7 @@ const upsertMongoSetting = async (
   const mongo = await getMongoDb();
   const now = new Date();
   await mongo.collection<SettingDocument>(SETTINGS_COLLECTION).updateOne(
-    { _id: key as any },
+    { _id: key as unknown as any },
     {
       $set: { key, value, updatedAt: now },
       $setOnInsert: { createdAt: now },

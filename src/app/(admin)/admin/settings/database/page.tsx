@@ -1,7 +1,7 @@
 "use client";
 
 import { useToast, Button, Label } from "@/shared/ui";
-import { useMemo, useState } from "react";
+import { useMemo, useState, ChangeEvent } from "react";
 import { useSettingsMap, useUpdateSetting } from "@/shared/hooks/useSettings";
 
 
@@ -101,7 +101,7 @@ function DatabaseSettingsForm({ initialProvider }: { initialProvider: ProviderVa
             id="app-db-provider"
             className="w-full rounded-md border border-gray-800 bg-gray-950 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-600 disabled:cursor-not-allowed disabled:text-gray-500"
             value={provider}
-            onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
+            onChange={(event: ChangeEvent<HTMLSelectElement>) => {
               const value = event.target.value === "mongodb" ? "mongodb" : "prisma";
               setProvider(value);
               setDirty(true);

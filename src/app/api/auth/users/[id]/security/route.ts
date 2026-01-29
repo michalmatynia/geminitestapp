@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { updateAuthSecurityProfile, getAuthSecurityProfile } from "@/features/auth/server";
 import { internalError, authError } from "@/shared/errors/app-error";
 import { auth } from "@/features/auth/server";
-import { apiHandlerWithParams } from "@/shared/lib/api/api-handler";
+import { apiHandlerWithParams, type ApiHandlerContext } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
@@ -98,5 +98,5 @@ async function PATCH_handler(req: Request, context: { params: Promise<{ id: stri
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "auth.users.[id].security.GET" });
-export const PATCH = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "auth.users.[id].security.PATCH" });
+export const GET = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }) => GET_handler(req, { params: Promise.resolve(params) }), { source: "auth.users.[id].security.GET" });
+export const PATCH = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }) => PATCH_handler(req, { params: Promise.resolve(params) }), { source: "auth.users.[id].security.PATCH" });

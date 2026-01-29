@@ -1,8 +1,8 @@
 "use client";
+import { JSX, useState } from "react";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
-import { useState } from "react";
 
 export default function AdminDashboard(): JSX.Element {
   const [recentActivityOpen, setRecentActivityOpen] = useState(true);

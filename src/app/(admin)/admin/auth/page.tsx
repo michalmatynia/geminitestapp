@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { AuthHomePage } from "@/features/auth";
 
 export default function Page(): JSX.Element {

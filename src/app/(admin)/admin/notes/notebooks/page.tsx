@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { AdminNotesNotebooksPage } from "@/features/notesapp";
 
 export default function Page(): JSX.Element {

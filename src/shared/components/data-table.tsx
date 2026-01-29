@@ -1,4 +1,5 @@
 "use client";
+import React, { JSX, memo, useEffect, useMemo, useState } from "react";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import {
@@ -13,7 +14,6 @@ import {
   RowSelectionState,
   OnChangeFn,
 } from "@tanstack/react-table";
-import React, { useEffect, useState, memo, useMemo } from "react";
 import { useQueryClient, QueryClient } from "@tanstack/react-query";
 
 
@@ -229,4 +229,4 @@ export const DataTable = memo(function DataTable<TData>({
       {footer && footer(table)}
     </div>
   );
-}) as <TData>(props: DataTableProps<TData>) => React.JSX.Element;
+}) as <TData>(props: DataTableProps<TData>) => JSX.Element;

@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { ProductEditPage } from "@/features/products/server";
 
 export default async function Page({

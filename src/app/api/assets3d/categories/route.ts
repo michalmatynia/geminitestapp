@@ -3,7 +3,7 @@ import { getAsset3DRepository } from "@/features/viewer3d/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 import type { ApiHandlerContext } from "@/shared/types/api";
 
-async function GET_handler(): Promise<Response> {
+async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const repository = getAsset3DRepository();
   const categories = await repository.getCategories();
   return NextResponse.json(categories);

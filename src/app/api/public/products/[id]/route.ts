@@ -10,7 +10,7 @@ import type { ApiHandlerContext } from "@/shared/types/api";
  * Fetches a single product by its ID for public consumption.
  */
 async function GET_handler(
-  _req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<Response> {
   try {
@@ -18,12 +18,14 @@ async function GET_handler(
     const product = await productService.getProductById(id);
     if (!product) {
       return createErrorResponse(notFoundError("Product not found"), {
+        request: req,
         source: "public.products.[id].GET",
       });
     }
     return NextResponse.json(product);
-  } catch (_error) {
-    return createErrorResponse(_error, {
+  } catch (error) {
+    return createErrorResponse(error, {
+      request: req,
       source: "public.products.[id].GET",
       fallbackMessage: "Failed to fetch product",
     });
@@ -31,4 +33,6 @@ async function GET_handler(
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(
-  async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "public.products.[id].GET" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> => GET_handler(req, { params: Promise.resolve(params) }),
+  { source: "public.products.[id].GET" }
+);

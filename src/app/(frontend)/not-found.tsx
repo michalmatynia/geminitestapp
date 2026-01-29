@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { Button } from "@/shared/ui";
 import Link from "next/link";
 

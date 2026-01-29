@@ -107,7 +107,7 @@ async function POST_handler(req: NextRequest,
       return options;
     };
 
-    const refreshAccessToken = async () => {
+    const refreshAccessToken = async (): Promise<string> => {
       if (!refreshToken || !clientId || !clientSecret) {
         throw new Error("Missing refresh token or client credentials.");
       }
@@ -188,4 +188,6 @@ async function POST_handler(req: NextRequest,
 }
 
 export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(
-  async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.request.POST" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> => POST_handler(req, { params: Promise.resolve(params) }),
+  { source: "integrations.[id].connections.[connectionId].allegro.request.POST" }
+);

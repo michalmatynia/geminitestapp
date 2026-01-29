@@ -1,7 +1,6 @@
 "use client";
+import type, { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useState } from "react";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { ProfilerOnRenderCallback } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";

@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { BlocksPage } from "@/features/cms";
 
 export default function Page(): JSX.Element {

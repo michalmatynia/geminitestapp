@@ -1,6 +1,7 @@
 "use client";
-
 import * as React from "react";
+import { JSX } from "react";
+
 import { cn } from "@/shared/utils";
 
 type TooltipProps = {
@@ -19,7 +20,7 @@ export function Tooltip({
   contentClassName,
   side = "top",
   maxWidth = "400px",
-}: TooltipProps): React.JSX.Element {
+}: TooltipProps): JSX.Element {
   const [isVisible, setIsVisible] = React.useState(false);
 
   const sideStyles = {

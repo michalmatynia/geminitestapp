@@ -1,14 +1,13 @@
 "use client";
+import React, { JSX, memo, useState } from "react";
 
 import { Button, useToast, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/shared/ui";
-import React, { memo } from "react";
 import { Table as ReactTable } from "@tanstack/react-table";
 
 import { ProductWithImages } from "@/features/products/types";
 import { logger } from "@/shared/utils/logger";
 
 
-import { useState } from "react";
 import { Trash2 } from "lucide-react";
 
 interface ProductTableFooterProps<TData> {
@@ -131,4 +130,4 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
       </AlertDialog>
     </>
   );
-}) as <TData>(props: ProductTableFooterProps<TData>) => React.JSX.Element;
+}) as <TData>(props: ProductTableFooterProps<TData>) => JSX.Element;

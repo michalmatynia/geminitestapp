@@ -39,7 +39,7 @@ async function POST_handler(req: NextRequest,
     step: string,
     status: "pending" | "ok" | "failed",
     detail: string
-  ) => {
+  ): void => {
     steps.push({
       step,
       status,
@@ -48,7 +48,7 @@ async function POST_handler(req: NextRequest,
     });
   };
 
-  const fail = (step: string, detail: string, status = 400) => {
+  const fail = (step: string, detail: string, status: number = 400): Response => {
     const safeDetail = detail?.trim() ? detail : "Unknown error";
     pushStep(step, "failed", safeDetail);
     return createErrorResponse(mapStatusToAppError(safeDetail, status), {
@@ -119,7 +119,7 @@ async function POST_handler(req: NextRequest,
       ? SANDBOX_TOKEN_URL
       : PROD_TOKEN_URL;
 
-    const buildRequest = (token: string) =>
+    const buildRequest = (token: string): Promise<Response> =>
       fetch(`${baseUrl}/me`, {
         method: "GET",
         headers: {
@@ -128,7 +128,7 @@ async function POST_handler(req: NextRequest,
         },
       });
 
-    const refreshAccessToken = async () => {
+    const refreshAccessToken = async (): Promise<string> => {
       if (!refreshToken || !clientId || !clientSecret) {
         throw new Error("Missing refresh token or client credentials.");
       }
@@ -256,4 +256,6 @@ async function POST_handler(req: NextRequest,
 }
 
 export const POST = apiHandlerWithParams<{ id: string; connectionId: string }>(
-  async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.test.POST" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> => POST_handler(req, { params: Promise.resolve(params) }),
+  { source: "integrations.[id].connections.[connectionId].allegro.test.POST" }
+);

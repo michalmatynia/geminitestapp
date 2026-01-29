@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import prisma from "@/shared/lib/db/prisma";

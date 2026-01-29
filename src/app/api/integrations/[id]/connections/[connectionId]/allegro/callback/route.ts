@@ -22,7 +22,7 @@ type AllegroTokenResponse = {
   error_description?: string;
 };
 
-const toErrorRedirect = (origin: string, reason: string) => {
+const toErrorRedirect = (origin: string, reason: string): string => {
   const url = new URL("/admin/integrations", origin);
   url.searchParams.set("allegro", "error");
   url.searchParams.set("reason", reason);
@@ -176,4 +176,6 @@ async function GET_handler(
 }
 
 export const GET = apiHandlerWithParams<{ id: string; connectionId: string }>(
-  async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "integrations.[id].connections.[connectionId].allegro.callback.GET" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> => GET_handler(req, { params: Promise.resolve(params) }),
+  { source: "integrations.[id].connections.[connectionId].allegro.callback.GET" }
+);

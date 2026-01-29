@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import { AdminAiPathsPage } from "@/features/ai-paths";
 
 export default function Page(): JSX.Element {

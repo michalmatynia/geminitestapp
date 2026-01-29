@@ -1,4 +1,5 @@
-import { Suspense } from "react";
+import { JSX, Suspense } from "react";
+
 import { AdminChatbotContextPage } from "@/features/chatbot";
 
 export default function Page(): JSX.Element {

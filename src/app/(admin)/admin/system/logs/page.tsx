@@ -1,4 +1,5 @@
-import { Suspense } from "react";
+import { JSX, Suspense } from "react";
+
 import { SystemLogsPage } from "@/features/observability";
 
 export default function Page(): JSX.Element {

@@ -1,7 +1,8 @@
 "use client";
+import React, { JSX, useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import { Button, Input, Label, Textarea, useToast, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 
@@ -91,7 +92,7 @@ type AiPathsSettingsProps = {
 
 const AUTO_SAVE_DEBOUNCE_MS = 100; // Very short debounce for near-immediate saves
 
-export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPathsSettingsProps): React.JSX.Element {
+export function AiPathsSettings({ activeTab, renderActions, onTabChange }: AiPathsSettingsProps): JSX.Element {
   const { toast } = useToast();
   const normalizeTriggerLabel = (value?: string | null): string =>
     value === "Product Modal - Context Grabber"

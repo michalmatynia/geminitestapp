@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/shared/lib/db/prisma";
-import { getProductDataProvider } from "@/features/products/server";
+import { getInternationalizationProvider } from "@/features/internationalization/services/internationalization-provider";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import {
@@ -53,7 +53,7 @@ async function PUT_handler(
     const body = (await req.json()) as unknown;
     const data = currencySchema.parse(body);
 
-    const provider = await getProductDataProvider();
+    const provider = await getInternationalizationProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
         throw configurationError("MongoDB is not configured");
@@ -128,7 +128,7 @@ async function DELETE_handler(
   try {
     const { id } = await params;
 
-    const provider = await getProductDataProvider();
+    const provider = await getInternationalizationProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
         throw configurationError("MongoDB is not configured");

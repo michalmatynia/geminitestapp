@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/shared/lib/db/prisma";
-import { getProductDataProvider } from "@/features/products/server";
+import type { Prisma } from "@prisma/client";
+import { getInternationalizationProvider } from "@/features/internationalization/services/internationalization-provider";
 import { getMongoDb } from "@/shared/lib/db/mongo-client";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { parseJsonBody } from "@/features/products/server";
@@ -59,7 +60,7 @@ async function PUT_handler(
     }
     const data = parsed.data;
 
-    const provider = await getProductDataProvider();
+    const provider = await getInternationalizationProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
         throw internalError("MongoDB is not configured.");
@@ -124,7 +125,7 @@ async function PUT_handler(
       return NextResponse.json(updated);
     }
 
-    const language = await prisma.$transaction(async (tx) => {
+    const language = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const existingLanguage = await tx.language.findUnique({
         where: { id },
         select: { id: true },
@@ -202,7 +203,7 @@ async function DELETE_handler(
       throw badRequestError("Language id is required");
     }
 
-    const provider = await getProductDataProvider();
+    const provider = await getInternationalizationProvider();
     if (provider === "mongodb") {
       if (!process.env.MONGODB_URI) {
         throw internalError("MongoDB is not configured.");
@@ -229,7 +230,7 @@ async function DELETE_handler(
       return new Response(null, { status: 204 });
     }
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const existingLanguage = await tx.language.findUnique({
         where: { id },
         select: { id: true },

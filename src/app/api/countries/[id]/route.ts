@@ -42,7 +42,7 @@ const COUNTRIES_COLLECTION = "countries";
 const normalizeCountryResponse = (
   country: CountryDoc,
   currencyMap: Map<string, CurrencyDoc>
-) => ({n  id: country.id,
+) => ({ id: country.id,
   code: country.code,
   name: country.name,
   currencies: (country.currencyIds ?? [])

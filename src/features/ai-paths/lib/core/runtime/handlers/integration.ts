@@ -893,7 +893,6 @@ export const handleDatabase: NodeHandler = async ({
     const inputValue = coerceInput(resolvedInputs.value);
     const entityIdInput = coerceInput(resolvedInputs.entityId);
     const productIdInput = coerceInput(resolvedInputs.productId);
-    const _entityId = entityIdInput ?? resolvedEntityId;
     const parseQueryInput = (value: unknown) => {
       if (!value) return null;
       if (typeof value === "object" && !Array.isArray(value)) {

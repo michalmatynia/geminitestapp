@@ -238,6 +238,14 @@ const eslintConfig = [
         }
       ],
       "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/typedef": [
+        "warn",
+        {
+          "parameter": true,
+          "arrowParameter": true,
+          "variableDeclaration": false
+        }
+      ],
       "@typescript-eslint/no-unsafe-assignment": "error",
       "@typescript-eslint/no-unsafe-call": "error",
       "@typescript-eslint/no-unsafe-member-access": "error",

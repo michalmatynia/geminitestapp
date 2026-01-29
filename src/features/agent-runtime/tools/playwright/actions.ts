@@ -177,7 +177,7 @@ export const inferLoginCandidates = async (
 
 export const ensureLoginFormVisible = async (
   page: Page,
-  runId: string,
+  _runId: string,
   log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>
 ) => {
   if (!page) return;

@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/shared/ui";
-import React from "react";
 import { Plus, Trash2, MessageSquare } from "lucide-react";
 
 import type { ChatSession } from "@/shared/types/chatbot";

@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { ChatbotDebugState } from "@/shared/types/chatbot";
 import type { AgentAuditLog } from "@prisma/client";
 

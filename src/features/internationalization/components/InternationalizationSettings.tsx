@@ -1,5 +1,4 @@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Button, Input } from "@/shared/ui";
-import React from "react";
 import { MoreVertical } from "lucide-react";
 
 import type { CurrencyOption, CountryOption, Language } from "@/shared/types/internationalization";

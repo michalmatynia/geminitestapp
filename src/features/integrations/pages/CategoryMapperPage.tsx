@@ -1,7 +1,7 @@
 "use client";
 
 import { useToast, SectionHeader, SectionPanel } from "@/shared/ui";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { MarketplaceSelector } from "@/features/integrations/components/marketplaces/category-mapper/MarketplaceSelector";
 import { BaseCategoryMapper } from "@/features/integrations/components/marketplaces/category-mapper/BaseCategoryMapper";

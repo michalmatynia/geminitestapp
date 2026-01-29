@@ -48,11 +48,11 @@ describe("productMigration", () => {
       expect(result.productsUpserted).toBe(2);
       expect(mockMongoCollection.bulkWrite).toHaveBeenCalled();
       
-      const bulkWriteCall = mockMongoCollection.bulkWrite.mock.calls[0][0];
+      const bulkWriteCall = (mockMongoCollection.bulkWrite.mock.calls[0] as any[])[0];
       expect(bulkWriteCall.length).toBe(2);
       // Order is guaranteed by orderBy id: asc
-      expect(bulkWriteCall[0].replaceOne.replacement.sku).toBe("SKU1");
-      expect(bulkWriteCall[1].replaceOne.replacement.sku).toBe("SKU2");
+      expect(bulkWriteCall[0].replaceOne?.replacement?.sku).toBe("SKU1");
+      expect(bulkWriteCall[1].replaceOne?.replacement?.sku).toBe("SKU2");
     });
 
     it("should respect batchSize and cursor", async () => {

@@ -35,7 +35,7 @@ describe("useAsset3dQueries", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toHaveLength(1);
-    expect(result.current.data![0].name).toBe("Test");
+    expect(result.current.data?.[0]?.name).toBe("Test");
   });
 
   it("useAsset3DCategories should fetch categories", async () => {

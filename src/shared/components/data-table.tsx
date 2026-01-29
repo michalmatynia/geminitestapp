@@ -14,6 +14,7 @@ import {
   OnChangeFn,
 } from "@tanstack/react-table";
 import React, { useEffect, useState, memo, useMemo } from "react";
+import { useQueryClient, QueryClient } from "@tanstack/react-query";
 
 
 export type PriceGroupForCalculation = {
@@ -64,6 +65,7 @@ declare module "@tanstack/react-table" {
     onExportSettingsClick?: (row: TData) => void;
     integrationBadgeIds?: Set<string>;
     integrationBadgeStatuses?: Map<string, string>;
+    queryClient?: QueryClient;
   }
 }
 
@@ -91,6 +93,7 @@ export const DataTable = memo(function DataTable<TData>({
 }: DataTableProps<TData>) {
   const [internalRowSelection, setInternalRowSelection] = useState<RowSelectionState>({});
   const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
+  const queryClient = useQueryClient();
 
   const rowSelection = controlledRowSelection ?? internalRowSelection;
   const onRowSelectionChange = controlledOnRowSelectionChange ?? setInternalRowSelection;
@@ -130,6 +133,7 @@ export const DataTable = memo(function DataTable<TData>({
     ...(onExportSettingsClick ? { onExportSettingsClick } : {}),
     ...(integrationBadgeIds ? { integrationBadgeIds } : {}),
     ...(integrationBadgeStatuses ? { integrationBadgeStatuses } : {}),
+    queryClient,
   }), [
     setRefreshTrigger,
     productNameKey,
@@ -141,6 +145,7 @@ export const DataTable = memo(function DataTable<TData>({
     onExportSettingsClick,
     integrationBadgeIds,
     integrationBadgeStatuses,
+    queryClient,
   ]);
 
   // TanStack Table is not compatible with React Compiler memoization warnings.

@@ -1,5 +1,5 @@
 import { AppModal, ModalShell, Button } from "@/shared/ui";
-import React, { useRef } from "react";
+import { useRef } from "react";
 
 
 

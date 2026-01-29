@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Dialog } from '@playwright/test';
 
 test.describe('Products Management - Advanced', () => {
   test.beforeEach(async ({ page }) => {
@@ -6,7 +6,7 @@ test.describe('Products Management - Advanced', () => {
   });
 
   async function createTestProduct(page: any, sku: string, name: string) {
-    page.on('dialog', async dialog => {
+    page.on('dialog', async (dialog: Dialog) => {
       if (dialog.message().includes('Enter a new unique SKU')) {
         await dialog.accept(sku);
       }
@@ -35,7 +35,7 @@ test.describe('Products Management - Advanced', () => {
     await row.getByLabel('Open row actions').click();
 
     // Setup dialog handler for duplicate SKU
-    page.on('dialog', async dialog => {
+    page.on('dialog', async (dialog: Dialog) => {
       if (dialog.message().includes('Enter a new unique SKU for the duplicate')) {
         await dialog.accept(duplicateSku);
       }

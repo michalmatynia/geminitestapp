@@ -1,7 +1,7 @@
 "use client";
 
 import { useToast, Button, SectionHeader, SectionPanel } from "@/shared/ui";
-import React, {
+import {
   useCallback,
   useEffect,
   useState,

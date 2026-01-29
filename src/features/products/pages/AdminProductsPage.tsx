@@ -334,6 +334,11 @@ export function AdminProductsPage() {
         } else {
           toast("Selected products deleted successfully.", { variant: "success" });
         }
+        
+        // Invalidate both products list and count queries
+        void queryClient.invalidateQueries({ queryKey: ["products"] });
+        void queryClient.invalidateQueries({ queryKey: ["products-count"] });
+        
         setRowSelection({});
         setRefreshTrigger((prev) => prev + 1);
       } catch (error) {
@@ -341,7 +346,7 @@ export function AdminProductsPage() {
         setActionError("An error occurred during deletion.");
       }
     }
-  }, [rowSelection, setActionError, toast]);
+  }, [rowSelection, setActionError, toast, queryClient]);
 
   useEffect(() => {
     setIsDebugOpen(searchParams.get("debug") === "true");

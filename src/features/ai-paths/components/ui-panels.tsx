@@ -1,5 +1,4 @@
 import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui";
-import React from "react";
 
 
 import type { PathMeta } from "@/features/ai-paths/lib";

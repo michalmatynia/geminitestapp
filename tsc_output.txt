@@ -1,0 +1,45 @@
+__tests__/features/products/prismaProductRepository.test.ts(62,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/products/prismaProductRepository.test.ts(64,67): error TS2322: Type 'number' is not assignable to type 'string'.
+__tests__/features/products/prismaProductRepository.test.ts(66,12): error TS2532: Object is possibly 'undefined'.
+__tests__/features/products/productMigration.test.ts(51,29): error TS2532: Object is possibly 'undefined'.
+__tests__/features/products/productService.test.ts(81,59): error TS2375: Type '{ id: string | undefined; }' is not assignable to type 'ProductWhereUniqueInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type '{ id: string | undefined; }' is not assignable to type '{ id: string; sku: string; } & { id?: string; sku?: string; AND?: ProductWhereInput | ProductWhereInput[]; OR?: ProductWhereInput[]; ... 30 more ...; defaultPriceGroup?: (Without<...> & PriceGroupWhereInput) | ... 1 more ... | null; }'.
+    Property 'sku' is missing in type '{ id: string | undefined; }' but required in type '{ id: string; sku: string; }'.
+__tests__/features/products/productService.test.ts(99,9): error TS2375: Type '{ productId: string | undefined; catalogId: string; }' is not assignable to type 'ProductCatalogWhereInput' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'productId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | StringFilter<"ProductCatalog">'.
+      Type 'undefined' is not assignable to type 'string | StringFilter<"ProductCatalog">'.
+__tests__/features/viewer3d/useAsset3dQueries.test.tsx(38,12): error TS2532: Object is possibly 'undefined'.
+e2e/products-advanced.spec.ts(9,29): error TS7006: Parameter 'dialog' implicitly has an 'any' type.
+src/app/(admin)/admin/settings/ai/page.tsx(4,8): error TS6133: 'React' is declared but its value is never read.
+src/app/api/products/categories/[id]/route.ts(323,3): error TS6133: 'req' is declared but its value is never read.
+src/features/agent-runtime/tools/llm/index.ts(146,3): error TS6133: 'context' is declared but its value is never read.
+src/features/agent-runtime/tools/playwright/actions.ts(180,3): error TS6133: 'runId' is declared but its value is never read.
+src/features/agentcreator/components/AgentCreatorSettingsSection.tsx(4,1): error TS6133: 'React' is declared but its value is never read.
+src/features/ai-paths/components/node-config/database/DatabaseQueryValidatorPanel.tsx(4,1): error TS6133: 'React' is declared but its value is never read.
+src/features/ai-paths/components/ui-panels.tsx(2,1): error TS6133: 'React' is declared but its value is never read.
+src/features/ai-paths/lib/core/runtime/handlers/integration.ts(896,11): error TS6133: '_entityId' is declared but its value is never read.
+src/features/chatbot/components/DebugPanel.tsx(3,1): error TS6133: 'React' is declared but its value is never read.
+src/features/chatbot/components/SessionSidebar.tsx(4,1): error TS6133: 'React' is declared but its value is never read.
+src/features/integrations/components/marketplaces/category-mapper/MarketplaceSelector.tsx(4,1): error TS6133: 'React' is declared but its value is never read.
+src/features/integrations/hooks/useIntegrationMutations.ts(57,17): error TS6133: 'data' is declared but its value is never read.
+src/features/integrations/hooks/useIntegrationMutations.ts(83,17): error TS6133: 'data' is declared but its value is never read.
+src/features/integrations/pages/CategoryMapperPage.tsx(4,8): error TS6133: 'React' is declared but its value is never read.
+src/features/internationalization/components/InternationalizationSettings.tsx(2,1): error TS6133: 'React' is declared but its value is never read.
+src/features/notesapp/components/CreateNoteModal.tsx(2,8): error TS6133: 'React' is declared but its value is never read.
+src/features/notesapp/components/editor/MarkdownToolbar.tsx(4,1): error TS6133: 'React' is declared but its value is never read.
+src/features/notesapp/pages/AdminNotesPage.tsx(3,8): error TS6133: 'React' is declared but its value is never read.
+src/features/products/components/DebugPanel.tsx(19,13): error TS6133: 'key' is declared but its value is never read.
+src/features/products/components/list/ProductColumns.tsx(442,25): error TS2339: Property 'queryClient' does not exist on type '{ setRefreshTrigger?: Dispatch<SetStateAction<number>>; currencyCode?: string; priceGroups?: PriceGroupForCalculation[]; }'.
+src/features/products/components/list/ProductColumns.tsx(443,27): error TS2339: Property 'queryClient' does not exist on type '{ setRefreshTrigger?: Dispatch<SetStateAction<number>>; currencyCode?: string; priceGroups?: PriceGroupForCalculation[]; }'.
+src/features/products/components/list/ProductColumns.tsx(444,27): error TS2339: Property 'queryClient' does not exist on type '{ setRefreshTrigger?: Dispatch<SetStateAction<number>>; currencyCode?: string; priceGroups?: PriceGroupForCalculation[]; }'.
+src/features/products/components/list/ProductFilters.tsx(4,8): error TS6133: 'React' is declared but its value is never read.
+src/features/products/components/ProductModals.tsx(3,1): error TS6133: 'React' is declared but its value is never read.
+src/features/products/components/settings/catalogs/CatalogsSettings.tsx(2,1): error TS6133: 'React' is declared but its value is never read.
+src/features/products/components/settings/pricing/PriceGroupsSettings.tsx(2,1): error TS6133: 'React' is declared but its value is never read.
+src/features/products/context/ProductFormContext.tsx(15,1): error TS6133: 'useQueryClient' is declared but its value is never read.
+src/features/products/context/ProductFormContext.tsx(329,12): error TS2552: Cannot find name 'queryClient'. Did you mean 'useQueryClient'?
+src/features/products/context/ProductFormContext.tsx(330,12): error TS2552: Cannot find name 'queryClient'. Did you mean 'useQueryClient'?
+src/features/products/pages/ProductSettingsPage.tsx(4,8): error TS6133: 'React' is declared but its value is never read.
+src/shared/components/theme-toggle.tsx(6,1): error TS6133: 'React' is declared but its value is never read.
+src/shared/providers/theme-provider.tsx(5,1): error TS6133: 'React' is declared but its value is never read.

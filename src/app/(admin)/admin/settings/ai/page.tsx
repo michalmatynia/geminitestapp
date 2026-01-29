@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Input, Label, useToast, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronLeftIcon, SaveIcon } from "lucide-react";
 import Link from "next/link";
 

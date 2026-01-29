@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { PriceGroupWithDetails } from "@/features/products/types";
 import { useProductsWithCount } from "@/features/products/hooks/useProductsQuery";
 
@@ -152,14 +152,17 @@ export function useProductData({
     products: data,
     total,
     isLoading,
+    isFetching,
     error,
     refetch,
   } = useProductsWithCount(filters, {
     enabled: preferencesLoaded && initialSyncComplete,
   });
 
+  const lastRefreshTrigger = useRef(refreshTrigger);
   useEffect(() => {
-    if (refreshTrigger > 0) {
+    if (refreshTrigger > lastRefreshTrigger.current) {
+      lastRefreshTrigger.current = refreshTrigger;
       void refetch();
     }
   }, [refreshTrigger, refetch]);
@@ -197,5 +200,6 @@ export function useProductData({
     setCatalogFilter,
     loadError,
     isLoading,
+    isFetching,
   };
 }

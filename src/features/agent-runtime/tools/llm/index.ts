@@ -143,7 +143,7 @@ export const validateExtractionWithLLM = async (
 };
 
 export const normalizeExtractionItemsWithLLM = async (
-  context: LLMContext,
+  _context: LLMContext,
   params: {
     prompt: string;
     extractionType: "product_names" | "emails";

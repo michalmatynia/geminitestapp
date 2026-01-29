@@ -79,12 +79,15 @@ async function GET_handler(req: Request) {
       orderBy: { email: "asc" },
     })) as PrismaUserSummary[];
 
-    const payload: AuthUserSummary[] = users.map((user) => ({
+    // am I here
+    const payload: AuthUserSummary[] = users.map((user: PrismaUserSummary) => ({
       id: user.id,
       email: user.email ?? null,
       name: user.name ?? null,
       image: user.image ?? null,
-      emailVerified: user.emailVerified ? user.emailVerified.toISOString() : null,
+      emailVerified: user.emailVerified
+        ? user.emailVerified.toISOString()
+        : null,
       provider,
     }));
 

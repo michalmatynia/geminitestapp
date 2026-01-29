@@ -59,10 +59,10 @@ describe("prismaProductRepository", () => {
     
     const apple = await prismaProductRepository.getProducts({ search: "apple" });
     expect(apple.length).toBe(1);
-    expect(apple[0].name_en).toBe("Apple");
+    expect(apple[0]?.name_en).toBe("Apple");
 
-    const expensive = await prismaProductRepository.getProducts({ minPrice: 15 });
+    const expensive = await prismaProductRepository.getProducts({ minPrice: "15" });
     expect(expensive.length).toBe(1);
-    expect(expensive[0].name_en).toBe("Banana");
+    expect(expensive[0]?.name_en).toBe("Banana");
   });
 });

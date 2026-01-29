@@ -1,5 +1,4 @@
 import { Button, Label } from "@/shared/ui";
-import React from "react";
 import { PriceGroup } from "@/features/products/types";
 
 

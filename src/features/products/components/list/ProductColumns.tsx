@@ -5,6 +5,7 @@ import type { PriceGroupForCalculation } from "@/shared/ui";
 import type { ColumnDef, Row } from "@tanstack/react-table";
 import { ArrowUpDown, Bold, Download, MoreVertical, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 
 
 
@@ -126,12 +127,19 @@ interface ColumnActionsProps {
 const handleDelete = async (
   id: string,
   setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>,
+  queryClient: ReturnType<typeof useQueryClient>,
   notify?: ToastFn
 ) => {
   if (!window.confirm("Are you sure you want to delete this product?")) return;
 
   const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
   if (res.ok) {
+    // Small delay to ensure DB consistency before refetch
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["products"] }),
+      queryClient.invalidateQueries({ queryKey: ["products-count"] }),
+    ]);
     setRefreshTrigger((prev) => prev + 1);
     return;
   }
@@ -153,6 +161,7 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
   const product = row.original;
   const router = useRouter();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleDuplicate = async () => {
     const sku = window.prompt("Enter a new unique SKU for the duplicate:");
@@ -180,6 +189,8 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
 
     if (res.ok) {
       const duplicated = (await res.json()) as { id?: string };
+      void queryClient.invalidateQueries({ queryKey: ["products"] });
+      void queryClient.invalidateQueries({ queryKey: ["products-count"] });
       setRefreshTrigger((prev) => prev + 1);
 
       if (duplicated.id) {
@@ -229,7 +240,7 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
             className="text-destructive focus:text-destructive"
             onSelect={(event) => {
               event.preventDefault();
-              void handleDelete(product.id, setRefreshTrigger, toast);
+              void handleDelete(product.id, setRefreshTrigger, queryClient, toast);
             }}
           >
             Remove
@@ -373,6 +384,7 @@ export const columns: ColumnDef<ProductWithImages>[] = [
             setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
             currencyCode?: string;
             priceGroups?: PriceGroupForCalculation[];
+            queryClient?: any;
           }
         | undefined;
 
@@ -431,7 +443,13 @@ export const columns: ColumnDef<ProductWithImages>[] = [
             value={product.price}
             productId={product.id}
             field="price"
-            onUpdate={() => setRefreshTrigger((prev) => prev + 1)}
+            onUpdate={() => {
+              if (meta?.queryClient) {
+                void meta.queryClient.invalidateQueries({ queryKey: ["products"] });
+                void meta.queryClient.invalidateQueries({ queryKey: ["products-count"] });
+              }
+              setRefreshTrigger((prev) => prev + 1);
+            }}
           />
           {showCurrencyIndicator && displayPrice !== product.price && (
             <span className="text-xs text-muted-foreground" title={`Converted: ${displayPrice?.toFixed(2)} ${actualCurrency}`}>
@@ -453,11 +471,7 @@ export const columns: ColumnDef<ProductWithImages>[] = [
     ),
     cell: ({ row, table }) => {
       const product = row.original;
-      const meta = table.options.meta as
-        | {
-            setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
-          }
-        | undefined;
+      const meta = table.options.meta;
 
       const setRefreshTrigger = meta?.setRefreshTrigger;
       if (!setRefreshTrigger) {
@@ -469,7 +483,13 @@ export const columns: ColumnDef<ProductWithImages>[] = [
           value={product.stock}
           productId={product.id}
           field="stock"
-          onUpdate={() => setRefreshTrigger((prev) => prev + 1)}
+          onUpdate={() => {
+            if (meta?.queryClient) {
+              void meta.queryClient.invalidateQueries({ queryKey: ["products"] });
+              void meta.queryClient.invalidateQueries({ queryKey: ["products-count"] });
+            }
+            setRefreshTrigger((prev) => prev + 1);
+          }}
         />
       );
     },
@@ -496,6 +516,7 @@ export const columns: ColumnDef<ProductWithImages>[] = [
             onExportSettingsClick?: (p: ProductWithImages) => void;
             integrationBadgeIds?: Set<string>;
             integrationBadgeStatuses?: Map<string, string>;
+            queryClient?: any;
           }
         | undefined;
 
@@ -552,6 +573,7 @@ export const columns: ColumnDef<ProductWithImages>[] = [
         | {
             setRefreshTrigger?: React.Dispatch<React.SetStateAction<number>>;
             onProductEditClick?: (p: ProductWithImages) => void;
+            queryClient?: any;
           }
         | undefined;
 

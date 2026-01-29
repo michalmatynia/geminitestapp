@@ -54,7 +54,7 @@ export function useUpsertConnection() {
       }
       return (await res.json()) as IntegrationConnection;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: ["integration-connections", variables.integrationId] });
     },
   });
@@ -80,7 +80,7 @@ export function useDeleteConnection() {
       }
       return (await res.json()) as Record<string, unknown>;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: ["integration-connections", variables.integrationId] });
     },
   });

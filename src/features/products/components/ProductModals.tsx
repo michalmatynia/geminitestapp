@@ -1,6 +1,5 @@
 "use client";
 import { ModalShell, Button, AppModal } from "@/shared/ui";
-import React from "react";
 
 
 

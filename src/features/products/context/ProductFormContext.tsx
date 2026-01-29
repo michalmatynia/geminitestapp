@@ -161,6 +161,7 @@ export function ProductFormProvider({
     getValues,
   } = methods;
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -325,12 +326,20 @@ export function ProductFormProvider({
         variant: "success",
       });
 
+      // Small delay to ensure DB consistency before refetch
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Invalidate both products list and count queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["products"] }),
+        queryClient.invalidateQueries({ queryKey: ["products-count"] }),
+      ]);
+
       // Only close modal for Create mode, not Edit mode
       if (!product) {
         // For Create mode, close modal immediately without updating image state
         // This prevents the flickering caused by image slots re-rendering before modal closes
         onSuccess?.();
-        router.push("/admin/products");
       } else {
         // For Edit mode, update image slots to reflect saved state
         refreshImages(savedProduct);

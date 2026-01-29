@@ -1,7 +1,8 @@
 "use client";
 
-import { useQuery, useQueries } from "@tanstack/react-query";
+import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import { getProducts, countProducts } from "@/features/products/api";
+import { useCallback } from "react";
 
 interface UseProductsFilters {
   search?: string | undefined;
@@ -13,6 +14,7 @@ interface UseProductsFilters {
   page?: number | undefined;
   pageSize?: number | undefined;
   catalogId?: string | undefined;
+  searchLanguage?: string | undefined;
 }
 
 interface UseProductsOptions {
@@ -50,6 +52,7 @@ export function useProductsWithCount(
   options: UseProductsOptions = {}
 ) {
   const { enabled = true } = options;
+  const queryClient = useQueryClient();
 
   const results = useQueries({
     queries: [
@@ -68,17 +71,19 @@ export function useProductsWithCount(
 
   const [productsQuery, countQuery] = results;
 
+  const refetch = useCallback(async () => {
+    await Promise.all([
+      queryClient.refetchQueries({ queryKey: ["products"] }),
+      queryClient.refetchQueries({ queryKey: ["products-count"] }),
+    ]);
+  }, [queryClient]);
+
   return {
     products: productsQuery.data ?? [],
     total: countQuery.data ?? 0,
     isLoading: productsQuery.isPending || countQuery.isPending,
     isFetching: productsQuery.isFetching || countQuery.isFetching,
     error: productsQuery.error || countQuery.error,
-    refetch: async () => {
-      await Promise.all([
-        productsQuery.refetch(),
-        countQuery.refetch(),
-      ]);
-    },
+    refetch,
   };
 }

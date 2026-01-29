@@ -320,7 +320,7 @@ async function PUT_handler(
  * Deletes a product category and all its children (cascade).
  */
 async function DELETE_handler(
-  req: Request,
+  _req: Request,
   props: { params: Promise<{ id: string }> }
 ) {
   const params = await props.params;

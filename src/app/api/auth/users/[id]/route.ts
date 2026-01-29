@@ -10,7 +10,7 @@ import { parseJsonBody } from "@/features/products/server";
 import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { authError, conflictError, internalError, notFoundError } from "@/shared/errors/app-error";
 import type { AuthUserSummary } from "@/features/auth/server";
-import {  apiHandlerWithParams, type ApiHandlerContext , type ApiHandlerContext } from "@/shared/lib/api/api-handler";
+import { apiHandlerWithParams, type ApiHandlerContext } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";
 

@@ -40,9 +40,7 @@ async function GET_handler(req: NextRequest,
 }
 
 export const GET = apiHandlerWithParams<{ sessionId: string }>(
-  async (req: NextRequest, ctx: ApiHandlerContext, params: { sessionId: string }): Promise<Response> => 
-  async (req: Request(req, { params: Promise.resolve(params) }),
- _ctx: unknown, params: { sessionId: string }) =>
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { sessionId: string }): Promise<Response> =>
     GET_handler(req, { params: Promise.resolve(params) }),
   { source: "chatbot.sessions.[sessionId].GET" }
 );

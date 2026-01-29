@@ -131,8 +131,12 @@ async function POST_handler(req: NextRequest,
 }
 
 export const GET = apiHandlerWithParams<{ sessionId: string }>(
-  async (req: NextRequest, ctx: ApiHandlerContext, params: { sessionId: string }): Promise<Response> => async (req: Request(req, { params: Promise.resolve(params) }),
- _ctx: unknown, params: { sessionId: string }) => GET_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.sessions.[sessionId].messages.GET" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { sessionId: string }): Promise<Response> =>
+    GET_handler(req, { params: Promise.resolve(params) }),
+  { source: "chatbot.sessions.[sessionId].messages.GET" }
+);
 export const POST = apiHandlerWithParams<{ sessionId: string }>(
-  async (req: NextRequest, ctx: ApiHandlerContext, params: { sessionId: string }): Promise<Response> => async (req: Request(req, { params: Promise.resolve(params) }),
- _ctx: unknown, params: { sessionId: string }) => POST_handler(req, { params: Promise.resolve(params) }), { source: "chatbot.sessions.[sessionId].messages.POST" });
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { sessionId: string }): Promise<Response> =>
+    POST_handler(req, { params: Promise.resolve(params) }),
+  { source: "chatbot.sessions.[sessionId].messages.POST" }
+);

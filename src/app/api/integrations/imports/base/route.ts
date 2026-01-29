@@ -21,7 +21,6 @@ import {
   fetchBaseWarehousesDebug,
   fetchBaseProducts,
   fetchBaseProductIds,
-  fetchBaseWarehouses as fetchBaseWarehousesOrig,
   fetchBaseProductDetails,
 } from "@/features/integrations/server";
 import { extractBaseImageUrls, mapBaseProduct } from "@/features/integrations/server";

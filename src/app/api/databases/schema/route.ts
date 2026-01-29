@@ -6,17 +6,17 @@ import prisma from "@/shared/lib/db/prisma";
 type FieldInfo = {
   name: string;
   type: string;
-  isRequired?: boolean;
-  isId?: boolean;
-  isUnique?: boolean;
-  hasDefault?: boolean;
-  relationTo?: string;
+  isRequired?: boolean | undefined;
+  isId?: boolean | undefined;
+  isUnique?: boolean | undefined;
+  hasDefault?: boolean | undefined;
+  relationTo?: string | undefined;
 };
 
 type CollectionSchema = {
   name: string;
   fields: FieldInfo[];
-  relations?: string[];
+  relations?: string[] | undefined;
 };
 
 type SchemaResponse = {
@@ -111,8 +111,8 @@ async function getMongoSchema(): Promise<SchemaResponse> {
 }
 
 function getPrismaSchema(): SchemaResponse {
-  // @ts-expect-error - Accessing internal DMMF for schema introspection
-  const dmmf = prisma._dmmf?.datamodel as DmmfDatamodel;
+  // Accessing internal DMMF for schema introspection
+  const dmmf = (prisma as unknown as { _dmmf: { datamodel: DmmfDatamodel } })._dmmf?.datamodel;
   const collections: CollectionSchema[] = [];
 
   if (dmmf?.models) {

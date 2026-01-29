@@ -55,7 +55,7 @@ export default async function HomePage() {
 
   const cmsRepository = await getCmsRepository();
   const slugs = await cmsRepository.getSlugs();
-  const defaultSlug = slugs.find((s: { isDefault: boolean }) => s.isDefault);
+  const defaultSlug = slugs.find((s) => s.isDefault);
 
   type MaybeImages = {
     images?: (ProductWithImages["images"][number] | null)[] | null;

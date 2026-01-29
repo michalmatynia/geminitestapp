@@ -1,0 +1,185 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - heading "Admin" [level=1] [ref=e5]:
+          - link "Admin" [ref=e6] [cursor=pointer]:
+            - /url: /admin
+        - button [ref=e7] [cursor=pointer]:
+          - img [ref=e8]
+      - navigation [ref=e11]:
+        - button "Products" [ref=e13]:
+          - generic [ref=e14]:
+            - img [ref=e15]
+            - generic [ref=e19]: Products
+          - img [ref=e20]
+        - button "Integrations" [ref=e23]:
+          - generic [ref=e24]:
+            - img [ref=e25]
+            - generic [ref=e27]: Integrations
+          - img [ref=e28]
+        - button "AI Paths" [ref=e31]:
+          - generic [ref=e32]:
+            - img [ref=e33]
+            - generic [ref=e37]: AI Paths
+          - img [ref=e38]
+        - button "Notes" [ref=e41]:
+          - generic [ref=e42]:
+            - img [ref=e43]
+            - generic [ref=e46]: Notes
+          - img [ref=e47]
+        - link "Files" [ref=e49] [cursor=pointer]:
+          - /url: /admin/files
+          - img [ref=e50]
+          - text: Files
+        - button "3D Assets" [ref=e54]:
+          - generic [ref=e55]:
+            - img [ref=e56]
+            - generic [ref=e59]: 3D Assets
+          - img [ref=e60]
+        - link "Databases" [ref=e62] [cursor=pointer]:
+          - /url: /admin/databases
+          - img [ref=e63]
+          - text: Databases
+        - link "Front Manage" [ref=e67] [cursor=pointer]:
+          - /url: /admin/front-manage
+          - img [ref=e68]
+          - text: Front Manage
+        - link "System Logs" [ref=e71] [cursor=pointer]:
+          - /url: /admin/system/logs
+          - img [ref=e72]
+          - text: System Logs
+        - button "CMS" [ref=e75]:
+          - generic [ref=e76]:
+            - img [ref=e77]
+            - generic [ref=e79]: CMS
+          - img [ref=e80]
+        - button "Settings" [ref=e83]:
+          - generic [ref=e84]:
+            - img [ref=e85]
+            - generic [ref=e88]: Settings
+          - img [ref=e89]
+        - button "Auth" [ref=e92]:
+          - generic [ref=e93]:
+            - img [ref=e94]
+            - generic [ref=e96]: Auth
+          - img [ref=e97]
+        - button "Agent Creator" [ref=e100]:
+          - generic [ref=e101]:
+            - img [ref=e102]
+            - generic [ref=e104]: Agent Creator
+          - img [ref=e105]
+        - button "Chatbot" [ref=e108]:
+          - generic [ref=e109]:
+            - img [ref=e110]
+            - generic [ref=e112]: Chatbot
+          - img [ref=e113]
+    - generic [ref=e115]:
+      - banner:
+        - button "Log In" [ref=e117] [cursor=pointer]:
+          - img [ref=e118]
+          - text: Log In
+      - main [ref=e121]:
+        - generic [ref=e122]:
+          - generic [ref=e124]:
+            - generic [ref=e125]:
+              - generic [ref=e126]:
+                - button "Create new product" [ref=e127] [cursor=pointer]:
+                  - img [ref=e128]
+                - button "Create product from Pin Draft" [ref=e130] [cursor=pointer]:
+                  - img [ref=e131]
+              - heading "Products" [level=1] [ref=e135]
+            - generic [ref=e136]:
+              - generic [ref=e137]:
+                - generic [ref=e138]: Page
+                - button "Previous page" [disabled]:
+                  - img
+                - generic [ref=e139]:
+                  - generic [ref=e140]: "1"
+                  - generic [ref=e141]: /
+                  - generic [ref=e142]: "1"
+                - button "Next page" [disabled]:
+                  - img
+                - combobox "Products per page" [ref=e143]:
+                  - generic: 24 per page
+                  - img [ref=e144]
+              - generic [ref=e146]:
+                - combobox "Select product name language" [ref=e147]:
+                  - generic: Polish
+                  - img [ref=e148]
+                - combobox "Select currency" [ref=e150]:
+                  - generic: PLN
+                  - img [ref=e151]
+                - combobox "Filter by catalog" [ref=e153]:
+                  - generic: All catalogs
+                  - img [ref=e154]
+          - generic [ref=e157]:
+            - generic [ref=e158]:
+              - heading "Filters" [level=3] [ref=e159]
+              - button "Reset filters" [ref=e160] [cursor=pointer]:
+                - img [ref=e161]
+                - text: Reset filters
+            - generic [ref=e164]:
+              - generic [ref=e165]:
+                - text: Name
+                - textbox "Name" [active] [ref=e166]:
+                  - /placeholder: Search by name...
+                  - text: Product to Duplicate 1769673385180
+              - generic [ref=e167]:
+                - text: SKU
+                - textbox "SKU" [ref=e168]:
+                  - /placeholder: Search by SKU...
+              - generic [ref=e169]:
+                - text: Min Price
+                - spinbutton "Min Price" [ref=e170]
+              - generic [ref=e171]:
+                - text: Max Price
+                - spinbutton "Max Price" [ref=e172]
+              - generic [ref=e173]:
+                - text: From Date
+                - textbox "From Date" [ref=e174]
+              - generic [ref=e175]:
+                - text: To Date
+                - textbox "To Date" [ref=e176]
+          - generic [ref=e178]:
+            - button "Selection" [ref=e179] [cursor=pointer]:
+              - img [ref=e180]
+              - text: Selection
+            - button "Actions" [disabled]:
+              - img
+              - text: Actions
+          - table [ref=e186]:
+            - rowgroup [ref=e187]:
+              - row "Select all Image Name Price (PLN) Stock Created At" [ref=e188]:
+                - columnheader "Select all" [ref=e189]:
+                  - checkbox "Select all" [ref=e190]
+                - columnheader "Image" [ref=e191]
+                - columnheader "Name" [ref=e192]:
+                  - button "Name" [ref=e193] [cursor=pointer]:
+                    - text: Name
+                    - img [ref=e194]
+                - columnheader "Price (PLN)" [ref=e197]:
+                  - button "Price (PLN)" [ref=e198] [cursor=pointer]:
+                    - text: Price
+                    - generic [ref=e199]: (PLN)
+                    - img [ref=e200]
+                - columnheader "Stock" [ref=e203]:
+                  - button "Stock" [ref=e204] [cursor=pointer]:
+                    - text: Stock
+                    - img [ref=e205]
+                - columnheader "Created At" [ref=e208]:
+                  - button "Created At" [ref=e209] [cursor=pointer]:
+                    - text: Created At
+                    - img [ref=e210]
+                - columnheader [ref=e213]
+                - columnheader [ref=e214]
+            - rowgroup [ref=e215]:
+              - row "No results." [ref=e216]:
+                - cell "No results." [ref=e217]
+  - button "Open Next.js Dev Tools" [ref=e223] [cursor=pointer]:
+    - img [ref=e224]
+  - alert [ref=e227]
+```

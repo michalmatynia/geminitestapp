@@ -1,0 +1,82 @@
+2:"$Sreact.fragment"
+4:I["[project]/node_modules/next/dist/next-devtools/userspace/app/segment-explorer-node.js [app-client] (ecmascript)",["/_next/static/chunks/node_modules_next_dist_be32b49c._.js","/_next/static/chunks/node_modules_next_dist_client_components_builtin_global-error_1cf6b850.js"],"SegmentViewNode"]
+a:"$Sreact.suspense"
+c:I["[project]/src/features/products/pages/AdminProductsPage.tsx [app-client] (ecmascript)",["/_next/static/chunks/src_08527c91._.js","/_next/static/chunks/node_modules_next_cd640352._.js","/_next/static/chunks/node_modules_tailwind-merge_dist_bundle-mjs_mjs_56b6fd65._.js","/_next/static/chunks/node_modules_%40tanstack_table-core_build_lib_index_mjs_b0999871._.js","/_next/static/chunks/node_modules_%40tanstack_query-core_build_modern_68026771._.js","/_next/static/chunks/node_modules_ecc18022._.js","/_next/static/chunks/src_app_layout_tsx_1cf6b850._.js","/_next/static/chunks/node_modules_turndown_lib_turndown_browser_es_db86c35a.js","/_next/static/chunks/src_features_admin_606b88f1._.js","/_next/static/chunks/src_features_notesapp_768b339b._.js","/_next/static/chunks/src_features_foldertree_cbf38cdc._.js","/_next/static/chunks/src_shared_d5ea4755._.js","/_next/static/chunks/node_modules_prosemirror-view_dist_index_21ada2c5.js","/_next/static/chunks/node_modules_%40tiptap_core_dist_f5afb391._.js","/_next/static/chunks/node_modules_zod_v4_1267b87d._.js","/_next/static/chunks/node_modules_1bf45afc._.js","/_next/static/chunks/src_app_(admin)_layout_tsx_7006af70._.js","/_next/static/chunks/src_features_aafe5ac0._.js","/_next/static/chunks/src_features_products_components_f5ce2d80._.js","/_next/static/chunks/src_features_products_pages_4dbc0695._.js","/_next/static/chunks/src_features_products_ce0a27cb._.js","/_next/static/chunks/src_features_integrations_1e6fba92._.js","/_next/static/chunks/src_features_data-import-export_087600cc._.js","/_next/static/chunks/src_features_playwright_b668a392._.js","/_next/static/chunks/src_features_ai-paths_lib_3f16aa69._.js","/_next/static/chunks/src_features_ai-paths_components_ui-panels_tsx_1925b79f._.js","/_next/static/chunks/src_features_ai-paths_components_node-config_0b11a017._.js","/_next/static/chunks/src_features_ai-paths_components_AiPathsSettings_tsx_782c2447._.js","/_next/static/chunks/src_features_ai-paths_components_4cccb9e4._.js","/_next/static/chunks/src_features_ai-paths_63e81e01._.js","/_next/static/chunks/src_features_jobs_a914697b._.js","/_next/static/chunks/src_features_f1889c9d._.js","/_next/static/chunks/src_shared_c352caaa._.js","/_next/static/chunks/node_modules_81837c94._.js","/_next/static/chunks/src_app_(admin)_admin_products_page_tsx_df7be870._.js"],"AdminProductsPage"]
+22:I["[project]/node_modules/next/dist/lib/framework/boundary-components.js [app-client] (ecmascript)",["/_next/static/chunks/node_modules_next_dist_be32b49c._.js","/_next/static/chunks/node_modules_next_dist_client_components_builtin_global-error_1cf6b850.js"],"OutletBoundary"]
+2c:I["[project]/node_modules/next/dist/lib/framework/boundary-components.js [app-client] (ecmascript)",["/_next/static/chunks/node_modules_next_dist_be32b49c._.js","/_next/static/chunks/node_modules_next_dist_client_components_builtin_global-error_1cf6b850.js"],"ViewportBoundary"]
+33:I["[project]/node_modules/next/dist/lib/framework/boundary-components.js [app-client] (ecmascript)",["/_next/static/chunks/node_modules_next_dist_be32b49c._.js","/_next/static/chunks/node_modules_next_dist_client_components_builtin_global-error_1cf6b850.js"],"MetadataBoundary"]
+:N1769673417874.716
+1:[]
+3:[]
+6:{"name":"Page","key":null,"env":"Server","stack":[],"props":{"params":"$@7","searchParams":"$@8"}}
+9:[["Page","/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/server/chunks/ssr/[root-of-the-server]__eca53d48._.js",532,263,531,1,false]]
+b:[["Page","/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/dev/server/chunks/ssr/[root-of-the-server]__eca53d48._.js",534,270,531,1,false]]
+d:[["Array.map","",0,0,0,0,false]]
+e:[["Array.map","",0,0,0,0,false]]
+f:[["Array.map","",0,0,0,0,false]]
+10:[["Array.map","",0,0,0,0,false]]
+11:[["Array.map","",0,0,0,0,false]]
+12:[["Array.map","",0,0,0,0,false]]
+13:[["Array.map","",0,0,0,0,false]]
+14:[["Array.map","",0,0,0,0,false]]
+15:[["Array.map","",0,0,0,0,false]]
+16:[["Array.map","",0,0,0,0,false]]
+17:[["Array.map","",0,0,0,0,false]]
+18:[["Array.map","",0,0,0,0,false]]
+19:[["Array.map","",0,0,0,0,false]]
+1a:[["Array.map","",0,0,0,0,false]]
+1b:[["Array.map","",0,0,0,0,false]]
+1c:[["Array.map","",0,0,0,0,false]]
+1d:[["Array.map","",0,0,0,0,false]]
+1e:[["Array.map","",0,0,0,0,false]]
+20:{"name":"Next.MetadataOutlet","key":null,"env":"Server","stack":[],"props":{}}
+21:[]
+23:[]
+25:[]
+28:"$EObject.defineProperty(function(type,config,children){for(var propName,i=2;i<arguments.length;i++)validateChildKeys(arguments[i]);i={};var key=null;if(null!=config)for(propName in didWarnAboutOldJSXRuntime||!(\"__self\"in config)||\"key\"in config||(didWarnAboutOldJSXRuntime=!0,console.warn(\"Your app (or one of its dependencies) is using an outdated JSX transform. Update to the modern JSX transform for faster performance: https://react.dev/link/new-jsx-transform\")),hasValidKey(config)&&(checkKeyStringCoercion(config.key),key=\"\"+config.key),config)hasOwnProperty.call(config,propName)&&\"key\"!==propName&&\"__self\"!==propName&&\"__source\"!==propName&&(i[propName]=config[propName]);var childrenLength=arguments.length-2;if(1===childrenLength)i.children=children;else if(1<childrenLength){for(var childArray=Array(childrenLength),_i=0;_i<childrenLength;_i++)childArray[_i]=arguments[_i+2];Object.freeze&&Object.freeze(childArray),i.children=childArray}if(type&&type.defaultProps)for(propName in childrenLength=type.defaultProps)void 0===i[propName]&&(i[propName]=childrenLength[propName]);return key&&function(props,displayName){function warnAboutAccessingKey(){specialPropKeyWarningShown||(specialPropKeyWarningShown=!0,console.error(\"%s: `key` is not a prop. Trying to access it will result in `undefined` being returned. If you need to access the same value within the child component, you should pass it as a different prop. (https://react.dev/link/special-props)\",displayName))}warnAboutAccessingKey.isReactWarning=!0,Object.defineProperty(props,\"key\",{get:warnAboutAccessingKey,configurable:!0})}(i,\"function\"==typeof type?type.displayName||type.name||\"Unknown\":type),(propName=1e4>ReactSharedInternals.recentlyCreatedOwnerStacks++)?(childArray=Error.stackTraceLimit,Error.stackTraceLimit=10,childrenLength=Error(\"react-stack-top-frame\"),Error.stackTraceLimit=childArray):childrenLength=unknownOwnerDebugStack,ReactElement(type,key,i,getOwner(),childrenLength,propName?createTask(getTaskName(type)):unknownOwnerDebugTask)},\"name\",{value:\"\"})"
+27:{"name":"NonIndex","key":null,"env":"Server","stack":[],"props":{"createElement":"$28","pagePath":"/admin/products","statusCode":200,"isPossibleServerAction":false}}
+2a:{"name":"ViewportWrapper","key":"6fcacdf8v","env":"Server","stack":[],"props":{}}
+2b:[]
+2e:{"name":"Next.Viewport","key":null,"env":"Server","owner":"$2a","stack":[],"props":{}}
+30:{"name":"MetadataWrapper","key":"6fcacdf8m","env":"Server","stack":[],"props":{}}
+31:[]
+32:[]
+34:[]
+36:{"name":"Next.Metadata","key":null,"env":"Server","owner":"$30","stack":[],"props":{}}
+7:{}
+8:
+5:D{"time":0.40912500000558794}
+5:D"$6"
+5:D{"time":0.471666000004916}
+5:["$","$a",null,{"fallback":null,"children":["$","$Lc",null,{},"$6","$b",1]},"$6","$9",1]
+1f:D{"time":0.8958750000019791}
+1f:D"$20"
+1f:D{"time":1.6445000000021537}
+1f:["$","$L22",null,{"children":["$","$a",null,{"name":"Next.MetadataOutlet","children":"$@24"},"$20","$23",1]},"$20","$21",1]
+26:D{"time":1.772541000005731}
+26:D"$27"
+26:D{"time":1.776041000004625}
+26:null
+29:D{"time":1.7897910000028787}
+29:D"$2a"
+29:D{"time":1.8237910000025295}
+2d:D{"time":1.8480410000047414}
+2d:D"$2e"
+29:["$","$L2c","6fcacdf8v",{"children":"$L2d"},"$2a","$2b",1]
+2f:D{"time":2.1088330000056885}
+2f:D"$30"
+2f:D{"time":2.179375000006985}
+35:D{"time":2.241375000005064}
+35:D"$36"
+2f:["$","div","6fcacdf8m",{"hidden":true,"children":["$","$L33",null,{"children":["$","$a",null,{"name":"Next.Metadata","children":"$L35"},"$30","$34",1]},"$30","$32",1]},"$30","$31",1]
+0:{"b":"development","f":[["children","(admin)","children","admin","children","products","children","__PAGE__",["__PAGE__",{}],[["$","$2","c",{"children":[["$","$L4","c-page",{"type":"page","pagePath":"(admin)/admin/products/page.tsx","children":"$5"},null,"$3",1],[["$","script","script-0",{"src":"/_next/static/chunks/src_features_aafe5ac0._.js","async":true,"nonce":"$undefined"},null,"$d",0],["$","script","script-1",{"src":"/_next/static/chunks/src_features_products_components_f5ce2d80._.js","async":true,"nonce":"$undefined"},null,"$e",0],["$","script","script-2",{"src":"/_next/static/chunks/src_features_products_pages_4dbc0695._.js","async":true,"nonce":"$undefined"},null,"$f",0],["$","script","script-3",{"src":"/_next/static/chunks/src_features_products_ce0a27cb._.js","async":true,"nonce":"$undefined"},null,"$10",0],["$","script","script-4",{"src":"/_next/static/chunks/src_features_integrations_1e6fba92._.js","async":true,"nonce":"$undefined"},null,"$11",0],["$","script","script-5",{"src":"/_next/static/chunks/src_features_data-import-export_087600cc._.js","async":true,"nonce":"$undefined"},null,"$12",0],["$","script","script-6",{"src":"/_next/static/chunks/src_features_playwright_b668a392._.js","async":true,"nonce":"$undefined"},null,"$13",0],["$","script","script-7",{"src":"/_next/static/chunks/src_features_ai-paths_lib_3f16aa69._.js","async":true,"nonce":"$undefined"},null,"$14",0],["$","script","script-8",{"src":"/_next/static/chunks/src_features_ai-paths_components_ui-panels_tsx_1925b79f._.js","async":true,"nonce":"$undefined"},null,"$15",0],["$","script","script-9",{"src":"/_next/static/chunks/src_features_ai-paths_components_node-config_0b11a017._.js","async":true,"nonce":"$undefined"},null,"$16",0],["$","script","script-10",{"src":"/_next/static/chunks/src_features_ai-paths_components_AiPathsSettings_tsx_782c2447._.js","async":true,"nonce":"$undefined"},null,"$17",0],["$","script","script-11",{"src":"/_next/static/chunks/src_features_ai-paths_components_4cccb9e4._.js","async":true,"nonce":"$undefined"},null,"$18",0],["$","script","script-12",{"src":"/_next/static/chunks/src_features_ai-paths_63e81e01._.js","async":true,"nonce":"$undefined"},null,"$19",0],["$","script","script-13",{"src":"/_next/static/chunks/src_features_jobs_a914697b._.js","async":true,"nonce":"$undefined"},null,"$1a",0],["$","script","script-14",{"src":"/_next/static/chunks/src_features_f1889c9d._.js","async":true,"nonce":"$undefined"},null,"$1b",0],["$","script","script-15",{"src":"/_next/static/chunks/src_shared_c352caaa._.js","async":true,"nonce":"$undefined"},null,"$1c",0],["$","script","script-16",{"src":"/_next/static/chunks/node_modules_81837c94._.js","async":true,"nonce":"$undefined"},null,"$1d",0],["$","script","script-17",{"src":"/_next/static/chunks/src_app_(admin)_admin_products_page_tsx_df7be870._.js","async":true,"nonce":"$undefined"},null,"$1e",0]],"$1f"]},null,"$1",0],{},null,false,false],["$","$2","h",{"children":["$26","$29","$2f"]},null,"$25",0],false]],"q":"","i":false,"S":false}
+37:[]
+38:[]
+2d:D{"time":4.964125000005879}
+2d:[["$","meta","0",{"charSet":"utf-8"},"$20","$37",0],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"},"$20","$38",0]]
+39:[]
+3a:[]
+24:D{"time":5.644208000005165}
+24:null
+35:D{"time":5.651000000005297}
+35:[["$","title","0",{"children":"Create Next App"},"$20","$39",0],["$","meta","1",{"name":"description","content":"Generated by create next app"},"$20","$3a",0]]

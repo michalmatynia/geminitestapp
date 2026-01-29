@@ -1,0 +1,93 @@
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="defaultPriceGroupId"
+
+15ba906f-e2d1-4a0e-995f-67047a011ae5
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="ean"
+
+
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="gtin"
+
+
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="asin"
+
+
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="name_en"
+
+Product to Delete 1769673416218
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="name_pl"
+
+
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="name_de"
+
+
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="price"
+
+0
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="description_en"
+
+
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="description_pl"
+
+
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="description_de"
+
+
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="supplierName"
+
+
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="supplierLink"
+
+
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="priceComment"
+
+
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="stock"
+
+0
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="sizeLength"
+
+0
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="sizeWidth"
+
+0
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="weight"
+
+0
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="length"
+
+0
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="sku"
+
+DEL1769673416218
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="imageLinks"
+
+["","","","","","","","","","","","","","",""]
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="catalogIds"
+
+cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10
+------WebKitFormBoundary4GYre6wqYJyq9GUQ
+Content-Disposition: form-data; name="parameters"
+
+[]
+------WebKitFormBoundary4GYre6wqYJyq9GUQ--

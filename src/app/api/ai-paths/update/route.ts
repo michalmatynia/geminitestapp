@@ -57,7 +57,7 @@ const applyAppendMode = (
   return next;
 };
 
-async function POST_handler(req: Request): Promise<NextResponse> {
+async function POST_handler(req: Request): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, updateSchema, {
       logPrefix: "ai-paths.update",

@@ -50,7 +50,7 @@ const COUNTRIES_COLLECTION = "countries";
 
 const seedMongoInternationalization = async (
   db: Awaited<ReturnType<typeof getMongoDb>>
-) => {
+): Promise<void> => {
   const now = new Date();
   await db.collection<CurrencyDoc>(CURRENCIES_COLLECTION).bulkWrite(
     defaultCurrencies.map((currency: (typeof defaultCurrencies)[number]) => ({
@@ -105,7 +105,7 @@ const seedMongoInternationalization = async (
 const normalizeCountryResponse = (
   country: CountryDoc,
   currencyMap: Map<string, CurrencyDoc>
-) => ({
+): { id: string; code: string; name: string; currencies: unknown[] } => ({
   id: country.id,
   code: country.code,
   name: country.name,
@@ -130,7 +130,7 @@ const normalizeCountryResponse = (
  * GET /api/countries
  * Fetches all countries (and ensures defaults exist).
  */
-async function GET_handler(req: Request) {
+async function GET_handler(req: Request): Promise<Response> {
   try {
     const provider = await getInternationalizationProvider();
     if (provider === "mongodb") {
@@ -198,7 +198,7 @@ async function GET_handler(req: Request) {
  * POST /api/countries
  * Creates a country.
  */
-async function POST_handler(req: Request) {
+async function POST_handler(req: Request): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, countrySchema, {
       logPrefix: "countries.POST",

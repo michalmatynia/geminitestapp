@@ -6,7 +6,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 
 const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 
-async function GET_handler(req: Request): Promise<NextResponse> {
+async function GET_handler(req: Request): Promise<Response> {
   const requestStart = Date.now();
   try {
     if (!("agentLongTermMemory" in prisma)) {

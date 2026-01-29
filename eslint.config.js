@@ -180,6 +180,22 @@ const disableTypeCheckedForConfigFiles = compat
     files: configFiles,
   }));
 
+const apiRouteConfig = {
+  files: ["src/app/api/**/route.{ts,tsx}"],
+  rules: {
+    "no-restricted-syntax": [
+      "error",
+      ...commonRestrictedSyntax,
+      {
+        selector:
+          "TSTypeReference[typeName.name='NextResponse']",
+        message:
+          "Use 'Response' instead of 'NextResponse' in handler return types. The ApiRouteHandler type expects Promise<Response>. You can still use NextResponse.json() to create responses.",
+      },
+    ],
+  },
+};
+
 const nextRouteConfig = {
   files: [
     "src/app/**/page.{ts,tsx,js,jsx}",
@@ -286,6 +302,7 @@ const eslintConfig = [
     },
   },
   ...layerBoundaryConfigs,
+  apiRouteConfig,
   nextRouteConfig,
   {
     files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx", "**/__tests__/**/*"],

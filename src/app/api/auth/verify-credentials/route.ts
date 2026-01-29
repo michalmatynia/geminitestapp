@@ -21,7 +21,7 @@ const payloadSchema = z.object({
   password: z.string().min(1),
 });
 
-async function POST_handler(req: Request): Promise<NextResponse> {
+async function POST_handler(req: Request): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, payloadSchema, {
       logPrefix: "auth.verify.POST",

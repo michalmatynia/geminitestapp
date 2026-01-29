@@ -113,7 +113,7 @@ const cleanupChatbotTemp = async (): Promise<void> => {
 
 
 
-async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<NextResponse> {
+async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
 
   const requestStart = Date.now();
 
@@ -197,7 +197,7 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Ne
 
 
 
-async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<NextResponse> {
+async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
 
   const tempFiles: string[] = [];
 

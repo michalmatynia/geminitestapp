@@ -10,7 +10,7 @@ const DEBUG_CHATBOT = process.env.DEBUG_CHATBOT === "true";
 async function GET_handler(
   req: Request,
   props: { params: Promise<{ sessionId: string }> }
-): Promise<NextResponse> {
+): Promise<Response> {
   try {
     const params = await props.params;
     const session = await chatbotSessionRepository.findById(params.sessionId);

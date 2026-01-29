@@ -29,7 +29,7 @@ const pageUpdateSchema = z.object({
  * GET /api/cms/pages/[id]
  * Fetches a single page by its ID.
  */
-async function GET_handler(req: NextRequest, ctx: Ctx) {
+async function GET_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | Response> {
   try {
     const id = await getId(ctx);
     const cmsRepository = await getCmsRepository();
@@ -53,7 +53,7 @@ async function GET_handler(req: NextRequest, ctx: Ctx) {
  * PUT /api/cms/pages/[id]
  * Updates a page.
  */
-async function PUT_handler(req: NextRequest, ctx: Ctx) {
+async function PUT_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | Response> {
   try {
     const id = await getId(ctx);
 
@@ -94,7 +94,7 @@ async function PUT_handler(req: NextRequest, ctx: Ctx) {
  * DELETE /api/cms/pages/[id]
  * Deletes a page.
  */
-async function DELETE_handler(req: NextRequest, ctx: Ctx) {
+async function DELETE_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | Response> {
   try {
     const id = await getId(ctx);
     const cmsRepository = await getCmsRepository();
@@ -111,6 +111,20 @@ async function DELETE_handler(req: NextRequest, ctx: Ctx) {
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "cms.pages.[id].GET" });
-export const PUT = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "cms.pages.[id].PUT" });
-export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "cms.pages.[id].DELETE" });
+export const GET = apiHandlerWithParams<{ id: string }>(
+  async (req: NextRequest, _ctx: unknown, params: { id: string }) =>
+    GET_handler(req, { params: Promise.resolve(params) }),
+  { source: "cms.pages.[id].GET" }
+);
+
+export const PUT = apiHandlerWithParams<{ id: string }>(
+  async (req: NextRequest, _ctx: unknown, params: { id: string }) =>
+    PUT_handler(req, { params: Promise.resolve(params) }),
+  { source: "cms.pages.[id].PUT" }
+);
+
+export const DELETE = apiHandlerWithParams<{ id: string }>(
+  async (req: NextRequest, _ctx: unknown, params: { id: string }) =>
+    DELETE_handler(req, { params: Promise.resolve(params) }),
+  { source: "cms.pages.[id].DELETE" }
+);

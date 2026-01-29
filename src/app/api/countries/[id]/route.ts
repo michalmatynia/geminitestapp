@@ -43,7 +43,7 @@ const COUNTRIES_COLLECTION = "countries";
 const normalizeCountryResponse = (
   country: CountryDoc,
   currencyMap: Map<string, CurrencyDoc>
-) => ({ id: country.id,
+): { id: string; code: string; name: string; currencies: unknown[] } => ({ id: country.id,
   code: country.code,
   name: country.name,
   currencies: (country.currencyIds ?? [])
@@ -70,7 +70,7 @@ const normalizeCountryResponse = (
 async function PUT_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<NextResponse | Response> {
   try {
     const { id } = await params;
     const body = (await req.json()) as unknown;
@@ -183,7 +183,7 @@ async function PUT_handler(
 async function DELETE_handler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<NextResponse | Response> {
   try {
     const { id } = await params;
 
@@ -208,5 +208,5 @@ async function DELETE_handler(
   }
 }
 
-export const PUT = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "countries.[id].PUT" });
-export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "countries.[id].DELETE" });
+export const PUT = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: unknown, params: { id: string }) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "countries.[id].PUT" });
+export const DELETE = apiHandlerWithParams<{ id: string }>(async (req: NextRequest, _ctx: unknown, params: { id: string }) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "countries.[id].DELETE" });

@@ -20,7 +20,7 @@ type MongoUserDoc = {
   createdAt?: Date | null;
 };
 
-async function GET_handler(req: Request): Promise<NextResponse> {
+async function GET_handler(req: Request): Promise<Response> {
   try {
     const session = await auth();
     const hasAccess =

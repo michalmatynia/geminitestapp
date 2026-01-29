@@ -19,7 +19,7 @@ const payloadSchema = z.object({
   timestamp: z.string().optional(),
 });
 
-async function POST_handler(req: Request): Promise<NextResponse> {
+async function POST_handler(req: Request): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, payloadSchema, {
       logPrefix: "client-errors.POST",

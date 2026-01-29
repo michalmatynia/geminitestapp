@@ -16,7 +16,7 @@ const messageSchema = z.object({
 async function GET_handler(
   req: Request,
   { params }: { params: Promise<{ sessionId: string }> }
-): Promise<NextResponse> {
+): Promise<Response> {
   const requestStart = Date.now();
   try {
     if (!("chatbotMessage" in prisma) || !("chatbotSession" in prisma)) {
@@ -62,7 +62,7 @@ async function GET_handler(
 async function POST_handler(
   req: Request,
   { params }: { params: Promise<{ sessionId: string }> }
-): Promise<NextResponse> {
+): Promise<Response> {
   const requestStart = Date.now();
   try {
     if (!("chatbotMessage" in prisma) || !("chatbotSession" in prisma)) {

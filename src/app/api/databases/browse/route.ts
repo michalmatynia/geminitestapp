@@ -150,7 +150,7 @@ async function browsePrismaCollection(params: BrowseParams): Promise<BrowseRespo
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<Response> {
   try {
     const { searchParams } = new URL(request.url);
     const collection = searchParams.get("collection");

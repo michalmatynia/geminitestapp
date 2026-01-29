@@ -16,7 +16,7 @@ const updateSchema = z.object({
   disableMfa: z.boolean().optional(),
 });
 
-async function GET_handler(_req: Request, context: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+async function GET_handler(_req: Request, context: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
     const session = await auth();
     const hasAccess =
@@ -45,7 +45,7 @@ async function GET_handler(_req: Request, context: { params: Promise<{ id: strin
   }
 }
 
-async function PATCH_handler(req: Request, context: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+async function PATCH_handler(req: Request, context: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
     const session = await auth();
     const hasAccess =

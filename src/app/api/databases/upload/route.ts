@@ -14,7 +14,7 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { badRequestError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 
-async function POST_handler(req: NextRequest) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;

@@ -13,7 +13,7 @@ import {
 } from "@/features/database/server";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 
-async function POST_handler(req: Request) {
+async function POST_handler(req: Request): Promise<Response> {
   let stage = "parse";
   let backupName: string | undefined;
   let previewMode: "backup" | "current" = "backup";

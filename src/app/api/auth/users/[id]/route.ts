@@ -32,7 +32,7 @@ type MongoUserDoc = {
 async function PATCH_handler(
   req: Request,
   context: { params: Promise<{ id: string }> }
-): Promise<NextResponse> {
+): Promise<Response> {
   try {
     const session = await auth();
     const hasAccess =

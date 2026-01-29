@@ -138,7 +138,7 @@ function getPrismaSchema(): SchemaResponse {
   return { provider: "prisma", collections };
 }
 
-export async function GET() {
+export async function GET(): Promise<Response> {
   try {
     const provider = await getAppDbProvider();
 

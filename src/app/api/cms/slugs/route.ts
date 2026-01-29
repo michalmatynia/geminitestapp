@@ -13,7 +13,7 @@ const slugSchema = z.object({
  * GET /api/cms/slugs
  * Fetches a list of all slugs.
  */
-async function GET_handler() {
+async function GET_handler(): Promise<NextResponse | Response> {
   try {
     const cmsRepository = await getCmsRepository();
     const slugs = await cmsRepository.getSlugs();
@@ -30,7 +30,7 @@ async function GET_handler() {
  * POST /api/cms/slugs
  * Creates a new slug.
  */
-async function POST_handler(req: Request) {
+async function POST_handler(req: Request): Promise<NextResponse | Response> {
   try {
     const parsed = await parseJsonBody(req, slugSchema, {
       logPrefix: "cms-slugs",

@@ -26,7 +26,7 @@ const catalogSchema = z.object({
  * GET /api/catalogs
  * Fetches all catalogs.
  */
-async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<NextResponse> {
+async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   try {
     const catalogRepository = await getCatalogRepository();
     let catalogs = await catalogRepository.listCatalogs();
@@ -151,7 +151,7 @@ async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Ne
  * POST /api/catalogs
  * Creates a catalog.
  */
-async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<NextResponse> {
+async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   try {
     const parsed = await parseJsonBody(req, catalogSchema, {
       logPrefix: "catalogs.POST",

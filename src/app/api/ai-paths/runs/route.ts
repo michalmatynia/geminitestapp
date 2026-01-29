@@ -15,7 +15,7 @@ const RUN_STATUSES: AiPathRunStatus[] = [
   "dead_lettered",
 ];
 
-async function GET_handler(req: Request): Promise<NextResponse> {
+async function GET_handler(req: Request): Promise<Response> {
   try {
     const url = new URL(req.url);
     const pathId = url.searchParams.get("pathId")?.trim() || undefined;

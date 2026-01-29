@@ -15,7 +15,7 @@ const pageCreateSchema = z.object({
  * GET /api/cms/pages
  * Fetches a list of all pages.
  */
-async function GET_handler() {
+async function GET_handler(): Promise<NextResponse | Response> {
   try {
     const cmsRepository = await getCmsRepository();
     const pages = await cmsRepository.getPages();
@@ -36,7 +36,7 @@ async function GET_handler() {
  * POST /api/cms/pages
  * Creates a new page.
  */
-async function POST_handler(req: Request) {
+async function POST_handler(req: Request): Promise<NextResponse | Response> {
   try {
     const parsed = await parseJsonBody(req, pageCreateSchema, {
       logPrefix: "cms-pages",

@@ -5,7 +5,7 @@ import { apiHandler } from "@/shared/lib/api/api-handler";
 
 export const runtime = "nodejs";
 
-async function POST_handler(req: NextRequest) {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const { searchParams } = new URL(req.url);
     const type = searchParams.get("type") || "postgresql";

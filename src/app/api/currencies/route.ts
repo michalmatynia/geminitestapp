@@ -33,7 +33,7 @@ type CurrencyDoc = {
 
 const CURRENCIES_COLLECTION = "currencies";
 
-const seedMongoCurrencies = async (db: Awaited<ReturnType<typeof getMongoDb>>) => {
+const seedMongoCurrencies = async (db: Awaited<ReturnType<typeof getMongoDb>>): Promise<void> => {
   const now = new Date();
   await db.collection<CurrencyDoc>(CURRENCIES_COLLECTION).bulkWrite(
     defaultCurrencies.map((currency: (typeof defaultCurrencies)[number]) => ({
@@ -60,7 +60,7 @@ const seedMongoCurrencies = async (db: Awaited<ReturnType<typeof getMongoDb>>) =
  * GET /api/currencies
  * Fetches all currencies (and ensures defaults exist).
  */
-async function GET_handler(req: Request) {
+async function GET_handler(req: Request): Promise<NextResponse | Response> {
   try {
     const provider = await getInternationalizationProvider();
     if (provider === "mongodb") {
@@ -108,7 +108,7 @@ async function GET_handler(req: Request) {
  * POST /api/currencies
  * Creates a currency.
  */
-async function POST_handler(req: Request) {
+async function POST_handler(req: Request): Promise<NextResponse | Response> {
   try {
     const parsed = await parseJsonBody(req, currencySchema, {
       logPrefix: "currencies.POST",

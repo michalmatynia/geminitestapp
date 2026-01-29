@@ -23,7 +23,7 @@ const slugUpdateSchema = z.object({
  * GET /api/cms/slugs/[id]
  * Fetches a single slug by its ID.
  */
-async function GET_handler(req: NextRequest, ctx: Ctx) {
+async function GET_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | Response> {
   try {
     const id = await getId(ctx);
     const cmsRepository = await getCmsRepository();
@@ -47,7 +47,7 @@ async function GET_handler(req: NextRequest, ctx: Ctx) {
  * DELETE /api/cms/slugs/[id]
  * Deletes a slug.
  */
-async function DELETE_handler(req: NextRequest, ctx: Ctx) {
+async function DELETE_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | Response> {
   try {
     const id = await getId(ctx);
     const cmsRepository = await getCmsRepository();
@@ -68,7 +68,7 @@ async function DELETE_handler(req: NextRequest, ctx: Ctx) {
  * PUT /api/cms/slugs/[id]
  * Updates a slug.
  */
-async function PUT_handler(req: NextRequest, ctx: Ctx) {
+async function PUT_handler(req: NextRequest, ctx: Ctx): Promise<NextResponse | Response> {
   try {
     const id = await getId(ctx);
 
@@ -108,6 +108,20 @@ async function PUT_handler(req: NextRequest, ctx: Ctx) {
   }
 }
 
-export const GET = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }), { source: "cms.slugs.[id].GET" });
-export const DELETE = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }), { source: "cms.slugs.[id].DELETE" });
-export const PUT = apiHandlerWithParams<{ id: string }>(async (req, _ctx, params) => PUT_handler(req, { params: Promise.resolve(params) }), { source: "cms.slugs.[id].PUT" });
+export const GET = apiHandlerWithParams<{ id: string }>(
+  async (req: NextRequest, _ctx: unknown, params: { id: string }) =>
+    GET_handler(req, { params: Promise.resolve(params) }),
+  { source: "cms.slugs.[id].GET" }
+);
+
+export const DELETE = apiHandlerWithParams<{ id: string }>(
+  async (req: NextRequest, _ctx: unknown, params: { id: string }) =>
+    DELETE_handler(req, { params: Promise.resolve(params) }),
+  { source: "cms.slugs.[id].DELETE" }
+);
+
+export const PUT = apiHandlerWithParams<{ id: string }>(
+  async (req: NextRequest, _ctx: unknown, params: { id: string }) =>
+    PUT_handler(req, { params: Promise.resolve(params) }),
+  { source: "cms.slugs.[id].PUT" }
+);

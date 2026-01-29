@@ -4,7 +4,7 @@ import { createErrorResponse } from "@/shared/lib/api/handle-api-error";
 import { configurationError, notFoundError } from "@/shared/errors/app-error";
 import { apiHandler } from "@/shared/lib/api/api-handler";
 
-async function POST_handler(req: NextRequest): Promise<NextResponse> {
+async function POST_handler(req: NextRequest): Promise<Response> {
   try {
     const data = (await req.json()) as Record<string, unknown>;
     if (!process.env.MONGODB_URI) {
@@ -32,11 +32,11 @@ async function POST_handler(req: NextRequest): Promise<NextResponse> {
       request: req,
       source: "ai-config.POST",
       fallbackMessage: "Failed to save AI configuration",
-    }) as Promise<NextResponse>;
+    });
   }
 }
 
-async function GET_handler(req: NextRequest): Promise<NextResponse> {
+async function GET_handler(req: NextRequest): Promise<Response> {
   try {
     if (!process.env.MONGODB_URI) {
       throw configurationError("MongoDB not configured");
@@ -52,7 +52,7 @@ async function GET_handler(req: NextRequest): Promise<NextResponse> {
       request: req,
       source: "ai-config.GET",
       fallbackMessage: "Failed to fetch AI configuration",
-    }) as Promise<NextResponse>;
+    });
   }
 }
 

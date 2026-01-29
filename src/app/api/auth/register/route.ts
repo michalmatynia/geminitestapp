@@ -105,7 +105,10 @@ async function POST_handler(req: Request) {
       select: { id: true, email: true, name: true },
     });
     return NextResponse.json(user, { status: 201 });
-  } catch (error: unknown) {
+    } catch (error) {
+    if (error instanceof DOMException) {
+      console.log("Abort");
+    }
     return createErrorResponse(error, {
       request: req,
       source: "auth.register.POST",

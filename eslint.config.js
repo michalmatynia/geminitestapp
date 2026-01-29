@@ -47,6 +47,21 @@ const featureBaseRestrictions = [
   },
 ];
 
+const commonRestrictedSyntax = [
+  {
+    selector:
+      "Property[key.name='_id'] > ObjectExpression > Property[key.name='$in'] > ArrayExpression > Literal",
+    message:
+      "MongoDB _id with $in using string literals. Ensure collection is typed or use ObjectId() to avoid 'string[] is not assignable to ObjectId[]' errors.",
+  },
+  {
+    selector:
+      "BinaryExpression[operator='instanceof'][right.name='DOMException']",
+    message:
+      "Use 'isAbortError(error)' or check 'error.name === \"AbortError\"' instead of 'instanceof DOMException' for better cross-environment compatibility.",
+  },
+];
+
 const layerBoundaryConfigs = [
   {
     files: ["src/**/*.{ts,tsx,js,jsx}"],
@@ -141,6 +156,7 @@ const configFiles = [
   "scripts/debug-product.mjs",
   "scripts/cleanup-base-export-templates.mjs",
   "scripts/backfill-note-colors.mjs",
+  "scripts/cleanup-db-provider-settings.ts",
 ];
 
 const disableTypeCheckedForConfigFiles = compat
@@ -164,6 +180,7 @@ const nextRouteConfig = {
   rules: {
     "no-restricted-syntax": [
       "warn",
+      ...commonRestrictedSyntax,
       {
         selector:
           "ExportNamedDeclaration[source] > ExportSpecifier[exported.name='runtime']",
@@ -172,9 +189,9 @@ const nextRouteConfig = {
       },
       {
         selector:
-          "ExportNamedDeclaration > VariableDeclaration > VariableDeclarator[id.name='runtime'][init.type!='Literal']",
+          "ExportNamedDeclaration > VariableDeclaration > VariableDeclarator[id.name=/^(runtime|dynamic|dynamicParams|revalidate|fetchCache|preferredRegion|maxDuration)$/][init.type!='Literal']",
         message:
-          "Next.js Route Segment Config 'runtime' must be a static string literal.",
+          "Next.js Route Segment Config options must be static literals for reliable build-time optimization.",
       },
     ],
   },
@@ -222,15 +239,7 @@ const eslintConfig = [
       "@typescript-eslint/no-explicit-any": "error",
       // "@typescript-eslint/no-misused-promises": "off",
       "import/order": "off",
-      "no-restricted-syntax": [
-        "warn",
-        {
-          selector:
-            "Property[key.name='_id'] > ObjectExpression > Property[key.name='$in'] > ArrayExpression > Literal",
-          message:
-            "MongoDB _id with $in using string literals. Ensure collection is typed or use ObjectId() to avoid 'string[] is not assignable to ObjectId[]' errors.",
-        },
-      ],
+      "no-restricted-syntax": ["warn", ...commonRestrictedSyntax],
     },
     settings: {
       react: {
